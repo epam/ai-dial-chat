@@ -1,3 +1,9 @@
+# FORKED REPOSITORY
+
+This repository was forked from github.com/mckaywrigley/chatbot-ui.git . The code was scanned by Snyk (no major vulnerabilities) - and, later, [with OpenAI](./testme.ipynb) - and we didn't see data flowing anywhere but OpenAI API).
+It's forked and "frozen" to minimize the risk. In future we will, hopefully, have someone responsible for this project - but as of now we want to provide the service ASAP.
+
+
 # Chatbot UI
 
 Chatbot UI is an open source chat UI for AI models.
