@@ -18,3 +18,8 @@ build_and_release:
   except:
     variables:
       - $CI_COMMIT_MESSAGE =~ /no-build/
+
+release:
+  except:
+    variables:
+      - $CI_COMMIT_MESSAGE =~ /no-build/
