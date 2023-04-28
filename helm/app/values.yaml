@@ -1,0 +1,14 @@
+app:
+  image:
+    repository: somerepo/blah
+    tag: latest
+    pullPolicy: Always
+  env: []
+
+secrets:
+  openai_token: SET-EXPLICITLY
+
+auth:
+  user: someuser
+  # cheatsheet: apt install apache2 && htpasswd -c <RESULTING_FILE> <USERNAME>
+  password: SET-EXPLICITLY

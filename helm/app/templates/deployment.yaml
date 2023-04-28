@@ -1,0 +1,53 @@
+# french
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "app.fullname" . }}
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: {{ include "app.fullname" . }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: {{ include "app.fullname" . }}
+    spec:
+      containers:
+        - name: chat
+          image: {{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+          env:
+            # simple hack to re-deploy each time. used on DEV to pull "latest" each time with imagePullPolicy:Always
+            - name: RELEASE_DATE
+              value: "{{ now }}"
+            - name: OPENAI_API_KEY
+              valueFrom:
+               secretKeyRef:
+                 name: {{ include "app.fullname" . }}
+                 key: token
+            {{- range .Values.app.env }}
+            - name: {{ .name }}
+              value: "{{ .value }}"
+            {{- end }}
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - {{ include "app.fullname" . }}
+                topologyKey: kubernetes.io/hostname

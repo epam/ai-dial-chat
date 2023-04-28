@@ -1,0 +1,27 @@
+---
+
+app:
+  image:
+    repository: epmgptcommon.azurecr.io/chatbot-ui
+    tag: "latest"
+  env:
+    - name: OPENAI_API_HOST
+      value: "https://southcentralus.api.cognitive.microsoft.com/"
+    - name: DEFAULT_MODEL
+      value: "gpt-35-turbo"
+    - name: AZURE_DEPLOYMENT_ID
+      value: "gpt-35-turbo"
+    - name: OPENAI_API_TYPE
+      value: "azure"
+    - name: OPENAI_API_VERSION
+      value: "2023-03-15-preview"
+    #- name: DEBUG
+    #  value: "*"
+
+secrets:
+  openai_token: SET-EXPLICITLY
+
+auth:
+  user: loki
+  # cheatsheet: apt install apache2 && htpasswd -c <RESULTING_FILE> <USERNAME>
+  password: SET-EXPLICITLY
