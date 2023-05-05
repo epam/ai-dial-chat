@@ -9,8 +9,15 @@ import { GoogleBody, GoogleSource } from '@/types/google';
 import { Readability } from '@mozilla/readability';
 import endent from 'endent';
 import jsdom, { JSDOM } from 'jsdom';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from './auth/[...nextauth]';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
+  const session = await getServerSession(req, res, authOptions);
+
+  if(!session) {
+    return res.status(401).send('');
+  }
   try {
     const { messages, key, model, googleAPIKey, googleCSEId } =
       req.body as GoogleBody;

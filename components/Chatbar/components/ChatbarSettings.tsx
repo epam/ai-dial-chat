@@ -13,6 +13,7 @@ import { SidebarButton } from '../../Sidebar/SidebarButton';
 import ChatbarContext from '../Chatbar.context';
 import { ClearConversations } from './ClearConversations';
 import { PluginKeys } from './PluginKeys';
+import { User } from '../User';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation('sidebar');
@@ -68,6 +69,8 @@ export const ChatbarSettings = () => {
           setIsSettingDialog(false);
         }}
       />
+
+      <User />
     </div>
   );
 };

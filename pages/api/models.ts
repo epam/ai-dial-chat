@@ -1,14 +1,22 @@
+import { getServerSession } from 'next-auth/next';
+import { NextApiRequest, NextApiResponse } from 'next';
 import { OPENAI_API_HOST, OPENAI_API_TYPE, OPENAI_API_VERSION, OPENAI_ORGANIZATION } from '@/utils/app/const';
 
 import { OpenAIModel, OpenAIModelID, OpenAIModels } from '@/types/openai';
+import { authOptions } from './auth/[...nextauth]';
 
-export const config = {
-  runtime: 'edge',
-};
+// export const config = {
+//   runtime: 'edge',
+// };
 
-const handler = async (req: Request): Promise<Response> => {
+const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  const session = await getServerSession(req, res, authOptions);
+
+  if(!session) {
+    return res.status(401).send('');
+  }
   try {
-    const { key } = (await req.json()) as {
+    const { key } = req.body as {
       key: string;
     };
 
@@ -33,10 +41,12 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (response.status === 401) {
-      return new Response(response.body, {
-        status: 500,
-        headers: response.headers,
-      });
+      // return new Response(response.body, {
+      //   status: 500,
+      //   headers: response.headers,
+      // });
+      
+      return res.status(500).send(await response.text());
     } else if (response.status !== 200) {
       console.error(
         `OpenAI API returned an error ${
@@ -62,10 +72,12 @@ const handler = async (req: Request): Promise<Response> => {
       })
       .filter(Boolean);
 
-    return new Response(JSON.stringify(models), { status: 200 });
+    // return new Response(JSON.stringify(models), { status: 200 });
+    return res.status(200).json(models);
   } catch (error) {
     console.error(error);
-    return new Response('Error', { status: 500 });
+    // return new Response('Error', { status: 500 });
+    return res.status(500).send('Error')
   }
 };
 
