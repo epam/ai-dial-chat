@@ -31,7 +31,7 @@ export const User: FC = () => {
   const { t } = useTranslation('sidebar');
   const onClick = useCallback(() => {
     session
-      ? signOut({ redirect: false })
+      ? signOut({ redirect: true })
       : signIn('azure-ad', { redirect: true });
   }, [session]);
 
@@ -45,7 +45,7 @@ export const User: FC = () => {
       )}
       <SidebarButton
         onClick={onClick}
-        className={session ? 'w-12' : ''}
+        className={session ? 'w-12' : void 0}
         icon={session ? <IconLogout /> : <IconLogin />}
         text={session ? '' : t('Sign In')}
       />

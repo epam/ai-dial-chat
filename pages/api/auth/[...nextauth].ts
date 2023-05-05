@@ -1,4 +1,5 @@
-import NextAuth, { AuthOptions } from 'next-auth';
+import type { AuthOptions } from 'next-auth';
+import NextAuth from 'next-auth/next';
 import AzureProvider from 'next-auth/providers/azure-ad';
 
 export const authOptions: AuthOptions = {
@@ -11,6 +12,5 @@ export const authOptions: AuthOptions = {
       authorization: { params: { scope: 'openid profile user.Read email' } },
     }),
   ],
-  
 };
 export default NextAuth(authOptions);
