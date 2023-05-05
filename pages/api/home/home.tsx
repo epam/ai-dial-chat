@@ -44,12 +44,14 @@ import { v4 as uuidv4 } from 'uuid';
 interface Props {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
+  usePluginKeys: boolean;
   defaultModelId: OpenAIModelID;
 }
 
 const Home = ({
   serverSideApiKeyIsSet,
   serverSidePluginKeysSet,
+  usePluginKeys,
   defaultModelId,
 }: Props) => {
   const { t } = useTranslation('chat');
@@ -246,7 +248,13 @@ const Home = ({
         field: 'serverSidePluginKeysSet',
         value: serverSidePluginKeysSet,
       });
-  }, [defaultModelId, serverSideApiKeyIsSet, serverSidePluginKeysSet]);
+
+    usePluginKeys && 
+      dispatch({
+        field: 'usePluginKeys',
+        value: usePluginKeys,
+      })
+  }, [defaultModelId, serverSideApiKeyIsSet, serverSidePluginKeysSet, usePluginKeys]);
 
   // ON LOAD --------------------------------------------
 
@@ -269,12 +277,14 @@ const Home = ({
       dispatch({ field: 'apiKey', value: apiKey });
     }
 
-    const pluginKeys = localStorage.getItem('pluginKeys');
-    if (serverSidePluginKeysSet) {
-      dispatch({ field: 'pluginKeys', value: [] });
-      localStorage.removeItem('pluginKeys');
-    } else if (pluginKeys) {
-      dispatch({ field: 'pluginKeys', value: pluginKeys });
+    if(usePluginKeys){
+      const pluginKeys = localStorage.getItem('pluginKeys');
+      if (serverSidePluginKeysSet) {
+        dispatch({ field: 'pluginKeys', value: [] });
+        localStorage.removeItem('pluginKeys');
+      } else if (pluginKeys) {
+        dispatch({ field: 'pluginKeys', value: pluginKeys });
+      }
     }
 
     if (window.innerWidth < 640) {
@@ -345,6 +355,7 @@ const Home = ({
     dispatch,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
+    usePluginKeys
   ]);
 
   return (
@@ -416,6 +427,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   return {
     props: {
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
+      usePluginKeys: !process.env.NEXT_PUBLIC_DISABLE_PLUGIN_KEYS,
       defaultModelId,
       serverSidePluginKeysSet,
       ...(await serverSideTranslations(locale ?? 'en', [
