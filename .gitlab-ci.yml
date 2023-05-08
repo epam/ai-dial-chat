@@ -6,8 +6,9 @@ include:
 
 variables:
   HELM_NS_NAME: "epm-gpt-common"
-  HELM_CHART: "./helm/app"
-  HELM_EXTRA_ARGS: "--values ./helm/dev.yaml --set secrets.openai_token=${OPENAI_TOKEN_AZURE} --set auth.password='${BASIC_AUTH_HTPASSWD_B64}'"
+  HELM_CHART: "./helm/chat"
+  HELM_RELEASE_NAME: "${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}"
+  HELM_EXTRA_ARGS: "--values ./helm/dev.yaml --set image.tag=${CI_COMMIT_REF_SLUG}"
 
 prepare_version:
   except:

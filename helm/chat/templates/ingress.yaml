@@ -1,0 +1,47 @@
+{{- if .Values.ingress.enabled -}}
+{{- $ingressPath := .Values.ingress.path -}}
+{{- $pathType := .Values.ingress.pathType -}}
+{{- $serviceName := .Values.ingress.serviceName | default ( include "app.fullname" . ) -}}
+{{- $servicePort := .Values.ingress.servicePort | default .Values.service.ports.http -}}
+{{- $extraPaths := .Values.ingress.extraPaths -}}
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: {{ template "app.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "app.labels" . | nindent 4 }}
+    {{- if .Values.ingress.annotations }}
+  annotations:
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ tpl $value $ | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+{{- if .Values.ingress.ingressClassName }}
+  ingressClassName: {{ .Values.ingress.ingressClassName }}
+{{- end }}
+{{- if .Values.ingress.tls }}
+  tls:
+{{ toYaml .Values.ingress.tls | indent 4 }}
+{{- end }}
+  rules:
+  {{- range .Values.ingress.hosts }}
+    - host: {{ tpl . $ }}
+      http:
+        paths:
+      {{- if $extraPaths }}
+      {{ toYaml $extraPaths | nindent 10 }}
+      {{- end }}
+          - path: {{ $ingressPath }}
+            pathType: {{ $pathType }}
+            backend:
+              service:
+                name: {{ $serviceName }}
+                port:
+                  {{- if typeIs "string" $servicePort }}
+                  name: {{ $servicePort }}
+                  {{- else if or (typeIs "int" $servicePort) (typeIs "float64" $servicePort) }}
+                  number: {{ $servicePort | int }}
+                  {{- end }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: chat
+description: A Helm chart for epm GPT chat 
+version: 0.0.1
+appVersion: 1.0.0
+kubeVersion: ">=1.21.0-0"
+maintainers:
+  - name: Aliaksei Banshchyk
+    email: aliaksei_banshchyk@epam.com
