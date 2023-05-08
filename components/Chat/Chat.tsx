@@ -49,6 +49,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
       apiKey,
       pluginKeys,
       serverSideApiKeyIsSet,
+      usePluginKeys,
       messageIsStreaming,
       modelError,
       loading,
@@ -104,7 +105,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
         let body;
         if (!plugin) {
           body = JSON.stringify(chatBody);
-        } else {
+        } else if(usePluginKeys) {
           body = JSON.stringify({
             ...chatBody,
             googleAPIKey: pluginKeys

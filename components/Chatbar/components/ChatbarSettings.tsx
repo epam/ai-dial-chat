@@ -25,6 +25,7 @@ export const ChatbarSettings = () => {
       lightMode,
       serverSideApiKeyIsSet,
       serverSidePluginKeysSet,
+      usePluginKeys,
       conversations,
     },
     dispatch: homeDispatch,
@@ -61,7 +62,7 @@ export const ChatbarSettings = () => {
         <Key apiKey={apiKey} onApiKeyChange={handleApiKeyChange} />
       ) : null}
 
-      {!serverSidePluginKeysSet ? <PluginKeys /> : null}
+      {!serverSidePluginKeysSet && usePluginKeys ? <PluginKeys /> : null}
 
       <SettingDialog
         open={isSettingDialogOpen}
