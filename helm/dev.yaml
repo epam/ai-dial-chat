@@ -4,6 +4,7 @@ image:
 replicaCount: 2
 
 env:
+  NEXTAUTH_URL: "https://;chat.lab.epam.com"
   OPENAI_API_HOST: "https://southcentralus.api.cognitive.microsoft.com/"
   DEFAULT_MODEL: "gpt-35-turbo"
   AZURE_DEPLOYMENT_ID: "gpt-35-turbo"
@@ -38,11 +39,11 @@ ingress:
   #     more_set_headers "Cache-control: max-age=60";
   #     more_set_headers "Strict-Transport-Security: max-age=31536000";
   hosts:
-    - chat-gpt.lab.epam.com
+    - chat.lab.epam.com
   tls:
     - secretName: wildcard-lab-epam-com
       hosts:
-        - chat-gpt.lab.epam.com
+        - chat.lab.epam.com
 
 serviceAccount:
   create: false
