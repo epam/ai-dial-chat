@@ -43,7 +43,7 @@ export const ChatbarSettings = () => {
         <ClearConversations onClearConversations={handleClearConversations} />
       ) : null}
 
-      <Import onImport={handleImportConversations} />
+      {process.env.NEXT_PUBLIC_SHOW_IMPORT === 'true' && <Import onImport={handleImportConversations} />}
 
       <SidebarButton
         text={t('Export data')}
