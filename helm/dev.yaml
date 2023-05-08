@@ -1,27 +1,51 @@
----
+image:
+  pullPolicy: Always
 
-app:
-  image:
-    repository: epmgptcommon.azurecr.io/chatbot-ui
-    tag: "latest"
-  env:
-    - name: OPENAI_API_HOST
-      value: "https://southcentralus.api.cognitive.microsoft.com/"
-    - name: DEFAULT_MODEL
-      value: "gpt-35-turbo"
-    - name: AZURE_DEPLOYMENT_ID
-      value: "gpt-35-turbo"
-    - name: OPENAI_API_TYPE
-      value: "azure"
-    - name: OPENAI_API_VERSION
-      value: "2023-03-15-preview"
-    #- name: DEBUG
-    #  value: "*"
+replicaCount: 2
 
-secrets:
-  openai_token: SET-EXPLICITLY
+env:
+  OPENAI_API_HOST: "https://southcentralus.api.cognitive.microsoft.com/"
+  DEFAULT_MODEL: "gpt-35-turbo"
+  AZURE_DEPLOYMENT_ID: "gpt-35-turbo"
+  OPENAI_API_TYPE: "azure"
+  OPENAI_API_VERSION: "2023-03-15-preview"
+  # simple hack to re-deploy each time. used on DEV to pull "latest" each time with image.pullPolicy:Always
+  RELEASE_DATE: '{{ dateInZone "2006-01-02 15:04:05Z" (now) "UTC" }}'
 
-auth:
-  user: loki
-  # cheatsheet: apt install apache2 && htpasswd -c <RESULTING_FILE> <USERNAME>
-  password: SET-EXPLICITLY
+podLabels:
+  azure.workload.identity/use: "true"
+
+# affinity:
+#   podAntiAffinity:
+#     preferredDuringSchedulingIgnoredDuringExecution:
+#       - weight: 100
+#         podAffinityTerm:
+#           labelSelector:
+#             matchExpressions:
+#               - key: app
+#                 operator: In
+#                 values:
+#                   - {{ include "app.fullname" . }}
+#           topologyKey: kubernetes.io/hostname
+
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "Content-Security-Policy: default-src 'self' data:";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "Cache-control: max-age=60";
+      more_set_headers "Strict-Transport-Security: max-age=31536000";
+  hosts:
+    - chat-gpt.lab.epam.com
+  tls:
+    - secretName: wildcard-lab-epam-com
+      hosts:
+        - chat-gpt.lab.epam.com
+
+serviceAccount:
+  create: false
+  name: epm-gpt-common
+
+extraEnvVarsSecret: "chat-lab-test"
