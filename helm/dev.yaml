@@ -31,12 +31,12 @@ podLabels:
 ingress:
   enabled: true
   ingressClassName: nginx
-  annotations:
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      more_set_headers "Content-Security-Policy: default-src 'self' data:";
-      more_set_headers "X-Content-Type-Options: nosniff";
-      more_set_headers "Cache-control: max-age=60";
-      more_set_headers "Strict-Transport-Security: max-age=31536000";
+  # annotations:
+  #   nginx.ingress.kubernetes.io/configuration-snippet: |
+  #     more_set_headers "Content-Security-Policy: default-src 'self' data:";
+  #     more_set_headers "X-Content-Type-Options: nosniff";
+  #     more_set_headers "Cache-control: max-age=60";
+  #     more_set_headers "Strict-Transport-Security: max-age=31536000";
   hosts:
     - chat-gpt.lab.epam.com
   tls:

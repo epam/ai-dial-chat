@@ -81,8 +81,10 @@ spec:
           {{- end }}
           {{- if or .Values.secrets .Values.extraEnvVarsSecret }}
           envFrom:
+            {{- if .Values.secrets }}
             - secretRef:
                 name: {{ template "app.fullname" . }}
+            {{- end }}
             {{- if .Values.extraEnvVarsSecret }}
             - secretRef:
                 name: {{ include "app.tplvalues.render" (dict "value" .Values.extraEnvVarsSecret "context" $) }}

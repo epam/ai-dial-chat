@@ -11,7 +11,7 @@ Return the proper image name
     {{- if .global.imageRegistry }}
      {{- $registryName = .global.imageRegistry -}}
     {{- end -}}
-{{- end -}}v
+{{- end -}}
 {{- if .imageRoot.digest }}
     {{- $separator = "@" -}}
     {{- $termination = .imageRoot.digest | toString -}}
