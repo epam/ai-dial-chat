@@ -49,4 +49,4 @@ serviceAccount:
   create: false
   name: epm-gpt-common
 
-extraEnvVarsSecret: "chat-lab-test"
+# extraEnvVarsSecret: "chat-lab-test"

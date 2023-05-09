@@ -8,7 +8,7 @@ variables:
   HELM_NS_NAME: "epm-gpt-common"
   HELM_CHART: "./helm/chat"
   HELM_RELEASE_NAME: "${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}"
-  HELM_EXTRA_ARGS: "--values ./helm/dev.yaml --set image.tag=${CI_COMMIT_REF_SLUG}"
+  HELM_EXTRA_ARGS: "--values ./helm/dev.yaml --set image.tag=${CI_COMMIT_REF_SLUG} --set secrets.OPENAI_API_KEY=${OPENAI_TOKEN_AZURE} --set secrets.NEXTAUTH_SECRET=${NEXTAUTH_SECRET} --set secrets.AUTH_TENANT_ID=${AUTH_TENANT_ID} --set secrets.AUTH_CLIENT_SECRET=${AUTH_CLIENT_SECRET} --set secrets.AUTH_CLIENT_ID=${AUTH_CLIENT_ID}"
 
 prepare_version:
   except:
