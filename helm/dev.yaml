@@ -5,7 +5,8 @@ replicaCount: 2
 
 env:
   NEXTAUTH_URL: "https://chat.lab.epam.com"
-  OPENAI_API_HOST: "https://southcentralus.api.cognitive.microsoft.com/"
+  # OPENAI_API_HOST: "https://southcentralus.api.cognitive.microsoft.com/"
+  OPENAI_API_HOST: "http://openai-proxy-dev-chat.epm-gpt-common.svc.cluster.local"
   DEFAULT_MODEL: "gpt-35-turbo"
   AZURE_DEPLOYMENT_ID: "gpt-35-turbo"
   OPENAI_API_TYPE: "azure"
