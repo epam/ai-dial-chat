@@ -15,6 +15,7 @@ import tiktokenModel from '@dqbd/tiktoken/encoders/cl100k_base.json';
 import { Tiktoken, init } from '@dqbd/tiktoken/lite/init';
 import { readFileSync } from 'fs';
 import path from 'path';
+import { getHeaders } from '../../utils/server/getHeaders';
 
 // export const config = {
 //   runtime: 'edge',
@@ -77,6 +78,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       temperatureToUse,
       key,
       messagesToSend,
+      getHeaders(session),
     );
     res.setHeader('Transfer-Encoding', 'chunked');
     // return new Response(stream);

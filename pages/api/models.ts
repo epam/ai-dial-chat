@@ -4,6 +4,7 @@ import { OPENAI_API_HOST, OPENAI_API_TYPE, OPENAI_API_VERSION, OPENAI_ORGANIZATI
 
 import { OpenAIModel, OpenAIModelID, OpenAIModels } from '@/types/openai';
 import { authOptions } from './auth/[...nextauth]';
+import { getHeaders } from '../../utils/server/getHeaders';
 
 // export const config = {
 //   runtime: 'edge',
@@ -24,7 +25,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     if (OPENAI_API_TYPE === 'azure') {
       url = `${OPENAI_API_HOST}/openai/deployments?api-version=${OPENAI_API_VERSION}`;
     }
-
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
@@ -37,6 +37,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         ...((OPENAI_API_TYPE === 'openai' && OPENAI_ORGANIZATION) && {
           'OpenAI-Organization': OPENAI_ORGANIZATION,
         }),
+        ...getHeaders(session),
       },
     });
 
