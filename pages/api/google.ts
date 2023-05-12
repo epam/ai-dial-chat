@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
-import { OPENAI_API_HOST } from '@/utils/app/const';
+import { MAX_TOKENS, OPENAI_API_HOST } from '@/utils/app/const';
 import { cleanSourceText } from '@/utils/server/google';
 
 import { Message } from '@/types/chat';
@@ -137,7 +137,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
           },
           answerMessage,
         ],
-        max_tokens: 1000,
+        max_tokens: MAX_TOKENS,
         temperature: 1,
         stream: false,
       }),
