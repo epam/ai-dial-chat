@@ -412,7 +412,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
 
                   {models.length > 0 && (
                     <div className="flex h-full flex-col space-y-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-600">
-                      {!!process.env.NEXT_PUBLIC_SHOW_MODELS && <ModelSelect />}
+                      <ModelSelect />
 
                       <SystemPrompt
                         conversation={selectedConversation}
@@ -456,7 +456,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
                     <IconClearAll size={18} />
                   </button>
                 </div>
-                {showSettings && !!process.env.NEXT_PUBLIC_SHOW_MODELS && (
+                {showSettings && (
                   <div className="flex flex-col space-y-10 md:mx-auto md:max-w-xl md:gap-6 md:py-3 md:pt-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
                     <div className="flex h-full flex-col space-y-4 border-b border-neutral-200 p-4 dark:border-neutral-600 md:rounded-lg md:border">
                       <ModelSelect />
