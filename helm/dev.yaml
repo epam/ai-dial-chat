@@ -14,6 +14,7 @@ env:
   NEXT_PUBLIC_SHOW_MODELS: "true"
   # simple hack to re-deploy each time. used on DEV to pull "latest" each time with image.pullPolicy:Always
   RELEASE_DATE: '{{ dateInZone "2006-01-02 15:04:05Z" (now) "UTC" }}'
+  NEXT_PUBLIC_MAX_TOKENS: 4000
 
 podLabels:
   azure.workload.identity/use: "true"
