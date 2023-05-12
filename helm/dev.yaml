@@ -11,6 +11,7 @@ env:
   AZURE_DEPLOYMENT_ID: "gpt-35-turbo"
   OPENAI_API_TYPE: "azure"
   OPENAI_API_VERSION: "2023-03-15-preview"
+  NEXT_PUBLIC_SHOW_MODELS: "true"
   # simple hack to re-deploy each time. used on DEV to pull "latest" each time with image.pullPolicy:Always
   RELEASE_DATE: '{{ dateInZone "2006-01-02 15:04:05Z" (now) "UTC" }}'
 
