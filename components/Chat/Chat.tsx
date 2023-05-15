@@ -20,6 +20,7 @@ import {
 } from '@/utils/app/conversation';
 import { throttle } from '@/utils/data/throttle';
 
+import { OpenAIModel } from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
 import { Plugin } from '@/types/plugin';
 
@@ -29,14 +30,38 @@ import Spinner from '../Spinner';
 import { ChatInput } from './ChatInput';
 import { ChatLoader } from './ChatLoader';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
+import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { ModelSelect } from './ModelSelect';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
-import { MemoizedChatMessage } from './MemoizedChatMessage';
 
 interface Props {
   stopConversationRef: MutableRefObject<boolean>;
 }
+
+const handleRate = (
+  message: Message,
+  id: string,
+  model: OpenAIModel,
+  apiKey: string,
+) => {
+  if (!message.like) {
+    return;
+  }
+  fetch('/api/rate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      key: apiKey,
+      message,
+      id,
+      model,
+      value: message.like > 0 ? true : false,
+    }),
+  }).then();
+};
 
 export const Chat = memo(({ stopConversationRef }: Props) => {
   const { t } = useTranslation('chat');
@@ -70,7 +95,12 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSend = useCallback(
-    async (message: Message, deleteCount = 0, plugin: Plugin | null = null) => {
+    async (
+      message: Message,
+      id: string,
+      deleteCount = 0,
+      plugin: Plugin | null = null,
+    ) => {
       if (selectedConversation) {
         let updatedConversation: Conversation;
         if (deleteCount) {
@@ -96,7 +126,11 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
         homeDispatch({ field: 'messageIsStreaming', value: true });
         const chatBody: ChatBody = {
           model: updatedConversation.model,
-          messages: updatedConversation.messages,
+          messages: updatedConversation.messages.map((message) => {
+            const gptMessage = { ...message, like: void 0 };
+            return gptMessage;
+          }),
+          id: id.toLowerCase(),
           key: apiKey,
           prompt: updatedConversation.prompt,
           temperature: updatedConversation.temperature,
@@ -105,7 +139,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
         let body;
         if (!plugin) {
           body = JSON.stringify(chatBody);
-        } else if(usePluginKeys) {
+        } else if (usePluginKeys) {
           body = JSON.stringify({
             ...chatBody,
             googleAPIKey: pluginKeys
@@ -253,6 +287,27 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
       selectedConversation,
       stopConversationRef,
     ],
+  );
+
+  const onLikeHandler = useCallback(
+    (index: number) => (editedMessage: Message) => {
+      if (!selectedConversation) {
+        return;
+      }
+      const messages = [...selectedConversation.messages];
+      messages[index] = editedMessage;
+      handleUpdateConversation(selectedConversation, {
+        key: 'messages',
+        value: messages,
+      });
+      handleRate(
+        editedMessage,
+        selectedConversation?.id ?? '',
+        selectedConversation.model,
+        apiKey,
+      );
+    },
+    [apiKey, handleUpdateConversation, selectedConversation],
   );
 
   const scrollToBottom = useCallback(() => {
@@ -474,9 +529,11 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
                       // discard edited message and the ones that come after then resend
                       handleSend(
                         editedMessage,
+                        selectedConversation?.id,
                         selectedConversation?.messages.length - index,
                       );
                     }}
+                    onLike={onLikeHandler(index)}
                   />
                 ))}
 
@@ -495,12 +552,17 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
             textareaRef={textareaRef}
             onSend={(message, plugin) => {
               setCurrentMessage(message);
-              handleSend(message, 0, plugin);
+              handleSend(message, selectedConversation?.id ?? '', 0, plugin);
             }}
             onScrollDownClick={handleScrollDown}
             onRegenerate={() => {
               if (currentMessage) {
-                handleSend(currentMessage, 2, null);
+                handleSend(
+                  currentMessage,
+                  selectedConversation?.id ?? '',
+                  2,
+                  null,
+                );
               }
             }}
             showScrollDownButton={showScrollDownButton}
