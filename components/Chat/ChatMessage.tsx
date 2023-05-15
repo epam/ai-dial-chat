@@ -8,7 +8,15 @@ import {
   IconTrash,
   IconUser,
 } from '@tabler/icons-react';
-import { FC, memo, useContext, useEffect, useRef, useState } from 'react';
+import {
+  ButtonHTMLAttributes,
+  FC,
+  memo,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -21,6 +29,7 @@ import HomeContext from '@/pages/api/home/home.context';
 import { CodeBlock } from '../Markdown/CodeBlock';
 import { MemoizedReactMarkdown } from '../Markdown/MemoizedReactMarkdown';
 
+import classNames from 'classnames';
 import rehypeMathjax from 'rehype-mathjax';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -31,6 +40,26 @@ export interface Props {
   onEdit?: (editedMessage: Message) => void;
   onLike?: (editedMessage: Message) => void;
 }
+
+const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
+  children,
+  className = 'invisible group-hover:visible',
+  type = 'button',
+  ...props
+}) => {
+  return (
+    <button
+      type={type}
+      className={classNames(
+        'focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300',
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
 
 export const ChatMessage: FC<Props> = memo(
   ({ message, messageIndex, onEdit, onLike }) => {
@@ -292,19 +321,27 @@ export const ChatMessage: FC<Props> = memo(
                       : ''
                   }`}
                 </MemoizedReactMarkdown>
-                <div className="absolute bottom-0 right-0 flex flex-row gap-2">
-                  <IconThumbUp
-                    className="cursor-pointer"
-                    color={message.like !== 1 ? 'grey' : 'white'}
-                    size={24}
-                    onClick={setLike(message.like === 1 ? 0 : 1)}
-                  />
-                  <IconThumbDown
-                    className="cursor-pointer"
-                    color={message.like !== -1 ? 'grey' : 'white'}
-                    size={24}
-                    onClick={setLike(message.like === -1 ? 0 : -1)}
-                  />
+                <div className="absolute bottom-0 right-8 flex flex-row gap-2">
+                  {message.like !== -1 && (
+                    <Button
+                      onClick={message.like !== 1 ? setLike(1) : void 0}
+                      className={
+                        message.like !== 1 ? void 0 : 'visible text-gray-700 dark:text-gray-300'
+                      }
+                    >
+                      <IconThumbUp size={24} />
+                    </Button>
+                  )}
+                  {message.like !== 1 && (
+                    <Button
+                      onClick={message.like !== -1 ? setLike(-1) : void 0}
+                      className={
+                        message.like !== -1 ? void 0 : 'visible text-gray-700 dark:text-gray-300'
+                      }
+                    >
+                      <IconThumbDown size={24} />
+                    </Button>
+                  )}
                 </div>
                 <div className="md:-mr-8 ml-1 md:ml-0 flex flex-col md:flex-row gap-4 md:gap-1 items-center md:items-start justify-end md:justify-start">
                   {messagedCopied ? (
@@ -313,12 +350,9 @@ export const ChatMessage: FC<Props> = memo(
                       className="text-green-500 dark:text-green-400"
                     />
                   ) : (
-                    <button
-                      className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                      onClick={copyOnClick}
-                    >
+                    <Button onClick={copyOnClick}>
                       <IconCopy size={20} />
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
