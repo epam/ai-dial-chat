@@ -29,10 +29,10 @@ import Spinner from '../Spinner';
 import { ChatInput } from './ChatInput';
 import { ChatLoader } from './ChatLoader';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
+import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { ModelSelect } from './ModelSelect';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
-import { MemoizedChatMessage } from './MemoizedChatMessage';
 
 interface Props {
   stopConversationRef: MutableRefObject<boolean>;
@@ -96,7 +96,11 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
         homeDispatch({ field: 'messageIsStreaming', value: true });
         const chatBody: ChatBody = {
           model: updatedConversation.model,
-          messages: updatedConversation.messages,
+          messages: updatedConversation.messages.map((message) => {
+            const gptMessage = { ...message };
+            delete gptMessage.like;
+            return gptMessage;
+          }),
           key: apiKey,
           prompt: updatedConversation.prompt,
           temperature: updatedConversation.temperature,
@@ -105,7 +109,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
         let body;
         if (!plugin) {
           body = JSON.stringify(chatBody);
-        } else if(usePluginKeys) {
+        } else if (usePluginKeys) {
           body = JSON.stringify({
             ...chatBody,
             googleAPIKey: pluginKeys
@@ -253,6 +257,21 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
       selectedConversation,
       stopConversationRef,
     ],
+  );
+
+  const onLikeHandler = useCallback(
+    (index: number) => (editedMessage: Message) => {
+      if (!selectedConversation) {
+        return;
+      }
+      const messages = [...selectedConversation.messages];
+      messages[index] = editedMessage;
+      handleUpdateConversation(selectedConversation, {
+        key: 'messages',
+        value: messages,
+      });
+    },
+    [handleUpdateConversation, selectedConversation],
   );
 
   const scrollToBottom = useCallback(() => {
@@ -477,6 +496,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
                         selectedConversation?.messages.length - index,
                       );
                     }}
+                    onLike={onLikeHandler(index)}
                   />
                 ))}
 

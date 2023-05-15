@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 
 import { GetServerSideProps } from 'next';
+import { getServerSession } from 'next-auth/next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import Head from 'next/head';
@@ -36,12 +37,11 @@ import { Chatbar } from '@/components/Chatbar/Chatbar';
 import { Navbar } from '@/components/Mobile/Navbar';
 import Promptbar from '@/components/Promptbar';
 
+import { authOptions } from '../auth/[...nextauth]';
 import HomeContext from './home.context';
 import { HomeInitialState, initialState } from './home.state';
 
 import { v4 as uuidv4 } from 'uuid';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../auth/[...nextauth]';
 
 interface Props {
   serverSideApiKeyIsSet: boolean;
@@ -251,12 +251,17 @@ const Home = ({
         value: serverSidePluginKeysSet,
       });
 
-    usePluginKeys && 
+    usePluginKeys &&
       dispatch({
         field: 'usePluginKeys',
         value: usePluginKeys,
-      })
-  }, [defaultModelId, serverSideApiKeyIsSet, serverSidePluginKeysSet, usePluginKeys]);
+      });
+  }, [
+    defaultModelId,
+    serverSideApiKeyIsSet,
+    serverSidePluginKeysSet,
+    usePluginKeys,
+  ]);
 
   // ON LOAD --------------------------------------------
 
@@ -279,7 +284,7 @@ const Home = ({
       dispatch({ field: 'apiKey', value: apiKey });
     }
 
-    if(usePluginKeys){
+    if (usePluginKeys) {
       const pluginKeys = localStorage.getItem('pluginKeys');
       if (serverSidePluginKeysSet) {
         dispatch({ field: 'pluginKeys', value: [] });
@@ -357,7 +362,7 @@ const Home = ({
     dispatch,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
-    usePluginKeys
+    usePluginKeys,
   ]);
 
   return (
@@ -408,16 +413,19 @@ const Home = ({
 };
 export default Home;
 
-export const getServerSideProps: GetServerSideProps = async ({ locale, req, res }) => {
-
+export const getServerSideProps: GetServerSideProps = async ({
+  locale,
+  req,
+  res,
+}) => {
   const session = await getServerSession(req, res, authOptions);
-  if(!session) {
+  if (!session) {
     return {
       redirect: {
         permanent: false,
         destination: '/api/auth/signin',
-      }
-    }
+      },
+    };
   }
 
   const defaultModelId =
