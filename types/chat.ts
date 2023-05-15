@@ -17,6 +17,14 @@ export interface ChatBody {
   id: string;
 }
 
+export interface RateBody {
+  model: OpenAIModel;
+  message: Message;
+  key: string;
+  id: string;
+  value: boolean;
+}
+
 export interface Conversation {
   id: string;
   name: string;

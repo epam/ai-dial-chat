@@ -20,6 +20,7 @@ import {
 } from '@/utils/app/conversation';
 import { throttle } from '@/utils/data/throttle';
 
+import { OpenAIModel } from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
 import { Plugin } from '@/types/plugin';
 
@@ -37,6 +38,30 @@ import { TemperatureSlider } from './Temperature';
 interface Props {
   stopConversationRef: MutableRefObject<boolean>;
 }
+
+const handleRate = (
+  message: Message,
+  id: string,
+  model: OpenAIModel,
+  apiKey: string,
+) => {
+  if (!message.like) {
+    return;
+  }
+  fetch('/api/rate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      key: apiKey,
+      message,
+      id,
+      model,
+      value: message.like > 0 ? true : false,
+    }),
+  }).then();
+};
 
 export const Chat = memo(({ stopConversationRef }: Props) => {
   const { t } = useTranslation('chat');
@@ -70,7 +95,12 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSend = useCallback(
-    async (message: Message, id: string,  deleteCount = 0, plugin: Plugin | null = null) => {
+    async (
+      message: Message,
+      id: string,
+      deleteCount = 0,
+      plugin: Plugin | null = null,
+    ) => {
       if (selectedConversation) {
         let updatedConversation: Conversation;
         if (deleteCount) {
@@ -270,8 +300,14 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
         key: 'messages',
         value: messages,
       });
+      handleRate(
+        editedMessage,
+        selectedConversation?.id ?? '',
+        selectedConversation.model,
+        apiKey,
+      );
     },
-    [handleUpdateConversation, selectedConversation],
+    [apiKey, handleUpdateConversation, selectedConversation],
   );
 
   const scrollToBottom = useCallback(() => {
@@ -521,7 +557,12 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
             onScrollDownClick={handleScrollDown}
             onRegenerate={() => {
               if (currentMessage) {
-                handleSend(currentMessage, selectedConversation?.id ?? '', 2, null);
+                handleSend(
+                  currentMessage,
+                  selectedConversation?.id ?? '',
+                  2,
+                  null,
+                );
               }
             }}
             showScrollDownButton={showScrollDownButton}

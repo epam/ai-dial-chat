@@ -1,6 +1,7 @@
 import { Session } from 'next-auth';
 
 import { createHash } from 'crypto';
+import { validate } from 'uuid';
 
 const sha256 = (str: string) => createHash('sha256').update(str).digest('hex');
 
@@ -9,7 +10,7 @@ export const getHeaders = (session: Session, id?: string): HeadersInit => {
     'X-USER': sha256(session.user?.email ?? ''),
     'X-JOB-TITLE': (session as any).jobTitle,
   };
-  if (id) {
+  if (id && validate(id)) {
     headers['X-CORRELATION-ID'] = id;
   }
   return headers;
