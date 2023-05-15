@@ -70,7 +70,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSend = useCallback(
-    async (message: Message, deleteCount = 0, plugin: Plugin | null = null) => {
+    async (message: Message, id: string,  deleteCount = 0, plugin: Plugin | null = null) => {
       if (selectedConversation) {
         let updatedConversation: Conversation;
         if (deleteCount) {
@@ -97,10 +97,10 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
         const chatBody: ChatBody = {
           model: updatedConversation.model,
           messages: updatedConversation.messages.map((message) => {
-            const gptMessage = { ...message };
-            delete gptMessage.like;
+            const gptMessage = { ...message, like: void 0 };
             return gptMessage;
           }),
+          id: id.toLowerCase(),
           key: apiKey,
           prompt: updatedConversation.prompt,
           temperature: updatedConversation.temperature,
@@ -493,6 +493,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
                       // discard edited message and the ones that come after then resend
                       handleSend(
                         editedMessage,
+                        selectedConversation?.id,
                         selectedConversation?.messages.length - index,
                       );
                     }}
@@ -515,12 +516,12 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
             textareaRef={textareaRef}
             onSend={(message, plugin) => {
               setCurrentMessage(message);
-              handleSend(message, 0, plugin);
+              handleSend(message, selectedConversation?.id ?? '', 0, plugin);
             }}
             onScrollDownClick={handleScrollDown}
             onRegenerate={() => {
               if (currentMessage) {
-                handleSend(currentMessage, 2, null);
+                handleSend(currentMessage, selectedConversation?.id ?? '', 2, null);
               }
             }}
             showScrollDownButton={showScrollDownButton}

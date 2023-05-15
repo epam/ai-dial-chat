@@ -35,7 +35,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const { model, messages, key, prompt, temperature } = req.body as ChatBody;
+    const { model, messages, key, prompt, temperature, id } = req.body as ChatBody;
 
     await init((imports) => WebAssembly.instantiate(wasm, imports));
     const encoding = new Tiktoken(
@@ -78,7 +78,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       temperatureToUse,
       key,
       messagesToSend,
-      getHeaders(session),
+      getHeaders(session, id),
     );
     res.setHeader('Transfer-Encoding', 'chunked');
     // return new Response(stream);
