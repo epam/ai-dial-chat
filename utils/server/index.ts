@@ -30,12 +30,12 @@ export const OpenAIStream = async (
   key: string,
   messages: Message[],
   headers: HeadersInit,
+  tokenCount: number,
 ) => {
   let url = `${OPENAI_API_HOST}/v1/chat/completions`;
   if (OPENAI_API_TYPE === 'azure') {
     url = `${OPENAI_API_HOST}/openai/deployments/${model.id}/chat/completions?api-version=${OPENAI_API_VERSION}`;
   }
-
   const res = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
@@ -60,7 +60,7 @@ export const OpenAIStream = async (
         },
         ...messages,
       ],
-      max_tokens: MAX_TOKENS,
+      max_tokens: model.tokenLimit - tokenCount,
       temperature: temperature,
       stream: true,
     }),
