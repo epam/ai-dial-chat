@@ -16,6 +16,8 @@ import { Tiktoken, init } from '@dqbd/tiktoken/lite/init';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { getHeaders } from '../../utils/server/getHeaders';
+import { OpenAIModelID, OpenAIModels } from '../../types/openai';
+import { fallbackModelID } from '../../types/openai';
 
 // export const config = {
 //   runtime: 'edge',
@@ -35,7 +37,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const { model, messages, key, prompt, temperature, id } = req.body as ChatBody;
+    const { model: _model, messages, key, prompt, temperature, id } = req.body as ChatBody;
 
     await init((imports) => WebAssembly.instantiate(wasm, imports));
     const encoding = new Tiktoken(
@@ -56,19 +58,36 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const prompt_tokens = encoding.encode(promptToSend);
 
-    let tokenCount = prompt_tokens.length;
+    // let tokenCount = prompt_tokens.length;
+    // let messagesToSend: Message[] = [];
+    
+    const model = OpenAIModels[_model.id as OpenAIModelID] ?? OpenAIModels[fallbackModelID];
+
+    let tokens_per_message = 0;
+    if (model.name == 'GPT-3.5') {
+      tokens_per_message = 5;
+    } else if (model.name == 'GPT-4' || model.name == 'GPT-4-32K') {
+      tokens_per_message = 4;
+    }
+
+    let tokenCount = prompt_tokens.length + tokens_per_message;
     let messagesToSend: Message[] = [];
 
     for (let i = messages.length - 1; i >= 0; i--) {
-      const message = messages[i];
+      const message = {
+        role: messages[i].role,
+        content: messages[i].content,
+      };
       const tokens = encoding.encode(message.content);
 
-      if (tokenCount + tokens.length + 1000 > model.tokenLimit) {
+      if (tokenCount + tokens.length > model.requestLimit) {
         break;
       }
-      tokenCount += tokens.length;
+      tokenCount += tokens.length + tokens_per_message;
       messagesToSend = [message, ...messagesToSend];
     }
+
+    tokenCount += 3;
 
     encoding.free();
 
@@ -79,6 +98,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       key,
       messagesToSend,
       getHeaders(session, id),
+      tokenCount,
     );
     res.setHeader('Transfer-Encoding', 'chunked');
     // return new Response(stream);
