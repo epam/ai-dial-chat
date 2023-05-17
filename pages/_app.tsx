@@ -8,7 +8,7 @@ import { Inter } from 'next/font/google';
 
 import '@/styles/globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], weight: 'variable' });
 
 function App({ Component, pageProps }: AppProps<SessionProviderProps>) {
   const queryClient = new QueryClient();
