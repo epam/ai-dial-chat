@@ -379,7 +379,7 @@ export const ChatInput = ({
           )}
         </div>
       </div>
-      <div className="px-3 pt-2 pb-3 text-center font-normal text-[12px] text-black/50 dark:text-white/50 md:px-4 md:pt-3 md:pb-6">
+      <div className="px-3 pt-2 pb-3 text-center text-[12px] text-black/50 dark:text-white/50 md:px-4 md:pt-3 md:pb-6">
         {/* <a
           href="https://github.com/mckaywrigley/chatbot-ui"
           target="_blank"
@@ -392,19 +392,11 @@ export const ChatInput = ({
         {t(
           "Chatbot UI is an advanced chatbot kit for OpenAI's chat models aiming to mimic ChatGPT's interface and functionality.",
         )} */}
-        EPAM AI chat can be used <span className='font-bold'>any work-related activity</span>. Rest assured,
+        <a href="https://kb.epam.com/display/EPMGPT/EPAM+AI+Chat" target="_blank" rel="noreferrer"
+          className="underline font-bold">EPAM AI Chat</a> can be used <span className='underline'>any work-related activity</span>. Rest assured,
         information you share here is{' '}
-        <span className='font-bold'>not disclosed to third-party companies</span>. However, we{' '}
-        <span className='font-bold'>anonymize and log</span> all interactions for research purposes. <br />
-        For{' '}
-        <a
-          href="https://forms.office.com/pages/responsepage.aspx?id=0HIbtJ9OJkyKaflJ82fJHdQPBVd0k-NIrw5RTnrmjixUMERJNEk1UDZFQ0E3MEFEQlBPWUtPUkRONSQlQCN0PWcu"
-          rel="noreferrer"
-          className="underline"
-        >
-         free API access
-        </a>{' '}
-        please fill out the form. Your request will be processed within 24 hours
+        <span className='underline'>not disclosed to third-party companies</span>. However, we{' '}
+        <span className='underline'>anonymize and log</span> all interactions for research purposes. <br />
       </div>
     </div>
   );
