@@ -1,9 +1,9 @@
-import { IconExternalLink } from '@tabler/icons-react';
+import { IconExclamationCircle, IconExternalLink } from '@tabler/icons-react';
 import { useContext } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { OpenAIModel } from '@/types/openai';
+import { OpenAIModel, OpenAIModelID } from '@/types/openai';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -61,6 +61,15 @@ export const ModelSelect = () => {
           {t('View Account Usage')}
         </a>
       </div> */}
+      {selectedConversation?.model?.id === OpenAIModelID.GPT_4_32K && (
+        <div className="w-full mt-3 text-left text-neutral-700 dark:text-neutral-400 flex gap-2 items-center">
+          <IconExclamationCircle size={18} />
+          <div>
+            Please only use this one if you absolutely need it. It's slower and
+            more expensive.
+          </div>
+        </div>
+      )}
     </div>
   );
 };
