@@ -62,7 +62,7 @@ export const ModelSelect = () => {
         </a>
       </div> */}
       {selectedConversation?.model?.id === OpenAIModelID.GPT_4_32K && (
-        <div className="w-full mt-3 text-left text-neutral-700 dark:text-neutral-400 flex gap-2 items-center">
+        <div className="w-full mt-3 text-left text-orange-600 dark:text-orange-600 flex gap-2 items-center">
           <IconExclamationCircle size={18} />
           <div>
             Please only use this one if you absolutely need it. It&apos;s slower and
