@@ -65,7 +65,7 @@ export const ModelSelect = () => {
         <div className="w-full mt-3 text-left text-neutral-700 dark:text-neutral-400 flex gap-2 items-center">
           <IconExclamationCircle size={18} />
           <div>
-            Please only use this one if you absolutely need it. It's slower and
+            Please only use this one if you absolutely need it. It&apos;s slower and
             more expensive.
           </div>
         </div>
