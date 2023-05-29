@@ -35,6 +35,8 @@ import { ModelSelect } from './ModelSelect';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 
+import { errors } from '@/constants/errors';
+
 interface Props {
   stopConversationRef: MutableRefObject<boolean>;
 }
@@ -162,7 +164,9 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
         if (!response.ok) {
           homeDispatch({ field: 'loading', value: false });
           homeDispatch({ field: 'messageIsStreaming', value: false });
-          toast.error(response.statusText);
+
+          const errorResponse = await response.text();
+          toast.error(errorResponse || t<string>(errors.generalServer));
           return;
         }
         const data = response.body;
