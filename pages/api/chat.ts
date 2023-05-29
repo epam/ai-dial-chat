@@ -5,6 +5,7 @@ import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
 import { OpenAIError, OpenAIStream } from '@/utils/server';
 
 import { ChatBody, Message } from '@/types/chat';
+import { errors } from '@/constants/errors';
 
 import { authOptions } from './auth/[...nextauth]';
 
@@ -124,6 +125,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   } catch (error) {
     console.error(error);
     if (error instanceof OpenAIError) {
+      // Rate limit errors and gateway errors https://platform.openai.com/docs/guides/error-codes/api-errors
+      if (['429', '504'].includes(error.code)) {
+        return res.status(500).send(errors.rateLimitExceeded);
+      }
       // return new Response('Error', { status: 500, statusText: error.message });
       return res.status(500).send(error.message);
     } else {

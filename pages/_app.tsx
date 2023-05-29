@@ -16,7 +16,7 @@ function App({ Component, pageProps }: AppProps<SessionProviderProps>) {
   return (
     <SessionProvider session={pageProps.session}>
       <div className={inter.className}>
-        <Toaster />
+        <Toaster toastOptions={{ duration: 9000 }} />
         <QueryClientProvider client={queryClient}>
           <Component {...pageProps} />
         </QueryClientProvider>

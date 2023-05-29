@@ -1,6 +1,6 @@
 include:
   - project: "epm-gpt/common/common-ci-templates"
-    ref: "main"
+    ref: "0.0.1"
     file:
     - "pipelines/cicd/docker_helm.yml"
 
