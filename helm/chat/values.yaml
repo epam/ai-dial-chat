@@ -1,0 +1,134 @@
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+annotations: {}
+labels: {}
+
+image:
+  registry: epmgptcommon.azurecr.io
+  repository: chatbot-ui
+  tag: latest
+  digest: ""
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+replicaCount: 1
+
+command: []
+args: []
+
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 1
+
+priorityClassName: ""
+schedulerName: ""
+topologySpreadConstraints: []
+hostAliases: []
+
+extraVolumes: []
+extraVolumeMounts: []
+
+initContainers: []
+sidecars: []
+
+env: {}
+  # OPENAI_API_HOST: "https://southcentralus.api.cognitive.microsoft.com/"
+  # DEFAULT_MODEL: "gpt-35-turbo"
+  # AZURE_DEPLOYMENT_ID: "gpt-35-turbo"
+  # OPENAI_API_TYPE: "azure"
+  # OPENAI_API_VERSION: "2023-03-15-preview"
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+  automountServiceAccountToken: true
+
+existingSecret: ""
+
+containerPorts:
+  http: 3000
+
+sessionAffinity: "None"
+
+affinity: {}
+nodeSelector: {}
+tolerations: {}
+
+resources:
+  limits:
+    cpu: 1
+    memory: 1Gi
+  requests:
+     cpu: 0.5
+     memory: 512Mi
+
+podSecurityContext:
+  enabled: false
+  fsGroup: 1001
+
+containerSecurityContext:
+  enabled: false
+  runAsUser: 1001
+  runAsNonRoot: true
+
+customStartupProbe: {}
+customLivenessProbe: {}
+customReadinessProbe: {}
+
+lifecycleHooks: {}
+podAnnotations: {}
+podLabels: {}
+
+service:
+  type: ClusterIP
+  ports:
+    http: 80
+  loadBalancerSourceRanges: []
+  loadBalancerIP: ""
+  nodePorts:
+    http: ""
+  externalTrafficPolicy: Cluster
+  clusterIP: ""
+  extraPorts: []
+  annotations: {}
+  sessionAffinity: None
+  sessionAffinityConfig: {}
+
+ingress:
+  enabled: false
+  # Values can be templated
+  ingressClassName: nginx
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  pathType: "Prefix"
+  path: "/"
+  hosts:
+    - chart-example.local
+  ## Extra paths to prepend to every host configuration. This is useful when working with annotation based services.
+  extraPaths: []
+  # - path: /*
+  #   backend:
+  #     serviceName: ssl-redirect
+  #     servicePort: use-annotation
+  extraHosts: []
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+extraEnvVarsSecret: ""
+secrets: {}
+  # OPENAI_API_KEY: ""
+  # AUTH_CLIENT_ID: ""
+  # AUTH_TENANT_ID: ""
+  # AUTH_CLIENT_SECRET: ""
+  # NEXTAUTH_SECRET: ""

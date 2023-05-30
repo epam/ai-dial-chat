@@ -13,6 +13,7 @@ import { SidebarButton } from '../../Sidebar/SidebarButton';
 import ChatbarContext from '../Chatbar.context';
 import { ClearConversations } from './ClearConversations';
 import { PluginKeys } from './PluginKeys';
+import { User } from '../User';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation('sidebar');
@@ -24,6 +25,7 @@ export const ChatbarSettings = () => {
       lightMode,
       serverSideApiKeyIsSet,
       serverSidePluginKeysSet,
+      usePluginKeys,
       conversations,
     },
     dispatch: homeDispatch,
@@ -42,7 +44,7 @@ export const ChatbarSettings = () => {
         <ClearConversations onClearConversations={handleClearConversations} />
       ) : null}
 
-      <Import onImport={handleImportConversations} />
+      {process.env.NEXT_PUBLIC_SHOW_IMPORT === 'true' && <Import onImport={handleImportConversations} />}
 
       <SidebarButton
         text={t('Export data')}
@@ -60,7 +62,7 @@ export const ChatbarSettings = () => {
         <Key apiKey={apiKey} onApiKeyChange={handleApiKeyChange} />
       ) : null}
 
-      {!serverSidePluginKeysSet ? <PluginKeys /> : null}
+      {!serverSidePluginKeysSet && usePluginKeys ? <PluginKeys /> : null}
 
       <SettingDialog
         open={isSettingDialogOpen}
@@ -68,6 +70,8 @@ export const ChatbarSettings = () => {
           setIsSettingDialog(false);
         }}
       />
+
+      <User />
     </div>
   );
 };

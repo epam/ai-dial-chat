@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 
 import { GetServerSideProps } from 'next';
+import { getServerSession } from 'next-auth/next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import Head from 'next/head';
@@ -36,6 +37,7 @@ import { Chatbar } from '@/components/Chatbar/Chatbar';
 import { Navbar } from '@/components/Mobile/Navbar';
 import Promptbar from '@/components/Promptbar';
 
+import { authOptions } from '../auth/[...nextauth]';
 import HomeContext from './home.context';
 import { HomeInitialState, initialState } from './home.state';
 
@@ -44,12 +46,14 @@ import { v4 as uuidv4 } from 'uuid';
 interface Props {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
+  usePluginKeys: boolean;
   defaultModelId: OpenAIModelID;
 }
 
 const Home = ({
   serverSideApiKeyIsSet,
   serverSidePluginKeysSet,
+  usePluginKeys,
   defaultModelId,
 }: Props) => {
   const { t } = useTranslation('chat');
@@ -246,7 +250,18 @@ const Home = ({
         field: 'serverSidePluginKeysSet',
         value: serverSidePluginKeysSet,
       });
-  }, [defaultModelId, serverSideApiKeyIsSet, serverSidePluginKeysSet]);
+
+    usePluginKeys &&
+      dispatch({
+        field: 'usePluginKeys',
+        value: usePluginKeys,
+      });
+  }, [
+    defaultModelId,
+    serverSideApiKeyIsSet,
+    serverSidePluginKeysSet,
+    usePluginKeys,
+  ]);
 
   // ON LOAD --------------------------------------------
 
@@ -269,12 +284,14 @@ const Home = ({
       dispatch({ field: 'apiKey', value: apiKey });
     }
 
-    const pluginKeys = localStorage.getItem('pluginKeys');
-    if (serverSidePluginKeysSet) {
-      dispatch({ field: 'pluginKeys', value: [] });
-      localStorage.removeItem('pluginKeys');
-    } else if (pluginKeys) {
-      dispatch({ field: 'pluginKeys', value: pluginKeys });
+    if (usePluginKeys) {
+      const pluginKeys = localStorage.getItem('pluginKeys');
+      if (serverSidePluginKeysSet) {
+        dispatch({ field: 'pluginKeys', value: [] });
+        localStorage.removeItem('pluginKeys');
+      } else if (pluginKeys) {
+        dispatch({ field: 'pluginKeys', value: pluginKeys });
+      }
     }
 
     if (window.innerWidth < 640) {
@@ -345,6 +362,7 @@ const Home = ({
     dispatch,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
+    usePluginKeys,
   ]);
 
   return (
@@ -395,7 +413,21 @@ const Home = ({
 };
 export default Home;
 
-export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({
+  locale,
+  req,
+  res,
+}) => {
+  const session = await getServerSession(req, res, authOptions);
+  if (!session) {
+    return {
+      redirect: {
+        permanent: false,
+        destination: '/api/auth/signin',
+      },
+    };
+  }
+
   const defaultModelId =
     (process.env.DEFAULT_MODEL &&
       Object.values(OpenAIModelID).includes(
@@ -416,6 +448,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   return {
     props: {
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
+      usePluginKeys: !!process.env.NEXT_PUBLIC_ENABLE_PLUGIN_KEYS,
       defaultModelId,
       serverSidePluginKeysSet,
       ...(await serverSideTranslations(locale ?? 'en', [

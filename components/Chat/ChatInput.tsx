@@ -380,7 +380,7 @@ export const ChatInput = ({
         </div>
       </div>
       <div className="px-3 pt-2 pb-3 text-center text-[12px] text-black/50 dark:text-white/50 md:px-4 md:pt-3 md:pb-6">
-        <a
+        {/* <a
           href="https://github.com/mckaywrigley/chatbot-ui"
           target="_blank"
           rel="noreferrer"
@@ -391,7 +391,12 @@ export const ChatInput = ({
         .{' '}
         {t(
           "Chatbot UI is an advanced chatbot kit for OpenAI's chat models aiming to mimic ChatGPT's interface and functionality.",
-        )}
+        )} */}
+        <a href="https://kb.epam.com/display/EPMGPT/EPAM+AI+Chat" target="_blank" rel="noreferrer"
+          className="underline font-bold">EPAM AI Chat</a> can be used <span className='underline'>any work-related activity</span>. Rest assured,
+        information you share here is{' '}
+        <span className='underline'>not disclosed to third-party companies</span>. However, we{' '}
+        <span className='underline'>anonymize and log</span> all interactions for research purposes. <br />
       </div>
     </div>
   );

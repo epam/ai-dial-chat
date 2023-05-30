@@ -37,7 +37,7 @@ Build locally:
 
 ```shell
 docker build -t chatgpt-ui .
-docker run -e OPENAI_API_KEY=xxxxxxxx -p 3000:3000 chatgpt-ui
+docker run -e OPENAI_API_KEY=xxxxxxxx -e AUTH_CLIENT_ID=xxxxxxxx -e AUTH_TENANT_ID=xxxxxxxx -e AUTH_CLIENT_SECRET=xxxxxxxx -e NEXTAUTH_SECRET=xxxxxxxx -p 3000:3000 chatgpt-ui
 ```
 
 Pull from ghcr:
@@ -72,13 +72,25 @@ OPENAI_API_KEY=YOUR_KEY
 
 > Additionally, if you have multiple OpenAI Organizations, you can set `OPENAI_ORGANIZATION` to specify one.
 
-**4. Run App**
+**4. Configure SSO for Azure AD**
+
+Add variables .env.local:
+```bash
+AUTH_CLIENT_ID=xxxxx
+AUTH_TENANT_ID=xxxxx
+AUTH_CLIENT_SECRET=xxxxx
+NEXTAUTH_SECRET=xxxxx
+```
+
+where `NEXTAUTH_SECRET` is random string (`openssl rand -base64 32`)
+
+**5. Run App**
 
 ```bash
 npm run dev
 ```
 
-**5. Use It**
+**6. Use It**
 
 You should be able to start chatting.
 
@@ -88,14 +100,16 @@ When deploying the application, the following environment variables can be set:
 
 | Environment Variable              | Default value                  | Description                                                                                                                               |
 | --------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| AUTH_CLIENT_ID                    |                                | Client ID from Azure AD
+| AUTH_TENANT_ID                    |                                | Tenant ID from Azure AD
+| AUTH_CLIENT_SECRET                |                                | Client Secret from Azure AD
+| NEXTAUTH_SECRET                   |                                | Random crypto-string
 | OPENAI_API_KEY                    |                                | The default API key used for authentication with OpenAI                                                                                   |
 | OPENAI_API_HOST                   | `https://api.openai.com`       | The base url, for Azure use `https://<endpoint>.openai.azure.com`                                                                         |
 | OPENAI_API_TYPE                   | `openai`                       | The API type, options are `openai` or `azure`                                                                                             |
 | OPENAI_API_VERSION                | `2023-03-15-preview`           | Only applicable for Azure OpenAI                                                                                                          |
-| AZURE_DEPLOYMENT_ID               |                                | Needed when Azure OpenAI, Ref [Azure OpenAI API](https://learn.microsoft.com/zh-cn/azure/cognitive-services/openai/reference#completions) |
 | OPENAI_ORGANIZATION               |                                | Your OpenAI organization ID                                                                                                               |
-| DEFAULT_MODEL                     | `gpt-3.5-turbo`                | The default model to use on new conversations, for Azure use `gpt-35-turbo`                                                               |
-| NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT | [see here](utils/app/const.ts) | The default system prompt to use on new conversations                                                                                     |
+| DEFAULT_MODEL | `gpt-3.5-turbo` _(OpenAI)_ `gpt-35-turbo` _(Azure)_ | The default model to use on new conversations |
 | NEXT_PUBLIC_DEFAULT_TEMPERATURE   | 1                              | The default temperature to use on new conversations                                                                                       |
 | GOOGLE_API_KEY                    |                                | See [Custom Search JSON API documentation][GCSE]                                                                                          |
 | GOOGLE_CSE_ID                     |                                | See [Custom Search JSON API documentation][GCSE]                                                                                          |
