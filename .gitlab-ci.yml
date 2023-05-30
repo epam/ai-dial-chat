@@ -55,3 +55,31 @@ release:
     - if: "$CI_COMMIT_MESSAGE =~ /no-build/"
       when: never
     - if: '$CI_COMMIT_REF_NAME  == "main"'
+
+dry_run:
+  stage: dry_run
+  extends: .helm_diff
+  rules:
+    - if: '$CI_COMMIT_REF_NAME  == "main"'
+      variables:
+        HELM_EXTRA_VALUES_FILE: "./helm/main.yaml"
+        HELM_APP_IMAGE_TAG: $BUILD_VERSION
+    - if: '$CI_COMMIT_REF_NAME  == "dev"'
+      variables:
+        HELM_EXTRA_VALUES_FILE: "./helm/$CI_COMMIT_REF_NAME.yaml"
+        HELM_APP_IMAGE_TAG: $CI_COMMIT_REF_NAME
+
+deploy:
+  stage: deploy
+  extends: .helm_upgrade
+  rules:
+    - if: '$CI_COMMIT_REF_NAME  == "main"'
+      when: manual
+      variables:
+        HELM_EXTRA_VALUES_FILE: "./helm/main.yaml"
+        HELM_APP_IMAGE_TAG: $BUILD_VERSION
+    - if: '$CI_COMMIT_REF_NAME  == "dev"'
+      when: on_success
+      variables:
+        HELM_EXTRA_VALUES_FILE: "./helm/$CI_COMMIT_REF_NAME.yaml"
+        HELM_APP_IMAGE_TAG: $CI_COMMIT_REF_NAME
