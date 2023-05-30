@@ -24,3 +24,25 @@ release:
   except:
     variables:
       - $CI_COMMIT_MESSAGE =~ /no-build/
+
+
+# Overriding default script, see comment below
+dev_dry_run:
+  script:
+    - |
+      #
+      set +x
+      # for some reason gitlab-ci fials with doing this within HELM_EXTRA_ARGS,
+      # TODO: figure out general way to do that
+      export AUTH_PASSWD="$(echo ${BASIC_AUTH_HTPASSWD_B64} |  base64 -d)"
+      helm diff upgrade --namespace "${HELM_NS_NAME}" --color --allow-unreleased "${HELM_RELEASE_NAME}" "${HELM_CHART}" --values ./helm/dev.yaml --set secrets.openai_token=${OPENAI_TOKEN_AZURE} --set auth.password=${AUTH_PASSWD}
+
+# Overriding default script, see comment below
+dev_deploy:
+  script:
+    - |
+      set +x
+      # for some reason gitlab-ci fials with doing this within HELM_EXTRA_ARGS,
+      # TODO: figure out general way to do that
+      export AUTH_PASSWD="$(echo ${BASIC_AUTH_HTPASSWD_B64} |  base64 -d)"
+      helm upgrade --create-namespace --install --namespace "${HELM_NS_NAME}" "${HELM_RELEASE_NAME}" "${HELM_CHART}" --values ./helm/dev.yaml --set secrets.openai_token=${OPENAI_TOKEN_AZURE} --set auth.password=${AUTH_PASSWD}
