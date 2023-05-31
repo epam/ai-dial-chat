@@ -22,6 +22,7 @@ env:
   NEXT_PUBLIC_SHOW_MODELS: "true"
   NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT: ""
   NEXT_PUBLIC_MAX_TOKENS: "4000"
+  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
 
 podLabels:
   azure.workload.identity/use: "true"
