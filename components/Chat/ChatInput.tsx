@@ -26,6 +26,7 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { PluginSelect } from './PluginSelect';
 import { PromptList } from './PromptList';
+import { ReportIssueDialog } from './ReportIssueDialog';
 import { RequestAPIKeyDialog } from './RequestApiKeyDialog';
 import { VariableModal } from './VariableModal';
 
@@ -63,6 +64,7 @@ export const ChatInput = ({
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showPluginSelect, setShowPluginSelect] = useState(false);
   const [isRequestAPIDialogOpen, setIsRequestAPIDialogOpen] = useState(false);
+  const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
   const [plugin, setPlugin] = useState<Plugin | null>(null);
 
   const promptListRef = useRef<HTMLUListElement | null>(null);
@@ -417,7 +419,18 @@ export const ChatInput = ({
           }}
           className="underline font-bold"
         >
-          Request API Key
+          {t('Request API Key')}
+        </a>{' '}
+        |{' '}
+        <a
+          href=""
+          onClick={(e) => {
+            e.preventDefault();
+            setIsReportIssueDialogOpen(true);
+          }}
+          className="underline font-bold"
+        >
+          {t('Report issue')}
         </a>
       </div>
 
@@ -427,6 +440,13 @@ export const ChatInput = ({
           setIsRequestAPIDialogOpen(false);
         }}
       ></RequestAPIKeyDialog>
+
+      <ReportIssueDialog
+        isOpen={isReportIssueDialogOpen}
+        onClose={() => {
+          setIsReportIssueDialogOpen(false);
+        }}
+      ></ReportIssueDialog>
     </div>
   );
 };
