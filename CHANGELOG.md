@@ -1,3 +1,5 @@
+## [1.1.1](https://git.epam.com/epm-gpt/common/chatbot-ui/compare/1.1.0...1.1.1) (2023-05-31)
+
 ## [1.1.0](https://git.epam.com/epm-gpt/common/chatbot-ui/compare/1.0.0...1.1.0) (2023-05-30)
 
 
