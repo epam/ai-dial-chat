@@ -28,6 +28,10 @@
   height: 6px;
 }
 
+.dark ::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
 html {
   background: #202123;
 }

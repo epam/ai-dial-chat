@@ -18,6 +18,7 @@ import {
   saveConversations,
   updateConversation,
 } from '@/utils/app/conversation';
+import { showAPIToastError } from '@/utils/app/errors';
 import { throttle } from '@/utils/data/throttle';
 
 import { OpenAIModel } from '../../types/openai';
@@ -165,7 +166,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
           homeDispatch({ field: 'loading', value: false });
           homeDispatch({ field: 'messageIsStreaming', value: false });
 
-          await showToastError(response, t(errorsMessages.generalServer));
+          await showAPIToastError(response, t(errorsMessages.generalServer));
           return;
         }
         const data = response.body;
@@ -576,16 +577,3 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   );
 });
 Chat.displayName = 'Chat';
-
-async function showToastError(
-  response: Response,
-  localizedGeneralError: string,
-) {
-  let toastMessage = await response.text();
-
-  if (response.status === 504 || !toastMessage?.length) {
-    toastMessage = localizedGeneralError;
-  }
-
-  toast.error(toastMessage);
-}
