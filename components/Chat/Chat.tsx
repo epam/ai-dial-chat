@@ -35,7 +35,7 @@ import { ModelSelect } from './ModelSelect';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 
-import { errors } from '@/constants/errors';
+import { errorsMessages } from '@/constants/errors';
 
 interface Props {
   stopConversationRef: MutableRefObject<boolean>;
@@ -165,8 +165,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
           homeDispatch({ field: 'loading', value: false });
           homeDispatch({ field: 'messageIsStreaming', value: false });
 
-          const errorResponse = await response.text();
-          toast.error(errorResponse || t<string>(errors.generalServer));
+          await showToastError(response, t(errorsMessages.generalServer));
           return;
         }
         const data = response.body;
@@ -577,3 +576,16 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   );
 });
 Chat.displayName = 'Chat';
+
+async function showToastError(
+  response: Response,
+  localizedGeneralError: string,
+) {
+  let toastMessage = await response.text();
+
+  if (response.status === 504 || !toastMessage?.length) {
+    toastMessage = localizedGeneralError;
+  }
+
+  toast.error(toastMessage);
+}
