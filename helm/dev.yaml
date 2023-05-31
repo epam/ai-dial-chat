@@ -4,6 +4,14 @@ image:
 
 replicaCount: 1
 
+resources:
+  limits:
+    cpu: 1
+    memory: 1Gi
+  requests:
+     cpu: 0.25
+     memory: 512Mi
+
 env:
   NEXTAUTH_URL: "https://dev-chat.ai-proxy.lab.epam.com"
   # OPENAI_API_HOST: "https://southcentralus.api.cognitive.microsoft.com/"
