@@ -26,7 +26,7 @@ export const ContextMenu = ({
 
   return (
     <div
-      className={`absolute right-0 min-w-[50px] top-[20px] z-20 bg-[#202123] p-2 rounded-lg border border-neutral-600 ${classes.current}`}
+      className={`absolute right-0 min-w-[50px] z-20 bg-[#202123] p-2 rounded-lg border border-neutral-600 ${classes.current}`}
     >
       <ul className="flex flex-col gap-2">
         <li
@@ -60,8 +60,8 @@ function getContextMenuPositioningClasses(
   contextMenuHeight: number,
 ): string {
   const padding = 20;
-  const classesTop = `top-[${padding}px] bottom-auto`;
-  const classesBottom = `bottom-[${padding}px] top-auto`;
+  const classesTop = `top-5 bottom-auto`;
+  const classesBottom = `bottom-5 top-auto`;
   let parent = parentRef.current as HTMLDivElement | null;
 
   while (parent) {
