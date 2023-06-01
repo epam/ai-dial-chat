@@ -1,9 +1,7 @@
 import { IconRobot } from '@tabler/icons-react';
 import { FC } from 'react';
 
-interface Props {}
-
-export const ChatLoader: FC<Props> = () => {
+export const ChatLoader: FC = () => {
   return (
     <div
       className="group border-b border-black/10 bg-gray-50 text-gray-800 dark:border-gray-900/50 dark:bg-[#444654] dark:text-gray-100"
