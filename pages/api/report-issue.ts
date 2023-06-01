@@ -29,7 +29,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     })
   })
   if (!response.ok) {
-    console.log(`${response.status} ${await response.text()}`);
+    console.error(`Received error from azure functions: ${response.status} ${response.statusText} ${await response.text()}`);
     return res.status(500).send(errorsMessages.generalServer);
   }
 
