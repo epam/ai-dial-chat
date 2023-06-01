@@ -11,6 +11,7 @@ import {
 import {
   ButtonHTMLAttributes,
   FC,
+  ReactNode,
   memo,
   useContext,
   useEffect,
@@ -61,6 +62,10 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
   );
 };
 
+const InlineLoader: FC = () => {
+  return <span className="animate-ping cursor-default mt-1">▍</span>;
+};
+
 export const ChatMessage: FC<Props> = memo(
   ({ message, messageIndex, onEdit, onLike }) => {
     const { t } = useTranslation('chat');
@@ -79,6 +84,9 @@ export const ChatMessage: FC<Props> = memo(
     const [isTyping, setIsTyping] = useState<boolean>(false);
     const [messageContent, setMessageContent] = useState(message.content);
     const [messagedCopied, setMessageCopied] = useState(false);
+
+    const isLastMessage =
+      messageIndex == (selectedConversation?.messages.length ?? 0) - 1;
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -181,7 +189,12 @@ export const ChatMessage: FC<Props> = memo(
         <div className="relative m-auto flex p-4 text-base md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
           <div className="min-w-[40px] text-right font-bold">
             {message.role === 'assistant' ? (
-              <IconRobot size={30} />
+              <IconRobot
+                size={30}
+                className={
+                  isLastMessage && messageIsStreaming ? 'animate-bounce' : ''
+                }
+              />
             ) : (
               <IconUser size={30} />
             )}
@@ -262,11 +275,7 @@ export const ChatMessage: FC<Props> = memo(
                     code({ node, inline, className, children, ...props }) {
                       if (children.length) {
                         if (children[0] == '▍') {
-                          return (
-                            <span className="animate-pulse cursor-default mt-1">
-                              ▍
-                            </span>
-                          );
+                          return <InlineLoader />;
                         }
 
                         children[0] = (children[0] as string).replace(
@@ -311,22 +320,40 @@ export const ChatMessage: FC<Props> = memo(
                         </td>
                       );
                     },
+                    p({ children, className }) {
+                      if (children.length) {
+                        if (children[0] == '▍') {
+                          return <InlineLoader />;
+                        }
+                      }
+
+                      return <p className={className}>{children}</p>;
+                    },
                   }}
                 >
                   {`${message.content}${
-                    messageIsStreaming &&
-                    messageIndex ==
-                      (selectedConversation?.messages.length ?? 0) - 1
-                      ? '`▍`'
-                      : ''
+                    messageIsStreaming && isLastMessage ? '`▍`' : ''
                   }`}
                 </MemoizedReactMarkdown>
+
                 <div className="absolute bottom-0 right-8 flex flex-row gap-2">
+                  {messageIsStreaming &&
+                    isLastMessage &&
+                    message.role === 'assistant' && (
+                      <div className="min-w-[40px] flex font-bold">
+                        <IconRobot
+                          size={30}
+                          className="animate-bounce self-end"
+                        />
+                      </div>
+                    )}
                   {message.like !== -1 && (
                     <Button
                       onClick={message.like !== 1 ? setLike(1) : void 0}
                       className={
-                        message.like !== 1 ? void 0 : 'visible text-gray-700 dark:text-gray-300'
+                        message.like !== 1
+                          ? void 0
+                          : 'visible text-gray-700 dark:text-gray-300'
                       }
                     >
                       <IconThumbUp size={24} />
@@ -336,7 +363,9 @@ export const ChatMessage: FC<Props> = memo(
                     <Button
                       onClick={message.like !== -1 ? setLike(-1) : void 0}
                       className={
-                        message.like !== -1 ? void 0 : 'visible text-gray-700 dark:text-gray-300'
+                        message.like !== -1
+                          ? void 0
+                          : 'visible text-gray-700 dark:text-gray-300'
                       }
                     >
                       <IconThumbDown size={24} />
