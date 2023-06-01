@@ -1,5 +1,5 @@
 import { IconFileImport } from '@tabler/icons-react';
-import { FC } from 'react';
+import { FC, useRef } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -13,9 +13,11 @@ interface Props {
 
 export const Import: FC<Props> = ({ onImport }) => {
   const { t } = useTranslation('sidebar');
+  const ref = useRef(null);
   return (
     <>
       <input
+        ref={ref}
         id="import-file"
         className="sr-only"
         tabIndex={-1}
@@ -26,16 +28,17 @@ export const Import: FC<Props> = ({ onImport }) => {
 
           const file = e.target.files[0];
           const reader = new FileReader();
-          reader.onload = (e) => {
-            let json = JSON.parse(e.target?.result as string);
+          reader.onload = (readerEvent) => {
+            let json = JSON.parse(readerEvent.target?.result as string);
             onImport(json);
+            (ref.current as unknown as HTMLInputElement).value = '';
           };
           reader.readAsText(file);
         }}
       />
 
       <SidebarButton
-        text={t('Import data')}
+        text={t('Import conversations')}
         icon={<IconFileImport size={18} />}
         onClick={() => {
           const importFile = document.querySelector(

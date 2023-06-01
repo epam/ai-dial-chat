@@ -1,16 +1,12 @@
-import {
-  IconCheck,
-  IconMessage,
-  IconPencil,
-  IconTrash,
-  IconX,
-} from '@tabler/icons-react';
+import { IconCheck, IconDots, IconMessage, IconX } from '@tabler/icons-react';
 import {
   DragEvent,
   KeyboardEvent,
   MouseEventHandler,
+  MutableRefObject,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 
@@ -20,6 +16,8 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
 import ChatbarContext from '@/components/Chatbar/Chatbar.context';
+
+import { ContextMenu } from './ContextMenu';
 
 interface Props {
   conversation: Conversation;
@@ -31,12 +29,15 @@ export const ConversationComponent = ({ conversation }: Props) => {
     handleSelectConversation,
     handleUpdateConversation,
   } = useContext(HomeContext);
+  const { handleExportItem } = useContext(ChatbarContext);
 
   const { handleDeleteConversation } = useContext(ChatbarContext);
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
+  const [isContextMenuOpened, setIsContextMenuOpened] = useState(false);
+  const contextMenuParentRef = useRef(null);
 
   const handleEnterDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter') {
@@ -95,10 +96,38 @@ export const ConversationComponent = ({ conversation }: Props) => {
   useEffect(() => {
     if (isRenaming) {
       setIsDeleting(false);
+      setIsContextMenuOpened(false);
     } else if (isDeleting) {
       setIsRenaming(false);
+      setIsContextMenuOpened(false);
     }
   }, [isRenaming, isDeleting]);
+
+  const wrapperRef = useRef(null);
+
+  /**
+   * Hook that alerts clicks outside of the passed ref
+   */
+  function useOutsideAlerter(ref: MutableRefObject<HTMLElement | null>) {
+    useEffect(() => {
+      /**
+       * Alert if clicked on outside of element
+       */
+      function handleClickOutside(event: MouseEvent) {
+        if (ref.current && !ref.current.contains(event.target as Node)) {
+          setIsContextMenuOpened(false);
+        }
+      }
+      // Bind the event listener
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        // Unbind the event listener on clean up
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }, [ref]);
+  }
+
+  useOutsideAlerter(wrapperRef);
 
   return (
     <div className="relative flex items-center">
@@ -123,7 +152,12 @@ export const ConversationComponent = ({ conversation }: Props) => {
               ? 'bg-[#343541]/90'
               : ''
           }`}
-          onClick={() => handleSelectConversation(conversation)}
+          onClick={() => {
+            setIsDeleting(false);
+            setIsContextMenuOpened(false);
+            setIsRenaming(false);
+            handleSelectConversation(conversation);
+          }}
           disabled={messageIsStreaming}
           draggable="true"
           onDragStart={(e) => handleDragStart(e, conversation)}
@@ -139,6 +173,36 @@ export const ConversationComponent = ({ conversation }: Props) => {
         </button>
       )}
 
+      {selectedConversation?.id === conversation.id &&
+        !isDeleting &&
+        !isRenaming && (
+          <div
+            className="absolute right-1 z-100 flex text-gray-300"
+            ref={wrapperRef}
+          >
+            <SidebarActionButton
+              handleClick={(e) => {
+                e.stopPropagation();
+                setIsContextMenuOpened((isOpened) => !isOpened);
+              }}
+            >
+              <IconDots size={18} />
+            </SidebarActionButton>
+            <div className="relative" ref={contextMenuParentRef}>
+              {!isDeleting && !isRenaming && isContextMenuOpened && (
+                <ContextMenu
+                  parentRef={contextMenuParentRef}
+                  onDelete={handleOpenDeleteModal}
+                  onRename={handleOpenRenameModal}
+                  onExport={function (): void {
+                    handleExportItem(conversation.id);
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        )}
+
       {(isDeleting || isRenaming) &&
         selectedConversation?.id === conversation.id && (
           <div className="absolute right-1 z-10 flex text-gray-300">
@@ -147,19 +211,6 @@ export const ConversationComponent = ({ conversation }: Props) => {
             </SidebarActionButton>
             <SidebarActionButton handleClick={handleCancel}>
               <IconX size={18} />
-            </SidebarActionButton>
-          </div>
-        )}
-
-      {selectedConversation?.id === conversation.id &&
-        !isDeleting &&
-        !isRenaming && (
-          <div className="absolute right-1 z-10 flex text-gray-300">
-            <SidebarActionButton handleClick={handleOpenRenameModal}>
-              <IconPencil size={18} />
-            </SidebarActionButton>
-            <SidebarActionButton handleClick={handleOpenDeleteModal}>
-              <IconTrash size={18} />
             </SidebarActionButton>
           </div>
         )}

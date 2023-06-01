@@ -1,5 +1,6 @@
+import { IconX } from '@tabler/icons-react';
 import { SessionProvider, SessionProviderProps } from 'next-auth/react';
-import { Toaster } from 'react-hot-toast';
+import toast, { ToastBar, Toaster, resolveValue } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 import { appWithTranslation } from 'next-i18next';
@@ -16,7 +17,23 @@ function App({ Component, pageProps }: AppProps<SessionProviderProps>) {
   return (
     <SessionProvider session={pageProps.session}>
       <div className={inter.className}>
-        <Toaster />
+        <Toaster toastOptions={{ duration: 9000 }}>
+          {(t) => (
+            <ToastBar toast={t}>
+              {({ icon, message }) => (
+                <>
+                  {icon}
+                  {message}
+                  {t.type !== 'loading' && (
+                    <button onClick={() => toast.dismiss(t.id)}>
+                      <IconX />
+                    </button>
+                  )}
+                </>
+              )}
+            </ToastBar>
+          )}
+        </Toaster>
         <QueryClientProvider client={queryClient}>
           <Component {...pageProps} />
         </QueryClientProvider>

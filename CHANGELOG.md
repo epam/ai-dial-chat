@@ -1,3 +1,19 @@
+## [1.1.1](https://git.epam.com/epm-gpt/common/chatbot-ui/compare/1.1.0...1.1.1) (2023-05-31)
+
+## [1.1.0](https://git.epam.com/epm-gpt/common/chatbot-ui/compare/1.0.0...1.1.0) (2023-05-30)
+
+
+### Bug Fixes
+
+* helm deployment fix [no-build] ([fa3c728](https://git.epam.com/epm-gpt/common/chatbot-ui/commit/fa3c728e24d5a2c1afd5b725213be46f4eaaea97))
+* show errors messages according to server response ([b08c0ff](https://git.epam.com/epm-gpt/common/chatbot-ui/commit/b08c0ff2071862afbe6c46826f56b1fd43a7ddc7))
+* url fix in helm [no-build] ([d6f6eaf](https://git.epam.com/epm-gpt/common/chatbot-ui/commit/d6f6eaf71dfd116ba2095410a7386a618319dba0))
+
+
+### Features
+
+* export single conversation ([d29e776](https://git.epam.com/epm-gpt/common/chatbot-ui/commit/d29e7764866c010c11bc95047e955b7a42baf18d))
+
 ## [1.0.0](https://git.epam.com/epm-gpt/common/chatbot-ui/compare/...1.0.0) (2023-04-28)
 
 

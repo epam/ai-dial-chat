@@ -71,6 +71,56 @@ function currentDate() {
   return `${month}-${day}`;
 }
 
+function triggerDownload(data: ExportFormatV4) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: 'application/json',
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = `chatbot_ui_history_${currentDate()}.json`;
+  link.href = url;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+export const exportItem = (conversationId: string) => {
+  let history = localStorage.getItem('conversationHistory');
+  let folders = localStorage.getItem('folders');
+
+  let conversation: Conversation | undefined;
+  let convertedHistory;
+  let convertedFolders;
+
+  if (history) {
+    convertedHistory = JSON.parse(history) as Conversation[];
+    conversation = convertedHistory.filter(({ id }) => id === conversationId)[0];
+
+    if (typeof conversation !== "undefined") {
+      convertedHistory = [conversation];
+    }
+  }
+
+  if (folders) {
+    convertedFolders = JSON.parse(folders) as FolderInterface[];
+
+    if (typeof conversation !== "undefined") {
+      convertedFolders = convertedFolders.filter(({ id }) => id === conversation?.folderId);
+    }
+  }
+
+  const data = {
+    version: 4,
+    history: convertedHistory || [],
+    folders: convertedFolders || [],
+    prompts: [],
+  } as LatestExportFormat;
+
+  triggerDownload(data);
+}
+
 export const exportData = () => {
   let history = localStorage.getItem('conversationHistory');
   let folders = localStorage.getItem('folders');
@@ -95,18 +145,7 @@ export const exportData = () => {
     prompts: prompts || [],
   } as LatestExportFormat;
 
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: 'application/json',
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.download = `chatbot_ui_history_${currentDate()}.json`;
-  link.href = url;
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  triggerDownload(data)
 };
 
 export const importData = (
@@ -162,3 +201,4 @@ export const importData = (
     prompts: newPrompts,
   };
 };
+

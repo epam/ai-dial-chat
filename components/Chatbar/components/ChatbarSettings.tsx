@@ -11,9 +11,9 @@ import { Import } from '../../Settings/Import';
 import { Key } from '../../Settings/Key';
 import { SidebarButton } from '../../Sidebar/SidebarButton';
 import ChatbarContext from '../Chatbar.context';
+import { User } from '../User';
 import { ClearConversations } from './ClearConversations';
 import { PluginKeys } from './PluginKeys';
-import { User } from '../User';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation('sidebar');
@@ -44,10 +44,10 @@ export const ChatbarSettings = () => {
         <ClearConversations onClearConversations={handleClearConversations} />
       ) : null}
 
-      {process.env.NEXT_PUBLIC_SHOW_IMPORT === 'true' && <Import onImport={handleImportConversations} />}
+      <Import onImport={handleImportConversations} />
 
       <SidebarButton
-        text={t('Export data')}
+        text={t('Export conversations')}
         icon={<IconFileExport size={18} />}
         onClick={() => handleExportData()}
       />

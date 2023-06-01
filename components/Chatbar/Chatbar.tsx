@@ -7,7 +7,7 @@ import { useCreateReducer } from '@/hooks/useCreateReducer';
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
 import { saveConversation, saveConversations } from '@/utils/app/conversation';
 import { saveFolders } from '@/utils/app/folders';
-import { exportData, importData } from '@/utils/app/importExport';
+import { exportData, exportItem, importData } from '@/utils/app/importExport';
 
 import { Conversation } from '@/types/chat';
 import { LatestExportFormat, SupportedExportFormats } from '@/types/export';
@@ -98,6 +98,10 @@ export const Chatbar = () => {
     exportData();
   };
 
+  const handleExportItem = (conversationId: string) => {
+    exportItem(conversationId);
+  };
+
   const handleImportConversations = (data: SupportedExportFormats) => {
     const { history, folders, prompts }: LatestExportFormat = importData(data);
     homeDispatch({ field: 'conversations', value: history });
@@ -107,8 +111,6 @@ export const Chatbar = () => {
     });
     homeDispatch({ field: 'folders', value: folders });
     homeDispatch({ field: 'prompts', value: prompts });
-
-    window.location.reload();
   };
 
   const handleClearConversations = () => {
@@ -214,6 +216,7 @@ export const Chatbar = () => {
         handleClearConversations,
         handleImportConversations,
         handleExportData,
+        handleExportItem,
         handlePluginKeyChange,
         handleClearPluginKey,
         handleApiKeyChange,
