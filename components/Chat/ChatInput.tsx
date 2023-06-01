@@ -411,6 +411,7 @@ export const ChatInput = ({
         </span>
         . However, we <span className="underline">anonymize and log</span> all
         interactions for research purposes. <br />
+        For API access please fill&nbsp;
         <a
           href=""
           onClick={(e) => {
@@ -419,9 +420,9 @@ export const ChatInput = ({
           }}
           className="underline font-bold"
         >
-          {t('Request API Key')}
-        </a>{' '}
-        |{' '}
+          {t('this form')}
+        </a>
+        .&nbsp;If you have a problem please&nbsp;
         <a
           href=""
           onClick={(e) => {
@@ -430,8 +431,9 @@ export const ChatInput = ({
           }}
           className="underline font-bold"
         >
-          {t('Report issue')}
+          {t('report an issue')}
         </a>
+        .
       </div>
 
       <RequestAPIKeyDialog

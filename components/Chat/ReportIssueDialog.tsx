@@ -1,5 +1,5 @@
 import { IconAsterisk, IconX } from '@tabler/icons-react';
-import { FC, MutableRefObject, useEffect, useRef, useState } from 'react';
+import { FC, MutableRefObject, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { useTranslation } from 'next-i18next';
@@ -61,7 +61,6 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const inputs = [titleInputRef, descriptionInputRef];
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
@@ -103,7 +102,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
             role="dialog"
           >
             <div className="flex justify-between text-lg pb-4 font-bold text-black dark:text-neutral-200">
-              {t('Report issue')}
+              {t('Report an issue')}
               <button onClick={onClose}>
                 <IconX></IconX>
               </button>
@@ -157,30 +156,31 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
                     >[],
                   )
                 ) {
-                  setIsLoading(true);
+                  const loadingToast = toast.loading(
+                    t('Reporting an issue in progress...'),
+                  );
+                  onClose();
+
                   const response = await reportIssue({
                     title: titleInputRef.current?.value as string,
                     description: descriptionInputRef.current?.value as string,
                   });
 
                   if (response.ok) {
-                    toast.success(t('Issue reported successfully'));
-                    onClose();
+                    toast.success(t('Issue reported successfully'), {
+                      id: loadingToast,
+                    });
                   } else {
                     showAPIToastError(
                       response,
                       t(errorsMessages.generalServer),
+                      loadingToast,
                     );
                   }
-                  setIsLoading(false);
                 }
               }}
             >
-              {isLoading ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-neutral-800 opacity-60 dark:border-neutral-100"></div>
-              ) : (
-                t('Report issue')
-              )}
+              {t('Report an issue')}
             </button>
           </div>
         </div>
