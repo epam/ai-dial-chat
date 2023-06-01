@@ -11,7 +11,6 @@ import {
 import {
   ButtonHTMLAttributes,
   FC,
-  ReactNode,
   memo,
   useContext,
   useEffect,
@@ -29,8 +28,6 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { CodeBlock } from '../Markdown/CodeBlock';
 import { MemoizedReactMarkdown } from '../Markdown/MemoizedReactMarkdown';
-import BlinkingCursor from './InlineLoader';
-import { modelCursorSign, modelCursorSignWithBackquote } from './chatConstants';
 
 import classNames from 'classnames';
 import rehypeMathjax from 'rehype-mathjax';
@@ -82,9 +79,6 @@ export const ChatMessage: FC<Props> = memo(
     const [isTyping, setIsTyping] = useState<boolean>(false);
     const [messageContent, setMessageContent] = useState(message.content);
     const [messagedCopied, setMessageCopied] = useState(false);
-
-    const isLastMessage =
-      messageIndex == (selectedConversation?.messages.length ?? 0) - 1;
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -187,12 +181,7 @@ export const ChatMessage: FC<Props> = memo(
         <div className="relative m-auto flex p-4 text-base md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
           <div className="min-w-[40px] text-right font-bold">
             {message.role === 'assistant' ? (
-              <IconRobot
-                size={30}
-                className={
-                  isLastMessage && messageIsStreaming ? 'animate-bounce' : ''
-                }
-              />
+              <IconRobot size={30} />
             ) : (
               <IconUser size={30} />
             )}
@@ -272,13 +261,17 @@ export const ChatMessage: FC<Props> = memo(
                   components={{
                     code({ node, inline, className, children, ...props }) {
                       if (children.length) {
-                        if (children[0] == modelCursorSign) {
-                          return <BlinkingCursor />;
+                        if (children[0] == '▍') {
+                          return (
+                            <span className="animate-pulse cursor-default mt-1">
+                              ▍
+                            </span>
+                          );
                         }
 
                         children[0] = (children[0] as string).replace(
-                          modelCursorSignWithBackquote,
-                          modelCursorSign,
+                          '`▍`',
+                          '▍',
                         );
                       }
 
@@ -318,40 +311,22 @@ export const ChatMessage: FC<Props> = memo(
                         </td>
                       );
                     },
-                    p({ children, className }) {
-                      if (children.length) {
-                        if (children[0] == modelCursorSign) {
-                          return <BlinkingCursor />;
-                        }
-                      }
-
-                      return <p className={className}>{children}</p>;
-                    },
                   }}
                 >
                   {`${message.content}${
-                    messageIsStreaming && isLastMessage
-                      ? modelCursorSignWithBackquote
-                      : modelCursorSignWithBackquote
+                    messageIsStreaming &&
+                    messageIndex ==
+                      (selectedConversation?.messages.length ?? 0) - 1
+                      ? '`▍`'
+                      : ''
                   }`}
                 </MemoizedReactMarkdown>
-
                 <div className="absolute bottom-0 right-8 flex flex-row gap-2">
-                  {isLastMessage && message.role === 'assistant' && (
-                    <div className="min-w-[40px] flex font-bold">
-                      <IconRobot
-                        size={30}
-                        className="animate-bounce self-end"
-                      />
-                    </div>
-                  )}
                   {message.like !== -1 && (
                     <Button
                       onClick={message.like !== 1 ? setLike(1) : void 0}
                       className={
-                        message.like !== 1
-                          ? void 0
-                          : 'visible text-gray-700 dark:text-gray-300'
+                        message.like !== 1 ? void 0 : 'visible text-gray-700 dark:text-gray-300'
                       }
                     >
                       <IconThumbUp size={24} />
@@ -361,9 +336,7 @@ export const ChatMessage: FC<Props> = memo(
                     <Button
                       onClick={message.like !== -1 ? setLike(-1) : void 0}
                       className={
-                        message.like !== -1
-                          ? void 0
-                          : 'visible text-gray-700 dark:text-gray-300'
+                        message.like !== -1 ? void 0 : 'visible text-gray-700 dark:text-gray-300'
                       }
                     >
                       <IconThumbDown size={24} />
