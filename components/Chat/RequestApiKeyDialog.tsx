@@ -1,5 +1,5 @@
 import { IconAsterisk, IconX } from '@tabler/icons-react';
-import { FC, MutableRefObject, useEffect, useRef, useState } from 'react';
+import { FC, MutableRefObject, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { useTranslation } from 'next-i18next';
@@ -79,6 +79,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
   const azureAgreementInputRef = useRef<HTMLInputElement>(null);
   const EPAMAgreementInputRef = useRef<HTMLInputElement>(null);
   const localAgreementInputRef = useRef<HTMLInputElement>(null);
+  const notClientProjectUsageAgreementInputRef = useRef<HTMLInputElement>(null);
   const inputs = [
     projectNameInputRef,
     streamNameInputRef,
@@ -90,8 +91,8 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
     azureAgreementInputRef,
     EPAMAgreementInputRef,
     localAgreementInputRef,
+    notClientProjectUsageAgreementInputRef,
   ];
-  const [isLoading, setIsLoading] = useState(false);
 
   const date = new Date();
   const year = date.getFullYear();
@@ -326,8 +327,24 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                 className="inline m-0 mr-2 border h-4 w-4 flex-shrink-0 rounded-sm text-black border-neutral-600 invalid:shadow-[0_0_1px_1px] invalid:shadow-red-500 accent-neutral-500 dark:bg-[#40414F]  dark:text-white"
               ></input>
               <label className="inline-block mb-2" htmlFor="EPAMAgreementInput">
+                {t('2. Usage is complaint to EPAM company policies ')}
+                <span className="inline-block text-red-500">
+                  <IconAsterisk size={10} />
+                </span>
+              </label>
+            </div>
+
+            <div className="text-sm font-bold mb-2 text-black dark:text-neutral-200 flex">
+              <input
+                ref={notClientProjectUsageAgreementInputRef}
+                name="notClientProjectUsageAgreementInput"
+                required
+                type="checkbox"
+                className="inline m-0 mr-2 border h-4 w-4 flex-shrink-0 rounded-sm text-black border-neutral-600 invalid:shadow-[0_0_1px_1px] invalid:shadow-red-500 accent-neutral-500 dark:bg-[#40414F]  dark:text-white"
+              ></input>
+              <label className="inline-block mb-2" htmlFor="EPAMAgreementInput">
                 {t(
-                  '2. EPAM company policies (do not use it for a client projects) ',
+                  '3. Confirm that this key will not be used for client project production load.',
                 )}
                 <span className="inline-block text-red-500">
                   <IconAsterisk size={10} />
@@ -347,7 +364,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                 className="inline-block mb-2"
                 htmlFor="localAgreementInput"
               >
-                {t('3. Local law regulations (if some) ')}
+                {t('4. Local law regulations (if some) ')}
                 <span className="inline-block text-red-500">
                   <IconAsterisk size={10} />
                 </span>
@@ -356,7 +373,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
             <button
               type="button"
-              className="flex items-center justify-center w-full px-4 py-2 mt-6 h-8 border rounded-lg shadow border-neutral-500 text-neutral-900 hover:bg-neutral-100 focus:outline-none dark:border-neutral-800 dark:border-opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-300"
+              className="flex items-center justify-center w-full px-4 py-2 mt-6 h-10 border rounded-lg shadow border-neutral-500 text-neutral-900 hover:bg-neutral-100 focus:outline-none dark:border-neutral-800 dark:border-opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-300"
               onClick={async () => {
                 if (
                   checkValidity(
@@ -365,7 +382,11 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                     >[],
                   )
                 ) {
-                  setIsLoading(true);
+                  const loadingToast = toast.loading(
+                    t('Requesting API key in progress...'),
+                  );
+                  onClose();
+
                   const response = await requestApiKey({
                     access_scenario: scenarioInputRef.current?.value as string,
                     business_reason: businessJustificationInputRef.current
@@ -380,23 +401,20 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                   });
 
                   if (response.ok) {
-                    toast.success('API Key requested succesfully');
-                    onClose();
+                    toast.success(t('API Key requested succesfully'), {
+                      id: loadingToast,
+                    });
                   } else {
                     showAPIToastError(
                       response,
                       t(errorsMessages.generalServer),
+                      loadingToast,
                     );
                   }
-                  setIsLoading(false);
                 }
               }}
             >
-              {isLoading ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-neutral-800 opacity-60 dark:border-neutral-100"></div>
-              ) : (
-                t('Send Request')
-              )}
+              {t('Send Request')}
             </button>
           </div>
         </div>

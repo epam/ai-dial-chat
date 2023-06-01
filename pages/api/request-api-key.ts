@@ -29,7 +29,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     })
   })
   if (!response.ok) {
-    console.log(response.text);
+    console.log(`${response.status} ${await response.text()}`);
     return res.status(500).send(errorsMessages.generalServer);
   }
 
