@@ -29,6 +29,8 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { CodeBlock } from '../Markdown/CodeBlock';
 import { MemoizedReactMarkdown } from '../Markdown/MemoizedReactMarkdown';
+import BlinkingCursor from './InlineLoader';
+import { modelCursorSign, modelCursorSignWithBackquote } from './chatConstants';
 
 import classNames from 'classnames';
 import rehypeMathjax from 'rehype-mathjax';
@@ -60,10 +62,6 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
       {children}
     </button>
   );
-};
-
-const InlineLoader: FC = () => {
-  return <span className="animate-ping cursor-default mt-1">▍</span>;
 };
 
 export const ChatMessage: FC<Props> = memo(
@@ -274,13 +272,13 @@ export const ChatMessage: FC<Props> = memo(
                   components={{
                     code({ node, inline, className, children, ...props }) {
                       if (children.length) {
-                        if (children[0] == '▍') {
-                          return <InlineLoader />;
+                        if (children[0] == modelCursorSign) {
+                          return <BlinkingCursor />;
                         }
 
                         children[0] = (children[0] as string).replace(
-                          '`▍`',
-                          '▍',
+                          modelCursorSignWithBackquote,
+                          modelCursorSign,
                         );
                       }
 
@@ -322,8 +320,8 @@ export const ChatMessage: FC<Props> = memo(
                     },
                     p({ children, className }) {
                       if (children.length) {
-                        if (children[0] == '▍') {
-                          return <InlineLoader />;
+                        if (children[0] == modelCursorSign) {
+                          return <BlinkingCursor />;
                         }
                       }
 
@@ -332,21 +330,21 @@ export const ChatMessage: FC<Props> = memo(
                   }}
                 >
                   {`${message.content}${
-                    messageIsStreaming && isLastMessage ? '`▍`' : ''
+                    messageIsStreaming && isLastMessage
+                      ? modelCursorSignWithBackquote
+                      : modelCursorSignWithBackquote
                   }`}
                 </MemoizedReactMarkdown>
 
                 <div className="absolute bottom-0 right-8 flex flex-row gap-2">
-                  {messageIsStreaming &&
-                    isLastMessage &&
-                    message.role === 'assistant' && (
-                      <div className="min-w-[40px] flex font-bold">
-                        <IconRobot
-                          size={30}
-                          className="animate-bounce self-end"
-                        />
-                      </div>
-                    )}
+                  {isLastMessage && message.role === 'assistant' && (
+                    <div className="min-w-[40px] flex font-bold">
+                      <IconRobot
+                        size={30}
+                        className="animate-bounce self-end"
+                      />
+                    </div>
+                  )}
                   {message.like !== -1 && (
                     <Button
                       onClick={message.like !== 1 ? setLike(1) : void 0}

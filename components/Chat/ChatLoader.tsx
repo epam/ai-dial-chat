@@ -1,6 +1,8 @@
 import { IconRobot } from '@tabler/icons-react';
 import { FC } from 'react';
 
+import { modelCursorSign } from './chatConstants';
+
 export const ChatLoader: FC = () => {
   return (
     <div
@@ -12,7 +14,9 @@ export const ChatLoader: FC = () => {
           <IconRobot size={30} />
         </div>
 
-        <span className="animate-ping cursor-default mt-1">▍</span>
+        <span className="animate-ping cursor-default mt-1">
+          {modelCursorSign}
+        </span>
       </div>
     </div>
   );
