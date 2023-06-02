@@ -28,6 +28,8 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { CodeBlock } from '../Markdown/CodeBlock';
 import { MemoizedReactMarkdown } from '../Markdown/MemoizedReactMarkdown';
+import BlinkingCursor from './BlinkingCursor';
+import { modelCursorSign, modelCursorSignWithBackquote } from './chatConstants';
 
 import classNames from 'classnames';
 import rehypeMathjax from 'rehype-mathjax';
@@ -79,6 +81,16 @@ export const ChatMessage: FC<Props> = memo(
     const [isTyping, setIsTyping] = useState<boolean>(false);
     const [messageContent, setMessageContent] = useState(message.content);
     const [messagedCopied, setMessageCopied] = useState(false);
+
+    const isLastMessage =
+      messageIndex == (selectedConversation?.messages.length ?? 0) - 1;
+
+    const replaceCursor = (cursorSign: string) =>
+      cursorSign.replace(modelCursorSignWithBackquote, modelCursorSign);
+
+    const isShowResponseLoader: boolean = messageIsStreaming && isLastMessage;
+    const isUser = message.role === 'user';
+    const isAssistant = message.role === 'assistant';
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -168,11 +180,10 @@ export const ChatMessage: FC<Props> = memo(
         textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
       }
     }, [isEditing]);
-
     return (
       <div
         className={`group md:px-4 ${
-          message.role === 'assistant'
+          isAssistant
             ? 'border-b border-black/10 bg-gray-50 text-gray-800 dark:border-gray-900/50 dark:bg-[#444654] dark:text-gray-100'
             : 'border-b border-black/10 bg-white text-gray-800 dark:border-gray-900/50 dark:bg-[#343541] dark:text-gray-100'
         }`}
@@ -180,15 +191,18 @@ export const ChatMessage: FC<Props> = memo(
       >
         <div className="relative m-auto flex p-4 text-base md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
           <div className="min-w-[40px] text-right font-bold">
-            {message.role === 'assistant' ? (
-              <IconRobot size={30} />
+            {isAssistant ? (
+              <IconRobot
+                size={30}
+                className={isShowResponseLoader ? 'animate-bounce' : ''}
+              />
             ) : (
               <IconUser size={30} />
             )}
           </div>
 
           <div className="prose mt-[-2px] w-full dark:prose-invert">
-            {message.role === 'user' ? (
+            {isUser ? (
               <div className="flex w-full">
                 {isEditing ? (
                   <div className="flex w-full flex-col">
@@ -261,17 +275,15 @@ export const ChatMessage: FC<Props> = memo(
                   components={{
                     code({ node, inline, className, children, ...props }) {
                       if (children.length) {
-                        if (children[0] == '▍') {
+                        if (children[0] == modelCursorSign) {
                           return (
-                            <span className="animate-pulse cursor-default mt-1">
-                              ▍
-                            </span>
+                            <BlinkingCursor isShowing={isShowResponseLoader} />
                           );
                         }
 
                         children[0] = (children[0] as string).replace(
-                          '`▍`',
-                          '▍',
+                          modelCursorSignWithBackquote,
+                          modelCursorSign,
                         );
                       }
 
@@ -311,22 +323,42 @@ export const ChatMessage: FC<Props> = memo(
                         </td>
                       );
                     },
+                    p({ children, className }) {
+                      if (children.length) {
+                        if (children[0] == modelCursorSign) {
+                          return (
+                            <BlinkingCursor isShowing={isShowResponseLoader} />
+                          );
+                        }
+                      }
+                      if (children[0] == modelCursorSignWithBackquote) {
+                        children[0] = replaceCursor(children[0] as string);
+                      }
+                      return <p className={className}>{children}</p>;
+                    },
                   }}
                 >
                   {`${message.content}${
-                    messageIsStreaming &&
-                    messageIndex ==
-                      (selectedConversation?.messages.length ?? 0) - 1
-                      ? '`▍`'
-                      : ''
+                    isShowResponseLoader ? modelCursorSignWithBackquote : ''
                   }`}
                 </MemoizedReactMarkdown>
+
                 <div className="absolute bottom-0 right-8 flex flex-row gap-2">
+                  {isShowResponseLoader && isAssistant && (
+                    <div className="min-w-[40px] flex font-bold">
+                      <IconRobot
+                        size={30}
+                        className="animate-bounce self-end"
+                      />
+                    </div>
+                  )}
                   {message.like !== -1 && (
                     <Button
                       onClick={message.like !== 1 ? setLike(1) : void 0}
                       className={
-                        message.like !== 1 ? void 0 : 'visible text-gray-700 dark:text-gray-300'
+                        message.like !== 1
+                          ? void 0
+                          : 'visible text-gray-700 dark:text-gray-300'
                       }
                     >
                       <IconThumbUp size={24} />
@@ -336,7 +368,9 @@ export const ChatMessage: FC<Props> = memo(
                     <Button
                       onClick={message.like !== -1 ? setLike(-1) : void 0}
                       className={
-                        message.like !== -1 ? void 0 : 'visible text-gray-700 dark:text-gray-300'
+                        message.like !== -1
+                          ? void 0
+                          : 'visible text-gray-700 dark:text-gray-300'
                       }
                     >
                       <IconThumbDown size={24} />
