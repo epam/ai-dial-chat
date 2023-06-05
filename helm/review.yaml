@@ -1,0 +1,75 @@
+image:
+  pullPolicy: Always
+  pullSecrets: 
+    - epm-rtc-registry-test
+
+
+replicaCount: 1
+
+resources:
+  limits:
+    cpu: 1
+    memory: 1Gi
+  requests:
+     cpu: 0.25
+     memory: 512Mi
+
+env:
+  NEXTAUTH_URL: "https://dev-chat.ai-proxy.lab.epam.com"
+  OPENAI_API_HOST: "https://ai-proxy.staging.deltixhub.io"
+  DEFAULT_MODEL: "gpt-35-turbo"
+  OPENAI_API_TYPE: "azure"
+  OPENAI_API_VERSION: "2023-03-15-preview"
+  NEXT_PUBLIC_SHOW_MODELS: "true"
+  NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT: ""
+  NEXT_PUBLIC_MAX_TOKENS: "4000"
+#  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
+
+# podLabels:
+#   azure.workload.identity/use: "true"
+
+# extraEnvVarsSecret: "chat-manual"
+
+podAnnotations:
+  autorestart: '{{ dateInZone "2006-01-02 15:04:05Z" (now) "UTC" }}'
+
+# affinity:
+#   podAntiAffinity:
+#     preferredDuringSchedulingIgnoredDuringExecution:
+#       - weight: 100
+#         podAffinityTerm:
+#           labelSelector:
+#             matchExpressions:
+#               - key: app
+#                 operator: In
+#                 values:
+#                   - {{ include "app.fullname" . }}
+#           topologyKey: kubernetes.io/hostname
+
+ingress:
+  enabled: true
+  ingressClassName: alb
+  annotations:
+    alb.ingress.kubernetes.io/scheme: "internet-facing"
+    alb.ingress.kubernetes.io/target-type: "ip"
+    alb.ingress.kubernetes.io/backend-protocol: "HTTP"
+    alb.ingress.kubernetes.io/healthcheck-path: "/"
+    alb.ingress.kubernetes.io/healthcheck-protocol: "HTTP"
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "5"
+    alb.ingress.kubernetes.io/healthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/target-group-attributes: "stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=86400"
+    alb.ingress.kubernetes.io/load-balancer-attributes: "routing.http2.enabled=true"
+    alb.ingress.kubernetes.io/listen-ports: '[{ "HTTP" : 80, "HTTPS" : 443 }]'
+    alb.ingress.kubernetes.io/ssl-policy: "ELBSecurityPolicy-TLS-1-2-Ext-2018-06"
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:eu-north-1:725751206603:certificate/373e8fd1-088e-4022-adf1-5f3e7820fb4a"
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/group.name: "allow-all"
+  hosts:
+    - chat-review.staging.deltixhub.io
+
+
+serviceAccount:
+  create: true
+  name: chat
+
+# extraEnvVarsSecret: "chat-lab-test"
