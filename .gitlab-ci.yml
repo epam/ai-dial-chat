@@ -1,9 +1,9 @@
 include:
   - project: "Gitlab/ci"
-    ref: 0.2.21
+    ref: 0.2.22
     file: "application/nodejs.yml"
   - project: Gitlab/ci
-    ref: helm_extra_args
+    ref: 0.2.22
     file: helm/helm-environment.gitlab-ci.yml
 
 
@@ -14,7 +14,7 @@ variables:
   DOCKER_REGISTRY_SERVER: "registry-dev.deltixhub.com"
   HELM_REPO: https://nexus.deltixhub.com/repository/epm-rtc-helm
   SECRET_NAME: "epm-rtc-registry-dev"
-  CHART: "chart" # Helm chart name, e.g. "gitlab-runner"
+  CHART: "chat" # Helm chart name, e.g. "gitlab-runner"
   VERSION: "0.0.1" # Helm chart version
 
   development_AWS_ACCESS_KEY_ID: ${staging_AWS_ACCESS_KEY_ID}
@@ -23,7 +23,7 @@ variables:
   development_HELM_VALUES_FILE: "helm/development.yaml"
   development_ENV_URL: "https://chat.staging.deltixhub.io"
   development_NAMESPACE: ai-chat
-  development_HELM_EXTRA_ARGS: "-f ${HELM_SECRET_FILE_dev}"
+  # development_HELM_EXTRA_ARGS: "-f ${HELM_SECRET_FILE_dev}"
 
   staging_DEPLOY_ENV: "false"
 
@@ -42,8 +42,8 @@ stages:
   - test
   - prepare
   - build
-  - deploy
   - publish # publush docker images
+  - deploy
   - promote # copy docker image to public repo
   - production # Stage name used in include. Not used. ToDo - delete this
 

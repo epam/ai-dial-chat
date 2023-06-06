@@ -1,5 +1,6 @@
 image:
   pullPolicy: Always
+  registry: registry-test.deltixhub.com
   pullSecrets: 
     - epm-rtc-registry-test
 
