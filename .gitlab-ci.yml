@@ -32,7 +32,7 @@ variables:
   review_HELM_VALUES_FILE: "helm/review.yaml"
   review_ENV_URL: "https://${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}.staging.deltixhub.io"
   review_NAMESPACE: ai-chat-review
-  review_HELM_CUSTOM_VALUES: "ingress.hosts[0]=${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}.staging.deltixhub.io,fullnameOverride=mr-${CI_MERGE_REQUEST_IID},image.tag=mr-${CI_MERGE_REQUEST_IID},serviceAccount.name=mr-${CI_MERGE_REQUEST_IID}"
+  review_HELM_CUSTOM_VALUES: "ingress.hosts[0]=${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}.staging.deltixhub.io,fullnameOverride=mr-${CI_MERGE_REQUEST_IID},image.tag=mr-${CI_MERGE_REQUEST_IID},serviceAccount.name=mr-${CI_MERGE_REQUEST_IID},env.NEXTAUTH_URL=https://${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}.staging.deltixhub.io"
   review_RELEASE: ${CHART}-mr-${CI_MERGE_REQUEST_IID}
   review_SECRET_NAME: "epm-rtc-registry-test"
   review_DOCKER_REGISTRY_SERVER: "registry-test.deltixhub.com"
