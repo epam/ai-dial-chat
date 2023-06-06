@@ -17,7 +17,7 @@ resources:
      memory: 512Mi
 
 env:
-  NEXTAUTH_URL: "https://dev-chat.ai-proxy.lab.epam.com"
+  NEXTAUTH_URL: "https://chat.staging.deltixhub.io"
   # OPENAI_API_HOST: "https://southcentralus.api.cognitive.microsoft.com/"
   OPENAI_API_HOST: "https://ai-proxy.staging.deltixhub.io"
   DEFAULT_MODEL: "gpt-35-turbo"
