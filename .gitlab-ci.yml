@@ -23,7 +23,7 @@ variables:
   development_HELM_VALUES_FILE: "helm/development.yaml"
   development_ENV_URL: "https://chat.staging.deltixhub.io"
   development_NAMESPACE: ai-chat
-  # development_HELM_EXTRA_ARGS: "-f ${HELM_SECRET_FILE_dev}"
+  development_HELM_EXTRA_ARGS: "-f ${HELM_SECRET_FILE_dev}"
 
   staging_DEPLOY_ENV: "false"
 
