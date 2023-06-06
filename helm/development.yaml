@@ -1,5 +1,6 @@
 image:
   pullPolicy: Always
+  registry: registry-dev.deltixhub.com
   tag: development
   pullSecrets: 
     - epm-rtc-registry-dev
