@@ -23,6 +23,9 @@ env:
   NEXT_PUBLIC_SHOW_MODELS: "true"
   NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT: ""
   NEXT_PUBLIC_MAX_TOKENS: "4000"
+  SHOW_REQUEST_API_KEY: 'true'
+  SHOW_REPORT_AN_ISSUE: 'true'
+  SHOW_FOOTER: 'true'
 #  NEXTAUTH_URL: "https://dev-chat.ai-proxy.lab.epam.com"
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
 

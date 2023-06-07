@@ -48,6 +48,9 @@ interface Props {
   serverSidePluginKeysSet: boolean;
   usePluginKeys: boolean;
   defaultModelId: OpenAIModelID;
+  isShowFooter: boolean;
+  isShowRequestApiKey: boolean;
+  isShowReportAnIssue: boolean;
 }
 
 const Home = ({
@@ -55,6 +58,9 @@ const Home = ({
   serverSidePluginKeysSet,
   usePluginKeys,
   defaultModelId,
+  isShowFooter,
+  isShowRequestApiKey,
+  isShowReportAnIssue,
 }: Props) => {
   const { t } = useTranslation('chat');
   const { getModels } = useApiService();
@@ -256,11 +262,29 @@ const Home = ({
         field: 'usePluginKeys',
         value: usePluginKeys,
       });
+    isShowFooter &&
+      dispatch({
+        field: 'isShowFooter',
+        value: isShowFooter,
+      });
+    isShowReportAnIssue &&
+      dispatch({
+        field: 'isShowReportAnIssue',
+        value: isShowReportAnIssue,
+      });
+    isShowRequestApiKey &&
+      dispatch({
+        field: 'isShowRequestApiKey',
+        value: isShowRequestApiKey,
+      });
   }, [
     defaultModelId,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
     usePluginKeys,
+    isShowFooter,
+    isShowReportAnIssue,
+    isShowRequestApiKey,
   ]);
 
   // ON LOAD --------------------------------------------
@@ -451,6 +475,9 @@ export const getServerSideProps: GetServerSideProps = async ({
       usePluginKeys: !!process.env.NEXT_PUBLIC_ENABLE_PLUGIN_KEYS,
       defaultModelId,
       serverSidePluginKeysSet,
+      isShowFooter: process.env.SHOW_FOOTER === 'true',
+      isShowRequestApiKey: process.env.SHOW_REQUEST_API_KEY === 'true',
+      isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',
