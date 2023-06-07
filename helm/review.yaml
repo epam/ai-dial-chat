@@ -25,6 +25,7 @@ env:
   SHOW_REQUEST_API_KEY: 'true'
   SHOW_REPORT_AN_ISSUE: 'true'
   SHOW_FOOTER: 'true'
+  AUTH_GITLAB_HOST: "https://gitlab.deltixhub.com"
 #  NEXTAUTH_URL: "https://dev-chat.ai-proxy.lab.epam.com"
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
 
