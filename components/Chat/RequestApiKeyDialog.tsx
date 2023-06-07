@@ -388,16 +388,27 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                   onClose();
 
                   const response = await requestApiKey({
-                    access_scenario: scenarioInputRef.current?.value as string,
-                    business_reason: businessJustificationInputRef.current
-                      ?.value as string,
+                    access_scenario: (
+                      scenarioInputRef.current?.value as string
+                    ).trim(),
+                    business_reason: (
+                      businessJustificationInputRef.current?.value as string
+                    ).trim(),
                     project_end: transformDateString(
                       projectEndDateInputRef.current?.value as string,
                     ),
-                    project_id: projectNameInputRef.current?.value as string,
-                    project_lead: techLeadNameInputRef.current?.value as string,
-                    project_stream: streamNameInputRef.current?.value as string,
-                    workload_pattern: costInputRef.current?.value as string,
+                    project_id: (
+                      projectNameInputRef.current?.value as string
+                    ).trim(),
+                    project_lead: (
+                      techLeadNameInputRef.current?.value as string
+                    ).trim(),
+                    project_stream: (
+                      streamNameInputRef.current?.value as string
+                    ).trim(),
+                    workload_pattern: (
+                      costInputRef.current?.value as string
+                    ).trim(),
                   });
 
                   if (response.ok) {
