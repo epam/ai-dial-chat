@@ -29,6 +29,10 @@ env:
   SHOW_REQUEST_API_KEY: "true"
   SHOW_REPORT_AN_ISSUE: "true"
   SHOW_FOOTER: "true"
+  GOOGLE_AI_HOST: "https://palm-ai-proxy.staging.deltixhub.io"
+  GOOGLE_AI_PROJECT_IDt: "EPM-AI-PROXY"
+  GOOGLE_AI_LOCATION: "us-central1"
+  
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
 
 # podLabels:
