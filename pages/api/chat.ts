@@ -67,7 +67,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     let tokens_per_message = 0;
     if (model.name == 'GPT-3.5') {
       tokens_per_message = 5;
-    } else if (model.name == 'GPT-4' || model.name == 'GPT-4-32K') {
+    } else if (model.name == 'GPT-4' || model.name == 'GPT-4-32K' || model.name === 'BARD') { // TODO: ugly
       tokens_per_message = 4;
     }
 
