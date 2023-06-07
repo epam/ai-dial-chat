@@ -102,7 +102,7 @@ const allProviders: (Provider | boolean)[] = [
 const providers = allProviders.filter(Boolean) as Provider[];
 
 if (!providers.length) {
-  throw new Error('No auth providers!');
+  console.error('No auth providers!');
 }
 
 export const authOptions: AuthOptions = {
