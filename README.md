@@ -37,7 +37,7 @@ Build locally:
 
 ```shell
 docker build -t chatgpt-ui .
-docker run -e OPENAI_API_KEY=xxxxxxxx -e AUTH_CLIENT_ID=xxxxxxxx -e AUTH_TENANT_ID=xxxxxxxx -e AUTH_CLIENT_SECRET=xxxxxxxx -e NEXTAUTH_SECRET=xxxxxxxx -p 3000:3000 chatgpt-ui
+docker run -e OPENAI_API_KEY=xxxxxxxx -e AUTH_AZURE_AD_CLIENT_ID=xxxxxxxx -e AUTH_AZURE_AD_TENANT_ID=xxxxxxxx -e AUTH_AZURE_AD_SECRET=xxxxxxxx -e NEXTAUTH_SECRET=xxxxxxxx -p 3000:3000 chatgpt-ui
 ```
 
 Pull from ghcr:
@@ -76,9 +76,9 @@ OPENAI_API_KEY=YOUR_KEY
 
 Add variables .env.local:
 ```bash
-AUTH_CLIENT_ID=xxxxx
-AUTH_TENANT_ID=xxxxx
-AUTH_CLIENT_SECRET=xxxxx
+AUTH_AZURE_AD_CLIENT_ID=xxxxx
+AUTH_AZURE_AD_TENANT_ID=xxxxx
+AUTH_AZURE_AD_SECRET=xxxxx
 NEXTAUTH_SECRET=xxxxx
 ```
 
@@ -100,9 +100,9 @@ When deploying the application, the following environment variables can be set:
 
 | Environment Variable              | Default value                  | Description                                                                                                                               |
 | --------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| AUTH_CLIENT_ID                    |                                | Client ID from Azure AD
-| AUTH_TENANT_ID                    |                                | Tenant ID from Azure AD
-| AUTH_CLIENT_SECRET                |                                | Client Secret from Azure AD
+| AUTH_AZURE_AD_CLIENT_ID           |                                | Client ID from Azure AD
+| AUTH_AZURE_AD_TENANT_ID           |                                | Tenant ID from Azure AD
+| AUTH_AZURE_AD_SECRET              |                                | Client Secret from Azure AD
 | NEXTAUTH_SECRET                   |                                | Random crypto-string
 | OPENAI_API_KEY                    |                                | The default API key used for authentication with OpenAI                                                                                   |
 | OPENAI_API_HOST                   | `https://api.openai.com`       | The base url, for Azure use `https://<endpoint>.openai.azure.com`                                                                         |
