@@ -24,6 +24,7 @@ import { Prompt } from '@/types/prompt';
 
 import HomeContext from '@/pages/api/home/home.context';
 
+import { FooterMessage } from './FooterMessage';
 import { PluginSelect } from './PluginSelect';
 import { PromptList } from './PromptList';
 import { ReportIssueDialog } from './ReportIssueDialog';
@@ -50,7 +51,14 @@ export const ChatInput = ({
   const { t } = useTranslation('chat');
 
   const {
-    state: { selectedConversation, messageIsStreaming, prompts },
+    state: {
+      selectedConversation,
+      messageIsStreaming,
+      prompts,
+      isShowFooter,
+      isShowRequestApiKey,
+      isShowReportAnIssue,
+    },
 
     dispatch: homeDispatch,
   } = useContext(HomeContext);
@@ -63,8 +71,6 @@ export const ChatInput = ({
   const [variables, setVariables] = useState<string[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showPluginSelect, setShowPluginSelect] = useState(false);
-  const [isRequestAPIDialogOpen, setIsRequestAPIDialogOpen] = useState(false);
-  const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
   const [plugin, setPlugin] = useState<Plugin | null>(null);
 
   const promptListRef = useRef<HTMLUListElement | null>(null);
@@ -383,72 +389,11 @@ export const ChatInput = ({
           )}
         </div>
       </div>
-      <div className="px-3 pt-2 pb-3 text-center text-[12px] text-black/50 dark:text-white/50 md:px-4 md:pt-3 md:pb-6">
-        {/* <a
-          href="https://github.com/mckaywrigley/chatbot-ui"
-          target="_blank"
-          rel="noreferrer"
-          className="underline"
-        >
-          ChatBot UI
-        </a>
-        .{' '}
-        {t(
-          "Chatbot UI is an advanced chatbot kit for OpenAI's chat models aiming to mimic ChatGPT's interface and functionality.",
-        )} */}
-        <a
-          href="https://kb.epam.com/display/EPMGPT/EPAM+AI+Chat"
-          target="_blank"
-          rel="noreferrer"
-          className="underline font-bold"
-        >
-          EPAM AI Chat
-        </a>{' '}
-        can be used <span className="underline">any work-related activity</span>
-        . Rest assured, information you share here is{' '}
-        <span className="underline">
-          not disclosed to third-party companies
-        </span>
-        . However, we <span className="underline">anonymize and log</span> all
-        interactions for research purposes. <br />
-        For API access please fill&nbsp;
-        <a
-          href=""
-          onClick={(e) => {
-            e.preventDefault();
-            setIsRequestAPIDialogOpen(true);
-          }}
-          className="underline font-bold"
-        >
-          {t('this form')}
-        </a>
-        .&nbsp;If you have a problem please&nbsp;
-        <a
-          href=""
-          onClick={(e) => {
-            e.preventDefault();
-            setIsReportIssueDialogOpen(true);
-          }}
-          className="underline font-bold"
-        >
-          {t('report an issue')}
-        </a>
-        .
-      </div>
-
-      <RequestAPIKeyDialog
-        isOpen={isRequestAPIDialogOpen}
-        onClose={() => {
-          setIsRequestAPIDialogOpen(false);
-        }}
-      ></RequestAPIKeyDialog>
-
-      <ReportIssueDialog
-        isOpen={isReportIssueDialogOpen}
-        onClose={() => {
-          setIsReportIssueDialogOpen(false);
-        }}
-      ></ReportIssueDialog>
+      <FooterMessage
+        isShowFooter={isShowFooter}
+        isShowRequestApiKey={isShowRequestApiKey}
+        isShowReportAnIssue={isShowReportAnIssue}
+      />
     </div>
   );
 };
