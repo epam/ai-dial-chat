@@ -118,18 +118,20 @@ export const authOptions: AuthOptions = {
       if (!options.account?.access_token) {
         return false;
       }
-      let jobTitle = 'unknown';
-      try {
-        const user = (await fetch('https://graph.microsoft.com/v1.0/me', {
-          headers: {
-            Authorization: `${options.account.token_type} ${options.account.access_token}`,
-            Accept: 'application/json',
-          },
-        }).then((r) => r.json())) as IGraphUser;
-        jobTitle = user.jobTitle ?? 'unknown';
-      } catch {}
+      if (process.env.USE_USER_JOB_TITLE === 'true') {
+        let jobTitle = 'unknown';
+        try {
+          const user = (await fetch('https://graph.microsoft.com/v1.0/me', {
+            headers: {
+              Authorization: `${options.account.token_type} ${options.account.access_token}`,
+              Accept: 'application/json',
+            },
+          }).then((r) => r.json())) as IGraphUser;
+          jobTitle = user.jobTitle ?? 'unknown';
+        } catch {}
 
-      options.account.jobTitle = jobTitle;
+        options.account.jobTitle = jobTitle;
+      }
       return true;
     },
     session: async (options) => {
