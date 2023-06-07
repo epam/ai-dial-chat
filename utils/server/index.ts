@@ -1,7 +1,13 @@
 import { Message } from '@/types/chat';
-import { OpenAIModel } from '@/types/openai';
+import { OpenAIModel, OpenAIModelID } from '@/types/openai';
 
-import { MAX_TOKENS, OPENAI_API_HOST, OPENAI_API_TYPE, OPENAI_API_VERSION, OPENAI_ORGANIZATION } from '../app/const';
+import {
+  MAX_TOKENS,
+  OPENAI_API_HOST,
+  OPENAI_API_TYPE,
+  OPENAI_API_VERSION,
+  OPENAI_ORGANIZATION,
+} from '../app/const';
 
 import {
   ParsedEvent,
@@ -26,33 +32,67 @@ export class OpenAIError extends Error {
 export const OpenAIStream = async (
   model: OpenAIModel,
   systemPrompt: string,
-  temperature : number,
+  temperature: number,
   key: string,
   messages: Message[],
   headers: HeadersInit,
   tokenCount: number,
 ) => {
+  const isGoogle =
+    model.id === OpenAIModelID.BISON_001 && !!process.env.GOOGLE_AI_TOKEN;
+
   let url = `${OPENAI_API_HOST}/v1/chat/completions`;
-  if (OPENAI_API_TYPE === 'azure') {
+  if (isGoogle) {
+    url = `${process.env.GOOGLE_AI_HOST ?? OPENAI_API_HOST}/v1/projects/${
+      process.env.GOOGLE_AI_PROJECT_ID
+    }/locations/${process.env.GOOGLE_AI_LOCATION}/publishers/google/models/${
+      process.env.GOOGLE_AI_BARD_MODEL_ID ?? model.id
+    }:predict`;
+  } else if (OPENAI_API_TYPE === 'azure') {
     url = `${OPENAI_API_HOST}/openai/deployments/${model.id}/chat/completions?api-version=${OPENAI_API_VERSION}`;
   }
-  const res = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(OPENAI_API_TYPE === 'openai' && {
-        Authorization: `Bearer ${key ? key : process.env.OPENAI_API_KEY}`
-      }),
-      ...(OPENAI_API_TYPE === 'azure' && {
-        'api-key': `${key ? key : process.env.OPENAI_API_KEY}`
-      }),
-      ...((OPENAI_API_TYPE === 'openai' && OPENAI_ORGANIZATION) && {
-        'OpenAI-Organization': OPENAI_ORGANIZATION,
-      }),
-      ...headers,
-    },
-    method: 'POST',
-    body: JSON.stringify({
-      ...(OPENAI_API_TYPE === 'openai' && {model: model.id}),
+
+  const requestHeaders = {
+    ...headers,
+    'Content-Type': 'application/json',
+  } as Record<string, string>;
+  let body: string;
+
+  if (isGoogle) {
+    requestHeaders.Authorization = `Bearer ${process.env.GOOGLE_AI_TOKEN}`;
+
+    body = JSON.stringify({
+      instances: [
+        {
+          context: systemPrompt,
+          examples: [],
+          messages: messages.map((msg) => ({
+            author: msg.role === 'assistant' ? 'bot' : 'user',
+            content: msg.content,
+          })),
+        },
+      ],
+      parameters: {
+        temperature,
+        maxDecodeSteps: 200,
+        topP: 0.8,
+        topK: 40,
+      },
+    });
+  } else {
+    if (OPENAI_API_TYPE === 'openai') {
+      requestHeaders.Authorization = `Bearer ${
+        key ? key : process.env.OPENAI_API_KEY
+      }`;
+    }
+    if (OPENAI_API_TYPE === 'azure') {
+      requestHeaders['api-key'] = `${key ? key : process.env.OPENAI_API_KEY}`;
+    }
+    if (OPENAI_API_TYPE === 'openai' && OPENAI_ORGANIZATION) {
+      requestHeaders['OpenAI-Organization'] = OPENAI_ORGANIZATION;
+    }
+    body = JSON.stringify({
+      ...(OPENAI_API_TYPE === 'openai' && { model: model.id }),
       messages: [
         {
           role: 'system',
@@ -61,16 +101,32 @@ export const OpenAIStream = async (
         ...messages,
       ],
       max_tokens: model.tokenLimit - tokenCount,
-      temperature: temperature,
+      temperature,
       stream: true,
-    }),
+    });
+  }
+
+  const res = await fetch(url, {
+    headers: requestHeaders,
+    method: 'POST',
+    body,
   });
 
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
   if (res.status !== 200) {
-    const result = await res.json();
+    let result: any;
+    try {
+      result = await res.json();
+    } catch (e) {
+      throw new OpenAIError(
+        `Server error: ${res.statusText}`,
+        '',
+        '',
+        res.status + '',
+      );
+    }
     if (result.error) {
       throw new OpenAIError(
         result.error.message,
@@ -89,29 +145,42 @@ export const OpenAIStream = async (
 
   const stream = new ReadableStream({
     async start(controller) {
-      const onParse = (event: ParsedEvent | ReconnectInterval) => {
-        if (event.type === 'event') {
-          const data = event.data;
-
-          try {
-            const json = JSON.parse(data);
-            if (json.choices[0].finish_reason != null) {
-              controller.close();
-              return;
-            }
-            const text = json.choices[0].delta.content;
-            const queue = encoder.encode(text);
-            controller.enqueue(queue);
-          } catch (e) {
-            controller.error(e);
-          }
+      if (isGoogle) {
+        try {
+          const result = await res.json();
+          const queue = encoder.encode(
+            result.predictions[0]?.candidates?.[0]?.content,
+          );
+          controller.enqueue(queue);
+          controller.close();
+        } catch (e) {
+          controller.error(e);
         }
-      };
+      } else {
+        const onParse = (event: ParsedEvent | ReconnectInterval) => {
+          if (event.type === 'event') {
+            const data = event.data;
 
-      const parser = createParser(onParse);
+            try {
+              const json = JSON.parse(data);
+              if (json.choices[0].finish_reason != null) {
+                controller.close();
+                return;
+              }
+              const text = json.choices[0].delta.content;
+              const queue = encoder.encode(text);
+              controller.enqueue(queue);
+            } catch (e) {
+              controller.error(e);
+            }
+          }
+        };
 
-      for await (const chunk of res.body as any) {
-        parser.feed(decoder.decode(chunk));
+        const parser = createParser(onParse);
+
+        for await (const chunk of res.body as any) {
+          parser.feed(decoder.decode(chunk));
+        }
       }
     },
   });
