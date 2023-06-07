@@ -120,8 +120,12 @@ export const OpenAIStream = async (
     try {
       result = await res.json();
     } catch (e) {
-      console.log('EEEEEEEE', res.statusText)
-      throw new Error(`Server returned an error: ${res.statusText}`);
+      throw new OpenAIError(
+        `Server error: ${res.statusText}`,
+        '',
+        '',
+        res.status + '',
+      );
     }
     if (result.error) {
       throw new OpenAIError(
