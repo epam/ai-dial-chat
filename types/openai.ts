@@ -50,7 +50,7 @@ export const OpenAIModels: Record<OpenAIModelID, OpenAIModel> = {
   },
   [OpenAIModelID.BISON_001]: {
     id: OpenAIModelID.BISON_001,
-    name: 'BARD',
+    name: 'PaLM2 (bison)',
     maxLength: 24000,
     tokenLimit: 8000,
     requestLimit: 6000,
