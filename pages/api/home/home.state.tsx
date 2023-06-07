@@ -28,6 +28,9 @@ export interface HomeInitialState {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   usePluginKeys: boolean;
+  isShowFooter: boolean;
+  isShowRequestApiKey: boolean;
+  isShowReportAnIssue: boolean;
 }
 
 export const initialState: HomeInitialState = {
@@ -53,4 +56,7 @@ export const initialState: HomeInitialState = {
   serverSideApiKeyIsSet: false,
   serverSidePluginKeysSet: false,
   usePluginKeys: false,
+  isShowFooter: false,
+  isShowRequestApiKey: false,
+  isShowReportAnIssue: false,
 };
