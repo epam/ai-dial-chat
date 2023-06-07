@@ -1,5 +1,5 @@
 import { Conversation } from '@/types/chat';
-import { OpenAIModel } from '@/types/openai';
+import { OpenAIModel, OpenAIModelID } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 import Spinner from '../Spinner';
@@ -9,16 +9,20 @@ interface Props {
   models: OpenAIModel[];
   conversation: Conversation;
   prompts: Prompt[];
+  defaultModelId: OpenAIModelID;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
+  onSelectModel: (modelId: string) => void;
 }
 
 export const ChatEmpty = ({
   models,
   conversation,
   prompts,
+  defaultModelId,
   onChangePrompt,
   onChangeTemperature,
+  onSelectModel,
 }: Props) => {
   return (
     <>
@@ -35,10 +39,13 @@ export const ChatEmpty = ({
 
         {models.length > 0 && (
           <ChatEmptySettings
+            defaultModelId={defaultModelId}
+            models={models}
             conversation={conversation}
             prompts={prompts}
             onChangePrompt={onChangePrompt}
             onChangeTemperature={onChangeTemperature}
+            onSelectModel={onSelectModel}
           />
         )}
       </div>

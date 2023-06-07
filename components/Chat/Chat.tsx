@@ -20,8 +20,9 @@ import {
 import { showAPIToastError } from '@/utils/app/errors';
 import { throttle } from '@/utils/data/throttle';
 
-import { OpenAIModel } from '../../types/openai';
+import { OpenAIModel, OpenAIModelID } from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
+import { Prompt } from '@/types/prompt';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -30,6 +31,7 @@ import { ChatEmpty } from './ChatEmpty';
 import { ChatEmptySettings } from './ChatEmptySettings';
 import { ChatInput } from './ChatInput';
 import { ChatLoader } from './ChatLoader';
+import { ChatSettings } from './ChatSettings';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { ModelSelect } from './ModelSelect';
@@ -83,6 +85,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
       modelError,
       loading,
       prompts,
+      defaultModelId,
     },
     handleUpdateConversation,
     dispatch: homeDispatch,
@@ -90,7 +93,6 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
 
   const [currentMessage, setCurrentMessage] = useState<Message>();
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
-  const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showScrollDownButton, setShowScrollDownButton] =
     useState<boolean>(false);
 
@@ -297,11 +299,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
     });
   };
 
-  const handleSettings = () => {
-    setShowSettings(!showSettings);
-  };
-
-  const onClearAll = () => {
+  const handleClearConversation = () => {
     if (
       confirm(t<string>('Are you sure you want to clear all messages?')) &&
       selectedConversation
@@ -360,6 +358,28 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
     };
   }, [messagesEndRef]);
 
+  const handleSelectModel = (conversation: Conversation, modelId: string) => {
+    handleUpdateConversation(conversation, {
+      key: 'model',
+      value: models.find((model) => model.id === modelId) as OpenAIModel,
+    });
+  };
+
+  const handleChangePrompt = (conversation: Conversation, prompt: string) =>
+    handleUpdateConversation(conversation, {
+      key: 'prompt',
+      value: prompt,
+    });
+
+  const handleChangeTemperature = (
+    conversation: Conversation,
+    temperature: number,
+  ) =>
+    handleUpdateConversation(conversation, {
+      key: 'temperature',
+      value: temperature,
+    });
+
   return (
     <div className="relative flex-1 overflow-hidden bg-white dark:bg-[#343541]">
       {!(apiKey || serverSideApiKeyIsSet) ? (
@@ -378,70 +398,55 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
                 conversation={selectedConversation}
                 models={models}
                 prompts={prompts}
+                defaultModelId={defaultModelId || OpenAIModelID.GPT_3_5}
+                onSelectModel={(modelId: string) =>
+                  handleSelectModel(selectedConversation, modelId)
+                }
                 onChangePrompt={(prompt) =>
-                  handleUpdateConversation(selectedConversation, {
-                    key: 'prompt',
-                    value: prompt,
-                  })
+                  handleChangePrompt(selectedConversation, prompt)
                 }
                 onChangeTemperature={(temperature) =>
-                  handleUpdateConversation(selectedConversation, {
-                    key: 'temperature',
-                    value: temperature,
-                  })
+                  handleChangeTemperature(selectedConversation, temperature)
                 }
               />
             ) : (
-              <>
-                <div className="sticky top-0 z-10 flex justify-center border border-b-neutral-300 bg-neutral-100 py-2 text-sm text-neutral-500 dark:border-none dark:bg-[#444654] dark:text-neutral-200">
-                  {t('Model')}: {selectedConversation?.model.name} | {t('Temp')}
-                  : {selectedConversation?.temperature} |
-                  <button
-                    className="ml-2 cursor-pointer hover:opacity-50"
-                    onClick={handleSettings}
-                  >
-                    <IconSettings size={18} />
-                  </button>
-                  <button
-                    className="ml-2 cursor-pointer hover:opacity-50"
-                    onClick={onClearAll}
-                  >
-                    <IconClearAll size={18} />
-                  </button>
-                </div>
-                {showSettings && (
-                  <div className="flex flex-col space-y-10 md:mx-auto md:max-w-xl md:gap-6 md:py-3 md:pt-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
-                    <div className="flex h-full flex-col space-y-4 border-b border-neutral-200 p-4 dark:border-neutral-600 md:rounded-lg md:border">
-                      <ModelSelect />
-                    </div>
-                  </div>
-                )}
-
-                {selectedConversation?.messages.map((message, index) => (
-                  <MemoizedChatMessage
-                    key={index}
-                    message={message}
-                    messageIndex={index}
-                    onEdit={(editedMessage) => {
-                      setCurrentMessage(editedMessage);
-                      // discard edited message and the ones that come after then resend
-                      handleSend(
-                        editedMessage,
-                        selectedConversation?.id,
-                        selectedConversation?.messages.length - index,
-                      );
-                    }}
-                    onLike={onLikeHandler(index)}
+              selectedConversation && (
+                <>
+                  <ChatSettings
+                    conversation={selectedConversation}
+                    defaultModelId={defaultModelId || OpenAIModelID.GPT_3_5}
+                    models={models}
+                    onClearConversation={handleClearConversation}
+                    onSelectModel={(modelId: string) =>
+                      handleSelectModel(selectedConversation, modelId)
+                    }
                   />
-                ))}
+                  {selectedConversation?.messages.map((message, index) => (
+                    <MemoizedChatMessage
+                      key={index}
+                      message={message}
+                      messageIndex={index}
+                      onEdit={(editedMessage) => {
+                        setCurrentMessage(editedMessage);
+                        // discard edited message and the ones that come after then resend
+                        handleSend(
+                          editedMessage,
+                          selectedConversation?.id,
+                          selectedConversation?.messages.length - index,
+                        );
+                      }}
+                      onLike={onLikeHandler(index)}
+                    />
+                  ))}
 
-                {loading && <ChatLoader />}
+                  {loading && <ChatLoader />}
 
-                <div
-                  className="h-[162px] bg-white dark:bg-[#343541]"
-                  ref={messagesEndRef}
-                />
-              </>
+                  <div
+                    className="h-[162px] bg-white dark:bg-[#343541]"
+                    ref={messagesEndRef}
+                  />
+                </>
+              )
             )}
           </div>
 
