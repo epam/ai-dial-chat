@@ -1,8 +1,10 @@
 import type { AuthOptions } from 'next-auth';
 import NextAuth from 'next-auth/next';
 import { OAuthConfig, OAuthUserConfig, Provider } from 'next-auth/providers';
+import Auth0Provider from 'next-auth/providers/auth0';
 import AzureProvider from 'next-auth/providers/azure-ad';
 import { GitLabProfile } from 'next-auth/providers/gitlab';
+import GoogleProvider from 'next-auth/providers/google';
 
 const DEFAULT_NAME = 'SSO';
 
@@ -76,6 +78,24 @@ const allProviders: (Provider | boolean)[] = [
       clientSecret: process.env.AUTH_GITLAB_SECRET,
       name: process.env.AUTH_GITLAB_NAME ?? DEFAULT_NAME,
       gitlabHost: process.env.AUTH_GITLAB_HOST,
+    }),
+
+  !!process.env.AUTH_GOOGLE_CLIENT_ID &&
+    !!process.env.AUTH_GOOGLE_SECRET &&
+    GoogleProvider({
+      clientId: process.env.AUTH_GOOGLE_CLIENT_ID,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+      name: process.env.AUTH_GOOGLE_NAME ?? DEFAULT_NAME,
+    }),
+
+  !!process.env.AUTH_AUTH0_CLIENT_ID &&
+    !!process.env.AUTH_AUTH0_SECRET &&
+    !!process.env.AUTH_AUTH0_HOST &&
+    Auth0Provider({
+      clientId: process.env.AUTH_AUTH0_CLIENT_ID,
+      clientSecret: process.env.AUTH_AUTH0_SECRET,
+      name: process.env.AUTH_AUTH0_NAME ?? DEFAULT_NAME,
+      issuer: process.env.AUTH_AUTH0_HOST,
     }),
 ];
 
