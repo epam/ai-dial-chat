@@ -72,13 +72,13 @@ OPENAI_API_KEY=YOUR_KEY
 
 > Additionally, if you have multiple OpenAI Organizations, you can set `OPENAI_ORGANIZATION` to specify one.
 
-**4. Configure SSO for Azure AD**
+**4. Configure SSO for Auth0**
 
 Add variables .env.local:
 ```bash
-AUTH_AZURE_AD_CLIENT_ID=xxxxx
-AUTH_AZURE_AD_TENANT_ID=xxxxx
-AUTH_AZURE_AD_SECRET=xxxxx
+AUTH_AUTH0_CLIENT_ID="QXHosbmuKaegHNn9MMSAKUhRNb6JXvNp"
+AUTH_AUTH0_SECRET="N-uPvuwXXluEkIT69E2RvEYxA7lHoUh4zMtjPzlGlJDCNdPzJhMTBjknGcSY9WGl"
+AUTH_AUTH0_HOST="https://chatbot-ui-staging.eu.auth0.com"
 NEXTAUTH_SECRET=xxxxx
 ```
 
