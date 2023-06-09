@@ -17,4 +17,4 @@ export const OPENAI_API_VERSION =
 export const OPENAI_ORGANIZATION =
   process.env.OPENAI_ORGANIZATION || '';
 
-export const MAX_TOKENS = +(process.env.NEXT_PUBLIC_MAX_TOKENS ?? 1000);
+export const MAX_TOKENS = 1000;
