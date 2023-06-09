@@ -2,12 +2,10 @@ import { Conversation, Message } from '@/types/chat';
 import { ErrorMessage } from '@/types/error';
 import { FolderInterface } from '@/types/folder';
 import { OpenAIModel, OpenAIModelID } from '@/types/openai';
-import { PluginKey } from '@/types/plugin';
 import { Prompt } from '@/types/prompt';
 
 export interface HomeInitialState {
   apiKey: string;
-  pluginKeys: PluginKey[];
   loading: boolean;
   lightMode: 'light' | 'dark';
   messageIsStreaming: boolean;
@@ -15,7 +13,7 @@ export interface HomeInitialState {
   models: OpenAIModel[];
   folders: FolderInterface[];
   conversations: Conversation[];
-  selectedConversation: Conversation | undefined;
+  selectedConversationIds: string[];
   currentMessage: Message | undefined;
   prompts: Prompt[];
   temperature: number;
@@ -28,19 +26,19 @@ export interface HomeInitialState {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   usePluginKeys: boolean;
+  isCompareMode: boolean;
 }
 
 export const initialState: HomeInitialState = {
   apiKey: '',
   loading: false,
-  pluginKeys: [],
   lightMode: 'dark',
   messageIsStreaming: false,
   modelError: null,
   models: [],
   folders: [],
   conversations: [],
-  selectedConversation: undefined,
+  selectedConversationIds: [],
   currentMessage: undefined,
   prompts: [],
   temperature: 1,
@@ -53,4 +51,5 @@ export const initialState: HomeInitialState = {
   serverSideApiKeyIsSet: false,
   serverSidePluginKeysSet: false,
   usePluginKeys: false,
+  isCompareMode: false,
 };

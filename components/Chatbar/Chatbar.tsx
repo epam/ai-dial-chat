@@ -5,13 +5,16 @@ import { useTranslation } from 'next-i18next';
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
-import { saveConversation, saveConversations } from '@/utils/app/conversation';
+import {
+  saveConversations,
+  saveSelectedConversationIds,
+} from '@/utils/app/conversation';
 import { saveFolders } from '@/utils/app/folders';
 import { exportData, exportItem, importData } from '@/utils/app/importExport';
 
 import { Conversation } from '@/types/chat';
 import { LatestExportFormat, SupportedExportFormats } from '@/types/export';
-import { OpenAIModels } from '@/types/openai';
+import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -33,7 +36,7 @@ export const Chatbar = () => {
   });
 
   const {
-    state: { conversations, showChatbar, defaultModelId, folders, pluginKeys },
+    state: { conversations, showChatbar, defaultModelId, folders },
     dispatch: homeDispatch,
     handleCreateFolder,
     handleNewConversation,
@@ -66,29 +69,33 @@ export const Chatbar = () => {
     const { history, folders, prompts }: LatestExportFormat = importData(data);
     homeDispatch({ field: 'conversations', value: history });
     homeDispatch({
-      field: 'selectedConversation',
-      value: history[history.length - 1],
+      field: 'selectedConversationIds',
+      value: [history[history.length - 1].id],
     });
     homeDispatch({ field: 'folders', value: folders });
     homeDispatch({ field: 'prompts', value: prompts });
   };
 
   const handleClearConversations = () => {
+    const newConversation = {
+      id: uuidv4(),
+      name: t('New Conversation'),
+      messages: [],
+      model: OpenAIModels[defaultModelId || OpenAIModelID.GPT_3_5],
+      prompt: DEFAULT_SYSTEM_PROMPT,
+      temperature: DEFAULT_TEMPERATURE,
+      folderId: null,
+    };
+
+    homeDispatch({
+      field: 'selectedConversationIds',
+      value: [newConversation.id],
+    });
     defaultModelId &&
       homeDispatch({
-        field: 'selectedConversation',
-        value: {
-          id: uuidv4(),
-          name: t('New Conversation'),
-          messages: [],
-          model: OpenAIModels[defaultModelId],
-          prompt: DEFAULT_SYSTEM_PROMPT,
-          temperature: DEFAULT_TEMPERATURE,
-          folderId: null,
-        },
+        field: 'conversations',
+        value: [newConversation],
       });
-
-    homeDispatch({ field: 'conversations', value: [] });
 
     localStorage.removeItem('conversationHistory');
     localStorage.removeItem('selectedConversation');
@@ -110,27 +117,34 @@ export const Chatbar = () => {
 
     if (updatedConversations.length > 0) {
       homeDispatch({
-        field: 'selectedConversation',
-        value: updatedConversations[updatedConversations.length - 1],
+        field: 'selectedConversationIds',
+        value: [updatedConversations[updatedConversations.length - 1].id],
       });
 
-      saveConversation(updatedConversations[updatedConversations.length - 1]);
+      saveSelectedConversationIds([
+        updatedConversations[updatedConversations.length - 1].id,
+      ]);
     } else {
+      const newConversation = {
+        id: uuidv4(),
+        name: t('New Conversation'),
+        messages: [],
+        model: OpenAIModels[defaultModelId || OpenAIModelID.GPT_3_5],
+        prompt: DEFAULT_SYSTEM_PROMPT,
+        temperature: DEFAULT_TEMPERATURE,
+        folderId: null,
+      };
       defaultModelId &&
         homeDispatch({
-          field: 'selectedConversation',
-          value: {
-            id: uuidv4(),
-            name: t('New Conversation'),
-            messages: [],
-            model: OpenAIModels[defaultModelId],
-            prompt: DEFAULT_SYSTEM_PROMPT,
-            temperature: DEFAULT_TEMPERATURE,
-            folderId: null,
-          },
+          field: 'conversations',
+          value: [newConversation],
         });
+      homeDispatch({
+        field: 'selectedConversationIds',
+        value: [newConversation.id],
+      });
 
-      localStorage.removeItem('selectedConversation');
+      localStorage.removeItem('selectedConversationIds');
     }
   };
 

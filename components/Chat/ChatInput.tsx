@@ -32,23 +32,27 @@ interface Props {
   onSend: (message: Message) => void;
   onRegenerate: () => void;
   onScrollDownClick: () => void;
+  maxLength: number;
   stopConversationRef: MutableRefObject<boolean>;
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
   showScrollDownButton: boolean;
+  isMessagesPresented: boolean;
 }
 
 export const ChatInput = ({
   onSend,
   onRegenerate,
   onScrollDownClick,
+  maxLength,
   stopConversationRef,
   textareaRef,
   showScrollDownButton,
+  isMessagesPresented,
 }: Props) => {
   const { t } = useTranslation('chat');
 
   const {
-    state: { selectedConversation, messageIsStreaming, prompts },
+    state: { messageIsStreaming, prompts },
 
     dispatch: homeDispatch,
   } = useContext(HomeContext);
@@ -72,7 +76,6 @@ export const ChatInput = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
-    const maxLength = selectedConversation?.model.maxLength;
 
     if (maxLength && value.length > maxLength) {
       alert(
@@ -268,16 +271,14 @@ export const ChatInput = ({
           </button>
         )}
 
-        {!messageIsStreaming &&
-          selectedConversation &&
-          selectedConversation.messages.length > 0 && (
-            <button
-              className="absolute top-0 left-0 right-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white py-2 px-4 text-black hover:opacity-50 dark:border-neutral-600 dark:bg-[#343541] dark:text-white md:mb-0 md:mt-2"
-              onClick={onRegenerate}
-            >
-              <IconRepeat size={16} /> {t('Regenerate response')}
-            </button>
-          )}
+        {!messageIsStreaming && isMessagesPresented && (
+          <button
+            className="absolute top-0 left-0 right-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white py-2 px-4 text-black hover:opacity-50 dark:border-neutral-600 dark:bg-[#343541] dark:text-white md:mb-0 md:mt-2"
+            onClick={onRegenerate}
+          >
+            <IconRepeat size={16} /> {t('Regenerate response')}
+          </button>
+        )}
 
         <div className="relative mx-2 flex w-full flex-grow flex-col rounded-md border border-black/10 bg-white shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:border-gray-900/50 dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)] sm:mx-4">
           <textarea

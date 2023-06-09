@@ -22,7 +22,7 @@ import { useTranslation } from 'next-i18next';
 
 import { updateConversation } from '@/utils/app/conversation';
 
-import { Message } from '@/types/chat';
+import { Conversation, Message } from '@/types/chat';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -39,6 +39,7 @@ import remarkMath from 'remark-math';
 export interface Props {
   message: Message;
   messageIndex: number;
+  conversation: Conversation;
   onEdit?: (editedMessage: Message) => void;
   onLike?: (editedMessage: Message) => void;
 }
@@ -64,17 +65,12 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
 };
 
 export const ChatMessage: FC<Props> = memo(
-  ({ message, messageIndex, onEdit, onLike }) => {
+  ({ message, messageIndex, conversation, onEdit, onLike }) => {
     const { t } = useTranslation('chat');
 
     const {
-      state: {
-        selectedConversation,
-        conversations,
-        currentMessage,
-        messageIsStreaming,
-      },
-      dispatch: homeDispatch,
+      state: { messageIsStreaming },
+      handleUpdateConversation,
     } = useContext(HomeContext);
 
     const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -83,7 +79,7 @@ export const ChatMessage: FC<Props> = memo(
     const [messagedCopied, setMessageCopied] = useState(false);
 
     const isLastMessage =
-      messageIndex == (selectedConversation?.messages.length ?? 0) - 1;
+      messageIndex == (conversation?.messages.length ?? 0) - 1;
 
     const replaceCursor = (cursorSign: string) =>
       cursorSign.replace(modelCursorSignWithBackquote, modelCursorSign);
@@ -99,7 +95,7 @@ export const ChatMessage: FC<Props> = memo(
     };
 
     const setLike = (likeStatus: number) => () => {
-      if (selectedConversation && onLike) {
+      if (conversation && onLike) {
         onLike({ ...message, like: likeStatus });
       }
     };
@@ -116,7 +112,7 @@ export const ChatMessage: FC<Props> = memo(
 
     const handleEditMessage = () => {
       if (message.content != messageContent) {
-        if (selectedConversation && onEdit) {
+        if (conversation && onEdit) {
           onEdit({ ...message, content: messageContent });
         }
       }
@@ -124,9 +120,9 @@ export const ChatMessage: FC<Props> = memo(
     };
 
     const handleDeleteMessage = () => {
-      if (!selectedConversation) return;
+      if (!conversation) return;
 
-      const { messages } = selectedConversation;
+      const { messages } = conversation;
       const findIndex = messages.findIndex((elm) => elm === message);
 
       if (findIndex < 0) return;
@@ -140,16 +136,14 @@ export const ChatMessage: FC<Props> = memo(
         messages.splice(findIndex, 1);
       }
       const updatedConversation = {
-        ...selectedConversation,
+        ...conversation,
         messages,
       };
 
-      const { single, all } = updateConversation(
-        updatedConversation,
-        conversations,
-      );
-      homeDispatch({ field: 'selectedConversation', value: single });
-      homeDispatch({ field: 'conversations', value: all });
+      handleUpdateConversation(updatedConversation, {
+        key: 'messages',
+        value: messages,
+      });
     };
 
     const handlePressEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

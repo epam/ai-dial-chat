@@ -1,4 +1,3 @@
-import { IconClearAll, IconSettings } from '@tabler/icons-react';
 import {
   MutableRefObject,
   memo,
@@ -12,32 +11,22 @@ import {
 import { useTranslation } from 'next-i18next';
 
 import { getEndpoint } from '@/utils/app/api';
-import {
-  saveConversation,
-  saveConversations,
-  updateConversation,
-} from '@/utils/app/conversation';
 import { showAPIToastError } from '@/utils/app/errors';
 import { throttle } from '@/utils/data/throttle';
 
 import { OpenAIModel, OpenAIModelID } from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
-import { Prompt } from '@/types/prompt';
 
 import HomeContext from '@/pages/api/home/home.context';
 
-import Spinner from '../Spinner';
+import { ChatCompareSelect } from './ChatCompareSelect';
 import { ChatEmpty } from './ChatEmpty';
-import { ChatEmptySettings } from './ChatEmptySettings';
 import { ChatInput } from './ChatInput';
 import { ChatLoader } from './ChatLoader';
 import { ChatSettings } from './ChatSettings';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
-import { ModelSelect } from './ModelSelect';
 import { NoApiKeySet } from './NoApiKeySet';
-import { SystemPrompt } from './SystemPrompt';
-import { TemperatureSlider } from './Temperature';
 
 import { errorsMessages } from '@/constants/errors';
 
@@ -74,55 +63,93 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
 
   const {
     state: {
-      selectedConversation,
       conversations,
+      selectedConversationIds,
       models,
       apiKey,
-      pluginKeys,
       serverSideApiKeyIsSet,
-      usePluginKeys,
       messageIsStreaming,
       modelError,
       loading,
       prompts,
       defaultModelId,
+      isCompareMode,
     },
     handleUpdateConversation,
+    handleSelectConversation,
     dispatch: homeDispatch,
   } = useContext(HomeContext);
 
-  const [currentMessage, setCurrentMessage] = useState<Message>();
+  const [currentUserMessage, setCurrentUserMessage] = useState<Message>();
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
     useState<boolean>(false);
+  const [selectedConversations, setSelectedConversations] = useState<
+    Conversation[]
+  >([]);
+  const [mergedMessages, setMergedMessages] = useState<any>([]);
+
+  const localConversations = useRef<Conversation[]>(conversations);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  useEffect(() => {
+    if (selectedConversationIds.length > 0) {
+      const selectedConversations = conversations.filter((conv) =>
+        selectedConversationIds.includes(conv.id),
+      );
+      setSelectedConversations(
+        conversations.filter((conv) =>
+          selectedConversationIds.includes(conv.id),
+        ),
+      );
+      let mergedMessages = [];
+      for (let i = 0; i < selectedConversations[0].messages.length; i++) {
+        mergedMessages.push(
+          selectedConversations.map((conv) => [conv, conv.messages[i], i]),
+        );
+      }
+      setMergedMessages(mergedMessages);
+    }
+  }, [selectedConversationIds, conversations]);
+
   const handleSend = useCallback(
-    async (message: Message, id: string, deleteCount = 0) => {
-      if (selectedConversation) {
+    async (conversation: Conversation, message: Message, deleteCount = 0) => {
+      if (conversation) {
         let updatedConversation: Conversation;
         if (deleteCount) {
-          const updatedMessages = [...selectedConversation.messages];
+          const updatedMessages = [...conversation.messages];
           for (let i = 0; i < deleteCount; i++) {
             updatedMessages.pop();
           }
           updatedConversation = {
-            ...selectedConversation,
+            ...conversation,
             messages: [...updatedMessages, message],
           };
+          localConversations.current = handleUpdateConversation(
+            updatedConversation,
+            {
+              key: 'messages',
+              value: [...updatedMessages, message],
+            },
+            localConversations.current,
+          );
         } else {
           updatedConversation = {
-            ...selectedConversation,
-            messages: [...selectedConversation.messages, message],
+            ...conversation,
+            messages: [...conversation.messages, message],
           };
+          localConversations.current = handleUpdateConversation(
+            updatedConversation,
+            {
+              key: 'messages',
+              value: [...conversation.messages, message],
+            },
+            localConversations.current,
+          );
         }
-        homeDispatch({
-          field: 'selectedConversation',
-          value: updatedConversation,
-        });
         homeDispatch({ field: 'loading', value: true });
         homeDispatch({ field: 'messageIsStreaming', value: true });
         const chatBody: ChatBody = {
@@ -131,7 +158,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
             const gptMessage = { ...message, like: void 0 };
             return gptMessage;
           }),
-          id: id.toLowerCase(),
+          id: conversation.id.toLowerCase(),
           key: apiKey,
           prompt: updatedConversation.prompt,
           temperature: updatedConversation.temperature,
@@ -169,6 +196,14 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
             ...updatedConversation,
             name: customName,
           };
+          localConversations.current = handleUpdateConversation(
+            updatedConversation,
+            {
+              key: 'name',
+              value: customName,
+            },
+            localConversations.current,
+          );
         }
         homeDispatch({ field: 'loading', value: false });
         const reader = data.getReader();
@@ -196,10 +231,14 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
               ...updatedConversation,
               messages: updatedMessages,
             };
-            homeDispatch({
-              field: 'selectedConversation',
-              value: updatedConversation,
-            });
+            localConversations.current = handleUpdateConversation(
+              updatedConversation,
+              {
+                key: 'messages',
+                value: updatedMessages,
+              },
+              localConversations.current,
+            );
           } else {
             const updatedMessages: Message[] = updatedConversation.messages.map(
               (message, index) => {
@@ -216,57 +255,42 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
               ...updatedConversation,
               messages: updatedMessages,
             };
-            homeDispatch({
-              field: 'selectedConversation',
-              value: updatedConversation,
-            });
+            localConversations.current = handleUpdateConversation(
+              updatedConversation,
+              {
+                key: 'messages',
+                value: updatedMessages,
+              },
+              localConversations.current,
+            );
           }
         }
-        saveConversation(updatedConversation);
-        const updatedConversations: Conversation[] = conversations.map(
-          (conversation) => {
-            if (conversation.id === selectedConversation.id) {
-              return updatedConversation;
-            }
-            return conversation;
-          },
-        );
-        if (updatedConversations.length === 0) {
-          updatedConversations.push(updatedConversation);
-        }
-        homeDispatch({ field: 'conversations', value: updatedConversations });
-        saveConversations(updatedConversations);
+
         homeDispatch({ field: 'messageIsStreaming', value: false });
       }
     },
-    [
-      apiKey,
-      conversations,
-      pluginKeys,
-      selectedConversation,
-      stopConversationRef,
-    ],
+    [apiKey, conversations, stopConversationRef],
   );
 
   const onLikeHandler = useCallback(
-    (index: number) => (editedMessage: Message) => {
-      if (!selectedConversation) {
+    (index: number, conversation: Conversation) => (editedMessage: Message) => {
+      if (!conversation) {
         return;
       }
-      const messages = [...selectedConversation.messages];
+      const messages = [...conversation.messages];
       messages[index] = editedMessage;
-      handleUpdateConversation(selectedConversation, {
+      handleUpdateConversation(conversation, {
         key: 'messages',
         value: messages,
       });
       handleRate(
         editedMessage,
-        selectedConversation?.id ?? '',
-        selectedConversation.model,
+        conversation?.id ?? '',
+        conversation.model,
         apiKey,
       );
     },
-    [apiKey, handleUpdateConversation, selectedConversation],
+    [apiKey, handleUpdateConversation],
   );
 
   const scrollToBottom = useCallback(() => {
@@ -299,12 +323,12 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
     });
   };
 
-  const handleClearConversation = () => {
+  const handleClearConversation = (conversation: Conversation) => {
     if (
       confirm(t<string>('Are you sure you want to clear all messages?')) &&
-      selectedConversation
+      conversation
     ) {
-      handleUpdateConversation(selectedConversation, {
+      handleUpdateConversation(conversation, {
         key: 'messages',
         value: [],
       });
@@ -318,21 +342,14 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   };
   const throttledScrollDown = throttle(scrollDown, 250);
 
-  // useEffect(() => {
-  //   console.log('currentMessage', currentMessage);
-  //   if (currentMessage) {
-  //     handleSend(currentMessage);
-  //     homeDispatch({ field: 'currentMessage', value: undefined });
-  //   }
-  // }, [currentMessage]);
-
+  // TODO: fix
   useEffect(() => {
     throttledScrollDown();
-    selectedConversation &&
-      setCurrentMessage(
-        selectedConversation.messages[selectedConversation.messages.length - 2],
-      );
-  }, [selectedConversation, throttledScrollDown]);
+    // selectedConversation &&
+    //   setCurrentUserMessage(
+    //     selectedConversation.messages[selectedConversation.messages.length - 2],
+    //   );
+  }, [selectedConversationIds, throttledScrollDown]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -380,6 +397,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
       value: temperature,
     });
 
+  console.log(mergedMessages);
   return (
     <div className="relative flex-1 overflow-hidden bg-white dark:bg-[#343541]">
       {!(apiKey || serverSideApiKeyIsSet) ? (
@@ -388,79 +406,126 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
         <ErrorMessageDiv error={modelError} />
       ) : (
         <>
-          <div
-            className="max-h-full overflow-x-hidden"
-            ref={chatContainerRef}
-            onScroll={handleScroll}
-          >
-            {selectedConversation?.messages.length === 0 ? (
-              <ChatEmpty
-                conversation={selectedConversation}
-                models={models}
-                prompts={prompts}
-                defaultModelId={defaultModelId || OpenAIModelID.GPT_3_5}
-                onSelectModel={(modelId: string) =>
-                  handleSelectModel(selectedConversation, modelId)
-                }
-                onChangePrompt={(prompt) =>
-                  handleChangePrompt(selectedConversation, prompt)
-                }
-                onChangeTemperature={(temperature) =>
-                  handleChangeTemperature(selectedConversation, temperature)
-                }
-              />
-            ) : (
-              selectedConversation && (
-                <>
-                  <ChatSettings
-                    conversation={selectedConversation}
-                    defaultModelId={defaultModelId || OpenAIModelID.GPT_3_5}
-                    models={models}
-                    onClearConversation={handleClearConversation}
-                    onSelectModel={(modelId: string) =>
-                      handleSelectModel(selectedConversation, modelId)
-                    }
-                  />
-                  {selectedConversation?.messages.map((message, index) => (
-                    <MemoizedChatMessage
-                      key={index}
-                      message={message}
-                      messageIndex={index}
-                      onEdit={(editedMessage) => {
-                        setCurrentMessage(editedMessage);
-                        // discard edited message and the ones that come after then resend
-                        handleSend(
-                          editedMessage,
-                          selectedConversation?.id,
-                          selectedConversation?.messages.length - index,
-                        );
-                      }}
-                      onLike={onLikeHandler(index)}
-                    />
-                  ))}
-
-                  {loading && <ChatLoader />}
-
-                  <div
-                    className="h-[162px] bg-white dark:bg-[#343541]"
-                    ref={messagesEndRef}
-                  />
-                </>
-              )
-            )}
+          <div className="flex max-h-full">
+            <div className="w-full h-full relative">
+              <div className="flex w-full sticky">
+                {selectedConversations.map((conv) => (
+                  <>
+                    <div
+                      key={conv.id}
+                      className={`${isCompareMode ? 'w-[50%]' : 'w-full'}`}
+                    >
+                      {conv.messages.length === 0 ? (
+                        <ChatEmpty
+                          conversation={conv}
+                          models={models}
+                          prompts={prompts}
+                          defaultModelId={
+                            defaultModelId || OpenAIModelID.GPT_3_5
+                          }
+                          onSelectModel={(modelId: string) =>
+                            handleSelectModel(conv, modelId)
+                          }
+                          onChangePrompt={(prompt) =>
+                            handleChangePrompt(conv, prompt)
+                          }
+                          onChangeTemperature={(temperature) =>
+                            handleChangeTemperature(conv, temperature)
+                          }
+                        />
+                      ) : (
+                        <ChatSettings
+                          conversation={conv}
+                          defaultModelId={
+                            defaultModelId || OpenAIModelID.GPT_3_5
+                          }
+                          models={models}
+                          onClearConversation={() =>
+                            handleClearConversation(conv)
+                          }
+                          onSelectModel={(modelId: string) =>
+                            handleSelectModel(conv, modelId)
+                          }
+                        />
+                      )}
+                    </div>
+                    {isCompareMode && selectedConversations.length < 2 && (
+                      <ChatCompareSelect
+                        conversations={conversations}
+                        selectedConversations={selectedConversations}
+                        onConversationSelect={(conversation) => {
+                          handleSelectConversation(conversation, true);
+                        }}
+                      />
+                    )}
+                  </>
+                ))}
+              </div>
+              <div
+                className="max-h-full overflow-x-hidden overflow-auto flex flex-col"
+                ref={chatContainerRef}
+                onScroll={handleScroll}
+              >
+                {mergedMessages.map((mergedStr, i) => (
+                  <div key={i} className="w-full flex">
+                    {mergedStr.map(([conv, message, index]) => (
+                      <div
+                        key={conv.id}
+                        className={`${isCompareMode ? 'w-[50%]' : 'w-full'}`}
+                      >
+                        <div>
+                          <MemoizedChatMessage
+                            key={conv.id}
+                            message={message}
+                            messageIndex={index}
+                            conversation={conv}
+                            onEdit={(editedMessage) => {
+                              setCurrentUserMessage(editedMessage);
+                              // discard edited message and the ones that come after then resend
+                              handleSend(
+                                conv,
+                                editedMessage,
+                                conv?.messages.length - index,
+                              );
+                            }}
+                            onLike={onLikeHandler(index, conv)}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+                {loading && <ChatLoader />}
+                <div
+                  className="h-[162px] bg-white dark:bg-[#343541]"
+                  ref={messagesEndRef}
+                />
+              </div>
+            </div>
           </div>
-
           <ChatInput
             stopConversationRef={stopConversationRef}
             textareaRef={textareaRef}
+            isMessagesPresented={selectedConversations.some(
+              (val) => val.messages.length > 0,
+            )}
+            maxLength={Math.min(
+              ...selectedConversations.map((conv) => conv.model.maxLength),
+            )}
             onSend={(message) => {
-              setCurrentMessage(message);
-              handleSend(message, selectedConversation?.id ?? '', 0);
+              setCurrentUserMessage(message);
+              localConversations.current = conversations;
+              selectedConversations.forEach((conv) => {
+                handleSend(conv, message, 0);
+              });
             }}
             onScrollDownClick={handleScrollDown}
             onRegenerate={() => {
-              if (currentMessage) {
-                handleSend(currentMessage, selectedConversation?.id ?? '', 2);
+              if (currentUserMessage) {
+                localConversations.current = conversations;
+                selectedConversations.forEach((conv) => {
+                  handleSend(conv, currentUserMessage, 2);
+                });
               }
             }}
             showScrollDownButton={showScrollDownButton}
