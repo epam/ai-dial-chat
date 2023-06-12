@@ -27,6 +27,9 @@ export interface HomeInitialState {
   serverSidePluginKeysSet: boolean;
   usePluginKeys: boolean;
   isCompareMode: boolean;
+  isShowFooter: boolean;
+  isShowRequestApiKey: boolean;
+  isShowReportAnIssue: boolean;
 }
 
 export const initialState: HomeInitialState = {
@@ -52,4 +55,7 @@ export const initialState: HomeInitialState = {
   serverSidePluginKeysSet: false,
   usePluginKeys: false,
   isCompareMode: false,
+  isShowFooter: false,
+  isShowRequestApiKey: false,
+  isShowReportAnIssue: false,
 };

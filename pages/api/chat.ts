@@ -74,9 +74,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       OpenAIModels[_model.id as OpenAIModelID] ?? OpenAIModels[fallbackModelID];
 
     let tokens_per_message = 0;
-    if (model.name == 'GPT-3.5') {
+    if (model.id == OpenAIModelID.GPT_3_5 || model.id == OpenAIModelID.GPT_3_5_AZ) {
       tokens_per_message = 5;
-    } else if (model.name == 'GPT-4' || model.name == 'GPT-4-32K') {
+    } else if (model.id == OpenAIModelID.GPT_4 || model.name == OpenAIModelID.GPT_4_32K || model.name === OpenAIModelID.BISON_001) {
       tokens_per_message = 4;
     }
 
