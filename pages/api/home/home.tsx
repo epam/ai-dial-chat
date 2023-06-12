@@ -354,10 +354,11 @@ const Home = ({
     }
 
     const conversationHistory = localStorage.getItem('conversationHistory');
+    let cleanedConversationHistory: Conversation[] | undefined;
     if (conversationHistory) {
       const parsedConversationHistory: Conversation[] =
         JSON.parse(conversationHistory);
-      const cleanedConversationHistory = cleanConversationHistory(
+      cleanedConversationHistory = cleanConversationHistory(
         parsedConversationHistory,
       );
 
@@ -367,13 +368,23 @@ const Home = ({
     const selectedConversationIds = localStorage.getItem(
       'selectedConversationIds',
     );
-    if (selectedConversationIds) {
+    const parsedSelectedConversationsIds: string[] = JSON.parse(
+      selectedConversationIds || '[]',
+    );
+    const filteredSelectedConversationIds =
+      parsedSelectedConversationsIds.filter((convId) =>
+        cleanedConversationHistory?.some((conv) => conv.id === convId),
+      );
+    if (
+      filteredSelectedConversationIds?.length > 0 &&
+      cleanedConversationHistory
+    ) {
       dispatch({
         field: 'selectedConversationIds',
-        value: JSON.parse(selectedConversationIds),
+        value: filteredSelectedConversationIds,
       });
 
-      if (selectedConversationIds.length > 1) {
+      if (filteredSelectedConversationIds.length > 1) {
         dispatch({
           field: 'isCompareMode',
           value: true,
