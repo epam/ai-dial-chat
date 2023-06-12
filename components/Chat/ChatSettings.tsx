@@ -39,7 +39,7 @@ export const ChatSettings = ({
           <>
             {t('Name')}:&nbsp;
             <span
-              className="max-w-[50px] text-ellipsis whitespace-nowrap overflow-hidden"
+              className="max-w-[50px] lg:max-w-[300px] text-ellipsis whitespace-nowrap overflow-hidden"
               title={conversation.name}
             >
               {conversation.name}
@@ -47,8 +47,10 @@ export const ChatSettings = ({
             &nbsp;|{' '}
           </>
         )}
-        {t('Model')}: {conversation.model.name} | {t('Temp')}:{' '}
-        {conversation.temperature} |
+        <span>
+          {t('Model')}: {conversation.model.name} | {t('Temp')}:{' '}
+          {conversation.temperature} |
+        </span>
         <button
           className="ml-2 cursor-pointer hover:opacity-50"
           onClick={() => {
