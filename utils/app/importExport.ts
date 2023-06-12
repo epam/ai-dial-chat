@@ -96,9 +96,11 @@ export const exportItem = (conversationId: string) => {
 
   if (history) {
     convertedHistory = JSON.parse(history) as Conversation[];
-    conversation = convertedHistory.filter(({ id }) => id === conversationId)[0];
+    conversation = convertedHistory.filter(
+      ({ id }) => id === conversationId,
+    )[0];
 
-    if (typeof conversation !== "undefined") {
+    if (typeof conversation !== 'undefined') {
       convertedHistory = [conversation];
     }
   }
@@ -106,8 +108,10 @@ export const exportItem = (conversationId: string) => {
   if (folders) {
     convertedFolders = JSON.parse(folders) as FolderInterface[];
 
-    if (typeof conversation !== "undefined") {
-      convertedFolders = convertedFolders.filter(({ id }) => id === conversation?.folderId);
+    if (typeof conversation !== 'undefined') {
+      convertedFolders = convertedFolders.filter(
+        ({ id }) => id === conversation?.folderId,
+      );
     }
   }
 
@@ -119,7 +123,7 @@ export const exportItem = (conversationId: string) => {
   } as LatestExportFormat;
 
   triggerDownload(data);
-}
+};
 
 export const exportData = () => {
   let history = localStorage.getItem('conversationHistory');
@@ -145,7 +149,7 @@ export const exportData = () => {
     prompts: prompts || [],
   } as LatestExportFormat;
 
-  triggerDownload(data)
+  triggerDownload(data);
 };
 
 export const importData = (
@@ -168,11 +172,11 @@ export const importData = (
   localStorage.setItem('conversationHistory', JSON.stringify(newHistory));
   if (newHistory.length > 0) {
     localStorage.setItem(
-      'selectedConversation',
-      JSON.stringify(newHistory[newHistory.length - 1]),
+      'selectedConversationIds',
+      JSON.stringify([newHistory[newHistory.length - 1].id]),
     );
   } else {
-    localStorage.removeItem('selectedConversation');
+    localStorage.removeItem('selectedConversationIds');
   }
 
   const oldFolders = localStorage.getItem('folders');
@@ -201,4 +205,3 @@ export const importData = (
     prompts: newPrompts,
   };
 };
-

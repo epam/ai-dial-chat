@@ -111,17 +111,22 @@ const Home = ({
     conversation: Conversation,
     isMultiple?: boolean,
   ) => {
-    if (!selectedConversationIds.includes(conversation.id)) {
-      const newSelectedIds = isMultiple
-        ? [...selectedConversationIds, conversation.id]
-        : [conversation.id];
-      dispatch({
-        field: 'selectedConversationIds',
-        value: newSelectedIds,
-      });
+    const newSelectedIds = isMultiple
+      ? Array.from(new Set([...selectedConversationIds, conversation.id]))
+      : [conversation.id];
+    dispatch({
+      field: 'selectedConversationIds',
+      value: newSelectedIds,
+    });
 
-      saveSelectedConversationIds(newSelectedIds);
+    if (!isMultiple) {
+      dispatch({
+        field: 'isCompareMode',
+        value: false,
+      });
     }
+
+    saveSelectedConversationIds(newSelectedIds);
   };
 
   // FOLDER OPERATIONS  --------------------------------------------
@@ -341,8 +346,15 @@ const Home = ({
     if (selectedConversationIds) {
       dispatch({
         field: 'selectedConversationIds',
-        value: selectedConversationIds,
+        value: JSON.parse(selectedConversationIds),
       });
+
+      if (selectedConversationIds.length > 1) {
+        dispatch({
+          field: 'isCompareMode',
+          value: true,
+        });
+      }
     } else {
       const lastConversation = conversations[conversations.length - 1];
       const newConversation = {

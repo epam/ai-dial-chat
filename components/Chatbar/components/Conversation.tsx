@@ -205,6 +205,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
                       field: 'isCompareMode',
                       value: true,
                     });
+                    setIsContextMenuOpened(false);
                   }}
                 />
               )}

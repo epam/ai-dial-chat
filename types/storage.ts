@@ -1,13 +1,12 @@
 import { Conversation } from './chat';
 import { FolderInterface } from './folder';
-import { PluginKey } from './plugin';
 import { Prompt } from './prompt';
 
 // keep track of local storage schema
 export interface LocalStorage {
   apiKey: string;
   conversationHistory: Conversation[];
-  selectedConversation: Conversation;
+  selectedConversationIds: string[];
   theme: 'light' | 'dark';
   // added folders (3/23/23)
   folders: FolderInterface[];

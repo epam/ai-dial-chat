@@ -1,14 +1,17 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 
+import { getHeaders } from '../../utils/server/getHeaders';
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
 import { OpenAIError, OpenAIStream } from '@/utils/server';
 
+import { OpenAIModelID, OpenAIModels } from '../../types/openai';
+import { fallbackModelID } from '../../types/openai';
 import { ChatBody, Message } from '@/types/chat';
-import { errorsMessages } from '@/constants/errors';
 
 import { authOptions } from './auth/[...nextauth]';
 
+import { errorsMessages } from '@/constants/errors';
 // 1@ts-expect-error
 // import wasm from '../../node_modules/@dqbd/tiktoken/lite/tiktoken_bg.wasm?module';
 // import wasm from '@dqbd/tiktoken/lite/tiktoken_bg.wasm';
@@ -16,9 +19,6 @@ import tiktokenModel from '@dqbd/tiktoken/encoders/cl100k_base.json';
 import { Tiktoken, init } from '@dqbd/tiktoken/lite/init';
 import { readFileSync } from 'fs';
 import path from 'path';
-import { getHeaders } from '../../utils/server/getHeaders';
-import { OpenAIModelID, OpenAIModels } from '../../types/openai';
-import { fallbackModelID } from '../../types/openai';
 
 // export const config = {
 //   runtime: 'edge',
@@ -38,7 +38,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const { model: _model, messages, key, prompt, temperature, id } = req.body as ChatBody;
+    const {
+      model: _model,
+      messages,
+      key,
+      prompt,
+      temperature,
+      id,
+    } = req.body as ChatBody;
 
     await init((imports) => WebAssembly.instantiate(wasm, imports));
     const encoding = new Tiktoken(
@@ -57,12 +64,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       temperatureToUse = DEFAULT_TEMPERATURE;
     }
 
+    console.log(promptToSend);
     const prompt_tokens = encoding.encode(promptToSend);
 
     // let tokenCount = prompt_tokens.length;
     // let messagesToSend: Message[] = [];
-    
-    const model = OpenAIModels[_model.id as OpenAIModelID] ?? OpenAIModels[fallbackModelID];
+
+    const model =
+      OpenAIModels[_model.id as OpenAIModelID] ?? OpenAIModels[fallbackModelID];
 
     let tokens_per_message = 0;
     if (model.name == 'GPT-3.5') {

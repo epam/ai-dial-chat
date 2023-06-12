@@ -68,7 +68,6 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
       models,
       apiKey,
       serverSideApiKeyIsSet,
-      messageIsStreaming,
       modelError,
       loading,
       prompts,
@@ -97,18 +96,19 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
 
   useEffect(() => {
     if (selectedConversationIds.length > 0) {
-      const selectedConversations = conversations.filter((conv) =>
-        selectedConversationIds.includes(conv.id),
-      );
-      setSelectedConversations(
-        conversations.filter((conv) =>
-          selectedConversationIds.includes(conv.id),
-        ),
-      );
+      const selectedConversations = selectedConversationIds
+        .map((id) => conversations.find((conv) => conv.id === id))
+        .filter((value) => !!value) as Conversation[];
+      setSelectedConversations(selectedConversations);
+
       let mergedMessages = [];
       for (let i = 0; i < selectedConversations[0].messages.length; i++) {
         mergedMessages.push(
-          selectedConversations.map((conv) => [conv, conv.messages[i], i]),
+          selectedConversations.map((conv) => [
+            conv,
+            conv.messages[i] || { role: 'assistant', content: '' },
+            i,
+          ]),
         );
       }
       setMergedMessages(mergedMessages);
@@ -335,22 +335,6 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
     }
   };
 
-  const scrollDown = () => {
-    if (autoScrollEnabled) {
-      messagesEndRef.current?.scrollIntoView(true);
-    }
-  };
-  const throttledScrollDown = throttle(scrollDown, 250);
-
-  // TODO: fix
-  useEffect(() => {
-    throttledScrollDown();
-    // selectedConversation &&
-    //   setCurrentUserMessage(
-    //     selectedConversation.messages[selectedConversation.messages.length - 2],
-    //   );
-  }, [selectedConversationIds, throttledScrollDown]);
-
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -360,8 +344,8 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
         }
       },
       {
-        root: null,
-        threshold: 0.5,
+        root: chatContainerRef.current,
+        threshold: 0.1,
       },
     );
     const messagesEndElement = messagesEndRef.current;
@@ -397,7 +381,35 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
       value: temperature,
     });
 
-  console.log(mergedMessages);
+  const handleDeleteMessage = (message: Message) => {
+    selectedConversations.forEach((conversation) => {
+      const { messages } = conversation;
+      const findIndex = messages.findIndex(
+        ({ content }) => content === message.content,
+      );
+
+      if (findIndex < 0) return;
+
+      if (
+        findIndex < messages.length - 1 &&
+        messages[findIndex + 1].role === 'assistant'
+      ) {
+        messages.splice(findIndex, 2);
+      } else {
+        messages.splice(findIndex, 1);
+      }
+      const updatedConversation = {
+        ...conversation,
+        messages,
+      };
+
+      handleUpdateConversation(updatedConversation, {
+        key: 'messages',
+        value: messages,
+      });
+    });
+  };
+
   return (
     <div className="relative flex-1 overflow-hidden bg-white dark:bg-[#343541]">
       {!(apiKey || serverSideApiKeyIsSet) ? (
@@ -406,14 +418,24 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
         <ErrorMessageDiv error={modelError} />
       ) : (
         <>
-          <div className="flex max-h-full">
-            <div className="w-full h-full relative">
-              <div className="flex w-full sticky">
+          <div className="flex h-full overflow-hidden">
+            <div
+              className={`flex flex-col h-full overflow-hidden ${
+                isCompareMode && selectedConversations.length < 2
+                  ? 'w-[50%]'
+                  : 'w-full'
+              }`}
+            >
+              <div className="flex w-full sticky top-0 z-10">
                 {selectedConversations.map((conv) => (
                   <>
                     <div
                       key={conv.id}
-                      className={`${isCompareMode ? 'w-[50%]' : 'w-full'}`}
+                      className={`${
+                        isCompareMode && selectedConversations.length > 1
+                          ? 'w-[50%]'
+                          : 'w-full'
+                      }`}
                     >
                       {conv.messages.length === 0 ? (
                         <ChatEmpty
@@ -440,68 +462,99 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
                             defaultModelId || OpenAIModelID.GPT_3_5
                           }
                           models={models}
+                          isCompareMode={isCompareMode}
+                          selectedCinversationIds={selectedConversationIds}
                           onClearConversation={() =>
                             handleClearConversation(conv)
                           }
                           onSelectModel={(modelId: string) =>
                             handleSelectModel(conv, modelId)
                           }
+                          onUnselectConversation={() => {
+                            const filteredSelectedConversation =
+                              selectedConversations.filter(
+                                ({ id }) => id !== conv.id,
+                              )[0];
+                            handleSelectConversation(
+                              filteredSelectedConversation,
+                            );
+                          }}
                         />
                       )}
                     </div>
-                    {isCompareMode && selectedConversations.length < 2 && (
-                      <ChatCompareSelect
-                        conversations={conversations}
-                        selectedConversations={selectedConversations}
-                        onConversationSelect={(conversation) => {
-                          handleSelectConversation(conversation, true);
-                        }}
-                      />
-                    )}
                   </>
                 ))}
               </div>
               <div
-                className="max-h-full overflow-x-hidden overflow-auto flex flex-col"
+                className="max-h-full overflow-x-hidden flex flex-col"
                 ref={chatContainerRef}
                 onScroll={handleScroll}
               >
-                {mergedMessages.map((mergedStr, i) => (
-                  <div key={i} className="w-full flex">
-                    {mergedStr.map(([conv, message, index]) => (
-                      <div
-                        key={conv.id}
-                        className={`${isCompareMode ? 'w-[50%]' : 'w-full'}`}
-                      >
-                        <div>
-                          <MemoizedChatMessage
+                {mergedMessages.map(
+                  (mergedStr: [Conversation, Message, number][], i: number) => (
+                    <div key={i} className="w-full flex">
+                      {mergedStr.map(
+                        ([conv, message, index]: [
+                          Conversation,
+                          Message,
+                          number,
+                        ]) => (
+                          <div
                             key={conv.id}
-                            message={message}
-                            messageIndex={index}
-                            conversation={conv}
-                            onEdit={(editedMessage) => {
-                              setCurrentUserMessage(editedMessage);
-                              // discard edited message and the ones that come after then resend
-                              handleSend(
-                                conv,
-                                editedMessage,
-                                conv?.messages.length - index,
-                              );
-                            }}
-                            onLike={onLikeHandler(index, conv)}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
+                            className={`${
+                              isCompareMode && selectedConversations.length > 1
+                                ? 'w-[50%]'
+                                : 'w-full'
+                            }`}
+                          >
+                            <div className="h-full">
+                              <MemoizedChatMessage
+                                key={conv.id}
+                                message={message}
+                                messageIndex={index}
+                                conversation={conv}
+                                onEdit={(editedMessage) => {
+                                  setCurrentUserMessage(editedMessage);
+                                  // discard edited message and the ones that come after then resend
+
+                                  selectedConversations.forEach((conv) => {
+                                    handleSend(
+                                      conv,
+                                      editedMessage,
+                                      conv?.messages.length - index,
+                                    );
+                                  });
+                                }}
+                                onLike={onLikeHandler(index, conv)}
+                                onDelete={(message) => {
+                                  handleDeleteMessage(message);
+                                }}
+                              />
+                            </div>
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  ),
+                )}
                 {loading && <ChatLoader />}
                 <div
-                  className="h-[162px] bg-white dark:bg-[#343541]"
+                  className="h-[162px] shrink-0 bg-white dark:bg-[#343541]"
                   ref={messagesEndRef}
                 />
               </div>
             </div>
+            {isCompareMode && selectedConversations.length < 2 && (
+              <div className="w-[50%]">
+                <ChatCompareSelect
+                  conversations={conversations}
+                  selectedConversations={selectedConversations}
+                  onConversationSelect={(conversation) => {
+                    handleSelectConversation(conversation, true);
+                  }}
+                />
+              </div>
+            )}
           </div>
           <ChatInput
             stopConversationRef={stopConversationRef}

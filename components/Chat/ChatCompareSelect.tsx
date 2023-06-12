@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Conversation } from '@/types/chat';
 
@@ -13,6 +14,7 @@ export const ChatCompareSelect = ({
   selectedConversations,
   onConversationSelect,
 }: Props) => {
+  const { t } = useTranslation('chat');
   const [comparableConversations, setComparableConversations] = useState<
     Conversation[]
   >([]);
@@ -57,9 +59,19 @@ export const ChatCompareSelect = ({
   }, [conversations, selectedConversations]);
 
   return (
-    <div className="flex flex-col items-start">
-      <h5 className="h-full">Select Conversation</h5>
+    <div className="flex flex-col items-center justify-center h-full text-base text-black/80 dark:text-white/80">
+      <div className="mb-5 flex flex-col text-center max-w-[300px]">
+        <h5>{t('Select Conversation to compare with')}</h5>
+        <i>
+          (
+          {t(
+            'Note: only conversations with same user messages can be compared',
+          )}
+          )
+        </i>
+      </div>
       <select
+        className="bg-[#40414F] p-3 rounded-md min-w-[150px] border border-gray-900/50"
         onChange={(e) => {
           const selectedOption = conversations
             .filter((val) => val.id === e.target.value)
@@ -69,9 +81,13 @@ export const ChatCompareSelect = ({
             onConversationSelect(selectedOption);
           }
         }}
-        value="''"
+        value="null"
       >
-        <option value="''">Select Option</option>
+        {comparableConversations.length === 0 ? (
+          <option value="null">No conversations available</option>
+        ) : (
+          <option value="null">Select Conversation</option>
+        )}
         {comparableConversations.map((val) => (
           <option key={val.id} value={val.id}>
             {val.name}

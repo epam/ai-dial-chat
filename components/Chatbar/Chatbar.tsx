@@ -72,6 +72,10 @@ export const Chatbar = () => {
       field: 'selectedConversationIds',
       value: [history[history.length - 1].id],
     });
+    homeDispatch({
+      field: 'isCompareMode',
+      value: false,
+    });
     homeDispatch({ field: 'folders', value: folders });
     homeDispatch({ field: 'prompts', value: prompts });
   };
@@ -91,6 +95,10 @@ export const Chatbar = () => {
       field: 'selectedConversationIds',
       value: [newConversation.id],
     });
+    homeDispatch({
+      field: 'isCompareMode',
+      value: false,
+    });
     defaultModelId &&
       homeDispatch({
         field: 'conversations',
@@ -98,7 +106,6 @@ export const Chatbar = () => {
       });
 
     localStorage.removeItem('conversationHistory');
-    localStorage.removeItem('selectedConversation');
 
     const updatedFolders = folders.filter((f) => f.type !== 'chat');
 
@@ -146,6 +153,10 @@ export const Chatbar = () => {
 
       localStorage.removeItem('selectedConversationIds');
     }
+    homeDispatch({
+      field: 'isCompareMode',
+      value: false,
+    });
   };
 
   const handleToggleChatbar = () => {
