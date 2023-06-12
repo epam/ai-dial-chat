@@ -1,14 +1,19 @@
-import { IconClearAll, IconSettings } from '@tabler/icons-react';
 import {
+  IconClearAll,
+  IconPlayerPlay,
+  IconSettings,
+} from '@tabler/icons-react';
+import {
+  MouseEventHandler,
   MutableRefObject,
   memo,
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
-import toast from 'react-hot-toast';
 
 import { useTranslation } from 'next-i18next';
 
@@ -30,6 +35,7 @@ import HomeContext from '@/pages/api/home/home.context';
 import Spinner from '../Spinner';
 import { ChatInput } from './ChatInput';
 import { ChatLoader } from './ChatLoader';
+import ChatReplayControls from './ChatReplayControls';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { ModelSelect } from './ModelSelect';
@@ -92,10 +98,47 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showScrollDownButton, setShowScrollDownButton] =
     useState<boolean>(false);
+  const [activeReplayIndex, setActiveReplayIndex] = useState<number>(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const isEmptySelectedConversation = useMemo(() => {
+    return (
+      !!selectedConversation?.messages &&
+      selectedConversation?.messages.length === 0
+    );
+  }, [selectedConversation]);
+
+  const { replayUserMessagesStack, isReplay } = useMemo(() => {
+    return {
+      replayUserMessagesStack:
+        selectedConversation?.replay?.replayUserMessagesStack,
+      isReplay: selectedConversation?.replay?.isReplay,
+    };
+  }, [selectedConversation]);
+
+  const isFirstActiveReplayIndex = activeReplayIndex === 0;
+  const isLastActiveReplayIndex = replayUserMessagesStack
+    ? activeReplayIndex === replayUserMessagesStack.length
+    : true;
+
+  const isReplayFinished =
+    isReplay &&
+    replayUserMessagesStack &&
+    replayUserMessagesStack?.length * 2 ===
+      selectedConversation?.messages?.length;
+  const isLastMessageFromAssistant = () => {
+    if (!isEmptySelectedConversation) {
+      return (
+        selectedConversation?.messages[selectedConversation.messages.length - 1]
+          .role === 'assistant'
+      );
+    } else {
+      return false;
+    }
+  };
 
   const handleSend = useCallback(
     async (
@@ -103,6 +146,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
       id: string,
       deleteCount = 0,
       plugin: Plugin | null = null,
+      activeReplayIndex?: number,
     ) => {
       if (selectedConversation) {
         let updatedConversation: Conversation;
@@ -114,11 +158,20 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
           updatedConversation = {
             ...selectedConversation,
             messages: [...updatedMessages, message],
+            // replay: {
+            //   ...selectedConversation.replay,
+            //   activeReplayIndex: activeReplayIndex,
+            // },
           };
         } else {
           updatedConversation = {
             ...selectedConversation,
             messages: [...selectedConversation.messages, message],
+            replay: {
+              ...selectedConversation.replay,
+              activeReplayIndex:
+                isReplay && activeReplayIndex ? activeReplayIndex : 0,
+            },
           };
         }
         homeDispatch({
@@ -162,6 +215,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
           signal: controller.signal,
           body,
         });
+
         if (!response.ok) {
           homeDispatch({ field: 'loading', value: false });
           homeDispatch({ field: 'messageIsStreaming', value: false });
@@ -176,7 +230,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
           return;
         }
         if (!plugin) {
-          if (updatedConversation.messages.length === 1) {
+          if (updatedConversation.messages.length === 1 && !isReplay) {
             const { content } = message;
             const customName =
               content.length > 30 ? content.substring(0, 30) + '...' : content;
@@ -367,6 +421,69 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   };
   const throttledScrollDown = throttle(scrollDown, 250);
 
+  const handleReplay = (deleteCount = 0) => {
+    if (selectedConversation && replayUserMessagesStack) {
+      if (!isLastActiveReplayIndex) {
+        handleSend(
+          replayUserMessagesStack[activeReplayIndex],
+          selectedConversation?.id,
+          deleteCount,
+          null,
+          activeReplayIndex,
+        );
+        setActiveReplayIndex((prevActiveReplayIndex) => {
+          return prevActiveReplayIndex + 1;
+        });
+      }
+    }
+  };
+  const onClickReplayStart: MouseEventHandler<HTMLButtonElement> = (e) => {
+    e.preventDefault();
+    handleReplay();
+  };
+  const onClickReplayReStart: MouseEventHandler<HTMLButtonElement> = (e) => {
+    e.preventDefault();
+    if (isLastMessageFromAssistant()) {
+      handleReplay(2);
+    } else {
+      handleReplay(1);
+    }
+  };
+  const handleReplayStop = () => {
+    if (selectedConversation) {
+      const updatedConversation: Conversation = {
+        ...selectedConversation,
+        replay: {
+          ...selectedConversation?.replay,
+          isReplay: false,
+        },
+      };
+      let updatedConversations: Conversation[] = [];
+      if (conversations.length === 0) {
+        updatedConversations.push(updatedConversation);
+      } else {
+        updatedConversations = conversations.map((conversation) => {
+          if (conversation.id === selectedConversation.id) {
+            return updatedConversation;
+          }
+          return conversation;
+        });
+      }
+
+      const nonMutableUpdatedConversation: Conversation[] = [
+        ...updatedConversations,
+      ];
+      homeDispatch({
+        field: 'conversations',
+        value: nonMutableUpdatedConversation,
+      });
+      saveConversations(nonMutableUpdatedConversation);
+      homeDispatch({
+        field: 'selectedConversation',
+        value: updatedConversation,
+      });
+    }
+  };
   // useEffect(() => {
   //   console.log('currentMessage', currentMessage);
   //   if (currentMessage) {
@@ -406,6 +523,28 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
       }
     };
   }, [messagesEndRef]);
+
+  useEffect(() => {
+    if (isReplay) {
+      if (
+        !loading &&
+        !messageIsStreaming &&
+        !isEmptySelectedConversation &&
+        isLastMessageFromAssistant()
+      ) {
+        if (!isLastActiveReplayIndex) {
+          handleReplay();
+        } else {
+          handleReplayStop();
+        }
+      }
+    }
+  }, [messageIsStreaming]);
+  useEffect(() => {
+    if (isReplay) {
+      setActiveReplayIndex(selectedConversation?.replay.activeReplayIndex ?? 0);
+    }
+  }, [selectedConversation?.id]);
 
   return (
     <div className="relative flex-1 overflow-hidden bg-white dark:bg-[#343541]">
@@ -456,7 +595,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
             ref={chatContainerRef}
             onScroll={handleScroll}
           >
-            {selectedConversation?.messages.length === 0 ? (
+            {isEmptySelectedConversation && selectedConversation ? (
               <>
                 <div className="mx-auto flex flex-col space-y-5 md:space-y-10 px-3 pt-5 md:pt-12 sm:max-w-[600px]">
                   <div className="text-center text-3xl font-semibold text-gray-800 dark:text-gray-100">
@@ -551,26 +690,34 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
             )}
           </div>
 
-          <ChatInput
-            stopConversationRef={stopConversationRef}
-            textareaRef={textareaRef}
-            onSend={(message, plugin) => {
-              setCurrentMessage(message);
-              handleSend(message, selectedConversation?.id ?? '', 0, plugin);
-            }}
-            onScrollDownClick={handleScrollDown}
-            onRegenerate={() => {
-              if (currentMessage) {
-                handleSend(
-                  currentMessage,
-                  selectedConversation?.id ?? '',
-                  2,
-                  null,
-                );
-              }
-            }}
-            showScrollDownButton={showScrollDownButton}
-          />
+          {isReplay && !messageIsStreaming && !isReplayFinished ? (
+            <ChatReplayControls
+              onClickReplayStart={onClickReplayStart}
+              onClickReplayReStart={onClickReplayReStart}
+              showReplayStart={isEmptySelectedConversation}
+            />
+          ) : (
+            <ChatInput
+              stopConversationRef={stopConversationRef}
+              textareaRef={textareaRef}
+              onSend={(message, plugin) => {
+                setCurrentMessage(message);
+                handleSend(message, selectedConversation?.id ?? '', 0, plugin);
+              }}
+              onScrollDownClick={handleScrollDown}
+              onRegenerate={() => {
+                if (currentMessage) {
+                  handleSend(
+                    currentMessage,
+                    selectedConversation?.id ?? '',
+                    2,
+                    null,
+                  );
+                }
+              }}
+              showScrollDownButton={showScrollDownButton}
+            />
+          )}
         </>
       )}
     </div>

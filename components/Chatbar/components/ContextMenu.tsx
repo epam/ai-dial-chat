@@ -1,4 +1,9 @@
-import { IconFileExport, IconPencil, IconTrash } from '@tabler/icons-react';
+import {
+  IconFileExport,
+  IconPencil,
+  IconRefreshDot,
+  IconTrash,
+} from '@tabler/icons-react';
 import { MouseEventHandler, RefObject, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -7,6 +12,7 @@ interface Props {
   onDelete: MouseEventHandler<unknown>;
   onRename: MouseEventHandler<unknown>;
   onExport: MouseEventHandler<unknown>;
+  onReplay: MouseEventHandler<HTMLLIElement>;
 }
 
 export const ContextMenu = ({
@@ -14,6 +20,7 @@ export const ContextMenu = ({
   onDelete,
   onRename,
   onExport,
+  onReplay,
 }: Props) => {
   const { t } = useTranslation('sidebar');
   const contextMenuHeight = 120;
@@ -35,6 +42,13 @@ export const ContextMenu = ({
         >
           <IconPencil size={18} />
           <span className="ml-2">{t('Rename')}</span>
+        </li>
+        <li
+          onClick={onReplay}
+          className="flex cursor-pointer p-2 hover:bg-[#343541] rounded-lg"
+        >
+          <IconRefreshDot size={18} />
+          <span className="ml-2">{t('Replay')}</span>
         </li>
         <li
           onClick={onExport}

@@ -33,4 +33,10 @@ export interface Conversation {
   prompt: string;
   temperature: number;
   folderId: string | null;
+  replay: Replay;
+}
+export interface Replay{
+  isReplay: boolean;
+  replayUserMessagesStack?: Message[];
+  activeReplayIndex: number;
 }

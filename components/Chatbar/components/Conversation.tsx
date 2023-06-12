@@ -25,9 +25,10 @@ interface Props {
 
 export const ConversationComponent = ({ conversation }: Props) => {
   const {
-    state: { selectedConversation, messageIsStreaming },
+    state: { selectedConversation, messageIsStreaming, conversations },
     handleSelectConversation,
     handleUpdateConversation,
+    handleNewConversation,
   } = useContext(HomeContext);
   const { handleExportItem } = useContext(ChatbarContext);
 
@@ -91,6 +92,19 @@ export const ConversationComponent = ({ conversation }: Props) => {
   const handleOpenDeleteModal: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();
     setIsDeleting(true);
+  };
+
+  const handleStartReplay: MouseEventHandler<HTMLLIElement> = (e) => {
+    if (selectedConversation) {
+      const newConversationName = `[Replay] ${selectedConversation.name}`;
+      e.stopPropagation();
+
+      const userMessages = selectedConversation.messages.filter(
+        ({ role }) => role === 'user',
+      );
+
+      handleNewConversation(newConversationName, userMessages);
+    }
   };
 
   useEffect(() => {
@@ -197,6 +211,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
                   onExport={function (): void {
                     handleExportItem(conversation.id);
                   }}
+                  onReplay={handleStartReplay}
                 />
               )}
             </div>
