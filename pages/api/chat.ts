@@ -74,9 +74,16 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       OpenAIModels[_model.id as OpenAIModelID] ?? OpenAIModels[fallbackModelID];
 
     let tokens_per_message = 0;
-    if (model.id == OpenAIModelID.GPT_3_5 || model.id == OpenAIModelID.GPT_3_5_AZ) {
+    if (
+      model.id == OpenAIModelID.GPT_3_5 ||
+      model.id == OpenAIModelID.GPT_3_5_AZ
+    ) {
       tokens_per_message = 5;
-    } else if (model.id == OpenAIModelID.GPT_4 || model.name == OpenAIModelID.GPT_4_32K || model.name === OpenAIModelID.BISON_001) {
+    } else if (
+      model.id == OpenAIModelID.GPT_4 ||
+      model.name == OpenAIModelID.GPT_4_32K ||
+      model.name === OpenAIModelID.BISON_001
+    ) {
       tokens_per_message = 4;
     }
 
@@ -88,6 +95,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         role: messages[i].role,
         content: messages[i].content,
       };
+      console.log('message.content', message.content);
       const tokens = encoding.encode(message.content);
 
       if (tokenCount + tokens.length > model.requestLimit) {

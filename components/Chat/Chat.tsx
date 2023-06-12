@@ -428,61 +428,55 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
             >
               <div className="flex w-full sticky top-0 z-10">
                 {selectedConversations.map((conv) => (
-                  <>
-                    <div
-                      key={conv.id}
-                      className={`${
-                        isCompareMode && selectedConversations.length > 1
-                          ? 'w-[50%]'
-                          : 'w-full'
-                      }`}
-                    >
-                      {conv.messages.length === 0 ? (
-                        <ChatEmpty
-                          conversation={conv}
-                          models={models}
-                          prompts={prompts}
-                          defaultModelId={
-                            defaultModelId || OpenAIModelID.GPT_3_5
-                          }
-                          onSelectModel={(modelId: string) =>
-                            handleSelectModel(conv, modelId)
-                          }
-                          onChangePrompt={(prompt) =>
-                            handleChangePrompt(conv, prompt)
-                          }
-                          onChangeTemperature={(temperature) =>
-                            handleChangeTemperature(conv, temperature)
-                          }
-                        />
-                      ) : (
-                        <ChatSettings
-                          conversation={conv}
-                          defaultModelId={
-                            defaultModelId || OpenAIModelID.GPT_3_5
-                          }
-                          models={models}
-                          isCompareMode={isCompareMode}
-                          selectedCinversationIds={selectedConversationIds}
-                          onClearConversation={() =>
-                            handleClearConversation(conv)
-                          }
-                          onSelectModel={(modelId: string) =>
-                            handleSelectModel(conv, modelId)
-                          }
-                          onUnselectConversation={() => {
-                            const filteredSelectedConversation =
-                              selectedConversations.filter(
-                                ({ id }) => id !== conv.id,
-                              )[0];
-                            handleSelectConversation(
-                              filteredSelectedConversation,
-                            );
-                          }}
-                        />
-                      )}
-                    </div>
-                  </>
+                  <div
+                    key={conv.id}
+                    className={`${
+                      isCompareMode && selectedConversations.length > 1
+                        ? 'w-[50%]'
+                        : 'w-full'
+                    }`}
+                  >
+                    {conv.messages.length === 0 ? (
+                      <ChatEmpty
+                        conversation={conv}
+                        models={models}
+                        prompts={prompts}
+                        defaultModelId={defaultModelId || OpenAIModelID.GPT_3_5}
+                        onSelectModel={(modelId: string) =>
+                          handleSelectModel(conv, modelId)
+                        }
+                        onChangePrompt={(prompt) =>
+                          handleChangePrompt(conv, prompt)
+                        }
+                        onChangeTemperature={(temperature) =>
+                          handleChangeTemperature(conv, temperature)
+                        }
+                      />
+                    ) : (
+                      <ChatSettings
+                        conversation={conv}
+                        defaultModelId={defaultModelId || OpenAIModelID.GPT_3_5}
+                        models={models}
+                        isCompareMode={isCompareMode}
+                        selectedCinversationIds={selectedConversationIds}
+                        onClearConversation={() =>
+                          handleClearConversation(conv)
+                        }
+                        onSelectModel={(modelId: string) =>
+                          handleSelectModel(conv, modelId)
+                        }
+                        onUnselectConversation={() => {
+                          const filteredSelectedConversation =
+                            selectedConversations.filter(
+                              ({ id }) => id !== conv.id,
+                            )[0];
+                          handleSelectConversation(
+                            filteredSelectedConversation,
+                          );
+                        }}
+                      />
+                    )}
+                  </div>
                 ))}
               </div>
               <div
