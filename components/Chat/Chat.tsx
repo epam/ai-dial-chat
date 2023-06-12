@@ -119,16 +119,10 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
     };
   }, [selectedConversation]);
 
-  const isFirstActiveReplayIndex = activeReplayIndex === 0;
-  const isLastActiveReplayIndex = replayUserMessagesStack
-    ? activeReplayIndex === replayUserMessagesStack.length
-    : true;
-
-  const isReplayFinished =
-    isReplay &&
+  const isLastActiveReplayIndex =
     replayUserMessagesStack &&
-    replayUserMessagesStack?.length * 2 ===
-      selectedConversation?.messages?.length;
+    replayUserMessagesStack?.length <= activeReplayIndex;
+
   const isLastMessageFromAssistant = () => {
     if (!isEmptySelectedConversation) {
       return (
@@ -158,10 +152,6 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
           updatedConversation = {
             ...selectedConversation,
             messages: [...updatedMessages, message],
-            // replay: {
-            //   ...selectedConversation.replay,
-            //   activeReplayIndex: activeReplayIndex,
-            // },
           };
         } else {
           updatedConversation = {
@@ -421,15 +411,15 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   };
   const throttledScrollDown = throttle(scrollDown, 250);
 
-  const handleReplay = (deleteCount = 0) => {
+  const handleReplay = (deleteCount = 0, replayIndex = activeReplayIndex) => {
     if (selectedConversation && replayUserMessagesStack) {
       if (!isLastActiveReplayIndex) {
         handleSend(
-          replayUserMessagesStack[activeReplayIndex],
+          replayUserMessagesStack[replayIndex],
           selectedConversation?.id,
           deleteCount,
           null,
-          activeReplayIndex,
+          replayIndex,
         );
         setActiveReplayIndex((prevActiveReplayIndex) => {
           return prevActiveReplayIndex + 1;
@@ -443,10 +433,11 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   };
   const onClickReplayReStart: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.preventDefault();
+    const prevActiveReplayIndex = activeReplayIndex - 1;
     if (isLastMessageFromAssistant()) {
-      handleReplay(2);
+      handleReplay(2, prevActiveReplayIndex);
     } else {
-      handleReplay(1);
+      handleReplay(1, prevActiveReplayIndex);
     }
   };
   const handleReplayStop = () => {
@@ -690,7 +681,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
             )}
           </div>
 
-          {isReplay && !messageIsStreaming && !isReplayFinished ? (
+          {isReplay && !messageIsStreaming && !isLastActiveReplayIndex ? (
             <ChatReplayControls
               onClickReplayStart={onClickReplayStart}
               onClickReplayReStart={onClickReplayReStart}
