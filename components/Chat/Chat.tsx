@@ -180,12 +180,28 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
           homeDispatch({ field: 'messageIsStreaming', value: false });
 
           await showAPIToastError(response, t(errorsMessages.generalServer));
+          const errorMessage: Message = {
+            content: t(
+              'Error happened during answering. Please regenerate response',
+            ),
+            role: 'assistant',
+            isError: true,
+          };
+          localConversations.current = handleUpdateConversation(
+            updatedConversation,
+            {
+              key: 'messages',
+              value: [...updatedConversation.messages, errorMessage],
+            },
+            localConversations.current,
+          );
           return;
         }
         const data = response.body;
         if (!data) {
           homeDispatch({ field: 'loading', value: false });
           homeDispatch({ field: 'messageIsStreaming', value: false });
+
           return;
         }
         if (updatedConversation.messages.length === 1) {

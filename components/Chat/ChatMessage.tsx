@@ -238,7 +238,9 @@ export const ChatMessage: FC<Props> = memo(
             ) : (
               <div className="h-full flex flex-row">
                 <MemoizedReactMarkdown
-                  className="prose dark:prose-invert flex-1"
+                  className={`prose dark:prose-invert flex-1 ${
+                    message.isError ? 'text-red-400' : ''
+                  }`}
                   remarkPlugins={[remarkGfm, remarkMath]}
                   rehypePlugins={[rehypeMathjax]}
                   components={{
