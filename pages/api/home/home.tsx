@@ -51,6 +51,7 @@ interface Props {
   isShowFooter: boolean;
   isShowRequestApiKey: boolean;
   isShowReportAnIssue: boolean;
+  appName: string;
 }
 
 const Home = ({
@@ -61,6 +62,7 @@ const Home = ({
   isShowFooter,
   isShowRequestApiKey,
   isShowReportAnIssue,
+  appName,
 }: Props) => {
   const { t } = useTranslation('chat');
   const { getModels } = useApiService();
@@ -402,7 +404,7 @@ const Home = ({
       }}
     >
       <Head>
-        <title>Chatbot UI</title>
+        <title>{appName}</title>
         <meta name="description" content="ChatGPT but better." />
         <meta
           name="viewport"
@@ -425,7 +427,10 @@ const Home = ({
             <Chatbar />
 
             <div className="flex flex-1">
-              <Chat stopConversationRef={stopConversationRef} />
+              <Chat
+                stopConversationRef={stopConversationRef}
+                appName={appName}
+              />
             </div>
 
             <Promptbar />
@@ -478,6 +483,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       isShowFooter: process.env.SHOW_FOOTER === 'true',
       isShowRequestApiKey: process.env.SHOW_REQUEST_API_KEY === 'true',
       isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
+      appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',
