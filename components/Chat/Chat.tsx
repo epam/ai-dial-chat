@@ -413,16 +413,19 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
       {!(apiKey || serverSideApiKeyIsSet) ? (
         <div className="mx-auto flex h-full w-[300px] flex-col justify-center space-y-6 sm:w-[600px]">
           <div className="text-center text-4xl font-bold text-black dark:text-white">
-            {t('Welcome to {{name}}', { appName: APP_NAME })}
+            {t('Welcome to {{appName}}', { appName: APP_NAME })}
           </div>
           <div className="text-center text-lg text-black dark:text-white">
             <div className="mb-8">
-              {t(`{{name}} is an open source clone of OpenAI's ChatGPT UI.`, {
-                appName: APP_NAME,
-              })}
+              {t(
+                `{{appName}} is an open source clone of OpenAI's ChatGPT UI.`,
+                {
+                  appName: APP_NAME,
+                },
+              )}
             </div>
             <div className="mb-2 font-bold">
-              {t('Important: {{name}} is 100% unaffiliated with OpenAI.', {
+              {t('Important: {{appName}} is 100% unaffiliated with OpenAI.', {
                 appName: APP_NAME,
               })}
             </div>
@@ -430,7 +433,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
           <div className="text-center text-gray-500 dark:text-gray-400">
             <div className="mb-2">
               {t(
-                '{{name}} allows you to plug in your API key to use this UI with their API.',
+                '{{appName}} allows you to plug in your API key to use this UI with their API.',
                 { appName: APP_NAME },
               )}
             </div>
