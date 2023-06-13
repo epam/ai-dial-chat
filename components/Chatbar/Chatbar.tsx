@@ -5,14 +5,16 @@ import { useTranslation } from 'next-i18next';
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
-import { saveConversation, saveConversations } from '@/utils/app/conversation';
+import {
+  saveConversations,
+  saveSelectedConversationIds,
+} from '@/utils/app/conversation';
 import { saveFolders } from '@/utils/app/folders';
 import { exportData, exportItem, importData } from '@/utils/app/importExport';
 
 import { Conversation } from '@/types/chat';
 import { LatestExportFormat, SupportedExportFormats } from '@/types/export';
-import { OpenAIModels } from '@/types/openai';
-import { PluginKey } from '@/types/plugin';
+import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -34,7 +36,7 @@ export const Chatbar = () => {
   });
 
   const {
-    state: { conversations, showChatbar, defaultModelId, folders, pluginKeys },
+    state: { conversations, showChatbar, defaultModelId, folders },
     dispatch: homeDispatch,
     handleCreateFolder,
     handleNewConversation,
@@ -55,45 +57,6 @@ export const Chatbar = () => {
     [homeDispatch],
   );
 
-  const handlePluginKeyChange = (pluginKey: PluginKey) => {
-    if (pluginKeys.some((key) => key.pluginId === pluginKey.pluginId)) {
-      const updatedPluginKeys = pluginKeys.map((key) => {
-        if (key.pluginId === pluginKey.pluginId) {
-          return pluginKey;
-        }
-
-        return key;
-      });
-
-      homeDispatch({ field: 'pluginKeys', value: updatedPluginKeys });
-
-      localStorage.setItem('pluginKeys', JSON.stringify(updatedPluginKeys));
-    } else {
-      homeDispatch({ field: 'pluginKeys', value: [...pluginKeys, pluginKey] });
-
-      localStorage.setItem(
-        'pluginKeys',
-        JSON.stringify([...pluginKeys, pluginKey]),
-      );
-    }
-  };
-
-  const handleClearPluginKey = (pluginKey: PluginKey) => {
-    const updatedPluginKeys = pluginKeys.filter(
-      (key) => key.pluginId !== pluginKey.pluginId,
-    );
-
-    if (updatedPluginKeys.length === 0) {
-      homeDispatch({ field: 'pluginKeys', value: [] });
-      localStorage.removeItem('pluginKeys');
-      return;
-    }
-
-    homeDispatch({ field: 'pluginKeys', value: updatedPluginKeys });
-
-    localStorage.setItem('pluginKeys', JSON.stringify(updatedPluginKeys));
-  };
-
   const handleExportData = () => {
     exportData();
   };
@@ -106,32 +69,43 @@ export const Chatbar = () => {
     const { history, folders, prompts }: LatestExportFormat = importData(data);
     homeDispatch({ field: 'conversations', value: history });
     homeDispatch({
-      field: 'selectedConversation',
-      value: history[history.length - 1],
+      field: 'selectedConversationIds',
+      value: [history[history.length - 1].id],
+    });
+    homeDispatch({
+      field: 'isCompareMode',
+      value: false,
     });
     homeDispatch({ field: 'folders', value: folders });
     homeDispatch({ field: 'prompts', value: prompts });
   };
 
   const handleClearConversations = () => {
+    const newConversation = {
+      id: uuidv4(),
+      name: t('New Conversation'),
+      messages: [],
+      model: OpenAIModels[defaultModelId || OpenAIModelID.GPT_3_5],
+      prompt: DEFAULT_SYSTEM_PROMPT,
+      temperature: DEFAULT_TEMPERATURE,
+      folderId: null,
+    };
+
+    homeDispatch({
+      field: 'selectedConversationIds',
+      value: [newConversation.id],
+    });
+    homeDispatch({
+      field: 'isCompareMode',
+      value: false,
+    });
     defaultModelId &&
       homeDispatch({
-        field: 'selectedConversation',
-        value: {
-          id: uuidv4(),
-          name: t('New Conversation'),
-          messages: [],
-          model: OpenAIModels[defaultModelId],
-          prompt: DEFAULT_SYSTEM_PROMPT,
-          temperature: DEFAULT_TEMPERATURE,
-          folderId: null,
-        },
+        field: 'conversations',
+        value: [newConversation],
       });
 
-    homeDispatch({ field: 'conversations', value: [] });
-
     localStorage.removeItem('conversationHistory');
-    localStorage.removeItem('selectedConversation');
 
     const updatedFolders = folders.filter((f) => f.type !== 'chat');
 
@@ -150,28 +124,39 @@ export const Chatbar = () => {
 
     if (updatedConversations.length > 0) {
       homeDispatch({
-        field: 'selectedConversation',
-        value: updatedConversations[updatedConversations.length - 1],
+        field: 'selectedConversationIds',
+        value: [updatedConversations[updatedConversations.length - 1].id],
       });
 
-      saveConversation(updatedConversations[updatedConversations.length - 1]);
+      saveSelectedConversationIds([
+        updatedConversations[updatedConversations.length - 1].id,
+      ]);
     } else {
+      const newConversation = {
+        id: uuidv4(),
+        name: t('New Conversation'),
+        messages: [],
+        model: OpenAIModels[defaultModelId || OpenAIModelID.GPT_3_5],
+        prompt: DEFAULT_SYSTEM_PROMPT,
+        temperature: DEFAULT_TEMPERATURE,
+        folderId: null,
+      };
       defaultModelId &&
         homeDispatch({
-          field: 'selectedConversation',
-          value: {
-            id: uuidv4(),
-            name: t('New Conversation'),
-            messages: [],
-            model: OpenAIModels[defaultModelId],
-            prompt: DEFAULT_SYSTEM_PROMPT,
-            temperature: DEFAULT_TEMPERATURE,
-            folderId: null,
-          },
+          field: 'conversations',
+          value: [newConversation],
         });
+      homeDispatch({
+        field: 'selectedConversationIds',
+        value: [newConversation.id],
+      });
 
-      localStorage.removeItem('selectedConversation');
+      localStorage.removeItem('selectedConversationIds');
     }
+    homeDispatch({
+      field: 'isCompareMode',
+      value: false,
+    });
   };
 
   const handleToggleChatbar = () => {
@@ -217,8 +202,6 @@ export const Chatbar = () => {
         handleImportConversations,
         handleExportData,
         handleExportItem,
-        handlePluginKeyChange,
-        handleClearPluginKey,
         handleApiKeyChange,
       }}
     >
