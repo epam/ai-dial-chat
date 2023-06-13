@@ -404,7 +404,7 @@ const Home = ({
       }}
     >
       <Head>
-        <title>{process.env.NEXT_PUBLIC_APP_NAME}</title>
+        <title>{appName}</title>
         <meta name="description" content="ChatGPT but better." />
         <meta
           name="viewport"
@@ -483,7 +483,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       isShowFooter: process.env.SHOW_FOOTER === 'true',
       isShowRequestApiKey: process.env.SHOW_REQUEST_API_KEY === 'true',
       isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
-      appName: process.env.NEXT_PUBLIC_APP_NAME ?? '',
+      appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',
