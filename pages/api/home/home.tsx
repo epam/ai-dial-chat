@@ -18,8 +18,8 @@ import {
 } from '@/utils/app/clean';
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
 import {
-  saveConversation,
   saveConversations,
+  saveSelectedConversationIds,
   updateConversation,
 } from '@/utils/app/conversation';
 import { saveFolders } from '@/utils/app/folders';
@@ -67,7 +67,9 @@ const Home = ({
   const { t } = useTranslation('chat');
   const { getModels } = useApiService();
   const { getModelsError } = useErrorService();
-  const [initialRender, setInitialRender] = useState<boolean>(true);
+  const [selectedConversationNames, setSelectedConversationNames] = useState<
+    string[]
+  >([]);
 
   const contextValue = useCreateReducer<HomeInitialState>({
     initialState,
@@ -79,7 +81,7 @@ const Home = ({
       lightMode,
       folders,
       conversations,
-      selectedConversation,
+      selectedConversationIds,
       prompts,
       temperature,
     },
@@ -113,13 +115,26 @@ const Home = ({
 
   // FETCH MODELS ----------------------------------------------
 
-  const handleSelectConversation = (conversation: Conversation) => {
+  const handleSelectConversation = (
+    conversation: Conversation,
+    isMultiple?: boolean,
+  ) => {
+    const newSelectedIds = isMultiple
+      ? Array.from(new Set([...selectedConversationIds, conversation.id]))
+      : [conversation.id];
     dispatch({
-      field: 'selectedConversation',
-      value: conversation,
+      field: 'selectedConversationIds',
+      value: newSelectedIds,
     });
 
-    saveConversation(conversation);
+    if (!isMultiple) {
+      dispatch({
+        field: 'isCompareMode',
+        value: false,
+      });
+    }
+
+    saveSelectedConversationIds(newSelectedIds);
   };
 
   // FOLDER OPERATIONS  --------------------------------------------
@@ -210,10 +225,13 @@ const Home = ({
 
     const updatedConversations = [...conversations, newConversation];
 
-    dispatch({ field: 'selectedConversation', value: newConversation });
+    dispatch({
+      field: 'selectedConversationIds',
+      value: [newConversation.id],
+    });
     dispatch({ field: 'conversations', value: updatedConversations });
 
-    saveConversation(newConversation);
+    saveSelectedConversationIds([newConversation.id]);
     saveConversations(updatedConversations);
 
     dispatch({ field: 'loading', value: false });
@@ -222,19 +240,21 @@ const Home = ({
   const handleUpdateConversation = (
     conversation: Conversation,
     data: KeyValuePair,
-  ) => {
+    localConversations?: Conversation[],
+  ): Conversation[] => {
     const updatedConversation = {
       ...conversation,
       [data.key]: data.value,
     };
 
-    const { single, all } = updateConversation(
+    const allConversation = updateConversation(
       updatedConversation,
-      conversations,
+      localConversations || conversations,
     );
 
-    dispatch({ field: 'selectedConversation', value: single });
-    dispatch({ field: 'conversations', value: all });
+    dispatch({ field: 'conversations', value: allConversation });
+
+    return allConversation;
   };
 
   // EFFECTS  --------------------------------------------
@@ -243,7 +263,7 @@ const Home = ({
     if (window.innerWidth < 640) {
       dispatch({ field: 'showChatbar', value: false });
     }
-  }, [selectedConversation]);
+  }, [selectedConversationIds]);
 
   useEffect(() => {
     defaultModelId &&
@@ -310,16 +330,6 @@ const Home = ({
       dispatch({ field: 'apiKey', value: apiKey });
     }
 
-    if (usePluginKeys) {
-      const pluginKeys = localStorage.getItem('pluginKeys');
-      if (serverSidePluginKeysSet) {
-        dispatch({ field: 'pluginKeys', value: [] });
-        localStorage.removeItem('pluginKeys');
-      } else if (pluginKeys) {
-        dispatch({ field: 'pluginKeys', value: pluginKeys });
-      }
-    }
-
     if (window.innerWidth < 640) {
       dispatch({ field: 'showChatbar', value: false });
       dispatch({ field: 'showPromptbar', value: false });
@@ -346,41 +356,60 @@ const Home = ({
     }
 
     const conversationHistory = localStorage.getItem('conversationHistory');
+    let cleanedConversationHistory: Conversation[] | undefined;
     if (conversationHistory) {
       const parsedConversationHistory: Conversation[] =
         JSON.parse(conversationHistory);
-      const cleanedConversationHistory = cleanConversationHistory(
+      cleanedConversationHistory = cleanConversationHistory(
         parsedConversationHistory,
       );
 
       dispatch({ field: 'conversations', value: cleanedConversationHistory });
     }
 
-    const selectedConversation = localStorage.getItem('selectedConversation');
-    if (selectedConversation) {
-      const parsedSelectedConversation: Conversation =
-        JSON.parse(selectedConversation);
-      const cleanedSelectedConversation = cleanSelectedConversation(
-        parsedSelectedConversation,
+    const selectedConversationIds = localStorage.getItem(
+      'selectedConversationIds',
+    );
+    const parsedSelectedConversationsIds: string[] = JSON.parse(
+      selectedConversationIds || '[]',
+    );
+    const filteredSelectedConversationIds =
+      parsedSelectedConversationsIds.filter((convId) =>
+        cleanedConversationHistory?.some((conv) => conv.id === convId),
       );
-
+    if (
+      filteredSelectedConversationIds?.length > 0 &&
+      cleanedConversationHistory
+    ) {
       dispatch({
-        field: 'selectedConversation',
-        value: cleanedSelectedConversation,
+        field: 'selectedConversationIds',
+        value: filteredSelectedConversationIds,
       });
+
+      if (filteredSelectedConversationIds.length > 1) {
+        dispatch({
+          field: 'isCompareMode',
+          value: true,
+        });
+      }
     } else {
       const lastConversation = conversations[conversations.length - 1];
+      const newConversation = {
+        id: uuidv4(),
+        name: t('New Conversation'),
+        messages: [],
+        model: OpenAIModels[defaultModelId],
+        prompt: DEFAULT_SYSTEM_PROMPT,
+        temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
+        folderId: null,
+      };
       dispatch({
-        field: 'selectedConversation',
-        value: {
-          id: uuidv4(),
-          name: t('New Conversation'),
-          messages: [],
-          model: OpenAIModels[defaultModelId],
-          prompt: DEFAULT_SYSTEM_PROMPT,
-          temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
-          folderId: null,
-        },
+        field: 'selectedConversationIds',
+        value: [newConversation.id],
+      });
+      dispatch({
+        field: 'conversations',
+        value: [...conversations, newConversation],
       });
     }
   }, [
@@ -390,6 +419,16 @@ const Home = ({
     serverSidePluginKeysSet,
     usePluginKeys,
   ]);
+
+  useEffect(() => {
+    if (selectedConversationIds.length > 0) {
+      setSelectedConversationNames(
+        conversations
+          .filter((conv) => selectedConversationIds.includes(conv.id))
+          .map((conv) => conv.name),
+      );
+    }
+  }, [selectedConversationIds, conversations]);
 
   return (
     <HomeContext.Provider
@@ -412,13 +451,13 @@ const Home = ({
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      {selectedConversation && (
+      {selectedConversationNames.length > 0 && (
         <main
           className={`flex h-screen w-screen flex-col text-sm text-white dark:text-white ${lightMode}`}
         >
           <div className="fixed top-0 w-full sm:hidden">
             <Navbar
-              selectedConversation={selectedConversation}
+              selectedConversationNames={selectedConversationNames}
               onNewConversation={handleNewConversation}
             />
           </div>

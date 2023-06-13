@@ -4,6 +4,7 @@ export interface Message {
   role: Role;
   content: string;
   like?: number;
+  isError?: boolean;
 }
 
 export type Role = 'assistant' | 'user';
