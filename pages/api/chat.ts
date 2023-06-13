@@ -64,7 +64,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       temperatureToUse = DEFAULT_TEMPERATURE;
     }
 
-    console.log(promptToSend);
     const prompt_tokens = encoding.encode(promptToSend);
 
     // let tokenCount = prompt_tokens.length;
@@ -95,7 +94,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         role: messages[i].role,
         content: messages[i].content,
       };
-      console.log('message.content', message.content);
       const tokens = encoding.encode(message.content);
 
       if (tokenCount + tokens.length > model.requestLimit) {
