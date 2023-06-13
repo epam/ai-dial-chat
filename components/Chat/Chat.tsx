@@ -40,6 +40,7 @@ import { errorsMessages } from '@/constants/errors';
 
 interface Props {
   stopConversationRef: MutableRefObject<boolean>;
+  appName: string;
 }
 
 const handleRate = (
@@ -66,7 +67,7 @@ const handleRate = (
   }).then();
 };
 
-export const Chat = memo(({ stopConversationRef }: Props) => {
+export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const { t } = useTranslation('chat');
 
   const {
@@ -97,7 +98,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME;
+  const APP_NAME = appName;
 
   const handleSend = useCallback(
     async (
