@@ -18,5 +18,3 @@ export const OPENAI_ORGANIZATION =
   process.env.OPENAI_ORGANIZATION || '';
 
 export const MAX_TOKENS = 1000;
-
-export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'AI Chat';

@@ -16,11 +16,7 @@ import {
   cleanConversationHistory,
   cleanSelectedConversation,
 } from '@/utils/app/clean';
-import {
-  APP_NAME,
-  DEFAULT_SYSTEM_PROMPT,
-  DEFAULT_TEMPERATURE,
-} from '@/utils/app/const';
+import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
 import {
   saveConversation,
   saveConversations,
@@ -406,7 +402,7 @@ const Home = ({
       }}
     >
       <Head>
-        <title>{APP_NAME}</title>
+        <title>{process.env.NEXT_PUBLIC_APP_NAME}</title>
         <meta name="description" content="ChatGPT but better." />
         <meta
           name="viewport"

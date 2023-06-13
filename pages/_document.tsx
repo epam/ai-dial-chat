@@ -1,7 +1,5 @@
 import { DocumentProps, Head, Html, Main, NextScript } from 'next/document';
 
-import { APP_NAME } from '@/utils/app/const';
-
 import i18nextConfig from '../next-i18next.config';
 
 type Props = DocumentProps & {
@@ -15,7 +13,10 @@ export default function Document(props: Props) {
     <Html lang={currentLocale}>
       <Head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-title" content={APP_NAME}></meta>
+        <meta
+          name="apple-mobile-web-app-title"
+          content={process.env.NEXT_PUBLIC_APP_NAME}
+        ></meta>
       </Head>
       <body>
         <Main />

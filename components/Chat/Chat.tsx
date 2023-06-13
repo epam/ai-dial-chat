@@ -13,7 +13,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'next-i18next';
 
 import { getEndpoint } from '@/utils/app/api';
-import { APP_NAME } from '@/utils/app/const';
 import {
   saveConversation,
   saveConversations,
@@ -97,6 +96,8 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME;
 
   const handleSend = useCallback(
     async (
