@@ -13,7 +13,10 @@ export default function Document(props: Props) {
     <Html lang={currentLocale}>
       <Head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-title" content="Chatbot UI"></meta>
+        <meta
+          name="apple-mobile-web-app-title"
+          content={process.env.NEXT_PUBLIC_APP_NAME || 'Chatbot UI'}
+        ></meta>
       </Head>
       <body>
         <Main />
