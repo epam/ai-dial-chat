@@ -97,8 +97,19 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<HTMLDivElement>(null);
+  const [inputHeight, setInputHeight] = useState<number>(142);
 
   const APP_NAME = appName;
+
+  useEffect(() => {
+    if (
+      inputRef.current?.clientHeight &&
+      inputRef.current?.clientHeight !== inputHeight
+    ) {
+      setInputHeight(inputRef.current?.clientHeight);
+    }
+  });
 
   const handleSend = useCallback(
     async (
@@ -558,7 +569,8 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                 {loading && <ChatLoader />}
 
                 <div
-                  className="h-[162px] bg-white dark:bg-[#343541]"
+                  className="shrink-0 bg-white dark:bg-[#343541]"
+                  style={{ height: inputHeight - 10 }}
                   ref={messagesEndRef}
                 />
               </>
@@ -566,6 +578,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
           </div>
 
           <ChatInput
+            inputRef={inputRef}
             stopConversationRef={stopConversationRef}
             textareaRef={textareaRef}
             onSend={(message, plugin) => {
