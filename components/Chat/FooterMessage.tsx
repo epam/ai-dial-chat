@@ -9,12 +9,22 @@ interface Props {
   isShowFooter: boolean;
   isShowRequestApiKey: boolean;
   isShowReportAnIssue: boolean;
+  footerHtmlMessage: string;
+  requestApiKeyHtmlPreMessage: string;
+  requestApiKeyHtmlLinkMessage: string;
+  reportAnIssueHtmlPreMessage: string;
+  reportAnIssueHtmlLinkMessage: string;
 }
 
 export const FooterMessage = ({
   isShowFooter,
   isShowReportAnIssue,
   isShowRequestApiKey,
+  footerHtmlMessage,
+  requestApiKeyHtmlPreMessage,
+  requestApiKeyHtmlLinkMessage,
+  reportAnIssueHtmlPreMessage,
+  reportAnIssueHtmlLinkMessage,
 }: Props) => {
   const { t } = useTranslation('chat');
   const [isRequestAPIDialogOpen, setIsRequestAPIDialogOpen] = useState(false);
@@ -23,51 +33,55 @@ export const FooterMessage = ({
   return isShowFooter ? (
     <>
       <div className="px-3 pt-2 pb-3 text-center text-[12px] text-black/50 dark:text-white/50 md:px-4 md:pt-3 md:pb-6">
-        <a
-          href="https://kb.epam.com/display/EPMGPT/EPAM+AI+Chat"
-          target="_blank"
-          rel="noreferrer"
-          className="underline font-bold"
-        >
-          EPAM AI Chat
-        </a>{' '}
-        can be used <span className="underline">any work-related activity</span>
-        . Rest assured, information you share here is{' '}
-        <span className="underline">
-          not disclosed to third-party companies
-        </span>
-        . However, we <span className="underline">anonymize and log</span> all
-        interactions for research purposes. <br />
+        <span
+          dangerouslySetInnerHTML={{ __html: footerHtmlMessage || '' }}
+        ></span>
         {isShowRequestApiKey ? (
           <>
-            For API access please fill&nbsp;
-            <a
-              href=""
-              onClick={(e) => {
-                e.preventDefault();
-                setIsRequestAPIDialogOpen(true);
+            <span
+              dangerouslySetInnerHTML={{
+                __html: requestApiKeyHtmlPreMessage || '',
               }}
-              className="underline font-bold"
-            >
-              {t('this form')}
-            </a>
-            .&nbsp;
+            ></span>
+            {requestApiKeyHtmlLinkMessage && (
+              <a
+                href=""
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsRequestAPIDialogOpen(true);
+                }}
+              >
+                <span
+                  dangerouslySetInnerHTML={{
+                    __html: requestApiKeyHtmlLinkMessage || '',
+                  }}
+                ></span>
+              </a>
+            )}
           </>
         ) : null}
         {isShowReportAnIssue ? (
           <>
-            If you have a problem please&nbsp;
-            <a
-              href=""
-              onClick={(e) => {
-                e.preventDefault();
-                setIsReportIssueDialogOpen(true);
+            <span
+              dangerouslySetInnerHTML={{
+                __html: reportAnIssueHtmlPreMessage || '',
               }}
-              className="underline font-bold"
-            >
-              {t('report an issue')}
-            </a>
-            .
+            ></span>
+            {reportAnIssueHtmlPreMessage && (
+              <a
+                href=""
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsReportIssueDialogOpen(true);
+                }}
+              >
+                <span
+                  dangerouslySetInnerHTML={{
+                    __html: reportAnIssueHtmlLinkMessage || '',
+                  }}
+                ></span>
+              </a>
+            )}
           </>
         ) : null}
       </div>

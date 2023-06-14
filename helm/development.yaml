@@ -2,9 +2,8 @@ image:
   pullPolicy: Always
   registry: registry-dev.deltixhub.com
   tag: development
-  pullSecrets: 
+  pullSecrets:
     - epm-rtc-registry-dev
-
 
 replicaCount: 1
 
@@ -13,26 +12,31 @@ resources:
     cpu: 1
     memory: 1Gi
   requests:
-     cpu: 0.25
-     memory: 512Mi
+    cpu: 0.25
+    memory: 512Mi
 
 env:
-  NEXTAUTH_URL: "https://chat.staging.deltixhub.io"
+  NEXTAUTH_URL: 'https://chat.staging.deltixhub.io'
   # OPENAI_API_HOST: "https://southcentralus.api.cognitive.microsoft.com/"
-  OPENAI_API_HOST: "http://ai-proxy.ai-proxy.svc.cluster.local"
-  DEFAULT_MODEL: "gpt-35-turbo"
-  OPENAI_API_TYPE: "azure"
-  OPENAI_API_VERSION: "2023-03-15-preview"
-  NEXT_PUBLIC_SHOW_MODELS: "true"
-  NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT: ""
-  SHOW_REQUEST_API_KEY: "true"
-  SHOW_REPORT_AN_ISSUE: "true"
-  SHOW_FOOTER: "true"
-  GOOGLE_AI_HOST: "https://palm-ai-proxy.staging.deltixhub.io"
-  GOOGLE_AI_PROJECT_ID: "EPM-AI-PROXY"
-  GOOGLE_AI_LOCATION: "us-central1"
-  USE_USER_JOB_TITLE: "false"
-  AUTH_AUTH0_HOST: "https://chatbot-ui-staging.eu.auth0.com"
+  OPENAI_API_HOST: 'http://ai-proxy.ai-proxy.svc.cluster.local'
+  DEFAULT_MODEL: 'gpt-35-turbo'
+  OPENAI_API_TYPE: 'azure'
+  OPENAI_API_VERSION: '2023-03-15-preview'
+  NEXT_PUBLIC_SHOW_MODELS: 'true'
+  NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT: ''
+  GOOGLE_AI_HOST: 'https://palm-ai-proxy.staging.deltixhub.io'
+  GOOGLE_AI_PROJECT_ID: 'EPM-AI-PROXY'
+  GOOGLE_AI_LOCATION: 'us-central1'
+  USE_USER_JOB_TITLE: 'false'
+  AUTH_AUTH0_HOST: 'https://chatbot-ui-staging.eu.auth0.com'
+  SHOW_REQUEST_API_KEY: 'true'
+  SHOW_REPORT_AN_ISSUE: 'true'
+  SHOW_FOOTER: 'true'
+  FOOTER_HTML_MESSAGE: '<a href="https://kb.epam.com/display/EPMGPT/EPAM+AI+Chat" target="_blank" rel="noreferrer"> <u><strong>EPAM AI Chat</strong></u> </a>&nbsp;can be used <u>any work-related activity</u>. Rest assured, information you share here is&nbsp;<u> not disclosed to third-party companies </u>. However, we <u>anonymize and log</u> all interactions for research purposes. <br/>'
+  REQUEST_API_KEY_PRE_MESSAGE: 'For API access please fill&nbsp;'
+  REQUEST_API_KEY_LINK_MESSAGE: '<u><strong>this form</strong></u>.'
+  REPORT_AN_ISSUE_PRE_MESSAGE: '&nbsp;If you have a problem please&nbsp;'
+  REPORT_AN_ISSUE_LINK_MESSAGE: '<u><strong>report an issue</strong></u>.'
 
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
 
@@ -61,26 +65,24 @@ ingress:
   enabled: true
   ingressClassName: alb
   annotations:
-    alb.ingress.kubernetes.io/scheme: "internet-facing"
-    alb.ingress.kubernetes.io/target-type: "ip"
-    alb.ingress.kubernetes.io/backend-protocol: "HTTP"
-    alb.ingress.kubernetes.io/healthcheck-path: "/"
-    alb.ingress.kubernetes.io/healthcheck-protocol: "HTTP"
-    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "5"
-    alb.ingress.kubernetes.io/healthy-threshold-count: "2"
-    alb.ingress.kubernetes.io/target-group-attributes: "stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=86400"
-    alb.ingress.kubernetes.io/load-balancer-attributes: "routing.http2.enabled=true"
+    alb.ingress.kubernetes.io/scheme: 'internet-facing'
+    alb.ingress.kubernetes.io/target-type: 'ip'
+    alb.ingress.kubernetes.io/backend-protocol: 'HTTP'
+    alb.ingress.kubernetes.io/healthcheck-path: '/'
+    alb.ingress.kubernetes.io/healthcheck-protocol: 'HTTP'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/target-group-attributes: 'stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=86400'
+    alb.ingress.kubernetes.io/load-balancer-attributes: 'routing.http2.enabled=true'
     alb.ingress.kubernetes.io/listen-ports: '[{ "HTTP" : 80, "HTTPS" : 443 }]'
-    alb.ingress.kubernetes.io/ssl-policy: "ELBSecurityPolicy-TLS-1-2-Ext-2018-06"
-    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:eu-north-1:725751206603:certificate/373e8fd1-088e-4022-adf1-5f3e7820fb4a"
-    alb.ingress.kubernetes.io/ssl-redirect: "443"
-    alb.ingress.kubernetes.io/group.name: "allow-all"
+    alb.ingress.kubernetes.io/ssl-policy: 'ELBSecurityPolicy-TLS-1-2-Ext-2018-06'
+    alb.ingress.kubernetes.io/certificate-arn: 'arn:aws:acm:eu-north-1:725751206603:certificate/373e8fd1-088e-4022-adf1-5f3e7820fb4a'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/group.name: 'allow-all'
   hosts:
     - chat.staging.deltixhub.io
-
 
 serviceAccount:
   create: true
   name: chat
-
 # extraEnvVarsSecret: "chat-lab-test"

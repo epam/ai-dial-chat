@@ -27,9 +27,16 @@ export interface HomeInitialState {
   serverSidePluginKeysSet: boolean;
   usePluginKeys: boolean;
   isCompareMode: boolean;
+
+  // Footer env variables
   isShowFooter: boolean;
   isShowRequestApiKey: boolean;
   isShowReportAnIssue: boolean;
+  footerHtmlMessage: string;
+  requestApiKeyHtmlPreMessage: string;
+  requestApiKeyHtmlLinkMessage: string;
+  reportAnIssueHtmlPreMessage: string;
+  reportAnIssueHtmlLinkMessage: string;
 }
 
 export const initialState: HomeInitialState = {
@@ -55,7 +62,14 @@ export const initialState: HomeInitialState = {
   serverSidePluginKeysSet: false,
   usePluginKeys: false,
   isCompareMode: false,
+
+  // Footer env variables
   isShowFooter: false,
   isShowRequestApiKey: false,
   isShowReportAnIssue: false,
+  footerHtmlMessage: '',
+  requestApiKeyHtmlPreMessage: '',
+  requestApiKeyHtmlLinkMessage: '',
+  reportAnIssueHtmlPreMessage: '',
+  reportAnIssueHtmlLinkMessage: '',
 };

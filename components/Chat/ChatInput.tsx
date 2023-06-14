@@ -1,7 +1,5 @@
 import {
   IconArrowDown,
-  IconBolt,
-  IconBrandGoogle,
   IconPlayerStop,
   IconRepeat,
   IconSend,
@@ -25,8 +23,6 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { FooterMessage } from './FooterMessage';
 import { PromptList } from './PromptList';
-import { ReportIssueDialog } from './ReportIssueDialog';
-import { RequestAPIKeyDialog } from './RequestApiKeyDialog';
 import { VariableModal } from './VariableModal';
 
 interface Props {
@@ -59,9 +55,12 @@ export const ChatInput = ({
       isShowFooter,
       isShowRequestApiKey,
       isShowReportAnIssue,
+      footerHtmlMessage,
+      requestApiKeyHtmlPreMessage,
+      requestApiKeyHtmlLinkMessage,
+      reportAnIssueHtmlPreMessage,
+      reportAnIssueHtmlLinkMessage,
     },
-
-    dispatch: homeDispatch,
   } = useContext(HomeContext);
 
   const [content, setContent] = useState<string>();
@@ -358,6 +357,11 @@ export const ChatInput = ({
         isShowFooter={isShowFooter}
         isShowRequestApiKey={isShowRequestApiKey}
         isShowReportAnIssue={isShowReportAnIssue}
+        footerHtmlMessage={footerHtmlMessage}
+        requestApiKeyHtmlPreMessage={requestApiKeyHtmlPreMessage}
+        requestApiKeyHtmlLinkMessage={requestApiKeyHtmlLinkMessage}
+        reportAnIssueHtmlPreMessage={reportAnIssueHtmlPreMessage}
+        reportAnIssueHtmlLinkMessage={reportAnIssueHtmlLinkMessage}
       />
     </div>
   );

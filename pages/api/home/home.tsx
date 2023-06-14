@@ -52,6 +52,11 @@ interface Props {
   isShowRequestApiKey: boolean;
   isShowReportAnIssue: boolean;
   appName: string;
+  footerHtmlMessage: string;
+  requestApiKeyHtmlPreMessage: string;
+  requestApiKeyHtmlLinkMessage: string;
+  reportAnIssueHtmlPreMessage: string;
+  reportAnIssueHtmlLinkMessage: string;
 }
 
 const Home = ({
@@ -59,10 +64,15 @@ const Home = ({
   serverSidePluginKeysSet,
   usePluginKeys,
   defaultModelId,
+  appName,
   isShowFooter,
   isShowRequestApiKey,
   isShowReportAnIssue,
-  appName,
+  footerHtmlMessage,
+  requestApiKeyHtmlPreMessage,
+  requestApiKeyHtmlLinkMessage,
+  reportAnIssueHtmlPreMessage,
+  reportAnIssueHtmlLinkMessage,
 }: Props) => {
   const { t } = useTranslation('chat');
   const { getModels } = useApiService();
@@ -299,6 +309,32 @@ const Home = ({
         field: 'isShowRequestApiKey',
         value: isShowRequestApiKey,
       });
+
+    footerHtmlMessage &&
+      dispatch({
+        field: 'footerHtmlMessage',
+        value: footerHtmlMessage,
+      });
+    requestApiKeyHtmlPreMessage &&
+      dispatch({
+        field: 'requestApiKeyHtmlPreMessage',
+        value: requestApiKeyHtmlPreMessage,
+      });
+    requestApiKeyHtmlLinkMessage &&
+      dispatch({
+        field: 'requestApiKeyHtmlLinkMessage',
+        value: requestApiKeyHtmlLinkMessage,
+      });
+    reportAnIssueHtmlPreMessage &&
+      dispatch({
+        field: 'reportAnIssueHtmlPreMessage',
+        value: reportAnIssueHtmlPreMessage,
+      });
+    reportAnIssueHtmlLinkMessage &&
+      dispatch({
+        field: 'reportAnIssueHtmlLinkMessage',
+        value: reportAnIssueHtmlLinkMessage,
+      });
   }, [
     defaultModelId,
     serverSideApiKeyIsSet,
@@ -307,6 +343,11 @@ const Home = ({
     isShowFooter,
     isShowReportAnIssue,
     isShowRequestApiKey,
+    footerHtmlMessage,
+    requestApiKeyHtmlPreMessage,
+    requestApiKeyHtmlLinkMessage,
+    reportAnIssueHtmlPreMessage,
+    reportAnIssueHtmlLinkMessage,
   ]);
 
   // ON LOAD --------------------------------------------
@@ -519,10 +560,21 @@ export const getServerSideProps: GetServerSideProps = async ({
       usePluginKeys: !!process.env.NEXT_PUBLIC_ENABLE_PLUGIN_KEYS,
       defaultModelId,
       serverSidePluginKeysSet,
+      appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
+
+      // Footer variables
       isShowFooter: process.env.SHOW_FOOTER === 'true',
       isShowRequestApiKey: process.env.SHOW_REQUEST_API_KEY === 'true',
       isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
-      appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
+      footerHtmlMessage: process.env.FOOTER_HTML_MESSAGE ?? '',
+      requestApiKeyHtmlPreMessage:
+        process.env.REQUEST_API_KEY_PRE_MESSAGE ?? '',
+      requestApiKeyHtmlLinkMessage:
+        process.env.REQUEST_API_KEY_LINK_MESSAGE ?? '',
+      reportAnIssueHtmlPreMessage:
+        process.env.REPORT_AN_ISSUE_PRE_MESSAGE ?? '',
+      reportAnIssueHtmlLinkMessage:
+        process.env.REPORT_AN_ISSUE_LINK_MESSAGE ?? '',
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',
