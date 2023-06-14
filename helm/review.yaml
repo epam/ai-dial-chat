@@ -27,6 +27,7 @@ env:
   SHOW_FOOTER: 'true'
   AUTH_AUTH0_HOST: "https://chatbot-ui-staging.eu.auth0.com"
   NEXT_PUBLIC_APP_NAME: "MR Review"
+  AUTH_TEST_TOKEN: "temp_token_for_tests"
 #  NEXTAUTH_URL: "https://dev-chat.ai-proxy.lab.epam.com"
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
 
