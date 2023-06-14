@@ -32,6 +32,7 @@ import { errorsMessages } from '@/constants/errors';
 
 interface Props {
   stopConversationRef: MutableRefObject<boolean>;
+  appName: string;
 }
 
 const handleRate = (
@@ -58,7 +59,7 @@ const handleRate = (
   }).then();
 };
 
-export const Chat = memo(({ stopConversationRef }: Props) => {
+export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const { t } = useTranslation('chat');
 
   const {
@@ -429,7 +430,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   return (
     <div className="relative flex-1 overflow-hidden bg-white dark:bg-[#343541]">
       {!(apiKey || serverSideApiKeyIsSet) ? (
-        <NoApiKeySet />
+        <NoApiKeySet appName={appName} />
       ) : modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : (
@@ -467,6 +468,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
                         onChangeTemperature={(temperature) =>
                           handleChangeTemperature(conv, temperature)
                         }
+                        appName={appName}
                       />
                     ) : (
                       <ChatSettings

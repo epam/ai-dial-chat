@@ -13,6 +13,7 @@ interface Props {
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
   onSelectModel: (modelId: string) => void;
+  appName: string;
 }
 
 export const ChatEmpty = ({
@@ -23,6 +24,7 @@ export const ChatEmpty = ({
   onChangePrompt,
   onChangeTemperature,
   onSelectModel,
+  appName,
 }: Props) => {
   return (
     <>
@@ -33,7 +35,7 @@ export const ChatEmpty = ({
               <Spinner size="16px" className="mx-auto" />
             </div>
           ) : (
-            'Chatbot UI'
+            appName
           )}
         </div>
 
