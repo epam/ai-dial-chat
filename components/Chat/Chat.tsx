@@ -8,7 +8,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import toast from 'react-hot-toast';
 
 import { useTranslation } from 'next-i18next';
 
@@ -578,7 +577,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
           </div>
 
           <ChatInput
-            inputRef={inputRef}
+            ref={inputRef}
             stopConversationRef={stopConversationRef}
             textareaRef={textareaRef}
             onSend={(message, plugin) => {
