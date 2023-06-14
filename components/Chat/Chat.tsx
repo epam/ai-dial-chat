@@ -468,6 +468,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                         onChangeTemperature={(temperature) =>
                           handleChangeTemperature(conv, temperature)
                         }
+                        appName={appName}
                       />
                     ) : (
                       <ChatSettings
