@@ -33,6 +33,7 @@ env:
   GOOGLE_AI_LOCATION: "us-central1"
   USE_USER_JOB_TITLE: "false"
   AUTH_AUTH0_HOST: "https://chatbot-ui-staging.eu.auth0.com"
+  NEXT_PUBLIC_APP_NAME: "DIAL - Staging"
 
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
 
