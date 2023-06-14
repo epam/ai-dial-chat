@@ -37,6 +37,7 @@ env:
   REQUEST_API_KEY_LINK_MESSAGE: '<u><strong>this form</strong></u>.'
   REPORT_AN_ISSUE_PRE_MESSAGE: '&nbsp;If you have a problem please&nbsp;'
   REPORT_AN_ISSUE_LINK_MESSAGE: '<u><strong>report an issue</strong></u>.'
+  NEXT_PUBLIC_APP_NAME: 'DIAL - Staging'
 
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
 
