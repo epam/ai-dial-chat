@@ -1,30 +1,23 @@
 import { IconExclamationCircle, IconExternalLink } from '@tabler/icons-react';
-import { useContext } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { OpenAIModel, OpenAIModelID } from '@/types/openai';
 
-import HomeContext from '@/pages/api/home/home.context';
+interface Props {
+  models: OpenAIModel[];
+  conversationModelId: string;
+  defaultModelId: OpenAIModelID;
+  onSelectModel: (modelId: string) => void;
+}
 
-export const ModelSelect = () => {
+export const ModelSelect = ({
+  conversationModelId,
+  models,
+  defaultModelId,
+  onSelectModel,
+}: Props) => {
   const { t } = useTranslation('chat');
-
-  const {
-    state: { selectedConversation, models, defaultModelId },
-    handleUpdateConversation,
-    dispatch: homeDispatch,
-  } = useContext(HomeContext);
-
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    selectedConversation &&
-      handleUpdateConversation(selectedConversation, {
-        key: 'model',
-        value: models.find(
-          (model) => model.id === e.target.value,
-        ) as OpenAIModel,
-      });
-  };
 
   return (
     <div className="flex flex-col">
@@ -35,8 +28,8 @@ export const ModelSelect = () => {
         <select
           className="w-full bg-transparent p-2"
           placeholder={t('Select a model') || ''}
-          value={selectedConversation?.model?.id || defaultModelId}
-          onChange={handleChange}
+          value={conversationModelId || defaultModelId}
+          onChange={(e) => onSelectModel(e.target.value)}
         >
           {models.map((model) => (
             <option
@@ -51,22 +44,12 @@ export const ModelSelect = () => {
           ))}
         </select>
       </div>
-      {/* <div className="w-full mt-3 text-left text-neutral-700 dark:text-neutral-400 flex items-center">
-        <a
-          href="https://platform.openai.com/account/usage"
-          target="_blank"
-          className="flex items-center"
-        >
-          <IconExternalLink size={18} className={'inline mr-1'} />
-          {t('View Account Usage')}
-        </a>
-      </div> */}
-      {selectedConversation?.model?.id === OpenAIModelID.GPT_4_32K && (
+      {conversationModelId === OpenAIModelID.GPT_4_32K && (
         <div className="w-full mt-3 text-left text-orange-600 dark:text-orange-600 flex gap-2 items-center">
           <IconExclamationCircle size={18} />
           <div>
-            Please only use this one if you absolutely need it. It&apos;s slower and
-            more expensive.
+            Please only use this one if you absolutely need it. It&apos;s slower
+            and more expensive.
           </div>
         </div>
       )}

@@ -1,7 +1,5 @@
 import {
   IconArrowDown,
-  IconBolt,
-  IconBrandGoogle,
   IconPlayerStop,
   IconRepeat,
   IconSend,
@@ -22,23 +20,23 @@ import {
 import { useTranslation } from 'next-i18next';
 
 import { Message } from '@/types/chat';
-import { Plugin } from '@/types/plugin';
 import { Prompt } from '@/types/prompt';
 
 import HomeContext from '@/pages/api/home/home.context';
 
 import { FooterMessage } from './FooterMessage';
-import { PluginSelect } from './PluginSelect';
 import { PromptList } from './PromptList';
 import { VariableModal } from './VariableModal';
 
 interface Props {
-  onSend: (message: Message, plugin: Plugin | null) => void;
+  onSend: (message: Message) => void;
   onRegenerate: () => void;
   onScrollDownClick: () => void;
+  maxLength: number;
   stopConversationRef: MutableRefObject<boolean>;
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
   showScrollDownButton: boolean;
+  isMessagesPresented: boolean;
 }
 
 export const ChatInput = forwardRef(
@@ -47,9 +45,11 @@ export const ChatInput = forwardRef(
       onSend,
       onRegenerate,
       onScrollDownClick,
+      maxLength,
       stopConversationRef,
       textareaRef,
       showScrollDownButton,
+      isMessagesPresented,
     }: Props,
     ref: ForwardedRef<HTMLDivElement>,
   ) => {
@@ -57,15 +57,15 @@ export const ChatInput = forwardRef(
 
     const {
       state: {
-        selectedConversation,
         messageIsStreaming,
         prompts,
         isShowFooter,
         isShowRequestApiKey,
         isShowReportAnIssue,
+        footerHtmlMessage,
+        requestApiKeyHtmlMessage,
+        reportAnIssueHtmlMessage,
       },
-
-      dispatch: homeDispatch,
     } = useContext(HomeContext);
 
     const [content, setContent] = useState<string>();
@@ -76,7 +76,6 @@ export const ChatInput = forwardRef(
     const [variables, setVariables] = useState<string[]>([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [showPluginSelect, setShowPluginSelect] = useState(false);
-    const [plugin, setPlugin] = useState<Plugin | null>(null);
 
     const promptListRef = useRef<HTMLUListElement | null>(null);
 
@@ -86,7 +85,6 @@ export const ChatInput = forwardRef(
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const value = e.target.value;
-      const maxLength = selectedConversation?.model.maxLength;
 
       if (maxLength && value.length > maxLength) {
         alert(
@@ -112,9 +110,8 @@ export const ChatInput = forwardRef(
         return;
       }
 
-      onSend({ role: 'user', content }, plugin);
+      onSend({ role: 'user', content });
       setContent('');
-      setPlugin(null);
 
       if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
         textareaRef.current.blur();
@@ -282,53 +279,20 @@ export const ChatInput = forwardRef(
               className="absolute top-0 left-0 right-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white py-2 px-4 text-black hover:opacity-50 dark:border-neutral-600 dark:bg-[#343541] dark:text-white md:mb-0 md:mt-2"
               onClick={handleStopConversation}
             >
-              <IconPlayerStop size={16} /> {t('Stop Generating')}
+              <IconPlayerStop size={16} /> {t('Stop generating')}
             </button>
           )}
 
-          {!messageIsStreaming &&
-            selectedConversation &&
-            selectedConversation.messages.length > 0 && (
-              <button
-                className="absolute top-0 left-0 right-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white py-2 px-4 text-black hover:opacity-50 dark:border-neutral-600 dark:bg-[#343541] dark:text-white md:mb-0 md:mt-2"
-                onClick={onRegenerate}
-              >
-                <IconRepeat size={16} /> {t('Regenerate response')}
-              </button>
-            )}
+          {!messageIsStreaming && isMessagesPresented && (
+            <button
+              className="absolute top-0 left-0 right-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white py-2 px-4 text-black hover:opacity-50 dark:border-neutral-600 dark:bg-[#343541] dark:text-white md:mb-0 md:mt-2"
+              onClick={onRegenerate}
+            >
+              <IconRepeat size={16} /> {t('Regenerate response')}
+            </button>
+          )}
 
           <div className="relative mx-2 flex w-full flex-grow flex-col rounded-md border border-black/10 bg-white shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:border-gray-900/50 dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)] sm:mx-4">
-            <button
-              className="absolute left-2 top-2 rounded-sm p-1 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
-              onClick={() => setShowPluginSelect(!showPluginSelect)}
-              onKeyDown={(e) => {}}
-            >
-              {plugin ? <IconBrandGoogle size={20} /> : <IconBolt size={20} />}
-            </button>
-
-            {showPluginSelect && (
-              <div className="absolute left-0 bottom-14 rounded bg-white dark:bg-[#343541]">
-                <PluginSelect
-                  plugin={plugin}
-                  onKeyDown={(e: any) => {
-                    if (e.key === 'Escape') {
-                      e.preventDefault();
-                      setShowPluginSelect(false);
-                      textareaRef.current?.focus();
-                    }
-                  }}
-                  onPluginChange={(plugin: Plugin) => {
-                    setPlugin(plugin);
-                    setShowPluginSelect(false);
-
-                    if (textareaRef && textareaRef.current) {
-                      textareaRef.current.focus();
-                    }
-                  }}
-                />
-              </div>
-            )}
-
             <textarea
               ref={textareaRef}
               className="m-0 w-full resize-none border-0 bg-transparent p-0 py-2 pr-8 pl-10 text-black dark:bg-transparent dark:text-white md:py-3 md:pl-10"
@@ -401,6 +365,9 @@ export const ChatInput = forwardRef(
           isShowFooter={isShowFooter}
           isShowRequestApiKey={isShowRequestApiKey}
           isShowReportAnIssue={isShowReportAnIssue}
+          footerHtmlMessage={footerHtmlMessage}
+          requestApiKeyHtmlMessage={requestApiKeyHtmlMessage}
+          reportAnIssueHtmlMessage={reportAnIssueHtmlMessage}
         />
       </div>
     );
