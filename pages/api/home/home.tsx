@@ -210,7 +210,11 @@ const Home = ({
   };
 
   // CONVERSATION OPERATIONS  --------------------------------------------
-
+  const defaultReplay: Replay = {
+    isReplay: false,
+    replayUserMessagesStack: [],
+    activeReplayIndex: 0,
+  };
   const handleNewConversation = (
     name = 'New Conversation',
     replayUserMessagesStack?: Message[],
@@ -434,7 +438,7 @@ const Home = ({
     } else {
       const lastConversation =
         cleanedConversationHistory[conversations.length - 1];
-      const newConversation = {
+      const newConversation: Conversation = {
         id: uuidv4(),
         name: t('New Conversation'),
         messages: [],
@@ -442,6 +446,7 @@ const Home = ({
         prompt: DEFAULT_SYSTEM_PROMPT,
         temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
         folderId: null,
+        replay: defaultReplay,
       };
       dispatch({
         field: 'selectedConversationIds',

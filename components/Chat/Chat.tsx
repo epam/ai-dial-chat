@@ -253,11 +253,15 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
           return;
         }
         console.log(
-          'updatedConversation.messages.length === 1 && !isReplay',
+          '!!!!!????updatedConversation.messages.length === 1 && !updatedConversation.replay.isReplay',
           updatedConversation,
-          !isReplay,
+          !updatedConversation.replay.isReplay,
         );
-        if (updatedConversation.messages.length === 1 && !isReplay) {
+        if (
+          updatedConversation.messages.length === 1 &&
+          !updatedConversation.replay.isReplay
+        ) {
+          console.log('!!!RENAME');
           const { content } = message;
           const customName =
             content.length > 30 ? content.substring(0, 30) + '...' : content;
@@ -572,13 +576,21 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   }, [messageIsStreaming, selectedConversations]);
 
   useEffect(() => {
-    console.log('SETTING ACTIVE REPLAY INDEX');
+    console.log(
+      'SETTING ACTIVE REPLAY INDEX, selectedConversationIds',
+      selectedConversationIds,
+    );
     console.log('isReplay', isReplay);
 
     console.log('selectedConversations', selectedConversations);
-    setActiveReplayIndex(
-      selectedConversations[0].replay.activeReplayIndex ?? 0,
-    );
+
+    if (isSelectedConversations && isReplay) {
+      setActiveReplayIndex(
+        selectedConversations[0].replay.activeReplayIndex ?? 0,
+      );
+    } else {
+      setActiveReplayIndex(0);
+    }
   }, [selectedConversationIds]);
 
   return (
