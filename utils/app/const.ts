@@ -18,3 +18,9 @@ export const OPENAI_ORGANIZATION =
   process.env.OPENAI_ORGANIZATION || '';
 
 export const MAX_TOKENS = 1000;
+
+export const GOOGLE_MAX_OUTPUT_TOKENS = +(process.env.GOOGLE_AI_MAX_OUTPUT_TOKENS ?? 1024);
+
+export const GOOGLE_TOP_P = +(process.env.GOOGLE_AI_TOP_P ?? 0.8);
+
+export const GOOGLE_TOP_K = +(process.env.GOOGLE_AI_TOP_K ?? 40);
