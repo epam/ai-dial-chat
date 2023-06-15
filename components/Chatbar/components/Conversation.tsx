@@ -25,7 +25,7 @@ interface Props {
 
 export const ConversationComponent = ({ conversation }: Props) => {
   const {
-    state: { messageIsStreaming, selectedConversationIds, conversations },
+    state: { messageIsStreaming, selectedConversationIds },
     handleSelectConversation,
     handleUpdateConversation,
     handleNewConversation,

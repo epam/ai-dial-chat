@@ -51,6 +51,10 @@ interface Props {
   isShowFooter: boolean;
   isShowRequestApiKey: boolean;
   isShowReportAnIssue: boolean;
+  appName: string;
+  footerHtmlMessage: string;
+  requestApiKeyHtmlMessage: string;
+  reportAnIssueHtmlMessage: string;
 }
 
 const Home = ({
@@ -58,9 +62,13 @@ const Home = ({
   serverSidePluginKeysSet,
   usePluginKeys,
   defaultModelId,
+  appName,
   isShowFooter,
   isShowRequestApiKey,
   isShowReportAnIssue,
+  footerHtmlMessage,
+  requestApiKeyHtmlMessage,
+  reportAnIssueHtmlMessage,
 }: Props) => {
   const { t } = useTranslation('chat');
   const { getModels } = useApiService();
@@ -237,6 +245,10 @@ const Home = ({
       field: 'selectedConversationIds',
       value: [newConversation.id],
     });
+    dispatch({
+      field: 'isCompareMode',
+      value: false,
+    });
     dispatch({ field: 'conversations', value: updatedConversations });
 
     saveSelectedConversationIds([newConversation.id]);
@@ -307,6 +319,22 @@ const Home = ({
         field: 'isShowRequestApiKey',
         value: isShowRequestApiKey,
       });
+
+    footerHtmlMessage &&
+      dispatch({
+        field: 'footerHtmlMessage',
+        value: footerHtmlMessage,
+      });
+    requestApiKeyHtmlMessage &&
+      dispatch({
+        field: 'requestApiKeyHtmlMessage',
+        value: requestApiKeyHtmlMessage,
+      });
+    reportAnIssueHtmlMessage &&
+      dispatch({
+        field: 'reportAnIssueHtmlMessage',
+        value: reportAnIssueHtmlMessage,
+      });
   }, [
     defaultModelId,
     serverSideApiKeyIsSet,
@@ -315,6 +343,9 @@ const Home = ({
     isShowFooter,
     isShowReportAnIssue,
     isShowRequestApiKey,
+    footerHtmlMessage,
+    requestApiKeyHtmlMessage,
+    reportAnIssueHtmlMessage,
   ]);
 
   // ON LOAD --------------------------------------------
@@ -364,7 +395,7 @@ const Home = ({
     }
 
     const conversationHistory = localStorage.getItem('conversationHistory');
-    let cleanedConversationHistory: Conversation[] | undefined;
+    let cleanedConversationHistory: Conversation[] = [];
     if (conversationHistory) {
       const parsedConversationHistory: Conversation[] =
         JSON.parse(conversationHistory);
@@ -383,11 +414,11 @@ const Home = ({
     );
     const filteredSelectedConversationIds =
       parsedSelectedConversationsIds.filter((convId) =>
-        cleanedConversationHistory?.some((conv) => conv.id === convId),
+        cleanedConversationHistory.some((conv) => conv.id === convId),
       );
     if (
       filteredSelectedConversationIds?.length > 0 &&
-      cleanedConversationHistory
+      cleanedConversationHistory.length > 0
     ) {
       dispatch({
         field: 'selectedConversationIds',
@@ -401,7 +432,8 @@ const Home = ({
         });
       }
     } else {
-      const lastConversation = conversations[conversations.length - 1];
+      const lastConversation =
+        cleanedConversationHistory[conversations.length - 1];
       const newConversation = {
         id: uuidv4(),
         name: t('New Conversation'),
@@ -417,7 +449,7 @@ const Home = ({
       });
       dispatch({
         field: 'conversations',
-        value: [...conversations, newConversation],
+        value: [...cleanedConversationHistory, newConversation],
       });
     }
   }, [
@@ -451,7 +483,7 @@ const Home = ({
       }}
     >
       <Head>
-        <title>Chatbot UI</title>
+        <title>{appName}</title>
         <meta name="description" content="ChatGPT but better." />
         <meta
           name="viewport"
@@ -474,7 +506,10 @@ const Home = ({
             <Chatbar />
 
             <div className="flex flex-1">
-              <Chat stopConversationRef={stopConversationRef} />
+              <Chat
+                stopConversationRef={stopConversationRef}
+                appName={appName}
+              />
             </div>
 
             <Promptbar />
@@ -524,9 +559,15 @@ export const getServerSideProps: GetServerSideProps = async ({
       usePluginKeys: !!process.env.NEXT_PUBLIC_ENABLE_PLUGIN_KEYS,
       defaultModelId,
       serverSidePluginKeysSet,
+      appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
+
+      // Footer variables
       isShowFooter: process.env.SHOW_FOOTER === 'true',
       isShowRequestApiKey: process.env.SHOW_REQUEST_API_KEY === 'true',
       isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
+      footerHtmlMessage: process.env.FOOTER_HTML_MESSAGE ?? '',
+      requestApiKeyHtmlMessage: process.env.REQUEST_API_KEY_HTML_MESSAGE ?? '',
+      reportAnIssueHtmlMessage: process.env.REPORT_AN_ISSUE_HTML_MESSAGE ?? '',
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',

@@ -1,23 +1,36 @@
+import { FC } from 'react';
+
 import { useTranslation } from 'next-i18next';
 
-export const NoApiKeySet = () => {
+interface NoApiKeySetProps {
+  appName: string;
+}
+export const NoApiKeySet: FC<NoApiKeySetProps> = ({ appName }) => {
   const { t } = useTranslation('chat');
 
   return (
     <div className="mx-auto flex h-full w-[300px] flex-col justify-center space-y-6 sm:w-[600px]">
       <div className="text-center text-4xl font-bold text-black dark:text-white">
-        Welcome to Chatbot UI
+        {t('Welcome to {{appName}}', { appName })}
       </div>
       <div className="text-center text-lg text-black dark:text-white">
-        <div className="mb-8">{`Chatbot UI is an open source clone of OpenAI's ChatGPT UI.`}</div>
+        <div className="mb-8">
+          {t(`{{ appName }} is an open source clone of OpenAI's ChatGPT UI.`, {
+            appName,
+          })}
+        </div>
         <div className="mb-2 font-bold">
-          Important: Chatbot UI is 100% unaffiliated with OpenAI.
+          {t('Important: {{ appName }} is 100% unaffiliated with OpenAI.', {
+            appName,
+          })}
         </div>
       </div>
       <div className="text-center text-gray-500 dark:text-gray-400">
         <div className="mb-2">
-          Chatbot UI allows you to plug in your API key to use this UI with
-          their API.
+          {t(
+            '{{ appName }} allows you to plug in your API key to use this UI with their API.',
+            { appName },
+          )}
         </div>
         <div className="mb-2">
           It is <span className="italic">only</span> used to communicate with

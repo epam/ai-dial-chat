@@ -2,6 +2,9 @@ import { Message } from '@/types/chat';
 import { OpenAIModel, OpenAIModelID } from '@/types/openai';
 
 import {
+  GOOGLE_MAX_OUTPUT_TOKENS,
+  GOOGLE_TOP_K,
+  GOOGLE_TOP_P,
   OPENAI_API_HOST,
   OPENAI_API_TYPE,
   OPENAI_API_VERSION,
@@ -73,9 +76,9 @@ export const OpenAIStream = async (
       ],
       parameters: {
         temperature,
-        maxDecodeSteps: 200,
-        topP: 0.8,
-        topK: 40,
+        topP: GOOGLE_TOP_P,
+        topK: GOOGLE_TOP_K,
+        maxOutputTokens: GOOGLE_MAX_OUTPUT_TOKENS,
       },
     });
   } else {

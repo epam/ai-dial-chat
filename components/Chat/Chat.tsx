@@ -36,6 +36,7 @@ import { errorsMessages } from '@/constants/errors';
 
 interface Props {
   stopConversationRef: MutableRefObject<boolean>;
+  appName: string;
 }
 
 const handleRate = (
@@ -62,7 +63,7 @@ const handleRate = (
   }).then();
 };
 
-export const Chat = memo(({ stopConversationRef }: Props) => {
+export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const { t } = useTranslation('chat');
 
   const {
@@ -92,7 +93,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   const [selectedConversations, setSelectedConversations] = useState<
     Conversation[]
   >([]);
-  const [mergedMessages, setMergedMessages] = useState<any[]>([]);
+  const [mergedMessages, setMergedMessages] = useState<any>([]);
 
   const localConversations = useRef<Conversation[]>(conversations);
 
@@ -139,15 +140,13 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
     ].role === 'assistant';
 
   useEffect(() => {
+    localConversations.current = conversations;
     if (selectedConversationIds.length > 0) {
       const selectedConversations = selectedConversationIds
         .map((id) => conversations.find((conv) => conv.id === id))
         .filter((value) => !!value) as Conversation[];
       setSelectedConversations(selectedConversations);
 
-      console.log('!!!selectedConversations', selectedConversations);
-      console.log('!!!selectedConversationIds', selectedConversationIds);
-      console.log('!!!conversations', conversations);
       let mergedMessages = [];
       for (let i = 0; i < selectedConversations[0].messages.length; i++) {
         mergedMessages.push(
@@ -659,6 +658,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
                         onChangeTemperature={(temperature) =>
                           handleChangeTemperature(conv, temperature)
                         }
+                        appName={appName}
                       />
                     ) : (
                       <ChatSettings
