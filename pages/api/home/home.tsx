@@ -52,6 +52,9 @@ interface Props {
   isShowRequestApiKey: boolean;
   isShowReportAnIssue: boolean;
   appName: string;
+  footerHtmlMessage: string;
+  requestApiKeyHtmlMessage: string;
+  reportAnIssueHtmlMessage: string;
 }
 
 const Home = ({
@@ -59,10 +62,13 @@ const Home = ({
   serverSidePluginKeysSet,
   usePluginKeys,
   defaultModelId,
+  appName,
   isShowFooter,
   isShowRequestApiKey,
   isShowReportAnIssue,
-  appName,
+  footerHtmlMessage,
+  requestApiKeyHtmlMessage,
+  reportAnIssueHtmlMessage,
 }: Props) => {
   const { t } = useTranslation('chat');
   const { getModels } = useApiService();
@@ -299,6 +305,22 @@ const Home = ({
         field: 'isShowRequestApiKey',
         value: isShowRequestApiKey,
       });
+
+    footerHtmlMessage &&
+      dispatch({
+        field: 'footerHtmlMessage',
+        value: footerHtmlMessage,
+      });
+    requestApiKeyHtmlMessage &&
+      dispatch({
+        field: 'requestApiKeyHtmlMessage',
+        value: requestApiKeyHtmlMessage,
+      });
+    reportAnIssueHtmlMessage &&
+      dispatch({
+        field: 'reportAnIssueHtmlMessage',
+        value: reportAnIssueHtmlMessage,
+      });
   }, [
     defaultModelId,
     serverSideApiKeyIsSet,
@@ -307,6 +329,9 @@ const Home = ({
     isShowFooter,
     isShowReportAnIssue,
     isShowRequestApiKey,
+    footerHtmlMessage,
+    requestApiKeyHtmlMessage,
+    reportAnIssueHtmlMessage,
   ]);
 
   // ON LOAD --------------------------------------------
@@ -519,10 +544,15 @@ export const getServerSideProps: GetServerSideProps = async ({
       usePluginKeys: !!process.env.NEXT_PUBLIC_ENABLE_PLUGIN_KEYS,
       defaultModelId,
       serverSidePluginKeysSet,
+      appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
+
+      // Footer variables
       isShowFooter: process.env.SHOW_FOOTER === 'true',
       isShowRequestApiKey: process.env.SHOW_REQUEST_API_KEY === 'true',
       isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
-      appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
+      footerHtmlMessage: process.env.FOOTER_HTML_MESSAGE ?? '',
+      requestApiKeyHtmlMessage: process.env.REQUEST_API_KEY_HTML_MESSAGE ?? '',
+      reportAnIssueHtmlMessage: process.env.REPORT_AN_ISSUE_HTML_MESSAGE ?? '',
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',
