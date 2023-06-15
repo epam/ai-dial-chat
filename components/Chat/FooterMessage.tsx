@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { useRouter } from 'next/router';
 
 import { ReportIssueDialog } from './ReportIssueDialog';
 import { RequestAPIKeyDialog } from './RequestApiKeyDialog';
@@ -10,10 +11,8 @@ interface Props {
   isShowRequestApiKey: boolean;
   isShowReportAnIssue: boolean;
   footerHtmlMessage: string;
-  requestApiKeyHtmlPreMessage: string;
-  requestApiKeyHtmlLinkMessage: string;
-  reportAnIssueHtmlPreMessage: string;
-  reportAnIssueHtmlLinkMessage: string;
+  requestApiKeyHtmlMessage: string;
+  reportAnIssueHtmlMessage: string;
 }
 
 export const FooterMessage = ({
@@ -21,14 +20,35 @@ export const FooterMessage = ({
   isShowReportAnIssue,
   isShowRequestApiKey,
   footerHtmlMessage,
-  requestApiKeyHtmlPreMessage,
-  requestApiKeyHtmlLinkMessage,
-  reportAnIssueHtmlPreMessage,
-  reportAnIssueHtmlLinkMessage,
+  requestApiKeyHtmlMessage,
+  reportAnIssueHtmlMessage,
 }: Props) => {
   const { t } = useTranslation('chat');
   const [isRequestAPIDialogOpen, setIsRequestAPIDialogOpen] = useState(false);
   const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
+  const router = useRouter();
+  const requestApiKeyHash = '#requestApiKey';
+  const reportAnIssueHash = '#reportAnIssue';
+
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash;
+
+      if (hash === requestApiKeyHash) {
+        setIsRequestAPIDialogOpen(true);
+      }
+      if (hash === reportAnIssueHash) {
+        setIsReportIssueDialogOpen(true);
+      }
+    };
+    handleHash();
+
+    window.addEventListener('hashchange', handleHash);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHash);
+    };
+  }, []);
 
   return isShowFooter ? (
     <>
@@ -40,65 +60,41 @@ export const FooterMessage = ({
           <>
             <span
               dangerouslySetInnerHTML={{
-                __html: requestApiKeyHtmlPreMessage || '',
+                __html: requestApiKeyHtmlMessage || '',
               }}
             ></span>
-            {requestApiKeyHtmlLinkMessage && (
-              <a
-                href=""
-                onClick={(e) => {
-                  e.preventDefault();
-                  setIsRequestAPIDialogOpen(true);
-                }}
-              >
-                <span
-                  dangerouslySetInnerHTML={{
-                    __html: requestApiKeyHtmlLinkMessage || '',
-                  }}
-                ></span>
-              </a>
-            )}
           </>
         ) : null}
         {isShowReportAnIssue ? (
           <>
             <span
               dangerouslySetInnerHTML={{
-                __html: reportAnIssueHtmlPreMessage || '',
+                __html: reportAnIssueHtmlMessage || '',
               }}
             ></span>
-            {reportAnIssueHtmlPreMessage && (
-              <a
-                href=""
-                onClick={(e) => {
-                  e.preventDefault();
-                  setIsReportIssueDialogOpen(true);
-                }}
-              >
-                <span
-                  dangerouslySetInnerHTML={{
-                    __html: reportAnIssueHtmlLinkMessage || '',
-                  }}
-                ></span>
-              </a>
-            )}
           </>
         ) : null}
       </div>
 
-      <RequestAPIKeyDialog
-        isOpen={isRequestAPIDialogOpen}
-        onClose={() => {
-          setIsRequestAPIDialogOpen(false);
-        }}
-      ></RequestAPIKeyDialog>
+      {isShowRequestApiKey && (
+        <RequestAPIKeyDialog
+          isOpen={isRequestAPIDialogOpen}
+          onClose={() => {
+            setIsRequestAPIDialogOpen(false);
+            router.replace(router.basePath);
+          }}
+        ></RequestAPIKeyDialog>
+      )}
 
-      <ReportIssueDialog
-        isOpen={isReportIssueDialogOpen}
-        onClose={() => {
-          setIsReportIssueDialogOpen(false);
-        }}
-      ></ReportIssueDialog>
+      {isShowReportAnIssue && (
+        <ReportIssueDialog
+          isOpen={isReportIssueDialogOpen}
+          onClose={() => {
+            setIsReportIssueDialogOpen(false);
+            router.replace(router.basePath);
+          }}
+        ></ReportIssueDialog>
+      )}
     </>
   ) : (
     <></>

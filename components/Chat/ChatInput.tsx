@@ -56,10 +56,8 @@ export const ChatInput = ({
       isShowRequestApiKey,
       isShowReportAnIssue,
       footerHtmlMessage,
-      requestApiKeyHtmlPreMessage,
-      requestApiKeyHtmlLinkMessage,
-      reportAnIssueHtmlPreMessage,
-      reportAnIssueHtmlLinkMessage,
+      requestApiKeyHtmlMessage,
+      reportAnIssueHtmlMessage,
     },
   } = useContext(HomeContext);
 
@@ -358,10 +356,8 @@ export const ChatInput = ({
         isShowRequestApiKey={isShowRequestApiKey}
         isShowReportAnIssue={isShowReportAnIssue}
         footerHtmlMessage={footerHtmlMessage}
-        requestApiKeyHtmlPreMessage={requestApiKeyHtmlPreMessage}
-        requestApiKeyHtmlLinkMessage={requestApiKeyHtmlLinkMessage}
-        reportAnIssueHtmlPreMessage={reportAnIssueHtmlPreMessage}
-        reportAnIssueHtmlLinkMessage={reportAnIssueHtmlLinkMessage}
+        requestApiKeyHtmlMessage={requestApiKeyHtmlMessage}
+        reportAnIssueHtmlMessage={reportAnIssueHtmlMessage}
       />
     </div>
   );

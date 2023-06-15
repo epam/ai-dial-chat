@@ -53,10 +53,8 @@ interface Props {
   isShowReportAnIssue: boolean;
   appName: string;
   footerHtmlMessage: string;
-  requestApiKeyHtmlPreMessage: string;
-  requestApiKeyHtmlLinkMessage: string;
-  reportAnIssueHtmlPreMessage: string;
-  reportAnIssueHtmlLinkMessage: string;
+  requestApiKeyHtmlMessage: string;
+  reportAnIssueHtmlMessage: string;
 }
 
 const Home = ({
@@ -69,10 +67,8 @@ const Home = ({
   isShowRequestApiKey,
   isShowReportAnIssue,
   footerHtmlMessage,
-  requestApiKeyHtmlPreMessage,
-  requestApiKeyHtmlLinkMessage,
-  reportAnIssueHtmlPreMessage,
-  reportAnIssueHtmlLinkMessage,
+  requestApiKeyHtmlMessage,
+  reportAnIssueHtmlMessage,
 }: Props) => {
   const { t } = useTranslation('chat');
   const { getModels } = useApiService();
@@ -315,25 +311,15 @@ const Home = ({
         field: 'footerHtmlMessage',
         value: footerHtmlMessage,
       });
-    requestApiKeyHtmlPreMessage &&
+    requestApiKeyHtmlMessage &&
       dispatch({
-        field: 'requestApiKeyHtmlPreMessage',
-        value: requestApiKeyHtmlPreMessage,
+        field: 'requestApiKeyHtmlMessage',
+        value: requestApiKeyHtmlMessage,
       });
-    requestApiKeyHtmlLinkMessage &&
+    reportAnIssueHtmlMessage &&
       dispatch({
-        field: 'requestApiKeyHtmlLinkMessage',
-        value: requestApiKeyHtmlLinkMessage,
-      });
-    reportAnIssueHtmlPreMessage &&
-      dispatch({
-        field: 'reportAnIssueHtmlPreMessage',
-        value: reportAnIssueHtmlPreMessage,
-      });
-    reportAnIssueHtmlLinkMessage &&
-      dispatch({
-        field: 'reportAnIssueHtmlLinkMessage',
-        value: reportAnIssueHtmlLinkMessage,
+        field: 'reportAnIssueHtmlMessage',
+        value: reportAnIssueHtmlMessage,
       });
   }, [
     defaultModelId,
@@ -344,10 +330,8 @@ const Home = ({
     isShowReportAnIssue,
     isShowRequestApiKey,
     footerHtmlMessage,
-    requestApiKeyHtmlPreMessage,
-    requestApiKeyHtmlLinkMessage,
-    reportAnIssueHtmlPreMessage,
-    reportAnIssueHtmlLinkMessage,
+    requestApiKeyHtmlMessage,
+    reportAnIssueHtmlMessage,
   ]);
 
   // ON LOAD --------------------------------------------
@@ -567,14 +551,8 @@ export const getServerSideProps: GetServerSideProps = async ({
       isShowRequestApiKey: process.env.SHOW_REQUEST_API_KEY === 'true',
       isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
       footerHtmlMessage: process.env.FOOTER_HTML_MESSAGE ?? '',
-      requestApiKeyHtmlPreMessage:
-        process.env.REQUEST_API_KEY_PRE_MESSAGE ?? '',
-      requestApiKeyHtmlLinkMessage:
-        process.env.REQUEST_API_KEY_LINK_MESSAGE ?? '',
-      reportAnIssueHtmlPreMessage:
-        process.env.REPORT_AN_ISSUE_PRE_MESSAGE ?? '',
-      reportAnIssueHtmlLinkMessage:
-        process.env.REPORT_AN_ISSUE_LINK_MESSAGE ?? '',
+      requestApiKeyHtmlMessage: process.env.REQUEST_API_KEY_HTML_MESSAGE ?? '',
+      reportAnIssueHtmlMessage: process.env.REPORT_AN_ISSUE_HTML_MESSAGE ?? '',
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',
