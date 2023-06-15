@@ -3,6 +3,7 @@ import NextAuth from 'next-auth/next';
 import { OAuthConfig, OAuthUserConfig, Provider } from 'next-auth/providers';
 import Auth0Provider from 'next-auth/providers/auth0';
 import AzureProvider from 'next-auth/providers/azure-ad';
+import CredentialsProvider from 'next-auth/providers/credentials';
 import { GitLabProfile } from 'next-auth/providers/gitlab';
 import GoogleProvider from 'next-auth/providers/google';
 
@@ -97,6 +98,27 @@ const allProviders: (Provider | boolean)[] = [
       name: process.env.AUTH_AUTH0_NAME ?? DEFAULT_NAME,
       issuer: process.env.AUTH_AUTH0_HOST,
     }),
+
+  !!process.env.AUTH_TEST_TOKEN &&
+    CredentialsProvider({
+      name: 'Credentials',
+      credentials: {
+        access_token: {
+          label: 'Token',
+          type: 'password',
+        },
+      },
+      async authorize(credentials, req) {
+        if (credentials?.access_token === process.env.AUTH_TEST_TOKEN) {
+          return {
+            id: '0',
+            email: 'test',
+            name: 'test',
+          };
+        }
+        return null;
+      },
+    }),
 ];
 
 const providers = allProviders.filter(Boolean) as Provider[];
@@ -115,6 +137,13 @@ export const authOptions: AuthOptions = {
       return options.token;
     },
     signIn: async (options) => {
+      if (
+        options.account?.type === 'credentials' &&
+        options.credentials?.access_token === process.env.AUTH_TEST_TOKEN
+      ) {
+        return true;
+      }
+
       if (!options.account?.access_token) {
         return false;
       }
