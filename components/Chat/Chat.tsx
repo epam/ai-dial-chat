@@ -96,6 +96,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
+    localConversations.current = conversations;
     if (selectedConversationIds.length > 0) {
       const selectedConversations = selectedConversationIds
         .map((id) => conversations.find((conv) => conv.id === id))

@@ -235,6 +235,10 @@ const Home = ({
       field: 'selectedConversationIds',
       value: [newConversation.id],
     });
+    dispatch({
+      field: 'isCompareMode',
+      value: false,
+    });
     dispatch({ field: 'conversations', value: updatedConversations });
 
     saveSelectedConversationIds([newConversation.id]);
@@ -381,7 +385,7 @@ const Home = ({
     }
 
     const conversationHistory = localStorage.getItem('conversationHistory');
-    let cleanedConversationHistory: Conversation[] | undefined;
+    let cleanedConversationHistory: Conversation[] = [];
     if (conversationHistory) {
       const parsedConversationHistory: Conversation[] =
         JSON.parse(conversationHistory);
@@ -400,11 +404,11 @@ const Home = ({
     );
     const filteredSelectedConversationIds =
       parsedSelectedConversationsIds.filter((convId) =>
-        cleanedConversationHistory?.some((conv) => conv.id === convId),
+        cleanedConversationHistory.some((conv) => conv.id === convId),
       );
     if (
       filteredSelectedConversationIds?.length > 0 &&
-      cleanedConversationHistory
+      cleanedConversationHistory.length > 0
     ) {
       dispatch({
         field: 'selectedConversationIds',
@@ -418,7 +422,8 @@ const Home = ({
         });
       }
     } else {
-      const lastConversation = conversations[conversations.length - 1];
+      const lastConversation =
+        cleanedConversationHistory[conversations.length - 1];
       const newConversation = {
         id: uuidv4(),
         name: t('New Conversation'),
@@ -434,7 +439,7 @@ const Home = ({
       });
       dispatch({
         field: 'conversations',
-        value: [...conversations, newConversation],
+        value: [...cleanedConversationHistory, newConversation],
       });
     }
   }, [

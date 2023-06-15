@@ -1,4 +1,9 @@
-import { IconFileExport, IconPencil, IconTrash } from '@tabler/icons-react';
+import {
+  IconFileExport,
+  IconPencil,
+  IconScale,
+  IconTrash,
+} from '@tabler/icons-react';
 import { MouseEventHandler, RefObject, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -42,7 +47,7 @@ export const ContextMenu = ({
           onClick={onCompare}
           className="flex cursor-pointer p-2 hover:bg-[#343541] rounded-lg"
         >
-          <IconPencil size={18} />
+          <IconScale size={18} />
           <span className="ml-2">{t('Compare')}</span>
         </li>
         <li
