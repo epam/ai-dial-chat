@@ -20,9 +20,7 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
-import { updateConversation } from '@/utils/app/conversation';
-
-import { Message } from '@/types/chat';
+import { Conversation, Message } from '@/types/chat';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -39,8 +37,10 @@ import remarkMath from 'remark-math';
 export interface Props {
   message: Message;
   messageIndex: number;
-  onEdit?: (editedMessage: Message) => void;
-  onLike?: (editedMessage: Message) => void;
+  conversation: Conversation;
+  onEdit: (editedMessage: Message) => void;
+  onLike: (editedMessage: Message) => void;
+  onDelete: (deletedMessage: Message) => void;
 }
 
 const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
@@ -64,17 +64,11 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
 };
 
 export const ChatMessage: FC<Props> = memo(
-  ({ message, messageIndex, onEdit, onLike }) => {
+  ({ message, messageIndex, conversation, onEdit, onLike, onDelete }) => {
     const { t } = useTranslation('chat');
 
     const {
-      state: {
-        selectedConversation,
-        conversations,
-        currentMessage,
-        messageIsStreaming,
-      },
-      dispatch: homeDispatch,
+      state: { messageIsStreaming },
     } = useContext(HomeContext);
 
     const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -83,7 +77,7 @@ export const ChatMessage: FC<Props> = memo(
     const [messagedCopied, setMessageCopied] = useState(false);
 
     const isLastMessage =
-      messageIndex == (selectedConversation?.messages.length ?? 0) - 1;
+      messageIndex == (conversation?.messages.length ?? 0) - 1;
 
     const replaceCursor = (cursorSign: string) =>
       cursorSign.replace(modelCursorSignWithBackquote, modelCursorSign);
@@ -99,7 +93,7 @@ export const ChatMessage: FC<Props> = memo(
     };
 
     const setLike = (likeStatus: number) => () => {
-      if (selectedConversation && onLike) {
+      if (conversation && onLike) {
         onLike({ ...message, like: likeStatus });
       }
     };
@@ -116,7 +110,7 @@ export const ChatMessage: FC<Props> = memo(
 
     const handleEditMessage = () => {
       if (message.content != messageContent) {
-        if (selectedConversation && onEdit) {
+        if (conversation && onEdit) {
           onEdit({ ...message, content: messageContent });
         }
       }
@@ -124,32 +118,7 @@ export const ChatMessage: FC<Props> = memo(
     };
 
     const handleDeleteMessage = () => {
-      if (!selectedConversation) return;
-
-      const { messages } = selectedConversation;
-      const findIndex = messages.findIndex((elm) => elm === message);
-
-      if (findIndex < 0) return;
-
-      if (
-        findIndex < messages.length - 1 &&
-        messages[findIndex + 1].role === 'assistant'
-      ) {
-        messages.splice(findIndex, 2);
-      } else {
-        messages.splice(findIndex, 1);
-      }
-      const updatedConversation = {
-        ...selectedConversation,
-        messages,
-      };
-
-      const { single, all } = updateConversation(
-        updatedConversation,
-        conversations,
-      );
-      homeDispatch({ field: 'selectedConversation', value: single });
-      homeDispatch({ field: 'conversations', value: all });
+      onDelete(message);
     };
 
     const handlePressEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -182,14 +151,14 @@ export const ChatMessage: FC<Props> = memo(
     }, [isEditing]);
     return (
       <div
-        className={`group md:px-4 ${
+        className={`h-full group md:px-4 ${
           isAssistant
             ? 'border-b border-black/10 bg-gray-50 text-gray-800 dark:border-gray-900/50 dark:bg-[#444654] dark:text-gray-100'
             : 'border-b border-black/10 bg-white text-gray-800 dark:border-gray-900/50 dark:bg-[#343541] dark:text-gray-100'
         }`}
         style={{ overflowWrap: 'anywhere' }}
       >
-        <div className="relative m-auto flex p-4 text-base md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
+        <div className="h-full relative m-auto flex p-4 text-base md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
           <div className="min-w-[40px] text-right font-bold">
             {isAssistant ? (
               <IconRobot
@@ -203,7 +172,7 @@ export const ChatMessage: FC<Props> = memo(
 
           <div className="prose mt-[-2px] w-full dark:prose-invert">
             {isUser ? (
-              <div className="flex w-full">
+              <div className="flex">
                 {isEditing ? (
                   <div className="flex w-full flex-col">
                     <textarea
@@ -250,7 +219,7 @@ export const ChatMessage: FC<Props> = memo(
                 )}
 
                 {!isEditing && (
-                  <div className="md:-mr-8 ml-1 md:ml-0 flex flex-col md:flex-row gap-4 md:gap-1 items-center md:items-start justify-end md:justify-start">
+                  <div className="w-[60px] flex flex-col md:flex-row gap-4 md:gap-1 items-center md:items-start justify-end md:justify-start">
                     <button
                       className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                       onClick={toggleEditing}
@@ -267,9 +236,11 @@ export const ChatMessage: FC<Props> = memo(
                 )}
               </div>
             ) : (
-              <div className="flex flex-row">
+              <div className="h-full flex flex-row">
                 <MemoizedReactMarkdown
-                  className="prose dark:prose-invert flex-1"
+                  className={`prose dark:prose-invert flex-1 ${
+                    message.isError ? 'text-red-400' : ''
+                  }`}
                   remarkPlugins={[remarkGfm, remarkMath]}
                   rehypePlugins={[rehypeMathjax]}
                   components={{
@@ -343,51 +314,53 @@ export const ChatMessage: FC<Props> = memo(
                   }`}
                 </MemoizedReactMarkdown>
 
-                <div className="absolute bottom-0 right-8 flex flex-row gap-2">
-                  {isShowResponseLoader && isAssistant && (
-                    <div className="min-w-[40px] flex font-bold">
-                      <IconRobot
-                        size={30}
-                        className="animate-bounce self-end"
+                <div className="flex flex-col justify-between w-[60px]">
+                  <div className="md:-mr-8 ml-1 md:ml-0 flex flex-col md:flex-row gap-4 md:gap-1 items-center md:items-start justify-end md:justify-start">
+                    {messagedCopied ? (
+                      <IconCheck
+                        size={20}
+                        className="text-green-500 dark:text-green-400"
                       />
-                    </div>
-                  )}
-                  {message.like !== -1 && (
-                    <Button
-                      onClick={message.like !== 1 ? setLike(1) : void 0}
-                      className={
-                        message.like !== 1
-                          ? void 0
-                          : 'visible text-gray-700 dark:text-gray-300'
-                      }
-                    >
-                      <IconThumbUp size={24} />
-                    </Button>
-                  )}
-                  {message.like !== 1 && (
-                    <Button
-                      onClick={message.like !== -1 ? setLike(-1) : void 0}
-                      className={
-                        message.like !== -1
-                          ? void 0
-                          : 'visible text-gray-700 dark:text-gray-300'
-                      }
-                    >
-                      <IconThumbDown size={24} />
-                    </Button>
-                  )}
-                </div>
-                <div className="md:-mr-8 ml-1 md:ml-0 flex flex-col md:flex-row gap-4 md:gap-1 items-center md:items-start justify-end md:justify-start">
-                  {messagedCopied ? (
-                    <IconCheck
-                      size={20}
-                      className="text-green-500 dark:text-green-400"
-                    />
-                  ) : (
-                    <Button onClick={copyOnClick}>
-                      <IconCopy size={20} />
-                    </Button>
-                  )}
+                    ) : (
+                      <Button onClick={copyOnClick}>
+                        <IconCopy size={20} />
+                      </Button>
+                    )}
+                  </div>
+                  <div className="bottom-0 right-8 flex flex-row gap-2">
+                    {isShowResponseLoader && isAssistant && (
+                      <div className="min-w-[40px] flex font-bold">
+                        <IconRobot
+                          size={30}
+                          className="animate-bounce self-end"
+                        />
+                      </div>
+                    )}
+                    {message.like !== -1 && (
+                      <Button
+                        onClick={message.like !== 1 ? setLike(1) : void 0}
+                        className={
+                          message.like !== 1
+                            ? void 0
+                            : 'visible text-gray-700 dark:text-gray-300'
+                        }
+                      >
+                        <IconThumbUp size={24} />
+                      </Button>
+                    )}
+                    {message.like !== 1 && (
+                      <Button
+                        onClick={message.like !== -1 ? setLike(-1) : void 0}
+                        className={
+                          message.like !== -1
+                            ? void 0
+                            : 'visible text-gray-700 dark:text-gray-300'
+                        }
+                      >
+                        <IconThumbDown size={24} />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

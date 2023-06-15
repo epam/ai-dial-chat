@@ -4,12 +4,12 @@ import { FC } from 'react';
 import { Conversation } from '@/types/chat';
 
 interface Props {
-  selectedConversation: Conversation;
+  selectedConversationNames: string[];
   onNewConversation: () => void;
 }
 
 export const Navbar: FC<Props> = ({
-  selectedConversation,
+  selectedConversationNames,
   onNewConversation,
 }) => {
   return (
@@ -17,7 +17,7 @@ export const Navbar: FC<Props> = ({
       <div className="mr-4"></div>
 
       <div className="max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap">
-        {selectedConversation.name}
+        {selectedConversationNames.join(' / ')}
       </div>
 
       <IconPlus

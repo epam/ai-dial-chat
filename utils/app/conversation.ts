@@ -12,17 +12,13 @@ export const updateConversation = (
     return c;
   });
 
-  saveConversation(updatedConversation);
   saveConversations(updatedConversations);
 
-  return {
-    single: updatedConversation,
-    all: updatedConversations,
-  };
+  return updatedConversations;
 };
 
-export const saveConversation = (conversation: Conversation) => {
-  localStorage.setItem('selectedConversation', JSON.stringify(conversation));
+export const saveSelectedConversationIds = (ids: string[]) => {
+  localStorage.setItem('selectedConversationIds', JSON.stringify(ids));
 };
 
 export const saveConversations = (conversations: Conversation[]) => {

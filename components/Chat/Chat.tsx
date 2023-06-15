@@ -1,9 +1,4 @@
 import {
-  IconClearAll,
-  IconPlayerPlay,
-  IconSettings,
-} from '@tabler/icons-react';
-import {
   MouseEventHandler,
   MutableRefObject,
   memo,
@@ -18,29 +13,24 @@ import {
 import { useTranslation } from 'next-i18next';
 
 import { getEndpoint } from '@/utils/app/api';
-import {
-  saveConversation,
-  saveConversations,
-  updateConversation,
-} from '@/utils/app/conversation';
+import { updateConversation } from '@/utils/app/conversation';
 import { showAPIToastError } from '@/utils/app/errors';
 import { throttle } from '@/utils/data/throttle';
 
-import { OpenAIModel } from '../../types/openai';
+import { OpenAIModel, OpenAIModelID } from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
-import { Plugin } from '@/types/plugin';
 
 import HomeContext from '@/pages/api/home/home.context';
 
-import Spinner from '../Spinner';
+import { ChatCompareSelect } from './ChatCompareSelect';
+import { ChatEmpty } from './ChatEmpty';
 import { ChatInput } from './ChatInput';
 import { ChatLoader } from './ChatLoader';
 import ChatReplayControls from './ChatReplayControls';
+import { ChatSettings } from './ChatSettings';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
-import { ModelSelect } from './ModelSelect';
-import { SystemPrompt } from './SystemPrompt';
-import { TemperatureSlider } from './Temperature';
+import { NoApiKeySet } from './NoApiKeySet';
 
 import { errorsMessages } from '@/constants/errors';
 
@@ -77,97 +67,150 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
 
   const {
     state: {
-      selectedConversation,
       conversations,
+      selectedConversationIds,
       models,
       apiKey,
-      pluginKeys,
       serverSideApiKeyIsSet,
-      usePluginKeys,
-      messageIsStreaming,
       modelError,
       loading,
       prompts,
+      defaultModelId,
+      isCompareMode,
+      messageIsStreaming,
     },
     handleUpdateConversation,
+    handleSelectConversation,
     dispatch: homeDispatch,
   } = useContext(HomeContext);
 
-  const [currentMessage, setCurrentMessage] = useState<Message>();
+  const [currentUserMessage, setCurrentUserMessage] = useState<Message>();
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
-  const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showScrollDownButton, setShowScrollDownButton] =
     useState<boolean>(false);
   const [activeReplayIndex, setActiveReplayIndex] = useState<number>(0);
+  const [selectedConversations, setSelectedConversations] = useState<
+    Conversation[]
+  >([]);
+  const [mergedMessages, setMergedMessages] = useState<any[]>([]);
+
+  const localConversations = useRef<Conversation[]>(conversations);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const isEmptySelectedConversation = useMemo(() => {
-    return (
-      !!selectedConversation?.messages &&
-      selectedConversation?.messages.length === 0
-    );
-  }, [selectedConversation]);
+  const isSelectedConversations = selectedConversations.length > 0;
+  const isEmptySelectedConversation = isSelectedConversations
+    ? selectedConversations.some(({ messages }) => messages.length === 0)
+    : true;
+  // selectedConversations &&
+  // selectedConversations.some(({ messages }) => messages.length === 0);
 
-  const { replayUserMessagesStack, isReplay } = useMemo(() => {
-    return {
-      replayUserMessagesStack:
-        selectedConversation?.replay?.replayUserMessagesStack,
-      isReplay: selectedConversation?.replay?.isReplay,
-    };
-  }, [selectedConversation]);
+  const replayUserMessagesStack = useMemo(
+    () =>
+      isSelectedConversations &&
+      selectedConversations[0].replay?.replayUserMessagesStack,
+    [selectedConversations],
+  );
+  const isReplay = useMemo(
+    () => isSelectedConversations && selectedConversations[0].replay?.isReplay,
+    [selectedConversations],
+  );
+  // const { replayUserMessagesStack, isReplay } = useMemo(() => {
+  //   return {
+  //     replayUserMessagesStack:
+  //       selectedConversations[0].replay?.replayUserMessagesStack,
+  //     isReplay: selectedConversation?.replay?.isReplay,
+  //   };
+  // }, [selectedConversation]);
 
   const isLastActiveReplayIndex =
     replayUserMessagesStack &&
     replayUserMessagesStack?.length <= activeReplayIndex;
 
-  const isLastMessageFromAssistant = () => {
-    if (!isEmptySelectedConversation) {
-      return (
-        selectedConversation?.messages[selectedConversation.messages.length - 1]
-          .role === 'assistant'
-      );
-    } else {
-      return false;
+  console.log('isEmptySelectedConversation', isEmptySelectedConversation);
+  console.log('selectedConversations', selectedConversations);
+  console.log('isSelectedConversations', isSelectedConversations);
+  const isLastMessageFromAssistant =
+    !isEmptySelectedConversation &&
+    selectedConversations[0].messages[
+      selectedConversations[0].messages.length - 1
+    ].role === 'assistant';
+
+  useEffect(() => {
+    if (selectedConversationIds.length > 0) {
+      const selectedConversations = selectedConversationIds
+        .map((id) => conversations.find((conv) => conv.id === id))
+        .filter((value) => !!value) as Conversation[];
+      setSelectedConversations(selectedConversations);
+
+      console.log('!!!selectedConversations', selectedConversations);
+      console.log('!!!selectedConversationIds', selectedConversationIds);
+      console.log('!!!conversations', conversations);
+      let mergedMessages = [];
+      for (let i = 0; i < selectedConversations[0].messages.length; i++) {
+        mergedMessages.push(
+          selectedConversations.map((conv) => [
+            conv,
+            conv.messages[i] || { role: 'assistant', content: '' },
+            i,
+          ]),
+        );
+      }
+      setMergedMessages([...mergedMessages]);
     }
-  };
+  }, [selectedConversationIds, conversations]);
 
   const handleSend = useCallback(
     async (
+      conversation: Conversation,
       message: Message,
-      id: string,
       deleteCount = 0,
-      plugin: Plugin | null = null,
-      activeReplayIndex?: number,
+      activeReplayIndex = 0,
     ) => {
-      if (selectedConversation) {
+      console.log('handleSend conversation', conversation);
+      if (conversation) {
         let updatedConversation: Conversation;
         if (deleteCount) {
-          const updatedMessages = [...selectedConversation.messages];
+          const updatedMessages = [...conversation.messages];
           for (let i = 0; i < deleteCount; i++) {
             updatedMessages.pop();
           }
           updatedConversation = {
-            ...selectedConversation,
+            ...conversation,
             messages: [...updatedMessages, message],
-          };
-        } else {
-          updatedConversation = {
-            ...selectedConversation,
-            messages: [...selectedConversation.messages, message],
             replay: {
-              ...selectedConversation.replay,
-              activeReplayIndex:
-                isReplay && activeReplayIndex ? activeReplayIndex : 0,
+              ...conversation.replay,
+              activeReplayIndex: activeReplayIndex,
             },
           };
+          localConversations.current = handleUpdateConversation(
+            updatedConversation,
+            {
+              key: 'messages',
+              value: [...updatedMessages, message],
+            },
+            localConversations.current,
+          );
+        } else {
+          updatedConversation = {
+            ...conversation,
+            messages: [...conversation.messages, message],
+            replay: {
+              ...conversation.replay,
+              activeReplayIndex: activeReplayIndex,
+            },
+          };
+          localConversations.current = handleUpdateConversation(
+            updatedConversation,
+            {
+              key: 'messages',
+              value: [...conversation.messages, message],
+            },
+            localConversations.current,
+          );
         }
-        homeDispatch({
-          field: 'selectedConversation',
-          value: updatedConversation,
-        });
         homeDispatch({ field: 'loading', value: true });
         homeDispatch({ field: 'messageIsStreaming', value: true });
         const chatBody: ChatBody = {
@@ -176,26 +219,14 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
             const gptMessage = { ...message, like: void 0 };
             return gptMessage;
           }),
-          id: id.toLowerCase(),
+          id: conversation.id.toLowerCase(),
           key: apiKey,
           prompt: updatedConversation.prompt,
           temperature: updatedConversation.temperature,
         };
-        const endpoint = getEndpoint(plugin);
+        const endpoint = getEndpoint();
         let body;
-        if (!plugin) {
-          body = JSON.stringify(chatBody);
-        } else if (usePluginKeys) {
-          body = JSON.stringify({
-            ...chatBody,
-            googleAPIKey: pluginKeys
-              .find((key) => key.pluginId === 'google-search')
-              ?.requiredKeys.find((key) => key.key === 'GOOGLE_API_KEY')?.value,
-            googleCSEId: pluginKeys
-              .find((key) => key.pluginId === 'google-search')
-              ?.requiredKeys.find((key) => key.key === 'GOOGLE_CSE_ID')?.value,
-          });
-        }
+        body = JSON.stringify(chatBody);
         const controller = new AbortController();
         const response = await fetch(endpoint, {
           method: 'POST',
@@ -211,151 +242,138 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
           homeDispatch({ field: 'messageIsStreaming', value: false });
 
           await showAPIToastError(response, t(errorsMessages.generalServer));
+          const errorMessage: Message = {
+            content: t(
+              'Error happened during answering. Please regenerate response',
+            ),
+            role: 'assistant',
+            isError: true,
+          };
+          localConversations.current = handleUpdateConversation(
+            updatedConversation,
+            {
+              key: 'messages',
+              value: [...updatedConversation.messages, errorMessage],
+            },
+            localConversations.current,
+          );
           return;
         }
         const data = response.body;
         if (!data) {
           homeDispatch({ field: 'loading', value: false });
           homeDispatch({ field: 'messageIsStreaming', value: false });
+
           return;
         }
-        if (!plugin) {
-          if (updatedConversation.messages.length === 1 && !isReplay) {
-            const { content } = message;
-            const customName =
-              content.length > 30 ? content.substring(0, 30) + '...' : content;
-            updatedConversation = {
-              ...updatedConversation,
-              name: customName,
-            };
-          }
-          homeDispatch({ field: 'loading', value: false });
-          const reader = data.getReader();
-          const decoder = new TextDecoder();
-          let done = false;
-          let isFirst = true;
-          let text = '';
-          while (!done) {
-            if (stopConversationRef.current === true) {
-              controller.abort();
-              done = true;
-              break;
-            }
-            const { value, done: doneReading } = await reader.read();
-            done = doneReading;
-            const chunkValue = decoder.decode(value);
-            text += chunkValue;
-            if (isFirst) {
-              isFirst = false;
-              const updatedMessages: Message[] = [
-                ...updatedConversation.messages,
-                { role: 'assistant', content: chunkValue },
-              ];
-              updatedConversation = {
-                ...updatedConversation,
-                messages: updatedMessages,
-              };
-              homeDispatch({
-                field: 'selectedConversation',
-                value: updatedConversation,
-              });
-            } else {
-              const updatedMessages: Message[] =
-                updatedConversation.messages.map((message, index) => {
-                  if (index === updatedConversation.messages.length - 1) {
-                    return {
-                      ...message,
-                      content: text,
-                    };
-                  }
-                  return message;
-                });
-              updatedConversation = {
-                ...updatedConversation,
-                messages: updatedMessages,
-              };
-              homeDispatch({
-                field: 'selectedConversation',
-                value: updatedConversation,
-              });
-            }
-          }
-          saveConversation(updatedConversation);
-          const updatedConversations: Conversation[] = conversations.map(
-            (conversation) => {
-              if (conversation.id === selectedConversation.id) {
-                return updatedConversation;
-              }
-              return conversation;
-            },
-          );
-          if (updatedConversations.length === 0) {
-            updatedConversations.push(updatedConversation);
-          }
-          homeDispatch({ field: 'conversations', value: updatedConversations });
-          saveConversations(updatedConversations);
-          homeDispatch({ field: 'messageIsStreaming', value: false });
-        } else {
-          const { answer } = await response.json();
-          const updatedMessages: Message[] = [
-            ...updatedConversation.messages,
-            { role: 'assistant', content: answer },
-          ];
+        console.log(
+          'updatedConversation.messages.length === 1 && !isReplay',
+          updatedConversation.messages,
+          !isReplay,
+        );
+        if (updatedConversation.messages.length === 1 && !isReplay) {
+          const { content } = message;
+          const customName =
+            content.length > 30 ? content.substring(0, 30) + '...' : content;
           updatedConversation = {
             ...updatedConversation,
-            messages: updatedMessages,
+            name: customName,
           };
-          homeDispatch({
-            field: 'selectedConversation',
-            value: updateConversation,
-          });
-          saveConversation(updatedConversation);
-          const updatedConversations: Conversation[] = conversations.map(
-            (conversation) => {
-              if (conversation.id === selectedConversation.id) {
-                return updatedConversation;
-              }
-              return conversation;
+          localConversations.current = handleUpdateConversation(
+            updatedConversation,
+            {
+              key: 'name',
+              value: customName,
             },
+            localConversations.current,
           );
-          if (updatedConversations.length === 0) {
-            updatedConversations.push(updatedConversation);
-          }
-          homeDispatch({ field: 'conversations', value: updatedConversations });
-          saveConversations(updatedConversations);
-          homeDispatch({ field: 'loading', value: false });
-          homeDispatch({ field: 'messageIsStreaming', value: false });
         }
+        homeDispatch({ field: 'loading', value: false });
+        const reader = data.getReader();
+        const decoder = new TextDecoder();
+        let done = false;
+        let isFirst = true;
+        let text = '';
+        while (!done) {
+          if (stopConversationRef.current === true) {
+            controller.abort();
+            done = true;
+            break;
+          }
+          const { value, done: doneReading } = await reader.read();
+          done = doneReading;
+          const chunkValue = decoder.decode(value);
+          text += chunkValue;
+          if (isFirst) {
+            isFirst = false;
+            const updatedMessages: Message[] = [
+              ...updatedConversation.messages,
+              { role: 'assistant', content: chunkValue },
+            ];
+            updatedConversation = {
+              ...updatedConversation,
+              messages: updatedMessages,
+            };
+            localConversations.current = handleUpdateConversation(
+              updatedConversation,
+              {
+                key: 'messages',
+                value: updatedMessages,
+              },
+              localConversations.current,
+            );
+          } else {
+            const updatedMessages: Message[] = updatedConversation.messages.map(
+              (message, index) => {
+                if (index === updatedConversation.messages.length - 1) {
+                  return {
+                    ...message,
+                    content: text,
+                  };
+                }
+                return message;
+              },
+            );
+            updatedConversation = {
+              ...updatedConversation,
+              messages: updatedMessages,
+            };
+            localConversations.current = handleUpdateConversation(
+              updatedConversation,
+              {
+                key: 'messages',
+                value: updatedMessages,
+              },
+              localConversations.current,
+            );
+          }
+        }
+
+        homeDispatch({ field: 'messageIsStreaming', value: false });
       }
     },
-    [
-      apiKey,
-      conversations,
-      pluginKeys,
-      selectedConversation,
-      stopConversationRef,
-    ],
+    [apiKey, conversations, stopConversationRef],
   );
 
   const onLikeHandler = useCallback(
-    (index: number) => (editedMessage: Message) => {
-      if (!selectedConversation) {
+    (index: number, conversation: Conversation) => (editedMessage: Message) => {
+      if (!conversation) {
         return;
       }
-      const messages = [...selectedConversation.messages];
+      const messages = [...conversation.messages];
       messages[index] = editedMessage;
-      handleUpdateConversation(selectedConversation, {
+      handleUpdateConversation(conversation, {
         key: 'messages',
         value: messages,
       });
       handleRate(
         editedMessage,
-        selectedConversation?.id ?? '',
-        selectedConversation.model,
+        conversation?.id ?? '',
+        conversation.model,
         apiKey,
       );
     },
-    [apiKey, handleUpdateConversation, selectedConversation],
+    [apiKey, handleUpdateConversation],
   );
 
   const scrollToBottom = useCallback(() => {
@@ -388,43 +406,39 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
     });
   };
 
-  const handleSettings = () => {
-    setShowSettings(!showSettings);
-  };
-
-  const onClearAll = () => {
+  const handleClearConversation = (conversation: Conversation) => {
     if (
       confirm(t<string>('Are you sure you want to clear all messages?')) &&
-      selectedConversation
+      conversation
     ) {
-      handleUpdateConversation(selectedConversation, {
+      handleUpdateConversation(conversation, {
         key: 'messages',
         value: [],
       });
     }
   };
 
-  const scrollDown = () => {
-    if (autoScrollEnabled) {
-      messagesEndRef.current?.scrollIntoView(true);
-    }
-  };
-  const throttledScrollDown = throttle(scrollDown, 250);
-
   const handleReplay = (deleteCount = 0, replayIndex = activeReplayIndex) => {
-    if (selectedConversation && replayUserMessagesStack) {
-      if (!isLastActiveReplayIndex) {
-        handleSend(
+    if (replayUserMessagesStack && !!replayUserMessagesStack[replayIndex]) {
+      console.log(
+        'start',
+        selectedConversations,
+        replayUserMessagesStack[replayIndex],
+      );
+      // const updatedConversations
+      setCurrentUserMessage(replayUserMessagesStack[replayIndex]);
+      localConversations.current = conversations;
+      setActiveReplayIndex((prevActiveReplayIndex) => {
+        return prevActiveReplayIndex + 1;
+      });
+      selectedConversations.forEach(async (conversation) => {
+        await handleSend(
+          conversation,
           replayUserMessagesStack[replayIndex],
-          selectedConversation?.id,
           deleteCount,
-          null,
           replayIndex,
         );
-        setActiveReplayIndex((prevActiveReplayIndex) => {
-          return prevActiveReplayIndex + 1;
-        });
-      }
+      });
     }
   };
   const onClickReplayStart: MouseEventHandler<HTMLButtonElement> = (e) => {
@@ -433,63 +447,60 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   };
   const onClickReplayReStart: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.preventDefault();
+    console.log('REPLAY restart!!!');
+
     const prevActiveReplayIndex = activeReplayIndex - 1;
-    if (isLastMessageFromAssistant()) {
+    if (isLastMessageFromAssistant) {
       handleReplay(2, prevActiveReplayIndex);
     } else {
       handleReplay(1, prevActiveReplayIndex);
     }
   };
   const handleReplayStop = () => {
-    if (selectedConversation) {
-      const updatedConversation: Conversation = {
-        ...selectedConversation,
-        replay: {
-          ...selectedConversation?.replay,
-          isReplay: false,
-        },
+    console.log('REPLAY STOP!!!');
+    selectedConversations.forEach((conv) => {
+      const updatedReplay = {
+        ...conv.replay,
+        isReplay: false,
       };
-      let updatedConversations: Conversation[] = [];
-      if (conversations.length === 0) {
-        updatedConversations.push(updatedConversation);
-      } else {
-        updatedConversations = conversations.map((conversation) => {
-          if (conversation.id === selectedConversation.id) {
-            return updatedConversation;
-          }
-          return conversation;
-        });
-      }
-
-      const nonMutableUpdatedConversation: Conversation[] = [
-        ...updatedConversations,
-      ];
-      homeDispatch({
-        field: 'conversations',
-        value: nonMutableUpdatedConversation,
-      });
-      saveConversations(nonMutableUpdatedConversation);
-      homeDispatch({
-        field: 'selectedConversation',
-        value: updatedConversation,
-      });
-    }
+      handleUpdateConversation(conv, { key: 'replay', value: updatedReplay });
+    });
   };
-  // useEffect(() => {
-  //   console.log('currentMessage', currentMessage);
-  //   if (currentMessage) {
-  //     handleSend(currentMessage);
-  //     homeDispatch({ field: 'currentMessage', value: undefined });
-  //   }
-  // }, [currentMessage]);
+  // const handleReplayStop = () => {
+  //   if (selectedConversation) {
+  //     const updatedConversation: Conversation = {
+  //       ...selectedConversation,
+  //       replay: {
+  //         ...selectedConversation?.replay,
+  //         isReplay: false,
+  //       },
+  //     };
+  //     let updatedConversations: Conversation[] = [];
+  //     if (conversations.length === 0) {
+  //       updatedConversations.push(updatedConversation);
+  //     } else {
+  //       updatedConversations = conversations.map((conversation) => {
+  //         if (conversation.id === selectedConversation.id) {
+  //           return updatedConversation;
+  //         }
+  //         return conversation;
+  //       });
+  //     }
 
-  useEffect(() => {
-    throttledScrollDown();
-    selectedConversation &&
-      setCurrentMessage(
-        selectedConversation.messages[selectedConversation.messages.length - 2],
-      );
-  }, [selectedConversation, throttledScrollDown]);
+  //     const nonMutableUpdatedConversation: Conversation[] = [
+  //       ...updatedConversations,
+  //     ];
+  //     homeDispatch({
+  //       field: 'conversations',
+  //       value: nonMutableUpdatedConversation,
+  //     });
+  //     saveConversations(nonMutableUpdatedConversation);
+  //     homeDispatch({
+  //       field: 'selectedConversation',
+  //       value: updatedConversation,
+  //     });
+  //   }
+  // };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -500,8 +511,8 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
         }
       },
       {
-        root: null,
-        threshold: 0.5,
+        root: chatContainerRef.current,
+        threshold: 0.1,
       },
     );
     const messagesEndElement = messagesEndRef.current;
@@ -515,15 +526,79 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
     };
   }, [messagesEndRef]);
 
+  const handleSelectModel = (conversation: Conversation, modelId: string) => {
+    handleUpdateConversation(conversation, {
+      key: 'model',
+      value: models.find((model) => model.id === modelId) as OpenAIModel,
+    });
+  };
+
+  const handleChangePrompt = (conversation: Conversation, prompt: string) =>
+    handleUpdateConversation(conversation, {
+      key: 'prompt',
+      value: prompt,
+    });
+
+  const handleChangeTemperature = (
+    conversation: Conversation,
+    temperature: number,
+  ) =>
+    handleUpdateConversation(conversation, {
+      key: 'temperature',
+      value: temperature,
+    });
+
+  const handleDeleteMessage = (message: Message) => {
+    selectedConversations.forEach((conversation) => {
+      const { messages } = conversation;
+      const findIndex = messages.findIndex(
+        ({ content }) => content === message.content,
+      );
+
+      if (findIndex < 0) return;
+
+      if (
+        findIndex < messages.length - 1 &&
+        messages[findIndex + 1].role === 'assistant'
+      ) {
+        messages.splice(findIndex, 2);
+      } else {
+        messages.splice(findIndex, 1);
+      }
+      const updatedConversation = {
+        ...conversation,
+        messages,
+      };
+
+      handleUpdateConversation(updatedConversation, {
+        key: 'messages',
+        value: messages,
+      });
+    });
+  };
+
   useEffect(() => {
+    console.log('isReplay', isReplay);
+    console.log('loading', loading);
+    console.log('messageIsStreaming', messageIsStreaming);
+    console.log('isEmptySelectedConversation', isEmptySelectedConversation);
+    console.log('isLastMessageFromAssistant()', isLastMessageFromAssistant);
+    console.log('isLastActiveReplayIndex', isLastActiveReplayIndex);
+    // console.log(
+    //   'selectedConversations[0] role',
+    //   selectedConversations[0].messages[
+    //     selectedConversations[0].messages.length - 1
+    //   ],
+    // );
     if (isReplay) {
       if (
         !loading &&
         !messageIsStreaming &&
         !isEmptySelectedConversation &&
-        isLastMessageFromAssistant()
+        isLastMessageFromAssistant
       ) {
         if (!isLastActiveReplayIndex) {
+          console.log('NEXT REPLAY');
           handleReplay();
         } else {
           handleReplayStop();
@@ -531,156 +606,158 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
       }
     }
   }, [messageIsStreaming]);
+
   useEffect(() => {
     if (isReplay) {
-      setActiveReplayIndex(selectedConversation?.replay.activeReplayIndex ?? 0);
+      setActiveReplayIndex(
+        selectedConversations[0].replay.activeReplayIndex ?? 0,
+      );
     }
-  }, [selectedConversation?.id]);
+  }, [selectedConversations]);
 
+  ////////////////
+  console.log('activeReplayIndex', activeReplayIndex);
+  console.log('selectedConversations', selectedConversations);
   return (
     <div className="relative flex-1 overflow-hidden bg-white dark:bg-[#343541]">
       {!(apiKey || serverSideApiKeyIsSet) ? (
-        <div className="mx-auto flex h-full w-[300px] flex-col justify-center space-y-6 sm:w-[600px]">
-          <div className="text-center text-4xl font-bold text-black dark:text-white">
-            Welcome to Chatbot UI
-          </div>
-          <div className="text-center text-lg text-black dark:text-white">
-            <div className="mb-8">{`Chatbot UI is an open source clone of OpenAI's ChatGPT UI.`}</div>
-            <div className="mb-2 font-bold">
-              Important: Chatbot UI is 100% unaffiliated with OpenAI.
-            </div>
-          </div>
-          <div className="text-center text-gray-500 dark:text-gray-400">
-            <div className="mb-2">
-              Chatbot UI allows you to plug in your API key to use this UI with
-              their API.
-            </div>
-            <div className="mb-2">
-              It is <span className="italic">only</span> used to communicate
-              with their API.
-            </div>
-            <div className="mb-2">
-              {t(
-                'Please set your OpenAI API key in the bottom left of the sidebar.',
-              )}
-            </div>
-            <div>
-              {t("If you don't have an OpenAI API key, you can get one here: ")}
-              <a
-                href="https://platform.openai.com/account/api-keys"
-                target="_blank"
-                rel="noreferrer"
-                className="text-blue-500 hover:underline"
-              >
-                openai.com
-              </a>
-            </div>
-          </div>
-        </div>
+        <NoApiKeySet />
       ) : modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : (
         <>
-          <div
-            className="max-h-full overflow-x-hidden"
-            ref={chatContainerRef}
-            onScroll={handleScroll}
-          >
-            {isEmptySelectedConversation && selectedConversation ? (
-              <>
-                <div className="mx-auto flex flex-col space-y-5 md:space-y-10 px-3 pt-5 md:pt-12 sm:max-w-[600px]">
-                  <div className="text-center text-3xl font-semibold text-gray-800 dark:text-gray-100">
-                    {models.length === 0 ? (
-                      <div>
-                        <Spinner size="16px" className="mx-auto" />
-                      </div>
+          <div className="flex h-full overflow-hidden">
+            <div
+              className={`flex flex-col h-full overflow-hidden ${
+                isCompareMode && selectedConversations.length < 2
+                  ? 'w-[50%]'
+                  : 'w-full'
+              }`}
+            >
+              <div className="flex w-full sticky top-0 z-10">
+                {selectedConversations.map((conv) => (
+                  <div
+                    key={conv.id}
+                    className={`${
+                      isCompareMode && selectedConversations.length > 1
+                        ? 'w-[50%]'
+                        : 'w-full'
+                    }`}
+                  >
+                    {conv.messages.length === 0 ? (
+                      <ChatEmpty
+                        conversation={conv}
+                        models={models}
+                        prompts={prompts}
+                        defaultModelId={defaultModelId || OpenAIModelID.GPT_3_5}
+                        onSelectModel={(modelId: string) =>
+                          handleSelectModel(conv, modelId)
+                        }
+                        onChangePrompt={(prompt) =>
+                          handleChangePrompt(conv, prompt)
+                        }
+                        onChangeTemperature={(temperature) =>
+                          handleChangeTemperature(conv, temperature)
+                        }
+                      />
                     ) : (
-                      'Chatbot UI'
+                      <ChatSettings
+                        conversation={conv}
+                        defaultModelId={defaultModelId || OpenAIModelID.GPT_3_5}
+                        models={models}
+                        isCompareMode={isCompareMode}
+                        selectedCinversationIds={selectedConversationIds}
+                        onClearConversation={() =>
+                          handleClearConversation(conv)
+                        }
+                        onSelectModel={(modelId: string) =>
+                          handleSelectModel(conv, modelId)
+                        }
+                        onUnselectConversation={() => {
+                          const filteredSelectedConversation =
+                            selectedConversations.filter(
+                              ({ id }) => id !== conv.id,
+                            )[0];
+                          handleSelectConversation(
+                            filteredSelectedConversation,
+                          );
+                        }}
+                      />
                     )}
                   </div>
-
-                  {models.length > 0 && (
-                    <div className="flex h-full flex-col space-y-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-600">
-                      <ModelSelect />
-
-                      <SystemPrompt
-                        conversation={selectedConversation}
-                        prompts={prompts}
-                        onChangePrompt={(prompt) =>
-                          handleUpdateConversation(selectedConversation, {
-                            key: 'prompt',
-                            value: prompt,
-                          })
-                        }
-                      />
-
-                      <TemperatureSlider
-                        label={t('Temperature')}
-                        onChangeTemperature={(temperature) =>
-                          handleUpdateConversation(selectedConversation, {
-                            key: 'temperature',
-                            value: temperature,
-                          })
-                        }
-                      />
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="sticky top-0 z-10 flex justify-center border border-b-neutral-300 bg-neutral-100 py-2 text-sm text-neutral-500 dark:border-none dark:bg-[#444654] dark:text-neutral-200">
-                  {t('Model')}: {selectedConversation?.model.name} | {t('Temp')}
-                  : {selectedConversation?.temperature} |
-                  <button
-                    className="ml-2 cursor-pointer hover:opacity-50"
-                    onClick={handleSettings}
-                  >
-                    <IconSettings size={18} />
-                  </button>
-                  <button
-                    className="ml-2 cursor-pointer hover:opacity-50"
-                    onClick={onClearAll}
-                  >
-                    <IconClearAll size={18} />
-                  </button>
-                </div>
-                {showSettings && (
-                  <div className="flex flex-col space-y-10 md:mx-auto md:max-w-xl md:gap-6 md:py-3 md:pt-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
-                    <div className="flex h-full flex-col space-y-4 border-b border-neutral-200 p-4 dark:border-neutral-600 md:rounded-lg md:border">
-                      <ModelSelect />
-                    </div>
-                  </div>
-                )}
-
-                {selectedConversation?.messages.map((message, index) => (
-                  <MemoizedChatMessage
-                    key={index}
-                    message={message}
-                    messageIndex={index}
-                    onEdit={(editedMessage) => {
-                      setCurrentMessage(editedMessage);
-                      // discard edited message and the ones that come after then resend
-                      handleSend(
-                        editedMessage,
-                        selectedConversation?.id,
-                        selectedConversation?.messages.length - index,
-                      );
-                    }}
-                    onLike={onLikeHandler(index)}
-                  />
                 ))}
+              </div>
+              <div
+                className="max-h-full overflow-x-hidden flex flex-col"
+                ref={chatContainerRef}
+                onScroll={handleScroll}
+              >
+                {mergedMessages.map(
+                  (mergedStr: [Conversation, Message, number][], i: number) => (
+                    <div key={i} className="w-full flex">
+                      {mergedStr.map(
+                        ([conv, message, index]: [
+                          Conversation,
+                          Message,
+                          number,
+                        ]) => (
+                          <div
+                            key={conv.id}
+                            className={`${
+                              isCompareMode && selectedConversations.length > 1
+                                ? 'w-[50%]'
+                                : 'w-full'
+                            }`}
+                          >
+                            <div className="h-full">
+                              <MemoizedChatMessage
+                                key={conv.id}
+                                message={message}
+                                messageIndex={index}
+                                conversation={conv}
+                                onEdit={(editedMessage) => {
+                                  setCurrentUserMessage(editedMessage);
+                                  // discard edited message and the ones that come after then resend
 
+                                  selectedConversations.forEach((conv) => {
+                                    handleSend(
+                                      conv,
+                                      editedMessage,
+                                      conv?.messages.length - index,
+                                    );
+                                  });
+                                }}
+                                onLike={onLikeHandler(index, conv)}
+                                onDelete={(message) => {
+                                  handleDeleteMessage(message);
+                                }}
+                              />
+                            </div>
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  ),
+                )}
                 {loading && <ChatLoader />}
-
                 <div
-                  className="h-[162px] bg-white dark:bg-[#343541]"
+                  className="h-[162px] shrink-0 bg-white dark:bg-[#343541]"
                   ref={messagesEndRef}
                 />
-              </>
+              </div>
+            </div>
+            {isCompareMode && selectedConversations.length < 2 && (
+              <div className="w-[50%]">
+                <ChatCompareSelect
+                  conversations={conversations}
+                  selectedConversations={selectedConversations}
+                  onConversationSelect={(conversation) => {
+                    handleSelectConversation(conversation, true);
+                  }}
+                />
+              </div>
             )}
           </div>
-
           {isReplay && !messageIsStreaming && !isLastActiveReplayIndex ? (
             <ChatReplayControls
               onClickReplayStart={onClickReplayStart}
@@ -691,19 +768,26 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
             <ChatInput
               stopConversationRef={stopConversationRef}
               textareaRef={textareaRef}
-              onSend={(message, plugin) => {
-                setCurrentMessage(message);
-                handleSend(message, selectedConversation?.id ?? '', 0, plugin);
+              isMessagesPresented={selectedConversations.some(
+                (val) => val.messages.length > 0,
+              )}
+              maxLength={Math.min(
+                ...selectedConversations.map((conv) => conv.model.maxLength),
+              )}
+              onSend={(message) => {
+                setCurrentUserMessage(message);
+                localConversations.current = conversations;
+                selectedConversations.forEach((conv) => {
+                  handleSend(conv, message, 0);
+                });
               }}
               onScrollDownClick={handleScrollDown}
               onRegenerate={() => {
-                if (currentMessage) {
-                  handleSend(
-                    currentMessage,
-                    selectedConversation?.id ?? '',
-                    2,
-                    null,
-                  );
+                if (currentUserMessage) {
+                  localConversations.current = conversations;
+                  selectedConversations.forEach((conv) => {
+                    handleSend(conv, currentUserMessage, 2);
+                  });
                 }
               }}
               showScrollDownButton={showScrollDownButton}

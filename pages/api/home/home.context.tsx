@@ -18,11 +18,15 @@ export interface HomeContextProps {
   handleCreateFolder: (name: string, type: FolderType) => void;
   handleDeleteFolder: (folderId: string) => void;
   handleUpdateFolder: (folderId: string, name: string) => void;
-  handleSelectConversation: (conversation: Conversation) => void;
+  handleSelectConversation: (
+    conversation: Conversation,
+    isMultiple?: boolean,
+  ) => void;
   handleUpdateConversation: (
     conversation: Conversation,
     data: KeyValuePair,
-  ) => void;
+    localConversations?: Conversation[],
+  ) => Conversation[];
 }
 
 const HomeContext = createContext<HomeContextProps>(undefined!);

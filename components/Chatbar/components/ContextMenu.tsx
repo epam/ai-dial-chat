@@ -13,6 +13,7 @@ interface Props {
   onRename: MouseEventHandler<unknown>;
   onExport: MouseEventHandler<unknown>;
   onReplay: MouseEventHandler<HTMLLIElement>;
+  onCompare: MouseEventHandler<unknown>;
 }
 
 export const ContextMenu = ({
@@ -21,6 +22,7 @@ export const ContextMenu = ({
   onRename,
   onExport,
   onReplay,
+  onCompare,
 }: Props) => {
   const { t } = useTranslation('sidebar');
   const contextMenuHeight = 120;
@@ -42,6 +44,13 @@ export const ContextMenu = ({
         >
           <IconPencil size={18} />
           <span className="ml-2">{t('Rename')}</span>
+        </li>
+        <li
+          onClick={onCompare}
+          className="flex cursor-pointer p-2 hover:bg-[#343541] rounded-lg"
+        >
+          <IconPencil size={18} />
+          <span className="ml-2">{t('Compare')}</span>
         </li>
         <li
           onClick={onReplay}
