@@ -612,7 +612,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         selectedConversations[0].replay.activeReplayIndex ?? 0,
       );
     }
-  }, [selectedConversations]);
+  }, [selectedConversationIds]);
 
   ////////////////
   console.log('activeReplayIndex', activeReplayIndex);
@@ -620,7 +620,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   return (
     <div className="relative flex-1 overflow-hidden bg-white dark:bg-[#343541]">
       {!(apiKey || serverSideApiKeyIsSet) ? (
-        <NoApiKeySet />
+        <NoApiKeySet appName={appName} />
       ) : modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : (
