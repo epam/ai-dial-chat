@@ -33,8 +33,6 @@ export interface HomeInitialState {
   isShowRequestApiKey: boolean;
   isShowReportAnIssue: boolean;
   footerHtmlMessage: string;
-  requestApiKeyHtmlMessage: string;
-  reportAnIssueHtmlMessage: string;
 }
 
 export const initialState: HomeInitialState = {
@@ -66,6 +64,4 @@ export const initialState: HomeInitialState = {
   isShowRequestApiKey: false,
   isShowReportAnIssue: false,
   footerHtmlMessage: '',
-  requestApiKeyHtmlMessage: '',
-  reportAnIssueHtmlMessage: '',
 };
