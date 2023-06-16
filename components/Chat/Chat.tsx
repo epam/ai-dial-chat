@@ -349,7 +349,9 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
             );
           }
         }
-        setActiveReplayIndex(activeReplayIndex + 1);
+        if (stopConversationRef.current !== true) {
+          setActiveReplayIndex(activeReplayIndex + 1);
+        }
         homeDispatch({ field: 'loading', value: false });
         homeDispatch({ field: 'messageIsStreaming', value: false });
       }
@@ -564,8 +566,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         selectedConversations[0].replay.activeReplayIndex ?? 0,
       );
     }
-  }, [selectedConversationIds, isReplay]);
-
+  }, [selectedConversationIds, isReplay, selectedConversations]);
   return (
     <div className="relative flex-1 overflow-hidden bg-white dark:bg-[#343541]">
       {!(apiKey || serverSideApiKeyIsSet) ? (
