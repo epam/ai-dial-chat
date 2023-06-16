@@ -597,9 +597,9 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
             onRegenerate={() => {
               localConversations.current = conversations;
               selectedConversations.forEach((conv) => {
-                const lastUserMessageIndex = conv.messages.findLastIndex(
-                  (message) => message.role === 'user',
-                );
+                const lastUserMessageIndex = conv.messages
+                  .map((msg) => msg.role)
+                  .lastIndexOf('user');
                 handleSend(
                   conv,
                   conv.messages[lastUserMessageIndex],
