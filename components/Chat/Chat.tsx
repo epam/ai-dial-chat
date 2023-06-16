@@ -487,7 +487,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                         defaultModelId={defaultModelId || OpenAIModelID.GPT_3_5}
                         models={models}
                         isCompareMode={isCompareMode}
-                        selectedCinversationIds={selectedConversationIds}
+                        selectedConversationIds={selectedConversationIds}
                         onClearConversation={() =>
                           handleClearConversation(conv)
                         }
@@ -597,7 +597,14 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
             onRegenerate={() => {
               localConversations.current = conversations;
               selectedConversations.forEach((conv) => {
-                handleSend(conv, conv.messages[conv.messages.length - 2], 2);
+                const lastUserMessageIndex = conv.messages
+                  .map((msg) => msg.role)
+                  .lastIndexOf('user');
+                handleSend(
+                  conv,
+                  conv.messages[lastUserMessageIndex],
+                  conv.messages.length - lastUserMessageIndex,
+                );
               });
             }}
             showScrollDownButton={showScrollDownButton}
