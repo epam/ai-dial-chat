@@ -53,8 +53,6 @@ interface Props {
   isShowReportAnIssue: boolean;
   appName: string;
   footerHtmlMessage: string;
-  requestApiKeyHtmlMessage: string;
-  reportAnIssueHtmlMessage: string;
 }
 
 const Home = ({
@@ -67,8 +65,6 @@ const Home = ({
   isShowRequestApiKey,
   isShowReportAnIssue,
   footerHtmlMessage,
-  requestApiKeyHtmlMessage,
-  reportAnIssueHtmlMessage,
 }: Props) => {
   const { t } = useTranslation('chat');
   const { getModels } = useApiService();
@@ -315,16 +311,6 @@ const Home = ({
         field: 'footerHtmlMessage',
         value: footerHtmlMessage,
       });
-    requestApiKeyHtmlMessage &&
-      dispatch({
-        field: 'requestApiKeyHtmlMessage',
-        value: requestApiKeyHtmlMessage,
-      });
-    reportAnIssueHtmlMessage &&
-      dispatch({
-        field: 'reportAnIssueHtmlMessage',
-        value: reportAnIssueHtmlMessage,
-      });
   }, [
     defaultModelId,
     serverSideApiKeyIsSet,
@@ -334,8 +320,6 @@ const Home = ({
     isShowReportAnIssue,
     isShowRequestApiKey,
     footerHtmlMessage,
-    requestApiKeyHtmlMessage,
-    reportAnIssueHtmlMessage,
   ]);
 
   // ON LOAD --------------------------------------------
@@ -556,8 +540,6 @@ export const getServerSideProps: GetServerSideProps = async ({
       isShowRequestApiKey: process.env.SHOW_REQUEST_API_KEY === 'true',
       isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
       footerHtmlMessage: process.env.FOOTER_HTML_MESSAGE ?? '',
-      requestApiKeyHtmlMessage: process.env.REQUEST_API_KEY_HTML_MESSAGE ?? '',
-      reportAnIssueHtmlMessage: process.env.REPORT_AN_ISSUE_HTML_MESSAGE ?? '',
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',
