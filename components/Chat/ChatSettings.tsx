@@ -13,7 +13,7 @@ interface Props {
   models: OpenAIModel[];
   defaultModelId: OpenAIModelID;
   isCompareMode: boolean;
-  selectedCinversationIds: string[];
+  selectedConversationIds: string[];
   onSelectModel: (modelId: string) => void;
   onClearConversation: () => void;
   onUnselectConversation: () => void;
@@ -24,7 +24,7 @@ export const ChatSettings = ({
   models,
   defaultModelId,
   isCompareMode,
-  selectedCinversationIds,
+  selectedConversationIds,
   onSelectModel,
   onClearConversation,
   onUnselectConversation,
@@ -59,13 +59,15 @@ export const ChatSettings = ({
         >
           <IconSettings size={18} />
         </button>
-        <button
-          className="ml-2 cursor-pointer hover:opacity-50"
-          onClick={onClearConversation}
-        >
-          <IconClearAll size={18} />
-        </button>
-        {isCompareMode && selectedCinversationIds.length > 1 && (
+        {!isCompareMode && (
+          <button
+            className="ml-2 cursor-pointer hover:opacity-50"
+            onClick={onClearConversation}
+          >
+            <IconClearAll size={18} />
+          </button>
+        )}
+        {isCompareMode && selectedConversationIds.length > 1 && (
           <button
             className="ml-2 cursor-pointer hover:opacity-50"
             onClick={onUnselectConversation}

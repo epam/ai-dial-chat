@@ -487,7 +487,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                         defaultModelId={defaultModelId || OpenAIModelID.GPT_3_5}
                         models={models}
                         isCompareMode={isCompareMode}
-                        selectedCinversationIds={selectedConversationIds}
+                        selectedConversationIds={selectedConversationIds}
                         onClearConversation={() =>
                           handleClearConversation(conv)
                         }
