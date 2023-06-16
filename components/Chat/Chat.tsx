@@ -94,6 +94,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
     Conversation[]
   >([]);
   const [mergedMessages, setMergedMessages] = useState<any>([]);
+  const [playReplay, setPlayReplay] = useState<boolean>(false);
 
   const localConversations = useRef<Conversation[]>(conversations);
 
@@ -101,10 +102,24 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const isSelectedConversations = selectedConversations.length > 0;
+  const isSelectedConversations =
+    !!selectedConversations && selectedConversations.length > 0;
+
   const isEmptySelectedConversation = isSelectedConversations
-    ? selectedConversations.some(({ messages }) => messages.length === 0)
+    ? selectedConversations?.some(({ messages }) => messages.length === 0)
     : true;
+
+  console.log(
+    'isSELECTEDConv',
+    isEmptySelectedConversation,
+    selectedConversations,
+  );
+  const isErrorMessage =
+    isSelectedConversations && !isEmptySelectedConversation
+      ? selectedConversations?.some(
+          ({ messages }) => messages[messages.length - 1].isError ?? false,
+        )
+      : false;
 
   const replayUserMessagesStack =
     isSelectedConversations &&
@@ -125,6 +140,9 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
     selectedConversations[0].messages[
       selectedConversations[0].messages.length - 1
     ].role === 'assistant';
+
+  const isReplayFinished =
+    isLastActiveReplayIndex && isLastMessageFromAssistant;
 
   useEffect(() => {
     localConversations.current = conversations;
@@ -155,7 +173,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       deleteCount = 0,
       activeReplayIndex = 0,
     ) => {
-      console.log('handleSend conversation', conversation);
+      console.log('!!!SEND MENSAGE', conversation);
       if (conversation) {
         let updatedConversation: Conversation;
         if (deleteCount) {
@@ -235,6 +253,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
             role: 'assistant',
             isError: true,
           };
+
           localConversations.current = handleUpdateConversation(
             updatedConversation,
             {
@@ -252,16 +271,11 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
 
           return;
         }
-        console.log(
-          '!!!!!????updatedConversation.messages.length === 1 && !updatedConversation.replay.isReplay',
-          updatedConversation,
-          !updatedConversation.replay.isReplay,
-        );
+
         if (
           updatedConversation.messages.length === 1 &&
           !updatedConversation.replay.isReplay
         ) {
-          console.log('!!!RENAME');
           const { content } = message;
           const customName =
             content.length > 30 ? content.substring(0, 30) + '...' : content;
@@ -338,7 +352,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
             );
           }
         }
-
+        setActiveReplayIndex(activeReplayIndex + 1);
         homeDispatch({ field: 'loading', value: false });
         homeDispatch({ field: 'messageIsStreaming', value: false });
       }
@@ -428,15 +442,18 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       setCurrentUserMessage(replayUserMessagesStack[replayIndex]);
       localConversations.current = conversations;
 
-      await handleSend(
-        selectedConversations[0],
-        replayUserMessagesStack[replayIndex],
-        deleteCount,
-        replayIndex,
+      const sendToAllSelectedConversations = selectedConversations.map(
+        (conversation) => {
+          return handleSend(
+            conversation,
+            replayUserMessagesStack[replayIndex],
+            deleteCount,
+            replayIndex,
+          );
+        },
       );
-      setActiveReplayIndex((prevActiveReplayIndex) => {
-        return prevActiveReplayIndex + 1;
-      });
+
+      await Promise.all(sendToAllSelectedConversations);
     }
   };
   const onClickReplayStart: MouseEventHandler<HTMLButtonElement> = (e) => {
@@ -446,23 +463,27 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const onClickReplayReStart: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.preventDefault();
     console.log('REPLAY restart!!!');
-
     const prevActiveReplayIndex = activeReplayIndex - 1;
+    console.log('REPLAY restart!!!', activeReplayIndex);
     if (isLastMessageFromAssistant) {
-      handleReplay(2, prevActiveReplayIndex);
+      handleReplay(2, activeReplayIndex);
     } else {
-      handleReplay(1, prevActiveReplayIndex);
+      handleReplay(1, activeReplayIndex);
     }
+
+    // const prevActiveReplayIndex = activeReplayIndex - 1;
   };
   const handleReplayStop = () => {
     console.log('REPLAY STOP!!!');
-    selectedConversations.forEach((conv) => {
-      const updatedReplay = {
-        ...conv.replay,
-        isReplay: false,
-      };
-      handleUpdateConversation(conv, { key: 'replay', value: updatedReplay });
-    });
+    if (isReplayFinished) {
+      selectedConversations.forEach((conv) => {
+        const updatedReplay = {
+          ...conv.replay,
+          isReplay: false,
+        };
+        handleUpdateConversation(conv, { key: 'replay', value: updatedReplay });
+      });
+    }
   };
 
   useEffect(() => {
@@ -558,19 +579,20 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
     //     selectedConversations[0].messages.length - 1
     //   ],
     // );
-    if (isReplay) {
-      if (
-        !loading &&
-        !messageIsStreaming &&
-        !isEmptySelectedConversation &&
-        isLastMessageFromAssistant
-      ) {
-        if (!isLastActiveReplayIndex) {
-          console.log('NEXT REPLAY');
-          handleReplay();
-        } else {
-          handleReplayStop();
-        }
+
+    if (
+      isReplay &&
+      !loading &&
+      !messageIsStreaming &&
+      !isEmptySelectedConversation &&
+      isLastMessageFromAssistant &&
+      !isErrorMessage
+    ) {
+      if (!isReplayFinished) {
+        console.log('NEXT REPLAY');
+        handleReplay();
+      } else {
+        handleReplayStop();
       }
     }
   }, [messageIsStreaming, selectedConversations]);
@@ -734,7 +756,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
               </div>
             )}
           </div>
-          {isReplay && !messageIsStreaming && !isLastActiveReplayIndex ? (
+          {isReplay && !messageIsStreaming && !isReplayFinished ? (
             <ChatReplayControls
               onClickReplayStart={onClickReplayStart}
               onClickReplayReStart={onClickReplayReStart}
