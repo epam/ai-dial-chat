@@ -97,6 +97,19 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<HTMLDivElement>(null);
+  const [inputHeight, setInputHeight] = useState<number>(142);
+
+  const APP_NAME = appName;
+
+  useEffect(() => {
+    if (
+      inputRef.current?.clientHeight &&
+      inputRef.current?.clientHeight !== inputHeight
+    ) {
+      setInputHeight(inputRef.current?.clientHeight);
+    }
+  });
 
   const isSelectedConversations =
     !!selectedConversations && selectedConversations.length > 0;
@@ -682,7 +695,8 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                 )}
                 {loading && <ChatLoader />}
                 <div
-                  className="h-[162px] shrink-0 bg-white dark:bg-[#343541]"
+                  className="shrink-0 bg-white dark:bg-[#343541]"
+                  style={{ height: inputHeight - 10 }}
                   ref={messagesEndRef}
                 />
               </div>
@@ -707,6 +721,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
             />
           ) : (
             <ChatInput
+              ref={inputRef}
               stopConversationRef={stopConversationRef}
               textareaRef={textareaRef}
               isMessagesPresented={selectedConversations.some(
@@ -716,7 +731,6 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                 ...selectedConversations.map((conv) => conv.model.maxLength),
               )}
               onSend={(message) => {
-                setCurrentUserMessage(message);
                 localConversations.current = conversations;
                 selectedConversations.forEach((conv) => {
                   handleSend(conv, message, 0);
@@ -724,12 +738,10 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
               }}
               onScrollDownClick={handleScrollDown}
               onRegenerate={() => {
-                if (currentUserMessage) {
-                  localConversations.current = conversations;
-                  selectedConversations.forEach((conv) => {
-                    handleSend(conv, currentUserMessage, 2);
-                  });
-                }
+                localConversations.current = conversations;
+                selectedConversations.forEach((conv) => {
+                  handleSend(conv, conv.messages[conv.messages.length - 2], 2);
+                });
               }}
               showScrollDownButton={showScrollDownButton}
             />
