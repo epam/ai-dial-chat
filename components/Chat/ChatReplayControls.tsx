@@ -1,5 +1,5 @@
 import { IconPlayerPlay } from '@tabler/icons-react';
-import { FC, MouseEventHandler } from 'react';
+import { FC, MouseEventHandler, useTransition } from 'react';
 
 interface ChatReplayControlsProps {
   onClickReplayReStart: MouseEventHandler<HTMLButtonElement>;
@@ -11,6 +11,7 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
   onClickReplayStart,
   showReplayStart,
 }) => {
+  const [isPending, startTransition] = useTransition();
   return (
     <div
       className={`absolute w-full 
@@ -21,7 +22,11 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
         <button
           className={`mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white py-2 px-4
            text-black opacity-50 hover:opacity-100 dark:border-neutral-600 dark:bg-[#343541] dark:text-white md:mb-0 md:mt-2`}
-          onClick={onClickReplayStart}
+          onClick={(e) => {
+            startTransition(() => {
+              onClickReplayStart(e);
+            });
+          }}
         >
           <span>Start Replay</span>
           <IconPlayerPlay size={30} />
@@ -30,7 +35,11 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
         <button
           className={`mx-auto flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white py-2 px-4 
           text-black opacity-50 hover:opacity-100 dark:border-neutral-600 dark:bg-[#343541] dark:text-white md:mb-0 md:mt-2`}
-          onClick={onClickReplayReStart}
+          onClick={(e) => {
+            startTransition(() => {
+              onClickReplayReStart(e);
+            });
+          }}
         >
           <span>
             Looks like something went wrong. Do you want to restart Replay?

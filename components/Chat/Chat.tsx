@@ -125,6 +125,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const replayUserMessagesStack =
     isSelectedConversations &&
     selectedConversations[0].replay?.replayUserMessagesStack;
+
   const isReplay =
     isSelectedConversations && selectedConversations[0].replay?.isReplay;
 
@@ -562,10 +563,8 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       setActiveReplayIndex(
         selectedConversations[0].replay.activeReplayIndex ?? 0,
       );
-    } else {
-      setActiveReplayIndex(0);
     }
-  }, [selectedConversationIds]);
+  }, [selectedConversationIds, isReplay]);
 
   return (
     <div className="relative flex-1 overflow-hidden bg-white dark:bg-[#343541]">
