@@ -11,8 +11,6 @@ interface Props {
   isShowRequestApiKey: boolean;
   isShowReportAnIssue: boolean;
   footerHtmlMessage: string;
-  requestApiKeyHtmlMessage: string;
-  reportAnIssueHtmlMessage: string;
 }
 
 export const FooterMessage = ({
@@ -20,8 +18,6 @@ export const FooterMessage = ({
   isShowReportAnIssue,
   isShowRequestApiKey,
   footerHtmlMessage,
-  requestApiKeyHtmlMessage,
-  reportAnIssueHtmlMessage,
 }: Props) => {
   const { t } = useTranslation('chat');
   const [isRequestAPIDialogOpen, setIsRequestAPIDialogOpen] = useState(false);
@@ -56,24 +52,6 @@ export const FooterMessage = ({
         <span
           dangerouslySetInnerHTML={{ __html: footerHtmlMessage || '' }}
         ></span>
-        {isShowRequestApiKey ? (
-          <>
-            <span
-              dangerouslySetInnerHTML={{
-                __html: requestApiKeyHtmlMessage || '',
-              }}
-            ></span>
-          </>
-        ) : null}
-        {isShowReportAnIssue ? (
-          <>
-            <span
-              dangerouslySetInnerHTML={{
-                __html: reportAnIssueHtmlMessage || '',
-              }}
-            ></span>
-          </>
-        ) : null}
       </div>
 
       {isShowRequestApiKey && (
