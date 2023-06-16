@@ -63,6 +63,8 @@ export const ChatInput = forwardRef(
         isShowRequestApiKey,
         isShowReportAnIssue,
         footerHtmlMessage,
+        requestApiKeyHtmlMessage,
+        reportAnIssueHtmlMessage,
       },
     } = useContext(HomeContext);
 
@@ -364,6 +366,8 @@ export const ChatInput = forwardRef(
           isShowRequestApiKey={isShowRequestApiKey}
           isShowReportAnIssue={isShowReportAnIssue}
           footerHtmlMessage={footerHtmlMessage}
+          requestApiKeyHtmlMessage={requestApiKeyHtmlMessage}
+          reportAnIssueHtmlMessage={reportAnIssueHtmlMessage}
         />
       </div>
     );

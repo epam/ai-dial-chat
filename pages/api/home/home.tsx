@@ -37,7 +37,6 @@ import { Chatbar } from '@/components/Chatbar/Chatbar';
 import { Navbar } from '@/components/Mobile/Navbar';
 import Promptbar from '@/components/Promptbar';
 
-import packageJSON from '../../../package.json';
 import { authOptions } from '../auth/[...nextauth]';
 import HomeContext from './home.context';
 import { HomeInitialState, initialState } from './home.state';
@@ -54,6 +53,8 @@ interface Props {
   isShowReportAnIssue: boolean;
   appName: string;
   footerHtmlMessage: string;
+  requestApiKeyHtmlMessage: string;
+  reportAnIssueHtmlMessage: string;
 }
 
 const Home = ({
@@ -66,6 +67,8 @@ const Home = ({
   isShowRequestApiKey,
   isShowReportAnIssue,
   footerHtmlMessage,
+  requestApiKeyHtmlMessage,
+  reportAnIssueHtmlMessage,
 }: Props) => {
   const { t } = useTranslation('chat');
   const { getModels } = useApiService();
@@ -312,6 +315,16 @@ const Home = ({
         field: 'footerHtmlMessage',
         value: footerHtmlMessage,
       });
+    requestApiKeyHtmlMessage &&
+      dispatch({
+        field: 'requestApiKeyHtmlMessage',
+        value: requestApiKeyHtmlMessage,
+      });
+    reportAnIssueHtmlMessage &&
+      dispatch({
+        field: 'reportAnIssueHtmlMessage',
+        value: reportAnIssueHtmlMessage,
+      });
   }, [
     defaultModelId,
     serverSideApiKeyIsSet,
@@ -321,6 +334,8 @@ const Home = ({
     isShowReportAnIssue,
     isShowRequestApiKey,
     footerHtmlMessage,
+    requestApiKeyHtmlMessage,
+    reportAnIssueHtmlMessage,
   ]);
 
   // ON LOAD --------------------------------------------
@@ -528,10 +543,6 @@ export const getServerSideProps: GetServerSideProps = async ({
     serverSidePluginKeysSet = true;
   }
 
-  const processedFooterHtmlMessage = (
-    process.env.FOOTER_HTML_MESSAGE ?? ''
-  ).replace('%%VERSION%%', packageJSON.version);
-
   return {
     props: {
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
@@ -544,7 +555,9 @@ export const getServerSideProps: GetServerSideProps = async ({
       isShowFooter: process.env.SHOW_FOOTER === 'true',
       isShowRequestApiKey: process.env.SHOW_REQUEST_API_KEY === 'true',
       isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
-      footerHtmlMessage: processedFooterHtmlMessage,
+      footerHtmlMessage: process.env.FOOTER_HTML_MESSAGE ?? '',
+      requestApiKeyHtmlMessage: process.env.REQUEST_API_KEY_HTML_MESSAGE ?? '',
+      reportAnIssueHtmlMessage: process.env.REPORT_AN_ISSUE_HTML_MESSAGE ?? '',
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',
