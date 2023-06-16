@@ -597,7 +597,14 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
             onRegenerate={() => {
               localConversations.current = conversations;
               selectedConversations.forEach((conv) => {
-                handleSend(conv, conv.messages[conv.messages.length - 2], 2);
+                const lastUserMessageIndex = conv.messages.findLastIndex(
+                  (message) => message.role === 'user',
+                );
+                handleSend(
+                  conv,
+                  conv.messages[lastUserMessageIndex],
+                  conv.messages.length - lastUserMessageIndex,
+                );
               });
             }}
             showScrollDownButton={showScrollDownButton}
