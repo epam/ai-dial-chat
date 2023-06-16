@@ -5,7 +5,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -13,9 +12,7 @@ import {
 import { useTranslation } from 'next-i18next';
 
 import { getEndpoint } from '@/utils/app/api';
-import { updateConversation } from '@/utils/app/conversation';
 import { showAPIToastError } from '@/utils/app/errors';
-import { throttle } from '@/utils/data/throttle';
 
 import { OpenAIModel, OpenAIModelID } from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
@@ -94,7 +91,6 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
     Conversation[]
   >([]);
   const [mergedMessages, setMergedMessages] = useState<any>([]);
-  const [playReplay, setPlayReplay] = useState<boolean>(false);
 
   const localConversations = useRef<Conversation[]>(conversations);
 
@@ -109,11 +105,6 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
     ? selectedConversations?.some(({ messages }) => messages.length === 0)
     : true;
 
-  console.log(
-    'isSELECTEDConv',
-    isEmptySelectedConversation,
-    selectedConversations,
-  );
   const isErrorMessage =
     isSelectedConversations && !isEmptySelectedConversation
       ? selectedConversations?.some(
@@ -130,10 +121,6 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const isLastActiveReplayIndex =
     replayUserMessagesStack &&
     replayUserMessagesStack?.length <= activeReplayIndex;
-
-  console.log('isEmptySelectedConversation', isEmptySelectedConversation);
-  console.log('selectedConversations', selectedConversations);
-  console.log('isSelectedConversations', isSelectedConversations);
 
   const isLastMessageFromAssistant =
     !isEmptySelectedConversation &&
@@ -173,7 +160,6 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       deleteCount = 0,
       activeReplayIndex = 0,
     ) => {
-      console.log('!!!SEND MENSAGE', conversation);
       if (conversation) {
         let updatedConversation: Conversation;
         if (deleteCount) {
@@ -427,18 +413,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
     deleteCount = 0,
     replayIndex = activeReplayIndex,
   ) => {
-    console.log(
-      '!!!!START REPLAY!!!',
-      selectedConversations,
-      replayUserMessagesStack,
-    );
     if (replayUserMessagesStack && !!replayUserMessagesStack[replayIndex]) {
-      console.log(
-        '!!!START REPLAY>>>>!!!',
-        selectedConversations,
-        replayUserMessagesStack[replayIndex],
-      );
-      // const updatedConversations
       setCurrentUserMessage(replayUserMessagesStack[replayIndex]);
       localConversations.current = conversations;
 
@@ -462,19 +437,14 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   };
   const onClickReplayReStart: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.preventDefault();
-    console.log('REPLAY restart!!!');
-    const prevActiveReplayIndex = activeReplayIndex - 1;
-    console.log('REPLAY restart!!!', activeReplayIndex);
+
     if (isLastMessageFromAssistant) {
       handleReplay(2, activeReplayIndex);
     } else {
       handleReplay(1, activeReplayIndex);
     }
-
-    // const prevActiveReplayIndex = activeReplayIndex - 1;
   };
   const handleReplayStop = () => {
-    console.log('REPLAY STOP!!!');
     if (isReplayFinished) {
       selectedConversations.forEach((conv) => {
         const updatedReplay = {
@@ -562,24 +532,6 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   };
 
   useEffect(() => {
-    console.log('!!!REPLAY ACTIVATION');
-    console.log('selectedConversations', selectedConversations);
-    // console.log('localConversations.current', localConversations.current);
-    // console.log('activeReplayIndex', activeReplayIndex);
-
-    console.log('isReplay', isReplay);
-    // console.log('loading', loading);
-    // console.log('messageIsStreaming', messageIsStreaming);
-    // console.log('isEmptySelectedConversation', isEmptySelectedConversation);
-    console.log('isLastMessageFromAssistant', isLastMessageFromAssistant);
-    console.log('isLastActiveReplayIndex', isLastActiveReplayIndex);
-    // console.log(
-    //   'selectedConversations[0] role',
-    //   selectedConversations[0].messages[
-    //     selectedConversations[0].messages.length - 1
-    //   ],
-    // );
-
     if (
       isReplay &&
       !loading &&
@@ -589,7 +541,6 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       !isErrorMessage
     ) {
       if (!isReplayFinished) {
-        console.log('NEXT REPLAY');
         handleReplay();
       } else {
         handleReplayStop();
@@ -598,14 +549,6 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   }, [messageIsStreaming, selectedConversations]);
 
   useEffect(() => {
-    console.log(
-      'SETTING ACTIVE REPLAY INDEX, selectedConversationIds',
-      selectedConversationIds,
-    );
-    console.log('isReplay', isReplay);
-
-    console.log('selectedConversations', selectedConversations);
-
     if (isSelectedConversations && isReplay) {
       setActiveReplayIndex(
         selectedConversations[0].replay.activeReplayIndex ?? 0,
