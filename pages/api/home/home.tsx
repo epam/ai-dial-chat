@@ -37,6 +37,7 @@ import { Chatbar } from '@/components/Chatbar/Chatbar';
 import { Navbar } from '@/components/Mobile/Navbar';
 import Promptbar from '@/components/Promptbar';
 
+import packageJSON from '../../../package.json';
 import { authOptions } from '../auth/[...nextauth]';
 import HomeContext from './home.context';
 import { HomeInitialState, initialState } from './home.state';
@@ -542,6 +543,10 @@ export const getServerSideProps: GetServerSideProps = async ({
     serverSidePluginKeysSet = true;
   }
 
+  const updatedFooterHTMLMessage = (
+    process.env.FOOTER_HTML_MESSAGE ?? ''
+  ).replace('%%VERSION%%', packageJSON.version);
+
   return {
     props: {
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
@@ -554,7 +559,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       isShowFooter: process.env.SHOW_FOOTER === 'true',
       isShowRequestApiKey: process.env.SHOW_REQUEST_API_KEY === 'true',
       isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
-      footerHtmlMessage: process.env.FOOTER_HTML_MESSAGE ?? '',
+      footerHtmlMessage: updatedFooterHTMLMessage,
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',
