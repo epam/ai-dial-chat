@@ -25,7 +25,7 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
            text-black opacity-50 hover:opacity-100 dark:border-neutral-600 dark:bg-[#343541] dark:text-white md:mb-0 md:mt-2`}
           onClick={onClickReplayStart}
         >
-          <span>{t('Start Replay')} Start Repla</span>
+          <span>{t('Start Replay')}</span>
           <IconPlayerPlay size={30} />
         </button>
       ) : (
