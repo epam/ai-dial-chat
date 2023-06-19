@@ -26,7 +26,7 @@ import { saveFolders } from '@/utils/app/folders';
 import { savePrompts } from '@/utils/app/prompts';
 import { getSettings } from '@/utils/app/settings';
 
-import { Conversation } from '@/types/chat';
+import { Conversation, Message, Replay } from '@/types/chat';
 import { KeyValuePair } from '@/types/data';
 import { FolderInterface, FolderType } from '@/types/folder';
 import { OpenAIModelID, OpenAIModels, fallbackModelID } from '@/types/openai';
@@ -206,13 +206,26 @@ const Home = ({
   };
 
   // CONVERSATION OPERATIONS  --------------------------------------------
-
-  const handleNewConversation = () => {
+  const defaultReplay: Replay = {
+    isReplay: false,
+    replayUserMessagesStack: [],
+    activeReplayIndex: 0,
+  };
+  const handleNewConversation = (
+    name = 'New Conversation',
+    replayUserMessagesStack?: Message[],
+  ) => {
     const lastConversation = conversations[conversations.length - 1];
+
+    const newReplay: Replay = {
+      isReplay: !!replayUserMessagesStack,
+      replayUserMessagesStack: replayUserMessagesStack ?? [],
+      activeReplayIndex: 0,
+    };
 
     const newConversation: Conversation = {
       id: uuidv4(),
-      name: t('New Conversation'),
+      name: t(name),
       messages: [],
       model: lastConversation?.model || {
         id: OpenAIModels[defaultModelId].id,
@@ -223,6 +236,7 @@ const Home = ({
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
       folderId: null,
+      replay: newReplay,
     };
 
     const updatedConversations = [...conversations, newConversation];
@@ -408,7 +422,7 @@ const Home = ({
     } else {
       const lastConversation =
         cleanedConversationHistory[conversations.length - 1];
-      const newConversation = {
+      const newConversation: Conversation = {
         id: uuidv4(),
         name: t('New Conversation'),
         messages: [],
@@ -416,6 +430,7 @@ const Home = ({
         prompt: DEFAULT_SYSTEM_PROMPT,
         temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
         folderId: null,
+        replay: defaultReplay,
       };
       dispatch({
         field: 'selectedConversationIds',

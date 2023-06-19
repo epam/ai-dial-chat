@@ -12,7 +12,7 @@ import {
 import { saveFolders } from '@/utils/app/folders';
 import { exportData, exportItem, importData } from '@/utils/app/importExport';
 
-import { Conversation } from '@/types/chat';
+import { Conversation, Replay } from '@/types/chat';
 import { LatestExportFormat, SupportedExportFormats } from '@/types/export';
 import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 
@@ -48,6 +48,12 @@ export const Chatbar = () => {
     dispatch: chatDispatch,
   } = chatBarContextValue;
 
+  const defaultReplay: Replay = {
+    isReplay: false,
+    replayUserMessagesStack: [],
+    activeReplayIndex: 0,
+  };
+
   const handleApiKeyChange = useCallback(
     (apiKey: string) => {
       homeDispatch({ field: 'apiKey', value: apiKey });
@@ -81,7 +87,7 @@ export const Chatbar = () => {
   };
 
   const handleClearConversations = () => {
-    const newConversation = {
+    const newConversation: Conversation = {
       id: uuidv4(),
       name: t('New Conversation'),
       messages: [],
@@ -89,6 +95,7 @@ export const Chatbar = () => {
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: DEFAULT_TEMPERATURE,
       folderId: null,
+      replay: defaultReplay,
     };
 
     homeDispatch({
@@ -132,7 +139,7 @@ export const Chatbar = () => {
         updatedConversations[updatedConversations.length - 1].id,
       ]);
     } else {
-      const newConversation = {
+      const newConversation: Conversation = {
         id: uuidv4(),
         name: t('New Conversation'),
         messages: [],
@@ -140,6 +147,7 @@ export const Chatbar = () => {
         prompt: DEFAULT_SYSTEM_PROMPT,
         temperature: DEFAULT_TEMPERATURE,
         folderId: null,
+        replay: defaultReplay,
       };
       defaultModelId &&
         homeDispatch({
