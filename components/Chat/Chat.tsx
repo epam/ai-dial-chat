@@ -321,7 +321,9 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
     [apiKey, handleUpdateConversation],
   );
 
-  const scrollToBottom = useCallback(() => {
+  const scrollToBottom = useEffect(() => {
+    debugger;
+
     if (autoScrollEnabled) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       textareaRef.current?.focus();
@@ -373,7 +375,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       },
       {
         root: chatContainerRef.current,
-        threshold: 0.1,
+        threshold: 0.5,
       },
     );
     const messagesEndElement = messagesEndRef.current;
