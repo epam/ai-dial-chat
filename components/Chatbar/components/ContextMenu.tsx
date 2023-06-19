@@ -15,6 +15,7 @@ interface Props {
   onExport: MouseEventHandler<unknown>;
   onReplay: MouseEventHandler<HTMLLIElement>;
   onCompare: MouseEventHandler<unknown>;
+  isEmptyConversation: boolean;
 }
 
 export const ContextMenu = ({
@@ -24,6 +25,7 @@ export const ContextMenu = ({
   onExport,
   onReplay,
   onCompare,
+  isEmptyConversation,
 }: Props) => {
   const { t } = useTranslation('sidebar');
   const contextMenuHeight = 120;
@@ -53,13 +55,15 @@ export const ContextMenu = ({
           <IconScale size={18} />
           <span className="ml-2">{t('Compare')}</span>
         </li>
-        <li
-          onClick={onReplay}
-          className="flex cursor-pointer p-2 hover:bg-[#343541] rounded-lg"
-        >
-          <IconRefreshDot size={18} />
-          <span className="ml-2">{t('Replay')}</span>
-        </li>
+        {!isEmptyConversation && (
+          <li
+            onClick={onReplay}
+            className="flex cursor-pointer p-2 hover:bg-[#343541] rounded-lg"
+          >
+            <IconRefreshDot size={18} />
+            <span className="ml-2">{t('Replay')}</span>
+          </li>
+        )}
         <li
           onClick={onExport}
           className="flex cursor-pointer p-2 hover:bg-[#343541] rounded-lg"
