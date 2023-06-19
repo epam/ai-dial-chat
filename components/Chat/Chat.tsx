@@ -349,9 +349,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
             );
           }
         }
-        if (stopConversationRef.current !== true) {
-          setActiveReplayIndex(activeReplayIndex + 1);
-        }
+
         homeDispatch({ field: 'loading', value: false });
         homeDispatch({ field: 'messageIsStreaming', value: false });
       }
@@ -441,6 +439,10 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       );
 
       await Promise.all(sendToAllSelectedConversations);
+
+      if (stopConversationRef.current !== true) {
+        setActiveReplayIndex(activeReplayIndex + 1);
+      }
     }
   };
   const onClickReplayStart: MouseEventHandler<HTMLButtonElement> = (e) => {
