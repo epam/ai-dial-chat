@@ -321,9 +321,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
     [apiKey, handleUpdateConversation],
   );
 
-  const scrollToBottom = useEffect(() => {
-    debugger;
-
+  useEffect(() => {
     if (autoScrollEnabled) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       textareaRef.current?.focus();
