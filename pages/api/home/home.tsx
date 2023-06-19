@@ -206,22 +206,41 @@ const Home = ({
   };
 
   // CONVERSATION OPERATIONS  --------------------------------------------
+
+  const updateAllConversationsStore = (
+    updatedConversations: Conversation[],
+  ) => {
+    dispatch({ field: 'conversations', value: updatedConversations });
+
+    saveConversations(updatedConversations);
+
+    dispatch({ field: 'loading', value: false });
+  };
+
+  const addNewConversationToStore = (newConversation: Conversation) => {
+    const updatedConversations = [...conversations, newConversation];
+
+    dispatch({
+      field: 'selectedConversationIds',
+      value: [newConversation.id],
+    });
+    dispatch({
+      field: 'isCompareMode',
+      value: false,
+    });
+
+    saveSelectedConversationIds([newConversation.id]);
+
+    updateAllConversationsStore(updatedConversations);
+  };
+
   const defaultReplay: Replay = {
     isReplay: false,
     replayUserMessagesStack: [],
     activeReplayIndex: 0,
   };
-  const handleNewConversation = (
-    name = 'New Conversation',
-    replayUserMessagesStack?: Message[],
-  ) => {
+  const handleNewConversation = (name = 'New Conversation') => {
     const lastConversation = conversations[conversations.length - 1];
-
-    const newReplay: Replay = {
-      isReplay: !!replayUserMessagesStack,
-      replayUserMessagesStack: replayUserMessagesStack ?? [],
-      activeReplayIndex: 0,
-    };
 
     const newConversation: Conversation = {
       id: uuidv4(),
@@ -236,24 +255,10 @@ const Home = ({
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
       folderId: null,
-      replay: newReplay,
+      replay: defaultReplay,
     };
 
-    const updatedConversations = [...conversations, newConversation];
-
-    dispatch({
-      field: 'selectedConversationIds',
-      value: [newConversation.id],
-    });
-    dispatch({
-      field: 'isCompareMode',
-      value: false,
-    });
-    dispatch({ field: 'conversations', value: updatedConversations });
-
-    saveSelectedConversationIds([newConversation.id]);
-    saveConversations(updatedConversations);
-
+    addNewConversationToStore(newConversation);
     dispatch({ field: 'loading', value: false });
   };
 
@@ -275,6 +280,28 @@ const Home = ({
     dispatch({ field: 'conversations', value: allConversation });
 
     return allConversation;
+  };
+
+  const handleNewReplayConversation = (conversation: Conversation) => {
+    const newConversationName = `[Replay] ${conversation.name}`;
+
+    const userMessages = conversation.messages.filter(
+      ({ role }) => role === 'user',
+    );
+    const newConversation: Conversation = {
+      ...conversation,
+      id: uuidv4(),
+      name: newConversationName,
+      messages: [],
+
+      replay: {
+        isReplay: true,
+        replayUserMessagesStack: userMessages,
+        activeReplayIndex: 0,
+      },
+    };
+
+    addNewConversationToStore(newConversation);
   };
 
   // EFFECTS  --------------------------------------------
@@ -469,6 +496,7 @@ const Home = ({
         handleUpdateFolder,
         handleSelectConversation,
         handleUpdateConversation,
+        handleNewReplayConversation,
       }}
     >
       <Head>
