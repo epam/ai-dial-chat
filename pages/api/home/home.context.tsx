@@ -11,10 +11,7 @@ import { HomeInitialState } from './home.state';
 export interface HomeContextProps {
   state: HomeInitialState;
   dispatch: Dispatch<ActionType<HomeInitialState>>;
-  handleNewConversation: (
-    name?: string,
-    replayUserMessagesStack?: Message[],
-  ) => void;
+  handleNewConversation: (name?: string) => void;
   handleCreateFolder: (name: string, type: FolderType) => void;
   handleDeleteFolder: (folderId: string) => void;
   handleUpdateFolder: (folderId: string, name: string) => void;
@@ -27,6 +24,7 @@ export interface HomeContextProps {
     data: KeyValuePair,
     localConversations?: Conversation[],
   ) => Conversation[];
+  handleNewReplayConversation: (conversation: Conversation) => void;
 }
 
 const HomeContext = createContext<HomeContextProps>(undefined!);

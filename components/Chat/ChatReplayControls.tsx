@@ -25,7 +25,7 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
            text-black opacity-50 hover:opacity-100 dark:border-neutral-600 dark:bg-[#343541] dark:text-white md:mb-0 md:mt-2`}
           onClick={onClickReplayStart}
         >
-          <span>{t('Start Replay')}</span>
+          <span>{t('Start replay')}</span>
           <IconPlayerPlay size={30} />
         </button>
       ) : (
@@ -36,7 +36,7 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
         >
           <span>
             {t(
-              'Looks like something went wrong. Do you want to restart Replay?',
+              'Looks like something went wrong. Do you want to restart replay?',
             )}
           </span>
           <IconPlayerPlay size={30} />

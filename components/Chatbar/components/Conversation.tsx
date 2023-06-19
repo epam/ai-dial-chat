@@ -28,7 +28,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
     state: { messageIsStreaming, selectedConversationIds },
     handleSelectConversation,
     handleUpdateConversation,
-    handleNewConversation,
+    handleNewReplayConversation,
     dispatch,
   } = useContext(HomeContext);
   const { handleExportItem } = useContext(ChatbarContext);
@@ -40,6 +40,8 @@ export const ConversationComponent = ({ conversation }: Props) => {
   const [renameValue, setRenameValue] = useState('');
   const [isContextMenuOpened, setIsContextMenuOpened] = useState(false);
   const contextMenuParentRef = useRef(null);
+
+  const isEmptyConversation = conversation.messages.length === 0;
 
   const handleEnterDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter') {
@@ -96,14 +98,9 @@ export const ConversationComponent = ({ conversation }: Props) => {
   };
 
   const handleStartReplay: MouseEventHandler<HTMLLIElement> = (e) => {
-    const newConversationName = `[Replay] ${conversation.name}`;
     e.stopPropagation();
 
-    const userMessages = conversation.messages.filter(
-      ({ role }) => role === 'user',
-    );
-
-    handleNewConversation(newConversationName, userMessages);
+    handleNewReplayConversation(conversation);
   };
 
   useEffect(() => {
@@ -220,6 +217,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
                     setIsContextMenuOpened(false);
                   }}
                   onReplay={handleStartReplay}
+                  isEmptyConversation={isEmptyConversation}
                 />
               )}
             </div>
