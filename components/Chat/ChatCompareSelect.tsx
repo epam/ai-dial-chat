@@ -71,7 +71,7 @@ export const ChatCompareSelect = ({
         </i>
       </div>
       <select
-        className="bg-[#40414F] p-3 rounded-md min-w-[150px] border border-gray-900/50"
+        className="dark:bg-[#40414F] p-3 rounded-md min-w-[150px] border border-gray-900/50"
         onChange={(e) => {
           const selectedOption = conversations
             .filter((val) => val.id === e.target.value)
