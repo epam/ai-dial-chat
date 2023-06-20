@@ -7,7 +7,11 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { GitLabProfile } from 'next-auth/providers/gitlab';
 import GoogleProvider from 'next-auth/providers/google';
 
+import { v5 as uuid } from 'uuid';
+
 const DEFAULT_NAME = 'SSO';
+
+const TEST_TOKENS = new Set((process.env.AUTH_TEST_TOKEN ?? '').split(','));
 
 interface IGraphUser {
   '@odata.context': string;
@@ -109,11 +113,14 @@ const allProviders: (Provider | boolean)[] = [
         },
       },
       async authorize(credentials, req) {
-        if (credentials?.access_token === process.env.AUTH_TEST_TOKEN) {
+        if (
+          !!credentials?.access_token &&
+          TEST_TOKENS.has(credentials.access_token)
+        ) {
           return {
-            id: '0',
+            id: uuid(credentials.access_token, 'd9428888-122b-11e1-b85c-61cd3cbb3210'),
             email: 'test',
-            name: 'test',
+            name: 'test: ' + credentials.access_token,
           };
         }
         return null;
@@ -139,7 +146,8 @@ export const authOptions: AuthOptions = {
     signIn: async (options) => {
       if (
         options.account?.type === 'credentials' &&
-        options.credentials?.access_token === process.env.AUTH_TEST_TOKEN
+        !!options.credentials?.access_token &&
+        TEST_TOKENS.has(options.credentials.access_token as string)
       ) {
         return true;
       }
