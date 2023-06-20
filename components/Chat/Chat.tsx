@@ -64,10 +64,9 @@ const findSelectedConversations = (
   selectedConversationIds: string[],
   conversations: Conversation[],
 ) => {
-  const selectedConversations = selectedConversationIds
-    .map((id) => conversations.find((conv) => conv.id === id))
-    .filter((value) => !!value) as Conversation[];
-  return selectedConversations;
+  const ids = new Set(selectedConversationIds);
+
+  return conversations.filter((i) => i != null && ids.has(i.id));
 };
 
 export const Chat = memo(({ stopConversationRef, appName }: Props) => {
@@ -164,9 +163,10 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   useEffect(() => {
     localConversations.current = conversations;
     if (selectedConversationIds.length > 0) {
-      const selectedConversations = selectedConversationIds
-        .map((id) => conversations.find((conv) => conv.id === id))
-        .filter((value) => !!value) as Conversation[];
+      const selectedConversations = findSelectedConversations(
+        selectedConversationIds,
+        conversations,
+      );
       setSelectedConversations(selectedConversations);
 
       let mergedMessages = [];
