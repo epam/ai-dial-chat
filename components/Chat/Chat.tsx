@@ -60,6 +60,15 @@ const handleRate = (
   }).then();
 };
 
+const findSelectedConversations = (
+  selectedConversationIds: string[],
+  conversations: Conversation[],
+) => {
+  const ids = new Set(selectedConversationIds);
+
+  return conversations.filter((i) => i != null && ids.has(i.id));
+};
+
 export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const { t } = useTranslation('chat');
 
@@ -88,8 +97,20 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const [activeReplayIndex, setActiveReplayIndex] = useState<number>(0);
   const [selectedConversations, setSelectedConversations] = useState<
     Conversation[]
-  >([]);
+  >(() => {
+    if (selectedConversationIds.length > 0) {
+      const sConversations = findSelectedConversations(
+        selectedConversationIds,
+        conversations,
+      );
+      return sConversations;
+    } else {
+      return [];
+    }
+  });
   const [mergedMessages, setMergedMessages] = useState<any>([]);
+  const [isReplayPaused, setIsReplayPaused] = useState<boolean>(true);
+  const [isReplay, setIsReplay] = useState<boolean>(false);
 
   const localConversations = useRef<Conversation[]>(conversations);
 
@@ -117,7 +138,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
 
   const isErrorMessage =
     isSelectedConversations && !isEmptySelectedConversation
-      ? selectedConversations?.some(
+      ? selectedConversations.some(
           ({ messages }) => messages[messages.length - 1].isError ?? false,
         )
       : false;
@@ -125,9 +146,6 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const replayUserMessagesStack =
     isSelectedConversations &&
     selectedConversations[0].replay?.replayUserMessagesStack;
-
-  const isReplay =
-    isSelectedConversations && selectedConversations[0].replay?.isReplay;
 
   const isLastActiveReplayIndex =
     replayUserMessagesStack &&
@@ -145,9 +163,10 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   useEffect(() => {
     localConversations.current = conversations;
     if (selectedConversationIds.length > 0) {
-      const selectedConversations = selectedConversationIds
-        .map((id) => conversations.find((conv) => conv.id === id))
-        .filter((value) => !!value) as Conversation[];
+      const selectedConversations = findSelectedConversations(
+        selectedConversationIds,
+        conversations,
+      );
       setSelectedConversations(selectedConversations);
 
       let mergedMessages = [];
@@ -214,6 +233,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         }
         homeDispatch({ field: 'loading', value: true });
         homeDispatch({ field: 'messageIsStreaming', value: true });
+
         const chatBody: ChatBody = {
           model: updatedConversation.model,
           messages: updatedConversation.messages.map((message) => {
@@ -259,14 +279,14 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
             },
             localConversations.current,
           );
-          return;
+          return { error: true };
         }
         const data = response.body;
         if (!data) {
           homeDispatch({ field: 'loading', value: false });
           homeDispatch({ field: 'messageIsStreaming', value: false });
 
-          return;
+          return { error: true };
         }
 
         if (
@@ -423,6 +443,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const handleReplay = async (
     deleteCount = 0,
     replayIndex = activeReplayIndex,
+    isError = isErrorMessage,
   ) => {
     if (replayUserMessagesStack && !!replayUserMessagesStack[replayIndex]) {
       localConversations.current = conversations;
@@ -437,26 +458,47 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
           );
         },
       );
+      try {
+        const response = await Promise.all(sendToAllSelectedConversations);
+        let isResponseError = false;
+        response.forEach((res) => {
+          if (res && res.error) {
+            isResponseError = res.error;
+          }
+        });
 
-      await Promise.all(sendToAllSelectedConversations);
-
-      if (stopConversationRef.current !== true) {
-        setActiveReplayIndex(activeReplayIndex + 1);
+        if (
+          stopConversationRef.current !== true &&
+          !isError &&
+          !isResponseError
+        ) {
+          setActiveReplayIndex(
+            (prevActiveReplayIndex) => prevActiveReplayIndex + 1,
+          );
+        } else {
+          setIsReplayPaused(true);
+        }
+      } catch {
+        setIsReplayPaused(true);
       }
     }
   };
+
   const onClickReplayStart: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.preventDefault();
+    setIsReplayPaused(false);
     handleReplay();
   };
+
   const onClickReplayReStart: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.preventDefault();
 
     if (isLastMessageFromAssistant) {
-      handleReplay(2, activeReplayIndex);
+      handleReplay(2, activeReplayIndex, false);
     } else {
-      handleReplay(1, activeReplayIndex);
+      handleReplay(1, activeReplayIndex, false);
     }
+    setIsReplayPaused(false);
   };
   const handleReplayStop = () => {
     if (isReplayFinished) {
@@ -467,6 +509,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         };
         handleUpdateConversation(conv, { key: 'replay', value: updatedReplay });
       });
+      setIsReplayPaused(true);
     }
   };
 
@@ -552,7 +595,8 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       !messageIsStreaming &&
       !isEmptySelectedConversation &&
       isLastMessageFromAssistant &&
-      !isErrorMessage
+      !isErrorMessage &&
+      !isReplayPaused
     ) {
       if (!isReplayFinished) {
         handleReplay();
@@ -563,12 +607,22 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   }, [messageIsStreaming, selectedConversations]);
 
   useEffect(() => {
-    if (isSelectedConversations && isReplay) {
-      setActiveReplayIndex(
-        selectedConversations[0].replay.activeReplayIndex ?? 0,
+    if (selectedConversationIds.length > 0) {
+      const selectedConversations = findSelectedConversations(
+        selectedConversationIds,
+        conversations,
       );
+
+      const isReplayConv = selectedConversations[0].replay.isReplay;
+      setIsReplay(isReplayConv);
+      if (isReplayConv && isReplayPaused) {
+        setActiveReplayIndex(
+          selectedConversations[0].replay.activeReplayIndex ?? 0,
+        );
+      }
     }
-  }, [selectedConversationIds, isReplay, selectedConversations]);
+  }, [selectedConversationIds]);
+
   return (
     <div className="relative flex-1 overflow-hidden bg-white dark:bg-[#343541]">
       {!(apiKey || serverSideApiKeyIsSet) ? (
