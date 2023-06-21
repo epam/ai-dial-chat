@@ -1,11 +1,13 @@
 import type { AuthOptions } from 'next-auth';
 import NextAuth from 'next-auth/next';
-import { OAuthConfig, OAuthUserConfig, Provider } from 'next-auth/providers';
+import { Provider } from 'next-auth/providers';
 import Auth0Provider from 'next-auth/providers/auth0';
 import AzureProvider from 'next-auth/providers/azure-ad';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { GitLabProfile } from 'next-auth/providers/gitlab';
 import GoogleProvider from 'next-auth/providers/google';
+
+import { GitLab } from '../../../utils/auth/customGitlab';
+import PingId from '../../../utils/auth/pingIdentity';
 
 import { v5 as uuid } from 'uuid';
 
@@ -26,42 +28,6 @@ interface IGraphUser {
   surname: string;
   userPrincipalName: string;
   id: string;
-}
-
-function GitLab<P extends GitLabProfile>(
-  options: OAuthUserConfig<P> & { gitlabHost?: string },
-): OAuthConfig<P> {
-  const host = options.gitlabHost ?? 'https://gitlab.com';
-
-  return {
-    id: 'gitlab',
-    name: 'GitLab',
-    type: 'oauth',
-    authorization: {
-      url: `${host}/oauth/authorize`,
-      params: { scope: 'read_user' },
-    },
-    token: `${host}/oauth/token`,
-    userinfo: `${host}/api/v4/user`,
-    checks: ['pkce', 'state'],
-    profile(profile) {
-      return {
-        id: profile.id.toString(),
-        name: profile.name ?? profile.username,
-        email: profile.email,
-        image: profile.avatar_url,
-      };
-    },
-    style: {
-      logo: '/gitlab.svg',
-      logoDark: '/gitlab-dark.svg',
-      bg: '#fff',
-      text: '#FC6D26',
-      bgDark: '#FC6D26',
-      textDark: '#fff',
-    },
-    options,
-  };
 }
 
 const allProviders: (Provider | boolean)[] = [
@@ -103,6 +69,16 @@ const allProviders: (Provider | boolean)[] = [
       issuer: process.env.AUTH_AUTH0_HOST,
     }),
 
+  !!process.env.AUTH_PING_ID_CLIENT_ID &&
+    !!process.env.AUTH_PING_ID_SECRET &&
+    !!process.env.AUTH_PING_ID_HOST &&
+    PingId({
+      clientId: process.env.AUTH_PING_ID_CLIENT_ID,
+      clientSecret: process.env.AUTH_PING_ID_SECRET,
+      name: process.env.AUTH_PING_ID_NAME ?? DEFAULT_NAME,
+      issuer: process.env.AUTH_PING_ID_HOST,
+    }),
+
   !!process.env.AUTH_TEST_TOKEN &&
     CredentialsProvider({
       name: 'Credentials',
@@ -118,7 +94,10 @@ const allProviders: (Provider | boolean)[] = [
           TEST_TOKENS.has(credentials.access_token)
         ) {
           return {
-            id: uuid(credentials.access_token, 'd9428888-122b-11e1-b85c-61cd3cbb3210'),
+            id: uuid(
+              credentials.access_token,
+              'd9428888-122b-11e1-b85c-61cd3cbb3210',
+            ),
             email: 'test',
             name: 'test: ' + credentials.access_token,
           };
