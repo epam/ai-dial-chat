@@ -13,6 +13,7 @@ import { useTranslation } from 'next-i18next';
 
 import { getEndpoint } from '@/utils/app/api';
 import { showAPIToastError } from '@/utils/app/errors';
+import { throttle } from '@/utils/data/throttle';
 
 import { OpenAIModel, OpenAIModelID } from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
@@ -405,6 +406,24 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
     }
   }, [autoScrollEnabled]);
 
+  const scrollDown = () => {
+    if (autoScrollEnabled) {
+      messagesEndRef.current?.scrollIntoView(true);
+    }
+  };
+  const throttledScrollDown = throttle(scrollDown, 250);
+
+  useEffect(() => {
+    throttledScrollDown();
+  }, [conversations, throttledScrollDown]);
+
+  const handleScrollDown = () => {
+    chatContainerRef.current?.scrollTo({
+      top: chatContainerRef.current.scrollHeight,
+      behavior: 'smooth',
+    });
+  };
+
   const handleScroll = () => {
     if (chatContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } =
@@ -421,12 +440,29 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
     }
   };
 
-  const handleScrollDown = () => {
-    chatContainerRef.current?.scrollTo({
-      top: chatContainerRef.current.scrollHeight,
-      behavior: 'smooth',
-    });
-  };
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setAutoScrollEnabled(entry.isIntersecting);
+        if (entry.isIntersecting) {
+          textareaRef.current?.focus();
+        }
+      },
+      {
+        root: chatContainerRef.current,
+        threshold: 0.1,
+      },
+    );
+    const messagesEndElement = messagesEndRef.current;
+    if (messagesEndElement) {
+      observer.observe(messagesEndElement);
+    }
+    return () => {
+      if (messagesEndElement) {
+        observer.unobserve(messagesEndElement);
+      }
+    };
+  }, [messagesEndRef]);
 
   const handleClearConversation = (conversation: Conversation) => {
     if (
@@ -512,30 +548,6 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       setIsReplayPaused(true);
     }
   };
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setAutoScrollEnabled(entry.isIntersecting);
-        if (entry.isIntersecting) {
-          textareaRef.current?.focus();
-        }
-      },
-      {
-        root: chatContainerRef.current,
-        threshold: 0.5,
-      },
-    );
-    const messagesEndElement = messagesEndRef.current;
-    if (messagesEndElement) {
-      observer.observe(messagesEndElement);
-    }
-    return () => {
-      if (messagesEndElement) {
-        observer.unobserve(messagesEndElement);
-      }
-    };
-  }, [messagesEndRef]);
 
   const handleSelectModel = (conversation: Conversation, modelId: string) => {
     handleUpdateConversation(conversation, {
