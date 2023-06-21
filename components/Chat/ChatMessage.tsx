@@ -328,14 +328,6 @@ export const ChatMessage: FC<Props> = memo(
                     )}
                   </div>
                   <div className="bottom-0 right-8 flex flex-row gap-2">
-                    {isShowResponseLoader && isAssistant && (
-                      <div className="min-w-[40px] flex font-bold">
-                        <IconRobot
-                          size={30}
-                          className="animate-bounce self-end"
-                        />
-                      </div>
-                    )}
                     {message.like !== -1 && (
                       <Button
                         onClick={message.like !== 1 ? setLike(1) : void 0}
