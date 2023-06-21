@@ -98,17 +98,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const [activeReplayIndex, setActiveReplayIndex] = useState<number>(0);
   const [selectedConversations, setSelectedConversations] = useState<
     Conversation[]
-  >(() => {
-    if (selectedConversationIds.length > 0) {
-      const sConversations = findSelectedConversations(
-        selectedConversationIds,
-        conversations,
-      );
-      return sConversations;
-    } else {
-      return [];
-    }
-  });
+  >([]);
   const [mergedMessages, setMergedMessages] = useState<any>([]);
   const [isReplayPaused, setIsReplayPaused] = useState<boolean>(true);
   const [isReplay, setIsReplay] = useState<boolean>(false);
@@ -482,9 +472,12 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
     isError = isErrorMessage,
   ) => {
     if (replayUserMessagesStack && !!replayUserMessagesStack[replayIndex]) {
-      localConversations.current = conversations;
+      const selectedConversationsLocal = findSelectedConversations(
+        selectedConversationIds,
+        [...localConversations.current],
+      );
 
-      const sendToAllSelectedConversations = selectedConversations.map(
+      const sendToAllSelectedConversations = selectedConversationsLocal.map(
         (conversation) => {
           return handleSend(
             conversation,
@@ -630,6 +623,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       );
 
       const isReplayConv = selectedConversations[0].replay.isReplay;
+
       setIsReplay(isReplayConv);
       if (isReplayConv) {
         setActiveReplayIndex(
