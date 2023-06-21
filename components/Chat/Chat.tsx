@@ -415,7 +415,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
 
   useEffect(() => {
     throttledScrollDown();
-  }, [selectedConversations, throttledScrollDown]);
+  }, [conversations, throttledScrollDown]);
 
   const handleScrollDown = () => {
     chatContainerRef.current?.scrollTo({
@@ -450,7 +450,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       },
       {
         root: chatContainerRef.current,
-        threshold: 0.5,
+        threshold: 0.1,
       },
     );
     const messagesEndElement = messagesEndRef.current;
