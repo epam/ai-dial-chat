@@ -538,6 +538,10 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   };
   const handleReplayStop = () => {
     if (isReplayFinished) {
+      const selectedConversations = findSelectedConversations(
+        selectedConversationIds,
+        localConversations.current,
+      );
       selectedConversations.forEach((conv) => {
         const updatedReplay = {
           ...conv.replay,
@@ -616,7 +620,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         handleReplayStop();
       }
     }
-  }, [messageIsStreaming, selectedConversations]);
+  }, [messageIsStreaming, activeReplayIndex, selectedConversations]);
 
   useEffect(() => {
     if (selectedConversationIds.length > 0) {
@@ -627,7 +631,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
 
       const isReplayConv = selectedConversations[0].replay.isReplay;
       setIsReplay(isReplayConv);
-      if (isReplayConv && isReplayPaused) {
+      if (isReplayConv) {
         setActiveReplayIndex(
           selectedConversations[0].replay.activeReplayIndex ?? 0,
         );
