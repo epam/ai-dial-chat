@@ -604,11 +604,11 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
     ) {
       if (!isReplayFinished) {
         handleReplay();
-      } else if (!messageIsStreaming) {
+      } else {
         handleReplayStop();
       }
     }
-  }, [messageIsStreaming, activeReplayIndex, mergedMessages]);
+  }, [messageIsStreaming, activeReplayIndex, selectedConversations]);
 
   useEffect(() => {
     if (selectedConversationIds.length > 0) {
@@ -619,7 +619,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
 
       const isReplayConv = selectedConversations[0].replay.isReplay;
       setIsReplay(isReplayConv);
-      if (isReplay) {
+      if (isReplayConv) {
         setActiveReplayIndex(
           selectedConversations[0].replay.activeReplayIndex ?? 0,
         );
