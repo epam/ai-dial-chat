@@ -199,7 +199,6 @@ describe('cleanData Functions', () => {
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: DEFAULT_TEMPERATURE,
             folderId: null,
-            replay: defaultReplay,
           },
         ],
         folders: [
