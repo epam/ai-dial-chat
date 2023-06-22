@@ -54,11 +54,13 @@ export function cleanData(data: SupportedExportFormats): LatestExportFormat {
   }
 
   if (isExportFormatV3(data)) {
-    return { ...data, version: 4, prompts: [] };
+    
+    return { history:cleanConversationHistory(data.history), folders: [...data.folders] , version: 4, prompts: [] };
   }
 
   if (isExportFormatV4(data)) {
-    return data;
+    
+    return {...data, history:cleanConversationHistory(data.history)};
   }
 
   throw new Error('Unsupported data format');
