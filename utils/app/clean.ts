@@ -2,6 +2,8 @@ import { Conversation } from '@/types/chat';
 import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE, OPENAI_API_TYPE } from './const';
+import { defaultReplay } from '@/utils/app/defaultStateConstants';
+
 
 export const cleanSelectedConversation = (conversation: Conversation) => {
   // added model for each conversation (3/20/23)
@@ -9,6 +11,7 @@ export const cleanSelectedConversation = (conversation: Conversation) => {
   // added folders (3/23/23)
   // added prompts (3/26/23)
   // added messages (4/16/23)
+  // added replay (6/22/2023)
 
   let updatedConversation = conversation;
 
@@ -48,6 +51,9 @@ export const cleanSelectedConversation = (conversation: Conversation) => {
       messages: updatedConversation.messages || [],
     };
   }
+  if(!updatedConversation.replay){
+    conversation.replay = defaultReplay;
+  }
 
   return updatedConversation;
 };
@@ -58,6 +64,7 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
   // added folders (3/23/23)
   // added prompts (3/26/23)
   // added messages (4/16/23)
+  // added replay (6/22/2023)
 
   if (!Array.isArray(history)) {
     console.warn('history is not an array. Returning an empty array.');
@@ -84,6 +91,10 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
 
       if (!conversation.messages) {
         conversation.messages = [];
+      }
+
+      if(!conversation.replay){
+        conversation.replay = defaultReplay;
       }
 
       acc.push(conversation);
