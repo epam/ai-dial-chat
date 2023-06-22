@@ -2,7 +2,7 @@ import { Conversation } from '@/types/chat';
 import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE, OPENAI_API_TYPE } from './const';
-import { defaultReplay } from '@/constants/defaultStateConstants';
+import { defaultReplay } from '@/utils/app/defaultStateConstants';
 
 export const cleanSelectedConversation = (conversation: Conversation) => {
   // added model for each conversation (3/20/23)
