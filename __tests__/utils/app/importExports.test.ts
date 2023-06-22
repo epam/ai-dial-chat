@@ -12,6 +12,7 @@ import { ExportFormatV1, ExportFormatV2, ExportFormatV4 } from '@/types/export';
 import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 
 import { describe, expect, it } from 'vitest';
+import { defaultReplay } from '@/utils/app/defaultStateConstants';
 
 describe('Export Format Functions', () => {
   describe('isExportFormatV1', () => {
@@ -104,6 +105,7 @@ describe('cleanData Functions', () => {
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: DEFAULT_TEMPERATURE,
             folderId: null,
+            replay: defaultReplay,
           },
         ],
         folders: [],
@@ -160,6 +162,7 @@ describe('cleanData Functions', () => {
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: DEFAULT_TEMPERATURE,
             folderId: null,
+            replay: defaultReplay
           },
         ],
         folders: [
@@ -196,6 +199,7 @@ describe('cleanData Functions', () => {
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: DEFAULT_TEMPERATURE,
             folderId: null,
+            replay: defaultReplay,
           },
         ],
         folders: [
@@ -239,6 +243,7 @@ describe('cleanData Functions', () => {
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: DEFAULT_TEMPERATURE,
             folderId: null,
+            replay: defaultReplay,
           },
         ],
         folders: [

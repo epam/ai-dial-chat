@@ -1,13 +1,9 @@
-import { Conversation, Replay } from '@/types/chat';
+import { Conversation } from '@/types/chat';
 import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE, OPENAI_API_TYPE } from './const';
+import { defaultReplay } from '@/utils/app/defaultStateConstants';
 
-export const defaultReplay: Replay = {
-  isReplay: false,
-  replayUserMessagesStack: [],
-  activeReplayIndex: 0,
-};
 
 export const cleanSelectedConversation = (conversation: Conversation) => {
   // added model for each conversation (3/20/23)
