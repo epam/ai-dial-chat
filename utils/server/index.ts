@@ -166,8 +166,11 @@ export const OpenAIStream = async (
       } else {
         const onParse = (event: ParsedEvent | ReconnectInterval) => {
           if (event.type === 'event') {
+            if (event.data === '[DONE]') {
+              controller.close();
+              return;
+            }
             const data = event.data;
-
             try {
               const json = JSON.parse(data);
               if (json.choices[0].finish_reason != null) {
