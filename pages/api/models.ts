@@ -1,18 +1,24 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { Session } from 'next-auth';
 import { getServerSession } from 'next-auth/next';
 
 import { getHeaders } from '../../utils/server/getHeaders';
 import {
+  BEDROCK_HOST,
   OPENAI_API_HOST,
   OPENAI_API_TYPE,
   OPENAI_API_VERSION,
   OPENAI_ORGANIZATION,
 } from '@/utils/app/const';
 
-import { OpenAIModel, OpenAIModelID, OpenAIModels, bedrockModels, googleModels } from '@/types/openai';
+import {
+  OpenAIModel,
+  OpenAIModelID,
+  OpenAIModels,
+  googleModels,
+} from '@/types/openai';
 
 import { authOptions } from './auth/[...nextauth]';
-import { Session } from 'next-auth';
 
 // export const config = {
 //   runtime: 'edge',
@@ -29,6 +35,69 @@ function addModel(model_name: string, models: OpenAIModel[]) {
   }
 }
 
+async function getOpenAIModels(session: Session, key: string): Promise<any[]> {
+  let url = `${OPENAI_API_HOST}/v1/models`;
+  if (OPENAI_API_TYPE === 'azure') {
+    url = `${OPENAI_API_HOST}/openai/deployments?api-version=${OPENAI_API_VERSION}`;
+  }
+
+  const errMsg = 'Request for OpenAI models returned an error';
+
+  const response = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(OPENAI_API_TYPE === 'openai' && {
+        Authorization: `Bearer ${key ? key : process.env.OPENAI_API_KEY}`,
+      }),
+      ...(OPENAI_API_TYPE === 'azure' && {
+        'api-key': `${key ? key : process.env.OPENAI_API_KEY}`,
+      }),
+      ...(OPENAI_API_TYPE === 'openai' &&
+        OPENAI_ORGANIZATION && {
+          'OpenAI-Organization': OPENAI_ORGANIZATION,
+        }),
+      ...getHeaders(session),
+    },
+  }).catch((error) => {
+    console.error(`${errMsg}: ${error.message}`);
+    throw new Error(errMsg);
+  });
+
+  if (response.status !== 200) {
+    console.error(`${errMsg} ${response.status}: ${await response.text()}`);
+    throw new Error(errMsg);
+  }
+
+  const json = await response.json();
+  return json.data;
+}
+
+async function getBedrockModels(session: Session): Promise<any[]> {
+  let url = `${BEDROCK_HOST}/models`;
+
+  const errMsg = 'Request for Bedrock models returned an error';
+
+  const response = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...getHeaders(session),
+    },
+  }).catch((error) => {
+    const msg = `${errMsg}: ${error.message}`;
+    console.error(msg);
+    throw new Error(msg);
+  });
+
+  if (response.status !== 200) {
+    const msg = `${errMsg} ${response.status}: ${await response.text()}`;
+    console.error(msg);
+    throw new Error(msg);
+  }
+
+  const json = await response.json();
+  return json.data;
+}
+
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
 
@@ -40,53 +109,22 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       key: string;
     };
 
-    let url = `${OPENAI_API_HOST}/v1/models`;
-    if (OPENAI_API_TYPE === 'azure') {
-      url = `${OPENAI_API_HOST}/openai/deployments?api-version=${OPENAI_API_VERSION}`;
-    }
-    const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(OPENAI_API_TYPE === 'openai' && {
-          Authorization: `Bearer ${key ? key : process.env.OPENAI_API_KEY}`,
-        }),
-        ...(OPENAI_API_TYPE === 'azure' && {
-          'api-key': `${key ? key : process.env.OPENAI_API_KEY}`,
-        }),
-        ...(OPENAI_API_TYPE === 'openai' &&
-          OPENAI_ORGANIZATION && {
-            'OpenAI-Organization': OPENAI_ORGANIZATION,
-          }),
-        ...getHeaders(session),
-      },
-    });
     const models: OpenAIModel[] = [];
 
-    if (response.status !== 200) {
-      console.error(
-        `OpenAI API returned an error ${
-          response.status
-        }: ${await response.text()}`,
-      );
-      // throw new Error('OpenAI API returned an error');
-    } else {
-      const json = await response.json();
+    const openAIModels = await getOpenAIModels(session, key).catch(() => {
+      return [];
+    });
 
-      const openAIModels = json.data
-        .map((model: any) => {
-          const model_name =
-            OPENAI_API_TYPE === 'azure' ? model.model : model.id;
-          for (const [key, value] of Object.entries(OpenAIModelID)) {
-            if (value === model_name) {
-              return {
-                id: model.id,
-                name: OpenAIModels[value].name,
-              };
-            }
-          }
-        })
-        .filter(Boolean);
-      models.push(...openAIModels);
+    for (const model of openAIModels) {
+      const model_name = OPENAI_API_TYPE === 'azure' ? model.model : model.id;
+      for (const [key, value] of Object.entries(OpenAIModelID)) {
+        if (value === model_name) {
+          models.push({
+            id: model.id,
+            name: OpenAIModels[value].name,
+          } as any);
+        }
+      }
     }
 
     if (process.env.GOOGLE_AI_TOKEN) {
@@ -95,8 +133,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }
     }
 
+    const bedrockModels = await getBedrockModels(session).catch(() => {
+      return [];
+    });
+
     for (const model of bedrockModels) {
-      addModel(model, models);
+      addModel(model.id, models);
     }
 
     // return new Response(JSON.stringify(models), { status: 200 });
