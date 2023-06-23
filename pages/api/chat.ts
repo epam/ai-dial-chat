@@ -72,6 +72,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const model =
       OpenAIModels[_model.id as OpenAIModelID] ?? OpenAIModels[fallbackModelID];
 
+    // TODO: add to OpenAIModel interface
     let tokens_per_message = 0;
     if (
       model.id == OpenAIModelID.GPT_3_5 ||
@@ -80,8 +81,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       tokens_per_message = 5;
     } else if (
       model.id == OpenAIModelID.GPT_4 ||
-      model.name == OpenAIModelID.GPT_4_32K ||
-      model.name === OpenAIModelID.BISON_001
+      model.id == OpenAIModelID.GPT_4_32K ||
+      model.id === OpenAIModelID.BISON_001
     ) {
       tokens_per_message = 4;
     }

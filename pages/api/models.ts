@@ -9,13 +9,25 @@ import {
   OPENAI_ORGANIZATION,
 } from '@/utils/app/const';
 
-import { OpenAIModel, OpenAIModelID, OpenAIModels } from '@/types/openai';
+import { OpenAIModel, OpenAIModelID, OpenAIModels, bedrockModels, googleModels } from '@/types/openai';
 
 import { authOptions } from './auth/[...nextauth]';
+import { Session } from 'next-auth';
 
 // export const config = {
 //   runtime: 'edge',
 // };
+
+function addModel(model_name: string, models: OpenAIModel[]) {
+  for (const [key, value] of Object.entries(OpenAIModelID)) {
+    if (value === model_name) {
+      models.push({
+        id: model_name,
+        name: OpenAIModels[value].name,
+      } as any);
+    }
+  }
+}
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
@@ -78,10 +90,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     if (process.env.GOOGLE_AI_TOKEN) {
-      models.push({
-        id: OpenAIModels[OpenAIModelID.BISON_001].id,
-        name: OpenAIModels[OpenAIModelID.BISON_001].name,
-      } as any);
+      for (const model of googleModels) {
+        addModel(model, models);
+      }
+    }
+
+    for (const model of bedrockModels) {
+      addModel(model, models);
     }
 
     // return new Response(JSON.stringify(models), { status: 200 });

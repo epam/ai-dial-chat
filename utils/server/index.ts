@@ -1,7 +1,8 @@
 import { Message } from '@/types/chat';
-import { OpenAIModel, OpenAIModelID } from '@/types/openai';
+import { OpenAIModel, OpenAIModelID, bedrockModels, googleModels } from '@/types/openai';
 
 import {
+  BEDROCK_HOST,
   GOOGLE_MAX_OUTPUT_TOKENS,
   GOOGLE_TOP_K,
   GOOGLE_TOP_P,
@@ -41,7 +42,9 @@ export const OpenAIStream = async (
   tokenCount: number,
 ) => {
   const isGoogle =
-    model.id === OpenAIModelID.BISON_001 && !!process.env.GOOGLE_AI_TOKEN;
+    googleModels.includes(model.id as any) && !!process.env.GOOGLE_AI_TOKEN;
+
+  const isBedrock = bedrockModels.includes(model.id as any);
 
   let url = `${OPENAI_API_HOST}/v1/chat/completions`;
   if (isGoogle) {
@@ -50,6 +53,8 @@ export const OpenAIStream = async (
     }/locations/${process.env.GOOGLE_AI_LOCATION}/publishers/google/models/${
       process.env.GOOGLE_AI_BARD_MODEL_ID ?? model.id
     }:predict`;
+  } else if (isBedrock) {
+    url = `${BEDROCK_HOST}/chat/completions`;
   } else if (OPENAI_API_TYPE === 'azure') {
     url = `${OPENAI_API_HOST}/openai/deployments/${model.id}/chat/completions?api-version=${OPENAI_API_VERSION}`;
   }
