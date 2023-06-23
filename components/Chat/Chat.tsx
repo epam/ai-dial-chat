@@ -110,6 +110,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLDivElement>(null);
   const [inputHeight, setInputHeight] = useState<number>(142);
+  const messageIsStreamingAmount = useRef<number>(0);
 
   useEffect(() => {
     if (
@@ -119,6 +120,14 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       setInputHeight(inputRef.current?.clientHeight);
     }
   });
+
+  const handleMessageIsStreamingChange = (amount: number) => {
+    messageIsStreamingAmount.current += amount;
+    homeDispatch({
+      field: 'messageIsStreaming',
+      value: messageIsStreamingAmount.current !== 0,
+    });
+  };
 
   const isSelectedConversations =
     !!selectedConversations && selectedConversations.length > 0;
@@ -223,7 +232,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
           );
         }
         homeDispatch({ field: 'loading', value: true });
-        homeDispatch({ field: 'messageIsStreaming', value: true });
+        handleMessageIsStreamingChange(1);
 
         const chatBody: ChatBody = {
           model: updatedConversation.model,
@@ -251,7 +260,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
 
         if (!response.ok) {
           homeDispatch({ field: 'loading', value: false });
-          homeDispatch({ field: 'messageIsStreaming', value: false });
+          handleMessageIsStreamingChange(-1);
 
           await showAPIToastError(response, t(errorsMessages.generalServer));
           const errorMessage: Message = {
@@ -275,7 +284,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         const data = response.body;
         if (!data) {
           homeDispatch({ field: 'loading', value: false });
-          homeDispatch({ field: 'messageIsStreaming', value: false });
+          handleMessageIsStreamingChange(-1);
 
           return { error: true };
         }
@@ -362,7 +371,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         }
 
         homeDispatch({ field: 'loading', value: false });
-        homeDispatch({ field: 'messageIsStreaming', value: false });
+        handleMessageIsStreamingChange(-1);
       }
     },
     [apiKey, conversations, stopConversationRef],
@@ -683,6 +692,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                         models={models}
                         isCompareMode={isCompareMode}
                         selectedConversationIds={selectedConversationIds}
+                        messageIsStreaming={messageIsStreaming}
                         onClearConversation={() =>
                           handleClearConversation(conv)
                         }

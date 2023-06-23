@@ -14,6 +14,7 @@ interface Props {
   defaultModelId: OpenAIModelID;
   isCompareMode: boolean;
   selectedConversationIds: string[];
+  messageIsStreaming: boolean;
   onSelectModel: (modelId: string) => void;
   onClearConversation: () => void;
   onUnselectConversation: () => void;
@@ -25,6 +26,7 @@ export const ChatSettings = ({
   defaultModelId,
   isCompareMode,
   selectedConversationIds,
+  messageIsStreaming,
   onSelectModel,
   onClearConversation,
   onUnselectConversation,
@@ -69,8 +71,9 @@ export const ChatSettings = ({
         )}
         {isCompareMode && selectedConversationIds.length > 1 && (
           <button
-            className="ml-2 cursor-pointer hover:opacity-50"
+            className="ml-2 cursor-pointer hover:opacity-50 disabled:cursor-not-allowed"
             onClick={onUnselectConversation}
+            disabled={messageIsStreaming}
           >
             <IconX size={18} />
           </button>
