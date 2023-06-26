@@ -33,7 +33,7 @@ const wasm = readFileSync(
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
-  if (!process.env.AUTH_DISABLED && !session) {
+  if (process.env.AUTH_DISABLED !== 'true' && !session) {
     return res.status(401).send(errorsMessages[401]);
   }
 

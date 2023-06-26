@@ -675,7 +675,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                         models={models}
                         prompts={prompts}
                         defaultModelId={defaultModelId || OpenAIModelID.GPT_3_5}
-                        isShowSettings={enabledFeatures.includes(
+                        isShowSettings={enabledFeatures.has(
                           'empty-chat-settings',
                         )}
                         onSelectModel={(modelId: string) =>
@@ -690,7 +690,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                         appName={appName}
                       />
                     ) : (
-                      enabledFeatures.includes('top-settings') && (
+                      enabledFeatures.has('top-settings') && (
                         <ChatSettings
                           messageIsStreaming={messageIsStreaming}
                           conversation={conv}
@@ -699,13 +699,11 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                           }
                           models={models}
                           isCompareMode={isCompareMode}
-                          isShowChatInfo={enabledFeatures.includes(
-                            'top-chat-info',
-                          )}
-                          isShowClearConversation={enabledFeatures.includes(
+                          isShowChatInfo={enabledFeatures.has('top-chat-info')}
+                          isShowClearConversation={enabledFeatures.has(
                             'top-clear-conversation',
                           )}
-                          isShowModelSelect={enabledFeatures.includes(
+                          isShowModelSelect={enabledFeatures.has(
                             'top-chat-model-settings',
                           )}
                           selectedConversationIds={selectedConversationIds}
@@ -758,9 +756,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                                 message={message}
                                 messageIndex={index}
                                 conversation={conv}
-                                isLikesEnabled={enabledFeatures.includes(
-                                  'likes',
-                                )}
+                                isLikesEnabled={enabledFeatures.has('likes')}
                                 onEdit={(editedMessage) => {
                                   selectedConversations.forEach((conv) => {
                                     handleSend(

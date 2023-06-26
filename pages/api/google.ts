@@ -16,7 +16,7 @@ import jsdom, { JSDOM } from 'jsdom';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
   const session = await getServerSession(req, res, authOptions);
-  if (!process.env.AUTH_DISABLED && !session) {
+  if (process.env.AUTH_DISABLED !== 'true' && !session) {
     return res.status(401).send(errorsMessages[401]);
   }
 

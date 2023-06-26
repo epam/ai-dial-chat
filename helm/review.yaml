@@ -23,10 +23,10 @@ env:
   NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT: ''
   AUTH_AUTH0_HOST: 'https://chatbot-ui-staging.eu.auth0.com'
   NEXT_PUBLIC_APP_NAME: 'MR Review'
-  SHOW_REQUEST_API_KEY: 'true'
-  SHOW_REPORT_AN_ISSUE: 'true'
-  SHOW_FOOTER: 'true'
   FOOTER_HTML_MESSAGE: '<a href="https://kb.epam.com/display/EPMGPT/EPAM+AI+Chat" target="_blank" rel="noreferrer"> <u><strong>EPAM AI Chat</strong></u> </a>&nbsp;can be used <u>any work-related activity</u>. Rest assured, information you share here is&nbsp;<u> not disclosed to third-party companies </u>. However, we <u>anonymize and log</u> all interactions for research purposes. <br/>For API access please fill&nbsp;<a href="#requestApiKey"><u><strong>this form</strong></u></a>.&nbsp;If you have a problem please&nbsp;<a href="#reportAnIssue"><u><strong>report an issue</strong></u></a>. Version %%VERSION%%'
+  ENABLED_FEATURES: 'conversations-section,prompts-section,top-settings,top-clear-conversation,top-chat-info,top-chat-model-settings,empty-chat-settings,footer,request-api-key,report-an-issue,likes'
+  AUTH_DISABLED: 'false'
+  IS_IFRAME: 'false'
 #  NEXTAUTH_URL: "https://dev-chat.ai-proxy.lab.epam.com"
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
 

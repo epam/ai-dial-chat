@@ -69,6 +69,7 @@ const Home = ({
   enabledFeatures,
   isIframe,
 }: Props) => {
+  const enabledFeaturesSet = new Set(enabledFeatures);
   const { t } = useTranslation('chat');
   const { getModels } = useApiService();
   const { getModelsError } = useErrorService();
@@ -355,10 +356,10 @@ const Home = ({
         field: 'footerHtmlMessage',
         value: footerHtmlMessage,
       });
-    enabledFeatures &&
+    enabledFeaturesSet &&
       dispatch({
         field: 'enabledFeatures',
-        value: enabledFeatures,
+        value: enabledFeaturesSet,
       });
     isIframe &&
       dispatch({
@@ -526,7 +527,7 @@ const Home = ({
         <main
           className={`flex h-screen w-screen flex-col text-sm text-white dark:text-white ${lightMode}`}
         >
-          {enabledFeatures.includes('conversations-section') && (
+          {enabledFeaturesSet.has('conversations-section') && (
             <div className="fixed top-0 w-full sm:hidden">
               <Navbar
                 selectedConversationNames={selectedConversationNames}
@@ -537,12 +538,10 @@ const Home = ({
 
           <div
             className={`flex h-full w-full sm:pt-0 ${
-              enabledFeatures.includes('conversations-section')
-                ? 'pt-[48px]'
-                : ''
+              enabledFeaturesSet.has('conversations-section') ? 'pt-[48px]' : ''
             }`}
           >
-            {enabledFeatures.includes('conversations-section') && <Chatbar />}
+            {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
 
             <div className="flex flex-1">
               <Chat
@@ -551,7 +550,7 @@ const Home = ({
               />
             </div>
 
-            {enabledFeatures.includes('prompts-section') && <Promptbar />}
+            {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
           </div>
         </main>
       )}
@@ -566,7 +565,7 @@ export const getServerSideProps: GetServerSideProps = async ({
   res,
 }) => {
   const session = await getServerSession(req, res, authOptions);
-  if (!process.env.AUTH_DISABLED && !session) {
+  if (process.env.AUTH_DISABLED !== 'true' && !session) {
     return {
       redirect: {
         permanent: false,
@@ -610,7 +609,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
       footerHtmlMessage: updatedFooterHTMLMessage,
       enabledFeatures: (process.env.ENABLED_FEATURES || '').split(','),
-      isIframe: process.env.IS_IFRAME || false,
+      isIframe: process.env.IS_IFRAME === 'true' || false,
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',

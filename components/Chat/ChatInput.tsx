@@ -361,9 +361,9 @@ export const ChatInput = forwardRef(
           </div>
         </div>
         <FooterMessage
-          isShowFooter={enabledFeatures.includes('footer')}
-          isShowRequestApiKey={enabledFeatures.includes('request-api-key')}
-          isShowReportAnIssue={enabledFeatures.includes('report-an-issue')}
+          isShowFooter={enabledFeatures.has('footer')}
+          isShowRequestApiKey={enabledFeatures.has('request-api-key')}
+          isShowReportAnIssue={enabledFeatures.has('report-an-issue')}
           footerHtmlMessage={footerHtmlMessage}
         />
       </div>

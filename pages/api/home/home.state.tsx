@@ -36,7 +36,7 @@ export interface HomeInitialState {
   isShowReportAnIssue: boolean;
   footerHtmlMessage: string;
 
-  enabledFeatures: Feature[];
+  enabledFeatures: Set<Feature>;
 }
 
 export const initialState: HomeInitialState = {
@@ -70,5 +70,5 @@ export const initialState: HomeInitialState = {
   isShowReportAnIssue: false,
   footerHtmlMessage: '',
 
-  enabledFeatures: [],
+  enabledFeatures: new Set([]),
 };

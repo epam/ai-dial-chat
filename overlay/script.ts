@@ -115,14 +115,13 @@ export default class ChatAIOverlay {
     }
   }
 
-  public load() {
-    const { overlay } = this.createIframe();
-    this.overlay = overlay;
+  public load(): void {
+    this.overlay = this.createOverlayElements();
 
-    document.body.appendChild(overlay);
+    document.body.appendChild(this.overlay);
   }
 
-  public closeChat() {
+  public closeChat(): void {
     if (!this.overlay) {
       return;
     }
@@ -133,7 +132,7 @@ export default class ChatAIOverlay {
     }, 500);
   }
 
-  public openChat() {
+  public openChat(): void {
     if (!this.overlay) {
       return;
     }
@@ -141,29 +140,91 @@ export default class ChatAIOverlay {
     this.overlayShowed = true;
   }
 
-  public toggleChat() {
+  public toggleChat(): void {
     this.overlayShowed ? this.closeChat() : this.openChat();
   }
 
-  private createIframe() {
-    const overlay = document.createElement('div');
-    overlay.style.transition = 'transform 0.5s ease';
-    overlay.style.position = 'fixed';
-    overlay.style.top = this.config.position.top;
-    overlay.style.bottom = this.config.position.bottom;
-    overlay.style.left = this.config.position.left;
-    overlay.style.right = this.config.position.right;
-    overlay.style.transform = `scale(0.5) ${this.config.position.transform}`;
-    overlay.style.zIndex = '2';
-    overlay.style.width = `${this.config.overlayWidth}px`;
-    overlay.style.height = `${this.config.overlayHeight}px`;
+  private createOverlayElements() {
+    const overlay = this.createOverlay();
 
+    const iframe = this.createIframe();
+
+    const overlayTopContainer = this.createOverlayControlElements(iframe);
+    overlay.appendChild(overlayTopContainer);
+    overlay.appendChild(iframe);
+
+    return overlay;
+  }
+
+  private createOverlayControlElements(iframe: HTMLIFrameElement) {
+    const overlayTopContainer = document.createElement('div');
+    this.setStyles(overlayTopContainer, {
+      backgroundColor: '#444654',
+      height: '30px',
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'end',
+    });
+
+    const overlayButtonsContainer = document.createElement('div');
+    this.setStyles(overlayButtonsContainer, {
+      height: '100%',
+      display: 'flex',
+      justifyContent: 'end',
+      alignItems: 'end',
+      marginRight: '10px',
+      boxSizing: 'border-box',
+    });
+
+    const closeButton = document.createElement('button');
+    this.setStyles(closeButton, {
+      boxSizing: 'border-box',
+      appearance: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      backgroundColor: 'transparent',
+      height: '100%',
+      width: '20px',
+      display: 'flex',
+      paddingTop: '15px',
+      paddingBottom: '8px',
+      paddingRight: '5px',
+      paddingLeft: '5px',
+      alignItems: 'end',
+    });
+    closeButton.addEventListener('click', () => this.toggleChat());
+
+    const closeButtonInnerElement = document.createElement('span');
+    this.setStyles(closeButtonInnerElement, {
+      boxSizing: 'border-box',
+      border: '1px solid white',
+      borderRadius: '2px',
+      width: '100%',
+      display: 'block',
+    });
+
+    closeButton.appendChild(closeButtonInnerElement);
+
+    overlayButtonsContainer.appendChild(closeButton);
+
+    if (this.config.allowFulscreen) {
+      const fulscreenButton = this.createFullscreenButton(iframe);
+
+      overlayButtonsContainer.appendChild(fulscreenButton);
+    }
+    overlayTopContainer.appendChild(overlayButtonsContainer);
+    return overlayTopContainer;
+  }
+
+  private createIframe() {
     const iframe = document.createElement('iframe');
     iframe.setAttribute('src', this.config.domain);
-    iframe.style.appearance = 'none';
-    iframe.style.border = 'none';
-    iframe.style.width = '100%';
-    iframe.style.height = 'calc(100% - 20px)';
+    this.setStyles(iframe, {
+      appearance: 'none',
+      border: 'none',
+      width: '100%',
+      height: 'calc(100% - 20px)',
+    });
     iframe.allow = 'clipboard-write';
     iframe.allowFullscreen = this.config.allowFulscreen;
     iframe.sandbox.add('allow-same-origin');
@@ -171,7 +232,7 @@ export default class ChatAIOverlay {
     iframe.sandbox.add('allow-modals');
     iframe.onload = () => {
       if (this.config.showButtonIcon) {
-        const button = this.createButton(this.position);
+        const button = this.createOverlayButton(this.position);
         button.addEventListener('click', () => this.toggleChat());
         document.body.appendChild(button);
       }
@@ -180,104 +241,93 @@ export default class ChatAIOverlay {
         this.config.onLoad(this);
       }
     };
-
-    const closeMenu = document.createElement('div');
-    closeMenu.style.backgroundColor = '#444654';
-    closeMenu.style.height = '30px';
-    closeMenu.style.width = '100%';
-    closeMenu.style.display = 'flex';
-    closeMenu.style.justifyContent = 'end';
-
-    const overlayButtonsContainer = document.createElement('div');
-    overlayButtonsContainer.style.height = '100%';
-    overlayButtonsContainer.style.display = 'flex';
-    overlayButtonsContainer.style.justifyContent = 'end';
-    overlayButtonsContainer.style.alignItems = 'end';
-    overlayButtonsContainer.style.marginRight = '10px';
-    overlayButtonsContainer.style.boxSizing = 'border-box';
-
-    const closeButton = document.createElement('button');
-    closeButton.style.boxSizing = 'border-box';
-    closeButton.style.appearance = 'none';
-    closeButton.style.border = 'none';
-    closeButton.style.cursor = 'pointer';
-    closeButton.style.backgroundColor = 'transparent';
-    closeButton.style.height = '100%';
-    closeButton.style.width = '20px';
-    closeButton.style.display = 'flex';
-    closeButton.style.paddingTop = '15px';
-    closeButton.style.paddingBottom = '8px';
-    closeButton.style.paddingRight = '5px';
-    closeButton.style.paddingLeft = '5px';
-    closeButton.style.alignItems = 'end';
-    closeButton.addEventListener('click', () => this.toggleChat());
-    const closeButtonInnerElement = document.createElement('span');
-    closeButtonInnerElement.style.boxSizing = 'border-box';
-    closeButtonInnerElement.style.border = '1px solid white';
-    closeButtonInnerElement.style.borderRadius = '2px';
-    closeButtonInnerElement.style.width = '100%';
-    closeButtonInnerElement.style.display = 'block';
-
-    closeButton.appendChild(closeButtonInnerElement);
-
-    overlayButtonsContainer.appendChild(closeButton);
-
-    if (this.config.allowFulscreen) {
-      const fulscreenButton = document.createElement('button');
-      fulscreenButton.style.appearance = 'none';
-      fulscreenButton.style.border = 'none';
-      fulscreenButton.style.backgroundColor = 'transparent';
-      fulscreenButton.style.cursor = 'pointer';
-      fulscreenButton.style.boxSizing = 'border-box';
-      fulscreenButton.style.height = '100%';
-      fulscreenButton.style.width = '20px';
-      fulscreenButton.style.paddingTop = '15px';
-      fulscreenButton.style.paddingBottom = '8px';
-      fulscreenButton.style.paddingRight = '5px';
-      fulscreenButton.style.paddingLeft = '5px';
-      fulscreenButton.style.display = 'flex';
-      fulscreenButton.style.alignItems = 'end';
-      fulscreenButton.addEventListener('click', () => {
-        iframe.requestFullscreen();
-      });
-
-      const fulscreenButtonInnerElement = document.createElement('span');
-      fulscreenButtonInnerElement.style.boxSizing = 'border-box';
-      fulscreenButtonInnerElement.style.border = '1px solid white';
-      fulscreenButtonInnerElement.style.borderRadius = '2px';
-      fulscreenButtonInnerElement.style.width = '100%';
-      fulscreenButtonInnerElement.style.display = 'block';
-      fulscreenButtonInnerElement.style.height = '10px';
-      fulscreenButtonInnerElement.style.width = '10px';
-
-      fulscreenButton.appendChild(fulscreenButtonInnerElement);
-
-      overlayButtonsContainer.appendChild(fulscreenButton);
-    }
-    closeMenu.appendChild(overlayButtonsContainer);
-    overlay.appendChild(closeMenu);
-    overlay.appendChild(iframe);
-
-    return { overlay };
+    return iframe;
   }
 
-  createButton(position: PositionModel) {
+  private createOverlay() {
+    const overlay = document.createElement('div');
+    this.setStyles(overlay, {
+      transition: 'transform 0.5s ease',
+      position: 'fixed',
+      top: this.config.position.top,
+      bottom: this.config.position.bottom,
+      left: this.config.position.left,
+      right: this.config.position.right,
+      transform: `scale(0.5) ${this.config.position.transform}`,
+      zIndex: '2',
+      width: `${this.config.overlayWidth}px`,
+      height: `${this.config.overlayHeight}px`,
+    });
+    return overlay;
+  }
+
+  private createFullscreenButton(iframe: HTMLIFrameElement) {
+    const fulscreenButton = document.createElement('button');
+    this.setStyles(fulscreenButton, {
+      appearance: 'none',
+      border: 'none',
+      backgroundColor: 'transparent',
+      cursor: 'pointer',
+      boxSizing: 'border-box',
+      height: '100%',
+      width: '20px',
+      paddingTop: '15px',
+      paddingBottom: '8px',
+      paddingRight: '5px',
+      paddingLeft: '5px',
+      display: 'flex',
+      alignItems: 'end',
+    });
+    fulscreenButton.addEventListener('click', () => {
+      iframe.requestFullscreen();
+    });
+
+    const fulscreenButtonInnerElement = document.createElement('span');
+    this.setStyles(fulscreenButtonInnerElement, {
+      boxSizing: 'border-box',
+      border: '1px solid white',
+      borderRadius: '2px',
+      display: 'block',
+      height: '10px',
+      width: '10px',
+    });
+
+    fulscreenButton.appendChild(fulscreenButtonInnerElement);
+
+    return fulscreenButton;
+  }
+
+  private createOverlayButton(position: PositionModel) {
     let button = document.createElement('button');
     button.id = 'chatButton';
-    button.style.backgroundColor = this.config.iconBgColor;
-    button.style.borderRadius = '100%';
-    button.style.border = 'none';
-    button.style.height = `${this.config.iconHeight}px`;
-    button.style.width = `${this.config.iconWidth}px`;
-    button.style.color = this.config.iconColor;
-    button.style.cursor = 'pointer';
-    button.style.position = 'fixed';
-    button.style.top = position.top;
-    button.style.bottom = position.bottom;
-    button.style.left = position.left;
-    button.style.right = position.right;
+
+    this.setStyles(button, {
+      backgroundColor: this.config.iconBgColor,
+      borderRadius: '100%',
+      border: 'none',
+      height: `${this.config.iconHeight}px`,
+      width: `${this.config.iconWidth}px`,
+      color: this.config.iconColor,
+      cursor: 'pointer',
+      position: 'fixed',
+      top: position.top,
+      bottom: position.bottom,
+      left: position.left,
+      right: position.right,
+    });
     button.innerHTML = this.config.iconSvg;
 
     return button;
+  }
+
+  private setStyles(
+    htmlElement: HTMLElement,
+    styles: { [property in keyof CSSStyleDeclaration]?: string },
+  ) {
+    Object.entries(styles).map(([key, value]) => {
+      if (value && key) {
+        htmlElement.style[key as any] = value;
+      }
+    });
   }
 }
