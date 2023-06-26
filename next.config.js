@@ -21,6 +21,23 @@ const nextConfig = {
       },
     ],
   },
+  async headers() {
+    return [
+      {
+        source: '/',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: `${
+              process.env.ALLOWED_IFRAME_ORIGINS
+                ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
+                : 'frame-ancestors none'
+            }`,
+          },
+        ],
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

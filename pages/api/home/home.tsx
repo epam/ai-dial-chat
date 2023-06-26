@@ -12,10 +12,7 @@ import { useCreateReducer } from '@/hooks/useCreateReducer';
 import useErrorService from '@/services/errorService';
 import useApiService from '@/services/useApiService';
 
-import {
-  cleanConversationHistory,
-  cleanSelectedConversation,
-} from '@/utils/app/clean';
+import { cleanConversationHistory } from '@/utils/app/clean';
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
 import {
   saveConversations,
@@ -26,8 +23,9 @@ import { saveFolders } from '@/utils/app/folders';
 import { savePrompts } from '@/utils/app/prompts';
 import { getSettings } from '@/utils/app/settings';
 
-import { Conversation, Message, Replay } from '@/types/chat';
+import { Conversation, Replay } from '@/types/chat';
 import { KeyValuePair } from '@/types/data';
+import { Feature } from '@/types/features';
 import { FolderInterface, FolderType } from '@/types/folder';
 import { OpenAIModelID, OpenAIModels, fallbackModelID } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
@@ -54,6 +52,8 @@ interface Props {
   isShowReportAnIssue: boolean;
   appName: string;
   footerHtmlMessage: string;
+  enabledFeatures: Feature[];
+  isIframe: boolean;
 }
 
 const Home = ({
@@ -66,6 +66,8 @@ const Home = ({
   isShowRequestApiKey,
   isShowReportAnIssue,
   footerHtmlMessage,
+  enabledFeatures,
+  isIframe,
 }: Props) => {
   const { t } = useTranslation('chat');
   const { getModels } = useApiService();
@@ -353,6 +355,16 @@ const Home = ({
         field: 'footerHtmlMessage',
         value: footerHtmlMessage,
       });
+    enabledFeatures &&
+      dispatch({
+        field: 'enabledFeatures',
+        value: enabledFeatures,
+      });
+    isIframe &&
+      dispatch({
+        field: 'isIframe',
+        value: isIframe,
+      });
   }, [
     defaultModelId,
     serverSideApiKeyIsSet,
@@ -362,6 +374,7 @@ const Home = ({
     isShowReportAnIssue,
     isShowRequestApiKey,
     footerHtmlMessage,
+    enabledFeatures,
   ]);
 
   // ON LOAD --------------------------------------------
@@ -513,15 +526,23 @@ const Home = ({
         <main
           className={`flex h-screen w-screen flex-col text-sm text-white dark:text-white ${lightMode}`}
         >
-          <div className="fixed top-0 w-full sm:hidden">
-            <Navbar
-              selectedConversationNames={selectedConversationNames}
-              onNewConversation={handleNewConversation}
-            />
-          </div>
+          {enabledFeatures.includes('conversations-section') && (
+            <div className="fixed top-0 w-full sm:hidden">
+              <Navbar
+                selectedConversationNames={selectedConversationNames}
+                onNewConversation={handleNewConversation}
+              />
+            </div>
+          )}
 
-          <div className="flex h-full w-full pt-[48px] sm:pt-0">
-            <Chatbar />
+          <div
+            className={`flex h-full w-full sm:pt-0 ${
+              enabledFeatures.includes('conversations-section')
+                ? 'pt-[48px]'
+                : ''
+            }`}
+          >
+            {enabledFeatures.includes('conversations-section') && <Chatbar />}
 
             <div className="flex flex-1">
               <Chat
@@ -530,7 +551,7 @@ const Home = ({
               />
             </div>
 
-            <Promptbar />
+            {enabledFeatures.includes('prompts-section') && <Promptbar />}
           </div>
         </main>
       )}
@@ -545,7 +566,7 @@ export const getServerSideProps: GetServerSideProps = async ({
   res,
 }) => {
   const session = await getServerSession(req, res, authOptions);
-  if (!session) {
+  if (!process.env.AUTH_DISABLED && !session) {
     return {
       redirect: {
         permanent: false,
@@ -588,6 +609,8 @@ export const getServerSideProps: GetServerSideProps = async ({
       isShowRequestApiKey: process.env.SHOW_REQUEST_API_KEY === 'true',
       isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
       footerHtmlMessage: updatedFooterHTMLMessage,
+      enabledFeatures: (process.env.ENABLED_FEATURES || '').split(','),
+      isIframe: process.env.IS_IFRAME || false,
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',

@@ -86,6 +86,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       defaultModelId,
       isCompareMode,
       messageIsStreaming,
+      enabledFeatures,
     },
     handleUpdateConversation,
     handleSelectConversation,
@@ -674,6 +675,9 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                         models={models}
                         prompts={prompts}
                         defaultModelId={defaultModelId || OpenAIModelID.GPT_3_5}
+                        isShowSettings={enabledFeatures.includes(
+                          'empty-chat-settings',
+                        )}
                         onSelectModel={(modelId: string) =>
                           handleSelectModel(conv, modelId)
                         }
@@ -686,29 +690,32 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                         appName={appName}
                       />
                     ) : (
-                      <ChatSettings
-                        conversation={conv}
-                        defaultModelId={defaultModelId || OpenAIModelID.GPT_3_5}
-                        models={models}
-                        isCompareMode={isCompareMode}
-                        selectedConversationIds={selectedConversationIds}
-                        messageIsStreaming={messageIsStreaming}
-                        onClearConversation={() =>
-                          handleClearConversation(conv)
-                        }
-                        onSelectModel={(modelId: string) =>
-                          handleSelectModel(conv, modelId)
-                        }
-                        onUnselectConversation={() => {
-                          const filteredSelectedConversation =
-                            selectedConversations.filter(
-                              ({ id }) => id !== conv.id,
-                            )[0];
-                          handleSelectConversation(
-                            filteredSelectedConversation,
-                          );
-                        }}
-                      />
+                      enabledFeatures.includes('top-settings') && (
+                        <ChatSettings
+                          conversation={conv}
+                          defaultModelId={
+                            defaultModelId || OpenAIModelID.GPT_3_5
+                          }
+                          models={models}
+                          isCompareMode={isCompareMode}
+                          selectedConversationIds={selectedConversationIds}
+                          onClearConversation={() =>
+                            handleClearConversation(conv)
+                          }
+                          onSelectModel={(modelId: string) =>
+                            handleSelectModel(conv, modelId)
+                          }
+                          onUnselectConversation={() => {
+                            const filteredSelectedConversation =
+                              selectedConversations.filter(
+                                ({ id }) => id !== conv.id,
+                              )[0];
+                            handleSelectConversation(
+                              filteredSelectedConversation,
+                            );
+                          }}
+                        />
+                      )
                     )}
                   </div>
                 ))}
@@ -741,6 +748,9 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                                 message={message}
                                 messageIndex={index}
                                 conversation={conv}
+                                isLikesEnabled={enabledFeatures.includes(
+                                  'likes',
+                                )}
                                 onEdit={(editedMessage) => {
                                   selectedConversations.forEach((conv) => {
                                     handleSend(

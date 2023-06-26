@@ -59,10 +59,9 @@ export const ChatInput = forwardRef(
       state: {
         messageIsStreaming,
         prompts,
-        isShowFooter,
-        isShowRequestApiKey,
-        isShowReportAnIssue,
         footerHtmlMessage,
+        enabledFeatures,
+        isIframe,
       },
     } = useContext(HomeContext);
 
@@ -305,7 +304,9 @@ export const ChatInput = forwardRef(
                 }`,
               }}
               placeholder={
-                t('Type a message or type "/" to select a prompt...') || ''
+                isIframe
+                  ? t('Type a message') || ''
+                  : t('Type a message or type "/" to select a prompt...') || ''
               }
               value={content}
               rows={1}
@@ -360,9 +361,9 @@ export const ChatInput = forwardRef(
           </div>
         </div>
         <FooterMessage
-          isShowFooter={isShowFooter}
-          isShowRequestApiKey={isShowRequestApiKey}
-          isShowReportAnIssue={isShowReportAnIssue}
+          isShowFooter={enabledFeatures.includes('footer')}
+          isShowRequestApiKey={enabledFeatures.includes('request-api-key')}
+          isShowReportAnIssue={enabledFeatures.includes('report-an-issue')}
           footerHtmlMessage={footerHtmlMessage}
         />
       </div>

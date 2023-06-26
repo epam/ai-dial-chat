@@ -33,7 +33,7 @@ const wasm = readFileSync(
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
-  if (!session) {
+  if (process.env.AUTH_ENABLED && !session) {
     return res.status(401).send(errorsMessages[401]);
   }
 
@@ -113,7 +113,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       temperatureToUse,
       key,
       messagesToSend,
-      getHeaders(session, id),
+      (session && getHeaders(session, id)) || {},
       tokenCount,
     );
     res.setHeader('Transfer-Encoding', 'chunked');

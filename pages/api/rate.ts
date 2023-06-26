@@ -20,7 +20,7 @@ import { authOptions } from './auth/[...nextauth]';
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
 
-  if (!session || req.method !== 'POST') {
+  if (process.env.AUTH_ENABLED && (!session || req.method !== 'POST')) {
     return res.status(401).send('');
   }
   try {
@@ -41,7 +41,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           OPENAI_ORGANIZATION && {
             'OpenAI-Organization': OPENAI_ORGANIZATION,
           }),
-        ...getHeaders(session, id),
+        ...((session && getHeaders(session, id)) || {}),
       },
       method: 'POST',
       body: JSON.stringify({
@@ -49,7 +49,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         rate: value,
         message: message.content,
       }),
-    }).then(r => r.status);
+    }).then((r) => r.status);
   } catch (error) {
     console.error(error);
   }
