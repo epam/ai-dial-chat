@@ -692,12 +692,22 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                     ) : (
                       enabledFeatures.includes('top-settings') && (
                         <ChatSettings
+                          messageIsStreaming={messageIsStreaming}
                           conversation={conv}
                           defaultModelId={
                             defaultModelId || OpenAIModelID.GPT_3_5
                           }
                           models={models}
                           isCompareMode={isCompareMode}
+                          isShowChatInfo={enabledFeatures.includes(
+                            'top-chat-info',
+                          )}
+                          isShowClearConversation={enabledFeatures.includes(
+                            'top-clear-conversation',
+                          )}
+                          isShowModelSelect={enabledFeatures.includes(
+                            'top-chat-model-settings',
+                          )}
                           selectedConversationIds={selectedConversationIds}
                           onClearConversation={() =>
                             handleClearConversation(conv)

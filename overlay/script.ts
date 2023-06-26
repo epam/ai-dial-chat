@@ -164,9 +164,11 @@ export default class ChatAIOverlay {
     iframe.style.border = 'none';
     iframe.style.width = '100%';
     iframe.style.height = 'calc(100% - 20px)';
+    iframe.allow = 'clipboard-write';
     iframe.allowFullscreen = this.config.allowFulscreen;
     iframe.sandbox.add('allow-same-origin');
     iframe.sandbox.add('allow-scripts');
+    iframe.sandbox.add('allow-modals');
     iframe.onload = () => {
       if (this.config.showButtonIcon) {
         const button = this.createButton(this.position);
