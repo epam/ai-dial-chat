@@ -13,16 +13,18 @@ import { OpenAIModel, OpenAIModelID, OpenAIModels } from '@/types/openai';
 
 import { authOptions } from './auth/[...nextauth]';
 
+import { errorsMessages } from '@/constants/errors';
+
 // export const config = {
 //   runtime: 'edge',
 // };
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
-
-  if (process.env.AUTH_ENABLED && !session) {
-    return res.status(401).send('');
+  if (!process.env.AUTH_DISABLED && !session) {
+    return res.status(401).send(errorsMessages[401]);
   }
+
   try {
     const { key } = req.body as {
       key: string;

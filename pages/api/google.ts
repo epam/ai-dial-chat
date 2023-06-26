@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
 
 import { MAX_TOKENS, OPENAI_API_HOST } from '@/utils/app/const';
 import { cleanSourceText } from '@/utils/server/google';
@@ -6,18 +7,19 @@ import { cleanSourceText } from '@/utils/server/google';
 import { Message } from '@/types/chat';
 import { GoogleBody, GoogleSource } from '@/types/google';
 
+import { authOptions } from './auth/[...nextauth]';
+
+import { errorsMessages } from '@/constants/errors';
 import { Readability } from '@mozilla/readability';
 import endent from 'endent';
 import jsdom, { JSDOM } from 'jsdom';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from './auth/[...nextauth]';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
   const session = await getServerSession(req, res, authOptions);
-
-  if(!session) {
-    return res.status(401).send('');
+  if (!process.env.AUTH_DISABLED && !session) {
+    return res.status(401).send(errorsMessages[401]);
   }
+
   try {
     const { messages, key, model, googleAPIKey, googleCSEId } =
       req.body as GoogleBody;
@@ -149,7 +151,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
     res.status(200).json({ answer });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Error'})
+    res.status(500).json({ error: 'Error' });
   }
 };
 
