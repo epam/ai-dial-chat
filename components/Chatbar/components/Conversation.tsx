@@ -31,7 +31,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
     handleNewReplayConversation,
     dispatch,
   } = useContext(HomeContext);
-  const { handleExportItem } = useContext(ChatbarContext);
+  const { handleExportConversation } = useContext(ChatbarContext);
 
   const { handleDeleteConversation } = useContext(ChatbarContext);
 
@@ -207,7 +207,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
                   onDelete={handleOpenDeleteModal}
                   onRename={handleOpenRenameModal}
                   onExport={function (): void {
-                    handleExportItem(conversation.id);
+                    handleExportConversation(conversation.id);
                   }}
                   onCompare={() => {
                     dispatch({

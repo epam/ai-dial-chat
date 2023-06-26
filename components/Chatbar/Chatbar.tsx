@@ -10,7 +10,11 @@ import {
   saveSelectedConversationIds,
 } from '@/utils/app/conversation';
 import { saveFolders } from '@/utils/app/folders';
-import { exportData, exportItem, importData } from '@/utils/app/importExport';
+import {
+  exportConversation,
+  exportConversations,
+  importData,
+} from '@/utils/app/importExport';
 
 import { Conversation, Replay } from '@/types/chat';
 import { LatestExportFormat, SupportedExportFormats } from '@/types/export';
@@ -63,12 +67,12 @@ export const Chatbar = () => {
     [homeDispatch],
   );
 
-  const handleExportData = () => {
-    exportData();
+  const handleExportConversations = () => {
+    exportConversations();
   };
 
-  const handleExportItem = (conversationId: string) => {
-    exportItem(conversationId);
+  const handleExportConversation = (conversationId: string) => {
+    exportConversation(conversationId);
   };
 
   const handleImportConversations = (data: SupportedExportFormats) => {
@@ -208,8 +212,8 @@ export const Chatbar = () => {
         handleDeleteConversation,
         handleClearConversations,
         handleImportConversations,
-        handleExportData,
-        handleExportItem,
+        handleExportConversations,
+        handleExportConversation,
         handleApiKeyChange,
       }}
     >

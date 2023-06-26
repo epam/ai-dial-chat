@@ -1,9 +1,11 @@
 import { Conversation } from '@/types/chat';
 import {
+  ExportConversationsFormatV4,
   ExportFormatV1,
   ExportFormatV2,
   ExportFormatV3,
   ExportFormatV4,
+  LatestExportConversationsFormat,
   LatestExportFormat,
   SupportedExportFormats,
 } from '@/types/export';
@@ -60,7 +62,7 @@ export function cleanData(data: SupportedExportFormats): LatestExportFormat {
 
   if (isExportFormatV4(data)) {
     
-    return {...data, history:cleanConversationHistory(data.history)};
+    return {...data, history:cleanConversationHistory(data.history), prompts: data.prompts || []};
   }
 
   throw new Error('Unsupported data format');
@@ -73,13 +75,14 @@ function currentDate() {
   return `${month}-${day}`;
 }
 
-function triggerDownload(data: ExportFormatV4) {
+type ExportType = 'conversation'| 'conversations_history' | 'prompt' | 'prompts_history';
+function triggerDownload(data: ExportConversationsFormatV4, exportType: ExportType) {
   const blob = new Blob([JSON.stringify(data, null, 2)], {
     type: 'application/json',
   });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.download = `chatbot_ui_history_${currentDate()}.json`;
+  link.download = `chatbot_ui_${exportType}_${currentDate()}.json`;
   link.href = url;
   link.style.display = 'none';
   document.body.appendChild(link);
@@ -88,7 +91,20 @@ function triggerDownload(data: ExportFormatV4) {
   URL.revokeObjectURL(url);
 }
 
-export const exportItem = (conversationId: string) => {
+const triggerDownloadConversation= (data: ExportConversationsFormatV4)=>{
+  triggerDownload(data, 'conversation')
+}
+const triggerDownloadConversationsHistory= (data: ExportConversationsFormatV4)=>{
+  triggerDownload(data, 'conversations_history')
+}
+// const triggerDownloadPrompt= ()=>{
+//   triggerDownload(data, 'conversation')
+// }
+// const triggerDownloadPromptsHistory= ()=>{
+//   triggerDownload(data, 'conversation')
+// }
+
+export const exportConversation = (conversationId: string) => {
   let history = localStorage.getItem('conversationHistory');
   let folders = localStorage.getItem('folders');
 
@@ -117,20 +133,18 @@ export const exportItem = (conversationId: string) => {
     }
   }
 
-  const data = {
+  const data: ExportConversationsFormatV4 = {
     version: 4,
     history: convertedHistory || [],
     folders: convertedFolders || [],
-    prompts: [],
-  } as LatestExportFormat;
+  };
 
-  triggerDownload(data);
+  triggerDownloadConversation(data);
 };
 
-export const exportData = () => {
+export const exportConversations = () => {
   let history = localStorage.getItem('conversationHistory');
   let folders = localStorage.getItem('folders');
-  let prompts = localStorage.getItem('prompts');
 
   if (history) {
     history = JSON.parse(history);
@@ -140,18 +154,14 @@ export const exportData = () => {
     folders = JSON.parse(folders);
   }
 
-  if (prompts) {
-    prompts = JSON.parse(prompts);
-  }
 
-  const data = {
+  const data= {
     version: 4,
     history: history || [],
     folders: folders || [],
-    prompts: prompts || [],
-  } as LatestExportFormat;
+  } as ExportConversationsFormatV4 ;
 
-  triggerDownload(data);
+  triggerDownloadConversationsHistory(data);
 };
 
 export const importData = (

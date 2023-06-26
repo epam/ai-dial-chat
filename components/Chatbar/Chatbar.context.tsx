@@ -12,8 +12,8 @@ export interface ChatbarContextProps {
   dispatch: Dispatch<ActionType<ChatbarInitialState>>;
   handleDeleteConversation: (conversation: Conversation) => void;
   handleClearConversations: () => void;
-  handleExportData: () => void;
-  handleExportItem: (conversationId: string) => void;
+  handleExportConversations: () => void;
+  handleExportConversation: (conversationId: string) => void;
   handleImportConversations: (data: SupportedExportFormats) => void;
   handleApiKeyChange: (apiKey: string) => void;
 }
