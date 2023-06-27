@@ -19,7 +19,7 @@ export interface ChatAIOverlayInitialConfigModel {
   overlayHeight?: number;
   // True by default
   showButtonIcon?: boolean;
-  allowFulscreen?: boolean;
+  allowFulscreenDesktop?: boolean;
   iconWidth?: number;
   iconHeight?: number;
   iconBgColor?: string;
@@ -77,7 +77,7 @@ const defaultConfig: ChatAIOverlayConfigModel = {
   domain: '',
   position: Positions['right-bottom'],
   showButtonIcon: true,
-  allowFulscreen: false,
+  allowFulscreenDesktop: false,
   overlayHeight: 380,
   overlayWidth: 540,
   iconBgColor: '#444654',
@@ -93,6 +93,8 @@ export default class ChatAIOverlay {
   private overlay: HTMLElement | undefined;
   private position: PositionModel = Positions['right-bottom'];
   private config: ChatAIOverlayConfigModel = defaultConfig;
+  private isMobileView = window.matchMedia('(max-width: 768px)').matches;
+  private iframe: HTMLIFrameElement | undefined;
 
   constructor(config: string | ChatAIOverlayInitialConfigModel) {
     if (!config) {
@@ -114,6 +116,12 @@ export default class ChatAIOverlay {
         position:
           (config.position && Positions[config.position]) ||
           defaultConfig.position,
+        iconSvg:
+          config.iconSvg ??
+          getDefaultSVG(
+            (config.iconHeight ?? defaultConfig.iconHeight) - 15,
+            (config.iconWidth ?? defaultConfig.iconWidth) - 15,
+          ),
       };
     }
   }
@@ -139,6 +147,13 @@ export default class ChatAIOverlay {
     if (!this.overlay) {
       return;
     }
+    if (this.isMobileView) {
+      this.openFullscreen();
+      this.overlayShowed = true;
+
+      return;
+    }
+
     this.overlay.style.transform = 'scale(1) translate(0, 0)';
     this.overlayShowed = true;
   }
@@ -147,19 +162,24 @@ export default class ChatAIOverlay {
     this.overlayShowed ? this.closeChat() : this.openChat();
   }
 
+  private openFullscreen(): void {
+    this.iframe?.requestFullscreen();
+  }
+
   private createOverlayElements() {
     const overlay = this.createOverlay();
 
     const iframe = this.createIframe();
+    this.iframe = iframe;
 
-    const overlayTopContainer = this.createOverlayControlElements(iframe);
+    const overlayTopContainer = this.createOverlayControlElements();
     overlay.appendChild(overlayTopContainer);
     overlay.appendChild(iframe);
 
     return overlay;
   }
 
-  private createOverlayControlElements(iframe: HTMLIFrameElement) {
+  private createOverlayControlElements() {
     const overlayTopContainer = document.createElement('div');
     this.setStyles(overlayTopContainer, {
       backgroundColor: '#444654',
@@ -210,8 +230,8 @@ export default class ChatAIOverlay {
 
     overlayButtonsContainer.appendChild(closeButton);
 
-    if (this.config.allowFulscreen) {
-      const fulscreenButton = this.createFullscreenButton(iframe);
+    if (this.config.allowFulscreenDesktop) {
+      const fulscreenButton = this.createFullscreenButton();
 
       overlayButtonsContainer.appendChild(fulscreenButton);
     }
@@ -229,7 +249,7 @@ export default class ChatAIOverlay {
       height: 'calc(100% - 20px)',
     });
     iframe.allow = 'clipboard-write';
-    iframe.allowFullscreen = this.config.allowFulscreen;
+    iframe.allowFullscreen = this.config.allowFulscreenDesktop;
     iframe.sandbox.add('allow-same-origin');
     iframe.sandbox.add('allow-scripts');
     iframe.sandbox.add('allow-modals');
@@ -264,7 +284,7 @@ export default class ChatAIOverlay {
     return overlay;
   }
 
-  private createFullscreenButton(iframe: HTMLIFrameElement) {
+  private createFullscreenButton() {
     const fulscreenButton = document.createElement('button');
     this.setStyles(fulscreenButton, {
       appearance: 'none',
@@ -282,7 +302,7 @@ export default class ChatAIOverlay {
       alignItems: 'end',
     });
     fulscreenButton.addEventListener('click', () => {
-      iframe.requestFullscreen();
+      this.openFullscreen();
     });
 
     const fulscreenButtonInnerElement = document.createElement('span');
@@ -318,10 +338,7 @@ export default class ChatAIOverlay {
       left: position.left,
       right: position.right,
     });
-    button.innerHTML = getDefaultSVG(
-      this.config.iconWidth - 15,
-      this.config.iconHeight - 15,
-    );
+    button.innerHTML = this.config.iconSvg;
 
     return button;
   }
