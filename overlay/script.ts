@@ -65,10 +65,13 @@ const Positions: Record<PositionConfigValue | string, PositionModel> = {
     transform: 'translate(1080px, 800px)',
   },
 };
-const defaultSvg = `<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-message-circle-2-filled" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
-<path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-<path d="M5.821 4.91c3.898 -2.765 9.469 -2.539 13.073 .536c3.667 3.127 4.168 8.238 1.152 11.897c-2.842 3.447 -7.965 4.583 -12.231 2.805l-.232 -.101l-4.375 .931l-.075 .013l-.11 .009l-.113 -.004l-.044 -.005l-.11 -.02l-.105 -.034l-.1 -.044l-.076 -.042l-.108 -.077l-.081 -.074l-.073 -.083l-.053 -.075l-.065 -.115l-.042 -.106l-.031 -.113l-.013 -.075l-.009 -.11l.004 -.113l.005 -.044l.02 -.11l.022 -.072l1.15 -3.451l-.022 -.036c-2.21 -3.747 -1.209 -8.392 2.411 -11.118l.23 -.168z" stroke-width="0" fill="currentColor" />
-</svg>`;
+
+const getDefaultSVG = (height: number, width: number) => {
+  return `<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-message-circle-2-filled" width="${width}" height="${height}" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5.821 4.91c3.898 -2.765 9.469 -2.539 13.073 .536c3.667 3.127 4.168 8.238 1.152 11.897c-2.842 3.447 -7.965 4.583 -12.231 2.805l-.232 -.101l-4.375 .931l-.075 .013l-.11 .009l-.113 -.004l-.044 -.005l-.11 -.02l-.105 -.034l-.1 -.044l-.076 -.042l-.108 -.077l-.081 -.074l-.073 -.083l-.053 -.075l-.065 -.115l-.042 -.106l-.031 -.113l-.013 -.075l-.009 -.11l.004 -.113l.005 -.044l.02 -.11l.022 -.072l1.15 -3.451l-.022 -.036c-2.21 -3.747 -1.209 -8.392 2.411 -11.118l.23 -.168z" stroke-width="0" fill="currentColor" />
+  </svg>`;
+};
 
 const defaultConfig: ChatAIOverlayConfigModel = {
   domain: '',
@@ -79,9 +82,9 @@ const defaultConfig: ChatAIOverlayConfigModel = {
   overlayWidth: 540,
   iconBgColor: '#444654',
   iconColor: 'white',
-  iconSvg: defaultSvg,
   iconHeight: 60,
   iconWidth: 60,
+  iconSvg: getDefaultSVG(45, 45),
   onLoad: (chatAIOverlay: ChatAIOverlay) => {},
 };
 
@@ -315,7 +318,10 @@ export default class ChatAIOverlay {
       left: position.left,
       right: position.right,
     });
-    button.innerHTML = this.config.iconSvg;
+    button.innerHTML = getDefaultSVG(
+      this.config.iconWidth - 15,
+      this.config.iconHeight - 15,
+    );
 
     return button;
   }
