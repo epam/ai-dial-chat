@@ -87,6 +87,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       isCompareMode,
       messageIsStreaming,
       enabledFeatures,
+      isIframe,
     },
     handleUpdateConversation,
     handleSelectConversation,
@@ -706,6 +707,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                           isShowModelSelect={enabledFeatures.has(
                             'top-chat-model-settings',
                           )}
+                          isIframe={isIframe}
                           selectedConversationIds={selectedConversationIds}
                           onClearConversation={() =>
                             handleClearConversation(conv)

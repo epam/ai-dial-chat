@@ -18,6 +18,7 @@ interface Props {
   isShowChatInfo: boolean;
   isShowModelSelect: boolean;
   isShowClearConversation: boolean;
+  isIframe: boolean;
   onSelectModel: (modelId: string) => void;
   onClearConversation: () => void;
   onUnselectConversation: () => void;
@@ -33,6 +34,7 @@ export const ChatSettings = ({
   isShowChatInfo,
   isShowModelSelect,
   isShowClearConversation,
+  isIframe,
   onSelectModel,
   onClearConversation,
   onUnselectConversation,
@@ -58,8 +60,12 @@ export const ChatSettings = ({
               </>
             )}
             <span>
-              {t('Model')}: {conversation.model.name} | {t('Temp')}:{' '}
-              {conversation.temperature} |
+              {t('Model')}: {conversation.model.name} |{' '}
+              {!isIframe && (
+                <>
+                  {t('Temp')}: {conversation.temperature} |
+                </>
+              )}
             </span>
           </>
         )}
