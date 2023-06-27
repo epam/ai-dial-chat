@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 
 import { useTranslation } from 'next-i18next';
 
@@ -11,13 +12,14 @@ import {
 } from '@/utils/app/conversation';
 import { saveFolders } from '@/utils/app/folders';
 import {
+  CleanDataResponse,
   exportConversation,
   exportConversations,
   importData,
 } from '@/utils/app/importExport';
 
 import { Conversation, Replay } from '@/types/chat';
-import { LatestExportFormat, SupportedExportFormats } from '@/types/export';
+import { SupportedExportFormats } from '@/types/export';
 import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -30,6 +32,7 @@ import Sidebar from '../Sidebar';
 import ChatbarContext from './Chatbar.context';
 import { ChatbarInitialState, initialState } from './Chatbar.state';
 
+import { errorsMessages } from '@/constants/errors';
 import { v4 as uuidv4 } from 'uuid';
 
 export const Chatbar = () => {
@@ -76,18 +79,23 @@ export const Chatbar = () => {
   };
 
   const handleImportConversations = (data: SupportedExportFormats) => {
-    const { history, folders, prompts }: LatestExportFormat = importData(data);
-    homeDispatch({ field: 'conversations', value: history });
-    homeDispatch({
-      field: 'selectedConversationIds',
-      value: [history[history.length - 1].id],
-    });
-    homeDispatch({
-      field: 'isCompareMode',
-      value: false,
-    });
-    homeDispatch({ field: 'folders', value: folders });
-    homeDispatch({ field: 'prompts', value: prompts });
+    const { history, folders, prompts, isError }: CleanDataResponse =
+      importData(data);
+    if (isError) {
+      toast.error(t(errorsMessages.unsupportedDataFormat));
+    } else {
+      homeDispatch({ field: 'conversations', value: history });
+      homeDispatch({
+        field: 'selectedConversationIds',
+        value: [history[history.length - 1].id],
+      });
+      homeDispatch({
+        field: 'isCompareMode',
+        value: false,
+      });
+      homeDispatch({ field: 'folders', value: folders });
+      homeDispatch({ field: 'prompts', value: prompts });
+    }
   };
 
   const handleClearConversations = () => {

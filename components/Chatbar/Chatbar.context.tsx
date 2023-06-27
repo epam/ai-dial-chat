@@ -7,6 +7,7 @@ import { SupportedExportFormats } from '@/types/export';
 
 import { ChatbarInitialState } from './Chatbar.state';
 
+export type ImportConversationsHandler = (data: SupportedExportFormats) => void;
 export interface ChatbarContextProps {
   state: ChatbarInitialState;
   dispatch: Dispatch<ActionType<ChatbarInitialState>>;
@@ -14,7 +15,7 @@ export interface ChatbarContextProps {
   handleClearConversations: () => void;
   handleExportConversations: () => void;
   handleExportConversation: (conversationId: string) => void;
-  handleImportConversations: (data: SupportedExportFormats) => void;
+  handleImportConversations: ImportConversationsHandler;
   handleApiKeyChange: (apiKey: string) => void;
 }
 

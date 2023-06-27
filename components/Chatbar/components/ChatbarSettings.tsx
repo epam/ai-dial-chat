@@ -5,6 +5,8 @@ import { useTranslation } from 'next-i18next';
 
 import HomeContext from '@/pages/api/home/home.context';
 
+import PromptbarContext from '@/components/Promptbar/PromptBar.context';
+import { ImportPromts } from '@/components/Promptbar/components/ImportPrompt';
 import { SettingDialog } from '@/components/Settings/SettingDialog';
 
 import { Import } from '../../Settings/Import';
@@ -37,13 +39,19 @@ export const ChatbarSettings = () => {
     handleApiKeyChange,
   } = useContext(ChatbarContext);
 
+  // const { handleImportPrompts } = useContext(PromptbarContext);
+
   return (
     <div className="flex flex-col items-center space-y-1 border-t border-white/20 pt-1 text-sm">
       {conversations.length > 0 ? (
         <ClearConversations onClearConversations={handleClearConversations} />
       ) : null}
 
-      <Import onImport={handleImportConversations} />
+      <Import
+        onImport={handleImportConversations}
+        text={t('Import conversations')}
+        type="conversations"
+      />
 
       <SidebarButton
         text={t('Export conversations')}

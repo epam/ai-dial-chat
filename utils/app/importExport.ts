@@ -5,7 +5,6 @@ import {
   ExportFormatV2,
   ExportFormatV3,
   ExportFormatV4,
-  LatestExportConversationsFormat,
   LatestExportFormat,
   SupportedExportFormats,
 } from '@/types/export';
@@ -30,16 +29,48 @@ export function isExportFormatV4(obj: any): obj is ExportFormatV4 {
   return obj.version === 4;
 }
 
+export function isPromtsJSON(promts: any) {
+  return (
+    !promts[0].hasOwnProperty('messages') &&
+    promts[0].hasOwnProperty('id') &&
+    promts[0].hasOwnProperty('name') &&
+    promts[0].hasOwnProperty('content')
+  );
+}
+
+export function isUnsuportedFormat(data: any) {
+  return (
+    !isExportFormatV1(data) &&
+    !isExportFormatV2(data) &&
+    !isExportFormatV3(data) &&
+    !isExportFormatV4(data)
+  );
+}
+
 export const isLatestExportFormat = isExportFormatV4;
 
-export function cleanData(data: SupportedExportFormats): LatestExportFormat {
+export interface CleanDataResponse extends LatestExportFormat {
+  isError: boolean;
+}
+export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV1(data)) {
-    return {
+    const cleanHistoryData: LatestExportFormat = {
       version: 4,
       history: cleanConversationHistory(data),
       folders: [],
       prompts: [],
     };
+    if (isPromtsJSON(data)) {
+      return {
+        ...cleanHistoryData,
+        isError: true,
+      };
+    } else {
+      return {
+        ...cleanHistoryData,
+        isError: false,
+      };
+    }
   }
 
   if (isExportFormatV2(data)) {
@@ -52,20 +83,36 @@ export function cleanData(data: SupportedExportFormats): LatestExportFormat {
         type: 'chat',
       })),
       prompts: [],
+      isError: false,
     };
   }
 
   if (isExportFormatV3(data)) {
-    
-    return { history:cleanConversationHistory(data.history), folders: [...data.folders] , version: 4, prompts: [] };
+    return {
+      history: cleanConversationHistory(data.history),
+      folders: [...data.folders],
+      version: 4,
+      prompts: [],
+      isError: false,
+    };
   }
 
   if (isExportFormatV4(data)) {
-    
-    return {...data, history:cleanConversationHistory(data.history), prompts: data.prompts || []};
+    return {
+      ...data,
+      history: cleanConversationHistory(data.history),
+      prompts: data.prompts || [],
+      isError: false,
+    };
   }
 
-  throw new Error('Unsupported data format');
+  return {
+    version: 4,
+    history: [],
+    folders: [],
+    prompts: [],
+    isError: true,
+  };
 }
 
 function currentDate() {
@@ -75,8 +122,16 @@ function currentDate() {
   return `${month}-${day}`;
 }
 
-type ExportType = 'conversation'| 'conversations_history' | 'prompt' | 'prompts_history';
-function triggerDownload(data: ExportConversationsFormatV4, exportType: ExportType) {
+type ExportType =
+  | 'conversation'
+  | 'conversations_history'
+  | 'prompt'
+  | 'prompts_history';
+
+function triggerDownload(
+  data: ExportConversationsFormatV4 | Prompt[],
+  exportType: ExportType,
+) {
   const blob = new Blob([JSON.stringify(data, null, 2)], {
     type: 'application/json',
   });
@@ -91,18 +146,17 @@ function triggerDownload(data: ExportConversationsFormatV4, exportType: ExportTy
   URL.revokeObjectURL(url);
 }
 
-const triggerDownloadConversation= (data: ExportConversationsFormatV4)=>{
-  triggerDownload(data, 'conversation')
-}
-const triggerDownloadConversationsHistory= (data: ExportConversationsFormatV4)=>{
-  triggerDownload(data, 'conversations_history')
-}
-// const triggerDownloadPrompt= ()=>{
-//   triggerDownload(data, 'conversation')
-// }
-// const triggerDownloadPromptsHistory= ()=>{
-//   triggerDownload(data, 'conversation')
-// }
+const triggerDownloadConversation = (data: ExportConversationsFormatV4) => {
+  triggerDownload(data, 'conversation');
+};
+const triggerDownloadConversationsHistory = (
+  data: ExportConversationsFormatV4,
+) => {
+  triggerDownload(data, 'conversations_history');
+};
+const triggerDownloadPromptsHistory = (data: Prompt[]) => {
+  triggerDownload(data, 'prompts_history');
+};
 
 export const exportConversation = (conversationId: string) => {
   let history = localStorage.getItem('conversationHistory');
@@ -154,20 +208,29 @@ export const exportConversations = () => {
     folders = JSON.parse(folders);
   }
 
-
-  const data= {
+  const data = {
     version: 4,
     history: history || [],
     folders: folders || [],
-  } as ExportConversationsFormatV4 ;
+  } as ExportConversationsFormatV4;
 
   triggerDownloadConversationsHistory(data);
 };
 
-export const importData = (
-  data: SupportedExportFormats,
-): LatestExportFormat => {
-  const { history, folders, prompts } = cleanData(data);
+export const exportPrompts = () => {
+  let prompts = localStorage.getItem('prompts');
+
+  if (prompts) {
+    prompts = JSON.parse(prompts);
+  }
+
+  const data = (prompts || []) as Prompt[];
+
+  triggerDownloadPromptsHistory(data);
+};
+
+export const importData = (data: SupportedExportFormats): CleanDataResponse => {
+  const { history, folders, prompts, isError } = cleanData(data);
 
   const oldConversations = localStorage.getItem('conversationHistory');
   const oldConversationsParsed = oldConversations
@@ -215,5 +278,24 @@ export const importData = (
     history: newHistory,
     folders: newFolders,
     prompts: newPrompts,
+    isError,
   };
+};
+
+export type ImportPromtsResponse = { prompts: Prompt[]; isError: boolean };
+export const importPrompts = (prompts: Prompt[]): ImportPromtsResponse => {
+  const oldPrompts = localStorage.getItem('prompts');
+  const oldPromptsParsed = oldPrompts ? JSON.parse(oldPrompts) : [];
+
+  if (isPromtsJSON(prompts)) {
+    const newPrompts: Prompt[] = [...oldPromptsParsed, ...prompts].filter(
+      (prompt, index, self) =>
+        index === self.findIndex((p) => p.id === prompt.id),
+    );
+    localStorage.setItem('prompts', JSON.stringify(newPrompts));
+
+    return { prompts: newPrompts, isError: false };
+  }
+
+  return { prompts: oldPromptsParsed, isError: true };
 };

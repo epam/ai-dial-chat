@@ -1,8 +1,10 @@
 import { useContext, useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
+import { exportPrompts, importPrompts } from '@/utils/app/importExport';
 import { savePrompts } from '@/utils/app/prompts';
 
 import { OpenAIModels } from '@/types/openai';
@@ -18,6 +20,7 @@ import Sidebar from '../Sidebar';
 import PromptbarContext from './PromptBar.context';
 import { PromptbarInitialState, initialState } from './Promptbar.state';
 
+import { errorsMessages } from '@/constants/errors';
 import { v4 as uuidv4 } from 'uuid';
 
 const Promptbar = () => {
@@ -97,6 +100,20 @@ const Promptbar = () => {
     }
   };
 
+  const handleExportPrompts = () => {
+    exportPrompts();
+  };
+
+  const handleImportPrompts = (promptsJSON: Prompt[]) => {
+    const { prompts, isError } = importPrompts(promptsJSON);
+
+    if (isError) {
+      toast.error(t(errorsMessages.unsupportedDataFormat));
+    } else {
+      homeDispatch({ field: 'prompts', value: prompts });
+    }
+  };
+
   useEffect(() => {
     if (searchTerm) {
       promptDispatch({
@@ -123,6 +140,8 @@ const Promptbar = () => {
         handleCreatePrompt,
         handleDeletePrompt,
         handleUpdatePrompt,
+        handleExportPrompts,
+        handleImportPrompts,
       }}
     >
       <Sidebar<Prompt>
@@ -144,6 +163,7 @@ const Promptbar = () => {
         handleCreateItem={handleCreatePrompt}
         handleCreateFolder={() => handleCreateFolder(t('New folder'), 'prompt')}
         handleDrop={handleDrop}
+        footerComponent={<PromptbarSettings />}
       />
     </PromptbarContext.Provider>
   );
