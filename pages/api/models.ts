@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { Session } from 'next-auth';
 import { getServerSession } from 'next-auth/next';
 
 import { getHeaders } from '../../utils/server/getHeaders';
@@ -32,7 +33,7 @@ function setDefaultModel(models: OpenAIModel[]) {
   return models;
 }
 
-function limitModelsAccordingToUser(models: OpenAIModel[], session) {
+function limitModelsAccordingToUser(models: OpenAIModel[], session: Session) {
   const modelsLimitations: Record<string, Set<string>> = (
     process.env.AVAILABLE_MODELS_USERS_LIMITATIONS ?? ''
   )
