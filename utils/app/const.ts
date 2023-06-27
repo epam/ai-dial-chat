@@ -27,3 +27,4 @@ export const GOOGLE_TOP_K = +(process.env.GOOGLE_AI_TOP_K ?? 40);
 
 export const BEDROCK_HOST =
   process.env.BEDROCK_HOST || "http://openai-bedrock-adapter.openai-bedrock-adapter";
+export const BEDROCK_ACCESS = process.env.BEDROCK_ACCESS?.split(",") || []

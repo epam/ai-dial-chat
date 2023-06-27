@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth/next';
 
 import { getHeaders } from '../../utils/server/getHeaders';
 import {
+  BEDROCK_ACCESS,
   BEDROCK_HOST,
   OPENAI_API_HOST,
   OPENAI_API_TYPE,
@@ -59,13 +60,11 @@ async function getOpenAIModels(session: Session, key: string): Promise<any[]> {
       ...getHeaders(session),
     },
   }).catch((error) => {
-    console.error(`${errMsg}: ${error.message}`);
-    throw new Error(errMsg);
+    throw new Error(`${errMsg}: ${error.message}`);
   });
 
   if (response.status !== 200) {
-    console.error(`${errMsg} ${response.status}: ${await response.text()}`);
-    throw new Error(errMsg);
+    throw new Error(`${errMsg} ${response.status}: ${await response.text()}`);
   }
 
   const json = await response.json();
@@ -73,6 +72,16 @@ async function getOpenAIModels(session: Session, key: string): Promise<any[]> {
 }
 
 async function getBedrockModels(session: Session): Promise<any[]> {
+  const email = session?.user?.email;
+
+  if (!email) {
+    throw new Error('Unknown user');
+  }
+
+  if (!BEDROCK_ACCESS.includes(email)) {
+    throw new Error('Access denied');
+  }
+
   let url = `${BEDROCK_HOST}/models`;
 
   const errMsg = 'Request for Bedrock models returned an error';
@@ -84,13 +93,11 @@ async function getBedrockModels(session: Session): Promise<any[]> {
     },
   }).catch((error) => {
     const msg = `${errMsg}: ${error.message}`;
-    console.error(msg);
     throw new Error(msg);
   });
 
   if (response.status !== 200) {
     const msg = `${errMsg} ${response.status}: ${await response.text()}`;
-    console.error(msg);
     throw new Error(msg);
   }
 
@@ -111,7 +118,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const models: OpenAIModel[] = [];
 
-    const openAIModels = await getOpenAIModels(session, key).catch(() => {
+    const openAIModels = await getOpenAIModels(session, key).catch((error) => {
+      console.error(error.message);
       return [];
     });
 
@@ -133,7 +141,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }
     }
 
-    const bedrockModels = await getBedrockModels(session).catch(() => {
+    const bedrockModels = await getBedrockModels(session).catch((error) => {
+      console.error(error.message);
       return [];
     });
 

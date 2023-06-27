@@ -1,5 +1,5 @@
 import { Message } from '@/types/chat';
-import { OpenAIModel, OpenAIModelID, bedrockModels, googleModels } from '@/types/openai';
+import { OpenAIModel, bedrockModels, googleModels } from '@/types/openai';
 
 import {
   BEDROCK_HOST,
