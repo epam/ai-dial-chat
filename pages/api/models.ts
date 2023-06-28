@@ -45,13 +45,11 @@ function limitModelsAccordingToUser(models: OpenAIModel[], session: Session) {
         emails: new Set(emailsString.split(',')),
       };
     })
-    .reduce(
-      (acc, curr) => ({
-        ...acc,
-        [curr.modelId]: curr.emails,
-      }),
-      {},
-    );
+    .reduce((acc, curr) => {
+      acc[curr.modelId] = curr.emails;
+
+      return acc;
+    }, <Record<string, Set<string>>>{});
 
   models = models.filter((model: OpenAIModel) => {
     if (!modelsLimitations[model.id]) {
