@@ -29,6 +29,7 @@ export interface HomeInitialState {
   usePluginKeys: boolean;
   isCompareMode: boolean;
   isIframe: boolean;
+  modelIconMapping: Record<string, string>;
 
   // Footer env variables
   isShowFooter: boolean;
@@ -63,6 +64,7 @@ export const initialState: HomeInitialState = {
   usePluginKeys: false,
   isCompareMode: false,
   isIframe: false,
+  modelIconMapping: {},
 
   // Footer env variables
   isShowFooter: false,
