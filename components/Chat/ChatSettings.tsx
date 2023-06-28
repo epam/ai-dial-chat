@@ -84,6 +84,7 @@ export const ChatSettings = ({
           <div className="flex h-full flex-col space-y-4 border-b border-neutral-200 p-4 dark:border-neutral-600 md:rounded-lg md:border">
             <ModelSelect
               conversationModelId={conversation.model.id}
+              conversationModelName={conversation.model.name}
               defaultModelId={defaultModelId}
               models={models}
               onSelectModel={onSelectModel}

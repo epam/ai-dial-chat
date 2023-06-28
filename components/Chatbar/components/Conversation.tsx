@@ -1,4 +1,4 @@
-import { IconCheck, IconDots, IconMessage, IconX } from '@tabler/icons-react';
+import { IconCheck, IconDots, IconX } from '@tabler/icons-react';
 import {
   DragEvent,
   KeyboardEvent,
@@ -20,6 +20,7 @@ import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
 import ChatbarContext from '@/components/Chatbar/Chatbar.context';
 
 import { ContextMenu } from '../../Common/ContextMenu';
+import { ModelIcon } from './ModelIcon';
 
 interface Props {
   conversation: Conversation;
@@ -27,7 +28,7 @@ interface Props {
 
 export const ConversationComponent = ({ conversation }: Props) => {
   const {
-    state: { messageIsStreaming, selectedConversationIds },
+    state: { messageIsStreaming, selectedConversationIds, modelIconMapping },
     handleSelectConversation,
     handleUpdateConversation,
     handleNewReplayConversation,
@@ -123,7 +124,12 @@ export const ConversationComponent = ({ conversation }: Props) => {
     <div className="relative flex items-center">
       {isRenaming && selectedConversationIds.includes(conversation.id) ? (
         <div className="flex w-full items-center gap-3 rounded-lg bg-[#343541]/90 p-3">
-          <IconMessage size={18} />
+          <ModelIcon
+            size={18}
+            modelIconMapping={modelIconMapping}
+            modelId={conversation.model.id}
+          />
+
           <input
             className="mr-12 flex-1 overflow-hidden overflow-ellipsis border-neutral-400 bg-transparent text-left text-[12.5px] leading-3 text-white outline-none focus:border-neutral-100"
             type="text"
@@ -152,7 +158,11 @@ export const ConversationComponent = ({ conversation }: Props) => {
           draggable="true"
           onDragStart={(e) => handleDragStart(e, conversation)}
         >
-          <IconMessage size={18} />
+          <ModelIcon
+            size={18}
+            modelIconMapping={modelIconMapping}
+            modelId={conversation.model.id}
+          />
           <div
             className={`relative max-h-5 flex-1 overflow-hidden text-ellipsis whitespace-nowrap break-all text-left text-[12.5px] leading-3 ${
               selectedConversationIds.includes(conversation.id)

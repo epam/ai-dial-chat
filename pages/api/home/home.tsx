@@ -53,6 +53,7 @@ interface Props {
   isShowReportAnIssue: boolean;
   appName: string;
   footerHtmlMessage: string;
+  modelIconMapping: string;
 }
 
 const Home = ({
@@ -64,6 +65,7 @@ const Home = ({
   isShowRequestApiKey,
   isShowReportAnIssue,
   footerHtmlMessage,
+  modelIconMapping,
 }: Props) => {
   const { t } = useTranslation('chat');
   const { getModels } = useApiService();
@@ -358,7 +360,13 @@ const Home = ({
         field: 'footerHtmlMessage',
         value: footerHtmlMessage,
       });
+    modelIconMapping &&
+      dispatch({
+        field: 'modelIconMapping',
+        value: modelIconMapping,
+      });
   }, [
+    modelIconMapping,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
     usePluginKeys,
@@ -571,13 +579,23 @@ export const getServerSideProps: GetServerSideProps = async ({
     process.env.FOOTER_HTML_MESSAGE ?? ''
   ).replace('%%VERSION%%', packageJSON.version);
 
+  const modelIconMap = (process.env.MODEL_ICON_MAPPING || '')
+    .split(',')
+    .reduce<Record<string, string>>((acc, modelIcon) => {
+      const [modelId, iconClass] = modelIcon.split('=');
+
+      acc[modelId] = iconClass;
+
+      return acc;
+    }, {});
+
   return {
     props: {
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
       usePluginKeys: !!process.env.NEXT_PUBLIC_ENABLE_PLUGIN_KEYS,
       serverSidePluginKeysSet,
       appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
-
+      modelIconMapping: modelIconMap,
       // Footer variables
       isShowFooter: process.env.SHOW_FOOTER === 'true',
       isShowRequestApiKey: process.env.SHOW_REQUEST_API_KEY === 'true',
