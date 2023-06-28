@@ -29,21 +29,12 @@ export function isExportFormatV4(obj: any): obj is ExportFormatV4 {
   return obj.version === 4;
 }
 
-export function isPromtsJSON(promts: any) {
+export function isPromtsFormat(promts: any) {
   return (
     !promts[0].hasOwnProperty('messages') &&
     promts[0].hasOwnProperty('id') &&
     promts[0].hasOwnProperty('name') &&
     promts[0].hasOwnProperty('content')
-  );
-}
-
-export function isUnsuportedFormat(data: any) {
-  return (
-    !isExportFormatV1(data) &&
-    !isExportFormatV2(data) &&
-    !isExportFormatV3(data) &&
-    !isExportFormatV4(data)
   );
 }
 
@@ -60,7 +51,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
       folders: [],
       prompts: [],
     };
-    if (isPromtsJSON(data)) {
+    if (isPromtsFormat(data)) {
       return {
         ...cleanHistoryData,
         isError: true,
@@ -158,6 +149,10 @@ const triggerDownloadPromptsHistory = (data: Prompt[]) => {
   triggerDownload(data, 'prompts_history');
 };
 
+const triggerDownloadPrompt = (data: Prompt[]) => {
+  triggerDownload(data, 'prompt');
+};
+
 export const exportConversation = (conversationId: string) => {
   let history = localStorage.getItem('conversationHistory');
   let folders = localStorage.getItem('folders');
@@ -229,6 +224,17 @@ export const exportPrompts = () => {
   triggerDownloadPromptsHistory(data);
 };
 
+export const exportPrompt = (promptId: string) => {
+  const prompts = localStorage.getItem('prompts');
+  if (prompts) {
+    const parsedPrompts: Prompt[] = JSON.parse(prompts);
+    const promptToExport = parsedPrompts.find(({ id }) => id === promptId);
+    const data: Prompt[] = promptToExport ? [promptToExport] : [];
+
+    triggerDownloadPrompt(data);
+  }
+};
+
 export const importData = (data: SupportedExportFormats): CleanDataResponse => {
   const { history, folders, prompts, isError } = cleanData(data);
 
@@ -287,7 +293,7 @@ export const importPrompts = (prompts: Prompt[]): ImportPromtsResponse => {
   const oldPrompts = localStorage.getItem('prompts');
   const oldPromptsParsed = oldPrompts ? JSON.parse(oldPrompts) : [];
 
-  if (isPromtsJSON(prompts)) {
+  if (isPromtsFormat(prompts)) {
     const newPrompts: Prompt[] = [...oldPromptsParsed, ...prompts].filter(
       (prompt, index, self) =>
         index === self.findIndex((p) => p.id === prompt.id),

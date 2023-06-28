@@ -10,6 +10,8 @@ import {
   useState,
 } from 'react';
 
+import useOutsideAlerter from '@/hooks/useOutsideAlerter';
+
 import { Conversation } from '@/types/chat';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -17,7 +19,7 @@ import HomeContext from '@/pages/api/home/home.context';
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
 import ChatbarContext from '@/components/Chatbar/Chatbar.context';
 
-import { ContextMenu } from './ContextMenu';
+import { ContextMenu } from '../../Common/ContextMenu';
 
 interface Props {
   conversation: Conversation;
@@ -115,29 +117,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
 
   const wrapperRef = useRef(null);
 
-  /**
-   * Hook that alerts clicks outside of the passed ref
-   */
-  function useOutsideAlerter(ref: MutableRefObject<HTMLElement | null>) {
-    useEffect(() => {
-      /**
-       * Alert if clicked on outside of element
-       */
-      function handleClickOutside(event: MouseEvent) {
-        if (ref.current && !ref.current.contains(event.target as Node)) {
-          setIsContextMenuOpened(false);
-        }
-      }
-      // Bind the event listener
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => {
-        // Unbind the event listener on clean up
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
-    }, [ref]);
-  }
-
-  useOutsideAlerter(wrapperRef);
+  useOutsideAlerter(wrapperRef, setIsContextMenuOpened);
 
   return (
     <div className="relative flex items-center">

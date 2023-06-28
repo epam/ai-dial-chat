@@ -1,4 +1,5 @@
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
+import { defaultReplay } from '@/utils/app/defaultStateConstants';
 import {
   cleanData,
   isExportFormatV1,
@@ -6,13 +7,13 @@ import {
   isExportFormatV3,
   isExportFormatV4,
   isLatestExportFormat,
+  isPromtsFormat,
 } from '@/utils/app/importExport';
 
 import { ExportFormatV1, ExportFormatV2, ExportFormatV4 } from '@/types/export';
 import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 
 import { describe, expect, it } from 'vitest';
-import { defaultReplay } from '@/utils/app/defaultStateConstants';
 
 describe('Export Format Functions', () => {
   describe('isExportFormatV1', () => {
@@ -110,6 +111,7 @@ describe('cleanData Functions', () => {
         ],
         folders: [],
         prompts: [],
+        isError: false,
       });
     });
   });
@@ -162,7 +164,7 @@ describe('cleanData Functions', () => {
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: DEFAULT_TEMPERATURE,
             folderId: null,
-            replay: defaultReplay
+            replay: defaultReplay,
           },
         ],
         folders: [
@@ -173,12 +175,13 @@ describe('cleanData Functions', () => {
           },
         ],
         prompts: [],
+        isError: false,
       });
     });
   });
 
   describe('cleaning v4 data', () => {
-    it('should return the latest format', () => {
+    it('old v4 data should return the latest format', () => {
       const data = {
         version: 4,
         history: [
@@ -262,7 +265,36 @@ describe('cleanData Functions', () => {
             folderId: null,
           },
         ],
+        isError: false,
       });
     });
+  });
+});
+
+describe('Export helpers functions', () => {
+  it('Should return false for non-prompts data', () => {
+    const testData = [
+      {
+        id: '1',
+        name: 'Test prompt',
+        description: '',
+        messages: [],
+      },
+    ];
+    expect(isPromtsFormat(testData)).toBeFalsy();
+  });
+
+  it('Should return true for prompts data', () => {
+    const testData = [
+      {
+        id: '1',
+        name: 'prompt 1',
+        description: '',
+        content: '',
+        model: OpenAIModels[OpenAIModelID.GPT_3_5],
+        folderId: null,
+      },
+    ];
+    expect(isPromtsFormat(testData)).toBeTruthy();
   });
 });

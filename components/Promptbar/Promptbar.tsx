@@ -72,6 +72,12 @@ const Promptbar = () => {
     savePrompts(updatedPrompts);
   };
 
+  const handleClearAllPrompts = () => {
+    const emptyPromptsStringified = JSON.stringify([]);
+    homeDispatch({ field: 'prompts', value: [] });
+    localStorage.setItem('prompts', emptyPromptsStringified);
+  };
+
   const handleUpdatePrompt = (prompt: Prompt) => {
     const updatedPrompts = prompts.map((p) => {
       if (p.id === prompt.id) {
@@ -142,6 +148,7 @@ const Promptbar = () => {
         handleUpdatePrompt,
         handleExportPrompts,
         handleImportPrompts,
+        handleClearAllPrompts,
       }}
     >
       <Sidebar<Prompt>
@@ -163,7 +170,7 @@ const Promptbar = () => {
         handleCreateItem={handleCreatePrompt}
         handleCreateFolder={() => handleCreateFolder(t('New folder'), 'prompt')}
         handleDrop={handleDrop}
-        footerComponent={<PromptbarSettings />}
+        footerComponent={<PromptbarSettings allPrompts={prompts} />}
       />
     </PromptbarContext.Provider>
   );

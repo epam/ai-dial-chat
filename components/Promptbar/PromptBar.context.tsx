@@ -15,6 +15,7 @@ export interface PromptbarContextProps {
   handleUpdatePrompt: (prompt: Prompt) => void;
   handleExportPrompts: () => void;
   handleImportPrompts: ImportPromptsHandler;
+  handleClearAllPrompts: () => void;
 }
 
 const PromptbarContext = createContext<PromptbarContextProps>(undefined!);

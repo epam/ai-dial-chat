@@ -1,7 +1,7 @@
 import {
   IconBulbFilled,
   IconCheck,
-  IconTrash,
+  IconDots,
   IconX,
 } from '@tabler/icons-react';
 import {
@@ -9,12 +9,18 @@ import {
   MouseEventHandler,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
+
+import useOutsideAlerter from '@/hooks/useOutsideAlerter';
+
+import { exportPrompt } from '@/utils/app/importExport';
 
 import { Prompt } from '@/types/prompt';
 
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
+import { ContextMenu } from '@/components/Common/ContextMenu';
 
 import PromptbarContext from '../PromptBar.context';
 import { PromptModal } from './PromptModal';
@@ -33,15 +39,21 @@ export const PromptComponent = ({ prompt }: Props) => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
-  const [renameValue, setRenameValue] = useState('');
+  const [isContextMenuOpened, setIsContextMenuOpened] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
+
+  const contextMenuParentRef = useRef(null);
+  const wrapperRef = useRef(null);
 
   const handleUpdate = (prompt: Prompt) => {
     handleUpdatePrompt(prompt);
     promptDispatch({ field: 'searchTerm', value: '' });
+    setIsRenaming(false);
   };
 
-  const handleDelete: MouseEventHandler<HTMLButtonElement> = (e) => {
+  const handleDelete: MouseEventHandler = (e) => {
     e.stopPropagation();
+    e.preventDefault();
 
     if (isDeleting) {
       handleDeletePrompt(prompt);
@@ -49,15 +61,22 @@ export const PromptComponent = ({ prompt }: Props) => {
     }
 
     setIsDeleting(false);
+    setIsContextMenuOpened(false);
+    setIsSelected(false);
   };
 
-  const handleCancelDelete: MouseEventHandler<HTMLButtonElement> = (e) => {
+  const handleCancelDelete: MouseEventHandler = (e) => {
     e.stopPropagation();
+    e.preventDefault();
+
     setIsDeleting(false);
+    setIsContextMenuOpened(false);
   };
 
-  const handleOpenDeleteModal: MouseEventHandler<HTMLButtonElement> = (e) => {
+  const handleOpenDeleteModal: MouseEventHandler = (e) => {
     e.stopPropagation();
+    e.preventDefault();
+
     setIsDeleting(true);
   };
 
@@ -67,29 +86,58 @@ export const PromptComponent = ({ prompt }: Props) => {
     }
   };
 
+  const handleOpenRenameModal: MouseEventHandler = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    setShowModal(true);
+    setIsRenaming(true);
+  };
+
+  const handleOnClickPrompt: MouseEventHandler = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    setIsSelected(true);
+  };
+
+  const handleOnClickContextMenuButton: MouseEventHandler = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    setIsContextMenuOpened((isOpened) => !isOpened);
+  };
+
+  const handleExportPrompt: MouseEventHandler = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    exportPrompt(prompt.id);
+    setIsContextMenuOpened(false);
+  };
+
   useEffect(() => {
     if (isRenaming) {
       setIsDeleting(false);
+      setIsContextMenuOpened(false);
     } else if (isDeleting) {
       setIsRenaming(false);
+      setIsContextMenuOpened(false);
     }
   }, [isRenaming, isDeleting]);
+
+  useOutsideAlerter(wrapperRef, setIsContextMenuOpened);
+  useOutsideAlerter(wrapperRef, setIsSelected);
 
   return (
     <div className="relative flex items-center">
       <button
-        className="flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-sm transition-colors duration-200 hover:bg-[#343541]/90"
+        className={`flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-sm transition-colors duration-200 ${
+          isSelected ? 'bg-[#343541]/90' : ''
+        } hover:bg-[#343541]/90`}
         draggable="true"
-        onClick={(e) => {
-          e.stopPropagation();
-          setShowModal(true);
-        }}
+        onClick={handleOnClickPrompt}
         onDragStart={(e) => handleDragStart(e, prompt)}
-        onMouseLeave={() => {
-          setIsDeleting(false);
-          setIsRenaming(false);
-          setRenameValue('');
-        }}
       >
         <IconBulbFilled size={18} />
 
@@ -98,7 +146,7 @@ export const PromptComponent = ({ prompt }: Props) => {
         </div>
       </button>
 
-      {(isDeleting || isRenaming) && (
+      {isDeleting && (
         <div className="absolute right-1 z-10 flex text-gray-300">
           <SidebarActionButton handleClick={handleDelete}>
             <IconCheck size={18} />
@@ -109,12 +157,25 @@ export const PromptComponent = ({ prompt }: Props) => {
           </SidebarActionButton>
         </div>
       )}
-
-      {!isDeleting && !isRenaming && (
-        <div className="absolute right-1 z-10 flex text-gray-300">
-          <SidebarActionButton handleClick={handleOpenDeleteModal}>
-            <IconTrash size={18} />
+      {isSelected && !isDeleting && !isRenaming && (
+        <div
+          className="absolute right-1 z-100 flex text-gray-300"
+          ref={wrapperRef}
+          onClick={handleOnClickPrompt}
+        >
+          <SidebarActionButton handleClick={handleOnClickContextMenuButton}>
+            <IconDots size={18} />
           </SidebarActionButton>
+          <div className="relative" ref={contextMenuParentRef}>
+            {!isDeleting && !isRenaming && isContextMenuOpened && (
+              <ContextMenu
+                parentRef={contextMenuParentRef}
+                onDelete={handleOpenDeleteModal}
+                onRename={handleOpenRenameModal}
+                onExport={handleExportPrompt}
+              />
+            )}
+          </div>
         </div>
       )}
 

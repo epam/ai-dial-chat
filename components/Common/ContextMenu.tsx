@@ -13,9 +13,9 @@ interface Props {
   onDelete: MouseEventHandler<unknown>;
   onRename: MouseEventHandler<unknown>;
   onExport: MouseEventHandler<unknown>;
-  onReplay: MouseEventHandler<HTMLLIElement>;
-  onCompare: MouseEventHandler<unknown>;
-  isEmptyConversation: boolean;
+  onReplay?: MouseEventHandler<HTMLLIElement>;
+  onCompare?: MouseEventHandler<unknown>;
+  isEmptyConversation?: boolean;
 }
 
 export const ContextMenu = ({
@@ -48,14 +48,16 @@ export const ContextMenu = ({
           <IconPencil size={18} />
           <span className="ml-2">{t('Rename')}</span>
         </li>
-        <li
-          onClick={onCompare}
-          className="flex cursor-pointer p-2 hover:bg-[#343541] rounded-lg"
-        >
-          <IconScale size={18} />
-          <span className="ml-2">{t('Compare')}</span>
-        </li>
-        {!isEmptyConversation && (
+        {onCompare && (
+          <li
+            onClick={onCompare}
+            className="flex cursor-pointer p-2 hover:bg-[#343541] rounded-lg"
+          >
+            <IconScale size={18} />
+            <span className="ml-2">{t('Compare')}</span>
+          </li>
+        )}
+        {!isEmptyConversation && onReplay && (
           <li
             onClick={onReplay}
             className="flex cursor-pointer p-2 hover:bg-[#343541] rounded-lg"
