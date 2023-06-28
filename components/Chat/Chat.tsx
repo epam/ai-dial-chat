@@ -753,6 +753,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                                 message={message}
                                 messageIndex={index}
                                 conversation={conv}
+                                editDisabled={isNotAllowedModel}
                                 onEdit={(editedMessage) => {
                                   selectedConversations.forEach((conv) => {
                                     handleSend(
