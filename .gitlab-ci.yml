@@ -10,6 +10,7 @@ include:
 variables:
   SKIP_LINT: "true"
   ARTIFACTORY_DOCKER_PATH: "ai/dial/chatbot-ui"
+  AUDIT_CMD: "npm audit --omit dev"
 
   DOCKER_REGISTRY_SERVER: "registry-dev.deltixhub.com"
   HELM_REPO: https://nexus.deltixhub.com/repository/epm-rtc-helm
