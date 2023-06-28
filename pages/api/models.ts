@@ -34,6 +34,10 @@ function setDefaultModel(models: OpenAIModel[]) {
 }
 
 function limitModelsAccordingToUser(models: OpenAIModel[], session: Session) {
+  if (!process.env.AVAILABLE_MODELS_USERS_LIMITATIONS) {
+    return models;
+  }
+
   const modelsLimitations: Record<string, Set<string>> = (
     process.env.AVAILABLE_MODELS_USERS_LIMITATIONS ?? ''
   )
