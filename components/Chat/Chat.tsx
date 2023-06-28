@@ -173,11 +173,6 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       );
       setSelectedConversations(selectedConversations);
 
-      const modelIds = models.map((model) => model.id);
-      setIsNotAllowedModel(
-        selectedConversations.some((conv) => !modelIds.includes(conv.model.id)),
-      );
-
       let mergedMessages = [];
       for (let i = 0; i < selectedConversations[0].messages.length; i++) {
         mergedMessages.push(
@@ -191,6 +186,14 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       setMergedMessages([...mergedMessages]);
     }
   }, [selectedConversationIds, conversations]);
+
+  useEffect(() => {
+    const modelIds = models.map((model) => model.id);
+    setIsNotAllowedModel(
+      models.length > 0 &&
+        selectedConversations.some((conv) => !modelIds.includes(conv.model.id)),
+    );
+  }, [selectedConversations, models]);
 
   const handleSend = useCallback(
     async (
