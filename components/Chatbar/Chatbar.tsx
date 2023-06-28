@@ -36,7 +36,13 @@ export const Chatbar = () => {
   });
 
   const {
-    state: { conversations, showChatbar, defaultModelId, folders },
+    state: {
+      conversations,
+      showChatbar,
+      defaultModelId,
+      folders,
+      messageIsStreaming,
+    },
     dispatch: homeDispatch,
     handleCreateFolder,
     handleNewConversation,
@@ -216,6 +222,7 @@ export const Chatbar = () => {
       <Sidebar<Conversation>
         side={'left'}
         isOpen={showChatbar}
+        isNewDisabled={messageIsStreaming}
         addItemButtonTitle={t('New chat')}
         itemComponent={<Conversations conversations={filteredConversations} />}
         folderComponent={<ChatFolders searchTerm={searchTerm} />}
