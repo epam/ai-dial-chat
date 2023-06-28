@@ -28,7 +28,7 @@ export const ContextMenu = ({
   isEmptyConversation,
 }: Props) => {
   const { t } = useTranslation('sidebar');
-  const contextMenuHeight = 120;
+  const contextMenuHeight = 230;
   let classes = useRef('');
 
   classes.current = getContextMenuPositioningClasses(

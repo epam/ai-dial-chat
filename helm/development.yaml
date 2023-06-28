@@ -34,6 +34,7 @@ env:
   SHOW_FOOTER: 'true'
   FOOTER_HTML_MESSAGE: '<a href="https://kb.epam.com/display/EPMGPT/EPAM+AI+Chat" target="_blank" rel="noreferrer"> <u><strong>EPAM AI Chat</strong></u> </a>&nbsp;can be used <u>any work-related activity</u>. Rest assured, information you share here is&nbsp;<u> not disclosed to third-party companies </u>. However, we <u>anonymize and log</u> all interactions for research purposes. <br/>For API access please fill&nbsp;<a href="#requestApiKey"><u><strong>this form</strong></u></a>.&nbsp;If you have a problem please&nbsp;<a href="#reportAnIssue"><u><strong>report an issue</strong></u></a>. Version %%VERSION%%'
   NEXT_PUBLIC_APP_NAME: 'DIAL - Staging'
+  AVAILABLE_MODELS_USERS_LIMITATIONS: 'gpt-35-turbo=user_gpt_4_35@example.com|gpt-4=user_gpt_4_35@example.com|chat-bison=user_bison_only@example.com'
 
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
 

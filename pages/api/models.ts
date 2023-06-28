@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { Session } from 'next-auth';
 import { getServerSession } from 'next-auth/next';
 
 import { getHeaders } from '../../utils/server/getHeaders';
@@ -9,13 +10,63 @@ import {
   OPENAI_ORGANIZATION,
 } from '@/utils/app/const';
 
-import { OpenAIModel, OpenAIModelID, OpenAIModels } from '@/types/openai';
+import {
+  OpenAIModel,
+  OpenAIModelID,
+  OpenAIModels,
+  fallbackModelID,
+} from '@/types/openai';
 
 import { authOptions } from './auth/[...nextauth]';
 
 // export const config = {
 //   runtime: 'edge',
 // };
+
+function setDefaultModel(models: OpenAIModel[]) {
+  const defaultModelId = process.env.DEFAULT_MODEL || fallbackModelID;
+  const defaultModel =
+    models.filter((model) => model.id === defaultModelId).pop() || models[0];
+  models = models.map((model) =>
+    model.id === defaultModel.id ? { ...model, isDefault: true } : model,
+  );
+  return models;
+}
+
+function limitModelsAccordingToUser(models: OpenAIModel[], session: Session) {
+  if (!process.env.AVAILABLE_MODELS_USERS_LIMITATIONS) {
+    return models;
+  }
+
+  const modelsLimitations: Record<string, Set<string>> = (
+    process.env.AVAILABLE_MODELS_USERS_LIMITATIONS ?? ''
+  )
+    .split('|')
+    .map((userLimitations) => {
+      const [modelId, emailsString] = userLimitations.split('=');
+      return {
+        modelId,
+        emails: new Set(emailsString.split(',')),
+      };
+    })
+    .reduce((acc, curr) => {
+      acc[curr.modelId] = curr.emails;
+
+      return acc;
+    }, <Record<string, Set<string>>>{});
+
+  models = models.filter((model: OpenAIModel) => {
+    if (!modelsLimitations[model.id]) {
+      return true;
+    }
+    if (!session?.user?.email) {
+      return false;
+    }
+
+    return modelsLimitations[model.id].has(session?.user?.email);
+  });
+  return models;
+}
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
@@ -48,7 +99,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         ...getHeaders(session),
       },
     });
-    const models: OpenAIModel[] = [];
+    let models: OpenAIModel[] = [];
 
     if (response.status !== 200) {
       console.error(
@@ -83,6 +134,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         name: OpenAIModels[OpenAIModelID.BISON_001].name,
       } as any);
     }
+
+    models = limitModelsAccordingToUser(models, session);
+    models = setDefaultModel(models);
 
     // return new Response(JSON.stringify(models), { status: 200 });
     return res.status(200).json(models);
