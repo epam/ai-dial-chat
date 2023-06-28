@@ -34,7 +34,7 @@ env:
   ENABLED_FEATURES: 'conversations-section,prompts-section,top-settings,top-clear-conversation,top-chat-info,top-chat-model-settings,empty-chat-settings,footer,request-api-key,report-an-issue,likes'
   AUTH_DISABLED: 'false'
   IS_IFRAME: 'false'
-  AVAILABLE_MODELS_USERS_LIMITATIONS: 'gpt-35-turbo=user_gpt_4_35@example.com|gpt-4=user_gpt_4_35@example.com|chat-bison=user_bison_only@example.com'
+  AVAILABLE_MODELS_USERS_LIMITATIONS: 'gpt-35-turbo=user_gpt_4_35@example.com|gpt-4=user_gpt_4_35@example.com|chat-bison=user_bison_only@example.com,user_gpt_4_35@example.com'
 
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
 
