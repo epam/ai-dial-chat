@@ -27,6 +27,7 @@ export interface HomeInitialState {
   serverSidePluginKeysSet: boolean;
   usePluginKeys: boolean;
   isCompareMode: boolean;
+  modelIconMapping: Record<string, string>;
 
   // Footer env variables
   isShowFooter: boolean;
@@ -58,6 +59,7 @@ export const initialState: HomeInitialState = {
   serverSidePluginKeysSet: false,
   usePluginKeys: false,
   isCompareMode: false,
+  modelIconMapping: {},
 
   // Footer env variables
   isShowFooter: false,
