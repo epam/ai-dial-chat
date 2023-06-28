@@ -21,62 +21,6 @@ const nextConfig = {
       },
     ],
   },
-  publicRuntimeConfig: {
-    async headers() {
-      console.log(
-        'Content-Security-Policy process.env.ALLOWED_IFRAME_ORIGINS',
-        process.env.ALLOWED_IFRAME_ORIGINS,
-      );
-      console.log(
-        'Check process.env.ALLOWED_IFRAME_ORIGINS',
-        process.env.ALLOWED_IFRAME_ORIGINS
-          ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
-          : 'frame-ancestors none',
-      );
-      return [
-        {
-          source: '/:path*',
-          headers: [
-            {
-              key: 'Content-Security-Policy',
-              value: `${
-                process.env.ALLOWED_IFRAME_ORIGINS
-                  ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
-                  : 'frame-ancestors none'
-              }`,
-            },
-          ],
-        },
-      ];
-    },
-  },
-  async headers() {
-    console.log(
-      'Content-Security-Policy process.env.ALLOWED_IFRAME_ORIGINS',
-      process.env.ALLOWED_IFRAME_ORIGINS,
-    );
-    console.log(
-      'Check process.env.ALLOWED_IFRAME_ORIGINS',
-      process.env.ALLOWED_IFRAME_ORIGINS
-        ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
-        : 'frame-ancestors none',
-    );
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: `${
-              process.env.ALLOWED_IFRAME_ORIGINS
-                ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
-                : 'frame-ancestors none'
-            }`,
-          },
-        ],
-      },
-    ];
-  },
 };
 
 module.exports = nextConfig;

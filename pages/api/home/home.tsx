@@ -568,6 +568,12 @@ export const getServerSideProps: GetServerSideProps = async ({
   req,
   res,
 }) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    process.env.ALLOWED_IFRAME_ORIGINS
+      ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
+      : 'frame-ancestors none',
+  );
   const session = await getServerSession(req, res, authOptions);
   if (process.env.AUTH_DISABLED !== 'true' && !session) {
     return {
