@@ -1,5 +1,10 @@
 const { i18n } = require('./next-i18next.config');
 
+console.log(
+  'Content-Security-Policy process.env.ALLOWED_IFRAME_ORIGINS',
+  process.env.ALLOWED_IFRAME_ORIGINS,
+);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   i18n,
