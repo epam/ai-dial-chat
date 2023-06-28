@@ -222,12 +222,12 @@ const Home = ({
     dispatch({ field: 'conversations', value: updatedConversations });
 
     saveConversations(updatedConversations);
-
-    dispatch({ field: 'loading', value: false });
   };
 
   const addNewConversationToStore = (newConversation: Conversation) => {
     const updatedConversations = [...conversations, newConversation];
+
+    updateAllConversationsStore(updatedConversations);
 
     dispatch({
       field: 'selectedConversationIds',
@@ -239,8 +239,6 @@ const Home = ({
     });
 
     saveSelectedConversationIds([newConversation.id]);
-
-    updateAllConversationsStore(updatedConversations);
   };
 
   const defaultReplay: Replay = {
@@ -480,6 +478,7 @@ const Home = ({
         field: 'conversations',
         value: [...cleanedConversationHistory, newConversation],
       });
+      saveSelectedConversationIds([newConversation.id]);
     }
   }, [
     defaultModelId,
