@@ -16,7 +16,7 @@ variables:
   HELM_REPO: https://nexus.deltixhub.com/repository/epm-rtc-helm
   SECRET_NAME: "epm-rtc-registry-dev"
   CHART: "chat" # Helm chart name, e.g. "gitlab-runner"
-  VERSION: "0.0.1" # Helm chart version
+  VERSION: "0.0.3" # Helm chart version
 
   development_AWS_ACCESS_KEY_ID: ${staging_AWS_ACCESS_KEY_ID}
   development_AWS_SECRET_ACCESS_KEY: ${staging_AWS_SECRET_ACCESS_KEY}
@@ -25,6 +25,9 @@ variables:
   development_ENV_URL: "https://chat.staging.deltixhub.io"
   development_NAMESPACE: ai-chat
   development_HELM_EXTRA_ARGS: "-f ${HELM_SECRET_FILE_dev}"
+
+  development_HELM_VALUES_FILE_OVERLAY: "helm/development-overlay.yaml"
+  development_RELEASE_OVERLAY: development-overlay
 
   staging_DEPLOY_ENV: "false"
 
@@ -39,6 +42,10 @@ variables:
   review_DOCKER_REGISTRY_SERVER: "registry-test.deltixhub.com"
   review_HELM_EXTRA_ARGS: "-f ${HELM_SECRET_FILE_review}"
 
+  review_HELM_VALUES_FILE_OVERLAY: "helm/review-overlay.yaml"
+  review_HELM_CUSTOM_VALUES_OVERLAY: "ingress.hosts[0]=${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}-overlay.staging.deltixhub.io,fullnameOverride=mr-${CI_MERGE_REQUEST_IID}-overlay,image.tag=mr-${CI_MERGE_REQUEST_IID},serviceAccount.name=mr-${CI_MERGE_REQUEST_IID}-overlay,env.NEXTAUTH_URL=https://${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}-overlay.staging.deltixhub.io"
+  review_RELEASE_OVERLAY: ${CHART}-overlay-mr-${CI_MERGE_REQUEST_IID}
+
 stages:
   - test
   - prepare
@@ -47,6 +54,45 @@ stages:
   - deploy
   - promote # copy docker image to public repo
   - production # Stage name used in include. Not used. ToDo - delete this
+
+.deploy:
+  cache: []
+  script:
+    - echo ${HELM_EXTRA_ARGS}
+    - export ENV_PREFIX=${CI_ENVIRONMENT_NAME%%/*} # get env name or env group name as prefix
+    - eval 'for variable in "${!'"$ENV_PREFIX"_'@}"; do export "${variable#'"$ENV_PREFIX"_'}"="${!variable}" ; done' #replace $ENV_PREFIX_var to var
+    - echo ${HELM_EXTRA_ARGS}
+    - if [[ "$PRIVATE_HELM_REPO" = "true" ]]; then helm repo add ${REPO} ${HELM_REPO} --username ${HELM_REPO_USER} --password ${HELM_REPO_PASS}; else helm repo add ${REPO} ${HELM_REPO}; fi
+    - helm repo update
+    - aws eks update-kubeconfig --name ${ENV_ID}
+    - kubectl create namespace $NAMESPACE || echo "Namespace $NAMESPACE already exists"
+    - if [[ "$SECRET" = "true" ]]; then kubectl delete secret $SECRET_NAME --namespace=$NAMESPACE --ignore-not-found && kubectl create secret docker-registry $SECRET_NAME --docker-server=$DOCKER_REGISTRY_SERVER --docker-username=$DOCKER_REGISTRY_USER --docker-password=$DOCKER_REGISTRY_PASS --namespace=$NAMESPACE; fi
+    - kubectl delete secret maintainer-${RELEASE} --namespace=$NAMESPACE --ignore-not-found && kubectl create secret generic maintainer-${RELEASE} --namespace=$NAMESPACE --from-literal=gitlabRepo="${CI_PROJECT_URL}" --from-literal=gitlabUser="${GITLAB_USER_LOGIN}"
+    - helm upgrade ${RELEASE} ${REPO}/${CHART} --version ${VERSION} -f ${HELM_VALUES_FILE} --set "$HELM_CUSTOM_VALUES" --namespace ${NAMESPACE} --install --create-namespace ${ATOMIC:+ "--atomic"} ${HELM_EXTRA_ARGS} --disable-openapi-validation --stderrthreshold=ERROR || (echo -e "\e[91mERROR  ${CHART} deployment failed" && exit 1)
+    - helm upgrade ${RELEASE_OVERLAY} ${REPO}/${CHART} --version ${VERSION} -f ${HELM_VALUES_FILE_OVERLAY} --set "$HELM_CUSTOM_VALUES_OVERLAY" --namespace ${NAMESPACE} --install --create-namespace ${ATOMIC:+ "--atomic"} ${HELM_EXTRA_ARGS} --disable-openapi-validation --stderrthreshold=ERROR || (echo -e "\e[91mERROR  ${CHART} deployment failed" && exit 1)
+    - if [[ "$VERBOSE" = "true" ]]; then helm list -a -n ${NAMESPACE}; fi
+  resource_group: $CI_ENVIRONMENT_NAME
+  tags:
+    - kubernetes
+
+.destroy:
+  variables:
+    GIT_STRATEGY: none
+  cache: []
+  script:
+    - export ENV_PREFIX=${CI_ENVIRONMENT_NAME%%/*} # get env name or env group name as prefix
+    - eval 'for variable in "${!'"$ENV_PREFIX"_'@}"; do export "${variable#'"$ENV_PREFIX"_'}"="${!variable}" ; done' #replace $ENV_PREFIX_var to var
+    - aws eks update-kubeconfig --name ${ENV_ID}
+    - if [[ "$SECRET" = "true" ]]; then kubectl delete secret $SECRET_NAME --namespace=$NAMESPACE --ignore-not-found; fi
+    - kubectl delete secret maintainer-${RELEASE} --namespace=$NAMESPACE --ignore-not-found
+    - helm uninstall ${RELEASE} --namespace ${NAMESPACE}
+    - helm uninstall ${RELEASE_OVERLAY} --namespace ${NAMESPACE}
+    - if [[ "$VERBOSE" = "true" ]]; then helm list -a -n ${NAMESPACE}; fi
+  resource_group: $CI_ENVIRONMENT_NAME
+  environment:
+    action: stop
+  tags:
+    - kubernetes
 
 build:
   artifacts:
