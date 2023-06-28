@@ -27,6 +27,8 @@ env:
   SHOW_REPORT_AN_ISSUE: 'true'
   SHOW_FOOTER: 'true'
   FOOTER_HTML_MESSAGE: '<a href="https://kb.epam.com/display/EPMGPT/EPAM+AI+Chat" target="_blank" rel="noreferrer"> <u><strong>EPAM AI Chat</strong></u> </a>&nbsp;can be used <u>any work-related activity</u>. Rest assured, information you share here is&nbsp;<u> not disclosed to third-party companies </u>. However, we <u>anonymize and log</u> all interactions for research purposes. <br/>For API access please fill&nbsp;<a href="#requestApiKey"><u><strong>this form</strong></u></a>.&nbsp;If you have a problem please&nbsp;<a href="#reportAnIssue"><u><strong>report an issue</strong></u></a>. Version %%VERSION%%'
+  MODEL_ICON_MAPPING: 'gpt-4=gpt4.svg,gpt-35-turbo=gpt3.svg,gpt-4-32k=gpt4.svg,chat-bison=palm2.svg'
+
 #  NEXTAUTH_URL: "https://dev-chat.ai-proxy.lab.epam.com"
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
 
