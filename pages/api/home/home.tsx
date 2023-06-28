@@ -27,7 +27,7 @@ import { Conversation, Replay } from '@/types/chat';
 import { KeyValuePair } from '@/types/data';
 import { Feature } from '@/types/features';
 import { FolderInterface, FolderType } from '@/types/folder';
-import { OpenAIModelID, OpenAIModels, fallbackModelID } from '@/types/openai';
+import { OpenAIModel, OpenAIModels, fallbackModelID } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 import { Chat } from '@/components/Chat/Chat';
@@ -46,7 +46,6 @@ interface Props {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   usePluginKeys: boolean;
-  defaultModelId: OpenAIModelID;
   isShowFooter: boolean;
   isShowRequestApiKey: boolean;
   isShowReportAnIssue: boolean;
@@ -60,7 +59,6 @@ const Home = ({
   serverSideApiKeyIsSet,
   serverSidePluginKeysSet,
   usePluginKeys,
-  defaultModelId,
   appName,
   isShowFooter,
   isShowRequestApiKey,
@@ -89,7 +87,7 @@ const Home = ({
       conversations,
       selectedConversationIds,
       prompts,
-      temperature,
+      defaultModelId,
     },
     dispatch,
   } = contextValue;
@@ -112,7 +110,15 @@ const Home = ({
   );
 
   useEffect(() => {
-    if (data) dispatch({ field: 'models', value: data });
+    if (data) {
+      dispatch({ field: 'models', value: data });
+
+      const defaultModelId =
+        (data as any as OpenAIModel[]).find((model) => model.isDefault)?.id ||
+        fallbackModelID;
+
+      dispatch({ field: 'defaultModelId', value: defaultModelId });
+    }
   }, [data, dispatch]);
 
   useEffect(() => {
@@ -250,11 +256,12 @@ const Home = ({
       id: uuidv4(),
       name: t(name),
       messages: [],
-      model: lastConversation?.model || {
+      model: {
         id: OpenAIModels[defaultModelId].id,
         name: OpenAIModels[defaultModelId].name,
         maxLength: OpenAIModels[defaultModelId].maxLength,
         tokenLimit: OpenAIModels[defaultModelId].tokenLimit,
+        requestLimit: OpenAIModels[defaultModelId].requestLimit,
       },
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
@@ -317,8 +324,6 @@ const Home = ({
   }, [selectedConversationIds]);
 
   useEffect(() => {
-    defaultModelId &&
-      dispatch({ field: 'defaultModelId', value: defaultModelId });
     serverSideApiKeyIsSet &&
       dispatch({
         field: 'serverSideApiKeyIsSet',
@@ -367,7 +372,6 @@ const Home = ({
         value: isIframe,
       });
   }, [
-    defaultModelId,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
     usePluginKeys,
@@ -574,14 +578,6 @@ export const getServerSideProps: GetServerSideProps = async ({
     };
   }
 
-  const defaultModelId =
-    (process.env.DEFAULT_MODEL &&
-      Object.values(OpenAIModelID).includes(
-        process.env.DEFAULT_MODEL as OpenAIModelID,
-      ) &&
-      process.env.DEFAULT_MODEL) ||
-    fallbackModelID;
-
   let serverSidePluginKeysSet = false;
 
   const googleApiKey = process.env.GOOGLE_API_KEY;
@@ -599,7 +595,6 @@ export const getServerSideProps: GetServerSideProps = async ({
     props: {
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
       usePluginKeys: !!process.env.NEXT_PUBLIC_ENABLE_PLUGIN_KEYS,
-      defaultModelId,
       serverSidePluginKeysSet,
       appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
 

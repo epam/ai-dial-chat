@@ -10,7 +10,7 @@ export interface Message {
 export type Role = 'assistant' | 'user';
 
 export interface ChatBody {
-  model: OpenAIModel;
+  modelId: string;
   messages: Message[];
   key: string;
   prompt: string;
@@ -36,7 +36,7 @@ export interface Conversation {
   folderId: string | null;
   replay: Replay;
 }
-export interface Replay{
+export interface Replay {
   isReplay: boolean;
   replayUserMessagesStack?: Message[];
   activeReplayIndex: number;

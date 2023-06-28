@@ -38,14 +38,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const {
-      model: _model,
-      messages,
-      key,
-      prompt,
-      temperature,
-      id,
-    } = req.body as ChatBody;
+    const { modelId, messages, key, prompt, temperature, id } =
+      req.body as ChatBody;
 
     await init((imports) => WebAssembly.instantiate(wasm, imports));
     const encoding = new Tiktoken(
@@ -70,7 +64,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     // let messagesToSend: Message[] = [];
 
     const model =
-      OpenAIModels[_model.id as OpenAIModelID] ?? OpenAIModels[fallbackModelID];
+      OpenAIModels[modelId as OpenAIModelID] ?? OpenAIModels[fallbackModelID];
 
     let tokens_per_message = 0;
     if (
