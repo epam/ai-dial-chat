@@ -1,10 +1,5 @@
 const { i18n } = require('./next-i18next.config');
 
-console.log(
-  'Content-Security-Policy process.env.ALLOWED_IFRAME_ORIGINS',
-  process.env.ALLOWED_IFRAME_ORIGINS,
-);
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   i18n,
@@ -26,22 +21,24 @@ const nextConfig = {
       },
     ],
   },
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: `${
-              process.env.ALLOWED_IFRAME_ORIGINS
-                ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
-                : 'frame-ancestors none'
-            }`,
-          },
-        ],
-      },
-    ];
+  publicRuntimeConfig: {
+    async headers() {
+      return [
+        {
+          source: '/:path*',
+          headers: [
+            {
+              key: 'Content-Security-Policy',
+              value: `${
+                process.env.ALLOWED_IFRAME_ORIGINS
+                  ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
+                  : 'frame-ancestors none'
+              }`,
+            },
+          ],
+        },
+      ];
+    },
   },
 };
 
