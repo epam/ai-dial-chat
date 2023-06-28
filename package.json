@@ -59,6 +59,6 @@
     "vitest": "^0.29.7"
   },
   "overrides": {
-    "word-wrap": "npm:@aashutoshrathi/word-wrap@1.2.6"
+    "word-wrap": "$@aashutoshrathi/word-wrap"
   }
 }
