@@ -771,6 +771,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                                 messageIndex={index}
                                 conversation={conv}
                                 isLikesEnabled={enabledFeatures.has('likes')}
+                                editDisabled={isNotAllowedModel}
                                 onEdit={(editedMessage) => {
                                   selectedConversations.forEach((conv) => {
                                     handleSend(
