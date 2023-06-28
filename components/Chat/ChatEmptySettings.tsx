@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/types/chat';
@@ -28,6 +30,13 @@ export const ChatEmptySettings = ({
   onSelectModel,
 }: Props) => {
   const { t } = useTranslation('chat');
+
+  useEffect(() => {
+    const modelsIds = models.map(({ id }) => id);
+    if (!modelsIds.includes(conversation.id)) {
+      onSelectModel(defaultModelId);
+    }
+  }, []);
 
   return (
     <div className="flex h-full flex-col space-y-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-600">

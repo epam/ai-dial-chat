@@ -17,6 +17,7 @@ interface Props<T> {
   itemComponent: ReactNode;
   folderComponent: ReactNode;
   footerComponent?: ReactNode;
+  isNewDisabled?: boolean;
   searchTerm: string;
   handleSearchTerm: (searchTerm: string) => void;
   toggleOpen: () => void;
@@ -33,6 +34,7 @@ const Sidebar = <T,>({
   itemComponent,
   folderComponent,
   footerComponent,
+  isNewDisabled,
   searchTerm,
   handleSearchTerm,
   toggleOpen,
@@ -61,11 +63,12 @@ const Sidebar = <T,>({
       >
         <div className="flex items-center">
           <button
-            className="text-sidebar flex w-[190px] flex-shrink-0 cursor-pointer select-none items-center gap-3 rounded-md border border-white/20 p-3 text-white transition-colors duration-200 hover:bg-gray-500/10"
+            className={`disabled:cursor-not-allowed text-sidebar flex w-[190px] flex-shrink-0 cursor-pointer select-none items-center gap-3 rounded-md border border-white/20 p-3 text-white transition-colors duration-200 hover:bg-gray-500/10`}
             onClick={() => {
               handleCreateItem();
               handleSearchTerm('');
             }}
+            disabled={!!isNewDisabled}
           >
             <IconPlus size={16} />
             {addItemButtonTitle}

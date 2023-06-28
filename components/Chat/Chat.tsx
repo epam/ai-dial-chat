@@ -29,6 +29,7 @@ import { ChatSettings } from './ChatSettings';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NoApiKeySet } from './NoApiKeySet';
+import { NotAllowedModel } from './NotAllowedModel';
 
 import { errorsMessages } from '@/constants/errors';
 
@@ -111,6 +112,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const inputRef = useRef<HTMLDivElement>(null);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const messageIsStreamingAmount = useRef<number>(0);
+  const [isNotAllowedModel, setIsNotAllowedModel] = useState(false);
 
   useEffect(() => {
     if (
@@ -183,6 +185,14 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
     }
   }, [selectedConversationIds, conversations]);
 
+  useEffect(() => {
+    const modelIds = models.map((model) => model.id);
+    setIsNotAllowedModel(
+      models.length > 0 &&
+        selectedConversations.some((conv) => !modelIds.includes(conv.model.id)),
+    );
+  }, [selectedConversations, models]);
+
   const handleSend = useCallback(
     async (
       conversation: Conversation,
@@ -190,189 +200,191 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       deleteCount = 0,
       activeReplayIndex = 0,
     ) => {
-      if (conversation) {
-        let updatedConversation: Conversation;
-        if (deleteCount) {
-          const updatedMessages = [...conversation.messages];
-          for (let i = 0; i < deleteCount; i++) {
-            updatedMessages.pop();
-          }
+      if (!conversation) {
+        return;
+      }
+
+      let updatedConversation: Conversation;
+      if (deleteCount) {
+        const updatedMessages = [...conversation.messages];
+        for (let i = 0; i < deleteCount; i++) {
+          updatedMessages.pop();
+        }
+        updatedConversation = {
+          ...conversation,
+          messages: [...updatedMessages, message],
+          replay: {
+            ...conversation.replay,
+            activeReplayIndex: activeReplayIndex,
+          },
+        };
+        localConversations.current = handleUpdateConversation(
+          updatedConversation,
+          {
+            key: 'messages',
+            value: [...updatedMessages, message],
+          },
+          localConversations.current,
+        );
+      } else {
+        updatedConversation = {
+          ...conversation,
+          messages: [...conversation.messages, message],
+          replay: {
+            ...conversation.replay,
+            activeReplayIndex: activeReplayIndex,
+          },
+        };
+        localConversations.current = handleUpdateConversation(
+          updatedConversation,
+          {
+            key: 'messages',
+            value: [...conversation.messages, message],
+          },
+          localConversations.current,
+        );
+      }
+      homeDispatch({ field: 'loading', value: true });
+      handleMessageIsStreamingChange(1);
+
+      const chatBody: ChatBody = {
+        modelId: conversation.model.id,
+        messages: updatedConversation.messages.map((message) => {
+          const gptMessage = { ...message, like: void 0 };
+          return gptMessage;
+        }),
+        id: conversation.id.toLowerCase(),
+        key: apiKey,
+        prompt: updatedConversation.prompt,
+        temperature: updatedConversation.temperature,
+      };
+      const endpoint = getEndpoint();
+      let body;
+      body = JSON.stringify(chatBody);
+      const controller = new AbortController();
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+        body,
+      });
+
+      if (!response.ok) {
+        homeDispatch({ field: 'loading', value: false });
+        handleMessageIsStreamingChange(-1);
+
+        await showAPIToastError(response, t(errorsMessages.generalServer));
+        const errorMessage: Message = {
+          content: t(
+            'Error happened during answering. Please regenerate response',
+          ),
+          role: 'assistant',
+          isError: true,
+        };
+
+        localConversations.current = handleUpdateConversation(
+          updatedConversation,
+          {
+            key: 'messages',
+            value: [...updatedConversation.messages, errorMessage],
+          },
+          localConversations.current,
+        );
+        return { error: true };
+      }
+      const data = response.body;
+      if (!data) {
+        homeDispatch({ field: 'loading', value: false });
+        handleMessageIsStreamingChange(-1);
+
+        return { error: true };
+      }
+
+      if (
+        updatedConversation.messages.length === 1 &&
+        !updatedConversation.replay.isReplay
+      ) {
+        const { content } = message;
+        const customName =
+          content.length > 30 ? content.substring(0, 30) + '...' : content;
+        updatedConversation = {
+          ...updatedConversation,
+          name: customName,
+        };
+        localConversations.current = handleUpdateConversation(
+          updatedConversation,
+          {
+            key: 'name',
+            value: customName,
+          },
+          localConversations.current,
+        );
+      }
+      homeDispatch({ field: 'loading', value: false });
+      const reader = data.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let isFirst = true;
+      let text = '';
+      while (!done) {
+        if (stopConversationRef.current === true) {
+          controller.abort();
+          done = true;
+          break;
+        }
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunkValue = decoder.decode(value);
+        text += chunkValue;
+        if (isFirst) {
+          isFirst = false;
+          const updatedMessages: Message[] = [
+            ...updatedConversation.messages,
+            { role: 'assistant', content: chunkValue },
+          ];
           updatedConversation = {
-            ...conversation,
-            messages: [...updatedMessages, message],
-            replay: {
-              ...conversation.replay,
-              activeReplayIndex: activeReplayIndex,
-            },
+            ...updatedConversation,
+            messages: updatedMessages,
           };
           localConversations.current = handleUpdateConversation(
             updatedConversation,
             {
               key: 'messages',
-              value: [...updatedMessages, message],
+              value: updatedMessages,
             },
             localConversations.current,
           );
         } else {
-          updatedConversation = {
-            ...conversation,
-            messages: [...conversation.messages, message],
-            replay: {
-              ...conversation.replay,
-              activeReplayIndex: activeReplayIndex,
+          const updatedMessages: Message[] = updatedConversation.messages.map(
+            (message, index) => {
+              if (index === updatedConversation.messages.length - 1) {
+                return {
+                  ...message,
+                  content: text,
+                };
+              }
+              return message;
             },
-          };
-          localConversations.current = handleUpdateConversation(
-            updatedConversation,
-            {
-              key: 'messages',
-              value: [...conversation.messages, message],
-            },
-            localConversations.current,
           );
-        }
-        homeDispatch({ field: 'loading', value: true });
-        handleMessageIsStreamingChange(1);
-
-        const chatBody: ChatBody = {
-          model: updatedConversation.model,
-          messages: updatedConversation.messages.map((message) => {
-            const gptMessage = { ...message, like: void 0 };
-            return gptMessage;
-          }),
-          id: conversation.id.toLowerCase(),
-          key: apiKey,
-          prompt: updatedConversation.prompt,
-          temperature: updatedConversation.temperature,
-        };
-        const endpoint = getEndpoint();
-        let body;
-        body = JSON.stringify(chatBody);
-        const controller = new AbortController();
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          signal: controller.signal,
-          body,
-        });
-
-        if (!response.ok) {
-          homeDispatch({ field: 'loading', value: false });
-          handleMessageIsStreamingChange(-1);
-
-          await showAPIToastError(response, t(errorsMessages.generalServer));
-          const errorMessage: Message = {
-            content: t(
-              'Error happened during answering. Please regenerate response',
-            ),
-            role: 'assistant',
-            isError: true,
-          };
-
-          localConversations.current = handleUpdateConversation(
-            updatedConversation,
-            {
-              key: 'messages',
-              value: [...updatedConversation.messages, errorMessage],
-            },
-            localConversations.current,
-          );
-          return { error: true };
-        }
-        const data = response.body;
-        if (!data) {
-          homeDispatch({ field: 'loading', value: false });
-          handleMessageIsStreamingChange(-1);
-
-          return { error: true };
-        }
-
-        if (
-          updatedConversation.messages.length === 1 &&
-          !updatedConversation.replay.isReplay
-        ) {
-          const { content } = message;
-          const customName =
-            content.length > 30 ? content.substring(0, 30) + '...' : content;
           updatedConversation = {
             ...updatedConversation,
-            name: customName,
+            messages: updatedMessages,
           };
           localConversations.current = handleUpdateConversation(
             updatedConversation,
             {
-              key: 'name',
-              value: customName,
+              key: 'messages',
+              value: updatedMessages,
             },
             localConversations.current,
           );
         }
-        homeDispatch({ field: 'loading', value: false });
-        const reader = data.getReader();
-        const decoder = new TextDecoder();
-        let done = false;
-        let isFirst = true;
-        let text = '';
-        while (!done) {
-          if (stopConversationRef.current === true) {
-            controller.abort();
-            done = true;
-            break;
-          }
-          const { value, done: doneReading } = await reader.read();
-          done = doneReading;
-          const chunkValue = decoder.decode(value);
-          text += chunkValue;
-          if (isFirst) {
-            isFirst = false;
-            const updatedMessages: Message[] = [
-              ...updatedConversation.messages,
-              { role: 'assistant', content: chunkValue },
-            ];
-            updatedConversation = {
-              ...updatedConversation,
-              messages: updatedMessages,
-            };
-            localConversations.current = handleUpdateConversation(
-              updatedConversation,
-              {
-                key: 'messages',
-                value: updatedMessages,
-              },
-              localConversations.current,
-            );
-          } else {
-            const updatedMessages: Message[] = updatedConversation.messages.map(
-              (message, index) => {
-                if (index === updatedConversation.messages.length - 1) {
-                  return {
-                    ...message,
-                    content: text,
-                  };
-                }
-                return message;
-              },
-            );
-            updatedConversation = {
-              ...updatedConversation,
-              messages: updatedMessages,
-            };
-            localConversations.current = handleUpdateConversation(
-              updatedConversation,
-              {
-                key: 'messages',
-                value: updatedMessages,
-              },
-              localConversations.current,
-            );
-          }
-        }
-
-        homeDispatch({ field: 'loading', value: false });
-        handleMessageIsStreamingChange(-1);
       }
+
+      homeDispatch({ field: 'loading', value: false });
+      handleMessageIsStreamingChange(-1);
     },
     [apiKey, conversations, stopConversationRef],
   );
@@ -741,6 +753,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                                 message={message}
                                 messageIndex={index}
                                 conversation={conv}
+                                editDisabled={isNotAllowedModel}
                                 onEdit={(editedMessage) => {
                                   selectedConversations.forEach((conv) => {
                                     handleSend(
@@ -782,45 +795,53 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
               </div>
             )}
           </div>
-          {isReplay && !messageIsStreaming && !isReplayFinished ? (
-            <ChatReplayControls
-              onClickReplayStart={onClickReplayStart}
-              onClickReplayReStart={onClickReplayReStart}
-              showReplayStart={isEmptySelectedConversation}
-            />
+          {isNotAllowedModel ? (
+            <NotAllowedModel />
           ) : (
-            <ChatInput
-              ref={inputRef}
-              stopConversationRef={stopConversationRef}
-              textareaRef={textareaRef}
-              isMessagesPresented={selectedConversations.some(
-                (val) => val.messages.length > 0,
+            <>
+              {isReplay && !messageIsStreaming && !isReplayFinished ? (
+                <ChatReplayControls
+                  onClickReplayStart={onClickReplayStart}
+                  onClickReplayReStart={onClickReplayReStart}
+                  showReplayStart={isEmptySelectedConversation}
+                />
+              ) : (
+                <ChatInput
+                  ref={inputRef}
+                  stopConversationRef={stopConversationRef}
+                  textareaRef={textareaRef}
+                  isMessagesPresented={selectedConversations.some(
+                    (val) => val.messages.length > 0,
+                  )}
+                  maxLength={Math.min(
+                    ...selectedConversations.map(
+                      (conv) => conv.model.maxLength,
+                    ),
+                  )}
+                  showScrollDownButton={showScrollDownButton}
+                  onSend={(message) => {
+                    localConversations.current = conversations;
+                    selectedConversations.forEach((conv) => {
+                      handleSend(conv, message, 0);
+                    });
+                  }}
+                  onScrollDownClick={handleScrollDown}
+                  onRegenerate={() => {
+                    localConversations.current = conversations;
+                    selectedConversations.forEach((conv) => {
+                      const lastUserMessageIndex = conv.messages
+                        .map((msg) => msg.role)
+                        .lastIndexOf('user');
+                      handleSend(
+                        conv,
+                        conv.messages[lastUserMessageIndex],
+                        conv.messages.length - lastUserMessageIndex,
+                      );
+                    });
+                  }}
+                />
               )}
-              maxLength={Math.min(
-                ...selectedConversations.map((conv) => conv.model.maxLength),
-              )}
-              onSend={(message) => {
-                localConversations.current = conversations;
-                selectedConversations.forEach((conv) => {
-                  handleSend(conv, message, 0);
-                });
-              }}
-              onScrollDownClick={handleScrollDown}
-              onRegenerate={() => {
-                localConversations.current = conversations;
-                selectedConversations.forEach((conv) => {
-                  const lastUserMessageIndex = conv.messages
-                    .map((msg) => msg.role)
-                    .lastIndexOf('user');
-                  handleSend(
-                    conv,
-                    conv.messages[lastUserMessageIndex],
-                    conv.messages.length - lastUserMessageIndex,
-                  );
-                });
-              }}
-              showScrollDownButton={showScrollDownButton}
-            />
+            </>
           )}
         </>
       )}
