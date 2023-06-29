@@ -1,9 +1,8 @@
 image:
   pullPolicy: Always
-  registry: registry-dev.deltixhub.com
-  tag: development
+  registry: registry-test.deltixhub.com
   pullSecrets:
-    - epm-rtc-registry-dev
+    - epm-rtc-registry-test
 
 replicaCount: 1
 
@@ -16,27 +15,20 @@ resources:
     memory: 512Mi
 
 env:
-  NEXTAUTH_URL: 'https://chat.staging.deltixhub.io'
-  # OPENAI_API_HOST: "https://southcentralus.api.cognitive.microsoft.com/"
   OPENAI_API_HOST: 'http://ai-proxy.ai-proxy.svc.cluster.local'
   DEFAULT_MODEL: 'gpt-35-turbo'
   OPENAI_API_TYPE: 'azure'
   OPENAI_API_VERSION: '2023-03-15-preview'
   NEXT_PUBLIC_SHOW_MODELS: 'true'
   NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT: ''
-  GOOGLE_AI_HOST: 'https://palm-ai-proxy.staging.deltixhub.io'
-  GOOGLE_AI_PROJECT_ID: 'EPM-AI-PROXY'
-  GOOGLE_AI_LOCATION: 'us-central1'
-  USE_USER_JOB_TITLE: 'false'
   AUTH_AUTH0_HOST: 'https://chatbot-ui-staging.eu.auth0.com'
+  NEXT_PUBLIC_APP_NAME: 'MR Review'
   FOOTER_HTML_MESSAGE: '<a href="https://kb.epam.com/display/EPMGPT/EPAM+AI+Chat" target="_blank" rel="noreferrer"> <u><strong>EPAM AI Chat</strong></u> </a>&nbsp;can be used <u>any work-related activity</u>. Rest assured, information you share here is&nbsp;<u> not disclosed to third-party companies </u>. However, we <u>anonymize and log</u> all interactions for research purposes. <br/>For API access please fill&nbsp;<a href="#requestApiKey"><u><strong>this form</strong></u></a>.&nbsp;If you have a problem please&nbsp;<a href="#reportAnIssue"><u><strong>report an issue</strong></u></a>. Version %%VERSION%%'
-  NEXT_PUBLIC_APP_NAME: 'DIAL - Staging'
-  ENABLED_FEATURES: 'conversations-section,prompts-section,top-settings,top-clear-conversation,top-chat-info,top-chat-model-settings,empty-chat-settings,footer,request-api-key,report-an-issue,likes'
+  ENABLED_FEATURES: 'top-settings,top-chat-info,top-clear-conversation'
   AUTH_DISABLED: 'false'
-  IS_IFRAME: 'false'
-  MODEL_ICON_MAPPING: 'gpt-4=gpt4.svg,gpt-35-turbo=gpt3.svg,gpt-4-32k=gpt4.svg,chat-bison=palm2.svg'
-  AVAILABLE_MODELS_USERS_LIMITATIONS: ''
-
+  IS_IFRAME: 'true'
+  ALLOWED_IFRAME_ORIGINS: "'self' https://chatbot-ui-staging.eu.auth0.com/* http://127.0.0.1:8080/"
+#  NEXTAUTH_URL: "https://dev-chat.ai-proxy.lab.epam.com"
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
 
 # podLabels:
@@ -67,7 +59,7 @@ ingress:
     alb.ingress.kubernetes.io/scheme: 'internet-facing'
     alb.ingress.kubernetes.io/target-type: 'ip'
     alb.ingress.kubernetes.io/backend-protocol: 'HTTP'
-    alb.ingress.kubernetes.io/healthcheck-path: '/'
+    alb.ingress.kubernetes.io/healthcheck-path: '/api/healthcheck'
     alb.ingress.kubernetes.io/healthcheck-protocol: 'HTTP'
     alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
     alb.ingress.kubernetes.io/healthy-threshold-count: '2'
@@ -79,7 +71,7 @@ ingress:
     alb.ingress.kubernetes.io/ssl-redirect: '443'
     alb.ingress.kubernetes.io/group.name: 'allow-all'
   hosts:
-    - chat.staging.deltixhub.io
+    - chat-review.staging.deltixhub.io
 
 serviceAccount:
   create: true

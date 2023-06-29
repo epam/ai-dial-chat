@@ -87,6 +87,8 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       defaultModelId,
       isCompareMode,
       messageIsStreaming,
+      enabledFeatures,
+      isIframe,
     },
     handleUpdateConversation,
     handleSelectConversation,
@@ -686,6 +688,9 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                         models={models}
                         prompts={prompts}
                         defaultModelId={defaultModelId || OpenAIModelID.GPT_3_5}
+                        isShowSettings={enabledFeatures.has(
+                          'empty-chat-settings',
+                        )}
                         onSelectModel={(modelId: string) =>
                           handleSelectModel(conv, modelId)
                         }
@@ -698,29 +703,41 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                         appName={appName}
                       />
                     ) : (
-                      <ChatSettings
-                        conversation={conv}
-                        defaultModelId={defaultModelId || OpenAIModelID.GPT_3_5}
-                        models={models}
-                        isCompareMode={isCompareMode}
-                        selectedConversationIds={selectedConversationIds}
-                        messageIsStreaming={messageIsStreaming}
-                        onClearConversation={() =>
-                          handleClearConversation(conv)
-                        }
-                        onSelectModel={(modelId: string) =>
-                          handleSelectModel(conv, modelId)
-                        }
-                        onUnselectConversation={() => {
-                          const filteredSelectedConversation =
-                            selectedConversations.filter(
-                              ({ id }) => id !== conv.id,
-                            )[0];
-                          handleSelectConversation(
-                            filteredSelectedConversation,
-                          );
-                        }}
-                      />
+                      enabledFeatures.has('top-settings') && (
+                        <ChatSettings
+                          messageIsStreaming={messageIsStreaming}
+                          conversation={conv}
+                          defaultModelId={
+                            defaultModelId || OpenAIModelID.GPT_3_5
+                          }
+                          models={models}
+                          isCompareMode={isCompareMode}
+                          isShowChatInfo={enabledFeatures.has('top-chat-info')}
+                          isShowClearConversation={enabledFeatures.has(
+                            'top-clear-conversation',
+                          )}
+                          isShowModelSelect={enabledFeatures.has(
+                            'top-chat-model-settings',
+                          )}
+                          isIframe={isIframe}
+                          selectedConversationIds={selectedConversationIds}
+                          onClearConversation={() =>
+                            handleClearConversation(conv)
+                          }
+                          onSelectModel={(modelId: string) =>
+                            handleSelectModel(conv, modelId)
+                          }
+                          onUnselectConversation={() => {
+                            const filteredSelectedConversation =
+                              selectedConversations.filter(
+                                ({ id }) => id !== conv.id,
+                              )[0];
+                            handleSelectConversation(
+                              filteredSelectedConversation,
+                            );
+                          }}
+                        />
+                      )
                     )}
                   </div>
                 ))}
@@ -753,6 +770,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                                 message={message}
                                 messageIndex={index}
                                 conversation={conv}
+                                isLikesEnabled={enabledFeatures.has('likes')}
                                 editDisabled={isNotAllowedModel}
                                 onEdit={(editedMessage) => {
                                   selectedConversations.forEach((conv) => {

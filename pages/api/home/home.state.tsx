@@ -1,5 +1,6 @@
 import { Conversation, Message } from '@/types/chat';
 import { ErrorMessage } from '@/types/error';
+import { Feature } from '@/types/features';
 import { FolderInterface } from '@/types/folder';
 import { OpenAIModel, OpenAIModelID, fallbackModelID } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
@@ -27,6 +28,7 @@ export interface HomeInitialState {
   serverSidePluginKeysSet: boolean;
   usePluginKeys: boolean;
   isCompareMode: boolean;
+  isIframe: boolean;
   modelIconMapping: Record<string, string>;
 
   // Footer env variables
@@ -34,6 +36,8 @@ export interface HomeInitialState {
   isShowRequestApiKey: boolean;
   isShowReportAnIssue: boolean;
   footerHtmlMessage: string;
+
+  enabledFeatures: Set<Feature>;
 }
 
 export const initialState: HomeInitialState = {
@@ -59,6 +63,7 @@ export const initialState: HomeInitialState = {
   serverSidePluginKeysSet: false,
   usePluginKeys: false,
   isCompareMode: false,
+  isIframe: false,
   modelIconMapping: {},
 
   // Footer env variables
@@ -66,4 +71,6 @@ export const initialState: HomeInitialState = {
   isShowRequestApiKey: false,
   isShowReportAnIssue: false,
   footerHtmlMessage: '',
+
+  enabledFeatures: new Set([]),
 };

@@ -12,10 +12,7 @@ import { useCreateReducer } from '@/hooks/useCreateReducer';
 import useErrorService from '@/services/errorService';
 import useApiService from '@/services/useApiService';
 
-import {
-  cleanConversationHistory,
-  cleanSelectedConversation,
-} from '@/utils/app/clean';
+import { cleanConversationHistory } from '@/utils/app/clean';
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
 import {
   saveConversations,
@@ -26,8 +23,9 @@ import { saveFolders } from '@/utils/app/folders';
 import { savePrompts } from '@/utils/app/prompts';
 import { getSettings } from '@/utils/app/settings';
 
-import { Conversation, Message, Replay } from '@/types/chat';
+import { Conversation, Replay } from '@/types/chat';
 import { KeyValuePair } from '@/types/data';
+import { Feature } from '@/types/features';
 import { FolderInterface, FolderType } from '@/types/folder';
 import { OpenAIModel, OpenAIModels, fallbackModelID } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
@@ -53,6 +51,8 @@ interface Props {
   isShowReportAnIssue: boolean;
   appName: string;
   footerHtmlMessage: string;
+  enabledFeatures: Feature[];
+  isIframe: boolean;
   modelIconMapping: string;
 }
 
@@ -65,8 +65,11 @@ const Home = ({
   isShowRequestApiKey,
   isShowReportAnIssue,
   footerHtmlMessage,
+  enabledFeatures,
+  isIframe,
   modelIconMapping,
 }: Props) => {
+  const enabledFeaturesSet = new Set(enabledFeatures);
   const { t } = useTranslation('chat');
   const { getModels } = useApiService();
   const { getModelsError } = useErrorService();
@@ -360,6 +363,16 @@ const Home = ({
         field: 'footerHtmlMessage',
         value: footerHtmlMessage,
       });
+    enabledFeaturesSet &&
+      dispatch({
+        field: 'enabledFeatures',
+        value: enabledFeaturesSet,
+      });
+    isIframe &&
+      dispatch({
+        field: 'isIframe',
+        value: isIframe,
+      });
     modelIconMapping &&
       dispatch({
         field: 'modelIconMapping',
@@ -374,6 +387,7 @@ const Home = ({
     isShowReportAnIssue,
     isShowRequestApiKey,
     footerHtmlMessage,
+    enabledFeatures,
   ]);
 
   // ON LOAD --------------------------------------------
@@ -525,15 +539,21 @@ const Home = ({
         <main
           className={`flex h-screen w-screen flex-col text-sm text-white dark:text-white ${lightMode}`}
         >
-          <div className="fixed top-0 w-full sm:hidden">
-            <Navbar
-              selectedConversationNames={selectedConversationNames}
-              onNewConversation={handleNewConversation}
-            />
-          </div>
+          {enabledFeaturesSet.has('conversations-section') && (
+            <div className="fixed top-0 w-full sm:hidden">
+              <Navbar
+                selectedConversationNames={selectedConversationNames}
+                onNewConversation={handleNewConversation}
+              />
+            </div>
+          )}
 
-          <div className="flex h-full w-full pt-[48px] sm:pt-0">
-            <Chatbar />
+          <div
+            className={`flex h-full w-full sm:pt-0 ${
+              enabledFeaturesSet.has('conversations-section') ? 'pt-[48px]' : ''
+            }`}
+          >
+            {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
 
             <div className="flex flex-1">
               <Chat
@@ -542,7 +562,7 @@ const Home = ({
               />
             </div>
 
-            <Promptbar />
+            {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
           </div>
         </main>
       )}
@@ -556,8 +576,14 @@ export const getServerSideProps: GetServerSideProps = async ({
   req,
   res,
 }) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    process.env.ALLOWED_IFRAME_ORIGINS
+      ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
+      : 'frame-ancestors none',
+  );
   const session = await getServerSession(req, res, authOptions);
-  if (!session) {
+  if (process.env.AUTH_DISABLED !== 'true' && !session) {
     return {
       redirect: {
         permanent: false,
@@ -601,6 +627,8 @@ export const getServerSideProps: GetServerSideProps = async ({
       isShowRequestApiKey: process.env.SHOW_REQUEST_API_KEY === 'true',
       isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
       footerHtmlMessage: updatedFooterHTMLMessage,
+      enabledFeatures: (process.env.ENABLED_FEATURES || '').split(','),
+      isIframe: process.env.IS_IFRAME === 'true' || false,
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',

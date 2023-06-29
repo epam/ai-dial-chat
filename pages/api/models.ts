@@ -19,6 +19,8 @@ import {
 
 import { authOptions } from './auth/[...nextauth]';
 
+import { errorsMessages } from '@/constants/errors';
+
 // export const config = {
 //   runtime: 'edge',
 // };
@@ -33,7 +35,7 @@ function setDefaultModel(models: OpenAIModel[]) {
   return models;
 }
 
-function limitModelsAccordingToUser(models: OpenAIModel[], session: Session) {
+function limitModelsAccordingToUser(models: OpenAIModel[], session: Session | null) {
   if (!process.env.AVAILABLE_MODELS_USERS_LIMITATIONS) {
     return models;
   }
@@ -70,10 +72,10 @@ function limitModelsAccordingToUser(models: OpenAIModel[], session: Session) {
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
-
-  if (!session) {
-    return res.status(401).send('');
+  if (process.env.AUTH_DISABLED !== 'true' && !session) {
+    return res.status(401).send(errorsMessages[401]);
   }
+
   try {
     const { key } = req.body as {
       key: string;
@@ -96,7 +98,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           OPENAI_ORGANIZATION && {
             'OpenAI-Organization': OPENAI_ORGANIZATION,
           }),
-        ...getHeaders(session),
+        ...((session && getHeaders(session)) || {}),
       },
     });
     let models: OpenAIModel[] = [];

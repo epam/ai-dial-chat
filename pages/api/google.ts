@@ -9,16 +9,17 @@ import { GoogleBody, GoogleSource } from '@/types/google';
 
 import { authOptions } from './auth/[...nextauth]';
 
+import { errorsMessages } from '@/constants/errors';
 import { Readability } from '@mozilla/readability';
 import endent from 'endent';
 import jsdom, { JSDOM } from 'jsdom';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
   const session = await getServerSession(req, res, authOptions);
-
-  if (!session) {
-    return res.status(401).send('');
+  if (process.env.AUTH_DISABLED !== 'true' && !session) {
+    return res.status(401).send(errorsMessages[401]);
   }
+
   try {
     const { messages, key, modelId, googleAPIKey, googleCSEId } =
       req.body as GoogleBody;
