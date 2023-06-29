@@ -1,5 +1,5 @@
 import { Message } from '@/types/chat';
-import { OpenAIModel, bedrockModels, googleModels } from '@/types/openai';
+import { OpenAIModel, bedrockModels, googleModels, openAIModels } from '@/types/openai';
 
 import {
   BEDROCK_HOST,
@@ -11,6 +11,10 @@ import {
   OPENAI_API_VERSION,
   OPENAI_ORGANIZATION,
 } from '../app/const';
+import {
+  extendWithBedrockHeaders,
+  extendWithOpenAIHeaders,
+} from './getHeaders';
 
 import {
   ParsedEvent,
@@ -38,13 +42,15 @@ export const OpenAIStream = async (
   temperature: number,
   key: string,
   messages: Message[],
-  headers: HeadersInit,
+  headers: Record<string, string>,
   tokenCount: number,
 ) => {
   const isGoogle =
-    googleModels.includes(model.id as any) && !!process.env.GOOGLE_AI_TOKEN;
+    googleModels.includes(model.id as any);
 
   const isBedrock = bedrockModels.includes(model.id as any);
+
+  const isOpenAI = openAIModels.includes(model.id as any);
 
   let url = `${OPENAI_API_HOST}/v1/chat/completions`;
   if (isGoogle) {
@@ -59,10 +65,10 @@ export const OpenAIStream = async (
     url = `${OPENAI_API_HOST}/openai/deployments/${model.id}/chat/completions?api-version=${OPENAI_API_VERSION}`;
   }
 
-  const requestHeaders = {
+  let requestHeaders: Record<string, string> = {
     ...headers,
     'Content-Type': 'application/json',
-  } as Record<string, string>;
+  };
   let body: string;
 
   if (isGoogle) {
@@ -87,19 +93,12 @@ export const OpenAIStream = async (
       },
     });
   } else {
-    if (OPENAI_API_TYPE === 'openai') {
-      requestHeaders.Authorization = `Bearer ${
-        key ? key : process.env.OPENAI_API_KEY
-      }`;
-    }
-    if (OPENAI_API_TYPE === 'azure') {
-      requestHeaders['api-key'] = `${key ? key : process.env.OPENAI_API_KEY}`;
-    }
-    if (OPENAI_API_TYPE === 'openai' && OPENAI_ORGANIZATION) {
-      requestHeaders['OpenAI-Organization'] = OPENAI_ORGANIZATION;
-    }
+    requestHeaders = isBedrock
+      ? extendWithBedrockHeaders(key, requestHeaders)
+      : extendWithOpenAIHeaders(key, requestHeaders);
+
     body = JSON.stringify({
-      ...(OPENAI_API_TYPE === 'openai' && { model: model.id }),
+      ...((isOpenAI && OPENAI_API_TYPE === 'openai') && { model: model.id }),
       messages: [
         {
           role: 'system',

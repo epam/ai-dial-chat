@@ -22,6 +22,13 @@ export enum OpenAIModelID {
   ANTHROPIC_CLAUDE_V1 = 'anthropic.claude-v1',
 }
 
+export const openAIModels = [
+  OpenAIModelID.GPT_3_5,
+  OpenAIModelID.GPT_3_5_AZ,
+  OpenAIModelID.GPT_4,
+  OpenAIModelID.GPT_4_32K
+];
+
 export const googleModels = [OpenAIModelID.BISON_001];
 
 export const bedrockModels = [

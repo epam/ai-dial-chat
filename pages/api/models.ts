@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { Session } from 'next-auth';
 import { getServerSession } from 'next-auth/next';
 
-import { getOpenAIHeaders } from '../../utils/server/getHeaders';
+import { getBedrockHeaders, getOpenAIHeaders } from '../../utils/server/getHeaders';
 import {
   BEDROCK_HOST,
   OPENAI_API_HOST,
@@ -71,7 +71,7 @@ async function getBedrockModels(session: Session | null, key: string): Promise<a
   const errMsg = 'Request for Bedrock models returned an error';
 
   const response = await fetch(url, {
-    headers: getOpenAIHeaders(session, key)
+    headers: getBedrockHeaders(session, key)
   }).catch((error) => {
     throw new Error(`${errMsg}: ${error.message}`);
   });
