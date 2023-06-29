@@ -6,6 +6,7 @@ import {
   ExportFormatV3,
   ExportFormatV4,
   LatestExportFormat,
+  PromptsHistory,
   SupportedExportFormats,
 } from '@/types/export';
 import { FolderInterface } from '@/types/folder';
@@ -120,7 +121,7 @@ type ExportType =
   | 'prompts_history';
 
 function triggerDownload(
-  data: ExportConversationsFormatV4 | Prompt[],
+  data: ExportConversationsFormatV4 | Prompt[] | PromptsHistory,
   exportType: ExportType,
 ) {
   const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -145,7 +146,8 @@ const triggerDownloadConversationsHistory = (
 ) => {
   triggerDownload(data, 'conversations_history');
 };
-const triggerDownloadPromptsHistory = (data: Prompt[]) => {
+
+const triggerDownloadPromptsHistory = (data: PromptsHistory) => {
   triggerDownload(data, 'prompts_history');
 };
 
@@ -214,23 +216,35 @@ export const exportConversations = () => {
 
 export const exportPrompts = () => {
   let prompts = localStorage.getItem('prompts');
+  const promptFolders = localStorage.getItem('folders');
+  let promptsToExport: Prompt[] = [];
+  let promptFoldersToExport: FolderInterface[] = [];
 
   if (prompts) {
-    prompts = JSON.parse(prompts);
+    promptsToExport = JSON.parse(prompts);
   }
 
-  const data = (prompts || []) as Prompt[];
-
+  if (promptFolders) {
+    const parsedPromptFolders: FolderInterface[] = JSON.parse(promptFolders);
+    promptFoldersToExport = parsedPromptFolders.filter(
+      ({ type }) => type === 'prompt',
+    );
+  }
+  const data = {
+    prompts: promptsToExport,
+    folders: promptFoldersToExport,
+  };
   triggerDownloadPromptsHistory(data);
 };
 
 export const exportPrompt = (promptId: string) => {
   const prompts = localStorage.getItem('prompts');
+
   if (prompts) {
     const parsedPrompts: Prompt[] = JSON.parse(prompts);
     const promptToExport = parsedPrompts.find(({ id }) => id === promptId);
-    const data: Prompt[] = promptToExport ? [promptToExport] : [];
 
+    const data: Prompt[] = promptToExport ? [promptToExport] : [];
     triggerDownloadPrompt(data);
   }
 };

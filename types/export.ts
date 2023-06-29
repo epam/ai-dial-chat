@@ -50,3 +50,10 @@ export interface ExportConversationsFormatV4 {
   history: Conversation[];
   folders: FolderInterface[];
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+export interface PromptsHistory {
+  prompts: Prompt[];
+  folders: FolderInterface[];
+}
