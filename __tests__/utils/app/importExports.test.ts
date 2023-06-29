@@ -10,7 +10,12 @@ import {
   isPromtsFormat,
 } from '@/utils/app/importExport';
 
-import { ExportFormatV1, ExportFormatV2, ExportFormatV4 } from '@/types/export';
+import {
+  ExportFormatV1,
+  ExportFormatV2,
+  ExportFormatV4,
+  PromptsHistory,
+} from '@/types/export';
 import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 
 import { describe, expect, it } from 'vitest';
@@ -273,28 +278,30 @@ describe('cleanData Functions', () => {
 
 describe('Export helpers functions', () => {
   it('Should return false for non-prompts data', () => {
-    const testData = [
-      {
-        id: '1',
-        name: 'Test prompt',
-        description: '',
-        messages: [],
-      },
-    ];
+    const testData = [{ id: 1 }];
     expect(isPromtsFormat(testData)).toBeFalsy();
   });
 
   it('Should return true for prompts data', () => {
-    const testData = [
-      {
-        id: '1',
-        name: 'prompt 1',
-        description: '',
-        content: '',
-        model: OpenAIModels[OpenAIModelID.GPT_3_5],
-        folderId: null,
-      },
-    ];
+    const testData: PromptsHistory = {
+      prompts: [
+        {
+          id: '1',
+          name: 'prompt 1',
+          description: '',
+          content: '',
+          model: OpenAIModels[OpenAIModelID.GPT_3_5],
+          folderId: null,
+        },
+      ],
+      folders: [
+        {
+          id: 'pf-1',
+          name: 'Test folder',
+          type: 'prompt',
+        },
+      ],
+    };
     expect(isPromtsFormat(testData)).toBeTruthy();
   });
 });

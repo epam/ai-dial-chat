@@ -30,12 +30,12 @@ export function isExportFormatV4(obj: any): obj is ExportFormatV4 {
   return obj.version === 4;
 }
 
-export function isPromtsFormat(promts: any) {
+export function isPromtsFormat(obj: any) {
   return (
-    !promts[0].hasOwnProperty('messages') &&
-    promts[0].hasOwnProperty('id') &&
-    promts[0].hasOwnProperty('name') &&
-    promts[0].hasOwnProperty('content')
+    obj &&
+    typeof obj === 'object' &&
+    !obj.hasOwnProperty('version') &&
+    obj.hasOwnProperty('prompts')
   );
 }
 
@@ -52,17 +52,10 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
       folders: [],
       prompts: [],
     };
-    if (isPromtsFormat(data)) {
-      return {
-        ...cleanHistoryData,
-        isError: true,
-      };
-    } else {
-      return {
-        ...cleanHistoryData,
-        isError: false,
-      };
-    }
+    return {
+      ...cleanHistoryData,
+      isError: false,
+    };
   }
 
   if (isExportFormatV2(data)) {
@@ -195,14 +188,16 @@ export const exportConversation = (conversationId: string) => {
 
 export const exportConversations = () => {
   let history = localStorage.getItem('conversationHistory');
-  let folders = localStorage.getItem('folders');
+  const localFolders = localStorage.getItem('folders');
+  let folders: any[] = [];
 
   if (history) {
     history = JSON.parse(history);
   }
 
-  if (folders) {
-    folders = JSON.parse(folders);
+  if (localFolders) {
+    const foldersParsed: FolderInterface[] = JSON.parse(localFolders);
+    folders = foldersParsed.filter(({ type }) => type === 'chat');
   }
 
   const data = {
@@ -302,20 +297,46 @@ export const importData = (data: SupportedExportFormats): CleanDataResponse => {
   };
 };
 
-export type ImportPromtsResponse = { prompts: Prompt[]; isError: boolean };
-export const importPrompts = (prompts: Prompt[]): ImportPromtsResponse => {
+export type ImportPromtsResponse = {
+  prompts: Prompt[];
+  folders: FolderInterface[];
+  isError: boolean;
+};
+export const importPrompts = (
+  promptsHistory: PromptsHistory,
+): ImportPromtsResponse => {
   const oldPrompts = localStorage.getItem('prompts');
-  const oldPromptsParsed = oldPrompts ? JSON.parse(oldPrompts) : [];
+  const oldPromptsParsed: Prompt[] = oldPrompts ? JSON.parse(oldPrompts) : [];
 
-  if (isPromtsFormat(prompts)) {
-    const newPrompts: Prompt[] = [...oldPromptsParsed, ...prompts].filter(
-      (prompt, index, self) =>
-        index === self.findIndex((p) => p.id === prompt.id),
-    );
+  const oldPromptsFolders = localStorage.getItem('folders');
+  const oldFoldersParsed: FolderInterface[] = oldPromptsFolders
+    ? JSON.parse(oldPromptsFolders)
+    : [];
+
+  if (isPromtsFormat(promptsHistory)) {
+    const newPrompts: Prompt[] = oldPromptsParsed
+      .concat(promptsHistory.prompts)
+      .filter(
+        (prompt, index, self) =>
+          index === self.findIndex((p) => p.id === prompt.id),
+      );
+
+    const newFolders: FolderInterface[] = oldFoldersParsed
+      .concat(promptsHistory.folders)
+      .filter(
+        (folder, index, self) =>
+          index === self.findIndex((p) => p.id === folder.id),
+      );
+
     localStorage.setItem('prompts', JSON.stringify(newPrompts));
+    localStorage.setItem('folders', JSON.stringify(newFolders));
 
-    return { prompts: newPrompts, isError: false };
+    return { prompts: newPrompts, folders: newFolders, isError: false };
   }
 
-  return { prompts: oldPromptsParsed, isError: true };
+  return {
+    prompts: oldPromptsParsed,
+    folders: oldFoldersParsed,
+    isError: true,
+  };
 };

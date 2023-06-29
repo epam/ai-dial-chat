@@ -470,14 +470,16 @@ const Home = ({
         folderId: null,
         replay: defaultReplay,
       };
+
+      const updatedConversations: Conversation[] =
+        cleanedConversationHistory.concat(newConversation);
+
       dispatch({
         field: 'selectedConversationIds',
         value: [newConversation.id],
       });
-      dispatch({
-        field: 'conversations',
-        value: [...cleanedConversationHistory, newConversation],
-      });
+
+      updateAllConversationsStore(updatedConversations);
       saveSelectedConversationIds([newConversation.id]);
     }
   }, [

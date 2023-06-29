@@ -7,6 +7,7 @@ import { useCreateReducer } from '@/hooks/useCreateReducer';
 import { exportPrompts, importPrompts } from '@/utils/app/importExport';
 import { savePrompts } from '@/utils/app/prompts';
 
+import { PromptsHistory } from '@/types/export';
 import { FolderInterface } from '@/types/folder';
 import { OpenAIModels } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
@@ -124,13 +125,14 @@ const Promptbar = () => {
     exportPrompts();
   };
 
-  const handleImportPrompts = (promptsJSON: Prompt[]) => {
-    const { prompts, isError } = importPrompts(promptsJSON);
+  const handleImportPrompts = (promptsJSON: PromptsHistory) => {
+    const { prompts, folders, isError } = importPrompts(promptsJSON);
 
     if (isError) {
       toast.error(t(errorsMessages.unsupportedDataFormat));
     } else {
       homeDispatch({ field: 'prompts', value: prompts });
+      homeDispatch({ field: 'folders', value: folders });
     }
   };
 
