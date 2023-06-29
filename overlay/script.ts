@@ -147,12 +147,6 @@ export default class ChatAIOverlay {
     if (!this.overlay) {
       return;
     }
-    if (this.isMobileView) {
-      this.openFullscreen();
-      this.overlayShowed = true;
-
-      return;
-    }
 
     this.overlay.style.transform = 'scale(1) translate(0, 0)';
     this.overlayShowed = true;
@@ -230,7 +224,7 @@ export default class ChatAIOverlay {
 
     overlayButtonsContainer.appendChild(closeButton);
 
-    if (this.config.allowFulscreenDesktop) {
+    if (!this.isMobileView && this.config.allowFulscreenDesktop) {
       const fulscreenButton = this.createFullscreenButton();
 
       overlayButtonsContainer.appendChild(fulscreenButton);
@@ -270,17 +264,20 @@ export default class ChatAIOverlay {
 
   private createOverlay() {
     const overlay = document.createElement('div');
+    const mobileHeight = window.innerHeight;
     this.setStyles(overlay, {
       transition: 'transform 0.5s ease',
       position: 'fixed',
-      top: this.config.position.top,
-      bottom: this.config.position.bottom,
-      left: this.config.position.left,
-      right: this.config.position.right,
+      top: this.isMobileView ? '0' : this.config.position.top,
+      bottom: this.isMobileView ? '0' : this.config.position.bottom,
+      left: this.isMobileView ? '0' : this.config.position.left,
+      right: this.isMobileView ? '0' : this.config.position.right,
       transform: `scale(0.5) ${this.config.position.transform}`,
       zIndex: '2',
-      width: `${this.config.overlayWidth}px`,
-      height: `${this.config.overlayHeight}px`,
+      width: this.isMobileView ? '100vw' : `${this.config.overlayWidth}px`,
+      height: this.isMobileView
+        ? `${mobileHeight}px`
+        : `${this.config.overlayHeight}px`,
     });
     return overlay;
   }
