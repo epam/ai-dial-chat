@@ -102,14 +102,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     for (const model of openAIModels) {
       const model_name = OPENAI_API_TYPE === 'azure' ? model.model : model.id;
-      for (const [key, value] of Object.entries(OpenAIModelID)) {
-        if (value === model_name) {
-          models.push({
-            id: model.id,
-            name: OpenAIModels[value].name,
-          } as any);
-        }
-      }
+      addModel(model_name, models);
     }
 
     if (process.env.GOOGLE_AI_TOKEN) {
