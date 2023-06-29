@@ -80,5 +80,5 @@ ingress:
 
 serviceAccount:
   create: true
-  name: chat
+  name: development-overlay
 # extraEnvVarsSecret: "chat-lab-test"
