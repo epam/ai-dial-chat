@@ -8,17 +8,14 @@ import { SidebarButton } from '../Sidebar/SidebarButton';
 interface Props {
   text: string;
   onImport: ImportConversationsHandler | ImportPromptsHandler;
-  type: 'conversations' | 'prompts';
 }
 
-export const Import: FC<Props> = ({ onImport, text, type }) => {
-  const ref = useRef(null);
-  const inputId = `import-${type}-file`;
+export const Import: FC<Props> = ({ onImport, text }) => {
+  const ref = useRef<HTMLInputElement>(null);
   return (
     <>
       <input
         ref={ref}
-        id={inputId}
         className="sr-only"
         tabIndex={-1}
         type="file"
@@ -41,9 +38,7 @@ export const Import: FC<Props> = ({ onImport, text, type }) => {
         text={text}
         icon={<IconFileImport size={18} />}
         onClick={() => {
-          const importFile = document.querySelector(
-            `#${inputId}`,
-          ) as HTMLInputElement;
+          const importFile = ref.current;
           if (importFile) {
             importFile.click();
           }

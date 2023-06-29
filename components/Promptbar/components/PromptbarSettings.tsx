@@ -30,11 +30,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
         />
       ) : null}
 
-      <Import
-        onImport={handleImportPrompts}
-        text={t('Import prompts')}
-        type="prompts"
-      />
+      <Import onImport={handleImportPrompts} text={t('Import prompts')} />
 
       <SidebarButton
         text={t('Export prompts')}

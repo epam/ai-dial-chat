@@ -50,7 +50,6 @@ export const ChatbarSettings = () => {
       <Import
         onImport={handleImportConversations}
         text={t('Import conversations')}
-        type="conversations"
       />
 
       <SidebarButton
