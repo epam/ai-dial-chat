@@ -27,7 +27,12 @@ import { Conversation, Replay } from '@/types/chat';
 import { KeyValuePair } from '@/types/data';
 import { Feature } from '@/types/features';
 import { FolderInterface, FolderType } from '@/types/folder';
-import { OpenAIModel, OpenAIModels, fallbackModelID } from '@/types/openai';
+import {
+  OpenAIModel,
+  OpenAIModelID,
+  OpenAIModels,
+  fallbackModelID,
+} from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 import { Chat } from '@/components/Chat/Chat';
@@ -54,6 +59,7 @@ interface Props {
   enabledFeatures: Feature[];
   isIframe: boolean;
   modelIconMapping: string;
+  defaultModelId: OpenAIModelID;
 }
 
 const Home = ({
@@ -68,6 +74,7 @@ const Home = ({
   enabledFeatures,
   isIframe,
   modelIconMapping,
+  defaultModelId,
 }: Props) => {
   const enabledFeaturesSet = new Set(enabledFeatures);
   const { t } = useTranslation('chat');
@@ -89,7 +96,7 @@ const Home = ({
       conversations,
       selectedConversationIds,
       prompts,
-      defaultModelId,
+      defaultModelId: clientDefaultModelId,
     },
     dispatch,
   } = contextValue;
@@ -115,9 +122,9 @@ const Home = ({
     if (data) {
       dispatch({ field: 'models', value: data });
 
-      const defaultModelId =
-        (data as any as OpenAIModel[]).find((model) => model.isDefault)?.id ||
-        fallbackModelID;
+      const defaultModelId = (data as any as OpenAIModel[]).find(
+        (model) => model.isDefault,
+      )?.id;
 
       dispatch({ field: 'defaultModelId', value: defaultModelId });
     }
@@ -250,6 +257,10 @@ const Home = ({
     activeReplayIndex: 0,
   };
   const handleNewConversation = (name = 'New Conversation') => {
+    if (!clientDefaultModelId) {
+      return;
+    }
+
     const lastConversation = conversations[conversations.length - 1];
 
     const newConversation: Conversation = {
@@ -257,11 +268,11 @@ const Home = ({
       name: t(name),
       messages: [],
       model: {
-        id: OpenAIModels[defaultModelId].id,
-        name: OpenAIModels[defaultModelId].name,
-        maxLength: OpenAIModels[defaultModelId].maxLength,
-        tokenLimit: OpenAIModels[defaultModelId].tokenLimit,
-        requestLimit: OpenAIModels[defaultModelId].requestLimit,
+        id: OpenAIModels[clientDefaultModelId].id,
+        name: OpenAIModels[clientDefaultModelId].name,
+        maxLength: OpenAIModels[clientDefaultModelId].maxLength,
+        tokenLimit: OpenAIModels[clientDefaultModelId].tokenLimit,
+        requestLimit: OpenAIModels[clientDefaultModelId].requestLimit,
       },
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
@@ -324,6 +335,11 @@ const Home = ({
   }, [selectedConversationIds]);
 
   useEffect(() => {
+    defaultModelId &&
+      dispatch({
+        field: 'defaultModelId',
+        value: defaultModelId,
+      });
     serverSideApiKeyIsSet &&
       dispatch({
         field: 'serverSideApiKeyIsSet',
@@ -377,6 +393,7 @@ const Home = ({
         value: modelIconMapping,
       });
   }, [
+    defaultModelId,
     modelIconMapping,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
@@ -474,6 +491,7 @@ const Home = ({
     } else {
       const lastConversation =
         cleanedConversationHistory[conversations.length - 1];
+
       const newConversation: Conversation = {
         id: uuidv4(),
         name: t('New Conversation'),
@@ -630,6 +648,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       footerHtmlMessage: updatedFooterHTMLMessage,
       enabledFeatures: (process.env.ENABLED_FEATURES || '').split(','),
       isIframe: process.env.IS_IFRAME === 'true' || false,
+      defaultModelId: process.env.DEFAULT_MODEL || fallbackModelID,
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',

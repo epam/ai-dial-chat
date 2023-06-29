@@ -23,7 +23,7 @@ export interface HomeInitialState {
   currentFolder: FolderInterface | undefined;
   messageError: boolean;
   searchTerm: string;
-  defaultModelId: OpenAIModelID;
+  defaultModelId: OpenAIModelID | undefined;
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   usePluginKeys: boolean;
@@ -58,7 +58,7 @@ export const initialState: HomeInitialState = {
   currentFolder: undefined,
   messageError: false,
   searchTerm: '',
-  defaultModelId: fallbackModelID,
+  defaultModelId: undefined,
   serverSideApiKeyIsSet: false,
   serverSidePluginKeysSet: false,
   usePluginKeys: false,
