@@ -1,15 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 
-import { getHeaders } from '../../utils/server/getHeaders';
-import {
-  OPENAI_API_HOST,
-  OPENAI_API_TYPE,
-  OPENAI_ORGANIZATION,
-} from '@/utils/app/const';
+import { getOpenAIHeaders } from '../../utils/server/getHeaders';
+import { OPENAI_API_HOST } from '@/utils/app/const';
 
 import { RateBody } from '../../types/chat';
-import { OpenAIModel, OpenAIModelID, OpenAIModels } from '@/types/openai';
 
 import { authOptions } from './auth/[...nextauth]';
 
@@ -29,27 +24,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const url = `${OPENAI_API_HOST}/v1/rate`;
 
     const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(OPENAI_API_TYPE === 'openai' && {
-          Authorization: `Bearer ${key ? key : process.env.OPENAI_API_KEY}`,
-        }),
-        ...(OPENAI_API_TYPE === 'azure' && {
-          'api-key': `${key ? key : process.env.OPENAI_API_KEY}`,
-        }),
-        ...(OPENAI_API_TYPE === 'openai' &&
-          OPENAI_ORGANIZATION && {
-            'OpenAI-Organization': OPENAI_ORGANIZATION,
-          }),
-        ...getHeaders(session, id),
-      },
+      headers: getOpenAIHeaders(session, id),
       method: 'POST',
       body: JSON.stringify({
         model: model.id,
         rate: value,
         message: message.content,
       }),
-    }).then(r => r.status);
+    }).then((r) => r.status);
   } catch (error) {
     console.error(error);
   }

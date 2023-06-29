@@ -54,7 +54,7 @@ export const OpenAIStream = async (
       process.env.GOOGLE_AI_BARD_MODEL_ID ?? model.id
     }:predict`;
   } else if (isBedrock) {
-    url = `${BEDROCK_HOST}/chat/completions`;
+    url = `${BEDROCK_HOST}/openai/deployments/${model.id}/chat/completions?api-version=${OPENAI_API_VERSION}`;
   } else if (OPENAI_API_TYPE === 'azure') {
     url = `${OPENAI_API_HOST}/openai/deployments/${model.id}/chat/completions?api-version=${OPENAI_API_VERSION}`;
   }

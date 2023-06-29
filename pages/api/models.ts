@@ -2,14 +2,13 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { Session } from 'next-auth';
 import { getServerSession } from 'next-auth/next';
 
-import { getHeaders } from '../../utils/server/getHeaders';
+import { getOpenAIHeaders } from '../../utils/server/getHeaders';
 import {
   BEDROCK_ACCESS,
   BEDROCK_HOST,
   OPENAI_API_HOST,
   OPENAI_API_TYPE,
   OPENAI_API_VERSION,
-  OPENAI_ORGANIZATION,
 } from '@/utils/app/const';
 
 import {
@@ -45,20 +44,7 @@ async function getOpenAIModels(session: Session, key: string): Promise<any[]> {
   const errMsg = 'Request for OpenAI models returned an error';
 
   const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(OPENAI_API_TYPE === 'openai' && {
-        Authorization: `Bearer ${key ? key : process.env.OPENAI_API_KEY}`,
-      }),
-      ...(OPENAI_API_TYPE === 'azure' && {
-        'api-key': `${key ? key : process.env.OPENAI_API_KEY}`,
-      }),
-      ...(OPENAI_API_TYPE === 'openai' &&
-        OPENAI_ORGANIZATION && {
-          'OpenAI-Organization': OPENAI_ORGANIZATION,
-        }),
-      ...getHeaders(session),
-    },
+    headers: getOpenAIHeaders(session, key),
   }).catch((error) => {
     throw new Error(`${errMsg}: ${error.message}`);
   });
@@ -71,7 +57,7 @@ async function getOpenAIModels(session: Session, key: string): Promise<any[]> {
   return json.data;
 }
 
-async function getBedrockModels(session: Session): Promise<any[]> {
+async function getBedrockModels(session: Session, key: string): Promise<any[]> {
   const email = session?.user?.email;
 
   if (!email) {
@@ -82,23 +68,19 @@ async function getBedrockModels(session: Session): Promise<any[]> {
     throw new Error('Access denied');
   }
 
-  let url = `${BEDROCK_HOST}/models`;
+  let url = `${BEDROCK_HOST}/openai/models`;
 
   const errMsg = 'Request for Bedrock models returned an error';
 
   const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...getHeaders(session),
-    },
+    headers: getOpenAIHeaders(session, key)
   }).catch((error) => {
-    const msg = `${errMsg}: ${error.message}`;
-    throw new Error(msg);
+    console.log(error)
+    throw new Error(`${errMsg}: ${error.message}`);
   });
 
   if (response.status !== 200) {
-    const msg = `${errMsg} ${response.status}: ${await response.text()}`;
-    throw new Error(msg);
+    throw new Error(`${errMsg} ${response.status}: ${await response.text()}`);
   }
 
   const json = await response.json();
@@ -141,7 +123,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }
     }
 
-    const bedrockModels = await getBedrockModels(session).catch((error) => {
+    const bedrockModels = await getBedrockModels(session, key).catch((error) => {
       console.error(error.message);
       return [];
     });
