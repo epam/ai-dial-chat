@@ -144,7 +144,7 @@ const triggerDownloadPromptsHistory = (data: PromptsHistory) => {
   triggerDownload(data, 'prompts_history');
 };
 
-const triggerDownloadPrompt = (data: Prompt[]) => {
+const triggerDownloadPrompt = (data: PromptsHistory) => {
   triggerDownload(data, 'prompt');
 };
 
@@ -234,19 +234,34 @@ export const exportPrompts = () => {
 
 export const exportPrompt = (promptId: string) => {
   const prompts = localStorage.getItem('prompts');
+  const folders = localStorage.getItem('folders');
 
   if (prompts) {
     const parsedPrompts: Prompt[] = JSON.parse(prompts);
     const promptToExport = parsedPrompts.find(({ id }) => id === promptId);
+    let promptFoldersToExport: any[] = [];
 
-    const data: Prompt[] = promptToExport ? [promptToExport] : [];
-    triggerDownloadPrompt(data);
+    if (promptToExport) {
+      const promptsToExport: Prompt[] = [promptToExport];
+
+      if (promptToExport.folderId && folders) {
+        const parsedPromptFolders: FolderInterface[] = JSON.parse(folders);
+        promptFoldersToExport = parsedPromptFolders.filter(
+          ({ id }) => id === promptToExport.folderId,
+        );
+      }
+
+      const data: PromptsHistory = {
+        prompts: promptsToExport,
+        folders: promptFoldersToExport,
+      };
+      triggerDownloadPrompt(data);
+    }
   }
 };
 
 export const importData = (data: SupportedExportFormats): CleanDataResponse => {
   const { history, folders, prompts, isError } = cleanData(data);
-
   const oldConversations = localStorage.getItem('conversationHistory');
   const oldConversationsParsed = oldConversations
     ? JSON.parse(oldConversations)
