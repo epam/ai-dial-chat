@@ -8,8 +8,11 @@ import {
 import { MouseEventHandler, RefObject, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { FeatureType } from '@/types/components';
+
 interface Props {
   parentRef: RefObject<HTMLDivElement>;
+  featureType: FeatureType;
   onDelete: MouseEventHandler<unknown>;
   onRename: MouseEventHandler<unknown>;
   onExport: MouseEventHandler<unknown>;
@@ -26,10 +29,13 @@ export const ContextMenu = ({
   onReplay,
   onCompare,
   isEmptyConversation,
+  featureType,
 }: Props) => {
   const { t } = useTranslation('sidebar');
   const contextMenuHeight = 230;
   let classes = useRef('');
+
+  const isConversation = featureType === 'conversation';
 
   classes.current = getContextMenuPositioningClasses(
     parentRef,
@@ -46,7 +52,9 @@ export const ContextMenu = ({
           className="flex cursor-pointer p-2 hover:bg-[#343541] rounded-lg"
         >
           <IconPencil size={18} />
-          <span className="ml-2">{t('Rename')}</span>
+          <span className="ml-2">
+            {t(`${isConversation ? 'Rename' : 'Edit'}`)}
+          </span>
         </li>
         {onCompare && (
           <li

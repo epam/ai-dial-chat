@@ -173,6 +173,7 @@ export const PromptComponent = ({ prompt }: Props) => {
                 onDelete={handleOpenDeleteModal}
                 onRename={handleOpenRenameModal}
                 onExport={handleExportPrompt}
+                featureType="prompt"
               />
             )}
           </div>

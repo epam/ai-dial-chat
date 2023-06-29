@@ -208,6 +208,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
                   }}
                   onReplay={handleStartReplay}
                   isEmptyConversation={isEmptyConversation}
+                  featureType="conversation"
                 />
               )}
             </div>
