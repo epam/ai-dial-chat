@@ -264,6 +264,7 @@ export default class ChatAIOverlay {
 
   private createOverlay() {
     const overlay = document.createElement('div');
+    const mobileHeight = window.innerHeight;
     this.setStyles(overlay, {
       transition: 'transform 0.5s ease',
       position: 'fixed',
@@ -274,7 +275,9 @@ export default class ChatAIOverlay {
       transform: `scale(0.5) ${this.config.position.transform}`,
       zIndex: '2',
       width: this.isMobileView ? '100vw' : `${this.config.overlayWidth}px`,
-      height: this.isMobileView ? '100vh' : `${this.config.overlayHeight}px`,
+      height: this.isMobileView
+        ? `${mobileHeight}px`
+        : `${this.config.overlayHeight}px`,
     });
     return overlay;
   }
