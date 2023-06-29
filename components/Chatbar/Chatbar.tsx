@@ -116,9 +116,12 @@ export const Chatbar = () => {
       replay: defaultReplay,
     };
 
+    const newConversations: Conversation[] = [newConversation];
+    const newSelectedConversationIds: string[] = [newConversation.id];
+
     homeDispatch({
       field: 'selectedConversationIds',
-      value: [newConversation.id],
+      value: newSelectedConversationIds,
     });
     homeDispatch({
       field: 'isCompareMode',
@@ -127,7 +130,7 @@ export const Chatbar = () => {
     defaultModelId &&
       homeDispatch({
         field: 'conversations',
-        value: [newConversation],
+        value: newConversations,
       });
 
     localStorage.removeItem('conversationHistory');
@@ -135,7 +138,9 @@ export const Chatbar = () => {
     const updatedFolders = folders.filter((f) => f.type !== 'chat');
 
     homeDispatch({ field: 'folders', value: updatedFolders });
+    saveConversations(newConversations);
     saveFolders(updatedFolders);
+    saveSelectedConversationIds(newSelectedConversationIds);
   };
 
   const handleDeleteConversation = (conversation: Conversation) => {
