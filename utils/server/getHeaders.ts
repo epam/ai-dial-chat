@@ -18,7 +18,7 @@ export const getHeaders = (session: Session, id?: string): HeadersInit => {
   return headers;
 };
 
-export function getOpenAIHeaders(session: Session, key: string): HeadersInit {
+export function getOpenAIHeaders(session: Session | null, key: string, id?: string): HeadersInit {
   return {
     'Content-Type': 'application/json',
     ...(OPENAI_API_TYPE === 'openai' && {
@@ -31,6 +31,6 @@ export function getOpenAIHeaders(session: Session, key: string): HeadersInit {
       OPENAI_ORGANIZATION && {
         'OpenAI-Organization': OPENAI_ORGANIZATION,
       }),
-    ...getHeaders(session),
+    ...((session && getHeaders(session, id)) || {}),
   };
 }

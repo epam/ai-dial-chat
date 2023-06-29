@@ -15,6 +15,10 @@ interface Props {
   isCompareMode: boolean;
   selectedConversationIds: string[];
   messageIsStreaming: boolean;
+  isShowChatInfo: boolean;
+  isShowModelSelect: boolean;
+  isShowClearConversation: boolean;
+  isIframe: boolean;
   onSelectModel: (modelId: string) => void;
   onClearConversation: () => void;
   onUnselectConversation: () => void;
@@ -27,6 +31,10 @@ export const ChatSettings = ({
   isCompareMode,
   selectedConversationIds,
   messageIsStreaming,
+  isShowChatInfo,
+  isShowModelSelect,
+  isShowClearConversation,
+  isIframe,
   onSelectModel,
   onClearConversation,
   onUnselectConversation,
@@ -37,31 +45,41 @@ export const ChatSettings = ({
   return (
     <>
       <div className="sticky top-0 z-10 flex justify-center border border-b-neutral-300 bg-neutral-100 py-2 text-sm text-neutral-500 dark:border-none dark:bg-[#444654] dark:text-neutral-200">
-        {isCompareMode && (
+        {isShowChatInfo && (
           <>
-            {t('Name')}:&nbsp;
-            <span
-              className="max-w-[50px] lg:max-w-[300px] text-ellipsis whitespace-nowrap overflow-hidden"
-              title={conversation.name}
-            >
-              {conversation.name}
+            {isCompareMode && (
+              <>
+                {t('Name')}:&nbsp;
+                <span
+                  className="max-w-[50px] lg:max-w-[300px] text-ellipsis whitespace-nowrap overflow-hidden"
+                  title={conversation.name}
+                >
+                  {conversation.name}
+                </span>
+                &nbsp;|{' '}
+              </>
+            )}
+            <span>
+              {t('Model')}: {conversation.model.name} |{' '}
+              {!isIframe && (
+                <>
+                  {t('Temp')}: {conversation.temperature} |
+                </>
+              )}
             </span>
-            &nbsp;|{' '}
           </>
         )}
-        <span>
-          {t('Model')}: {conversation.model.name} | {t('Temp')}:{' '}
-          {conversation.temperature} |
-        </span>
-        <button
-          className="ml-2 cursor-pointer hover:opacity-50"
-          onClick={() => {
-            setShowSettings(!showSettings);
-          }}
-        >
-          <IconSettings size={18} />
-        </button>
-        {!isCompareMode && (
+        {isShowModelSelect && (
+          <button
+            className="ml-2 cursor-pointer hover:opacity-50"
+            onClick={() => {
+              setShowSettings(!showSettings);
+            }}
+          >
+            <IconSettings size={18} />
+          </button>
+        )}
+        {isShowClearConversation && !isCompareMode && (
           <button
             className="ml-2 cursor-pointer hover:opacity-50"
             onClick={onClearConversation}
@@ -84,6 +102,7 @@ export const ChatSettings = ({
           <div className="flex h-full flex-col space-y-4 border-b border-neutral-200 p-4 dark:border-neutral-600 md:rounded-lg md:border">
             <ModelSelect
               conversationModelId={conversation.model.id}
+              conversationModelName={conversation.model.name}
               defaultModelId={defaultModelId}
               models={models}
               onSelectModel={onSelectModel}

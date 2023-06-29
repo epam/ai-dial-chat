@@ -6,6 +6,7 @@ export interface OpenAIModel {
   maxLength: number; // maximum length of a message
   tokenLimit: number;
   requestLimit: number;
+  isDefault?: boolean;
 }
 
 export enum OpenAIModelID {

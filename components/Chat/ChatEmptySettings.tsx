@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/types/chat';
@@ -33,6 +35,7 @@ export const ChatEmptySettings = ({
     <div className="flex h-full flex-col space-y-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-600">
       <ModelSelect
         conversationModelId={conversation.model.id}
+        conversationModelName={conversation.model.name}
         defaultModelId={defaultModelId}
         models={models}
         onSelectModel={onSelectModel}

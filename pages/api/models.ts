@@ -15,9 +15,12 @@ import {
   OpenAIModelID,
   OpenAIModels,
   googleModels,
+  fallbackModelID,
 } from '@/types/openai';
 
 import { authOptions } from './auth/[...nextauth]';
+
+import { errorsMessages } from '@/constants/errors';
 
 // export const config = {
 //   runtime: 'edge',
@@ -34,7 +37,7 @@ function addModel(model_name: string, models: OpenAIModel[]) {
   }
 }
 
-async function getOpenAIModels(session: Session, key: string): Promise<any[]> {
+async function getOpenAIModels(session: Session | null, key: string): Promise<any[]> {
   let url = `${OPENAI_API_HOST}/v1/models`;
   if (OPENAI_API_TYPE === 'azure') {
     url = `${OPENAI_API_HOST}/openai/deployments?api-version=${OPENAI_API_VERSION}`;
@@ -56,7 +59,7 @@ async function getOpenAIModels(session: Session, key: string): Promise<any[]> {
   return json.data;
 }
 
-async function getBedrockModels(session: Session, key: string): Promise<any[]> {
+async function getBedrockModels(session: Session | null, key: string): Promise<any[]> {
   const email = session?.user?.email;
 
   if (!email) {
@@ -70,7 +73,6 @@ async function getBedrockModels(session: Session, key: string): Promise<any[]> {
   const response = await fetch(url, {
     headers: getOpenAIHeaders(session, key)
   }).catch((error) => {
-    console.log(error)
     throw new Error(`${errMsg}: ${error.message}`);
   });
 
@@ -82,18 +84,63 @@ async function getBedrockModels(session: Session, key: string): Promise<any[]> {
   return json.data;
 }
 
+function setDefaultModel(models: OpenAIModel[]) {
+  const defaultModelId = process.env.DEFAULT_MODEL || fallbackModelID;
+  const defaultModel =
+    models.filter((model) => model.id === defaultModelId).pop() || models[0];
+  models = models.map((model) =>
+    model.id === defaultModel.id ? { ...model, isDefault: true } : model,
+  );
+  return models;
+}
+
+function limitModelsAccordingToUser(models: OpenAIModel[], session: Session | null) {
+  if (!process.env.AVAILABLE_MODELS_USERS_LIMITATIONS) {
+    return models;
+  }
+
+  const modelsLimitations: Record<string, Set<string>> = (
+    process.env.AVAILABLE_MODELS_USERS_LIMITATIONS ?? ''
+  )
+    .split('|')
+    .map((userLimitations) => {
+      const [modelId, emailsString] = userLimitations.split('=');
+      return {
+        modelId,
+        emails: new Set(emailsString.split(',')),
+      };
+    })
+    .reduce((acc, curr) => {
+      acc[curr.modelId] = curr.emails;
+
+      return acc;
+    }, <Record<string, Set<string>>>{});
+
+  models = models.filter((model: OpenAIModel) => {
+    if (!modelsLimitations[model.id]) {
+      return true;
+    }
+    if (!session?.user?.email) {
+      return false;
+    }
+
+    return modelsLimitations[model.id].has(session?.user?.email);
+  });
+  return models;
+}
+
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
-
-  if (!session) {
-    return res.status(401).send('');
+  if (process.env.AUTH_DISABLED !== 'true' && !session) {
+    return res.status(401).send(errorsMessages[401]);
   }
+
   try {
     const { key } = req.body as {
       key: string;
     };
 
-    const models: OpenAIModel[] = [];
+    let models: OpenAIModel[] = [];
 
     const openAIModels = await getOpenAIModels(session, key).catch((error) => {
       console.error(error.message);
@@ -119,6 +166,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     for (const model of bedrockModels) {
       addModel(model.id, models);
     }
+
+    models = limitModelsAccordingToUser(models, session);
+    models = setDefaultModel(models);
 
     // return new Response(JSON.stringify(models), { status: 200 });
     return res.status(200).json(models);

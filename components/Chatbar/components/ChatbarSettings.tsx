@@ -7,12 +7,12 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { SettingDialog } from '@/components/Settings/SettingDialog';
 
+import { ClearAllElements } from '../../Common/ClearAllElements';
 import { Import } from '../../Settings/Import';
 import { Key } from '../../Settings/Key';
 import { SidebarButton } from '../../Sidebar/SidebarButton';
 import ChatbarContext from '../Chatbar.context';
 import { User } from '../User';
-import { ClearConversations } from './ClearConversations';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation('sidebar');
@@ -33,22 +33,29 @@ export const ChatbarSettings = () => {
   const {
     handleClearConversations,
     handleImportConversations,
-    handleExportData,
+    handleExportConversations,
     handleApiKeyChange,
   } = useContext(ChatbarContext);
 
   return (
     <div className="flex flex-col items-center space-y-1 border-t border-white/20 pt-1 text-sm">
       {conversations.length > 0 ? (
-        <ClearConversations onClearConversations={handleClearConversations} />
+        <ClearAllElements
+          onClearAll={handleClearConversations}
+          translation="sidebar"
+          elementsType="conversations"
+        />
       ) : null}
 
-      <Import onImport={handleImportConversations} />
+      <Import
+        onImport={handleImportConversations}
+        text={t('Import conversations')}
+      />
 
       <SidebarButton
         text={t('Export conversations')}
         icon={<IconFileExport size={18} />}
-        onClick={() => handleExportData()}
+        onClick={() => handleExportConversations()}
       />
 
       <SidebarButton

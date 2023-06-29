@@ -1,4 +1,5 @@
 import { IconExclamationCircle, IconExternalLink } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -7,17 +8,27 @@ import { OpenAIModel, OpenAIModelID } from '@/types/openai';
 interface Props {
   models: OpenAIModel[];
   conversationModelId: string;
+  conversationModelName: string;
   defaultModelId: OpenAIModelID;
   onSelectModel: (modelId: string) => void;
 }
 
 export const ModelSelect = ({
   conversationModelId,
+  conversationModelName,
   models,
   defaultModelId,
   onSelectModel,
 }: Props) => {
   const { t } = useTranslation('chat');
+
+  const [isNotAllowedModelSelected, setIsNotAllowedModelSelected] =
+    useState(false);
+
+  useEffect(() => {
+    const modelsIds = models.map(({ id }) => id);
+    setIsNotAllowedModelSelected(!modelsIds.includes(conversationModelId));
+  }, [conversationModelId, models]);
 
   return (
     <div className="flex flex-col">
@@ -31,6 +42,16 @@ export const ModelSelect = ({
           value={conversationModelId || defaultModelId}
           onChange={(e) => onSelectModel(e.target.value)}
         >
+          {isNotAllowedModelSelected && (
+            <option
+              key={conversationModelId}
+              value={conversationModelId}
+              className="dark:bg-[#343541] dark:text-white"
+              disabled={true}
+            >
+              {conversationModelName}
+            </option>
+          )}
           {models.map((model) => (
             <option
               key={model.id}

@@ -1,7 +1,8 @@
 import { Conversation, Message } from '@/types/chat';
 import { ErrorMessage } from '@/types/error';
+import { Feature } from '@/types/features';
 import { FolderInterface } from '@/types/folder';
-import { OpenAIModel, OpenAIModelID } from '@/types/openai';
+import { OpenAIModel, OpenAIModelID, fallbackModelID } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 export interface HomeInitialState {
@@ -22,17 +23,21 @@ export interface HomeInitialState {
   currentFolder: FolderInterface | undefined;
   messageError: boolean;
   searchTerm: string;
-  defaultModelId: OpenAIModelID | undefined;
+  defaultModelId: OpenAIModelID;
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   usePluginKeys: boolean;
   isCompareMode: boolean;
+  isIframe: boolean;
+  modelIconMapping: Record<string, string>;
 
   // Footer env variables
   isShowFooter: boolean;
   isShowRequestApiKey: boolean;
   isShowReportAnIssue: boolean;
   footerHtmlMessage: string;
+
+  enabledFeatures: Set<Feature>;
 }
 
 export const initialState: HomeInitialState = {
@@ -53,15 +58,19 @@ export const initialState: HomeInitialState = {
   currentFolder: undefined,
   messageError: false,
   searchTerm: '',
-  defaultModelId: undefined,
+  defaultModelId: fallbackModelID,
   serverSideApiKeyIsSet: false,
   serverSidePluginKeysSet: false,
   usePluginKeys: false,
   isCompareMode: false,
+  isIframe: false,
+  modelIconMapping: {},
 
   // Footer env variables
   isShowFooter: false,
   isShowRequestApiKey: false,
   isShowReportAnIssue: false,
   footerHtmlMessage: '',
+
+  enabledFeatures: new Set([]),
 };

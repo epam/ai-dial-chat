@@ -8,23 +8,25 @@ import { RateBody } from '../../types/chat';
 
 import { authOptions } from './auth/[...nextauth]';
 
+import { errorsMessages } from '@/constants/errors';
+
 // export const config = {
 //   runtime: 'edge',
 // };
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
-
-  if (!session || req.method !== 'POST') {
-    return res.status(401).send('');
+  if (process.env.AUTH_DISABLED !== 'true' && !session) {
+    return res.status(401).send(errorsMessages[401]);
   }
+
   try {
     const { key, message, id, model, value } = req.body as RateBody;
 
     const url = `${OPENAI_API_HOST}/v1/rate`;
 
     const response = await fetch(url, {
-      headers: getOpenAIHeaders(session, id),
+      headers: getOpenAIHeaders(session, key, id),
       method: 'POST',
       body: JSON.stringify({
         model: model.id,
