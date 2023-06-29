@@ -4,7 +4,6 @@ import { getServerSession } from 'next-auth/next';
 
 import { getOpenAIHeaders } from '../../utils/server/getHeaders';
 import {
-  BEDROCK_ACCESS,
   BEDROCK_HOST,
   OPENAI_API_HOST,
   OPENAI_API_TYPE,
@@ -62,10 +61,6 @@ async function getBedrockModels(session: Session, key: string): Promise<any[]> {
 
   if (!email) {
     throw new Error('Unknown user');
-  }
-
-  if (!BEDROCK_ACCESS.includes(email)) {
-    throw new Error('Access denied');
   }
 
   let url = `${BEDROCK_HOST}/openai/models`;
