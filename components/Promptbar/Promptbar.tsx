@@ -7,6 +7,7 @@ import { useCreateReducer } from '@/hooks/useCreateReducer';
 import { exportPrompts, importPrompts } from '@/utils/app/importExport';
 import { savePrompts } from '@/utils/app/prompts';
 
+import { FolderInterface } from '@/types/folder';
 import { OpenAIModels } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
@@ -31,7 +32,7 @@ const Promptbar = () => {
   });
 
   const {
-    state: { prompts, defaultModelId, showPromptbar },
+    state: { prompts, defaultModelId, showPromptbar, folders },
     dispatch: homeDispatch,
     handleCreateFolder,
   } = useContext(HomeContext);
@@ -76,6 +77,19 @@ const Promptbar = () => {
     const emptyPromptsStringified = JSON.stringify([]);
     homeDispatch({ field: 'prompts', value: [] });
     localStorage.setItem('prompts', emptyPromptsStringified);
+
+    const folders = localStorage.getItem('folders');
+
+    if (folders) {
+      const parsedFolders: FolderInterface[] = JSON.parse(folders);
+
+      const filteredFolders = parsedFolders.filter(
+        ({ type }) => type !== 'prompt',
+      );
+      const filteredFoldersStringified = JSON.stringify(filteredFolders);
+      homeDispatch({ field: 'folders', value: filteredFolders });
+      localStorage.setItem('folders', filteredFoldersStringified);
+    }
   };
 
   const handleUpdatePrompt = (prompt: Prompt) => {
@@ -161,6 +175,7 @@ const Promptbar = () => {
           />
         }
         folderComponent={<PromptFolders />}
+        folders={folders}
         items={filteredPrompts}
         searchTerm={searchTerm}
         handleSearchTerm={(searchTerm: string) =>
