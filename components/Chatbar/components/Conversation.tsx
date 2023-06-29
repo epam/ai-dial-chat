@@ -177,7 +177,8 @@ export const ConversationComponent = ({ conversation }: Props) => {
 
       {selectedConversationIds.includes(conversation.id) &&
         !isDeleting &&
-        !isRenaming && (
+        !isRenaming &&
+        !messageIsStreaming && (
           <div
             className="absolute right-1 z-100 flex text-gray-300"
             ref={wrapperRef}
