@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 
 import { useTranslation } from 'next-i18next';
 
@@ -10,10 +11,15 @@ import {
   saveSelectedConversationIds,
 } from '@/utils/app/conversation';
 import { saveFolders } from '@/utils/app/folders';
-import { exportData, exportItem, importData } from '@/utils/app/importExport';
+import {
+  CleanDataResponse,
+  exportConversation,
+  exportConversations,
+  importData,
+} from '@/utils/app/importExport';
 
 import { Conversation, Replay } from '@/types/chat';
-import { LatestExportFormat, SupportedExportFormats } from '@/types/export';
+import { SupportedExportFormats } from '@/types/export';
 import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -26,6 +32,7 @@ import Sidebar from '../Sidebar';
 import ChatbarContext from './Chatbar.context';
 import { ChatbarInitialState, initialState } from './Chatbar.state';
 
+import { errorsMessages } from '@/constants/errors';
 import { v4 as uuidv4 } from 'uuid';
 
 export const Chatbar = () => {
@@ -69,27 +76,32 @@ export const Chatbar = () => {
     [homeDispatch],
   );
 
-  const handleExportData = () => {
-    exportData();
+  const handleExportConversations = () => {
+    exportConversations();
   };
 
-  const handleExportItem = (conversationId: string) => {
-    exportItem(conversationId);
+  const handleExportConversation = (conversationId: string) => {
+    exportConversation(conversationId);
   };
 
   const handleImportConversations = (data: SupportedExportFormats) => {
-    const { history, folders, prompts }: LatestExportFormat = importData(data);
-    homeDispatch({ field: 'conversations', value: history });
-    homeDispatch({
-      field: 'selectedConversationIds',
-      value: [history[history.length - 1].id],
-    });
-    homeDispatch({
-      field: 'isCompareMode',
-      value: false,
-    });
-    homeDispatch({ field: 'folders', value: folders });
-    homeDispatch({ field: 'prompts', value: prompts });
+    const { history, folders, prompts, isError }: CleanDataResponse =
+      importData(data);
+    if (isError) {
+      toast.error(t(errorsMessages.unsupportedDataFormat));
+    } else {
+      homeDispatch({ field: 'conversations', value: history });
+      homeDispatch({
+        field: 'selectedConversationIds',
+        value: [history[history.length - 1].id],
+      });
+      homeDispatch({
+        field: 'isCompareMode',
+        value: false,
+      });
+      homeDispatch({ field: 'folders', value: folders });
+      homeDispatch({ field: 'prompts', value: prompts });
+    }
   };
 
   const handleClearConversations = () => {
@@ -104,9 +116,12 @@ export const Chatbar = () => {
       replay: defaultReplay,
     };
 
+    const newConversations: Conversation[] = [newConversation];
+    const newSelectedConversationIds: string[] = [newConversation.id];
+
     homeDispatch({
       field: 'selectedConversationIds',
-      value: [newConversation.id],
+      value: newSelectedConversationIds,
     });
     homeDispatch({
       field: 'isCompareMode',
@@ -115,7 +130,7 @@ export const Chatbar = () => {
     defaultModelId &&
       homeDispatch({
         field: 'conversations',
-        value: [newConversation],
+        value: newConversations,
       });
 
     localStorage.removeItem('conversationHistory');
@@ -214,8 +229,8 @@ export const Chatbar = () => {
         handleDeleteConversation,
         handleClearConversations,
         handleImportConversations,
-        handleExportData,
-        handleExportItem,
+        handleExportConversations,
+        handleExportConversation,
         handleApiKeyChange,
       }}
     >
@@ -226,6 +241,7 @@ export const Chatbar = () => {
         addItemButtonTitle={t('New chat')}
         itemComponent={<Conversations conversations={filteredConversations} />}
         folderComponent={<ChatFolders searchTerm={searchTerm} />}
+        folders={folders}
         items={filteredConversations}
         searchTerm={searchTerm}
         handleSearchTerm={(searchTerm: string) =>

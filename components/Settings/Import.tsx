@@ -1,24 +1,21 @@
 import { IconFileImport } from '@tabler/icons-react';
 import { FC, useRef } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
-import { SupportedExportFormats } from '@/types/export';
-
+import { ImportConversationsHandler } from '../Chatbar/Chatbar.context';
+import { ImportPromptsHandler } from '../Promptbar/PromptBar.context';
 import { SidebarButton } from '../Sidebar/SidebarButton';
 
 interface Props {
-  onImport: (data: SupportedExportFormats) => void;
+  text: string;
+  onImport: ImportConversationsHandler | ImportPromptsHandler;
 }
 
-export const Import: FC<Props> = ({ onImport }) => {
-  const { t } = useTranslation('sidebar');
-  const ref = useRef(null);
+export const Import: FC<Props> = ({ onImport, text }) => {
+  const ref = useRef<HTMLInputElement>(null);
   return (
     <>
       <input
         ref={ref}
-        id="import-file"
         className="sr-only"
         tabIndex={-1}
         type="file"
@@ -38,12 +35,10 @@ export const Import: FC<Props> = ({ onImport }) => {
       />
 
       <SidebarButton
-        text={t('Import conversations')}
+        text={text}
         icon={<IconFileImport size={18} />}
         onClick={() => {
-          const importFile = document.querySelector(
-            '#import-file',
-          ) as HTMLInputElement;
+          const importFile = ref.current;
           if (importFile) {
             importFile.click();
           }
