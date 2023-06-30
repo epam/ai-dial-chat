@@ -67,6 +67,8 @@ export const Chatbar = () => {
     activeReplayIndex: 0,
   };
 
+  const chatFolders = folders.filter(({ type }) => type === 'chat');
+
   const handleApiKeyChange = useCallback(
     (apiKey: string) => {
       homeDispatch({ field: 'apiKey', value: apiKey });
@@ -172,6 +174,7 @@ export const Chatbar = () => {
         folderId: null,
         replay: defaultReplay,
       };
+
       defaultModelId &&
         homeDispatch({
           field: 'conversations',
@@ -181,8 +184,9 @@ export const Chatbar = () => {
         field: 'selectedConversationIds',
         value: [newConversation.id],
       });
-
       localStorage.removeItem('selectedConversationIds');
+      saveConversations([newConversation]);
+      saveSelectedConversationIds([newConversation.id]);
     }
     homeDispatch({
       field: 'isCompareMode',
@@ -243,7 +247,7 @@ export const Chatbar = () => {
         addItemButtonTitle={t('New chat')}
         itemComponent={<Conversations conversations={filteredConversations} />}
         folderComponent={<ChatFolders searchTerm={searchTerm} />}
-        folders={folders}
+        folders={chatFolders}
         items={filteredConversations}
         searchTerm={searchTerm}
         handleSearchTerm={(searchTerm: string) =>
