@@ -84,29 +84,28 @@ const getDefaultSVG = (height: number, width: number) => {
   </svg>`;
 };
 
-const defaultConfig: ChatAIOverlayConfigModel = {
-  domain: '',
-  position: getPosition()['right-bottom'],
-  showButtonIcon: true,
-  allowFulscreenDesktop: false,
-  overlayHeight: 380,
-  overlayWidth: 540,
-  iconBgColor: '#444654',
-  iconColor: 'white',
-  iconHeight: 60,
-  iconWidth: 60,
-  iconSvg: getDefaultSVG(45, 45),
-  overlayZIndex: '5',
-  onLoad: (chatAIOverlay: ChatAIOverlay) => {},
-};
-
 export default class ChatAIOverlay {
   public overlayShowed = false;
   private overlay: HTMLElement | undefined;
   private button: HTMLElement | undefined;
   private initialPosition: PositionConfigValue | undefined;
   private position: PositionModel = getPosition()['right-bottom'];
-  private config: ChatAIOverlayConfigModel = defaultConfig;
+  private defaultConfig: ChatAIOverlayConfigModel = {
+    domain: '',
+    position: getPosition()['right-bottom'],
+    showButtonIcon: true,
+    allowFulscreenDesktop: false,
+    overlayHeight: 380,
+    overlayWidth: 540,
+    iconBgColor: '#444654',
+    iconColor: 'white',
+    iconHeight: 60,
+    iconWidth: 60,
+    iconSvg: getDefaultSVG(45, 45),
+    overlayZIndex: '5',
+    onLoad: (chatAIOverlay: ChatAIOverlay) => {},
+  };
+  private config: ChatAIOverlayConfigModel;
   private isMobileView = this.getIsMobileView();
   private iframe: HTMLIFrameElement | undefined;
   private listenerAbortController = new AbortController();
@@ -139,25 +138,25 @@ export default class ChatAIOverlay {
 
     if (typeof config === 'string') {
       this.config = {
-        ...defaultConfig,
+        ...this.defaultConfig,
         domain: config,
       };
     } else {
       if (!config.domain) {
         throw Error('No domain provided for ChatAIOverlay');
       }
-      this.initialPosition = config.position;
+      this.initialPosition = config.position || 'right-bottom';
       this.config = {
-        ...defaultConfig,
+        ...this.defaultConfig,
         ...config,
         position:
           (config.position && getPosition()[config.position]) ||
-          defaultConfig.position,
+          this.defaultConfig.position,
         iconSvg:
           config.iconSvg ??
           getDefaultSVG(
-            (config.iconHeight ?? defaultConfig.iconHeight) - 15,
-            (config.iconWidth ?? defaultConfig.iconWidth) - 15,
+            (config.iconHeight ?? this.defaultConfig.iconHeight) - 15,
+            (config.iconWidth ?? this.defaultConfig.iconWidth) - 15,
           ),
       };
     }
