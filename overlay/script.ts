@@ -17,6 +17,7 @@ export interface ChatAIOverlayInitialConfigModel {
   position?: PositionConfigValue;
   overlayWidth?: number;
   overlayHeight?: number;
+  overlayZIndex?: string;
   // True by default
   showButtonIcon?: boolean;
   allowFulscreenDesktop?: boolean;
@@ -85,21 +86,45 @@ const defaultConfig: ChatAIOverlayConfigModel = {
   iconHeight: 60,
   iconWidth: 60,
   iconSvg: getDefaultSVG(45, 45),
+  overlayZIndex: '5',
   onLoad: (chatAIOverlay: ChatAIOverlay) => {},
 };
 
 export default class ChatAIOverlay {
   public overlayShowed = false;
   private overlay: HTMLElement | undefined;
+  private button: HTMLElement | undefined;
   private position: PositionModel = Positions['right-bottom'];
   private config: ChatAIOverlayConfigModel = defaultConfig;
-  private isMobileView = window.matchMedia('(max-width: 768px)').matches;
+  private isMobileView = this.getIsMobileView();
   private iframe: HTMLIFrameElement | undefined;
+  private listenerAbortController = new AbortController();
 
   constructor(config: string | ChatAIOverlayInitialConfigModel) {
     if (!config) {
       throw Error('No config provided for ChatAIOverlay');
     }
+
+    window.addEventListener(
+      'orientationchange',
+      () => {
+        this.isMobileView = this.getIsMobileView();
+        if (this.overlay) {
+          this.updateOverlay(this.overlay);
+        }
+      },
+      { signal: this.listenerAbortController.signal },
+    );
+    window.addEventListener(
+      'resize',
+      () => {
+        this.isMobileView = this.getIsMobileView();
+        if (this.overlay) {
+          this.updateOverlay(this.overlay);
+        }
+      },
+      { signal: this.listenerAbortController.signal },
+    );
 
     if (typeof config === 'string') {
       this.config = {
@@ -132,6 +157,12 @@ export default class ChatAIOverlay {
     document.body.appendChild(this.overlay);
   }
 
+  public unload(): void {
+    this.listenerAbortController.abort();
+    this.overlay?.remove();
+    this.button?.remove();
+  }
+
   public closeChat(): void {
     if (!this.overlay) {
       return;
@@ -154,6 +185,15 @@ export default class ChatAIOverlay {
 
   public toggleChat(): void {
     this.overlayShowed ? this.closeChat() : this.openChat();
+  }
+
+  private getIsMobileView() {
+    return (
+      (window.matchMedia('(orientation:landscape)').matches &&
+        window.matchMedia('(max-height: 768px)').matches) ||
+      (window.matchMedia('(orientation:portrait)').matches &&
+        window.matchMedia('(max-width: 768px)').matches)
+    );
   }
 
   private openFullscreen(): void {
@@ -250,9 +290,9 @@ export default class ChatAIOverlay {
     iframe.sandbox.add('allow-forms');
     iframe.onload = () => {
       if (this.config.showButtonIcon) {
-        const button = this.createOverlayButton(this.position);
-        button.addEventListener('click', () => this.toggleChat());
-        document.body.appendChild(button);
+        this.button = this.createOverlayButton(this.position);
+        this.button.addEventListener('click', () => this.toggleChat());
+        document.body.appendChild(this.button);
       }
 
       if (this.config.onLoad) {
@@ -263,7 +303,11 @@ export default class ChatAIOverlay {
   }
 
   private createOverlay() {
-    const overlay = document.createElement('div');
+    let overlay = document.createElement('div');
+    return this.updateOverlay(overlay);
+  }
+
+  private updateOverlay(overlay: HTMLElement) {
     const mobileHeight = window.innerHeight;
     this.setStyles(overlay, {
       transition: 'transform 0.5s ease',
@@ -273,12 +317,13 @@ export default class ChatAIOverlay {
       left: this.isMobileView ? '0' : this.config.position.left,
       right: this.isMobileView ? '0' : this.config.position.right,
       transform: `scale(0.5) ${this.config.position.transform}`,
-      zIndex: '2',
+      zIndex: this.config.overlayZIndex,
       width: this.isMobileView ? '100vw' : `${this.config.overlayWidth}px`,
       height: this.isMobileView
         ? `${mobileHeight}px`
         : `${this.config.overlayHeight}px`,
     });
+
     return overlay;
   }
 
