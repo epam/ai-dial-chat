@@ -5,7 +5,7 @@ export const DEFAULT_SYSTEM_PROMPT =
 export const OPENAI_API_HOST =
   process.env.OPENAI_API_HOST || 'https://api.openai.com';
 
-export const DEFAULT_TEMPERATURE = 
+export const DEFAULT_TEMPERATURE =
   parseFloat(process.env.NEXT_PUBLIC_DEFAULT_TEMPERATURE || "1");
 
 export const OPENAI_API_TYPE =
@@ -24,3 +24,6 @@ export const GOOGLE_MAX_OUTPUT_TOKENS = +(process.env.GOOGLE_AI_MAX_OUTPUT_TOKEN
 export const GOOGLE_TOP_P = +(process.env.GOOGLE_AI_TOP_P ?? 0.8);
 
 export const GOOGLE_TOP_K = +(process.env.GOOGLE_AI_TOP_K ?? 40);
+
+export const BEDROCK_HOST =
+  process.env.BEDROCK_HOST || "http://openai-bedrock-adapter.openai-bedrock-adapter";

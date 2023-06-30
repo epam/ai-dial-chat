@@ -624,15 +624,18 @@ export const getServerSideProps: GetServerSideProps = async ({
     process.env.FOOTER_HTML_MESSAGE ?? ''
   ).replace('%%VERSION%%', packageJSON.version);
 
-  const modelIconMap = (process.env.MODEL_ICON_MAPPING || '')
-    .split(',')
-    .reduce<Record<string, string>>((acc, modelIcon) => {
+  let modelIconMap: Record<string, string> = {};
+  if (process.env.MODEL_ICON_MAPPING) {
+    modelIconMap = process.env.MODEL_ICON_MAPPING.split(',').reduce<
+      Record<string, string>
+    >((acc, modelIcon) => {
       const [modelId, iconClass] = modelIcon.split('=');
 
       acc[modelId] = iconClass;
 
       return acc;
     }, {});
+  }
 
   return {
     props: {

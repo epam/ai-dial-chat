@@ -74,8 +74,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       tokens_per_message = 5;
     } else if (
       model.id == OpenAIModelID.GPT_4 ||
-      model.name == OpenAIModelID.GPT_4_32K ||
-      model.name === OpenAIModelID.BISON_001
+      model.id == OpenAIModelID.GPT_4_32K ||
+      model.id === OpenAIModelID.BISON_001
     ) {
       tokens_per_message = 4;
     }
