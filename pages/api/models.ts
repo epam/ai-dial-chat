@@ -60,12 +60,6 @@ async function getOpenAIModels(session: Session | null, key: string): Promise<an
 }
 
 async function getBedrockModels(session: Session | null, key: string): Promise<any[]> {
-  const email = session?.user?.email;
-
-  if (!email) {
-    throw new Error('Unknown user');
-  }
-
   let url = `${BEDROCK_HOST}/openai/models`;
 
   const errMsg = 'Request for Bedrock models returned an error';
