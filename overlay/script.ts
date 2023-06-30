@@ -145,7 +145,7 @@ export default class ChatAIOverlay {
       if (!config.domain) {
         throw Error('No domain provided for ChatAIOverlay');
       }
-      this.initialPosition = config.position;
+      this.initialPosition = config.position || 'right-bottom';
       this.config = {
         ...this.defaultConfig,
         ...config,
