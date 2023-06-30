@@ -93,28 +93,38 @@ const defaultConfig: ChatAIOverlayConfigModel = {
 export default class ChatAIOverlay {
   public overlayShowed = false;
   private overlay: HTMLElement | undefined;
+  private button: HTMLElement | undefined;
   private position: PositionModel = Positions['right-bottom'];
   private config: ChatAIOverlayConfigModel = defaultConfig;
   private isMobileView = this.getIsMobileView();
   private iframe: HTMLIFrameElement | undefined;
+  private listenerAbortController = new AbortController();
 
   constructor(config: string | ChatAIOverlayInitialConfigModel) {
     if (!config) {
       throw Error('No config provided for ChatAIOverlay');
     }
 
-    window.addEventListener('orientationchange', () => {
-      this.isMobileView = this.getIsMobileView();
-      if (this.overlay) {
-        this.updateOverlay(this.overlay);
-      }
-    });
-    window.addEventListener('resize', () => {
-      this.isMobileView = this.getIsMobileView();
-      if (this.overlay) {
-        this.updateOverlay(this.overlay);
-      }
-    });
+    window.addEventListener(
+      'orientationchange',
+      () => {
+        this.isMobileView = this.getIsMobileView();
+        if (this.overlay) {
+          this.updateOverlay(this.overlay);
+        }
+      },
+      { signal: this.listenerAbortController.signal },
+    );
+    window.addEventListener(
+      'resize',
+      () => {
+        this.isMobileView = this.getIsMobileView();
+        if (this.overlay) {
+          this.updateOverlay(this.overlay);
+        }
+      },
+      { signal: this.listenerAbortController.signal },
+    );
 
     if (typeof config === 'string') {
       this.config = {
@@ -145,6 +155,12 @@ export default class ChatAIOverlay {
     this.overlay = this.createOverlayElements();
 
     document.body.appendChild(this.overlay);
+  }
+
+  public unload(): void {
+    this.listenerAbortController.abort();
+    this.overlay?.remove();
+    this.button?.remove();
   }
 
   public closeChat(): void {
@@ -274,9 +290,9 @@ export default class ChatAIOverlay {
     iframe.sandbox.add('allow-forms');
     iframe.onload = () => {
       if (this.config.showButtonIcon) {
-        const button = this.createOverlayButton(this.position);
-        button.addEventListener('click', () => this.toggleChat());
-        document.body.appendChild(button);
+        this.button = this.createOverlayButton(this.position);
+        this.button.addEventListener('click', () => this.toggleChat());
+        document.body.appendChild(this.button);
       }
 
       if (this.config.onLoad) {
