@@ -92,14 +92,14 @@ export const OpenAIModels: Record<OpenAIModelID, OpenAIModel> = {
     id: OpenAIModelID.AI21_J2_GRANDE_INSTRUCT,
     name: 'Jurassic-2 Grande',
     maxLength: 24000,
-    tokenLimit: 8191,
+    tokenLimit: 8000,
     requestLimit: 6000,
   },
   [OpenAIModelID.AI21_J2_JUMBO_INSTRUCT]: {
     id: OpenAIModelID.AI21_J2_JUMBO_INSTRUCT,
     name: 'Jurassic-2 Jumbo',
     maxLength: 24000,
-    tokenLimit: 8191,
+    tokenLimit: 8000,
     requestLimit: 6000,
   },
   [OpenAIModelID.ANTHROPIC_CLAUDE_INSTANT_V1]: {
