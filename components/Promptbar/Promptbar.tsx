@@ -1,10 +1,14 @@
 import { useContext, useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
+import { exportPrompts, importPrompts } from '@/utils/app/importExport';
 import { savePrompts } from '@/utils/app/prompts';
 
+import { PromptsHistory } from '@/types/export';
+import { FolderInterface } from '@/types/folder';
 import { OpenAIModels } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
@@ -18,6 +22,7 @@ import Sidebar from '../Sidebar';
 import PromptbarContext from './PromptBar.context';
 import { PromptbarInitialState, initialState } from './Promptbar.state';
 
+import { errorsMessages } from '@/constants/errors';
 import { v4 as uuidv4 } from 'uuid';
 
 const Promptbar = () => {
@@ -28,7 +33,7 @@ const Promptbar = () => {
   });
 
   const {
-    state: { prompts, defaultModelId, showPromptbar },
+    state: { prompts, defaultModelId, showPromptbar, folders },
     dispatch: homeDispatch,
     handleCreateFolder,
   } = useContext(HomeContext);
@@ -37,6 +42,8 @@ const Promptbar = () => {
     state: { searchTerm, filteredPrompts },
     dispatch: promptDispatch,
   } = promptBarContextValue;
+
+  const promptFolders = folders.filter(({ type }) => type === 'prompt');
 
   const handleTogglePromptbar = () => {
     homeDispatch({ field: 'showPromptbar', value: !showPromptbar });
@@ -69,6 +76,25 @@ const Promptbar = () => {
     savePrompts(updatedPrompts);
   };
 
+  const handleClearAllPrompts = () => {
+    const emptyPromptsStringified = JSON.stringify([]);
+    homeDispatch({ field: 'prompts', value: [] });
+    localStorage.setItem('prompts', emptyPromptsStringified);
+
+    const folders = localStorage.getItem('folders');
+
+    if (folders) {
+      const parsedFolders: FolderInterface[] = JSON.parse(folders);
+
+      const filteredFolders = parsedFolders.filter(
+        ({ type }) => type !== 'prompt',
+      );
+      const filteredFoldersStringified = JSON.stringify(filteredFolders);
+      homeDispatch({ field: 'folders', value: filteredFolders });
+      localStorage.setItem('folders', filteredFoldersStringified);
+    }
+  };
+
   const handleUpdatePrompt = (prompt: Prompt) => {
     const updatedPrompts = prompts.map((p) => {
       if (p.id === prompt.id) {
@@ -94,6 +120,21 @@ const Promptbar = () => {
       handleUpdatePrompt(updatedPrompt);
 
       e.target.style.background = 'none';
+    }
+  };
+
+  const handleExportPrompts = () => {
+    exportPrompts();
+  };
+
+  const handleImportPrompts = (promptsJSON: PromptsHistory) => {
+    const { prompts, folders, isError } = importPrompts(promptsJSON);
+
+    if (isError) {
+      toast.error(t(errorsMessages.unsupportedDataFormat));
+    } else {
+      homeDispatch({ field: 'prompts', value: prompts });
+      homeDispatch({ field: 'folders', value: folders });
     }
   };
 
@@ -123,6 +164,9 @@ const Promptbar = () => {
         handleCreatePrompt,
         handleDeletePrompt,
         handleUpdatePrompt,
+        handleExportPrompts,
+        handleImportPrompts,
+        handleClearAllPrompts,
       }}
     >
       <Sidebar<Prompt>
@@ -135,6 +179,7 @@ const Promptbar = () => {
           />
         }
         folderComponent={<PromptFolders />}
+        folders={promptFolders}
         items={filteredPrompts}
         searchTerm={searchTerm}
         handleSearchTerm={(searchTerm: string) =>
@@ -144,6 +189,7 @@ const Promptbar = () => {
         handleCreateItem={handleCreatePrompt}
         handleCreateFolder={() => handleCreateFolder(t('New folder'), 'prompt')}
         handleDrop={handleDrop}
+        footerComponent={<PromptbarSettings allPrompts={prompts} />}
       />
     </PromptbarContext.Provider>
   );

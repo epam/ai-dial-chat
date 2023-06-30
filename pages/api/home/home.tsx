@@ -12,10 +12,7 @@ import { useCreateReducer } from '@/hooks/useCreateReducer';
 import useErrorService from '@/services/errorService';
 import useApiService from '@/services/useApiService';
 
-import {
-  cleanConversationHistory,
-  cleanSelectedConversation,
-} from '@/utils/app/clean';
+import { cleanConversationHistory } from '@/utils/app/clean';
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
 import {
   saveConversations,
@@ -26,10 +23,16 @@ import { saveFolders } from '@/utils/app/folders';
 import { savePrompts } from '@/utils/app/prompts';
 import { getSettings } from '@/utils/app/settings';
 
-import { Conversation, Message, Replay } from '@/types/chat';
+import { Conversation, Replay } from '@/types/chat';
 import { KeyValuePair } from '@/types/data';
+import { Feature } from '@/types/features';
 import { FolderInterface, FolderType } from '@/types/folder';
-import { OpenAIModelID, OpenAIModels, fallbackModelID } from '@/types/openai';
+import {
+  OpenAIModel,
+  OpenAIModelID,
+  OpenAIModels,
+  fallbackModelID,
+} from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 import { Chat } from '@/components/Chat/Chat';
@@ -48,25 +51,32 @@ interface Props {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   usePluginKeys: boolean;
-  defaultModelId: OpenAIModelID;
   isShowFooter: boolean;
   isShowRequestApiKey: boolean;
   isShowReportAnIssue: boolean;
   appName: string;
   footerHtmlMessage: string;
+  enabledFeatures: Feature[];
+  isIframe: boolean;
+  modelIconMapping: string;
+  defaultModelId: OpenAIModelID;
 }
 
 const Home = ({
   serverSideApiKeyIsSet,
   serverSidePluginKeysSet,
   usePluginKeys,
-  defaultModelId,
   appName,
   isShowFooter,
   isShowRequestApiKey,
   isShowReportAnIssue,
   footerHtmlMessage,
+  enabledFeatures,
+  isIframe,
+  modelIconMapping,
+  defaultModelId,
 }: Props) => {
+  const enabledFeaturesSet = new Set(enabledFeatures);
   const { t } = useTranslation('chat');
   const { getModels } = useApiService();
   const { getModelsError } = useErrorService();
@@ -86,7 +96,7 @@ const Home = ({
       conversations,
       selectedConversationIds,
       prompts,
-      temperature,
+      defaultModelId: clientDefaultModelId,
     },
     dispatch,
   } = contextValue;
@@ -109,7 +119,15 @@ const Home = ({
   );
 
   useEffect(() => {
-    if (data) dispatch({ field: 'models', value: data });
+    if (data) {
+      dispatch({ field: 'models', value: data });
+
+      const defaultModelId = (data as any as OpenAIModel[]).find(
+        (model) => model.isDefault,
+      )?.id;
+
+      dispatch({ field: 'defaultModelId', value: defaultModelId });
+    }
   }, [data, dispatch]);
 
   useEffect(() => {
@@ -214,12 +232,12 @@ const Home = ({
     dispatch({ field: 'conversations', value: updatedConversations });
 
     saveConversations(updatedConversations);
-
-    dispatch({ field: 'loading', value: false });
   };
 
   const addNewConversationToStore = (newConversation: Conversation) => {
     const updatedConversations = [...conversations, newConversation];
+
+    updateAllConversationsStore(updatedConversations);
 
     dispatch({
       field: 'selectedConversationIds',
@@ -231,8 +249,6 @@ const Home = ({
     });
 
     saveSelectedConversationIds([newConversation.id]);
-
-    updateAllConversationsStore(updatedConversations);
   };
 
   const defaultReplay: Replay = {
@@ -241,17 +257,22 @@ const Home = ({
     activeReplayIndex: 0,
   };
   const handleNewConversation = (name = 'New Conversation') => {
+    if (!clientDefaultModelId) {
+      return;
+    }
+
     const lastConversation = conversations[conversations.length - 1];
 
     const newConversation: Conversation = {
       id: uuidv4(),
       name: t(name),
       messages: [],
-      model: lastConversation?.model || {
-        id: OpenAIModels[defaultModelId].id,
-        name: OpenAIModels[defaultModelId].name,
-        maxLength: OpenAIModels[defaultModelId].maxLength,
-        tokenLimit: OpenAIModels[defaultModelId].tokenLimit,
+      model: {
+        id: OpenAIModels[clientDefaultModelId].id,
+        name: OpenAIModels[clientDefaultModelId].name,
+        maxLength: OpenAIModels[clientDefaultModelId].maxLength,
+        tokenLimit: OpenAIModels[clientDefaultModelId].tokenLimit,
+        requestLimit: OpenAIModels[clientDefaultModelId].requestLimit,
       },
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
@@ -315,7 +336,10 @@ const Home = ({
 
   useEffect(() => {
     defaultModelId &&
-      dispatch({ field: 'defaultModelId', value: defaultModelId });
+      dispatch({
+        field: 'defaultModelId',
+        value: defaultModelId,
+      });
     serverSideApiKeyIsSet &&
       dispatch({
         field: 'serverSideApiKeyIsSet',
@@ -353,8 +377,24 @@ const Home = ({
         field: 'footerHtmlMessage',
         value: footerHtmlMessage,
       });
+    enabledFeaturesSet &&
+      dispatch({
+        field: 'enabledFeatures',
+        value: enabledFeaturesSet,
+      });
+    isIframe &&
+      dispatch({
+        field: 'isIframe',
+        value: isIframe,
+      });
+    modelIconMapping &&
+      dispatch({
+        field: 'modelIconMapping',
+        value: modelIconMapping,
+      });
   }, [
     defaultModelId,
+    modelIconMapping,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
     usePluginKeys,
@@ -362,6 +402,7 @@ const Home = ({
     isShowReportAnIssue,
     isShowRequestApiKey,
     footerHtmlMessage,
+    enabledFeatures,
   ]);
 
   // ON LOAD --------------------------------------------
@@ -450,6 +491,7 @@ const Home = ({
     } else {
       const lastConversation =
         cleanedConversationHistory[conversations.length - 1];
+
       const newConversation: Conversation = {
         id: uuidv4(),
         name: t('New Conversation'),
@@ -460,14 +502,17 @@ const Home = ({
         folderId: null,
         replay: defaultReplay,
       };
+
+      const updatedConversations: Conversation[] =
+        cleanedConversationHistory.concat(newConversation);
+
       dispatch({
         field: 'selectedConversationIds',
         value: [newConversation.id],
       });
-      dispatch({
-        field: 'conversations',
-        value: [...cleanedConversationHistory, newConversation],
-      });
+
+      updateAllConversationsStore(updatedConversations);
+      saveSelectedConversationIds([newConversation.id]);
     }
   }, [
     defaultModelId,
@@ -513,15 +558,21 @@ const Home = ({
         <main
           className={`flex h-screen w-screen flex-col text-sm text-white dark:text-white ${lightMode}`}
         >
-          <div className="fixed top-0 w-full sm:hidden">
-            <Navbar
-              selectedConversationNames={selectedConversationNames}
-              onNewConversation={handleNewConversation}
-            />
-          </div>
+          {enabledFeaturesSet.has('conversations-section') && (
+            <div className="fixed top-0 w-full sm:hidden">
+              <Navbar
+                selectedConversationNames={selectedConversationNames}
+                onNewConversation={handleNewConversation}
+              />
+            </div>
+          )}
 
-          <div className="flex h-full w-full pt-[48px] sm:pt-0">
-            <Chatbar />
+          <div
+            className={`flex h-full w-full sm:pt-0 ${
+              enabledFeaturesSet.has('conversations-section') ? 'pt-[48px]' : ''
+            }`}
+          >
+            {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
 
             <div className="flex flex-1">
               <Chat
@@ -530,7 +581,7 @@ const Home = ({
               />
             </div>
 
-            <Promptbar />
+            {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
           </div>
         </main>
       )}
@@ -544,8 +595,14 @@ export const getServerSideProps: GetServerSideProps = async ({
   req,
   res,
 }) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    process.env.ALLOWED_IFRAME_ORIGINS
+      ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
+      : 'frame-ancestors none',
+  );
   const session = await getServerSession(req, res, authOptions);
-  if (!session) {
+  if (process.env.AUTH_DISABLED !== 'true' && !session) {
     return {
       redirect: {
         permanent: false,
@@ -553,14 +610,6 @@ export const getServerSideProps: GetServerSideProps = async ({
       },
     };
   }
-
-  const defaultModelId =
-    (process.env.DEFAULT_MODEL &&
-      Object.values(OpenAIModelID).includes(
-        process.env.DEFAULT_MODEL as OpenAIModelID,
-      ) &&
-      process.env.DEFAULT_MODEL) ||
-    fallbackModelID;
 
   let serverSidePluginKeysSet = false;
 
@@ -575,19 +624,34 @@ export const getServerSideProps: GetServerSideProps = async ({
     process.env.FOOTER_HTML_MESSAGE ?? ''
   ).replace('%%VERSION%%', packageJSON.version);
 
+  let modelIconMap: Record<string, string> = {};
+  if (process.env.MODEL_ICON_MAPPING) {
+    modelIconMap = process.env.MODEL_ICON_MAPPING.split(',').reduce<
+      Record<string, string>
+    >((acc, modelIcon) => {
+      const [modelId, iconClass] = modelIcon.split('=');
+
+      acc[modelId] = iconClass;
+
+      return acc;
+    }, {});
+  }
+
   return {
     props: {
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
       usePluginKeys: !!process.env.NEXT_PUBLIC_ENABLE_PLUGIN_KEYS,
-      defaultModelId,
       serverSidePluginKeysSet,
       appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
-
+      modelIconMapping: modelIconMap,
       // Footer variables
       isShowFooter: process.env.SHOW_FOOTER === 'true',
       isShowRequestApiKey: process.env.SHOW_REQUEST_API_KEY === 'true',
       isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
       footerHtmlMessage: updatedFooterHTMLMessage,
+      enabledFeatures: (process.env.ENABLED_FEATURES || '').split(','),
+      isIframe: process.env.IS_IFRAME === 'true' || false,
+      defaultModelId: process.env.DEFAULT_MODEL || fallbackModelID,
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',

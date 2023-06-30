@@ -33,6 +33,8 @@ export interface Props {
   message: Message;
   messageIndex: number;
   conversation: Conversation;
+  isLikesEnabled: boolean;
+  editDisabled: boolean;
   onEdit: (editedMessage: Message) => void;
   onLike: (editedMessage: Message) => void;
   onDelete: (deletedMessage: Message) => void;
@@ -59,7 +61,16 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
 };
 
 export const ChatMessage: FC<Props> = memo(
-  ({ message, messageIndex, conversation, onEdit, onLike, onDelete }) => {
+  ({
+    message,
+    messageIndex,
+    conversation,
+    isLikesEnabled,
+    editDisabled,
+    onEdit,
+    onLike,
+    onDelete,
+  }) => {
     const { t } = useTranslation('chat');
 
     const {
@@ -216,8 +227,9 @@ export const ChatMessage: FC<Props> = memo(
                 {!isEditing && (
                   <div className="w-[60px] flex flex-col md:flex-row gap-4 md:gap-1 items-center md:items-start justify-end md:justify-start">
                     <button
-                      className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                      className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 disabled:cursor-not-allowed"
                       onClick={toggleEditing}
+                      disabled={editDisabled}
                     >
                       <IconEdit size={20} />
                     </button>
@@ -251,29 +263,33 @@ export const ChatMessage: FC<Props> = memo(
                     )}
                   </div>
                   <div className="bottom-0 right-8 flex flex-row gap-2">
-                    {message.like !== -1 && (
-                      <Button
-                        onClick={message.like !== 1 ? setLike(1) : void 0}
-                        className={
-                          message.like !== 1
-                            ? void 0
-                            : 'visible text-gray-700 dark:text-gray-300'
-                        }
-                      >
-                        <IconThumbUp size={24} />
-                      </Button>
-                    )}
-                    {message.like !== 1 && (
-                      <Button
-                        onClick={message.like !== -1 ? setLike(-1) : void 0}
-                        className={
-                          message.like !== -1
-                            ? void 0
-                            : 'visible text-gray-700 dark:text-gray-300'
-                        }
-                      >
-                        <IconThumbDown size={24} />
-                      </Button>
+                    {isLikesEnabled && (
+                      <>
+                        {message.like !== -1 && (
+                          <Button
+                            onClick={message.like !== 1 ? setLike(1) : void 0}
+                            className={
+                              message.like !== 1
+                                ? void 0
+                                : 'visible text-gray-700 dark:text-gray-300'
+                            }
+                          >
+                            <IconThumbUp size={24} />
+                          </Button>
+                        )}
+                        {message.like !== 1 && (
+                          <Button
+                            onClick={message.like !== -1 ? setLike(-1) : void 0}
+                            className={
+                              message.like !== -1
+                                ? void 0
+                                : 'visible text-gray-700 dark:text-gray-300'
+                            }
+                          >
+                            <IconThumbDown size={24} />
+                          </Button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

@@ -33,19 +33,13 @@ const wasm = readFileSync(
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
-  if (!session) {
+  if (process.env.AUTH_DISABLED !== 'true' && !session) {
     return res.status(401).send(errorsMessages[401]);
   }
 
   try {
-    const {
-      model: _model,
-      messages,
-      key,
-      prompt,
-      temperature,
-      id,
-    } = req.body as ChatBody;
+    const { modelId, messages, key, prompt, temperature, id } =
+      req.body as ChatBody;
 
     await init((imports) => WebAssembly.instantiate(wasm, imports));
     const encoding = new Tiktoken(
@@ -70,7 +64,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     // let messagesToSend: Message[] = [];
 
     const model =
-      OpenAIModels[_model.id as OpenAIModelID] ?? OpenAIModels[fallbackModelID];
+      OpenAIModels[modelId as OpenAIModelID] ?? OpenAIModels[fallbackModelID];
 
     let tokens_per_message = 0;
     if (
@@ -80,8 +74,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       tokens_per_message = 5;
     } else if (
       model.id == OpenAIModelID.GPT_4 ||
-      model.name == OpenAIModelID.GPT_4_32K ||
-      model.name === OpenAIModelID.BISON_001
+      model.id == OpenAIModelID.GPT_4_32K ||
+      model.id === OpenAIModelID.BISON_001
     ) {
       tokens_per_message = 4;
     }
@@ -113,7 +107,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       temperatureToUse,
       key,
       messagesToSend,
-      getHeaders(session, id),
+      (session && getHeaders(session, id)) || {},
       tokenCount,
     );
     res.setHeader('Transfer-Encoding', 'chunked');

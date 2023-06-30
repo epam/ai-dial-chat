@@ -10,6 +10,7 @@ interface Props {
   conversation: Conversation;
   prompts: Prompt[];
   defaultModelId: OpenAIModelID;
+  isShowSettings: boolean;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
   onSelectModel: (modelId: string) => void;
@@ -21,10 +22,11 @@ export const ChatEmpty = ({
   conversation,
   prompts,
   defaultModelId,
+  isShowSettings,
+  appName,
   onChangePrompt,
   onChangeTemperature,
   onSelectModel,
-  appName,
 }: Props) => {
   return (
     <>
@@ -39,7 +41,7 @@ export const ChatEmpty = ({
           )}
         </div>
 
-        {models.length > 0 && (
+        {isShowSettings && models.length > 0 && (
           <ChatEmptySettings
             defaultModelId={defaultModelId}
             models={models}

@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 
 import { useTranslation } from 'next-i18next';
 
@@ -10,10 +11,15 @@ import {
   saveSelectedConversationIds,
 } from '@/utils/app/conversation';
 import { saveFolders } from '@/utils/app/folders';
-import { exportData, exportItem, importData } from '@/utils/app/importExport';
+import {
+  CleanDataResponse,
+  exportConversation,
+  exportConversations,
+  importData,
+} from '@/utils/app/importExport';
 
 import { Conversation, Replay } from '@/types/chat';
-import { LatestExportFormat, SupportedExportFormats } from '@/types/export';
+import { SupportedExportFormats } from '@/types/export';
 import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -26,6 +32,7 @@ import Sidebar from '../Sidebar';
 import ChatbarContext from './Chatbar.context';
 import { ChatbarInitialState, initialState } from './Chatbar.state';
 
+import { errorsMessages } from '@/constants/errors';
 import { v4 as uuidv4 } from 'uuid';
 
 export const Chatbar = () => {
@@ -36,7 +43,13 @@ export const Chatbar = () => {
   });
 
   const {
-    state: { conversations, showChatbar, defaultModelId, folders },
+    state: {
+      conversations,
+      showChatbar,
+      defaultModelId,
+      folders,
+      messageIsStreaming,
+    },
     dispatch: homeDispatch,
     handleCreateFolder,
     handleNewConversation,
@@ -54,6 +67,8 @@ export const Chatbar = () => {
     activeReplayIndex: 0,
   };
 
+  const chatFolders = folders.filter(({ type }) => type === 'chat');
+
   const handleApiKeyChange = useCallback(
     (apiKey: string) => {
       homeDispatch({ field: 'apiKey', value: apiKey });
@@ -63,27 +78,32 @@ export const Chatbar = () => {
     [homeDispatch],
   );
 
-  const handleExportData = () => {
-    exportData();
+  const handleExportConversations = () => {
+    exportConversations();
   };
 
-  const handleExportItem = (conversationId: string) => {
-    exportItem(conversationId);
+  const handleExportConversation = (conversationId: string) => {
+    exportConversation(conversationId);
   };
 
   const handleImportConversations = (data: SupportedExportFormats) => {
-    const { history, folders, prompts }: LatestExportFormat = importData(data);
-    homeDispatch({ field: 'conversations', value: history });
-    homeDispatch({
-      field: 'selectedConversationIds',
-      value: [history[history.length - 1].id],
-    });
-    homeDispatch({
-      field: 'isCompareMode',
-      value: false,
-    });
-    homeDispatch({ field: 'folders', value: folders });
-    homeDispatch({ field: 'prompts', value: prompts });
+    const { history, folders, prompts, isError }: CleanDataResponse =
+      importData(data);
+    if (isError) {
+      toast.error(t(errorsMessages.unsupportedDataFormat));
+    } else {
+      homeDispatch({ field: 'conversations', value: history });
+      homeDispatch({
+        field: 'selectedConversationIds',
+        value: [history[history.length - 1].id],
+      });
+      homeDispatch({
+        field: 'isCompareMode',
+        value: false,
+      });
+      homeDispatch({ field: 'folders', value: folders });
+      homeDispatch({ field: 'prompts', value: prompts });
+    }
   };
 
   const handleClearConversations = () => {
@@ -98,9 +118,12 @@ export const Chatbar = () => {
       replay: defaultReplay,
     };
 
+    const newConversations: Conversation[] = [newConversation];
+    const newSelectedConversationIds: string[] = [newConversation.id];
+
     homeDispatch({
       field: 'selectedConversationIds',
-      value: [newConversation.id],
+      value: newSelectedConversationIds,
     });
     homeDispatch({
       field: 'isCompareMode',
@@ -109,7 +132,7 @@ export const Chatbar = () => {
     defaultModelId &&
       homeDispatch({
         field: 'conversations',
-        value: [newConversation],
+        value: newConversations,
       });
 
     localStorage.removeItem('conversationHistory');
@@ -117,7 +140,9 @@ export const Chatbar = () => {
     const updatedFolders = folders.filter((f) => f.type !== 'chat');
 
     homeDispatch({ field: 'folders', value: updatedFolders });
+    saveConversations(newConversations);
     saveFolders(updatedFolders);
+    saveSelectedConversationIds(newSelectedConversationIds);
   };
 
   const handleDeleteConversation = (conversation: Conversation) => {
@@ -149,6 +174,7 @@ export const Chatbar = () => {
         folderId: null,
         replay: defaultReplay,
       };
+
       defaultModelId &&
         homeDispatch({
           field: 'conversations',
@@ -158,8 +184,9 @@ export const Chatbar = () => {
         field: 'selectedConversationIds',
         value: [newConversation.id],
       });
-
       localStorage.removeItem('selectedConversationIds');
+      saveConversations([newConversation]);
+      saveSelectedConversationIds([newConversation.id]);
     }
     homeDispatch({
       field: 'isCompareMode',
@@ -208,17 +235,19 @@ export const Chatbar = () => {
         handleDeleteConversation,
         handleClearConversations,
         handleImportConversations,
-        handleExportData,
-        handleExportItem,
+        handleExportConversations,
+        handleExportConversation,
         handleApiKeyChange,
       }}
     >
       <Sidebar<Conversation>
         side={'left'}
         isOpen={showChatbar}
+        isNewDisabled={messageIsStreaming}
         addItemButtonTitle={t('New chat')}
         itemComponent={<Conversations conversations={filteredConversations} />}
         folderComponent={<ChatFolders searchTerm={searchTerm} />}
+        folders={chatFolders}
         items={filteredConversations}
         searchTerm={searchTerm}
         handleSearchTerm={(searchTerm: string) =>

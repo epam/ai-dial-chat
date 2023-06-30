@@ -6,16 +6,22 @@ import { useTranslation } from 'next-i18next';
 import { SidebarButton } from '@/components/Sidebar/SidebarButton';
 
 interface Props {
-  onClearConversations: () => void;
+  onClearAll: () => void;
+  translation: string;
+  elementsType: 'conversations' | 'prompts';
 }
 
-export const ClearConversations: FC<Props> = ({ onClearConversations }) => {
+export const ClearAllElements: FC<Props> = ({
+  onClearAll,
+  translation,
+  elementsType,
+}) => {
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
 
-  const { t } = useTranslation('sidebar');
+  const { t } = useTranslation(translation);
 
   const handleClearConversations = () => {
-    onClearConversations();
+    onClearAll();
     setIsConfirming(false);
   };
 
@@ -33,6 +39,7 @@ export const ClearConversations: FC<Props> = ({ onClearConversations }) => {
           size={18}
           onClick={(e) => {
             e.stopPropagation();
+            e.preventDefault();
             handleClearConversations();
           }}
         />
@@ -42,6 +49,7 @@ export const ClearConversations: FC<Props> = ({ onClearConversations }) => {
           size={18}
           onClick={(e) => {
             e.stopPropagation();
+            e.preventDefault();
             setIsConfirming(false);
           }}
         />
@@ -49,7 +57,7 @@ export const ClearConversations: FC<Props> = ({ onClearConversations }) => {
     </div>
   ) : (
     <SidebarButton
-      text={t('Clear conversations')}
+      text={t(`Clear ${elementsType}`)}
       icon={<IconTrash size={18} />}
       onClick={() => setIsConfirming(true)}
     />
