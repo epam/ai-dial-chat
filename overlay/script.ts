@@ -36,36 +36,46 @@ type ChatAIOverlayConfigModel = Required<
   }
 >;
 
-const Positions: Record<PositionConfigValue | string, PositionModel> = {
-  'left-bottom': {
-    top: 'initial',
-    bottom: '20px',
-    left: '20px',
-    right: 'initial',
-    transform: 'translate(-1080px, 800px)',
-  },
-  'left-top': {
-    top: '20px',
-    bottom: 'initial',
-    left: '20px',
-    right: 'initial',
-    transform: 'translate(-1080px, -800px)',
-  },
-  'right-top': {
-    top: '20px',
-    bottom: 'initial',
-    left: 'initial',
-    right: '20px',
-    transform: 'translate(1080px, -800px)',
-  },
-  'right-bottom': {
-    top: 'initial',
-    bottom: '20px',
-    left: 'initial',
-    right: '20px',
-    transform: 'translate(1080px, 800px)',
-  },
-};
+function getPosition(): Record<PositionConfigValue | string, PositionModel> {
+  return {
+    'left-bottom': {
+      top: 'initial',
+      bottom: '20px',
+      left: '20px',
+      right: 'initial',
+      transform: `translate(-${window.innerWidth * 2}px, ${
+        window.innerHeight * 2
+      }px)`,
+    },
+    'left-top': {
+      top: '20px',
+      bottom: 'initial',
+      left: '20px',
+      right: 'initial',
+      transform: `translate(-${window.innerWidth * 2}px, -${
+        window.innerHeight * 2
+      }px)`,
+    },
+    'right-top': {
+      top: '20px',
+      bottom: 'initial',
+      left: 'initial',
+      right: '20px',
+      transform: `translate(${window.innerWidth * 2}px, -${
+        window.innerHeight * 2
+      }px)`,
+    },
+    'right-bottom': {
+      top: 'initial',
+      bottom: '20px',
+      left: 'initial',
+      right: '20px',
+      transform: `translate(${window.innerWidth * 2}px, ${
+        window.innerHeight * 2
+      }px)`,
+    },
+  };
+}
 
 const getDefaultSVG = (height: number, width: number) => {
   return `<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-message-circle-2-filled" width="${width}" height="${height}" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -76,7 +86,7 @@ const getDefaultSVG = (height: number, width: number) => {
 
 const defaultConfig: ChatAIOverlayConfigModel = {
   domain: '',
-  position: Positions['right-bottom'],
+  position: getPosition()['right-bottom'],
   showButtonIcon: true,
   allowFulscreenDesktop: false,
   overlayHeight: 380,
@@ -94,7 +104,8 @@ export default class ChatAIOverlay {
   public overlayShowed = false;
   private overlay: HTMLElement | undefined;
   private button: HTMLElement | undefined;
-  private position: PositionModel = Positions['right-bottom'];
+  private initialPosition: PositionConfigValue | undefined;
+  private position: PositionModel = getPosition()['right-bottom'];
   private config: ChatAIOverlayConfigModel = defaultConfig;
   private isMobileView = this.getIsMobileView();
   private iframe: HTMLIFrameElement | undefined;
@@ -135,11 +146,12 @@ export default class ChatAIOverlay {
       if (!config.domain) {
         throw Error('No domain provided for ChatAIOverlay');
       }
+      this.initialPosition = config.position;
       this.config = {
         ...defaultConfig,
         ...config,
         position:
-          (config.position && Positions[config.position]) ||
+          (config.position && getPosition()[config.position]) ||
           defaultConfig.position,
         iconSvg:
           config.iconSvg ??
@@ -190,9 +202,9 @@ export default class ChatAIOverlay {
   private getIsMobileView() {
     return (
       (window.matchMedia('(orientation:landscape)').matches &&
-        window.matchMedia('(max-height: 768px)').matches) ||
+        window.matchMedia('(max-height: 550px)').matches) ||
       (window.matchMedia('(orientation:portrait)').matches &&
-        window.matchMedia('(max-width: 768px)').matches)
+        window.matchMedia('(max-width: 550px)').matches)
     );
   }
 
@@ -308,7 +320,12 @@ export default class ChatAIOverlay {
   }
 
   private updateOverlay(overlay: HTMLElement) {
+    if (!this.initialPosition) {
+      return overlay;
+    }
+
     const mobileHeight = window.innerHeight;
+    this.position = getPosition()[this.initialPosition];
     this.setStyles(overlay, {
       transition: 'transform 0.5s ease',
       position: 'fixed',
@@ -316,7 +333,9 @@ export default class ChatAIOverlay {
       bottom: this.isMobileView ? '0' : this.config.position.bottom,
       left: this.isMobileView ? '0' : this.config.position.left,
       right: this.isMobileView ? '0' : this.config.position.right,
-      transform: `scale(0.5) ${this.config.position.transform}`,
+      transform: this.overlayShowed
+        ? this.overlay?.style.transform
+        : `scale(0.5) ${this.config.position.transform}`,
       zIndex: this.config.overlayZIndex,
       width: this.isMobileView ? '100vw' : `${this.config.overlayWidth}px`,
       height: this.isMobileView
