@@ -96,7 +96,7 @@ export const VariableModal: FC<Props> = ({
 
         {updatedVariables.map((variable, index) => (
           <div className="mb-4" key={index}>
-            <div className="mb-2 text-sm font-bold text-neutral-200">
+            <div className="mb-2 text-sm font-bold text-neutral-600 dark:text-neutral-200">
               {variable.key}
             </div>
 
