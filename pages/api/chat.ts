@@ -66,7 +66,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const model =
       OpenAIModels[modelId as OpenAIModelID] ?? OpenAIModels[fallbackModelID];
 
-    // TODO: add to OpenAIModel interface
     let tokens_per_message = 0;
     if (
       model.id == OpenAIModelID.GPT_3_5 ||
