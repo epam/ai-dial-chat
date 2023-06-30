@@ -43,6 +43,8 @@ const Promptbar = () => {
     dispatch: promptDispatch,
   } = promptBarContextValue;
 
+  const promptFolders = folders.filter(({ type }) => type === 'prompt');
+
   const handleTogglePromptbar = () => {
     homeDispatch({ field: 'showPromptbar', value: !showPromptbar });
     localStorage.setItem('showPromptbar', JSON.stringify(!showPromptbar));
@@ -177,7 +179,7 @@ const Promptbar = () => {
           />
         }
         folderComponent={<PromptFolders />}
-        folders={folders}
+        folders={promptFolders}
         items={filteredPrompts}
         searchTerm={searchTerm}
         handleSearchTerm={(searchTerm: string) =>
