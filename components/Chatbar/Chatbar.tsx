@@ -138,7 +138,9 @@ export const Chatbar = () => {
     const updatedFolders = folders.filter((f) => f.type !== 'chat');
 
     homeDispatch({ field: 'folders', value: updatedFolders });
+    saveConversations(newConversations);
     saveFolders(updatedFolders);
+    saveSelectedConversationIds(newSelectedConversationIds);
   };
 
   const handleDeleteConversation = (conversation: Conversation) => {
