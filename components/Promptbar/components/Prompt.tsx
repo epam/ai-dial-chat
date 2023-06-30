@@ -183,7 +183,10 @@ export const PromptComponent = ({ prompt }: Props) => {
       {showModal && (
         <PromptModal
           prompt={prompt}
-          onClose={() => setShowModal(false)}
+          onClose={() => {
+            setShowModal(false);
+            setIsRenaming(false);
+          }}
           onUpdatePrompt={handleUpdate}
         />
       )}
