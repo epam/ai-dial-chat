@@ -6,7 +6,7 @@
     "dev": "next dev",
     "watch:overlay": "tsc overlay/script.ts --watch --target es6 --skipLibCheck --outDir dist/overlay",
     "dev:overlay": "npx cpy-cli ./overlay/example.html ./dist --rename=index.html && npx http-server ./dist/overlay --c-1",
-    "dev:overlay-advanced": "npx cpy-cli ./overlay/example-advanced.html ./dist --rename=index.html && npx http-server ./dist/overlay --c-1",
+    "dev:overlay-advanced": "npx cpy-cli ./overlay/example-advanced.html ./dist --rename=index.html && npx http-server ./dist/overlay -c-1",
     "build": "npm run build:overlay && next build",
     "build:overlay": "tsc overlay/script.ts --target es6 --skipLibCheck --outDir public/overlay",
     "start": "next start",

@@ -15,8 +15,8 @@ interface PositionModel {
 export interface ChatAIOverlayInitialConfigModel {
   domain: string;
   position?: PositionConfigValue;
-  overlayWidth?: number;
-  overlayHeight?: number;
+  overlayWidth?: string;
+  overlayHeight?: string;
   overlayZIndex?: string;
   // True by default
   showButtonIcon?: boolean;
@@ -95,8 +95,8 @@ export default class ChatAIOverlay {
     position: getPosition()['right-bottom'],
     showButtonIcon: true,
     allowFulscreenDesktop: false,
-    overlayHeight: 380,
-    overlayWidth: 540,
+    overlayHeight: '380px',
+    overlayWidth: '540px',
     iconBgColor: '#444654',
     iconColor: 'white',
     iconHeight: 60,
@@ -323,7 +323,7 @@ export default class ChatAIOverlay {
       return overlay;
     }
 
-    const mobileHeight = window.innerHeight;
+    const mobileHeight = `${window.innerHeight}px`;
     this.position = getPosition()[this.initialPosition];
     this.setStyles(overlay, {
       transition: 'transform 0.5s ease',
@@ -336,10 +336,8 @@ export default class ChatAIOverlay {
         ? this.overlay?.style.transform
         : `scale(0.5) ${this.config.position.transform}`,
       zIndex: this.config.overlayZIndex,
-      width: this.isMobileView ? '100vw' : `${this.config.overlayWidth}px`,
-      height: this.isMobileView
-        ? `${mobileHeight}px`
-        : `${this.config.overlayHeight}px`,
+      width: this.isMobileView ? '100vw' : this.config.overlayWidth,
+      height: this.isMobileView ? mobileHeight : this.config.overlayHeight,
     });
 
     return overlay;
