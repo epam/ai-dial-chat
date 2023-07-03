@@ -31,6 +31,8 @@ const wasm = readFileSync(
   ),
 );
 
+let encoding: Tiktoken;
+
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
   if (process.env.AUTH_DISABLED !== 'true' && !session) {
@@ -41,12 +43,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const { modelId, messages, key, prompt, temperature, id } =
       req.body as ChatBody;
 
-    await init((imports) => WebAssembly.instantiate(wasm, imports));
-    const encoding = new Tiktoken(
-      tiktokenModel.bpe_ranks,
-      tiktokenModel.special_tokens,
-      tiktokenModel.pat_str,
-    );
+    if (!encoding) {
+      await init((imports) => WebAssembly.instantiate(wasm, imports));
+      encoding = new Tiktoken(
+        tiktokenModel.bpe_ranks,
+        tiktokenModel.special_tokens,
+        tiktokenModel.pat_str,
+      );
+    }
 
     let promptToSend = prompt;
     if (!promptToSend) {
@@ -99,7 +103,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     tokenCount += 3;
 
-    encoding.free();
+    // encoding.free();
 
     const stream = await OpenAIStream(
       model,
