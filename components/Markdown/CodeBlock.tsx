@@ -1,6 +1,7 @@
 import { IconCheck, IconClipboard, IconDownload } from '@tabler/icons-react';
-import { FC, memo, useState } from 'react';
+import { FC, memo, useContext, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { defaultStyle } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
 import { useTranslation } from 'next-i18next';
@@ -10,14 +11,24 @@ import {
   programmingLanguages,
 } from '@/utils/app/codeblock';
 
+import HomeContext from '@/pages/api/home/home.context';
+
 interface Props {
   language: string;
   value: string;
 }
+const codeBlockTheme = {
+  dark: oneDark,
+  light: defaultStyle,
+};
 
 export const CodeBlock: FC<Props> = memo(({ language, value }) => {
   const { t } = useTranslation('markdown');
   const [isCopied, setIsCopied] = useState<Boolean>(false);
+
+  const {
+    state: { lightMode },
+  } = useContext(HomeContext);
 
   const copyToClipboard = () => {
     if (!navigator.clipboard || !navigator.clipboard.writeText) {
@@ -83,7 +94,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value }) => {
 
       <SyntaxHighlighter
         language={language}
-        style={oneDark}
+        style={codeBlockTheme[lightMode]}
         customStyle={{ margin: 0 }}
       >
         {value}

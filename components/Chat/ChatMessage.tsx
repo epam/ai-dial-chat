@@ -24,15 +24,10 @@ import { Conversation, Message } from '@/types/chat';
 
 import HomeContext from '@/pages/api/home/home.context';
 
-import { CodeBlock } from '../Markdown/CodeBlock';
-import { MemoizedReactMarkdown } from '../Markdown/MemoizedReactMarkdown';
-import BlinkingCursor from './BlinkingCursor';
+import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { modelCursorSign, modelCursorSignWithBackquote } from './chatConstants';
 
 import classNames from 'classnames';
-import rehypeMathjax from 'rehype-mathjax';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
 
 export interface Props {
   message: Message;
@@ -249,82 +244,10 @@ export const ChatMessage: FC<Props> = memo(
               </div>
             ) : (
               <div className="h-full flex flex-row">
-                <MemoizedReactMarkdown
-                  className={`prose dark:prose-invert flex-1 ${
-                    message.isError ? 'text-red-400' : ''
-                  }`}
-                  remarkPlugins={[remarkGfm, remarkMath]}
-                  rehypePlugins={[rehypeMathjax]}
-                  components={{
-                    code({ node, inline, className, children, ...props }) {
-                      if (children.length) {
-                        if (children[0] == modelCursorSign) {
-                          return (
-                            <BlinkingCursor isShowing={isShowResponseLoader} />
-                          );
-                        }
-
-                        children[0] = (children[0] as string).replace(
-                          modelCursorSignWithBackquote,
-                          modelCursorSign,
-                        );
-                      }
-
-                      const match = /language-(\w+)/.exec(className || '');
-
-                      return !inline ? (
-                        <CodeBlock
-                          key={Math.random()}
-                          language={(match && match[1]) || ''}
-                          value={String(children).replace(/\n$/, '')}
-                          {...props}
-                        />
-                      ) : (
-                        <code className={className} {...props}>
-                          {children}
-                        </code>
-                      );
-                    },
-                    table({ children }) {
-                      return (
-                        <table className="border-collapse border border-black px-3 py-1 dark:border-white">
-                          {children}
-                        </table>
-                      );
-                    },
-                    th({ children }) {
-                      return (
-                        <th className="break-words border border-black bg-gray-500 px-3 py-1 text-white dark:border-white">
-                          {children}
-                        </th>
-                      );
-                    },
-                    td({ children }) {
-                      return (
-                        <td className="break-words border border-black px-3 py-1 dark:border-white">
-                          {children}
-                        </td>
-                      );
-                    },
-                    p({ children, className }) {
-                      if (children.length) {
-                        if (children[0] == modelCursorSign) {
-                          return (
-                            <BlinkingCursor isShowing={isShowResponseLoader} />
-                          );
-                        }
-                      }
-                      if (children[0] == modelCursorSignWithBackquote) {
-                        children[0] = replaceCursor(children[0] as string);
-                      }
-                      return <p className={className}>{children}</p>;
-                    },
-                  }}
-                >
-                  {`${message.content}${
-                    isShowResponseLoader ? modelCursorSignWithBackquote : ''
-                  }`}
-                </MemoizedReactMarkdown>
+                <ChatMDComponent
+                  isShowResponseLoader={isShowResponseLoader}
+                  message={message}
+                />
 
                 <div className="flex flex-col justify-between w-[60px]">
                   <div className="md:-mr-8 ml-1 md:ml-0 flex flex-col md:flex-row gap-4 md:gap-1 items-center md:items-start justify-end md:justify-start">
