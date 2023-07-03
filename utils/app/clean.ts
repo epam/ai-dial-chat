@@ -1,9 +1,13 @@
+import { defaultReplay } from '@/utils/app/defaultStateConstants';
+
 import { Conversation } from '@/types/chat';
 import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 
-import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE, OPENAI_API_TYPE } from './const';
-import { defaultReplay } from '@/utils/app/defaultStateConstants';
-
+import {
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+  OPENAI_API_TYPE,
+} from './const';
 
 export const cleanSelectedConversation = (conversation: Conversation) => {
   // added model for each conversation (3/20/23)
@@ -19,7 +23,10 @@ export const cleanSelectedConversation = (conversation: Conversation) => {
   if (!updatedConversation.model) {
     updatedConversation = {
       ...updatedConversation,
-      model: updatedConversation.model || (OPENAI_API_TYPE === 'azure') ? OpenAIModels[OpenAIModelID.GPT_3_5_AZ] : OpenAIModels[OpenAIModelID.GPT_3_5],
+      model:
+        updatedConversation.model || OPENAI_API_TYPE === 'azure'
+          ? OpenAIModels[OpenAIModelID.GPT_3_5_AZ]
+          : OpenAIModels[OpenAIModelID.GPT_3_5],
     };
   }
 
@@ -51,7 +58,7 @@ export const cleanSelectedConversation = (conversation: Conversation) => {
       messages: updatedConversation.messages || [],
     };
   }
-  if(!updatedConversation.replay){
+  if (!updatedConversation.replay) {
     conversation.replay = defaultReplay;
   }
 
@@ -74,14 +81,17 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
   return history.reduce((acc: any[], conversation) => {
     try {
       if (!conversation.model) {
-        conversation.model = (OPENAI_API_TYPE === 'azure') ? OpenAIModels[OpenAIModelID.GPT_3_5_AZ] : OpenAIModels[OpenAIModelID.GPT_3_5];
+        conversation.model =
+          OPENAI_API_TYPE === 'azure'
+            ? OpenAIModels[OpenAIModelID.GPT_3_5_AZ]
+            : OpenAIModels[OpenAIModelID.GPT_3_5];
       }
 
       if (!conversation.prompt) {
         conversation.prompt = DEFAULT_SYSTEM_PROMPT;
       }
 
-      if (!conversation.temperature) {
+      if (conversation.temperature === null || conversation.temperature < 0) {
         conversation.temperature = DEFAULT_TEMPERATURE;
       }
 
@@ -93,7 +103,7 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
         conversation.messages = [];
       }
 
-      if(!conversation.replay){
+      if (!conversation.replay) {
         conversation.replay = defaultReplay;
       }
 

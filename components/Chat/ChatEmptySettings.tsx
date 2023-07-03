@@ -50,6 +50,7 @@ export const ChatEmptySettings = ({
       <TemperatureSlider
         label={t('Temperature')}
         onChangeTemperature={onChangeTemperature}
+        conversation={conversation}
       />
     </div>
   );
