@@ -71,11 +71,11 @@ export const CodeBlock: FC<Props> = memo(({ language, value }) => {
     URL.revokeObjectURL(url);
   };
   return (
-    <div className="codeblock relative font-sans text-[16px]">
-      <div className="flex items-center justify-between py-1.5 px-4">
+    <div className="codeblock relative font-sans text-[16px] bg-white dark:bg-[#343541]">
+      <div className="flex items-center justify-between py-1.5 px-4 bg-[#343541] dark:bg-black">
         <span className="text-xs lowercase text-white">{language}</span>
 
-        <div className="flex items-center">
+        <div className="flex items-center ">
           <button
             className="flex gap-1.5 items-center rounded bg-none p-1 text-xs text-white"
             onClick={copyToClipboard}
@@ -95,7 +95,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value }) => {
       <SyntaxHighlighter
         language={language}
         style={codeBlockTheme[lightMode]}
-        customStyle={{ margin: 0 }}
+        customStyle={{ margin: 0, borderRadius: 0 }}
       >
         {value}
       </SyntaxHighlighter>
