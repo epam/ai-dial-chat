@@ -1,4 +1,5 @@
 include:
+  - template: Jobs/Container-Scanning.gitlab-ci.yml
   - project: "Gitlab/ci"
     ref: 0.2.22
     file: "application/nodejs.yml"
@@ -170,6 +171,20 @@ publish:
         DOCKER_TAG: gitlab-mr${CI_MERGE_REQUEST_ID}
         DOCKER_ADDITIONAL_TAG: mr-${CI_MERGE_REQUEST_IID}
         REPOSITORY: ${ARTIFACTORY_DOCKER_TEST_REPOSITORY}
+
+container_scanning:
+  stage: promote
+  variables:
+    GIT_STRATEGY: none
+    CS_IMAGE: ${ARTIFACTORY_DOCKER_DEV_REPOSITORY}/${ARTIFACTORY_DOCKER_PATH}:$CI_COMMIT_TAG
+    CS_REGISTRY_USER: ${ARTIFACTORY_USER}
+    CS_REGISTRY_PASSWORD: ${ARTIFACTORY_PASS}
+  dependencies: []
+  rules:
+    - if: $CI_COMMIT_TAG
+  tags:
+    - AWS
+    - DockerExecutor
 
 ### Copy frontend and backend docker images to public repository. Run on git tag manually
 promote:
