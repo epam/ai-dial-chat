@@ -14,14 +14,6 @@ interface Props {
   conversation: Conversation;
 }
 
-const getTemperature = (
-  conversation: Conversation,
-  defaultTemperature: number,
-) =>
-  conversation?.temperature || conversation?.temperature === 0
-    ? conversation?.temperature
-    : defaultTemperature;
-
 export const TemperatureSlider: FC<Props> = ({
   label,
   onChangeTemperature,
@@ -32,14 +24,12 @@ export const TemperatureSlider: FC<Props> = ({
   } = useContext(HomeContext);
 
   const [temperature, setTemperature] = useState<number>(() => {
-    if (!conversation?.id) {
-      const lastConversation = conversations[conversations.length - 1];
-      const temperature = getTemperature(lastConversation, DEFAULT_TEMPERATURE);
-      return temperature;
-    } else {
-      const temperature = getTemperature(conversation, DEFAULT_TEMPERATURE);
-      return temperature;
-    }
+    const lastConversation = conversations[conversations.length - 1];
+    return (
+      conversation.temperature ??
+      lastConversation?.temperature ??
+      DEFAULT_TEMPERATURE
+    );
   });
   const { t } = useTranslation('chat');
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {

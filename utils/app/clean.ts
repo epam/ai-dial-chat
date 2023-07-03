@@ -91,7 +91,7 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
         conversation.prompt = DEFAULT_SYSTEM_PROMPT;
       }
 
-      if (conversation.temperature === null || conversation.temperature < 0) {
+      if (conversation.temperature == null || conversation.temperature < 0) {
         conversation.temperature = DEFAULT_TEMPERATURE;
       }
 
