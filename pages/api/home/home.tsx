@@ -1,3 +1,4 @@
+import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 
@@ -12,6 +13,9 @@ import { useCreateReducer } from '@/hooks/useCreateReducer';
 import useErrorService from '@/services/errorService';
 import useApiService from '@/services/useApiService';
 
+import { AuthWindowLocationLike } from '@/utils/app/auth/authWindowLocationLike';
+import { delay } from '@/utils/app/auth/delay';
+import { timeoutAsync } from '@/utils/app/auth/timeoutAsync';
 import { cleanConversationHistory } from '@/utils/app/clean';
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
 import {
@@ -59,6 +63,7 @@ interface Props {
   enabledFeatures: Feature[];
   isIframe: boolean;
   modelIconMapping: string;
+  authDisabled: boolean;
   defaultModelId: OpenAIModelID;
 }
 
@@ -75,7 +80,10 @@ const Home = ({
   isIframe,
   modelIconMapping,
   defaultModelId,
+  authDisabled,
 }: Props) => {
+  const session = useSession();
+
   const enabledFeaturesSet = new Set(enabledFeatures);
   const { t } = useTranslation('chat');
   const { getModels } = useApiService();
@@ -407,6 +415,36 @@ const Home = ({
 
   // ON LOAD --------------------------------------------
 
+  const handleIframeAuth = async () => {
+    const timeout = 30 * 1000;
+    let complete = false;
+    await Promise.race([
+      timeoutAsync(timeout),
+      (async () => {
+        const authWindowLocation = new AuthWindowLocationLike(
+          '/api/auth/signin',
+        );
+
+        await authWindowLocation.ready; // ready after redirects
+        const t = Math.max(100, timeout / 1000);
+        // wait for redirection to back
+        while (!complete) {
+          try {
+            if (authWindowLocation.href === window.location.href) {
+              complete = true;
+              authWindowLocation.destroy();
+              break;
+            }
+          } catch {}
+          await delay(t);
+        }
+        window.location.reload();
+
+        return;
+      })(),
+    ]);
+  };
+
   useEffect(() => {
     const settings = getSettings();
     if (settings.theme) {
@@ -554,36 +592,49 @@ const Home = ({
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      {selectedConversationNames.length > 0 && (
-        <main
-          className={`flex h-screen w-screen flex-col text-sm text-white dark:text-white ${lightMode}`}
-        >
-          {enabledFeaturesSet.has('conversations-section') && (
-            <div className="fixed top-0 w-full sm:hidden">
-              <Navbar
-                selectedConversationNames={selectedConversationNames}
-                onNewConversation={handleNewConversation}
-              />
-            </div>
-          )}
-
-          <div
-            className={`flex h-full w-full sm:pt-0 ${
-              enabledFeaturesSet.has('conversations-section') ? 'pt-[48px]' : ''
-            }`}
+      {isIframe && !authDisabled && session.status !== 'authenticated' ? (
+        <div className="w-full h-full grid place-items-center min-h-[100px]">
+          <button
+            onClick={handleIframeAuth}
+            className="appearance-none border-gray-900/50 bg-[#343541] text-gray-100 border-gray-200 p-3 rounded-lg"
           >
-            {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
+            {t('Login')}
+          </button>
+        </div>
+      ) : (
+        selectedConversationNames.length > 0 && (
+          <main
+            className={`flex h-screen w-screen flex-col text-sm text-white dark:text-white ${lightMode}`}
+          >
+            {enabledFeaturesSet.has('conversations-section') && (
+              <div className="fixed top-0 w-full sm:hidden">
+                <Navbar
+                  selectedConversationNames={selectedConversationNames}
+                  onNewConversation={handleNewConversation}
+                />
+              </div>
+            )}
 
-            <div className="flex flex-1">
-              <Chat
-                stopConversationRef={stopConversationRef}
-                appName={appName}
-              />
+            <div
+              className={`flex h-full w-full sm:pt-0 ${
+                enabledFeaturesSet.has('conversations-section')
+                  ? 'pt-[48px]'
+                  : ''
+              }`}
+            >
+              {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
+
+              <div className="flex flex-1">
+                <Chat
+                  stopConversationRef={stopConversationRef}
+                  appName={appName}
+                />
+              </div>
+
+              {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
             </div>
-
-            {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
-          </div>
-        </main>
+          </main>
+        )
       )}
     </HomeContext.Provider>
   );
@@ -595,6 +646,7 @@ export const getServerSideProps: GetServerSideProps = async ({
   req,
   res,
 }) => {
+  const isIframe = process.env.IS_IFRAME === 'true' || false;
   res.setHeader(
     'Content-Security-Policy',
     process.env.ALLOWED_IFRAME_ORIGINS
@@ -602,7 +654,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       : 'frame-ancestors none',
   );
   const session = await getServerSession(req, res, authOptions);
-  if (process.env.AUTH_DISABLED !== 'true' && !session) {
+  if (!isIframe && process.env.AUTH_DISABLED !== 'true' && !session) {
     return {
       redirect: {
         permanent: false,
@@ -650,8 +702,9 @@ export const getServerSideProps: GetServerSideProps = async ({
       isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
       footerHtmlMessage: updatedFooterHTMLMessage,
       enabledFeatures: (process.env.ENABLED_FEATURES || '').split(','),
-      isIframe: process.env.IS_IFRAME === 'true' || false,
+      isIframe,
       defaultModelId: process.env.DEFAULT_MODEL || fallbackModelID,
+      authDisabled: process.env.AUTH_DISABLED === 'true',
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',
