@@ -281,6 +281,7 @@ const Home = ({
         maxLength: OpenAIModels[clientDefaultModelId].maxLength,
         tokenLimit: OpenAIModels[clientDefaultModelId].tokenLimit,
         requestLimit: OpenAIModels[clientDefaultModelId].requestLimit,
+        type: OpenAIModels[clientDefaultModelId].type,
       },
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,

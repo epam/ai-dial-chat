@@ -1,5 +1,11 @@
 import { Message } from '@/types/chat';
-import { OpenAIModel, bedrockModels, googleModels, openAIModels } from '@/types/openai';
+import {
+  OpenAIModel,
+  applicationsModels,
+  bedrockModels,
+  googleModels,
+  openAIModels,
+} from '@/types/openai';
 
 import {
   BEDROCK_HOST,
@@ -45,12 +51,13 @@ export const OpenAIStream = async (
   headers: Record<string, string>,
   tokenCount: number,
 ) => {
-  const isGoogle =
-    googleModels.includes(model.id as any);
+  const isGoogle = googleModels.includes(model.id as any);
 
   const isBedrock = bedrockModels.includes(model.id as any);
 
   const isOpenAI = openAIModels.includes(model.id as any);
+
+  const isGptWorld = applicationsModels.includes(model.id as any);
 
   let url = `${OPENAI_API_HOST}/v1/chat/completions`;
   if (isGoogle) {
@@ -61,6 +68,12 @@ export const OpenAIStream = async (
     }:predict`;
   } else if (isBedrock) {
     url = `${BEDROCK_HOST}/openai/deployments/${model.id}/chat/completions?api-version=${OPENAI_API_VERSION}`;
+  } else if (isGptWorld) {
+    url = `${
+      process.env.GPT_WORLD_HOST ?? OPENAI_API_HOST
+    }/openai/deployments/${
+      model.id
+    }/chat/completions?api-version=${OPENAI_API_VERSION}`;
   } else if (OPENAI_API_TYPE === 'azure') {
     url = `${OPENAI_API_HOST}/openai/deployments/${model.id}/chat/completions?api-version=${OPENAI_API_VERSION}`;
   }
@@ -98,7 +111,7 @@ export const OpenAIStream = async (
       : extendWithOpenAIHeaders(key, requestHeaders);
 
     body = JSON.stringify({
-      ...((isOpenAI && OPENAI_API_TYPE === 'openai') && { model: model.id }),
+      ...(isOpenAI && OPENAI_API_TYPE === 'openai' && { model: model.id }),
       messages: [
         {
           role: 'system',

@@ -16,6 +16,7 @@ import {
   OpenAIModels,
   googleModels,
   fallbackModelID,
+  applicationsModels,
 } from '@/types/openai';
 
 import { authOptions } from './auth/[...nextauth]';
@@ -159,6 +160,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     for (const model of bedrockModels) {
       addModel(model.id, models);
+    }
+
+    if (process.env.SHOW_APPLICATIONS_MODELS === 'true') {
+      for (const model of applicationsModels) {
+        addModel(model, models);
+      }
     }
 
     models = limitModelsAccordingToUser(models, session);
