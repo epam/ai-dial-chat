@@ -1,12 +1,11 @@
 import { defaultReplay } from '@/utils/app/defaultStateConstants';
 
 import { Conversation } from '@/types/chat';
-import { OpenAIModelID, OpenAIModels } from '@/types/openai';
+import { OpenAIEntityModelID, OpenAIEntityModels } from '@/types/openai';
 
 import {
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
-  OPENAI_API_TYPE,
 } from './const';
 
 export const cleanSelectedConversation = (conversation: Conversation) => {
@@ -24,9 +23,8 @@ export const cleanSelectedConversation = (conversation: Conversation) => {
     updatedConversation = {
       ...updatedConversation,
       model:
-        updatedConversation.model || OPENAI_API_TYPE === 'azure'
-          ? OpenAIModels[OpenAIModelID.GPT_3_5_AZ]
-          : OpenAIModels[OpenAIModelID.GPT_3_5],
+        updatedConversation.model ||
+        OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
     };
   }
 
@@ -81,10 +79,7 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
   return history.reduce((acc: any[], conversation) => {
     try {
       if (!conversation.model) {
-        conversation.model =
-          OPENAI_API_TYPE === 'azure'
-            ? OpenAIModels[OpenAIModelID.GPT_3_5_AZ]
-            : OpenAIModels[OpenAIModelID.GPT_3_5];
+        conversation.model = OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ];
       }
 
       if (!conversation.prompt) {

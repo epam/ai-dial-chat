@@ -20,7 +20,7 @@ import {
 
 import { Conversation, Replay } from '@/types/chat';
 import { SupportedExportFormats } from '@/types/export';
-import { OpenAIModelID, OpenAIModels } from '@/types/openai';
+import { OpenAIEntityModelID, OpenAIEntityModels } from '@/types/openai';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -111,7 +111,7 @@ export const Chatbar = () => {
       id: uuidv4(),
       name: t('New Conversation'),
       messages: [],
-      model: OpenAIModels[defaultModelId || OpenAIModelID.GPT_3_5],
+      model: OpenAIEntityModels[defaultModelId || OpenAIEntityModelID.GPT_3_5],
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: DEFAULT_TEMPERATURE,
       folderId: null,
@@ -168,7 +168,8 @@ export const Chatbar = () => {
         id: uuidv4(),
         name: t('New Conversation'),
         messages: [],
-        model: OpenAIModels[defaultModelId || OpenAIModelID.GPT_3_5],
+        model:
+          OpenAIEntityModels[defaultModelId || OpenAIEntityModelID.GPT_3_5],
         prompt: DEFAULT_SYSTEM_PROMPT,
         temperature: DEFAULT_TEMPERATURE,
         folderId: null,

@@ -2,7 +2,11 @@ import { Conversation, Message } from '@/types/chat';
 import { ErrorMessage } from '@/types/error';
 import { Feature } from '@/types/features';
 import { FolderInterface } from '@/types/folder';
-import { OpenAIModel, OpenAIModelID, fallbackModelID } from '@/types/openai';
+import {
+  OpenAIEntityAddon,
+  OpenAIEntityModel,
+  OpenAIEntityModelID,
+} from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 export interface HomeInitialState {
@@ -11,7 +15,9 @@ export interface HomeInitialState {
   lightMode: 'light' | 'dark';
   messageIsStreaming: boolean;
   modelError: ErrorMessage | null;
-  models: OpenAIModel[];
+  models: OpenAIEntityModel[];
+  addonError: ErrorMessage | null;
+  addons: OpenAIEntityAddon[];
   folders: FolderInterface[];
   conversations: Conversation[];
   selectedConversationIds: string[];
@@ -23,7 +29,7 @@ export interface HomeInitialState {
   currentFolder: FolderInterface | undefined;
   messageError: boolean;
   searchTerm: string;
-  defaultModelId: OpenAIModelID | undefined;
+  defaultModelId: OpenAIEntityModelID | undefined;
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   usePluginKeys: boolean;
@@ -47,6 +53,8 @@ export const initialState: HomeInitialState = {
   messageIsStreaming: false,
   modelError: null,
   models: [],
+  addonError: null,
+  addons: [],
   folders: [],
   conversations: [],
   selectedConversationIds: [],

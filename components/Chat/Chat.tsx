@@ -15,7 +15,7 @@ import { getEndpoint } from '@/utils/app/api';
 import { showAPIToastError } from '@/utils/app/errors';
 import { throttle } from '@/utils/data/throttle';
 
-import { OpenAIModel, OpenAIModelID } from '../../types/openai';
+import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -41,7 +41,7 @@ interface Props {
 const handleRate = (
   message: Message,
   id: string,
-  model: OpenAIModel,
+  model: OpenAIEntityModel,
   apiKey: string,
 ) => {
   if (!message.like) {
@@ -572,7 +572,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const handleSelectModel = (conversation: Conversation, modelId: string) => {
     handleUpdateConversation(conversation, {
       key: 'model',
-      value: models.find((model) => model.id === modelId) as OpenAIModel,
+      value: models.find((model) => model.id === modelId) as OpenAIEntityModel,
     });
   };
 
@@ -687,7 +687,9 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                         conversation={conv}
                         models={models}
                         prompts={prompts}
-                        defaultModelId={defaultModelId || OpenAIModelID.GPT_3_5}
+                        defaultModelId={
+                          defaultModelId || OpenAIEntityModelID.GPT_3_5
+                        }
                         isShowSettings={enabledFeatures.has(
                           'empty-chat-settings',
                         )}
@@ -708,7 +710,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                           messageIsStreaming={messageIsStreaming}
                           conversation={conv}
                           defaultModelId={
-                            defaultModelId || OpenAIModelID.GPT_3_5
+                            defaultModelId || OpenAIEntityModelID.GPT_3_5
                           }
                           models={models}
                           isCompareMode={isCompareMode}

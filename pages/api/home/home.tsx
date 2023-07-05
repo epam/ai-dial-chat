@@ -32,9 +32,9 @@ import { KeyValuePair } from '@/types/data';
 import { Feature } from '@/types/features';
 import { FolderInterface, FolderType } from '@/types/folder';
 import {
-  OpenAIModel,
-  OpenAIModelID,
-  OpenAIModels,
+  OpenAIEntityModel,
+  OpenAIEntityModelID,
+  OpenAIEntityModels,
   fallbackModelID,
 } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
@@ -64,7 +64,7 @@ interface Props {
   isIframe: boolean;
   modelIconMapping: string;
   authDisabled: boolean;
-  defaultModelId: OpenAIModelID;
+  defaultModelId: OpenAIEntityModelID;
 }
 
 const Home = ({
@@ -86,7 +86,7 @@ const Home = ({
 
   const enabledFeaturesSet = new Set(enabledFeatures);
   const { t } = useTranslation('chat');
-  const { getModels } = useApiService();
+  const { getModels, getAddons } = useApiService();
   const { getModelsError } = useErrorService();
   const [selectedConversationNames, setSelectedConversationNames] = useState<
     string[]
@@ -111,7 +111,7 @@ const Home = ({
 
   const stopConversationRef = useRef<boolean>(false);
 
-  const { data, error, refetch } = useQuery(
+  const { data: modelsData, error: modelsError } = useQuery(
     ['GetModels', apiKey, serverSideApiKeyIsSet],
     ({ signal }) => {
       if (!apiKey && !serverSideApiKeyIsSet) return null;
@@ -123,24 +123,49 @@ const Home = ({
         signal,
       );
     },
-    { enabled: true, refetchOnMount: false },
+    { enabled: true, refetchOnMount: false, staleTime: 60000 },
   );
 
   useEffect(() => {
-    if (data) {
-      dispatch({ field: 'models', value: data });
+    if (modelsData) {
+      dispatch({ field: 'models', value: modelsData });
 
-      const defaultModelId = (data as any as OpenAIModel[]).find(
+      const defaultModelId = (modelsData as any as OpenAIEntityModel[]).find(
         (model) => model.isDefault,
       )?.id;
 
       dispatch({ field: 'defaultModelId', value: defaultModelId });
     }
-  }, [data, dispatch]);
+  }, [modelsData, dispatch]);
 
   useEffect(() => {
-    dispatch({ field: 'modelError', value: getModelsError(error) });
-  }, [dispatch, error, getModelsError]);
+    dispatch({ field: 'modelError', value: getModelsError(modelsError) });
+  }, [dispatch, modelsError, getModelsError]);
+
+  const { data: addonsData, error: addonsError } = useQuery(
+    ['GetAddons', apiKey, serverSideApiKeyIsSet],
+    ({ signal }) => {
+      if (!apiKey && !serverSideApiKeyIsSet) return null;
+
+      return getAddons(
+        {
+          key: apiKey,
+        },
+        signal,
+      );
+    },
+    { enabled: true, refetchOnMount: false, staleTime: 60000 },
+  );
+
+  useEffect(() => {
+    if (addonsData) {
+      dispatch({ field: 'addons', value: addonsData });
+    }
+  }, [addonsData, dispatch]);
+
+  useEffect(() => {
+    dispatch({ field: 'addonError', value: getModelsError(addonsError) });
+  }, [dispatch, addonsError, getModelsError]);
 
   // FETCH MODELS ----------------------------------------------
 
@@ -276,12 +301,12 @@ const Home = ({
       name: t(name),
       messages: [],
       model: {
-        id: OpenAIModels[clientDefaultModelId].id,
-        name: OpenAIModels[clientDefaultModelId].name,
-        maxLength: OpenAIModels[clientDefaultModelId].maxLength,
-        tokenLimit: OpenAIModels[clientDefaultModelId].tokenLimit,
-        requestLimit: OpenAIModels[clientDefaultModelId].requestLimit,
-        type: OpenAIModels[clientDefaultModelId].type,
+        id: OpenAIEntityModels[clientDefaultModelId].id,
+        name: OpenAIEntityModels[clientDefaultModelId].name,
+        maxLength: OpenAIEntityModels[clientDefaultModelId].maxLength,
+        tokenLimit: OpenAIEntityModels[clientDefaultModelId].tokenLimit,
+        requestLimit: OpenAIEntityModels[clientDefaultModelId].requestLimit,
+        type: OpenAIEntityModels[clientDefaultModelId].type,
       },
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
@@ -535,7 +560,7 @@ const Home = ({
         id: uuidv4(),
         name: t('New Conversation'),
         messages: [],
-        model: OpenAIModels[defaultModelId],
+        model: OpenAIEntityModels[defaultModelId],
         prompt: DEFAULT_SYSTEM_PROMPT,
         temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
         folderId: null,

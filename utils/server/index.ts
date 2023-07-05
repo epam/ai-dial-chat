@@ -1,26 +1,8 @@
 import { Message } from '@/types/chat';
-import {
-  OpenAIModel,
-  applicationsModels,
-  bedrockModels,
-  googleModels,
-  openAIModels,
-} from '@/types/openai';
+import { OpenAIEntityModel, OpenAIEntityModelType } from '@/types/openai';
 
-import {
-  BEDROCK_HOST,
-  GOOGLE_MAX_OUTPUT_TOKENS,
-  GOOGLE_TOP_K,
-  GOOGLE_TOP_P,
-  OPENAI_API_HOST,
-  OPENAI_API_TYPE,
-  OPENAI_API_VERSION,
-  OPENAI_ORGANIZATION,
-} from '../app/const';
-import {
-  extendWithBedrockHeaders,
-  extendWithOpenAIHeaders,
-} from './getHeaders';
+import { OPENAI_API_HOST, OPENAI_API_VERSION } from '../app/const';
+import { getHeaders } from './getHeaders';
 
 import {
   ParsedEvent,
@@ -42,88 +24,57 @@ export class OpenAIError extends Error {
   }
 }
 
-export const OpenAIStream = async (
-  model: OpenAIModel,
-  systemPrompt: string,
-  temperature: number,
-  key: string,
-  messages: Message[],
-  headers: Record<string, string>,
-  tokenCount: number,
-) => {
-  const isGoogle = googleModels.includes(model.id as any);
-
-  const isBedrock = bedrockModels.includes(model.id as any);
-
-  const isOpenAI = openAIModels.includes(model.id as any);
-
-  const isGptWorld = applicationsModels.includes(model.id as any);
-
-  let url = `${OPENAI_API_HOST}/v1/chat/completions`;
-  if (isGoogle) {
-    url = `${process.env.GOOGLE_AI_HOST ?? OPENAI_API_HOST}/v1/projects/${
-      process.env.GOOGLE_AI_PROJECT_ID
-    }/locations/${process.env.GOOGLE_AI_LOCATION}/publishers/google/models/${
-      process.env.GOOGLE_AI_BARD_MODEL_ID ?? model.id
-    }:predict`;
-  } else if (isBedrock) {
-    url = `${BEDROCK_HOST}/openai/deployments/${model.id}/chat/completions?api-version=${OPENAI_API_VERSION}`;
-  } else if (isGptWorld) {
-    url = `${
-      process.env.GPT_WORLD_HOST ?? OPENAI_API_HOST
-    }/openai/deployments/${
-      model.id
-    }/chat/completions?api-version=${OPENAI_API_VERSION}`;
-  } else if (OPENAI_API_TYPE === 'azure') {
-    url = `${OPENAI_API_HOST}/openai/deployments/${model.id}/chat/completions?api-version=${OPENAI_API_VERSION}`;
+function getUrl(
+  modelId: string,
+  modelType: OpenAIEntityModelType,
+  isAddonsAdded: boolean,
+): string {
+  if (modelType === 'model' && isAddonsAdded) {
+    return `${OPENAI_API_HOST}/openai/deployments/assistant/chat/completions?api-version=${OPENAI_API_VERSION}`;
   }
 
+  return `${OPENAI_API_HOST}/openai/deployments/${modelId}/chat/completions?api-version=${OPENAI_API_VERSION}`;
+}
+
+export const OpenAIStream = async ({
+  model,
+  systemPrompt,
+  temperature,
+  key,
+  messages,
+  tokenCount,
+  userJWT,
+  isAddonsAdded,
+}: {
+  model: OpenAIEntityModel;
+  systemPrompt: string;
+  temperature: number;
+  key: string;
+  messages: Message[];
+  tokenCount: number;
+  userJWT: string;
+  isAddonsAdded: boolean;
+}) => {
+  const url = getUrl(model.id, model.type, isAddonsAdded);
   let requestHeaders: Record<string, string> = {
-    ...headers,
+    ...(key && getHeaders(key)),
     'Content-Type': 'application/json',
   };
   let body: string;
 
-  if (isGoogle) {
-    requestHeaders.Authorization = `Bearer ${process.env.GOOGLE_AI_TOKEN}`;
-
-    body = JSON.stringify({
-      instances: [
-        {
-          context: systemPrompt,
-          examples: [],
-          messages: messages.map((msg) => ({
-            author: msg.role === 'assistant' ? 'bot' : 'user',
-            content: msg.content,
-          })),
-        },
-      ],
-      parameters: {
-        temperature,
-        topP: GOOGLE_TOP_P,
-        topK: GOOGLE_TOP_K,
-        maxOutputTokens: GOOGLE_MAX_OUTPUT_TOKENS,
+  body = JSON.stringify({
+    ...(userJWT && { user: userJWT }),
+    messages: [
+      {
+        role: 'system',
+        content: systemPrompt,
       },
-    });
-  } else {
-    requestHeaders = isBedrock
-      ? extendWithBedrockHeaders(key, requestHeaders)
-      : extendWithOpenAIHeaders(key, requestHeaders);
-
-    body = JSON.stringify({
-      ...(isOpenAI && OPENAI_API_TYPE === 'openai' && { model: model.id }),
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt,
-        },
-        ...messages,
-      ],
-      max_tokens: model.tokenLimit - tokenCount,
-      temperature,
-      stream: true,
-    });
-  }
+      ...messages,
+    ],
+    max_tokens: model.tokenLimit - tokenCount,
+    temperature,
+    stream: true,
+  });
 
   const res = await fetch(url, {
     headers: requestHeaders,
@@ -164,45 +115,32 @@ export const OpenAIStream = async (
 
   const stream = new ReadableStream({
     async start(controller) {
-      if (isGoogle) {
-        try {
-          const result = await res.json();
-          const queue = encoder.encode(
-            result.predictions[0]?.candidates?.[0]?.content,
-          );
-          controller.enqueue(queue);
-          controller.close();
-        } catch (e) {
-          controller.error(e);
-        }
-      } else {
-        const onParse = (event: ParsedEvent | ReconnectInterval) => {
-          if (event.type === 'event') {
-            if (event.data === '[DONE]') {
+      const onParse = (event: ParsedEvent | ReconnectInterval) => {
+        if (event.type === 'event') {
+          if (event.data === '[DONE]') {
+            controller.close();
+            return;
+          }
+          const data = event.data;
+          try {
+            const json = JSON.parse(data);
+            if (json.choices[0].finish_reason != null) {
               controller.close();
               return;
             }
-            const data = event.data;
-            try {
-              const json = JSON.parse(data);
-              if (json.choices[0].finish_reason != null) {
-                controller.close();
-                return;
-              }
-              const text = json.choices[0].delta.content;
-              const queue = encoder.encode(text);
-              controller.enqueue(queue);
-            } catch (e) {
-              controller.error(e);
-            }
+            const text = json.choices[0].delta.content;
+            const queue = encoder.encode(text);
+            controller.enqueue(queue);
+          } catch (e) {
+            controller.error(e);
           }
-        };
-
-        const parser = createParser(onParse);
-
-        for await (const chunk of res.body as any) {
-          parser.feed(decoder.decode(chunk));
         }
+      };
+
+      const parser = createParser(onParse);
+
+      for await (const chunk of res.body as any) {
+        parser.feed(decoder.decode(chunk));
       }
     },
   });
