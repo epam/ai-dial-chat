@@ -25,7 +25,7 @@ export enum OpenAIEntityModelID {
   GPT_3_5_AZ = 'gpt-35-turbo',
   GPT_4 = 'gpt-4',
   GPT_4_32K = 'gpt-4-32k',
-  BISON_001 = 'chat-bison',
+  BISON_001 = 'chat-bison@001',
   AMAZON_TITAN_TG1_LARGE = 'amazon.titan-tg1-large',
   AI21_J2_GRANDE_INSTRUCT = 'ai21.j2-grande-instruct',
   AI21_J2_JUMBO_INSTRUCT = 'ai21.j2-jumbo-instruct',
