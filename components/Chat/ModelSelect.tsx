@@ -127,7 +127,6 @@ export const ModelSelect = ({
     setIsNotAllowedModelSelected(!modelsIds.includes(conversationModelId));
   }, [conversationModelId, models]);
 
-  console.log('Models', models);
   return (
     <div className="flex flex-col">
       <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
