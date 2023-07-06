@@ -1,13 +1,84 @@
-import { useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import Select, {
+  ClassNamesConfig,
+  NoticeProps,
+  OptionProps,
+  SingleValueProps,
+  components,
+} from 'react-select';
 
 import { Conversation } from '@/types/chat';
+
+import { SelectIcon } from '../Select/SelectIcon';
 
 interface Props {
   conversations: Conversation[];
   selectedConversations: Conversation[];
   onConversationSelect: (conversation: Conversation) => void;
 }
+
+interface CompareOption {
+  value: string;
+  label: string;
+  modelId: string;
+}
+
+const NoConversationsMessage: FC<NoticeProps<CompareOption>> = (props) => {
+  const { t } = useTranslation('chat');
+  return (
+    <components.NoOptionsMessage {...props}>
+      {t('No conversations available')}
+    </components.NoOptionsMessage>
+  );
+};
+
+const CustomSelectOption = (props: OptionProps<CompareOption>) => {
+  const { data, children, isSelected } = props;
+  return (
+    <>
+      <components.Option
+        {...props}
+        className={`!p-0 !pl-4 dark:text-white/80 hover:dark:bg-[#40414F] hover:cursor-pointer ${
+          isSelected ? 'dark:bg-[#202123]' : 'dark:bg-[#343541]'
+        }`}
+      >
+        <SelectIcon modelId={data.modelId}>{children}</SelectIcon>
+      </components.Option>
+    </>
+  );
+};
+
+const CustomSingleValue = (props: SingleValueProps<CompareOption>) => {
+  const { children, getValue } = props;
+  const selectedOption = getValue()[0];
+  return (
+    <components.SingleValue className="!pl-1" {...props}>
+      {selectedOption ? (
+        <SelectIcon modelId={selectedOption.value}>{children}</SelectIcon>
+      ) : (
+        children
+      )}
+    </components.SingleValue>
+  );
+};
+
+const selectClassNames: ClassNamesConfig<CompareOption> = {
+  control: (state) =>
+    `dark:bg-[#343541] dark:text-white/80 hover:dark:border-white hover:dark:shadow-white  !rounded-lg ${
+      state.isFocused
+        ? 'dark:border-white/80 dark:shadow-white/80 dark:shadow-sm'
+        : ''
+    }`,
+  placeholder: (state) => 'text-neutral-900 dark:text-white/80',
+  valueContainer: (state) => '!text-neutral-900 hover:cursor-text',
+  menu: (state) =>
+    '!mt-1 dark:bg-[#343541] !rounded !shadow-md !shadow-neutral-400 dark:!shadow-[#717283]',
+  singleValue: (state) => '!text-neutral-900 dark:!text-white/80 center m-0',
+  dropdownIndicator: (state) =>
+    '!py-0 hover:!text-neutral-900 hover:dark:!text-white/80',
+  input: (state) => 'dark:!text-white/80',
+};
 
 export const ChatCompareSelect = ({
   conversations,
@@ -18,6 +89,33 @@ export const ChatCompareSelect = ({
   const [comparableConversations, setComparableConversations] = useState<
     Conversation[]
   >([]);
+
+  const comparableOptions: CompareOption[] = comparableConversations.map(
+    (conversation) => {
+      return {
+        value: conversation.id,
+        label: conversation.name,
+        modelId: conversation.model.id,
+      };
+    },
+  );
+
+  const placeholder: string =
+    comparableConversations.length === 0
+      ? t('No conversations available')
+      : t('Select conversation');
+
+  const handleOnChange = (option: CompareOption | null) => {
+    if (option) {
+      const selectedOption = conversations
+        .filter((val) => val.id === option.value)
+        .pop();
+
+      if (selectedOption) {
+        onConversationSelect(selectedOption);
+      }
+    }
+  };
 
   useEffect(() => {
     if (selectedConversations.length === 1) {
@@ -61,7 +159,7 @@ export const ChatCompareSelect = ({
   return (
     <div className="flex flex-col items-center justify-center h-full text-base text-black/80 dark:text-white/80">
       <div className="mb-5 flex flex-col text-center max-w-[300px]">
-        <h5>{t('Select Conversation to compare with')}</h5>
+        <h5>{t('Select conversation to compare with')}</h5>
         <i>
           (
           {t(
@@ -70,30 +168,19 @@ export const ChatCompareSelect = ({
           )
         </i>
       </div>
-      <select
-        className="dark:bg-[#40414F] p-3 rounded-md min-w-[150px] border border-gray-900/50"
-        onChange={(e) => {
-          const selectedOption = conversations
-            .filter((val) => val.id === e.target.value)
-            .pop();
 
-          if (selectedOption) {
-            onConversationSelect(selectedOption);
-          }
+      <Select<CompareOption>
+        className="dark:bg-[#40414F] !rounded-md !min-w-[220px] border !border-gray-900/50 text-base text-black/80 dark:text-white/80"
+        classNames={selectClassNames}
+        options={comparableOptions}
+        placeholder={placeholder}
+        onChange={handleOnChange}
+        components={{
+          NoOptionsMessage: NoConversationsMessage,
+          Option: CustomSelectOption,
+          SingleValue: CustomSingleValue,
         }}
-        value="null"
-      >
-        {comparableConversations.length === 0 ? (
-          <option value="null">No conversations available</option>
-        ) : (
-          <option value="null">Select Conversation</option>
-        )}
-        {comparableConversations.map((val) => (
-          <option key={val.id} value={val.id}>
-            {val.name}
-          </option>
-        ))}
-      </select>
+      />
     </div>
   );
 };

@@ -1,5 +1,5 @@
-import { IconExclamationCircle, IconExternalLink } from '@tabler/icons-react';
-import { ReactNode, useContext, useEffect, useState } from 'react';
+import { IconExclamationCircle } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
 import Select, {
   ClassNamesConfig,
   OptionProps,
@@ -11,9 +11,7 @@ import { useTranslation } from 'next-i18next';
 
 import { OpenAIModel, OpenAIModelID } from '@/types/openai';
 
-import HomeContext from '@/pages/api/home/home.context';
-
-import { ModelIcon } from '../Chatbar/components/ModelIcon';
+import { SelectIcon } from '../Select/SelectIcon';
 
 interface Props {
   models: OpenAIModel[];
@@ -28,26 +26,7 @@ interface ModelsSelectOption {
   label: string;
   isDisabled: boolean;
 }
-interface SelectIconProps {
-  modelId: string;
-  children: ReactNode;
-}
-const SelectIcon = ({ modelId, children }: SelectIconProps) => {
-  const {
-    state: { modelIconMapping, lightMode },
-  } = useContext(HomeContext);
-  return (
-    <span className="flex flex-row items-center gap-2">
-      <ModelIcon
-        size={18}
-        modelIconMapping={modelIconMapping}
-        modelId={modelId}
-        inverted={lightMode === 'dark'}
-      />
-      {children}
-    </span>
-  );
-};
+
 const CustomSelectOption = (props: OptionProps<ModelsSelectOption>) => {
   const { data, children, isSelected } = props;
   return (
@@ -92,12 +71,14 @@ const selectClassNames: ClassNamesConfig<ModelsSelectOption> = {
     }`,
   placeholder: (state) => 'text-neutral-900 dark:text-white',
   valueContainer: (state) => '!text-neutral-900 hover:cursor-text',
-  menu: (state) => '!mt-1 dark:bg-[#343541] !rounded !shadow-2xl',
+  menu: (state) =>
+    '!mt-1 dark:bg-[#343541] !rounded !shadow-md !shadow-neutral-400 dark:!shadow-[#717283]',
   singleValue: (state) => '!text-neutral-900 dark:!text-white center m-0',
   dropdownIndicator: (state) =>
     '!py-0 hover:!text-neutral-900 hover:dark:!text-white',
   input: (state) => 'dark:!text-white',
 };
+
 export const ModelSelect = ({
   conversationModelId,
   conversationModelName,
@@ -149,7 +130,7 @@ export const ModelSelect = ({
       <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
         {t('Model')}
       </label>
-      <Select
+      <Select<ModelsSelectOption>
         className="w-full rounded-lg text-neutral-900 dark:text-white dark:bg-[#343541]"
         classNames={selectClassNames}
         options={selectOptionsWithNotAllowedModel}
