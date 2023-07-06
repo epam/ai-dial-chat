@@ -112,6 +112,7 @@ describe('cleanData Functions', () => {
             temperature: DEFAULT_TEMPERATURE,
             folderId: null,
             replay: defaultReplay,
+            selectedAddons: [],
           },
         ],
         folders: [],
@@ -170,6 +171,7 @@ describe('cleanData Functions', () => {
             temperature: DEFAULT_TEMPERATURE,
             folderId: null,
             replay: defaultReplay,
+            selectedAddons: [],
           },
         ],
         folders: [
@@ -251,6 +253,7 @@ describe('cleanData Functions', () => {
             temperature: DEFAULT_TEMPERATURE,
             folderId: null,
             replay: defaultReplay,
+            selectedAddons: [],
           },
         ],
         folders: [
