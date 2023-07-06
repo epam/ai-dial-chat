@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/types/chat';
-import { OpenAIModel, OpenAIModelID } from '@/types/openai';
+import { OpenAIEntityModel, OpenAIEntityModelID } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 import { ModelSelect } from './ModelSelect';
@@ -13,8 +13,8 @@ import { TemperatureSlider } from './Temperature';
 interface Props {
   conversation: Conversation;
   prompts: Prompt[];
-  models: OpenAIModel[];
-  defaultModelId: OpenAIModelID;
+  models: OpenAIEntityModel[];
+  defaultModelId: OpenAIEntityModelID;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
   onSelectModel: (modelId: string) => void;

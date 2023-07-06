@@ -1,11 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 
-import { getHeaders } from '../../utils/server/getHeaders';
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
 import { OpenAIError, OpenAIStream } from '@/utils/server';
 
-import { OpenAIModelID, OpenAIModels } from '../../types/openai';
+import { OpenAIEntityModelID, OpenAIEntityModels } from '../../types/openai';
 import { fallbackModelID } from '../../types/openai';
 import { ChatBody, Message } from '@/types/chat';
 
@@ -31,6 +30,8 @@ const wasm = readFileSync(
   ),
 );
 
+let encoding: Tiktoken;
+
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
   if (process.env.AUTH_DISABLED !== 'true' && !session) {
@@ -38,15 +39,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const { modelId, messages, key, prompt, temperature, id } =
+    const { modelId, messages, key, prompt, temperature, selectedAddons } =
       req.body as ChatBody;
 
-    await init((imports) => WebAssembly.instantiate(wasm, imports));
-    const encoding = new Tiktoken(
-      tiktokenModel.bpe_ranks,
-      tiktokenModel.special_tokens,
-      tiktokenModel.pat_str,
-    );
+    if (!encoding) {
+      await init((imports) => WebAssembly.instantiate(wasm, imports));
+      encoding = new Tiktoken(
+        tiktokenModel.bpe_ranks,
+        tiktokenModel.special_tokens,
+        tiktokenModel.pat_str,
+      );
+    }
 
     let promptToSend = prompt;
     if (!promptToSend) {
@@ -64,18 +67,19 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     // let messagesToSend: Message[] = [];
 
     const model =
-      OpenAIModels[modelId as OpenAIModelID] ?? OpenAIModels[fallbackModelID];
+      OpenAIEntityModels[modelId as OpenAIEntityModelID] ??
+      OpenAIEntityModels[fallbackModelID];
 
     let tokens_per_message = 0;
     if (
-      model.id == OpenAIModelID.GPT_3_5 ||
-      model.id == OpenAIModelID.GPT_3_5_AZ
+      model.id == OpenAIEntityModelID.GPT_3_5 ||
+      model.id == OpenAIEntityModelID.GPT_3_5_AZ
     ) {
       tokens_per_message = 5;
     } else if (
-      model.id == OpenAIModelID.GPT_4 ||
-      model.id == OpenAIModelID.GPT_4_32K ||
-      model.id === OpenAIModelID.BISON_001
+      model.id == OpenAIEntityModelID.GPT_4 ||
+      model.id == OpenAIEntityModelID.GPT_4_32K ||
+      model.id === OpenAIEntityModelID.BISON_001
     ) {
       tokens_per_message = 4;
     }
@@ -99,17 +103,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     tokenCount += 3;
 
-    encoding.free();
+    // encoding.free();
 
-    const stream = await OpenAIStream(
+    const stream = await OpenAIStream({
       model,
-      promptToSend,
-      temperatureToUse,
+      systemPrompt: promptToSend,
+      temperature: temperatureToUse,
       key,
-      messagesToSend,
-      (session && getHeaders(session, id)) || {},
+      messages: messagesToSend,
       tokenCount,
-    );
+      isAddonsAdded: selectedAddons?.length > 0,
+    });
     res.setHeader('Transfer-Encoding', 'chunked');
     // return new Response(stream);
     const reader = stream.getReader();

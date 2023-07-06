@@ -9,15 +9,15 @@ import Select, {
 
 import { useTranslation } from 'next-i18next';
 
-import { OpenAIModel, OpenAIModelID } from '@/types/openai';
+import { OpenAIEntityModel, OpenAIEntityModelID } from '@/types/openai';
 
 import { SelectIcon } from '../Select/SelectIcon';
 
 interface Props {
-  models: OpenAIModel[];
+  models: OpenAIEntityModel[];
   conversationModelId: string;
   conversationModelName: string;
-  defaultModelId: OpenAIModelID;
+  defaultModelId: OpenAIEntityModelID;
   onSelectModel: (modelId: string) => void;
 }
 
@@ -144,7 +144,7 @@ export const ModelSelect = ({
           SingleValue: CustomSingleValue,
         }}
       />
-      {conversationModelId === OpenAIModelID.GPT_4_32K && (
+      {conversationModelId === OpenAIEntityModelID.GPT_4_32K && (
         <div className="w-full mt-3 text-left text-orange-600 dark:text-orange-600 flex gap-2 items-center">
           <IconExclamationCircle size={18} />
           <div>

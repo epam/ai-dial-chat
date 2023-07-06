@@ -1,3 +1,4 @@
+import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 
@@ -12,8 +13,15 @@ import { useCreateReducer } from '@/hooks/useCreateReducer';
 import useErrorService from '@/services/errorService';
 import useApiService from '@/services/useApiService';
 
+import { AuthWindowLocationLike } from '@/utils/app/auth/authWindowLocationLike';
+import { delay } from '@/utils/app/auth/delay';
+import { timeoutAsync } from '@/utils/app/auth/timeoutAsync';
 import { cleanConversationHistory } from '@/utils/app/clean';
-import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+} from '@/utils/app/const';
 import {
   saveConversations,
   saveSelectedConversationIds,
@@ -28,9 +36,9 @@ import { KeyValuePair } from '@/types/data';
 import { Feature } from '@/types/features';
 import { FolderInterface, FolderType } from '@/types/folder';
 import {
-  OpenAIModel,
-  OpenAIModelID,
-  OpenAIModels,
+  OpenAIEntityModel,
+  OpenAIEntityModelID,
+  OpenAIEntityModels,
   fallbackModelID,
 } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
@@ -51,15 +59,13 @@ interface Props {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   usePluginKeys: boolean;
-  isShowFooter: boolean;
-  isShowRequestApiKey: boolean;
-  isShowReportAnIssue: boolean;
   appName: string;
   footerHtmlMessage: string;
   enabledFeatures: Feature[];
   isIframe: boolean;
   modelIconMapping: string;
-  defaultModelId: OpenAIModelID;
+  authDisabled: boolean;
+  defaultModelId: OpenAIEntityModelID;
 }
 
 const Home = ({
@@ -67,18 +73,18 @@ const Home = ({
   serverSidePluginKeysSet,
   usePluginKeys,
   appName,
-  isShowFooter,
-  isShowRequestApiKey,
-  isShowReportAnIssue,
   footerHtmlMessage,
   enabledFeatures,
   isIframe,
   modelIconMapping,
   defaultModelId,
+  authDisabled,
 }: Props) => {
+  const session = useSession();
+
   const enabledFeaturesSet = new Set(enabledFeatures);
   const { t } = useTranslation('chat');
-  const { getModels } = useApiService();
+  const { getModels, getAddons } = useApiService();
   const { getModelsError } = useErrorService();
   const [selectedConversationNames, setSelectedConversationNames] = useState<
     string[]
@@ -103,7 +109,7 @@ const Home = ({
 
   const stopConversationRef = useRef<boolean>(false);
 
-  const { data, error, refetch } = useQuery(
+  const { data: modelsData, error: modelsError } = useQuery(
     ['GetModels', apiKey, serverSideApiKeyIsSet],
     ({ signal }) => {
       if (!apiKey && !serverSideApiKeyIsSet) return null;
@@ -115,24 +121,49 @@ const Home = ({
         signal,
       );
     },
-    { enabled: true, refetchOnMount: false },
+    { enabled: true, refetchOnMount: false, staleTime: 60000 },
   );
 
   useEffect(() => {
-    if (data) {
-      dispatch({ field: 'models', value: data });
+    if (modelsData) {
+      dispatch({ field: 'models', value: modelsData });
 
-      const defaultModelId = (data as any as OpenAIModel[]).find(
+      const defaultModelId = (modelsData as any as OpenAIEntityModel[]).find(
         (model) => model.isDefault,
       )?.id;
 
       dispatch({ field: 'defaultModelId', value: defaultModelId });
     }
-  }, [data, dispatch]);
+  }, [modelsData, dispatch]);
 
   useEffect(() => {
-    dispatch({ field: 'modelError', value: getModelsError(error) });
-  }, [dispatch, error, getModelsError]);
+    dispatch({ field: 'modelError', value: getModelsError(modelsError) });
+  }, [dispatch, modelsError, getModelsError]);
+
+  const { data: addonsData, error: addonsError } = useQuery(
+    ['GetAddons', apiKey, serverSideApiKeyIsSet],
+    ({ signal }) => {
+      if (!apiKey && !serverSideApiKeyIsSet) return null;
+
+      return getAddons(
+        {
+          key: apiKey,
+        },
+        signal,
+      );
+    },
+    { enabled: true, refetchOnMount: false, staleTime: 60000 },
+  );
+
+  useEffect(() => {
+    if (addonsData) {
+      dispatch({ field: 'addons', value: addonsData });
+    }
+  }, [addonsData, dispatch]);
+
+  useEffect(() => {
+    dispatch({ field: 'addonError', value: getModelsError(addonsError) });
+  }, [dispatch, addonsError, getModelsError]);
 
   // FETCH MODELS ----------------------------------------------
 
@@ -256,7 +287,7 @@ const Home = ({
     replayUserMessagesStack: [],
     activeReplayIndex: 0,
   };
-  const handleNewConversation = (name = 'New Conversation') => {
+  const handleNewConversation = (name = DEFAULT_CONVERSATION_NAME) => {
     if (!clientDefaultModelId) {
       return;
     }
@@ -268,16 +299,19 @@ const Home = ({
       name: t(name),
       messages: [],
       model: {
-        id: OpenAIModels[clientDefaultModelId].id,
-        name: OpenAIModels[clientDefaultModelId].name,
-        maxLength: OpenAIModels[clientDefaultModelId].maxLength,
-        tokenLimit: OpenAIModels[clientDefaultModelId].tokenLimit,
-        requestLimit: OpenAIModels[clientDefaultModelId].requestLimit,
+        id: OpenAIEntityModels[clientDefaultModelId].id,
+        name: OpenAIEntityModels[clientDefaultModelId].name,
+        maxLength: OpenAIEntityModels[clientDefaultModelId].maxLength,
+        tokenLimit: OpenAIEntityModels[clientDefaultModelId].tokenLimit,
+        requestLimit: OpenAIEntityModels[clientDefaultModelId].requestLimit,
+        type: OpenAIEntityModels[clientDefaultModelId].type,
       },
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
       folderId: null,
       replay: defaultReplay,
+      selectedAddons:
+        OpenAIEntityModels[clientDefaultModelId].selectedAddons ?? [],
     };
 
     addNewConversationToStore(newConversation);
@@ -356,21 +390,6 @@ const Home = ({
         field: 'usePluginKeys',
         value: usePluginKeys,
       });
-    isShowFooter &&
-      dispatch({
-        field: 'isShowFooter',
-        value: isShowFooter,
-      });
-    isShowReportAnIssue &&
-      dispatch({
-        field: 'isShowReportAnIssue',
-        value: isShowReportAnIssue,
-      });
-    isShowRequestApiKey &&
-      dispatch({
-        field: 'isShowRequestApiKey',
-        value: isShowRequestApiKey,
-      });
 
     footerHtmlMessage &&
       dispatch({
@@ -398,14 +417,41 @@ const Home = ({
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
     usePluginKeys,
-    isShowFooter,
-    isShowReportAnIssue,
-    isShowRequestApiKey,
     footerHtmlMessage,
     enabledFeatures,
   ]);
 
   // ON LOAD --------------------------------------------
+
+  const handleIframeAuth = async () => {
+    const timeout = 30 * 1000;
+    let complete = false;
+    await Promise.race([
+      timeoutAsync(timeout),
+      (async () => {
+        const authWindowLocation = new AuthWindowLocationLike(
+          '/api/auth/signin',
+        );
+
+        await authWindowLocation.ready; // ready after redirects
+        const t = Math.max(100, timeout / 1000);
+        // wait for redirection to back
+        while (!complete) {
+          try {
+            if (authWindowLocation.href === window.location.href) {
+              complete = true;
+              authWindowLocation.destroy();
+              break;
+            }
+          } catch {}
+          await delay(t);
+        }
+        window.location.reload();
+
+        return;
+      })(),
+    ]);
+  };
 
   useEffect(() => {
     const settings = getSettings();
@@ -494,13 +540,14 @@ const Home = ({
 
       const newConversation: Conversation = {
         id: uuidv4(),
-        name: t('New Conversation'),
+        name: t(DEFAULT_CONVERSATION_NAME),
         messages: [],
-        model: OpenAIModels[defaultModelId],
+        model: OpenAIEntityModels[defaultModelId],
         prompt: DEFAULT_SYSTEM_PROMPT,
         temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
         folderId: null,
         replay: defaultReplay,
+        selectedAddons: OpenAIEntityModels[defaultModelId].selectedAddons ?? [],
       };
 
       const updatedConversations: Conversation[] =
@@ -554,36 +601,49 @@ const Home = ({
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      {selectedConversationNames.length > 0 && (
-        <main
-          className={`flex h-screen w-screen flex-col text-sm text-white dark:text-white ${lightMode}`}
-        >
-          {enabledFeaturesSet.has('conversations-section') && (
-            <div className="fixed top-0 w-full sm:hidden">
-              <Navbar
-                selectedConversationNames={selectedConversationNames}
-                onNewConversation={handleNewConversation}
-              />
-            </div>
-          )}
-
-          <div
-            className={`flex h-full w-full sm:pt-0 ${
-              enabledFeaturesSet.has('conversations-section') ? 'pt-[48px]' : ''
-            }`}
+      {isIframe && !authDisabled && session.status !== 'authenticated' ? (
+        <div className="w-full h-full grid place-items-center min-h-[100px]">
+          <button
+            onClick={handleIframeAuth}
+            className="appearance-none border-gray-900/50 bg-[#343541] text-gray-100 border-gray-200 p-3 rounded-lg"
           >
-            {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
+            {t('Login')}
+          </button>
+        </div>
+      ) : (
+        selectedConversationNames.length > 0 && (
+          <main
+            className={`flex h-screen w-screen flex-col text-sm text-white dark:text-white ${lightMode}`}
+          >
+            {enabledFeaturesSet.has('conversations-section') && (
+              <div className="fixed top-0 w-full sm:hidden">
+                <Navbar
+                  selectedConversationNames={selectedConversationNames}
+                  onNewConversation={handleNewConversation}
+                />
+              </div>
+            )}
 
-            <div className="flex flex-1">
-              <Chat
-                stopConversationRef={stopConversationRef}
-                appName={appName}
-              />
+            <div
+              className={`flex h-full w-full sm:pt-0 ${
+                enabledFeaturesSet.has('conversations-section')
+                  ? 'pt-[48px]'
+                  : ''
+              }`}
+            >
+              {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
+
+              <div className="flex flex-1">
+                <Chat
+                  stopConversationRef={stopConversationRef}
+                  appName={appName}
+                />
+              </div>
+
+              {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
             </div>
-
-            {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
-          </div>
-        </main>
+          </main>
+        )
       )}
     </HomeContext.Provider>
   );
@@ -595,6 +655,7 @@ export const getServerSideProps: GetServerSideProps = async ({
   req,
   res,
 }) => {
+  const isIframe = process.env.IS_IFRAME === 'true' || false;
   res.setHeader(
     'Content-Security-Policy',
     process.env.ALLOWED_IFRAME_ORIGINS
@@ -602,7 +663,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       : 'frame-ancestors none',
   );
   const session = await getServerSession(req, res, authOptions);
-  if (process.env.AUTH_DISABLED !== 'true' && !session) {
+  if (!isIframe && process.env.AUTH_DISABLED !== 'true' && !session) {
     return {
       redirect: {
         permanent: false,
@@ -644,14 +705,11 @@ export const getServerSideProps: GetServerSideProps = async ({
       serverSidePluginKeysSet,
       appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
       modelIconMapping: modelIconMap,
-      // Footer variables
-      isShowFooter: process.env.SHOW_FOOTER === 'true',
-      isShowRequestApiKey: process.env.SHOW_REQUEST_API_KEY === 'true',
-      isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
       footerHtmlMessage: updatedFooterHTMLMessage,
       enabledFeatures: (process.env.ENABLED_FEATURES || '').split(','),
-      isIframe: process.env.IS_IFRAME === 'true' || false,
+      isIframe,
       defaultModelId: process.env.DEFAULT_MODEL || fallbackModelID,
+      authDisabled: process.env.AUTH_DISABLED === 'true',
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',

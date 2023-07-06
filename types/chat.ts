@@ -1,4 +1,4 @@
-import { OpenAIModel } from './openai';
+import { OpenAIEntityModel } from './openai';
 
 export interface Message {
   role: Role;
@@ -16,10 +16,11 @@ export interface ChatBody {
   prompt: string;
   temperature: number;
   id: string;
+  selectedAddons: string[];
 }
 
 export interface RateBody {
-  model: OpenAIModel;
+  model: OpenAIEntityModel;
   message: Message;
   key: string;
   id: string;
@@ -30,11 +31,12 @@ export interface Conversation {
   id: string;
   name: string;
   messages: Message[];
-  model: OpenAIModel;
+  model: OpenAIEntityModel;
   prompt: string;
   temperature: number;
   folderId: string | null;
   replay: Replay;
+  selectedAddons: string[];
 }
 export interface Replay {
   isReplay: boolean;

@@ -5,7 +5,11 @@ import { useTranslation } from 'next-i18next';
 
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
-import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+} from '@/utils/app/const';
 import {
   saveConversations,
   saveSelectedConversationIds,
@@ -20,7 +24,7 @@ import {
 
 import { Conversation, Replay } from '@/types/chat';
 import { SupportedExportFormats } from '@/types/export';
-import { OpenAIModelID, OpenAIModels } from '@/types/openai';
+import { OpenAIEntityModelID, OpenAIEntityModels } from '@/types/openai';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -109,13 +113,16 @@ export const Chatbar = () => {
   const handleClearConversations = () => {
     const newConversation: Conversation = {
       id: uuidv4(),
-      name: t('New Conversation'),
+      name: t(DEFAULT_CONVERSATION_NAME),
       messages: [],
-      model: OpenAIModels[defaultModelId || OpenAIModelID.GPT_3_5],
+      model: OpenAIEntityModels[defaultModelId || OpenAIEntityModelID.GPT_3_5],
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: DEFAULT_TEMPERATURE,
       folderId: null,
       replay: defaultReplay,
+      selectedAddons:
+        OpenAIEntityModels[defaultModelId || OpenAIEntityModelID.GPT_3_5]
+          .selectedAddons ?? [],
     };
 
     const newConversations: Conversation[] = [newConversation];
@@ -166,13 +173,17 @@ export const Chatbar = () => {
     } else {
       const newConversation: Conversation = {
         id: uuidv4(),
-        name: t('New Conversation'),
+        name: t(DEFAULT_CONVERSATION_NAME),
         messages: [],
-        model: OpenAIModels[defaultModelId || OpenAIModelID.GPT_3_5],
+        model:
+          OpenAIEntityModels[defaultModelId || OpenAIEntityModelID.GPT_3_5],
         prompt: DEFAULT_SYSTEM_PROMPT,
         temperature: DEFAULT_TEMPERATURE,
         folderId: null,
         replay: defaultReplay,
+        selectedAddons:
+          OpenAIEntityModels[defaultModelId || OpenAIEntityModelID.GPT_3_5]
+            .selectedAddons ?? [],
       };
 
       defaultModelId &&

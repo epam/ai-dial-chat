@@ -299,6 +299,7 @@ export default class ChatAIOverlay {
     iframe.sandbox.add('allow-scripts');
     iframe.sandbox.add('allow-modals');
     iframe.sandbox.add('allow-forms');
+    iframe.sandbox.add('allow-popups');
     iframe.onload = () => {
       if (this.config.showButtonIcon) {
         this.button = this.createOverlayButton(this.position);
