@@ -32,8 +32,8 @@ const CustomSelectOption = (props: OptionProps<ModelsSelectOption>) => {
   return (
     <>
       <components.Option
-        isDisabled={data.isDisabled}
         {...props}
+        isDisabled={data.isDisabled}
         className={`!p-0 !pl-4 dark:text-white hover:dark:bg-[#40414F] hover:cursor-pointer ${
           isSelected ? 'dark:bg-[#202123]' : 'dark:bg-[#343541]'
         } ${
