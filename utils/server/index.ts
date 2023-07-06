@@ -43,7 +43,7 @@ export const OpenAIStream = async ({
   key,
   messages,
   tokenCount,
-  userJWT,
+  userJWT = '',
   isAddonsAdded,
 }: {
   model: OpenAIEntityModel;
@@ -52,12 +52,14 @@ export const OpenAIStream = async ({
   key: string;
   messages: Message[];
   tokenCount: number;
-  userJWT: string;
+  userJWT: string | null;
   isAddonsAdded: boolean;
 }) => {
   const url = getUrl(model.id, model.type, isAddonsAdded);
+  const apiKey = key ? key : process.env.OPENAI_API_KEY;
+
   let requestHeaders: Record<string, string> = {
-    ...(key && getHeaders(key)),
+    ...(apiKey && getHeaders(apiKey)),
     'Content-Type': 'application/json',
   };
   let body: string;
@@ -74,6 +76,7 @@ export const OpenAIStream = async ({
     max_tokens: model.tokenLimit - tokenCount,
     temperature,
     stream: true,
+    model: model.id,
   });
 
   const res = await fetch(url, {
