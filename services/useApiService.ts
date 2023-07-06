@@ -38,8 +38,22 @@ const useApiService = () => {
     [fetchService],
   );
 
+  const getAddons = useCallback(
+    (params: GetModelsRequestProps, signal?: AbortSignal) => {
+      return fetchService.post<GetModelsRequestProps>(`/api/addons`, {
+        body: { key: params.key },
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal,
+      });
+    },
+    [fetchService],
+  );
+
   return {
     getModels,
+    getAddons,
   };
 };
 

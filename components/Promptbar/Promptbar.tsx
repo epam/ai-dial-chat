@@ -9,7 +9,7 @@ import { savePrompts } from '@/utils/app/prompts';
 
 import { PromptsHistory } from '@/types/export';
 import { FolderInterface } from '@/types/folder';
-import { OpenAIModels } from '@/types/openai';
+import { OpenAIEntityModels } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -57,7 +57,7 @@ const Promptbar = () => {
         name: `Prompt ${prompts.length + 1}`,
         description: '',
         content: '',
-        model: OpenAIModels[defaultModelId],
+        model: OpenAIEntityModels[defaultModelId],
         folderId: null,
       };
 

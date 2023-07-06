@@ -4,14 +4,14 @@ import { useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/types/chat';
-import { OpenAIModel, OpenAIModelID } from '@/types/openai';
+import { OpenAIEntityModel, OpenAIEntityModelID } from '@/types/openai';
 
 import { ModelSelect } from './ModelSelect';
 
 interface Props {
   conversation: Conversation;
-  models: OpenAIModel[];
-  defaultModelId: OpenAIModelID;
+  models: OpenAIEntityModel[];
+  defaultModelId: OpenAIEntityModelID;
   isCompareMode: boolean;
   selectedConversationIds: string[];
   messageIsStreaming: boolean;

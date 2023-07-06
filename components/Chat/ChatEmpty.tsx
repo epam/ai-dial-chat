@@ -1,15 +1,15 @@
 import { Conversation } from '@/types/chat';
-import { OpenAIModel, OpenAIModelID } from '@/types/openai';
+import { OpenAIEntityModel, OpenAIEntityModelID } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 import Spinner from '../Spinner';
 import { ChatEmptySettings } from './ChatEmptySettings';
 
 interface Props {
-  models: OpenAIModel[];
+  models: OpenAIEntityModel[];
   conversation: Conversation;
   prompts: Prompt[];
-  defaultModelId: OpenAIModelID;
+  defaultModelId: OpenAIEntityModelID;
   isShowSettings: boolean;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;

@@ -17,7 +17,11 @@ import { AuthWindowLocationLike } from '@/utils/app/auth/authWindowLocationLike'
 import { delay } from '@/utils/app/auth/delay';
 import { timeoutAsync } from '@/utils/app/auth/timeoutAsync';
 import { cleanConversationHistory } from '@/utils/app/clean';
-import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+} from '@/utils/app/const';
 import {
   saveConversations,
   saveSelectedConversationIds,
@@ -32,9 +36,9 @@ import { KeyValuePair } from '@/types/data';
 import { Feature } from '@/types/features';
 import { FolderInterface, FolderType } from '@/types/folder';
 import {
-  OpenAIModel,
-  OpenAIModelID,
-  OpenAIModels,
+  OpenAIEntityModel,
+  OpenAIEntityModelID,
+  OpenAIEntityModels,
   fallbackModelID,
 } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
@@ -55,16 +59,13 @@ interface Props {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   usePluginKeys: boolean;
-  isShowFooter: boolean;
-  isShowRequestApiKey: boolean;
-  isShowReportAnIssue: boolean;
   appName: string;
   footerHtmlMessage: string;
   enabledFeatures: Feature[];
   isIframe: boolean;
   modelIconMapping: string;
   authDisabled: boolean;
-  defaultModelId: OpenAIModelID;
+  defaultModelId: OpenAIEntityModelID;
 }
 
 const Home = ({
@@ -72,9 +73,6 @@ const Home = ({
   serverSidePluginKeysSet,
   usePluginKeys,
   appName,
-  isShowFooter,
-  isShowRequestApiKey,
-  isShowReportAnIssue,
   footerHtmlMessage,
   enabledFeatures,
   isIframe,
@@ -86,7 +84,7 @@ const Home = ({
 
   const enabledFeaturesSet = new Set(enabledFeatures);
   const { t } = useTranslation('chat');
-  const { getModels } = useApiService();
+  const { getModels, getAddons } = useApiService();
   const { getModelsError } = useErrorService();
   const [selectedConversationNames, setSelectedConversationNames] = useState<
     string[]
@@ -111,7 +109,7 @@ const Home = ({
 
   const stopConversationRef = useRef<boolean>(false);
 
-  const { data, error, refetch } = useQuery(
+  const { data: modelsData, error: modelsError } = useQuery(
     ['GetModels', apiKey, serverSideApiKeyIsSet],
     ({ signal }) => {
       if (!apiKey && !serverSideApiKeyIsSet) return null;
@@ -123,24 +121,49 @@ const Home = ({
         signal,
       );
     },
-    { enabled: true, refetchOnMount: false },
+    { enabled: true, refetchOnMount: false, staleTime: 60000 },
   );
 
   useEffect(() => {
-    if (data) {
-      dispatch({ field: 'models', value: data });
+    if (modelsData) {
+      dispatch({ field: 'models', value: modelsData });
 
-      const defaultModelId = (data as any as OpenAIModel[]).find(
+      const defaultModelId = (modelsData as any as OpenAIEntityModel[]).find(
         (model) => model.isDefault,
       )?.id;
 
       dispatch({ field: 'defaultModelId', value: defaultModelId });
     }
-  }, [data, dispatch]);
+  }, [modelsData, dispatch]);
 
   useEffect(() => {
-    dispatch({ field: 'modelError', value: getModelsError(error) });
-  }, [dispatch, error, getModelsError]);
+    dispatch({ field: 'modelError', value: getModelsError(modelsError) });
+  }, [dispatch, modelsError, getModelsError]);
+
+  const { data: addonsData, error: addonsError } = useQuery(
+    ['GetAddons', apiKey, serverSideApiKeyIsSet],
+    ({ signal }) => {
+      if (!apiKey && !serverSideApiKeyIsSet) return null;
+
+      return getAddons(
+        {
+          key: apiKey,
+        },
+        signal,
+      );
+    },
+    { enabled: true, refetchOnMount: false, staleTime: 60000 },
+  );
+
+  useEffect(() => {
+    if (addonsData) {
+      dispatch({ field: 'addons', value: addonsData });
+    }
+  }, [addonsData, dispatch]);
+
+  useEffect(() => {
+    dispatch({ field: 'addonError', value: getModelsError(addonsError) });
+  }, [dispatch, addonsError, getModelsError]);
 
   // FETCH MODELS ----------------------------------------------
 
@@ -264,7 +287,7 @@ const Home = ({
     replayUserMessagesStack: [],
     activeReplayIndex: 0,
   };
-  const handleNewConversation = (name = 'New Conversation') => {
+  const handleNewConversation = (name = DEFAULT_CONVERSATION_NAME) => {
     if (!clientDefaultModelId) {
       return;
     }
@@ -276,16 +299,19 @@ const Home = ({
       name: t(name),
       messages: [],
       model: {
-        id: OpenAIModels[clientDefaultModelId].id,
-        name: OpenAIModels[clientDefaultModelId].name,
-        maxLength: OpenAIModels[clientDefaultModelId].maxLength,
-        tokenLimit: OpenAIModels[clientDefaultModelId].tokenLimit,
-        requestLimit: OpenAIModels[clientDefaultModelId].requestLimit,
+        id: OpenAIEntityModels[clientDefaultModelId].id,
+        name: OpenAIEntityModels[clientDefaultModelId].name,
+        maxLength: OpenAIEntityModels[clientDefaultModelId].maxLength,
+        tokenLimit: OpenAIEntityModels[clientDefaultModelId].tokenLimit,
+        requestLimit: OpenAIEntityModels[clientDefaultModelId].requestLimit,
+        type: OpenAIEntityModels[clientDefaultModelId].type,
       },
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
       folderId: null,
       replay: defaultReplay,
+      selectedAddons:
+        OpenAIEntityModels[clientDefaultModelId].selectedAddons ?? [],
     };
 
     addNewConversationToStore(newConversation);
@@ -364,21 +390,6 @@ const Home = ({
         field: 'usePluginKeys',
         value: usePluginKeys,
       });
-    isShowFooter &&
-      dispatch({
-        field: 'isShowFooter',
-        value: isShowFooter,
-      });
-    isShowReportAnIssue &&
-      dispatch({
-        field: 'isShowReportAnIssue',
-        value: isShowReportAnIssue,
-      });
-    isShowRequestApiKey &&
-      dispatch({
-        field: 'isShowRequestApiKey',
-        value: isShowRequestApiKey,
-      });
 
     footerHtmlMessage &&
       dispatch({
@@ -406,9 +417,6 @@ const Home = ({
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
     usePluginKeys,
-    isShowFooter,
-    isShowReportAnIssue,
-    isShowRequestApiKey,
     footerHtmlMessage,
     enabledFeatures,
   ]);
@@ -532,13 +540,14 @@ const Home = ({
 
       const newConversation: Conversation = {
         id: uuidv4(),
-        name: t('New Conversation'),
+        name: t(DEFAULT_CONVERSATION_NAME),
         messages: [],
-        model: OpenAIModels[defaultModelId],
+        model: OpenAIEntityModels[defaultModelId],
         prompt: DEFAULT_SYSTEM_PROMPT,
         temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
         folderId: null,
         replay: defaultReplay,
+        selectedAddons: OpenAIEntityModels[defaultModelId].selectedAddons ?? [],
       };
 
       const updatedConversations: Conversation[] =
@@ -696,10 +705,6 @@ export const getServerSideProps: GetServerSideProps = async ({
       serverSidePluginKeysSet,
       appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
       modelIconMapping: modelIconMap,
-      // Footer variables
-      isShowFooter: process.env.SHOW_FOOTER === 'true',
-      isShowRequestApiKey: process.env.SHOW_REQUEST_API_KEY === 'true',
-      isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
       footerHtmlMessage: updatedFooterHTMLMessage,
       enabledFeatures: (process.env.ENABLED_FEATURES || '').split(','),
       isIframe,

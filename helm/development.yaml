@@ -18,11 +18,10 @@ resources:
 env:
   NEXTAUTH_URL: 'https://chat.staging.deltixhub.io'
   # OPENAI_API_HOST: "https://southcentralus.api.cognitive.microsoft.com/"
-  OPENAI_API_HOST: 'http://ai-proxy.ai-proxy.svc.cluster.local'
+  OPENAI_API_HOST: 'https://openai-proxy-mr-12.staging.deltixhub.io'
   DEFAULT_MODEL: 'gpt-35-turbo'
   OPENAI_API_TYPE: 'azure'
   OPENAI_API_VERSION: '2023-03-15-preview'
-  NEXT_PUBLIC_SHOW_MODELS: 'true'
   NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT: ''
   GOOGLE_AI_HOST: 'https://palm-ai-proxy.staging.deltixhub.io'
   GOOGLE_AI_PROJECT_ID: 'EPM-AI-PROXY'
