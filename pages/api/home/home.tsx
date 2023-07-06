@@ -59,9 +59,6 @@ interface Props {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   usePluginKeys: boolean;
-  isShowFooter: boolean;
-  isShowRequestApiKey: boolean;
-  isShowReportAnIssue: boolean;
   appName: string;
   footerHtmlMessage: string;
   enabledFeatures: Feature[];
@@ -76,9 +73,6 @@ const Home = ({
   serverSidePluginKeysSet,
   usePluginKeys,
   appName,
-  isShowFooter,
-  isShowRequestApiKey,
-  isShowReportAnIssue,
   footerHtmlMessage,
   enabledFeatures,
   isIframe,
@@ -396,21 +390,6 @@ const Home = ({
         field: 'usePluginKeys',
         value: usePluginKeys,
       });
-    isShowFooter &&
-      dispatch({
-        field: 'isShowFooter',
-        value: isShowFooter,
-      });
-    isShowReportAnIssue &&
-      dispatch({
-        field: 'isShowReportAnIssue',
-        value: isShowReportAnIssue,
-      });
-    isShowRequestApiKey &&
-      dispatch({
-        field: 'isShowRequestApiKey',
-        value: isShowRequestApiKey,
-      });
 
     footerHtmlMessage &&
       dispatch({
@@ -438,9 +417,6 @@ const Home = ({
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
     usePluginKeys,
-    isShowFooter,
-    isShowReportAnIssue,
-    isShowRequestApiKey,
     footerHtmlMessage,
     enabledFeatures,
   ]);
@@ -729,10 +705,6 @@ export const getServerSideProps: GetServerSideProps = async ({
       serverSidePluginKeysSet,
       appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
       modelIconMapping: modelIconMap,
-      // Footer variables
-      isShowFooter: process.env.SHOW_FOOTER === 'true',
-      isShowRequestApiKey: process.env.SHOW_REQUEST_API_KEY === 'true',
-      isShowReportAnIssue: process.env.SHOW_REPORT_AN_ISSUE === 'true',
       footerHtmlMessage: updatedFooterHTMLMessage,
       enabledFeatures: (process.env.ENABLED_FEATURES || '').split(','),
       isIframe,
