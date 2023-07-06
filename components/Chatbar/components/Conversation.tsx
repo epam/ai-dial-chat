@@ -128,6 +128,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
             size={18}
             modelIconMapping={modelIconMapping}
             modelId={conversation.model.id}
+            inverted
           />
 
           <input
@@ -162,6 +163,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
             size={18}
             modelIconMapping={modelIconMapping}
             modelId={conversation.model.id}
+            inverted
           />
           <div
             className={`relative max-h-5 flex-1 overflow-hidden text-ellipsis whitespace-nowrap break-all text-left text-[12.5px] leading-3 ${

@@ -6,14 +6,20 @@ interface Props {
   modelId: string;
   size: number;
   modelIconMapping: Record<string, string>;
+  inverted?: boolean;
 }
 
-export const ModelIcon = ({ modelIconMapping, modelId, size }: Props) => {
+export const ModelIcon = ({
+  modelIconMapping,
+  modelId,
+  size,
+  inverted,
+}: Props) => {
   return (
     <>
       {modelIconMapping[modelId] ? (
         <Image
-          className="text-red-100 invert"
+          className={`text-red-100 ${inverted ? 'invert' : ''}`}
           src={`/images/${modelIconMapping[modelId]}`}
           width={size}
           height={size}

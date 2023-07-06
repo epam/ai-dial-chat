@@ -1,9 +1,19 @@
 import { IconExclamationCircle, IconExternalLink } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { ReactNode, useContext, useEffect, useState } from 'react';
+import Select, {
+  ClassNamesConfig,
+  OptionProps,
+  SingleValueProps,
+  components,
+} from 'react-select';
 
 import { useTranslation } from 'next-i18next';
 
 import { OpenAIModel, OpenAIModelID } from '@/types/openai';
+
+import HomeContext from '@/pages/api/home/home.context';
+
+import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 interface Props {
   models: OpenAIModel[];
@@ -13,6 +23,81 @@ interface Props {
   onSelectModel: (modelId: string) => void;
 }
 
+interface ModelsSelectOption {
+  value: string;
+  label: string;
+  isDisabled: boolean;
+}
+interface SelectIconProps {
+  modelId: string;
+  children: ReactNode;
+}
+const SelectIcon = ({ modelId, children }: SelectIconProps) => {
+  const {
+    state: { modelIconMapping, lightMode },
+  } = useContext(HomeContext);
+  return (
+    <span className="flex flex-row items-center gap-2">
+      <ModelIcon
+        size={18}
+        modelIconMapping={modelIconMapping}
+        modelId={modelId}
+        inverted={lightMode === 'dark'}
+      />
+      {children}
+    </span>
+  );
+};
+const CustomSelectOption = (props: OptionProps<ModelsSelectOption>) => {
+  const { data, children, isSelected } = props;
+  return (
+    <>
+      <components.Option
+        isDisabled={data.isDisabled}
+        {...props}
+        className={`!p-0 !pl-4 dark:text-white hover:dark:bg-[#40414F] hover:cursor-pointer ${
+          isSelected ? 'dark:bg-[#202123]' : 'dark:bg-[#343541]'
+        } ${
+          data.isDisabled
+            ? 'dark:!text-neutral-400 hover:!cursor-not-allowed dark:!bg-[#40414F]'
+            : ''
+        }`}
+      >
+        <SelectIcon modelId={data.value}>{children}</SelectIcon>
+      </components.Option>
+    </>
+  );
+};
+
+const CustomSingleValue = (props: SingleValueProps<ModelsSelectOption>) => {
+  const { children, getValue } = props;
+  const selectedOption = getValue()[0];
+  return (
+    <components.SingleValue className="!pl-1" {...props}>
+      {selectedOption ? (
+        <SelectIcon modelId={selectedOption.value}>{children}</SelectIcon>
+      ) : (
+        children
+      )}
+    </components.SingleValue>
+  );
+};
+
+const selectClassNames: ClassNamesConfig<ModelsSelectOption> = {
+  control: (state) =>
+    `dark:bg-[#343541] dark:text-white hover:dark:border-white hover:dark:shadow-white  !rounded-lg ${
+      state.isFocused
+        ? 'dark:border-white dark:shadow-white dark:shadow-sm'
+        : ''
+    }`,
+  placeholder: (state) => 'text-neutral-900 dark:text-white',
+  valueContainer: (state) => '!text-neutral-900 hover:cursor-text',
+  menu: (state) => '!mt-1 dark:bg-[#343541] !rounded !shadow-2xl',
+  singleValue: (state) => '!text-neutral-900 dark:!text-white center m-0',
+  dropdownIndicator: (state) =>
+    '!py-0 hover:!text-neutral-900 hover:dark:!text-white',
+  input: (state) => 'dark:!text-white',
+};
 export const ModelSelect = ({
   conversationModelId,
   conversationModelName,
@@ -25,6 +110,35 @@ export const ModelSelect = ({
   const [isNotAllowedModelSelected, setIsNotAllowedModelSelected] =
     useState(false);
 
+  const selectOptions: ModelsSelectOption[] = models.map((model) => {
+    return {
+      value: model.id,
+      label:
+        model.id === defaultModelId ? `Default (${model.name})` : model.name,
+      isDisabled: false,
+    };
+  });
+  const selectOptionsWithNotAllowedModel: ModelsSelectOption[] =
+    isNotAllowedModelSelected
+      ? selectOptions.concat({
+          value: conversationModelId,
+          label: conversationModelName,
+          isDisabled: true,
+        })
+      : selectOptions;
+
+  const conversationOption: ModelsSelectOption = {
+    value: conversationModelId,
+    label:
+      conversationModelId === defaultModelId
+        ? `Default (${conversationModelName})`
+        : conversationModelName,
+    isDisabled: isNotAllowedModelSelected,
+  };
+  const defaultModelOption: ModelsSelectOption | undefined =
+    selectOptionsWithNotAllowedModel.find(
+      ({ value }) => value === defaultModelId,
+    );
   useEffect(() => {
     const modelsIds = models.map(({ id }) => id);
     setIsNotAllowedModelSelected(!modelsIds.includes(conversationModelId));
@@ -35,36 +149,20 @@ export const ModelSelect = ({
       <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
         {t('Model')}
       </label>
-      <div className="w-full rounded-lg border border-neutral-200 bg-transparent pr-2 text-neutral-900 dark:border-neutral-600 dark:text-white">
-        <select
-          className="w-full bg-transparent p-2"
-          placeholder={t('Select a model') || ''}
-          value={conversationModelId || defaultModelId}
-          onChange={(e) => onSelectModel(e.target.value)}
-        >
-          {isNotAllowedModelSelected && (
-            <option
-              key={conversationModelId}
-              value={conversationModelId}
-              className="dark:bg-[#343541] dark:text-white"
-              disabled={true}
-            >
-              {conversationModelName}
-            </option>
-          )}
-          {models.map((model) => (
-            <option
-              key={model.id}
-              value={model.id}
-              className="dark:bg-[#343541] dark:text-white"
-            >
-              {model.id === defaultModelId
-                ? `Default (${model.name})`
-                : model.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      <Select
+        className="w-full rounded-lg text-neutral-900 dark:text-white dark:bg-[#343541]"
+        classNames={selectClassNames}
+        options={selectOptionsWithNotAllowedModel}
+        placeholder={t('Select a model') || ''}
+        defaultValue={conversationOption || defaultModelOption}
+        onChange={(option) => {
+          if (option) onSelectModel(option.value);
+        }}
+        components={{
+          Option: CustomSelectOption,
+          SingleValue: CustomSingleValue,
+        }}
+      />
       {conversationModelId === OpenAIModelID.GPT_4_32K && (
         <div className="w-full mt-3 text-left text-orange-600 dark:text-orange-600 flex gap-2 items-center">
           <IconExclamationCircle size={18} />
