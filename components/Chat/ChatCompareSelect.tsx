@@ -34,14 +34,14 @@ const NoConversationsMessage: FC<NoticeProps<CompareOption>> = (props) => {
 };
 
 const CustomSelectOption = (props: OptionProps<CompareOption>) => {
-  const { data, children, isSelected } = props;
+  const { data, children, isFocused } = props;
   return (
     <>
       <components.Option
         {...props}
-        className={`!p-0 !pl-4 dark:text-white/80 hover:dark:bg-[#40414F] hover:cursor-pointer ${
-          isSelected ? 'dark:bg-[#202123]' : 'dark:bg-[#343541]'
-        }`}
+        className={`!p-0 !pl-4 dark:text-white/80 hover:dark:bg-[#202123]  hover:cursor-pointer 
+        ${isFocused ? 'dark:bg-[#202123]' : 'dark:bg-[#40414F]'}
+        `}
       >
         <SelectIcon modelId={data.modelId}>{children}</SelectIcon>
       </components.Option>
@@ -65,7 +65,7 @@ const CustomSingleValue = (props: SingleValueProps<CompareOption>) => {
 
 const selectClassNames: ClassNamesConfig<CompareOption> = {
   control: (state) =>
-    `dark:bg-[#343541] dark:text-white/80 hover:dark:border-white hover:dark:shadow-white  !rounded-lg ${
+    `dark:bg-[#40414F] dark:text-white/80 hover:dark:border-white hover:dark:shadow-white  !rounded-lg ${
       state.isFocused
         ? 'dark:border-white/80 dark:shadow-white/80 dark:shadow-sm'
         : ''
@@ -73,7 +73,7 @@ const selectClassNames: ClassNamesConfig<CompareOption> = {
   placeholder: (state) => 'text-neutral-900 dark:text-white/80',
   valueContainer: (state) => '!text-neutral-900 hover:cursor-text',
   menu: (state) =>
-    '!mt-1 dark:bg-[#343541] !rounded !shadow-md !shadow-neutral-400 dark:!shadow-[#717283]',
+    '!mt-1 dark:bg-[#40414F] !rounded !shadow-md !shadow-neutral-400 dark:!shadow-[#717283]',
   singleValue: (state) => '!text-neutral-900 dark:!text-white/80 center m-0',
   dropdownIndicator: (state) =>
     '!py-0 hover:!text-neutral-900 hover:dark:!text-white/80',

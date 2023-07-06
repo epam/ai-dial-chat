@@ -28,7 +28,7 @@ interface ModelsSelectOption {
 }
 
 const CustomSelectOption = (props: OptionProps<ModelsSelectOption>) => {
-  const { data, children, isSelected } = props;
+  const { data, children, isSelected, isFocused } = props;
   return (
     <>
       <components.Option
@@ -40,7 +40,9 @@ const CustomSelectOption = (props: OptionProps<ModelsSelectOption>) => {
           data.isDisabled
             ? 'dark:!text-neutral-400 hover:!cursor-not-allowed dark:!bg-[#40414F]'
             : ''
-        }`}
+        } 
+        ${isFocused ? 'dark:bg-[#40414F]' : ''}
+        `}
       >
         <SelectIcon modelId={data.value}>{children}</SelectIcon>
       </components.Option>
@@ -125,6 +127,7 @@ export const ModelSelect = ({
     setIsNotAllowedModelSelected(!modelsIds.includes(conversationModelId));
   }, [conversationModelId, models]);
 
+  console.log('Models', models);
   return (
     <div className="flex flex-col">
       <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
