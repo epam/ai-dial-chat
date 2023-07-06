@@ -98,6 +98,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
 
     for (const entity of [...models, ...applications, ...assistants]) {
+      console.log(entity)
       entities.push({
         id: entity.id,
         name: OpenAIEntityModels[entity.id as OpenAIEntityModelID]?.name || entity.id,

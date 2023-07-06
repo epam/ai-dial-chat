@@ -13,6 +13,7 @@ export type OpenAIEntityModel = Omit<OpenAIEntity, 'type'> & {
   requestLimit: number;
   isDefault?: boolean;
   type: OpenAIEntityModelType;
+  selectedAddons?: string[];
 };
 
 export type OpenAIEntityAddon = Omit<OpenAIEntity, 'type'> & {
@@ -40,6 +41,22 @@ export enum OpenAIEntityAddonID {
   EPAM10K_SEMANTIC_SEARCH = 'epam-10k-semantic-search',
   EPAM10K_GOLDEN_QNA = 'epam-10k-golden-qna',
 }
+
+export const OpenAIEntityAddons: Record<
+  OpenAIEntityAddonID,
+  OpenAIEntityAddon
+> = {
+  [OpenAIEntityAddonID.EPAM10K_SEMANTIC_SEARCH]: {
+    id: OpenAIEntityAddonID.EPAM10K_SEMANTIC_SEARCH,
+    name: 'EPAM10K_SEMANTIC_SEARCH',
+    type: 'addon',
+  },
+  [OpenAIEntityAddonID.EPAM10K_GOLDEN_QNA]: {
+    id: OpenAIEntityAddonID.EPAM10K_GOLDEN_QNA,
+    name: 'EPAM10K_GOLDEN_QNA',
+    type: 'addon',
+  },
+};
 
 // in case the `DEFAULT_MODEL` environment variable is not set or set to an unsupported model
 export const fallbackModelID = OpenAIEntityModelID.GPT_3_5_AZ;
@@ -159,21 +176,6 @@ export const OpenAIEntityModels: Record<
     tokenLimit: 8000,
     requestLimit: 6000,
     type: 'assistant',
-  },
-};
-
-export const OpenAIEntityAddons: Record<
-  OpenAIEntityAddonID,
-  OpenAIEntityAddon
-> = {
-  [OpenAIEntityAddonID.EPAM10K_SEMANTIC_SEARCH]: {
-    id: OpenAIEntityAddonID.EPAM10K_SEMANTIC_SEARCH,
-    name: 'EPAM10K_SEMANTIC_SEARCH',
-    type: 'addon',
-  },
-  [OpenAIEntityAddonID.EPAM10K_GOLDEN_QNA]: {
-    id: OpenAIEntityAddonID.EPAM10K_GOLDEN_QNA,
-    name: 'EPAM10K_GOLDEN_QNA',
-    type: 'addon',
+    selectedAddons: ['epam-10k-semantic-search'],
   },
 };

@@ -9,6 +9,8 @@ export const DEFAULT_TEMPERATURE = parseFloat(
   process.env.NEXT_PUBLIC_DEFAULT_TEMPERATURE || '1',
 );
 
+export const DEFAULT_CONVERSATION_NAME = 'New conversation';
+
 export const OPENAI_API_VERSION =
   process.env.OPENAI_API_VERSION || '2023-03-15-preview';
 

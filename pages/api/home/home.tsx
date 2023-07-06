@@ -17,7 +17,11 @@ import { AuthWindowLocationLike } from '@/utils/app/auth/authWindowLocationLike'
 import { delay } from '@/utils/app/auth/delay';
 import { timeoutAsync } from '@/utils/app/auth/timeoutAsync';
 import { cleanConversationHistory } from '@/utils/app/clean';
-import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+} from '@/utils/app/const';
 import {
   saveConversations,
   saveSelectedConversationIds,
@@ -289,7 +293,7 @@ const Home = ({
     replayUserMessagesStack: [],
     activeReplayIndex: 0,
   };
-  const handleNewConversation = (name = 'New Conversation') => {
+  const handleNewConversation = (name = DEFAULT_CONVERSATION_NAME) => {
     if (!clientDefaultModelId) {
       return;
     }
@@ -312,6 +316,8 @@ const Home = ({
       temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
       folderId: null,
       replay: defaultReplay,
+      selectedAddons:
+        OpenAIEntityModels[clientDefaultModelId].selectedAddons ?? [],
     };
 
     addNewConversationToStore(newConversation);
@@ -558,13 +564,14 @@ const Home = ({
 
       const newConversation: Conversation = {
         id: uuidv4(),
-        name: t('New Conversation'),
+        name: t(DEFAULT_CONVERSATION_NAME),
         messages: [],
         model: OpenAIEntityModels[defaultModelId],
         prompt: DEFAULT_SYSTEM_PROMPT,
         temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
         folderId: null,
         replay: defaultReplay,
+        selectedAddons: OpenAIEntityModels[defaultModelId].selectedAddons ?? [],
       };
 
       const updatedConversations: Conversation[] =

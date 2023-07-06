@@ -43,7 +43,6 @@ export const OpenAIStream = async ({
   key,
   messages,
   tokenCount,
-  userJWT = '',
   isAddonsAdded,
 }: {
   model: OpenAIEntityModel;
@@ -52,7 +51,6 @@ export const OpenAIStream = async ({
   key: string;
   messages: Message[];
   tokenCount: number;
-  userJWT: string | null;
   isAddonsAdded: boolean;
 }) => {
   const url = getUrl(model.id, model.type, isAddonsAdded);
@@ -65,7 +63,6 @@ export const OpenAIStream = async ({
   let body: string;
 
   body = JSON.stringify({
-    ...(userJWT && { user: userJWT }),
     messages: [
       {
         role: 'system',

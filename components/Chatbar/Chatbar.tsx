@@ -5,7 +5,11 @@ import { useTranslation } from 'next-i18next';
 
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
-import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+} from '@/utils/app/const';
 import {
   saveConversations,
   saveSelectedConversationIds,
@@ -109,13 +113,16 @@ export const Chatbar = () => {
   const handleClearConversations = () => {
     const newConversation: Conversation = {
       id: uuidv4(),
-      name: t('New Conversation'),
+      name: t(DEFAULT_CONVERSATION_NAME),
       messages: [],
       model: OpenAIEntityModels[defaultModelId || OpenAIEntityModelID.GPT_3_5],
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: DEFAULT_TEMPERATURE,
       folderId: null,
       replay: defaultReplay,
+      selectedAddons:
+        OpenAIEntityModels[defaultModelId || OpenAIEntityModelID.GPT_3_5]
+          .selectedAddons ?? [],
     };
 
     const newConversations: Conversation[] = [newConversation];
@@ -166,7 +173,7 @@ export const Chatbar = () => {
     } else {
       const newConversation: Conversation = {
         id: uuidv4(),
-        name: t('New Conversation'),
+        name: t(DEFAULT_CONVERSATION_NAME),
         messages: [],
         model:
           OpenAIEntityModels[defaultModelId || OpenAIEntityModelID.GPT_3_5],
@@ -174,6 +181,9 @@ export const Chatbar = () => {
         temperature: DEFAULT_TEMPERATURE,
         folderId: null,
         replay: defaultReplay,
+        selectedAddons:
+          OpenAIEntityModels[defaultModelId || OpenAIEntityModelID.GPT_3_5]
+            .selectedAddons ?? [],
       };
 
       defaultModelId &&

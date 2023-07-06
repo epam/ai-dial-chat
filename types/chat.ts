@@ -36,6 +36,7 @@ export interface Conversation {
   temperature: number;
   folderId: string | null;
   replay: Replay;
+  selectedAddons: string[];
 }
 export interface Replay {
   isReplay: boolean;

@@ -259,6 +259,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         key: apiKey,
         prompt: updatedConversation.prompt,
         temperature: updatedConversation.temperature,
+        selectedAddons: conversation.selectedAddons,
       };
       const endpoint = getEndpoint();
       let body;

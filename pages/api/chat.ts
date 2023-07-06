@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
@@ -36,11 +35,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (process.env.AUTH_DISABLED !== 'true' && !session) {
     return res.status(401).send(errorsMessages[401]);
   }
-
-  const userJson = await getToken({
-    req,
-    raw: false,
-  });
 
   try {
     const { modelId, messages, key, prompt, temperature, selectedAddons } =
@@ -115,7 +109,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       messages: messagesToSend,
       tokenCount,
       isAddonsAdded: selectedAddons?.length > 0,
-      userJWT: (userJson?.id_token as string) ?? null,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
     // return new Response(stream);
