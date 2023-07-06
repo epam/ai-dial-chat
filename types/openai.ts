@@ -48,12 +48,12 @@ export const OpenAIEntityAddons: Record<
 > = {
   [OpenAIEntityAddonID.EPAM10K_SEMANTIC_SEARCH]: {
     id: OpenAIEntityAddonID.EPAM10K_SEMANTIC_SEARCH,
-    name: 'EPAM10K_SEMANTIC_SEARCH',
+    name: 'EPAM10K Semantic Search',
     type: 'addon',
   },
   [OpenAIEntityAddonID.EPAM10K_GOLDEN_QNA]: {
     id: OpenAIEntityAddonID.EPAM10K_GOLDEN_QNA,
-    name: 'EPAM10K_GOLDEN_QNA',
+    name: 'EPAM10K Golden QNA',
     type: 'addon',
   },
 };
@@ -155,7 +155,7 @@ export const OpenAIEntityModels: Record<
   },
   [OpenAIEntityModelID.MIRROR]: {
     id: OpenAIEntityModelID.MIRROR,
-    name: 'MIRROR',
+    name: 'Mirror',
     maxLength: 24000,
     tokenLimit: 8000,
     requestLimit: 6000,
