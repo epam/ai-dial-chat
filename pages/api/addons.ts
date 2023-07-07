@@ -38,7 +38,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       },
     );
 
-    console.log(addons);
     for (const addon of addons) {
       const mappedAddon = OpenAIEntityAddons[addon.id as OpenAIEntityAddonID];
       if (mappedAddon != null) {
@@ -46,7 +45,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           id: addon.id,
           name: mappedAddon.name || addon.id,
           type: addon.object,
-        } as any);
+        });
       }
     }
 

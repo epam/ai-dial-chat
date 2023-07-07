@@ -13,7 +13,6 @@ import {
 import { authOptions } from './auth/[...nextauth]';
 
 import { errorsMessages } from '@/constants/errors';
-import { getHeaders } from '@/utils/server/getHeaders';
 import { getEntities } from '@/utils/server/getEntities';
 
 // export const config = {
@@ -92,7 +91,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return [];
     });
 
-    // console.log([...models, ...applications, ...assistants])
     for (const entity of [...models, ...applications, ...assistants]) {
       if (entity.capabilities?.embeddings) {
         continue;
@@ -104,7 +102,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           id: entity.id,
           name: existingModelMapping.name,
           type: entity.object,
-        } as any);
+        });
       }
     }
 

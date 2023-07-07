@@ -3,7 +3,7 @@ export type OpenAIEntityType = OpenAIEntityModelType | 'addon';
 
 export interface ProxyOpenAIEntity {
   id: string;
-  object: string;
+  object: OpenAIEntityType;
   capabilities?: {
     embeddings: boolean;
   };
