@@ -18,7 +18,7 @@ resources:
 env:
   NEXTAUTH_URL: 'https://chat-overlay.staging.deltixhub.io'
   OPENAI_API_HOST: 'https://openai-proxy-mr-12.staging.deltixhub.io'
-  DEFAULT_MODEL: 'gpt-35-turbo'
+  DEFAULT_MODEL: 'epam10k-semantic-search'
   OPENAI_API_TYPE: 'azure'
   OPENAI_API_VERSION: '2023-03-15-preview'
   NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT: ''
