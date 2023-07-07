@@ -5,6 +5,7 @@ import Select, {
   OptionProps,
   SingleValueProps,
   components,
+  createFilter,
 } from 'react-select';
 
 import { useTranslation } from 'next-i18next';
@@ -168,6 +169,7 @@ export const ModelSelect = ({
         {t('Model')}
       </label>
       <Select<CompanionSelectOption>
+        isSearchable
         className="w-full rounded-lg text-neutral-900 dark:text-white dark:bg-[#343541]"
         classNames={selectClassNames}
         options={groupedSelectOptionsWithNotAllowed}
@@ -180,6 +182,9 @@ export const ModelSelect = ({
           Option: CustomSelectOption,
           SingleValue: CustomSingleValue,
         }}
+        filterOption={createFilter({
+          stringify: (option) => `${option.label}`,
+        })}
       />
       {conversationModelId === OpenAIEntityModelID.GPT_4_32K && (
         <div className="w-full mt-3 text-left text-orange-600 dark:text-orange-600 flex gap-2 items-center">
