@@ -174,7 +174,7 @@ export const ChatMessage: FC<Props> = memo(
                 modelId={conversation.model.id}
                 inverted={lightMode === 'dark'}
                 animate={isShowResponseLoader}
-                size={30}
+                size={24}
               />
             ) : (
               <IconUser size={30} />
