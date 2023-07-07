@@ -165,7 +165,7 @@ export const ModelSelect = ({
   return (
     <div className="flex flex-col">
       <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
-        {t('Models')}
+        {t('Model')}
       </label>
       <Select<CompanionSelectOption>
         className="w-full rounded-lg text-neutral-900 dark:text-white dark:bg-[#343541]"
