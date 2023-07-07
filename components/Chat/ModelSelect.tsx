@@ -90,9 +90,12 @@ const selectClassNames: ClassNamesConfig<CompanionSelectOption> = {
   input: (state) => 'dark:!text-white',
 };
 
-const createOption = ({ id, name }: OpenAIEntity) => ({
-  value: id,
-  label: name,
+const createOption = (entity: OpenAIEntity | OpenAIEntityModel) => ({
+  value: entity.id,
+  label:
+    entity.type === 'model' && (entity as OpenAIEntityModel).isDefault
+      ? `Default (${entity.name})`
+      : entity.name,
   isDisabled: false,
 });
 
