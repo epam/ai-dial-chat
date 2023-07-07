@@ -92,15 +92,6 @@ const selectClassNames: ClassNamesConfig<CompanionSelectOption> = {
   groupHeading: (state) => '!text-sm',
 };
 
-const createOption = (entity: OpenAIEntity | OpenAIEntityModel) => ({
-  value: entity.id,
-  label:
-    entity.type === 'model' && (entity as OpenAIEntityModel).isDefault
-      ? `Default (${entity.name})`
-      : entity.name,
-  isDisabled: false,
-});
-
 export const ModelSelect = ({
   conversationModelId,
   conversationModelName,
@@ -112,6 +103,15 @@ export const ModelSelect = ({
 
   const [isNotAllowedModelSelected, setIsNotAllowedModelSelected] =
     useState(false);
+
+  const createOption = (entity: OpenAIEntity | OpenAIEntityModel) => ({
+    value: entity.id,
+    label:
+      entity.type === 'model' && (entity as OpenAIEntityModel).isDefault
+        ? `${t('Default')} (${entity.name})`
+        : entity.name,
+    isDisabled: false,
+  });
 
   const selectModelsOptions: CompanionSelectOption[] = models
     .filter(({ type }) => type === 'model')
@@ -132,26 +132,26 @@ export const ModelSelect = ({
     value: conversationModelId,
     label:
       conversationModelId === defaultModelId
-        ? `Default (${conversationModelName})`
+        ? `${t('Default')} ${conversationModelName}`
         : conversationModelName,
     isDisabled: isNotAllowedModelSelected,
   };
   const groupedSelectOptions: readonly CompanionGroupsSelectOptions[] = [
     {
-      label: 'Models',
+      label: t('Models'),
       options: selectModelsOptions,
     },
     {
-      label: 'Assistants',
+      label: t('Assistants'),
       options: selectAssistantOptions,
     },
     {
-      label: 'Applications',
+      label: t('Applications'),
       options: selectAppsOptions,
     },
   ];
   const notAllowedGroup: CompanionGroupsSelectOptions = {
-    label: 'Not Allowed',
+    label: t('Not Allowed'),
     options: isNotAllowedModelSelected ? [conversationOption] : [],
   };
   const groupedSelectOptionsWithNotAllowed: readonly CompanionGroupsSelectOptions[] =
@@ -191,8 +191,9 @@ export const ModelSelect = ({
         <div className="w-full mt-3 text-left text-orange-600 dark:text-orange-600 flex gap-2 items-center">
           <IconExclamationCircle size={18} />
           <div>
-            Please only use this one if you absolutely need it. It&apos;s slower
-            and more expensive.
+            {t(
+              "Please only use this one if you absolutely need it. It's slower and more expensive.",
+            )}
           </div>
         </div>
       )}
