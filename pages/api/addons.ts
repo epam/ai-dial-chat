@@ -1,13 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Session } from 'next-auth';
 import { getServerSession } from 'next-auth/next';
 
 import { getEntities } from '@/utils/server/getEntities';
 
 import {
-  OpenAIEntityModel,
-  OpenAIEntityModelID,
-  OpenAIEntityModels,
+  OpenAIEntity,
+  OpenAIEntityAddonID,
+  OpenAIEntityAddons,
+  ProxyOpenAIEntity,
 } from '@/types/openai';
 
 import { authOptions } from './auth/[...nextauth]';
@@ -29,19 +29,24 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       key: string;
     };
 
-    let entities: OpenAIEntityModel[] = [];
+    let entities: OpenAIEntity[] = [];
 
-    const addons = await getEntities('addon', key).catch((error) => {
-      console.error(error.message);
-      return [];
-    });
+    const addons: ProxyOpenAIEntity[] = await getEntities('addon', key).catch(
+      (error) => {
+        console.error(error.message);
+        return [];
+      },
+    );
 
     for (const addon of addons) {
-      entities.push({
-        id: addon.id,
-        name:
-          OpenAIEntityModels[addon.id as OpenAIEntityModelID]?.name || addon.id,
-      } as any);
+      const mappedAddon = OpenAIEntityAddons[addon.id as OpenAIEntityAddonID];
+      if (mappedAddon != null) {
+        entities.push({
+          id: addon.id,
+          name: mappedAddon.name || addon.id,
+          type: addon.object,
+        });
+      }
     }
 
     return res.status(200).json(entities);
