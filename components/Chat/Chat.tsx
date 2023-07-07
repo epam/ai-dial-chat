@@ -13,6 +13,7 @@ import { useTranslation } from 'next-i18next';
 
 import { getEndpoint } from '@/utils/app/api';
 import { showAPIToastError } from '@/utils/app/errors';
+import { mergeMessages, parseStreamMessages } from '@/utils/app/merge-streams';
 import { throttle } from '@/utils/data/throttle';
 
 import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
@@ -330,7 +331,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       const decoder = new TextDecoder();
       let done = false;
       let isFirst = true;
-      let text = '';
+      let newMessage: Message = { content: '' } as Message;
       while (!done) {
         if (stopConversationRef.current === true) {
           controller.abort();
@@ -339,13 +340,13 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         }
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
-        const chunkValue = decoder.decode(value);
-        text += chunkValue;
+        const chunkValue = parseStreamMessages(decoder.decode(value));
+        mergeMessages(newMessage, chunkValue);
         if (isFirst) {
           isFirst = false;
           const updatedMessages: Message[] = [
             ...updatedConversation.messages,
-            { role: 'assistant', content: chunkValue },
+            newMessage,
           ];
           updatedConversation = {
             ...updatedConversation,
@@ -363,10 +364,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
           const updatedMessages: Message[] = updatedConversation.messages.map(
             (message, index) => {
               if (index === updatedConversation.messages.length - 1) {
-                return {
-                  ...message,
-                  content: text,
-                };
+                return newMessage;
               }
               return message;
             },

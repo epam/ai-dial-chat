@@ -1,5 +1,10 @@
 import { Message } from '@/types/chat';
-import { OpenAIEntityModel, OpenAIEntityModelType } from '@/types/openai';
+import {
+  OpenAIEntityModel,
+  OpenAIEntityModelID,
+  OpenAIEntityModelType,
+  OpenAIEntityModels,
+} from '@/types/openai';
 
 import { OPENAI_API_HOST, OPENAI_API_VERSION } from '../app/const';
 import { getHeaders } from './getHeaders';
@@ -73,7 +78,11 @@ export const OpenAIStream = async ({
     max_tokens: model.tokenLimit - tokenCount,
     temperature,
     stream: true,
-    model: model.id,
+    // TODO: replace it with real data from assistant selected submodel
+    model:
+      model.type !== 'assistant'
+        ? model.id
+        : OpenAIEntityModels[OpenAIEntityModelID.GPT_4].id,
   });
 
   const res = await fetch(url, {
@@ -124,13 +133,16 @@ export const OpenAIStream = async ({
           const data = event.data;
           try {
             const json = JSON.parse(data);
+            const text =
+              JSON.stringify(json.choices[0].delta) +
+              (json.choices[0].finish_reason == null ? ',' : '');
+            const queue = encoder.encode(text);
+            controller.enqueue(queue);
+
             if (json.choices[0].finish_reason != null) {
               controller.close();
               return;
             }
-            const text = json.choices[0].delta.content;
-            const queue = encoder.encode(text);
-            controller.enqueue(queue);
           } catch (e) {
             controller.error(e);
           }

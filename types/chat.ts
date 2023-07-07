@@ -1,10 +1,18 @@
 import { OpenAIEntityModel } from './openai';
 
+export interface Attachment {
+  data: string;
+}
+
 export interface Message {
   role: Role;
   content: string;
+  custom_content?: {
+    attachments?: Attachment[];
+  };
   like?: number;
   isError?: boolean;
+  state?: object;
 }
 
 export type Role = 'assistant' | 'user';
