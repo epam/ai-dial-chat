@@ -24,6 +24,8 @@ import { Conversation, Message } from '@/types/chat';
 
 import HomeContext from '@/pages/api/home/home.context';
 
+import { ModelIcon } from '../Chatbar/components/ModelIcon';
+
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { modelCursorSign, modelCursorSignWithBackquote } from './chatConstants';
 
@@ -74,7 +76,7 @@ export const ChatMessage: FC<Props> = memo(
     const { t } = useTranslation('chat');
 
     const {
-      state: { messageIsStreaming },
+      state: { messageIsStreaming, modelIconMapping, lightMode },
     } = useContext(HomeContext);
 
     const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -167,9 +169,12 @@ export const ChatMessage: FC<Props> = memo(
         <div className="h-full relative m-auto flex p-4 text-base md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
           <div className="min-w-[40px] text-right font-bold">
             {isAssistant ? (
-              <IconRobot
+              <ModelIcon
+                modelIconMapping={modelIconMapping}
+                modelId={conversation.model.id}
+                inverted={lightMode === 'dark'}
+                animate={isShowResponseLoader}
                 size={30}
-                className={isShowResponseLoader ? 'animate-bounce' : ''}
               />
             ) : (
               <IconUser size={30} />
