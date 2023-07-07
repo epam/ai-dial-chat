@@ -1,6 +1,14 @@
 export type OpenAIEntityModelType = 'model' | 'application' | 'assistant';
 export type OpenAIEntityType = OpenAIEntityModelType | 'addon';
 
+export interface ProxyOpenAIEntity {
+  id: string;
+  object: OpenAIEntityType;
+  capabilities?: {
+    embeddings: boolean;
+  };
+}
+
 export interface OpenAIEntity {
   id: string;
   name: string;
@@ -35,24 +43,26 @@ export enum OpenAIEntityModelID {
   MIRROR = 'mirror',
   EPAM10K = 'epam10k',
   ASSISTANT10K = 'assistant-10k',
+  EPAM10K_SEMANTIC_SEARCH = 'epam10k-semantic-search',
+  EPAM10K_GOLDEN_QNA = 'epam10k-golden-qna',
 }
 
 export enum OpenAIEntityAddonID {
-  EPAM10K_SEMANTIC_SEARCH = 'epam-10k-semantic-search',
-  EPAM10K_GOLDEN_QNA = 'epam-10k-golden-qna',
+  ADDON_EPAM10K_SEMANTIC_SEARCH = 'addon-epam10k-golden-qna',
+  ADDON_EPAM10K_GOLDEN_QNA = 'addon-epam10k-semantic-search',
 }
 
 export const OpenAIEntityAddons: Record<
   OpenAIEntityAddonID,
   OpenAIEntityAddon
 > = {
-  [OpenAIEntityAddonID.EPAM10K_SEMANTIC_SEARCH]: {
-    id: OpenAIEntityAddonID.EPAM10K_SEMANTIC_SEARCH,
+  [OpenAIEntityAddonID.ADDON_EPAM10K_SEMANTIC_SEARCH]: {
+    id: OpenAIEntityAddonID.ADDON_EPAM10K_SEMANTIC_SEARCH,
     name: 'EPAM10K Semantic Search',
     type: 'addon',
   },
-  [OpenAIEntityAddonID.EPAM10K_GOLDEN_QNA]: {
-    id: OpenAIEntityAddonID.EPAM10K_GOLDEN_QNA,
+  [OpenAIEntityAddonID.ADDON_EPAM10K_GOLDEN_QNA]: {
+    id: OpenAIEntityAddonID.ADDON_EPAM10K_GOLDEN_QNA,
     name: 'EPAM10K Golden QNA',
     type: 'addon',
   },
@@ -101,7 +111,7 @@ export const OpenAIEntityModels: Record<
     id: OpenAIEntityModelID.BISON_001,
     name: 'PaLM2 (bison)',
     maxLength: 24000,
-    tokenLimit: 8000,
+    tokenLimit: 1025,
     requestLimit: 6000,
     type: 'model',
   },
@@ -140,6 +150,22 @@ export const OpenAIEntityModels: Record<
   [OpenAIEntityModelID.ANTHROPIC_CLAUDE_V1]: {
     id: OpenAIEntityModelID.ANTHROPIC_CLAUDE_V1,
     name: 'Anthropic (Claude)',
+    maxLength: 24000,
+    tokenLimit: 8000,
+    requestLimit: 6000,
+    type: 'model',
+  },
+  [OpenAIEntityModelID.EPAM10K_GOLDEN_QNA]: {
+    id: OpenAIEntityModelID.EPAM10K_GOLDEN_QNA,
+    name: 'EPAM10K Golden QNA',
+    maxLength: 24000,
+    tokenLimit: 8000,
+    requestLimit: 6000,
+    type: 'model',
+  },
+  [OpenAIEntityModelID.EPAM10K_SEMANTIC_SEARCH]: {
+    id: OpenAIEntityModelID.EPAM10K_SEMANTIC_SEARCH,
+    name: 'EPAM10K Semantic Search',
     maxLength: 24000,
     tokenLimit: 8000,
     requestLimit: 6000,

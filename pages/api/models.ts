@@ -3,22 +3,16 @@ import { Session } from 'next-auth';
 import { getServerSession } from 'next-auth/next';
 
 import {
-  OPENAI_API_HOST,
-  OPENAI_API_VERSION,
-} from '@/utils/app/const';
-
-import {
-  OpenAIEntityModel,
   OpenAIEntityModelID,
   OpenAIEntityModels,
   fallbackModelID,
-  OpenAIEntityType,
+  OpenAIEntity,
+  ProxyOpenAIEntity,
 } from '@/types/openai';
 
 import { authOptions } from './auth/[...nextauth]';
 
 import { errorsMessages } from '@/constants/errors';
-import { getHeaders } from '@/utils/server/getHeaders';
 import { getEntities } from '@/utils/server/getEntities';
 
 // export const config = {
@@ -26,7 +20,7 @@ import { getEntities } from '@/utils/server/getEntities';
 // };
 
 
-function setDefaultModel(models: OpenAIEntityModel[]) {
+function setDefaultModel(models: OpenAIEntity[]) {
   const defaultModelId = process.env.DEFAULT_MODEL || fallbackModelID;
   const defaultModel =
     models.filter((model) => model.id === defaultModelId).pop() || models[0];
@@ -36,7 +30,7 @@ function setDefaultModel(models: OpenAIEntityModel[]) {
   return models;
 }
 
-function limitModelsAccordingToUser(models: OpenAIEntityModel[], session: Session | null) {
+function limitModelsAccordingToUser(models: OpenAIEntity[], session: Session | null) {
   if (!process.env.AVAILABLE_MODELS_USERS_LIMITATIONS) {
     return models;
   }
@@ -58,7 +52,7 @@ function limitModelsAccordingToUser(models: OpenAIEntityModel[], session: Sessio
       return acc;
     }, <Record<string, Set<string>>>{});
 
-  models = models.filter((model: OpenAIEntityModel) => {
+  models = models.filter((model: OpenAIEntity) => {
     if (!modelsLimitations[model.id]) {
       return true;
     }
@@ -82,26 +76,34 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       key: string;
     };
 
-    let entities: OpenAIEntityModel[] = [];
+    let entities: OpenAIEntity[] = [];
 
-    const models = await getEntities('model', key).catch((error) => {
+    const models: ProxyOpenAIEntity[] = await getEntities('model', key).catch((error) => {
       console.error(error.message);
       return [];
     });
-    const applications = await getEntities('application', key).catch((error) => {
+    const applications: ProxyOpenAIEntity[] = await getEntities('application', key).catch((error) => {
       console.error(error.message);
       return [];
     });
-    const assistants = await getEntities('assistant', key).catch((error) => {
+    const assistants: ProxyOpenAIEntity[] = await getEntities('assistant', key).catch((error) => {
       console.error(error.message);
       return [];
     });
 
     for (const entity of [...models, ...applications, ...assistants]) {
-      entities.push({
-        id: entity.id,
-        name: OpenAIEntityModels[entity.id as OpenAIEntityModelID]?.name || entity.id,
-      } as any);
+      if (entity.capabilities?.embeddings) {
+        continue;
+      }
+
+      const existingModelMapping = OpenAIEntityModels[entity.id as OpenAIEntityModelID];
+      if (existingModelMapping != null) {
+        entities.push({
+          id: entity.id,
+          name: existingModelMapping.name,
+          type: entity.object,
+        });
+      }
     }
 
     entities = limitModelsAccordingToUser(entities, session);
