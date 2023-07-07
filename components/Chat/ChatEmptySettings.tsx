@@ -44,7 +44,6 @@ export const ChatEmptySettings = ({
         conversationModelName={conversation.model.name}
         defaultModelId={defaultModelId}
         models={models}
-        addons={addons}
         onSelectModel={onSelectModel}
       />
 

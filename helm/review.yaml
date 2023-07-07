@@ -26,7 +26,7 @@ env:
   ENABLED_FEATURES: 'conversations-section,prompts-section,top-settings,top-clear-conversation,top-chat-info,top-chat-model-settings,empty-chat-settings,footer,request-api-key,report-an-issue,likes'
   AUTH_DISABLED: 'false'
   IS_IFRAME: 'false'
-  MODEL_ICON_MAPPING: 'gpt-4=gpt4.svg,gpt-35-turbo=gpt3.svg,gpt-4-32k=gpt4.svg,chat-bison=palm2.svg'
+  MODEL_ICON_MAPPING: 'gpt-4=gpt4.svg,gpt-35-turbo=gpt3.svg,gpt-4-32k=gpt4.svg,chat-bison@001=palm2.svg'
 
 #  NEXTAUTH_URL: "https://dev-chat.ai-proxy.lab.epam.com"
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"

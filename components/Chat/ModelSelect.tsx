@@ -10,7 +10,7 @@ import Select, {
 import { useTranslation } from 'next-i18next';
 
 import {
-  OpenAIEntityAddon,
+  OpenAIEntity,
   OpenAIEntityModel,
   OpenAIEntityModelID,
 } from '@/types/openai';
@@ -19,29 +19,24 @@ import { SelectIcon } from '../Select/SelectIcon';
 
 interface Props {
   models: OpenAIEntityModel[];
-  addons: OpenAIEntityAddon[];
   conversationModelId: string;
   conversationModelName: string;
   defaultModelId: OpenAIEntityModelID;
   onSelectModel: (modelId: string) => void;
 }
 
-interface ModelsSelectOption {
+interface CompanionSelectOption {
   value: string;
   label: string;
   isDisabled: boolean;
 }
 
-type AddonsSelectOption = ModelsSelectOption;
-
 interface CompanionGroupsSelectOptions {
   readonly label: string;
-  readonly options:
-    | readonly ModelsSelectOption[]
-    | readonly AddonsSelectOption[];
+  readonly options: readonly CompanionSelectOption[];
 }
 
-const CustomSelectOption = (props: OptionProps<ModelsSelectOption>) => {
+const CustomSelectOption = (props: OptionProps<CompanionSelectOption>) => {
   const { data, children, isSelected, isFocused } = props;
   return (
     <>
@@ -64,7 +59,7 @@ const CustomSelectOption = (props: OptionProps<ModelsSelectOption>) => {
   );
 };
 
-const CustomSingleValue = (props: SingleValueProps<ModelsSelectOption>) => {
+const CustomSingleValue = (props: SingleValueProps<CompanionSelectOption>) => {
   const { children, getValue } = props;
   const selectedOption = getValue()[0];
   return (
@@ -78,7 +73,7 @@ const CustomSingleValue = (props: SingleValueProps<ModelsSelectOption>) => {
   );
 };
 
-const selectClassNames: ClassNamesConfig<ModelsSelectOption> = {
+const selectClassNames: ClassNamesConfig<CompanionSelectOption> = {
   control: (state) =>
     `dark:bg-[#343541] dark:text-white hover:dark:border-white hover:dark:shadow-white  !rounded-lg ${
       state.isFocused
@@ -95,11 +90,16 @@ const selectClassNames: ClassNamesConfig<ModelsSelectOption> = {
   input: (state) => 'dark:!text-white',
 };
 
+const createOption = ({ id, name }: OpenAIEntity) => ({
+  value: id,
+  label: name,
+  isDisabled: false,
+});
+
 export const ModelSelect = ({
   conversationModelId,
   conversationModelName,
   models,
-  addons,
   defaultModelId,
   onSelectModel,
 }: Props) => {
@@ -108,24 +108,22 @@ export const ModelSelect = ({
   const [isNotAllowedModelSelected, setIsNotAllowedModelSelected] =
     useState(false);
 
-  const selectOptions: ModelsSelectOption[] = models.map((model) => {
-    return {
-      value: model.id,
-      label:
-        model.id === defaultModelId ? `Default (${model.name})` : model.name,
-      isDisabled: false,
-    };
-  });
-  const selectOptionsWithNotAllowedModel: ModelsSelectOption[] =
-    isNotAllowedModelSelected
-      ? selectOptions.concat({
-          value: conversationModelId,
-          label: conversationModelName,
-          isDisabled: true,
-        })
-      : selectOptions;
+  const selectModelsOptions: CompanionSelectOption[] = models
+    .filter(({ type }) => type === 'model')
+    .map(createOption);
 
-  const conversationOption: ModelsSelectOption = {
+  const defaultModelOption: CompanionSelectOption | undefined =
+    selectModelsOptions.find(({ value }) => value === defaultModelId);
+
+  const selectAssistantOptions: CompanionSelectOption[] = models
+    .filter(({ type }) => type === 'assistant')
+    .map(createOption);
+
+  const selectAppsOptions: CompanionSelectOption[] = models
+    .filter(({ type }) => type === 'application')
+    .map(createOption);
+
+  const conversationOption: CompanionSelectOption = {
     value: conversationModelId,
     label:
       conversationModelId === defaultModelId
@@ -133,29 +131,28 @@ export const ModelSelect = ({
         : conversationModelName,
     isDisabled: isNotAllowedModelSelected,
   };
-  const defaultModelOption: ModelsSelectOption | undefined =
-    selectOptionsWithNotAllowedModel.find(
-      ({ value }) => value === defaultModelId,
-    );
-
-  const selectAddonsOptions: AddonsSelectOption[] = addons.map((addon) => {
-    return {
-      value: addon.id,
-      label: addon.name,
-      isDisabled: false,
-    };
-  });
-
   const groupedSelectOptions: readonly CompanionGroupsSelectOptions[] = [
     {
       label: 'Models',
-      options: selectOptionsWithNotAllowedModel,
+      options: selectModelsOptions,
     },
     {
-      label: 'Addons',
-      options: selectAddonsOptions,
+      label: 'Assistants',
+      options: selectAssistantOptions,
+    },
+    {
+      label: 'Applications',
+      options: selectAppsOptions,
     },
   ];
+  const notAllowedGroup: CompanionGroupsSelectOptions = {
+    label: 'Not Allowed',
+    options: isNotAllowedModelSelected ? [conversationOption] : [],
+  };
+  const groupedSelectOptionsWithNotAllowed: readonly CompanionGroupsSelectOptions[] =
+    isNotAllowedModelSelected
+      ? groupedSelectOptions.concat(notAllowedGroup)
+      : groupedSelectOptions;
 
   useEffect(() => {
     const modelsIds = models.map(({ id }) => id);
@@ -165,14 +162,14 @@ export const ModelSelect = ({
   return (
     <div className="flex flex-col">
       <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
-        {t('Model')}
+        {t('Models')}
       </label>
-      <Select<ModelsSelectOption | AddonsSelectOption>
+      <Select<CompanionSelectOption>
         className="w-full rounded-lg text-neutral-900 dark:text-white dark:bg-[#343541]"
         classNames={selectClassNames}
-        options={groupedSelectOptions}
+        options={groupedSelectOptionsWithNotAllowed}
         placeholder={t('Select a model') || ''}
-        defaultValue={conversationOption || defaultModelOption}
+        value={conversationOption || defaultModelOption}
         onChange={(option) => {
           if (option) onSelectModel(option.value);
         }}

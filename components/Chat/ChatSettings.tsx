@@ -111,7 +111,6 @@ export const ChatSettings = ({
               conversationModelName={conversation.model.name}
               defaultModelId={defaultModelId}
               models={models}
-              addons={addons}
               onSelectModel={onSelectModel}
             />
           </div>
