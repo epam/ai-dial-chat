@@ -44,7 +44,7 @@ const CustomSelectOption = (props: OptionProps<CompanionSelectOption>) => {
       <components.Option
         {...props}
         isDisabled={data.isDisabled}
-        className={`!p-0 !pl-4 dark:text-white hover:dark:bg-[#40414F] hover:cursor-pointer ${
+        className={`!p-1 !pl-4 dark:text-white hover:dark:bg-[#40414F] hover:cursor-pointer ${
           isSelected ? 'dark:bg-[#202123]' : 'dark:bg-[#343541]'
         } ${
           data.isDisabled
@@ -84,11 +84,12 @@ const selectClassNames: ClassNamesConfig<CompanionSelectOption> = {
   placeholder: (state) => 'text-neutral-900 dark:text-white',
   valueContainer: (state) => '!text-neutral-900 hover:cursor-text',
   menu: (state) =>
-    '!mt-1 dark:bg-[#343541] !rounded !shadow-md !shadow-neutral-400 dark:!shadow-[#717283]',
+    '!mt-1 dark:bg-[#343541] !rounded !shadow-sm !shadow-neutral-400 dark:!shadow-[#717283]',
   singleValue: (state) => '!text-neutral-900 dark:!text-white center m-0',
   dropdownIndicator: (state) =>
     '!py-0 hover:!text-neutral-900 hover:dark:!text-white',
   input: (state) => 'dark:!text-white',
+  groupHeading: (state) => '!text-sm',
 };
 
 const createOption = (entity: OpenAIEntity | OpenAIEntityModel) => ({
