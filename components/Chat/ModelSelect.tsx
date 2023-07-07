@@ -9,12 +9,17 @@ import Select, {
 
 import { useTranslation } from 'next-i18next';
 
-import { OpenAIEntityModel, OpenAIEntityModelID } from '@/types/openai';
+import {
+  OpenAIEntityAddon,
+  OpenAIEntityModel,
+  OpenAIEntityModelID,
+} from '@/types/openai';
 
 import { SelectIcon } from '../Select/SelectIcon';
 
 interface Props {
   models: OpenAIEntityModel[];
+  addons: OpenAIEntityAddon[];
   conversationModelId: string;
   conversationModelName: string;
   defaultModelId: OpenAIEntityModelID;
@@ -25,6 +30,15 @@ interface ModelsSelectOption {
   value: string;
   label: string;
   isDisabled: boolean;
+}
+
+type AddonsSelectOption = ModelsSelectOption;
+
+interface CompanionGroupsSelectOptions {
+  readonly label: string;
+  readonly options:
+    | readonly ModelsSelectOption[]
+    | readonly AddonsSelectOption[];
 }
 
 const CustomSelectOption = (props: OptionProps<ModelsSelectOption>) => {
@@ -85,6 +99,7 @@ export const ModelSelect = ({
   conversationModelId,
   conversationModelName,
   models,
+  addons,
   defaultModelId,
   onSelectModel,
 }: Props) => {
@@ -122,6 +137,26 @@ export const ModelSelect = ({
     selectOptionsWithNotAllowedModel.find(
       ({ value }) => value === defaultModelId,
     );
+
+  const selectAddonsOptions: AddonsSelectOption[] = addons.map((addon) => {
+    return {
+      value: addon.id,
+      label: addon.name,
+      isDisabled: false,
+    };
+  });
+
+  const groupedSelectOptions: readonly CompanionGroupsSelectOptions[] = [
+    {
+      label: 'Models',
+      options: selectOptionsWithNotAllowedModel,
+    },
+    {
+      label: 'Addons',
+      options: selectAddonsOptions,
+    },
+  ];
+
   useEffect(() => {
     const modelsIds = models.map(({ id }) => id);
     setIsNotAllowedModelSelected(!modelsIds.includes(conversationModelId));
@@ -132,10 +167,10 @@ export const ModelSelect = ({
       <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
         {t('Model')}
       </label>
-      <Select<ModelsSelectOption>
+      <Select<ModelsSelectOption | AddonsSelectOption>
         className="w-full rounded-lg text-neutral-900 dark:text-white dark:bg-[#343541]"
         classNames={selectClassNames}
-        options={selectOptionsWithNotAllowedModel}
+        options={groupedSelectOptions}
         placeholder={t('Select a model') || ''}
         defaultValue={conversationOption || defaultModelOption}
         onChange={(option) => {

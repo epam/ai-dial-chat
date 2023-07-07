@@ -79,6 +79,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       conversations,
       selectedConversationIds,
       models,
+      addons,
       apiKey,
       serverSideApiKeyIsSet,
       modelError,
@@ -687,6 +688,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                       <ChatEmpty
                         conversation={conv}
                         models={models}
+                        addons={addons}
                         prompts={prompts}
                         defaultModelId={
                           defaultModelId || OpenAIEntityModelID.GPT_3_5
@@ -714,6 +716,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                             defaultModelId || OpenAIEntityModelID.GPT_3_5
                           }
                           models={models}
+                          addons={addons}
                           isCompareMode={isCompareMode}
                           isShowChatInfo={enabledFeatures.has('top-chat-info')}
                           isShowClearConversation={enabledFeatures.has(
