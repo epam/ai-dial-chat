@@ -108,7 +108,7 @@ export const ModelSelect = ({
     value: entity.id,
     label:
       entity.type === 'model' && (entity as OpenAIEntityModel).isDefault
-        ? `${t('Default')} (${entity.name})`
+        ? t('Default {{name}}', { name: entity.name })
         : entity.name,
     isDisabled: false,
   });
@@ -132,7 +132,7 @@ export const ModelSelect = ({
     value: conversationModelId,
     label:
       conversationModelId === defaultModelId
-        ? `${t('Default')} ${conversationModelName}`
+        ? t('Default {{name}}', { name: conversationModelName })
         : conversationModelName,
     isDisabled: isNotAllowedModelSelected,
   };
