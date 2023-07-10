@@ -1,7 +1,18 @@
 import { OpenAIEntityModel } from './openai';
 
 export interface Attachment {
+  index: number;
   data: string;
+}
+
+export type StageStatus = 'completed' | 'failed' | null;
+
+export interface Stage {
+  index: number;
+  name: string;
+  content: string;
+  attachments?: Attachment[];
+  status: StageStatus;
 }
 
 export interface Message {
@@ -9,6 +20,7 @@ export interface Message {
   content: string;
   custom_content?: {
     attachments?: Attachment[];
+    stages?: Stage[];
   };
   like?: number;
   isError?: boolean;

@@ -342,26 +342,13 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         done = doneReading;
         const chunkValue = parseStreamMessages(decoder.decode(value));
         mergeMessages(newMessage, chunkValue);
+        let updatedMessages: Message[];
+        
         if (isFirst) {
           isFirst = false;
-          const updatedMessages: Message[] = [
-            ...updatedConversation.messages,
-            newMessage,
-          ];
-          updatedConversation = {
-            ...updatedConversation,
-            messages: updatedMessages,
-          };
-          localConversations.current = handleUpdateConversation(
-            updatedConversation,
-            {
-              key: 'messages',
-              value: updatedMessages,
-            },
-            localConversations.current,
-          );
+          updatedMessages = [...updatedConversation.messages, newMessage];
         } else {
-          const updatedMessages: Message[] = updatedConversation.messages.map(
+          updatedMessages = updatedConversation.messages.map(
             (message, index) => {
               if (index === updatedConversation.messages.length - 1) {
                 return newMessage;
@@ -369,19 +356,19 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
               return message;
             },
           );
-          updatedConversation = {
-            ...updatedConversation,
-            messages: updatedMessages,
-          };
-          localConversations.current = handleUpdateConversation(
-            updatedConversation,
-            {
-              key: 'messages',
-              value: updatedMessages,
-            },
-            localConversations.current,
-          );
         }
+        updatedConversation = {
+          ...updatedConversation,
+          messages: updatedMessages,
+        };
+        localConversations.current = handleUpdateConversation(
+          updatedConversation,
+          {
+            key: 'messages',
+            value: updatedMessages,
+          },
+          localConversations.current,
+        );
       }
 
       homeDispatch({ field: 'loading', value: false });
