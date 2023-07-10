@@ -66,7 +66,7 @@ export const OpenAIStream = async ({
   let requestHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(apiKey && getHeaders(apiKey)),
-    ...(userJWT && { Authorization: `Bearer ${userJWT}` }),
+    // ...(userJWT && { 'Authorization': `Bearer ${userJWT}` }),
   };
   let body: string;
 
