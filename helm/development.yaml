@@ -29,6 +29,7 @@ env:
   BEDROCK_HOST: http://openai-bedrock-adapter.openai-bedrock-adapter
   USE_USER_JOB_TITLE: 'false'
   AUTH_AUTH0_HOST: 'https://chatbot-ui-staging.eu.auth0.com'
+  AUTH_AUTH0_AUDIENCE: "chat"
   FOOTER_HTML_MESSAGE: '<a href="https://kb.epam.com/display/EPMGPT/EPAM+AI+Chat" target="_blank" rel="noreferrer"> <u><strong>EPAM AI Chat</strong></u> </a>&nbsp;can be used <u>any work-related activity</u>. Rest assured, information you share here is&nbsp;<u> not disclosed to third-party companies </u>. However, we <u>anonymize and log</u> all interactions for research purposes. <br/>For API access please fill&nbsp;<a href="#requestApiKey"><u><strong>this form</strong></u></a>.&nbsp;If you have a problem please&nbsp;<a href="#reportAnIssue"><u><strong>report an issue</strong></u></a>. Version %%VERSION%%'
   NEXT_PUBLIC_APP_NAME: 'DIAL - Staging'
   ENABLED_FEATURES: 'conversations-section,prompts-section,top-settings,top-clear-conversation,top-chat-info,top-chat-model-settings,empty-chat-settings,footer,request-api-key,report-an-issue,likes'
