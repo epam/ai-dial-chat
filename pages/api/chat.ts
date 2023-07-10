@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
@@ -50,6 +51,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         tiktokenModel.pat_str,
       );
     }
+
+    const token = await getToken({ req });
 
     let promptToSend = prompt;
     if (!promptToSend) {
@@ -113,6 +116,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       messages: messagesToSend,
       tokenCount,
       isAddonsAdded: selectedAddons?.length > 0,
+      userJWT: token?.access_token as string | undefined,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
     // return new Response(stream);

@@ -49,6 +49,7 @@ export const OpenAIStream = async ({
   messages,
   tokenCount,
   isAddonsAdded,
+  userJWT,
 }: {
   model: OpenAIEntityModel;
   systemPrompt: string;
@@ -57,13 +58,15 @@ export const OpenAIStream = async ({
   messages: Message[];
   tokenCount: number;
   isAddonsAdded: boolean;
+  userJWT: string | null | undefined;
 }) => {
   const url = getUrl(model.id, model.type, isAddonsAdded);
   const apiKey = key ? key : process.env.OPENAI_API_KEY;
 
   let requestHeaders: Record<string, string> = {
-    ...(apiKey && getHeaders(apiKey)),
     'Content-Type': 'application/json',
+    ...(apiKey && getHeaders(apiKey)),
+    ...(userJWT && { Authorization: `Bearer ${userJWT}` }),
   };
   let body: string;
 
@@ -133,10 +136,9 @@ export const OpenAIStream = async ({
           const data = event.data;
           try {
             const json = JSON.parse(data);
-            const text =
-              JSON.stringify(json.choices[0].delta) +
-              (json.choices[0].finish_reason == null ? ',' : '');
-            const queue = encoder.encode(text);
+            const text = JSON.stringify(json.choices[0].delta);
+            const queue = encoder.encode(text + '\0');
+
             controller.enqueue(queue);
 
             if (json.choices[0].finish_reason != null) {

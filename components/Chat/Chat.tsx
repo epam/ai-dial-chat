@@ -343,7 +343,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         const chunkValue = parseStreamMessages(decoder.decode(value));
         mergeMessages(newMessage, chunkValue);
         let updatedMessages: Message[];
-        
+
         if (isFirst) {
           isFirst = false;
           updatedMessages = [...updatedConversation.messages, newMessage];

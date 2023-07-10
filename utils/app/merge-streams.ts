@@ -5,7 +5,7 @@ export const parseStreamMessages = (message: string): Partial<Message>[] => {
   if (message.charAt(message.length - 1) === ',') {
     formattedMessage = formattedMessage.slice(0, formattedMessage.length - 1);
   }
-  const parsedMessage = JSON.parse('[' + formattedMessage + ']');
+  const parsedMessage = formattedMessage.split('\0').filter(msg => !!msg).map(chunk => JSON.parse(chunk));
 
   return parsedMessage;
 };

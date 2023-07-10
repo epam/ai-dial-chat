@@ -67,6 +67,11 @@ const allProviders: (Provider | boolean)[] = [
       clientSecret: process.env.AUTH_AUTH0_SECRET,
       name: process.env.AUTH_AUTH0_NAME ?? DEFAULT_NAME,
       issuer: process.env.AUTH_AUTH0_HOST,
+      authorization: {
+        params: {
+          audience: process.env.AUTH_AUTH0_AUDIENCE,
+        },
+      },
     }),
 
   !!process.env.AUTH_PING_ID_CLIENT_ID &&
@@ -192,6 +197,8 @@ export const authOptions: AuthOptions = {
       if (options.account) {
         options.token.jobTitle = options.account.jobTitle;
       }
+
+      options.token.access_token = options.account?.access_token;
       return options.token;
     },
     signIn: async (options) => {
@@ -206,6 +213,7 @@ export const authOptions: AuthOptions = {
       if (!options.account?.access_token) {
         return false;
       }
+
       if (process.env.USE_USER_JOB_TITLE === 'true') {
         let jobTitle = 'unknown';
         try {
