@@ -1,8 +1,15 @@
 import { OpenAIEntityModel } from './openai';
 
+export type AttachmentMIMEType = 'text/markdown' | 'image/jpeg';
+
 export interface Attachment {
   index: number;
-  data: string;
+  type: AttachmentMIMEType;
+  title: string;
+  data?: string;
+  url?: string;
+  reference_type?: AttachmentMIMEType;
+  reference_url?: string;
 }
 
 export type StageStatus = 'completed' | 'failed' | null;
