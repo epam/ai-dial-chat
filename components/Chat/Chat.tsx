@@ -788,9 +788,10 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                 )}
                 {loading && (
                   <div className={'flex w-full'}>
-                    {selectedConversations.map(({ model }) => {
+                    {selectedConversations.map(({ model, id }) => {
                       return (
                         <div
+                          key={id}
                           className={`${
                             isCompareMode && selectedConversations.length > 1
                               ? 'w-[50%]'
