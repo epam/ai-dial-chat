@@ -196,9 +196,9 @@ export const authOptions: AuthOptions = {
     jwt: async (options) => {
       if (options.account) {
         options.token.jobTitle = options.account.jobTitle;
+        options.token.access_token = options.account?.access_token;
       }
 
-      options.token.access_token = options.account?.access_token;
       return options.token;
     },
     signIn: async (options) => {
