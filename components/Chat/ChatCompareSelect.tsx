@@ -39,7 +39,7 @@ const CustomSelectOption = (props: OptionProps<CompareOption>) => {
     <>
       <components.Option
         {...props}
-        className={`!p-0 !pl-4 dark:text-white/80 hover:dark:bg-[#202123]  hover:cursor-pointer 
+        className={`!p-1 !pl-4 dark:text-white/80 hover:dark:bg-[#202123]  hover:cursor-pointer 
         ${isFocused ? 'dark:bg-[#202123]' : 'dark:bg-[#40414F]'}
         `}
       >
@@ -73,7 +73,7 @@ const selectClassNames: ClassNamesConfig<CompareOption> = {
   placeholder: (state) => 'text-neutral-900 dark:text-white/80',
   valueContainer: (state) => '!text-neutral-900 hover:cursor-text',
   menu: (state) =>
-    '!mt-1 dark:bg-[#40414F] !rounded !shadow-md !shadow-neutral-400 dark:!shadow-[#717283]',
+    '!mt-1 dark:bg-[#40414F] !rounded !shadow-sm !shadow-neutral-400 dark:!shadow-[#717283]',
   singleValue: (state) => '!text-neutral-900 dark:!text-white/80 center m-0',
   dropdownIndicator: (state) =>
     '!py-0 hover:!text-neutral-900 hover:dark:!text-white/80',

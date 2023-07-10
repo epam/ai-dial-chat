@@ -1,5 +1,9 @@
 import { Conversation } from '@/types/chat';
-import { OpenAIEntityModel, OpenAIEntityModelID } from '@/types/openai';
+import {
+  OpenAIEntityAddon,
+  OpenAIEntityModel,
+  OpenAIEntityModelID,
+} from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 import Spinner from '../Spinner';
@@ -7,6 +11,7 @@ import { ChatEmptySettings } from './ChatEmptySettings';
 
 interface Props {
   models: OpenAIEntityModel[];
+  addons: OpenAIEntityAddon[];
   conversation: Conversation;
   prompts: Prompt[];
   defaultModelId: OpenAIEntityModelID;
@@ -19,6 +24,7 @@ interface Props {
 
 export const ChatEmpty = ({
   models,
+  addons,
   conversation,
   prompts,
   defaultModelId,
@@ -45,6 +51,7 @@ export const ChatEmpty = ({
           <ChatEmptySettings
             defaultModelId={defaultModelId}
             models={models}
+            addons={addons}
             conversation={conversation}
             prompts={prompts}
             onChangePrompt={onChangePrompt}

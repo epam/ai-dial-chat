@@ -4,13 +4,18 @@ import { useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/types/chat';
-import { OpenAIEntityModel, OpenAIEntityModelID } from '@/types/openai';
+import {
+  OpenAIEntityAddon,
+  OpenAIEntityModel,
+  OpenAIEntityModelID,
+} from '@/types/openai';
 
 import { ModelSelect } from './ModelSelect';
 
 interface Props {
   conversation: Conversation;
   models: OpenAIEntityModel[];
+  addons: OpenAIEntityAddon[];
   defaultModelId: OpenAIEntityModelID;
   isCompareMode: boolean;
   selectedConversationIds: string[];
@@ -27,6 +32,7 @@ interface Props {
 export const ChatSettings = ({
   conversation,
   models,
+  addons,
   defaultModelId,
   isCompareMode,
   selectedConversationIds,

@@ -37,11 +37,7 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
           name: conversation.name || DEFAULT_CONVERSATION_NAME,
           model: model,
           prompt: conversation.prompt || DEFAULT_SYSTEM_PROMPT,
-          temperature:
-            (conversation.temperature != null &&
-              conversation.temperature >= 0 &&
-              conversation.temperature) ||
-            DEFAULT_TEMPERATURE,
+          temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
           folderId: conversation.folderId || null,
           messages: conversation.messages || [],
           replay: conversation.replay || defaultReplay,

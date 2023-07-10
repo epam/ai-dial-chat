@@ -3,7 +3,11 @@ import { useEffect } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/types/chat';
-import { OpenAIEntityModel, OpenAIEntityModelID } from '@/types/openai';
+import {
+  OpenAIEntityAddon,
+  OpenAIEntityModel,
+  OpenAIEntityModelID,
+} from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 import { ModelSelect } from './ModelSelect';
@@ -14,6 +18,7 @@ interface Props {
   conversation: Conversation;
   prompts: Prompt[];
   models: OpenAIEntityModel[];
+  addons: OpenAIEntityAddon[];
   defaultModelId: OpenAIEntityModelID;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
@@ -24,6 +29,7 @@ export const ChatEmptySettings = ({
   conversation,
   prompts,
   models,
+  addons,
   defaultModelId,
   onChangePrompt,
   onChangeTemperature,

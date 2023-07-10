@@ -5,11 +5,16 @@ import Select, {
   OptionProps,
   SingleValueProps,
   components,
+  createFilter,
 } from 'react-select';
 
 import { useTranslation } from 'next-i18next';
 
-import { OpenAIEntityModel, OpenAIEntityModelID } from '@/types/openai';
+import {
+  OpenAIEntity,
+  OpenAIEntityModel,
+  OpenAIEntityModelID,
+} from '@/types/openai';
 
 import { SelectIcon } from '../Select/SelectIcon';
 
@@ -21,20 +26,25 @@ interface Props {
   onSelectModel: (modelId: string) => void;
 }
 
-interface ModelsSelectOption {
+interface CompanionSelectOption {
   value: string;
   label: string;
   isDisabled: boolean;
 }
 
-const CustomSelectOption = (props: OptionProps<ModelsSelectOption>) => {
+interface CompanionGroupsSelectOptions {
+  readonly label: string;
+  readonly options: readonly CompanionSelectOption[];
+}
+
+const CustomSelectOption = (props: OptionProps<CompanionSelectOption>) => {
   const { data, children, isSelected, isFocused } = props;
   return (
     <>
       <components.Option
         {...props}
         isDisabled={data.isDisabled}
-        className={`!p-0 !pl-4 dark:text-white hover:dark:bg-[#40414F] hover:cursor-pointer ${
+        className={`!p-1 !pl-4 dark:text-white hover:dark:bg-[#40414F] hover:cursor-pointer ${
           isSelected ? 'dark:bg-[#202123]' : 'dark:bg-[#343541]'
         } ${
           data.isDisabled
@@ -50,7 +60,7 @@ const CustomSelectOption = (props: OptionProps<ModelsSelectOption>) => {
   );
 };
 
-const CustomSingleValue = (props: SingleValueProps<ModelsSelectOption>) => {
+const CustomSingleValue = (props: SingleValueProps<CompanionSelectOption>) => {
   const { children, getValue } = props;
   const selectedOption = getValue()[0];
   return (
@@ -64,7 +74,7 @@ const CustomSingleValue = (props: SingleValueProps<ModelsSelectOption>) => {
   );
 };
 
-const selectClassNames: ClassNamesConfig<ModelsSelectOption> = {
+const selectClassNames: ClassNamesConfig<CompanionSelectOption> = {
   control: (state) =>
     `dark:bg-[#343541] dark:text-white hover:dark:border-white hover:dark:shadow-white  !rounded-lg ${
       state.isFocused
@@ -74,11 +84,12 @@ const selectClassNames: ClassNamesConfig<ModelsSelectOption> = {
   placeholder: (state) => 'text-neutral-900 dark:text-white',
   valueContainer: (state) => '!text-neutral-900 hover:cursor-text',
   menu: (state) =>
-    '!mt-1 dark:bg-[#343541] !rounded !shadow-md !shadow-neutral-400 dark:!shadow-[#717283]',
+    '!mt-1 dark:bg-[#343541] !rounded !shadow-sm !shadow-neutral-400 dark:!shadow-[#717283]',
   singleValue: (state) => '!text-neutral-900 dark:!text-white center m-0',
   dropdownIndicator: (state) =>
     '!py-0 hover:!text-neutral-900 hover:dark:!text-white',
   input: (state) => 'dark:!text-white',
+  groupHeading: (state) => '!text-sm',
 };
 
 export const ModelSelect = ({
@@ -93,35 +104,61 @@ export const ModelSelect = ({
   const [isNotAllowedModelSelected, setIsNotAllowedModelSelected] =
     useState(false);
 
-  const selectOptions: ModelsSelectOption[] = models.map((model) => {
-    return {
-      value: model.id,
-      label:
-        model.id === defaultModelId ? `Default (${model.name})` : model.name,
-      isDisabled: false,
-    };
+  const createOption = (entity: OpenAIEntity | OpenAIEntityModel) => ({
+    value: entity.id,
+    label:
+      entity.type === 'model' && (entity as OpenAIEntityModel).isDefault
+        ? t('Default {{name}}', { name: entity.name })
+        : entity.name,
+    isDisabled: false,
   });
-  const selectOptionsWithNotAllowedModel: ModelsSelectOption[] =
-    isNotAllowedModelSelected
-      ? selectOptions.concat({
-          value: conversationModelId,
-          label: conversationModelName,
-          isDisabled: true,
-        })
-      : selectOptions;
 
-  const conversationOption: ModelsSelectOption = {
+  const selectModelsOptions: CompanionSelectOption[] = models
+    .filter(({ type }) => type === 'model')
+    .map(createOption);
+
+  const defaultModelOption: CompanionSelectOption | undefined =
+    selectModelsOptions.find(({ value }) => value === defaultModelId);
+
+  const selectAssistantOptions: CompanionSelectOption[] = models
+    .filter(({ type }) => type === 'assistant')
+    .map(createOption);
+
+  const selectAppsOptions: CompanionSelectOption[] = models
+    .filter(({ type }) => type === 'application')
+    .map(createOption);
+
+  const conversationOption: CompanionSelectOption = {
     value: conversationModelId,
     label:
       conversationModelId === defaultModelId
-        ? `Default (${conversationModelName})`
+        ? t('Default {{name}}', { name: conversationModelName })
         : conversationModelName,
     isDisabled: isNotAllowedModelSelected,
   };
-  const defaultModelOption: ModelsSelectOption | undefined =
-    selectOptionsWithNotAllowedModel.find(
-      ({ value }) => value === defaultModelId,
-    );
+  const groupedSelectOptions: readonly CompanionGroupsSelectOptions[] = [
+    {
+      label: t('Models'),
+      options: selectModelsOptions,
+    },
+    {
+      label: t('Assistants'),
+      options: selectAssistantOptions,
+    },
+    {
+      label: t('Applications'),
+      options: selectAppsOptions,
+    },
+  ];
+  const notAllowedGroup: CompanionGroupsSelectOptions = {
+    label: t('Not Allowed'),
+    options: isNotAllowedModelSelected ? [conversationOption] : [],
+  };
+  const groupedSelectOptionsWithNotAllowed: readonly CompanionGroupsSelectOptions[] =
+    isNotAllowedModelSelected
+      ? groupedSelectOptions.concat(notAllowedGroup)
+      : groupedSelectOptions;
+
   useEffect(() => {
     const modelsIds = models.map(({ id }) => id);
     setIsNotAllowedModelSelected(!modelsIds.includes(conversationModelId));
@@ -132,12 +169,13 @@ export const ModelSelect = ({
       <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
         {t('Model')}
       </label>
-      <Select<ModelsSelectOption>
+      <Select<CompanionSelectOption>
+        isSearchable
         className="w-full rounded-lg text-neutral-900 dark:text-white dark:bg-[#343541]"
         classNames={selectClassNames}
-        options={selectOptionsWithNotAllowedModel}
+        options={groupedSelectOptionsWithNotAllowed}
         placeholder={t('Select a model') || ''}
-        defaultValue={conversationOption || defaultModelOption}
+        value={conversationOption || defaultModelOption}
         onChange={(option) => {
           if (option) onSelectModel(option.value);
         }}
@@ -145,13 +183,17 @@ export const ModelSelect = ({
           Option: CustomSelectOption,
           SingleValue: CustomSingleValue,
         }}
+        filterOption={createFilter({
+          stringify: (option) => `${option.label}`,
+        })}
       />
       {conversationModelId === OpenAIEntityModelID.GPT_4_32K && (
         <div className="w-full mt-3 text-left text-orange-600 dark:text-orange-600 flex gap-2 items-center">
           <IconExclamationCircle size={18} />
           <div>
-            Please only use this one if you absolutely need it. It&apos;s slower
-            and more expensive.
+            {t(
+              "Please only use this one if you absolutely need it. It's slower and more expensive.",
+            )}
           </div>
         </div>
       )}
