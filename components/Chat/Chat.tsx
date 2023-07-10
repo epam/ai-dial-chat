@@ -13,6 +13,7 @@ import { useTranslation } from 'next-i18next';
 
 import { getEndpoint } from '@/utils/app/api';
 import { showAPIToastError } from '@/utils/app/errors';
+import { mergeMessages, parseStreamMessages } from '@/utils/app/merge-streams';
 import { throttle } from '@/utils/data/throttle';
 
 import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
@@ -333,7 +334,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       const decoder = new TextDecoder();
       let done = false;
       let isFirst = true;
-      let text = '';
+      let newMessage: Message = { content: '' } as Message;
       while (!done) {
         if (stopConversationRef.current === true) {
           controller.abort();
@@ -342,51 +343,35 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         }
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
-        const chunkValue = decoder.decode(value);
-        text += chunkValue;
+        const chunkValue = parseStreamMessages(decoder.decode(value));
+        mergeMessages(newMessage, chunkValue);
+        let updatedMessages: Message[];
+
         if (isFirst) {
           isFirst = false;
-          const updatedMessages: Message[] = [
-            ...updatedConversation.messages,
-            { role: 'assistant', content: chunkValue },
-          ];
-          updatedConversation = {
-            ...updatedConversation,
-            messages: updatedMessages,
-          };
-          localConversations.current = handleUpdateConversation(
-            updatedConversation,
-            {
-              key: 'messages',
-              value: updatedMessages,
-            },
-            localConversations.current,
-          );
+          updatedMessages = [...updatedConversation.messages, newMessage];
         } else {
-          const updatedMessages: Message[] = updatedConversation.messages.map(
+          updatedMessages = updatedConversation.messages.map(
             (message, index) => {
               if (index === updatedConversation.messages.length - 1) {
-                return {
-                  ...message,
-                  content: text,
-                };
+                return newMessage;
               }
               return message;
             },
           );
-          updatedConversation = {
-            ...updatedConversation,
-            messages: updatedMessages,
-          };
-          localConversations.current = handleUpdateConversation(
-            updatedConversation,
-            {
-              key: 'messages',
-              value: updatedMessages,
-            },
-            localConversations.current,
-          );
         }
+        updatedConversation = {
+          ...updatedConversation,
+          messages: updatedMessages,
+        };
+        localConversations.current = handleUpdateConversation(
+          updatedConversation,
+          {
+            key: 'messages',
+            value: updatedMessages,
+          },
+          localConversations.current,
+        );
       }
 
       homeDispatch({ field: 'loading', value: false });
