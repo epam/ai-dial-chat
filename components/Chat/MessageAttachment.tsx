@@ -27,8 +27,8 @@ export const MessageAttachment = ({ attachment }: Props) => {
         isOpened ? 'w-full' : 'w-[30%]'
       }`}
     >
-      <div className={`px-3 flex items-center justify-between`}>
-        <div className="flex items-center gap-3">
+      <div className={`px-2 flex items-center gap-3`}>
+        <div className="flex items-center">
           {attachment.reference_url ? (
             <a
               href={attachment.reference_url}
@@ -40,23 +40,23 @@ export const MessageAttachment = ({ attachment }: Props) => {
           ) : (
             <IconPaperclip size={18} className="flex-shrink-0" />
           )}
-
-          <span
-            className={`font-semibold ${
-              isOpened
-                ? 'max-w-full'
-                : 'text-ellipsis overflow-hidden whitespace-nowrap max-w-[95px]'
-            }`}
-            title={attachment.title}
-          >
-            {attachment.title}
-          </span>
         </div>
         <button
           onClick={() => {
             setIsOpened((isOpened) => !isOpened);
           }}
+          className="flex grow items-center justify-between gap-1"
         >
+          <span
+            className={`font-semibold ${
+              isOpened
+                ? 'max-w-full'
+                : 'text-ellipsis overflow-hidden whitespace-nowrap max-w-[90px]'
+            }`}
+            title={attachment.title}
+          >
+            {attachment.title}
+          </span>
           <IconChevronDown
             className={`transition ${isOpened ? 'rotate-180' : ''}`}
           />
@@ -90,7 +90,7 @@ export const MessageAttachment = ({ attachment }: Props) => {
               target="_blank"
               className="block mt-3"
             >
-              {t('Reference url')}
+              {t('Reference')}
             </a>
           )}
         </div>
