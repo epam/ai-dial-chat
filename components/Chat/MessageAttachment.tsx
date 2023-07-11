@@ -48,7 +48,7 @@ export const MessageAttachment = ({ attachment }: Props) => {
           className="flex grow items-center justify-between gap-1"
         >
           <span
-            className={`font-semibold ${
+            className={`font-semibold text-left ${
               isOpened
                 ? 'max-w-full'
                 : 'text-ellipsis overflow-hidden whitespace-nowrap max-w-[90px]'
