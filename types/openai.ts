@@ -7,12 +7,14 @@ export interface ProxyOpenAIEntity {
   capabilities?: {
     embeddings: boolean;
   };
+  addons?: string[];
 }
 
 export interface OpenAIEntity {
   id: string;
   name: string;
   type: OpenAIEntityType;
+  selectedAddons?: OpenAIEntityAddonID[];
 }
 
 export type OpenAIEntityModel = Omit<OpenAIEntity, 'type'> & {
@@ -198,6 +200,6 @@ export const OpenAIEntityModels: Record<
     maxLength: 24000,
     requestLimit: 6000,
     type: 'assistant',
-    selectedAddons: ['epam-10k-semantic-search'],
+    selectedAddons: [OpenAIEntityAddonID.ADDON_EPAM10K_SEMANTIC_SEARCH],
   },
 };

@@ -253,6 +253,15 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       homeDispatch({ field: 'loading', value: true });
       handleMessageIsStreamingChange(1);
 
+      const lastModel = models.find(
+        (model) => model.id === conversation.model.id,
+      ) as OpenAIEntityModel;
+      const selectedAddons = Array.from(
+        new Set([
+          ...conversation.selectedAddons,
+          ...(lastModel.selectedAddons ?? []),
+        ]),
+      );
       const chatBody: ChatBody = {
         modelId: conversation.model.id,
         messages: updatedConversation.messages.map((message) => {
@@ -263,7 +272,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         key: apiKey,
         prompt: updatedConversation.prompt,
         temperature: updatedConversation.temperature,
-        selectedAddons: conversation.selectedAddons,
+        selectedAddons: selectedAddons,
       };
       const endpoint = getEndpoint();
       let body;
@@ -377,7 +386,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       homeDispatch({ field: 'loading', value: false });
       handleMessageIsStreamingChange(-1);
     },
-    [apiKey, conversations, stopConversationRef],
+    [apiKey, conversations, stopConversationRef, models],
   );
 
   const onLikeHandler = useCallback(
@@ -559,9 +568,17 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   };
 
   const handleSelectModel = (conversation: Conversation, modelId: string) => {
-    handleUpdateConversation(conversation, {
+    const model = models.find(
+      (model) => model.id === modelId,
+    ) as OpenAIEntityModel;
+    const updatedConversation: Conversation = {
+      ...conversation,
+      model: model,
+      selectedAddons: model.selectedAddons ?? [],
+    };
+    handleUpdateConversation(updatedConversation, {
       key: 'model',
-      value: models.find((model) => model.id === modelId) as OpenAIEntityModel,
+      value: model,
     });
   };
 
