@@ -62,7 +62,6 @@ export const OpenAIStream = async ({
 }) => {
   const url = getUrl(model.id, model.type, isAddonsAdded);
   const apiKey = key ? key : process.env.OPENAI_API_KEY;
-
   let requestHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(apiKey && getHeaders(apiKey)),
@@ -78,14 +77,14 @@ export const OpenAIStream = async ({
       },
       ...messages,
     ],
-    max_tokens: model.tokenLimit - tokenCount,
     temperature,
     stream: true,
     // TODO: replace it with real data from assistant selected submodel
     model:
       model.type !== 'assistant'
         ? model.id
-        : OpenAIEntityModels[OpenAIEntityModelID.GPT_4].id,
+        : OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ].id,
+    ...(model.tokenLimit && { max_tokens: model.tokenLimit - tokenCount }),
   });
 
   const res = await fetch(url, {

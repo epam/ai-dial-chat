@@ -27,6 +27,7 @@ import HomeContext from '@/pages/api/home/home.context';
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import ChatMDComponent from '../Markdown/ChatMDComponent';
+import { MessageAttachment } from './MessageAttachment';
 import { modelCursorSign, modelCursorSignWithBackquote } from './chatConstants';
 
 import classNames from 'classnames';
@@ -249,12 +250,23 @@ export const ChatMessage: FC<Props> = memo(
               </div>
             ) : (
               <div className="h-full flex flex-row">
-                <ChatMDComponent
-                  isShowResponseLoader={isShowResponseLoader}
-                  message={message}
-                />
+                <div className="flex-grow flex flex-col gap-2">
+                  <ChatMDComponent
+                    isShowResponseLoader={isShowResponseLoader}
+                    content={message.content}
+                    isError={message.isError}
+                  />
+                  <div className="flex flex-wrap max-w-full gap-1">
+                    {message.custom_content?.attachments?.map((attachment) => (
+                      <MessageAttachment
+                        key={attachment.index}
+                        attachment={attachment}
+                      />
+                    ))}
+                  </div>
+                </div>
 
-                <div className="flex flex-col justify-between w-[60px]">
+                <div className="flex flex-col justify-between w-[60px] flex-shrink-0">
                   <div className="md:-mr-8 ml-1 md:ml-0 flex flex-col md:flex-row gap-4 md:gap-1 items-center md:items-start justify-end md:justify-start">
                     {messagedCopied ? (
                       <IconCheck
