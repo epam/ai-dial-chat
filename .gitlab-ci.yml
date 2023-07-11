@@ -31,7 +31,7 @@ variables:
   development_RELEASE_OVERLAY: development-overlay
 
   development_HELM_VALUES_FILE_OVERLAY10K: "helm/development-overlay10k.yaml"
-  development_RELEASE_OVERLAY10K: development-overlay
+  development_RELEASE_OVERLAY10K: development-overlay10k
 
   staging_DEPLOY_ENV: "false"
 
