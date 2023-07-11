@@ -8,6 +8,7 @@ import {
   fallbackModelID,
   OpenAIEntity,
   ProxyOpenAIEntity,
+  OpenAIEntityAddonID,
 } from '@/types/openai';
 
 import { authOptions } from './auth/[...nextauth]';
@@ -95,13 +96,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       if (entity.capabilities?.embeddings) {
         continue;
       }
-
+      
       const existingModelMapping = OpenAIEntityModels[entity.id as OpenAIEntityModelID];
       if (existingModelMapping != null) {
         entities.push({
           id: entity.id,
           name: existingModelMapping.name,
           type: entity.object,
+          selectedAddons: entity.addons as OpenAIEntityAddonID[] | undefined,
         });
       }
     }

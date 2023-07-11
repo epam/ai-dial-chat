@@ -7,12 +7,14 @@ export interface ProxyOpenAIEntity {
   capabilities?: {
     embeddings: boolean;
   };
+  addons?: string[];
 }
 
 export interface OpenAIEntity {
   id: string;
   name: string;
   type: OpenAIEntityType;
+  selectedAddons?: OpenAIEntityAddonID[];
 }
 
 export type OpenAIEntityModel = Omit<OpenAIEntity, 'type'> & {

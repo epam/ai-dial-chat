@@ -1,5 +1,6 @@
 import { Message } from '@/types/chat';
 import {
+  OpenAIEntityAddonID,
   OpenAIEntityModel,
   OpenAIEntityModelID,
   OpenAIEntityModelType,
@@ -48,7 +49,7 @@ export const OpenAIStream = async ({
   key,
   messages,
   tokenCount,
-  isAddonsAdded,
+  selectedAddons,
   userJWT,
 }: {
   model: OpenAIEntityModel;
@@ -57,10 +58,10 @@ export const OpenAIStream = async ({
   key: string;
   messages: Message[];
   tokenCount: number;
-  isAddonsAdded: boolean;
+  selectedAddons: OpenAIEntityAddonID[];
   userJWT: string | null | undefined;
 }) => {
-  const url = getUrl(model.id, model.type, isAddonsAdded);
+  const url = getUrl(model.id, model.type, selectedAddons?.length > 0);
   const apiKey = key ? key : process.env.OPENAI_API_KEY;
   let requestHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -79,6 +80,7 @@ export const OpenAIStream = async ({
     ],
     temperature,
     stream: true,
+    addons: selectedAddons?.map((addon) => ({ name: addon })) ?? [],
     // TODO: replace it with real data from assistant selected submodel
     model:
       model.type !== 'assistant'

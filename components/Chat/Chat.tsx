@@ -559,9 +559,17 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   };
 
   const handleSelectModel = (conversation: Conversation, modelId: string) => {
-    handleUpdateConversation(conversation, {
+    const model = models.find(
+      (model) => model.id === modelId,
+    ) as OpenAIEntityModel;
+    const updatedConversation: Conversation = {
+      ...conversation,
+      model: model,
+      selectedAddons: model.selectedAddons ?? [],
+    };
+    handleUpdateConversation(updatedConversation, {
       key: 'model',
-      value: models.find((model) => model.id === modelId) as OpenAIEntityModel,
+      value: model,
     });
   };
 
