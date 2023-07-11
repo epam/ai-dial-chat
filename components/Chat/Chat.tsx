@@ -91,6 +91,8 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       messageIsStreaming,
       enabledFeatures,
       isIframe,
+      modelIconMapping,
+      lightMode,
     },
     handleUpdateConversation,
     handleSelectConversation,
@@ -784,7 +786,28 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                     </div>
                   ),
                 )}
-                {loading && <ChatLoader />}
+                {loading && (
+                  <div className={'flex w-full'}>
+                    {selectedConversations.map(({ model, id }) => {
+                      return (
+                        <div
+                          key={id}
+                          className={`${
+                            isCompareMode && selectedConversations.length > 1
+                              ? 'w-[50%]'
+                              : 'w-full'
+                          }`}
+                        >
+                          <ChatLoader
+                            modelIconMapping={modelIconMapping}
+                            modelId={model.id}
+                            theme={lightMode}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
                 <div
                   className="shrink-0 bg-white dark:bg-[#343541]"
                   style={{ height: inputHeight - 10 }}
