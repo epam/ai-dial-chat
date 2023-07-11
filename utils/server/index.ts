@@ -80,13 +80,15 @@ export const OpenAIStream = async ({
     ],
     temperature,
     stream: true,
-    addons: selectedAddons?.map((addon) => ({ name: addon })) ?? [],
     // TODO: replace it with real data from assistant selected submodel
     model:
       model.type !== 'assistant'
         ? model.id
         : OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ].id,
     ...(model.tokenLimit && { max_tokens: model.tokenLimit - tokenCount }),
+    ...(model.selectedAddons?.length && {
+      addons: selectedAddons?.map((addon) => ({ name: addon })),
+    }),
   });
 
   const res = await fetch(url, {

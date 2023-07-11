@@ -256,7 +256,6 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       const lastModel = models.find(
         (model) => model.id === conversation.model.id,
       ) as OpenAIEntityModel;
-      debugger;
       const selectedAddons = Array.from(
         new Set([
           ...conversation.selectedAddons,
