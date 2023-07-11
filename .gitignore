@@ -41,3 +41,6 @@ pnpm-lock.yaml
 
 # overlay
 /public/overlay
+
+# editors
+.vscode

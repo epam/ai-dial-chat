@@ -17,7 +17,7 @@ export interface OpenAIEntity {
 
 export type OpenAIEntityModel = Omit<OpenAIEntity, 'type'> & {
   maxLength: number; // maximum length of a message
-  tokenLimit: number;
+  tokenLimit?: number;
   requestLimit: number;
   isDefault?: boolean;
   type: OpenAIEntityModelType;
@@ -48,8 +48,8 @@ export enum OpenAIEntityModelID {
 }
 
 export enum OpenAIEntityAddonID {
-  ADDON_EPAM10K_SEMANTIC_SEARCH = 'addon-epam10k-golden-qna',
-  ADDON_EPAM10K_GOLDEN_QNA = 'addon-epam10k-semantic-search',
+  ADDON_EPAM10K_SEMANTIC_SEARCH = 'addon-epam10k-semantic-search',
+  ADDON_EPAM10K_GOLDEN_QNA = 'addon-epam10k-golden-qna',
 }
 
 export const OpenAIEntityAddons: Record<
@@ -175,7 +175,6 @@ export const OpenAIEntityModels: Record<
     id: OpenAIEntityModelID.GPT_WORLD,
     name: 'GPT World',
     maxLength: 24000,
-    tokenLimit: 8000,
     requestLimit: 6000,
     type: 'application',
   },
@@ -183,7 +182,6 @@ export const OpenAIEntityModels: Record<
     id: OpenAIEntityModelID.MIRROR,
     name: 'Mirror',
     maxLength: 24000,
-    tokenLimit: 8000,
     requestLimit: 6000,
     type: 'application',
   },
@@ -191,7 +189,6 @@ export const OpenAIEntityModels: Record<
     id: OpenAIEntityModelID.EPAM10K,
     name: 'EPAM10K',
     maxLength: 24000,
-    tokenLimit: 8000,
     requestLimit: 6000,
     type: 'application',
   },
@@ -199,7 +196,6 @@ export const OpenAIEntityModels: Record<
     id: OpenAIEntityModelID.ASSISTANT10K,
     name: 'ASSISTANT10K',
     maxLength: 24000,
-    tokenLimit: 8000,
     requestLimit: 6000,
     type: 'assistant',
     selectedAddons: ['epam-10k-semantic-search'],
