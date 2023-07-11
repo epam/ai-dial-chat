@@ -1,0 +1,79 @@
+image:
+  pullPolicy: Always
+  registry: registry-test.deltixhub.com
+  pullSecrets:
+    - epm-rtc-registry-test
+
+replicaCount: 1
+
+resources:
+  limits:
+    cpu: 1
+    memory: 1Gi
+  requests:
+    cpu: 0.25
+    memory: 512Mi
+
+env:
+  OPENAI_API_HOST: 'http://dial-proxy.dial-proxy'
+  DEFAULT_MODEL: 'epam10k-semantic-search'
+  OPENAI_API_TYPE: 'azure'
+  OPENAI_API_VERSION: '2023-03-15-preview'
+  NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT: ''
+  AUTH_AUTH0_HOST: 'https://chatbot-ui-staging.eu.auth0.com'
+  AUTH_AUTH0_AUDIENCE: 'chat'
+  NEXT_PUBLIC_APP_NAME: 'MR Review'
+  FOOTER_HTML_MESSAGE: '<a href="https://kb.epam.com/display/EPMGPT/EPAM+AI+Chat" target="_blank" rel="noreferrer"> <u><strong>EPAM AI Chat</strong></u> </a>&nbsp;can be used <u>any work-related activity</u>. Rest assured, information you share here is&nbsp;<u> not disclosed to third-party companies </u>. However, we <u>anonymize and log</u> all interactions for research purposes. <br/>For API access please fill&nbsp;<a href="#requestApiKey"><u><strong>this form</strong></u></a>.&nbsp;If you have a problem please&nbsp;<a href="#reportAnIssue"><u><strong>report an issue</strong></u></a>. Version %%VERSION%%'
+  ENABLED_FEATURES: 'top-settings,top-chat-info,top-clear-conversation'
+  AUTH_DISABLED: 'false'
+  IS_IFRAME: 'true'
+  ALLOWED_IFRAME_ORIGINS: "'self' https://chatbot-ui-staging.eu.auth0.com/* http://127.0.0.1:8080/"
+#  NEXTAUTH_URL: "https://dev-chat.ai-proxy.lab.epam.com"
+#  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
+
+# podLabels:
+#   azure.workload.identity/use: "true"
+
+# extraEnvVarsSecret: "chat-manual"
+
+podAnnotations:
+  autorestart: '{{ dateInZone "2006-01-02 15:04:05Z" (now) "UTC" }}'
+
+# affinity:
+#   podAntiAffinity:
+#     preferredDuringSchedulingIgnoredDuringExecution:
+#       - weight: 100
+#         podAffinityTerm:
+#           labelSelector:
+#             matchExpressions:
+#               - key: app
+#                 operator: In
+#                 values:
+#                   - {{ include "app.fullname" . }}
+#           topologyKey: kubernetes.io/hostname
+
+ingress:
+  enabled: true
+  ingressClassName: alb
+  annotations:
+    alb.ingress.kubernetes.io/scheme: 'internet-facing'
+    alb.ingress.kubernetes.io/target-type: 'ip'
+    alb.ingress.kubernetes.io/backend-protocol: 'HTTP'
+    alb.ingress.kubernetes.io/healthcheck-path: '/api/healthcheck'
+    alb.ingress.kubernetes.io/healthcheck-protocol: 'HTTP'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/target-group-attributes: 'stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=86400'
+    alb.ingress.kubernetes.io/load-balancer-attributes: 'routing.http2.enabled=true'
+    alb.ingress.kubernetes.io/listen-ports: '[{ "HTTP" : 80, "HTTPS" : 443 }]'
+    alb.ingress.kubernetes.io/ssl-policy: 'ELBSecurityPolicy-TLS-1-2-Ext-2018-06'
+    alb.ingress.kubernetes.io/certificate-arn: 'arn:aws:acm:eu-north-1:725751206603:certificate/373e8fd1-088e-4022-adf1-5f3e7820fb4a'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/group.name: 'allow-all'
+  hosts:
+    - chat-review.staging.deltixhub.io
+
+serviceAccount:
+  create: true
+  name: chat
+# extraEnvVarsSecret: "chat-lab-test"
