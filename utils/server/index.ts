@@ -87,7 +87,6 @@ export const OpenAIStream = async ({
     ...(model.tokenLimit && { max_tokens: model.tokenLimit - tokenCount }),
   });
 
-  console.log(body);
   const res = await fetch(url, {
     headers: requestHeaders,
     method: 'POST',
@@ -128,8 +127,6 @@ export const OpenAIStream = async ({
   const stream = new ReadableStream({
     async start(controller) {
       const onParse = (event: ParsedEvent | ReconnectInterval) => {
-        console.log(0);
-
         if (event.type === 'event') {
           if (event.data === '[DONE]') {
             controller.close();
@@ -155,11 +152,7 @@ export const OpenAIStream = async ({
 
       const parser = createParser(onParse);
 
-      console.log(123);
-
       for await (const chunk of res.body as any) {
-        console.log(decoder.decode(chunk));
-
         parser.feed(decoder.decode(chunk));
       }
     },
