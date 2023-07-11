@@ -200,6 +200,6 @@ export const OpenAIEntityModels: Record<
     maxLength: 24000,
     requestLimit: 6000,
     type: 'assistant',
-    selectedAddons: ['epam-10k-semantic-search'],
+    selectedAddons: [OpenAIEntityAddonID.ADDON_EPAM10K_SEMANTIC_SEARCH],
   },
 };
