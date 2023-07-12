@@ -344,6 +344,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       let done = false;
       let isFirst = true;
       let newMessage: Message = { content: '' } as Message;
+      let eventData = '';
       while (!done) {
         if (stopConversationRef.current === true) {
           controller.abort();
@@ -352,7 +353,13 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         }
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
-        const chunkValue = parseStreamMessages(decoder.decode(value));
+        let decodedValue = decoder.decode(value);
+        eventData += decodedValue;
+        if (decodedValue[decodedValue.length - 1] !== '\0') {
+          continue;
+        }
+        const chunkValue = parseStreamMessages(eventData);
+        eventData = '';
         mergeMessages(newMessage, chunkValue);
         let updatedMessages: Message[];
 
