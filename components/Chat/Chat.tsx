@@ -264,10 +264,14 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       );
       const chatBody: ChatBody = {
         modelId: conversation.model.id,
-        messages: updatedConversation.messages.map((message) => {
-          const gptMessage = { ...message, like: void 0 };
-          return gptMessage;
-        }),
+        messages: updatedConversation.messages.map((message) => ({
+          content: message.content,
+          role: message.role,
+          like: void 0,
+          ...(message.custom_content?.state && {
+            custom_content: { state: message.custom_content?.state },
+          }),
+        })),
         id: conversation.id.toLowerCase(),
         key: apiKey,
         prompt: updatedConversation.prompt,
