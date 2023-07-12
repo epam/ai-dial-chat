@@ -16,7 +16,7 @@ resources:
     memory: 512Mi
 
 env:
-  NEXTAUTH_URL: 'https://chat-overlay.staging.deltixhub.io'
+  NEXTAUTH_URL: 'https://chat-10k-overlay.staging.deltixhub.io'
   OPENAI_API_HOST: 'http://dial-proxy.dial-proxy'
   DEFAULT_MODEL: 'epam10k-semantic-search'
   OPENAI_API_TYPE: 'azure'
@@ -76,9 +76,9 @@ ingress:
     alb.ingress.kubernetes.io/ssl-redirect: '443'
     alb.ingress.kubernetes.io/group.name: 'allow-all'
   hosts:
-    - chat-overlay.staging.deltixhub.io
+    - chat-10k-overlay.staging.deltixhub.io
 
 serviceAccount:
   create: true
-  name: development-overlay
+  name: development-overlay-10k
 # extraEnvVarsSecret: "chat-lab-test"

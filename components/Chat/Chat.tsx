@@ -13,6 +13,7 @@ import { useTranslation } from 'next-i18next';
 
 import { getEndpoint } from '@/utils/app/api';
 import { showAPIToastError } from '@/utils/app/errors';
+import { mergeMessages, parseStreamMessages } from '@/utils/app/merge-streams';
 import { throttle } from '@/utils/data/throttle';
 
 import {
@@ -94,6 +95,8 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       messageIsStreaming,
       enabledFeatures,
       isIframe,
+      modelIconMapping,
+      lightMode,
     },
     handleUpdateConversation,
     handleSelectConversation,
@@ -254,6 +257,15 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       homeDispatch({ field: 'loading', value: true });
       handleMessageIsStreamingChange(1);
 
+      const lastModel = models.find(
+        (model) => model.id === conversation.model.id,
+      ) as OpenAIEntityModel;
+      const selectedAddons = Array.from(
+        new Set([
+          ...conversation.selectedAddons,
+          ...(lastModel.selectedAddons ?? []),
+        ]),
+      );
       const chatBody: ChatBody = {
         modelId: conversation.model.id,
         messages: updatedConversation.messages.map((message) => {
@@ -264,7 +276,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         key: apiKey,
         prompt: updatedConversation.prompt,
         temperature: updatedConversation.temperature,
-        selectedAddons: conversation.selectedAddons,
+        selectedAddons: selectedAddons,
       };
       const endpoint = getEndpoint();
       let body;
@@ -335,7 +347,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       const decoder = new TextDecoder();
       let done = false;
       let isFirst = true;
-      let text = '';
+      let newMessage: Message = { content: '' } as Message;
       while (!done) {
         if (stopConversationRef.current === true) {
           controller.abort();
@@ -344,57 +356,41 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         }
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
-        const chunkValue = decoder.decode(value);
-        text += chunkValue;
+        const chunkValue = parseStreamMessages(decoder.decode(value));
+        mergeMessages(newMessage, chunkValue);
+        let updatedMessages: Message[];
+
         if (isFirst) {
           isFirst = false;
-          const updatedMessages: Message[] = [
-            ...updatedConversation.messages,
-            { role: 'assistant', content: chunkValue },
-          ];
-          updatedConversation = {
-            ...updatedConversation,
-            messages: updatedMessages,
-          };
-          localConversations.current = handleUpdateConversation(
-            updatedConversation,
-            {
-              key: 'messages',
-              value: updatedMessages,
-            },
-            localConversations.current,
-          );
+          updatedMessages = [...updatedConversation.messages, newMessage];
         } else {
-          const updatedMessages: Message[] = updatedConversation.messages.map(
+          updatedMessages = updatedConversation.messages.map(
             (message, index) => {
               if (index === updatedConversation.messages.length - 1) {
-                return {
-                  ...message,
-                  content: text,
-                };
+                return newMessage;
               }
               return message;
             },
           );
-          updatedConversation = {
-            ...updatedConversation,
-            messages: updatedMessages,
-          };
-          localConversations.current = handleUpdateConversation(
-            updatedConversation,
-            {
-              key: 'messages',
-              value: updatedMessages,
-            },
-            localConversations.current,
-          );
         }
+        updatedConversation = {
+          ...updatedConversation,
+          messages: updatedMessages,
+        };
+        localConversations.current = handleUpdateConversation(
+          updatedConversation,
+          {
+            key: 'messages',
+            value: updatedMessages,
+          },
+          localConversations.current,
+        );
       }
 
       homeDispatch({ field: 'loading', value: false });
       handleMessageIsStreamingChange(-1);
     },
-    [apiKey, conversations, stopConversationRef],
+    [apiKey, conversations, stopConversationRef, models],
   );
 
   const onLikeHandler = useCallback(
@@ -583,6 +579,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
     const updatedConversation: Conversation = {
       ...conversation,
       model: newAiEntity,
+      selectedAddons: newAiEntity.selectedAddons ?? [],
     };
     if (newAiEntity.type === 'assistant') {
       handleUpdateConversation(conversation, {
@@ -863,7 +860,28 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                     </div>
                   ),
                 )}
-                {loading && <ChatLoader />}
+                {loading && (
+                  <div className={'flex w-full'}>
+                    {selectedConversations.map(({ model, id }) => {
+                      return (
+                        <div
+                          key={id}
+                          className={`${
+                            isCompareMode && selectedConversations.length > 1
+                              ? 'w-[50%]'
+                              : 'w-full'
+                          }`}
+                        >
+                          <ChatLoader
+                            modelIconMapping={modelIconMapping}
+                            modelId={model.id}
+                            theme={lightMode}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
                 <div
                   className="shrink-0 bg-white dark:bg-[#343541]"
                   style={{ height: inputHeight - 10 }}

@@ -1,10 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
 import { OpenAIError, OpenAIStream } from '@/utils/server';
 
-import { OpenAIEntityModelID, OpenAIEntityModels } from '../../types/openai';
+import {
+  OpenAIEntityAddonID,
+  OpenAIEntityModelID,
+  OpenAIEntityModels,
+} from '../../types/openai';
 import { fallbackModelID } from '../../types/openai';
 import { ChatBody, Message } from '@/types/chat';
 
@@ -50,6 +55,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         tiktokenModel.pat_str,
       );
     }
+
+    const token = await getToken({ req });
 
     let promptToSend = prompt;
     if (!promptToSend) {
@@ -112,7 +119,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       key,
       messages: messagesToSend,
       tokenCount,
-      isAddonsAdded: selectedAddons?.length > 0,
+      selectedAddons: selectedAddons as OpenAIEntityAddonID[],
+      userJWT: token?.access_token as string | undefined,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
     // return new Response(stream);

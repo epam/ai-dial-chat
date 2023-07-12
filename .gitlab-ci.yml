@@ -30,6 +30,9 @@ variables:
   development_HELM_VALUES_FILE_OVERLAY: "helm/development-overlay.yaml"
   development_RELEASE_OVERLAY: development-overlay
 
+  development_HELM_VALUES_FILE_OVERLAY10K: "helm/development-overlay10k.yaml"
+  development_RELEASE_OVERLAY10K: development-overlay10k
+
   staging_DEPLOY_ENV: "false"
 
   review_DEPLOY_ENV: "true"
@@ -46,6 +49,10 @@ variables:
   review_HELM_VALUES_FILE_OVERLAY: "helm/review-overlay.yaml"
   review_HELM_CUSTOM_VALUES_OVERLAY: "ingress.hosts[0]=${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}-overlay.staging.deltixhub.io,fullnameOverride=mr-${CI_MERGE_REQUEST_IID}-overlay,image.tag=mr-${CI_MERGE_REQUEST_IID},serviceAccount.name=mr-${CI_MERGE_REQUEST_IID}-overlay,env.NEXTAUTH_URL=https://${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}-overlay.staging.deltixhub.io"
   review_RELEASE_OVERLAY: ${CHART}-overlay-mr-${CI_MERGE_REQUEST_IID}
+
+  review_HELM_VALUES_FILE_OVERLAY10K: "helm/review-overlay10k.yaml"
+  review_HELM_CUSTOM_VALUES_OVERLAY10K: "ingress.hosts[0]=${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}-overlay10k.staging.deltixhub.io,fullnameOverride=mr-${CI_MERGE_REQUEST_IID}-overlay10k,image.tag=mr-${CI_MERGE_REQUEST_IID},serviceAccount.name=mr-${CI_MERGE_REQUEST_IID}-overlay10k,env.NEXTAUTH_URL=https://${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}-overlay10k.staging.deltixhub.io"
+  review_RELEASE_OVERLAY10K: ${CHART}-overlay10k-mr-${CI_MERGE_REQUEST_IID}
 
 stages:
   - test
@@ -71,6 +78,7 @@ stages:
     - kubectl delete secret maintainer-${RELEASE} --namespace=$NAMESPACE --ignore-not-found && kubectl create secret generic maintainer-${RELEASE} --namespace=$NAMESPACE --from-literal=gitlabRepo="${CI_PROJECT_URL}" --from-literal=gitlabUser="${GITLAB_USER_LOGIN}"
     - helm upgrade ${RELEASE} ${REPO}/${CHART} --version ${VERSION} -f ${HELM_VALUES_FILE} --set "$HELM_CUSTOM_VALUES" --namespace ${NAMESPACE} --install --create-namespace ${ATOMIC:+ "--atomic"} ${HELM_EXTRA_ARGS} --disable-openapi-validation --stderrthreshold=ERROR || (echo -e "\e[91mERROR  ${CHART} deployment failed" && exit 1)
     - helm upgrade ${RELEASE_OVERLAY} ${REPO}/${CHART} --version ${VERSION} -f ${HELM_VALUES_FILE_OVERLAY} --set "$HELM_CUSTOM_VALUES_OVERLAY" --namespace ${NAMESPACE} --install --create-namespace ${ATOMIC:+ "--atomic"} ${HELM_EXTRA_ARGS} --disable-openapi-validation --stderrthreshold=ERROR || (echo -e "\e[91mERROR  ${CHART} deployment failed" && exit 1)
+    - helm upgrade ${RELEASE_OVERLAY10K} ${REPO}/${CHART} --version ${VERSION} -f ${HELM_VALUES_FILE_OVERLAY10K} --set "$HELM_CUSTOM_VALUES_OVERLAY10K" --namespace ${NAMESPACE} --install --create-namespace ${ATOMIC:+ "--atomic"} ${HELM_EXTRA_ARGS} --disable-openapi-validation --stderrthreshold=ERROR || (echo -e "\e[91mERROR  ${CHART} deployment failed" && exit 1)
     - if [[ "$VERBOSE" = "true" ]]; then helm list -a -n ${NAMESPACE}; fi
   resource_group: $CI_ENVIRONMENT_NAME
   tags:
@@ -88,6 +96,7 @@ stages:
     - kubectl delete secret maintainer-${RELEASE} --namespace=$NAMESPACE --ignore-not-found
     - helm uninstall ${RELEASE} --namespace ${NAMESPACE}
     - helm uninstall ${RELEASE_OVERLAY} --namespace ${NAMESPACE}
+    - helm uninstall ${RELEASE_OVERLAY10K} --namespace ${NAMESPACE}
     - if [[ "$VERBOSE" = "true" ]]; then helm list -a -n ${NAMESPACE}; fi
   resource_group: $CI_ENVIRONMENT_NAME
   environment:

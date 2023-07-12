@@ -33,7 +33,7 @@ export const ModelIcon = ({
           style={{ color: 'red' }}
         ></Image>
       ) : (
-        <IconMessage size={size} />
+        <IconMessage size={size} className={animate ? 'animate-bounce' : ''} />
       )}
     </>
   );

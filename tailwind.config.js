@@ -7,7 +7,12 @@ module.exports = {
   ],
   darkMode: 'class',
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        'gray-1': '#444654',
+        'gray-2': '#343541',
+      },
+    },
   },
   variants: {
     extend: {
