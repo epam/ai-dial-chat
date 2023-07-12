@@ -37,6 +37,7 @@ export interface Conversation {
   folderId: string | null;
   replay: Replay;
   selectedAddons: string[];
+  assistantModelId?: string;
 }
 export interface Replay {
   isReplay: boolean;

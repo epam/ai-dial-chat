@@ -4,9 +4,9 @@ import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/types/chat';
 import {
-  OpenAIEntityAddon,
   OpenAIEntityModel,
   OpenAIEntityModelID,
+  OpenAIEntityModels,
 } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
@@ -18,25 +18,31 @@ interface Props {
   conversation: Conversation;
   prompts: Prompt[];
   models: OpenAIEntityModel[];
-  addons: OpenAIEntityAddon[];
   defaultModelId: OpenAIEntityModelID;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
   onSelectModel: (modelId: string) => void;
+  onSelectAssistantSubModel: (modelId: string) => void;
 }
 
 export const ChatEmptySettings = ({
   conversation,
   prompts,
   models,
-  addons,
   defaultModelId,
   onChangePrompt,
   onChangeTemperature,
   onSelectModel,
+  onSelectAssistantSubModel,
 }: Props) => {
   const { t } = useTranslation('chat');
-
+  const aiEntityType = conversation.model.type;
+  const modelsFiltered = models.filter((etity) => etity.type === 'model');
+  const defaultAssistantModel = OpenAIEntityModels[OpenAIEntityModelID.GPT_4];
+  const assitantModelName = conversation.assistantModelId
+    ? OpenAIEntityModels[conversation.assistantModelId as OpenAIEntityModelID]
+        .name
+    : defaultAssistantModel.name;
   return (
     <div className="flex h-full flex-col space-y-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-600">
       <ModelSelect
@@ -46,18 +52,34 @@ export const ChatEmptySettings = ({
         models={models}
         onSelectModel={onSelectModel}
       />
+      {aiEntityType === 'assistant' && (
+        <ModelSelect
+          conversationModelId={
+            conversation.assistantModelId ?? defaultAssistantModel.id
+          }
+          conversationModelName={
+            assitantModelName ?? defaultAssistantModel.name
+          }
+          defaultModelId={defaultModelId}
+          models={modelsFiltered}
+          onSelectModel={onSelectAssistantSubModel}
+        />
+      )}
+      {aiEntityType === 'model' && (
+        <SystemPrompt
+          conversation={conversation}
+          prompts={prompts}
+          onChangePrompt={onChangePrompt}
+        />
+      )}
 
-      <SystemPrompt
-        conversation={conversation}
-        prompts={prompts}
-        onChangePrompt={onChangePrompt}
-      />
-
-      <TemperatureSlider
-        label={t('Temperature')}
-        onChangeTemperature={onChangeTemperature}
-        conversation={conversation}
-      />
+      {aiEntityType !== 'application' && (
+        <TemperatureSlider
+          label={t('Temperature')}
+          onChangeTemperature={onChangeTemperature}
+          conversation={conversation}
+        />
+      )}
     </div>
   );
 };
