@@ -17,11 +17,11 @@ export interface Props {
 export const MessageStage = ({ stage }: Props) => {
   const [isOpened, setIsOpened] = useState(false);
   const [hasContent, setHasContent] = useState(
-    () => stage?.content || stage?.attachments?.length,
+    () => !!(stage?.content || stage?.attachments?.length),
   );
 
   useEffect(() => {
-    setHasContent(stage?.content || stage?.attachments?.length);
+    setHasContent(!!(stage?.content || stage?.attachments?.length));
   }, [stage]);
 
   const stageTitle = (
