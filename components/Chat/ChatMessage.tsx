@@ -2,7 +2,6 @@ import {
   IconCheck,
   IconCopy,
   IconEdit,
-  IconRobot,
   IconThumbDown,
   IconThumbUp,
   IconTrash,
@@ -28,6 +27,7 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachment } from './MessageAttachment';
+import { MessageStages } from './MessageStages';
 import { modelCursorSign, modelCursorSignWithBackquote } from './chatConstants';
 
 import classNames from 'classnames';
@@ -250,7 +250,10 @@ export const ChatMessage: FC<Props> = memo(
               </div>
             ) : (
               <div className="h-full flex flex-row">
-                <div className="flex-grow flex flex-col gap-2">
+                <div className="flex-grow flex flex-col gap-4">
+                  {message.custom_content?.stages?.length && (
+                    <MessageStages stages={message.custom_content?.stages} />
+                  )}
                   <ChatMDComponent
                     isShowResponseLoader={isShowResponseLoader}
                     content={message.content}

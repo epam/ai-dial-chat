@@ -7,8 +7,6 @@ import {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import Image from 'next/image';
-
 import { Attachment, AttachmentMIMEType } from '@/types/chat';
 
 import ChatMDComponent from '../Markdown/ChatMDComponent';
@@ -25,7 +23,7 @@ export const MessageAttachment = ({ attachment }: Props) => {
   return (
     <div
       className={`px-1 py-2 border rounded-lg dark:bg-gray-2 dark:border-gray-900/50 ${
-        isOpened ? 'w-full' : 'w-[30%]'
+        isOpened ? 'w-full' : 'w-full sm:w-[48%] md:w-[30%]'
       }`}
     >
       <div className={`px-2 flex items-center gap-3`}>
