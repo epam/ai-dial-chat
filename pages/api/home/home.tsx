@@ -107,8 +107,6 @@ const Home = ({
     dispatch,
   } = contextValue;
 
-  const stopConversationRef = useRef<boolean>(false);
-
   const { data: modelsData, error: modelsError } = useQuery(
     ['GetModels', apiKey, serverSideApiKeyIsSet],
     ({ signal }) => {
@@ -634,10 +632,7 @@ const Home = ({
               {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
 
               <div className="flex flex-1">
-                <Chat
-                  stopConversationRef={stopConversationRef}
-                  appName={appName}
-                />
+                <Chat appName={appName} />
               </div>
 
               {enabledFeaturesSet.has('prompts-section') && <Promptbar />}

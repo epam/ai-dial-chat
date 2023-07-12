@@ -35,7 +35,6 @@ import { NotAllowedModel } from './NotAllowedModel';
 import { errorsMessages } from '@/constants/errors';
 
 interface Props {
-  stopConversationRef: MutableRefObject<boolean>;
   appName: string;
 }
 
@@ -72,7 +71,7 @@ const findSelectedConversations = (
   return conversations.filter((i) => i != null && ids.has(i.id));
 };
 
-export const Chat = memo(({ stopConversationRef, appName }: Props) => {
+export const Chat = memo(({ appName }: Props) => {
   const { t } = useTranslation('chat');
 
   const {
@@ -118,6 +117,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const inputRef = useRef<HTMLDivElement>(null);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const messageIsStreamingAmount = useRef<number>(0);
+  const abortControllers = useRef<AbortController[]>();
   const [isNotAllowedModel, setIsNotAllowedModel] = useState(false);
 
   useEffect(() => {
@@ -209,6 +209,10 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       if (!conversation) {
         return;
       }
+      abortControllers.current =
+        abortControllers.current?.filter(
+          (controller) => !controller.signal.aborted,
+        ) ?? [];
 
       let updatedConversation: Conversation;
       if (deleteCount) {
@@ -281,15 +285,27 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       const endpoint = getEndpoint();
       let body;
       body = JSON.stringify(chatBody);
-      const controller = new AbortController();
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal,
-        body,
-      });
+      const abortController = new AbortController();
+      abortControllers.current?.push(abortController);
+      let response;
+      try {
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: abortController.signal,
+          body,
+        });
+      } catch (error: any) {
+        if (error.name === 'AbortError') {
+          homeDispatch({ field: 'loading', value: false });
+          handleMessageIsStreamingChange(-1);
+          return { error: true };
+        }
+
+        throw error;
+      }
 
       if (!response.ok) {
         homeDispatch({ field: 'loading', value: false });
@@ -349,13 +365,22 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       let isFirst = true;
       let newMessage: Message = { content: '' } as Message;
       let eventData = '';
+      let value: Uint8Array | undefined;
+      let doneReading: boolean = false;
       while (!done) {
-        if (stopConversationRef.current === true) {
-          controller.abort();
-          done = true;
-          break;
+        try {
+          const result = await reader.read();
+          value = result.value;
+          doneReading = result.done;
+        } catch (error: any) {
+          if (error.name === 'AbortError') {
+            abortController.abort();
+            done = true;
+            break;
+          }
+
+          throw error;
         }
-        const { value, done: doneReading } = await reader.read();
         done = doneReading;
         let decodedValue = decoder.decode(value);
         eventData += decodedValue;
@@ -396,8 +421,9 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
 
       homeDispatch({ field: 'loading', value: false });
       handleMessageIsStreamingChange(-1);
+      abortController.abort();
     },
-    [apiKey, conversations, stopConversationRef, models],
+    [apiKey, conversations, models],
   );
 
   const onLikeHandler = useCallback(
@@ -529,7 +555,9 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         });
 
         if (
-          stopConversationRef.current !== true &&
+          (abortControllers.current ?? []).some(
+            (controller) => controller.signal.aborted,
+          ) !== true &&
           !isError &&
           !isResponseError
         ) {
@@ -868,7 +896,6 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
               ) : (
                 <ChatInput
                   ref={inputRef}
-                  stopConversationRef={stopConversationRef}
                   textareaRef={textareaRef}
                   isMessagesPresented={selectedConversations.some(
                     (val) => val.messages.length > 0,
@@ -898,6 +925,11 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                         conv.messages.length - lastUserMessageIndex,
                       );
                     });
+                  }}
+                  onStopConversation={() => {
+                    abortControllers.current?.forEach((controller) =>
+                      controller.abort(),
+                    );
                   }}
                 />
               )}

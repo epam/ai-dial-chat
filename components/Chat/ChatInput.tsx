@@ -32,8 +32,8 @@ interface Props {
   onSend: (message: Message) => void;
   onRegenerate: () => void;
   onScrollDownClick: () => void;
+  onStopConversation: () => void;
   maxLength: number;
-  stopConversationRef: MutableRefObject<boolean>;
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
   showScrollDownButton: boolean;
   isMessagesPresented: boolean;
@@ -45,8 +45,8 @@ export const ChatInput = forwardRef(
       onSend,
       onRegenerate,
       onScrollDownClick,
+      onStopConversation,
       maxLength,
-      stopConversationRef,
       textareaRef,
       showScrollDownButton,
       isMessagesPresented,
@@ -113,13 +113,6 @@ export const ChatInput = forwardRef(
       if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
         textareaRef.current.blur();
       }
-    };
-
-    const handleStopConversation = () => {
-      stopConversationRef.current = true;
-      setTimeout(() => {
-        stopConversationRef.current = false;
-      }, 1000);
     };
 
     const isMobile = () => {
@@ -274,7 +267,7 @@ export const ChatInput = forwardRef(
           {messageIsStreaming && (
             <button
               className="absolute top-0 left-0 right-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white py-2 px-4 text-black hover:opacity-50 dark:border-neutral-600 dark:bg-[#343541] dark:text-white md:mb-0 md:mt-2"
-              onClick={handleStopConversation}
+              onClick={onStopConversation}
             >
               <IconPlayerStop size={16} /> {t('Stop generating')}
             </button>
