@@ -277,6 +277,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         prompt: updatedConversation.prompt,
         temperature: updatedConversation.temperature,
         selectedAddons: selectedAddons,
+        assistantSubModelId: conversation.assistantModelId ?? '',
       };
       const endpoint = getEndpoint();
       let body;
@@ -575,11 +576,16 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
     const newAiEntity = models.find(
       ({ id }) => id === modelId,
     ) as OpenAIEntityModel;
-
+    const selectedAddons = Array.from(
+      new Set([
+        ...conversation.selectedAddons,
+        ...(newAiEntity.selectedAddons ?? []),
+      ]),
+    );
     const updatedConversation: Conversation = {
       ...conversation,
       model: newAiEntity,
-      selectedAddons: newAiEntity.selectedAddons ?? [],
+      selectedAddons: selectedAddons,
     };
     if (newAiEntity.type === 'assistant') {
       handleUpdateConversation(conversation, {
@@ -769,7 +775,8 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                         appName={appName}
                       />
                     ) : (
-                      enabledFeatures.has('top-settings') && (
+                      enabledFeatures.has('top-settings') &&
+                      conv.model.type === 'model' && (
                         <ChatSettings
                           messageIsStreaming={messageIsStreaming}
                           conversation={conv}

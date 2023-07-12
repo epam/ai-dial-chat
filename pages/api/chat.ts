@@ -44,8 +44,15 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const { modelId, messages, key, prompt, temperature, selectedAddons } =
-      req.body as ChatBody;
+    const {
+      modelId,
+      messages,
+      key,
+      prompt,
+      temperature,
+      selectedAddons,
+      assistantSubModelId,
+    } = req.body as ChatBody;
 
     if (!encoding) {
       await init((imports) => WebAssembly.instantiate(wasm, imports));
@@ -120,6 +127,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       messages: messagesToSend,
       tokenCount,
       selectedAddons: selectedAddons as OpenAIEntityAddonID[],
+      assistantSubModelId: assistantSubModelId as OpenAIEntityModelID,
       userJWT: token?.access_token as string | undefined,
     });
     res.setHeader('Transfer-Encoding', 'chunked');

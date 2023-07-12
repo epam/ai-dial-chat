@@ -49,6 +49,7 @@ export interface ChatBody {
   temperature: number;
   id: string;
   selectedAddons: string[];
+  assistantSubModelId: string;
 }
 
 export interface RateBody {

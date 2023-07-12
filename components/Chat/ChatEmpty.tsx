@@ -1,6 +1,7 @@
 import { Conversation } from '@/types/chat';
 import {
   OpenAIEntityAddon,
+  OpenAIEntityAddonID,
   OpenAIEntityModel,
   OpenAIEntityModelID,
 } from '@/types/openai';
@@ -40,6 +41,10 @@ export const ChatEmpty = ({
   onChangeAddon,
 }: Props) => {
   const aiEntityType = conversation.model.type;
+  const model = models.find(({ id }) => id === conversation.model.id);
+  const preselectedAddons =
+    (model?.selectedAddons as OpenAIEntityAddonID[]) ?? [];
+
   return (
     <>
       <div className="mx-auto flex flex-col space-y-2 md:space-y-5 px-3 pt-5 md:pt-12 sm:max-w-[600px]">
@@ -69,7 +74,7 @@ export const ChatEmpty = ({
             {aiEntityType !== 'application' && (
               <Addons
                 addons={addons}
-                preselectedAddons={[]}
+                preselectedAddons={preselectedAddons ?? []}
                 onChangeAddon={onChangeAddon}
               />
             )}

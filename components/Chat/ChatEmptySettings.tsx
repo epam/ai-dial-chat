@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/types/chat';
@@ -38,11 +36,11 @@ export const ChatEmptySettings = ({
   const { t } = useTranslation('chat');
   const aiEntityType = conversation.model.type;
   const modelsFiltered = models.filter((etity) => etity.type === 'model');
-  const defaultAssistantModel = OpenAIEntityModels[OpenAIEntityModelID.GPT_4];
-  const assitantModelName = conversation.assistantModelId
+  const defaultAssitantSubModel = OpenAIEntityModels[OpenAIEntityModelID.GPT_4];
+  const assitantSubModelName = conversation.assistantModelId
     ? OpenAIEntityModels[conversation.assistantModelId as OpenAIEntityModelID]
         .name
-    : defaultAssistantModel.name;
+    : defaultAssitantSubModel.name;
   return (
     <div className="flex h-full flex-col space-y-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-600">
       <ModelSelect
@@ -55,11 +53,12 @@ export const ChatEmptySettings = ({
       {aiEntityType === 'assistant' && (
         <ModelSelect
           conversationModelId={
-            conversation.assistantModelId ?? defaultAssistantModel.id
+            conversation.assistantModelId ?? defaultAssitantSubModel.id
           }
           conversationModelName={
-            assitantModelName ?? defaultAssistantModel.name
+            assitantSubModelName ?? defaultAssitantSubModel.name
           }
+          label="Model"
           defaultModelId={defaultModelId}
           models={modelsFiltered}
           onSelectModel={onSelectAssistantSubModel}

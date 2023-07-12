@@ -24,6 +24,7 @@ interface Props {
   conversationModelName: string;
   defaultModelId: OpenAIEntityModelID;
   onSelectModel: (modelId: string) => void;
+  label?: 'Talk to' | 'Model';
 }
 
 interface CompanionSelectOption {
@@ -98,6 +99,7 @@ export const ModelSelect = ({
   models,
   defaultModelId,
   onSelectModel,
+  label = 'Talk to',
 }: Props) => {
   const { t } = useTranslation('chat');
 
@@ -167,7 +169,7 @@ export const ModelSelect = ({
   return (
     <div className="flex flex-col">
       <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
-        {t('Model')}
+        {t(label)}
       </label>
       <Select<CompanionSelectOption>
         isSearchable

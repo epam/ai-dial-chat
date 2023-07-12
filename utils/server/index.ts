@@ -4,7 +4,6 @@ import {
   OpenAIEntityModel,
   OpenAIEntityModelID,
   OpenAIEntityModelType,
-  OpenAIEntityModels,
 } from '@/types/openai';
 
 import { OPENAI_API_HOST, OPENAI_API_VERSION } from '../app/const';
@@ -50,6 +49,7 @@ export const OpenAIStream = async ({
   messages,
   tokenCount,
   selectedAddons,
+  assistantSubModelId,
   userJWT,
 }: {
   model: OpenAIEntityModel;
@@ -59,6 +59,7 @@ export const OpenAIStream = async ({
   messages: Message[];
   tokenCount: number;
   selectedAddons: OpenAIEntityAddonID[];
+  assistantSubModelId: OpenAIEntityModelID;
   userJWT: string | null | undefined;
 }) => {
   const url = getUrl(model.id, model.type, selectedAddons?.length > 0);
@@ -80,11 +81,10 @@ export const OpenAIStream = async ({
     ],
     temperature,
     stream: true,
-    // TODO: replace it with real data from assistant selected submodel
     model:
       model.type !== 'assistant'
         ? model.id
-        : OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ].id,
+        : assistantSubModelId ?? OpenAIEntityModelID.GPT_4,
     ...(model.tokenLimit && { max_tokens: model.tokenLimit - tokenCount }),
     ...(model.selectedAddons?.length && {
       addons: selectedAddons?.map((addon) => ({ name: addon })),
