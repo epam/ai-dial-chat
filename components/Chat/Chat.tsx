@@ -117,7 +117,7 @@ export const Chat = memo(({ appName }: Props) => {
   const inputRef = useRef<HTMLDivElement>(null);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const messageIsStreamingAmount = useRef<number>(0);
-  const abortControllers = useRef<AbortController[]>();
+  const abortController = useRef<AbortController>();
   const [isNotAllowedModel, setIsNotAllowedModel] = useState(false);
 
   useEffect(() => {
@@ -209,10 +209,6 @@ export const Chat = memo(({ appName }: Props) => {
       if (!conversation) {
         return;
       }
-      abortControllers.current =
-        abortControllers.current?.filter(
-          (controller) => !controller.signal.aborted,
-        ) ?? [];
 
       let updatedConversation: Conversation;
       if (deleteCount) {
@@ -285,8 +281,9 @@ export const Chat = memo(({ appName }: Props) => {
       const endpoint = getEndpoint();
       let body;
       body = JSON.stringify(chatBody);
-      const abortController = new AbortController();
-      abortControllers.current?.push(abortController);
+      if (!abortController.current || abortController.current.signal.aborted) {
+        abortController.current = new AbortController();
+      }
       let response;
       try {
         response = await fetch(endpoint, {
@@ -294,7 +291,7 @@ export const Chat = memo(({ appName }: Props) => {
           headers: {
             'Content-Type': 'application/json',
           },
-          signal: abortController.signal,
+          signal: abortController.current.signal,
           body,
         });
       } catch (error: any) {
@@ -374,7 +371,7 @@ export const Chat = memo(({ appName }: Props) => {
           doneReading = result.done;
         } catch (error: any) {
           if (error.name === 'AbortError') {
-            abortController.abort();
+            abortController.current.abort();
             done = true;
             break;
           }
@@ -421,7 +418,6 @@ export const Chat = memo(({ appName }: Props) => {
 
       homeDispatch({ field: 'loading', value: false });
       handleMessageIsStreamingChange(-1);
-      abortController.abort();
     },
     [apiKey, conversations, models],
   );
@@ -555,9 +551,7 @@ export const Chat = memo(({ appName }: Props) => {
         });
 
         if (
-          (abortControllers.current ?? []).some(
-            (controller) => controller.signal.aborted,
-          ) !== true &&
+          abortController.current?.signal?.aborted !== true &&
           !isError &&
           !isResponseError
         ) {
@@ -927,9 +921,7 @@ export const Chat = memo(({ appName }: Props) => {
                     });
                   }}
                   onStopConversation={() => {
-                    abortControllers.current?.forEach((controller) =>
-                      controller.abort(),
-                    );
+                    abortController.current?.abort();
                   }}
                 />
               )}
