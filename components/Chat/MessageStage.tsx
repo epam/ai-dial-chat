@@ -22,7 +22,7 @@ export const MessageStage = ({ stage }: Props) => {
 
   useEffect(() => {
     setHasContent(!!(stage?.content || stage?.attachments?.length));
-  }, [stage]);
+  }, [stage.content, stage?.attachments?.length]);
 
   const stageTitle = (
     <>
