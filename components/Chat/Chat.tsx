@@ -16,7 +16,11 @@ import { showAPIToastError } from '@/utils/app/errors';
 import { mergeMessages, parseStreamMessages } from '@/utils/app/merge-streams';
 import { throttle } from '@/utils/data/throttle';
 
-import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
+import {
+  OpenAIEntityModel,
+  OpenAIEntityModelID,
+  OpenAIEntityModels,
+} from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -277,6 +281,7 @@ export const Chat = memo(({ appName }: Props) => {
         prompt: updatedConversation.prompt,
         temperature: updatedConversation.temperature,
         selectedAddons: selectedAddons,
+        assistantSubModelId: conversation.assistantModelId ?? '',
       };
       const endpoint = getEndpoint();
       let body;
@@ -601,18 +606,70 @@ export const Chat = memo(({ appName }: Props) => {
   };
 
   const handleSelectModel = (conversation: Conversation, modelId: string) => {
-    const model = models.find(
-      (model) => model.id === modelId,
+    const newAiEntity = models.find(
+      ({ id }) => id === modelId,
     ) as OpenAIEntityModel;
+    const selectedAddons = Array.from(
+      new Set([
+        ...conversation.selectedAddons,
+        ...(newAiEntity.selectedAddons ?? []),
+      ]),
+    );
     const updatedConversation: Conversation = {
       ...conversation,
-      model: model,
-      selectedAddons: model.selectedAddons ?? [],
+      model: newAiEntity,
+      selectedAddons: selectedAddons,
     };
-    handleUpdateConversation(updatedConversation, {
-      key: 'model',
-      value: model,
+    if (newAiEntity.type === 'assistant') {
+      handleUpdateConversation(conversation, {
+        key: 'model',
+        value: newAiEntity,
+      });
+
+      handleUpdateConversation(updatedConversation, {
+        key: 'assistantModelId',
+        value: OpenAIEntityModelID.GPT_4,
+      });
+    } else {
+      handleUpdateConversation(conversation, {
+        key: 'model',
+        value: newAiEntity,
+      });
+      handleUpdateConversation(updatedConversation, {
+        key: 'assistantModelId',
+        value: '',
+      });
+    }
+  };
+
+  const handleSelectAssistantSubModel = (
+    conversation: Conversation,
+    modelId: string,
+  ) => {
+    handleUpdateConversation(conversation, {
+      key: 'assistantModelId',
+      value: modelId,
     });
+  };
+
+  const handleOnChangeAddon = (conversation: Conversation, addonId: string) => {
+    const isAddonInConversation = conversation.selectedAddons.some(
+      (id) => id === addonId,
+    );
+    if (isAddonInConversation) {
+      const filteredAddons = conversation.selectedAddons.filter(
+        (id) => id !== addonId,
+      );
+      handleUpdateConversation(conversation, {
+        key: 'selectedAddons',
+        value: filteredAddons,
+      });
+    } else {
+      handleUpdateConversation(conversation, {
+        key: 'selectedAddons',
+        value: conversation.selectedAddons.concat(addonId),
+      });
+    }
   };
 
   const handleChangePrompt = (conversation: Conversation, prompt: string) =>
@@ -736,6 +793,12 @@ export const Chat = memo(({ appName }: Props) => {
                         onSelectModel={(modelId: string) =>
                           handleSelectModel(conv, modelId)
                         }
+                        onSelectAssistantSubModel={(modelId: string) =>
+                          handleSelectAssistantSubModel(conv, modelId)
+                        }
+                        onChangeAddon={(addonId: string) =>
+                          handleOnChangeAddon(conv, addonId)
+                        }
                         onChangePrompt={(prompt) =>
                           handleChangePrompt(conv, prompt)
                         }
@@ -745,7 +808,8 @@ export const Chat = memo(({ appName }: Props) => {
                         appName={appName}
                       />
                     ) : (
-                      enabledFeatures.has('top-settings') && (
+                      enabledFeatures.has('top-settings') &&
+                      conv.model.type === 'model' && (
                         <ChatSettings
                           messageIsStreaming={messageIsStreaming}
                           conversation={conv}
