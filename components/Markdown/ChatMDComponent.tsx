@@ -98,8 +98,7 @@ const ChatMDComponent = ({
         className={`prose dark:prose-invert flex-1 ${
           isError ? 'text-red-400' : ''
         }`}
-        remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeMathjax]}
+        remarkPlugins={[remarkGfm]}
         components={getMDComponents(isShowResponseLoader)}
       >
         {`${content}${
