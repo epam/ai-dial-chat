@@ -1,5 +1,5 @@
 import { IconClearAll, IconSettings, IconX } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -47,6 +47,15 @@ export const ChatSettings = ({
 }: Props) => {
   const { t } = useTranslation('chat');
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [isModelSelectDisabled, setIsModelSelectDisabled] = useState(() =>
+    conversation.messages.some((message) => !!message.custom_content?.state),
+  );
+
+  useEffect(() => {
+    setIsModelSelectDisabled(
+      conversation.messages.some((message) => !!message.custom_content?.state),
+    );
+  }, [conversation.messages]);
 
   return (
     <>
@@ -65,6 +74,7 @@ export const ChatSettings = ({
                 &nbsp;|{' '}
               </>
             )}
+            
             <span>
               {t('Model')}: {conversation.model.name} |{' '}
               {!isIframe && (
@@ -107,12 +117,22 @@ export const ChatSettings = ({
         <div className="flex flex-col space-y-10 md:mx-auto md:max-w-xl md:gap-6 md:py-3 md:pt-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
           <div className="flex h-full flex-col space-y-4 border-b border-neutral-200 p-4 dark:border-neutral-600 md:rounded-lg md:border">
             <ModelSelect
+              isDisabled={isModelSelectDisabled}
               conversationModelId={conversation.model.id}
               conversationModelName={conversation.model.name}
               defaultModelId={defaultModelId}
               models={models}
               onSelectModel={onSelectModel}
             />
+
+            {isModelSelectDisabled && (
+              <span className="text-red-300">
+                {t(
+                  'Switching is not allowed. You are currently talk to {{model}} which maintains internal state, which might be corrupted by a different system.',
+                  { model: conversation.model.name },
+                )}
+              </span>
+            )}
           </div>
         </div>
       )}

@@ -25,6 +25,7 @@ interface Props {
   defaultModelId: OpenAIEntityModelID;
   onSelectModel: (modelId: string) => void;
   label?: 'Talk to' | 'Model';
+  isDisabled?: boolean;
 }
 
 interface CompanionSelectOption {
@@ -77,11 +78,11 @@ const CustomSingleValue = (props: SingleValueProps<CompanionSelectOption>) => {
 
 const selectClassNames: ClassNamesConfig<CompanionSelectOption> = {
   control: (state) =>
-    `dark:bg-[#343541] dark:text-white hover:dark:border-white hover:dark:shadow-white  !rounded-lg ${
+    `dark:text-white hover:dark:border-white hover:dark:shadow-white  !rounded-lg ${
       state.isFocused
         ? 'dark:border-white dark:shadow-white dark:shadow-sm'
         : ''
-    }`,
+    } ${state.isDisabled ? '!bg-gray-200/40' : 'dark:bg-[#343541]'}`,
   placeholder: (state) => 'text-neutral-900 dark:text-white',
   valueContainer: (state) => '!text-neutral-900 hover:cursor-text',
   menu: (state) =>
@@ -98,8 +99,9 @@ export const ModelSelect = ({
   conversationModelName,
   models,
   defaultModelId,
-  onSelectModel,
   label = 'Talk to',
+  isDisabled,
+  onSelectModel,
 }: Props) => {
   const { t } = useTranslation('chat');
 
@@ -188,6 +190,7 @@ export const ModelSelect = ({
         filterOption={createFilter({
           stringify: (option) => `${option.label}`,
         })}
+        isDisabled={isDisabled}
       />
       {conversationModelId === OpenAIEntityModelID.GPT_4_32K && (
         <div className="w-full mt-3 text-left text-orange-600 dark:text-orange-600 flex gap-2 items-center">
