@@ -78,6 +78,15 @@ export const MessageAttachment = ({ attachment }: Props) => {
               className="aspect-auto w-full m-0"
               alt="Attachment image"
             />
+          ) : attachment.type === 'text/html' ? (
+            <div className="max-w-full flex overflow-auto">
+              <span
+                className="shrink-0"
+                dangerouslySetInnerHTML={{
+                  __html: sanitize(attachment.data || ''),
+                }}
+              ></span>
+            </div>
           ) : attachment.type === 'text/plain' ? (
             <div className="overflow-hidden max-w-full">
               <span className="whitespace-pre-wrap">{attachment.data}</span>
