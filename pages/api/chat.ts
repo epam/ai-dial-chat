@@ -105,6 +105,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       const message = {
         role: messages[i].role,
         content: messages[i].content,
+        ...(messages[i].custom_content?.state && {
+          custom_content: messages[i].custom_content?.state,
+        }),
       };
       const tokens = encoding.encode(message.content);
 
