@@ -39,7 +39,6 @@ import { NotAllowedModel } from './NotAllowedModel';
 import { errorsMessages } from '@/constants/errors';
 
 interface Props {
-  stopConversationRef: MutableRefObject<boolean>;
   appName: string;
 }
 
@@ -76,7 +75,7 @@ const findSelectedConversations = (
   return conversations.filter((i) => i != null && ids.has(i.id));
 };
 
-export const Chat = memo(({ stopConversationRef, appName }: Props) => {
+export const Chat = memo(({ appName }: Props) => {
   const { t } = useTranslation('chat');
 
   const {
@@ -122,6 +121,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
   const inputRef = useRef<HTMLDivElement>(null);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const messageIsStreamingAmount = useRef<number>(0);
+  const abortController = useRef<AbortController>();
   const [isNotAllowedModel, setIsNotAllowedModel] = useState(false);
 
   useEffect(() => {
@@ -268,10 +268,14 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       );
       const chatBody: ChatBody = {
         modelId: conversation.model.id,
-        messages: updatedConversation.messages.map((message) => {
-          const gptMessage = { ...message, like: void 0 };
-          return gptMessage;
-        }),
+        messages: updatedConversation.messages.map((message) => ({
+          content: message.content,
+          role: message.role,
+          like: void 0,
+          ...(message.custom_content?.state && {
+            custom_content: { state: message.custom_content?.state },
+          }),
+        })),
         id: conversation.id.toLowerCase(),
         key: apiKey,
         prompt: updatedConversation.prompt,
@@ -282,15 +286,28 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       const endpoint = getEndpoint();
       let body;
       body = JSON.stringify(chatBody);
-      const controller = new AbortController();
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal,
-        body,
-      });
+      if (!abortController.current || abortController.current.signal.aborted) {
+        abortController.current = new AbortController();
+      }
+      let response;
+      try {
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: abortController.current.signal,
+          body,
+        });
+      } catch (error: any) {
+        if (error.name === 'AbortError') {
+          homeDispatch({ field: 'loading', value: false });
+          handleMessageIsStreamingChange(-1);
+          return { error: true };
+        }
+
+        throw error;
+      }
 
       if (!response.ok) {
         homeDispatch({ field: 'loading', value: false });
@@ -349,15 +366,31 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       let done = false;
       let isFirst = true;
       let newMessage: Message = { content: '' } as Message;
+      let eventData = '';
+      let value: Uint8Array | undefined;
+      let doneReading: boolean = false;
       while (!done) {
-        if (stopConversationRef.current === true) {
-          controller.abort();
-          done = true;
-          break;
+        try {
+          const result = await reader.read();
+          value = result.value;
+          doneReading = result.done;
+        } catch (error: any) {
+          if (error.name === 'AbortError') {
+            abortController.current.abort();
+            done = true;
+            break;
+          }
+
+          throw error;
         }
-        const { value, done: doneReading } = await reader.read();
         done = doneReading;
-        const chunkValue = parseStreamMessages(decoder.decode(value));
+        let decodedValue = decoder.decode(value);
+        eventData += decodedValue;
+        if (decodedValue[decodedValue.length - 1] !== '\0') {
+          continue;
+        }
+        const chunkValue = parseStreamMessages(eventData);
+        eventData = '';
         mergeMessages(newMessage, chunkValue);
         let updatedMessages: Message[];
 
@@ -391,7 +424,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
       homeDispatch({ field: 'loading', value: false });
       handleMessageIsStreamingChange(-1);
     },
-    [apiKey, conversations, stopConversationRef, models],
+    [apiKey, conversations, models],
   );
 
   const onLikeHandler = useCallback(
@@ -523,7 +556,7 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
         });
 
         if (
-          stopConversationRef.current !== true &&
+          abortController.current?.signal?.aborted !== true &&
           !isError &&
           !isResponseError
         ) {
@@ -921,7 +954,6 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
               ) : (
                 <ChatInput
                   ref={inputRef}
-                  stopConversationRef={stopConversationRef}
                   textareaRef={textareaRef}
                   isMessagesPresented={selectedConversations.some(
                     (val) => val.messages.length > 0,
@@ -951,6 +983,9 @@ export const Chat = memo(({ stopConversationRef, appName }: Props) => {
                         conv.messages.length - lastUserMessageIndex,
                       );
                     });
+                  }}
+                  onStopConversation={() => {
+                    abortController.current?.abort();
                   }}
                 />
               )}

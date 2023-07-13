@@ -1,11 +1,7 @@
 import { Message, Stage } from '@/types/chat';
 
 export const parseStreamMessages = (message: string): Partial<Message>[] => {
-  let formattedMessage = message;
-  if (message.charAt(message.length - 1) === ',') {
-    formattedMessage = formattedMessage.slice(0, formattedMessage.length - 1);
-  }
-  const parsedMessage = formattedMessage.split('\0').filter(msg => !!msg).map(chunk => JSON.parse(chunk));
+  const parsedMessage = message.split('\0').filter(msg => !!msg).map(chunk => JSON.parse(chunk));
 
   return parsedMessage;
 };

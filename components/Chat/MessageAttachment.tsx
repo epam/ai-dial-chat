@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import {
   IconChevronDown,
   IconExternalLink,
@@ -5,8 +6,6 @@ import {
 } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-
-import Image from 'next/image';
 
 import { Attachment, AttachmentMIMEType } from '@/types/chat';
 
@@ -24,7 +23,7 @@ export const MessageAttachment = ({ attachment }: Props) => {
   return (
     <div
       className={`px-1 py-2 border rounded-lg dark:bg-gray-2 dark:border-gray-900/50 ${
-        isOpened ? 'w-full' : 'w-[30%]'
+        isOpened ? 'w-full' : 'w-full sm:w-[48%] md:w-[30%]'
       }`}
     >
       <div className={`px-2 flex items-center gap-3`}>
@@ -55,21 +54,30 @@ export const MessageAttachment = ({ attachment }: Props) => {
             }`}
             title={attachment.title}
           >
-            {attachment.title}
+            {attachment.title || t('Attachment')}
           </span>
           <IconChevronDown
-            className={`transition ${isOpened ? 'rotate-180' : ''}`}
+            className={`flex-shrink-0 transition ${
+              isOpened ? 'rotate-180' : ''
+            }`}
           />
         </button>
       </div>
       {(attachment.data || attachment.url) && (
         <div
-          className={`relative overflow-hidden text-sm ${
-            isOpened ? 'h-full w-full mt-2 pt-4 transition-all' : 'h-0'
+          className={`relative overflow-hidden text-sm w-full aspect-square ${
+            isOpened ? 'h-auto mt-2 pt-4 transition-all' : 'h-0'
           }`}
         >
-          {imageTypes.includes(attachment.type) && attachment.url ? (
-            <Image src={attachment.url} fill={true} alt="Attachment image" />
+          {imageTypes.includes(attachment.type) ? (
+            <img
+              src={
+                attachment.url ||
+                `data:${attachment.type};base64,${attachment.data}`
+              }
+              className="aspect-auto w-full m-0"
+              alt="Attachment image"
+            />
           ) : attachment.type === 'text/plain' ? (
             <div className="overflow-hidden max-w-full">
               <span className="whitespace-pre-wrap">{attachment.data}</span>

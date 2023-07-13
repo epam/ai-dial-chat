@@ -22,7 +22,7 @@ export type StageStatus = 'completed' | 'failed' | null;
 export interface Stage {
   index: number;
   name: string;
-  content: string;
+  content?: string;
   attachments?: Attachment[];
   status: StageStatus;
 }
@@ -33,6 +33,7 @@ export interface Message {
   custom_content?: {
     attachments?: Attachment[];
     stages?: Stage[];
+    state?: object;
   };
   like?: number;
   isError?: boolean;
