@@ -11,6 +11,8 @@ import { Attachment, AttachmentMIMEType } from '@/types/chat';
 
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 
+import { sanitize } from 'isomorphic-dompurify';
+
 interface Props {
   attachment: Attachment;
 }
