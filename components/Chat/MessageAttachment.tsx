@@ -65,7 +65,7 @@ export const MessageAttachment = ({ attachment }: Props) => {
       </div>
       {(attachment.data || attachment.url) && (
         <div
-          className={`relative overflow-hidden text-sm w-full aspect-square ${
+          className={`relative overflow-hidden text-sm w-full ${
             isOpened ? 'h-auto mt-2 pt-4 transition-all' : 'h-0'
           }`}
         >
