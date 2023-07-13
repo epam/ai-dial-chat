@@ -69,7 +69,7 @@ export const MessageStage = ({ stage }: Props) => {
           />
         </button>
       ) : (
-        <div className="p-2">{stageTitle}</div>
+        <div className="p-2 flex">{stageTitle}</div>
       )}
 
       <div className={`overflow-hidden ${isOpened ? 'p-2' : 'h-0'}`}>

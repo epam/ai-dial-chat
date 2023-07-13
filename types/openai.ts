@@ -53,6 +53,7 @@ export enum OpenAIEntityModelID {
 export enum OpenAIEntityAddonID {
   ADDON_EPAM10K_SEMANTIC_SEARCH = 'addon-epam10k-semantic-search',
   ADDON_EPAM10K_GOLDEN_QNA = 'addon-epam10k-golden-qna',
+  ADDON_WOLFRAM = 'addon-wolfram',
 }
 
 export const OpenAIEntityAddons: Record<
@@ -67,6 +68,11 @@ export const OpenAIEntityAddons: Record<
   [OpenAIEntityAddonID.ADDON_EPAM10K_GOLDEN_QNA]: {
     id: OpenAIEntityAddonID.ADDON_EPAM10K_GOLDEN_QNA,
     name: 'EPAM10K Golden QNA',
+    type: 'addon',
+  },
+  [OpenAIEntityAddonID.ADDON_WOLFRAM]: {
+    id: OpenAIEntityAddonID.ADDON_WOLFRAM,
+    name: 'Wolfram',
     type: 'addon',
   },
 };

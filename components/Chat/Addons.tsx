@@ -40,8 +40,8 @@ export const AddonButton = ({
   }, [isAddonSelected]);
   return (
     <button
-      className={`border text-neutral-600 dark:text-white  rounded p-1 max-w-[20%] ${
-        isSelected ? 'border-[#0075ff] border-2' : 'dark:border-#cccccc'
+      className={` border text-neutral-600 dark:text-white rounded p-1 min-h-[80px] ${
+        isSelected ? 'border-[#0075ff] border-2' : ''
       } ${
         isPreselected
           ? 'bg-[#7f7f7f] text-white cursor-not-allowed border-[#0075ff] border-2'
@@ -61,9 +61,7 @@ export const Addons = ({
 }: AddonsProps) => {
   return (
     <div>
-      <div
-        className={`dark:bg- flex gap-8 flex-wrap overflow-auto max-h-[10vh]`}
-      >
+      <div className={`grid grid-cols-4 overflow-auto gap-8 max-h-[80px]`}>
         {addons.map((addon) => {
           const isPreselected = preselectedAddons.some((id) => id === addon.id);
           const isSelected = selectedAddons.some((id) => id === addon.id);
