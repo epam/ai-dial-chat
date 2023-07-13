@@ -25,7 +25,7 @@ export const MessageAttachment = ({ attachment }: Props) => {
   return (
     <div
       className={`px-1 py-2 border rounded-lg dark:bg-gray-2 dark:border-gray-900/50 ${
-        isOpened ? 'w-full' : 'w-full sm:w-[48%] md:w-[30%]'
+        isOpened ? 'col-start-1 col-span-1 sm:col-span-2 md:col-span-3' : ''
       }`}
     >
       <div className={`px-2 flex items-center gap-3`}>
@@ -46,13 +46,13 @@ export const MessageAttachment = ({ attachment }: Props) => {
           onClick={() => {
             setIsOpened((isOpened) => !isOpened);
           }}
-          className="flex grow items-center justify-between gap-1"
+          className="flex grow items-center justify-between overflow-hidden"
         >
           <span
-            className={`font-semibold text-left ${
+            className={`font-semibold text-sm text-left flex-shrink ${
               isOpened
                 ? 'max-w-full'
-                : 'text-ellipsis overflow-hidden whitespace-nowrap max-w-[90px]'
+                : 'max-w-[calc(100%-30px)] text-ellipsis overflow-hidden whitespace-nowrap'
             }`}
             title={attachment.title}
           >
