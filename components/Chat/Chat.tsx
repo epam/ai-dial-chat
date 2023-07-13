@@ -808,8 +808,7 @@ export const Chat = memo(({ appName }: Props) => {
                         appName={appName}
                       />
                     ) : (
-                      enabledFeatures.has('top-settings') &&
-                      conv.model.type === 'model' && (
+                      enabledFeatures.has('top-settings') && (
                         <ChatSettings
                           messageIsStreaming={messageIsStreaming}
                           conversation={conv}
@@ -823,9 +822,10 @@ export const Chat = memo(({ appName }: Props) => {
                           isShowClearConversation={enabledFeatures.has(
                             'top-clear-conversation',
                           )}
-                          isShowModelSelect={enabledFeatures.has(
-                            'top-chat-model-settings',
-                          )}
+                          isShowModelSelect={
+                            enabledFeatures.has('top-chat-model-settings') &&
+                            conv.model.type === 'model'
+                          }
                           isIframe={isIframe}
                           selectedConversationIds={selectedConversationIds}
                           onClearConversation={() =>
