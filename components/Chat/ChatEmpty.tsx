@@ -74,6 +74,7 @@ export const ChatEmpty = ({
             {aiEntityType !== 'application' && (
               <Addons
                 addons={addons}
+                selectedAddons={conversation.selectedAddons}
                 preselectedAddons={preselectedAddons ?? []}
                 onChangeAddon={onChangeAddon}
               />
