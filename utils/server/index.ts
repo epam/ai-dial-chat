@@ -86,7 +86,7 @@ export const OpenAIStream = async ({
         ? model.id
         : assistantSubModelId ?? OpenAIEntityModelID.GPT_4,
     ...(model.tokenLimit && { max_tokens: model.tokenLimit - tokenCount }),
-    ...(model.selectedAddons?.length && {
+    ...(selectedAddons?.length && {
       addons: selectedAddons?.map((addon) => ({ name: addon })),
     }),
   });
