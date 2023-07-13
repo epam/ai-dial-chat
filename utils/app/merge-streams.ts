@@ -80,11 +80,12 @@ export const mergeMessages = (
           newData.custom_content.stages,
         );
       }
+
+      if (newData.custom_content.state) {
+        source.custom_content.state = newData.custom_content.state;
+      }
     }
 
-    if (newData.state) {
-      source.state = newData.state;
-    }
   });
 
   return source;
