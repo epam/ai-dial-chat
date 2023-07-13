@@ -26,7 +26,7 @@ import HomeContext from '@/pages/api/home/home.context';
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import ChatMDComponent from '../Markdown/ChatMDComponent';
-import { MessageAttachment } from './MessageAttachment';
+import { MessageAttachments } from './MessageAttachments';
 import { MessageStages } from './MessageStages';
 import { modelCursorSign, modelCursorSignWithBackquote } from './chatConstants';
 
@@ -249,7 +249,7 @@ export const ChatMessage: FC<Props> = memo(
                 )}
               </div>
             ) : (
-              <div className="h-full flex flex-row">
+              <div className="h-full flex flex-row gap-1">
                 <div className="flex-grow flex flex-col gap-4">
                   {message.custom_content?.stages?.length && (
                     <MessageStages stages={message.custom_content?.stages} />
@@ -259,14 +259,11 @@ export const ChatMessage: FC<Props> = memo(
                     content={message.content}
                     isError={message.isError}
                   />
-                  <div className="flex flex-wrap max-w-full gap-1">
-                    {message.custom_content?.attachments?.map((attachment) => (
-                      <MessageAttachment
-                        key={attachment.index}
-                        attachment={attachment}
-                      />
-                    ))}
-                  </div>
+                  {message.custom_content?.attachments?.length && (
+                    <MessageAttachments
+                      attachments={message.custom_content.attachments}
+                    />
+                  )}
                 </div>
 
                 <div className="flex flex-col justify-between w-[60px] flex-shrink-0">

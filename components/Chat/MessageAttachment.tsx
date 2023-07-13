@@ -11,6 +11,8 @@ import { Attachment, AttachmentMIMEType } from '@/types/chat';
 
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 
+import { sanitize } from 'isomorphic-dompurify';
+
 interface Props {
   attachment: Attachment;
 }
@@ -23,7 +25,7 @@ export const MessageAttachment = ({ attachment }: Props) => {
   return (
     <div
       className={`px-1 py-2 border rounded-lg dark:bg-gray-2 dark:border-gray-900/50 ${
-        isOpened ? 'w-full' : 'w-full sm:w-[48%] md:w-[30%]'
+        isOpened ? 'col-start-1 col-span-1 sm:col-span-2 md:col-span-3' : ''
       }`}
     >
       <div className={`px-2 flex items-center gap-3`}>
@@ -44,13 +46,13 @@ export const MessageAttachment = ({ attachment }: Props) => {
           onClick={() => {
             setIsOpened((isOpened) => !isOpened);
           }}
-          className="flex grow items-center justify-between gap-1"
+          className="flex grow items-center justify-between overflow-hidden"
         >
           <span
-            className={`font-semibold text-left ${
+            className={`font-semibold text-sm text-left flex-shrink ${
               isOpened
                 ? 'max-w-full'
-                : 'text-ellipsis overflow-hidden whitespace-nowrap max-w-[90px]'
+                : 'max-w-[calc(100%-30px)] text-ellipsis overflow-hidden whitespace-nowrap'
             }`}
             title={attachment.title}
           >
@@ -65,7 +67,7 @@ export const MessageAttachment = ({ attachment }: Props) => {
       </div>
       {(attachment.data || attachment.url) && (
         <div
-          className={`relative overflow-hidden text-sm w-full aspect-square ${
+          className={`relative overflow-hidden text-sm w-full ${
             isOpened ? 'h-auto mt-2 pt-4 transition-all' : 'h-0'
           }`}
         >
@@ -78,6 +80,15 @@ export const MessageAttachment = ({ attachment }: Props) => {
               className="aspect-auto w-full m-0"
               alt="Attachment image"
             />
+          ) : attachment.type === 'text/html' ? (
+            <div className="max-w-full flex overflow-auto">
+              <span
+                className="shrink-0"
+                dangerouslySetInnerHTML={{
+                  __html: sanitize(attachment.data || ''),
+                }}
+              ></span>
+            </div>
           ) : attachment.type === 'text/plain' ? (
             <div className="overflow-hidden max-w-full">
               <span className="whitespace-pre-wrap">{attachment.data}</span>
