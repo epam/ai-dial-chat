@@ -402,9 +402,13 @@ export const Chat = memo(({ appName }: Props) => {
       homeDispatch({ field: 'loading', value: false });
       const reader = data.getReader();
       const decoder = new TextDecoder();
+      const messageModel: Message['model'] = {
+        id: updatedConversation.model.id,
+        name: updatedConversation.model.name,
+      };
       let done = false;
       let isFirst = true;
-      let newMessage: Message = { content: '' } as Message;
+      let newMessage: Message = { content: '', model: messageModel } as Message;
       let eventData = '';
       let value: Uint8Array | undefined;
       let doneReading: boolean = false;
