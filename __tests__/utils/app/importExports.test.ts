@@ -1,4 +1,8 @@
-import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
+import {
+  DEFAULT_ASSISTANT_SUBMODEL,
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+} from '@/utils/app/const';
 import { defaultReplay } from '@/utils/app/defaultStateConstants';
 import {
   cleanData,
@@ -113,6 +117,7 @@ describe('cleanData Functions', () => {
             folderId: null,
             replay: defaultReplay,
             selectedAddons: [],
+            assistantModelId: DEFAULT_ASSISTANT_SUBMODEL.id,
           },
         ],
         folders: [],
@@ -172,6 +177,7 @@ describe('cleanData Functions', () => {
             folderId: null,
             replay: defaultReplay,
             selectedAddons: [],
+            assistantModelId: DEFAULT_ASSISTANT_SUBMODEL.id,
           },
         ],
         folders: [
@@ -254,6 +260,7 @@ describe('cleanData Functions', () => {
             folderId: null,
             replay: defaultReplay,
             selectedAddons: [],
+            assistantModelId: DEFAULT_ASSISTANT_SUBMODEL.id,
           },
         ],
         folders: [
