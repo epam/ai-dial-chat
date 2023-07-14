@@ -165,24 +165,29 @@ const Home = ({
 
   // FETCH MODELS ----------------------------------------------
 
-  const handleSelectConversation = (
-    conversation: Conversation,
-    isMultiple?: boolean,
-  ) => {
-    const newSelectedIds = isMultiple
-      ? Array.from(new Set([...selectedConversationIds, conversation.id]))
-      : [conversation.id];
+  const handleSelectConversation = (conversation: Conversation) => {
+    const newSelectedIds = [conversation.id];
     dispatch({
       field: 'selectedConversationIds',
       value: newSelectedIds,
     });
 
-    if (!isMultiple) {
-      dispatch({
-        field: 'isCompareMode',
-        value: false,
-      });
-    }
+    dispatch({
+      field: 'isCompareMode',
+      value: false,
+    });
+
+    saveSelectedConversationIds(newSelectedIds);
+  };
+
+  const handleSelectConversations = (conversations: Conversation[]) => {
+    const newSelectedIds = Array.from(
+      new Set(conversations.map(({ id }) => id)),
+    );
+    dispatch({
+      field: 'selectedConversationIds',
+      value: newSelectedIds,
+    });
 
     saveSelectedConversationIds(newSelectedIds);
   };
@@ -263,21 +268,21 @@ const Home = ({
     saveConversations(updatedConversations);
   };
 
-  const addNewConversationToStore = (newConversation: Conversation) => {
-    const updatedConversations = [...conversations, newConversation];
-
+  const addNewConversationToStore = (newConversations: Conversation[]) => {
+    const updatedConversations = [...conversations, ...newConversations];
+    const ids = newConversations.map(({ id }) => id);
     updateAllConversationsStore(updatedConversations);
 
     dispatch({
       field: 'selectedConversationIds',
-      value: [newConversation.id],
+      value: ids,
     });
     dispatch({
       field: 'isCompareMode',
       value: false,
     });
 
-    saveSelectedConversationIds([newConversation.id]);
+    saveSelectedConversationIds(ids);
   };
 
   const defaultReplay: Replay = {
@@ -285,7 +290,9 @@ const Home = ({
     replayUserMessagesStack: [],
     activeReplayIndex: 0,
   };
-  const handleNewConversation = (name = DEFAULT_CONVERSATION_NAME) => {
+  const handleNewConversation = (
+    name = DEFAULT_CONVERSATION_NAME,
+  ): Conversation | undefined => {
     if (!clientDefaultModelId) {
       return;
     }
@@ -312,8 +319,48 @@ const Home = ({
         OpenAIEntityModels[clientDefaultModelId].selectedAddons ?? [],
     };
 
-    addNewConversationToStore(newConversation);
+    addNewConversationToStore([newConversation]);
     dispatch({ field: 'loading', value: false });
+
+    return newConversation;
+  };
+
+  const handleNewConversations = (
+    name = DEFAULT_CONVERSATION_NAME,
+    count: number = 2,
+  ): Conversation[] | undefined => {
+    if (!clientDefaultModelId) {
+      return;
+    }
+    const lastConversation = conversations[conversations.length - 1];
+    let newConversations = [];
+    for (let i = 0; i < count; i++) {
+      const newConversation: Conversation = {
+        id: uuidv4(),
+        name: t(name),
+        messages: [],
+        model: {
+          id: OpenAIEntityModels[clientDefaultModelId].id,
+          name: OpenAIEntityModels[clientDefaultModelId].name,
+          maxLength: OpenAIEntityModels[clientDefaultModelId].maxLength,
+          tokenLimit: OpenAIEntityModels[clientDefaultModelId].tokenLimit,
+          requestLimit: OpenAIEntityModels[clientDefaultModelId].requestLimit,
+          type: OpenAIEntityModels[clientDefaultModelId].type,
+        },
+        prompt: DEFAULT_SYSTEM_PROMPT,
+        temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
+        folderId: null,
+        replay: defaultReplay,
+        selectedAddons:
+          OpenAIEntityModels[clientDefaultModelId].selectedAddons ?? [],
+      };
+      newConversations.push(newConversation);
+    }
+
+    addNewConversationToStore(newConversations);
+    dispatch({ field: 'loading', value: false });
+
+    return newConversations;
   };
 
   const handleUpdateConversation = (
@@ -355,7 +402,7 @@ const Home = ({
       },
     };
 
-    addNewConversationToStore(newConversation);
+    addNewConversationToStore([newConversation]);
   };
 
   // EFFECTS  --------------------------------------------
@@ -582,10 +629,12 @@ const Home = ({
       value={{
         ...contextValue,
         handleNewConversation,
+        handleNewConversations,
         handleCreateFolder,
         handleDeleteFolder,
         handleUpdateFolder,
         handleSelectConversation,
+        handleSelectConversations,
         handleUpdateConversation,
         handleNewReplayConversation,
       }}
@@ -617,7 +666,7 @@ const Home = ({
               <div className="fixed top-0 w-full sm:hidden">
                 <Navbar
                   selectedConversationNames={selectedConversationNames}
-                  onNewConversation={handleNewConversation}
+                  onNewConversation={() => handleNewConversation()}
                 />
               </div>
             )}

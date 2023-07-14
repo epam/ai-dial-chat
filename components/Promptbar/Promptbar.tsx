@@ -1,3 +1,4 @@
+import { IconFolderPlus, IconPlus } from '@tabler/icons-react';
 import { useContext, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -157,6 +158,28 @@ const Promptbar = () => {
     }
   }, [searchTerm, prompts]);
 
+  const actionsBlock = (
+    <div className="flex items-center gap-2">
+      <button
+        className={`disabled:cursor-not-allowed text-sidebar flex grow flex-shrink-0 cursor-pointer select-none items-center gap-3 rounded-md border border-white/20 p-3 text-white transition-colors duration-200 hover:bg-gray-500/10`}
+        onClick={() => {
+          handleCreatePrompt();
+          promptDispatch({ field: 'searchTerm', value: '' });
+        }}
+      >
+        <IconPlus size={16} />
+        {t('New prompt')}
+      </button>
+
+      <button
+        className="flex flex-shrink-0 h-full cursor-pointer items-center gap-3 rounded-md border border-white/20 p-3 text-sm text-white transition-colors duration-200 hover:bg-gray-500/10"
+        onClick={() => handleCreateFolder(t('New folder'), 'prompt')}
+      >
+        <IconFolderPlus size={16} />
+      </button>
+    </div>
+  );
+
   return (
     <PromptbarContext.Provider
       value={{
@@ -172,12 +195,12 @@ const Promptbar = () => {
       <Sidebar<Prompt>
         side={'right'}
         isOpen={showPromptbar}
-        addItemButtonTitle={t('New prompt')}
         itemComponent={
           <Prompts
             prompts={filteredPrompts.filter((prompt) => !prompt.folderId)}
           />
         }
+        actionButtons={actionsBlock}
         folderComponent={<PromptFolders />}
         folders={promptFolders}
         items={filteredPrompts}
@@ -186,8 +209,6 @@ const Promptbar = () => {
           promptDispatch({ field: 'searchTerm', value: searchTerm })
         }
         toggleOpen={handleTogglePromptbar}
-        handleCreateItem={handleCreatePrompt}
-        handleCreateFolder={() => handleCreateFolder(t('New folder'), 'prompt')}
         handleDrop={handleDrop}
         footerComponent={<PromptbarSettings allPrompts={prompts} />}
       />

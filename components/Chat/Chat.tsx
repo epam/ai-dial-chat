@@ -104,15 +104,13 @@ const filterUnfinishedStages = (messages: Message[]): Message[] => {
     }),
   };
 
-  return [
-    ...messages.map((message, index) => {
-      if (index === assistentMessageIndex) {
-        return updatedMessage;
-      }
+  return messages.map((message, index) => {
+    if (index === assistentMessageIndex) {
+      return updatedMessage;
+    }
 
-      return message;
-    }),
-  ];
+    return message;
+  });
 };
 
 export const Chat = memo(({ appName }: Props) => {
@@ -139,6 +137,7 @@ export const Chat = memo(({ appName }: Props) => {
     },
     handleUpdateConversation,
     handleSelectConversation,
+    handleSelectConversations,
     dispatch: homeDispatch,
   } = useContext(HomeContext);
 
@@ -1006,7 +1005,10 @@ export const Chat = memo(({ appName }: Props) => {
                   conversations={conversations}
                   selectedConversations={selectedConversations}
                   onConversationSelect={(conversation) => {
-                    handleSelectConversation(conversation, true);
+                    handleSelectConversations([
+                      selectedConversations[0],
+                      conversation,
+                    ]);
                   }}
                 />
               </div>

@@ -183,7 +183,7 @@ export const ChatMessage: FC<Props> = memo(
             )}
           </div>
 
-          <div className="prose mt-[-2px] w-full dark:prose-invert">
+          <div className=" mt-[-2px] flex-shrink grow min-w-0">
             {isUser ? (
               <div className="flex">
                 {isEditing ? (
@@ -250,9 +250,9 @@ export const ChatMessage: FC<Props> = memo(
                 )}
               </div>
             ) : (
-              <div className="h-full flex flex-row gap-1">
-                <div className="flex-grow flex flex-col gap-4">
-                  {message.custom_content?.stages?.length && (
+              <div className="h-full flex flex-row gap-1 w-full">
+                <div className="prose dark:prose-invert grow flex flex-col gap-4 flex-shrink min-w-0">
+                  {!!message.custom_content?.stages?.length && (
                     <MessageStages stages={message.custom_content?.stages} />
                   )}
                   <ChatMDComponent
@@ -260,7 +260,7 @@ export const ChatMessage: FC<Props> = memo(
                     content={message.content}
                     isError={message.isError}
                   />
-                  {message.custom_content?.attachments?.length && (
+                  {!!message.custom_content?.attachments?.length && (
                     <MessageAttachments
                       attachments={message.custom_content.attachments}
                     />

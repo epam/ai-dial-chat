@@ -78,7 +78,7 @@ export const MessageStage = ({ stage }: Props) => {
         <div className="p-2 flex">{stageTitle}</div>
       )}
 
-      <div className={`overflow-hidden ${isOpened ? 'p-2' : 'h-0'}`}>
+      <div className={`overflow-auto ${isOpened ? 'p-2' : 'h-0'}`}>
         {stage.content && (
           <span className="inline-block">
             <ChatMDComponent
