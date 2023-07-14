@@ -38,6 +38,7 @@ export interface Message {
   like?: number;
   isError?: boolean;
   state?: object;
+  model?: Partial<OpenAIEntityModel>;
 }
 
 export type Role = 'assistant' | 'user';

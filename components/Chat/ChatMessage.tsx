@@ -25,6 +25,7 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
+import { Tooltip } from '../Common/Tooltip';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachment } from './MessageAttachment';
 import { MessageStages } from './MessageStages';
@@ -168,15 +169,19 @@ export const ChatMessage: FC<Props> = memo(
         style={{ overflowWrap: 'anywhere' }}
       >
         <div className="h-full relative m-auto flex p-4 text-base md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
-          <div className="min-w-[40px] text-right font-bold">
+          <div className="min-w-[40px] font-bold">
             {isAssistant ? (
-              <ModelIcon
-                modelIconMapping={modelIconMapping}
-                modelId={conversation.model.id}
-                inverted={lightMode === 'dark'}
-                animate={isShowResponseLoader}
-                size={24}
-              />
+              <Tooltip tooltip={message.model?.name ?? conversation.model.name}>
+                <div className="pl-1">
+                  <ModelIcon
+                    modelIconMapping={modelIconMapping}
+                    modelId={message.model?.id ?? conversation.model.id}
+                    inverted={lightMode === 'dark'}
+                    animate={isShowResponseLoader}
+                    size={24}
+                  />
+                </div>
+              </Tooltip>
             ) : (
               <IconUser size={30} />
             )}

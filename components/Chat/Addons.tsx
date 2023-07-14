@@ -40,8 +40,8 @@ export const AddonButton = ({
   }, [isAddonSelected]);
   return (
     <button
-      className={`border text-neutral-600 dark:text-white  rounded p-1 max-w-[20%] ${
-        isSelected ? 'border-[#0075ff] border-2' : 'dark:border-#cccccc'
+      className={`border border-2  text-neutral-600 dark:text-white  rounded p-1 max-w-[20%] ${
+        isSelected ? 'border-[#0075ff] border-2' : 'dark:border-neutral-300'
       } ${
         isPreselected
           ? 'bg-[#7f7f7f] text-white cursor-not-allowed border-[#0075ff] border-2'
