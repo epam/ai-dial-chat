@@ -1,4 +1,8 @@
+import toast from 'react-hot-toast';
+
 import { Conversation } from '@/types/chat';
+
+import { errorsMessages } from '@/constants/errors';
 
 export const updateConversation = (
   updatedConversation: Conversation,
@@ -22,5 +26,13 @@ export const saveSelectedConversationIds = (ids: string[]) => {
 };
 
 export const saveConversations = (conversations: Conversation[]) => {
-  localStorage.setItem('conversationHistory', JSON.stringify(conversations));
+  try {
+    localStorage.setItem('conversationHistory', JSON.stringify(conversations));
+  } catch (error: any) {
+    if (error.name === 'QuotaExceededError') {
+      toast.error(errorsMessages.localStorageQuotaExceeded);
+    } else {
+      throw error;
+    }
+  }
 };
