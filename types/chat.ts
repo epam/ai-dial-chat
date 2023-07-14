@@ -52,7 +52,7 @@ export interface ChatBody {
   temperature: number;
   id: string;
   selectedAddons: string[];
-  assistantSubModelId: string;
+  assistantSubModelId: string | null;
 }
 
 export interface RateBody {
@@ -73,7 +73,7 @@ export interface Conversation {
   folderId: string | null;
   replay: Replay;
   selectedAddons: string[];
-  assistantModelId?: string;
+  assistantModelId: string | null;
 }
 export interface Replay {
   isReplay: boolean;

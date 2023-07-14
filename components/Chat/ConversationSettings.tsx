@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { DEFAULT_ASSISTANT_SUBMODEL } from '@/utils/app/const';
+
 import { Conversation } from '@/types/chat';
 import {
   OpenAIEntityAddon,
@@ -45,11 +47,10 @@ export const ConversationSettings = ({
   const { t } = useTranslation('chat');
   const aiEntityType = conversation.model.type;
   const modelsFiltered = models.filter((etity) => etity.type === 'model');
-  const defaultAssitantSubModel = OpenAIEntityModels[OpenAIEntityModelID.GPT_4];
   const assitantSubModelName = conversation.assistantModelId
     ? OpenAIEntityModels[conversation.assistantModelId as OpenAIEntityModelID]
         .name
-    : defaultAssitantSubModel.name;
+    : DEFAULT_ASSISTANT_SUBMODEL.name;
   const [isModelSelectDisabled, setIsModelSelectDisabled] = useState(() =>
     conversation.messages.some((message) => !!message.custom_content?.state),
   );
@@ -84,10 +85,10 @@ export const ConversationSettings = ({
           {aiEntityType === 'assistant' && (
             <ModelSelect
               conversationModelId={
-                conversation.assistantModelId ?? defaultAssitantSubModel.id
+                conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id
               }
               conversationModelName={
-                assitantSubModelName ?? defaultAssitantSubModel.name
+                assitantSubModelName ?? DEFAULT_ASSISTANT_SUBMODEL.name
               }
               label="Model"
               defaultModelId={defaultModelId}

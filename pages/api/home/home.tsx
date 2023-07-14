@@ -310,6 +310,7 @@ const Home = ({
       replay: defaultReplay,
       selectedAddons:
         OpenAIEntityModels[clientDefaultModelId].selectedAddons ?? [],
+      assistantModelId: null,
     };
 
     addNewConversationToStore(newConversation);
@@ -546,6 +547,7 @@ const Home = ({
         folderId: null,
         replay: defaultReplay,
         selectedAddons: OpenAIEntityModels[defaultModelId].selectedAddons ?? [],
+        assistantModelId: lastConversation?.assistantModelId ?? null,
       };
 
       const updatedConversations: Conversation[] =

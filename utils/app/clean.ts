@@ -4,6 +4,7 @@ import { Conversation } from '@/types/chat';
 import { OpenAIEntityModelID, OpenAIEntityModels } from '@/types/openai';
 
 import {
+  DEFAULT_ASSISTANT_SUBMODEL,
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
@@ -46,6 +47,8 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
             (OpenAIEntityModels[model.id as OpenAIEntityModelID]
               .selectedAddons ??
               []),
+          assistantModelId:
+            conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id,
         };
 
         acc.push(cleanConversation);
