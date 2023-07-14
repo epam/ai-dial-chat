@@ -25,7 +25,6 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
-import { Tooltip } from '../Common/Tooltip';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachments } from './MessageAttachments';
 import { MessageStages } from './MessageStages';
