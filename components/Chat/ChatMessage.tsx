@@ -171,17 +171,14 @@ export const ChatMessage: FC<Props> = memo(
         <div className="h-full relative m-auto flex p-4 text-base md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
           <div className="min-w-[40px] font-bold">
             {isAssistant ? (
-              <Tooltip tooltip={message.model?.name ?? conversation.model.name}>
-                <div className="pl-1">
-                  <ModelIcon
-                    modelIconMapping={modelIconMapping}
-                    modelId={message.model?.id ?? conversation.model.id}
-                    inverted={lightMode === 'dark'}
-                    animate={isShowResponseLoader}
-                    size={24}
-                  />
-                </div>
-              </Tooltip>
+              <ModelIcon
+                modelIconMapping={modelIconMapping}
+                modelId={message.model?.id ?? conversation.model.id}
+                modelName={message.model?.name ?? conversation.model.name}
+                inverted={lightMode === 'dark'}
+                animate={isShowResponseLoader}
+                size={24}
+              />
             ) : (
               <IconUser size={30} />
             )}

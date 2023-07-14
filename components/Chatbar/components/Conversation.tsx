@@ -128,6 +128,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
             size={18}
             modelIconMapping={modelIconMapping}
             modelId={conversation.model.id}
+            modelName={conversation.model.name}
             inverted
           />
 
@@ -163,6 +164,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
             size={18}
             modelIconMapping={modelIconMapping}
             modelId={conversation.model.id}
+            modelName={conversation.model.name}
             inverted
           />
           <div

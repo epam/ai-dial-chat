@@ -10,6 +10,7 @@ interface Props {
   modelIconMapping: ModelIconMappingType;
   inverted?: boolean;
   animate?: boolean;
+  modelName?: string;
 }
 
 export const ModelIcon = ({
@@ -18,6 +19,7 @@ export const ModelIcon = ({
   size,
   inverted,
   animate,
+  modelName,
 }: Props) => {
   return (
     <>
@@ -31,9 +33,15 @@ export const ModelIcon = ({
           height={size}
           alt={`${modelId} icon`}
           style={{ color: 'red' }}
+          title={modelName}
         ></Image>
       ) : (
-        <IconMessage size={size} className={animate ? 'animate-bounce' : ''} />
+        <div title={modelName}>
+          <IconMessage
+            size={size}
+            className={animate ? 'animate-bounce' : ''}
+          />
+        </div>
       )}
     </>
   );
