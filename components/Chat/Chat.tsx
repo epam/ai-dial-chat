@@ -12,6 +12,7 @@ import {
 import { useTranslation } from 'next-i18next';
 
 import { getEndpoint } from '@/utils/app/api';
+import { DEFAULT_CONVERSATION_NAME } from '@/utils/app/const';
 import { showAPIToastError } from '@/utils/app/errors';
 import { mergeMessages, parseStreamMessages } from '@/utils/app/merge-streams';
 import { throttle } from '@/utils/data/throttle';
@@ -381,7 +382,8 @@ export const Chat = memo(({ appName }: Props) => {
 
       if (
         updatedConversation.messages.length === 1 &&
-        !updatedConversation.replay.isReplay
+        !updatedConversation.replay.isReplay &&
+        updatedConversation.name === DEFAULT_CONVERSATION_NAME
       ) {
         const { content } = message;
         const customName =
