@@ -9,13 +9,15 @@ import {
   OpenAIEntityModel,
   OpenAIEntityModelID,
 } from '@/types/openai';
+import { Prompt } from '@/types/prompt';
 
-import { ModelSelect } from './ModelSelect';
+import { ConversationSettings } from './ConversationSettings';
 
 interface Props {
   conversation: Conversation;
   models: OpenAIEntityModel[];
   addons: OpenAIEntityAddon[];
+  prompts: Prompt[];
   defaultModelId: OpenAIEntityModelID;
   isCompareMode: boolean;
   selectedConversationIds: string[];
@@ -27,6 +29,10 @@ interface Props {
   onSelectModel: (modelId: string) => void;
   onClearConversation: () => void;
   onUnselectConversation: () => void;
+  onChangePrompt: (prompt: string) => void;
+  onChangeTemperature: (temperature: number) => void;
+  onSelectAssistantSubModel: (modelId: string) => void;
+  onChangeAddon: (addonId: string) => void;
 }
 
 export const ChatSettings = ({
@@ -41,9 +47,14 @@ export const ChatSettings = ({
   isShowModelSelect,
   isShowClearConversation,
   isIframe,
+  prompts,
   onSelectModel,
   onClearConversation,
   onUnselectConversation,
+  onChangePrompt,
+  onChangeTemperature,
+  onSelectAssistantSubModel,
+  onChangeAddon,
 }: Props) => {
   const { t } = useTranslation('chat');
   const [showSettings, setShowSettings] = useState<boolean>(false);
@@ -65,6 +76,7 @@ export const ChatSettings = ({
                 &nbsp;|{' '}
               </>
             )}
+
             <span>
               {t('Model')}: {conversation.model.name} |{' '}
               {!isIframe && (
@@ -105,15 +117,18 @@ export const ChatSettings = ({
       </div>
       {showSettings && (
         <div className="flex flex-col space-y-10 md:mx-auto md:max-w-xl md:gap-6 md:py-3 md:pt-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
-          <div className="flex h-full flex-col space-y-4 border-b border-neutral-200 p-4 dark:border-neutral-600 md:rounded-lg md:border">
-            <ModelSelect
-              conversationModelId={conversation.model.id}
-              conversationModelName={conversation.model.name}
-              defaultModelId={defaultModelId}
-              models={models}
-              onSelectModel={onSelectModel}
-            />
-          </div>
+          <ConversationSettings
+            conversation={conversation}
+            defaultModelId={defaultModelId}
+            models={models}
+            prompts={prompts}
+            addons={addons}
+            onSelectModel={onSelectModel}
+            onChangePrompt={onChangePrompt}
+            onChangeTemperature={onChangeTemperature}
+            onSelectAssistantSubModel={onSelectAssistantSubModel}
+            onChangeAddon={onChangeAddon}
+          />
         </div>
       )}
     </>

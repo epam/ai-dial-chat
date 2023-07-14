@@ -819,6 +819,7 @@ export const Chat = memo(({ appName }: Props) => {
                           defaultModelId={
                             defaultModelId || OpenAIEntityModelID.GPT_3_5
                           }
+                          prompts={prompts}
                           models={models}
                           addons={addons}
                           isCompareMode={isCompareMode}
@@ -826,10 +827,9 @@ export const Chat = memo(({ appName }: Props) => {
                           isShowClearConversation={enabledFeatures.has(
                             'top-clear-conversation',
                           )}
-                          isShowModelSelect={
-                            enabledFeatures.has('top-chat-model-settings') &&
-                            conv.model.type === 'model'
-                          }
+                          isShowModelSelect={enabledFeatures.has(
+                            'top-chat-model-settings',
+                          )}
                           isIframe={isIframe}
                           selectedConversationIds={selectedConversationIds}
                           onClearConversation={() =>
@@ -847,6 +847,18 @@ export const Chat = memo(({ appName }: Props) => {
                               filteredSelectedConversation,
                             );
                           }}
+                          onChangePrompt={(prompt) =>
+                            handleChangePrompt(conv, prompt)
+                          }
+                          onChangeTemperature={(temperature) =>
+                            handleChangeTemperature(conv, temperature)
+                          }
+                          onSelectAssistantSubModel={(modelId: string) =>
+                            handleSelectAssistantSubModel(conv, modelId)
+                          }
+                          onChangeAddon={(addonId: string) =>
+                            handleOnChangeAddon(conv, addonId)
+                          }
                         />
                       )
                     )}
