@@ -83,7 +83,7 @@ export const MessageAttachment = ({ attachment }: Props) => {
           ) : attachment.type === 'text/html' ? (
             <div className="max-w-full flex overflow-auto">
               <span
-                className="shrink-0"
+                className="shrink-0 whitespace-pre prose dark:prose-invert"
                 dangerouslySetInnerHTML={{
                   __html: sanitize(attachment.data || ''),
                 }}
@@ -91,7 +91,9 @@ export const MessageAttachment = ({ attachment }: Props) => {
             </div>
           ) : attachment.type === 'text/plain' ? (
             <div className="overflow-hidden max-w-full">
-              <span className="whitespace-pre-wrap">{attachment.data}</span>
+              <span className="whitespace-pre-wrap prose dark:prose-invert">
+                {attachment.data}
+              </span>
             </div>
           ) : (
             (attachment.type === 'text/markdown' || !attachment.type) &&

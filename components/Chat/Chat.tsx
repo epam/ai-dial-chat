@@ -826,7 +826,7 @@ export const Chat = memo(({ appName }: Props) => {
                   : 'w-full'
               }`}
             >
-              <div className="flex w-full sticky top-0 z-10">
+              <div className="flex w-full">
                 {selectedConversations.map((conv) => (
                   <div
                     key={conv.id}
@@ -941,7 +941,7 @@ export const Chat = memo(({ appName }: Props) => {
                                 : 'w-full'
                             }`}
                           >
-                            <div className="h-full">
+                            <div className="h-full w-full">
                               <MemoizedChatMessage
                                 key={conv.id}
                                 message={message}
@@ -1058,6 +1058,9 @@ export const Chat = memo(({ appName }: Props) => {
                     });
                   }}
                   onStopConversation={() => {
+                    if (!isReplayPaused) {
+                      handleReplayStop();
+                    }
                     abortController.current?.abort();
                   }}
                 />

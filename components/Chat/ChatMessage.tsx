@@ -183,7 +183,7 @@ export const ChatMessage: FC<Props> = memo(
             )}
           </div>
 
-          <div className=" mt-[-2px] flex-shrink grow min-w-0">
+          <div className="flex-shrink min-w-0 mt-[-2px] w-full">
             {isUser ? (
               <div className="flex">
                 {isEditing ? (
@@ -250,8 +250,8 @@ export const ChatMessage: FC<Props> = memo(
                 )}
               </div>
             ) : (
-              <div className="h-full flex flex-row gap-1 w-full">
-                <div className="prose dark:prose-invert grow flex flex-col gap-4 flex-shrink min-w-0">
+              <div className="h-full flex flex-row gap-1">
+                <div className="flex-shrink min-w-0 grow flex flex-col gap-4">
                   {!!message.custom_content?.stages?.length && (
                     <MessageStages stages={message.custom_content?.stages} />
                   )}
