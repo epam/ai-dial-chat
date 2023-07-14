@@ -1,4 +1,5 @@
 import {
+  IconAlertCircleFilled,
   IconChevronDown,
   IconCircleCheckFilled,
   IconLoader,
@@ -33,8 +34,13 @@ export const MessageStage = ({ stage }: Props) => {
           size={20}
           className="animate-spin flex-shrink-0 grow-0 basis-auto"
         />
-      ) : (
+      ) : stage.status === 'completed' ? (
         <IconCircleCheckFilled
+          size={20}
+          className="flex-shrink-0 grow-0 basis-auto"
+        />
+      ) : (
+        <IconAlertCircleFilled
           size={20}
           className="flex-shrink-0 grow-0 basis-auto"
         />
