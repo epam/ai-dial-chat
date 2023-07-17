@@ -1059,7 +1059,7 @@ export const Chat = memo(({ appName }: Props) => {
                   }}
                   onStopConversation={() => {
                     if (!isReplayPaused) {
-                      handleReplayStop();
+                      setIsReplayPaused(true);
                     }
                     abortController.current?.abort();
                   }}
