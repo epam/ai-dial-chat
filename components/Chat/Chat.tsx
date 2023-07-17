@@ -104,15 +104,13 @@ const filterUnfinishedStages = (messages: Message[]): Message[] => {
     }),
   };
 
-  return [
-    ...messages.map((message, index) => {
-      if (index === assistentMessageIndex) {
-        return updatedMessage;
-      }
+  return messages.map((message, index) => {
+    if (index === assistentMessageIndex) {
+      return updatedMessage;
+    }
 
-      return message;
-    }),
-  ];
+    return message;
+  });
 };
 
 export const Chat = memo(({ appName }: Props) => {
@@ -139,6 +137,7 @@ export const Chat = memo(({ appName }: Props) => {
     },
     handleUpdateConversation,
     handleSelectConversation,
+    handleSelectConversations,
     dispatch: homeDispatch,
   } = useContext(HomeContext);
 
@@ -827,7 +826,7 @@ export const Chat = memo(({ appName }: Props) => {
                   : 'w-full'
               }`}
             >
-              <div className="flex w-full sticky top-0 z-10">
+              <div className="flex w-full">
                 {selectedConversations.map((conv) => (
                   <div
                     key={conv.id}
@@ -942,7 +941,7 @@ export const Chat = memo(({ appName }: Props) => {
                                 : 'w-full'
                             }`}
                           >
-                            <div className="h-full">
+                            <div className="h-full w-full">
                               <MemoizedChatMessage
                                 key={conv.id}
                                 message={message}
@@ -1006,7 +1005,10 @@ export const Chat = memo(({ appName }: Props) => {
                   conversations={conversations}
                   selectedConversations={selectedConversations}
                   onConversationSelect={(conversation) => {
-                    handleSelectConversation(conversation, true);
+                    handleSelectConversations([
+                      selectedConversations[0],
+                      conversation,
+                    ]);
                   }}
                 />
               </div>
@@ -1056,6 +1058,9 @@ export const Chat = memo(({ appName }: Props) => {
                     });
                   }}
                   onStopConversation={() => {
+                    if (!isReplayPaused) {
+                      handleReplayStop();
+                    }
                     abortController.current?.abort();
                   }}
                 />

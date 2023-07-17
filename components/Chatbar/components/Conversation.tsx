@@ -92,27 +92,28 @@ export const ConversationComponent = ({ conversation }: Props) => {
 
   const handleOpenRenameModal: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();
+    setIsContextMenuOpened(false);
     setIsRenaming(true);
     setRenameValue(conversation.name);
   };
   const handleOpenDeleteModal: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();
+    setIsContextMenuOpened(false);
     setIsDeleting(true);
   };
 
   const handleStartReplay: MouseEventHandler<HTMLLIElement> = (e) => {
     e.stopPropagation();
 
+    setIsContextMenuOpened(false);
     handleNewReplayConversation(conversation);
   };
 
   useEffect(() => {
     if (isRenaming) {
       setIsDeleting(false);
-      setIsContextMenuOpened(false);
     } else if (isDeleting) {
       setIsRenaming(false);
-      setIsContextMenuOpened(false);
     }
   }, [isRenaming, isDeleting]);
 
@@ -201,7 +202,8 @@ export const ConversationComponent = ({ conversation }: Props) => {
                   parentRef={contextMenuParentRef}
                   onDelete={handleOpenDeleteModal}
                   onRename={handleOpenRenameModal}
-                  onExport={function (): void {
+                  onExport={() => {
+                    setIsContextMenuOpened(false);
                     handleExportConversation(conversation.id);
                   }}
                   onCompare={() => {

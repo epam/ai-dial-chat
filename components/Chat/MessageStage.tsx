@@ -27,7 +27,7 @@ export const MessageStage = ({ stage }: Props) => {
 
   const stageTitle = (
     <div
-      className={`grid grid-flow-col items-center gap-3 ${isOpened ? '' : ' '}`}
+      className={`grid grid-flow-col min-w-0 items-center gap-3 overflow-hidden`}
     >
       {stage.status == null ? (
         <IconLoader
@@ -46,7 +46,7 @@ export const MessageStage = ({ stage }: Props) => {
         />
       )}
       <span
-        className={`font-semibold ${
+        className={`block font-semibold ${
           isOpened
             ? 'max-w-full'
             : 'overflow-hidden text-ellipsis whitespace-nowrap'
@@ -58,10 +58,10 @@ export const MessageStage = ({ stage }: Props) => {
   );
 
   return (
-    <div className="min-w-0 block text-sm border rounded-lg dark:bg-gray-2 dark:border-gray-900/50">
+    <div className="min-w-0 flex-shrink block text-sm border rounded-lg dark:bg-gray-2 dark:border-gray-900/50">
       {hasContent ? (
         <button
-          className="p-2 items-center flex gap-2 w-full"
+          className="p-2 items-center flex flex-shrink min-w-0 gap-2 w-full"
           onClick={() => {
             setIsOpened((opened) => !opened);
           }}
@@ -78,9 +78,13 @@ export const MessageStage = ({ stage }: Props) => {
         <div className="p-2 flex">{stageTitle}</div>
       )}
 
-      <div className={`overflow-hidden ${isOpened ? 'p-2' : 'h-0'}`}>
+      <div
+        className={`overflow-auto grid grid-flow-row max-w-full ${
+          isOpened ? 'p-2' : 'h-0'
+        }`}
+      >
         {stage.content && (
-          <span className="inline-block">
+          <span className="inline-block overflow-auto">
             <ChatMDComponent
               isShowResponseLoader={false}
               content={stage.content}
