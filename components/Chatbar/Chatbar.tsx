@@ -273,8 +273,9 @@ export const Chatbar = () => {
       </button>
 
       <button
-        className="flex flex-shrink-0 h-full cursor-pointer items-center gap-3 rounded-md border border-white/20 p-3 text-sm text-white transition-colors duration-200 hover:bg-gray-500/10"
+        className="disabled:cursor-not-allowed flex flex-shrink-0 h-full cursor-pointer items-center gap-3 rounded-md border border-white/20 p-3 text-sm text-white transition-colors duration-200 hover:bg-gray-500/10"
         onClick={handleToggleCompare}
+        disabled={!!messageIsStreaming}
       >
         <IconScale size={16} />
       </button>
