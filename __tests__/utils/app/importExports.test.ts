@@ -1,8 +1,5 @@
-import {
-  DEFAULT_ASSISTANT_SUBMODEL,
-  DEFAULT_SYSTEM_PROMPT,
-  DEFAULT_TEMPERATURE,
-} from '@/utils/app/const';
+import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
+import { getAssitantModelId } from '@/utils/app/conversation';
 import { defaultReplay } from '@/utils/app/defaultStateConstants';
 import {
   cleanData,
@@ -117,7 +114,7 @@ describe('cleanData Functions', () => {
             folderId: null,
             replay: defaultReplay,
             selectedAddons: [],
-            assistantModelId: DEFAULT_ASSISTANT_SUBMODEL.id,
+            assistantModelId: undefined,
           },
         ],
         folders: [],
@@ -177,7 +174,7 @@ describe('cleanData Functions', () => {
             folderId: null,
             replay: defaultReplay,
             selectedAddons: [],
-            assistantModelId: DEFAULT_ASSISTANT_SUBMODEL.id,
+            assistantModelId: undefined,
           },
         ],
         folders: [
@@ -260,7 +257,7 @@ describe('cleanData Functions', () => {
             folderId: null,
             replay: defaultReplay,
             selectedAddons: [],
-            assistantModelId: DEFAULT_ASSISTANT_SUBMODEL.id,
+            assistantModelId: undefined,
           },
         ],
         folders: [
@@ -313,5 +310,37 @@ describe('Export helpers functions', () => {
       ],
     };
     expect(isPromtsFormat(testData)).toBeTruthy();
+  });
+  describe('getAssitantModelId', () => {
+    it('should return default assistant model id', () => {
+      expect(
+        getAssitantModelId('assistant', OpenAIEntityModelID.GPT_4),
+      ).toEqual(OpenAIEntityModelID.GPT_4);
+    });
+  });
+  it('should return assistant model id', () => {
+    expect(
+      getAssitantModelId(
+        'assistant',
+        OpenAIEntityModelID.GPT_4,
+        OpenAIEntityModelID.GPT_3_5_AZ,
+      ),
+    ).toEqual(OpenAIEntityModelID.GPT_3_5_AZ);
+  });
+  it('should return udefined', () => {
+    expect(
+      getAssitantModelId(
+        'model',
+        OpenAIEntityModelID.GPT_4,
+        OpenAIEntityModelID.GPT_3_5_AZ,
+      ),
+    ).toBeUndefined();
+    expect(
+      getAssitantModelId(
+        'application',
+        OpenAIEntityModelID.GPT_4,
+        OpenAIEntityModelID.GPT_3_5_AZ,
+      ),
+    ).toBeUndefined();
   });
 });

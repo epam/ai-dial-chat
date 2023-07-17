@@ -44,6 +44,10 @@ export const ConversationSettings = ({
   onSelectAssistantSubModel,
   onChangeAddon,
 }: Props) => {
+  const [isModelSelectDisabled, setIsModelSelectDisabled] = useState(() =>
+    conversation.messages.some((message) => !!message.custom_content?.state),
+  );
+
   const { t } = useTranslation('chat');
   const aiEntityType = conversation.model.type;
   const modelsFiltered = models.filter((etity) => etity.type === 'model');
@@ -51,9 +55,7 @@ export const ConversationSettings = ({
     ? OpenAIEntityModels[conversation.assistantModelId as OpenAIEntityModelID]
         .name
     : DEFAULT_ASSISTANT_SUBMODEL.name;
-  const [isModelSelectDisabled, setIsModelSelectDisabled] = useState(() =>
-    conversation.messages.some((message) => !!message.custom_content?.state),
-  );
+
   const model = models.find(({ id }) => id === conversation.model.id);
   const preselectedAddons =
     (model?.selectedAddons as OpenAIEntityAddonID[]) ?? [];

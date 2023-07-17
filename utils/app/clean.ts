@@ -9,6 +9,7 @@ import {
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
 } from './const';
+import { getAssitantModelId } from './conversation';
 
 import { v4 } from 'uuid';
 
@@ -33,6 +34,12 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
           conversation.model ||
           OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ];
 
+        const assistantModelId: string | undefined = getAssitantModelId(
+          model.type,
+          DEFAULT_ASSISTANT_SUBMODEL.id,
+          conversation.assistantModelId,
+        );
+
         let cleanConversation: Conversation = {
           id: conversation.id || v4(),
           name: conversation.name || DEFAULT_CONVERSATION_NAME,
@@ -47,8 +54,7 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
             (OpenAIEntityModels[model.id as OpenAIEntityModelID]
               .selectedAddons ??
               []),
-          assistantModelId:
-            conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id,
+          assistantModelId,
         };
 
         acc.push(cleanConversation);

@@ -320,7 +320,7 @@ export const Chat = memo(({ appName }: Props) => {
         prompt: updatedConversation.prompt,
         temperature: updatedConversation.temperature,
         selectedAddons: selectedAddons,
-        assistantSubModelId: conversation.assistantModelId,
+        assistantModelId: conversation.assistantModelId,
       };
       const endpoint = getEndpoint();
       let body;
@@ -695,7 +695,7 @@ export const Chat = memo(({ appName }: Props) => {
       });
       handleUpdateConversation(updatedConversation, {
         key: 'assistantModelId',
-        value: '',
+        value: undefined,
       });
     }
   };
