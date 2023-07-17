@@ -72,7 +72,7 @@ export const OpenAIStream = async ({
   let body: string;
 
   body = JSON.stringify({
-    messages: [
+    messages: systemPrompt.trim().length === 0 ? messages : [
       {
         role: 'system',
         content: systemPrompt,
