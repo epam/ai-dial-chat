@@ -109,7 +109,7 @@ export const MessageAttachment = ({ attachment }: Props) => {
             <a
               href={attachment.reference_url}
               target="_blank"
-              className="block mt-3"
+              className="block mt-3 underline font-bold"
             >
               {t('Reference')}
             </a>
