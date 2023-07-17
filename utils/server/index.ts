@@ -72,13 +72,13 @@ export const OpenAIStream = async ({
   let body: string;
 
   body = JSON.stringify({
-    messages: [
+    messages: systemPrompt ? [
       {
         role: 'system',
         content: systemPrompt,
       },
       ...messages,
-    ],
+    ] : messages,
     temperature,
     stream: true,
     model:
