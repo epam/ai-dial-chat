@@ -294,11 +294,6 @@ const Home = ({
 
     const lastConversation = conversations[conversations.length - 1];
 
-    const assistantModelId = getAssitantModelId(
-      OpenAIEntityModels[clientDefaultModelId].type,
-      DEFAULT_ASSISTANT_SUBMODEL.id,
-    );
-
     const newConversation: Conversation = {
       id: uuidv4(),
       name: t(name),
@@ -317,7 +312,6 @@ const Home = ({
       replay: defaultReplay,
       selectedAddons:
         OpenAIEntityModels[clientDefaultModelId].selectedAddons ?? [],
-      assistantModelId,
     };
 
     addNewConversationToStore(newConversation);
@@ -546,11 +540,6 @@ const Home = ({
       const defaultModel: OpenAIEntityModel =
         OpenAIEntityModels[defaultModelId];
 
-      const assistantModelId = getAssitantModelId(
-        defaultModel.type,
-        DEFAULT_ASSISTANT_SUBMODEL.id,
-      );
-
       const newConversation: Conversation = {
         id: uuidv4(),
         name: t(DEFAULT_CONVERSATION_NAME),
@@ -561,7 +550,6 @@ const Home = ({
         folderId: null,
         replay: defaultReplay,
         selectedAddons: OpenAIEntityModels[defaultModelId].selectedAddons ?? [],
-        assistantModelId,
       };
 
       const updatedConversations: Conversation[] =
