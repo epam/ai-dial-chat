@@ -305,6 +305,11 @@ export const Chat = memo(({ appName }: Props) => {
           ...(lastModel.selectedAddons ?? []),
         ]),
       );
+
+      const assistantModelId = conversation.assistantModelId;
+      const chatBodyWithAssistantModel =
+        conversation.model.type && assistantModelId ? { assistantModelId } : {};
+
       const chatBody: ChatBody = {
         modelId: conversation.model.id,
         messages: updatedConversation.messages.map((message) => ({
@@ -320,7 +325,7 @@ export const Chat = memo(({ appName }: Props) => {
         prompt: updatedConversation.prompt,
         temperature: updatedConversation.temperature,
         selectedAddons: selectedAddons,
-        assistantModelId: conversation.assistantModelId,
+        ...chatBodyWithAssistantModel,
       };
       const endpoint = getEndpoint();
       let body;
