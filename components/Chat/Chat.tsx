@@ -676,7 +676,7 @@ export const Chat = memo(({ appName }: Props) => {
     const updatedConversation: Conversation = {
       ...conversation,
       model: newAiEntity,
-      selectedAddons: selectedAddons,
+      selectedAddons: newAiEntity.type !== 'application' ? selectedAddons : [],
     };
     if (newAiEntity.type === 'assistant') {
       handleUpdateConversation(conversation, {
