@@ -6,6 +6,7 @@ export interface ProxyOpenAIEntity {
   object: OpenAIEntityType;
   capabilities?: {
     embeddings: boolean;
+    chat_completion: boolean;
   };
   addons?: string[];
 }
