@@ -2,24 +2,25 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { Session } from 'next-auth';
 import { getServerSession } from 'next-auth/next';
 
+import { limitEntitiesAccordingToUser } from '@/utils/server/entitiesPermissions';
+import { getEntities } from '@/utils/server/getEntities';
+
 import {
+  OpenAIEntity,
+  OpenAIEntityAddonID,
   OpenAIEntityModelID,
   OpenAIEntityModels,
-  fallbackModelID,
-  OpenAIEntity,
   ProxyOpenAIEntity,
-  OpenAIEntityAddonID,
+  fallbackModelID,
 } from '@/types/openai';
 
 import { authOptions } from './auth/[...nextauth]';
 
 import { errorsMessages } from '@/constants/errors';
-import { getEntities } from '@/utils/server/getEntities';
 
 // export const config = {
 //   runtime: 'edge',
 // };
-
 
 function setDefaultModel(models: OpenAIEntity[]) {
   const defaultModelId = process.env.DEFAULT_MODEL || fallbackModelID;
@@ -28,41 +29,6 @@ function setDefaultModel(models: OpenAIEntity[]) {
   models = models.map((model) =>
     model.id === defaultModel.id ? { ...model, isDefault: true } : model,
   );
-  return models;
-}
-
-function limitModelsAccordingToUser(models: OpenAIEntity[], session: Session | null) {
-  if (!process.env.AVAILABLE_MODELS_USERS_LIMITATIONS) {
-    return models;
-  }
-
-  const modelsLimitations: Record<string, Set<string>> = (
-    process.env.AVAILABLE_MODELS_USERS_LIMITATIONS ?? ''
-  )
-    .split('|')
-    .map((userLimitations) => {
-      const [modelId, emailsString] = userLimitations.split('=');
-      return {
-        modelId,
-        emails: new Set(emailsString.split(',')),
-      };
-    })
-    .reduce((acc, curr) => {
-      acc[curr.modelId] = curr.emails;
-
-      return acc;
-    }, <Record<string, Set<string>>>{});
-
-  models = models.filter((model: OpenAIEntity) => {
-    if (!modelsLimitations[model.id]) {
-      return true;
-    }
-    if (!session?.user?.email) {
-      return false;
-    }
-
-    return modelsLimitations[model.id].has(session?.user?.email);
-  });
   return models;
 }
 
@@ -79,25 +45,38 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     let entities: OpenAIEntity[] = [];
 
-    const models: ProxyOpenAIEntity[] = await getEntities('model', key).catch((error) => {
+    const models: ProxyOpenAIEntity[] = await getEntities('model', key).catch(
+      (error) => {
+        console.error(error.message);
+        return [];
+      },
+    );
+    const applications: ProxyOpenAIEntity[] = await getEntities(
+      'application',
+      key,
+    ).catch((error) => {
       console.error(error.message);
       return [];
     });
-    const applications: ProxyOpenAIEntity[] = await getEntities('application', key).catch((error) => {
-      console.error(error.message);
-      return [];
-    });
-    const assistants: ProxyOpenAIEntity[] = await getEntities('assistant', key).catch((error) => {
+    const assistants: ProxyOpenAIEntity[] = await getEntities(
+      'assistant',
+      key,
+    ).catch((error) => {
       console.error(error.message);
       return [];
     });
 
     for (const entity of [...models, ...applications, ...assistants]) {
-      if (entity.capabilities?.embeddings || (entity.object === 'model' && entity.capabilities?.chat_completion !== true)) {
+      if (
+        entity.capabilities?.embeddings ||
+        (entity.object === 'model' &&
+          entity.capabilities?.chat_completion !== true)
+      ) {
         continue;
       }
-      
-      const existingModelMapping = OpenAIEntityModels[entity.id as OpenAIEntityModelID];
+
+      const existingModelMapping =
+        OpenAIEntityModels[entity.id as OpenAIEntityModelID];
       if (existingModelMapping != null) {
         entities.push({
           id: entity.id,
@@ -108,7 +87,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }
     }
 
-    entities = limitModelsAccordingToUser(entities, session);
+    entities = limitEntitiesAccordingToUser(
+      entities,
+      session,
+      process.env.AVAILABLE_MODELS_USERS_LIMITATIONS,
+    );
     entities = setDefaultModel(entities);
 
     return res.status(200).json(entities);
