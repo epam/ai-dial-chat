@@ -41,6 +41,7 @@ import {
   OpenAIEntityModel,
   OpenAIEntityModelID,
   OpenAIEntityModels,
+  defaultModelLimits,
   fallbackModelID,
 } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
@@ -105,6 +106,7 @@ const Home = ({
       selectedConversationIds,
       prompts,
       defaultModelId: clientDefaultModelId,
+      models,
     },
     dispatch,
   } = contextValue;
@@ -300,25 +302,30 @@ const Home = ({
     }
 
     const lastConversation = conversations[conversations.length - 1];
+    const model =
+      models.find((model) => clientDefaultModelId === model.id) || models[0];
+
+    if (!model) {
+      return;
+    }
 
     const newConversation: Conversation = {
       id: uuidv4(),
       name: t(name),
       messages: [],
       model: {
-        id: OpenAIEntityModels[clientDefaultModelId].id,
-        name: OpenAIEntityModels[clientDefaultModelId].name,
-        maxLength: OpenAIEntityModels[clientDefaultModelId].maxLength,
-        tokenLimit: OpenAIEntityModels[clientDefaultModelId].tokenLimit,
-        requestLimit: OpenAIEntityModels[clientDefaultModelId].requestLimit,
-        type: OpenAIEntityModels[clientDefaultModelId].type,
+        id: model.id,
+        name: model.name,
+        maxLength: model.maxLength ?? defaultModelLimits.maxLength,
+        tokenLimit: model.tokenLimit ?? defaultModelLimits.tokenLimit,
+        requestLimit: model.requestLimit ?? defaultModelLimits.requestLimit,
+        type: model.type,
       },
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
       folderId: null,
       replay: defaultReplay,
-      selectedAddons:
-        OpenAIEntityModels[clientDefaultModelId].selectedAddons ?? [],
+      selectedAddons: model.selectedAddons ?? [],
     };
 
     addNewConversationToStore([newConversation]);
@@ -335,6 +342,12 @@ const Home = ({
       return;
     }
     const lastConversation = conversations[conversations.length - 1];
+    const model =
+      models.find((model) => clientDefaultModelId === model.id) || models[0];
+
+    if (!model) {
+      return;
+    }
     let newConversations = [];
     for (let i = 0; i < count; i++) {
       const newConversation: Conversation = {
@@ -342,19 +355,18 @@ const Home = ({
         name: t(name),
         messages: [],
         model: {
-          id: OpenAIEntityModels[clientDefaultModelId].id,
-          name: OpenAIEntityModels[clientDefaultModelId].name,
-          maxLength: OpenAIEntityModels[clientDefaultModelId].maxLength,
-          tokenLimit: OpenAIEntityModels[clientDefaultModelId].tokenLimit,
-          requestLimit: OpenAIEntityModels[clientDefaultModelId].requestLimit,
-          type: OpenAIEntityModels[clientDefaultModelId].type,
+          id: model.id,
+          name: model.name,
+          maxLength: model.maxLength ?? defaultModelLimits.maxLength,
+          tokenLimit: model.tokenLimit ?? defaultModelLimits.tokenLimit,
+          requestLimit: model.requestLimit ?? defaultModelLimits.requestLimit,
+          type: model.type,
         },
         prompt: DEFAULT_SYSTEM_PROMPT,
         temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
         folderId: null,
         replay: defaultReplay,
-        selectedAddons:
-          OpenAIEntityModels[clientDefaultModelId].selectedAddons ?? [],
+        selectedAddons: model.selectedAddons ?? [],
       };
       newConversations.push(newConversation);
     }

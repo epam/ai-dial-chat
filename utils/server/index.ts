@@ -1,6 +1,8 @@
 import { Message } from '@/types/chat';
 import {
   OpenAIEntityAddonID,
+  OpenAIEntityApplicationType,
+  OpenAIEntityAssistantType,
   OpenAIEntityModel,
   OpenAIEntityModelID,
   OpenAIEntityModelType,
@@ -35,7 +37,10 @@ export class OpenAIError extends Error {
 
 function getUrl(
   modelId: string,
-  modelType: OpenAIEntityModelType,
+  modelType:
+    | OpenAIEntityModelType
+    | OpenAIEntityApplicationType
+    | OpenAIEntityAssistantType,
   isAddonsAdded: boolean,
 ): string {
   if (modelType === 'model' && isAddonsAdded) {

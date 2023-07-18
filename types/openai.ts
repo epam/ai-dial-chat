@@ -1,9 +1,11 @@
-export type OpenAIEntityModelType = 'model' | 'application' | 'assistant';
-export type OpenAIEntityType = OpenAIEntityModelType | 'addon';
+export type OpenAIEntityModelType = 'model';
+export type OpenAIEntityApplicationType = 'application';
+export type OpenAIEntityAssistantType = 'assistant';
+export type OpenAIEntityAddonType = 'addon';
 
-export interface ProxyOpenAIEntity {
+export interface ProxyOpenAIEntity<T = OpenAIEntityModelType> {
   id: string;
-  object: OpenAIEntityType;
+  object: T;
   capabilities?: {
     embeddings: boolean;
     chat_completion: boolean;
@@ -14,22 +16,28 @@ export interface ProxyOpenAIEntity {
 export interface OpenAIEntity {
   id: string;
   name: string;
-  type: OpenAIEntityType;
-  selectedAddons?: OpenAIEntityAddonID[];
+  type:
+    | OpenAIEntityModelType
+    | OpenAIEntityApplicationType
+    | OpenAIEntityAssistantType
+    | OpenAIEntityAddonType;
+  selectedAddons?: string[];
 }
 
-export type OpenAIEntityModel = Omit<OpenAIEntity, 'type'> & {
+export interface OpenAIEntityModel extends Omit<OpenAIEntity, 'type'> {
   maxLength: number; // maximum length of a message
   tokenLimit?: number;
   requestLimit: number;
   isDefault?: boolean;
-  type: OpenAIEntityModelType;
-  selectedAddons?: string[];
-};
+  type:
+    | OpenAIEntityModelType
+    | OpenAIEntityApplicationType
+    | OpenAIEntityAssistantType;
+}
 
-export type OpenAIEntityAddon = Omit<OpenAIEntity, 'type'> & {
+export interface OpenAIEntityAddon extends Omit<OpenAIEntity, 'type'> {
   type: 'addon';
-};
+}
 
 export enum OpenAIEntityModelID {
   GPT_3_5 = 'gpt-3.5-turbo',
@@ -81,10 +89,13 @@ export const OpenAIEntityAddons: Record<
 // in case the `DEFAULT_MODEL` environment variable is not set or set to an unsupported model
 export const fallbackModelID = OpenAIEntityModelID.GPT_3_5_AZ;
 
-export const OpenAIEntityModels: Record<
-  OpenAIEntityModelID,
-  OpenAIEntityModel
-> = {
+export const defaultModelLimits = {
+  maxLength: 24000,
+  tokenLimit: 8000,
+  requestLimit: 6000,
+};
+
+export const OpenAIEntityModels: Record<string, OpenAIEntityModel> = {
   [OpenAIEntityModelID.GPT_3_5]: {
     id: OpenAIEntityModelID.GPT_3_5,
     name: 'GPT-3.5',

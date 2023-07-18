@@ -45,7 +45,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   try {
     const {
-      modelId,
+      model,
       messages,
       key,
       prompt,
@@ -79,10 +79,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     // let tokenCount = prompt_tokens.length;
     // let messagesToSend: Message[] = [];
-
-    const model =
-      OpenAIEntityModels[modelId as OpenAIEntityModelID] ??
-      OpenAIEntityModels[fallbackModelID];
 
     let tokens_per_message = 0;
     if (
