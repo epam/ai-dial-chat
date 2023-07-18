@@ -310,7 +310,7 @@ export const Chat = memo(({ appName }: Props) => {
         conversation.model.type && assistantModelId ? { assistantModelId } : {};
 
       const chatBody: ChatBody = {
-        modelId: conversation.model.id,
+        model: conversation.model,
         messages: updatedConversation.messages.map((message) => ({
           content: message.content,
           role: message.role,

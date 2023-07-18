@@ -45,7 +45,7 @@ export interface Message {
 export type Role = 'assistant' | 'user';
 
 export interface ChatBody {
-  modelId: string;
+  model: OpenAIEntityModel;
   messages: Message[];
   key: string;
   prompt: string;

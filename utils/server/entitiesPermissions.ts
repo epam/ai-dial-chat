@@ -1,7 +1,7 @@
 import { OpenAIEntity } from "@/types/openai";
 import { Session } from "next-auth";
 
-export function limitEntitiesAccordingToUser(entities: OpenAIEntity[], session: Session | null, entityPermissions: string | undefined) {
+export function limitEntitiesAccordingToUser<T extends OpenAIEntity>(entities: T[], session: Session | null, entityPermissions: string | undefined): T[] {
     if (!entityPermissions) {
       return entities;
     }
@@ -23,7 +23,7 @@ export function limitEntitiesAccordingToUser(entities: OpenAIEntity[], session: 
         return acc;
       }, <Record<string, Set<string>>>{});
   
-    entities = entities.filter((model: OpenAIEntity) => {
+    entities = entities.filter((model) => {
       if (!entitiesLimitations[model.id]) {
         return true;
       }

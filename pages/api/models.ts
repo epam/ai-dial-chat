@@ -1,16 +1,18 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Session } from 'next-auth';
 import { getServerSession } from 'next-auth/next';
 
 import { limitEntitiesAccordingToUser } from '@/utils/server/entitiesPermissions';
 import { getEntities } from '@/utils/server/getEntities';
 
 import {
-  OpenAIEntity,
-  OpenAIEntityAddonID,
+  OpenAIEntityApplicationType,
+  OpenAIEntityAssistantType,
+  OpenAIEntityModel,
   OpenAIEntityModelID,
+  OpenAIEntityModelType,
   OpenAIEntityModels,
   ProxyOpenAIEntity,
+  defaultModelLimits,
   fallbackModelID,
 } from '@/types/openai';
 
@@ -22,7 +24,7 @@ import { errorsMessages } from '@/constants/errors';
 //   runtime: 'edge',
 // };
 
-function setDefaultModel(models: OpenAIEntity[]) {
+function setDefaultModel(models: OpenAIEntityModel[]) {
   const defaultModelId = process.env.DEFAULT_MODEL || fallbackModelID;
   const defaultModel =
     models.filter((model) => model.id === defaultModelId).pop() || models[0];
@@ -43,29 +45,25 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       key: string;
     };
 
-    let entities: OpenAIEntity[] = [];
+    let entities: OpenAIEntityModel[] = [];
 
-    const models: ProxyOpenAIEntity[] = await getEntities('model', key).catch(
-      (error) => {
+    const models: ProxyOpenAIEntity<OpenAIEntityModelType>[] =
+      await getEntities('model', key).catch((error) => {
         console.error(error.message);
         return [];
-      },
-    );
-    const applications: ProxyOpenAIEntity[] = await getEntities(
-      'application',
-      key,
-    ).catch((error) => {
-      console.error(error.message);
-      return [];
-    });
-    const assistants: ProxyOpenAIEntity[] = await getEntities(
-      'assistant',
-      key,
-    ).catch((error) => {
-      console.error(error.message);
-      return [];
-    });
+      });
+    const applications: ProxyOpenAIEntity<OpenAIEntityApplicationType>[] =
+      await getEntities('application', key).catch((error) => {
+        console.error(error.message);
+        return [];
+      });
+    const assistants: ProxyOpenAIEntity<OpenAIEntityAssistantType>[] =
+      await getEntities('assistant', key).catch((error) => {
+        console.error(error.message);
+        return [];
+      });
 
+    console.log([...models, ...applications, ...assistants]);
     for (const entity of [...models, ...applications, ...assistants]) {
       if (
         entity.capabilities?.embeddings ||
@@ -75,16 +73,22 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         continue;
       }
 
-      const existingModelMapping =
-        OpenAIEntityModels[entity.id as OpenAIEntityModelID];
-      if (existingModelMapping != null) {
-        entities.push({
-          id: entity.id,
-          name: existingModelMapping.name,
-          type: entity.object,
-          selectedAddons: entity.addons as OpenAIEntityAddonID[] | undefined,
-        });
-      }
+      const existingModelMapping: OpenAIEntityModel | undefined =
+        OpenAIEntityModels[entity.id];
+
+      entities.push({
+        id: entity.id,
+        name: existingModelMapping?.name ?? entity.id,
+        type: entity.object,
+        selectedAddons: entity.addons,
+        ...(existingModelMapping
+          ? {
+              maxLength: existingModelMapping.maxLength,
+              requestLimit: existingModelMapping.requestLimit,
+              tokenLimit: existingModelMapping.tokenLimit,
+            }
+          : defaultModelLimits),
+      });
     }
 
     entities = limitEntitiesAccordingToUser(

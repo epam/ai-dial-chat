@@ -6,6 +6,7 @@ import { getEntities } from '@/utils/server/getEntities';
 
 import {
   OpenAIEntity,
+  OpenAIEntityAddon,
   OpenAIEntityAddonID,
   OpenAIEntityAddons,
   ProxyOpenAIEntity,
@@ -40,14 +41,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     );
 
     for (const addon of addons) {
-      const mappedAddon = OpenAIEntityAddons[addon.id as OpenAIEntityAddonID];
-      if (mappedAddon != null) {
-        entities.push({
-          id: addon.id,
-          name: mappedAddon.name || addon.id,
-          type: addon.object,
-        });
-      }
+      const mappedAddon: OpenAIEntityAddon | undefined =
+        OpenAIEntityAddons[addon.id as OpenAIEntityAddonID];
+      entities.push({
+        id: addon.id,
+        name: mappedAddon?.name || addon.id,
+        type: addon.object,
+      });
     }
 
     entities = limitEntitiesAccordingToUser(
