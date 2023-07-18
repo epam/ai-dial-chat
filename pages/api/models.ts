@@ -63,7 +63,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         return [];
       });
 
-    console.log([...models, ...applications, ...assistants]);
     for (const entity of [...models, ...applications, ...assistants]) {
       if (
         entity.capabilities?.embeddings ||
