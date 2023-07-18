@@ -93,7 +93,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
 
     for (const entity of [...models, ...applications, ...assistants]) {
-      if (entity.capabilities?.embeddings) {
+      if (entity.capabilities?.embeddings || (entity.object === 'model' && entity.capabilities?.chat_completion !== true)) {
         continue;
       }
       
