@@ -209,7 +209,7 @@ export const OpenAIEntityModels: Record<string, OpenAIEntityModel> = {
   },
   [OpenAIEntityModelID.MIRROR]: {
     id: OpenAIEntityModelID.MIRROR,
-    name: 'Mirror',
+    name: 'Echo',
     maxLength: 24000,
     requestLimit: 6000,
     type: 'application',
