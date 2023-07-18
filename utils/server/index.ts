@@ -76,13 +76,16 @@ export const OpenAIStream = async ({
   let body: string;
 
   body = JSON.stringify({
-    messages: systemPrompt.trim().length === 0 ? messages : [
-      {
-        role: 'system',
-        content: systemPrompt,
-      },
-      ...messages,
-    ],
+    messages:
+      systemPrompt.trim().length === 0
+        ? messages
+        : [
+            {
+              role: 'system',
+              content: systemPrompt,
+            },
+            ...messages,
+          ],
     temperature,
     stream: true,
     model:
@@ -121,7 +124,7 @@ export const OpenAIStream = async ({
         result.error.message,
         result.error.type,
         result.error.param,
-        result.error.code,
+        result.error.code ?? res.status,
       );
     } else {
       throw new Error(
