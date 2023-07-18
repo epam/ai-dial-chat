@@ -1,6 +1,7 @@
 import toast from 'react-hot-toast';
 
 import { Conversation } from '@/types/chat';
+import { OpenAIEntityModelType } from '@/types/openai';
 
 import { errorsMessages } from '@/constants/errors';
 
@@ -35,4 +36,14 @@ export const saveConversations = (conversations: Conversation[]) => {
       throw error;
     }
   }
+};
+
+export const getAssitantModelId = (
+  modelType: OpenAIEntityModelType,
+  defaultAssistantModelId: string,
+  conversationAssistantModelId?: string,
+): string | undefined => {
+  return modelType === 'assistant'
+    ? conversationAssistantModelId ?? defaultAssistantModelId
+    : undefined;
 };

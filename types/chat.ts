@@ -52,7 +52,7 @@ export interface ChatBody {
   temperature: number;
   id: string;
   selectedAddons: string[];
-  assistantSubModelId: string;
+  assistantModelId?: string;
 }
 
 export interface RateBody {

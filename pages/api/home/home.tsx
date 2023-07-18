@@ -18,11 +18,13 @@ import { delay } from '@/utils/app/auth/delay';
 import { timeoutAsync } from '@/utils/app/auth/timeoutAsync';
 import { cleanConversationHistory } from '@/utils/app/clean';
 import {
+  DEFAULT_ASSISTANT_SUBMODEL,
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
 } from '@/utils/app/const';
 import {
+  getAssitantModelId,
   saveConversations,
   saveSelectedConversationIds,
   updateConversation,
@@ -582,12 +584,14 @@ const Home = ({
     } else {
       const lastConversation =
         cleanedConversationHistory[conversations.length - 1];
+      const defaultModel: OpenAIEntityModel =
+        OpenAIEntityModels[defaultModelId];
 
       const newConversation: Conversation = {
         id: uuidv4(),
         name: t(DEFAULT_CONVERSATION_NAME),
         messages: [],
-        model: OpenAIEntityModels[defaultModelId],
+        model: defaultModel,
         prompt: DEFAULT_SYSTEM_PROMPT,
         temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
         folderId: null,

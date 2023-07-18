@@ -12,16 +12,15 @@ import {
 import { useTranslation } from 'next-i18next';
 
 import { getEndpoint } from '@/utils/app/api';
-import { DEFAULT_CONVERSATION_NAME } from '@/utils/app/const';
+import {
+  DEFAULT_ASSISTANT_SUBMODEL,
+  DEFAULT_CONVERSATION_NAME,
+} from '@/utils/app/const';
 import { showAPIToastError } from '@/utils/app/errors';
 import { mergeMessages, parseStreamMessages } from '@/utils/app/merge-streams';
 import { throttle } from '@/utils/data/throttle';
 
-import {
-  OpenAIEntityModel,
-  OpenAIEntityModelID,
-  OpenAIEntityModels,
-} from '../../types/openai';
+import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -305,6 +304,11 @@ export const Chat = memo(({ appName }: Props) => {
           ...(lastModel.selectedAddons ?? []),
         ]),
       );
+
+      const assistantModelId = conversation.assistantModelId;
+      const chatBodyWithAssistantModel =
+        conversation.model.type && assistantModelId ? { assistantModelId } : {};
+
       const chatBody: ChatBody = {
         modelId: conversation.model.id,
         messages: updatedConversation.messages.map((message) => ({
@@ -320,7 +324,7 @@ export const Chat = memo(({ appName }: Props) => {
         prompt: updatedConversation.prompt,
         temperature: updatedConversation.temperature,
         selectedAddons: selectedAddons,
-        assistantSubModelId: conversation.assistantModelId ?? '',
+        ...chatBodyWithAssistantModel,
       };
       const endpoint = getEndpoint();
       let body;
@@ -686,7 +690,7 @@ export const Chat = memo(({ appName }: Props) => {
 
       handleUpdateConversation(updatedConversation, {
         key: 'assistantModelId',
-        value: OpenAIEntityModelID.GPT_4,
+        value: DEFAULT_ASSISTANT_SUBMODEL.id,
       });
     } else {
       handleUpdateConversation(conversation, {
@@ -695,7 +699,7 @@ export const Chat = memo(({ appName }: Props) => {
       });
       handleUpdateConversation(updatedConversation, {
         key: 'assistantModelId',
-        value: '',
+        value: undefined,
       });
     }
   };
