@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 
+import { limitEntitiesAccordingToUser } from '@/utils/server/entitiesPermissions';
 import { getEntities } from '@/utils/server/getEntities';
 
 import {
@@ -48,6 +49,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         });
       }
     }
+
+    entities = limitEntitiesAccordingToUser(
+      entities,
+      session,
+      process.env.AVAILABLE_ADDONS_USERS_LIMITATIONS,
+    );
 
     return res.status(200).json(entities);
   } catch (error) {
