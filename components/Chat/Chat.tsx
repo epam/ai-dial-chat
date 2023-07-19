@@ -306,8 +306,22 @@ export const Chat = memo(({ appName }: Props) => {
       );
 
       const assistantModelId = conversation.assistantModelId;
-      const chatBodyWithAssistantModel =
-        conversation.model.type && assistantModelId ? { assistantModelId } : {};
+      const conversationModelType = conversation.model.type;
+      let modelAdditionalSettings = {};
+
+      if (conversationModelType === 'model')
+        modelAdditionalSettings = {
+          prompt: updatedConversation.prompt,
+          temperature: updatedConversation.temperature,
+          selectedAddons,
+        };
+
+      if (conversationModelType === 'assistant' && assistantModelId)
+        modelAdditionalSettings = {
+          temperature: updatedConversation.temperature,
+          selectedAddons,
+          assistantModelId,
+        };
 
       const chatBody: ChatBody = {
         model: conversation.model,
@@ -321,10 +335,7 @@ export const Chat = memo(({ appName }: Props) => {
         })),
         id: conversation.id.toLowerCase(),
         key: apiKey,
-        prompt: updatedConversation.prompt,
-        temperature: updatedConversation.temperature,
-        selectedAddons: selectedAddons,
-        ...chatBodyWithAssistantModel,
+        ...modelAdditionalSettings,
       };
       const endpoint = getEndpoint();
       let body;
@@ -680,7 +691,7 @@ export const Chat = memo(({ appName }: Props) => {
     const updatedConversation: Conversation = {
       ...conversation,
       model: newAiEntity,
-      selectedAddons: newAiEntity.type !== 'application' ? selectedAddons : [],
+      selectedAddons,
     };
     if (newAiEntity.type === 'assistant') {
       handleUpdateConversation(conversation, {

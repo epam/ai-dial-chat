@@ -48,10 +48,10 @@ export interface ChatBody {
   model: OpenAIEntityModel;
   messages: Message[];
   key: string;
-  prompt: string;
-  temperature: number;
   id: string;
-  selectedAddons: string[];
+  prompt?: string;
+  temperature?: number;
+  selectedAddons?: string[];
   assistantModelId?: string;
 }
 
