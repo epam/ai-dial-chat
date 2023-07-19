@@ -79,7 +79,7 @@ export const ChatSettings = ({
 
             <span>
               {t('Model')}: {conversation.model.name} |{' '}
-              {!isIframe && (
+              {!isIframe && conversation.model.type !== 'application' && (
                 <>
                   {t('Temp')}: {conversation.temperature} |
                 </>

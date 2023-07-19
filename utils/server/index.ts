@@ -62,16 +62,20 @@ export const OpenAIStream = async ({
   userJWT,
 }: {
   model: OpenAIEntityModel;
-  systemPrompt: string;
-  temperature: number;
+  systemPrompt: string | undefined;
+  temperature: number | undefined;
   key: string;
   messages: Message[];
   tokenCount: number;
-  selectedAddons: OpenAIEntityAddonID[];
+  selectedAddons: OpenAIEntityAddonID[] | undefined;
   assistantModelId: OpenAIEntityModelID | undefined;
   userJWT: string | null | undefined;
 }) => {
-  const url = getUrl(model.id, model.type, selectedAddons?.length > 0);
+  const isAddonsAdded: boolean =
+    Array.isArray(selectedAddons) && selectedAddons?.length > 0;
+  const isSystemPrompt: boolean = systemPrompt?.trim().length === 0;
+
+  const url = getUrl(model.id, model.type, isAddonsAdded);
   const apiKey = key ? key : process.env.OPENAI_API_KEY;
   let requestHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -81,16 +85,15 @@ export const OpenAIStream = async ({
   let body: string;
 
   body = JSON.stringify({
-    messages:
-      systemPrompt.trim().length === 0
-        ? messages
-        : [
-            {
-              role: 'system',
-              content: systemPrompt,
-            },
-            ...messages,
-          ],
+    messages: !isSystemPrompt
+      ? messages
+      : [
+          {
+            role: 'system',
+            content: systemPrompt,
+          },
+          ...messages,
+        ],
     temperature,
     stream: true,
     model:

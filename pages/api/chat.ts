@@ -66,19 +66,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const token = await getToken({ req });
 
     let promptToSend = prompt;
-    if (!promptToSend) {
+    if (!promptToSend && model.type === 'model') {
       promptToSend = DEFAULT_SYSTEM_PROMPT;
     }
 
     let temperatureToUse = temperature;
-    if (temperatureToUse == null) {
+    if (temperatureToUse && model.type !== 'application') {
       temperatureToUse = DEFAULT_TEMPERATURE;
     }
 
-    const prompt_tokens = encoding.encode(promptToSend);
-
-    // let tokenCount = prompt_tokens.length;
-    // let messagesToSend: Message[] = [];
+    const promptToEncode: string = promptToSend ? promptToSend : '';
+    const prompt_tokens = encoding.encode(promptToEncode);
 
     let tokens_per_message = 0;
     if (
@@ -116,8 +114,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     tokenCount += 3;
 
-    // encoding.free();
-
     const stream = await OpenAIStream({
       model,
       systemPrompt: promptToSend,
@@ -130,7 +126,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       userJWT: token?.access_token as string | undefined,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
-    // return new Response(stream);
+
     const reader = stream.getReader();
     const processStream = async () => {
       try {
