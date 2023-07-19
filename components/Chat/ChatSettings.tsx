@@ -26,6 +26,7 @@ interface Props {
   isShowModelSelect: boolean;
   isShowClearConversation: boolean;
   isIframe: boolean;
+  isShowSettings: boolean;
   onSelectModel: (modelId: string) => void;
   onClearConversation: () => void;
   onUnselectConversation: () => void;
@@ -33,6 +34,7 @@ interface Props {
   onChangeTemperature: (temperature: number) => void;
   onSelectAssistantSubModel: (modelId: string) => void;
   onChangeAddon: (addonId: string) => void;
+  setShowSettings: (isShow: boolean) => void;
 }
 
 export const ChatSettings = ({
@@ -48,6 +50,7 @@ export const ChatSettings = ({
   isShowClearConversation,
   isIframe,
   prompts,
+  isShowSettings,
   onSelectModel,
   onClearConversation,
   onUnselectConversation,
@@ -55,9 +58,9 @@ export const ChatSettings = ({
   onChangeTemperature,
   onSelectAssistantSubModel,
   onChangeAddon,
+  setShowSettings,
 }: Props) => {
   const { t } = useTranslation('chat');
-  const [showSettings, setShowSettings] = useState<boolean>(false);
 
   return (
     <>
@@ -91,7 +94,7 @@ export const ChatSettings = ({
           <button
             className="ml-2 cursor-pointer hover:opacity-50"
             onClick={() => {
-              setShowSettings(!showSettings);
+              setShowSettings(!isShowSettings);
             }}
           >
             <IconSettings size={18} />
@@ -115,7 +118,7 @@ export const ChatSettings = ({
           </button>
         )}
       </div>
-      {showSettings && (
+      {isShowSettings && (
         <div className="flex flex-col space-y-10 md:mx-auto md:max-w-xl md:gap-6 md:py-3 md:pt-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
           <ConversationSettings
             conversation={conversation}
