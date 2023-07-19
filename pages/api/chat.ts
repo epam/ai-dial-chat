@@ -75,7 +75,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       temperatureToUse = DEFAULT_TEMPERATURE;
     }
 
-    const promptToEncode: string = promptToSend ? promptToSend : '';
+    const promptToEncode: string = promptToSend ?? '';
     const prompt_tokens = encoding.encode(promptToEncode);
 
     let tokens_per_message = 0;
