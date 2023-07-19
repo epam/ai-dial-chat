@@ -106,7 +106,6 @@ export const OpenAIStream = async ({
     }),
   });
 
-  console.log('BODY', body);
   const res = await fetch(url, {
     headers: requestHeaders,
     method: 'POST',
