@@ -73,7 +73,6 @@ export const OpenAIStream = async ({
 }) => {
   const isAddonsAdded: boolean =
     Array.isArray(selectedAddons) && selectedAddons?.length > 0;
-  const isSystemPrompt: boolean = systemPrompt?.trim().length === 0;
 
   const url = getUrl(model.id, model.type, isAddonsAdded);
   const apiKey = key ? key : process.env.OPENAI_API_KEY;
@@ -85,15 +84,16 @@ export const OpenAIStream = async ({
   let body: string;
 
   body = JSON.stringify({
-    messages: !isSystemPrompt
-      ? messages
-      : [
-          {
-            role: 'system',
-            content: systemPrompt,
-          },
-          ...messages,
-        ],
+    messages:
+      !systemPrompt || systemPrompt.trim().length === 0
+        ? messages
+        : [
+            {
+              role: 'system',
+              content: systemPrompt,
+            },
+            ...messages,
+          ],
     temperature,
     stream: true,
     model:
@@ -106,6 +106,7 @@ export const OpenAIStream = async ({
     }),
   });
 
+  console.log('BODY', body);
   const res = await fetch(url, {
     headers: requestHeaders,
     method: 'POST',
