@@ -150,6 +150,7 @@ export const Chat = memo(({ appName }: Props) => {
   const [mergedMessages, setMergedMessages] = useState<any>([]);
   const [isReplayPaused, setIsReplayPaused] = useState<boolean>(true);
   const [isReplay, setIsReplay] = useState<boolean>(false);
+  const [isShowChatSettings, setIsShowChatSettings] = useState(false);
 
   const localConversations = useRef<Conversation[]>(conversations);
 
@@ -647,12 +648,14 @@ export const Chat = memo(({ appName }: Props) => {
 
   const onClickReplayStart: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.preventDefault();
+    setIsShowChatSettings(false);
     setIsReplayPaused(false);
     handleReplay();
   };
 
   const onClickReplayReStart: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.preventDefault();
+    setIsShowChatSettings(false);
 
     if (isLastMessageFromAssistant) {
       handleReplay(2, activeReplayIndex, false);
@@ -789,6 +792,29 @@ export const Chat = memo(({ appName }: Props) => {
     });
   };
 
+  const onSendMessage = (message: Message) => {
+    setIsShowChatSettings(false);
+    localConversations.current = conversations;
+    selectedConversations.forEach((conv) => {
+      handleSend(conv, message, 0);
+    });
+  };
+
+  const onRegenerateMessage = () => {
+    setIsShowChatSettings(false);
+    localConversations.current = conversations;
+    selectedConversations.forEach((conv) => {
+      const lastUserMessageIndex = conv.messages
+        .map((msg) => msg.role)
+        .lastIndexOf('user');
+      handleSend(
+        conv,
+        conv.messages[lastUserMessageIndex],
+        conv.messages.length - lastUserMessageIndex,
+      );
+    });
+  };
+
   useEffect(() => {
     if (
       isReplay &&
@@ -900,6 +926,8 @@ export const Chat = memo(({ appName }: Props) => {
                             'top-chat-model-settings',
                           )}
                           isIframe={isIframe}
+                          isShowSettings={isShowChatSettings}
+                          setShowSettings={setIsShowChatSettings}
                           selectedConversationIds={selectedConversationIds}
                           onClearConversation={() =>
                             handleClearConversation(conv)
@@ -1052,26 +1080,9 @@ export const Chat = memo(({ appName }: Props) => {
                     ),
                   )}
                   showScrollDownButton={showScrollDownButton}
-                  onSend={(message) => {
-                    localConversations.current = conversations;
-                    selectedConversations.forEach((conv) => {
-                      handleSend(conv, message, 0);
-                    });
-                  }}
+                  onSend={onSendMessage}
                   onScrollDownClick={handleScrollDown}
-                  onRegenerate={() => {
-                    localConversations.current = conversations;
-                    selectedConversations.forEach((conv) => {
-                      const lastUserMessageIndex = conv.messages
-                        .map((msg) => msg.role)
-                        .lastIndexOf('user');
-                      handleSend(
-                        conv,
-                        conv.messages[lastUserMessageIndex],
-                        conv.messages.length - lastUserMessageIndex,
-                      );
-                    });
-                  }}
+                  onRegenerate={onRegenerateMessage}
                   onStopConversation={() => {
                     if (!isReplayPaused) {
                       setIsReplayPaused(true);
