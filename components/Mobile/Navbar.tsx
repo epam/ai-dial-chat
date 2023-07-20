@@ -1,8 +1,6 @@
 import { IconPlus } from '@tabler/icons-react';
 import { FC } from 'react';
 
-import { Conversation } from '@/types/chat';
-
 interface Props {
   selectedConversationNames: string[];
   onNewConversation: () => void;

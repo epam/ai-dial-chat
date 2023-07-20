@@ -1,4 +1,4 @@
-import { FC, useContext, useEffect, useReducer, useRef } from 'react';
+import { FC, useContext, useEffect, useRef } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -31,7 +31,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
       }
     };
 
-    const handleMouseUp = (e: MouseEvent) => {
+    const handleMouseUp = () => {
       window.removeEventListener('mouseup', handleMouseUp);
       onClose();
     };

@@ -8,7 +8,6 @@ import {
   OpenAIEntityApplicationType,
   OpenAIEntityAssistantType,
   OpenAIEntityModel,
-  OpenAIEntityModelID,
   OpenAIEntityModelType,
   OpenAIEntityModels,
   ProxyOpenAIEntity,

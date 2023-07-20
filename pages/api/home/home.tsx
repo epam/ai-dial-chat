@@ -1,5 +1,5 @@
 import { useSession } from 'next-auth/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 
 import { GetServerSideProps } from 'next';
@@ -18,13 +18,11 @@ import { delay } from '@/utils/app/auth/delay';
 import { timeoutAsync } from '@/utils/app/auth/timeoutAsync';
 import { cleanConversationHistory } from '@/utils/app/clean';
 import {
-  DEFAULT_ASSISTANT_SUBMODEL,
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
 } from '@/utils/app/const';
 import {
-  getAssitantModelId,
   saveConversations,
   saveSelectedConversationIds,
   updateConversation,
@@ -336,7 +334,7 @@ const Home = ({
 
   const handleNewConversations = (
     name = DEFAULT_CONVERSATION_NAME,
-    count: number = 2,
+    count = 2,
   ): Conversation[] | undefined => {
     if (!clientDefaultModelId) {
       return;
@@ -348,7 +346,7 @@ const Home = ({
     if (!model) {
       return;
     }
-    let newConversations = [];
+    const newConversations = [];
     for (let i = 0; i < count; i++) {
       const newConversation: Conversation = {
         id: uuidv4(),
@@ -502,7 +500,9 @@ const Home = ({
               authWindowLocation.destroy();
               break;
             }
-          } catch {}
+          } catch {
+            // Do nothing
+          }
           await delay(t);
         }
         window.location.reload();

@@ -1,4 +1,3 @@
-import { IconRobot } from '@tabler/icons-react';
 import { FC } from 'react';
 
 import { ModelIconMappingType } from '@/types/icons';

@@ -33,7 +33,7 @@ export const ContextMenu = ({
 }: Props) => {
   const { t } = useTranslation('sidebar');
   const contextMenuHeight = 230;
-  let classes = useRef('');
+  const classes = useRef('');
 
   const isConversation = featureType === 'conversation';
 

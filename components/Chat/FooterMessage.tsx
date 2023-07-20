@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
 import { ReportIssueDialog } from './ReportIssueDialog';
@@ -19,7 +18,6 @@ export const FooterMessage = ({
   isShowRequestApiKey,
   footerHtmlMessage,
 }: Props) => {
-  const { t } = useTranslation('chat');
   const [isRequestAPIDialogOpen, setIsRequestAPIDialogOpen] = useState(false);
   const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
   const router = useRouter();

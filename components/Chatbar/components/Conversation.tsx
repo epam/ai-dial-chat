@@ -3,7 +3,6 @@ import {
   DragEvent,
   KeyboardEvent,
   MouseEventHandler,
-  MutableRefObject,
   useContext,
   useEffect,
   useRef,

@@ -33,7 +33,7 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
       }
     };
 
-    const handleMouseUp = (e: MouseEvent) => {
+    const handleMouseUp = () => {
       window.removeEventListener('mouseup', handleMouseUp);
       onClose();
     };
