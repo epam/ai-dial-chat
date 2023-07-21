@@ -20,7 +20,7 @@ export function limitEntitiesAccordingToUser<T extends OpenAIEntity>(
         emails: new Set(emailsString.split(',')),
       };
     })
-      .reduce((acc, curr) => {
+    .reduce((acc, curr) => {
       acc[curr.entityId] = curr.emails;
 
       return acc;
