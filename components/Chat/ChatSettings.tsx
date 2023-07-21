@@ -81,7 +81,7 @@ export const ChatSettings = ({
             )}
 
             <span>
-              {t('Model')}: {conversation.model.name} |{' '}
+              {t('You are talking to')}: {conversation.model.name} |{' '}
               {!isIframe && conversation.model.type !== 'application' && (
                 <>
                   {t('Temp')}: {conversation.temperature} |
