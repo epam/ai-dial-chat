@@ -52,7 +52,7 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
           selectedAddons:
             conversation.selectedAddons ||
             (OpenAIEntityModels[model.id as OpenAIEntityModelID]
-              .selectedAddons ??
+              ?.selectedAddons ??
               []),
           assistantModelId,
         };
