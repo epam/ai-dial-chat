@@ -1,7 +1,11 @@
 import { defaultReplay } from '@/utils/app/defaultStateConstants';
 
 import { Conversation } from '@/types/chat';
-import { OpenAIEntityModelID, OpenAIEntityModels } from '@/types/openai';
+import {
+  OpenAIEntityModel,
+  OpenAIEntityModelID,
+  OpenAIEntityModels,
+} from '@/types/openai';
 
 import {
   DEFAULT_ASSISTANT_SUBMODEL,
@@ -30,9 +34,14 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
   return history.reduce(
     (acc: Conversation[], conversation: Partial<Conversation>) => {
       try {
-        const model =
-          conversation.model ||
-          OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ];
+        const model: OpenAIEntityModel = conversation.model
+          ? {
+              ...conversation.model,
+              ...(OpenAIEntityModels[conversation.model.id]
+                ? OpenAIEntityModels[conversation.model.id]
+                : { type: 'model' }),
+            }
+          : OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ];
 
         const assistantModelId: string | undefined = getAssitantModelId(
           model.type,

@@ -51,10 +51,12 @@ export const ConversationSettings = ({
   const { t } = useTranslation('chat');
   const aiEntityType = conversation.model.type;
   const modelsFiltered = models.filter((etity) => etity.type === 'model');
-  const assitantSubModelName = conversation.assistantModelId
-    ? OpenAIEntityModels[conversation.assistantModelId as OpenAIEntityModelID]
-        .name
-    : DEFAULT_ASSISTANT_SUBMODEL.name;
+  const assitantSubModelName =
+    conversation.assistantModelId &&
+    OpenAIEntityModels[conversation.assistantModelId as OpenAIEntityModelID]
+      ? OpenAIEntityModels[conversation.assistantModelId as OpenAIEntityModelID]
+          .name
+      : DEFAULT_ASSISTANT_SUBMODEL.name;
 
   const model = models.find(({ id }) => id === conversation.model.id);
   const preselectedAddons =
