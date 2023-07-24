@@ -40,9 +40,10 @@ const mergeStages = (sourceStages: Stage[], newStages: Stage[]) => {
 
 export const mergeMessages = (
   source: Message,
-  newMessages: Partial<Message>[],
+newMessages: Partial<Message>[],
 ) => {
   newMessages.forEach((newData) => {
+
     if (newData.role) {
       source.role = newData.role;
     }
@@ -85,7 +86,6 @@ export const mergeMessages = (
         source.custom_content.state = newData.custom_content.state;
       }
     }
-
   });
 
   return source;

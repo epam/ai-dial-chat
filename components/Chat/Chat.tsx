@@ -371,11 +371,11 @@ export const Chat = memo(({ appName }: Props) => {
 
         await showAPIToastError(response, t(errorsMessages.generalServer));
         const errorMessage: Message = {
-          content: t(
-            'Error happened during answering. Please regenerate response',
-          ),
+          content: '',
           role: 'assistant',
-          isError: true,
+          errorMessage:
+            t('Error happened during answering. Please regenerate response') ||
+            '',
         };
 
         localConversations.current = handleUpdateConversation(
