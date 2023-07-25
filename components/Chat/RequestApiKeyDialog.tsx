@@ -31,7 +31,7 @@ const checkValidity = (
     }
   });
 
-  if (!!focusableElement) {
+  if (focusableElement) {
     (focusableElement as HTMLInputElement | HTMLTextAreaElement).focus();
   }
 

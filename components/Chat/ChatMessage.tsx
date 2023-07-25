@@ -28,7 +28,6 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachments } from './MessageAttachments';
 import { MessageStages } from './MessageStages';
-import { modelCursorSign, modelCursorSignWithBackquote } from './chatConstants';
 
 import classNames from 'classnames';
 
@@ -87,9 +86,6 @@ export const ChatMessage: FC<Props> = memo(
 
     const isLastMessage =
       messageIndex == (conversation?.messages.length ?? 0) - 1;
-
-    const replaceCursor = (cursorSign: string) =>
-      cursorSign.replace(modelCursorSignWithBackquote, modelCursorSign);
 
     const isShowResponseLoader: boolean = messageIsStreaming && isLastMessage;
     const isUser = message.role === 'user';

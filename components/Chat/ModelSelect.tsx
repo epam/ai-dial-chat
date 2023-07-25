@@ -83,15 +83,15 @@ const selectClassNames: ClassNamesConfig<CompanionSelectOption> = {
         ? 'dark:border-white dark:shadow-white dark:shadow-sm'
         : ''
     } ${state.isDisabled ? '!bg-gray-200/40' : 'dark:bg-[#343541]'}`,
-  placeholder: (state) => 'text-neutral-900 dark:text-white',
-  valueContainer: (state) => '!text-neutral-900 hover:cursor-text',
-  menu: (state) =>
+  placeholder: () => 'text-neutral-900 dark:text-white',
+  valueContainer: () => '!text-neutral-900 hover:cursor-text',
+  menu: () =>
     '!mt-1 dark:bg-[#343541] !rounded !shadow-sm !shadow-neutral-400 dark:!shadow-[#717283]',
-  singleValue: (state) => '!text-neutral-900 dark:!text-white center m-0',
-  dropdownIndicator: (state) =>
+  singleValue: () => '!text-neutral-900 dark:!text-white center m-0',
+  dropdownIndicator: () =>
     '!py-0 hover:!text-neutral-900 hover:dark:!text-white',
-  input: (state) => 'dark:!text-white',
-  groupHeading: (state) => '!text-sm',
+  input: () => 'dark:!text-white',
+  groupHeading: () => '!text-sm',
 };
 
 export const ModelSelect = ({

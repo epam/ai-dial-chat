@@ -70,14 +70,14 @@ const selectClassNames: ClassNamesConfig<CompareOption> = {
         ? 'dark:border-white/80 dark:shadow-white/80 dark:shadow-sm'
         : ''
     }`,
-  placeholder: (state) => 'text-neutral-900 dark:text-white/80',
-  valueContainer: (state) => '!text-neutral-900 hover:cursor-text',
-  menu: (state) =>
+  placeholder: () => 'text-neutral-900 dark:text-white/80',
+  valueContainer: () => '!text-neutral-900 hover:cursor-text',
+  menu: () =>
     '!mt-1 dark:bg-[#40414F] !rounded !shadow-sm !shadow-neutral-400 dark:!shadow-[#717283]',
-  singleValue: (state) => '!text-neutral-900 dark:!text-white/80 center m-0',
-  dropdownIndicator: (state) =>
+  singleValue: () => '!text-neutral-900 dark:!text-white/80 center m-0',
+  dropdownIndicator: () =>
     '!py-0 hover:!text-neutral-900 hover:dark:!text-white/80',
-  input: (state) => 'dark:!text-white/80',
+  input: () => 'dark:!text-white/80',
 };
 
 export const ChatCompareSelect = ({

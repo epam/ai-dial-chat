@@ -1,4 +1,4 @@
-import type { AuthOptions, CookieOption, CookiesOptions } from 'next-auth';
+import type { AuthOptions, CookiesOptions } from 'next-auth';
 import NextAuth from 'next-auth/next';
 import { Provider } from 'next-auth/providers';
 import Auth0Provider from 'next-auth/providers/auth0';
@@ -93,7 +93,7 @@ const allProviders: (Provider | boolean)[] = [
           type: 'password',
         },
       },
-      async authorize(credentials, req) {
+      async authorize(credentials) {
         if (
           !!credentials?.access_token &&
           TEST_TOKENS.has(credentials.access_token)
@@ -224,7 +224,9 @@ export const authOptions: AuthOptions = {
             },
           }).then((r) => r.json())) as IGraphUser;
           jobTitle = user.jobTitle ?? 'unknown';
-        } catch {}
+        } catch {
+          // Do nothing
+        }
 
         options.account.jobTitle = jobTitle;
       }

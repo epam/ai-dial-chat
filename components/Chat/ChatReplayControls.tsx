@@ -1,5 +1,5 @@
 import { IconPlayerPlay } from '@tabler/icons-react';
-import { FC, MouseEventHandler, useTransition } from 'react';
+import { FC, MouseEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface ChatReplayControlsProps {

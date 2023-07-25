@@ -1,6 +1,5 @@
 import {
   MouseEventHandler,
-  MutableRefObject,
   memo,
   useCallback,
   useContext,
@@ -44,7 +43,6 @@ interface Props {
 
 const handleRate = (
   message: Message,
-  id: string,
   model: OpenAIEntityModel,
   apiKey: string,
 ) => {
@@ -59,7 +57,6 @@ const handleRate = (
     body: JSON.stringify({
       key: apiKey,
       message,
-      id,
       model,
       value: message.like > 0 ? true : false,
     }),
@@ -91,7 +88,7 @@ const filterUnfinishedStages = (messages: Message[]): Message[] => {
   }
 
   const assistentMessage = messages[assistentMessageIndex];
-  let updatedMessage: Message = {
+  const updatedMessage: Message = {
     ...assistentMessage,
     ...(assistentMessage.custom_content?.stages?.length && {
       custom_content: {
@@ -220,7 +217,7 @@ export const Chat = memo(({ appName }: Props) => {
       );
       setSelectedConversations(selectedConversations);
 
-      let mergedMessages = [];
+      const mergedMessages = [];
       for (let i = 0; i < selectedConversations[0].messages.length; i++) {
         mergedMessages.push(
           selectedConversations.map((conv) => [
@@ -339,8 +336,7 @@ export const Chat = memo(({ appName }: Props) => {
         ...modelAdditionalSettings,
       };
       const endpoint = getEndpoint();
-      let body;
-      body = JSON.stringify(chatBody);
+      const body = JSON.stringify(chatBody);
       if (!abortController.current || abortController.current.signal.aborted) {
         abortController.current = new AbortController();
       }
@@ -425,10 +421,13 @@ export const Chat = memo(({ appName }: Props) => {
       };
       let done = false;
       let isFirst = true;
-      let newMessage: Message = { content: '', model: messageModel } as Message;
+      const newMessage: Message = {
+        content: '',
+        model: messageModel,
+      } as Message;
       let eventData = '';
       let value: Uint8Array | undefined;
-      let doneReading: boolean = false;
+      let doneReading = false;
       while (!done) {
         try {
           const result = await reader.read();
@@ -458,7 +457,7 @@ export const Chat = memo(({ appName }: Props) => {
           throw error;
         }
         done = doneReading;
-        let decodedValue = decoder.decode(value);
+        const decodedValue = decoder.decode(value);
         eventData += decodedValue;
         if (decodedValue[decodedValue.length - 1] !== '\0') {
           continue;
@@ -512,12 +511,7 @@ export const Chat = memo(({ appName }: Props) => {
         key: 'messages',
         value: messages,
       });
-      handleRate(
-        editedMessage,
-        conversation?.id ?? '',
-        conversation.model,
-        apiKey,
-      );
+      handleRate(editedMessage, conversation.model, apiKey);
     },
     [apiKey, handleUpdateConversation],
   );

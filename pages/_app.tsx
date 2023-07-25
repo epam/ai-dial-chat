@@ -1,6 +1,6 @@
 import { IconX } from '@tabler/icons-react';
 import { SessionProvider, SessionProviderProps } from 'next-auth/react';
-import toast, { ToastBar, Toaster, resolveValue } from 'react-hot-toast';
+import toast, { ToastBar, Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 import { appWithTranslation } from 'next-i18next';
