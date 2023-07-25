@@ -190,7 +190,8 @@ export const Chat = memo(({ appName }: Props) => {
   const isErrorMessage =
     isSelectedConversations && !isEmptySelectedConversation
       ? selectedConversations.some(
-          ({ messages }) => messages[messages.length - 1].isError ?? false,
+          ({ messages }) =>
+            !!messages[messages.length - 1].errorMessage ?? false,
         )
       : false;
 
