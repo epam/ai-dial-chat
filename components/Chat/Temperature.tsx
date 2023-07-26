@@ -61,13 +61,13 @@ export const TemperatureSlider: FC<Props> = ({
         onChange={handleChange}
       />
       <ul className="w mt-2 pb-8 flex justify-between px-[24px] text-neutral-900 dark:text-neutral-100">
-        <li className="flex justify-center">
+        <li className="flex justify-center relative">
           <span className="absolute">{t('Precise')}</span>
         </li>
-        <li className="flex justify-center">
+        <li className="flex justify-center relative">
           <span className="absolute">{t('Neutral')}</span>
         </li>
-        <li className="flex justify-center">
+        <li className="flex justify-center relative">
           <span className="absolute">{t('Creative')}</span>
         </li>
       </ul>

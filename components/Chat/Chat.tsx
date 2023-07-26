@@ -867,7 +867,7 @@ export const Chat = memo(({ appName }: Props) => {
                   : 'w-full'
               }`}
             >
-              <div className="flex w-full">
+              <div className="flex w-full max-h-full">
                 {selectedConversations.map((conv) => (
                   <div
                     key={conv.id}
@@ -878,169 +878,196 @@ export const Chat = memo(({ appName }: Props) => {
                     }`}
                   >
                     {conv.messages.length === 0 ? (
-                      <ChatEmpty
-                        conversation={conv}
-                        models={models}
-                        addons={addons}
-                        prompts={prompts}
-                        defaultModelId={
-                          defaultModelId || OpenAIEntityModelID.GPT_3_5
-                        }
-                        isShowSettings={enabledFeatures.has(
-                          'empty-chat-settings',
-                        )}
-                        onSelectModel={(modelId: string) =>
-                          handleSelectModel(conv, modelId)
-                        }
-                        onSelectAssistantSubModel={(modelId: string) =>
-                          handleSelectAssistantSubModel(conv, modelId)
-                        }
-                        onChangeAddon={(addonId: string) =>
-                          handleOnChangeAddon(conv, addonId)
-                        }
-                        onChangePrompt={(prompt) =>
-                          handleChangePrompt(conv, prompt)
-                        }
-                        onChangeTemperature={(temperature) =>
-                          handleChangeTemperature(conv, temperature)
-                        }
-                        appName={appName}
-                      />
+                      <div className={`flex flex-col h-full`}>
+                        <div className="overflow-auto">
+                          <ChatEmpty
+                            conversation={conv}
+                            models={models}
+                            addons={addons}
+                            prompts={prompts}
+                            defaultModelId={
+                              defaultModelId || OpenAIEntityModelID.GPT_3_5
+                            }
+                            isShowSettings={enabledFeatures.has(
+                              'empty-chat-settings',
+                            )}
+                            onSelectModel={(modelId: string) =>
+                              handleSelectModel(conv, modelId)
+                            }
+                            onSelectAssistantSubModel={(modelId: string) =>
+                              handleSelectAssistantSubModel(conv, modelId)
+                            }
+                            onChangeAddon={(addonId: string) =>
+                              handleOnChangeAddon(conv, addonId)
+                            }
+                            onChangePrompt={(prompt) =>
+                              handleChangePrompt(conv, prompt)
+                            }
+                            onChangeTemperature={(temperature) =>
+                              handleChangeTemperature(conv, temperature)
+                            }
+                            appName={appName}
+                          />
+                        </div>
+
+                        <div
+                          className="shrink-0 bg-white dark:bg-[#343541]"
+                          style={{ height: inputHeight - 20 }}
+                        />
+                      </div>
                     ) : (
                       enabledFeatures.has('top-settings') && (
-                        <ChatSettings
-                          messageIsStreaming={messageIsStreaming}
-                          conversation={conv}
-                          defaultModelId={
-                            defaultModelId || OpenAIEntityModelID.GPT_3_5
-                          }
-                          prompts={prompts}
-                          models={models}
-                          addons={addons}
-                          isCompareMode={isCompareMode}
-                          isShowChatInfo={enabledFeatures.has('top-chat-info')}
-                          isShowClearConversation={enabledFeatures.has(
-                            'top-clear-conversation',
+                        <div className={`flex flex-col h-full`}>
+                          <div className="overflow-auto">
+                            <ChatSettings
+                              messageIsStreaming={messageIsStreaming}
+                              conversation={conv}
+                              defaultModelId={
+                                defaultModelId || OpenAIEntityModelID.GPT_3_5
+                              }
+                              prompts={prompts}
+                              models={models}
+                              addons={addons}
+                              isCompareMode={isCompareMode}
+                              isShowChatInfo={enabledFeatures.has(
+                                'top-chat-info',
+                              )}
+                              isShowClearConversation={enabledFeatures.has(
+                                'top-clear-conversation',
+                              )}
+                              isShowModelSelect={enabledFeatures.has(
+                                'top-chat-model-settings',
+                              )}
+                              isIframe={isIframe}
+                              isShowSettings={isShowChatSettings}
+                              setShowSettings={setIsShowChatSettings}
+                              selectedConversationIds={selectedConversationIds}
+                              onClearConversation={() =>
+                                handleClearConversation(conv)
+                              }
+                              onSelectModel={(modelId: string) =>
+                                handleSelectModel(conv, modelId)
+                              }
+                              onUnselectConversation={() => {
+                                const filteredSelectedConversation =
+                                  selectedConversations.filter(
+                                    ({ id }) => id !== conv.id,
+                                  )[0];
+                                handleSelectConversation(
+                                  filteredSelectedConversation,
+                                );
+                              }}
+                              onChangePrompt={(prompt) =>
+                                handleChangePrompt(conv, prompt)
+                              }
+                              onChangeTemperature={(temperature) =>
+                                handleChangeTemperature(conv, temperature)
+                              }
+                              onSelectAssistantSubModel={(modelId: string) =>
+                                handleSelectAssistantSubModel(conv, modelId)
+                              }
+                              onChangeAddon={(addonId: string) =>
+                                handleOnChangeAddon(conv, addonId)
+                              }
+                            />
+                          </div>
+                          {isShowChatSettings && (
+                            <div
+                              className="sm:hidden shrink-0 bg-white dark:bg-[#343541]"
+                              style={{ height: inputHeight }}
+                            />
                           )}
-                          isShowModelSelect={enabledFeatures.has(
-                            'top-chat-model-settings',
-                          )}
-                          isIframe={isIframe}
-                          isShowSettings={isShowChatSettings}
-                          setShowSettings={setIsShowChatSettings}
-                          selectedConversationIds={selectedConversationIds}
-                          onClearConversation={() =>
-                            handleClearConversation(conv)
-                          }
-                          onSelectModel={(modelId: string) =>
-                            handleSelectModel(conv, modelId)
-                          }
-                          onUnselectConversation={() => {
-                            const filteredSelectedConversation =
-                              selectedConversations.filter(
-                                ({ id }) => id !== conv.id,
-                              )[0];
-                            handleSelectConversation(
-                              filteredSelectedConversation,
-                            );
-                          }}
-                          onChangePrompt={(prompt) =>
-                            handleChangePrompt(conv, prompt)
-                          }
-                          onChangeTemperature={(temperature) =>
-                            handleChangeTemperature(conv, temperature)
-                          }
-                          onSelectAssistantSubModel={(modelId: string) =>
-                            handleSelectAssistantSubModel(conv, modelId)
-                          }
-                          onChangeAddon={(addonId: string) =>
-                            handleOnChangeAddon(conv, addonId)
-                          }
-                        />
+                        </div>
                       )
                     )}
                   </div>
                 ))}
               </div>
-              <div
-                className="max-h-full overflow-x-hidden flex flex-col"
-                ref={chatContainerRef}
-                onScroll={handleScroll}
-              >
-                {mergedMessages.map(
-                  (mergedStr: [Conversation, Message, number][], i: number) => (
-                    <div key={i} className="w-full flex">
-                      {mergedStr.map(
-                        ([conv, message, index]: [
-                          Conversation,
-                          Message,
-                          number,
-                        ]) => (
+              {mergedMessages?.length > 0 && (
+                <div
+                  className="max-h-full overflow-x-hidden flex flex-col"
+                  ref={chatContainerRef}
+                  onScroll={handleScroll}
+                >
+                  {mergedMessages.map(
+                    (
+                      mergedStr: [Conversation, Message, number][],
+                      i: number,
+                    ) => (
+                      <div key={i} className="w-full flex">
+                        {mergedStr.map(
+                          ([conv, message, index]: [
+                            Conversation,
+                            Message,
+                            number,
+                          ]) => (
+                            <div
+                              key={conv.id}
+                              className={`${
+                                isCompareMode &&
+                                selectedConversations.length > 1
+                                  ? 'w-[50%]'
+                                  : 'w-full'
+                              }`}
+                            >
+                              <div className="h-full w-full">
+                                <MemoizedChatMessage
+                                  key={conv.id}
+                                  message={message}
+                                  messageIndex={index}
+                                  conversation={conv}
+                                  isLikesEnabled={enabledFeatures.has('likes')}
+                                  editDisabled={isNotAllowedModel}
+                                  onEdit={(editedMessage) => {
+                                    selectedConversations.forEach((conv) => {
+                                      handleSend(
+                                        conv,
+                                        editedMessage,
+                                        conv?.messages.length - index,
+                                      );
+                                    });
+                                  }}
+                                  onLike={onLikeHandler(index, conv)}
+                                  onDelete={(message) => {
+                                    handleDeleteMessage(message);
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    ),
+                  )}
+                  {loading && (
+                    <div className={'flex w-full'}>
+                      {selectedConversations.map(({ model, id }) => {
+                        return (
                           <div
-                            key={conv.id}
+                            key={id}
                             className={`${
                               isCompareMode && selectedConversations.length > 1
                                 ? 'w-[50%]'
                                 : 'w-full'
                             }`}
                           >
-                            <div className="h-full w-full">
-                              <MemoizedChatMessage
-                                key={conv.id}
-                                message={message}
-                                messageIndex={index}
-                                conversation={conv}
-                                isLikesEnabled={enabledFeatures.has('likes')}
-                                editDisabled={isNotAllowedModel}
-                                onEdit={(editedMessage) => {
-                                  selectedConversations.forEach((conv) => {
-                                    handleSend(
-                                      conv,
-                                      editedMessage,
-                                      conv?.messages.length - index,
-                                    );
-                                  });
-                                }}
-                                onLike={onLikeHandler(index, conv)}
-                                onDelete={(message) => {
-                                  handleDeleteMessage(message);
-                                }}
-                              />
-                            </div>
+                            <ChatLoader
+                              modelIconMapping={modelIconMapping}
+                              modelId={model.id}
+                              theme={lightMode}
+                            />
                           </div>
-                        ),
-                      )}
+                        );
+                      })}
                     </div>
-                  ),
-                )}
-                {loading && (
-                  <div className={'flex w-full'}>
-                    {selectedConversations.map(({ model, id }) => {
-                      return (
-                        <div
-                          key={id}
-                          className={`${
-                            isCompareMode && selectedConversations.length > 1
-                              ? 'w-[50%]'
-                              : 'w-full'
-                          }`}
-                        >
-                          <ChatLoader
-                            modelIconMapping={modelIconMapping}
-                            modelId={model.id}
-                            theme={lightMode}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                <div
-                  className="shrink-0 bg-white dark:bg-[#343541]"
-                  style={{ height: inputHeight - 10 }}
-                  ref={messagesEndRef}
-                />
-              </div>
+                  )}
+                  <div
+                    className="shrink-0 bg-white dark:bg-[#343541]"
+                    style={{ height: inputHeight - 10 }}
+                    ref={messagesEndRef}
+                  />
+                </div>
+              )}
             </div>
             {isCompareMode && selectedConversations.length < 2 && (
               <div className="w-[50%]">
