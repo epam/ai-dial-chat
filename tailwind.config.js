@@ -32,39 +32,39 @@ module.exports = {
       ...colorPalette,
       'dropdowns-hints': {
         DEFAULT: `var(--dropdowns-hints, ${colorPalette['gray-100']})`,
-        dark: `var(--dropdowns-hints, ${colorPalette['black']})`,
+        dark: `var(--dropdowns-hints-dark, ${colorPalette['black']})`,
       },
       l1: {
         DEFAULT: `var(--l1, ${colorPalette['gray-300']})`,
-        dark: `var(--l1, ${colorPalette['gray-900']})`,
+        dark: `var(--l1-dark, ${colorPalette['gray-900']})`,
       },
       l2: {
         DEFAULT: `var(--l2, ${colorPalette['gray-200']})`,
-        dark: `var(--l2, ${colorPalette['gray-800']})`,
+        dark: `var(--l2-dark, ${colorPalette['gray-800']})`,
       },
       l3: {
         DEFAULT: `var(--l3, ${colorPalette['gray-100']})`,
-        dark: `var(--l3, ${colorPalette['gray-700']})`,
+        dark: `var(--l3-dark, ${colorPalette['gray-700']})`,
       },
       l4: {
         DEFAULT: `var(--l4, ${colorPalette['gray-400']})`,
-        dark: `var(--l4, ${colorPalette['gray-600']})`,
+        dark: `var(--l4-dark, ${colorPalette['gray-600']})`,
       },
       'icons-secondaryText': {
         DEFAULT: `var(--icons-secondaryText, ${colorPalette['gray-500']})`,
-        dark: `var(--icons-secondaryText, ${colorPalette['gray-500']})`,
+        dark: `var(--icons-secondaryText-dark, ${colorPalette['gray-500']})`,
       },
       text: {
         DEFAULT: `var(--text, ${colorPalette['gray-800']})`,
-        dark: `var(--text, ${colorPalette['gray-200']})`,
+        dark: `var(--text-dark, ${colorPalette['gray-200']})`,
       },
       'error-text': {
         DEFAULT: `var(--error-text, ${colorPalette['red-800']})`,
-        dark: `var(--error-text, ${colorPalette['red-400']})`,
+        dark: `var(--error-text-dark, ${colorPalette['red-400']})`,
       },
       'error-bg': {
         DEFAULT: `var(--error-bg, ${colorPalette['red-200']})`,
-        dark: `var(--error-bg, ${colorPalette['red-900']})`,
+        dark: `var(--error-bg-dark, ${colorPalette['red-900']})`,
       },
     },
   },
