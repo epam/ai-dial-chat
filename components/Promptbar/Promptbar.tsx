@@ -1,5 +1,5 @@
 import { IconFolderPlus, IconPlus } from '@tabler/icons-react';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 

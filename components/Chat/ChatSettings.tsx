@@ -1,5 +1,4 @@
 import { IconClearAll, IconSettings, IconX } from '@tabler/icons-react';
-import { useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 

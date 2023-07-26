@@ -1,41 +1,48 @@
 import { Message, Stage } from '@/types/chat';
 
 export const parseStreamMessages = (message: string): Partial<Message>[] => {
-  const parsedMessage = message.split('\0').filter(msg => !!msg).map(chunk => JSON.parse(chunk));
+  const parsedMessage = message
+    .split('\0')
+    .filter((msg) => !!msg)
+    .map((chunk) => JSON.parse(chunk));
 
   return parsedMessage;
 };
 
 const mergeStages = (sourceStages: Stage[], newStages: Stage[]) => {
-    const sourceStagesReducer = sourceStages.reduce((acc, curr) => {
-        acc[curr.index] = curr;
+  const sourceStagesReducer = sourceStages.reduce((acc, curr) => {
+    acc[curr.index] = curr;
 
-        return acc;
-    }, <Record<number, Stage>>{});
+    return acc;
+  }, {} as Record<number, Stage>);
 
-    newStages.forEach(stage => {
-      if (sourceStagesReducer[stage.index]) {
-        if (stage.attachments) {
-            sourceStagesReducer[stage.index].attachments = (sourceStagesReducer[stage.index].attachments || [])?.concat(stage.attachments);
-        }
-
-        if (stage.content) {
-            sourceStagesReducer[stage.index].content = (sourceStagesReducer[stage.index].content || '') + stage.content;
-        }
-
-        if (stage.name) {
-            sourceStagesReducer[stage.index].name = (sourceStagesReducer[stage.index].name || '') + stage.name;
-        }
-
-        if (stage.status) {
-            sourceStagesReducer[stage.index].status = stage.status;
-        }
-      } else {
-          sourceStagesReducer[stage.index] = stage;
+  newStages.forEach((stage) => {
+    if (sourceStagesReducer[stage.index]) {
+      if (stage.attachments) {
+        sourceStagesReducer[stage.index].attachments = (
+          sourceStagesReducer[stage.index].attachments || []
+        )?.concat(stage.attachments);
       }
-    });
 
-    return Object.values(sourceStagesReducer);
+      if (stage.content) {
+        sourceStagesReducer[stage.index].content =
+          (sourceStagesReducer[stage.index].content || '') + stage.content;
+      }
+
+      if (stage.name) {
+        sourceStagesReducer[stage.index].name =
+          (sourceStagesReducer[stage.index].name || '') + stage.name;
+      }
+
+      if (stage.status) {
+        sourceStagesReducer[stage.index].status = stage.status;
+      }
+    } else {
+      sourceStagesReducer[stage.index] = stage;
+    }
+  });
+
+  return Object.values(sourceStagesReducer);
 };
 
 export const mergeMessages = (
@@ -71,7 +78,6 @@ export const mergeMessages = (
       }
 
       if (newData.custom_content.stages) {
-
         if (!source.custom_content.stages) {
           source.custom_content.stages = [];
         }
@@ -85,7 +91,6 @@ export const mergeMessages = (
         source.custom_content.state = newData.custom_content.state;
       }
     }
-
   });
 
   return source;

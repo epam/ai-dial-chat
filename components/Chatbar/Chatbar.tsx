@@ -54,7 +54,6 @@ export const Chatbar = () => {
       defaultModelId,
       folders,
       messageIsStreaming,
-      isCompareMode,
     },
     dispatch: homeDispatch,
     handleCreateFolder,
