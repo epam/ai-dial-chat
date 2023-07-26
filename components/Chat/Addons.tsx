@@ -61,7 +61,9 @@ export const Addons = ({
 }: AddonsProps) => {
   return (
     <div>
-      <div className={`grid grid-cols-4 overflow-auto gap-8 max-h-[80px]`}>
+      <div
+        className={`grid grid-cols-2 sm:grid-cols-4 overflow-auto gap-8 max-h-[80px]`}
+      >
         {addons.map((addon) => {
           const isPreselected = preselectedAddons.some((id) => id === addon.id);
           const isSelected = selectedAddons.some((id) => id === addon.id);
