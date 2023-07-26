@@ -912,7 +912,14 @@ export const Chat = memo(({ appName }: Props) => {
                     ) : (
                       enabledFeatures.has('top-settings') && (
                         <div className={`flex flex-col h-full`}>
-                          <div className="overflow-auto">
+                          <div
+                            className={`overflow-auto`}
+                            style={{
+                              maxHeight: isShowChatSettings
+                                ? window.innerHeight - inputHeight - 40
+                                : '',
+                            }}
+                          >
                             <ChatSettings
                               messageIsStreaming={messageIsStreaming}
                               conversation={conv}
@@ -965,12 +972,6 @@ export const Chat = memo(({ appName }: Props) => {
                               }
                             />
                           </div>
-                          {isShowChatSettings && (
-                            <div
-                              className="sm:hidden shrink-0 bg-white dark:bg-[#343541]"
-                              style={{ height: inputHeight }}
-                            />
-                          )}
                         </div>
                       )
                     )}

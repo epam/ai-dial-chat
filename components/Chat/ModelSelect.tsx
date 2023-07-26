@@ -108,6 +108,10 @@ export const ModelSelect = ({
   const [isNotAllowedModelSelected, setIsNotAllowedModelSelected] =
     useState(false);
 
+  const [mainElement] = useState<HTMLElement | null>(() => {
+    return document.querySelector<HTMLElement>('.theme-main');
+  });
+
   const createOption = (entity: OpenAIEntity | OpenAIEntityModel) => ({
     value: entity.id,
     label:
@@ -175,6 +179,7 @@ export const ModelSelect = ({
       </label>
       <Select<CompanionSelectOption>
         isSearchable
+        menuPortalTarget={mainElement}
         className="w-full rounded-lg text-neutral-900 dark:text-white dark:bg-[#343541]"
         classNames={selectClassNames}
         options={groupedSelectOptionsWithNotAllowed}
