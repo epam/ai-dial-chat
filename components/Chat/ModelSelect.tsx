@@ -92,6 +92,8 @@ const selectClassNames: ClassNamesConfig<CompanionSelectOption> = {
     '!py-0 hover:!text-neutral-900 hover:dark:!text-white',
   input: () => 'dark:!text-white',
   groupHeading: () => '!text-sm',
+  menuPortal: () =>
+    'text-neutral-900 dark:text-white !mt-1 dark:bg-[#343541] !rounded !shadow-sm !shadow-neutral-400 dark:!shadow-[#717283]',
 };
 
 export const ModelSelect = ({
