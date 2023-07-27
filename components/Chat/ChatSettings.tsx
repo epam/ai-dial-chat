@@ -63,14 +63,14 @@ export const ChatSettings = ({
 
   return (
     <>
-      <div className="sticky top-0 z-10 flex justify-center items-center border border-b-neutral-300 bg-neutral-100 py-2 text-sm text-neutral-500 dark:border-none dark:bg-[#444654] dark:text-neutral-200">
+      <div className="sticky top-0 z-10 flex items-center justify-center border border-b-neutral-300 bg-neutral-100 py-2 text-sm text-neutral-500 dark:border-none dark:bg-[#444654] dark:text-neutral-200">
         {isShowChatInfo && (
           <>
             {isCompareMode && (
               <>
                 {t('Name')}:&nbsp;
                 <span
-                  className="max-w-[50px] lg:max-w-[300px] text-ellipsis whitespace-nowrap overflow-hidden"
+                  className="max-w-[50px] truncate lg:max-w-[300px]"
                   title={conversation.name}
                 >
                   {conversation.name}

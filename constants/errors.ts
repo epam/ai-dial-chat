@@ -6,5 +6,6 @@ export const errorsMessages = {
   unsupportedDataFormat: 'Unsupported data format',
   localStorageQuotaExceeded:
     'Conversation storage capacity exceeded. Please clean up some conversations (prefer ones with media attachments) and try again.',
-  customThemesConfigNotProvided: 'The custom config host url not provided. Please recheck application settings'
+  customThemesConfigNotProvided:
+    'The custom config host url not provided. Please recheck application settings',
 };

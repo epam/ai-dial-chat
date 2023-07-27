@@ -11,7 +11,7 @@
     "build:overlay": "tsc overlay/script.ts --target es6 --skipLibCheck --outDir public/overlay",
     "start": "next start",
     "lint": "next lint && prettier --check 'components' 'constants' 'overlay' pages services types utils",
-    "lint:fix": "next lint --fix && prettier 'components' 'constants' 'overlay' pages services types utils",
+    "lint:fix": "next lint --fix && prettier --write 'components' 'constants' 'overlay' pages services types utils",
     "format": "prettier --write .",
     "test": "vitest",
     "coverage": "vitest run --coverage"

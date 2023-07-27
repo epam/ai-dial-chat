@@ -46,11 +46,11 @@ const CustomSelectOption = (props: OptionProps<CompanionSelectOption>) => {
       <components.Option
         {...props}
         isDisabled={data.isDisabled}
-        className={`!p-1 !pl-4 dark:text-white hover:dark:bg-[#40414F] hover:cursor-pointer ${
+        className={`!p-1 !pl-4 hover:cursor-pointer dark:text-white hover:dark:bg-[#40414F] ${
           isSelected ? 'dark:bg-[#202123]' : 'dark:bg-[#343541]'
         } ${
           data.isDisabled
-            ? 'dark:!text-neutral-400 hover:!cursor-not-allowed dark:!bg-[#40414F]'
+            ? 'hover:!cursor-not-allowed dark:!bg-[#40414F] dark:!text-neutral-400'
             : ''
         } 
         ${isFocused ? 'dark:bg-[#40414F]' : ''}
@@ -175,7 +175,7 @@ export const ModelSelect = ({
       </label>
       <Select<CompanionSelectOption>
         isSearchable
-        className="w-full rounded-lg text-neutral-900 dark:text-white dark:bg-[#343541]"
+        className="w-full rounded-lg text-neutral-900 dark:bg-[#343541] dark:text-white"
         classNames={selectClassNames}
         options={groupedSelectOptionsWithNotAllowed}
         placeholder={t('Select a model') || ''}
@@ -193,7 +193,7 @@ export const ModelSelect = ({
         isDisabled={isDisabled}
       />
       {conversationModelId === OpenAIEntityModelID.GPT_4_32K && (
-        <div className="w-full mt-3 text-left text-orange-600 dark:text-orange-600 flex gap-2 items-center">
+        <div className="mt-3 flex w-full items-center gap-2 text-left text-orange-600 dark:text-orange-600">
           <IconExclamationCircle size={18} />
           <div>
             {t(
