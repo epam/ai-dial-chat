@@ -1,6 +1,5 @@
 import { FC } from 'react';
 
-import { ModelIconMappingType } from '@/types/icons';
 import { Settings } from '@/types/settings';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
@@ -9,15 +8,10 @@ import { modelCursorSign } from './chatConstants';
 
 interface ChatLoaderProps {
   theme: Settings['theme'];
-  modelIconMapping: ModelIconMappingType;
   modelId: string;
 }
 
-export const ChatLoader: FC<ChatLoaderProps> = ({
-  theme,
-  modelIconMapping,
-  modelId,
-}) => {
+export const ChatLoader: FC<ChatLoaderProps> = ({ theme, modelId }) => {
   return (
     <div
       className="group border-b border-black/10 bg-gray-50 text-gray-800 dark:border-gray-900/50 dark:bg-[#444654] dark:text-gray-100 md:px-4"
@@ -29,7 +23,6 @@ export const ChatLoader: FC<ChatLoaderProps> = ({
             size={24}
             animate={true}
             inverted={theme === 'dark'}
-            modelIconMapping={modelIconMapping}
             modelId={modelId}
           />
         </div>

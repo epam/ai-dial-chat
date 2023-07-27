@@ -64,7 +64,6 @@ interface Props {
   footerHtmlMessage: string;
   enabledFeatures: Feature[];
   isIframe: boolean;
-  modelIconMapping: string;
   authDisabled: boolean;
   defaultModelId: OpenAIEntityModelID;
   customThemesHost: string;
@@ -78,7 +77,6 @@ const Home = ({
   footerHtmlMessage,
   enabledFeatures,
   isIframe,
-  modelIconMapping,
   defaultModelId,
   authDisabled,
   customThemesHost,
@@ -465,14 +463,8 @@ const Home = ({
         field: 'isIframe',
         value: isIframe,
       });
-    modelIconMapping &&
-      dispatch({
-        field: 'modelIconMapping',
-        value: modelIconMapping,
-      });
   }, [
     defaultModelId,
-    modelIconMapping,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
     usePluginKeys,
@@ -750,26 +742,12 @@ export const getServerSideProps: GetServerSideProps = async ({
     process.env.FOOTER_HTML_MESSAGE ?? ''
   ).replace('%%VERSION%%', packageJSON.version);
 
-  let modelIconMap: Record<string, string> = {};
-  if (process.env.MODEL_ICON_MAPPING) {
-    modelIconMap = process.env.MODEL_ICON_MAPPING.split(',').reduce<
-      Record<string, string>
-    >((acc, modelIcon) => {
-      const [modelId, iconClass] = modelIcon.split('=');
-
-      acc[modelId] = iconClass;
-
-      return acc;
-    }, {});
-  }
-
   return {
     props: {
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
       usePluginKeys: !!process.env.NEXT_PUBLIC_ENABLE_PLUGIN_KEYS,
       serverSidePluginKeysSet,
       appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
-      modelIconMapping: modelIconMap,
       footerHtmlMessage: updatedFooterHTMLMessage,
       enabledFeatures: (process.env.ENABLED_FEATURES || '').split(','),
       isIframe,

@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
 import { errorsMessages } from '@/constants/errors';
+import cssEscape from 'css.escape';
 
 function generateColorsCssVariables(
   variables: Record<string, string> | undefined,
@@ -18,13 +19,40 @@ function generateColorsCssVariables(
     if (!value.startsWith('#') && !value.match(regex)) {
       compiledValue = `var(--${value})`;
     }
-    cssContent += `--${variable}${postfixValue}: ${compiledValue};\n`;
+    cssContent += `--${cssEscape(
+      variable,
+    )}${postfixValue}: ${compiledValue};\n`;
+  });
+  return cssContent;
+}
+
+function generateUrlsCssVariables(
+  variables: Record<string, string> | undefined,
+  postfix?: string,
+) {
+  if (!variables) {
+    return '';
+  }
+
+  let cssContent = '';
+  Object.entries(variables).forEach(([variable, value]) => {
+    if (!value) {
+      return;
+    }
+    const postfixValue = postfix ? `-${postfix}` : '';
+    let compiledValue = value;
+    if (!value.startsWith('http') && !value.startsWith('//')) {
+      compiledValue = `${process.env.THEMES_CONFIG_HOST}/${value}`;
+    }
+    cssContent += `--${cssEscape(
+      variable,
+    )}${postfixValue}: url('${compiledValue}');\n`;
   });
   return cssContent;
 }
 
 function wrapCssContents(contents: string[]): string {
-  return `:root {\n ${contents.join('\n')}\n }\n`;
+  return `:root:root {\n ${contents.join('')}\n }\n`;
 }
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -64,6 +92,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           generateColorsCssVariables(json.themes.colorsPalette),
           generateColorsCssVariables(json.themes.dark, 'dark'),
           generateColorsCssVariables(json.themes.light),
+          generateUrlsCssVariables({
+            'DEFAULT-logo': json.images['DEFAULT-logo'],
+          }),
+          generateUrlsCssVariables({ 'app-logo': json.images['app-logo'] }),
+          generateUrlsCssVariables(json.images.models, 'model'),
+          generateUrlsCssVariables(json.images.addons, 'addon'),
         ]),
       );
   }

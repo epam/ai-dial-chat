@@ -27,7 +27,7 @@ interface Props {
 
 export const ConversationComponent = ({ conversation }: Props) => {
   const {
-    state: { messageIsStreaming, selectedConversationIds, modelIconMapping },
+    state: { messageIsStreaming, selectedConversationIds },
     handleSelectConversation,
     handleUpdateConversation,
     handleNewReplayConversation,
@@ -126,7 +126,6 @@ export const ConversationComponent = ({ conversation }: Props) => {
         <div className="flex w-full items-center gap-3 rounded-lg bg-[#343541]/90 p-3">
           <ModelIcon
             size={18}
-            modelIconMapping={modelIconMapping}
             modelId={conversation.model.id}
             modelName={conversation.model.name}
             inverted
@@ -162,7 +161,6 @@ export const ConversationComponent = ({ conversation }: Props) => {
         >
           <ModelIcon
             size={18}
-            modelIconMapping={modelIconMapping}
             modelId={conversation.model.id}
             modelName={conversation.model.name}
             inverted
