@@ -846,7 +846,7 @@ export const Chat = memo(({ appName }: Props) => {
   }, [selectedConversationIds]);
 
   return (
-    <div className="relative flex-1 overflow-hidden bg-white dark:bg-[#343541]">
+    <div className="relative flex-1 overflow-hidden bg-white dark:bg-[#343541]" data-qa="chat">
       {!(apiKey || serverSideApiKeyIsSet) ? (
         <NoApiKeySet appName={appName} />
       ) : modelError ? (
