@@ -11,6 +11,7 @@
     "build:overlay": "tsc overlay/script.ts --target es6 --skipLibCheck --outDir public/overlay",
     "start": "next start",
     "lint": "next lint && prettier --check 'components' 'constants' 'overlay' pages services types utils",
+    "lint:fix": "next lint --fix && prettier 'components' 'constants' 'overlay' pages services types utils",
     "format": "prettier --write .",
     "test": "vitest",
     "coverage": "vitest run --coverage"
@@ -56,6 +57,7 @@
     "eslint": "^8.36.0",
     "eslint-config-next": "13.4.10",
     "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-tailwindcss": "^3.13.0",
     "gpt-3-encoder": "^1.1.4",
     "jsdom": "^21.1.1",
     "postcss": "^8.4.21",

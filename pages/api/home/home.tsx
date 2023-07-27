@@ -67,6 +67,7 @@ interface Props {
   modelIconMapping: string;
   authDisabled: boolean;
   defaultModelId: OpenAIEntityModelID;
+  customThemesHost: string | undefined;
 }
 
 const Home = ({
@@ -80,6 +81,7 @@ const Home = ({
   modelIconMapping,
   defaultModelId,
   authDisabled,
+  customThemesHost,
 }: Props) => {
   const session = useSession();
 
@@ -663,12 +665,15 @@ const Home = ({
           content="height=device-height ,width=device-width, initial-scale=1, user-scalable=no"
         />
         <link rel="icon" href="/favicon.ico" />
+        {!!customThemesHost && (
+          <link rel="stylesheet" href={`/api/themes-config?cssVariables`} />
+        )}
       </Head>
       {isIframe && !authDisabled && session.status !== 'authenticated' ? (
-        <div className="w-full h-full grid place-items-center min-h-[100px]">
+        <div className="grid h-full min-h-[100px] w-full place-items-center text-[#123123]">
           <button
             onClick={handleIframeAuth}
-            className="appearance-none border-gray-900/50 bg-[#343541] text-gray-100 border-gray-200 p-3 rounded-lg"
+            className="appearance-none rounded-lg border-gray-200 bg-[#343541] p-3 text-gray-100"
           >
             {t('Login')}
           </button>
@@ -770,6 +775,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       isIframe,
       defaultModelId: process.env.DEFAULT_MODEL || fallbackModelID,
       authDisabled: process.env.AUTH_DISABLED === 'true',
+      customThemesHost: process.env.THEMES_CONFIG_HOST,
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',

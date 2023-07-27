@@ -4,10 +4,11 @@
     "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/stylistic",
     "prettier",
+    "plugin:tailwindcss/recommended",
     "next/core-web-vitals"
   ],
   "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint"],
+  "plugins": ["@typescript-eslint", "tailwindcss"],
   "root": true,
   "rules": {
     "no-empty": "warn",
