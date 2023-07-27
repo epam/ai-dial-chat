@@ -67,7 +67,7 @@ interface Props {
   modelIconMapping: string;
   authDisabled: boolean;
   defaultModelId: OpenAIEntityModelID;
-  customThemesHost: string | undefined;
+  customThemesHost: string;
 }
 
 const Home = ({
@@ -775,7 +775,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       isIframe,
       defaultModelId: process.env.DEFAULT_MODEL || fallbackModelID,
       authDisabled: process.env.AUTH_DISABLED === 'true',
-      customThemesHost: process.env.THEMES_CONFIG_HOST,
+      customThemesHost: process.env.THEMES_CONFIG_HOST || '',
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',
