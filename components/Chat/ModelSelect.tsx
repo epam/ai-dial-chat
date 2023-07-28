@@ -92,6 +92,8 @@ const selectClassNames: ClassNamesConfig<CompanionSelectOption> = {
     '!py-0 hover:!text-neutral-900 hover:dark:!text-white',
   input: () => 'dark:!text-white',
   groupHeading: () => '!text-sm',
+  menuPortal: () =>
+    'text-neutral-900 dark:text-white !mt-1 dark:bg-[#343541] !rounded !shadow-sm !shadow-neutral-400 dark:!shadow-[#717283]',
 };
 
 export const ModelSelect = ({
@@ -107,6 +109,10 @@ export const ModelSelect = ({
 
   const [isNotAllowedModelSelected, setIsNotAllowedModelSelected] =
     useState(false);
+
+  const [mainElement] = useState<HTMLElement | null>(() => {
+    return document.querySelector<HTMLElement>('.theme-main');
+  });
 
   const createOption = (entity: OpenAIEntity | OpenAIEntityModel) => ({
     value: entity.id,
@@ -176,6 +182,7 @@ export const ModelSelect = ({
       <Select<CompanionSelectOption>
         isSearchable
         className="w-full rounded-lg text-neutral-900 dark:bg-[#343541] dark:text-white"
+        menuPortalTarget={mainElement}
         classNames={selectClassNames}
         options={groupedSelectOptionsWithNotAllowed}
         placeholder={t('Select a model') || ''}
