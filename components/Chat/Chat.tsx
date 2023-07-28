@@ -128,6 +128,7 @@ export const Chat = memo(({ appName }: Props) => {
       messageIsStreaming,
       enabledFeatures,
       isIframe,
+      modelIconMapping,
       lightMode,
     },
     handleUpdateConversation,
@@ -1044,7 +1045,11 @@ export const Chat = memo(({ appName }: Props) => {
                                 : 'w-full'
                             }`}
                           >
-                            <ChatLoader modelId={model.id} theme={lightMode} />
+                            <ChatLoader
+                              modelIconMapping={modelIconMapping}
+                              modelId={model.id}
+                              theme={lightMode}
+                            />
                           </div>
                         );
                       })}

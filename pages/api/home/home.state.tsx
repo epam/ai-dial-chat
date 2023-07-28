@@ -35,6 +35,7 @@ export interface HomeInitialState {
   usePluginKeys: boolean;
   isCompareMode: boolean;
   isIframe: boolean;
+  modelIconMapping: Record<string, string>;
   footerHtmlMessage: string;
 
   enabledFeatures: Set<Feature>;
@@ -66,6 +67,7 @@ export const initialState: HomeInitialState = {
   usePluginKeys: false,
   isCompareMode: false,
   isIframe: false,
+  modelIconMapping: {},
   footerHtmlMessage: '',
 
   enabledFeatures: new Set([]),

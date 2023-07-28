@@ -1,12 +1,20 @@
+import { IconMessage } from '@tabler/icons-react';
+
+import Image from 'next/image';
+
+import { ModelIconMappingType } from '@/types/icons';
+
 interface Props {
   modelId: string;
   size: number;
+  modelIconMapping: ModelIconMappingType;
   inverted?: boolean;
   animate?: boolean;
   modelName?: string;
 }
 
 export const ModelIcon = ({
+  modelIconMapping,
   modelId,
   size,
   inverted,
@@ -15,21 +23,26 @@ export const ModelIcon = ({
 }: Props) => {
   return (
     <>
-      <span
-        style={{
-          width: size,
-          height: size,
-          backgroundImage: `var(--${CSS.escape(
-            modelId,
-          )}-model, var(--DEFAULT-model, url(/images/default-model.svg)))`,
-        }}
-        className={`block bg-contain bg-no-repeat ${inverted ? 'invert' : ''} ${
-          animate ? 'animate-bounce' : ''
-        }`}
-        role="img"
-        aria-label={`${modelId} icon`}
-        title={modelName}
-      ></span>
+      {modelIconMapping[modelId] ? (
+        <Image
+          className={`text-red-100 ${inverted ? 'invert' : ''} ${
+            animate ? 'animate-bounce' : ''
+          }`}
+          src={`/images/${modelIconMapping[modelId]}`}
+          width={size}
+          height={size}
+          alt={`${modelId} icon`}
+          style={{ color: 'red' }}
+          title={modelName}
+        ></Image>
+      ) : (
+        <div title={modelName}>
+          <IconMessage
+            size={size}
+            className={animate ? 'animate-bounce' : ''}
+          />
+        </div>
+      )}
     </>
   );
 };
