@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Conversation } from '@/types/chat';
 
-import { ConversationComponent } from './Conversation';
+import { ConversationsRenderer } from './ConversationsRenderer';
 
 interface Props {
   conversations: Conversation[];
@@ -15,6 +15,18 @@ interface AllConversations {
   lastThirtyDays: Conversation[];
   lastYear: Conversation[];
   other: Conversation[];
+}
+interface SortedBlock {
+  conversations: Conversation[];
+  name: string;
+}
+interface SortedConversations {
+  [today: string]: SortedBlock;
+  yesterday: SortedBlock;
+  lastSevenDays: SortedBlock;
+  lastThirtyDays: SortedBlock;
+  lastYear: SortedBlock;
+  other: SortedBlock;
 }
 
 const sortingConversationsByDate = (
@@ -28,24 +40,19 @@ const sortingConversationsByDate = (
   }
   return -1;
 };
+
+const conversationsDateBlocksNames = {
+  today: 'Today',
+  yesterday: 'Yesterday',
+  lastSevenDays: 'Previous 7 Days',
+  lastThirtyDays: 'Previous 30 days',
+  lastYear: 'Previous Year',
+  other: 'Other',
+};
+
 export const Conversations = ({ conversations }: Props) => {
-  const [todayConversations, setTodayConversations] = useState<Conversation[]>(
-    [],
-  );
-  const [yesterdayConversations, setYesterdayConversations] = useState<
-    Conversation[]
-  >([]);
-  const [lastSevenDaysConversations, setLastSevenDaysConversations] = useState<
-    Conversation[]
-  >([]);
-  const [lastThirtyDaysConversations, setLastThirtyDaysConversations] =
-    useState<Conversation[]>([]);
-  const [lastYearConversations, setLastYearConversations] = useState<
-    Conversation[]
-  >([]);
-  const [otherConversations, setOtherConversations] = useState<Conversation[]>(
-    [],
-  );
+  const [sortedConversations, setSortedConversations] =
+    useState<SortedConversations>();
 
   const { t } = useTranslation('sidebar');
 
@@ -109,92 +116,52 @@ export const Conversations = ({ conversations }: Props) => {
       }
     });
 
-    setTodayConversations([
-      ...allConversations.today.sort(sortingConversationsByDate),
-    ]);
-    setYesterdayConversations([
-      ...allConversations.yesterday.sort(sortingConversationsByDate),
-    ]);
-    setLastSevenDaysConversations([
-      ...allConversations.lastSevenDays.sort(sortingConversationsByDate),
-    ]);
-    setLastThirtyDaysConversations([
-      ...allConversations.lastThirtyDays.sort(sortingConversationsByDate),
-    ]);
-    setLastYearConversations([
-      ...allConversations.lastYear.sort(sortingConversationsByDate),
-    ]);
-    setOtherConversations([...allConversations.other.reverse()]);
+    setSortedConversations({
+      today: {
+        conversations: allConversations.today.sort(sortingConversationsByDate),
+        name: conversationsDateBlocksNames.today,
+      },
+      yesterday: {
+        conversations: allConversations.yesterday.sort(
+          sortingConversationsByDate,
+        ),
+        name: conversationsDateBlocksNames.yesterday,
+      },
+      lastSevenDays: {
+        conversations: allConversations.lastSevenDays.sort(
+          sortingConversationsByDate,
+        ),
+        name: conversationsDateBlocksNames.lastSevenDays,
+      },
+      lastThirtyDays: {
+        conversations: allConversations.lastThirtyDays.sort(
+          sortingConversationsByDate,
+        ),
+        name: conversationsDateBlocksNames.lastThirtyDays,
+      },
+      lastYear: {
+        conversations: allConversations.lastYear.sort(
+          sortingConversationsByDate,
+        ),
+        name: conversationsDateBlocksNames.lastYear,
+      },
+      other: {
+        conversations: allConversations.other.reverse(),
+        name: conversationsDateBlocksNames.other,
+      },
+    });
   }, [conversations]);
 
   return (
     <div className="flex w-full flex-col gap-1">
-      {todayConversations.length > 0 && (
-        <>
-          <div className="ml-2 text-[#7F8792]">{t('Today')}</div>
-          {todayConversations.map((conversation) => (
-            <ConversationComponent
-              key={conversation.id}
-              conversation={conversation}
-            />
-          ))}
-        </>
-      )}
-      {yesterdayConversations.length > 0 && (
-        <>
-          <div className="ml-2 text-[#7F8792]">{t('Yesterday')}</div>
-          {yesterdayConversations.map((conversation) => (
-            <ConversationComponent
-              key={conversation.id}
-              conversation={conversation}
-            />
-          ))}
-        </>
-      )}
-      {lastSevenDaysConversations.length > 0 && (
-        <>
-          <div className="ml-2 text-[#7F8792]">{t('Previous 7 Days')}</div>
-          {lastSevenDaysConversations.map((conversation) => (
-            <ConversationComponent
-              key={conversation.id}
-              conversation={conversation}
-            />
-          ))}
-        </>
-      )}
-      {lastThirtyDaysConversations.length > 0 && (
-        <>
-          <div className="ml-2 text-[#7F8792]">{t('Previous 30 days')}</div>
-          {lastThirtyDaysConversations.map((conversation) => (
-            <ConversationComponent
-              key={conversation.id}
-              conversation={conversation}
-            />
-          ))}
-        </>
-      )}
-      {lastYearConversations.length > 0 && (
-        <>
-          <div className="ml-2 text-[#7F8792]">{t('Previous Year')}</div>
-          {lastYearConversations.map((conversation) => (
-            <ConversationComponent
-              key={conversation.id}
-              conversation={conversation}
-            />
-          ))}
-        </>
-      )}
-      {otherConversations.length > 0 && (
-        <>
-          <div className="ml-2 text-[#7F8792]">{t('Other')}</div>
-          {otherConversations.map((conversation) => (
-            <ConversationComponent
-              key={conversation.id}
-              conversation={conversation}
-            />
-          ))}
-        </>
-      )}
+      {sortedConversations &&
+        Object.keys(sortedConversations).map((block) => (
+          <ConversationsRenderer
+            key={block}
+            conversations={sortedConversations[block].conversations}
+            label={t('{{name}}', { name: sortedConversations[block].name })}
+          />
+        ))}
     </div>
   );
 };
