@@ -21,9 +21,9 @@ const sortingConversationsByDate = (
   convA: Conversation,
   convB: Conversation,
 ) => {
-  const dateA = convA.lastActivityDate as unknown as number;
-  const dateB = convB.lastActivityDate as unknown as number;
   if (convA.lastActivityDate && convB.lastActivityDate) {
+    const dateA = convA.lastActivityDate;
+    const dateB = convB.lastActivityDate;
     return dateB - dateA;
   }
   return -1;

@@ -220,7 +220,7 @@ export const Chatbar = () => {
         ...conversation,
         lastActivityDate:
           conversation.lastActivityDate &&
-          new Date(conversation.lastActivityDate),
+          new Date(conversation.lastActivityDate)[Symbol.toPrimitive]('number'),
       };
       handleUpdateConversation(conversationWithDate, {
         key: 'folderId',
