@@ -67,7 +67,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        // TODO: add no caching
       },
       signal: controller.signal,
     },
@@ -85,21 +84,18 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const json = await response.json();
 
   if (typeof req.query['cssVariables'] !== 'undefined') {
-    return res
-      .status(200)
-      .send(
-        wrapCssContents([
-          generateColorsCssVariables(json.themes.colorsPalette),
-          generateColorsCssVariables(json.themes.dark, 'dark'),
-          generateColorsCssVariables(json.themes.light),
-          generateUrlsCssVariables({
-            'DEFAULT-logo': json.images['DEFAULT-logo'],
-          }),
-          generateUrlsCssVariables({ 'app-logo': json.images['app-logo'] }),
-          generateUrlsCssVariables(json.images.models, 'model'),
-          generateUrlsCssVariables(json.images.addons, 'addon'),
-        ]),
-      );
+    return res.status(200).send(
+      wrapCssContents([
+        generateColorsCssVariables(json.themes.colorsPalette),
+        generateColorsCssVariables(json.themes.dark, 'dark'),
+        generateColorsCssVariables(json.themes.light),
+        generateUrlsCssVariables({
+          'app-logo': json.images['app-logo'],
+          'default-model': json.images['default-model'],
+          'default-addon': json.images['default-addon'],
+        }),
+      ]),
+    );
   }
 
   return res.status(200).send('');
