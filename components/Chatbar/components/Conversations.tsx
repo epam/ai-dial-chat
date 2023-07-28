@@ -20,8 +20,8 @@ const sortingConversationsByDate = (
   convA: Conversation,
   convB: Conversation,
 ) => {
-  let dateA = convA.lastActivityDate as unknown as number;
-  let dateB = convB.lastActivityDate as unknown as number;
+  const dateA = convA.lastActivityDate as unknown as number;
+  const dateB = convB.lastActivityDate as unknown as number;
   if (convA.lastActivityDate && convB.lastActivityDate) {
     return dateB - dateA;
   }
@@ -58,7 +58,7 @@ export const Conversations = ({ conversations }: Props) => {
   const lastYearDate = todayDate - oneDayMilliseconds * 365;
 
   useEffect(() => {
-    let allConversations: AllConversations = {
+    const allConversations: AllConversations = {
       today: [],
       yesterday: [],
       lastSevenDays: [],
