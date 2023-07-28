@@ -216,7 +216,16 @@ export const Chatbar = () => {
   const handleDrop = (e: any) => {
     if (e.dataTransfer) {
       const conversation = JSON.parse(e.dataTransfer.getData('conversation'));
-      handleUpdateConversation(conversation, { key: 'folderId', value: 0 });
+      const conversationWithDate: Conversation = {
+        ...conversation,
+        lastActivityDate:
+          conversation.lastActivityDate &&
+          new Date(conversation.lastActivityDate),
+      };
+      handleUpdateConversation(conversationWithDate, {
+        key: 'folderId',
+        value: 0,
+      });
       chatDispatch({ field: 'searchTerm', value: '' });
       e.target.style.background = 'none';
     }

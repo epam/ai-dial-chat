@@ -73,6 +73,7 @@ export interface Conversation {
   replay: Replay;
   selectedAddons: string[];
   assistantModelId?: string;
+  lastActivityDate?: Date;
 }
 export interface Replay {
   isReplay: boolean;

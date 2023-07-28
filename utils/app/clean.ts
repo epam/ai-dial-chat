@@ -64,6 +64,9 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
               ?.selectedAddons ??
               []),
           assistantModelId,
+          lastActivityDate:
+            conversation.lastActivityDate &&
+            new Date(conversation.lastActivityDate),
         };
 
         acc.push(cleanConversation);

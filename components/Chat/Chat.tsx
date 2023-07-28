@@ -250,17 +250,21 @@ export const Chat = memo(({ appName }: Props) => {
         return;
       }
 
-      let updatedConversation: Conversation;
+      let updatedConversation: Conversation = {
+        ...conversation,
+        lastActivityDate: new Date(),
+      };
+
       if (deleteCount) {
         const updatedMessages = [...conversation.messages];
         for (let i = 0; i < deleteCount; i++) {
           updatedMessages.pop();
         }
         updatedConversation = {
-          ...conversation,
+          ...updatedConversation,
           messages: [...updatedMessages, message],
           replay: {
-            ...conversation.replay,
+            ...updatedConversation.replay,
             activeReplayIndex: activeReplayIndex,
           },
         };
@@ -274,10 +278,10 @@ export const Chat = memo(({ appName }: Props) => {
         );
       } else {
         updatedConversation = {
-          ...conversation,
+          ...updatedConversation,
           messages: [...conversation.messages, message],
           replay: {
-            ...conversation.replay,
+            ...updatedConversation.replay,
             activeReplayIndex: activeReplayIndex,
           },
         };
