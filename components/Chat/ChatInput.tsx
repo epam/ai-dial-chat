@@ -281,7 +281,7 @@ export const ChatInput = forwardRef(
             </button>
           )}
 
-          <div className="relative mx-2 flex w-full grow flex-col rounded-md border border-black/10 bg-white shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:border-gray-900/50 dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)] sm:mx-4">
+          <div className="border-black/10 dark:border-gray-900/50 relative mx-2 flex w-full grow flex-col rounded-md border bg-white shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)] sm:mx-4">
             <textarea
               ref={textareaRef}
               className="m-0 w-full resize-none border-0 bg-transparent p-0 py-2 pl-10 pr-8 text-black dark:bg-transparent dark:text-white md:py-3 md:pl-10"

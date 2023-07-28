@@ -24,7 +24,7 @@ export const MessageAttachment = ({ attachment }: Props) => {
 
   return (
     <div
-      className={`rounded-lg border px-1 py-2 dark:border-gray-900/50 dark:bg-[#343541] ${
+      className={`dark:border-gray-900/50 rounded-lg border px-1 py-2 dark:bg-[#343541] ${
         isOpened ? 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3' : ''
       }`}
     >

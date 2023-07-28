@@ -158,8 +158,8 @@ export const ChatMessage: FC<Props> = memo(
       <div
         className={`group h-full md:px-4 ${
           isAssistant
-            ? 'border-b border-black/10 bg-gray-50 text-gray-800 dark:border-gray-900/50 dark:bg-[#444654] dark:text-gray-100'
-            : 'border-b border-black/10 bg-white text-gray-800 dark:border-gray-900/50 dark:bg-[#343541] dark:text-gray-100'
+            ? 'border-black/10 dark:border-gray-900/50 border-b bg-gray-50 text-gray-800 dark:bg-[#444654] dark:text-gray-100'
+            : 'border-black/10 dark:border-gray-900/50 border-b bg-white text-gray-800 dark:bg-[#343541] dark:text-gray-100'
         }`}
         style={{ overflowWrap: 'anywhere' }}
       >
