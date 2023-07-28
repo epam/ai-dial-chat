@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Conversation } from '@/types/chat';
 
@@ -46,6 +47,8 @@ export const Conversations = ({ conversations }: Props) => {
     [],
   );
 
+  const { t } = useTranslation('sidebar');
+
   const conversationsToDisplay = conversations.filter(
     (conversation) => !conversation.folderId,
   );
@@ -75,50 +78,52 @@ export const Conversations = ({ conversations }: Props) => {
         allConversations.other = allConversations.other.concat(conv);
       } else {
         if (lastActivityDateNumber > todayDate) {
-          allConversations.today = allConversations.today
-            .concat(conv)
-            .sort(sortingConversationsByDate);
+          allConversations.today = allConversations.today.concat(conv);
         }
         if (
           lastActivityDateNumber < todayDate &&
           lastActivityDateNumber >= yesterdayDate
         ) {
-          allConversations.yesterday = allConversations.yesterday
-            .concat(conv)
-            .sort(sortingConversationsByDate);
+          allConversations.yesterday = allConversations.yesterday.concat(conv);
         }
         if (
           lastActivityDateNumber < yesterdayDate &&
           lastActivityDateNumber >= lastSevenDate
         ) {
-          allConversations.lastSevenDays = allConversations.lastSevenDays
-            .concat(conv)
-            .sort(sortingConversationsByDate);
+          allConversations.lastSevenDays =
+            allConversations.lastSevenDays.concat(conv);
         }
         if (
           lastActivityDateNumber < lastSevenDate &&
           lastActivityDateNumber >= lastThirtyDate
         ) {
-          allConversations.lastThirtyDays = allConversations.lastThirtyDays
-            .concat(conv)
-            .sort(sortingConversationsByDate);
+          allConversations.lastThirtyDays =
+            allConversations.lastThirtyDays.concat(conv);
         }
         if (
           lastActivityDateNumber < lastThirtyDate &&
           lastActivityDateNumber >= lastYearDate
         ) {
-          allConversations.lastYear = allConversations.lastYear
-            .concat(conv)
-            .sort(sortingConversationsByDate);
+          allConversations.lastYear = allConversations.lastYear.concat(conv);
         }
       }
     });
 
-    setTodayConversations([...allConversations.today]);
-    setYesterdayConversations([...allConversations.yesterday]);
-    setLastSevenDaysConversations([...allConversations.lastSevenDays]);
-    setLastThirtyDaysConversations([...allConversations.lastThirtyDays]);
-    setLastYearConversations([...allConversations.lastYear]);
+    setTodayConversations([
+      ...allConversations.today.sort(sortingConversationsByDate),
+    ]);
+    setYesterdayConversations([
+      ...allConversations.yesterday.sort(sortingConversationsByDate),
+    ]);
+    setLastSevenDaysConversations([
+      ...allConversations.lastSevenDays.sort(sortingConversationsByDate),
+    ]);
+    setLastThirtyDaysConversations([
+      ...allConversations.lastThirtyDays.sort(sortingConversationsByDate),
+    ]);
+    setLastYearConversations([
+      ...allConversations.lastYear.sort(sortingConversationsByDate),
+    ]);
     setOtherConversations([...allConversations.other.reverse()]);
   }, [conversations]);
 
@@ -126,7 +131,7 @@ export const Conversations = ({ conversations }: Props) => {
     <div className="flex w-full flex-col gap-1">
       {todayConversations.length > 0 && (
         <>
-          <div className="ml-2 text-[#7F8792]">Today</div>
+          <div className="ml-2 text-[#7F8792]">{t('Today')}</div>
           {todayConversations.map((conversation) => (
             <ConversationComponent
               key={conversation.id}
@@ -137,7 +142,7 @@ export const Conversations = ({ conversations }: Props) => {
       )}
       {yesterdayConversations.length > 0 && (
         <>
-          <div className="ml-2 text-[#7F8792]">Yesterday</div>
+          <div className="ml-2 text-[#7F8792]">{t('Yesterday')}</div>
           {yesterdayConversations.map((conversation) => (
             <ConversationComponent
               key={conversation.id}
@@ -148,7 +153,7 @@ export const Conversations = ({ conversations }: Props) => {
       )}
       {lastSevenDaysConversations.length > 0 && (
         <>
-          <div className="ml-2 text-[#7F8792]">Previous 7 Days</div>
+          <div className="ml-2 text-[#7F8792]">{t('Previous 7 Days')}</div>
           {lastSevenDaysConversations.map((conversation) => (
             <ConversationComponent
               key={conversation.id}
@@ -159,7 +164,7 @@ export const Conversations = ({ conversations }: Props) => {
       )}
       {lastThirtyDaysConversations.length > 0 && (
         <>
-          <div className="ml-2 text-[#7F8792]">Previous 30 days</div>
+          <div className="ml-2 text-[#7F8792]">{t('Previous 30 days')}</div>
           {lastThirtyDaysConversations.map((conversation) => (
             <ConversationComponent
               key={conversation.id}
@@ -170,7 +175,7 @@ export const Conversations = ({ conversations }: Props) => {
       )}
       {lastYearConversations.length > 0 && (
         <>
-          <div className="ml-2 text-[#7F8792]">Previous Year</div>
+          <div className="ml-2 text-[#7F8792]">{t('Previous Year')}</div>
           {lastYearConversations.map((conversation) => (
             <ConversationComponent
               key={conversation.id}
@@ -181,7 +186,7 @@ export const Conversations = ({ conversations }: Props) => {
       )}
       {otherConversations.length > 0 && (
         <>
-          <div className="ml-2 text-[#7F8792]">Other</div>
+          <div className="ml-2 text-[#7F8792]">{t('Other')}</div>
           {otherConversations.map((conversation) => (
             <ConversationComponent
               key={conversation.id}
