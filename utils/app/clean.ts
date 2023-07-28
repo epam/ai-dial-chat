@@ -66,7 +66,9 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
           assistantModelId,
           lastActivityDate:
             conversation.lastActivityDate &&
-            new Date(conversation.lastActivityDate),
+            new Date(conversation.lastActivityDate)[Symbol.toPrimitive](
+              'number',
+            ),
         };
 
         acc.push(cleanConversation);

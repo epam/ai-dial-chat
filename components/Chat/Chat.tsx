@@ -252,7 +252,7 @@ export const Chat = memo(({ appName }: Props) => {
 
       let updatedConversation: Conversation = {
         ...conversation,
-        lastActivityDate: new Date(),
+        lastActivityDate: new Date()[Symbol.toPrimitive]('number'),
       };
 
       if (deleteCount) {

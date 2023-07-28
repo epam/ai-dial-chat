@@ -263,12 +263,17 @@ export const exportPrompt = (promptId: string) => {
 export const importData = (data: SupportedExportFormats): CleanDataResponse => {
   const { history, folders, prompts, isError } = cleanData(data);
   const oldConversations = localStorage.getItem('conversationHistory');
-  const oldConversationsParsed = oldConversations
-    ? JSON.parse(oldConversations)
-    : [];
+  let cleanedConversationHistory: Conversation[] = [];
+  if (oldConversations) {
+    const parsedConversationHistory: Conversation[] =
+      JSON.parse(oldConversations);
+    cleanedConversationHistory = cleanConversationHistory(
+      parsedConversationHistory,
+    );
+  }
 
   const newHistory: Conversation[] = [
-    ...oldConversationsParsed,
+    ...cleanedConversationHistory,
     ...history,
   ].filter(
     (conversation, index, self) =>

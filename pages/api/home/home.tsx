@@ -324,7 +324,7 @@ const Home = ({
       folderId: null,
       replay: defaultReplay,
       selectedAddons: model.selectedAddons ?? [],
-      lastActivityDate: new Date(),
+      lastActivityDate: new Date()[Symbol.toPrimitive]('number'),
     };
 
     addNewConversationToStore([newConversation]);
@@ -366,7 +366,7 @@ const Home = ({
         folderId: null,
         replay: defaultReplay,
         selectedAddons: model.selectedAddons ?? [],
-        lastActivityDate: new Date(),
+        lastActivityDate: new Date()[Symbol.toPrimitive]('number'),
       };
       newConversations.push(newConversation);
     }
@@ -611,7 +611,7 @@ const Home = ({
         folderId: null,
         replay: defaultReplay,
         selectedAddons: OpenAIEntityModels[defaultModelId].selectedAddons ?? [],
-        lastActivityDate: new Date(),
+        lastActivityDate: new Date()[Symbol.toPrimitive]('number'),
       };
 
       const updatedConversations: Conversation[] =

@@ -50,7 +50,7 @@ export const Conversations = ({ conversations }: Props) => {
     (conversation) => !conversation.folderId,
   );
 
-  const todayDate = new Date().setHours(0, 0, 0) as unknown as number;
+  const todayDate = new Date().setHours(0, 0, 0);
   const oneDayMilliseconds = 8.64e7;
   const yesterdayDate = todayDate - oneDayMilliseconds;
   const lastSevenDate = todayDate - oneDayMilliseconds * 7;
@@ -67,8 +67,11 @@ export const Conversations = ({ conversations }: Props) => {
       other: [],
     };
     conversationsToDisplay.forEach((conv) => {
-      const lastActivityDateNumber = conv.lastActivityDate as unknown as number;
-      if (!conv.lastActivityDate || typeof conv.lastActivityDate !== 'object') {
+      const lastActivityDateNumber = conv.lastActivityDate;
+      if (
+        !lastActivityDateNumber ||
+        typeof lastActivityDateNumber !== 'number'
+      ) {
         allConversations.other = allConversations.other.concat(conv);
       } else {
         if (lastActivityDateNumber > todayDate) {
@@ -119,12 +122,11 @@ export const Conversations = ({ conversations }: Props) => {
     setOtherConversations([...allConversations.other.reverse()]);
   }, [conversations]);
 
-  const secondTextColor = 'text-[#7F8792]';
   return (
     <div className="flex w-full flex-col gap-1">
       {todayConversations.length > 0 && (
         <>
-          <div className={`ml-2 ${secondTextColor}`}>Today</div>
+          <div className="ml-2 text-[#7F8792]">Today</div>
           {todayConversations.map((conversation) => (
             <ConversationComponent
               key={conversation.id}
@@ -135,7 +137,7 @@ export const Conversations = ({ conversations }: Props) => {
       )}
       {yesterdayConversations.length > 0 && (
         <>
-          <div className={`ml-2 ${secondTextColor}`}>Yesterday</div>
+          <div className="ml-2 text-[#7F8792]">Yesterday</div>
           {yesterdayConversations.map((conversation) => (
             <ConversationComponent
               key={conversation.id}
@@ -146,7 +148,7 @@ export const Conversations = ({ conversations }: Props) => {
       )}
       {lastSevenDaysConversations.length > 0 && (
         <>
-          <div className={`ml-2 ${secondTextColor}`}>Previous 7 Days</div>
+          <div className="ml-2 text-[#7F8792]">Previous 7 Days</div>
           {lastSevenDaysConversations.map((conversation) => (
             <ConversationComponent
               key={conversation.id}
@@ -157,7 +159,7 @@ export const Conversations = ({ conversations }: Props) => {
       )}
       {lastThirtyDaysConversations.length > 0 && (
         <>
-          <div className={`ml-2 ${secondTextColor}`}>Previous 30 days</div>
+          <div className="ml-2 text-[#7F8792]">Previous 30 days</div>
           {lastThirtyDaysConversations.map((conversation) => (
             <ConversationComponent
               key={conversation.id}
@@ -168,7 +170,7 @@ export const Conversations = ({ conversations }: Props) => {
       )}
       {lastYearConversations.length > 0 && (
         <>
-          <div className={`ml-2 ${secondTextColor}`}>Previous Year</div>
+          <div className="ml-2 text-[#7F8792]">Previous Year</div>
           {lastYearConversations.map((conversation) => (
             <ConversationComponent
               key={conversation.id}
@@ -179,7 +181,7 @@ export const Conversations = ({ conversations }: Props) => {
       )}
       {otherConversations.length > 0 && (
         <>
-          <div className={`ml-2 ${secondTextColor}`}>Other</div>
+          <div className="ml-2 text-[#7F8792]">Other</div>
           {otherConversations.map((conversation) => (
             <ConversationComponent
               key={conversation.id}
