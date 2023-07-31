@@ -3,9 +3,26 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { errorsMessages } from '@/constants/errors';
 import cssEscape from 'css.escape';
 
+const hexToRgb = (hex: string) => {
+  // http://stackoverflow.com/a/5624139
+  const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+  hex = hex.replace(shorthandRegex, (_, r, g, b) => {
+    return r + r + g + g + b + b;
+  });
+
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+
+  return result
+    ? [
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16),
+      ]
+    : null;
+};
+
 function generateColorsCssVariables(
   variables: Record<string, string> | undefined,
-  postfix?: string,
 ) {
   if (!variables) {
     return '';
@@ -13,22 +30,22 @@ function generateColorsCssVariables(
 
   let cssContent = '';
   Object.entries(variables).forEach(([variable, value]) => {
-    const postfixValue = postfix ? `-${postfix}` : '';
     let compiledValue = value;
-    const regex = '\\d{1,3} \\d{1,3} \\d{1,3}';
-    if (!value.startsWith('#') && !value.match(regex)) {
+    const rgbRegex = '\\d{1,3} \\d{1,3} \\d{1,3}';
+
+    if (value.startsWith('#')) {
+      const rgbValue = hexToRgb(value);
+      compiledValue = `${rgbValue?.join(' ') || ''}`;
+    } else if (!value.match(rgbRegex)) {
       compiledValue = `var(--${value})`;
     }
-    cssContent += `--${cssEscape(
-      variable,
-    )}${postfixValue}: ${compiledValue};\n`;
+    cssContent += `--${cssEscape(variable)}: ${compiledValue};\n`;
   });
   return cssContent;
 }
 
 function generateUrlsCssVariables(
   variables: Record<string, string> | undefined,
-  postfix?: string,
 ) {
   if (!variables) {
     return '';
@@ -39,14 +56,11 @@ function generateUrlsCssVariables(
     if (!value) {
       return;
     }
-    const postfixValue = postfix ? `-${postfix}` : '';
     let compiledValue = value;
     if (!value.startsWith('http') && !value.startsWith('//')) {
       compiledValue = `${process.env.THEMES_CONFIG_HOST}/${value}`;
     }
-    cssContent += `--${cssEscape(
-      variable,
-    )}${postfixValue}: url('${compiledValue}');\n`;
+    cssContent += `--${cssEscape(variable)}: url('${compiledValue}');\n`;
   });
   return cssContent;
 }
