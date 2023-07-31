@@ -324,6 +324,7 @@ const Home = ({
       folderId: null,
       replay: defaultReplay,
       selectedAddons: model.selectedAddons ?? [],
+      lastActivityDate: Date.now(),
     };
 
     addNewConversationToStore([newConversation]);
@@ -365,6 +366,7 @@ const Home = ({
         folderId: null,
         replay: defaultReplay,
         selectedAddons: model.selectedAddons ?? [],
+        lastActivityDate: Date.now(),
       };
       newConversations.push(newConversation);
     }
@@ -609,6 +611,7 @@ const Home = ({
         folderId: null,
         replay: defaultReplay,
         selectedAddons: OpenAIEntityModels[defaultModelId].selectedAddons ?? [],
+        lastActivityDate: Date.now(),
       };
 
       const updatedConversations: Conversation[] =
