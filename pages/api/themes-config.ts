@@ -87,8 +87,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(200).send(
       wrapCssContents([
         generateColorsCssVariables(json.themes.colorsPalette),
-        generateColorsCssVariables(json.themes.dark, 'dark'),
-        generateColorsCssVariables(json.themes.light),
         generateUrlsCssVariables({
           'app-logo': json.images['app-logo'],
           'default-model': json.images['default-model'],
