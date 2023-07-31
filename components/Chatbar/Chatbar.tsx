@@ -218,9 +218,7 @@ export const Chatbar = () => {
       const conversation = JSON.parse(e.dataTransfer.getData('conversation'));
       const conversationWithDate: Conversation = {
         ...conversation,
-        lastActivityDate:
-          conversation.lastActivityDate &&
-          new Date(conversation.lastActivityDate)[Symbol.toPrimitive]('number'),
+        lastActivityDate: conversation.lastActivityDate,
       };
       handleUpdateConversation(conversationWithDate, {
         key: 'folderId',

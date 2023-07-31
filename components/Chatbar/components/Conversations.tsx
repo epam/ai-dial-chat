@@ -21,7 +21,7 @@ interface SortedBlock {
   name: string;
 }
 interface SortedConversations {
-  [today: string]: SortedBlock;
+  today: SortedBlock;
   yesterday: SortedBlock;
   lastSevenDays: SortedBlock;
   lastThirtyDays: SortedBlock;
@@ -155,11 +155,11 @@ export const Conversations = ({ conversations }: Props) => {
   return (
     <div className="flex w-full flex-col gap-1">
       {sortedConversations &&
-        Object.keys(sortedConversations).map((block) => (
+        Object.entries(sortedConversations).map(([key, value]) => (
           <ConversationsRenderer
-            key={block}
-            conversations={sortedConversations[block].conversations}
-            label={t('{{name}}', { name: sortedConversations[block].name })}
+            key={key}
+            conversations={value.conversations}
+            label={t('{{name}}', { name: value.name })}
           />
         ))}
     </div>
