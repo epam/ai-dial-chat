@@ -120,7 +120,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       temperature: temperatureToUse,
       key,
       messages: messagesToSend,
-      tokenCount,
       selectedAddons: selectedAddons as OpenAIEntityAddonID[],
       assistantModelId: assistantModelId as OpenAIEntityModelID | undefined,
       userJWT: token?.access_token as string | undefined,
