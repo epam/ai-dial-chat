@@ -157,7 +157,7 @@ export const ChatCompareSelect = ({
   }, [conversations, selectedConversations]);
 
   return (
-    <div className="text-black/80 flex h-full flex-col items-center justify-center text-base dark:text-white/80">
+    <div className="flex h-full flex-col items-center justify-center text-base text-black/80 dark:text-white/80">
       <div className="mb-5 flex max-w-[300px] flex-col text-center">
         <h5>{t('Select conversation to compare with')}</h5>
         <i>
@@ -170,7 +170,7 @@ export const ChatCompareSelect = ({
       </div>
 
       <Select<CompareOption>
-        className="!border-gray-900/50 text-black/80 !min-w-[220px] !rounded-md border text-base dark:bg-[#40414F] dark:text-white/80"
+        className="!min-w-[220px] !rounded-md border !border-gray-900/50 text-base text-black/80 dark:bg-[#40414F] dark:text-white/80"
         classNames={selectClassNames}
         options={comparableOptions}
         placeholder={placeholder}

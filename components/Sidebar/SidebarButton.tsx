@@ -18,7 +18,7 @@ export const SidebarButton: FC<Props> = ({
   return (
     <button
       className={classNames(
-        'hover:bg-gray-500/10 flex cursor-pointer select-none items-center gap-3 rounded-md px-3 py-3 text-[14px] leading-3 text-white transition-colors duration-200',
+        'flex cursor-pointer select-none items-center gap-3 rounded-md px-3 py-3 text-[14px] leading-3 text-white transition-colors duration-200 hover:bg-gray-500/10',
         className,
       )}
       onClick={onClick}

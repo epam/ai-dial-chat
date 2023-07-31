@@ -26,7 +26,7 @@ export const ClearAllElements: FC<Props> = ({
   };
 
   return isConfirming ? (
-    <div className="hover:bg-gray-500/10 flex w-full cursor-pointer items-center rounded-lg p-3">
+    <div className="flex w-full cursor-pointer items-center rounded-lg p-3 hover:bg-gray-500/10">
       <IconTrash size={18} />
 
       <div className="ml-3 flex-1 text-left text-[12.5px] leading-3 text-white">

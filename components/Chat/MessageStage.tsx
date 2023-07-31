@@ -56,7 +56,7 @@ export const MessageStage = ({ stage }: Props) => {
   );
 
   return (
-    <div className="dark:border-gray-900/50 block min-w-0 shrink rounded-lg border text-sm dark:bg-[#343541]">
+    <div className="block min-w-0 shrink rounded-lg border text-sm dark:border-gray-900/50 dark:bg-[#343541]">
       {hasContent ? (
         <button
           className="flex w-full min-w-0 shrink items-center gap-2 p-2"
