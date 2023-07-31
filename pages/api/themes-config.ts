@@ -3,6 +3,9 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { errorsMessages } from '@/constants/errors';
 import cssEscape from 'css.escape';
 
+let cachedTheme = '';
+let cachedThemeExpiration: number;
+
 const hexToRgb = (hex: string) => {
   // http://stackoverflow.com/a/5624139
   const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
@@ -74,6 +77,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(500).send(errorsMessages.customThemesConfigNotProvided);
   }
 
+  if (
+    cachedThemeExpiration &&
+    cachedTheme &&
+    cachedThemeExpiration > Date.now()
+  ) {
+    return res.status(200).send(cachedTheme);
+  }
+
   const controller = new AbortController();
   const response = await fetch(
     `${process.env.THEMES_CONFIG_HOST}/config.json`,
@@ -97,20 +108,18 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const json = await response.json();
 
-  if (typeof req.query['cssVariables'] !== 'undefined') {
-    return res.status(200).send(
-      wrapCssContents([
-        generateColorsCssVariables(json.themes.colorsPalette),
-        generateUrlsCssVariables({
-          'app-logo': json.images['app-logo'],
-          'default-model': json.images['default-model'],
-          'default-addon': json.images['default-addon'],
-        }),
-      ]),
-    );
-  }
+  const dayInMs = 86400000;
+  cachedTheme = wrapCssContents([
+    generateColorsCssVariables(json.themes.colorsPalette),
+    generateUrlsCssVariables({
+      'app-logo': json.images['app-logo'],
+      'default-model': json.images['default-model'],
+      'default-addon': json.images['default-addon'],
+    }),
+  ]);
+  cachedThemeExpiration = Date.now() + dayInMs;
 
-  return res.status(200).send('');
+  return res.status(200).send(cachedTheme);
 };
 
 export default handler;

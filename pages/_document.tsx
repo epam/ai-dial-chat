@@ -18,7 +18,7 @@ export default function Document(props: Props) {
           content={process.env.NEXT_PUBLIC_APP_NAME || 'Chatbot UI'}
         ></meta>
         {!!process.env.THEMES_CONFIG_HOST && (
-          <link rel="stylesheet" href={`/api/themes-config?cssVariables`} />
+          <link rel="stylesheet" href={`/api/themes-config`} />
         )}
       </Head>
       <body>
