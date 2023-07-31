@@ -4,7 +4,7 @@ import { errorsMessages } from '@/constants/errors';
 import cssEscape from 'css.escape';
 
 let cachedTheme = '';
-let cachedThemeExpiration: number;
+let cachedThemeExpiration: number | undefined;
 
 const hexToRgb = (hex: string) => {
   // http://stackoverflow.com/a/5624139
