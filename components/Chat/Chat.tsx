@@ -243,6 +243,49 @@ export const Chat = memo(({ appName }: Props) => {
     );
   }, [selectedConversations, models]);
 
+  function handleErrorMessage({
+    updatedConversation,
+    errorText,
+    error,
+  }: {
+    updatedConversation: Conversation;
+    errorText: string;
+    error?: any;
+  }) {
+    homeDispatch({ field: 'loading', value: false });
+    handleMessageIsStreamingChange(-1);
+
+    const lastMessage =
+      updatedConversation.messages[updatedConversation.messages.length - 1];
+    const otherMessages = updatedConversation.messages.slice(
+      0,
+      lastMessage.role === 'assistant'
+        ? updatedConversation.messages.length - 1
+        : updatedConversation.messages.length,
+    );
+
+    const assistantErrorMessage: Message =
+      lastMessage.role === 'assistant'
+        ? { ...lastMessage, errorMessage: errorText }
+        : {
+            content: '',
+            role: 'assistant',
+            errorMessage: errorText,
+          };
+    localConversations.current = handleUpdateConversation(
+      updatedConversation,
+      {
+        key: 'messages',
+        value: [...otherMessages, assistantErrorMessage],
+      },
+      localConversations.current,
+    );
+
+    if (error) {
+      console.error(error);
+    }
+  }
+
   const handleSend = useCallback(
     async (
       conversation: Conversation,
@@ -346,7 +389,13 @@ export const Chat = memo(({ appName }: Props) => {
         abortController.current = new AbortController();
       }
       let response;
+      let isTimeout = false;
+      let timeoutId;
       try {
+        timeoutId = setTimeout(() => {
+          isTimeout = true;
+          abortController.current?.abort();
+        }, 20000);
         response = await fetch(endpoint, {
           method: 'POST',
           headers: {
@@ -357,41 +406,48 @@ export const Chat = memo(({ appName }: Props) => {
         });
       } catch (error: any) {
         if (error.name === 'AbortError') {
-          homeDispatch({ field: 'loading', value: false });
-          handleMessageIsStreamingChange(-1);
-          return { error: true };
+          // Do not show error for user abort
+          if (!isTimeout) {
+            homeDispatch({ field: 'loading', value: false });
+            handleMessageIsStreamingChange(-1);
+            return;
+          }
+
+          isTimeout = false;
+          handleErrorMessage({
+            updatedConversation,
+            errorText: t(errorsMessages.timeoutError),
+            error,
+          });
+          return;
         }
 
-        throw error;
+        handleErrorMessage({
+          updatedConversation,
+          errorText: t(errorsMessages.generalClient),
+          error,
+        });
+        return;
+      } finally {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
       }
 
       if (!response.ok) {
-        homeDispatch({ field: 'loading', value: false });
-        handleMessageIsStreamingChange(-1);
-
         await showAPIToastError(response, t(errorsMessages.generalServer));
-        const errorMessage: Message = {
-          content: '',
-          role: 'assistant',
-          errorMessage:
-            t('Error happened during answering. Please regenerate response') ||
-            '',
-        };
-
-        localConversations.current = handleUpdateConversation(
+        handleErrorMessage({
           updatedConversation,
-          {
-            key: 'messages',
-            value: [...updatedConversation.messages, errorMessage],
-          },
-          localConversations.current,
-        );
-        return { error: true };
+          errorText: t(errorsMessages.generalServer),
+        });
+        return;
       }
       const data = response.body;
       if (!data) {
-        homeDispatch({ field: 'loading', value: false });
-        handleMessageIsStreamingChange(-1);
+        handleErrorMessage({
+          updatedConversation,
+          errorText: t(errorsMessages.generalServer),
+        });
 
         return { error: true };
       }
@@ -430,8 +486,9 @@ export const Chat = memo(({ appName }: Props) => {
       let eventData = '';
       let value: Uint8Array | undefined;
       let doneReading = false;
-      let isTimeout = false;
-      let timeoutId;
+
+      isTimeout = false;
+      timeoutId = undefined;
       while (!done) {
         try {
           timeoutId = setTimeout(() => {
@@ -445,29 +502,34 @@ export const Chat = memo(({ appName }: Props) => {
           const updatedMessages = filterUnfinishedStages(
             updatedConversation.messages,
           );
-
-          if (error.name === 'AbortError' && isTimeout) {
-            updatedMessages[updatedMessages.length - 1].errorMessage =
-              errorsMessages.timeoutError;
-          } else if (error.name !== 'AbortError') {
-            console.error(error);
-          }
-
           updatedConversation = {
             ...updatedConversation,
             messages: updatedMessages,
           };
-          localConversations.current = handleUpdateConversation(
-            updatedConversation,
-            {
-              key: 'messages',
-              value: updatedMessages,
-            },
-            localConversations.current,
-          );
 
-          done = true;
-          break;
+          if (error.name === 'AbortError') {
+            // Do not show error for user abort
+            if (!isTimeout) {
+              homeDispatch({ field: 'loading', value: false });
+              handleMessageIsStreamingChange(-1);
+              return;
+            }
+
+            isTimeout = false;
+            handleErrorMessage({
+              updatedConversation,
+              errorText: t(errorsMessages.timeoutError),
+              error,
+            });
+            return;
+          }
+
+          handleErrorMessage({
+            updatedConversation,
+            errorText: t(errorsMessages.generalClient),
+            error,
+          });
+          return;
         } finally {
           if (timeoutId) {
             clearTimeout(timeoutId);
