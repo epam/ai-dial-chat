@@ -190,7 +190,8 @@ export const Chat = memo(({ appName }: Props) => {
   const isErrorMessage =
     isSelectedConversations && !isEmptySelectedConversation
       ? selectedConversations.some(
-          ({ messages }) => messages[messages.length - 1].isError ?? false,
+          ({ messages }) =>
+            !!messages[messages.length - 1].errorMessage ?? false,
         )
       : false;
 
@@ -370,11 +371,11 @@ export const Chat = memo(({ appName }: Props) => {
 
         await showAPIToastError(response, t(errorsMessages.generalServer));
         const errorMessage: Message = {
-          content: t(
-            'Error happened during answering. Please regenerate response',
-          ),
+          content: '',
           role: 'assistant',
-          isError: true,
+          errorMessage:
+            t('Error happened during answering. Please regenerate response') ||
+            '',
         };
 
         localConversations.current = handleUpdateConversation(
@@ -428,34 +429,44 @@ export const Chat = memo(({ appName }: Props) => {
       let newMessage: Message = { content: '', model: messageModel } as Message;
       let eventData = '';
       let value: Uint8Array | undefined;
-      let doneReading: boolean = false;
+      let doneReading = false;
+      let isTimeout = false;
       while (!done) {
         try {
+          const id = setTimeout(() => {
+            isTimeout = true;
+            abortController.current?.abort();
+          }, 20000);
           const result = await reader.read();
+          clearTimeout(id);
           value = result.value;
           doneReading = result.done;
         } catch (error: any) {
-          if (error.name === 'AbortError') {
-            const updatedMessages = filterUnfinishedStages(
-              updatedConversation.messages,
-            );
-            updatedConversation = {
-              ...updatedConversation,
-              messages: updatedMessages,
-            };
-            localConversations.current = handleUpdateConversation(
-              updatedConversation,
-              {
-                key: 'messages',
-                value: updatedMessages,
-              },
-              localConversations.current,
-            );
-            done = true;
-            break;
+          const updatedMessages = filterUnfinishedStages(
+            updatedConversation.messages,
+          );
+
+          if (error.name === 'AbortError' && isTimeout) {
+            updatedMessages[updatedMessages.length - 1].errorMessage =
+              errorsMessages.timeoutError;
           }
 
-          throw error;
+          updatedConversation = {
+            ...updatedConversation,
+            messages: updatedMessages,
+          };
+          localConversations.current = handleUpdateConversation(
+            updatedConversation,
+            {
+              key: 'messages',
+              value: updatedMessages,
+            },
+            localConversations.current,
+          );
+
+          console.error(error);
+          done = true;
+          break;
         }
         done = doneReading;
         let decodedValue = decoder.decode(value);

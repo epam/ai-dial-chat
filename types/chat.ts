@@ -37,7 +37,7 @@ export interface Message {
     state?: object;
   };
   like?: number;
-  isError?: boolean;
+  errorMessage?: string;
   state?: object;
   model?: Partial<OpenAIEntityModel>;
 }

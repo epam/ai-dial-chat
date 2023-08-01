@@ -19,7 +19,6 @@ export const replaceCursor = (cursorSign: string) =>
 
 interface ChatMDComponentProps {
   isShowResponseLoader: boolean;
-  isError?: boolean;
   content: string;
 }
 
@@ -90,14 +89,11 @@ export const getMDComponents = (isShowResponseLoader: boolean): Components => {
 const ChatMDComponent = ({
   isShowResponseLoader,
   content,
-  isError,
 }: ChatMDComponentProps) => {
   return (
     <>
       <MemoizedReactMarkdown
-        className={`prose dark:prose-invert flex-1 ${
-          isError ? 'text-red-400' : ''
-        }`}
+        className={`prose dark:prose-invert flex-1`}
         remarkPlugins={[remarkGfm]}
         components={getMDComponents(isShowResponseLoader)}
       >
