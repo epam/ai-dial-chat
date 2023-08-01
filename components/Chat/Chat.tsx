@@ -431,14 +431,14 @@ export const Chat = memo(({ appName }: Props) => {
       let value: Uint8Array | undefined;
       let doneReading = false;
       let isTimeout = false;
+      let timeoutId;
       while (!done) {
         try {
-          const id = setTimeout(() => {
+          timeoutId = setTimeout(() => {
             isTimeout = true;
             abortController.current?.abort();
           }, 20000);
           const result = await reader.read();
-          clearTimeout(id);
           value = result.value;
           doneReading = result.done;
         } catch (error: any) {
@@ -449,6 +449,8 @@ export const Chat = memo(({ appName }: Props) => {
           if (error.name === 'AbortError' && isTimeout) {
             updatedMessages[updatedMessages.length - 1].errorMessage =
               errorsMessages.timeoutError;
+          } else if (error.name !== 'AbortError') {
+            console.error(error);
           }
 
           updatedConversation = {
@@ -464,9 +466,12 @@ export const Chat = memo(({ appName }: Props) => {
             localConversations.current,
           );
 
-          console.error(error);
           done = true;
           break;
+        } finally {
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
         }
         done = doneReading;
         let decodedValue = decoder.decode(value);
