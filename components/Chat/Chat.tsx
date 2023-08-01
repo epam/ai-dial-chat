@@ -859,13 +859,13 @@ export const Chat = memo(({ appName }: Props) => {
         <>
           <div className="flex h-full overflow-hidden">
             <div
-              className={`flex flex-col h-full overflow-hidden ${
+              className={`flex h-full flex-col overflow-hidden ${
                 isCompareMode && selectedConversations.length < 2
                   ? 'w-[50%]'
                   : 'w-full'
               }`}
             >
-              <div className="flex w-full max-h-full">
+              <div className="flex max-h-full w-full">
                 {selectedConversations.map((conv) => (
                   <div
                     key={conv.id}
@@ -876,7 +876,7 @@ export const Chat = memo(({ appName }: Props) => {
                     }`}
                   >
                     {conv.messages.length === 0 ? (
-                      <div className={`flex flex-col h-full`}>
+                      <div className={`flex h-full flex-col`}>
                         <div className="overflow-auto">
                           <ChatEmpty
                             conversation={conv}
@@ -915,7 +915,7 @@ export const Chat = memo(({ appName }: Props) => {
                       </div>
                     ) : (
                       enabledFeatures.has('top-settings') && (
-                        <div className={`flex flex-col h-full`}>
+                        <div className={`flex h-full flex-col`}>
                           <div
                             className={`overflow-auto`}
                             style={{
@@ -984,7 +984,7 @@ export const Chat = memo(({ appName }: Props) => {
               </div>
               {mergedMessages?.length > 0 && (
                 <div
-                  className="max-h-full overflow-x-hidden flex flex-col"
+                  className="flex max-h-full flex-col overflow-x-hidden"
                   ref={chatContainerRef}
                   onScroll={handleScroll}
                 >
@@ -993,7 +993,7 @@ export const Chat = memo(({ appName }: Props) => {
                       mergedStr: [Conversation, Message, number][],
                       i: number,
                     ) => (
-                      <div key={i} className="w-full flex">
+                      <div key={i} className="flex w-full">
                         {mergedStr.map(
                           ([conv, message, index]: [
                             Conversation,

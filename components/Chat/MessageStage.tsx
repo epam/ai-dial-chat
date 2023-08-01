@@ -27,29 +27,27 @@ export const MessageStage = ({ stage }: Props) => {
 
   const stageTitle = (
     <div
-      className={`grid grid-flow-col min-w-0 items-center gap-3 overflow-hidden`}
+      className={`grid min-w-0 grid-flow-col items-center gap-3 overflow-hidden`}
     >
       {stage.status == null ? (
         <IconLoader
           size={20}
-          className="animate-spin flex-shrink-0 grow-0 basis-auto"
+          className="shrink-0 grow-0 basis-auto animate-spin"
         />
       ) : stage.status === 'completed' ? (
         <IconCircleCheckFilled
           size={20}
-          className="flex-shrink-0 grow-0 basis-auto"
+          className="shrink-0 grow-0 basis-auto"
         />
       ) : (
         <IconAlertCircleFilled
           size={20}
-          className="flex-shrink-0 grow-0 basis-auto"
+          className="shrink-0 grow-0 basis-auto"
         />
       )}
       <span
         className={`block font-semibold ${
-          isOpened
-            ? 'max-w-full'
-            : 'overflow-hidden text-ellipsis whitespace-nowrap'
+          isOpened ? 'max-w-full' : 'truncate'
         }`}
       >
         {stage.name}
@@ -58,10 +56,10 @@ export const MessageStage = ({ stage }: Props) => {
   );
 
   return (
-    <div className="min-w-0 flex-shrink block text-sm border rounded-lg dark:bg-gray-2 dark:border-gray-900/50">
+    <div className="block min-w-0 shrink rounded-lg border text-sm dark:border-gray-900/50 dark:bg-[#343541]">
       {hasContent ? (
         <button
-          className="p-2 items-center flex flex-shrink min-w-0 gap-2 w-full"
+          className="flex w-full min-w-0 shrink items-center gap-2 p-2"
           onClick={() => {
             setIsOpened((opened) => !opened);
           }}
@@ -69,17 +67,15 @@ export const MessageStage = ({ stage }: Props) => {
           {stageTitle}
           <IconChevronDown
             size={20}
-            className={`transition flex-shrink-0 ${
-              isOpened ? 'rotate-180' : ''
-            }`}
+            className={`shrink-0 transition ${isOpened ? 'rotate-180' : ''}`}
           />
         </button>
       ) : (
-        <div className="p-2 flex">{stageTitle}</div>
+        <div className="flex p-2">{stageTitle}</div>
       )}
 
       <div
-        className={`overflow-auto grid grid-flow-row max-w-full ${
+        className={`grid max-w-full grid-flow-row overflow-auto ${
           isOpened ? 'p-2' : 'h-0'
         }`}
       >

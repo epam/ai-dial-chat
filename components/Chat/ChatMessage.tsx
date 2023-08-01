@@ -52,7 +52,7 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
     <button
       type={type}
       className={classNames(
-        'focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300',
+        'text-gray-500 hover:text-gray-700 focus:visible dark:text-gray-400 dark:hover:text-gray-300',
         className,
       )}
       {...props}
@@ -156,14 +156,14 @@ export const ChatMessage: FC<Props> = memo(
     }, [isEditing]);
     return (
       <div
-        className={`h-full group md:px-4 ${
+        className={`group h-full md:px-4 ${
           isAssistant
             ? 'border-b border-black/10 bg-gray-50 text-gray-800 dark:border-gray-900/50 dark:bg-[#444654] dark:text-gray-100'
             : 'border-b border-black/10 bg-white text-gray-800 dark:border-gray-900/50 dark:bg-[#343541] dark:text-gray-100'
         }`}
         style={{ overflowWrap: 'anywhere' }}
       >
-        <div className="h-full relative m-auto flex p-4 text-base md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
+        <div className="relative m-auto flex h-full p-4 text-base md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
           <div className="min-w-[40px] font-bold">
             {isAssistant ? (
               <ModelIcon
@@ -179,7 +179,7 @@ export const ChatMessage: FC<Props> = memo(
             )}
           </div>
 
-          <div className="flex-shrink min-w-0 mt-[-2px] w-full">
+          <div className="mt-[-2px] w-full min-w-0 shrink">
             {isUser ? (
               <div className="flex">
                 {isEditing ? (
@@ -204,7 +204,7 @@ export const ChatMessage: FC<Props> = memo(
 
                     <div className="mt-10 flex justify-center space-x-4">
                       <button
-                        className="h-[40px] rounded-md bg-blue-500 px-4 py-1 text-sm font-medium text-white enabled:hover:bg-blue-600 disabled:opacity-50"
+                        className="bg-blue-500 enabled:hover:bg-blue-600 h-[40px] rounded-md px-4 py-1 text-sm font-medium text-white disabled:opacity-50"
                         onClick={handleEditMessage}
                         disabled={messageContent.trim().length <= 0}
                       >
@@ -222,22 +222,22 @@ export const ChatMessage: FC<Props> = memo(
                     </div>
                   </div>
                 ) : (
-                  <div className="prose whitespace-pre-wrap dark:prose-invert flex-1">
+                  <div className="prose flex-1 whitespace-pre-wrap dark:prose-invert">
                     {message.content}
                   </div>
                 )}
 
                 {!isEditing && (
-                  <div className="w-[60px] flex flex-col md:flex-row gap-4 md:gap-1 items-center md:items-start justify-end md:justify-start">
+                  <div className="flex w-[60px] flex-col items-center justify-end gap-4 md:flex-row md:items-start md:justify-start md:gap-1">
                     <button
-                      className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 disabled:cursor-not-allowed"
+                      className="invisible text-gray-500 hover:text-gray-700 focus:visible disabled:cursor-not-allowed group-hover:visible dark:text-gray-400 dark:hover:text-gray-300"
                       onClick={toggleEditing}
                       disabled={editDisabled}
                     >
                       <IconEdit size={20} />
                     </button>
                     <button
-                      className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                      className="invisible text-gray-500 hover:text-gray-700 focus:visible group-hover:visible dark:text-gray-400 dark:hover:text-gray-300"
                       onClick={handleDeleteMessage}
                     >
                       <IconTrash size={20} />
@@ -246,8 +246,8 @@ export const ChatMessage: FC<Props> = memo(
                 )}
               </div>
             ) : (
-              <div className="h-full flex flex-row gap-1">
-                <div className="flex-shrink min-w-0 grow flex flex-col gap-4">
+              <div className="flex h-full flex-row gap-1">
+                <div className="flex min-w-0 shrink grow flex-col gap-4">
                   {!!message.custom_content?.stages?.length && (
                     <MessageStages stages={message.custom_content?.stages} />
                   )}
@@ -263,8 +263,8 @@ export const ChatMessage: FC<Props> = memo(
                   )}
                 </div>
 
-                <div className="flex flex-col justify-between w-[60px] flex-shrink-0">
-                  <div className="md:-mr-8 ml-1 md:ml-0 flex flex-col md:flex-row gap-4 md:gap-1 items-center md:items-start justify-end md:justify-start">
+                <div className="flex w-[60px] shrink-0 flex-col justify-between">
+                  <div className="ml-1 flex flex-col items-center justify-end gap-4 md:-mr-8 md:ml-0 md:flex-row md:items-start md:justify-start md:gap-1">
                     {messagedCopied ? (
                       <IconCheck
                         size={20}

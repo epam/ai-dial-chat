@@ -267,7 +267,7 @@ export const Chatbar = () => {
   const actionsBlock = (
     <div className="flex items-center gap-2">
       <button
-        className={`disabled:cursor-not-allowed text-sidebar flex grow flex-shrink-0 cursor-pointer select-none items-center gap-3 rounded-md border border-white/20 p-3 text-white transition-colors duration-200 hover:bg-gray-500/10`}
+        className={`text-sidebar flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded-md border border-white/20 p-3 text-white transition-colors duration-200 hover:bg-gray-500/10 disabled:cursor-not-allowed`}
         onClick={() => {
           handleNewConversation();
           chatDispatch({ field: 'searchTerm', value: '' });
@@ -279,14 +279,14 @@ export const Chatbar = () => {
       </button>
 
       <button
-        className="disabled:cursor-not-allowed flex flex-shrink-0 h-full cursor-pointer items-center gap-3 rounded-md border border-white/20 p-3 text-sm text-white transition-colors duration-200 hover:bg-gray-500/10"
+        className="flex h-full shrink-0 cursor-pointer items-center gap-3 rounded-md border border-white/20 p-3 text-sm text-white transition-colors duration-200 hover:bg-gray-500/10 disabled:cursor-not-allowed"
         onClick={handleToggleCompare}
         disabled={!!messageIsStreaming}
       >
         <IconScale size={16} />
       </button>
       <button
-        className="flex flex-shrink-0 h-full cursor-pointer items-center gap-3 rounded-md border border-white/20 p-3 text-sm text-white transition-colors duration-200 hover:bg-gray-500/10"
+        className="flex h-full shrink-0 cursor-pointer items-center gap-3 rounded-md border border-white/20 p-3 text-sm text-white transition-colors duration-200 hover:bg-gray-500/10"
         onClick={() => handleCreateFolder(t('New folder'), 'chat')}
       >
         <IconFolderPlus size={16} />
