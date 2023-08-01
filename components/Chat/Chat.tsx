@@ -162,7 +162,7 @@ export const Chat = memo(({ appName }: Props) => {
   const messageIsStreamingAmount = useRef<number>(0);
   const abortController = useRef<AbortController>();
   const [isNotAllowedModel, setIsNotAllowedModel] = useState(false);
-
+  const isStopGenerating = useRef(false);
   useEffect(() => {
     if (
       inputRef.current?.clientHeight &&
@@ -293,6 +293,7 @@ export const Chat = memo(({ appName }: Props) => {
       deleteCount = 0,
       activeReplayIndex = 0,
     ) => {
+      isStopGenerating.current = false;
       if (!conversation) {
         return;
       }
@@ -389,11 +390,9 @@ export const Chat = memo(({ appName }: Props) => {
         abortController.current = new AbortController();
       }
       let response;
-      let isTimeout = false;
       let timeoutId;
       try {
         timeoutId = setTimeout(() => {
-          isTimeout = true;
           abortController.current?.abort();
         }, 20000);
         response = await fetch(endpoint, {
@@ -407,13 +406,12 @@ export const Chat = memo(({ appName }: Props) => {
       } catch (error: any) {
         if (error.name === 'AbortError') {
           // Do not show error for user abort
-          if (!isTimeout) {
+          if (isStopGenerating.current) {
             homeDispatch({ field: 'loading', value: false });
             handleMessageIsStreamingChange(-1);
             return;
           }
 
-          isTimeout = false;
           handleErrorMessage({
             updatedConversation,
             errorText: t(errorsMessages.timeoutError),
@@ -481,27 +479,30 @@ export const Chat = memo(({ appName }: Props) => {
         name: updatedConversation.model.name,
       };
       let done = false;
-      let isFirst = true;
-      let newMessage: Message = { content: '', model: messageModel } as Message;
+      let newMessage: Message = {
+        content: '',
+        model: messageModel,
+        role: 'assistant',
+      };
       let eventData = '';
       let value: Uint8Array | undefined;
       let doneReading = false;
 
-      isTimeout = false;
       timeoutId = undefined;
+      let updatedMessages: Message[] = [
+        ...updatedConversation.messages,
+        newMessage,
+      ];
       while (!done) {
         try {
           timeoutId = setTimeout(() => {
-            isTimeout = true;
             abortController.current?.abort();
           }, 20000);
           const result = await reader.read();
           value = result.value;
           doneReading = result.done;
         } catch (error: any) {
-          const updatedMessages = filterUnfinishedStages(
-            updatedConversation.messages,
-          );
+          updatedMessages = filterUnfinishedStages(updatedMessages);
           updatedConversation = {
             ...updatedConversation,
             messages: updatedMessages,
@@ -509,13 +510,20 @@ export const Chat = memo(({ appName }: Props) => {
 
           if (error.name === 'AbortError') {
             // Do not show error for user abort
-            if (!isTimeout) {
+            if (isStopGenerating.current) {
               homeDispatch({ field: 'loading', value: false });
               handleMessageIsStreamingChange(-1);
+              localConversations.current = handleUpdateConversation(
+                updatedConversation,
+                {
+                  key: 'messages',
+                  value: updatedMessages,
+                },
+                localConversations.current,
+              );
               return;
             }
 
-            isTimeout = false;
             handleErrorMessage({
               updatedConversation,
               errorText: t(errorsMessages.timeoutError),
@@ -544,21 +552,13 @@ export const Chat = memo(({ appName }: Props) => {
         const chunkValue = parseStreamMessages(eventData);
         eventData = '';
         mergeMessages(newMessage, chunkValue);
-        let updatedMessages: Message[];
 
-        if (isFirst) {
-          isFirst = false;
-          updatedMessages = [...updatedConversation.messages, newMessage];
-        } else {
-          updatedMessages = updatedConversation.messages.map(
-            (message, index) => {
-              if (index === updatedConversation.messages.length - 1) {
-                return newMessage;
-              }
-              return message;
-            },
-          );
-        }
+        updatedMessages = updatedMessages.map((message, index) => {
+          if (index === updatedMessages.length - 1) {
+            return newMessage;
+          }
+          return message;
+        });
         updatedConversation = {
           ...updatedConversation,
           messages: updatedMessages,
@@ -1193,6 +1193,7 @@ export const Chat = memo(({ appName }: Props) => {
                     if (!isReplayPaused) {
                       setIsReplayPaused(true);
                     }
+                    isStopGenerating.current = true;
                     abortController.current?.abort();
                   }}
                 />
