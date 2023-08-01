@@ -449,6 +449,8 @@ export const Chat = memo(({ appName }: Props) => {
           if (error.name === 'AbortError' && isTimeout) {
             updatedMessages[updatedMessages.length - 1].errorMessage =
               errorsMessages.timeoutError;
+          } else if (error.name !== 'AbortError') {
+            console.error(error);
           }
 
           updatedConversation = {
@@ -464,7 +466,6 @@ export const Chat = memo(({ appName }: Props) => {
             localConversations.current,
           );
 
-          console.error(error);
           done = true;
           break;
         }
