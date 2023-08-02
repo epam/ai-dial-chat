@@ -479,7 +479,7 @@ export const Chat = memo(({ appName }: Props) => {
         name: updatedConversation.model.name,
       };
       let done = false;
-      let newMessage: Message = {
+      const newMessage: Message = {
         content: '',
         model: messageModel,
         role: 'assistant',
