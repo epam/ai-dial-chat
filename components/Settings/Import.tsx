@@ -26,7 +26,7 @@ export const Import: FC<Props> = ({ onImport, text }) => {
           const file = e.target.files[0];
           const reader = new FileReader();
           reader.onload = (readerEvent) => {
-            let json = JSON.parse(readerEvent.target?.result as string);
+            const json = JSON.parse(readerEvent.target?.result as string);
             onImport(json);
             (ref.current as unknown as HTMLInputElement).value = '';
           };

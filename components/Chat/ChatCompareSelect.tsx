@@ -39,7 +39,7 @@ const CustomSelectOption = (props: OptionProps<CompareOption>) => {
     <>
       <components.Option
         {...props}
-        className={`!p-1 !pl-4 dark:text-white/80 hover:dark:bg-[#202123]  hover:cursor-pointer 
+        className={`!p-1 !pl-4 hover:cursor-pointer dark:text-white/80  hover:dark:bg-[#202123] 
         ${isFocused ? 'dark:bg-[#202123]' : 'dark:bg-[#40414F]'}
         `}
       >
@@ -70,14 +70,14 @@ const selectClassNames: ClassNamesConfig<CompareOption> = {
         ? 'dark:border-white/80 dark:shadow-white/80 dark:shadow-sm'
         : ''
     }`,
-  placeholder: (state) => 'text-neutral-900 dark:text-white/80',
-  valueContainer: (state) => '!text-neutral-900 hover:cursor-text',
-  menu: (state) =>
+  placeholder: () => 'text-neutral-900 dark:text-white/80',
+  valueContainer: () => '!text-neutral-900 hover:cursor-text',
+  menu: () =>
     '!mt-1 dark:bg-[#40414F] !rounded !shadow-sm !shadow-neutral-400 dark:!shadow-[#717283]',
-  singleValue: (state) => '!text-neutral-900 dark:!text-white/80 center m-0',
-  dropdownIndicator: (state) =>
+  singleValue: () => '!text-neutral-900 dark:!text-white/80 center m-0',
+  dropdownIndicator: () =>
     '!py-0 hover:!text-neutral-900 hover:dark:!text-white/80',
-  input: (state) => 'dark:!text-white/80',
+  input: () => 'dark:!text-white/80',
 };
 
 export const ChatCompareSelect = ({
@@ -157,8 +157,8 @@ export const ChatCompareSelect = ({
   }, [conversations, selectedConversations]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-full text-base text-black/80 dark:text-white/80">
-      <div className="mb-5 flex flex-col text-center max-w-[300px]">
+    <div className="flex h-full flex-col items-center justify-center text-base text-black/80 dark:text-white/80">
+      <div className="mb-5 flex max-w-[300px] flex-col text-center">
         <h5>{t('Select conversation to compare with')}</h5>
         <i>
           (
@@ -170,7 +170,7 @@ export const ChatCompareSelect = ({
       </div>
 
       <Select<CompareOption>
-        className="dark:bg-[#40414F] !rounded-md !min-w-[220px] border !border-gray-900/50 text-base text-black/80 dark:text-white/80"
+        className="!min-w-[220px] !rounded-md border !border-gray-900/50 text-base text-black/80 dark:bg-[#40414F] dark:text-white/80"
         classNames={selectClassNames}
         options={comparableOptions}
         placeholder={placeholder}

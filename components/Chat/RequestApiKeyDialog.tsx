@@ -31,7 +31,7 @@ const checkValidity = (
     }
   });
 
-  if (!!focusableElement) {
+  if (focusableElement) {
     (focusableElement as HTMLInputElement | HTMLTextAreaElement).focus();
   }
 
@@ -127,9 +127,9 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
   // Render the dialog.
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="fixed inset-0 z-10 overflow-hidden">
-        <div className="flex items-center justify-center min-h-screen max-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div className="flex max-h-screen min-h-screen items-center justify-center px-4 pb-20 pt-4 text-center sm:block sm:p-0">
           <div
             className="hidden sm:inline-block sm:h-screen sm:align-middle"
             aria-hidden="true"
@@ -137,18 +137,18 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
           <div
             ref={modalRef}
-            className="dark:border-netural-400 inline-block max-h-[800px] transform overflow-y-auto rounded-lg border border-gray-300 bg-white px-4 pt-5 pb-4 text-left align-bottom shadow-xl transition-all dark:bg-[#202123] sm:my-8 sm:max-h-[700px] sm:w-full sm:max-w-[50%] sm:p-6 sm:align-middle"
+            className="dark:border-netural-400 inline-block max-h-[800px] overflow-y-auto rounded-lg border border-gray-300 bg-white px-4 pb-4 pt-5 text-left align-bottom shadow-xl transition-all dark:bg-[#202123] sm:my-8 sm:max-h-[700px] sm:w-full sm:max-w-[50%] sm:p-6 sm:align-middle"
             role="dialog"
           >
-            <div className="flex justify-between text-lg pb-4 font-bold text-black dark:text-neutral-200">
+            <div className="flex justify-between pb-4 text-lg font-bold text-black dark:text-neutral-200">
               {t('Request API Key')}
               <button onClick={onClose}>
                 <IconX></IconX>
               </button>
             </div>
 
-            <div className="text-sm font-bold mb-5 text-black dark:text-neutral-200">
-              <label className="flex mb-2" htmlFor="projectNameInput">
+            <div className="mb-5 text-sm font-bold text-black dark:text-neutral-200">
+              <label className="mb-2 flex" htmlFor="projectNameInput">
                 {t('1. Project name (use one from Delivery Central)')}
                 <span className="inline text-red-500">
                   <IconAsterisk size={10} />
@@ -162,12 +162,12 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                 onBlur={(e) => {
                   e.target.classList.add('invalid:border-red-500');
                 }}
-                className="m-0 w-full border rounded-md p-0 pr-8 pl-3 text-black font-normal py-3 border-neutral-600 bg-white shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:shadow-[0_0_15px_rgba(0,0,0,0.10)] dark:text-white"
+                className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
               ></input>
             </div>
 
-            <div className="text-sm font-bold mb-5 text-black dark:text-neutral-200">
-              <label className="flex mb-2" htmlFor="streamNameInput">
+            <div className="mb-5 text-sm font-bold text-black dark:text-neutral-200">
+              <label className="mb-2 flex" htmlFor="streamNameInput">
                 {t('2. Stream Name (use one from Delivery Central)')}
                 <span className="inline text-red-500">
                   <IconAsterisk size={10} />
@@ -181,12 +181,12 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                 onBlur={(e) => {
                   e.target.classList.add('invalid:border-red-500');
                 }}
-                className="m-0 w-full border rounded-md p-0 pr-8 pl-3 text-black font-normal py-3 border-neutral-600 bg-white shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:shadow-[0_0_15px_rgba(0,0,0,0.10)] dark:text-white"
+                className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
               ></input>
             </div>
 
-            <div className="text-sm font-bold mb-5 text-black dark:text-neutral-200">
-              <label className="flex mb-2" htmlFor="techLeadNameInput">
+            <div className="mb-5 text-sm font-bold text-black dark:text-neutral-200">
+              <label className="mb-2 flex" htmlFor="techLeadNameInput">
                 {t(
                   '3. Project Tech Lead responsible for API token usage. Please provide name',
                 )}
@@ -202,12 +202,12 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                 onBlur={(e) => {
                   e.target.classList.add('invalid:border-red-500');
                 }}
-                className="m-0 w-full border rounded-md p-0 pr-8 pl-3 text-black font-normal py-3 border-neutral-600 bg-white shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:shadow-[0_0_15px_rgba(0,0,0,0.10)] dark:text-white"
+                className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
               ></input>
             </div>
 
-            <div className="text-sm font-bold mb-5 text-black dark:text-neutral-200">
-              <label className="flex mb-2" htmlFor="businessJustificationInput">
+            <div className="mb-5 text-sm font-bold text-black dark:text-neutral-200">
+              <label className="mb-2 flex" htmlFor="businessJustificationInput">
                 {t('4. Business justification')}
                 <span className="inline text-red-500">
                   <IconAsterisk size={10} />
@@ -220,12 +220,12 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                 onBlur={(e) => {
                   e.target.classList.add('invalid:border-red-500');
                 }}
-                className="m-0 w-full border rounded-md p-0 pr-8 pl-3 text-black font-normal py-3 border-neutral-600 bg-white shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:shadow-[0_0_15px_rgba(0,0,0,0.10)] dark:text-white"
+                className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
               ></textarea>
             </div>
 
-            <div className="text-sm font-bold mb-5 text-black dark:text-neutral-200">
-              <label className="flex mb-2" htmlFor="projectEndDateInput">
+            <div className="mb-5 text-sm font-bold text-black dark:text-neutral-200">
+              <label className="mb-2 flex" htmlFor="projectEndDateInput">
                 {t('5. End date of the project')}
                 <span className="inline text-red-500">
                   <IconAsterisk size={10} />
@@ -240,12 +240,12 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                 onBlur={(e) => {
                   e.target.classList.add('invalid:border-red-500');
                 }}
-                className="m-0 w-full border rounded-md p-0 pr-8 pl-3 text-black font-normal py-3 border-neutral-600 bg-white shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:shadow-[0_0_15px_rgba(0,0,0,0.10)] dark:text-white"
+                className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
               ></input>
             </div>
 
-            <div className="text-sm font-bold mb-5 text-black dark:text-neutral-200">
-              <label className="flex mb-2" htmlFor="scenarioInput">
+            <div className="mb-5 text-sm font-bold text-black dark:text-neutral-200">
+              <label className="mb-2 flex" htmlFor="scenarioInput">
                 {t(
                   '6. By default, access to the model is available from EPAM VPN only. If you want to deploy your solution anywhere beyond your personal laptop, please describe your scenario.',
                 )}
@@ -253,12 +253,12 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               <textarea
                 ref={scenarioInputRef}
                 name="scenarioInput"
-                className="m-0 w-full border rounded-md p-0 pr-8 pl-3 text-black font-normal py-3 border-neutral-600 bg-white shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:shadow-[0_0_15px_rgba(0,0,0,0.10)] dark:text-white"
+                className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
               ></textarea>
             </div>
 
-            <div className="text-sm font-bold mb-5 text-black dark:text-neutral-200">
-              <label className="inline-block mb-2" htmlFor="costInput">
+            <div className="mb-5 text-sm font-bold text-black dark:text-neutral-200">
+              <label className="mb-2 inline-block" htmlFor="costInput">
                 {t(
                   '7. We need to understand, how much cost your solution will generate monthly, and your workload pattern in terms of requests quantity and tokens usage during standard and peak workloads. Please describe this. More information is available at ',
                 )}
@@ -283,26 +283,26 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                 onBlur={(e) => {
                   e.target.classList.add('invalid:border-red-500');
                 }}
-                className="m-0 w-full border rounded-md p-0 pr-8 pl-3 text-black font-normal py-3 border-neutral-600 bg-white shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:shadow-[0_0_15px_rgba(0,0,0,0.10)] dark:text-white"
+                className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
               ></textarea>
             </div>
 
-            <div className="text-lg font-bold mt-10 mb-5 text-black dark:text-neutral-200">
+            <div className="mb-5 mt-10 text-lg font-bold text-black dark:text-neutral-200">
               {t(
                 'Also please acknowledge that your API usage should comply with:',
               )}
             </div>
 
-            <div className="text-sm font-bold mb-2 text-black dark:text-neutral-200 flex">
+            <div className="mb-2 flex text-sm font-bold text-black dark:text-neutral-200">
               <input
                 ref={azureAgreementInputRef}
                 name="azureAgreementInput"
                 required
                 type="checkbox"
-                className="inline m-0 mr-2 border h-4 w-4 flex-shrink-0 rounded-sm text-black border-neutral-600 invalid:shadow-[0_0_1px_1px] invalid:shadow-red-500 accent-neutral-500 dark:bg-[#40414F]  dark:text-white"
+                className="m-0 mr-2 inline h-4 w-4 shrink-0 rounded-sm border border-neutral-600 text-black accent-neutral-500 invalid:shadow-[0_0_1px_1px] invalid:shadow-red-500 dark:bg-[#40414F]  dark:text-white"
               ></input>
               <label
-                className="inline-block mb-2"
+                className="mb-2 inline-block"
                 htmlFor="azureAgreementInput"
               >
                 {t('1. Azure cognitive service terms and conditions ')}
@@ -318,15 +318,15 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               </label>
             </div>
 
-            <div className="text-sm font-bold mb-2 text-black dark:text-neutral-200 flex">
+            <div className="mb-2 flex text-sm font-bold text-black dark:text-neutral-200">
               <input
                 ref={EPAMAgreementInputRef}
                 name="EPAMAgreementInput"
                 required
                 type="checkbox"
-                className="inline m-0 mr-2 border h-4 w-4 flex-shrink-0 rounded-sm text-black border-neutral-600 invalid:shadow-[0_0_1px_1px] invalid:shadow-red-500 accent-neutral-500 dark:bg-[#40414F]  dark:text-white"
+                className="m-0 mr-2 inline h-4 w-4 shrink-0 rounded-sm border border-neutral-600 text-black accent-neutral-500 invalid:shadow-[0_0_1px_1px] invalid:shadow-red-500 dark:bg-[#40414F]  dark:text-white"
               ></input>
-              <label className="inline-block mb-2" htmlFor="EPAMAgreementInput">
+              <label className="mb-2 inline-block" htmlFor="EPAMAgreementInput">
                 {t('2. Usage is complaint to EPAM company policies ')}
                 <span className="inline-block text-red-500">
                   <IconAsterisk size={10} />
@@ -334,15 +334,15 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               </label>
             </div>
 
-            <div className="text-sm font-bold mb-2 text-black dark:text-neutral-200 flex">
+            <div className="mb-2 flex text-sm font-bold text-black dark:text-neutral-200">
               <input
                 ref={notClientProjectUsageAgreementInputRef}
                 name="notClientProjectUsageAgreementInput"
                 required
                 type="checkbox"
-                className="inline m-0 mr-2 border h-4 w-4 flex-shrink-0 rounded-sm text-black border-neutral-600 invalid:shadow-[0_0_1px_1px] invalid:shadow-red-500 accent-neutral-500 dark:bg-[#40414F]  dark:text-white"
+                className="m-0 mr-2 inline h-4 w-4 shrink-0 rounded-sm border border-neutral-600 text-black accent-neutral-500 invalid:shadow-[0_0_1px_1px] invalid:shadow-red-500 dark:bg-[#40414F]  dark:text-white"
               ></input>
-              <label className="inline-block mb-2" htmlFor="EPAMAgreementInput">
+              <label className="mb-2 inline-block" htmlFor="EPAMAgreementInput">
                 {t(
                   '3. Confirm that this key will not be used for client project production load.',
                 )}
@@ -352,16 +352,16 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               </label>
             </div>
 
-            <div className="text-sm font-bold mb-2 text-black dark:text-neutral-200 flex">
+            <div className="mb-2 flex text-sm font-bold text-black dark:text-neutral-200">
               <input
                 ref={localAgreementInputRef}
                 name="localAgreementInput"
                 required
                 type="checkbox"
-                className="inline m-0 mr-2 border h-4 w-4 flex-shrink-0 rounded-sm text-black border-neutral-600 invalid:shadow-[0_0_1px_1px] invalid:shadow-red-500 accent-neutral-500 dark:bg-[#40414F]  dark:text-white"
+                className="m-0 mr-2 inline h-4 w-4 shrink-0 rounded-sm border border-neutral-600 text-black accent-neutral-500 invalid:shadow-[0_0_1px_1px] invalid:shadow-red-500 dark:bg-[#40414F]  dark:text-white"
               ></input>
               <label
-                className="inline-block mb-2"
+                className="mb-2 inline-block"
                 htmlFor="localAgreementInput"
               >
                 {t('4. Local law regulations (if some) ')}
@@ -373,7 +373,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
             <button
               type="button"
-              className="flex items-center justify-center w-full px-4 py-2 mt-6 h-10 border rounded-lg shadow border-neutral-500 text-neutral-900 hover:bg-neutral-100 focus:outline-none dark:border-neutral-800 dark:border-opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-300"
+              className="mt-6 flex h-10 w-full items-center justify-center rounded-lg border border-neutral-500 px-4 py-2 text-neutral-900 shadow hover:bg-neutral-100 focus:outline-none dark:border-neutral-800 dark:border-opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-300"
               onClick={async () => {
                 if (
                   checkValidity(

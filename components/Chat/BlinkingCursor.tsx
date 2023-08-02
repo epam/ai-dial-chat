@@ -1,4 +1,4 @@
-import { FC, useContext } from 'react';
+import { FC } from 'react';
 
 import { modelCursorSign } from './chatConstants';
 
@@ -7,7 +7,7 @@ interface BlinkingCursorProps {
 }
 const BlinkingCursor: FC<BlinkingCursorProps> = ({ isShowing }) => {
   return isShowing ? (
-    <span className="animate-ping cursor-default mt-1">{modelCursorSign}</span>
+    <span className="mt-1 animate-ping cursor-default">{modelCursorSign}</span>
   ) : null;
 };
 

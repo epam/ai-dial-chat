@@ -2,8 +2,8 @@ module.exports = {
   trailingComma: 'all',
   singleQuote: true,
   plugins: [
-    'prettier-plugin-tailwindcss',
     '@trivago/prettier-plugin-sort-imports',
+    'prettier-plugin-tailwindcss',
   ],
   importOrder: [
     'react', // React
@@ -22,4 +22,5 @@ module.exports = {
   ],
   importOrderSeparation: true,
   importOrderSortSpecifiers: true,
+  pluginSearchDirs: false,
 };

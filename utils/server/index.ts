@@ -74,14 +74,13 @@ export const OpenAIStream = async ({
 
   const url = getUrl(model.id, model.type, isAddonsAdded);
   const apiKey = key ? key : process.env.OPENAI_API_KEY;
-  let requestHeaders: Record<string, string> = {
+  const requestHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(apiKey && getHeaders(apiKey)),
     // ...(userJWT && { 'Authorization': `Bearer ${userJWT}` }),
   };
-  let body: string;
 
-  body = JSON.stringify({
+  const body = JSON.stringify({
     messages:
       !systemPrompt || systemPrompt.trim().length === 0
         ? messages

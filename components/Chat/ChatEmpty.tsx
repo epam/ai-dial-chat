@@ -40,7 +40,7 @@ export const ChatEmpty = ({
 }: Props) => {
   return (
     <>
-      <div className="mx-auto flex flex-col space-y-2 md:space-y-5 px-3 pt-5 md:pt-12 sm:max-w-[600px]">
+      <div className="mx-auto flex flex-col space-y-2 px-3 pt-5 sm:max-w-[600px] md:space-y-5 md:pt-12">
         <div className="text-center text-3xl font-semibold text-gray-800 dark:text-gray-100">
           {models.length === 0 ? (
             <div>

@@ -1,5 +1,3 @@
-import { FC } from 'react';
-
 interface Props {
   size?: string;
   className?: string;

@@ -46,11 +46,11 @@ const CustomSelectOption = (props: OptionProps<CompanionSelectOption>) => {
       <components.Option
         {...props}
         isDisabled={data.isDisabled}
-        className={`!p-1 !pl-4 dark:text-white hover:dark:bg-[#40414F] hover:cursor-pointer ${
+        className={`!p-1 !pl-4 hover:cursor-pointer dark:text-white hover:dark:bg-[#40414F] ${
           isSelected ? 'dark:bg-[#202123]' : 'dark:bg-[#343541]'
         } ${
           data.isDisabled
-            ? 'dark:!text-neutral-400 hover:!cursor-not-allowed dark:!bg-[#40414F]'
+            ? 'hover:!cursor-not-allowed dark:!bg-[#40414F] dark:!text-neutral-400'
             : ''
         } 
         ${isFocused ? 'dark:bg-[#40414F]' : ''}
@@ -83,16 +83,16 @@ const selectClassNames: ClassNamesConfig<CompanionSelectOption> = {
         ? 'dark:border-white dark:shadow-white dark:shadow-sm'
         : ''
     } ${state.isDisabled ? '!bg-gray-200/40' : 'dark:bg-[#343541]'}`,
-  placeholder: (state) => 'text-neutral-900 dark:text-white',
-  valueContainer: (state) => '!text-neutral-900 hover:cursor-text',
-  menu: (state) =>
+  placeholder: () => 'text-neutral-900 dark:text-white',
+  valueContainer: () => '!text-neutral-900 hover:cursor-text',
+  menu: () =>
     '!mt-1 dark:bg-[#343541] !rounded !shadow-sm !shadow-neutral-400 dark:!shadow-[#717283]',
-  singleValue: (state) => '!text-neutral-900 dark:!text-white center m-0',
-  dropdownIndicator: (state) =>
+  singleValue: () => '!text-neutral-900 dark:!text-white center m-0',
+  dropdownIndicator: () =>
     '!py-0 hover:!text-neutral-900 hover:dark:!text-white',
-  input: (state) => 'dark:!text-white',
-  groupHeading: (state) => '!text-sm',
-  menuPortal: (state) =>
+  input: () => 'dark:!text-white',
+  groupHeading: () => '!text-sm',
+  menuPortal: () =>
     'text-neutral-900 dark:text-white !mt-1 dark:bg-[#343541] !rounded !shadow-sm !shadow-neutral-400 dark:!shadow-[#717283]',
 };
 
@@ -181,8 +181,8 @@ export const ModelSelect = ({
       </label>
       <Select<CompanionSelectOption>
         isSearchable
+        className="w-full rounded-lg text-neutral-900 dark:bg-[#343541] dark:text-white"
         menuPortalTarget={mainElement}
-        className="w-full rounded-lg text-neutral-900 dark:text-white dark:bg-[#343541]"
         classNames={selectClassNames}
         options={groupedSelectOptionsWithNotAllowed}
         placeholder={t('Select a model') || ''}
@@ -200,7 +200,7 @@ export const ModelSelect = ({
         isDisabled={isDisabled}
       />
       {conversationModelId === OpenAIEntityModelID.GPT_4_32K && (
-        <div className="w-full mt-3 text-left text-orange-600 dark:text-orange-600 flex gap-2 items-center">
+        <div className="mt-3 flex w-full items-center gap-2 text-left text-orange-600 dark:text-orange-600">
           <IconExclamationCircle size={18} />
           <div>
             {t(

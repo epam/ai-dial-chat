@@ -19,15 +19,7 @@ export const ChatbarSettings = () => {
   const [isSettingDialogOpen, setIsSettingDialog] = useState<boolean>(false);
 
   const {
-    state: {
-      apiKey,
-      lightMode,
-      serverSideApiKeyIsSet,
-      serverSidePluginKeysSet,
-      usePluginKeys,
-      conversations,
-    },
-    dispatch: homeDispatch,
+    state: { apiKey, serverSideApiKeyIsSet, conversations },
   } = useContext(HomeContext);
 
   const {

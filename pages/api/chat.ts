@@ -5,12 +5,7 @@ import { getServerSession } from 'next-auth/next';
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
 import { OpenAIError, OpenAIStream } from '@/utils/server';
 
-import {
-  OpenAIEntityAddonID,
-  OpenAIEntityModelID,
-  OpenAIEntityModels,
-} from '../../types/openai';
-import { fallbackModelID } from '../../types/openai';
+import { OpenAIEntityAddonID, OpenAIEntityModelID } from '../../types/openai';
 import { ChatBody, Message } from '@/types/chat';
 
 import { authOptions } from './auth/[...nextauth]';

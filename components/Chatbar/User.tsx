@@ -36,9 +36,9 @@ export const User: FC = () => {
   }, [session]);
 
   return (
-    <div className="flex items-center gap-2 w-full">
+    <div className="flex w-full items-center gap-2">
       {session && (
-        <div className="flex-1 min-w-0 flex items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <UserIcon image={session?.user?.image} title={session?.user?.name} />
           {session?.user?.name ?? ''}
         </div>

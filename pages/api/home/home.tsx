@@ -1,5 +1,5 @@
 import { useSession } from 'next-auth/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 
 import { GetServerSideProps } from 'next';
@@ -18,13 +18,11 @@ import { delay } from '@/utils/app/auth/delay';
 import { timeoutAsync } from '@/utils/app/auth/timeoutAsync';
 import { cleanConversationHistory } from '@/utils/app/clean';
 import {
-  DEFAULT_ASSISTANT_SUBMODEL,
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
 } from '@/utils/app/const';
 import {
-  getAssitantModelId,
   saveConversations,
   saveSelectedConversationIds,
   updateConversation,
@@ -325,6 +323,7 @@ const Home = ({
       folderId: null,
       replay: defaultReplay,
       selectedAddons: model.selectedAddons ?? [],
+      lastActivityDate: Date.now(),
     };
 
     addNewConversationToStore([newConversation]);
@@ -335,7 +334,7 @@ const Home = ({
 
   const handleNewConversations = (
     name = DEFAULT_CONVERSATION_NAME,
-    count: number = 2,
+    count = 2,
   ): Conversation[] | undefined => {
     if (!clientDefaultModelId) {
       return;
@@ -347,7 +346,7 @@ const Home = ({
     if (!model) {
       return;
     }
-    let newConversations = [];
+    const newConversations = [];
     for (let i = 0; i < count; i++) {
       const newConversation: Conversation = {
         id: uuidv4(),
@@ -365,6 +364,7 @@ const Home = ({
         folderId: null,
         replay: defaultReplay,
         selectedAddons: model.selectedAddons ?? [],
+        lastActivityDate: Date.now(),
       };
       newConversations.push(newConversation);
     }
@@ -500,7 +500,9 @@ const Home = ({
               authWindowLocation.destroy();
               break;
             }
-          } catch {}
+          } catch {
+            // Do nothing
+          }
           await delay(t);
         }
         window.location.reload();
@@ -607,6 +609,7 @@ const Home = ({
         folderId: null,
         replay: defaultReplay,
         selectedAddons: OpenAIEntityModels[defaultModelId].selectedAddons ?? [],
+        lastActivityDate: Date.now(),
       };
 
       const updatedConversations: Conversation[] =
@@ -663,10 +666,10 @@ const Home = ({
         <link rel="icon" href="/favicon.ico" />
       </Head>
       {isIframe && !authDisabled && session.status !== 'authenticated' ? (
-        <div className="w-full h-full grid place-items-center min-h-[100px]">
+        <div className="grid h-full min-h-[100px] w-full place-items-center text-[#123123]">
           <button
             onClick={handleIframeAuth}
-            className="appearance-none border-gray-900/50 bg-[#343541] text-gray-100 border-gray-200 p-3 rounded-lg"
+            className="appearance-none rounded-lg border-gray-200 bg-[#343541] p-3 text-gray-100"
           >
             {t('Login')}
           </button>

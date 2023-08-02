@@ -21,11 +21,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const { key, message, id, model, value } = req.body as RateBody;
+    const { key, message, model, value } = req.body as RateBody;
 
     const url = `${OPENAI_API_HOST}/v1/rate`;
 
-    const response = await fetch(url, {
+    await fetch(url, {
       headers: getHeaders(key),
       method: 'POST',
       body: JSON.stringify({

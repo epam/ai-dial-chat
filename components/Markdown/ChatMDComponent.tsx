@@ -1,7 +1,5 @@
 import { Components } from 'react-markdown';
 
-import { Message } from '@/types/chat';
-
 import BlinkingCursor from '../Chat/BlinkingCursor';
 import {
   modelCursorSign,
@@ -10,9 +8,7 @@ import {
 import { CodeBlock } from './CodeBlock';
 import { MemoizedReactMarkdown } from './MemoizedReactMarkdown';
 
-import rehypeMathjax from 'rehype-mathjax';
 import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
 
 export const replaceCursor = (cursorSign: string) =>
   cursorSign.replace(modelCursorSignWithBackquote, modelCursorSign);
@@ -24,7 +20,7 @@ interface ChatMDComponentProps {
 
 export const getMDComponents = (isShowResponseLoader: boolean): Components => {
   return {
-    code({ node, inline, className, children, ...props }) {
+    code({ inline, className, children, ...props }) {
       if (children.length) {
         if (children[0] == modelCursorSign) {
           return <BlinkingCursor isShowing={isShowResponseLoader} />;

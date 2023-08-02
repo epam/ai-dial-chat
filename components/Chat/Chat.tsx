@@ -1,6 +1,5 @@
 import {
   MouseEventHandler,
-  MutableRefObject,
   memo,
   useCallback,
   useContext,
@@ -44,7 +43,6 @@ interface Props {
 
 const handleRate = (
   message: Message,
-  id: string,
   model: OpenAIEntityModel,
   apiKey: string,
 ) => {
@@ -59,7 +57,6 @@ const handleRate = (
     body: JSON.stringify({
       key: apiKey,
       message,
-      id,
       model,
       value: message.like > 0 ? true : false,
     }),
@@ -91,7 +88,7 @@ const filterUnfinishedStages = (messages: Message[]): Message[] => {
   }
 
   const assistentMessage = messages[assistentMessageIndex];
-  let updatedMessage: Message = {
+  const updatedMessage: Message = {
     ...assistentMessage,
     ...(assistentMessage.custom_content?.stages?.length && {
       custom_content: {
@@ -221,7 +218,7 @@ export const Chat = memo(({ appName }: Props) => {
       );
       setSelectedConversations(selectedConversations);
 
-      let mergedMessages = [];
+      const mergedMessages = [];
       for (let i = 0; i < selectedConversations[0].messages.length; i++) {
         mergedMessages.push(
           selectedConversations.map((conv) => [
@@ -298,17 +295,21 @@ export const Chat = memo(({ appName }: Props) => {
         return;
       }
 
-      let updatedConversation: Conversation;
+      let updatedConversation: Conversation = {
+        ...conversation,
+        lastActivityDate: Date.now(),
+      };
+
       if (deleteCount) {
         const updatedMessages = [...conversation.messages];
         for (let i = 0; i < deleteCount; i++) {
           updatedMessages.pop();
         }
         updatedConversation = {
-          ...conversation,
+          ...updatedConversation,
           messages: [...updatedMessages, message],
           replay: {
-            ...conversation.replay,
+            ...updatedConversation.replay,
             activeReplayIndex: activeReplayIndex,
           },
         };
@@ -322,10 +323,10 @@ export const Chat = memo(({ appName }: Props) => {
         );
       } else {
         updatedConversation = {
-          ...conversation,
+          ...updatedConversation,
           messages: [...conversation.messages, message],
           replay: {
-            ...conversation.replay,
+            ...updatedConversation.replay,
             activeReplayIndex: activeReplayIndex,
           },
         };
@@ -384,8 +385,7 @@ export const Chat = memo(({ appName }: Props) => {
         ...modelAdditionalSettings,
       };
       const endpoint = getEndpoint();
-      let body;
-      body = JSON.stringify(chatBody);
+      const body = JSON.stringify(chatBody);
       if (!abortController.current || abortController.current.signal.aborted) {
         abortController.current = new AbortController();
       }
@@ -544,7 +544,7 @@ export const Chat = memo(({ appName }: Props) => {
           }
         }
         done = doneReading;
-        let decodedValue = decoder.decode(value);
+        const decodedValue = decoder.decode(value);
         eventData += decodedValue;
         if (decodedValue[decodedValue.length - 1] !== '\0') {
           continue;
@@ -590,12 +590,7 @@ export const Chat = memo(({ appName }: Props) => {
         key: 'messages',
         value: messages,
       });
-      handleRate(
-        editedMessage,
-        conversation?.id ?? '',
-        conversation.model,
-        apiKey,
-      );
+      handleRate(editedMessage, conversation.model, apiKey);
     },
     [apiKey, handleUpdateConversation],
   );
@@ -939,13 +934,13 @@ export const Chat = memo(({ appName }: Props) => {
         <>
           <div className="flex h-full overflow-hidden">
             <div
-              className={`flex flex-col h-full overflow-hidden ${
+              className={`flex h-full flex-col overflow-hidden ${
                 isCompareMode && selectedConversations.length < 2
                   ? 'w-[50%]'
                   : 'w-full'
               }`}
             >
-              <div className="flex w-full max-h-full">
+              <div className="flex max-h-full w-full">
                 {selectedConversations.map((conv) => (
                   <div
                     key={conv.id}
@@ -956,7 +951,7 @@ export const Chat = memo(({ appName }: Props) => {
                     }`}
                   >
                     {conv.messages.length === 0 ? (
-                      <div className={`flex flex-col h-full`}>
+                      <div className={`flex h-full flex-col`}>
                         <div className="overflow-auto">
                           <ChatEmpty
                             conversation={conv}
@@ -995,7 +990,7 @@ export const Chat = memo(({ appName }: Props) => {
                       </div>
                     ) : (
                       enabledFeatures.has('top-settings') && (
-                        <div className={`flex flex-col h-full`}>
+                        <div className={`flex h-full flex-col`}>
                           <div
                             className={`overflow-auto`}
                             style={{
@@ -1064,7 +1059,7 @@ export const Chat = memo(({ appName }: Props) => {
               </div>
               {mergedMessages?.length > 0 && (
                 <div
-                  className="max-h-full overflow-x-hidden flex flex-col"
+                  className="flex max-h-full flex-col overflow-x-hidden"
                   ref={chatContainerRef}
                   onScroll={handleScroll}
                 >
@@ -1073,7 +1068,7 @@ export const Chat = memo(({ appName }: Props) => {
                       mergedStr: [Conversation, Message, number][],
                       i: number,
                     ) => (
-                      <div key={i} className="w-full flex">
+                      <div key={i} className="flex w-full">
                         {mergedStr.map(
                           ([conv, message, index]: [
                             Conversation,

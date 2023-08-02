@@ -59,7 +59,6 @@ export interface RateBody {
   model: OpenAIEntityModel;
   message: Message;
   key: string;
-  id: string;
   value: boolean;
 }
 
@@ -74,6 +73,7 @@ export interface Conversation {
   replay: Replay;
   selectedAddons: string[];
   assistantModelId?: string;
+  lastActivityDate?: number;
 }
 export interface Replay {
   isReplay: boolean;

@@ -24,7 +24,7 @@ const codeBlockTheme = {
 
 export const CodeBlock: FC<Props> = memo(({ language, value }) => {
   const { t } = useTranslation('markdown');
-  const [isCopied, setIsCopied] = useState<Boolean>(false);
+  const [isCopied, setIsCopied] = useState<boolean>(false);
 
   const {
     state: { lightMode },
@@ -71,13 +71,13 @@ export const CodeBlock: FC<Props> = memo(({ language, value }) => {
     URL.revokeObjectURL(url);
   };
   return (
-    <div className="codeblock relative font-sans text-[16px] bg-white dark:bg-[#343541]">
-      <div className="flex items-center justify-between py-1.5 px-4 bg-[#343541] dark:bg-black">
+    <div className="codeblock relative bg-white font-sans text-[16px] dark:bg-[#343541]">
+      <div className="flex items-center justify-between bg-[#343541] px-4 py-1.5 dark:bg-black">
         <span className="text-xs lowercase text-white">{language}</span>
 
         <div className="flex items-center ">
           <button
-            className="flex gap-1.5 items-center rounded bg-none p-1 text-xs text-white"
+            className="flex items-center gap-1.5 rounded bg-none p-1 text-xs text-white"
             onClick={copyToClipboard}
           >
             {isCopied ? <IconCheck size={18} /> : <IconClipboard size={18} />}
