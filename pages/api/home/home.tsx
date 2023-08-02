@@ -671,39 +671,41 @@ const Home = ({
         <div className="grid h-full min-h-[100px] w-full place-items-center text-[#123123]">
           <button
             onClick={handleIframeAuth}
-            className="appearance-none rounded-lg border-gray-200 bg-[#343541] p-3 text-gray-100"
+            className="appearance-none rounded-lg border-gray-200 bg-[#343541] p-3 text-gray-200"
           >
             {t('Login')}
           </button>
         </div>
       ) : (
         selectedConversationNames.length > 0 && (
-          <main
-            className={`flex h-screen w-screen flex-col text-sm text-white dark:text-white ${lightMode} theme-main`}
-          >
-            {enabledFeaturesSet.has('conversations-section') && (
-              <div className="fixed top-0 w-full sm:hidden">
-                <Navbar
-                  selectedConversationNames={selectedConversationNames}
-                  onNewConversation={() => handleNewConversation()}
-                />
-              </div>
-            )}
-
+          <main className={`${lightMode} theme-main`}>
             <div
-              className={`flex h-full w-full sm:pt-0 ${
-                enabledFeaturesSet.has('conversations-section')
-                  ? 'pt-[48px]'
-                  : ''
-              }`}
+              className={`flex h-screen w-screen flex-col bg-gray-300 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-200`}
             >
-              {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
+              {enabledFeaturesSet.has('conversations-section') && (
+                <div className="fixed top-0 w-full sm:hidden">
+                  <Navbar
+                    selectedConversationNames={selectedConversationNames}
+                    onNewConversation={() => handleNewConversation()}
+                  />
+                </div>
+              )}
 
-              <div className="flex flex-1">
-                <Chat appName={appName} />
+              <div
+                className={`flex h-full w-full sm:pt-0 ${
+                  enabledFeaturesSet.has('conversations-section')
+                    ? 'pt-[48px]'
+                    : ''
+                }`}
+              >
+                {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
+
+                <div className="flex flex-1">
+                  <Chat appName={appName} />
+                </div>
+
+                {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
               </div>
-
-              {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
             </div>
           </main>
         )

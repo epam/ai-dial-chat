@@ -127,7 +127,6 @@ export const Chat = memo(({ appName }: Props) => {
       isCompareMode,
       messageIsStreaming,
       enabledFeatures,
-      isIframe,
       modelIconMapping,
       lightMode,
     },
@@ -850,7 +849,7 @@ export const Chat = memo(({ appName }: Props) => {
   }, [selectedConversationIds]);
 
   return (
-    <div className="relative flex-1 overflow-hidden bg-white dark:bg-[#343541]">
+    <div className="relative flex-1 overflow-hidden">
       {!(apiKey || serverSideApiKeyIsSet) ? (
         <NoApiKeySet appName={appName} />
       ) : modelError ? (
@@ -909,7 +908,7 @@ export const Chat = memo(({ appName }: Props) => {
                         </div>
 
                         <div
-                          className="shrink-0 bg-white dark:bg-[#343541]"
+                          className="shrink-0"
                           style={{ height: inputHeight - 20 }}
                         />
                       </div>
@@ -943,7 +942,7 @@ export const Chat = memo(({ appName }: Props) => {
                               isShowModelSelect={enabledFeatures.has(
                                 'top-chat-model-settings',
                               )}
-                              isIframe={isIframe}
+                              modelIconMapping={modelIconMapping}
                               isShowSettings={isShowChatSettings}
                               setShowSettings={setIsShowChatSettings}
                               selectedConversationIds={selectedConversationIds}
@@ -1061,7 +1060,7 @@ export const Chat = memo(({ appName }: Props) => {
                     </div>
                   )}
                   <div
-                    className="shrink-0 bg-white dark:bg-[#343541]"
+                    className="shrink-0 "
                     style={{ height: inputHeight - 10 }}
                     ref={messagesEndRef}
                   />

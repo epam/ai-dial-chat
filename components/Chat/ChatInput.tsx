@@ -260,7 +260,7 @@ export const ChatInput = forwardRef(
     return (
       <div
         ref={ref}
-        className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-white to-white pt-6 dark:border-white/20 dark:via-[#343541] dark:to-[#343541] md:pt-2"
+        className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 pt-6 dark:border-white/20 dark:via-gray-900 dark:to-gray-900 md:pt-2"
       >
         <div className="stretch mx-2 mt-4 flex flex-row gap-3 last:mb-2 md:mx-4 md:mt-[52px] md:last:mb-6 lg:mx-auto lg:max-w-3xl">
           {messageIsStreaming && (
@@ -281,10 +281,10 @@ export const ChatInput = forwardRef(
             </button>
           )}
 
-          <div className="relative mx-2 flex w-full grow flex-col rounded-md border border-black/10 bg-white shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:border-gray-900/50 dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)] sm:mx-4">
+          <div className="relative mx-2 flex w-full grow flex-col rounded-md border border-black/10 bg-gray-100 shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:border-gray-900/50 dark:bg-gray-700 dark:shadow-[0_0_15px_rgba(0,0,0,0.10)] sm:mx-4">
             <textarea
               ref={textareaRef}
-              className="m-0 w-full resize-none border-0 bg-transparent p-0 py-2 pl-10 pr-8 text-black dark:bg-transparent dark:text-white md:py-3 md:pl-10"
+              className="m-0 w-full resize-none border-0 bg-transparent p-3 dark:bg-transparent"
               style={{
                 resize: 'none',
                 bottom: `${textareaRef?.current?.scrollHeight}px`,
@@ -322,7 +322,7 @@ export const ChatInput = forwardRef(
             {showScrollDownButton && (
               <div className="absolute bottom-12 right-0 lg:-right-10 lg:bottom-0">
                 <button
-                  className="focus:ring-blue-500 flex h-7 w-7 items-center justify-center rounded-full bg-neutral-300 text-gray-800 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 dark:bg-gray-700 dark:text-neutral-200"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-300 text-gray-800 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue dark:bg-gray-700 dark:text-neutral-200"
                   onClick={onScrollDownClick}
                 >
                   <IconArrowDown size={18} />

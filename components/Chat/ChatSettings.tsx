@@ -1,14 +1,21 @@
 import { IconClearAll, IconSettings, IconX } from '@tabler/icons-react';
+import { useContext, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/types/chat';
+import { ModelIconMappingType } from '@/types/icons';
 import {
   OpenAIEntityAddon,
   OpenAIEntityModel,
   OpenAIEntityModelID,
 } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
+
+import HomeContext from '@/pages/api/home/home.context';
+
+import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import { ConversationSettings } from './ConversationSettings';
 
@@ -24,8 +31,8 @@ interface Props {
   isShowChatInfo: boolean;
   isShowModelSelect: boolean;
   isShowClearConversation: boolean;
-  isIframe: boolean;
   isShowSettings: boolean;
+  modelIconMapping: ModelIconMappingType;
   onSelectModel: (modelId: string) => void;
   onClearConversation: () => void;
   onUnselectConversation: () => void;
@@ -47,9 +54,9 @@ export const ChatSettings = ({
   isShowChatInfo,
   isShowModelSelect,
   isShowClearConversation,
-  isIframe,
   prompts,
   isShowSettings,
+  modelIconMapping,
   onSelectModel,
   onClearConversation,
   onUnselectConversation,
@@ -60,62 +67,79 @@ export const ChatSettings = ({
   setShowSettings,
 }: Props) => {
   const { t } = useTranslation('chat');
+  const {
+    state: { lightMode },
+  } = useContext(HomeContext);
+  const errorSwitchingMessage = t(
+    'Switching is not allowed. You are currently talk to {{model}} which maintains internal state, which might be corrupted by a different system.',
+    { model: conversation.model.name },
+  );
+  const [isModelSelectDisabled, setIsModelSelectDisabled] = useState(() =>
+    conversation.messages.some((message) => !!message.custom_content?.state),
+  );
+
+  useEffect(() => {
+    setIsModelSelectDisabled(
+      conversation.messages.some((message) => !!message.custom_content?.state),
+    );
+  }, [conversation.messages]);
 
   return (
     <>
-      <div className="sticky top-0 z-10 flex items-center justify-center border border-b-neutral-300 bg-neutral-100 py-2 text-sm text-neutral-500 dark:border-none dark:bg-[#444654] dark:text-neutral-200">
+      <div className="sticky top-0 z-10 flex items-center justify-center bg-gray-200 py-2 text-sm dark:bg-gray-800 [&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-gray-500">
+        {/* TODO: recheck env flags */}
         {isShowChatInfo && (
           <>
-            {isCompareMode && (
-              <>
-                {t('Name')}:&nbsp;
-                <span
-                  className="max-w-[50px] truncate lg:max-w-[300px]"
-                  title={conversation.name}
-                >
-                  {conversation.name}
-                </span>
-                &nbsp;|&nbsp;
-              </>
-            )}
+            <span
+              className="max-w-[50px] truncate lg:max-w-[425px]"
+              title={conversation.name}
+            >
+              {conversation.name}
+            </span>
 
             <span>
-              {t('You are talking to')}: {conversation.model.name} |{' '}
-              {!isIframe && conversation.model.type !== 'application' && (
-                <>
-                  {t('Temp')}: {conversation.temperature} |
-                </>
-              )}
+              <ModelIcon
+                modelId={conversation.model.id}
+                modelIconMapping={modelIconMapping}
+                size={18}
+                inverted={lightMode === 'dark'}
+              />
             </span>
           </>
         )}
-        {isShowModelSelect && (
-          <button
-            className="ml-2 cursor-pointer hover:opacity-50"
-            onClick={() => {
-              setShowSettings(!isShowSettings);
-            }}
-          >
-            <IconSettings size={18} />
-          </button>
-        )}
-        {isShowClearConversation && !isCompareMode && (
-          <button
-            className="ml-2 cursor-pointer hover:opacity-50"
-            onClick={onClearConversation}
-          >
-            <IconClearAll size={18} />
-          </button>
-        )}
-        {isCompareMode && selectedConversationIds.length > 1 && (
-          <button
-            className="ml-2 cursor-pointer hover:opacity-50 disabled:cursor-not-allowed"
-            onClick={onUnselectConversation}
-            disabled={messageIsStreaming}
-          >
-            <IconX size={18} />
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {isShowModelSelect && (
+            <button
+              className="cursor-pointer hover:opacity-50"
+              onClick={() => {
+                if (isModelSelectDisabled) {
+                  toast.error(errorSwitchingMessage);
+                  return;
+                }
+                setShowSettings(!isShowSettings);
+              }}
+            >
+              <IconSettings size={18} />
+            </button>
+          )}
+          {isShowClearConversation && !isCompareMode && (
+            <button
+              className="cursor-pointer hover:opacity-50"
+              onClick={onClearConversation}
+            >
+              <IconClearAll size={18} />
+            </button>
+          )}
+          {isCompareMode && selectedConversationIds.length > 1 && (
+            <button
+              className="cursor-pointer hover:opacity-50 disabled:cursor-not-allowed"
+              onClick={onUnselectConversation}
+              disabled={messageIsStreaming}
+            >
+              <IconX size={18} />
+            </button>
+          )}
+        </div>
       </div>
       {isShowSettings && (
         <div className="flex flex-col space-y-10 md:mx-auto md:max-w-xl md:gap-6 md:py-3 md:pt-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">

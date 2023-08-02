@@ -158,8 +158,8 @@ export const ChatMessage: FC<Props> = memo(
       <div
         className={`group h-full md:px-4 ${
           isAssistant
-            ? 'border-b border-black/10 bg-gray-50 text-gray-800 dark:border-gray-900/50 dark:bg-[#444654] dark:text-gray-100'
-            : 'border-b border-black/10 bg-white text-gray-800 dark:border-gray-900/50 dark:bg-[#343541] dark:text-gray-100'
+            ? 'border-b border-gray-400 bg-gray-200 dark:border-gray-700 dark:bg-gray-800'
+            : 'border-b border-gray-400  dark:border-gray-700'
         }`}
         style={{ overflowWrap: 'anywhere' }}
       >
@@ -172,7 +172,7 @@ export const ChatMessage: FC<Props> = memo(
                 modelName={message.model?.name ?? conversation.model.name}
                 inverted={lightMode === 'dark'}
                 animate={isShowResponseLoader}
-                size={24}
+                size={28}
               />
             ) : (
               <IconUser size={30} />
@@ -186,7 +186,7 @@ export const ChatMessage: FC<Props> = memo(
                   <div className="flex w-full flex-col">
                     <textarea
                       ref={textareaRef}
-                      className="w-full resize-none whitespace-pre-wrap border-none dark:bg-[#343541]"
+                      className="w-full resize-none whitespace-pre-wrap rounded border border-gray-600 px-3 py-2 focus-visible:outline-none dark:bg-transparent"
                       value={messageContent}
                       onChange={handleInputChange}
                       onKeyDown={handlePressEnter}
@@ -196,7 +196,6 @@ export const ChatMessage: FC<Props> = memo(
                         fontFamily: 'inherit',
                         fontSize: 'inherit',
                         lineHeight: 'inherit',
-                        padding: '0',
                         margin: '0',
                         overflow: 'hidden',
                       }}
@@ -204,14 +203,14 @@ export const ChatMessage: FC<Props> = memo(
 
                     <div className="mt-10 flex justify-center space-x-4">
                       <button
-                        className="bg-blue-500 enabled:hover:bg-blue-600 h-[40px] rounded-md px-4 py-1 text-sm font-medium text-white disabled:opacity-50"
+                        className="h-[40px] rounded-md bg-blue px-4 py-1 text-sm font-medium disabled:opacity-50"
                         onClick={handleEditMessage}
                         disabled={messageContent.trim().length <= 0}
                       >
                         {t('Save & Submit')}
                       </button>
                       <button
-                        className="h-[40px] rounded-md border border-neutral-300 px-4 py-1 text-sm font-medium text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                        className="h-[40px] rounded-md border border-gray-600 px-4 py-1 text-sm font-medium"
                         onClick={() => {
                           setMessageContent(message.content);
                           setIsEditing(false);
@@ -266,10 +265,7 @@ export const ChatMessage: FC<Props> = memo(
                 <div className="flex w-[60px] shrink-0 flex-col justify-between">
                   <div className="ml-1 flex flex-col items-center justify-end gap-4 md:-mr-8 md:ml-0 md:flex-row md:items-start md:justify-start md:gap-1">
                     {messagedCopied ? (
-                      <IconCheck
-                        size={20}
-                        className="text-green-500 dark:text-green-400"
-                      />
+                      <IconCheck size={20} />
                     ) : (
                       <Button onClick={copyOnClick}>
                         <IconCopy size={20} />
