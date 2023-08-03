@@ -1,9 +1,9 @@
 import { ChatSelectors } from '../selectors';
-import { ChatMessages } from './chatMessages';
-import { Message } from './message';
 import { BaseElement } from './baseElement';
-
+import { ChatMessages } from './chatMessages';
 import { ConversationSettings } from './conversationSettings';
+import { Message } from './message';
+
 import { Page } from '@playwright/test';
 
 export class Chat extends BaseElement {

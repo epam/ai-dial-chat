@@ -2,14 +2,16 @@ import { defineConfig, devices } from '@playwright/test';
 import { config } from 'dotenv';
 import * as path from 'path';
 
-
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
 config();
 
-export const STORAGE_STATE = path.join(__dirname, './src/auth/desktopUser.json');
+export const STORAGE_STATE = path.join(
+  __dirname,
+  './src/auth/desktopUser.json',
+);
 
 /**
  * See https://playwright.dev/docs/test-configuration.

@@ -1,2 +1,2 @@
 export * from './expectedMessages';
-export * from './expectedConstants'
+export * from './expectedConstants';

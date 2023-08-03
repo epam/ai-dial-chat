@@ -10,5 +10,5 @@ export const ChatSelectors = {
   messageContent: '[data-qa="message-content"]',
   loadingCursor: '[data-qa="loading-cursor"]',
   temperatureSlider: '[data-qa="temp-slider"]',
-  addons: '[data-qa="addons"]'
+  addons: '[data-qa="addons"]',
 };

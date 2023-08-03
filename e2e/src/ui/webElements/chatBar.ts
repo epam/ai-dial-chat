@@ -1,9 +1,6 @@
-import {
-  ChatBarSelectors,
-  SideBarSelectors,
-} from '../selectors';
-import { Conversation } from './conversation';
+import { ChatBarSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
+import { Conversation } from './conversation';
 
 import { Page } from '@playwright/test';
 

@@ -1,4 +1,4 @@
 export enum Attributes {
-    value = 'value',
-    span = 'span'
+  value = 'value',
+  span = 'span',
 }

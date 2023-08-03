@@ -5,5 +5,5 @@ export const SideBarSelectors = {
 
 export const ChatBarSelectors = {
   newChatButton: '[data-qa="new-chat"]',
-  conversation: '[data-qa="conversation"]'
-}
+  conversation: '[data-qa="conversation"]',
+};
