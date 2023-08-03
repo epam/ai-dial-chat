@@ -56,7 +56,6 @@ export const OpenAIStream = async ({
   temperature,
   key,
   messages,
-  tokenCount,
   selectedAddons,
   assistantModelId,
   userJWT,
@@ -66,7 +65,6 @@ export const OpenAIStream = async ({
   temperature: number | undefined;
   key: string;
   messages: Message[];
-  tokenCount: number;
   selectedAddons: OpenAIEntityAddonID[] | undefined;
   assistantModelId: OpenAIEntityModelID | undefined;
   userJWT: string | null | undefined;
@@ -99,7 +97,6 @@ export const OpenAIStream = async ({
       model.type !== 'assistant'
         ? model.id
         : assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id,
-    ...(model.tokenLimit && { max_tokens: model.tokenLimit - tokenCount }),
     ...(selectedAddons?.length && {
       addons: selectedAddons?.map((addon) => ({ name: addon })),
     }),

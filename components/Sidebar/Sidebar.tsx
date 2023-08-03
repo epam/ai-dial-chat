@@ -66,7 +66,7 @@ const Sidebar = <T,>({
           onSearch={handleSearchTerm}
         />
 
-        <div className="flex-grow overflow-auto">
+        <div className="grow overflow-auto">
           {folders?.length > 0 && (
             <div className="flex border-b border-white/20 pb-2">
               {folderComponent}

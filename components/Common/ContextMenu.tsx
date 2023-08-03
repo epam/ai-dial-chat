@@ -44,12 +44,12 @@ export const ContextMenu = ({
 
   return (
     <div
-      className={`absolute right-0 min-w-[50px] z-20 bg-[#202123] p-2 rounded-lg border border-neutral-600 ${classes.current}`}
+      className={`absolute right-0 z-20 min-w-[50px] rounded-lg border border-neutral-600 bg-[#202123] p-2 ${classes.current}`}
     >
       <ul className="flex flex-col gap-2">
         <li
           onClick={onRename}
-          className="flex cursor-pointer p-2 hover:bg-[#343541] rounded-lg"
+          className="flex cursor-pointer rounded-lg p-2 hover:bg-[#343541]"
         >
           <IconPencil size={18} />
           <span className="ml-2">
@@ -59,7 +59,7 @@ export const ContextMenu = ({
         {onCompare && (
           <li
             onClick={onCompare}
-            className="flex cursor-pointer p-2 hover:bg-[#343541] rounded-lg"
+            className="flex cursor-pointer rounded-lg p-2 hover:bg-[#343541]"
           >
             <IconScale size={18} />
             <span className="ml-2">{t('Compare')}</span>
@@ -68,7 +68,7 @@ export const ContextMenu = ({
         {!isEmptyConversation && onReplay && (
           <li
             onClick={onReplay}
-            className="flex cursor-pointer p-2 hover:bg-[#343541] rounded-lg"
+            className="flex cursor-pointer rounded-lg p-2 hover:bg-[#343541]"
           >
             <IconRefreshDot size={18} />
             <span className="ml-2">{t('Replay')}</span>
@@ -76,14 +76,14 @@ export const ContextMenu = ({
         )}
         <li
           onClick={onExport}
-          className="flex cursor-pointer p-2 hover:bg-[#343541] rounded-lg"
+          className="flex cursor-pointer rounded-lg p-2 hover:bg-[#343541]"
         >
           <IconFileExport size={18} />
           <span className="ml-2">{t('Export')}</span>
         </li>
         <li
           onClick={onDelete}
-          className="flex cursor-pointer p-2 hover:bg-[#343541] rounded-lg"
+          className="flex cursor-pointer rounded-lg p-2 hover:bg-[#343541]"
         >
           <IconTrash size={18} />
           <span className="ml-2">{t('Delete')}</span>

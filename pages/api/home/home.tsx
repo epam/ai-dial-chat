@@ -315,7 +315,6 @@ const Home = ({
         id: model.id,
         name: model.name,
         maxLength: model.maxLength ?? defaultModelLimits.maxLength,
-        tokenLimit: model.tokenLimit ?? defaultModelLimits.tokenLimit,
         requestLimit: model.requestLimit ?? defaultModelLimits.requestLimit,
         type: model.type,
       },
@@ -324,6 +323,7 @@ const Home = ({
       folderId: null,
       replay: defaultReplay,
       selectedAddons: model.selectedAddons ?? [],
+      lastActivityDate: Date.now(),
     };
 
     addNewConversationToStore([newConversation]);
@@ -356,7 +356,6 @@ const Home = ({
           id: model.id,
           name: model.name,
           maxLength: model.maxLength ?? defaultModelLimits.maxLength,
-          tokenLimit: model.tokenLimit ?? defaultModelLimits.tokenLimit,
           requestLimit: model.requestLimit ?? defaultModelLimits.requestLimit,
           type: model.type,
         },
@@ -365,6 +364,7 @@ const Home = ({
         folderId: null,
         replay: defaultReplay,
         selectedAddons: model.selectedAddons ?? [],
+        lastActivityDate: Date.now(),
       };
       newConversations.push(newConversation);
     }
@@ -609,6 +609,7 @@ const Home = ({
         folderId: null,
         replay: defaultReplay,
         selectedAddons: OpenAIEntityModels[defaultModelId].selectedAddons ?? [],
+        lastActivityDate: Date.now(),
       };
 
       const updatedConversations: Conversation[] =
@@ -665,10 +666,10 @@ const Home = ({
         <link rel="icon" href="/favicon.ico" />
       </Head>
       {isIframe && !authDisabled && session.status !== 'authenticated' ? (
-        <div className="w-full h-full grid place-items-center min-h-[100px]">
+        <div className="grid h-full min-h-[100px] w-full place-items-center text-[#123123]">
           <button
             onClick={handleIframeAuth}
-            className="appearance-none border-gray-900/50 bg-[#343541] text-gray-100 border-gray-200 p-3 rounded-lg"
+            className="appearance-none rounded-lg border-gray-200 bg-[#343541] p-3 text-gray-100"
           >
             {t('Login')}
           </button>
@@ -676,7 +677,7 @@ const Home = ({
       ) : (
         selectedConversationNames.length > 0 && (
           <main
-            className={`flex h-screen w-screen flex-col text-sm text-white dark:text-white ${lightMode}`}
+            className={`flex h-screen w-screen flex-col text-sm text-white dark:text-white ${lightMode} theme-main`}
           >
             {enabledFeaturesSet.has('conversations-section') && (
               <div className="fixed top-0 w-full sm:hidden">

@@ -133,7 +133,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
           />
 
           <input
-            className="mr-12 flex-1 overflow-hidden overflow-ellipsis border-neutral-400 bg-transparent text-left text-[12.5px] leading-3 text-white outline-none focus:border-neutral-100"
+            className="mr-12 flex-1 overflow-hidden text-ellipsis border-neutral-400 bg-transparent text-left text-[12.5px] leading-3 text-white outline-none focus:border-neutral-100"
             type="text"
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
@@ -168,7 +168,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
             inverted
           />
           <div
-            className={`relative max-h-5 flex-1 overflow-hidden text-ellipsis whitespace-nowrap break-all text-left text-[12.5px] leading-3 ${
+            className={`relative max-h-5 flex-1 truncate break-all text-left text-[12.5px] leading-3${
               selectedConversationIds.includes(conversation.id)
                 ? 'pr-12'
                 : 'pr-1'
@@ -184,7 +184,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
         !isRenaming &&
         !messageIsStreaming && (
           <div
-            className="absolute right-1 z-100 flex text-gray-300"
+            className="z-100 absolute right-1 flex text-gray-300"
             ref={wrapperRef}
           >
             <SidebarActionButton

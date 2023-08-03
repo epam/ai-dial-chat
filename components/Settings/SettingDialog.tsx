@@ -55,9 +55,9 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
 
   // Render the dialog.
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="fixed inset-0 z-10 overflow-hidden">
-        <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div className="flex min-h-screen items-center justify-center px-4 pb-20 pt-4 text-center sm:block sm:p-0">
           <div
             className="hidden sm:inline-block sm:h-screen sm:align-middle"
             aria-hidden="true"
@@ -65,14 +65,14 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
 
           <div
             ref={modalRef}
-            className="dark:border-netural-400 inline-block max-h-[400px] transform overflow-y-auto rounded-lg border border-gray-300 bg-white px-4 pt-5 pb-4 text-left align-bottom shadow-xl transition-all dark:bg-[#202123] sm:my-8 sm:max-h-[600px] sm:w-full sm:max-w-lg sm:p-6 sm:align-middle"
+            className="dark:border-netural-400 inline-block max-h-[400px] overflow-y-auto rounded-lg border border-gray-300 bg-white px-4 pb-4 pt-5 text-left align-bottom shadow-xl transition-all dark:bg-[#202123] sm:my-8 sm:max-h-[600px] sm:w-full sm:max-w-lg sm:p-6 sm:align-middle"
             role="dialog"
           >
-            <div className="text-lg pb-4 font-bold text-black dark:text-neutral-200">
+            <div className="pb-4 text-lg font-bold text-black dark:text-neutral-200">
               {t('Settings')}
             </div>
 
-            <div className="text-sm font-bold mb-2 text-black dark:text-neutral-200">
+            <div className="mb-2 text-sm font-bold text-black dark:text-neutral-200">
               {t('Theme')}
             </div>
 
@@ -84,13 +84,13 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
               }
             >
               <option
-                className="dark:bg-[#343541] appearance-none dark:hover:bg-black"
+                className="appearance-none dark:bg-[#343541] dark:hover:bg-black"
                 value="dark"
               >
                 {t('Dark mode')}
               </option>
               <option
-                className="dark:bg-[#343541] appearance-none dark:hover:bg-black"
+                className="appearance-none dark:bg-[#343541] dark:hover:bg-black"
                 value="light"
               >
                 {t('Light mode')}
@@ -99,7 +99,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
 
             <button
               type="button"
-              className="w-full px-4 py-2 mt-6 border rounded-lg shadow border-neutral-500 text-neutral-900 hover:bg-neutral-100 focus:outline-none dark:border-neutral-800 dark:border-opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-300"
+              className="mt-6 w-full rounded-lg border border-neutral-500 px-4 py-2 text-neutral-900 shadow hover:bg-neutral-100 focus:outline-none dark:border-neutral-800 dark:border-opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-300"
               onClick={() => {
                 handleSave();
                 onClose();

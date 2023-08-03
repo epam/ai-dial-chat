@@ -37,7 +37,7 @@ export interface Message {
     state?: object;
   };
   like?: number;
-  isError?: boolean;
+  errorMessage?: string;
   state?: object;
   model?: Partial<OpenAIEntityModel>;
 }
@@ -73,6 +73,7 @@ export interface Conversation {
   replay: Replay;
   selectedAddons: string[];
   assistantModelId?: string;
+  lastActivityDate?: number;
 }
 export interface Replay {
   isReplay: boolean;
