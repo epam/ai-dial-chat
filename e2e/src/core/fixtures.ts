@@ -1,38 +1,50 @@
-import { BasePage } from '../ui/pages/basePage';
-import { LoginPage } from '../ui/pages/loginPage';
-
-import { Chat } from '../ui/webElements/chat';
-import { ChatBar } from '../ui/webElements/chatBar';
-import { PromptBar } from '../ui/webElements/promptBar';
+import { DialHomePage } from '../ui/pages';
+import { LoginPage } from '../ui/pages';
+import { Chat, Conversation, ConversationSettings } from '../ui/webElements';
+import { ChatBar } from '../ui/webElements';
+import { PromptBar } from '../ui/webElements';
 
 import { test as base } from '@playwright/test';
 
-const test = base.extend<{
-  basePage: BasePage;
-  loginPage: LoginPage;
-  chatBar: ChatBar;
-  promptBar: PromptBar;
-  chat: Chat;
-}>({
-  basePage: async ({ page }, use) => {
-    const basePage = new BasePage(page);
-    await use(basePage);
+const test = base.extend<
+  {
+    dialHomePage: DialHomePage;
+    loginPage: LoginPage;
+    chatBar: ChatBar;
+    promptBar: PromptBar;
+    chat: Chat;
+    conversation: Conversation;
+    conversationSettings: ConversationSettings;
+  },
+  { workerStorageState: string }
+>({
+  dialHomePage: async ({ page }, use) => {
+    const dialHomePage = new DialHomePage(page);
+    await use(dialHomePage);
   },
   loginPage: async ({ page }, use) => {
     const loginPage = new LoginPage(page);
     await use(loginPage);
   },
-  chatBar: async ({ page }, use) => {
-    const chatBar = new ChatBar(page);
+  chatBar: async ({ dialHomePage }, use) => {
+    const chatBar = dialHomePage.getChatBar();
     await use(chatBar);
   },
-  promptBar: async ({ page }, use) => {
-    const promptBar = new PromptBar(page);
+  promptBar: async ({ dialHomePage }, use) => {
+    const promptBar = dialHomePage.getPromptBar();
     await use(promptBar);
   },
-  chat: async ({ page }, use) => {
-    const chat = new Chat(page);
+  chat: async ({ dialHomePage }, use) => {
+    const chat = dialHomePage.getChat();
     await use(chat);
+  },
+  conversation: async ({ chatBar }, use) => {
+    const conversation = chatBar.getConversations();
+    await use(conversation);
+  },
+  conversationSettings: async ({ chat }, use) => {
+    const conversationSettings = chat.getConversationSettings();
+    await use(conversationSettings);
   },
 });
 

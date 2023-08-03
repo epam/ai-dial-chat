@@ -1,4 +1,4 @@
-import { SideBarSelectors } from '../selectors/sideBarSelectors';
+import { SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Page } from '@playwright/test';

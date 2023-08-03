@@ -1,5 +1,4 @@
 import { Page } from '@playwright/test';
-import config from '../../../local.playwright.config'
 
 export class BasePage {
   protected page: Page;
@@ -9,6 +8,6 @@ export class BasePage {
   }
 
   async openHomePage() {
-    await this.page.goto(config.use!.baseURL!);
+    await this.page.goto('/');
   }
 }

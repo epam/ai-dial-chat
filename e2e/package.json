@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test-local": "playwright test --config=local.playwright.config.ts"
+    "test-local": "playwright test --config=local.playwright.config.ts",
+    "test-ci": "playwright test"
   },
   "keywords": [],
   "author": "",

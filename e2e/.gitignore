@@ -4,3 +4,4 @@ node_modules/
 /playwright/.cache/
 /allure-results/
 .env
+/src/auth/

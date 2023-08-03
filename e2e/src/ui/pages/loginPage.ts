@@ -1,13 +1,13 @@
-import { BasePage } from '../pages/basePage';
-
-import { LoginSelectors } from '../selectors/loginSelectors';
-import { BaseElement } from '../webElements/baseElement';
+import { ExpectedConstants } from '../../testData';
+import { LoginSelectors } from '../selectors';
+import { BaseElement } from '../webElements';
+import { BasePage } from './basePage';
 
 export class LoginPage extends BasePage {
   private tokenInput = new BaseElement(this.page, LoginSelectors.token);
   private signInButton = new BaseElement(this.page, LoginSelectors.signIn)
     .getRootLocator()
-    .getByText('Sign in with Credentials');
+    .getByText(ExpectedConstants.signInButtonTitle);
 
   async loginToChatBot() {
     await this.tokenInput.typeInInput(process.env.USER_TOKEN!);
