@@ -47,6 +47,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       temperature,
       selectedAddons,
       assistantModelId,
+      id,
     } = req.body as ChatBody;
 
     if (!encoding) {
@@ -118,6 +119,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       selectedAddons: selectedAddons as OpenAIEntityAddonID[],
       assistantModelId: assistantModelId as OpenAIEntityModelID | undefined,
       userJWT: token?.access_token as string | undefined,
+      chatId: id,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
 

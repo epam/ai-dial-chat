@@ -42,6 +42,7 @@ interface Props {
 }
 
 const handleRate = (
+  chatId: string,
   message: Message,
   model: OpenAIEntityModel,
   apiKey: string,
@@ -58,6 +59,7 @@ const handleRate = (
       key: apiKey,
       message,
       model,
+      id: chatId,
       value: message.like > 0 ? true : false,
     }),
   }).then();
@@ -590,7 +592,7 @@ export const Chat = memo(({ appName }: Props) => {
         key: 'messages',
         value: messages,
       });
-      handleRate(editedMessage, conversation.model, apiKey);
+      handleRate(conversation.id, editedMessage, conversation.model, apiKey);
     },
     [apiKey, handleUpdateConversation],
   );

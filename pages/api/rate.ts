@@ -1,7 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 
-import { getHeaders } from '../../utils/server/getHeaders';
+import {
+  getAnalyticsHeader as getAnalyticsHeaders,
+  getHeaders,
+} from '../../utils/server/getHeaders';
 import { OPENAI_API_HOST } from '@/utils/app/const';
 
 import { RateBody } from '../../types/chat';
@@ -21,12 +24,15 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const { key, message, model, value } = req.body as RateBody;
+    const { key, message, model, value, id } = req.body as RateBody;
 
     const url = `${OPENAI_API_HOST}/v1/rate`;
 
     await fetch(url, {
-      headers: getHeaders(key),
+      headers: {
+        ...getHeaders(key),
+        ...getAnalyticsHeaders(id),
+      },
       method: 'POST',
       body: JSON.stringify({
         model: model.id,
