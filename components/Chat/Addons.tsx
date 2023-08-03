@@ -62,7 +62,7 @@ export const Addons = ({
   return (
     <div>
       <div
-        className={`grid max-h-[80px] grid-cols-2 gap-8 overflow-auto sm:grid-cols-4`}
+        className={`grid max-h-[80px] grid-cols-2 gap-8 overflow-auto sm:grid-cols-4`} data-qa="addons"
       >
         {addons.map((addon) => {
           const isPreselected = preselectedAddons.some((id) => id === addon.id);

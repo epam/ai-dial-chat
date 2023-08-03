@@ -214,6 +214,7 @@ export const SystemPrompt: FC<Props> = ({
         rows={1}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
+        data-qa="system-prompt"
       />
 
       {showPromptList && filteredPrompts.length > 0 && (

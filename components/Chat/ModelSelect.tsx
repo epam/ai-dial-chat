@@ -175,7 +175,7 @@ export const ModelSelect = ({
   }, [conversationModelId, models]);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col" data-qa="select-model">
       <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
         {t(label)}
       </label>

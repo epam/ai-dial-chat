@@ -153,7 +153,7 @@ export const Conversations = ({ conversations }: Props) => {
   }, [conversations]);
 
   return (
-    <div className="flex w-full flex-col gap-1">
+    <div className="flex w-full flex-col gap-1" data-qa="conversations">
       {sortedConversations &&
         Object.entries(sortedConversations).map(([key, value]) => (
           <ConversationsRenderer

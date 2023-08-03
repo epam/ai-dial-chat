@@ -272,7 +272,7 @@ export const Chatbar = () => {
           handleNewConversation();
           chatDispatch({ field: 'searchTerm', value: '' });
         }}
-        disabled={!!messageIsStreaming}
+        disabled={!!messageIsStreaming} data-qa="new-chat"
       >
         <IconPlus size={16} />
         {t('New chat')}

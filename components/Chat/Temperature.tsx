@@ -39,7 +39,7 @@ export const TemperatureSlider: FC<Props> = ({
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col" data-qa="temp-slider">
       <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
         {label}
       </label>

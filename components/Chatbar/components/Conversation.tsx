@@ -121,7 +121,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
   useOutsideAlerter(wrapperRef, setIsContextMenuOpened);
 
   return (
-    <div className="relative flex items-center">
+    <div className="relative flex items-center" data-qa="conversation">
       {isRenaming && selectedConversationIds.includes(conversation.id) ? (
         <div className="flex w-full items-center gap-3 rounded-lg bg-[#343541]/90 p-3">
           <ModelIcon
