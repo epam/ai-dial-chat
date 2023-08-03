@@ -13,7 +13,7 @@ import {
   OPENAI_API_HOST,
   OPENAI_API_VERSION,
 } from '../app/const';
-import { getHeaders } from './getHeaders';
+import { getAnalyticsHeaders, getApiHeaders } from './getHeaders';
 
 import {
   ParsedEvent,
@@ -58,7 +58,7 @@ export const OpenAIStream = async ({
   messages,
   selectedAddons,
   assistantModelId,
-  userJWT,
+  chatId,
 }: {
   model: OpenAIEntityModel;
   systemPrompt: string | undefined;
@@ -68,6 +68,7 @@ export const OpenAIStream = async ({
   selectedAddons: OpenAIEntityAddonID[] | undefined;
   assistantModelId: OpenAIEntityModelID | undefined;
   userJWT: string | null | undefined;
+  chatId: string;
 }) => {
   const isAddonsAdded: boolean =
     Array.isArray(selectedAddons) && selectedAddons?.length > 0;
@@ -76,7 +77,8 @@ export const OpenAIStream = async ({
   const apiKey = key ? key : process.env.OPENAI_API_KEY;
   const requestHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(apiKey && getHeaders(apiKey)),
+    ...(apiKey && getApiHeaders(apiKey)),
+    ...getAnalyticsHeaders(chatId),
     // ...(userJWT && { 'Authorization': `Bearer ${userJWT}` }),
   };
 
