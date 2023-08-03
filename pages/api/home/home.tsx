@@ -36,6 +36,7 @@ import { KeyValuePair } from '@/types/data';
 import { Feature } from '@/types/features';
 import { FolderInterface, FolderType } from '@/types/folder';
 import {
+  OpenAIEntityAddon,
   OpenAIEntityModel,
   OpenAIEntityModelID,
   OpenAIEntityModels,
@@ -105,6 +106,7 @@ const Home = ({
       prompts,
       defaultModelId: clientDefaultModelId,
       models,
+      modelsMap,
     },
     dispatch,
   } = contextValue;
@@ -126,7 +128,19 @@ const Home = ({
 
   useEffect(() => {
     if (modelsData) {
+      // TODO: get rid of models array to use faster map
       dispatch({ field: 'models', value: modelsData });
+      dispatch({
+        field: 'modelsMap',
+        value: (modelsData as any as OpenAIEntityModel[]).reduce(
+          (acc, model) => {
+            acc[model.id] = model;
+
+            return acc;
+          },
+          {} as Record<string, OpenAIEntityModel>,
+        ),
+      });
 
       const defaultModelId = (modelsData as any as OpenAIEntityModel[]).find(
         (model) => model.isDefault,
@@ -158,6 +172,18 @@ const Home = ({
   useEffect(() => {
     if (addonsData) {
       dispatch({ field: 'addons', value: addonsData });
+
+      dispatch({
+        field: 'addonsMap',
+        value: (addonsData as any as OpenAIEntityAddon[]).reduce(
+          (acc, addon) => {
+            acc[addon.id] = addon;
+
+            return acc;
+          },
+          {} as Record<string, OpenAIEntityAddon>,
+        ),
+      });
     }
   }, [addonsData, dispatch]);
 
@@ -300,8 +326,7 @@ const Home = ({
     }
 
     const lastConversation = conversations[conversations.length - 1];
-    const model =
-      models.find((model) => clientDefaultModelId === model.id) || models[0];
+    const model = modelsMap[clientDefaultModelId] || models[0];
 
     if (!model) {
       return;
@@ -341,8 +366,7 @@ const Home = ({
       return;
     }
     const lastConversation = conversations[conversations.length - 1];
-    const model =
-      models.find((model) => clientDefaultModelId === model.id) || models[0];
+    const model = modelsMap[clientDefaultModelId] || models[0];
 
     if (!model) {
       return;
@@ -678,9 +702,10 @@ const Home = ({
         </div>
       ) : (
         selectedConversationNames.length > 0 && (
-          <main className={`${lightMode} theme-main`}>
+          <main className={`${lightMode} `}>
             <div
-              className={`flex h-screen w-screen flex-col bg-gray-300 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-200`}
+              className={`theme-main flex h-screen w-screen flex-col bg-gray-300 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-200`}
+              id="theme-main"
             >
               {enabledFeaturesSet.has('conversations-section') && (
                 <div className="fixed top-0 w-full sm:hidden">

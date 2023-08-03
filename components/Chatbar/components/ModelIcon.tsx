@@ -2,6 +2,12 @@ import Image from 'next/image';
 
 import { ModelIconMappingType } from '@/types/icons';
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/Common/Tooltip';
+
 interface Props {
   modelId: string;
   size: number;
@@ -9,17 +15,19 @@ interface Props {
   inverted?: boolean;
   animate?: boolean;
   modelName?: string;
+  isCustomTooltip?: boolean;
 }
 
 export const ModelIcon = ({
   modelIconMapping,
   modelId,
   size,
-  inverted,
   animate,
   modelName,
+  inverted,
+  isCustomTooltip,
 }: Props) => {
-  return (
+  const template = (
     <>
       {modelIconMapping[modelId] ? (
         <Image
@@ -30,7 +38,6 @@ export const ModelIcon = ({
           width={size}
           height={size}
           alt={`${modelId} icon`}
-          title={modelName}
         ></Image>
       ) : (
         <span
@@ -44,8 +51,20 @@ export const ModelIcon = ({
           } ${animate ? 'animate-bounce' : ''}`}
           role="img"
           aria-label={`${modelId} icon`}
-          title={modelName}
         ></span>
+      )}
+    </>
+  );
+
+  return (
+    <>
+      {isCustomTooltip ? (
+        template
+      ) : (
+        <Tooltip>
+          <TooltipTrigger>{template}</TooltipTrigger>
+          <TooltipContent>{modelName}</TooltipContent>
+        </Tooltip>
       )}
     </>
   );

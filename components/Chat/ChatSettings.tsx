@@ -17,6 +17,8 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
+import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
+import { ChatInfoTooltip } from './ChatInfoTooltip';
 import { ConversationSettings } from './ConversationSettings';
 
 interface Props {
@@ -67,8 +69,9 @@ export const ChatSettings = ({
   setShowSettings,
 }: Props) => {
   const { t } = useTranslation('chat');
+
   const {
-    state: { lightMode },
+    state: { modelsMap, addonsMap, lightMode },
   } = useContext(HomeContext);
   const errorSwitchingMessage = t(
     'Switching is not allowed. You are currently talk to {{model}} which maintains internal state, which might be corrupted by a different system.',
@@ -87,7 +90,6 @@ export const ChatSettings = ({
   return (
     <>
       <div className="sticky top-0 z-10 flex items-center justify-center bg-gray-200 py-2 text-sm dark:bg-gray-800 [&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-gray-500">
-        {/* TODO: recheck env flags */}
         {isShowChatInfo && (
           <>
             <span
@@ -97,13 +99,63 @@ export const ChatSettings = ({
               {conversation.name}
             </span>
 
-            <span>
-              <ModelIcon
-                modelId={conversation.model.id}
-                modelIconMapping={modelIconMapping}
-                size={18}
-                inverted={lightMode === 'dark'}
-              />
+            {modelsMap[conversation.model.id] && (
+              <span className="flex items-center">
+                <Tooltip>
+                  <TooltipTrigger>
+                    <ModelIcon
+                      modelId={conversation.model.id}
+                      modelIconMapping={modelIconMapping}
+                      size={18}
+                      inverted={lightMode === 'dark'}
+                      isCustomTooltip={true}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <ChatInfoTooltip
+                      model={modelsMap[conversation.model.id]}
+                      selectedAddons={
+                        modelsMap[conversation.model.id].type !== 'application'
+                          ? conversation.selectedAddons.map(
+                              (addon) => addonsMap[addon],
+                            )
+                          : null
+                      }
+                      subModel={
+                        conversation.assistantModelId &&
+                        modelsMap[conversation.model.id].type === 'assistant'
+                          ? modelsMap[conversation.assistantModelId]
+                          : null
+                      }
+                      prompt={
+                        modelsMap[conversation.model.id].type === 'model'
+                          ? conversation.prompt
+                          : null
+                      }
+                      temperature={
+                        modelsMap[conversation.model.id].type !== 'application'
+                          ? conversation.temperature
+                          : null
+                      }
+                      modelIconMapping={modelIconMapping}
+                    />
+                  </TooltipContent>
+                </Tooltip>
+              </span>
+            )}
+
+            <span className="flex items-center">
+              {conversation.selectedAddons?.map((addon) => (
+                <ModelIcon
+                  key={addon}
+                  modelId={addon}
+                  modelName={addonsMap[addon]?.name || addon}
+                  // TODO: fix mapping for addons, when icon_url will be provided
+                  modelIconMapping={{}}
+                  size={18}
+                  inverted={lightMode === 'dark'}
+                />
+              ))}
             </span>
           </>
         )}
