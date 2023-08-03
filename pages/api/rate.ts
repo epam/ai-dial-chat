@@ -12,6 +12,7 @@ import { RateBody } from '../../types/chat';
 import { authOptions } from './auth/[...nextauth]';
 
 import { errorsMessages } from '@/constants/errors';
+import { validate } from 'uuid';
 
 // export const config = {
 //   runtime: 'edge',
@@ -25,6 +26,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   try {
     const { key, message, model, value, id } = req.body as RateBody;
+
+    if (!id || !validate(id)) {
+      return res.status(400).send(errorsMessages[400]);
+    }
 
     const url = `${OPENAI_API_HOST}/v1/rate`;
 
