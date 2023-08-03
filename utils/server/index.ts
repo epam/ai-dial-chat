@@ -13,7 +13,7 @@ import {
   OPENAI_API_HOST,
   OPENAI_API_VERSION,
 } from '../app/const';
-import { getAnalyticsHeader, getHeaders } from './getHeaders';
+import { getAnalyticsHeaders, getApiHeaders } from './getHeaders';
 
 import {
   ParsedEvent,
@@ -77,8 +77,8 @@ export const OpenAIStream = async ({
   const apiKey = key ? key : process.env.OPENAI_API_KEY;
   const requestHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(apiKey && getHeaders(apiKey)),
-    ...getAnalyticsHeader(chatId),
+    ...(apiKey && getApiHeaders(apiKey)),
+    ...getAnalyticsHeaders(chatId),
     // ...(userJWT && { 'Authorization': `Bearer ${userJWT}` }),
   };
 

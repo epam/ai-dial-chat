@@ -1,5 +1,5 @@
 import { OPENAI_API_HOST, OPENAI_API_VERSION } from '../app/const';
-import { getHeaders } from './getHeaders';
+import { getApiHeaders } from './getHeaders';
 
 export async function getEntities(type: string, key: string): Promise<any[]> {
   const url = `${OPENAI_API_HOST}/openai/${type}s?api-version=${OPENAI_API_VERSION}`;
@@ -8,7 +8,7 @@ export async function getEntities(type: string, key: string): Promise<any[]> {
 
   const response = await fetch(url, {
     headers: {
-      ...(apiKey && getHeaders(apiKey)),
+      ...(apiKey && getApiHeaders(apiKey)),
     },
   }).catch((error) => {
     throw new Error(`${errMsg}: ${error.message}`);

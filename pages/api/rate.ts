@@ -2,8 +2,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 
 import {
-  getAnalyticsHeader as getAnalyticsHeaders,
-  getHeaders,
+  getAnalyticsHeaders,
+  getApiHeaders,
 } from '../../utils/server/getHeaders';
 import { OPENAI_API_HOST } from '@/utils/app/const';
 
@@ -30,7 +30,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     await fetch(url, {
       headers: {
-        ...getHeaders(key),
+        ...getApiHeaders(key),
         ...getAnalyticsHeaders(id),
       },
       method: 'POST',
