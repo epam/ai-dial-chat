@@ -89,7 +89,7 @@ const ChatMDComponent = ({
   return (
     <>
       <MemoizedReactMarkdown
-        className={`prose dark:prose-invert flex-1`}
+        className={`prose flex-1 dark:prose-invert`}
         remarkPlugins={[remarkGfm]}
         components={getMDComponents(isShowResponseLoader)}
       >

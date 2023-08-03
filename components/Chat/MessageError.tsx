@@ -6,8 +6,8 @@ export interface Props {
 
 export const MessageError = ({ error }: Props) => {
   return (
-    <div className="w-full rounded bg-red-200 text-red-500 p-3 flex gap-3">
-      <span className="shrink-0 flex items-center">
+    <div className="flex w-full gap-3 rounded bg-red-200 p-3 text-red-500">
+      <span className="flex shrink-0 items-center">
         <IconAlertCircle size={22}></IconAlertCircle>
       </span>
       <span>{error}</span>
