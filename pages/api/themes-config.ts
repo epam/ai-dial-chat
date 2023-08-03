@@ -112,9 +112,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   cachedTheme = wrapCssContents([
     generateColorsCssVariables(json.themes.colorsPalette),
     generateUrlsCssVariables({
-      'app-logo': json.images['app-logo'],
-      'default-model': json.images['default-model'],
-      'default-addon': json.images['default-addon'],
+      ...json.images,
     }),
   ]);
   cachedThemeExpiration = Date.now() + dayInMs;

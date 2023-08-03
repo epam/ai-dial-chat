@@ -38,6 +38,7 @@ env:
   MODEL_ICON_MAPPING: 'gpt-4=gpt4.svg,gpt-35-turbo=gpt3.svg,gpt-4-32k=gpt4.svg,chat-bison@001=palm2.svg,amazon.titan-tg1-large=awc.svg,ai21.j2-grande-instruct=ai21_j2.svg,ai21.j2-jumbo-instruct=ai21_j2.svg,anthropic.claude-instant-v1=anthropic.svg,anthropic.claude-v1=anthropic.svg,anthropic.claude-v2=anthropic.svg,stability.stable-diffusion-xl=Stable-Diffusion.svg,dolly=dolly.svg'
   AVAILABLE_MODELS_USERS_LIMITATIONS: ''
   AVAILABLE_ADDONS_USERS_LIMITATIONS: ''
+  THEMES_CONFIG_HOST: 'http://dial-chat-themes-static-site.dial-chat-themes'
 
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
 
