@@ -15,7 +15,6 @@ import ChevronDownIcon from '../../public/images/icons/chevron-down.svg';
 import FileArrowRightIcon from '../../public/images/icons/file-arrow-right.svg';
 import GearIcon from '../../public/images/icons/gear.svg';
 import UserIcon from '../../public/images/icons/user.svg';
-import SVGIcon from '../SVGIcon/SVGIcon';
 
 interface SelectOption {
   label: 'Settings' | 'Log Out';
@@ -38,12 +37,7 @@ const LogoutOption = ({ children }: OptionComponentProps) => {
   }, [session]);
   return (
     <div className="flex text-gray-500 dark:text-gray-200" onClick={onClick}>
-      <SVGIcon
-        width={18}
-        height={18}
-        stroke="currentColor"
-        SVGElement={FileArrowRightIcon}
-      />
+      <FileArrowRightIcon width={18} height={18} stroke="currentColor" />
       <span className="ml-3">{children}</span>
     </div>
   );
@@ -57,12 +51,7 @@ const SettingsOption = ({ children }: OptionComponentProps) => {
 
   return (
     <div className="flex text-gray-500 dark:text-gray-200" onClick={onClick}>
-      <SVGIcon
-        width={18}
-        height={18}
-        stroke="currentColor"
-        SVGElement={GearIcon}
-      />
+      <GearIcon width={18} height={18} stroke="currentColor" />
       <span className="ml-3">{children}</span>
     </div>
   );
@@ -94,12 +83,7 @@ const ValueContainer = (props: ValueContainerProps<SelectOption>) => {
       {...props}
       className="!flex text-gray-500 dark:text-gray-200"
     >
-      <SVGIcon
-        width={24}
-        height={24}
-        stroke="currentColor"
-        SVGElement={UserIcon}
-      />
+      <UserIcon width={24} height={24} stroke="currentColor" />
       <span className="ml-3 mr-2 grow">{session?.user?.name}</span>
     </components.ValueContainer>
   );
@@ -108,19 +92,18 @@ const ValueContainer = (props: ValueContainerProps<SelectOption>) => {
 const DropdownIndicator = (props: DropdownIndicatorProps<SelectOption>) => {
   return (
     <components.DropdownIndicator {...props} className="cursor-pointer">
-      <SVGIcon
+      <ChevronDownIcon
         className="text-gray-500 dark:!text-gray-200"
         width={18}
         height={18}
         stroke="currentColor"
-        SVGElement={ChevronDownIcon}
       />
     </components.DropdownIndicator>
   );
 };
 
 const selectClassNames: ClassNamesConfig<SelectOption> = {
-  control: () => '!border-none dark:bg-gray-700 !rounded-none',
+  control: () => '!border-none dark:bg-gray-700 !rounded-none h-full',
   indicatorSeparator: () => 'hidden',
   menu: () => 'dark:bg-black !z-50 !mt-0',
   menuList: () => '!p-0',

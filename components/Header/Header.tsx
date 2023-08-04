@@ -6,7 +6,6 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import MoveLeftIcon from '../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../public/images/icons/move-right.svg';
-import SVGIcon from '../SVGIcon/SVGIcon';
 import { SettingDialog } from '../Settings/SettingDialog';
 import { User } from './User';
 
@@ -42,13 +41,21 @@ const Header = () => {
         className="flex-none cursor-pointer border-r border-gray-300 px-5 py-3 dark:border-gray-900"
         onClick={handleToggleChatbar}
       >
-        <SVGIcon
-          className="text-gray-500 dark:text-gray-200"
-          width={24}
-          height={24}
-          stroke="currentColor"
-          SVGElement={showChatbar ? MoveLeftIcon : MoveRightIcon}
-        />
+        {showChatbar ? (
+          <MoveLeftIcon
+            className="text-gray-500 dark:text-gray-200"
+            width={24}
+            height={24}
+            stroke="currentColor"
+          />
+        ) : (
+          <MoveRightIcon
+            className="text-gray-500 dark:text-gray-200"
+            width={24}
+            height={24}
+            stroke="currentColor"
+          />
+        )}
       </div>
       <div className="flex grow">
         <span
@@ -58,7 +65,7 @@ const Header = () => {
           }}
         ></span>
         <div className="grow"></div>
-        <div className="flex  min-w-[195px]">
+        <div className="align-center  flex min-w-[195px]">
           <User />
         </div>
       </div>
@@ -67,13 +74,21 @@ const Header = () => {
         className="flex-none cursor-pointer border-l border-gray-300 px-5 py-3 dark:border-gray-900"
         onClick={handleTogglePromtbar}
       >
-        <SVGIcon
-          className="text-gray-500 dark:text-gray-200"
-          width={24}
-          height={24}
-          stroke="currentColor"
-          SVGElement={showPromptbar ? MoveRightIcon : MoveLeftIcon}
-        />
+        {showPromptbar ? (
+          <MoveRightIcon
+            className="text-gray-500 dark:text-gray-200"
+            width={24}
+            height={24}
+            stroke="currentColor"
+          />
+        ) : (
+          <MoveLeftIcon
+            className="text-gray-500 dark:text-gray-200"
+            width={24}
+            height={24}
+            stroke="currentColor"
+          />
+        )}
       </div>
       <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
     </div>
