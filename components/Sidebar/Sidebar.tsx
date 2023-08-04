@@ -4,11 +4,6 @@ import { useTranslation } from 'react-i18next';
 
 import { FolderInterface } from '@/types/folder';
 
-import {
-  CloseSidebarButton,
-  OpenSidebarButton,
-} from './components/OpenCloseButton';
-
 import Search from '../Search';
 
 interface Props<T> {
@@ -22,7 +17,7 @@ interface Props<T> {
   footerComponent?: ReactNode;
   searchTerm: string;
   handleSearchTerm: (searchTerm: string) => void;
-  toggleOpen: () => void;
+  toggleOpen?: () => void;
   handleDrop: (e: any) => void;
 }
 
@@ -37,7 +32,6 @@ const Sidebar = <T,>({
   footerComponent,
   searchTerm,
   handleSearchTerm,
-  toggleOpen,
   handleDrop,
 }: Props<T>) => {
   const { t } = useTranslation('promptbar');
@@ -57,7 +51,7 @@ const Sidebar = <T,>({
   return isOpen ? (
     <div data-qa="sidebar">
       <div
-        className={`fixed top-0 ${side}-0 z-40 flex h-full w-[260px] flex-none flex-col space-y-2 bg-[#202123] p-2 text-[14px] transition-all sm:relative sm:top-0`}
+        className={`fixed top-0 md:top-12 ${side}-0 z-40 flex h-full w-[260px] flex-none flex-col space-y-2 bg-[#202123] p-2 text-[14px] transition-all`}
       >
         {actionButtons}
         <Search
@@ -94,12 +88,8 @@ const Sidebar = <T,>({
         </div>
         {footerComponent}
       </div>
-
-      <CloseSidebarButton onClick={toggleOpen} side={side} />
     </div>
-  ) : (
-    <OpenSidebarButton onClick={toggleOpen} side={side} />
-  );
+  ) : null;
 };
 
 export default Sidebar;

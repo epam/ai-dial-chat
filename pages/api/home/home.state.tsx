@@ -38,6 +38,7 @@ export interface HomeInitialState {
   modelIconMapping: Record<string, string>;
   footerHtmlMessage: string;
 
+  isUserSettingsOpen: boolean;
   enabledFeatures: Set<Feature>;
 }
 
@@ -69,6 +70,7 @@ export const initialState: HomeInitialState = {
   isIframe: false,
   modelIconMapping: {},
   footerHtmlMessage: '',
+  isUserSettingsOpen: false,
 
   enabledFeatures: new Set([]),
 };
