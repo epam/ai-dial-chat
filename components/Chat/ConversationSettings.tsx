@@ -69,7 +69,10 @@ export const ConversationSettings = ({
   }, [conversation.messages]);
 
   return (
-    <div className="flex h-full flex-col space-y-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-600" data-qa="conversation-settings">
+    <div
+      className="flex h-full flex-col space-y-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-600"
+      data-qa="conversation-settings"
+    >
       {isModelSelectDisabled ? (
         <span className="text-red-300">
           {t(

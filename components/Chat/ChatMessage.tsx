@@ -180,7 +180,10 @@ export const ChatMessage: FC<Props> = memo(
             )}
           </div>
 
-          <div className="mt-[-2px] w-full min-w-0 shrink" data-qa="message-content">
+          <div
+            className="mt-[-2px] w-full min-w-0 shrink"
+            data-qa="message-content"
+          >
             {isUser ? (
               <div className="flex">
                 {isEditing ? (

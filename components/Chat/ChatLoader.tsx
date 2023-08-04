@@ -34,7 +34,10 @@ export const ChatLoader: FC<ChatLoaderProps> = ({
           />
         </div>
 
-        <span className="mt-1 animate-ping cursor-default" data-qa="loading-cursor">
+        <span
+          className="mt-1 animate-ping cursor-default"
+          data-qa="loading-cursor"
+        >
           {modelCursorSign}
         </span>
       </div>
