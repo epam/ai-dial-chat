@@ -1,5 +1,4 @@
 const { i18n } = require('./next-i18next.config');
-const optionsSVGR = require('./svgr.config');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
