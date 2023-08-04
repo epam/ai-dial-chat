@@ -40,8 +40,8 @@ export const ChatEmpty = ({
 }: Props) => {
   return (
     <>
-      <div className="mx-auto flex flex-col space-y-2 px-3 pt-5 sm:max-w-[600px] md:space-y-5 md:pt-12">
-        <div className="text-center text-3xl font-semibold text-gray-800 dark:text-gray-100">
+      <div className="flex flex-col px-3 pt-5 sm:max-w-[1000px]">
+        <div className="text-center text-xl text-gray-800 dark:text-gray-100">
           {models.length === 0 ? (
             <div>
               <Spinner size="16px" className="mx-auto" />
