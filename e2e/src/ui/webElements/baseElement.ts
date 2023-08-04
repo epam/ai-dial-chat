@@ -83,7 +83,12 @@ export class BaseElement {
   }
 
   async getAllBorderBottomColors() {
-    const allBorderColors = {
+    const allBorderColors: {
+      bottomBorderColors: string[];
+      topBorderColors: string[];
+      leftBorderColors: string[];
+      rightBorderColors: string[];
+    } = {
       bottomBorderColors: [],
       topBorderColors: [],
       leftBorderColors: [],
