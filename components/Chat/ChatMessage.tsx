@@ -203,7 +203,7 @@ export const ChatMessage: FC<Props> = memo(
 
                     <div className="mt-10 flex justify-center space-x-4">
                       <button
-                        className="h-[40px] rounded-md bg-blue px-4 py-1 text-sm font-medium disabled:opacity-50"
+                        className="h-[40px] rounded-md bg-blue-500 px-4 py-1 text-sm font-medium disabled:opacity-50"
                         onClick={handleEditMessage}
                         disabled={messageContent.trim().length <= 0}
                       >

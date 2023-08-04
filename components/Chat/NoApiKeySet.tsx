@@ -47,7 +47,7 @@ export const NoApiKeySet: FC<NoApiKeySetProps> = ({ appName }) => {
             href="https://platform.openai.com/account/api-keys"
             target="_blank"
             rel="noreferrer"
-            className="text-blue hover:underline"
+            className="text-blue-500 hover:underline"
           >
             openai.com
           </a>
