@@ -9,9 +9,15 @@ module.exports = {
   darkMode: 'class',
   theme: {
     extend: {
+      screens: {
+        sm: '560px',
+      },
       colors: {
         green: 'rgb(var(--green, 55 186 188) / <alpha-value)', // #37BABC
-        blue: 'rgb(var(--blue, 90 140 233) / <alpha-value>)', // #5A8CE9
+        blue: {
+          500: 'rgb(var(--blue-500, 90 140 233) / <alpha-value>)', // #5A8CE9,
+          700: 'rgb(var(--blue-700, 72, 120, 210) / <alpha-value>)', // #4878D2
+        },
         violet: 'rgb(var(--violet, 148 89 241) / <alpha-value>)', // #9459F1
         gray: {
           100: 'rgb(var(--gray-100, 252 252 252) / <alpha-value>)', // #FCFCFC
@@ -31,6 +37,9 @@ module.exports = {
           800: 'rgb(var(--red-800, 174 47 47) / <alpha-value>)', // #AE2F2F
           900: 'rgb(var(--red-900, 64 32 39) / <alpha-value>)', // #402027
         },
+      },
+      borderRadius: {
+        DEFAULT: '3px',
       },
     },
   },

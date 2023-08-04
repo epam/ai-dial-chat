@@ -25,12 +25,14 @@ The application enables you to customize color palettes and image URLs using a c
   },
   "images": {
     // image urls
-    "app-logo": "",
+    "app-logo": "app-logo.svg", 
     "default-model": "",
     "default-addon": ""
   }
 }
 ```
+
+The url for app logo will be recognized as relative url and transformed into {{host}}/app-logo.svg. You can also specify full path to your images like `https://some-path.svg`
 
 ### Configuring Colors Palette
 
@@ -42,7 +44,7 @@ Specify your custom colors within the `colorsPalette` object, using the desired 
     "green": "#37BABC",
 
     // RGB
-    "blue": "90 140 233",
+    "blue-500": "90 140 233",
     // ...
   }
 ```
@@ -60,7 +62,8 @@ Below is the default configuration for the theme. This configuration includes th
   "themes": {
     "colorsPalette": {
       "green": "#37BABC",
-      "blue": "#5A8CE9",
+      "blue-500": "#5A8CE9",
+      "blue-700": "#4878D2",
       "violet": "#9459F1",
       "gray-100": "#FCFCFC",
       "gray-200": "#F3F4F6",

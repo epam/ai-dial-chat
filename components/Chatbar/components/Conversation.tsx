@@ -27,7 +27,12 @@ interface Props {
 
 export const ConversationComponent = ({ conversation }: Props) => {
   const {
-    state: { messageIsStreaming, selectedConversationIds, modelIconMapping },
+    state: {
+      messageIsStreaming,
+      selectedConversationIds,
+      modelIconMapping,
+      lightMode,
+    },
     handleSelectConversation,
     handleUpdateConversation,
     handleNewReplayConversation,
@@ -123,13 +128,13 @@ export const ConversationComponent = ({ conversation }: Props) => {
   return (
     <div className="relative flex items-center" data-qa="conversation">
       {isRenaming && selectedConversationIds.includes(conversation.id) ? (
-        <div className="flex w-full items-center gap-3 rounded-lg bg-[#343541]/90 p-3">
+        <div className="flex w-full items-center gap-3 rounded-lg p-3">
           <ModelIcon
             size={18}
             modelIconMapping={modelIconMapping}
             modelId={conversation.model.id}
             modelName={conversation.model.name}
-            inverted
+            inverted={lightMode === 'dark'}
           />
 
           <input
@@ -165,10 +170,10 @@ export const ConversationComponent = ({ conversation }: Props) => {
             modelIconMapping={modelIconMapping}
             modelId={conversation.model.id}
             modelName={conversation.model.name}
-            inverted
+            inverted={lightMode === 'dark'}
           />
           <div
-            className={`relative max-h-5 flex-1 truncate break-all text-left text-[12.5px] leading-3${
+            className={`relative max-h-5 flex-1 truncate break-all text-left text-[12.5px] leading-3 ${
               selectedConversationIds.includes(conversation.id)
                 ? 'pr-12'
                 : 'pr-1'

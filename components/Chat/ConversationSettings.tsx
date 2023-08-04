@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react';
-
 import { useTranslation } from 'next-i18next';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/utils/app/const';
@@ -44,10 +42,6 @@ export const ConversationSettings = ({
   onSelectAssistantSubModel,
   onChangeAddon,
 }: Props) => {
-  const [isModelSelectDisabled, setIsModelSelectDisabled] = useState(() =>
-    conversation.messages.some((message) => !!message.custom_content?.state),
-  );
-
   const { t } = useTranslation('chat');
   const aiEntityType = conversation.model.type;
   const modelsFiltered = models.filter((etity) => etity.type === 'model');
@@ -62,72 +56,55 @@ export const ConversationSettings = ({
   const preselectedAddons =
     (model?.selectedAddons as OpenAIEntityAddonID[]) ?? [];
 
-  useEffect(() => {
-    setIsModelSelectDisabled(
-      conversation.messages.some((message) => !!message.custom_content?.state),
-    );
-  }, [conversation.messages]);
-
   return (
     <div
       className="flex h-full flex-col space-y-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-600"
       data-qa="conversation-settings"
     >
-      {isModelSelectDisabled ? (
-        <span className="text-red-300">
-          {t(
-            'Switching is not allowed. You are currently talk to {{model}} which maintains internal state, which might be corrupted by a different system.',
-            { model: conversation.model.name },
-          )}
-        </span>
-      ) : (
-        <>
-          <ModelSelect
-            conversationModelId={conversation.model.id}
-            conversationModelName={conversation.model.name}
-            defaultModelId={defaultModelId}
-            models={models}
-            onSelectModel={onSelectModel}
-          />
-          {aiEntityType === 'assistant' && (
-            <ModelSelect
-              conversationModelId={
-                conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id
-              }
-              conversationModelName={
-                assitantSubModelName ?? DEFAULT_ASSISTANT_SUBMODEL.name
-              }
-              label="Model"
-              defaultModelId={defaultModelId}
-              models={modelsFiltered}
-              onSelectModel={onSelectAssistantSubModel}
-            />
-          )}
-          {aiEntityType === 'model' && (
-            <SystemPrompt
-              conversation={conversation}
-              prompts={prompts}
-              onChangePrompt={onChangePrompt}
-            />
-          )}
+      <ModelSelect
+        conversationModelId={conversation.model.id}
+        conversationModelName={conversation.model.name}
+        defaultModelId={defaultModelId}
+        models={models}
+        onSelectModel={onSelectModel}
+      />
+      {aiEntityType === 'assistant' && (
+        <ModelSelect
+          conversationModelId={
+            conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id
+          }
+          conversationModelName={
+            assitantSubModelName ?? DEFAULT_ASSISTANT_SUBMODEL.name
+          }
+          label="Model"
+          defaultModelId={defaultModelId}
+          models={modelsFiltered}
+          onSelectModel={onSelectAssistantSubModel}
+        />
+      )}
+      {aiEntityType === 'model' && (
+        <SystemPrompt
+          conversation={conversation}
+          prompts={prompts}
+          onChangePrompt={onChangePrompt}
+        />
+      )}
 
-          {aiEntityType !== 'application' && (
-            <TemperatureSlider
-              label={t('Temperature')}
-              onChangeTemperature={onChangeTemperature}
-              conversation={conversation}
-            />
-          )}
+      {aiEntityType !== 'application' && (
+        <TemperatureSlider
+          label={t('Temperature')}
+          onChangeTemperature={onChangeTemperature}
+          conversation={conversation}
+        />
+      )}
 
-          {aiEntityType !== 'application' && (
-            <Addons
-              addons={addons}
-              selectedAddons={conversation.selectedAddons}
-              preselectedAddons={preselectedAddons ?? []}
-              onChangeAddon={onChangeAddon}
-            />
-          )}
-        </>
+      {aiEntityType !== 'application' && (
+        <Addons
+          addons={addons}
+          selectedAddons={conversation.selectedAddons}
+          preselectedAddons={preselectedAddons ?? []}
+          onChangeAddon={onChangeAddon}
+        />
       )}
     </div>
   );

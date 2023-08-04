@@ -12,6 +12,7 @@ export const SelectIcon = ({ modelId, children }: SelectIconProps) => {
   const {
     state: { modelIconMapping, lightMode },
   } = useContext(HomeContext);
+
   return (
     <span className="flex flex-row items-center gap-2">
       <ModelIcon

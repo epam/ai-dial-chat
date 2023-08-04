@@ -20,7 +20,7 @@ export const ChatLoader: FC<ChatLoaderProps> = ({
 }) => {
   return (
     <div
-      className="group border-b border-black/10 bg-gray-50 text-gray-800 dark:border-gray-900/50 dark:bg-[#444654] dark:text-gray-100 md:px-4"
+      className="group border-b border-gray-400 dark:border-gray-700 dark:bg-gray-800 md:px-4"
       style={{ overflowWrap: 'anywhere' }}
     >
       <div className="m-auto flex gap-4 p-4 text-base md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">

@@ -64,7 +64,7 @@ const CustomSelectOption = (props: OptionProps<SelectOption>) => {
     <components.Option
       {...props}
       className={`!p-3 hover:cursor-pointer ${
-        isFocused && '!bg-blue/20 dark:!bg-blue/20'
+        isFocused && '!bg-blue-500/20 dark:!bg-blue-500/20'
       } ${isSelected && '!bg-transparent'}`}
     >
       {data.label === 'Settings' && (
