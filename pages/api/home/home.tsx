@@ -707,19 +707,12 @@ const Home = ({
               className={`theme-main flex h-screen w-screen flex-col bg-gray-300 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-200`}
               id="theme-main"
             >
-              <div
-                className={`flex h-full w-full flex-col sm:pt-0 ${
-                  enabledFeaturesSet.has('conversations-section')
-                    ? 'pt-[48px]'
-                    : ''
-                }`}
-              >
+              <div className={`flex h-full w-full flex-col sm:pt-0`}>
                 <Header />
-                <div
-                  className="flex w-full"
-                  style={{ maxHeight: 'calc(100vh - 48px)' }}
-                >
-                  {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
+                <div className="flex w-full grow overflow-auto">
+                  {enabledFeaturesSet.has('conversations-section') && (
+                    <Chatbar />
+                  )}
 
                   <div className="flex flex-1">
                     <Chat appName={appName} />
