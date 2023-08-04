@@ -15,8 +15,18 @@ import {
   useRole,
 } from '@floating-ui/react';
 import type { Placement } from '@floating-ui/react';
-import * as React from 'react';
-import { useRef } from 'react';
+import {
+  HTMLProps,
+  ReactNode,
+  cloneElement,
+  createContext,
+  forwardRef,
+  isValidElement,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 interface TooltipOptions {
   initialOpen?: boolean;
@@ -31,7 +41,7 @@ export function useTooltip({
   open: controlledOpen,
   onOpenChange: setControlledOpen,
 }: TooltipOptions = {}) {
-  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(initialOpen);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(initialOpen);
   const arrowRef = useRef<SVGSVGElement>(null);
 
   const open = controlledOpen ?? uncontrolledOpen;
@@ -73,7 +83,7 @@ export function useTooltip({
 
   const interactions = useInteractions([hover, focus, dismiss, role]);
 
-  return React.useMemo(
+  return useMemo(
     () => ({
       open,
       setOpen,
@@ -87,10 +97,10 @@ export function useTooltip({
 
 type ContextType = ReturnType<typeof useTooltip> | null;
 
-const TooltipContext = React.createContext<ContextType>(null);
+const TooltipContext = createContext<ContextType>(null);
 
 export const useTooltipContext = () => {
-  const context = React.useContext(TooltipContext);
+  const context = useContext(TooltipContext);
 
   if (context == null) {
     throw new Error('Tooltip components must be wrapped in <Tooltip />');
@@ -102,7 +112,7 @@ export const useTooltipContext = () => {
 export function Tooltip({
   children,
   ...options
-}: { children: React.ReactNode } & TooltipOptions) {
+}: { children: ReactNode } & TooltipOptions) {
   // This can accept any props as options, e.g. `placement`,
   // or other positioning options.
   const tooltip = useTooltip(options);
@@ -113,17 +123,17 @@ export function Tooltip({
   );
 }
 
-export const TooltipTrigger = React.forwardRef<
+export const TooltipTrigger = forwardRef<
   HTMLElement,
-  React.HTMLProps<HTMLElement> & { asChild?: boolean }
+  HTMLProps<HTMLElement> & { asChild?: boolean }
 >(function TooltipTrigger({ children, asChild = false, ...props }, propRef) {
   const context = useTooltipContext();
   const childrenRef = (children as any).ref;
   const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
 
   // `asChild` allows the user to pass any element as the anchor
-  if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(
+  if (asChild && isValidElement(children)) {
+    return cloneElement(
       children,
       context.getReferenceProps({
         ref,
@@ -146,9 +156,9 @@ export const TooltipTrigger = React.forwardRef<
   );
 });
 
-export const TooltipContent = React.forwardRef<
+export const TooltipContent = forwardRef<
   HTMLDivElement,
-  React.HTMLProps<HTMLDivElement>
+  HTMLProps<HTMLDivElement>
 >(function TooltipContent({ style, ...props }, propRef) {
   const context = useTooltipContext();
   const ref = useMergeRefs([context.refs.setFloating, propRef]);
