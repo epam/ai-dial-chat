@@ -1,5 +1,5 @@
 {
-  "name": "ai-chatbot-starter",
+  "name": "dial-chat",
   "version": "1.8.0",
   "private": true,
   "scripts": {
@@ -19,6 +19,17 @@
   "dependencies": {
     "@aashutoshrathi/word-wrap": "^1.2.6",
     "@dqbd/tiktoken": "^1.0.7",
+    "@opentelemetry/exporter-metrics-otlp-proto": "^0.41.1",
+    "@opentelemetry/exporter-prometheus": "^0.41.1",
+    "@opentelemetry/exporter-trace-otlp-proto": "^0.41.1",
+    "@opentelemetry/instrumentation": "^0.41.1",
+    "@opentelemetry/instrumentation-http": "^0.41.1",
+    "@opentelemetry/resources": "^1.15.1",
+    "@opentelemetry/sdk-metrics": "^1.15.1",
+    "@opentelemetry/sdk-node": "^0.41.1",
+    "@opentelemetry/sdk-trace-base": "^1.15.1",
+    "@opentelemetry/sdk-trace-node": "^1.15.1",
+    "@opentelemetry/semantic-conventions": "^1.15.1",
     "@tabler/icons-react": "^2.9.0",
     "classnames": "^2.3.2",
     "css.escape": "^1.5.1",
