@@ -46,6 +46,7 @@ import { Prompt } from '@/types/prompt';
 
 import { Chat } from '@/components/Chat/Chat';
 import { Chatbar } from '@/components/Chatbar/Chatbar';
+import Header from '@/components/Header/Header';
 import { Navbar } from '@/components/Mobile/Navbar';
 import Promptbar from '@/components/Promptbar';
 
@@ -665,6 +666,7 @@ const Home = ({
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
+
       {isIframe && !authDisabled && session.status !== 'authenticated' ? (
         <div className="grid h-full min-h-[100px] w-full place-items-center text-[#123123]">
           <button
@@ -689,19 +691,25 @@ const Home = ({
             )}
 
             <div
-              className={`flex h-full w-full sm:pt-0 ${
+              className={`flex h-full w-full flex-col sm:pt-0 ${
                 enabledFeaturesSet.has('conversations-section')
                   ? 'pt-[48px]'
                   : ''
               }`}
             >
-              {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
+              <Header />
+              <div
+                className="flex w-full"
+                style={{ maxHeight: 'calc(100vh - 48px)' }}
+              >
+                {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
 
-              <div className="flex flex-1">
-                <Chat appName={appName} />
+                <div className="flex flex-1">
+                  <Chat appName={appName} />
+                </div>
+
+                {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
               </div>
-
-              {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
             </div>
           </main>
         )
