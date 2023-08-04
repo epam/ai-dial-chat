@@ -1,4 +1,4 @@
-import { STORAGE_STATE } from '../../playwright.config';
+import { STORAGE_STATE } from '../../config/playwright.config';
 import test from '../core/fixtures';
 
 test('Authenticate', async ({ page, loginPage }) => {

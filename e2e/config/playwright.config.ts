@@ -6,18 +6,15 @@ import * as path from 'path';
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-config();
+config({ path: './.env.local' });
 
-export const STORAGE_STATE = path.join(
-  __dirname,
-  './src/auth/desktopUser.json',
-);
+export const STORAGE_STATE = path.join(__dirname, '../auth/desktopUser.json');
 
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: './src/tests',
+  testDir: '../src/tests',
   /* Run tests in files in parallel */
   fullyParallel: false,
   /* Opt out of parallel tests on CI. */
@@ -25,8 +22,9 @@ export default defineConfig({
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['list'],
-    ['allure-playwright', { detail: true, outputFolder: 'allure-results' }],
+    ['allure-playwright', { detail: true, outputFolder: 'e2e/allure-results' }],
   ],
+  outputDir: '../test-results',
   timeout: 60000,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {

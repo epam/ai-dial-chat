@@ -10,7 +10,9 @@ export class LoginPage extends BasePage {
     .getByText(ExpectedConstants.signInButtonTitle);
 
   async loginToChatBot() {
-    await this.tokenInput.typeInInput(process.env.USER_TOKEN!);
+    await this.tokenInput.typeInInput(
+      process.env.AUTH_TEST_TOKEN!.split(',')[0],
+    );
     await this.signInButton.click();
   }
 }
