@@ -18,6 +18,8 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import { isMobile } from '@/utils/app/mobile';
+
 import { Message } from '@/types/chat';
 import { Prompt } from '@/types/prompt';
 
@@ -112,14 +114,6 @@ export const ChatInput = forwardRef(
       if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
         textareaRef.current.blur();
       }
-    };
-
-    const isMobile = () => {
-      const userAgent =
-        typeof window.navigator === 'undefined' ? '' : navigator.userAgent;
-      const mobileRegex =
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i;
-      return mobileRegex.test(userAgent);
     };
 
     const handleInitModal = () => {

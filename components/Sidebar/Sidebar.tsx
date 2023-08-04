@@ -22,7 +22,7 @@ interface Props<T> {
   footerComponent?: ReactNode;
   searchTerm: string;
   handleSearchTerm: (searchTerm: string) => void;
-  toggleOpen: () => void;
+  toggleOpen?: () => void;
   handleDrop: (e: any) => void;
 }
 
@@ -94,12 +94,8 @@ const Sidebar = <T,>({
         </div>
         {footerComponent}
       </div>
-
-      <CloseSidebarButton onClick={toggleOpen} side={side} />
     </div>
-  ) : (
-    <OpenSidebarButton onClick={toggleOpen} side={side} />
-  );
+  ) : null;
 };
 
 export default Sidebar;

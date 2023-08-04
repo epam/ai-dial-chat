@@ -13,7 +13,7 @@ interface AllConversations {
   yesterday: Conversation[];
   lastSevenDays: Conversation[];
   lastThirtyDays: Conversation[];
-  lastYear: Conversation[];
+  older: Conversation[];
   other: Conversation[];
 }
 interface SortedBlock {
@@ -44,9 +44,9 @@ const sortingConversationsByDate = (
 const conversationsDateBlocksNames = {
   today: 'Today',
   yesterday: 'Yesterday',
-  lastSevenDays: 'Previous 7 Days',
-  lastThirtyDays: 'Previous 30 days',
-  lastYear: 'Previous Year',
+  lastSevenDays: 'Last 7 Days',
+  lastThirtyDays: 'Last 30 days',
+  older: 'Older',
   other: 'Other',
 };
 
@@ -63,9 +63,9 @@ export const Conversations = ({ conversations }: Props) => {
   const todayDate = new Date().setHours(0, 0, 0);
   const oneDayMilliseconds = 8.64e7;
   const yesterdayDate = todayDate - oneDayMilliseconds;
-  const lastSevenDate = todayDate - oneDayMilliseconds * 7;
-  const lastThirtyDate = todayDate - oneDayMilliseconds * 30;
-  const lastYearDate = todayDate - oneDayMilliseconds * 365;
+  const lastSevenDate = todayDate - oneDayMilliseconds * 6;
+  const lastThirtyDate = todayDate - oneDayMilliseconds * 29;
+  const olderDate = todayDate - oneDayMilliseconds * 365;
 
   useEffect(() => {
     const allConversations: AllConversations = {
@@ -73,7 +73,7 @@ export const Conversations = ({ conversations }: Props) => {
       yesterday: [],
       lastSevenDays: [],
       lastThirtyDays: [],
-      lastYear: [],
+      older: [],
       other: [],
     };
     conversationsToDisplay.forEach((conv) => {
@@ -107,11 +107,8 @@ export const Conversations = ({ conversations }: Props) => {
           allConversations.lastThirtyDays =
             allConversations.lastThirtyDays.concat(conv);
         }
-        if (
-          lastActivityDateNumber < lastThirtyDate &&
-          lastActivityDateNumber >= lastYearDate
-        ) {
-          allConversations.lastYear = allConversations.lastYear.concat(conv);
+        if (lastActivityDateNumber < lastThirtyDate) {
+          allConversations.older = allConversations.older.concat(conv);
         }
       }
     });
@@ -140,10 +137,8 @@ export const Conversations = ({ conversations }: Props) => {
         name: conversationsDateBlocksNames.lastThirtyDays,
       },
       lastYear: {
-        conversations: allConversations.lastYear.sort(
-          sortingConversationsByDate,
-        ),
-        name: conversationsDateBlocksNames.lastYear,
+        conversations: allConversations.older.sort(sortingConversationsByDate),
+        name: conversationsDateBlocksNames.older,
       },
       other: {
         conversations: allConversations.other.reverse(),

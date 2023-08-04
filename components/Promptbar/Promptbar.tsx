@@ -46,11 +46,6 @@ const Promptbar = () => {
 
   const promptFolders = folders.filter(({ type }) => type === 'prompt');
 
-  const handleTogglePromptbar = () => {
-    homeDispatch({ field: 'showPromptbar', value: !showPromptbar });
-    localStorage.setItem('showPromptbar', JSON.stringify(!showPromptbar));
-  };
-
   const handleCreatePrompt = () => {
     if (defaultModelId) {
       const newPrompt: Prompt = {
@@ -208,7 +203,6 @@ const Promptbar = () => {
         handleSearchTerm={(searchTerm: string) =>
           promptDispatch({ field: 'searchTerm', value: searchTerm })
         }
-        toggleOpen={handleTogglePromptbar}
         handleDrop={handleDrop}
         footerComponent={<PromptbarSettings allPrompts={prompts} />}
       />
