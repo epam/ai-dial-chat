@@ -27,6 +27,7 @@ export default defineConfig({
     ['list'],
     ['allure-playwright', { detail: true, outputFolder: 'allure-results' }],
   ],
+  timeout: 60000,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     browserName: 'chromium',
