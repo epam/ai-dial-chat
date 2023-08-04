@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ModelIconMappingType } from '@/types/icons';
@@ -51,13 +51,28 @@ export const ChatInfoTooltip = ({
     state: { lightMode },
   } = useContext(HomeContext);
   const { t } = useTranslation('chat');
+  const getModelLabel = useCallback(() => {
+    switch (model.type) {
+      case 'application':
+        return t('Application');
+      case 'assistant':
+        return t('Assistant');
+      default:
+        return t('Model');
+    }
+  }, [model.type]);
 
   return (
     <div className="grid max-w-[880px] grid-cols-[max-content_1fr] gap-4 px-2 py-3">
       {model &&
-        getModelTemplate(model, lightMode, t('Model'), modelIconMapping)}
+        getModelTemplate(model, lightMode, getModelLabel(), modelIconMapping)}
       {subModel != null &&
-        getModelTemplate(subModel, lightMode, t('SubModel'), modelIconMapping)}
+        getModelTemplate(
+          subModel,
+          lightMode,
+          t('Assistant model'),
+          modelIconMapping,
+        )}
       {prompt && (
         <>
           <span className="text-gray-500">{t('System Prompt')}:</span>
