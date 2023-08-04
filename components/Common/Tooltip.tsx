@@ -159,7 +159,7 @@ export const TooltipContent = React.forwardRef<
     <FloatingPortal id="theme-main">
       <div
         ref={ref}
-        className="z-50 rounded bg-gray-100 px-2 py-1 dark:bg-black"
+        className="z-50 rounded bg-gray-100 px-2 py-1  dark:bg-black "
         style={{
           ...context.floatingStyles,
           ...style,
@@ -167,7 +167,12 @@ export const TooltipContent = React.forwardRef<
         {...context.getFloatingProps(props)}
       >
         {props.children}
-        <FloatingArrow ref={context.arrowRef} context={context.context} />
+        <FloatingArrow
+          ref={context.arrowRef}
+          context={context.context}
+          fill="currentColor"
+          className="text-gray-100 dark:text-black"
+        />
       </div>
     </FloatingPortal>
   );
