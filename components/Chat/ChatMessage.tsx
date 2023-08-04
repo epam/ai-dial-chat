@@ -27,6 +27,7 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachments } from './MessageAttachments';
+import { MessageError } from './MessageError';
 import { MessageStages } from './MessageStages';
 
 import classNames from 'classnames';
@@ -253,12 +254,14 @@ export const ChatMessage: FC<Props> = memo(
                   <ChatMDComponent
                     isShowResponseLoader={isShowResponseLoader}
                     content={message.content}
-                    isError={message.isError}
                   />
                   {!!message.custom_content?.attachments?.length && (
                     <MessageAttachments
                       attachments={message.custom_content.attachments}
                     />
+                  )}
+                  {!!message.errorMessage && (
+                    <MessageError error={message.errorMessage}></MessageError>
                   )}
                 </div>
 

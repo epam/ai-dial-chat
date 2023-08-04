@@ -84,13 +84,13 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
               }
             >
               <option
-                className="appearance-none dark:bg-[#343541] dark:hover:bg-black"
+                className="!dark:hover:bg-black appearance-none dark:bg-[#343541]"
                 value="dark"
               >
                 {t('Dark mode')}
               </option>
               <option
-                className="appearance-none dark:bg-[#343541] dark:hover:bg-black"
+                className="!dark:hover:bg-black appearance-none dark:bg-[#343541]"
                 value="light"
               >
                 {t('Light mode')}

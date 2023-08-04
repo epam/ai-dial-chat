@@ -208,11 +208,6 @@ export const Chatbar = () => {
     });
   };
 
-  const handleToggleChatbar = () => {
-    homeDispatch({ field: 'showChatbar', value: !showChatbar });
-    localStorage.setItem('showChatbar', JSON.stringify(!showChatbar));
-  };
-
   const handleDrop = (e: any) => {
     if (e.dataTransfer) {
       const conversation = JSON.parse(e.dataTransfer.getData('conversation'));
@@ -318,7 +313,6 @@ export const Chatbar = () => {
         handleSearchTerm={(searchTerm: string) =>
           chatDispatch({ field: 'searchTerm', value: searchTerm })
         }
-        toggleOpen={handleToggleChatbar}
         handleDrop={handleDrop}
         footerComponent={<ChatbarSettings />}
       />

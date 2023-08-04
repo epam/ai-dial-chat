@@ -37,7 +37,7 @@ export interface Message {
     state?: object;
   };
   like?: number;
-  isError?: boolean;
+  errorMessage?: string;
   state?: object;
   model?: Partial<OpenAIEntityModel>;
 }
@@ -59,6 +59,7 @@ export interface RateBody {
   model: OpenAIEntityModel;
   message: Message;
   key: string;
+  id: string;
   value: boolean;
 }
 

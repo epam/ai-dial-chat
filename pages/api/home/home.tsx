@@ -47,6 +47,7 @@ import { Prompt } from '@/types/prompt';
 
 import { Chat } from '@/components/Chat/Chat';
 import { Chatbar } from '@/components/Chatbar/Chatbar';
+import Header from '@/components/Header/Header';
 import { Navbar } from '@/components/Mobile/Navbar';
 import Promptbar from '@/components/Promptbar';
 
@@ -340,7 +341,6 @@ const Home = ({
         id: model.id,
         name: model.name,
         maxLength: model.maxLength ?? defaultModelLimits.maxLength,
-        tokenLimit: model.tokenLimit ?? defaultModelLimits.tokenLimit,
         requestLimit: model.requestLimit ?? defaultModelLimits.requestLimit,
         type: model.type,
       },
@@ -381,7 +381,6 @@ const Home = ({
           id: model.id,
           name: model.name,
           maxLength: model.maxLength ?? defaultModelLimits.maxLength,
-          tokenLimit: model.tokenLimit ?? defaultModelLimits.tokenLimit,
           requestLimit: model.requestLimit ?? defaultModelLimits.requestLimit,
           type: model.type,
         },
@@ -691,6 +690,7 @@ const Home = ({
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
+
       {isIframe && !authDisabled && session.status !== 'authenticated' ? (
         <div className="grid h-full min-h-[100px] w-full place-items-center text-[#123123]">
           <button
@@ -707,29 +707,26 @@ const Home = ({
               className={`theme-main flex h-screen w-screen flex-col bg-gray-300 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-200`}
               id="theme-main"
             >
-              {enabledFeaturesSet.has('conversations-section') && (
-                <div className="fixed top-0 w-full sm:hidden">
-                  <Navbar
-                    selectedConversationNames={selectedConversationNames}
-                    onNewConversation={() => handleNewConversation()}
-                  />
-                </div>
-              )}
-
               <div
-                className={`flex h-full w-full sm:pt-0 ${
+                className={`flex h-full w-full flex-col sm:pt-0 ${
                   enabledFeaturesSet.has('conversations-section')
                     ? 'pt-[48px]'
                     : ''
                 }`}
               >
-                {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
+                <Header />
+                <div
+                  className="flex w-full"
+                  style={{ maxHeight: 'calc(100vh - 48px)' }}
+                >
+                  {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
 
-                <div className="flex flex-1">
-                  <Chat appName={appName} />
+                  <div className="flex flex-1">
+                    <Chat appName={appName} />
+                  </div>
+
+                  {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
                 </div>
-
-                {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
               </div>
             </div>
           </main>

@@ -13,7 +13,7 @@ import {
   OPENAI_API_HOST,
   OPENAI_API_VERSION,
 } from '../app/const';
-import { getHeaders } from './getHeaders';
+import { getAnalyticsHeaders, getApiHeaders } from './getHeaders';
 
 import {
   ParsedEvent,
@@ -56,20 +56,19 @@ export const OpenAIStream = async ({
   temperature,
   key,
   messages,
-  tokenCount,
   selectedAddons,
   assistantModelId,
-  userJWT,
+  chatId,
 }: {
   model: OpenAIEntityModel;
   systemPrompt: string | undefined;
   temperature: number | undefined;
   key: string;
   messages: Message[];
-  tokenCount: number;
   selectedAddons: OpenAIEntityAddonID[] | undefined;
   assistantModelId: OpenAIEntityModelID | undefined;
   userJWT: string | null | undefined;
+  chatId: string;
 }) => {
   const isAddonsAdded: boolean =
     Array.isArray(selectedAddons) && selectedAddons?.length > 0;
@@ -78,7 +77,8 @@ export const OpenAIStream = async ({
   const apiKey = key ? key : process.env.OPENAI_API_KEY;
   const requestHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(apiKey && getHeaders(apiKey)),
+    ...(apiKey && getApiHeaders(apiKey)),
+    ...getAnalyticsHeaders(chatId),
     // ...(userJWT && { 'Authorization': `Bearer ${userJWT}` }),
   };
 
@@ -99,7 +99,6 @@ export const OpenAIStream = async ({
       model.type !== 'assistant'
         ? model.id
         : assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id,
-    ...(model.tokenLimit && { max_tokens: model.tokenLimit - tokenCount }),
     ...(selectedAddons?.length && {
       addons: selectedAddons?.map((addon) => ({ name: addon })),
     }),

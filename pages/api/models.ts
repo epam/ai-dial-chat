@@ -83,7 +83,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           ? {
               maxLength: existingModelMapping.maxLength,
               requestLimit: existingModelMapping.requestLimit,
-              tokenLimit: existingModelMapping.tokenLimit,
             }
           : defaultModelLimits),
       });

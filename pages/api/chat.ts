@@ -18,6 +18,7 @@ import tiktokenModel from '@dqbd/tiktoken/encoders/cl100k_base.json';
 import { Tiktoken, init } from '@dqbd/tiktoken/lite/init';
 import { readFileSync } from 'fs';
 import path from 'path';
+import { validate } from 'uuid';
 
 // export const config = {
 //   runtime: 'edge',
@@ -47,7 +48,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       temperature,
       selectedAddons,
       assistantModelId,
+      id,
     } = req.body as ChatBody;
+
+    if (!id || !validate(id)) {
+      return res.status(400).send(errorsMessages[400]);
+    }
 
     if (!encoding) {
       await init((imports) => WebAssembly.instantiate(wasm, imports));
@@ -115,10 +121,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       temperature: temperatureToUse,
       key,
       messages: messagesToSend,
-      tokenCount,
       selectedAddons: selectedAddons as OpenAIEntityAddonID[],
       assistantModelId: assistantModelId as OpenAIEntityModelID | undefined,
       userJWT: token?.access_token as string | undefined,
+      chatId: id,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
 

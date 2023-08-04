@@ -26,7 +26,6 @@ export interface OpenAIEntity {
 
 export interface OpenAIEntityModel extends Omit<OpenAIEntity, 'type'> {
   maxLength: number; // maximum length of a message
-  tokenLimit?: number;
   requestLimit: number;
   isDefault?: boolean;
   type:
@@ -91,7 +90,6 @@ export const fallbackModelID = OpenAIEntityModelID.GPT_3_5_AZ;
 
 export const defaultModelLimits = {
   maxLength: 24000,
-  tokenLimit: 8000,
   requestLimit: 6000,
 };
 
@@ -100,7 +98,6 @@ export const OpenAIEntityModels: Record<string, OpenAIEntityModel> = {
     id: OpenAIEntityModelID.GPT_3_5,
     name: 'GPT-3.5',
     maxLength: 12000,
-    tokenLimit: 4000,
     requestLimit: 3000,
     type: 'model',
   },
@@ -108,7 +105,6 @@ export const OpenAIEntityModels: Record<string, OpenAIEntityModel> = {
     id: OpenAIEntityModelID.GPT_3_5_AZ,
     name: 'GPT-3.5',
     maxLength: 12000,
-    tokenLimit: 4000,
     requestLimit: 3000,
     type: 'model',
   },
@@ -116,7 +112,6 @@ export const OpenAIEntityModels: Record<string, OpenAIEntityModel> = {
     id: OpenAIEntityModelID.GPT_4,
     name: 'GPT-4',
     maxLength: 24000,
-    tokenLimit: 8000,
     requestLimit: 6000,
     type: 'model',
   },
@@ -124,7 +119,6 @@ export const OpenAIEntityModels: Record<string, OpenAIEntityModel> = {
     id: OpenAIEntityModelID.GPT_4_32K,
     name: 'GPT-4-32K',
     maxLength: 96000,
-    tokenLimit: 32000,
     requestLimit: 24000,
     type: 'model',
   },
@@ -132,7 +126,6 @@ export const OpenAIEntityModels: Record<string, OpenAIEntityModel> = {
     id: OpenAIEntityModelID.BISON_001,
     name: 'PaLM2 (bison)',
     maxLength: 24000,
-    tokenLimit: 1025,
     requestLimit: 6000,
     type: 'model',
   },
@@ -140,7 +133,6 @@ export const OpenAIEntityModels: Record<string, OpenAIEntityModel> = {
     id: OpenAIEntityModelID.AMAZON_TITAN_TG1_LARGE,
     name: 'AWS (Titan)',
     maxLength: 24000,
-    tokenLimit: 8000,
     requestLimit: 6000,
     type: 'model',
   },
@@ -148,7 +140,6 @@ export const OpenAIEntityModels: Record<string, OpenAIEntityModel> = {
     id: OpenAIEntityModelID.AI21_J2_GRANDE_INSTRUCT,
     name: 'AI21 (Jurassic-2 Grande)',
     maxLength: 24000,
-    tokenLimit: 8000,
     requestLimit: 6000,
     type: 'model',
   },
@@ -156,7 +147,6 @@ export const OpenAIEntityModels: Record<string, OpenAIEntityModel> = {
     id: OpenAIEntityModelID.AI21_J2_JUMBO_INSTRUCT,
     name: 'AI21 (Jurassic-2 Jumbo)',
     maxLength: 24000,
-    tokenLimit: 8000,
     requestLimit: 6000,
     type: 'model',
   },
@@ -164,7 +154,6 @@ export const OpenAIEntityModels: Record<string, OpenAIEntityModel> = {
     id: OpenAIEntityModelID.ANTHROPIC_CLAUDE_INSTANT_V1,
     name: 'Anthropic (Claude Instant)',
     maxLength: 24000,
-    tokenLimit: 8000,
     requestLimit: 6000,
     type: 'model',
   },
@@ -172,7 +161,6 @@ export const OpenAIEntityModels: Record<string, OpenAIEntityModel> = {
     id: OpenAIEntityModelID.ANTHROPIC_CLAUDE_V1,
     name: 'Anthropic (Claude)',
     maxLength: 24000,
-    tokenLimit: 8000,
     requestLimit: 6000,
     type: 'model',
   },
@@ -180,7 +168,6 @@ export const OpenAIEntityModels: Record<string, OpenAIEntityModel> = {
     id: OpenAIEntityModelID.STABILITY_STABLE_DIFFUSION_XL,
     name: 'Stable Diffusion XL',
     maxLength: 24000,
-    tokenLimit: 8000,
     requestLimit: 6000,
     type: 'model',
   },
@@ -188,7 +175,6 @@ export const OpenAIEntityModels: Record<string, OpenAIEntityModel> = {
     id: OpenAIEntityModelID.EPAM10K_GOLDEN_QNA,
     name: 'EPAM10K Golden QNA',
     maxLength: 24000,
-    tokenLimit: 8000,
     requestLimit: 6000,
     type: 'model',
   },
@@ -196,7 +182,6 @@ export const OpenAIEntityModels: Record<string, OpenAIEntityModel> = {
     id: OpenAIEntityModelID.EPAM10K_SEMANTIC_SEARCH,
     name: 'EPAM10K Semantic Search',
     maxLength: 24000,
-    tokenLimit: 8000,
     requestLimit: 6000,
     type: 'model',
   },
