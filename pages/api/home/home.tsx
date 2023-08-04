@@ -36,6 +36,7 @@ import { KeyValuePair } from '@/types/data';
 import { Feature } from '@/types/features';
 import { FolderInterface, FolderType } from '@/types/folder';
 import {
+  OpenAIEntityAddon,
   OpenAIEntityModel,
   OpenAIEntityModelID,
   OpenAIEntityModels,
@@ -47,7 +48,6 @@ import { Prompt } from '@/types/prompt';
 import { Chat } from '@/components/Chat/Chat';
 import { Chatbar } from '@/components/Chatbar/Chatbar';
 import Header from '@/components/Header/Header';
-import { Navbar } from '@/components/Mobile/Navbar';
 import Promptbar from '@/components/Promptbar';
 
 import packageJSON from '../../../package.json';
@@ -106,6 +106,7 @@ const Home = ({
       prompts,
       defaultModelId: clientDefaultModelId,
       models,
+      modelsMap,
     },
     dispatch,
   } = contextValue;
@@ -127,7 +128,19 @@ const Home = ({
 
   useEffect(() => {
     if (modelsData) {
+      // TODO: get rid of models array to use faster map
       dispatch({ field: 'models', value: modelsData });
+      dispatch({
+        field: 'modelsMap',
+        value: (modelsData as any as OpenAIEntityModel[]).reduce(
+          (acc, model) => {
+            acc[model.id] = model;
+
+            return acc;
+          },
+          {} as Record<string, OpenAIEntityModel>,
+        ),
+      });
 
       const defaultModelId = (modelsData as any as OpenAIEntityModel[]).find(
         (model) => model.isDefault,
@@ -159,6 +172,18 @@ const Home = ({
   useEffect(() => {
     if (addonsData) {
       dispatch({ field: 'addons', value: addonsData });
+
+      dispatch({
+        field: 'addonsMap',
+        value: (addonsData as any as OpenAIEntityAddon[]).reduce(
+          (acc, addon) => {
+            acc[addon.id] = addon;
+
+            return acc;
+          },
+          {} as Record<string, OpenAIEntityAddon>,
+        ),
+      });
     }
   }, [addonsData, dispatch]);
 
@@ -301,8 +326,7 @@ const Home = ({
     }
 
     const lastConversation = conversations[conversations.length - 1];
-    const model =
-      models.find((model) => clientDefaultModelId === model.id) || models[0];
+    const model = modelsMap[clientDefaultModelId] || models[0];
 
     if (!model) {
       return;
@@ -341,8 +365,7 @@ const Home = ({
       return;
     }
     const lastConversation = conversations[conversations.length - 1];
-    const model =
-      models.find((model) => clientDefaultModelId === model.id) || models[0];
+    const model = modelsMap[clientDefaultModelId] || models[0];
 
     if (!model) {
       return;
@@ -671,44 +694,31 @@ const Home = ({
         <div className="grid h-full min-h-[100px] w-full place-items-center text-[#123123]">
           <button
             onClick={handleIframeAuth}
-            className="appearance-none rounded-lg border-gray-200 bg-[#343541] p-3 text-gray-100"
+            className="appearance-none rounded-lg border-gray-200 bg-[#343541] p-3 text-gray-200"
           >
             {t('Login')}
           </button>
         </div>
       ) : (
         selectedConversationNames.length > 0 && (
-          <main
-            className={`flex h-screen w-screen flex-col text-sm text-white dark:text-white ${lightMode} theme-main`}
-          >
-            {enabledFeaturesSet.has('conversations-section') && (
-              <div className="fixed top-0 w-full sm:hidden">
-                <Navbar
-                  selectedConversationNames={selectedConversationNames}
-                  onNewConversation={() => handleNewConversation()}
-                />
-              </div>
-            )}
-
+          <main className={`${lightMode} `}>
             <div
-              className={`flex h-full w-full flex-col sm:pt-0 ${
-                enabledFeaturesSet.has('conversations-section')
-                  ? 'pt-[48px]'
-                  : ''
-              }`}
+              className={`theme-main flex h-screen w-screen flex-col bg-gray-300 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-200`}
+              id="theme-main"
             >
-              <Header />
-              <div
-                className="flex w-full"
-                style={{ maxHeight: 'calc(100vh - 48px)' }}
-              >
-                {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
+              <div className={`flex h-full w-full flex-col sm:pt-0`}>
+                <Header />
+                <div className="flex w-full grow overflow-auto">
+                  {enabledFeaturesSet.has('conversations-section') && (
+                    <Chatbar />
+                  )}
 
-                <div className="flex flex-1">
-                  <Chat appName={appName} />
+                  <div className="flex flex-1">
+                    <Chat appName={appName} />
+                  </div>
+
+                  {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
                 </div>
-
-                {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
               </div>
             </div>
           </main>

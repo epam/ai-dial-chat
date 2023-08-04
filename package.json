@@ -19,6 +19,7 @@
   "dependencies": {
     "@aashutoshrathi/word-wrap": "^1.2.6",
     "@dqbd/tiktoken": "^1.0.7",
+    "@floating-ui/react": "^0.25.0",
     "@opentelemetry/exporter-prometheus": "^0.41.1",
     "@opentelemetry/exporter-trace-otlp-proto": "^0.41.1",
     "@opentelemetry/instrumentation": "^0.41.1",

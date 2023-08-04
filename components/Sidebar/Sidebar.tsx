@@ -49,45 +49,41 @@ const Sidebar = <T,>({
   };
 
   return isOpen ? (
-    <div>
-      <div
-        className={`fixed top-0 md:top-12 ${side}-0 z-40 flex h-full w-[260px] flex-none flex-col space-y-2 bg-[#202123] p-2 text-[14px] transition-all`}
-      >
-        {actionButtons}
-        <Search
-          placeholder={t('Search...') || ''}
-          searchTerm={searchTerm}
-          onSearch={handleSearchTerm}
-        />
+    <div
+      className={`fixed top-12 ${side}-0 z-40 flex h-full w-[260px] flex-none flex-col space-y-2 bg-gray-100 p-2 text-[14px] transition-all dark:bg-gray-900 lg:relative lg:top-0`}
+    >
+      {actionButtons}
+      <Search
+        placeholder={t('Search...') || ''}
+        searchTerm={searchTerm}
+        onSearch={handleSearchTerm}
+      />
 
-        <div className="grow overflow-auto">
-          {folders?.length > 0 && (
-            <div className="flex border-b border-white/20 pb-2">
-              {folderComponent}
-            </div>
-          )}
+      <div className="grow overflow-auto">
+        {folders?.length > 0 && (
+          <div className="flex border-b border-white/20 pb-2">
+            {folderComponent}
+          </div>
+        )}
 
-          {items?.length > 0 ? (
-            <div
-              className="pt-2"
-              onDrop={handleDrop}
-              onDragOver={allowDrop}
-              onDragEnter={highlightDrop}
-              onDragLeave={removeHighlight}
-            >
-              {itemComponent}
-            </div>
-          ) : (
-            <div className="mt-8 select-none text-center text-white opacity-50">
-              <IconMistOff className="mx-auto mb-3" />
-              <span className="text-[14px] leading-normal">
-                {t('No data.')}
-              </span>
-            </div>
-          )}
-        </div>
-        {footerComponent}
+        {items?.length > 0 ? (
+          <div
+            className="pt-2"
+            onDrop={handleDrop}
+            onDragOver={allowDrop}
+            onDragEnter={highlightDrop}
+            onDragLeave={removeHighlight}
+          >
+            {itemComponent}
+          </div>
+        ) : (
+          <div className="mt-8 select-none text-center opacity-50">
+            <IconMistOff className="mx-auto mb-3" />
+            <span className="text-[14px] leading-normal">{t('No data.')}</span>
+          </div>
+        )}
       </div>
+      {footerComponent}
     </div>
   ) : null;
 };

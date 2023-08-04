@@ -15,9 +15,13 @@ export interface HomeInitialState {
   lightMode: 'light' | 'dark';
   messageIsStreaming: boolean;
   modelError: ErrorMessage | null;
+  // TODO: get rid of models array to use faster map
   models: OpenAIEntityModel[];
+  modelsMap: Record<string, OpenAIEntityModel>;
   addonError: ErrorMessage | null;
+  // TODO: get rid of models array to use faster map
   addons: OpenAIEntityAddon[];
+  addonsMap: Record<string, OpenAIEntityAddon>;
   folders: FolderInterface[];
   conversations: Conversation[];
   selectedConversationIds: string[];
@@ -49,8 +53,10 @@ export const initialState: HomeInitialState = {
   messageIsStreaming: false,
   modelError: null,
   models: [],
+  modelsMap: {},
   addonError: null,
   addons: [],
+  addonsMap: {},
   folders: [],
   conversations: [],
   selectedConversationIds: [],
