@@ -47,7 +47,7 @@ const Header = () => {
           width={24}
           height={24}
           stroke="currentColor"
-          SVGElement={MoveLeftIcon}
+          SVGElement={showChatbar ? MoveLeftIcon : MoveRightIcon}
         />
       </div>
       <div className="flex grow">
@@ -72,7 +72,7 @@ const Header = () => {
           width={24}
           height={24}
           stroke="currentColor"
-          SVGElement={MoveRightIcon}
+          SVGElement={showPromptbar ? MoveRightIcon : MoveLeftIcon}
         />
       </div>
       <SettingDialog open={isUserSettingsOpen} onClose={onClose} />

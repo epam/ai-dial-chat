@@ -51,7 +51,7 @@ const Sidebar = <T,>({
   return isOpen ? (
     <div>
       <div
-        className={`fixed top-0 ${side}-0 z-40 flex h-full w-[260px] flex-none flex-col space-y-2 bg-[#202123] p-2 text-[14px] transition-all sm:relative sm:top-0`}
+        className={`fixed top-0 md:top-12 ${side}-0 z-40 flex h-full w-[260px] flex-none flex-col space-y-2 bg-[#202123] p-2 text-[14px] transition-all`}
       >
         {actionButtons}
         <Search
