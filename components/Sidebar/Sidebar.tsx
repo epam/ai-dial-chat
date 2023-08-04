@@ -4,11 +4,6 @@ import { useTranslation } from 'react-i18next';
 
 import { FolderInterface } from '@/types/folder';
 
-import {
-  CloseSidebarButton,
-  OpenSidebarButton,
-} from './components/OpenCloseButton';
-
 import Search from '../Search';
 
 interface Props<T> {
@@ -37,7 +32,6 @@ const Sidebar = <T,>({
   footerComponent,
   searchTerm,
   handleSearchTerm,
-  toggleOpen,
   handleDrop,
 }: Props<T>) => {
   const { t } = useTranslation('promptbar');

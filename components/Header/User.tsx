@@ -120,8 +120,8 @@ const DropdownIndicator = (props: DropdownIndicatorProps<SelectOption>) => {
 };
 
 const selectClassNames: ClassNamesConfig<SelectOption> = {
-  control: (state) => '!border-none dark:bg-gray-700 !rounded-none',
-  indicatorSeparator: (state) => 'hidden',
+  control: () => '!border-none dark:bg-gray-700 !rounded-none',
+  indicatorSeparator: () => 'hidden',
   menu: () => 'dark:bg-black !z-50 !mt-0',
   menuList: () => '!p-0',
 };

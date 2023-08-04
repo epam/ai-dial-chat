@@ -44,7 +44,7 @@ const sortingConversationsByDate = (
 const conversationsDateBlocksNames = {
   today: 'Today',
   yesterday: 'Yesterday',
-  lastSevenDays: 'Last 7 Days',
+  lastSevenDays: 'Last 7 days',
   lastThirtyDays: 'Last 30 days',
   older: 'Older',
   other: 'Other',
@@ -65,7 +65,6 @@ export const Conversations = ({ conversations }: Props) => {
   const yesterdayDate = todayDate - oneDayMilliseconds;
   const lastSevenDate = todayDate - oneDayMilliseconds * 6;
   const lastThirtyDate = todayDate - oneDayMilliseconds * 29;
-  const olderDate = todayDate - oneDayMilliseconds * 365;
 
   useEffect(() => {
     const allConversations: AllConversations = {

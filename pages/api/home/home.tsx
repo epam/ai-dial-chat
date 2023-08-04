@@ -106,7 +106,6 @@ const Home = ({
       prompts,
       defaultModelId: clientDefaultModelId,
       models,
-      isUserSettingsOpen,
     },
     dispatch,
   } = contextValue;

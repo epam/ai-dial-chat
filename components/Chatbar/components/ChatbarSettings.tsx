@@ -1,11 +1,9 @@
 import { IconFileExport } from '@tabler/icons-react';
-import { useContext, useState } from 'react';
+import { useContext } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import HomeContext from '@/pages/api/home/home.context';
-
-import { SettingDialog } from '@/components/Settings/SettingDialog';
 
 import { ClearAllElements } from '../../Common/ClearAllElements';
 import { Import } from '../../Settings/Import';
