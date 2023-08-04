@@ -3,6 +3,7 @@
 This repository was forked from github.com/mckaywrigley/chatbot-ui.git . The code was scanned by Snyk (no major vulnerabilities) - and, later, [with OpenAI](./testme.ipynb) - and we didn't see data flowing anywhere but OpenAI API).
 It's forked and "frozen" to minimize the risk. In future we will, hopefully, have someone responsible for this project - but as of now we want to provide the service ASAP.
 
+
 # Chatbot UI
 
 Chatbot UI is an open source chat UI for AI models.
@@ -74,7 +75,6 @@ OPENAI_API_KEY=YOUR_KEY
 **4. Configure SSO for Auth0**
 
 Add variables .env.local:
-
 ```bash
 AUTH_AUTH0_CLIENT_ID="QXHosbmuKaegHNn9MMSAKUhRNb6JXvNp"
 AUTH_AUTH0_SECRET="N-uPvuwXXluEkIT69E2RvEYxA7lHoUh4zMtjPzlGlJDCNdPzJhMTBjknGcSY9WGl"
@@ -98,21 +98,21 @@ You should be able to start chatting.
 
 When deploying the application, the following environment variables can be set:
 
-| Environment Variable            | Default value                                       | Description                                                       |
-| ------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------- |
-| AUTH_AZURE_AD_CLIENT_ID         |                                                     | Client ID from Azure AD                                           |
-| AUTH_AZURE_AD_TENANT_ID         |                                                     | Tenant ID from Azure AD                                           |
-| AUTH_AZURE_AD_SECRET            |                                                     | Client Secret from Azure AD                                       |
-| NEXTAUTH_SECRET                 |                                                     | Random crypto-string                                              |
-| OPENAI_API_KEY                  |                                                     | The default API key used for authentication with OpenAI           |
-| OPENAI_API_HOST                 | `https://api.openai.com`                            | The base url, for Azure use `https://<endpoint>.openai.azure.com` |
-| OPENAI_API_TYPE                 | `openai`                                            | The API type, options are `openai` or `azure`                     |
-| OPENAI_API_VERSION              | `2023-03-15-preview`                                | Only applicable for Azure OpenAI                                  |
-| OPENAI_ORGANIZATION             |                                                     | Your OpenAI organization ID                                       |
-| DEFAULT_MODEL                   | `gpt-3.5-turbo` _(OpenAI)_ `gpt-35-turbo` _(Azure)_ | The default model to use on new conversations                     |
-| NEXT_PUBLIC_DEFAULT_TEMPERATURE | 1                                                   | The default temperature to use on new conversations               |
-| GOOGLE_API_KEY                  |                                                     | See [Custom Search JSON API documentation][GCSE]                  |
-| GOOGLE_CSE_ID                   |                                                     | See [Custom Search JSON API documentation][GCSE]                  |
+| Environment Variable              | Default value                  | Description                                                                                                                               |
+| --------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| AUTH_AZURE_AD_CLIENT_ID           |                                | Client ID from Azure AD
+| AUTH_AZURE_AD_TENANT_ID           |                                | Tenant ID from Azure AD
+| AUTH_AZURE_AD_SECRET              |                                | Client Secret from Azure AD
+| NEXTAUTH_SECRET                   |                                | Random crypto-string
+| OPENAI_API_KEY                    |                                | The default API key used for authentication with OpenAI                                                                                   |
+| OPENAI_API_HOST                   | `https://api.openai.com`       | The base url, for Azure use `https://<endpoint>.openai.azure.com`                                                                         |
+| OPENAI_API_TYPE                   | `openai`                       | The API type, options are `openai` or `azure`                                                                                             |
+| OPENAI_API_VERSION                | `2023-03-15-preview`           | Only applicable for Azure OpenAI                                                                                                          |
+| OPENAI_ORGANIZATION               |                                | Your OpenAI organization ID                                                                                                               |
+| DEFAULT_MODEL | `gpt-3.5-turbo` _(OpenAI)_ `gpt-35-turbo` _(Azure)_ | The default model to use on new conversations |
+| NEXT_PUBLIC_DEFAULT_TEMPERATURE   | 1                              | The default temperature to use on new conversations                                                                                       |
+| GOOGLE_API_KEY                    |                                | See [Custom Search JSON API documentation][GCSE]                                                                                          |
+| GOOGLE_CSE_ID                     |                                | See [Custom Search JSON API documentation][GCSE]                                                                                          |
 
 If you do not provide an OpenAI API key with `OPENAI_API_KEY`, users will have to provide their own key.
 
