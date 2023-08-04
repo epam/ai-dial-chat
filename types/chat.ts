@@ -59,6 +59,7 @@ export interface RateBody {
   model: OpenAIEntityModel;
   message: Message;
   key: string;
+  id: string;
   value: boolean;
 }
 
