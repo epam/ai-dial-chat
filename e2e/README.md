@@ -18,7 +18,6 @@ Set path to config file as a CLI argument:
 
 `npx playwright test -c local.playwright-ct.config.ts`
 
-
 To run tests inside docker container:
 
 ```
@@ -34,10 +33,10 @@ npm run test-local
 
 Image version should correspond Playwright version
 
-
 To generate Allure report:
 
 `allure serve allure-results`
 
 To run a specific test:
- - Set the test to `test.only`
+
+- Set the test to `test.only`

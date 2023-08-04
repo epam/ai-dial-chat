@@ -1,57 +1,56 @@
 include:
   - template: Jobs/Container-Scanning.gitlab-ci.yml
-  - project: "Gitlab/ci"
+  - project: 'Gitlab/ci'
     ref: 0.2.22
-    file: "application/nodejs.yml"
+    file: 'application/nodejs.yml'
   - project: Gitlab/ci
     ref: 0.2.22
     file: helm/helm-environment.gitlab-ci.yml
 
-
 variables:
-  ARTIFACTORY_DOCKER_PATH: "ai/dial/chatbot-ui"
-  AUDIT_CMD: "npm audit --omit dev"
-  INSTALL_CMD: "npm i"
+  ARTIFACTORY_DOCKER_PATH: 'ai/dial/chatbot-ui'
+  AUDIT_CMD: 'npm audit --omit dev'
+  INSTALL_CMD: 'npm i'
 
-  DOCKER_REGISTRY_SERVER: "registry-dev.deltixhub.com"
+  DOCKER_REGISTRY_SERVER: 'registry-dev.deltixhub.com'
   HELM_REPO: https://nexus.deltixhub.com/repository/epm-rtc-helm
-  SECRET_NAME: "epm-rtc-registry-dev"
-  CHART: "chat" # Helm chart name, e.g. "gitlab-runner"
-  VERSION: "0.0.3" # Helm chart version
+  SECRET_NAME: 'epm-rtc-registry-dev'
+  CHART: 'chat' # Helm chart name, e.g. "gitlab-runner"
+  VERSION: '0.0.3' # Helm chart version
 
   development_AWS_ACCESS_KEY_ID: ${staging_AWS_ACCESS_KEY_ID}
   development_AWS_SECRET_ACCESS_KEY: ${staging_AWS_SECRET_ACCESS_KEY}
-  development_ENV_ID: "staging"
-  development_HELM_VALUES_FILE: "helm/development.yaml"
-  development_ENV_URL: "https://chat.staging.deltixhub.io"
+  development_ENV_ID: 'staging'
+  development_HELM_VALUES_FILE: 'helm/development.yaml'
+  development_ENV_URL: 'https://chat.staging.deltixhub.io'
   development_NAMESPACE: ai-chat
-  development_HELM_EXTRA_ARGS: "-f ${HELM_SECRET_FILE_dev}"
+  development_HELM_EXTRA_ARGS: '-f ${HELM_SECRET_FILE_dev}'
 
-  development_HELM_VALUES_FILE_OVERLAY: "helm/development-overlay.yaml"
+  development_HELM_VALUES_FILE_OVERLAY: 'helm/development-overlay.yaml'
   development_RELEASE_OVERLAY: development-overlay
 
-  development_HELM_VALUES_FILE_OVERLAY10K: "helm/development-overlay10k.yaml"
+  development_HELM_VALUES_FILE_OVERLAY10K: 'helm/development-overlay10k.yaml'
   development_RELEASE_OVERLAY10K: development-overlay10k
 
-  staging_DEPLOY_ENV: "false"
+  staging_DEPLOY_ENV: 'false'
 
-  review_DEPLOY_ENV: "true"
-  review_ENV_ID: "staging"
-  review_HELM_VALUES_FILE: "helm/review.yaml"
-  review_ENV_URL: "https://${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}.staging.deltixhub.io"
+  review_DEPLOY_ENV: 'true'
+  review_ENV_ID: 'staging'
+  review_HELM_VALUES_FILE: 'helm/review.yaml'
+  review_ENV_URL: 'https://${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}.staging.deltixhub.io'
   review_NAMESPACE: ai-chat-review
-  review_HELM_CUSTOM_VALUES: "ingress.hosts[0]=${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}.staging.deltixhub.io,fullnameOverride=mr-${CI_MERGE_REQUEST_IID},image.tag=mr-${CI_MERGE_REQUEST_IID},serviceAccount.name=mr-${CI_MERGE_REQUEST_IID},env.NEXTAUTH_URL=https://${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}.staging.deltixhub.io"
+  review_HELM_CUSTOM_VALUES: 'ingress.hosts[0]=${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}.staging.deltixhub.io,fullnameOverride=mr-${CI_MERGE_REQUEST_IID},image.tag=mr-${CI_MERGE_REQUEST_IID},serviceAccount.name=mr-${CI_MERGE_REQUEST_IID},env.NEXTAUTH_URL=https://${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}.staging.deltixhub.io'
   review_RELEASE: ${CHART}-mr-${CI_MERGE_REQUEST_IID}
-  review_SECRET_NAME: "epm-rtc-registry-test"
-  review_DOCKER_REGISTRY_SERVER: "registry-test.deltixhub.com"
-  review_HELM_EXTRA_ARGS: "-f ${HELM_SECRET_FILE_review}"
+  review_SECRET_NAME: 'epm-rtc-registry-test'
+  review_DOCKER_REGISTRY_SERVER: 'registry-test.deltixhub.com'
+  review_HELM_EXTRA_ARGS: '-f ${HELM_SECRET_FILE_review}'
 
-  review_HELM_VALUES_FILE_OVERLAY: "helm/review-overlay.yaml"
-  review_HELM_CUSTOM_VALUES_OVERLAY: "ingress.hosts[0]=${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}-overlay.staging.deltixhub.io,fullnameOverride=mr-${CI_MERGE_REQUEST_IID}-overlay,image.tag=mr-${CI_MERGE_REQUEST_IID},serviceAccount.name=mr-${CI_MERGE_REQUEST_IID}-overlay,env.NEXTAUTH_URL=https://${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}-overlay.staging.deltixhub.io"
+  review_HELM_VALUES_FILE_OVERLAY: 'helm/review-overlay.yaml'
+  review_HELM_CUSTOM_VALUES_OVERLAY: 'ingress.hosts[0]=${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}-overlay.staging.deltixhub.io,fullnameOverride=mr-${CI_MERGE_REQUEST_IID}-overlay,image.tag=mr-${CI_MERGE_REQUEST_IID},serviceAccount.name=mr-${CI_MERGE_REQUEST_IID}-overlay,env.NEXTAUTH_URL=https://${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}-overlay.staging.deltixhub.io'
   review_RELEASE_OVERLAY: ${CHART}-overlay-mr-${CI_MERGE_REQUEST_IID}
 
-  review_HELM_VALUES_FILE_OVERLAY10K: "helm/review-overlay10k.yaml"
-  review_HELM_CUSTOM_VALUES_OVERLAY10K: "ingress.hosts[0]=${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}-overlay10k.staging.deltixhub.io,fullnameOverride=mr-${CI_MERGE_REQUEST_IID}-overlay10k,image.tag=mr-${CI_MERGE_REQUEST_IID},serviceAccount.name=mr-${CI_MERGE_REQUEST_IID}-overlay10k,env.NEXTAUTH_URL=https://${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}-overlay10k.staging.deltixhub.io"
+  review_HELM_VALUES_FILE_OVERLAY10K: 'helm/review-overlay10k.yaml'
+  review_HELM_CUSTOM_VALUES_OVERLAY10K: 'ingress.hosts[0]=${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}-overlay10k.staging.deltixhub.io,fullnameOverride=mr-${CI_MERGE_REQUEST_IID}-overlay10k,image.tag=mr-${CI_MERGE_REQUEST_IID},serviceAccount.name=mr-${CI_MERGE_REQUEST_IID}-overlay10k,env.NEXTAUTH_URL=https://${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}-overlay10k.staging.deltixhub.io'
   review_RELEASE_OVERLAY10K: ${CHART}-overlay10k-mr-${CI_MERGE_REQUEST_IID}
 
 stages:
@@ -107,20 +106,20 @@ stages:
 build:
   artifacts:
     paths:
-      - "build"
+      - 'build'
   rules:
     - if: "$CI_COMMIT_BRANCH == 'development'"
-    - if: "$CI_COMMIT_TAG"
+    - if: '$CI_COMMIT_TAG'
     - if: "$CI_PIPELINE_SOURCE == 'merge_request_event'"
 
 deploy_development:
-  image: "registry.deltixhub.com/deltix.docker/devops/kubernetes-tools:0.17.1"
+  image: 'registry.deltixhub.com/deltix.docker/devops/kubernetes-tools:0.17.1'
   stage: deploy
   rules:
     - if: $CI_COMMIT_BRANCH == "development"
 
 destroy_development:
-  image: "registry.deltixhub.com/deltix.docker/devops/kubernetes-tools:0.17.1"
+  image: 'registry.deltixhub.com/deltix.docker/devops/kubernetes-tools:0.17.1'
   stage: deploy
   rules:
     - if: $CI_COMMIT_BRANCH == "development"
@@ -134,13 +133,13 @@ destroy_staging:
   stage: deploy
 
 deploy_review:
-  image: "registry.deltixhub.com/deltix.docker/devops/kubernetes-tools:0.17.1"
+  image: 'registry.deltixhub.com/deltix.docker/devops/kubernetes-tools:0.17.1'
   stage: deploy
   rules:
     - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "development" && $review_DEPLOY_ENV == "true"'
 
 destroy_review:
-  image: "registry.deltixhub.com/deltix.docker/devops/kubernetes-tools:0.17.1"
+  image: 'registry.deltixhub.com/deltix.docker/devops/kubernetes-tools:0.17.1'
   stage: deploy
   rules:
     - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "development" && $review_DEPLOY_ENV == "true"'
@@ -151,7 +150,7 @@ publish:
   image: dockerhub.deltixhub.com/docker:stable
   variables:
     DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
+    DOCKER_TLS_CERTDIR: ''
   cache: {}
   services:
     - docker:stable-dind
@@ -163,7 +162,7 @@ publish:
     - imageUrl=$REPOSITORY/${ARTIFACTORY_DOCKER_PATH}
     - docker build -t $imageUrl:${DOCKER_TAG} -t $imageUrl:${DOCKER_ADDITIONAL_TAG} .
     - docker push $imageUrl:${DOCKER_TAG}
-    - docker push $imageUrl:${DOCKER_ADDITIONAL_TAG} 
+    - docker push $imageUrl:${DOCKER_ADDITIONAL_TAG}
   rules:
     - if: $CI_COMMIT_TAG
       variables:
@@ -210,4 +209,3 @@ promote:
   tags:
     - AWS
     - DockerExecutor
-
