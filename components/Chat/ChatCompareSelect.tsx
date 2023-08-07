@@ -39,7 +39,7 @@ const CustomSelectOption = (props: OptionProps<CompareOption>) => {
     <>
       <components.Option
         {...props}
-        className={`!p-1 !pl-4 hover:cursor-pointer dark:text-white/80  hover:dark:bg-[#202123] 
+        className={`!flex !p-1 !pl-4 hover:cursor-pointer dark:text-white/80  hover:dark:bg-[#202123] 
         ${isFocused ? 'dark:bg-[#202123]' : 'dark:bg-[#40414F]'}
         `}
       >
@@ -73,7 +73,7 @@ const selectClassNames: ClassNamesConfig<CompareOption> = {
   placeholder: () => 'text-neutral-900 dark:text-white/80',
   valueContainer: () => '!text-neutral-900 hover:cursor-text',
   menu: () =>
-    '!mt-1 dark:bg-[#40414F] !rounded !shadow-sm !shadow-neutral-400 dark:!shadow-[#717283]',
+    '!mt-1 dark:bg-[#40414F] !rounded !shadow-sm !shadow-neutral-400 dark:!shadow-[#717283] w-full overflow-hidden',
   singleValue: () => '!text-neutral-900 dark:!text-white/80 center m-0',
   dropdownIndicator: () =>
     '!py-0 hover:!text-neutral-900 hover:dark:!text-white/80',
@@ -171,6 +171,7 @@ export const ChatCompareSelect = ({
 
       <Select<CompareOption>
         className="!min-w-[220px] !rounded-md border !border-gray-900/50 text-base text-black/80 dark:bg-[#40414F] dark:text-white/80"
+        menuIsOpen
         classNames={selectClassNames}
         options={comparableOptions}
         placeholder={placeholder}

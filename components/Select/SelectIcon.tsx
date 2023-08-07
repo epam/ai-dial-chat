@@ -14,14 +14,14 @@ export const SelectIcon = ({ modelId, children }: SelectIconProps) => {
   } = useContext(HomeContext);
 
   return (
-    <span className="flex flex-row items-center gap-2">
+    <span className="flex max-w-full !shrink-0 flex-row items-center gap-2">
       <ModelIcon
         size={18}
         modelIconMapping={modelIconMapping}
         modelId={modelId}
         inverted={lightMode === 'dark'}
       />
-      {children}
+      <span className="truncate break-all">{children}</span>
     </span>
   );
 };

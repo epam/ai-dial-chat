@@ -13,7 +13,7 @@ module.exports = {
         sm: '560px',
       },
       colors: {
-        green: 'rgb(var(--green, 55 186 188) / <alpha-value)', // #37BABC
+        green: 'rgb(var(--green, 55 186 188) / <alpha-value>)', // #37BABC
         blue: {
           500: 'rgb(var(--blue-500, 90 140 233) / <alpha-value>)', // #5A8CE9,
           700: 'rgb(var(--blue-700, 72, 120, 210) / <alpha-value>)', // #4878D2

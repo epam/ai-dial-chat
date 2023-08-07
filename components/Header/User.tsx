@@ -1,5 +1,5 @@
 import { signIn, signOut, useSession } from 'next-auth/react';
-import { ReactNode, useCallback, useContext } from 'react';
+import { ReactNode, useCallback, useContext, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Select, {
   ClassNamesConfig,
@@ -9,15 +9,18 @@ import Select, {
   components,
 } from 'react-select';
 
+import useOutsideAlerter from '@/hooks/useOutsideAlerter';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import ChevronDownIcon from '../../public/images/icons/chevron-down.svg';
+import ChevronUpIcon from '../../public/images/icons/chevron-up.svg';
 import FileArrowRightIcon from '../../public/images/icons/file-arrow-right.svg';
 import GearIcon from '../../public/images/icons/gear.svg';
 import UserIcon from '../../public/images/icons/user.svg';
 
 interface SelectOption {
-  label: 'Settings' | 'Log Out';
+  label: 'Settings' | 'Log out';
   value: 'settings' | 'log out';
 }
 
@@ -26,10 +29,12 @@ interface OptionComponentProps {
 }
 const userOptions: SelectOption[] = [
   { label: 'Settings', value: 'settings' },
-  { label: 'Log Out', value: 'log out' },
+  { label: 'Log out', value: 'log out' },
 ];
 const LogoutOption = ({ children }: OptionComponentProps) => {
   const { data: session } = useSession();
+  const { t } = useTranslation('sidebar');
+
   const onClick = useCallback(() => {
     session
       ? signOut({ redirect: true })
@@ -38,7 +43,7 @@ const LogoutOption = ({ children }: OptionComponentProps) => {
   return (
     <div className="flex text-gray-500 dark:text-gray-200" onClick={onClick}>
       <FileArrowRightIcon width={18} height={18} stroke="currentColor" />
-      <span className="ml-3">{children}</span>
+      <span className="ml-3">{session ? children : t('Login')}</span>
     </div>
   );
 };
@@ -70,7 +75,7 @@ const CustomSelectOption = (props: OptionProps<SelectOption>) => {
       {data.label === 'Settings' && (
         <SettingsOption>{t('{{name}}', { name: children })}</SettingsOption>
       )}
-      {data.label === 'Log Out' && (
+      {data.label === 'Log out' && (
         <LogoutOption>{t('{{name}}', { name: children })}</LogoutOption>
       )}
     </components.Option>
@@ -78,13 +83,15 @@ const CustomSelectOption = (props: OptionProps<SelectOption>) => {
 };
 const ValueContainer = (props: ValueContainerProps<SelectOption>) => {
   const { data: session } = useSession();
+
   return (
     <components.ValueContainer
       {...props}
-      className="!flex text-gray-500 dark:text-gray-200"
+      className="!flex cursor-pointer bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
     >
       <UserIcon width={24} height={24} stroke="currentColor" />
-      <span className="ml-3 mr-2 grow">{session?.user?.name}</span>
+
+      <span className="ml-3 mr-2 grow">{session?.user?.name ?? ''}</span>
     </components.ValueContainer>
   );
 };
@@ -92,12 +99,21 @@ const ValueContainer = (props: ValueContainerProps<SelectOption>) => {
 const DropdownIndicator = (props: DropdownIndicatorProps<SelectOption>) => {
   return (
     <components.DropdownIndicator {...props} className="cursor-pointer">
-      <ChevronDownIcon
-        className="text-gray-500 dark:!text-gray-200"
-        width={18}
-        height={18}
-        stroke="currentColor"
-      />
+      {props.selectProps.menuIsOpen ? (
+        <ChevronUpIcon
+          className="text-gray-800 dark:!text-gray-200"
+          width={18}
+          height={18}
+          stroke="currentColor"
+        />
+      ) : (
+        <ChevronDownIcon
+          className="text-gray-800 dark:!text-gray-200"
+          width={18}
+          height={18}
+          stroke="currentColor"
+        />
+      )}
     </components.DropdownIndicator>
   );
 };
@@ -105,20 +121,33 @@ const DropdownIndicator = (props: DropdownIndicatorProps<SelectOption>) => {
 const selectClassNames: ClassNamesConfig<SelectOption> = {
   control: () => '!border-none dark:bg-gray-700 !rounded-none h-full',
   indicatorSeparator: () => 'hidden',
-  menu: () => 'dark:bg-black !z-50 !mt-0',
+  menu: () => 'dark:bg-black !z-50 !rounded-none',
   menuList: () => '!p-0',
 };
 export const User = () => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useOutsideAlerter(ref, setOpen);
   return (
-    <Select<SelectOption>
-      isSearchable={false}
-      options={userOptions}
-      components={{
-        ValueContainer: ValueContainer,
-        DropdownIndicator: DropdownIndicator,
-        Option: CustomSelectOption,
+    <div
+      onClick={() => {
+        setOpen((prev) => !prev);
       }}
-      classNames={selectClassNames}
-    />
+      className="flex"
+      ref={ref}
+    >
+      <Select<SelectOption>
+        isClearable={false}
+        menuIsOpen={open}
+        isSearchable={false}
+        options={userOptions}
+        components={{
+          ValueContainer: ValueContainer,
+          DropdownIndicator: DropdownIndicator,
+          Option: CustomSelectOption,
+        }}
+        classNames={selectClassNames}
+      />
+    </div>
   );
 };
