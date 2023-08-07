@@ -1,7 +1,6 @@
 import { useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ModelIconMappingType } from '@/types/icons';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -14,22 +13,20 @@ interface Props {
   subModel: OpenAIEntityModel | undefined | null;
   prompt: string | null;
   temperature: number | null;
-  modelIconMapping: ModelIconMappingType;
 }
 
 const getModelTemplate = (
   model: OpenAIEntityModel,
   lightMode: 'dark' | 'light',
   label: string,
-  modelIconMapping: ModelIconMappingType,
 ) => {
   return (
     <>
       <span className="text-gray-500">{label}:</span>
       <div className="flex items-center gap-2">
         <ModelIcon
-          modelIconMapping={modelIconMapping}
-          modelId={model.id}
+          entityId={model.id}
+          entity={model}
           size={18}
           inverted={lightMode === 'dark'}
         />
@@ -45,7 +42,6 @@ export const ChatInfoTooltip = ({
   selectedAddons,
   prompt,
   temperature,
-  modelIconMapping,
 }: Props) => {
   const {
     state: { lightMode },
@@ -64,19 +60,13 @@ export const ChatInfoTooltip = ({
 
   return (
     <div className="grid max-w-[880px] grid-cols-[max-content_1fr] gap-4 px-2 py-3">
-      {model &&
-        getModelTemplate(model, lightMode, getModelLabel(), modelIconMapping)}
+      {model && getModelTemplate(model, lightMode, getModelLabel())}
       {subModel != null &&
-        getModelTemplate(
-          subModel,
-          lightMode,
-          t('Assistant model'),
-          modelIconMapping,
-        )}
+        getModelTemplate(subModel, lightMode, t('Assistant model'))}
       {prompt && (
         <>
           <span className="text-gray-500">{t('System Prompt')}:</span>
-          <div>{prompt}</div>
+          <div className="whitespace-pre-wrap">{prompt}</div>
         </>
       )}
       {temperature !== null && (

@@ -23,9 +23,9 @@ module.exports = {
           100: 'rgb(var(--gray-100, 252 252 252) / <alpha-value>)', // #FCFCFC
           200: 'rgb(var(--gray-200, 243 244 246) / <alpha-value>)', // #F3F4F6
           300: 'rgb(var(--gray-300, 234 237 240) / <alpha-value>)', // #EAEDF0
-          400: 'rgb(var(--gray-400, 221 225 230) / <alpha-value>)', // #DDE1E6
-          500: 'rgb(var(--gray-500, 127 135 146) / <alpha-value>)', // #7F8792
-          600: 'rgb(var(--gray-600, 51 57 66) / <alpha-value>)', // #333942
+          400: 'rgb(var(--gray-400, 221 225 230) / <alpha-value>)', // #DDE1E6, L4 (white)
+          500: 'rgb(var(--gray-500, 127 135 146) / <alpha-value>)', // #7F8792, icons, sec text
+          600: 'rgb(var(--gray-600, 51 57 66) / <alpha-value>)', // #333942, L4 (dark)
           700: 'rgb(var(--gray-700, 34 41 50) / <alpha-value>)', // #222932
           800: 'rgb(var(--gray-800, 20 26 35) / <alpha-value>)', // #141A23
           900: 'rgb(var(--gray-900, 9 13 19) / <alpha-value>)', // #090D13

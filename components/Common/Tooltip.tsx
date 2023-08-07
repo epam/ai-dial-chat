@@ -31,13 +31,15 @@ import {
 interface TooltipOptions {
   initialOpen?: boolean;
   placement?: Placement;
+  isTriggerClickable?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
 export function useTooltip({
   initialOpen = false,
-  placement = 'top',
+  placement = 'bottom',
+  isTriggerClickable = false,
   open: controlledOpen,
   onOpenChange: setControlledOpen,
 }: TooltipOptions = {}) {
@@ -74,6 +76,7 @@ export function useTooltip({
   const hover = useHover(context, {
     move: false,
     enabled: controlledOpen == null,
+    mouseOnly: isTriggerClickable,
   });
   const focus = useFocus(context, {
     enabled: controlledOpen == null,

@@ -65,9 +65,10 @@ interface Props {
   footerHtmlMessage: string;
   enabledFeatures: Feature[];
   isIframe: boolean;
-  modelIconMapping: string;
   authDisabled: boolean;
   defaultModelId: OpenAIEntityModelID;
+  recentModelsIds: string[];
+  recentAddonsIds: string[];
 }
 
 const Home = ({
@@ -78,9 +79,10 @@ const Home = ({
   footerHtmlMessage,
   enabledFeatures,
   isIframe,
-  modelIconMapping,
   defaultModelId,
   authDisabled,
+  recentModelsIds,
+  recentAddonsIds,
 }: Props) => {
   const session = useSession();
 
@@ -128,7 +130,6 @@ const Home = ({
 
   useEffect(() => {
     if (modelsData) {
-      // TODO: get rid of models array to use faster map
       dispatch({ field: 'models', value: modelsData });
       dispatch({
         field: 'modelsMap',
@@ -487,19 +488,25 @@ const Home = ({
         field: 'isIframe',
         value: isIframe,
       });
-    modelIconMapping &&
+    recentModelsIds &&
       dispatch({
-        field: 'modelIconMapping',
-        value: modelIconMapping,
+        field: 'recentModelsIds',
+        value: new Set(recentModelsIds),
+      });
+    recentAddonsIds &&
+      dispatch({
+        field: 'recentAddonsIds',
+        value: new Set(recentAddonsIds),
       });
   }, [
     defaultModelId,
-    modelIconMapping,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
     usePluginKeys,
     footerHtmlMessage,
     enabledFeatures,
+    recentModelsIds,
+    recentAddonsIds,
   ]);
 
   // ON LOAD --------------------------------------------
@@ -764,31 +771,25 @@ export const getServerSideProps: GetServerSideProps = async ({
     process.env.FOOTER_HTML_MESSAGE ?? ''
   ).replace('%%VERSION%%', packageJSON.version);
 
-  let modelIconMap: Record<string, string> = {};
-  if (process.env.MODEL_ICON_MAPPING) {
-    modelIconMap = process.env.MODEL_ICON_MAPPING.split(',').reduce<
-      Record<string, string>
-    >((acc, modelIcon) => {
-      const [modelId, iconClass] = modelIcon.split('=');
-
-      acc[modelId] = iconClass;
-
-      return acc;
-    }, {});
-  }
-
   return {
     props: {
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
       usePluginKeys: !!process.env.NEXT_PUBLIC_ENABLE_PLUGIN_KEYS,
       serverSidePluginKeysSet,
       appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
-      modelIconMapping: modelIconMap,
       footerHtmlMessage: updatedFooterHTMLMessage,
       enabledFeatures: (process.env.ENABLED_FEATURES || '').split(','),
       isIframe,
       defaultModelId: process.env.DEFAULT_MODEL || fallbackModelID,
       authDisabled: process.env.AUTH_DISABLED === 'true',
+      recentModelsIds:
+        (process.env.RECENT_MODELS_IDS &&
+          process.env.RECENT_MODELS_IDS.split(',')) ||
+        [],
+      recentAddonsIds:
+        (process.env.RECENT_ADDONS_IDS &&
+          process.env.RECENT_ADDONS_IDS.split(',')) ||
+        [],
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',

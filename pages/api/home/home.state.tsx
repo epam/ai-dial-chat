@@ -15,11 +15,9 @@ export interface HomeInitialState {
   lightMode: 'light' | 'dark';
   messageIsStreaming: boolean;
   modelError: ErrorMessage | null;
-  // TODO: get rid of models array to use faster map
   models: OpenAIEntityModel[];
   modelsMap: Record<string, OpenAIEntityModel>;
   addonError: ErrorMessage | null;
-  // TODO: get rid of models array to use faster map
   addons: OpenAIEntityAddon[];
   addonsMap: Record<string, OpenAIEntityAddon>;
   folders: FolderInterface[];
@@ -39,11 +37,13 @@ export interface HomeInitialState {
   usePluginKeys: boolean;
   isCompareMode: boolean;
   isIframe: boolean;
-  modelIconMapping: Record<string, string>;
   footerHtmlMessage: string;
 
   isUserSettingsOpen: boolean;
   enabledFeatures: Set<Feature>;
+
+  recentModelsIds: Set<string>;
+  recentAddonsIds: Set<string>;
 }
 
 export const initialState: HomeInitialState = {
@@ -74,9 +74,11 @@ export const initialState: HomeInitialState = {
   usePluginKeys: false,
   isCompareMode: false,
   isIframe: false,
-  modelIconMapping: {},
   footerHtmlMessage: '',
   isUserSettingsOpen: false,
 
   enabledFeatures: new Set([]),
+
+  recentModelsIds: new Set([]),
+  recentAddonsIds: new Set([]),
 };

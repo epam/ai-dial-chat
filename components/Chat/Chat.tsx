@@ -129,7 +129,6 @@ export const Chat = memo(({ appName }: Props) => {
       isCompareMode,
       messageIsStreaming,
       enabledFeatures,
-      modelIconMapping,
       lightMode,
     },
     handleUpdateConversation,
@@ -1019,7 +1018,6 @@ export const Chat = memo(({ appName }: Props) => {
                               isShowModelSelect={enabledFeatures.has(
                                 'top-chat-model-settings',
                               )}
-                              modelIconMapping={modelIconMapping}
                               isShowSettings={isShowChatSettings}
                               setShowSettings={setIsShowChatSettings}
                               selectedConversationIds={selectedConversationIds}
@@ -1126,11 +1124,7 @@ export const Chat = memo(({ appName }: Props) => {
                                 : 'w-full'
                             }`}
                           >
-                            <ChatLoader
-                              modelIconMapping={modelIconMapping}
-                              modelId={model.id}
-                              theme={lightMode}
-                            />
+                            <ChatLoader modelId={model.id} theme={lightMode} />
                           </div>
                         );
                       })}

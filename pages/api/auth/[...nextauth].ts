@@ -198,6 +198,8 @@ export const authOptions: AuthOptions = {
         options.token.jobTitle = options.account.jobTitle;
         options.token.access_token = options.account?.access_token;
       }
+      console.log(options.profile);
+      console.log(options.session);
 
       return options.token;
     },
@@ -222,7 +224,12 @@ export const authOptions: AuthOptions = {
               Authorization: `${options.account.token_type} ${options.account.access_token}`,
               Accept: 'application/json',
             },
-          }).then((r) => r.json())) as IGraphUser;
+          }).then(async (r) => {
+            const res = await r.json();
+            console.log(res);
+
+            return r.json();
+          })) as IGraphUser;
           jobTitle = user.jobTitle ?? 'unknown';
         } catch {
           // Do nothing
@@ -230,9 +237,13 @@ export const authOptions: AuthOptions = {
 
         options.account.jobTitle = jobTitle;
       }
+      console.log(options.session);
+
       return true;
     },
     session: async (options) => {
+      console.log('123', options.session);
+
       (options as any).session.jobTitle = options.token.jobTitle;
 
       return options.session;
