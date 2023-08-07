@@ -16,7 +16,7 @@ const exporter = new PrometheusExporter({
 let traceExporter: SpanExporter | undefined;
 if (process.env.TRACES_URL) {
   traceExporter = new OTLPTraceExporter({
-    url: 'http://localhost:4318/v1/traces',
+    url: process.env.TRACES_URL,
     headers: {},
   }) as SpanExporter;
 }
