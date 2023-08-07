@@ -17,7 +17,7 @@ variables:
   HELM_REPO: https://nexus.deltixhub.com/repository/epm-rtc-helm
   SECRET_NAME: "epm-rtc-registry-dev"
   CHART: "chat" # Helm chart name, e.g. "gitlab-runner"
-  VERSION: "0.0.3" # Helm chart version
+  VERSION: "0.1.2" # Helm chart version
 
   development_AWS_ACCESS_KEY_ID: ${staging_AWS_ACCESS_KEY_ID}
   development_AWS_SECRET_ACCESS_KEY: ${staging_AWS_SECRET_ACCESS_KEY}

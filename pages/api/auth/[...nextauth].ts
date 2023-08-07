@@ -5,6 +5,7 @@ import Auth0Provider from 'next-auth/providers/auth0';
 import AzureProvider from 'next-auth/providers/azure-ad';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
+import KeycloakProvider from 'next-auth/providers/keycloak';
 
 import { GitLab } from '../../../utils/auth/customGitlab';
 import PingId from '../../../utils/auth/pingIdentity';
@@ -82,6 +83,16 @@ const allProviders: (Provider | boolean)[] = [
       clientSecret: process.env.AUTH_PING_ID_SECRET,
       name: process.env.AUTH_PING_ID_NAME ?? DEFAULT_NAME,
       issuer: process.env.AUTH_PING_ID_HOST,
+    }),
+
+  !!process.env.AUTH_KEYCLOAK_CLIENT_ID &&
+    !!process.env.AUTH_KEYCLOAK_SECRET &&
+    !!process.env.AUTH_KEYCLOAK_HOST &&
+    KeycloakProvider({
+      clientId: process.env.AUTH_KEYCLOAK_CLIENT_ID,
+      clientSecret: process.env.AUTH_KEYCLOAK_SECRET,
+      name: process.env.AUTH_KEYCLOAK_NAME ?? DEFAULT_NAME,
+      issuer: process.env.AUTH_KEYCLOAK_HOST,
     }),
 
   !!process.env.AUTH_TEST_TOKEN &&
