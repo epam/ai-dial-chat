@@ -84,8 +84,8 @@ const allProviders: (Provider | boolean)[] = [
       name: process.env.AUTH_PING_ID_NAME ?? DEFAULT_NAME,
       issuer: process.env.AUTH_PING_ID_HOST,
     }),
-  
-    !!process.env.AUTH_KEYCLOAK_CLIENT_ID &&
+
+  !!process.env.AUTH_KEYCLOAK_CLIENT_ID &&
     !!process.env.AUTH_KEYCLOAK_SECRET &&
     !!process.env.AUTH_KEYCLOAK_HOST &&
     KeycloakProvider({
