@@ -1,4 +1,4 @@
-import { IconClearAll, IconSettings, IconX } from '@tabler/icons-react';
+import { IconX } from '@tabler/icons-react';
 import { useContext, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -17,6 +17,8 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
+import BroomIcon from '../../public/images/icons/broom.svg';
+import GearIcon from '../../public/images/icons/gear.svg';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
 import { ConversationSettings } from './ConversationSettings';
@@ -151,7 +153,7 @@ export const ChatSettings = ({
               )}
 
               {conversation.selectedAddons.length > 0 && (
-                <span className="flex items-center">
+                <span className="flex items-center gap-2">
                   {conversation.selectedAddons?.map((addon) => (
                     <ModelIcon
                       key={addon}
@@ -179,7 +181,7 @@ export const ChatSettings = ({
                   setShowSettings(!isShowSettings);
                 }}
               >
-                <IconSettings size={18} />
+                <GearIcon width={18} height={18} />
               </button>
             )}
             {isShowClearConversation && !isCompareMode && (
@@ -187,7 +189,7 @@ export const ChatSettings = ({
                 className="cursor-pointer hover:opacity-50"
                 onClick={onClearConversation}
               >
-                <IconClearAll size={18} />
+                <BroomIcon width={18} height={18} />
               </button>
             )}
             {isCompareMode && selectedConversationIds.length > 1 && (
