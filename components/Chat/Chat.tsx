@@ -130,10 +130,13 @@ export const Chat = memo(({ appName }: Props) => {
       messageIsStreaming,
       enabledFeatures,
       lightMode,
+      modelsMap,
     },
     handleUpdateConversation,
     handleSelectConversation,
     handleSelectConversations,
+    handleUpdateRecentModels,
+    handleUpdateRecentAddons,
     dispatch: homeDispatch,
   } = useContext(HomeContext);
 
@@ -293,6 +296,16 @@ export const Chat = memo(({ appName }: Props) => {
       isStopGenerating.current = false;
       if (!conversation) {
         return;
+      }
+
+      handleUpdateRecentModels(conversation.model.id);
+      if (
+        conversation.selectedAddons.length > 0 &&
+        modelsMap[conversation.model.id]?.type !== 'application'
+      ) {
+        conversation.selectedAddons.forEach((selectedAddon) => {
+          handleUpdateRecentAddons(selectedAddon);
+        });
       }
 
       let updatedConversation: Conversation = {

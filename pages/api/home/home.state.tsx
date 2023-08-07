@@ -42,8 +42,8 @@ export interface HomeInitialState {
   isUserSettingsOpen: boolean;
   enabledFeatures: Set<Feature>;
 
-  recentModelsIds: Set<string>;
-  recentAddonsIds: Set<string>;
+  recentModelsIds: string[];
+  recentAddonsIds: string[];
 }
 
 export const initialState: HomeInitialState = {
@@ -79,6 +79,6 @@ export const initialState: HomeInitialState = {
 
   enabledFeatures: new Set([]),
 
-  recentModelsIds: new Set([]),
-  recentAddonsIds: new Set([]),
+  recentModelsIds: [],
+  recentAddonsIds: [],
 };

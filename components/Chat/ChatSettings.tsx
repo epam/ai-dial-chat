@@ -194,7 +194,9 @@ export const ChatSettings = ({
                     <IconClearAll size={18} />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>{t('Clear all messages')}</TooltipContent>
+                <TooltipContent>
+                  {t('Clear conversation messages')}
+                </TooltipContent>
               </Tooltip>
             )}
             {isCompareMode && selectedConversationIds.length > 1 && (

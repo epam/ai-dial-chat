@@ -67,8 +67,8 @@ interface Props {
   isIframe: boolean;
   authDisabled: boolean;
   defaultModelId: OpenAIEntityModelID;
-  recentModelsIds: string[];
-  recentAddonsIds: string[];
+  defaultRecentModelsIds: string[];
+  defaultRecentAddonsIds: string[];
 }
 
 const Home = ({
@@ -81,8 +81,8 @@ const Home = ({
   isIframe,
   defaultModelId,
   authDisabled,
-  recentModelsIds,
-  recentAddonsIds,
+  defaultRecentModelsIds,
+  defaultRecentAddonsIds,
 }: Props) => {
   const session = useSession();
 
@@ -109,6 +109,8 @@ const Home = ({
       defaultModelId: clientDefaultModelId,
       models,
       modelsMap,
+      recentModelsIds,
+      recentAddonsIds,
     },
     dispatch,
   } = contextValue;
@@ -420,6 +422,29 @@ const Home = ({
     return allConversation;
   };
 
+  const handleUpdateRecentModels = (modelId: string): void => {
+    const recentFilteredModels = recentModelsIds.filter(
+      (recentModelId) => recentModelId !== modelId,
+    );
+
+    recentFilteredModels.unshift(modelId);
+    dispatch({ field: 'recentModelsIds', value: recentFilteredModels });
+    localStorage.setItem(
+      'recentModelsIds',
+      JSON.stringify(recentFilteredModels),
+    );
+  };
+  const handleUpdateRecentAddons = (addonId: string): void => {
+    const recentFilteredAddons = recentAddonsIds.filter((id) => id !== addonId);
+
+    recentFilteredAddons.unshift(addonId);
+    dispatch({ field: 'recentAddonsIds', value: recentFilteredAddons });
+    localStorage.setItem(
+      'recentAddonsIds',
+      JSON.stringify(recentFilteredAddons),
+    );
+  };
+
   const handleNewReplayConversation = (conversation: Conversation) => {
     const newConversationName = `[Replay] ${conversation.name}`;
 
@@ -488,16 +513,6 @@ const Home = ({
         field: 'isIframe',
         value: isIframe,
       });
-    recentModelsIds &&
-      dispatch({
-        field: 'recentModelsIds',
-        value: new Set(recentModelsIds),
-      });
-    recentAddonsIds &&
-      dispatch({
-        field: 'recentAddonsIds',
-        value: new Set(recentAddonsIds),
-      });
   }, [
     defaultModelId,
     serverSideApiKeyIsSet,
@@ -505,8 +520,6 @@ const Home = ({
     usePluginKeys,
     footerHtmlMessage,
     enabledFeatures,
-    recentModelsIds,
-    recentAddonsIds,
   ]);
 
   // ON LOAD --------------------------------------------
@@ -654,6 +667,44 @@ const Home = ({
       updateAllConversationsStore(updatedConversations);
       saveSelectedConversationIds([newConversation.id]);
     }
+
+    const recentAddonsIds = localStorage.getItem('recentAddonsIds');
+    if (recentAddonsIds) {
+      dispatch({
+        field: 'recentAddonsIds',
+        value: JSON.parse(recentAddonsIds),
+      });
+    } else {
+      if (defaultRecentAddonsIds) {
+        dispatch({
+          field: 'recentAddonsIds',
+          value: defaultRecentAddonsIds,
+        });
+        localStorage.setItem(
+          'recentAddonsIds',
+          JSON.stringify(defaultRecentAddonsIds),
+        );
+      }
+    }
+
+    const recentModelsIds = localStorage.getItem('recentModelsIds');
+    if (recentModelsIds) {
+      dispatch({
+        field: 'recentModelsIds',
+        value: JSON.parse(recentModelsIds),
+      });
+    } else {
+      if (defaultRecentModelsIds) {
+        dispatch({
+          field: 'recentModelsIds',
+          value: defaultRecentModelsIds,
+        });
+        localStorage.setItem(
+          'recentModelsIds',
+          JSON.stringify(defaultRecentModelsIds),
+        );
+      }
+    }
   }, [
     defaultModelId,
     dispatch,
@@ -685,6 +736,8 @@ const Home = ({
         handleSelectConversations,
         handleUpdateConversation,
         handleNewReplayConversation,
+        handleUpdateRecentModels,
+        handleUpdateRecentAddons,
       }}
     >
       <Head>
@@ -782,11 +835,11 @@ export const getServerSideProps: GetServerSideProps = async ({
       isIframe,
       defaultModelId: process.env.DEFAULT_MODEL || fallbackModelID,
       authDisabled: process.env.AUTH_DISABLED === 'true',
-      recentModelsIds:
+      defaultRecentModelsIds:
         (process.env.RECENT_MODELS_IDS &&
           process.env.RECENT_MODELS_IDS.split(',')) ||
         [],
-      recentAddonsIds:
+      defaultRecentAddonsIds:
         (process.env.RECENT_ADDONS_IDS &&
           process.env.RECENT_ADDONS_IDS.split(',')) ||
         [],
