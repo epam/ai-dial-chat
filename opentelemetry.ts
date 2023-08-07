@@ -6,6 +6,7 @@ import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { Resource } from '@opentelemetry/resources';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { SpanExporter } from '@opentelemetry/sdk-trace-base';
+import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 const exporter = new PrometheusExporter({
@@ -13,16 +14,17 @@ const exporter = new PrometheusExporter({
   endpoint: '/metrics',
 });
 
+let spanProcessor: SimpleSpanProcessor | undefined;
 let traceExporter: SpanExporter | undefined;
 if (process.env.TRACES_URL) {
   traceExporter = new OTLPTraceExporter({
     url: process.env.TRACES_URL,
     headers: {},
-  }) as SpanExporter;
+  });
+  spanProcessor = new SimpleSpanProcessor(traceExporter);
 }
 
 const sdk = new NodeSDK({
-  traceExporter,
   metricReader: exporter,
   resource: Resource.default().merge(
     new Resource({
@@ -31,5 +33,6 @@ const sdk = new NodeSDK({
     }),
   ),
   instrumentations: [new HttpInstrumentation()],
+  spanProcessor,
 });
 sdk.start();
