@@ -79,6 +79,7 @@ const CustomSelectOption = (props: OptionProps<SelectOption>) => {
   );
 };
 const ValueContainer = (props: ValueContainerProps<SelectOption>) => {
+  const { t } = useTranslation('settings');
   const { data: session } = useSession();
   return (
     <components.ValueContainer
@@ -91,7 +92,7 @@ const ValueContainer = (props: ValueContainerProps<SelectOption>) => {
           src={session?.user?.image}
           width={18}
           height={18}
-          alt={`User avatar`}
+          alt={t(`User avatar`)}
         />
       ) : (
         <UserIcon width={18} height={18} stroke="currentColor" />
