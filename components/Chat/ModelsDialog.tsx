@@ -47,6 +47,7 @@ export const ModelsDialog: FC<Props> = ({
   const { t } = useTranslation('chat');
   const {
     state: { models, lightMode },
+    handleUpdateRecentModels,
   } = useContext(HomeContext);
   const modalRef = useRef<HTMLDivElement>(null);
   const [entityTypes, setEntityTypes] = useState<
@@ -133,7 +134,11 @@ export const ModelsDialog: FC<Props> = ({
             ? 'border-blue-500'
             : 'border-gray-400 dark:border-gray-600'
         }`}
-        onClick={() => onModelSelect(entity.id)}
+        onClick={() => {
+          onModelSelect(entity.id);
+          handleUpdateRecentModels(entity.id);
+          onClose();
+        }}
       >
         <ModelIcon
           entityId={entity.id}
@@ -197,7 +202,7 @@ export const ModelsDialog: FC<Props> = ({
                 onChange={(e) => {
                   handleSearch(e.target.value);
                 }}
-                className="m-0 w-full rounded border border-gray-400 px-3 py-2 dark:border-gray-600"
+                className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 dark:border-gray-600"
               ></input>
             </div>
 

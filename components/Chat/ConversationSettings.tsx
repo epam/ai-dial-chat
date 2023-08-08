@@ -1,22 +1,23 @@
-import { useTranslation } from 'next-i18next';
+import { useContext, useEffect, useState } from 'react';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/utils/app/const';
 
 import { Conversation } from '@/types/chat';
 import {
   OpenAIEntityAddon,
-  OpenAIEntityAddonID,
   OpenAIEntityModel,
   OpenAIEntityModelID,
-  OpenAIEntityModels,
 } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
-import { Addons } from './Addons';
+import HomeContext from '@/pages/api/home/home.context';
+
+// import { Addons } from './Addons';
 import { ConversationSettingsModel } from './ConversationSettingsModels';
 import { ModelSelect } from './ModelSelect';
-import { SystemPrompt } from './SystemPrompt';
-import { TemperatureSlider } from './Temperature';
+
+// import { SystemPrompt } from './SystemPrompt';
+// import { TemperatureSlider } from './Temperature';
 
 interface Props {
   conversation: Conversation;
@@ -33,73 +34,71 @@ interface Props {
 
 export const ConversationSettings = ({
   conversation,
-  prompts,
-  models,
-  addons,
   defaultModelId,
-  onChangePrompt,
-  onChangeTemperature,
   onSelectModel,
   onSelectAssistantSubModel,
-  onChangeAddon,
 }: Props) => {
+  const {
+    state: { modelsMap, models },
+  } = useContext(HomeContext);
+  const [assistantSubModel, setAssistantSubModel] = useState(() => {
+    return modelsMap[
+      conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id
+    ];
+  });
+
+  useEffect(() => {
+    setAssistantSubModel(
+      modelsMap[conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id],
+    );
+  }, [modelsMap]);
   return (
-    <div className="grid w-full grid-cols-2 gap-[1px]">
-      <ConversationSettingsModel
-        modelId={conversation.model.id}
-        onModelSelect={onSelectModel}
-      />
-      <ConversationSettingsModel
-        modelId={conversation.model.id}
-        onModelSelect={onSelectModel}
-      />
+    <div className="grid w-full grid-cols-1 gap-[1px] md:grid-cols-2">
+      <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
+        <ConversationSettingsModel
+          modelId={conversation.model.id}
+          onModelSelect={onSelectModel}
+        />
+      </div>
+      <div>
+        {assistantSubModel &&
+          modelsMap[conversation.model.id].type === 'assistant' && (
+            <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
+              <ModelSelect
+                conversationModelId={assistantSubModel.id}
+                conversationModelName={assistantSubModel.name}
+                label="Model"
+                defaultModelId={defaultModelId}
+                models={models.filter((model) => model.type === 'model')}
+                onSelectModel={onSelectAssistantSubModel}
+              />
+            </div>
+          )}
+        {/* {aiEntityType === 'model' && (
+            <SystemPrompt
+              conversation={conversation}
+              prompts={prompts}
+              onChangePrompt={onChangePrompt}
+            />
+          )} */}
+
+        {/* {aiEntityType !== 'application' && (
+            <TemperatureSlider
+              label={t('Temperature')}
+              onChangeTemperature={onChangeTemperature}
+              conversation={conversation}
+            />
+          )} */}
+
+        {/* {aiEntityType !== 'application' && (
+            <Addons
+              addons={addons}
+              selectedAddons={conversation.selectedAddons}
+              preselectedAddons={preselectedAddons ?? []}
+              onChangeAddon={onChangeAddon}
+            />
+          )} */}
+      </div>
     </div>
-    // <div className="flex h-full flex-col space-y-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-600">
-    //   <ModelSelect
-    //     conversationModelId={conversation.model.id}
-    //     conversationModelName={conversation.model.name}
-    //     defaultModelId={defaultModelId}
-    //     models={models}
-    //     onSelectModel={onSelectModel}
-    //   />
-    //   {aiEntityType === 'assistant' && (
-    //     <ModelSelect
-    //       conversationModelId={
-    //         conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id
-    //       }
-    //       conversationModelName={
-    //         assitantSubModelName ?? DEFAULT_ASSISTANT_SUBMODEL.name
-    //       }
-    //       label="Model"
-    //       defaultModelId={defaultModelId}
-    //       models={modelsFiltered}
-    //       onSelectModel={onSelectAssistantSubModel}
-    //     />
-    //   )}
-    //   {aiEntityType === 'model' && (
-    //     <SystemPrompt
-    //       conversation={conversation}
-    //       prompts={prompts}
-    //       onChangePrompt={onChangePrompt}
-    //     />
-    //   )}
-
-    //   {aiEntityType !== 'application' && (
-    //     <TemperatureSlider
-    //       label={t('Temperature')}
-    //       onChangeTemperature={onChangeTemperature}
-    //       conversation={conversation}
-    //     />
-    //   )}
-
-    //   {aiEntityType !== 'application' && (
-    //     <Addons
-    //       addons={addons}
-    //       selectedAddons={conversation.selectedAddons}
-    //       preselectedAddons={preselectedAddons ?? []}
-    //       onChangeAddon={onChangeAddon}
-    //     />
-    //   )}
-    // </div>
   );
 };

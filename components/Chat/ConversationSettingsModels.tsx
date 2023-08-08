@@ -35,14 +35,16 @@ export const ConversationSettingsModel = ({
     const mappedEntities = Array.from(recentModelsIds)
       .map((id) => modelsMap[id])
       .filter(Boolean);
-    setRecentModels(mappedEntities.filter((entity) => entity.type === 'model'));
+    setRecentModels(
+      mappedEntities.filter((entity) => entity.type === 'model').slice(0, 4),
+    );
     setRecentNonModels(
-      mappedEntities.filter((entity) => entity.type !== 'model'),
+      mappedEntities.filter((entity) => entity.type !== 'model').slice(0, 3),
     );
   }, [recentModelsIds]);
 
   return (
-    <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
+    <div>
       <div className="mb-4">{t('Talk to')}</div>
 
       <div className="flex flex-col gap-3">
