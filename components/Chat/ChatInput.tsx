@@ -347,13 +347,15 @@ export const ChatInput = forwardRef(
             )}
           </div>
         </div>
-        {!isMediaQuery('(width <= 767px)') && (
-          <FooterMessage
-            isShowFooter={enabledFeatures.has('footer')}
-            isShowRequestApiKey={enabledFeatures.has('request-api-key')}
-            isShowReportAnIssue={enabledFeatures.has('report-an-issue')}
-            footerHtmlMessage={footerHtmlMessage}
-          />
+        {isMediaQuery('(width >= 768px)') && (
+          <div className="p-5">
+            <FooterMessage
+              isShowFooter={enabledFeatures.has('footer')}
+              isShowRequestApiKey={enabledFeatures.has('request-api-key')}
+              isShowReportAnIssue={enabledFeatures.has('report-an-issue')}
+              footerHtmlMessage={footerHtmlMessage}
+            />
+          </div>
         )}
       </div>
     );
