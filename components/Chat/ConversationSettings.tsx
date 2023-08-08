@@ -21,8 +21,8 @@ import { ModelSelect } from './ModelSelect';
 
 interface Props {
   conversation: Conversation;
+  model: OpenAIEntityModel;
   prompts: Prompt[];
-  models: OpenAIEntityModel[];
   defaultModelId: OpenAIEntityModelID;
   addons: OpenAIEntityAddon[];
   onChangeAddon: (addonId: string) => void;
@@ -33,6 +33,7 @@ interface Props {
 }
 
 export const ConversationSettings = ({
+  model,
   conversation,
   defaultModelId,
   onSelectModel,
@@ -52,8 +53,9 @@ export const ConversationSettings = ({
       modelsMap[conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id],
     );
   }, [modelsMap]);
+
   return (
-    <div className="grid w-full grid-cols-1 gap-[1px] md:grid-cols-2">
+    <div className="grid max-h-[500px] w-full min-w-[50%] grid-cols-1 gap-[1px] md:grid-cols-2">
       <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
         <ConversationSettingsModel
           modelId={conversation.model.id}
@@ -61,19 +63,18 @@ export const ConversationSettings = ({
         />
       </div>
       <div>
-        {assistantSubModel &&
-          modelsMap[conversation.model.id].type === 'assistant' && (
-            <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
-              <ModelSelect
-                conversationModelId={assistantSubModel.id}
-                conversationModelName={assistantSubModel.name}
-                label="Model"
-                defaultModelId={defaultModelId}
-                models={models.filter((model) => model.type === 'model')}
-                onSelectModel={onSelectAssistantSubModel}
-              />
-            </div>
-          )}
+        {assistantSubModel && model.type === 'assistant' && (
+          <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
+            <ModelSelect
+              conversationModelId={assistantSubModel.id}
+              conversationModelName={assistantSubModel.name}
+              label="Model"
+              defaultModelId={defaultModelId}
+              models={models.filter((model) => model.type === 'model')}
+              onSelectModel={onSelectAssistantSubModel}
+            />
+          </div>
+        )}
         {/* {aiEntityType === 'model' && (
             <SystemPrompt
               conversation={conversation}

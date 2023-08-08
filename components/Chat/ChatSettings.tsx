@@ -5,11 +5,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/types/chat';
-import {
-  OpenAIEntityAddon,
-  OpenAIEntityModel,
-  OpenAIEntityModelID,
-} from '@/types/openai';
+import { OpenAIEntityAddon, OpenAIEntityModelID } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -24,7 +20,6 @@ import { ConversationSettings } from './ConversationSettings';
 
 interface Props {
   conversation: Conversation;
-  models: OpenAIEntityModel[];
   addons: OpenAIEntityAddon[];
   prompts: Prompt[];
   defaultModelId: OpenAIEntityModelID;
@@ -47,7 +42,6 @@ interface Props {
 
 export const ChatSettings = ({
   conversation,
-  models,
   addons,
   defaultModelId,
   isCompareMode,
@@ -79,12 +73,23 @@ export const ChatSettings = ({
   const [isModelSelectDisabled, setIsModelSelectDisabled] = useState(() =>
     conversation.messages.some((message) => !!message.custom_content?.state),
   );
+  const [model, setModel] = useState(() => {
+    return modelsMap[conversation.model.id];
+  });
 
   useEffect(() => {
     setIsModelSelectDisabled(
       conversation.messages.some((message) => !!message.custom_content?.state),
     );
   }, [conversation.messages]);
+
+  useEffect(() => {
+    setModel(modelsMap[conversation.model.id]);
+  }, [conversation.model.id]);
+
+  if (!model) {
+    return <></>;
+  }
 
   return (
     <>
@@ -102,68 +107,59 @@ export const ChatSettings = ({
         <div className="flex md:[&>*:first-child]:border-l-[1px] md:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-gray-500 [&>*]:pl-2">
           {isShowChatInfo && (
             <>
-              {modelsMap[conversation.model.id] && (
-                <>
+              <span className="flex items-center">
+                <Tooltip>
+                  <TooltipTrigger>
+                    <ModelIcon
+                      entityId={conversation.model.id}
+                      entity={model}
+                      size={18}
+                      inverted={lightMode === 'dark'}
+                      isCustomTooltip={true}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <ChatInfoTooltip
+                      model={model}
+                      selectedAddons={
+                        model.type !== 'application'
+                          ? (conversation.selectedAddons
+                              .map((addon) => addonsMap[addon])
+                              .filter(Boolean) as OpenAIEntityAddon[])
+                          : null
+                      }
+                      subModel={
+                        conversation.assistantModelId &&
+                        model.type === 'assistant'
+                          ? modelsMap[conversation.assistantModelId]
+                          : null
+                      }
+                      prompt={
+                        model.type === 'model' ? conversation.prompt : null
+                      }
+                      temperature={
+                        model.type !== 'application'
+                          ? conversation.temperature
+                          : null
+                      }
+                    />
+                  </TooltipContent>
+                </Tooltip>
+              </span>
+              {model.type !== 'application' &&
+                conversation.selectedAddons.length > 0 && (
                   <span className="flex items-center">
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <ModelIcon
-                          entityId={conversation.model.id}
-                          entity={modelsMap[conversation.model.id]}
-                          size={18}
-                          inverted={lightMode === 'dark'}
-                          isCustomTooltip={true}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <ChatInfoTooltip
-                          model={modelsMap[conversation.model.id]}
-                          selectedAddons={
-                            modelsMap[conversation.model.id].type !==
-                            'application'
-                              ? conversation.selectedAddons.map(
-                                  (addon) => addonsMap[addon],
-                                )
-                              : null
-                          }
-                          subModel={
-                            conversation.assistantModelId &&
-                            modelsMap[conversation.model.id].type ===
-                              'assistant'
-                              ? modelsMap[conversation.assistantModelId]
-                              : null
-                          }
-                          prompt={
-                            modelsMap[conversation.model.id].type === 'model'
-                              ? conversation.prompt
-                              : null
-                          }
-                          temperature={
-                            modelsMap[conversation.model.id].type !==
-                            'application'
-                              ? conversation.temperature
-                              : null
-                          }
-                        />
-                      </TooltipContent>
-                    </Tooltip>
+                    {conversation.selectedAddons?.map((addon) => (
+                      <ModelIcon
+                        key={addon}
+                        entityId={addon}
+                        size={18}
+                        entity={addonsMap[addon]}
+                        inverted={lightMode === 'dark'}
+                      />
+                    ))}
                   </span>
-                  {modelsMap[conversation.model.id].type !== 'application' &&
-                    conversation.selectedAddons.length > 0 && (
-                      <span className="flex items-center">
-                        {conversation.selectedAddons?.map((addon) => (
-                          <ModelIcon
-                            key={addon}
-                            entityId={addon}
-                            size={18}
-                            entity={addonsMap[addon]}
-                            inverted={lightMode === 'dark'}
-                          />
-                        ))}
-                      </span>
-                    )}
-                </>
-              )}
+                )}
             </>
           )}
           <div className="flex items-center gap-2">
@@ -218,7 +214,7 @@ export const ChatSettings = ({
           <ConversationSettings
             conversation={conversation}
             defaultModelId={defaultModelId}
-            models={models}
+            model={model}
             prompts={prompts}
             addons={addons}
             onSelectModel={onSelectModel}

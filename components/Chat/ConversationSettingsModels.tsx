@@ -32,7 +32,7 @@ export const ConversationSettingsModel = ({
   useEffect(() => {
     const mappedEntities = Array.from(recentModelsIds)
       .map((id) => modelsMap[id])
-      .filter(Boolean);
+      .filter(Boolean) as OpenAIEntityModel[];
     setRecentModels(
       mappedEntities.filter((entity) => entity.type === 'model').slice(0, 4),
     );

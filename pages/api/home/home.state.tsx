@@ -16,10 +16,10 @@ export interface HomeInitialState {
   messageIsStreaming: boolean;
   modelError: ErrorMessage | null;
   models: OpenAIEntityModel[];
-  modelsMap: Record<string, OpenAIEntityModel>;
+  modelsMap: Partial<Record<string, OpenAIEntityModel>>;
   addonError: ErrorMessage | null;
   addons: OpenAIEntityAddon[];
-  addonsMap: Record<string, OpenAIEntityAddon>;
+  addonsMap: Partial<Record<string, OpenAIEntityAddon>>;
   folders: FolderInterface[];
   conversations: Conversation[];
   selectedConversationIds: string[];
