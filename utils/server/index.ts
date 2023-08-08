@@ -20,6 +20,7 @@ import {
   ReconnectInterval,
   createParser,
 } from 'eventsource-parser';
+import fetch from 'node-fetch';
 
 export class OpenAIError extends Error {
   type: string;

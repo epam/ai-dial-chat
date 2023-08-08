@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 
 import { errorsMessages } from '@/constants/errors';
 import cssEscape from 'css.escape';
+import fetch from 'node-fetch';
 
 let cachedTheme = '';
 let cachedThemeExpiration: number | undefined;
@@ -106,7 +107,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(500).send(errorsMessages.generalServer);
   }
 
-  const json = await response.json();
+  const json = (await response.json()) as any;
 
   const dayInMs = 86400000;
   cachedTheme = wrapCssContents([

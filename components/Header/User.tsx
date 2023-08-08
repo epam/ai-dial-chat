@@ -9,6 +9,8 @@ import Select, {
   components,
 } from 'react-select';
 
+import Image from 'next/image';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import ChevronDownIcon from '../../public/images/icons/chevron-down.svg';
@@ -77,13 +79,25 @@ const CustomSelectOption = (props: OptionProps<SelectOption>) => {
   );
 };
 const ValueContainer = (props: ValueContainerProps<SelectOption>) => {
+  const { t } = useTranslation('settings');
   const { data: session } = useSession();
   return (
     <components.ValueContainer
       {...props}
       className="!flex text-gray-500 dark:text-gray-200"
     >
-      <UserIcon width={24} height={24} stroke="currentColor" />
+      {session?.user?.image ? (
+        <Image
+          className="rounded"
+          src={session?.user?.image}
+          width={18}
+          height={18}
+          alt={t(`User avatar`)}
+        />
+      ) : (
+        <UserIcon width={18} height={18} stroke="currentColor" />
+      )}
+
       <span className="ml-3 mr-2 grow">{session?.user?.name}</span>
     </components.ValueContainer>
   );

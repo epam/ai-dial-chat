@@ -78,9 +78,20 @@ export const ChatInfoTooltip = ({
       {selectedAddons !== null && selectedAddons?.length > 0 && (
         <>
           <span className="text-gray-500">{t('Addons')}:</span>
-          <div>
+          <div className="flex flex-wrap gap-1">
             {selectedAddons.map((addon) => (
-              <span key={addon.id}>{addon.name}</span>
+              <span
+                key={addon.id}
+                className="flex gap-2 rounded bg-blue-500/20 px-3 py-2"
+              >
+                <ModelIcon
+                  modelIconMapping={{}}
+                  modelId={addon.id}
+                  size={18}
+                  inverted={lightMode === 'dark'}
+                />
+                {addon.name}
+              </span>
             ))}
           </div>
         </>
