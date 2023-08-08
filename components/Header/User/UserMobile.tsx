@@ -4,22 +4,18 @@ import { useTranslation } from 'react-i18next';
 
 import HomeContext from '@/pages/api/home/home.context';
 
-import FileArrowRightIcon from '../../public/images/icons/file-arrow-right.svg';
-import GearIcon from '../../public/images/icons/gear.svg';
-import UserIcon from '../../public/images/icons/user.svg';
-import { FooterMessage } from '../Chat/FooterMessage';
+import { FooterMessage } from '@/components/Chat/FooterMessage';
+
+import FileArrowRightIcon from '../../../public/images/icons/file-arrow-right.svg';
+import GearIcon from '../../../public/images/icons/gear.svg';
+import UserIcon from '../../../public/images/icons/user.svg';
 
 const UserInfo = () => {
   const { data: session } = useSession();
   return (
     <div className=" w-full border-b border-gray-300 p-2 text-gray-800 dark:border-gray-900 dark:text-gray-200">
       <div className="flex h-[42px] items-center">
-        <UserIcon
-          className="mx-2"
-          width={18}
-          height={18}
-          stroke="currentColor"
-        />
+        <UserIcon className="mx-2" width={18} height={18} />
 
         <span className="grow">{session?.user?.name ?? ''}</span>
       </div>
@@ -37,12 +33,7 @@ const UserSettings = () => {
 
   return (
     <div className="flex h-[42px] items-center gap-2 px-2" onClick={onClick}>
-      <GearIcon
-        className="dark:text-gray-500"
-        width={18}
-        height={18}
-        stroke="currentColor"
-      />
+      <GearIcon className="dark:text-gray-500" width={18} height={18} />
       <span>{t('Settings')}</span>
     </div>
   );
@@ -63,7 +54,6 @@ const Logout = () => {
         className="dark:text-gray-500"
         width={18}
         height={18}
-        stroke="currentColor"
       />
       <span>{session ? t('Log out') : t('Login')}</span>
     </div>

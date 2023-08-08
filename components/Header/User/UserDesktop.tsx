@@ -15,11 +15,11 @@ import useOutsideAlerter from '@/hooks/useOutsideAlerter';
 
 import HomeContext from '@/pages/api/home/home.context';
 
-import ChevronDownIcon from '../../public/images/icons/chevron-down.svg';
-import ChevronUpIcon from '../../public/images/icons/chevron-up.svg';
-import FileArrowRightIcon from '../../public/images/icons/file-arrow-right.svg';
-import GearIcon from '../../public/images/icons/gear.svg';
-import UserIcon from '../../public/images/icons/user.svg';
+import ChevronDownIcon from '../../../public/images/icons/chevron-down.svg';
+import ChevronUpIcon from '../../../public/images/icons/chevron-up.svg';
+import FileArrowRightIcon from '../../../public/images/icons/file-arrow-right.svg';
+import GearIcon from '../../../public/images/icons/gear.svg';
+import UserIcon from '../../../public/images/icons/user.svg';
 
 interface SelectOption {
   label: 'Settings' | 'Log out';
@@ -44,7 +44,7 @@ const LogoutOption = ({ children }: OptionComponentProps) => {
   }, [session]);
   return (
     <div className="flex text-gray-500 dark:text-gray-200" onClick={onClick}>
-      <FileArrowRightIcon width={18} height={18} stroke="currentColor" />
+      <FileArrowRightIcon width={18} height={18} />
       <span className="ml-3">{session ? children : t('Login')}</span>
     </div>
   );
@@ -58,7 +58,7 @@ const SettingsOption = ({ children }: OptionComponentProps) => {
 
   return (
     <div className="flex text-gray-500 dark:text-gray-200" onClick={onClick}>
-      <GearIcon width={18} height={18} stroke="currentColor" />
+      <GearIcon width={18} height={18} />
       <span className="ml-3">{children}</span>
     </div>
   );
@@ -101,7 +101,7 @@ const ValueContainer = (props: ValueContainerProps<SelectOption>) => {
           alt={t(`User avatar`)}
         />
       ) : (
-        <UserIcon width={18} height={18} stroke="currentColor" />
+        <UserIcon width={18} height={18} />
       )}
 
       <span className="ml-3 mr-2 grow">{session?.user?.name}</span>
@@ -117,14 +117,12 @@ const DropdownIndicator = (props: DropdownIndicatorProps<SelectOption>) => {
           className="text-gray-800 dark:!text-gray-200"
           width={18}
           height={18}
-          stroke="currentColor"
         />
       ) : (
         <ChevronDownIcon
           className="text-gray-800 dark:!text-gray-200"
           width={18}
           height={18}
-          stroke="currentColor"
         />
       )}
     </components.DropdownIndicator>
@@ -137,7 +135,7 @@ const selectClassNames: ClassNamesConfig<SelectOption> = {
   menu: () => 'dark:bg-black !z-50 !rounded-none',
   menuList: () => '!p-0',
 };
-export const User = () => {
+export const UserDesktop = () => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useOutsideAlerter(ref, setOpen);
@@ -146,7 +144,7 @@ export const User = () => {
       onClick={() => {
         setOpen((prev) => !prev);
       }}
-      className="flex"
+      className="flex max-md:hidden"
       ref={ref}
     >
       <Select<SelectOption>

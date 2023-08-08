@@ -19,7 +19,6 @@ import {
 import { useTranslation } from 'next-i18next';
 
 import { isMobile } from '@/utils/app/mobile';
-import { isMediaQuery } from '@/utils/app/styleHelpers';
 
 import { Message } from '@/types/chat';
 import { Prompt } from '@/types/prompt';
@@ -347,16 +346,15 @@ export const ChatInput = forwardRef(
             )}
           </div>
         </div>
-        {isMediaQuery('(width >= 768px)') && (
-          <div className="p-5">
-            <FooterMessage
-              isShowFooter={enabledFeatures.has('footer')}
-              isShowRequestApiKey={enabledFeatures.has('request-api-key')}
-              isShowReportAnIssue={enabledFeatures.has('report-an-issue')}
-              footerHtmlMessage={footerHtmlMessage}
-            />
-          </div>
-        )}
+
+        <div className="p-5 max-md:hidden">
+          <FooterMessage
+            isShowFooter={enabledFeatures.has('footer')}
+            isShowRequestApiKey={enabledFeatures.has('request-api-key')}
+            isShowReportAnIssue={enabledFeatures.has('report-an-issue')}
+            footerHtmlMessage={footerHtmlMessage}
+          />
+        </div>
       </div>
     );
   },

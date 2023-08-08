@@ -11,14 +11,12 @@ import XmarkIcon from '../../public/images/icons/xmark.svg';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 import { SettingDialog } from '../Settings/SettingDialog';
 import { CreateNewChatMobile } from './CreateNewChatMobile';
-import { ProfileButton } from './ProfileButton';
-import { User } from './User';
+import { User } from './User/User';
 
 const Header = () => {
   const {
-    state: { showChatbar, showPromptbar, isUserSettingsOpen, isProfileOpen },
+    state: { showChatbar, showPromptbar, isUserSettingsOpen },
     dispatch: homeDispatch,
-    handleNewConversation,
   } = useContext(HomeContext);
 
   const { t } = useTranslation('sidebar');
@@ -55,27 +53,24 @@ const Header = () => {
             onClick={handleToggleChatbar}
           >
             {showChatbar ? (
-              isMediaQuery('(width <= 767px)') ? (
+              <>
                 <XmarkIcon
-                  className="text-gray-500"
+                  className="text-gray-500 md:hidden"
                   width={24}
                   height={24}
-                  stroke="currentColor"
                 />
-              ) : (
+
                 <MoveLeftIcon
-                  className="text-gray-500 hover:text-green"
+                  className="text-gray-500 hover:text-green max-md:hidden"
                   width={24}
                   height={24}
-                  stroke="currentColor"
                 />
-              )
+              </>
             ) : (
               <MoveRightIcon
                 className="text-gray-500 hover:text-green"
                 width={24}
                 height={24}
-                stroke="currentColor"
               />
             )}
           </div>
@@ -84,9 +79,7 @@ const Header = () => {
           {showChatbar ? t('Close chat menu') : t('Open chat menu')}
         </TooltipContent>
       </Tooltip>
-      {isMediaQuery('(width <= 767px)') && (
-        <CreateNewChatMobile handleNewConversation={handleNewConversation} />
-      )}
+      <CreateNewChatMobile />
       <div className="flex grow justify-between">
         <span
           className="bg-center bg-no-repeat dark:invert max-md:grow xl:min-w-[195px]"
@@ -95,11 +88,7 @@ const Header = () => {
           }}
         ></span>
         <div className="max-md:border-l max-md:border-gray-300 max-md:dark:border-gray-900 xl:min-w-[195px]">
-          {isMediaQuery('(width <= 767px)') ? (
-            <ProfileButton isOpen={isProfileOpen} />
-          ) : (
-            <User />
-          )}
+          <User />
         </div>
       </div>
 
@@ -110,27 +99,24 @@ const Header = () => {
             onClick={handleTogglePromtbar}
           >
             {showPromptbar ? (
-              isMediaQuery('(width <= 767px)') ? (
+              <>
                 <XmarkIcon
-                  className="text-gray-500"
+                  className="text-gray-500 md:hidden"
                   width={24}
                   height={24}
-                  stroke="currentColor"
                 />
-              ) : (
+
                 <MoveRightIcon
-                  className="text-gray-500 hover:text-violet"
+                  className="text-gray-500 hover:text-violet max-md:hidden"
                   width={24}
                   height={24}
-                  stroke="currentColor"
                 />
-              )
+              </>
             ) : (
               <MoveLeftIcon
                 className="text-gray-500 hover:text-violet"
                 width={24}
                 height={24}
-                stroke="currentColor"
               />
             )}
           </div>

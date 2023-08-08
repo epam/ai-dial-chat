@@ -1,33 +1,25 @@
+import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Conversation } from '@/types/chat';
+import HomeContext from '@/pages/api/home/home.context';
 
 import CirclePlusIcon from '../../public/images/icons/circle-plus.svg';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 
-interface CreateNewChatMobileProps {
-  handleNewConversation: (
-    name?: string | undefined,
-  ) => Conversation | undefined;
-}
-export const CreateNewChatMobile = ({
-  handleNewConversation,
-}: CreateNewChatMobileProps) => {
+export const CreateNewChatMobile = () => {
+  const { handleNewConversation } = useContext(HomeContext);
   const { t } = useTranslation('sidebar');
 
   return (
     <Tooltip>
       <TooltipTrigger>
         <div
-          className="flex border-r border-gray-300 p-3 dark:border-gray-900"
-          onClick={() => handleNewConversation()}
+          className="flex border-r border-gray-300 p-3 dark:border-gray-900 md:hidden"
+          onClick={() => {
+            handleNewConversation();
+          }}
         >
-          <CirclePlusIcon
-            className="text-gray-500"
-            width={24}
-            height={24}
-            stroke="currentColor"
-          />
+          <CirclePlusIcon className="text-gray-500" width={24} height={24} />
         </div>
       </TooltipTrigger>
       <TooltipContent>{t('New chat')}</TooltipContent>
