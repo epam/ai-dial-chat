@@ -1,3 +1,5 @@
+import { useContext } from 'react';
+
 import { Conversation } from '@/types/chat';
 import {
   OpenAIEntityAddon,
@@ -5,6 +7,8 @@ import {
   OpenAIEntityModelID,
 } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
+
+import HomeContext from '@/pages/api/home/home.context';
 
 import Spinner from '../Spinner';
 import { ConversationSettings } from './ConversationSettings';
@@ -38,6 +42,10 @@ export const ChatEmpty = ({
   onSelectAssistantSubModel,
   onChangeAddon,
 }: Props) => {
+  const {
+    state: { modelsMap },
+  } = useContext(HomeContext);
+
   return (
     <>
       <div className="flex max-h-[560px] w-full flex-col items-center px-3 pt-5">
@@ -54,11 +62,11 @@ export const ChatEmpty = ({
             )}
           </div>
 
-          {isShowSettings && models.length > 0 && (
+          {isShowSettings && models.length !== 0 && (
             <>
               <ConversationSettings
                 defaultModelId={defaultModelId}
-                models={models}
+                model={modelsMap[conversation.model.id]}
                 conversation={conversation}
                 prompts={prompts}
                 addons={addons}

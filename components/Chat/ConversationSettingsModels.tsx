@@ -39,10 +39,10 @@ export const ConversationSettingsModel = ({
     setRecentNonModels(
       mappedEntities.filter((entity) => entity.type !== 'model').slice(0, 3),
     );
-  }, [recentModelsIds]);
+  }, [recentModelsIds, modelsMap]);
 
   return (
-    <div>
+    <div className="w-full">
       <div className="mb-4">{t('Talk to')}</div>
 
       <div className="flex flex-col gap-3">

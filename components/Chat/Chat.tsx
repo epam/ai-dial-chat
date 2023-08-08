@@ -1019,7 +1019,6 @@ export const Chat = memo(({ appName }: Props) => {
                                 defaultModelId || OpenAIEntityModelID.GPT_3_5
                               }
                               prompts={prompts}
-                              models={models}
                               addons={addons}
                               isCompareMode={isCompareMode}
                               isShowChatInfo={enabledFeatures.has(

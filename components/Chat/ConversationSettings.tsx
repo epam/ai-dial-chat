@@ -21,7 +21,7 @@ import { ModelSelect } from './ModelSelect';
 
 interface Props {
   conversation: Conversation;
-  model: OpenAIEntityModel;
+  model: OpenAIEntityModel | undefined;
   prompts: Prompt[];
   defaultModelId: OpenAIEntityModelID;
   addons: OpenAIEntityAddon[];
@@ -52,7 +52,7 @@ export const ConversationSettings = ({
     setAssistantSubModel(
       modelsMap[conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id],
     );
-  }, [modelsMap]);
+  }, [conversation.assistantModelId, modelsMap]);
 
   return (
     <div className="grid max-h-[500px] w-full min-w-[50%] grid-cols-1 gap-[1px] md:grid-cols-2">
@@ -63,7 +63,7 @@ export const ConversationSettings = ({
         />
       </div>
       <div>
-        {assistantSubModel && model.type === 'assistant' && (
+        {model && model.type === 'assistant' && assistantSubModel && (
           <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
             <ModelSelect
               conversationModelId={assistantSubModel.id}
