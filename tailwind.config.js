@@ -38,6 +38,9 @@ module.exports = {
           900: 'rgb(var(--red-900, 64 32 39) / <alpha-value>)', // #402027
         },
       },
+      borderRadius: {
+        DEFAULT: '3px',
+      },
     },
   },
   variants: {
