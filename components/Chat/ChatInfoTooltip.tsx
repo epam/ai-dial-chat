@@ -85,8 +85,8 @@ export const ChatInfoTooltip = ({
                 className="flex gap-2 rounded bg-blue-500/20 px-3 py-2"
               >
                 <ModelIcon
-                  modelIconMapping={{}}
-                  modelId={addon.id}
+                  entityId={addon.id}
+                  entity={addon}
                   size={18}
                   inverted={lightMode === 'dark'}
                 />

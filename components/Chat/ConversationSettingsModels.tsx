@@ -7,10 +7,8 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
-import { MemoizedReactMarkdown } from '../Markdown/MemoizedReactMarkdown';
+import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelsDialog } from './ModelsDialog';
-
-import remarkGfm from 'remark-gfm';
 
 interface Props {
   modelId: string;
@@ -91,9 +89,9 @@ export const ConversationSettingsModel = ({
                 <span>{entity.name}</span>
                 {entity.description && (
                   <span className="text-gray-500">
-                    <MemoizedReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <EntityMarkdownDescription>
                       {entity.description}
-                    </MemoizedReactMarkdown>
+                    </EntityMarkdownDescription>
                   </span>
                 )}
               </div>

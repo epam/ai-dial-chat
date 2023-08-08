@@ -14,10 +14,8 @@ import HomeContext from '@/pages/api/home/home.context';
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import XMark from '../../public/images/icons/xmark.svg';
+import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
-import { MemoizedReactMarkdown } from '../Markdown/MemoizedReactMarkdown';
-
-import remarkGfm from 'remark-gfm';
 
 interface Props {
   selectedModelId: string;
@@ -149,9 +147,9 @@ export const ModelsDialog: FC<Props> = ({
         <div className="flex flex-col text-left">
           <span>{entity.name}</span>
           {entity.description && (
-            <MemoizedReactMarkdown remarkPlugins={[remarkGfm]}>
+            <EntityMarkdownDescription>
               {entity.description}
-            </MemoizedReactMarkdown>
+            </EntityMarkdownDescription>
           )}
         </div>
       </button>
