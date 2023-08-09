@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { limitEntitiesAccordingToUser } from '@/utils/server/entitiesPermissions';
@@ -19,10 +20,6 @@ import { authOptions } from './auth/[...nextauth]';
 
 import { errorsMessages } from '@/constants/errors';
 
-// export const config = {
-//   runtime: 'edge',
-// };
-
 function setDefaultModel(models: OpenAIEntityModel[]) {
   const defaultModelId = process.env.DEFAULT_MODEL || fallbackModelID;
   const defaultModel =
@@ -39,28 +36,32 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(401).send(errorsMessages[401]);
   }
 
-  try {
-    const { key } = req.body as {
-      key: string;
-    };
+  const token = await getToken({ req });
 
+  try {
     let entities: OpenAIEntityModel[] = [];
 
     const models: ProxyOpenAIEntity<OpenAIEntityModelType>[] =
-      await getEntities('model', key).catch((error) => {
-        console.error(error.message);
-        return [];
-      });
+      await getEntities('model', token?.access_token as string).catch(
+        (error) => {
+          console.error(error.message);
+          return [];
+        },
+      );
     const applications: ProxyOpenAIEntity<OpenAIEntityApplicationType>[] =
-      await getEntities('application', key).catch((error) => {
-        console.error(error.message);
-        return [];
-      });
+      await getEntities('application', token?.access_token as string).catch(
+        (error) => {
+          console.error(error.message);
+          return [];
+        },
+      );
     const assistants: ProxyOpenAIEntity<OpenAIEntityAssistantType>[] =
-      await getEntities('assistant', key).catch((error) => {
-        console.error(error.message);
-        return [];
-      });
+      await getEntities('assistant', token?.access_token as string).catch(
+        (error) => {
+          console.error(error.message);
+          return [];
+        },
+      );
 
     for (const entity of [...models, ...applications, ...assistants]) {
       if (
