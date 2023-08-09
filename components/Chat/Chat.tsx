@@ -10,7 +10,6 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
-import { getEndpoint } from '@/utils/app/api';
 import {
   DEFAULT_ASSISTANT_SUBMODEL,
   DEFAULT_CONVERSATION_NAME,
@@ -385,7 +384,6 @@ export const Chat = memo(({ appName }: Props) => {
         key: apiKey,
         ...modelAdditionalSettings,
       };
-      const endpoint = getEndpoint();
       const body = JSON.stringify(chatBody);
       if (!abortController.current || abortController.current.signal.aborted) {
         abortController.current = new AbortController();
@@ -396,7 +394,7 @@ export const Chat = memo(({ appName }: Props) => {
         timeoutId = setTimeout(() => {
           abortController.current?.abort();
         }, 20000);
-        response = await fetch(endpoint, {
+        response = await fetch('api/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
