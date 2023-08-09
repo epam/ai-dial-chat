@@ -62,7 +62,7 @@ export const ModelIcon = ({
         template
       ) : (
         <Tooltip>
-          <TooltipTrigger>{template}</TooltipTrigger>
+          <TooltipTrigger className="shrink-0">{template}</TooltipTrigger>
           <TooltipContent>{modelName}</TooltipContent>
         </Tooltip>
       )}

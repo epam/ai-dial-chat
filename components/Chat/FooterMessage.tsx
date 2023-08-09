@@ -46,7 +46,7 @@ export const FooterMessage = ({
 
   return isShowFooter ? (
     <>
-      <div className="px-3 pb-3 pt-2 text-center text-[12px] text-gray-500 md:px-4 md:pb-6 md:pt-3">
+      <div className="text-[12px] text-gray-500 md:text-center">
         <span
           dangerouslySetInnerHTML={{ __html: footerHtmlMessage || '' }}
         ></span>

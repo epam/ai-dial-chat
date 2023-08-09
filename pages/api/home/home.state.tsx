@@ -44,6 +44,7 @@ export interface HomeInitialState {
 
   isUserSettingsOpen: boolean;
   enabledFeatures: Set<Feature>;
+  isProfileOpen: boolean;
 }
 
 export const initialState: HomeInitialState = {
@@ -79,4 +80,5 @@ export const initialState: HomeInitialState = {
   isUserSettingsOpen: false,
 
   enabledFeatures: new Set([]),
+  isProfileOpen: false,
 };
