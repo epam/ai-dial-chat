@@ -19,7 +19,6 @@ env:
   NEXTAUTH_URL: 'https://chat-overlay.staging.deltixhub.io'
   OPENAI_API_HOST: 'http://dial-proxy.dial-proxy'
   DEFAULT_MODEL: 'epam10k-semantic-search'
-  OPENAI_API_TYPE: 'azure'
   OPENAI_API_VERSION: '2023-03-15-preview'
   NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT: ''
   GOOGLE_AI_HOST: 'https://palm-ai-proxy.staging.deltixhub.io'
