@@ -56,7 +56,7 @@ const handleRate = (
     },
     body: JSON.stringify({
       key: apiKey,
-      messageId: message.responseId,
+      responseId: message.responseId,
       model,
       id: chatId,
       value: message.like > 0 ? true : false,

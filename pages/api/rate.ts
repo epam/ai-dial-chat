@@ -23,9 +23,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const { key, messageId, model, value, id } = req.body as RateBody;
+    const { key, responseId, model, value, id } = req.body as RateBody;
 
-    if (!id || !validate(id) || !messageId) {
+    if (!id || !validate(id) || !responseId) {
       return res.status(400).send(errorsMessages[400]);
     }
 
@@ -42,7 +42,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       body: JSON.stringify({
         model: model.id,
         rate: value,
-        responseId: messageId,
+        responseId,
       }),
     }).then((r) => r.status);
   } catch (error) {
