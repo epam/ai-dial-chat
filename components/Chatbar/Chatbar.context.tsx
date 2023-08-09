@@ -1,9 +1,7 @@
-import { Dispatch, createContext } from 'react';
-
 import { ActionType } from '@/hooks/useCreateReducer';
-
 import { Conversation } from '@/types/chat';
 import { SupportedExportFormats } from '@/types/export';
+import { createContext, Dispatch } from 'react';
 
 import { ChatbarInitialState } from './Chatbar.state';
 
@@ -16,7 +14,6 @@ export interface ChatbarContextProps {
   handleExportConversations: () => void;
   handleExportConversation: (conversationId: string) => void;
   handleImportConversations: ImportConversationsHandler;
-  handleApiKeyChange: (apiKey: string) => void;
 }
 
 const ChatbarContext = createContext<ChatbarContextProps>(undefined!);

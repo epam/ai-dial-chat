@@ -48,7 +48,6 @@ export type Role = 'assistant' | 'user';
 export interface ChatBody {
   model: OpenAIEntityModel;
   messages: Message[];
-  key: string;
   id: string;
   prompt?: string;
   temperature?: number;
@@ -59,7 +58,6 @@ export interface ChatBody {
 export interface RateBody {
   model: OpenAIEntityModel;
   responseId: string;
-  key: string;
   id: string;
   value: boolean;
 }

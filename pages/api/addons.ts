@@ -29,15 +29,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const token = await getToken({ req });
 
   try {
-    const { key } = req.body as {
-      key: string;
-    };
-
     let entities: OpenAIEntity[] = [];
 
     const addons: ProxyOpenAIEntity[] = await getEntities(
       'addon',
-      key,
       token?.access_token as string,
     ).catch((error) => {
       console.error(error.message);

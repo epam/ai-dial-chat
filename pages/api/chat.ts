@@ -43,7 +43,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const {
       model,
       messages,
-      key,
       prompt,
       temperature,
       selectedAddons,
@@ -119,7 +118,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       model,
       systemPrompt: promptToSend,
       temperature: temperatureToUse,
-      key,
       messages: messagesToSend,
       selectedAddons: selectedAddons as OpenAIEntityAddonID[],
       assistantModelId: assistantModelId as OpenAIEntityModelID | undefined,

@@ -68,7 +68,6 @@ export const OpenAIStream = async ({
   model,
   systemPrompt,
   temperature,
-  key,
   messages,
   selectedAddons,
   assistantModelId,
@@ -78,7 +77,6 @@ export const OpenAIStream = async ({
   model: OpenAIEntityModel;
   systemPrompt: string | undefined;
   temperature: number | undefined;
-  key: string;
   messages: Message[];
   selectedAddons: OpenAIEntityAddonID[] | undefined;
   assistantModelId: OpenAIEntityModelID | undefined;
@@ -89,10 +87,8 @@ export const OpenAIStream = async ({
     Array.isArray(selectedAddons) && selectedAddons?.length > 0;
 
   const url = getUrl(model.id, model.type, isAddonsAdded);
-  const apiKey = key ? key : process.env.OPENAI_API_KEY;
   const requestHeaders = getApiHeaders({
     chatId,
-    key: apiKey,
     jwt: userJWT,
   });
 

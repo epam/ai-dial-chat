@@ -20,10 +20,6 @@ import { authOptions } from './auth/[...nextauth]';
 
 import { errorsMessages } from '@/constants/errors';
 
-// export const config = {
-//   runtime: 'edge',
-// };
-
 function setDefaultModel(models: OpenAIEntityModel[]) {
   const defaultModelId = process.env.DEFAULT_MODEL || fallbackModelID;
   const defaultModel =
@@ -43,30 +39,24 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const token = await getToken({ req });
 
   try {
-    const { key } = req.body as {
-      key: string;
-    };
-
     let entities: OpenAIEntityModel[] = [];
 
     const models: ProxyOpenAIEntity<OpenAIEntityModelType>[] =
-      await getEntities('model', key, token?.access_token as string).catch(
+      await getEntities('model', token?.access_token as string).catch(
         (error) => {
           console.error(error.message);
           return [];
         },
       );
     const applications: ProxyOpenAIEntity<OpenAIEntityApplicationType>[] =
-      await getEntities(
-        'application',
-        key,
-        token?.access_token as string,
-      ).catch((error) => {
-        console.error(error.message);
-        return [];
-      });
+      await getEntities('application', token?.access_token as string).catch(
+        (error) => {
+          console.error(error.message);
+          return [];
+        },
+      );
     const assistants: ProxyOpenAIEntity<OpenAIEntityAssistantType>[] =
-      await getEntities('assistant', key, token?.access_token as string).catch(
+      await getEntities('assistant', token?.access_token as string).catch(
         (error) => {
           console.error(error.message);
           return [];

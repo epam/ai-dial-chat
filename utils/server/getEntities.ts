@@ -6,12 +6,11 @@ import fetch from 'node-fetch';
 export async function getEntities<
   P extends 'model' | 'assistant' | 'application' | 'addon',
   T = any[],
->(type: P, key: string, jwt: string): Promise<T> {
+>(type: P, jwt: string): Promise<T> {
   const url = `${OPENAI_API_HOST}/openai/${type}s?api-version=${OPENAI_API_VERSION}`;
   const errMsg = `Request for ${type}s returned an error`;
-  const apiKey = key ? key : process.env.OPENAI_API_KEY;
   const response = await fetch(url, {
-    headers: getApiHeaders({ key: apiKey, jwt }),
+    headers: getApiHeaders({ jwt }),
   }).catch((error) => {
     throw new Error(`${errMsg}: ${error.message}`);
   });

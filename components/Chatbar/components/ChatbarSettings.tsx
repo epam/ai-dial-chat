@@ -7,7 +7,6 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { ClearAllElements } from '../../Common/ClearAllElements';
 import { Import } from '../../Settings/Import';
-import { Key } from '../../Settings/Key';
 import { SidebarButton } from '../../Sidebar/SidebarButton';
 import ChatbarContext from '../Chatbar.context';
 
@@ -15,14 +14,13 @@ export const ChatbarSettings = () => {
   const { t } = useTranslation('sidebar');
 
   const {
-    state: { apiKey, serverSideApiKeyIsSet, conversations },
+    state: { conversations },
   } = useContext(HomeContext);
 
   const {
     handleClearConversations,
     handleImportConversations,
     handleExportConversations,
-    handleApiKeyChange,
   } = useContext(ChatbarContext);
 
   return (
@@ -45,10 +43,6 @@ export const ChatbarSettings = () => {
         icon={<IconFileExport size={18} />}
         onClick={() => handleExportConversations()}
       />
-
-      {!serverSideApiKeyIsSet ? (
-        <Key apiKey={apiKey} onApiKeyChange={handleApiKeyChange} />
-      ) : null}
     </div>
   );
 };

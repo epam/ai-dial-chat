@@ -32,9 +32,6 @@ export interface HomeInitialState {
   messageError: boolean;
   searchTerm: string;
   defaultModelId: OpenAIEntityModelID | undefined;
-  serverSideApiKeyIsSet: boolean;
-  serverSidePluginKeysSet: boolean;
-  usePluginKeys: boolean;
   isCompareMode: boolean;
   isIframe: boolean;
   footerHtmlMessage: string;
@@ -70,9 +67,6 @@ export const initialState: HomeInitialState = {
   messageError: false,
   searchTerm: '',
   defaultModelId: undefined,
-  serverSideApiKeyIsSet: false,
-  serverSidePluginKeysSet: false,
-  usePluginKeys: false,
   isCompareMode: false,
   isIframe: false,
   footerHtmlMessage: '',

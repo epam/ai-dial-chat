@@ -12,10 +12,6 @@ import { authOptions } from './auth/[...nextauth]';
 import { errorsMessages } from '@/constants/errors';
 import { validate } from 'uuid';
 
-// export const config = {
-//   runtime: 'edge',
-// };
-
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
   if (process.env.AUTH_DISABLED !== 'true' && !session) {
@@ -23,7 +19,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const { key, responseId, model, value, id } = req.body as RateBody;
+    const { responseId, model, value, id } = req.body as RateBody;
 
     if (!id || !validate(id) || !responseId) {
       return res.status(400).send(errorsMessages[400]);
@@ -34,7 +30,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     await fetch(url, {
       headers: getApiHeaders({
-        key,
         chatId: id,
         jwt: token?.access_token as string,
       }),
