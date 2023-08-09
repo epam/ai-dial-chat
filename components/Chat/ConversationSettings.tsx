@@ -19,6 +19,7 @@ import { Combobox } from '../Common/Combobox';
 // import { Addons } from './Addons';
 import { ConversationSettingsModel } from './ConversationSettingsModels';
 import { SystemPrompt } from './SystemPrompt';
+import { TemperatureSlider } from './Temperature';
 
 // import { SystemPrompt } from './SystemPrompt';
 // import { TemperatureSlider } from './Temperature';
@@ -43,6 +44,7 @@ export const ConversationSettings = ({
   onSelectModel,
   onSelectAssistantSubModel,
   onChangePrompt,
+  onChangeTemperature,
 }: Props) => {
   const {
     state: { modelsMap, models, lightMode },
@@ -87,7 +89,7 @@ export const ConversationSettings = ({
         />
       </div>
       {model ? (
-        <div>
+        <div className="flex flex-col gap-[1px]">
           {model.type === 'assistant' && assistantSubModel && (
             <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
               <Combobox
@@ -115,13 +117,15 @@ export const ConversationSettings = ({
             </div>
           )}
 
-          {/* {aiEntityType !== 'application' && (
-            <TemperatureSlider
-              label={t('Temperature')}
-              onChangeTemperature={onChangeTemperature}
-              conversation={conversation}
-            />
-          )} */}
+          {model.type !== 'application' && (
+            <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
+              <TemperatureSlider
+                label={t('Temperature')}
+                onChangeTemperature={onChangeTemperature}
+                conversation={conversation}
+              />
+            </div>
+          )}
 
           {/* {aiEntityType !== 'application' && (
             <Addons
