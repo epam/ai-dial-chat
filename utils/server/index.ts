@@ -51,6 +51,19 @@ function getUrl(
   return `${OPENAI_API_HOST}/openai/deployments/${modelId}/chat/completions?api-version=${OPENAI_API_VERSION}`;
 }
 
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+
+const appendChunk = <T extends object>(
+  stream: ReadableStreamDefaultController,
+  obj: T,
+) => {
+  const text = JSON.stringify(obj);
+  const queue = encoder.encode(text + '\0');
+
+  stream.enqueue(queue);
+};
+
 export const OpenAIStream = async ({
   model,
   systemPrompt,
@@ -111,9 +124,6 @@ export const OpenAIStream = async ({
     body,
   });
 
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-
   if (res.status !== 200) {
     let result: any;
     try {
@@ -141,7 +151,7 @@ export const OpenAIStream = async ({
       );
     }
   }
-
+  let idSend = false;
   const stream = new ReadableStream({
     async start(controller) {
       const onParse = (event: ParsedEvent | ReconnectInterval) => {
@@ -153,10 +163,12 @@ export const OpenAIStream = async ({
           const data = event.data;
           try {
             const json = JSON.parse(data);
-            const text = JSON.stringify(json.choices[0].delta);
-            const queue = encoder.encode(text + '\0');
+            if (!idSend) {
+              appendChunk(controller, { responseId: json.id });
+              idSend = true;
+            }
 
-            controller.enqueue(queue);
+            appendChunk(controller, json.choices[0].delta);
 
             if (json.choices[0].finish_reason != null) {
               controller.close();

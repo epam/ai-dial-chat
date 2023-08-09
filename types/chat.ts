@@ -40,6 +40,7 @@ export interface Message {
   errorMessage?: string;
   state?: object;
   model?: Partial<OpenAIEntityModel>;
+  responseId?: string;
 }
 
 export type Role = 'assistant' | 'user';
