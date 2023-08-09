@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { limitEntitiesAccordingToUser } from '@/utils/server/entitiesPermissions';
@@ -39,6 +40,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(401).send(errorsMessages[401]);
   }
 
+  const token = await getToken({ req });
+
   try {
     const { key } = req.body as {
       key: string;
@@ -47,20 +50,28 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     let entities: OpenAIEntityModel[] = [];
 
     const models: ProxyOpenAIEntity<OpenAIEntityModelType>[] =
-      await getEntities('model', key).catch((error) => {
-        console.error(error.message);
-        return [];
-      });
+      await getEntities('model', key, token?.access_token as string).catch(
+        (error) => {
+          console.error(error.message);
+          return [];
+        },
+      );
     const applications: ProxyOpenAIEntity<OpenAIEntityApplicationType>[] =
-      await getEntities('application', key).catch((error) => {
+      await getEntities(
+        'application',
+        key,
+        token?.access_token as string,
+      ).catch((error) => {
         console.error(error.message);
         return [];
       });
     const assistants: ProxyOpenAIEntity<OpenAIEntityAssistantType>[] =
-      await getEntities('assistant', key).catch((error) => {
-        console.error(error.message);
-        return [];
-      });
+      await getEntities('assistant', key, token?.access_token as string).catch(
+        (error) => {
+          console.error(error.message);
+          return [];
+        },
+      );
 
     for (const entity of [...models, ...applications, ...assistants]) {
       if (

@@ -123,7 +123,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       messages: messagesToSend,
       selectedAddons: selectedAddons as OpenAIEntityAddonID[],
       assistantModelId: assistantModelId as OpenAIEntityModelID | undefined,
-      userJWT: token?.access_token as string | undefined,
+      userJWT: token?.access_token as string,
       chatId: id,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
