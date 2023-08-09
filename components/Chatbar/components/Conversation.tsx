@@ -30,7 +30,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
     state: {
       messageIsStreaming,
       selectedConversationIds,
-      modelIconMapping,
+      modelsMap,
       lightMode,
     },
     handleSelectConversation,
@@ -131,10 +131,9 @@ export const ConversationComponent = ({ conversation }: Props) => {
         <div className="flex w-full items-center gap-3 rounded-lg p-3">
           <ModelIcon
             size={18}
-            modelIconMapping={modelIconMapping}
-            modelId={conversation.model.id}
-            modelName={conversation.model.name}
             inverted={lightMode === 'dark'}
+            entityId={conversation.model.id}
+            entity={modelsMap[conversation.model.id]}
           />
 
           <input
@@ -167,9 +166,8 @@ export const ConversationComponent = ({ conversation }: Props) => {
         >
           <ModelIcon
             size={18}
-            modelIconMapping={modelIconMapping}
-            modelId={conversation.model.id}
-            modelName={conversation.model.name}
+            entityId={conversation.model.id}
+            entity={modelsMap[conversation.model.id]}
             inverted={lightMode === 'dark'}
           />
           <div
@@ -189,7 +187,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
         !isRenaming &&
         !messageIsStreaming && (
           <div
-            className="z-100 absolute right-1 flex text-gray-300"
+            className="absolute right-1 z-50 flex text-gray-300"
             ref={wrapperRef}
           >
             <SidebarActionButton

@@ -39,6 +39,7 @@ env:
   AVAILABLE_MODELS_USERS_LIMITATIONS: ''
   AVAILABLE_ADDONS_USERS_LIMITATIONS: ''
   THEMES_CONFIG_HOST: 'https://dial-chat-themes.staging.deltixhub.io'
+  RECENT_MODELS_IDS: 'gpt-35-turbo,gpt-4,chat-bison@001,anthropic.claude-instant-v1,assistant-10k,gpt-world,mirror'
 
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
 
@@ -102,6 +103,6 @@ metrics:
     namespace: monitoring
     port: metrics
     # path: "/metrics"   # default
-    interval: "10s"
+    interval: '10s'
     labels:
       monitoring: application

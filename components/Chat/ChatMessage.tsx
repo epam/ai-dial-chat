@@ -77,7 +77,7 @@ export const ChatMessage: FC<Props> = memo(
     const { t } = useTranslation('chat');
 
     const {
-      state: { messageIsStreaming, modelIconMapping, lightMode },
+      state: { messageIsStreaming, modelsMap, lightMode },
     } = useContext(HomeContext);
 
     const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -168,9 +168,11 @@ export const ChatMessage: FC<Props> = memo(
           <div className="min-w-[40px] font-bold" data-qa="message-icon">
             {isAssistant ? (
               <ModelIcon
-                modelIconMapping={modelIconMapping}
-                modelId={message.model?.id ?? conversation.model.id}
-                modelName={message.model?.name ?? conversation.model.name}
+                entityId={message.model?.id ?? conversation.model.id}
+                entity={
+                  (message.model?.id && modelsMap[message.model?.id]) ||
+                  undefined
+                }
                 inverted={lightMode === 'dark'}
                 animate={isShowResponseLoader}
                 size={28}

@@ -48,6 +48,7 @@ import { Prompt } from '@/types/prompt';
 import { Chat } from '@/components/Chat/Chat';
 import { Chatbar } from '@/components/Chatbar/Chatbar';
 import Header from '@/components/Header/Header';
+import { UserMobile } from '@/components/Header/User/UserMobile';
 import Promptbar from '@/components/Promptbar';
 
 import packageJSON from '../../../package.json';
@@ -65,9 +66,10 @@ interface Props {
   footerHtmlMessage: string;
   enabledFeatures: Feature[];
   isIframe: boolean;
-  modelIconMapping: string;
   authDisabled: boolean;
   defaultModelId: OpenAIEntityModelID;
+  defaultRecentModelsIds: string[];
+  defaultRecentAddonsIds: string[];
 }
 
 const Home = ({
@@ -78,9 +80,10 @@ const Home = ({
   footerHtmlMessage,
   enabledFeatures,
   isIframe,
-  modelIconMapping,
   defaultModelId,
   authDisabled,
+  defaultRecentModelsIds,
+  defaultRecentAddonsIds,
 }: Props) => {
   const session = useSession();
 
@@ -107,6 +110,9 @@ const Home = ({
       defaultModelId: clientDefaultModelId,
       models,
       modelsMap,
+      recentModelsIds,
+      recentAddonsIds,
+      isProfileOpen,
     },
     dispatch,
   } = contextValue;
@@ -128,7 +134,6 @@ const Home = ({
 
   useEffect(() => {
     if (modelsData) {
-      // TODO: get rid of models array to use faster map
       dispatch({ field: 'models', value: modelsData });
       dispatch({
         field: 'modelsMap',
@@ -419,6 +424,29 @@ const Home = ({
     return allConversation;
   };
 
+  const handleUpdateRecentModels = (modelId: string): void => {
+    const recentFilteredModels = recentModelsIds.filter(
+      (recentModelId) => recentModelId !== modelId,
+    );
+
+    recentFilteredModels.unshift(modelId);
+    dispatch({ field: 'recentModelsIds', value: recentFilteredModels });
+    localStorage.setItem(
+      'recentModelsIds',
+      JSON.stringify(recentFilteredModels),
+    );
+  };
+  const handleUpdateRecentAddons = (addonId: string): void => {
+    const recentFilteredAddons = recentAddonsIds.filter((id) => id !== addonId);
+
+    recentFilteredAddons.unshift(addonId);
+    dispatch({ field: 'recentAddonsIds', value: recentFilteredAddons });
+    localStorage.setItem(
+      'recentAddonsIds',
+      JSON.stringify(recentFilteredAddons),
+    );
+  };
+
   const handleNewReplayConversation = (conversation: Conversation) => {
     const newConversationName = `[Replay] ${conversation.name}`;
 
@@ -487,14 +515,8 @@ const Home = ({
         field: 'isIframe',
         value: isIframe,
       });
-    modelIconMapping &&
-      dispatch({
-        field: 'modelIconMapping',
-        value: modelIconMapping,
-      });
   }, [
     defaultModelId,
-    modelIconMapping,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
     usePluginKeys,
@@ -647,6 +669,44 @@ const Home = ({
       updateAllConversationsStore(updatedConversations);
       saveSelectedConversationIds([newConversation.id]);
     }
+
+    const recentAddonsIds = localStorage.getItem('recentAddonsIds');
+    if (recentAddonsIds) {
+      dispatch({
+        field: 'recentAddonsIds',
+        value: JSON.parse(recentAddonsIds),
+      });
+    } else {
+      if (defaultRecentAddonsIds) {
+        dispatch({
+          field: 'recentAddonsIds',
+          value: defaultRecentAddonsIds,
+        });
+        localStorage.setItem(
+          'recentAddonsIds',
+          JSON.stringify(defaultRecentAddonsIds),
+        );
+      }
+    }
+
+    const recentModelsIds = localStorage.getItem('recentModelsIds');
+    if (recentModelsIds) {
+      dispatch({
+        field: 'recentModelsIds',
+        value: JSON.parse(recentModelsIds),
+      });
+    } else {
+      if (defaultRecentModelsIds) {
+        dispatch({
+          field: 'recentModelsIds',
+          value: defaultRecentModelsIds,
+        });
+        localStorage.setItem(
+          'recentModelsIds',
+          JSON.stringify(defaultRecentModelsIds),
+        );
+      }
+    }
   }, [
     defaultModelId,
     dispatch,
@@ -678,6 +738,8 @@ const Home = ({
         handleSelectConversations,
         handleUpdateConversation,
         handleNewReplayConversation,
+        handleUpdateRecentModels,
+        handleUpdateRecentAddons,
       }}
     >
       <Head>
@@ -718,6 +780,7 @@ const Home = ({
                   </div>
 
                   {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
+                  {isProfileOpen && <UserMobile />}
                 </div>
               </div>
             </div>
@@ -764,31 +827,25 @@ export const getServerSideProps: GetServerSideProps = async ({
     process.env.FOOTER_HTML_MESSAGE ?? ''
   ).replace('%%VERSION%%', packageJSON.version);
 
-  let modelIconMap: Record<string, string> = {};
-  if (process.env.MODEL_ICON_MAPPING) {
-    modelIconMap = process.env.MODEL_ICON_MAPPING.split(',').reduce<
-      Record<string, string>
-    >((acc, modelIcon) => {
-      const [modelId, iconClass] = modelIcon.split('=');
-
-      acc[modelId] = iconClass;
-
-      return acc;
-    }, {});
-  }
-
   return {
     props: {
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
       usePluginKeys: !!process.env.NEXT_PUBLIC_ENABLE_PLUGIN_KEYS,
       serverSidePluginKeysSet,
       appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
-      modelIconMapping: modelIconMap,
       footerHtmlMessage: updatedFooterHTMLMessage,
       enabledFeatures: (process.env.ENABLED_FEATURES || '').split(','),
       isIframe,
       defaultModelId: process.env.DEFAULT_MODEL || fallbackModelID,
       authDisabled: process.env.AUTH_DISABLED === 'true',
+      defaultRecentModelsIds:
+        (process.env.RECENT_MODELS_IDS &&
+          process.env.RECENT_MODELS_IDS.split(',')) ||
+        [],
+      defaultRecentAddonsIds:
+        (process.env.RECENT_ADDONS_IDS &&
+          process.env.RECENT_ADDONS_IDS.split(',')) ||
+        [],
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',

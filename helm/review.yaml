@@ -29,6 +29,7 @@ env:
   IS_IFRAME: 'false'
   MODEL_ICON_MAPPING: 'gpt-4=gpt4.svg,gpt-35-turbo=gpt3.svg,gpt-4-32k=gpt4.svg,chat-bison@001=palm2.svg,amazon.titan-tg1-large=awc.svg,ai21.j2-grande-instruct=ai21_j2.svg,ai21.j2-jumbo-instruct=ai21_j2.svg,anthropic.claude-instant-v1=anthropic.svg,anthropic.claude-v1=anthropic.svg,stability.stable-diffusion-xl=Stable-Diffusion.svg'
   THEMES_CONFIG_HOST: 'https://dial-chat-themes.staging.deltixhub.io'
+  RECENT_MODELS_IDS: 'gpt-35-turbo,gpt-4,chat-bison@001,anthropic.claude-instant-v1,assistant-10k,gpt-world,mirror'
 
 #  NEXTAUTH_URL: "https://dev-chat.ai-proxy.lab.epam.com"
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
@@ -93,6 +94,6 @@ metrics:
     namespace: monitoring
     port: metrics
     # path: "/metrics"   # default
-    interval: "10s"
+    interval: '10s'
     labels:
       monitoring: application
