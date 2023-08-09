@@ -1,5 +1,5 @@
 import { IconFolderPlus, IconPlus, IconScale } from '@tabler/icons-react';
-import { useCallback, useContext, useEffect } from 'react';
+import { useContext, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { useTranslation } from 'next-i18next';
@@ -75,15 +75,6 @@ export const Chatbar = () => {
   };
 
   const chatFolders = folders.filter(({ type }) => type === 'chat');
-
-  const handleApiKeyChange = useCallback(
-    (apiKey: string) => {
-      homeDispatch({ field: 'apiKey', value: apiKey });
-
-      localStorage.setItem('apiKey', apiKey);
-    },
-    [homeDispatch],
-  );
 
   const handleExportConversations = () => {
     exportConversations();
@@ -298,7 +289,6 @@ export const Chatbar = () => {
         handleImportConversations,
         handleExportConversations,
         handleExportConversation,
-        handleApiKeyChange,
       }}
     >
       <Sidebar<Conversation>
