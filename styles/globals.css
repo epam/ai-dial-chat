@@ -43,18 +43,16 @@ pre:has(div.codeblock) {
 }
 
 @layer components {
-  .temperature-slider {
-    .rc-slider-rail,
-    .rc-slider-track {
-      @apply top-[calc(50%-6px)] h-3;
-    }
+  .temperature-slider .rc-slider-rail,
+  .temperature-slider .rc-slider-track {
+    @apply top-[calc(50%-6px)] h-3;
+  }
 
-    .rc-slider-rail {
-      @apply rounded-full;
-    }
+  .temperature-slider .rc-slider-rail {
+    @apply rounded-full;
+  }
 
-    .rc-slider-track {
-      @apply rounded-full bg-blue-500;
-    }
+  .temperature-slider .rc-slider-track {
+    @apply rounded-full bg-blue-500;
   }
 }
