@@ -7,7 +7,7 @@ export const getApiHeaders = (key: string): Record<string, string> => {
 
 export const getAnalyticsHeaders = (chatId: string): Record<string, string> => {
   const headers: HeadersInit = {
-    'X-CORRELATION-ID': chatId,
+    'X-CONVERSATION-ID': chatId,
   };
   return headers;
 };
