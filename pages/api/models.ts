@@ -76,7 +76,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
       entities.push({
         id: entity.id,
-        name: existingModelMapping?.name ?? entity.id,
+        name: entity.display_name ?? existingModelMapping?.name ?? entity.id,
+        description: entity.description,
+        iconUrl: entity.icon_url,
         type: entity.object,
         selectedAddons: entity.addons,
         ...(existingModelMapping

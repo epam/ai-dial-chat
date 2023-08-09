@@ -1,3 +1,5 @@
+import { useContext } from 'react';
+
 import { Conversation } from '@/types/chat';
 import {
   OpenAIEntityAddon,
@@ -5,6 +7,8 @@ import {
   OpenAIEntityModelID,
 } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
+
+import HomeContext from '@/pages/api/home/home.context';
 
 import Spinner from '../Spinner';
 import { ConversationSettings } from './ConversationSettings';
@@ -38,35 +42,43 @@ export const ChatEmpty = ({
   onSelectAssistantSubModel,
   onChangeAddon,
 }: Props) => {
+  const {
+    state: { modelsMap },
+  } = useContext(HomeContext);
+
   return (
     <>
-      <div className="flex flex-col px-3 pt-5 sm:max-w-[1000px]">
-        <div className="text-center text-xl text-gray-800 dark:text-gray-100">
-          {models.length === 0 ? (
-            <div>
-              <Spinner size="16px" className="mx-auto" />
-            </div>
-          ) : (
-            appName
+      <div className="flex max-h-[560px] w-full flex-col items-center px-3 pt-5">
+        <div className="flex flex-col items-center gap-[1px] overflow-hidden rounded sm:max-w-[1000px]">
+          <div className="flex w-full items-center justify-center bg-gray-200 p-4 dark:bg-gray-800">
+            {models.length === 0 ? (
+              <div>
+                <Spinner size="16px" className="mx-auto" />
+              </div>
+            ) : (
+              <h4 className="max-w-[80%] text-center text-xl font-semibold">
+                {appName}
+              </h4>
+            )}
+          </div>
+
+          {isShowSettings && models.length !== 0 && (
+            <>
+              <ConversationSettings
+                defaultModelId={defaultModelId}
+                model={modelsMap[conversation.model.id]}
+                conversation={conversation}
+                prompts={prompts}
+                addons={addons}
+                onChangePrompt={onChangePrompt}
+                onChangeTemperature={onChangeTemperature}
+                onSelectAssistantSubModel={onSelectAssistantSubModel}
+                onSelectModel={onSelectModel}
+                onChangeAddon={onChangeAddon}
+              />
+            </>
           )}
         </div>
-
-        {isShowSettings && models.length > 0 && (
-          <>
-            <ConversationSettings
-              defaultModelId={defaultModelId}
-              models={models}
-              conversation={conversation}
-              prompts={prompts}
-              addons={addons}
-              onChangePrompt={onChangePrompt}
-              onChangeTemperature={onChangeTemperature}
-              onSelectAssistantSubModel={onSelectAssistantSubModel}
-              onSelectModel={onSelectModel}
-              onChangeAddon={onChangeAddon}
-            />
-          </>
-        )}
       </div>
     </>
   );

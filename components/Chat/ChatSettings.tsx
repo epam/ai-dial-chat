@@ -5,7 +5,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/types/chat';
-import { ModelIconMappingType } from '@/types/icons';
 import {
   OpenAIEntityAddon,
   OpenAIEntityModel,
@@ -25,7 +24,6 @@ import { ConversationSettings } from './ConversationSettings';
 
 interface Props {
   conversation: Conversation;
-  models: OpenAIEntityModel[];
   addons: OpenAIEntityAddon[];
   prompts: Prompt[];
   defaultModelId: OpenAIEntityModelID;
@@ -36,7 +34,6 @@ interface Props {
   isShowModelSelect: boolean;
   isShowClearConversation: boolean;
   isShowSettings: boolean;
-  modelIconMapping: ModelIconMappingType;
   onSelectModel: (modelId: string) => void;
   onClearConversation: () => void;
   onUnselectConversation: () => void;
@@ -49,7 +46,6 @@ interface Props {
 
 export const ChatSettings = ({
   conversation,
-  models,
   addons,
   defaultModelId,
   isCompareMode,
@@ -60,7 +56,6 @@ export const ChatSettings = ({
   isShowClearConversation,
   prompts,
   isShowSettings,
-  modelIconMapping,
   onSelectModel,
   onClearConversation,
   onUnselectConversation,
@@ -82,12 +77,19 @@ export const ChatSettings = ({
   const [isModelSelectDisabled, setIsModelSelectDisabled] = useState(() =>
     conversation.messages.some((message) => !!message.custom_content?.state),
   );
+  const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {
+    return modelsMap[conversation.model.id];
+  });
 
   useEffect(() => {
     setIsModelSelectDisabled(
       conversation.messages.some((message) => !!message.custom_content?.state),
     );
   }, [conversation.messages]);
+
+  useEffect(() => {
+    setModel(modelsMap[conversation.model.id]);
+  }, [modelsMap, conversation.model.id]);
 
   return (
     <>
@@ -102,16 +104,16 @@ export const ChatSettings = ({
             <TooltipContent>{conversation.name}</TooltipContent>
           </Tooltip>
         )}
-        <div className="flex md:[&>*:first-child]:border-l-[1px] md:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-gray-500 [&>*]:pl-2">
-          {isShowChatInfo && (
-            <>
-              {modelsMap[conversation.model.id] && (
+        {model && (
+          <div className="flex md:[&>*:first-child]:border-l-[1px] md:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-gray-500 [&>*]:pl-2">
+            {isShowChatInfo && (
+              <>
                 <span className="flex items-center">
                   <Tooltip>
                     <TooltipTrigger>
                       <ModelIcon
-                        modelId={conversation.model.id}
-                        modelIconMapping={modelIconMapping}
+                        entityId={conversation.model.id}
+                        entity={model}
                         size={18}
                         inverted={lightMode === 'dark'}
                         isCustomTooltip={true}
@@ -119,97 +121,102 @@ export const ChatSettings = ({
                     </TooltipTrigger>
                     <TooltipContent>
                       <ChatInfoTooltip
-                        model={modelsMap[conversation.model.id]}
+                        model={model}
                         selectedAddons={
-                          modelsMap[conversation.model.id].type !==
-                          'application'
-                            ? conversation.selectedAddons.map(
-                                (addon) => addonsMap[addon],
-                              )
+                          model.type !== 'application'
+                            ? (conversation.selectedAddons
+                                .map((addon) => addonsMap[addon])
+                                .filter(Boolean) as OpenAIEntityAddon[])
                             : null
                         }
                         subModel={
                           conversation.assistantModelId &&
-                          modelsMap[conversation.model.id].type === 'assistant'
+                          model.type === 'assistant'
                             ? modelsMap[conversation.assistantModelId]
                             : null
                         }
                         prompt={
-                          modelsMap[conversation.model.id].type === 'model'
-                            ? conversation.prompt
-                            : null
+                          model.type === 'model' ? conversation.prompt : null
                         }
                         temperature={
-                          modelsMap[conversation.model.id].type !==
-                          'application'
+                          model.type !== 'application'
                             ? conversation.temperature
                             : null
                         }
-                        modelIconMapping={modelIconMapping}
                       />
                     </TooltipContent>
                   </Tooltip>
                 </span>
+                {model.type !== 'application' &&
+                  conversation.selectedAddons.length > 0 && (
+                    <span className="flex items-center">
+                      {conversation.selectedAddons?.map((addon) => (
+                        <ModelIcon
+                          key={addon}
+                          entityId={addon}
+                          size={18}
+                          entity={addonsMap[addon]}
+                          inverted={lightMode === 'dark'}
+                        />
+                      ))}
+                    </span>
+                  )}
+              </>
+            )}
+            <div className="flex items-center gap-2">
+              {isShowModelSelect && (
+                <Tooltip isTriggerClickable={true}>
+                  <TooltipTrigger>
+                    <button
+                      className="cursor-pointer hover:opacity-50"
+                      onClick={() => {
+                        if (isModelSelectDisabled) {
+                          toast.error(errorSwitchingMessage);
+                          return;
+                        }
+                        setShowSettings(!isShowSettings);
+                      }}
+                    >
+                      <GearIcon width={18} height={18} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('Conversation settings')}</TooltipContent>
+                </Tooltip>
               )}
-
-              {conversation.selectedAddons.length > 0 && (
-                <span className="flex items-center gap-2">
-                  {conversation.selectedAddons?.map((addon) => (
-                    <ModelIcon
-                      key={addon}
-                      modelId={addon}
-                      modelName={addonsMap[addon]?.name || addon}
-                      // TODO: fix mapping for addons, when icon_url will be provided
-                      modelIconMapping={{}}
-                      size={18}
-                      inverted={lightMode === 'dark'}
-                    />
-                  ))}
-                </span>
+              {isShowClearConversation && !isCompareMode && (
+                <Tooltip isTriggerClickable={true}>
+                  <TooltipTrigger>
+                    <button
+                      className="cursor-pointer hover:opacity-50"
+                      onClick={onClearConversation}
+                    >
+                      <BroomIcon width={18} height={18} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t('Clear conversation messages')}
+                  </TooltipContent>
+                </Tooltip>
               )}
-            </>
-          )}
-          <div className="flex items-center gap-2">
-            {isShowModelSelect && (
-              <button
-                className="cursor-pointer hover:opacity-50"
-                onClick={() => {
-                  if (isModelSelectDisabled) {
-                    toast.error(errorSwitchingMessage);
-                    return;
-                  }
-                  setShowSettings(!isShowSettings);
-                }}
-              >
-                <GearIcon width={18} height={18} />
-              </button>
-            )}
-            {isShowClearConversation && !isCompareMode && (
-              <button
-                className="cursor-pointer hover:opacity-50"
-                onClick={onClearConversation}
-              >
-                <BroomIcon width={18} height={18} />
-              </button>
-            )}
-            {isCompareMode && selectedConversationIds.length > 1 && (
-              <button
-                className="cursor-pointer hover:opacity-50 disabled:cursor-not-allowed"
-                onClick={onUnselectConversation}
-                disabled={messageIsStreaming}
-              >
-                <IconX size={18} />
-              </button>
-            )}
+              {isCompareMode && selectedConversationIds.length > 1 && (
+                <button
+                  className="cursor-pointer hover:opacity-50 disabled:cursor-not-allowed"
+                  onClick={onUnselectConversation}
+                  disabled={messageIsStreaming}
+                >
+                  <IconX size={18} />
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
-      {isShowSettings && (
+      {isShowSettings && model && (
         <div className="flex flex-col space-y-10 md:mx-auto md:max-w-xl md:gap-6 md:py-3 md:pt-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
           <ConversationSettings
             conversation={conversation}
             defaultModelId={defaultModelId}
-            models={models}
+            model={model}
             prompts={prompts}
             addons={addons}
             onSelectModel={onSelectModel}

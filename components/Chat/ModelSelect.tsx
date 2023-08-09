@@ -176,12 +176,10 @@ export const ModelSelect = ({
 
   return (
     <div className="flex flex-col">
-      <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
-        {t(label)}
-      </label>
+      <label className="mb-2 text-left">{t(label)}</label>
       <Select<CompanionSelectOption>
         isSearchable
-        className="w-full rounded-lg text-neutral-900 dark:bg-[#343541] dark:text-white"
+        className="w-full rounded-lg"
         menuPortalTarget={mainElement}
         classNames={selectClassNames}
         options={groupedSelectOptionsWithNotAllowed}
@@ -199,6 +197,7 @@ export const ModelSelect = ({
         })}
         isDisabled={isDisabled}
       />
+      {/* TODO: recheck is needed */}
       {conversationModelId === OpenAIEntityModelID.GPT_4_32K && (
         <div className="mt-3 flex w-full items-center gap-2 text-left text-orange-600 dark:text-orange-600">
           <IconExclamationCircle size={18} />
