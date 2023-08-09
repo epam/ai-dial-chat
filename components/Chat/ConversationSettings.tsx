@@ -12,9 +12,11 @@ import { Prompt } from '@/types/prompt';
 
 import HomeContext from '@/pages/api/home/home.context';
 
+import { ModelIcon } from '../Chatbar/components/ModelIcon';
+
+import { Combobox } from '../Common/Combobox';
 // import { Addons } from './Addons';
 import { ConversationSettingsModel } from './ConversationSettingsModels';
-import { ModelSelect } from './ModelSelect';
 
 // import { SystemPrompt } from './SystemPrompt';
 // import { TemperatureSlider } from './Temperature';
@@ -35,12 +37,11 @@ interface Props {
 export const ConversationSettings = ({
   model,
   conversation,
-  defaultModelId,
   onSelectModel,
   onSelectAssistantSubModel,
 }: Props) => {
   const {
-    state: { modelsMap, models },
+    state: { modelsMap, models, lightMode },
   } = useContext(HomeContext);
   const [assistantSubModel, setAssistantSubModel] = useState(() => {
     return modelsMap[
@@ -54,8 +55,26 @@ export const ConversationSettings = ({
     );
   }, [conversation.assistantModelId, modelsMap]);
 
+  const getModelSelectRow = () => {
+    const ModelSelectRow = (model: OpenAIEntityModel) => {
+      return (
+        <div className="flex items-center gap-2">
+          <ModelIcon
+            entity={model}
+            entityId={model.id}
+            size={18}
+            inverted={lightMode === 'dark'}
+          />
+          <span>{model.name || model.id}</span>
+        </div>
+      );
+    };
+
+    return ModelSelectRow;
+  };
+
   return (
-    <div className="grid max-h-[500px] w-full min-w-[50%] grid-cols-1 gap-[1px] md:grid-cols-2">
+    <div className="grid max-h-[500px] w-full min-w-[50%] grid-cols-1 gap-[1px] overflow-auto md:grid-cols-2">
       <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
         <ConversationSettingsModel
           modelId={conversation.model.id}
@@ -65,13 +84,18 @@ export const ConversationSettings = ({
       <div>
         {model && model.type === 'assistant' && assistantSubModel && (
           <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
-            <ModelSelect
-              conversationModelId={assistantSubModel.id}
-              conversationModelName={assistantSubModel.name}
+            <Combobox
               label="Model"
-              defaultModelId={defaultModelId}
-              models={models.filter((model) => model.type === 'model')}
-              onSelectModel={onSelectAssistantSubModel}
+              items={models.filter((model) => model.type === 'model')}
+              initialSelectedItem={assistantSubModel}
+              getItemLabel={(model: OpenAIEntityModel) =>
+                model.name || model.id
+              }
+              getItemValue={(model: OpenAIEntityModel) => model.id}
+              itemRow={getModelSelectRow()}
+              onSelectItem={(itemID: string) => {
+                onSelectAssistantSubModel(itemID);
+              }}
             />
           </div>
         )}
