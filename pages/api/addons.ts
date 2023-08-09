@@ -45,7 +45,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         OpenAIEntityAddons[addon.id as OpenAIEntityAddonID];
       entities.push({
         id: addon.id,
-        name: mappedAddon?.name || addon.id,
+        name: addon.display_name ?? mappedAddon?.name ?? addon.id,
+        description: addon.description,
+        iconUrl: addon.icon_url,
         type: addon.object,
       });
     }

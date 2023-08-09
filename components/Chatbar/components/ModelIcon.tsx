@@ -1,6 +1,6 @@
 import Image from 'next/image';
 
-import { ModelIconMappingType } from '@/types/icons';
+import { OpenAIEntity } from '@/types/openai';
 
 import {
   Tooltip,
@@ -9,36 +9,39 @@ import {
 } from '@/components/Common/Tooltip';
 
 interface Props {
-  modelId: string;
+  entityId: string;
+  entity: OpenAIEntity | undefined;
   size: number;
-  modelIconMapping: ModelIconMappingType;
   inverted?: boolean;
   animate?: boolean;
-  modelName?: string;
   isCustomTooltip?: boolean;
 }
 
 export const ModelIcon = ({
-  modelIconMapping,
-  modelId,
+  entity,
+  entityId,
   size,
   animate,
-  modelName,
   inverted,
   isCustomTooltip,
 }: Props) => {
   const template = (
     <>
-      {modelIconMapping[modelId] ? (
-        <Image
-          className={`${inverted ? 'invert' : ''} ${
+      {entity?.iconUrl != null ? (
+        <span
+          className={`relative inline-block shrink-0 ${
             animate ? 'animate-bounce' : ''
           }`}
-          src={`/images/${modelIconMapping[modelId]}`}
-          width={size}
-          height={size}
-          alt={`${modelId} icon`}
-        ></Image>
+          style={{ height: `${size}px`, width: `${size}px` }}
+        >
+          <Image
+            className={`${inverted ? 'invert' : ''} `}
+            src={entity.iconUrl as string}
+            fill
+            style={{ objectFit: 'contain' }}
+            alt={`${entity.id} icon`}
+          ></Image>
+        </span>
       ) : (
         <span
           style={{
@@ -46,11 +49,11 @@ export const ModelIcon = ({
             height: size,
             backgroundImage: `var(--default-model, url(/images/icons/message-square-lines-alt.svg))`,
           }}
-          className={`block bg-contain bg-no-repeat ${
+          className={`inline-block shrink-0 bg-contain bg-no-repeat ${
             inverted ? 'invert' : ''
           } ${animate ? 'animate-bounce' : ''}`}
           role="img"
-          aria-label={`${modelId} icon`}
+          aria-label={`${entityId} icon`}
         ></span>
       )}
     </>
@@ -63,7 +66,7 @@ export const ModelIcon = ({
       ) : (
         <Tooltip>
           <TooltipTrigger className="shrink-0">{template}</TooltipTrigger>
-          <TooltipContent>{modelName}</TooltipContent>
+          <TooltipContent>{entity?.name || entityId}</TooltipContent>
         </Tooltip>
       )}
     </>

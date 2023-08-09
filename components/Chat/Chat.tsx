@@ -128,12 +128,14 @@ export const Chat = memo(({ appName }: Props) => {
       isCompareMode,
       messageIsStreaming,
       enabledFeatures,
-      modelIconMapping,
       lightMode,
+      modelsMap,
     },
     handleUpdateConversation,
     handleSelectConversation,
     handleSelectConversations,
+    handleUpdateRecentModels,
+    handleUpdateRecentAddons,
     dispatch: homeDispatch,
   } = useContext(HomeContext);
 
@@ -293,6 +295,16 @@ export const Chat = memo(({ appName }: Props) => {
       isStopGenerating.current = false;
       if (!conversation) {
         return;
+      }
+
+      handleUpdateRecentModels(conversation.model.id);
+      if (
+        conversation.selectedAddons.length > 0 &&
+        modelsMap[conversation.model.id]?.type !== 'application'
+      ) {
+        conversation.selectedAddons.forEach((selectedAddon) => {
+          handleUpdateRecentAddons(selectedAddon);
+        });
       }
 
       let updatedConversation: Conversation = {
@@ -1005,7 +1017,6 @@ export const Chat = memo(({ appName }: Props) => {
                                 defaultModelId || OpenAIEntityModelID.GPT_3_5
                               }
                               prompts={prompts}
-                              models={models}
                               addons={addons}
                               isCompareMode={isCompareMode}
                               isShowChatInfo={enabledFeatures.has(
@@ -1017,7 +1028,6 @@ export const Chat = memo(({ appName }: Props) => {
                               isShowModelSelect={enabledFeatures.has(
                                 'top-chat-model-settings',
                               )}
-                              modelIconMapping={modelIconMapping}
                               isShowSettings={isShowChatSettings}
                               setShowSettings={setIsShowChatSettings}
                               selectedConversationIds={selectedConversationIds}
@@ -1124,11 +1134,7 @@ export const Chat = memo(({ appName }: Props) => {
                                 : 'w-full'
                             }`}
                           >
-                            <ChatLoader
-                              modelIconMapping={modelIconMapping}
-                              modelId={model.id}
-                              theme={lightMode}
-                            />
+                            <ChatLoader modelId={model.id} theme={lightMode} />
                           </div>
                         );
                       })}

@@ -6,6 +6,9 @@ export type OpenAIEntityAddonType = 'addon';
 export interface ProxyOpenAIEntity<T = OpenAIEntityModelType> {
   id: string;
   object: T;
+  display_name?: string;
+  icon_url?: string;
+  description?: string;
   capabilities?: {
     embeddings: boolean;
     chat_completion: boolean;
@@ -16,6 +19,8 @@ export interface ProxyOpenAIEntity<T = OpenAIEntityModelType> {
 export interface OpenAIEntity {
   id: string;
   name: string;
+  description?: string | undefined;
+  iconUrl?: string | undefined;
   type:
     | OpenAIEntityModelType
     | OpenAIEntityApplicationType
