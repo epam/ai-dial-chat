@@ -25,14 +25,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const { key, message, model, value, id } = req.body as RateBody;
+    const { key, messageId, model, value, id } = req.body as RateBody;
 
-    if (!id || !validate(id)) {
+    if (!id || !validate(id) || !messageId) {
       return res.status(400).send(errorsMessages[400]);
     }
 
     const url = `${OPENAI_API_HOST}/v1/rate`;
-
+    
     await fetch(url, {
       headers: {
         ...getApiHeaders(key),
@@ -42,7 +42,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       body: JSON.stringify({
         model: model.id,
         rate: value,
-        message: message.content,
+        responseId: messageId,
       }),
     }).then((r) => r.status);
   } catch (error) {

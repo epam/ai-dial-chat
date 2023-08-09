@@ -46,7 +46,7 @@ const handleRate = (
   model: OpenAIEntityModel,
   apiKey: string,
 ) => {
-  if (!message.like) {
+  if (!message.like || !message.responseId) {
     return;
   }
   fetch('/api/rate', {
@@ -56,7 +56,7 @@ const handleRate = (
     },
     body: JSON.stringify({
       key: apiKey,
-      message,
+      messageId: message.responseId,
       model,
       id: chatId,
       value: message.like > 0 ? true : false,
