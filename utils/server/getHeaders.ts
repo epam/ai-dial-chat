@@ -19,6 +19,5 @@ export const getApiHeaders = ({
   if (key) {
     headers['Api-Key'] = key;
   }
-  console.log(headers)
   return headers;
 };
