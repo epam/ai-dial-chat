@@ -65,7 +65,7 @@ export const ModelIcon = ({
         template
       ) : (
         <Tooltip>
-          <TooltipTrigger>{template}</TooltipTrigger>
+          <TooltipTrigger className="shrink-0">{template}</TooltipTrigger>
           <TooltipContent>{entity?.name || entityId}</TooltipContent>
         </Tooltip>
       )}

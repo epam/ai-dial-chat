@@ -187,7 +187,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
         !isRenaming &&
         !messageIsStreaming && (
           <div
-            className="z-100 absolute right-1 flex text-gray-300"
+            className="absolute right-1 z-50 flex text-gray-300"
             ref={wrapperRef}
           >
             <SidebarActionButton

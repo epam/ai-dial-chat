@@ -48,6 +48,7 @@ import { Prompt } from '@/types/prompt';
 import { Chat } from '@/components/Chat/Chat';
 import { Chatbar } from '@/components/Chatbar/Chatbar';
 import Header from '@/components/Header/Header';
+import { UserMobile } from '@/components/Header/User/UserMobile';
 import Promptbar from '@/components/Promptbar';
 
 import packageJSON from '../../../package.json';
@@ -111,6 +112,7 @@ const Home = ({
       modelsMap,
       recentModelsIds,
       recentAddonsIds,
+      isProfileOpen,
     },
     dispatch,
   } = contextValue;
@@ -778,6 +780,7 @@ const Home = ({
                   </div>
 
                   {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
+                  {isProfileOpen && <UserMobile />}
                 </div>
               </div>
             </div>

@@ -44,6 +44,7 @@ export interface HomeInitialState {
 
   recentModelsIds: string[];
   recentAddonsIds: string[];
+  isProfileOpen: boolean;
 }
 
 export const initialState: HomeInitialState = {
@@ -81,4 +82,5 @@ export const initialState: HomeInitialState = {
 
   recentModelsIds: [],
   recentAddonsIds: [],
+  isProfileOpen: false,
 };
