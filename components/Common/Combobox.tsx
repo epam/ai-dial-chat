@@ -8,7 +8,6 @@ import {
 import {
   FunctionComponent,
   createElement,
-  createRef,
   useLayoutEffect,
   useState,
 } from 'react';
@@ -42,7 +41,6 @@ export const Combobox = ({
   const { t } = useTranslation('common');
   const [displayedItems, setDisplayedItems] = useState(items);
   const [floatingWidth, setFloatingWidth] = useState(0);
-  const toggleButtonRef = createRef<HTMLButtonElement>();
 
   const { x, y, refs, strategy, update } = useFloating({
     placement: 'bottom-start',
@@ -103,10 +101,10 @@ export const Combobox = ({
             {label}
           </label>
         )}
-        <div className="relative flex rounded border border-gray-400 focus-visible:border-gray-800 dark:border-gray-600 focus-visible:dark:border-gray-200">
+        <div className="relative flex rounded border border-gray-400 focus-within:border-gray-800 dark:border-gray-600 focus-within:dark:border-gray-200">
           <input
             placeholder={placeholder || ''}
-            className="w-full bg-transparent px-3 py-2.5"
+            className="w-full bg-transparent px-3 py-2.5 outline-none placeholder:text-gray-500"
             {...getInputProps({ ref: refs.reference as any })}
           />
           {!inputValue && itemRow && (
@@ -118,7 +116,7 @@ export const Combobox = ({
             aria-label="toggle menu"
             className={`px-2 transition-all ${isOpen ? 'rotate-180' : ''}`}
             type="button"
-            {...getToggleButtonProps({ ref: toggleButtonRef })}
+            {...getToggleButtonProps()}
           >
             <ChevronDown height={18} width={18} />
           </button>
@@ -129,7 +127,10 @@ export const Combobox = ({
           className={`max-h-80 overflow-auto bg-gray-100 dark:bg-gray-700 ${
             !isOpen && 'hidden'
           }`}
-          {...getMenuProps({ ref: refs.floating as any })}
+          {...getMenuProps(
+            { ref: refs.floating as any },
+            { suppressRefError: true },
+          )}
           style={{
             position: strategy,
             top: y ?? '',

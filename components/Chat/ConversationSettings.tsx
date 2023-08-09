@@ -1,4 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/utils/app/const';
 
@@ -17,6 +18,7 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 import { Combobox } from '../Common/Combobox';
 // import { Addons } from './Addons';
 import { ConversationSettingsModel } from './ConversationSettingsModels';
+import { SystemPrompt } from './SystemPrompt';
 
 // import { SystemPrompt } from './SystemPrompt';
 // import { TemperatureSlider } from './Temperature';
@@ -37,12 +39,15 @@ interface Props {
 export const ConversationSettings = ({
   model,
   conversation,
+  prompts,
   onSelectModel,
   onSelectAssistantSubModel,
+  onChangePrompt,
 }: Props) => {
   const {
     state: { modelsMap, models, lightMode },
   } = useContext(HomeContext);
+  const { t } = useTranslation('chat');
   const [assistantSubModel, setAssistantSubModel] = useState(() => {
     return modelsMap[
       conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id
@@ -81,33 +86,36 @@ export const ConversationSettings = ({
           onModelSelect={onSelectModel}
         />
       </div>
-      <div>
-        {model && model.type === 'assistant' && assistantSubModel && (
-          <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
-            <Combobox
-              label="Model"
-              items={models.filter((model) => model.type === 'model')}
-              initialSelectedItem={assistantSubModel}
-              getItemLabel={(model: OpenAIEntityModel) =>
-                model.name || model.id
-              }
-              getItemValue={(model: OpenAIEntityModel) => model.id}
-              itemRow={getModelSelectRow()}
-              onSelectItem={(itemID: string) => {
-                onSelectAssistantSubModel(itemID);
-              }}
-            />
-          </div>
-        )}
-        {/* {aiEntityType === 'model' && (
-            <SystemPrompt
-              conversation={conversation}
-              prompts={prompts}
-              onChangePrompt={onChangePrompt}
-            />
-          )} */}
+      {model ? (
+        <div>
+          {model.type === 'assistant' && assistantSubModel && (
+            <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
+              <Combobox
+                label="Model"
+                items={models.filter((model) => model.type === 'model')}
+                initialSelectedItem={assistantSubModel}
+                getItemLabel={(model: OpenAIEntityModel) =>
+                  model.name || model.id
+                }
+                getItemValue={(model: OpenAIEntityModel) => model.id}
+                itemRow={getModelSelectRow()}
+                onSelectItem={(itemID: string) => {
+                  onSelectAssistantSubModel(itemID);
+                }}
+              />
+            </div>
+          )}
+          {model.type === 'model' && (
+            <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
+              <SystemPrompt
+                conversation={conversation}
+                prompts={prompts}
+                onChangePrompt={onChangePrompt}
+              />
+            </div>
+          )}
 
-        {/* {aiEntityType !== 'application' && (
+          {/* {aiEntityType !== 'application' && (
             <TemperatureSlider
               label={t('Temperature')}
               onChangeTemperature={onChangeTemperature}
@@ -115,7 +123,7 @@ export const ConversationSettings = ({
             />
           )} */}
 
-        {/* {aiEntityType !== 'application' && (
+          {/* {aiEntityType !== 'application' && (
             <Addons
               addons={addons}
               selectedAddons={conversation.selectedAddons}
@@ -123,7 +131,10 @@ export const ConversationSettings = ({
               onChangeAddon={onChangeAddon}
             />
           )} */}
-      </div>
+        </div>
+      ) : (
+        <div>{t('No settings available')}</div>
+      )}
     </div>
   );
 };
