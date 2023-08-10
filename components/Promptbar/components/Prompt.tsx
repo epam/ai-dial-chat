@@ -38,11 +38,9 @@ export const PromptComponent = ({ prompt }: Props) => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
-  const [isContextMenuOpened, setIsContextMenuOpened] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const [isShowContextMenuButton, setIsShowContextMenuButton] = useState(true);
 
-  const contextMenuParentRef = useRef(null);
   const wrapperRef = useRef(null);
 
   const handleUpdate = (prompt: Prompt) => {
@@ -61,7 +59,6 @@ export const PromptComponent = ({ prompt }: Props) => {
     }
 
     setIsDeleting(false);
-    setIsContextMenuOpened(false);
     setIsSelected(false);
   };
 
@@ -70,7 +67,6 @@ export const PromptComponent = ({ prompt }: Props) => {
     e.preventDefault();
 
     setIsDeleting(false);
-    setIsContextMenuOpened(false);
   };
 
   const handleOpenDeleteModal: MouseEventHandler = (e) => {
@@ -101,32 +97,21 @@ export const PromptComponent = ({ prompt }: Props) => {
     setIsSelected(true);
   };
 
-  const handleOnClickContextMenuButton: MouseEventHandler = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-
-    setIsContextMenuOpened((isOpened) => !isOpened);
-  };
-
   const handleExportPrompt: MouseEventHandler = (e) => {
     e.preventDefault();
     e.stopPropagation();
 
     exportPrompt(prompt.id);
-    setIsContextMenuOpened(false);
   };
 
   useEffect(() => {
     if (isRenaming) {
       setIsDeleting(false);
-      setIsContextMenuOpened(false);
     } else if (isDeleting) {
       setIsRenaming(false);
-      setIsContextMenuOpened(false);
     }
   }, [isRenaming, isDeleting]);
 
-  useOutsideAlerter(wrapperRef, setIsContextMenuOpened);
   useOutsideAlerter(wrapperRef, setIsSelected);
   const onMouseOverHandler: MouseEventHandler = (e) => {
     e.stopPropagation();
