@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { Fragment, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -44,7 +44,6 @@ export const Addons = ({
     const description = addonsMap[addonId]?.description;
     const template = (
       <button
-        key={addonId}
         className={`flex items-center gap-2 px-3 py-2  ${
           isSelected ? 'bg-blue-500/20' : 'bg-gray-100 dark:bg-gray-700'
         }`}
@@ -67,7 +66,7 @@ export const Addons = ({
     );
 
     return (
-      <>
+      <Fragment key={addonId}>
         {description ? (
           <Tooltip>
             <TooltipTrigger className="flex shrink-0">
@@ -82,7 +81,7 @@ export const Addons = ({
         ) : (
           template
         )}
-      </>
+      </Fragment>
     );
   };
 
@@ -104,7 +103,7 @@ export const Addons = ({
             <>
               <span className="text-gray-500">{t('Recent')}</span>
               <div className="flex flex-wrap gap-1">
-                {filteredRecentAddons.map((addon) => getAddon(addon))}
+                {filteredRecentAddons.map((addon) => getAddon(addon, true))}
               </div>
             </>
           )}
