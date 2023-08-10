@@ -1,4 +1,3 @@
-import { IconFolderPlus, IconPlus, IconScale } from '@tabler/icons-react';
 import { useContext, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -33,6 +32,7 @@ import { ChatFolders } from './components/ChatFolders';
 import { ChatbarSettings } from './components/ChatbarSettings';
 import { Conversations } from './components/Conversations';
 
+import PlusIcon from '../../public/images/icons/plus-large.svg';
 import Sidebar from '../Sidebar';
 import ChatbarContext from './Chatbar.context';
 import { ChatbarInitialState, initialState } from './Chatbar.state';
@@ -56,10 +56,8 @@ export const Chatbar = () => {
       messageIsStreaming,
     },
     dispatch: homeDispatch,
-    handleCreateFolder,
     handleNewConversation,
-    handleNewConversations,
-    handleSelectConversations,
+
     handleUpdateConversation,
   } = useContext(HomeContext);
 
@@ -117,6 +115,7 @@ export const Chatbar = () => {
       selectedAddons:
         OpenAIEntityModels[defaultModelId || OpenAIEntityModelID.GPT_3_5]
           .selectedAddons ?? [],
+      lastActivityDate: Date.now(),
     };
 
     const newConversations: Conversation[] = [newConversation];
@@ -214,21 +213,6 @@ export const Chatbar = () => {
       e.target.style.background = 'none';
     }
   };
-  const handleToggleCompare = () => {
-    const newConversations = handleNewConversations(
-      DEFAULT_CONVERSATION_NAME,
-      2,
-    );
-    if (!newConversations) {
-      return;
-    }
-
-    handleSelectConversations(newConversations);
-    homeDispatch({
-      field: 'isCompareMode',
-      value: true,
-    });
-  };
 
   useEffect(() => {
     if (searchTerm) {
@@ -251,33 +235,17 @@ export const Chatbar = () => {
   }, [searchTerm, conversations]);
 
   const actionsBlock = (
-    <div className="flex items-center gap-2">
-      <button
-        className={`flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded-md border border-white/20 p-3 transition-colors duration-200 hover:bg-gray-500/10 disabled:cursor-not-allowed`}
-        onClick={() => {
-          handleNewConversation();
-          chatDispatch({ field: 'searchTerm', value: '' });
-        }}
-        disabled={!!messageIsStreaming}
-      >
-        <IconPlus size={16} />
-        {t('New chat')}
-      </button>
-
-      <button
-        className="flex h-full shrink-0 cursor-pointer items-center gap-3 rounded-md border border-white/20 p-3 text-sm transition-colors duration-200 hover:bg-gray-500/10 disabled:cursor-not-allowed"
-        onClick={handleToggleCompare}
-        disabled={!!messageIsStreaming}
-      >
-        <IconScale size={16} />
-      </button>
-      <button
-        className="flex h-full shrink-0 cursor-pointer items-center gap-3 rounded-md border border-white/20 p-3 text-sm transition-colors duration-200 hover:bg-gray-500/10"
-        onClick={() => handleCreateFolder(t('New folder'), 'chat')}
-      >
-        <IconFolderPlus size={16} />
-      </button>
-    </div>
+    <button
+      className={`flex shrink-0 cursor-pointer select-none items-center gap-3 p-3 transition-colors duration-200 disabled:cursor-not-allowed`}
+      onClick={() => {
+        handleNewConversation();
+        chatDispatch({ field: 'searchTerm', value: '' });
+      }}
+      disabled={!!messageIsStreaming}
+    >
+      <PlusIcon className="text-gray-500" width={18} height={18} />
+      {t('Add new chat')}
+    </button>
   );
 
   return (
@@ -292,6 +260,7 @@ export const Chatbar = () => {
       }}
     >
       <Sidebar<Conversation>
+        featureType="chat"
         side={'left'}
         actionButtons={actionsBlock}
         isOpen={showChatbar}

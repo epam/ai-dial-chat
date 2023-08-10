@@ -10,7 +10,7 @@ interface Props {
 
 export const Prompts: FC<Props> = ({ prompts }) => {
   return (
-    <div className="flex w-full flex-col gap-1">
+    <div className="flex w-full flex-col p-2">
       {prompts
         .slice()
         .reverse()

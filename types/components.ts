@@ -1,1 +1,1 @@
-export type FeatureType = 'conversation' | 'prompt';
+export type FeatureType = 'chat' | 'prompt';

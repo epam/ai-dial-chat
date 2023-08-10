@@ -1,4 +1,3 @@
-import { IconCheck, IconDots, IconX } from '@tabler/icons-react';
 import {
   DragEvent,
   KeyboardEvent,
@@ -9,8 +8,6 @@ import {
   useState,
 } from 'react';
 
-import useOutsideAlerter from '@/hooks/useOutsideAlerter';
-
 import { Conversation } from '@/types/chat';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -18,8 +15,12 @@ import HomeContext from '@/pages/api/home/home.context';
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
 import ChatbarContext from '@/components/Chatbar/Chatbar.context';
 
-import { ContextMenu } from '../../Common/ContextMenu';
+import CheckIcon from '../../../public/images/icons/check.svg';
+import XmarkIcon from '../../../public/images/icons/xmark.svg';
+import { ContextMenu } from '../../Common/NewContextMenu';
 import { ModelIcon } from './ModelIcon';
+
+import classNames from 'classnames';
 
 interface Props {
   conversation: Conversation;
@@ -45,8 +46,9 @@ export const ConversationComponent = ({ conversation }: Props) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
-  const [isContextMenuOpened, setIsContextMenuOpened] = useState(false);
-  const contextMenuParentRef = useRef(null);
+  const [isShowContextMenuButton, setIsShowContextMenuButton] = useState(false);
+  const wrapperRef = useRef(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const isEmptyConversation = conversation.messages.length === 0;
 
@@ -96,20 +98,17 @@ export const ConversationComponent = ({ conversation }: Props) => {
 
   const handleOpenRenameModal: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();
-    setIsContextMenuOpened(false);
     setIsRenaming(true);
     setRenameValue(conversation.name);
   };
   const handleOpenDeleteModal: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();
-    setIsContextMenuOpened(false);
     setIsDeleting(true);
   };
 
-  const handleStartReplay: MouseEventHandler<HTMLLIElement> = (e) => {
+  const handleStartReplay: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();
 
-    setIsContextMenuOpened(false);
     handleNewReplayConversation(conversation);
   };
 
@@ -121,14 +120,26 @@ export const ConversationComponent = ({ conversation }: Props) => {
     }
   }, [isRenaming, isDeleting]);
 
-  const wrapperRef = useRef(null);
-
-  useOutsideAlerter(wrapperRef, setIsContextMenuOpened);
+  const onMouseOverHandler: MouseEventHandler = (e) => {
+    e.stopPropagation();
+    setIsShowContextMenuButton(true);
+  };
+  const onMouseLeaveHandler: MouseEventHandler = (e) => {
+    e.stopPropagation();
+    setIsShowContextMenuButton(false);
+  };
 
   return (
-    <div className="relative flex items-center">
+    <div
+      className={classNames(
+        'relative flex h-[42px] items-center rounded-[3px] hover:bg-green/[15%]',
+        selectedConversationIds.includes(conversation.id)
+          ? 'border-l-2 border-l-green bg-green/[15%]'
+          : '',
+      )}
+    >
       {isRenaming && selectedConversationIds.includes(conversation.id) ? (
-        <div className="flex w-full items-center gap-3 rounded-lg p-3">
+        <div className="flex w-full items-center gap-3 px-3">
           <ModelIcon
             size={18}
             inverted={lightMode === 'dark'}
@@ -137,7 +148,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
           />
 
           <input
-            className="mr-12 flex-1 overflow-hidden text-ellipsis border-neutral-400 bg-transparent text-left text-[12.5px] leading-3 text-white outline-none focus:border-neutral-100"
+            className="mr-12 flex-1 overflow-hidden text-ellipsis bg-transparent text-left leading-3 outline-none"
             type="text"
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
@@ -147,22 +158,20 @@ export const ConversationComponent = ({ conversation }: Props) => {
         </div>
       ) : (
         <button
-          className={`flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-sm transition-colors duration-200 hover:bg-[#343541]/90 ${
+          className={`flex w-full cursor-pointer items-center gap-3 px-3 transition-colors duration-200 ${
             messageIsStreaming ? 'disabled:cursor-not-allowed' : ''
-          } ${
-            selectedConversationIds.includes(conversation.id)
-              ? 'bg-[#343541]/90'
-              : ''
           }`}
           onClick={() => {
             setIsDeleting(false);
-            setIsContextMenuOpened(false);
             setIsRenaming(false);
             handleSelectConversation(conversation);
           }}
+          onMouseOver={onMouseOverHandler}
+          onMouseLeave={onMouseLeaveHandler}
           disabled={messageIsStreaming}
           draggable="true"
           onDragStart={(e) => handleDragStart(e, conversation)}
+          ref={buttonRef}
         >
           <ModelIcon
             size={18}
@@ -171,7 +180,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
             inverted={lightMode === 'dark'}
           />
           <div
-            className={`relative max-h-5 flex-1 truncate break-all text-left text-[12.5px] leading-3 ${
+            className={`relative max-h-5 flex-1 truncate break-all text-left leading-3 ${
               selectedConversationIds.includes(conversation.id)
                 ? 'pr-12'
                 : 'pr-1'
@@ -182,56 +191,44 @@ export const ConversationComponent = ({ conversation }: Props) => {
         </button>
       )}
 
-      {selectedConversationIds.includes(conversation.id) &&
+      {isShowContextMenuButton &&
         !isDeleting &&
         !isRenaming &&
         !messageIsStreaming && (
           <div
-            className="absolute right-1 z-50 flex text-gray-300"
+            className="absolute right-1 z-50 flex"
             ref={wrapperRef}
+            onMouseOver={onMouseOverHandler}
+            onMouseLeave={onMouseLeaveHandler}
           >
-            <SidebarActionButton
-              handleClick={(e) => {
-                e.stopPropagation();
-                setIsContextMenuOpened((isOpened) => !isOpened);
+            <ContextMenu
+              conversation={conversation}
+              onDelete={handleOpenDeleteModal}
+              onRename={handleOpenRenameModal}
+              onExport={() => {
+                handleExportConversation(conversation.id);
               }}
-            >
-              <IconDots size={18} />
-            </SidebarActionButton>
-            <div className="relative" ref={contextMenuParentRef}>
-              {!isDeleting && !isRenaming && isContextMenuOpened && (
-                <ContextMenu
-                  parentRef={contextMenuParentRef}
-                  onDelete={handleOpenDeleteModal}
-                  onRename={handleOpenRenameModal}
-                  onExport={() => {
-                    setIsContextMenuOpened(false);
-                    handleExportConversation(conversation.id);
-                  }}
-                  onCompare={() => {
-                    dispatch({
-                      field: 'isCompareMode',
-                      value: true,
-                    });
-                    setIsContextMenuOpened(false);
-                  }}
-                  onReplay={handleStartReplay}
-                  isEmptyConversation={isEmptyConversation}
-                  featureType="conversation"
-                />
-              )}
-            </div>
+              onCompare={() => {
+                dispatch({
+                  field: 'isCompareMode',
+                  value: true,
+                });
+              }}
+              onReplay={handleStartReplay}
+              isEmptyConversation={isEmptyConversation}
+              featureType="chat"
+            />
           </div>
         )}
 
       {(isDeleting || isRenaming) &&
         selectedConversationIds.includes(conversation.id) && (
-          <div className="absolute right-1 z-10 flex text-gray-300">
+          <div className="absolute right-1 z-10 flex">
             <SidebarActionButton handleClick={handleConfirm}>
-              <IconCheck size={18} />
+              <CheckIcon width={18} height={18} size={18} />
             </SidebarActionButton>
             <SidebarActionButton handleClick={handleCancel}>
-              <IconX size={18} />
+              <XmarkIcon width={18} height={18} size={18} strokeWidth="2" />
             </SidebarActionButton>
           </div>
         )}

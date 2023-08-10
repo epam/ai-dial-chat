@@ -1,4 +1,3 @@
-import { IconFolderPlus, IconPlus } from '@tabler/icons-react';
 import { useContext, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +18,7 @@ import { PromptFolders } from './components/PromptFolders';
 import { PromptbarSettings } from './components/PromptbarSettings';
 import { Prompts } from './components/Prompts';
 
+import PlusIcon from '../../public/images/icons/plus-large.svg';
 import Sidebar from '../Sidebar';
 import PromptbarContext from './PromptBar.context';
 import { PromptbarInitialState, initialState } from './Promptbar.state';
@@ -36,7 +36,6 @@ const Promptbar = () => {
   const {
     state: { prompts, defaultModelId, showPromptbar, folders },
     dispatch: homeDispatch,
-    handleCreateFolder,
   } = useContext(HomeContext);
 
   const {
@@ -154,25 +153,24 @@ const Promptbar = () => {
   }, [searchTerm, prompts]);
 
   const actionsBlock = (
-    <div className="flex items-center gap-2">
-      <button
-        className={`text-sidebar flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded-md border border-white/20 p-3 transition-colors duration-200 hover:bg-gray-500/10 disabled:cursor-not-allowed`}
-        onClick={() => {
-          handleCreatePrompt();
-          promptDispatch({ field: 'searchTerm', value: '' });
-        }}
-      >
-        <IconPlus size={16} />
-        {t('New prompt')}
-      </button>
+    <button
+      className="flex shrink-0 cursor-pointer select-none items-center gap-3 p-3 transition-colors duration-200 disabled:cursor-not-allowed"
+      onClick={() => {
+        handleCreatePrompt();
+        promptDispatch({ field: 'searchTerm', value: '' });
+      }}
+    >
+      <PlusIcon className="text-gray-500" width={18} height={18} />
+      {t('Add new prompt')}
+    </button>
 
-      <button
-        className="flex h-full shrink-0 cursor-pointer items-center gap-3 rounded-md border border-white/20 p-3 text-sm transition-colors duration-200 hover:bg-gray-500/10"
-        onClick={() => handleCreateFolder(t('New folder'), 'prompt')}
-      >
-        <IconFolderPlus size={16} />
-      </button>
-    </div>
+    // <button
+    //   className="flex h-full shrink-0 cursor-pointer items-center gap-3 rounded-md border border-white/20 p-3 text-sm transition-colors duration-200 hover:bg-gray-500/10"
+    //   onClick={() => handleCreateFolder(t('New folder'), 'prompt')}
+    // >
+    //   <IconFolderPlus size={16} />
+    // </button>
+    // </div>
   );
 
   return (
@@ -188,6 +186,7 @@ const Promptbar = () => {
       }}
     >
       <Sidebar<Prompt>
+        featureType="prompt"
         side={'right'}
         isOpen={showPromptbar}
         itemComponent={
