@@ -163,6 +163,7 @@ export const Chat = memo(({ appName }: Props) => {
   const abortController = useRef<AbortController>();
   const [isNotAllowedModel, setIsNotAllowedModel] = useState(false);
   const isStopGenerating = useRef(false);
+
   useEffect(() => {
     if (
       inputRef.current?.clientHeight &&
@@ -938,22 +939,22 @@ export const Chat = memo(({ appName }: Props) => {
   }, [selectedConversationIds]);
 
   return (
-    <div className="relative flex-1 overflow-hidden">
+    <div className="relative flex-1">
       {!(apiKey || serverSideApiKeyIsSet) ? (
         <NoApiKeySet appName={appName} />
       ) : modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : (
         <>
-          <div className="flex h-full overflow-hidden">
+          <div className="flex h-full">
             <div
-              className={`flex h-full flex-col overflow-hidden ${
+              className={`flex h-full flex-col ${
                 isCompareMode && selectedConversations.length < 2
                   ? 'w-[50%]'
                   : 'w-full'
               }`}
             >
-              <div className="flex max-h-full w-full">
+              <div className="flex h-full w-full">
                 {selectedConversations.map((conv) => (
                   <div
                     key={conv.id}
@@ -964,8 +965,10 @@ export const Chat = memo(({ appName }: Props) => {
                     }`}
                   >
                     {conv.messages.length === 0 ? (
-                      <div className={`flex h-full flex-col`}>
-                        <div className="overflow-auto">
+                      <div
+                        className={`flex h-full flex-col justify-between overflow-y-auto`}
+                      >
+                        <div className="shrink-0">
                           <ChatEmpty
                             conversation={conv}
                             models={models}
@@ -998,7 +1001,7 @@ export const Chat = memo(({ appName }: Props) => {
 
                         <div
                           className="shrink-0"
-                          style={{ height: inputHeight - 20 }}
+                          style={{ height: inputHeight }}
                         />
                       </div>
                     ) : (

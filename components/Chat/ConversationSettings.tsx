@@ -80,7 +80,7 @@ export const ConversationSettings = ({
   };
 
   return (
-    <div className="grid max-h-[500px] w-full min-w-[50%] grid-cols-1 gap-[1px] md:grid-cols-2">
+    <div className="grid w-full min-w-[50%] gap-[1px] md:grid-cols-2">
       <div className="overflow-auto bg-gray-200 px-5 py-4 dark:bg-gray-800">
         <ConversationSettingsModel
           modelId={conversation.model.id}
