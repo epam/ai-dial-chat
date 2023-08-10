@@ -5,7 +5,7 @@ const nextConfig = {
   i18n,
   reactStrictMode: true,
   experimental: {
-    instrumentationHook: true
+    instrumentationHook: true,
   },
 
   webpack(config, { isServer, dev }) {

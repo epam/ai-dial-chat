@@ -106,6 +106,11 @@ export const ModelsDialog: FC<Props> = ({
     setSearchTerm(searchValue.trim().toLowerCase());
   };
 
+  useEffect(() => {
+    setSearchTerm('');
+    setEntityTypes(['model', 'assistant', 'application']);
+  }, [isOpen]);
+
   const handleFilterType = (
     entityType:
       | OpenAIEntityModelType
@@ -182,7 +187,7 @@ export const ModelsDialog: FC<Props> = ({
         <div className="flex h-screen items-center justify-center p-3 text-center">
           <div
             ref={modalRef}
-            className="flex h-full w-[calc(100%-12px)] grow flex-col gap-4 overflow-y-auto rounded bg-gray-100 px-5 py-4 text-left dark:bg-gray-700 md:w-[790px] md:grow-0"
+            className="flex min-h-[90%] w-[calc(100%-12px)] grow flex-col gap-4 overflow-y-auto rounded bg-gray-100 px-5 py-4 text-left dark:bg-gray-700 md:w-[790px] md:grow-0"
             role="dialog"
           >
             <div className="flex justify-between">
@@ -200,7 +205,7 @@ export const ModelsDialog: FC<Props> = ({
                 onChange={(e) => {
                   handleSearch(e.target.value);
                 }}
-                className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 dark:border-gray-600"
+                className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
               ></input>
             </div>
 
@@ -261,7 +266,7 @@ export const ModelsDialog: FC<Props> = ({
                   )}
               </>
             ) : (
-              <div className="flex grow items-center justify-center ">
+              <div className="flex grow items-center justify-center">
                 <NoResultsFound />
               </div>
             )}

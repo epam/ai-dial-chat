@@ -101,7 +101,7 @@ export const Combobox = ({
             {label}
           </label>
         )}
-        <div className="relative flex rounded border border-gray-400 focus-within:border-gray-800 dark:border-gray-600 focus-within:dark:border-gray-200">
+        <div className="relative flex rounded border border-gray-400 focus-within:border-blue-500 dark:border-gray-600 dark:focus-within:border-blue-500 ">
           <input
             placeholder={placeholder || ''}
             className="w-full bg-transparent px-3 py-2.5 outline-none placeholder:text-gray-500"

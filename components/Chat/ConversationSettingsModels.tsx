@@ -27,7 +27,7 @@ export const ConversationSettingsModel = ({
   const [recentNonModels, setRecentNonModels] = useState<OpenAIEntityModel[]>(
     [],
   );
-  const [isModelsDialogOpen, setIsModelDialogOpen] = useState(false);
+  const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
   useEffect(() => {
     const mappedEntities = Array.from(recentModelsIds)
@@ -101,7 +101,7 @@ export const ConversationSettingsModel = ({
       </div>
       <button
         className="mt-3 inline text-left text-blue-500"
-        onClick={() => setIsModelDialogOpen(true)}
+        onClick={() => setIsModelsDialogOpen(true)}
       >
         {t('See full list...')}
       </button>
@@ -109,7 +109,7 @@ export const ConversationSettingsModel = ({
         selectedModelId={modelId}
         isOpen={isModelsDialogOpen}
         onModelSelect={onModelSelect}
-        onClose={() => setIsModelDialogOpen(false)}
+        onClose={() => setIsModelsDialogOpen(false)}
       />
     </div>
   );

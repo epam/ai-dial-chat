@@ -16,13 +16,10 @@ import HomeContext from '@/pages/api/home/home.context';
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import { Combobox } from '../Common/Combobox';
-// import { Addons } from './Addons';
+import { Addons } from './Addons';
 import { ConversationSettingsModel } from './ConversationSettingsModels';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
-
-// import { SystemPrompt } from './SystemPrompt';
-// import { TemperatureSlider } from './Temperature';
 
 interface Props {
   conversation: Conversation;
@@ -45,9 +42,11 @@ export const ConversationSettings = ({
   onSelectAssistantSubModel,
   onChangePrompt,
   onChangeTemperature,
+  onChangeAddon,
 }: Props) => {
   const {
     state: { modelsMap, models, lightMode },
+    handleUpdateConversation,
   } = useContext(HomeContext);
   const { t } = useTranslation('chat');
   const [assistantSubModel, setAssistantSubModel] = useState(() => {
@@ -81,15 +80,15 @@ export const ConversationSettings = ({
   };
 
   return (
-    <div className="grid max-h-[500px] w-full min-w-[50%] grid-cols-1 gap-[1px] overflow-auto md:grid-cols-2">
-      <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
+    <div className="grid max-h-[500px] w-full min-w-[50%] grid-cols-1 gap-[1px] md:grid-cols-2">
+      <div className="overflow-auto bg-gray-200 px-5 py-4 dark:bg-gray-800">
         <ConversationSettingsModel
           modelId={conversation.model.id}
           onModelSelect={onSelectModel}
         />
       </div>
       {model ? (
-        <div className="flex flex-col gap-[1px]">
+        <div className="flex max-h-full shrink flex-col gap-[1px] overflow-auto">
           {model.type === 'assistant' && assistantSubModel && (
             <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
               <Combobox
@@ -127,14 +126,21 @@ export const ConversationSettings = ({
             </div>
           )}
 
-          {/* {aiEntityType !== 'application' && (
-            <Addons
-              addons={addons}
-              selectedAddons={conversation.selectedAddons}
-              preselectedAddons={preselectedAddons ?? []}
-              onChangeAddon={onChangeAddon}
-            />
-          )} */}
+          {model.type !== 'application' && (
+            <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
+              <Addons
+                preselectedAddonsIds={model.selectedAddons || []}
+                selectedAddonsIds={conversation.selectedAddons}
+                onChangeAddon={onChangeAddon}
+                onApplyAddons={(addonsIds) => {
+                  handleUpdateConversation(conversation, {
+                    key: 'selectedAddons',
+                    value: addonsIds,
+                  });
+                }}
+              />
+            </div>
+          )}
         </div>
       ) : (
         <div>{t('No settings available')}</div>
