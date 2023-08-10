@@ -1,13 +1,15 @@
-import { IconFileExport } from '@tabler/icons-react';
 import { FC, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Prompt } from '@/types/prompt';
 
-import { ClearAllElements } from '@/components/Common/ClearAllElements';
-import { Import } from '@/components/Settings/Import';
-import { SidebarButton } from '@/components/Sidebar/SidebarButton';
+import HomeContext from '@/pages/api/home/home.context';
 
+import { Import } from '@/components/Settings/Import';
+
+import FileRightIcon from '../../../public/images/icons/file-arrow-right.svg';
+import FolderPlusIcon from '../../../public/images/icons/folder-plus.svg';
+import TrashIcon from '../../../public/images/icons/trash.svg';
 import PromptbarContext from '../PromptBar.context';
 
 interface PromptbarSettingsProps {
@@ -19,24 +21,32 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
   const { t } = useTranslation('promptbar');
   const { handleExportPrompts, handleImportPrompts, handleClearAllPrompts } =
     useContext(PromptbarContext);
-
+  const { handleCreateFolder } = useContext(HomeContext);
   return (
-    <div className="flex flex-col items-center space-y-1 border-t border-white/20 pt-1 text-sm">
+    <div className="flex items-start gap-1 p-2 text-gray-500">
       {allPrompts.length > 0 ? (
-        <ClearAllElements
-          onClearAll={handleClearAllPrompts}
-          translation="prompts"
-          elementsType="prompts"
-        />
+        <div
+          className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center"
+          onClick={handleClearAllPrompts}
+        >
+          <TrashIcon width={24} height={24} />
+        </div>
       ) : null}
 
-      <Import onImport={handleImportPrompts} text={t('Import prompts')} />
+      <Import onImport={handleImportPrompts} />
+      <div
+        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center"
+        onClick={() => handleExportPrompts()}
+      >
+        <FileRightIcon width={24} height={24} />
+      </div>
 
-      <SidebarButton
-        text={t('Export prompts')}
-        icon={<IconFileExport size={18} />}
-        onClick={handleExportPrompts}
-      />
+      <div
+        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center"
+        onClick={() => handleCreateFolder(t('New folder'), 'prompt')}
+      >
+        <FolderPlusIcon width={24} height={24} />
+      </div>
     </div>
   );
 };
