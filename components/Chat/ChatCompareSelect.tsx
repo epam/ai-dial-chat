@@ -1,16 +1,13 @@
-import { FC, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import Select, {
-  ClassNamesConfig,
-  NoticeProps,
-  OptionProps,
-  SingleValueProps,
-  components,
-} from 'react-select';
 
 import { Conversation } from '@/types/chat';
 
-import { SelectIcon } from '../Select/SelectIcon';
+import HomeContext from '@/pages/api/home/home.context';
+
+import { ModelIcon } from '../Chatbar/components/ModelIcon';
+
+import { Combobox } from '../Common/Combobox';
 
 interface Props {
   conversations: Conversation[];
@@ -18,104 +15,18 @@ interface Props {
   onConversationSelect: (conversation: Conversation) => void;
 }
 
-interface CompareOption {
-  value: string;
-  label: string;
-  modelId: string;
-}
-
-const NoConversationsMessage: FC<NoticeProps<CompareOption>> = (props) => {
-  const { t } = useTranslation('chat');
-  return (
-    <components.NoOptionsMessage {...props}>
-      {t('No conversations available')}
-    </components.NoOptionsMessage>
-  );
-};
-
-const CustomSelectOption = (props: OptionProps<CompareOption>) => {
-  const { data, children, isFocused } = props;
-  return (
-    <>
-      <components.Option
-        {...props}
-        className={`!flex !p-1 !pl-4 hover:cursor-pointer dark:text-white/80  hover:dark:bg-[#202123] 
-        ${isFocused ? 'dark:bg-[#202123]' : 'dark:bg-[#40414F]'}
-        `}
-      >
-        <SelectIcon modelId={data.modelId}>{children}</SelectIcon>
-      </components.Option>
-    </>
-  );
-};
-
-const CustomSingleValue = (props: SingleValueProps<CompareOption>) => {
-  const { children, getValue } = props;
-  const selectedOption = getValue()[0];
-  return (
-    <components.SingleValue className="!pl-1" {...props}>
-      {selectedOption ? (
-        <SelectIcon modelId={selectedOption.value}>{children}</SelectIcon>
-      ) : (
-        children
-      )}
-    </components.SingleValue>
-  );
-};
-
-const selectClassNames: ClassNamesConfig<CompareOption> = {
-  control: (state) =>
-    `dark:bg-[#40414F] dark:text-white/80 hover:dark:border-white hover:dark:shadow-white  !rounded-lg ${
-      state.isFocused
-        ? 'dark:border-white/80 dark:shadow-white/80 dark:shadow-sm'
-        : ''
-    }`,
-  placeholder: () => 'text-neutral-900 dark:text-white/80',
-  valueContainer: () => '!text-neutral-900 hover:cursor-text',
-  menu: () =>
-    '!mt-1 dark:bg-[#40414F] !rounded !shadow-sm !shadow-neutral-400 dark:!shadow-[#717283] w-full overflow-hidden',
-  singleValue: () => '!text-neutral-900 dark:!text-white/80 center m-0',
-  dropdownIndicator: () =>
-    '!py-0 hover:!text-neutral-900 hover:dark:!text-white/80',
-  input: () => 'dark:!text-white/80',
-};
-
 export const ChatCompareSelect = ({
   conversations,
   selectedConversations,
   onConversationSelect,
 }: Props) => {
   const { t } = useTranslation('chat');
+  const {
+    state: { modelsMap, defaultModelId, lightMode },
+  } = useContext(HomeContext);
   const [comparableConversations, setComparableConversations] = useState<
     Conversation[]
   >([]);
-
-  const comparableOptions: CompareOption[] = comparableConversations.map(
-    (conversation) => {
-      return {
-        value: conversation.id,
-        label: conversation.name,
-        modelId: conversation.model.id,
-      };
-    },
-  );
-
-  const placeholder: string =
-    comparableConversations.length === 0
-      ? t('No conversations available')
-      : t('Select conversation');
-
-  const handleOnChange = (option: CompareOption | null) => {
-    if (option) {
-      const selectedOption = conversations
-        .filter((val) => val.id === option.value)
-        .pop();
-
-      if (selectedOption) {
-        onConversationSelect(selectedOption);
-      }
-    }
-  };
 
   useEffect(() => {
     if (selectedConversations.length === 1) {
@@ -156,32 +67,67 @@ export const ChatCompareSelect = ({
     }
   }, [conversations, selectedConversations]);
 
-  return (
-    <div className="flex h-full flex-col items-center justify-center text-base text-black/80 dark:text-white/80">
-      <div className="mb-5 flex max-w-[300px] flex-col text-center">
-        <h5>{t('Select conversation to compare with')}</h5>
-        <i>
-          (
-          {t(
-            'Note: only conversations with same user messages can be compared',
-          )}
-          )
-        </i>
-      </div>
+  const Option = (item: Conversation) => {
+    const model =
+      modelsMap[item.model?.id] ||
+      (defaultModelId && modelsMap[defaultModelId]);
 
-      <Select<CompareOption>
-        className="!min-w-[220px] !rounded-md border !border-gray-900/50 text-base text-black/80 dark:bg-[#40414F] dark:text-white/80"
-        menuIsOpen
-        classNames={selectClassNames}
-        options={comparableOptions}
-        placeholder={placeholder}
-        onChange={handleOnChange}
-        components={{
-          NoOptionsMessage: NoConversationsMessage,
-          Option: CustomSelectOption,
-          SingleValue: CustomSingleValue,
-        }}
-      />
+    if (!model) {
+      return <></>;
+    }
+
+    return (
+      <div className="flex items-center gap-3 pl-1">
+        <ModelIcon
+          entity={model}
+          entityId={model.id}
+          size={24}
+          inverted={lightMode === 'dark'}
+        />
+        <span>{item.name}</span>
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex h-full flex-col items-center justify-center p-5">
+      <div className="flex max-w-[465px] flex-col gap-3 rounded bg-gray-200 p-6 dark:bg-gray-800">
+        <div className="flex flex-col gap-2 text-center">
+          <h5 className="text-base font-semibold">
+            {t('Select conversation to compare with')}
+          </h5>
+          <span className="text-gray-500">
+            (
+            {t(
+              'Note: only conversations with same user messages can be compared',
+            )}
+            )
+          </span>
+        </div>
+        {comparableConversations && (
+          <Combobox
+            items={comparableConversations}
+            getItemLabel={(conversation: Conversation) => conversation.name}
+            getItemValue={(conversation: Conversation) => conversation.id}
+            itemRow={Option}
+            placeholder={
+              (comparableConversations?.length > 0
+                ? t('Select conversation')
+                : t('No conversations available')) as string
+            }
+            disabled={!comparableConversations?.length}
+            notFoundPlaceholder={t('No conversations available') || ''}
+            onSelectItem={(itemID: string) => {
+              const selectedConversation = comparableConversations.filter(
+                (conv) => conv.id === itemID,
+              )[0];
+              if (selectedConversation) {
+                onConversationSelect(selectedConversation);
+              }
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 };
