@@ -2,12 +2,14 @@ import {
   FloatingPortal,
   autoUpdate,
   flip,
+  offset,
   size,
   useFloating,
 } from '@floating-ui/react';
 import {
   FunctionComponent,
   createElement,
+  useEffect,
   useLayoutEffect,
   useState,
 } from 'react';
@@ -22,7 +24,9 @@ interface Props<T = any> {
   initialSelectedItem?: T;
   label?: string;
   placeholder?: string;
+  notFoundPlaceholder?: string;
   itemRow?: FunctionComponent<T>;
+  disabled?: boolean;
   getItemLabel: (item: T | undefined) => string;
   getItemValue: (item: T | undefined) => string;
   onSelectItem: (value: string) => void;
@@ -33,7 +37,9 @@ export const Combobox = ({
   initialSelectedItem,
   label,
   placeholder,
+  notFoundPlaceholder,
   itemRow,
+  disabled,
   getItemLabel,
   getItemValue,
   onSelectItem,
@@ -51,6 +57,7 @@ export const Combobox = ({
           setFloatingWidth(rects.reference.width + 35);
         },
       }),
+      offset(4),
       flip(),
     ],
   });
@@ -80,12 +87,25 @@ export const Combobox = ({
     },
     items,
     defaultSelectedItem: initialSelectedItem,
-    itemToString: () => '',
+    itemToString: getItemLabel,
     onSelectedItemChange: ({ selectedItem: newSelectedItem }) => {
       onSelectItem(getItemValue(newSelectedItem));
     },
     defaultInputValue: '',
   });
+
+  useEffect(() => {
+    setDisplayedItems(
+      items.filter((item) =>
+        inputValue
+          ? getItemLabel(item)
+              .trim()
+              .toLowerCase()
+              .includes(inputValue.trim().toLowerCase())
+          : true,
+      ),
+    );
+  }, [items]);
 
   useLayoutEffect(() => {
     if (isOpen && refs.reference.current && refs.floating.current) {
@@ -103,11 +123,12 @@ export const Combobox = ({
         )}
         <div className="relative flex rounded border border-gray-400 focus-within:border-blue-500 dark:border-gray-600 dark:focus-within:border-blue-500 ">
           <input
+            disabled={disabled}
             placeholder={placeholder || ''}
             className="w-full bg-transparent px-3 py-2.5 outline-none placeholder:text-gray-500"
             {...getInputProps({ ref: refs.reference as any })}
           />
-          {!inputValue && itemRow && (
+          {!inputValue && itemRow && selectedItem && (
             <div className="pointer-events-none absolute left-3 top-2.5 flex items-center">
               {createElement(itemRow, selectedItem)}
             </div>
@@ -124,7 +145,7 @@ export const Combobox = ({
       </div>
       <FloatingPortal id="theme-main">
         <ul
-          className={`max-h-80 overflow-auto bg-gray-100 dark:bg-gray-700 ${
+          className={`z-10 max-h-80 overflow-auto rounded bg-gray-100 dark:bg-gray-700 ${
             !isOpen && 'hidden'
           }`}
           {...getMenuProps(
@@ -154,7 +175,9 @@ export const Combobox = ({
                 </li>
               ))
             ) : (
-              <li className="px-3 py-2">{t('No available items')}</li>
+              <li className="px-3 py-2">
+                {notFoundPlaceholder || t('No available items')}
+              </li>
             ))}
         </ul>
       </FloatingPortal>
