@@ -45,18 +45,14 @@ export const MessageStage = ({ stage }: Props) => {
           className="shrink-0 grow-0 basis-auto"
         />
       )}
-      <span
-        className={`block font-semibold ${
-          isOpened ? 'max-w-full' : 'truncate'
-        }`}
-      >
+      <span className={`block ${isOpened ? 'max-w-full' : 'truncate'}`}>
         {stage.name}
       </span>
     </div>
   );
 
   return (
-    <div className="block min-w-0 shrink rounded-lg border text-sm dark:border-gray-900/50 dark:bg-[#343541]">
+    <div className="block min-w-0 shrink rounded border border-gray-400 bg-gray-300 dark:border-gray-700 dark:bg-gray-900">
       {hasContent ? (
         <button
           className="flex w-full min-w-0 shrink items-center gap-2 p-2"

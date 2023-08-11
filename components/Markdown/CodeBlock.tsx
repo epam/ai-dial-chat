@@ -1,4 +1,3 @@
-import { IconCheck, IconClipboard, IconDownload } from '@tabler/icons-react';
 import { FC, memo, useContext, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { defaultStyle } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
@@ -12,6 +11,10 @@ import {
 } from '@/utils/app/codeblock';
 
 import HomeContext from '@/pages/api/home/home.context';
+
+import Check from '../../public/images/icons/check.svg';
+import Clone from '../../public/images/icons/clone.svg';
+import Download from '../../public/images/icons/download.svg';
 
 interface Props {
   language: string;
@@ -71,23 +74,27 @@ export const CodeBlock: FC<Props> = memo(({ language, value }) => {
     URL.revokeObjectURL(url);
   };
   return (
-    <div className="codeblock relative bg-white font-sans text-[16px] dark:bg-[#343541]">
-      <div className="flex items-center justify-between bg-[#343541] px-4 py-1.5 dark:bg-black">
-        <span className="text-xs lowercase text-white">{language}</span>
+    <div className="codeblock relative border border-gray-400 bg-gray-300 font-sans dark:border-gray-700 dark:bg-gray-900">
+      <div className="flex items-center justify-between p-3">
+        <span className="lowercase">{language}</span>
 
-        <div className="flex items-center ">
+        <div className="flex items-center gap-3 border-b border-gray-400 dark:border-gray-700">
           <button
-            className="flex items-center gap-1.5 rounded bg-none p-1 text-xs text-white"
+            className="flex items-center [&:not(:disabled)]:hover:text-blue-500"
             onClick={copyToClipboard}
+            disabled={isCopied}
           >
-            {isCopied ? <IconCheck size={18} /> : <IconClipboard size={18} />}
-            {isCopied ? t('Copied!') : t('Copy code')}
+            {isCopied ? (
+              <Check width={18} height={18} />
+            ) : (
+              <Clone width={18} height={18} />
+            )}
           </button>
           <button
-            className="flex items-center rounded bg-none p-1 text-xs text-white"
+            className="flex items-center rounded bg-none hover:text-blue-500"
             onClick={downloadAsFile}
           >
-            <IconDownload size={18} />
+            <Download width={18} height={18} />
           </button>
         </div>
       </div>
@@ -96,6 +103,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value }) => {
         language={language}
         style={codeBlockTheme[lightMode]}
         customStyle={{ margin: 0, borderRadius: 0 }}
+        
       >
         {value}
       </SyntaxHighlighter>
