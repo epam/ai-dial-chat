@@ -13,15 +13,15 @@ export const ConversationsRenderer = ({
   return (
     <>
       {conversations.length > 0 && (
-        <>
-          <div className="ml-2 text-[#7F8792]">{label}</div>
+        <div className="px-2 pt-2">
+          <div className="px-3 py-1 text-[12px] text-gray-500">{label}</div>
           {conversations.map((conversation) => (
             <ConversationComponent
               key={conversation.id}
               conversation={conversation}
             />
           ))}
-        </>
+        </div>
       )}
     </>
   );

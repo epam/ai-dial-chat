@@ -206,7 +206,10 @@ const Home = ({
 
   // FOLDER OPERATIONS  --------------------------------------------
 
-  const handleCreateFolder = (name: string, type: FolderType) => {
+  const handleCreateFolder = (
+    name: string,
+    type: FolderType,
+  ): FolderInterface => {
     const newFolder: FolderInterface = {
       id: uuidv4(),
       name,
@@ -217,6 +220,7 @@ const Home = ({
 
     dispatch({ field: 'folders', value: updatedFolders });
     saveFolders(updatedFolders);
+    return newFolder;
   };
 
   const handleDeleteFolder = (folderId: string) => {

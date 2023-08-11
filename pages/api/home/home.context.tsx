@@ -4,7 +4,7 @@ import { ActionType } from '@/hooks/useCreateReducer';
 
 import { Conversation } from '@/types/chat';
 import { KeyValuePair } from '@/types/data';
-import { FolderType } from '@/types/folder';
+import { FolderInterface, FolderType } from '@/types/folder';
 
 import { HomeInitialState } from './home.state';
 
@@ -16,7 +16,7 @@ export interface HomeContextProps {
     name?: string,
     count?: number,
   ) => Conversation[] | undefined;
-  handleCreateFolder: (name: string, type: FolderType) => void;
+  handleCreateFolder: (name: string, type: FolderType) => FolderInterface;
   handleDeleteFolder: (folderId: string) => void;
   handleUpdateFolder: (folderId: string, name: string) => void;
   handleSelectConversation: (conversation: Conversation) => void;

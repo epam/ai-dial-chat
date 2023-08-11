@@ -1,10 +1,13 @@
-import { IconMistOff } from '@tabler/icons-react';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { FeatureType } from '@/types/components';
 import { FolderInterface } from '@/types/folder';
 
+import { NoResultsFound } from '../Common/NoResultsFound';
 import Search from '../Search';
+
+import classNames from 'classnames';
 
 interface Props<T> {
   isOpen: boolean;
@@ -16,6 +19,7 @@ interface Props<T> {
   folders: FolderInterface[];
   footerComponent?: ReactNode;
   searchTerm: string;
+  featureType: FeatureType;
   handleSearchTerm: (searchTerm: string) => void;
   toggleOpen?: () => void;
   handleDrop: (e: any) => void;
@@ -31,6 +35,7 @@ const Sidebar = <T,>({
   folders,
   footerComponent,
   searchTerm,
+  featureType,
   handleSearchTerm,
   handleDrop,
 }: Props<T>) => {
@@ -50,25 +55,25 @@ const Sidebar = <T,>({
 
   return isOpen ? (
     <div
-      className={`fixed top-12 ${side}-0 z-40 flex h-full w-[260px] flex-none flex-col space-y-2 bg-gray-100 p-2 text-[14px] transition-all dark:bg-gray-900 lg:relative lg:top-0`}
+      className={classNames(
+        `fixed top-12 z-40 flex h-full w-[260px] flex-none shrink-0 flex-col space-y-2 divide-y divide-gray-100 border-r border-gray-300 bg-gray-100 text-[14px] text-gray-800 transition-all dark:divide-gray-900 dark:border-gray-900 dark:bg-gray-700 dark:text-gray-200 lg:relative lg:top-0`,
+        `${side}-0`,
+      )}
     >
-      {actionButtons}
       <Search
-        placeholder={t('Search...') || ''}
+        placeholder={t('Search {{name}}...', { name: featureType })}
         searchTerm={searchTerm}
         onSearch={handleSearchTerm}
       />
-
+      {actionButtons}
       <div className="grow overflow-auto">
         {folders?.length > 0 && (
-          <div className="flex border-b border-white/20 pb-2">
-            {folderComponent}
-          </div>
+          <div className="flex p-2">{folderComponent}</div>
         )}
 
         {items?.length > 0 ? (
           <div
-            className="pt-2"
+            className="h-[full-46px] border-t border-gray-100 dark:border-gray-900"
             onDrop={handleDrop}
             onDragOver={allowDrop}
             onDragEnter={highlightDrop}
@@ -77,12 +82,12 @@ const Sidebar = <T,>({
             {itemComponent}
           </div>
         ) : (
-          <div className="mt-8 select-none text-center opacity-50">
-            <IconMistOff className="mx-auto mb-3" />
-            <span className="text-[14px] leading-normal">{t('No data.')}</span>
+          <div className="flex h-full content-center justify-center">
+            <NoResultsFound />
           </div>
         )}
       </div>
+
       {footerComponent}
     </div>
   ) : null;

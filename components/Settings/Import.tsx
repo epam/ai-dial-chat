@@ -1,16 +1,16 @@
-import { IconFileImport } from '@tabler/icons-react';
 import { FC, useRef } from 'react';
 
+import FileLeftIcon from '../../public/images/icons/file-arrow-left.svg';
 import { ImportConversationsHandler } from '../Chatbar/Chatbar.context';
 import { ImportPromptsHandler } from '../Promptbar/PromptBar.context';
-import { SidebarButton } from '../Sidebar/SidebarButton';
+
+// import { SidebarButton } from '../Sidebar/SidebarButton';
 
 interface Props {
-  text: string;
   onImport: ImportConversationsHandler | ImportPromptsHandler;
 }
 
-export const Import: FC<Props> = ({ onImport, text }) => {
+export const Import: FC<Props> = ({ onImport }) => {
   const ref = useRef<HTMLInputElement>(null);
   return (
     <>
@@ -33,8 +33,18 @@ export const Import: FC<Props> = ({ onImport, text }) => {
           reader.readAsText(file);
         }}
       />
-
-      <SidebarButton
+      <div
+        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center"
+        onClick={() => {
+          const importFile = ref.current;
+          if (importFile) {
+            importFile.click();
+          }
+        }}
+      >
+        <FileLeftIcon width={24} height={24} />
+      </div>
+      {/* <SidebarButton
         text={text}
         icon={<IconFileImport size={18} />}
         onClick={() => {
@@ -43,7 +53,7 @@ export const Import: FC<Props> = ({ onImport, text }) => {
             importFile.click();
           }
         }}
-      />
+      /> */}
     </>
   );
 };

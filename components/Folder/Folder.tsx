@@ -1,13 +1,6 @@
 import {
-  IconCaretDown,
-  IconCaretRight,
-  IconCheck,
-  IconPencil,
-  IconTrash,
-  IconX,
-} from '@tabler/icons-react';
-import {
   KeyboardEvent,
+  MouseEventHandler,
   ReactElement,
   useContext,
   useEffect,
@@ -20,6 +13,14 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
 
+import CaretDownIcon from '../../public/images/icons/caret-down.svg';
+import CaretRightIcon from '../../public/images/icons/caret-right.svg';
+import CheckIcon from '../../public/images/icons/check.svg';
+import XmarkIcon from '../../public/images/icons/xmark.svg';
+import { FolderContextMenu } from '../Common/FolderContextMenu';
+
+import classNames from 'classnames';
+
 interface Props {
   currentFolder: FolderInterface;
   searchTerm: string;
@@ -27,6 +28,21 @@ interface Props {
   folderComponent: (ReactElement | undefined)[];
 }
 
+interface CaretIconComponentProps {
+  isOpen: boolean;
+}
+
+const CaretIconComponent = ({ isOpen }: CaretIconComponentProps) => {
+  return (
+    <>
+      {isOpen ? (
+        <CaretDownIcon className="text-gray-500" width={18} height={18} />
+      ) : (
+        <CaretRightIcon className="text-gray-500" width={18} height={18} />
+      )}
+    </>
+  );
+};
 const Folder = ({
   currentFolder,
   searchTerm,
@@ -39,6 +55,7 @@ const Folder = ({
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const [isShowContextMenuButton, setIsShowContextMenuButton] = useState(false);
 
   const handleEnterDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter') {
@@ -75,6 +92,17 @@ const Folder = ({
     e.target.style.background = 'none';
   };
 
+  const onRename: MouseEventHandler = (e) => {
+    e.stopPropagation();
+    setIsRenaming(true);
+    setRenameValue(currentFolder.name);
+  };
+
+  const onDelete: MouseEventHandler = (e) => {
+    e.stopPropagation();
+    setIsDeleting(true);
+  };
+
   useEffect(() => {
     if (isRenaming) {
       setIsDeleting(false);
@@ -93,16 +121,18 @@ const Folder = ({
 
   return (
     <>
-      <div className="relative flex items-center">
+      <div
+        className={classNames(
+          'relative flex h-[42px] items-center rounded-[3px] hover:bg-green/[15%]',
+          isRenaming || isDeleting ? 'bg-green/[15%]' : '',
+        )}
+      >
         {isRenaming ? (
-          <div className="flex w-full items-center gap-3 bg-[#343541]/90 p-3">
-            {isOpen ? (
-              <IconCaretDown size={18} />
-            ) : (
-              <IconCaretRight size={18} />
-            )}
+          <div className="flex w-full items-center gap-3 px-3">
+            <CaretIconComponent isOpen={isOpen} />
+
             <input
-              className="mr-12 flex-1 overflow-hidden text-ellipsis border-neutral-400 bg-transparent text-left text-[12.5px] leading-3 text-white outline-none focus:border-neutral-100"
+              className="mr-12 flex-1 overflow-hidden text-ellipsis bg-transparent text-left leading-3 outline-none"
               type="text"
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
@@ -112,27 +142,32 @@ const Folder = ({
           </div>
         ) : (
           <button
-            className={`flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-sm transition-colors duration-200 hover:bg-[#343541]/90`}
+            className={`flex w-full cursor-pointer items-center gap-3 p-3 transition-colors duration-200`}
             onClick={() => setIsOpen(!isOpen)}
             onDrop={(e) => dropHandler(e)}
             onDragOver={allowDrop}
             onDragEnter={highlightDrop}
             onDragLeave={removeHighlight}
+            onMouseOver={() => {
+              setIsShowContextMenuButton(true);
+            }}
+            onMouseLeave={() => {
+              setIsShowContextMenuButton(false);
+            }}
           >
-            {isOpen ? (
-              <IconCaretDown size={18} />
-            ) : (
-              <IconCaretRight size={18} />
-            )}
+            <CaretIconComponent isOpen={isOpen} />
 
             <div className="relative max-h-5 flex-1 truncate break-all text-left text-[12.5px] leading-3">
               {currentFolder.name}
             </div>
+
+            {!isDeleting && !isRenaming && isShowContextMenuButton && (
+              <FolderContextMenu onRename={onRename} onDelete={onDelete} />
+            )}
           </button>
         )}
-
         {(isDeleting || isRenaming) && (
-          <div className="absolute right-1 z-10 flex text-gray-300">
+          <div className="absolute right-1 z-10 flex">
             <SidebarActionButton
               handleClick={(e) => {
                 e.stopPropagation();
@@ -147,7 +182,7 @@ const Folder = ({
                 setIsRenaming(false);
               }}
             >
-              <IconCheck size={18} />
+              <CheckIcon width={18} height={18} size={18} />
             </SidebarActionButton>
             <SidebarActionButton
               handleClick={(e) => {
@@ -156,29 +191,7 @@ const Folder = ({
                 setIsRenaming(false);
               }}
             >
-              <IconX size={18} />
-            </SidebarActionButton>
-          </div>
-        )}
-
-        {!isDeleting && !isRenaming && (
-          <div className="absolute right-1 z-10 flex text-gray-300">
-            <SidebarActionButton
-              handleClick={(e) => {
-                e.stopPropagation();
-                setIsRenaming(true);
-                setRenameValue(currentFolder.name);
-              }}
-            >
-              <IconPencil size={18} />
-            </SidebarActionButton>
-            <SidebarActionButton
-              handleClick={(e) => {
-                e.stopPropagation();
-                setIsDeleting(true);
-              }}
-            >
-              <IconTrash size={18} />
+              <XmarkIcon width={18} height={18} size={18} strokeWidth="2" />
             </SidebarActionButton>
           </div>
         )}
