@@ -103,7 +103,6 @@ export const CodeBlock: FC<Props> = memo(({ language, value }) => {
         language={language}
         style={codeBlockTheme[lightMode]}
         customStyle={{ margin: 0, borderRadius: 0 }}
-        
       >
         {value}
       </SyntaxHighlighter>
