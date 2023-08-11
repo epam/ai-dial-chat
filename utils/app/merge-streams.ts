@@ -54,6 +54,10 @@ export const mergeMessages = (
       source.role = newData.role;
     }
 
+    if (newData.responseId) {
+      source.responseId = newData.responseId;
+    }
+
     if (newData.content) {
       if (!source.content) {
         source.content = '';
@@ -92,6 +96,5 @@ export const mergeMessages = (
       }
     }
   });
-
   return source;
 };
