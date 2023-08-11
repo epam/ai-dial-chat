@@ -39,7 +39,7 @@ export const PromptComponent = ({ prompt }: Props) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
-  const [isShowContextMenuButton, setIsShowContextMenuButton] = useState(true);
+  const [isShowContextMenuButton, setIsShowContextMenuButton] = useState(false);
 
   const wrapperRef = useRef(null);
 
@@ -103,6 +103,11 @@ export const PromptComponent = ({ prompt }: Props) => {
 
     exportPrompt(prompt.id);
   };
+  const movePromptToFolder = (folderId: string) => {
+    const newPrompt = { ...prompt, folderId: folderId };
+    prompt.folderId;
+    handleUpdatePrompt(newPrompt);
+  };
 
   useEffect(() => {
     if (isRenaming) {
@@ -163,32 +168,13 @@ export const PromptComponent = ({ prompt }: Props) => {
         >
           <ContextMenu
             featureType="prompt"
+            moveToFolder={movePromptToFolder}
             onDelete={handleOpenDeleteModal}
             onRename={handleOpenRenameModal}
             onExport={handleExportPrompt}
-            prompt={prompt}
+            item={prompt}
           />
         </div>
-        // <div
-        //   className="absolute right-1 z-10 flex "
-        //   ref={wrapperRef}
-        //   onClick={handleOnClickPrompt}
-        // >
-        //   <SidebarActionButton handleClick={handleOnClickContextMenuButton}>
-        //     <IconDots size={18} />
-        //   </SidebarActionButton>
-        //   <div className="relative" ref={contextMenuParentRef}>
-        //     {!isDeleting && !isRenaming && isContextMenuOpened && (
-        //       <ContextMenu
-        //         parentRef={contextMenuParentRef}
-        //         onDelete={handleOpenDeleteModal}
-        //         onRename={handleOpenRenameModal}
-        //         onExport={handleExportPrompt}
-        //         featureType="prompt"
-        //       />
-        //     )}
-        //   </div>
-        // </div>
       )}
 
       {showModal && (

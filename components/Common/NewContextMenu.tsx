@@ -15,15 +15,14 @@ import PenIcon from '../../public/images/icons/pen-line.svg';
 import ReplayIcon from '../../public/images/icons/replay.svg';
 import CompareIcon from '../../public/images/icons/scale-balanced.svg';
 import TrashIcon from '../../public/images/icons/trash.svg';
-import PromptbarContext from '../Promptbar/PromptBar.context';
 import { Menu, MenuItem } from './DropdownMenu';
 
 import classNames from 'classnames';
 
 interface ContextMenuProps {
-  conversation?: Conversation;
-  prompt?: Prompt;
+  item: Conversation | Prompt;
   featureType: FeatureType;
+  moveToFolder?: (folderId: string) => void;
   onDelete: MouseEventHandler<unknown>;
   onRename: MouseEventHandler<unknown>;
   onExport: MouseEventHandler<unknown>;
@@ -34,8 +33,7 @@ interface ContextMenuProps {
 }
 
 export const ContextMenu = ({
-  conversation,
-  prompt,
+  item,
   featureType,
   onDelete,
   onRename,
@@ -44,6 +42,7 @@ export const ContextMenu = ({
   onCompare,
   isEmptyConversation,
   className,
+  moveToFolder,
 }: ContextMenuProps) => {
   const { t } = useTranslation('sidebar');
   const {
@@ -52,26 +51,23 @@ export const ContextMenu = ({
     handleUpdateConversation,
   } = useContext(HomeContext);
 
-  const { handleUpdatePrompt } = useContext(PromptbarContext);
-
   const moveConversationToFolder = (folderId: string) => {
-    if (conversation) {
-      handleUpdateConversation(conversation, {
+    if (featureType === 'chat') {
+      handleUpdateConversation(item as Conversation, {
         key: 'folderId',
         value: folderId,
       });
     }
   };
-  const movePromptToFolder = (folderId: string) => {
-    if (prompt) {
-      const newPrompt = { ...prompt, folderId: folderId };
-      prompt.folderId;
-      handleUpdatePrompt(newPrompt);
-    }
-  };
+
   const moveToNewFolder = () => {
     const newFolder = handleCreateFolder(t('New folder'), featureType);
-    moveConversationToFolder(newFolder.id);
+    if (featureType === 'chat') {
+      moveConversationToFolder(newFolder.id);
+    }
+    if (moveToFolder) {
+      moveToFolder(newFolder.id);
+    }
   };
   return (
     <>
@@ -149,7 +145,6 @@ export const ContextMenu = ({
           }
         >
           <MenuItem
-            // style={{ borderBottom: '1px solid' }}
             className="border-b border-gray-400 dark:border-gray-600"
             label="New folder"
             onClick={moveToNewFolder}
@@ -170,9 +165,9 @@ export const ContextMenu = ({
                 key={folder.id}
                 label={folder.name}
                 onClick={() => {
-                  conversation
-                    ? moveConversationToFolder(folder.id)
-                    : movePromptToFolder(folder.id);
+                  moveToFolder
+                    ? moveToFolder(folder.id)
+                    : moveConversationToFolder(folder.id);
                 }}
               />
             ))}

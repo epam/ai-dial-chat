@@ -202,7 +202,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
             onMouseLeave={onMouseLeaveHandler}
           >
             <ContextMenu
-              conversation={conversation}
+              item={conversation}
               onDelete={handleOpenDeleteModal}
               onRename={handleOpenRenameModal}
               onExport={() => {

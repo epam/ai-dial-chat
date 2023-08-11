@@ -1,10 +1,10 @@
-import { IconMistOff } from '@tabler/icons-react';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { FeatureType } from '@/types/components';
 import { FolderInterface } from '@/types/folder';
 
+import { NoResultsFound } from '../Common/NoResultsFound';
 import Search from '../Search';
 
 import classNames from 'classnames';
@@ -73,6 +73,7 @@ const Sidebar = <T,>({
 
         {items?.length > 0 ? (
           <div
+            className="h-[full-46px] border-t border-gray-100 dark:border-gray-900"
             onDrop={handleDrop}
             onDragOver={allowDrop}
             onDragEnter={highlightDrop}
@@ -81,9 +82,8 @@ const Sidebar = <T,>({
             {itemComponent}
           </div>
         ) : (
-          <div className="mt-8 select-none text-center opacity-50">
-            <IconMistOff className="mx-auto mb-3" />
-            <span className="leading-normal">{t('No data.')}</span>
+          <div className="flex h-full content-center justify-center">
+            <NoResultsFound />
           </div>
         )}
       </div>
