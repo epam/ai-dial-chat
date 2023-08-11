@@ -1,43 +1,30 @@
-import { FC, useContext, useState } from 'react';
+import { FC, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { DEFAULT_TEMPERATURE } from '@/utils/app/const';
-
-import { Conversation } from '@/types/chat';
-
-import HomeContext from '@/pages/api/home/home.context';
 
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 
 interface Props {
   label: string;
+  temperature: number | undefined;
   onChangeTemperature: (temperature: number) => void;
-  conversation: Conversation;
 }
 
 export const TemperatureSlider: FC<Props> = ({
   label,
   onChangeTemperature,
-  conversation,
+  temperature,
 }) => {
-  const {
-    state: { conversations },
-  } = useContext(HomeContext);
-
-  const [temperature, setTemperature] = useState<number>(() => {
-    const lastConversation = conversations[conversations.length - 1];
-    return (
-      conversation.temperature ??
-      lastConversation?.temperature ??
-      DEFAULT_TEMPERATURE
-    );
+  const [currentTemperature, setCurrentTemperature] = useState<number>(() => {
+    return temperature ?? DEFAULT_TEMPERATURE;
   });
   const { t } = useTranslation('chat');
   const handleChange = (value: number) => {
     const newValue = parseFloat(value);
-    setTemperature(newValue);
+    setCurrentTemperature(newValue);
     onChangeTemperature(newValue);
   };
 
@@ -50,7 +37,7 @@ export const TemperatureSlider: FC<Props> = ({
         onMouseDown={props.onMouseDown}
         onTouchStart={props.onTouchStart}
       >
-        {temperature}
+        {currentTemperature}
       </div>
     );
   };

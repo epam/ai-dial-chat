@@ -3,18 +3,14 @@ import { useTranslation } from 'react-i18next';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/utils/app/const';
 
-import { Conversation } from '@/types/chat';
-import {
-  OpenAIEntityAddon,
-  OpenAIEntityModel,
-  OpenAIEntityModelID,
-} from '@/types/openai';
+import { OpenAIEntityModel } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
+import XMark from '../../public/images/icons/xmark.svg';
 import { Combobox } from '../Common/Combobox';
 import { Addons } from './Addons';
 import { ConversationSettingsModel } from './ConversationSettingsModels';
@@ -22,44 +18,55 @@ import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 
 interface Props {
-  conversation: Conversation;
   model: OpenAIEntityModel | undefined;
+  assistantModelId: string | undefined;
+  prompt: string | undefined;
+  temperature: number | undefined;
   prompts: Prompt[];
-  defaultModelId: OpenAIEntityModelID;
-  addons: OpenAIEntityAddon[];
-  onChangeAddon: (addonId: string) => void;
+  selectedAddons: string[];
+  isApplyEnabled?: boolean;
+  isCloseEnabled?: boolean;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
   onSelectModel: (modelId: string) => void;
   onSelectAssistantSubModel: (modelId: string) => void;
+  onApplyAddons: (addonsIds: string[]) => void;
+  onChangeAddon: (addonsId: string) => void;
+  onApplySettings?: () => void;
+  onClose?: () => void;
 }
 
 export const ConversationSettings = ({
   model,
-  conversation,
+  assistantModelId,
   prompts,
+  prompt,
+  temperature,
+  selectedAddons,
+  isApplyEnabled,
+  isCloseEnabled,
+  onClose,
   onSelectModel,
   onSelectAssistantSubModel,
   onChangePrompt,
   onChangeTemperature,
   onChangeAddon,
+  onApplyAddons,
+  onApplySettings,
 }: Props) => {
   const {
     state: { modelsMap, models, lightMode },
-    handleUpdateConversation,
   } = useContext(HomeContext);
   const { t } = useTranslation('chat');
   const [assistantSubModel, setAssistantSubModel] = useState(() => {
-    return modelsMap[
-      conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id
-    ];
+    return modelsMap[assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id];
   });
 
   useEffect(() => {
     setAssistantSubModel(
-      modelsMap[conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id],
+      modelsMap[assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id],
     );
-  }, [conversation.assistantModelId, modelsMap]);
+  }, [assistantModelId, modelsMap]);
 
   const getModelSelectRow = () => {
     const ModelSelectRow = (model: OpenAIEntityModel) => {
@@ -80,70 +87,91 @@ export const ConversationSettings = ({
   };
 
   return (
-    <div className="grid w-full min-w-[50%] gap-[1px] md:grid-cols-2">
-      <div className="overflow-auto bg-gray-200 px-5 py-4 dark:bg-gray-800">
-        <ConversationSettingsModel
-          modelId={conversation.model.id}
-          onModelSelect={onSelectModel}
-        />
-      </div>
-      {model ? (
-        <div className="flex max-h-full shrink flex-col gap-[1px] overflow-auto">
-          {model.type === 'assistant' && assistantSubModel && (
-            <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
-              <Combobox
-                label="Model"
-                items={models.filter((model) => model.type === 'model')}
-                initialSelectedItem={assistantSubModel}
-                getItemLabel={(model: OpenAIEntityModel) =>
-                  model.name || model.id
-                }
-                getItemValue={(model: OpenAIEntityModel) => model.id}
-                itemRow={getModelSelectRow()}
-                onSelectItem={(itemID: string) => {
-                  onSelectAssistantSubModel(itemID);
-                }}
-              />
-            </div>
-          )}
-          {model.type === 'model' && (
-            <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
-              <SystemPrompt
-                conversation={conversation}
-                prompts={prompts}
-                onChangePrompt={onChangePrompt}
-              />
-            </div>
-          )}
-
-          {model.type !== 'application' && (
-            <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
-              <TemperatureSlider
-                label={t('Temperature')}
-                onChangeTemperature={onChangeTemperature}
-                conversation={conversation}
-              />
-            </div>
-          )}
-
-          {model.type !== 'application' && (
-            <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
-              <Addons
-                preselectedAddonsIds={model.selectedAddons || []}
-                selectedAddonsIds={conversation.selectedAddons}
-                onChangeAddon={onChangeAddon}
-                onApplyAddons={(addonsIds) => {
-                  handleUpdateConversation(conversation, {
-                    key: 'selectedAddons',
-                    value: addonsIds,
-                  });
-                }}
-              />
-            </div>
-          )}
+    <div className="flex min-w-[50%] flex-col gap-[1px]">
+      <div className="relative grid w-full gap-[1px] md:grid-cols-2">
+        <div className="overflow-auto bg-gray-200 px-5 py-4 dark:bg-gray-800">
+          <ConversationSettingsModel
+            modelId={model?.id}
+            onModelSelect={onSelectModel}
+          />
         </div>
-      ) : (
-        <div>{t('No settings available')}</div>
+        {model ? (
+          <div className="flex max-h-full shrink flex-col gap-[1px] overflow-auto">
+            {model.type === 'assistant' && assistantSubModel && (
+              <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
+                <Combobox
+                  label="Model"
+                  items={models.filter((model) => model.type === 'model')}
+                  initialSelectedItem={assistantSubModel}
+                  getItemLabel={(model: OpenAIEntityModel) =>
+                    model.name || model.id
+                  }
+                  getItemValue={(model: OpenAIEntityModel) => model.id}
+                  itemRow={getModelSelectRow()}
+                  onSelectItem={(itemID: string) => {
+                    onSelectAssistantSubModel(itemID);
+                  }}
+                />
+              </div>
+            )}
+            {model.type === 'model' && (
+              <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
+                <SystemPrompt
+                  model={model}
+                  prompt={prompt}
+                  prompts={prompts}
+                  onChangePrompt={onChangePrompt}
+                />
+              </div>
+            )}
+
+            {model.type !== 'application' && (
+              <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
+                <TemperatureSlider
+                  label={t('Temperature')}
+                  onChangeTemperature={onChangeTemperature}
+                  temperature={temperature}
+                />
+              </div>
+            )}
+
+            {model.type !== 'application' && (
+              <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
+                <Addons
+                  preselectedAddonsIds={model.selectedAddons || []}
+                  selectedAddonsIds={selectedAddons}
+                  onChangeAddon={onChangeAddon}
+                  onApplyAddons={onApplyAddons}
+                />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex justify-center p-3">
+            {t('No settings available')}
+          </div>
+        )}
+        {isCloseEnabled && (
+          <button
+            className="absolute right-3 top-3 text-gray-500 hover:text-blue-500"
+            onClick={onClose}
+          >
+            <XMark height={24} width={24} />
+          </button>
+        )}
+      </div>
+      {isApplyEnabled && onApplySettings && (
+        <div className="flex items-center justify-center bg-gray-200 px-5 py-4 dark:bg-gray-800">
+          <button
+            className="rounded bg-blue-500 px-3 py-2.5"
+            onClick={() => {
+              onClose?.();
+              onApplySettings();
+            }}
+          >
+            {t('Apply changes')}
+          </button>
+        </div>
       )}
     </div>
   );

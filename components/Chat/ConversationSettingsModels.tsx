@@ -11,7 +11,7 @@ import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelsDialog } from './ModelsDialog';
 
 interface Props {
-  modelId: string;
+  modelId: string | undefined;
   onModelSelect: (modelId: string) => void;
 }
 

@@ -18,7 +18,7 @@ import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
 
 interface Props {
-  selectedModelId: string;
+  selectedModelId: string | undefined;
   isOpen: boolean;
   onModelSelect: (selectedModelId: string) => void;
   onClose: () => void;

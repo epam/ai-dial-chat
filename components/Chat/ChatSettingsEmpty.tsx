@@ -28,9 +28,8 @@ interface Props {
   appName: string;
 }
 
-export const ChatEmpty = ({
+export const ChatSettingsEmpty = ({
   models,
-  addons,
   conversation,
   prompts,
   defaultModelId,
@@ -44,6 +43,7 @@ export const ChatEmpty = ({
 }: Props) => {
   const {
     state: { modelsMap },
+    handleUpdateConversation,
   } = useContext(HomeContext);
 
   return (
@@ -65,16 +65,25 @@ export const ChatEmpty = ({
           {isShowSettings && models.length !== 0 && (
             <>
               <ConversationSettings
-                defaultModelId={defaultModelId}
-                model={modelsMap[conversation.model.id]}
-                conversation={conversation}
+                model={
+                  modelsMap[conversation.model.id] || modelsMap[defaultModelId]
+                }
+                assistantModelId={conversation.assistantModelId}
+                prompt={conversation.prompt}
+                selectedAddons={conversation.selectedAddons}
+                temperature={conversation.temperature}
                 prompts={prompts}
-                addons={addons}
                 onChangePrompt={onChangePrompt}
                 onChangeTemperature={onChangeTemperature}
                 onSelectAssistantSubModel={onSelectAssistantSubModel}
                 onSelectModel={onSelectModel}
                 onChangeAddon={onChangeAddon}
+                onApplyAddons={(addons) => {
+                  handleUpdateConversation(conversation, {
+                    key: 'selectedAddons',
+                    value: addons,
+                  });
+                }}
               />
             </>
           )}
