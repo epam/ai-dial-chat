@@ -57,7 +57,7 @@ export const PromptFolders = () => {
             currentFolder={folder}
             handleDrop={handleDrop}
             folderComponent={PromptFolders(folder)}
-            highlightColor="violet/[15%]"
+            highlightColor="violet"
           />
         ))}
     </div>

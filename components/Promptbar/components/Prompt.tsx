@@ -123,8 +123,8 @@ export const PromptComponent = ({ prompt }: Props) => {
   return (
     <div
       className={classNames(
-        'group relative flex h-[42px] cursor-pointer items-center rounded-[3px] transition-colors duration-200 hover:bg-violet/[15%]',
-        isSelected ? 'border-l-2 border-l-violet bg-violet/[15%]' : '',
+        'group relative flex h-[42px] cursor-pointer items-center rounded transition-colors duration-200 hover:bg-violet/15',
+        isSelected ? 'border-l-2 border-l-violet bg-violet/15' : '',
       )}
       ref={wrapperRef}
       onClick={handleOnClickPrompt}
@@ -170,7 +170,7 @@ export const PromptComponent = ({ prompt }: Props) => {
               setIsShowMoveToModal(true);
             }}
             item={prompt}
-            highlightColor="violet/[15%]"
+            highlightColor="violet"
           />
         </div>
       )}

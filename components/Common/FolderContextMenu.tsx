@@ -1,17 +1,17 @@
 import { MouseEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { HighlightColor } from '@/types/components';
+
 import DotsIcon from '../../public/images/icons/dots-vertical.svg';
 import PenIcon from '../../public/images/icons/pen-line.svg';
 import TrashIcon from '../../public/images/icons/trash.svg';
 import { Menu, MenuItem } from './DropdownMenu';
 
-import classNames from 'classnames';
-
 interface FolderContextMenuProps {
   onDelete: MouseEventHandler<unknown>;
   onRename: MouseEventHandler<unknown>;
-  highlightColor: string;
+  highlightColor: HighlightColor;
 }
 export const FolderContextMenu = ({
   onDelete,
@@ -36,7 +36,11 @@ export const FolderContextMenu = ({
       }
     >
       <MenuItem
-        className={classNames(`hover:bg-${highlightColor}`)}
+        className={`${
+          highlightColor === 'green'
+            ? 'hover:bg-green/15'
+            : 'hover:bg-violet/15'
+        }`}
         label={t('Edit')}
         Icon={
           <PenIcon className="text-gray-500" width={18} height={18} size={18} />
@@ -44,7 +48,11 @@ export const FolderContextMenu = ({
         onClick={onRename}
       />
       <MenuItem
-        className={classNames(`hover:bg-${highlightColor}`)}
+        className={`${
+          highlightColor === 'green'
+            ? 'hover:bg-green/15'
+            : 'hover:bg-violet/15'
+        }`}
         label={t('Delete')}
         Icon={
           <TrashIcon

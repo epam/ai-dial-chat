@@ -124,9 +124,9 @@ export const ConversationComponent = ({ conversation }: Props) => {
   return (
     <div
       className={classNames(
-        'group relative flex h-[42px] items-center rounded-[3px] hover:bg-green/[15%]',
+        'group relative flex h-[42px] items-center rounded hover:bg-green/15',
         selectedConversationIds.includes(conversation.id)
-          ? 'border-l-2 border-l-green bg-green/[15%]'
+          ? 'border-l-2 border-l-green bg-green/15'
           : '',
       )}
     >
@@ -210,7 +210,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
             onReplay={handleStartReplay}
             isEmptyConversation={isEmptyConversation}
             featureType="chat"
-            highlightColor="green/[15%]"
+            highlightColor="green"
           />
         </div>
       )}

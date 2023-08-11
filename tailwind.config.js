@@ -41,6 +41,9 @@ module.exports = {
       borderRadius: {
         DEFAULT: '3px',
       },
+      opacity: {
+        15: '15%',
+      },
     },
   },
   variants: {

@@ -1,3 +1,4 @@
+import { FloatingOverlay } from '@floating-ui/react';
 import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,7 +10,6 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import FolderPlusIcon from '../../public/images/icons/folder-plus.svg';
 import XmarkIcon from '../../public/images/icons/xmark.svg';
-import { BlackOutModal } from './BlackOutModal';
 
 interface MoveToFolderMobileModalProps {
   item: Conversation | Prompt;
@@ -48,8 +48,8 @@ export const MoveToFolderMobileModal = ({
     }
   };
   return (
-    <BlackOutModal>
-      <div className="flex h-[calc(100vh-12px)] w-[calc(100vw-12px)] flex-col divide-y divide-gray-300 bg-gray-100 dark:divide-gray-900 dark:bg-gray-700">
+    <FloatingOverlay className="flex items-center justify-center bg-gray-900/70 p-3">
+      <div className="flex h-full w-full flex-col divide-y divide-gray-300 bg-gray-100 dark:divide-gray-900 dark:bg-gray-700">
         <div className="flex items-end justify-between px-3 pb-2 pt-4">
           <span className="h-min">Move to</span>
           <span onClick={onClose}>
@@ -57,7 +57,7 @@ export const MoveToFolderMobileModal = ({
           </span>
         </div>
         <div
-          className="flex h-[42px] gap-3  rounded-[3px] px-6 py-2 hover:bg-green/[15%]"
+          className="flex h-[42px] gap-3  rounded px-6 py-2 hover:bg-green/15"
           onClick={moveToNewFolder}
         >
           <FolderPlusIcon
@@ -75,7 +75,7 @@ export const MoveToFolderMobileModal = ({
             .map((folder) => (
               <div
                 key={folder.id}
-                className="flex h-[42px] items-center rounded-[3px] px-6 hover:bg-green/[15%]"
+                className="flex h-[42px] items-center rounded px-6 hover:bg-green/15"
                 onClick={() => {
                   moveToFolder
                     ? moveToFolder(folder.id)
@@ -87,6 +87,6 @@ export const MoveToFolderMobileModal = ({
             ))}
         </div>
       </div>
-    </BlackOutModal>
+    </FloatingOverlay>
   );
 };

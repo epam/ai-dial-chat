@@ -57,7 +57,7 @@ export const ChatFolders = ({ searchTerm }: Props) => {
             currentFolder={folder}
             handleDrop={handleDrop}
             folderComponent={ChatFolders(folder)}
-            highlightColor="green/[15%]"
+            highlightColor="green"
           />
         ))}
     </div>

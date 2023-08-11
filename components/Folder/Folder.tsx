@@ -10,6 +10,7 @@ import {
 
 import useOutsideAlerter from '@/hooks/useOutsideAlerter';
 
+import { HighlightColor } from '@/types/components';
 import { FolderInterface } from '@/types/folder';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -25,7 +26,7 @@ import { FolderContextMenu } from '../Common/FolderContextMenu';
 import classNames from 'classnames';
 
 interface Props {
-  highlightColor: string;
+  highlightColor: HighlightColor;
   currentFolder: FolderInterface;
   searchTerm: string;
   handleDrop: (e: any, folder: FolderInterface) => void;
@@ -126,13 +127,15 @@ const Folder = ({
   }, [searchTerm]);
 
   useOutsideAlerter(wrapperRef, setIsSelected);
-
+  const hoverColor =
+    highlightColor === 'green' ? 'hover:bg-green/15' : 'hover:bg-violet/15';
   return (
     <>
       <div
         className={classNames(
-          `group relative flex h-[42px] items-center rounded-[3px] hover:bg-${highlightColor}`,
-          isRenaming || isDeleting || isSelected ? `bg-${highlightColor}` : '',
+          'group relative flex h-[42px] items-center rounded',
+          isRenaming || isDeleting || isSelected ? hoverColor : '',
+          hoverColor,
         )}
         ref={wrapperRef}
       >

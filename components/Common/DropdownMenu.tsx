@@ -211,7 +211,7 @@ export const MenuComponent = forwardRef<
                 returnFocus={!isNested}
               >
                 <div
-                  className="z-50 w-max rounded-[3px] bg-gray-100 text-gray-800 focus-visible:outline-none dark:bg-black dark:text-gray-200"
+                  className="z-50 w-max rounded bg-gray-100 text-gray-800 focus-visible:outline-none dark:bg-black dark:text-gray-200"
                   ref={refs.setFloating}
                   style={{
                     ...floatingStyles,
