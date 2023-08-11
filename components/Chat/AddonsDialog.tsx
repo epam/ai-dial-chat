@@ -51,7 +51,7 @@ export const AddonsDialog: FC<Props> = ({
   });
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
-  
+
   const handleSearch = (searchValue: string) => {
     setSearchTerm(searchValue.trim().toLowerCase());
   };
@@ -183,7 +183,7 @@ export const AddonsDialog: FC<Props> = ({
             className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
           ></input>
         </div>
-        <div className="flex flex-col gap-4 overflow-auto">
+        <div className="flex flex-col gap-4">
           {selectedAddons?.length > 0 && (
             <div className="flex flex-col gap-3">
               <span className="text-gray-500">{t('Selected')}</span>
@@ -194,7 +194,7 @@ export const AddonsDialog: FC<Props> = ({
             </div>
           )}
           {displayedAddons?.length > 0 ? (
-            <div className="flex shrink grow flex-col gap-3">
+            <div className="flex shrink grow flex-col gap-3 overflow-auto">
               <span className="text-gray-500">{t('Search results')}</span>
 
               <div className="grid grid-cols-2 flex-wrap gap-3 md:grid-cols-3">
