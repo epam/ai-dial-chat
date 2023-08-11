@@ -40,6 +40,7 @@ export interface Message {
   errorMessage?: string;
   state?: object;
   model?: Partial<OpenAIEntityModel>;
+  responseId?: string;
 }
 
 export type Role = 'assistant' | 'user';
@@ -47,7 +48,6 @@ export type Role = 'assistant' | 'user';
 export interface ChatBody {
   model: OpenAIEntityModel;
   messages: Message[];
-  key: string;
   id: string;
   prompt?: string;
   temperature?: number;
@@ -57,8 +57,7 @@ export interface ChatBody {
 
 export interface RateBody {
   model: OpenAIEntityModel;
-  message: Message;
-  key: string;
+  responseId: string;
   id: string;
   value: boolean;
 }

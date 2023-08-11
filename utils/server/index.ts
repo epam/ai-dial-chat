@@ -13,7 +13,7 @@ import {
   OPENAI_API_HOST,
   OPENAI_API_VERSION,
 } from '../app/const';
-import { getAnalyticsHeaders, getApiHeaders } from './getHeaders';
+import { getApiHeaders } from './getHeaders';
 
 import {
   ParsedEvent,
@@ -51,37 +51,46 @@ function getUrl(
   return `${OPENAI_API_HOST}/openai/deployments/${modelId}/chat/completions?api-version=${OPENAI_API_VERSION}`;
 }
 
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+
+const appendChunk = <T extends object>(
+  stream: ReadableStreamDefaultController,
+  obj: T,
+) => {
+  const text = JSON.stringify(obj);
+  const queue = encoder.encode(text + '\0');
+
+  stream.enqueue(queue);
+};
+
 export const OpenAIStream = async ({
   model,
   systemPrompt,
   temperature,
-  key,
   messages,
   selectedAddons,
   assistantModelId,
   chatId,
+  userJWT,
 }: {
   model: OpenAIEntityModel;
   systemPrompt: string | undefined;
   temperature: number | undefined;
-  key: string;
   messages: Message[];
   selectedAddons: OpenAIEntityAddonID[] | undefined;
   assistantModelId: OpenAIEntityModelID | undefined;
-  userJWT: string | null | undefined;
+  userJWT: string;
   chatId: string;
 }) => {
   const isAddonsAdded: boolean =
     Array.isArray(selectedAddons) && selectedAddons?.length > 0;
 
   const url = getUrl(model.id, model.type, isAddonsAdded);
-  const apiKey = key ? key : process.env.OPENAI_API_KEY;
-  const requestHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(apiKey && getApiHeaders(apiKey)),
-    ...getAnalyticsHeaders(chatId),
-    // ...(userJWT && { 'Authorization': `Bearer ${userJWT}` }),
-  };
+  const requestHeaders = getApiHeaders({
+    chatId,
+    jwt: userJWT,
+  });
 
   const body = JSON.stringify({
     messages:
@@ -111,9 +120,6 @@ export const OpenAIStream = async ({
     body,
   });
 
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-
   if (res.status !== 200) {
     let result: any;
     try {
@@ -141,7 +147,7 @@ export const OpenAIStream = async ({
       );
     }
   }
-
+  let idSend = false;
   const stream = new ReadableStream({
     async start(controller) {
       const onParse = (event: ParsedEvent | ReconnectInterval) => {
@@ -153,10 +159,12 @@ export const OpenAIStream = async ({
           const data = event.data;
           try {
             const json = JSON.parse(data);
-            const text = JSON.stringify(json.choices[0].delta);
-            const queue = encoder.encode(text + '\0');
+            if (!idSend) {
+              appendChunk(controller, { responseId: json.id });
+              idSend = true;
+            }
 
-            controller.enqueue(queue);
+            appendChunk(controller, json.choices[0].delta);
 
             if (json.choices[0].finish_reason != null) {
               controller.close();

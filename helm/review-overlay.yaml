@@ -17,7 +17,6 @@ resources:
 env:
   OPENAI_API_HOST: 'http://dial-proxy.dial-proxy'
   DEFAULT_MODEL: 'epam10k-semantic-search'
-  OPENAI_API_TYPE: 'azure'
   OPENAI_API_VERSION: '2023-03-15-preview'
   NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT: ''
   AUTH_AUTH0_HOST: 'https://chatbot-ui-staging.eu.auth0.com'

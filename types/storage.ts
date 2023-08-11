@@ -4,7 +4,6 @@ import { Prompt } from './prompt';
 
 // keep track of local storage schema
 export interface LocalStorage {
-  apiKey: string;
   conversationHistory: Conversation[];
   selectedConversationIds: string[];
   theme: 'light' | 'dark';

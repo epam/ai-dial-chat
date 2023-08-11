@@ -10,7 +10,6 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
-import { getEndpoint } from '@/utils/app/api';
 import {
   DEFAULT_ASSISTANT_SUBMODEL,
   DEFAULT_CONVERSATION_NAME,
@@ -33,7 +32,6 @@ import { ChatSettings } from './ChatSettings';
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
-import { NoApiKeySet } from './NoApiKeySet';
 import { NotAllowedModel } from './NotAllowedModel';
 
 import { errorsMessages } from '@/constants/errors';
@@ -46,9 +44,8 @@ const handleRate = (
   chatId: string,
   message: Message,
   model: OpenAIEntityModel,
-  apiKey: string,
 ) => {
-  if (!message.like) {
+  if (!message.like || !message.responseId) {
     return;
   }
   fetch('/api/rate', {
@@ -57,8 +54,7 @@ const handleRate = (
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      key: apiKey,
-      message,
+      responseId: message.responseId,
       model,
       id: chatId,
       value: message.like > 0 ? true : false,
@@ -121,8 +117,6 @@ export const Chat = memo(({ appName }: Props) => {
       selectedConversationIds,
       models,
       addons,
-      apiKey,
-      serverSideApiKeyIsSet,
       modelError,
       loading,
       prompts,
@@ -396,10 +390,8 @@ export const Chat = memo(({ appName }: Props) => {
           }),
         })),
         id: conversation.id.toLowerCase(),
-        key: apiKey,
         ...modelAdditionalSettings,
       };
-      const endpoint = getEndpoint();
       const body = JSON.stringify(chatBody);
       if (!abortController.current || abortController.current.signal.aborted) {
         abortController.current = new AbortController();
@@ -410,7 +402,7 @@ export const Chat = memo(({ appName }: Props) => {
         timeoutId = setTimeout(() => {
           abortController.current?.abort();
         }, 20000);
-        response = await fetch(endpoint, {
+        response = await fetch('api/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -591,7 +583,7 @@ export const Chat = memo(({ appName }: Props) => {
       homeDispatch({ field: 'loading', value: false });
       handleMessageIsStreamingChange(-1);
     },
-    [apiKey, conversations, models],
+    [conversations, models],
   );
 
   const onLikeHandler = useCallback(
@@ -605,9 +597,9 @@ export const Chat = memo(({ appName }: Props) => {
         key: 'messages',
         value: messages,
       });
-      handleRate(conversation.id, editedMessage, conversation.model, apiKey);
+      handleRate(conversation.id, editedMessage, conversation.model);
     },
-    [apiKey, handleUpdateConversation],
+    [handleUpdateConversation],
   );
 
   useEffect(() => {
@@ -974,9 +966,7 @@ export const Chat = memo(({ appName }: Props) => {
 
   return (
     <div className="relative flex-1">
-      {!(apiKey || serverSideApiKeyIsSet) ? (
-        <NoApiKeySet appName={appName} />
-      ) : modelError ? (
+      {modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : (
         <>
