@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useState } from 'react';
 
 import { Conversation } from '@/types/chat';
 import {
@@ -47,7 +47,6 @@ export const ChatSettings = ({
   const {
     state: { modelsMap },
   } = useContext(HomeContext);
-  const modalRef = useRef<HTMLDivElement>(null);
 
   const [currentModel, setCurrentModel] = useState(
     modelsMap[model?.id || defaultModelId],
@@ -63,25 +62,6 @@ export const ChatSettings = ({
     conversation.selectedAddons || [],
   );
 
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        window.addEventListener('mouseup', handleMouseUp);
-      }
-    };
-
-    const handleMouseUp = () => {
-      window.removeEventListener('mouseup', handleMouseUp);
-      onClose();
-    };
-
-    window.addEventListener('mousedown', handleMouseDown);
-
-    return () => {
-      window.removeEventListener('mousedown', handleMouseDown);
-    };
-  }, [onClose]);
-
   const handleApplyChanges = () => {
     let conv = conversation;
     if (currentModel) {
@@ -95,40 +75,46 @@ export const ChatSettings = ({
     currentSelectedAddonsIds.forEach((addonId) => {
       conv = onChangeAddon(conv, addonId);
     });
+
+    onClose();
   };
 
   return (
-    <div ref={modalRef} className="shrink bg-gray-300 dark:bg-gray-900">
-      <ConversationSettings
-        isCloseEnabled={true}
-        isApplyEnabled={true}
-        model={currentModel}
-        prompts={prompts}
-        assistantModelId={currentAssistentModelId}
-        prompt={currentPrompt}
-        selectedAddons={currentSelectedAddonsIds}
-        temperature={currentTemperature}
-        onSelectModel={(modelId: string) => setCurrentModel(modelsMap[modelId])}
-        onChangePrompt={(prompt) => setCurrentPrompt(prompt)}
-        onChangeTemperature={(temperature) =>
-          setCurrentTemperature(temperature)
-        }
-        onSelectAssistantSubModel={(modelId: string) =>
-          setCurrentAssistentModelId(modelId)
-        }
-        onChangeAddon={(addonId: string) =>
-          setCurrentSelectedAddonsIds((addons) => {
-            if (addons.includes(addonId)) {
-              return addons.filter((id) => id !== addonId);
-            }
+    <div className="absolute top-0 z-50 flex h-full w-full grow items-start overflow-auto bg-gray-900/30 p-5 dark:bg-gray-900/70">
+      <div className="shrink bg-gray-300 dark:bg-gray-900">
+        <ConversationSettings
+          isCloseEnabled={true}
+          isApplyEnabled={true}
+          model={currentModel}
+          prompts={prompts}
+          assistantModelId={currentAssistentModelId}
+          prompt={currentPrompt}
+          selectedAddons={currentSelectedAddonsIds}
+          temperature={currentTemperature}
+          onSelectModel={(modelId: string) =>
+            setCurrentModel(modelsMap[modelId])
+          }
+          onChangePrompt={(prompt) => setCurrentPrompt(prompt)}
+          onChangeTemperature={(temperature) =>
+            setCurrentTemperature(temperature)
+          }
+          onSelectAssistantSubModel={(modelId: string) =>
+            setCurrentAssistentModelId(modelId)
+          }
+          onChangeAddon={(addonId: string) =>
+            setCurrentSelectedAddonsIds((addons) => {
+              if (addons.includes(addonId)) {
+                return addons.filter((id) => id !== addonId);
+              }
 
-            return [...addons, addonId];
-          })
-        }
-        onApplyAddons={(addons) => setCurrentSelectedAddonsIds(addons)}
-        onApplySettings={handleApplyChanges}
-        onClose={onClose}
-      />
+              return [...addons, addonId];
+            })
+          }
+          onApplyAddons={(addons) => setCurrentSelectedAddonsIds(addons)}
+          onApplySettings={handleApplyChanges}
+          onClose={() => onClose()}
+        />
+      </div>
     </div>
   );
 };

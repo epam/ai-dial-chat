@@ -728,14 +728,12 @@ export const Chat = memo(({ appName }: Props) => {
 
   const onClickReplayStart: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.preventDefault();
-    setIsShowChatSettings(false);
     setIsReplayPaused(false);
     handleReplay();
   };
 
   const onClickReplayReStart: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.preventDefault();
-    setIsShowChatSettings(false);
 
     if (isLastMessageFromAssistant) {
       handleReplay(2, activeReplayIndex, false);
@@ -906,7 +904,6 @@ export const Chat = memo(({ appName }: Props) => {
   };
 
   const onSendMessage = (message: Message) => {
-    setIsShowChatSettings(false);
     localConversations.current = conversations;
     selectedConversations.forEach((conv) => {
       handleSend(conv, message, 0);
@@ -914,7 +911,6 @@ export const Chat = memo(({ appName }: Props) => {
   };
 
   const onRegenerateMessage = () => {
-    setIsShowChatSettings(false);
     localConversations.current = conversations;
     selectedConversations.forEach((conv) => {
       const lastUserMessageIndex = conv.messages
@@ -1033,7 +1029,7 @@ export const Chat = memo(({ appName }: Props) => {
                 {selectedConversations.map((conv) => (
                   <div
                     key={conv.id}
-                    className={`relative ${
+                    className={`${
                       isCompareMode && selectedConversations.length > 1
                         ? 'w-[50%]'
                         : 'w-full'
@@ -1071,42 +1067,6 @@ export const Chat = memo(({ appName }: Props) => {
                               );
                             }}
                           />
-
-                          {isShowChatSettings && (
-                            <div className="absolute top-0 z-50 flex max-h-[90vh] w-full items-start overflow-auto bg-gray-900/30 p-5 dark:bg-gray-900/70">
-                              <ChatSettings
-                                conversation={conv}
-                                defaultModelId={
-                                  defaultModelId || OpenAIEntityModelID.GPT_3_5
-                                }
-                                model={modelsMap[conv.model.id]}
-                                prompts={prompts}
-                                addons={addons}
-                                onSelectModel={(
-                                  conv: Conversation,
-                                  modelId: string,
-                                ) => handleSelectModel(conv, modelId)}
-                                onChangePrompt={(conv: Conversation, prompt) =>
-                                  handleChangePrompt(conv, prompt)
-                                }
-                                onChangeTemperature={(
-                                  conv: Conversation,
-                                  temperature,
-                                ) => handleChangeTemperature(conv, temperature)}
-                                onSelectAssistantSubModel={(
-                                  conv: Conversation,
-                                  modelId: string,
-                                ) =>
-                                  handleSelectAssistantSubModel(conv, modelId)
-                                }
-                                onChangeAddon={(
-                                  conv: Conversation,
-                                  addonId: string,
-                                ) => handleOnChangeAddon(conv, addonId)}
-                                onClose={() => setIsShowChatSettings(false)}
-                              />
-                            </div>
-                          )}
                         </div>
                       )}
                   </div>
@@ -1194,6 +1154,49 @@ export const Chat = memo(({ appName }: Props) => {
                 </div>
               )}
             </div>
+            {isShowChatSettings && (
+              <div
+                className={`absolute left-0 top-0 grid h-full w-full ${
+                  selectedConversations.length === 1
+                    ? 'grid-cols-1'
+                    : 'grid-cols-2'
+                }`}
+              >
+                {selectedConversations.map((conv) => (
+                  <div className="relative h-full" key={conv.id}>
+                    {
+                      <ChatSettings
+                        conversation={conv}
+                        defaultModelId={
+                          defaultModelId || OpenAIEntityModelID.GPT_3_5
+                        }
+                        model={modelsMap[conv.model.id]}
+                        prompts={prompts}
+                        addons={addons}
+                        onSelectModel={(conv: Conversation, modelId: string) =>
+                          handleSelectModel(conv, modelId)
+                        }
+                        onChangePrompt={(conv: Conversation, prompt) =>
+                          handleChangePrompt(conv, prompt)
+                        }
+                        onChangeTemperature={(
+                          conv: Conversation,
+                          temperature,
+                        ) => handleChangeTemperature(conv, temperature)}
+                        onSelectAssistantSubModel={(
+                          conv: Conversation,
+                          modelId: string,
+                        ) => handleSelectAssistantSubModel(conv, modelId)}
+                        onChangeAddon={(conv: Conversation, addonId: string) =>
+                          handleOnChangeAddon(conv, addonId)
+                        }
+                        onClose={() => setIsShowChatSettings(false)}
+                      />
+                    }
+                  </div>
+                ))}
+              </div>
+            )}
             {isCompareMode && selectedConversations.length < 2 && (
               <div className="w-[50%]">
                 <ChatCompareSelect
