@@ -1,10 +1,4 @@
 import {
-  IconBulbFilled,
-  IconCheck,
-  IconDots,
-  IconX,
-} from '@tabler/icons-react';
-import {
   DragEvent,
   MouseEventHandler,
   useContext,
@@ -20,10 +14,15 @@ import { exportPrompt } from '@/utils/app/importExport';
 import { Prompt } from '@/types/prompt';
 
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
-import { ContextMenu } from '@/components/Common/ContextMenu';
+import { ContextMenu } from '@/components/Common/NewContextMenu';
 
+import CheckIcon from '../../../public/images/icons/check.svg';
+import LightbulbIcon from '../../../public/images/icons/lightbulb.svg';
+import XmarkIcon from '../../../public/images/icons/xmark.svg';
 import PromptbarContext from '../PromptBar.context';
 import { PromptModal } from './PromptModal';
+
+import classNames from 'classnames';
 
 interface Props {
   prompt: Prompt;
@@ -39,10 +38,9 @@ export const PromptComponent = ({ prompt }: Props) => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
-  const [isContextMenuOpened, setIsContextMenuOpened] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
+  const [isShowContextMenuButton, setIsShowContextMenuButton] = useState(false);
 
-  const contextMenuParentRef = useRef(null);
   const wrapperRef = useRef(null);
 
   const handleUpdate = (prompt: Prompt) => {
@@ -61,7 +59,6 @@ export const PromptComponent = ({ prompt }: Props) => {
     }
 
     setIsDeleting(false);
-    setIsContextMenuOpened(false);
     setIsSelected(false);
   };
 
@@ -70,7 +67,6 @@ export const PromptComponent = ({ prompt }: Props) => {
     e.preventDefault();
 
     setIsDeleting(false);
-    setIsContextMenuOpened(false);
   };
 
   const handleOpenDeleteModal: MouseEventHandler = (e) => {
@@ -101,82 +97,83 @@ export const PromptComponent = ({ prompt }: Props) => {
     setIsSelected(true);
   };
 
-  const handleOnClickContextMenuButton: MouseEventHandler = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-
-    setIsContextMenuOpened((isOpened) => !isOpened);
-  };
-
   const handleExportPrompt: MouseEventHandler = (e) => {
     e.preventDefault();
     e.stopPropagation();
 
     exportPrompt(prompt.id);
-    setIsContextMenuOpened(false);
+  };
+  const movePromptToFolder = (folderId: string) => {
+    const newPrompt = { ...prompt, folderId: folderId };
+    prompt.folderId;
+    handleUpdatePrompt(newPrompt);
   };
 
   useEffect(() => {
     if (isRenaming) {
       setIsDeleting(false);
-      setIsContextMenuOpened(false);
     } else if (isDeleting) {
       setIsRenaming(false);
-      setIsContextMenuOpened(false);
     }
   }, [isRenaming, isDeleting]);
 
-  useOutsideAlerter(wrapperRef, setIsContextMenuOpened);
   useOutsideAlerter(wrapperRef, setIsSelected);
-
+  const onMouseOverHandler: MouseEventHandler = (e) => {
+    e.stopPropagation();
+    setIsShowContextMenuButton(true);
+  };
+  const onMouseLeaveHandler: MouseEventHandler = (e) => {
+    e.stopPropagation();
+    setIsShowContextMenuButton(false);
+  };
   return (
-    <div className="relative flex items-center">
+    <div
+      className={classNames(
+        'relative flex  h-[42px] cursor-pointer items-center rounded-[3px] transition-colors duration-200 hover:bg-green/[15%]',
+        isSelected ? 'border-l-2 border-l-green bg-green/[15%]' : '',
+      )}
+      onMouseOver={onMouseOverHandler}
+      onMouseLeave={onMouseLeaveHandler}
+      ref={wrapperRef}
+      onClick={handleOnClickPrompt}
+    >
       <button
-        className={`flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-sm transition-colors duration-200 ${
-          isSelected ? 'bg-[#343541]/90' : ''
-        } hover:bg-[#343541]/90`}
+        className="flex w-full items-center gap-3  px-3 "
         draggable="true"
-        onClick={handleOnClickPrompt}
         onDragStart={(e) => handleDragStart(e, prompt)}
       >
-        <IconBulbFilled size={18} />
+        <LightbulbIcon width={18} height={18} size={18} />
 
-        <div className="relative max-h-5 flex-1 truncate break-all pr-4 text-left text-[12.5px] leading-3">
+        <div className="relative max-h-5 flex-1 truncate break-all pr-4 text-left leading-3">
           {prompt.name}
         </div>
       </button>
 
-      {isDeleting && (
-        <div className="absolute right-1 z-10 flex text-gray-300">
+      {(isDeleting || isRenaming) && (
+        <div className="absolute right-1 z-10 flex">
           <SidebarActionButton handleClick={handleDelete}>
-            <IconCheck size={18} />
+            <CheckIcon width={18} height={18} size={18} />
           </SidebarActionButton>
 
           <SidebarActionButton handleClick={handleCancelDelete}>
-            <IconX size={18} />
+            <XmarkIcon width={18} height={18} size={18} strokeWidth="2" />
           </SidebarActionButton>
         </div>
       )}
-      {isSelected && !isDeleting && !isRenaming && (
+      {isShowContextMenuButton && !isDeleting && !isRenaming && (
         <div
-          className="z-100 absolute right-1 flex text-gray-300"
-          ref={wrapperRef}
-          onClick={handleOnClickPrompt}
+          className="absolute right-1 z-50 flex"
+          onMouseOver={onMouseOverHandler}
+          onMouseLeave={onMouseLeaveHandler}
         >
-          <SidebarActionButton handleClick={handleOnClickContextMenuButton}>
-            <IconDots size={18} />
-          </SidebarActionButton>
-          <div className="relative" ref={contextMenuParentRef}>
-            {!isDeleting && !isRenaming && isContextMenuOpened && (
-              <ContextMenu
-                parentRef={contextMenuParentRef}
-                onDelete={handleOpenDeleteModal}
-                onRename={handleOpenRenameModal}
-                onExport={handleExportPrompt}
-                featureType="prompt"
-              />
-            )}
-          </div>
+          <ContextMenu
+            featureType="prompt"
+            moveToFolder={movePromptToFolder}
+            onDelete={handleOpenDeleteModal}
+            onRename={handleOpenRenameModal}
+            onExport={handleExportPrompt}
+            item={prompt}
+          />
         </div>
       )}
 

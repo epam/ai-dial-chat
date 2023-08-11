@@ -10,7 +10,6 @@ import {
 import { Prompt } from '@/types/prompt';
 
 export interface HomeInitialState {
-  apiKey: string;
   loading: boolean;
   lightMode: 'light' | 'dark';
   messageIsStreaming: boolean;
@@ -32,9 +31,6 @@ export interface HomeInitialState {
   messageError: boolean;
   searchTerm: string;
   defaultModelId: OpenAIEntityModelID | undefined;
-  serverSideApiKeyIsSet: boolean;
-  serverSidePluginKeysSet: boolean;
-  usePluginKeys: boolean;
   isCompareMode: boolean;
   isIframe: boolean;
   footerHtmlMessage: string;
@@ -48,7 +44,6 @@ export interface HomeInitialState {
 }
 
 export const initialState: HomeInitialState = {
-  apiKey: '',
   loading: false,
   lightMode: 'dark',
   messageIsStreaming: false,
@@ -70,9 +65,6 @@ export const initialState: HomeInitialState = {
   messageError: false,
   searchTerm: '',
   defaultModelId: undefined,
-  serverSideApiKeyIsSet: false,
-  serverSidePluginKeysSet: false,
-  usePluginKeys: false,
   isCompareMode: false,
   isIframe: false,
   footerHtmlMessage: '',

@@ -29,7 +29,7 @@ export const ModelIcon = ({
     <>
       {entity?.iconUrl != null ? (
         <span
-          className={`relative inline-block shrink-0 ${
+          className={`relative inline-block shrink-0 leading-none ${
             animate ? 'animate-bounce' : ''
           }`}
           style={{ height: `${size}px`, width: `${size}px` }}
@@ -65,7 +65,7 @@ export const ModelIcon = ({
         template
       ) : (
         <Tooltip>
-          <TooltipTrigger className="shrink-0">{template}</TooltipTrigger>
+          <TooltipTrigger className="flex shrink-0">{template}</TooltipTrigger>
           <TooltipContent>{entity?.name || entityId}</TooltipContent>
         </Tooltip>
       )}

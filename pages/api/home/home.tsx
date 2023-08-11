@@ -59,9 +59,6 @@ import { HomeInitialState, initialState } from './home.state';
 import { v4 as uuidv4 } from 'uuid';
 
 interface Props {
-  serverSideApiKeyIsSet: boolean;
-  serverSidePluginKeysSet: boolean;
-  usePluginKeys: boolean;
   appName: string;
   footerHtmlMessage: string;
   enabledFeatures: Feature[];
@@ -73,9 +70,6 @@ interface Props {
 }
 
 const Home = ({
-  serverSideApiKeyIsSet,
-  serverSidePluginKeysSet,
-  usePluginKeys,
   appName,
   footerHtmlMessage,
   enabledFeatures,
@@ -101,7 +95,6 @@ const Home = ({
 
   const {
     state: {
-      apiKey,
       lightMode,
       folders,
       conversations,
@@ -118,16 +111,9 @@ const Home = ({
   } = contextValue;
 
   const { data: modelsData, error: modelsError } = useQuery(
-    ['GetModels', apiKey, serverSideApiKeyIsSet],
+    ['GetModels'],
     ({ signal }) => {
-      if (!apiKey && !serverSideApiKeyIsSet) return null;
-
-      return getModels(
-        {
-          key: apiKey,
-        },
-        signal,
-      );
+      return getModels(signal);
     },
     { enabled: true, refetchOnMount: false, staleTime: 60000 },
   );
@@ -160,16 +146,9 @@ const Home = ({
   }, [dispatch, modelsError, getModelsError]);
 
   const { data: addonsData, error: addonsError } = useQuery(
-    ['GetAddons', apiKey, serverSideApiKeyIsSet],
+    ['GetAddons'],
     ({ signal }) => {
-      if (!apiKey && !serverSideApiKeyIsSet) return null;
-
-      return getAddons(
-        {
-          key: apiKey,
-        },
-        signal,
-      );
+      return getAddons(signal);
     },
     { enabled: true, refetchOnMount: false, staleTime: 60000 },
   );
@@ -227,7 +206,10 @@ const Home = ({
 
   // FOLDER OPERATIONS  --------------------------------------------
 
-  const handleCreateFolder = (name: string, type: FolderType) => {
+  const handleCreateFolder = (
+    name: string,
+    type: FolderType,
+  ): FolderInterface => {
     const newFolder: FolderInterface = {
       id: uuidv4(),
       name,
@@ -238,6 +220,7 @@ const Home = ({
 
     dispatch({ field: 'folders', value: updatedFolders });
     saveFolders(updatedFolders);
+    return newFolder;
   };
 
   const handleDeleteFolder = (folderId: string) => {
@@ -483,22 +466,6 @@ const Home = ({
         field: 'defaultModelId',
         value: defaultModelId,
       });
-    serverSideApiKeyIsSet &&
-      dispatch({
-        field: 'serverSideApiKeyIsSet',
-        value: serverSideApiKeyIsSet,
-      });
-    serverSidePluginKeysSet &&
-      dispatch({
-        field: 'serverSidePluginKeysSet',
-        value: serverSidePluginKeysSet,
-      });
-
-    usePluginKeys &&
-      dispatch({
-        field: 'usePluginKeys',
-        value: usePluginKeys,
-      });
 
     footerHtmlMessage &&
       dispatch({
@@ -515,14 +482,7 @@ const Home = ({
         field: 'isIframe',
         value: isIframe,
       });
-  }, [
-    defaultModelId,
-    serverSideApiKeyIsSet,
-    serverSidePluginKeysSet,
-    usePluginKeys,
-    footerHtmlMessage,
-    enabledFeatures,
-  ]);
+  }, [defaultModelId, footerHtmlMessage, enabledFeatures]);
 
   // ON LOAD --------------------------------------------
 
@@ -565,16 +525,6 @@ const Home = ({
         field: 'lightMode',
         value: settings.theme,
       });
-    }
-
-    const apiKey = localStorage.getItem('apiKey');
-
-    if (serverSideApiKeyIsSet) {
-      dispatch({ field: 'apiKey', value: '' });
-
-      localStorage.removeItem('apiKey');
-    } else if (apiKey) {
-      dispatch({ field: 'apiKey', value: apiKey });
     }
 
     if (window.innerWidth < 640) {
@@ -707,13 +657,7 @@ const Home = ({
         );
       }
     }
-  }, [
-    defaultModelId,
-    dispatch,
-    serverSideApiKeyIsSet,
-    serverSidePluginKeysSet,
-    usePluginKeys,
-  ]);
+  }, [defaultModelId, dispatch]);
 
   useEffect(() => {
     if (selectedConversationIds.length > 0) {
@@ -814,24 +758,12 @@ export const getServerSideProps: GetServerSideProps = async ({
     };
   }
 
-  let serverSidePluginKeysSet = false;
-
-  const googleApiKey = process.env.GOOGLE_API_KEY;
-  const googleCSEId = process.env.GOOGLE_CSE_ID;
-
-  if (googleApiKey && googleCSEId) {
-    serverSidePluginKeysSet = true;
-  }
-
   const updatedFooterHTMLMessage = (
     process.env.FOOTER_HTML_MESSAGE ?? ''
   ).replace('%%VERSION%%', packageJSON.version);
 
   return {
     props: {
-      serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
-      usePluginKeys: !!process.env.NEXT_PUBLIC_ENABLE_PLUGIN_KEYS,
-      serverSidePluginKeysSet,
       appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
       footerHtmlMessage: updatedFooterHTMLMessage,
       enabledFeatures: (process.env.ENABLED_FEATURES || '').split(','),

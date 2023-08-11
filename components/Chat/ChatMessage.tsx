@@ -281,7 +281,7 @@ export const ChatMessage: FC<Props> = memo(
                     )}
                   </div>
                   <div className="bottom-0 right-8 flex flex-row gap-2">
-                    {isLikesEnabled && (
+                    {isLikesEnabled && !!message.responseId && (
                       <>
                         {message.like !== -1 && (
                           <Button

@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { limitEntitiesAccordingToUser } from '@/utils/server/entitiesPermissions';
@@ -25,20 +26,18 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (process.env.AUTH_DISABLED !== 'true' && !session) {
     return res.status(401).send(errorsMessages[401]);
   }
+  const token = await getToken({ req });
 
   try {
-    const { key } = req.body as {
-      key: string;
-    };
-
     let entities: OpenAIEntity[] = [];
 
-    const addons: ProxyOpenAIEntity[] = await getEntities('addon', key).catch(
-      (error) => {
-        console.error(error.message);
-        return [];
-      },
-    );
+    const addons: ProxyOpenAIEntity[] = await getEntities(
+      'addon',
+      token?.access_token as string,
+    ).catch((error) => {
+      console.error(error.message);
+      return [];
+    });
 
     for (const addon of addons) {
       const mappedAddon: OpenAIEntityAddon | undefined =

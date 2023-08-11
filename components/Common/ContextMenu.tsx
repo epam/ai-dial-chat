@@ -10,6 +10,8 @@ import { useTranslation } from 'react-i18next';
 
 import { FeatureType } from '@/types/components';
 
+import MoveIcone from '../../public/images/icons/file-arrow-right.svg';
+
 interface Props {
   parentRef: RefObject<HTMLDivElement>;
   featureType: FeatureType;
@@ -35,7 +37,7 @@ export const ContextMenu = ({
   const contextMenuHeight = 230;
   const classes = useRef('');
 
-  const isConversation = featureType === 'conversation';
+  const isConversation = featureType === 'chat';
 
   classes.current = getContextMenuPositioningClasses(
     parentRef,
@@ -80,6 +82,10 @@ export const ContextMenu = ({
         >
           <IconFileExport size={18} />
           <span className="ml-2">{t('Export')}</span>
+        </li>
+        <li className="flex cursor-pointer rounded-lg p-2 hover:bg-[#343541]">
+          <MoveIcone width={18} height={18} />
+          <span className="ml-2">{t('Move to')}</span>
         </li>
         <li
           onClick={onDelete}

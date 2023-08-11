@@ -106,7 +106,6 @@ When deploying the application, the following environment variables can be set:
 | NEXTAUTH_SECRET                   |                                | Random crypto-string
 | OPENAI_API_KEY                    |                                | The default API key used for authentication with OpenAI                                                                                   |
 | OPENAI_API_HOST                   | `https://api.openai.com`       | The base url, for Azure use `https://<endpoint>.openai.azure.com`                                                                         |
-| OPENAI_API_TYPE                   | `openai`                       | The API type, options are `openai` or `azure`                                                                                             |
 | OPENAI_API_VERSION                | `2023-03-15-preview`           | Only applicable for Azure OpenAI                                                                                                          |
 | OPENAI_ORGANIZATION               |                                | Your OpenAI organization ID                                                                                                               |
 | DEFAULT_MODEL | `gpt-3.5-turbo` _(OpenAI)_ `gpt-35-turbo` _(Azure)_ | The default model to use on new conversations |

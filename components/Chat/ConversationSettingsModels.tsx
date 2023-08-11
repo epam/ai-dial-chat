@@ -11,7 +11,7 @@ import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelsDialog } from './ModelsDialog';
 
 interface Props {
-  modelId: string;
+  modelId: string | undefined;
   onModelSelect: (modelId: string) => void;
 }
 
@@ -27,7 +27,7 @@ export const ConversationSettingsModel = ({
   const [recentNonModels, setRecentNonModels] = useState<OpenAIEntityModel[]>(
     [],
   );
-  const [isModelsDialogOpen, setIsModelDialogOpen] = useState(false);
+  const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
   useEffect(() => {
     const mappedEntities = Array.from(recentModelsIds)
@@ -47,7 +47,7 @@ export const ConversationSettingsModel = ({
 
       <div className="flex flex-col gap-3">
         <div className="text-gray-500">{t('Recent')}</div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           {recentModels.map((entity) => (
             <button
               className={`flex items-center gap-3 rounded border p-3 text-left text-xs ${
@@ -101,7 +101,7 @@ export const ConversationSettingsModel = ({
       </div>
       <button
         className="mt-3 inline text-left text-blue-500"
-        onClick={() => setIsModelDialogOpen(true)}
+        onClick={() => setIsModelsDialogOpen(true)}
       >
         {t('See full list...')}
       </button>
@@ -109,7 +109,7 @@ export const ConversationSettingsModel = ({
         selectedModelId={modelId}
         isOpen={isModelsDialogOpen}
         onModelSelect={onModelSelect}
-        onClose={() => setIsModelDialogOpen(false)}
+        onClose={() => setIsModelsDialogOpen(false)}
       />
     </div>
   );

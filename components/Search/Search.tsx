@@ -1,7 +1,8 @@
-import { IconX } from '@tabler/icons-react';
 import { FC } from 'react';
 
 import { useTranslation } from 'next-i18next';
+
+import SearchIcon from '../../public/images/icons/search.svg';
 
 interface Props {
   placeholder: string;
@@ -15,27 +16,20 @@ const Search: FC<Props> = ({ placeholder, searchTerm, onSearch }) => {
     onSearch(e.target.value);
   };
 
-  const clearSearch = () => {
-    onSearch('');
-  };
-
   return (
-    <div className="relative flex items-center">
+    <div className="relative flex items-center px-5 py-1">
+      <SearchIcon
+        className="absolute left-5 text-gray-500"
+        width={18}
+        height={18}
+      />
       <input
-        className="w-full flex-1 rounded-md border border-neutral-600 bg-[#202123] px-4 py-3 pr-10 text-[14px] leading-3 text-white"
+        className="w-full bg-inherit py-3 pl-8 text-[14px] leading-3 text-inherit placeholder:text-gray-500"
         type="text"
         placeholder={t(placeholder) || ''}
         value={searchTerm}
         onChange={handleSearchChange}
       />
-
-      {searchTerm && (
-        <IconX
-          className="absolute right-4 cursor-pointer text-neutral-300 hover:text-neutral-400"
-          size={18}
-          onClick={clearSearch}
-        />
-      )}
     </div>
   );
 };
