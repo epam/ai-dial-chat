@@ -98,7 +98,7 @@ export const ChatSettings = ({
   };
 
   return (
-    <div ref={modalRef} className="bg-gray-300 dark:bg-gray-900">
+    <div ref={modalRef} className="shrink bg-gray-300 dark:bg-gray-900">
       <ConversationSettings
         isCloseEnabled={true}
         isApplyEnabled={true}

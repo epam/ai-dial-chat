@@ -88,8 +88,8 @@ export const ConversationSettings = ({
 
   return (
     <div className="flex min-w-[50%] flex-col gap-[1px]">
-      <div className="relative grid w-full gap-[1px] md:grid-cols-2">
-        <div className="overflow-auto bg-gray-200 px-5 py-4 dark:bg-gray-800">
+      <div className="relative grid w-full gap-[1px] xl:grid-cols-2">
+        <div className="shrink overflow-auto bg-gray-200 px-5 py-4 dark:bg-gray-800">
           <ConversationSettingsModel
             modelId={model?.id}
             onModelSelect={onSelectModel}

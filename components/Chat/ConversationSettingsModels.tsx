@@ -47,7 +47,7 @@ export const ConversationSettingsModel = ({
 
       <div className="flex flex-col gap-3">
         <div className="text-gray-500">{t('Recent')}</div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           {recentModels.map((entity) => (
             <button
               className={`flex items-center gap-3 rounded border p-3 text-left text-xs ${

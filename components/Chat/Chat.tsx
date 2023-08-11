@@ -989,19 +989,17 @@ export const Chat = memo(({ appName }: Props) => {
                   : 'w-full'
               }`}
             >
-              <div className="flex h-full w-full">
-                {selectedConversations.map((conv) => (
-                  <div
-                    key={conv.id}
-                    className={`${
-                      isCompareMode && selectedConversations.length > 1
-                        ? 'w-[50%]'
-                        : 'w-full'
-                    }`}
-                  >
-                    {conv.messages.length === 0 ? (
+              <div className="flex max-h-full w-full">
+                {selectedConversations.map(
+                  (conv) =>
+                    conv.messages.length === 0 && (
                       <div
-                        className={`flex h-full flex-col justify-between overflow-y-auto`}
+                        key={conv.id}
+                        className={`flex h-full flex-col justify-between overflow-auto ${
+                          selectedConversations.length > 1
+                            ? 'w-[50%]'
+                            : 'w-full'
+                        }`}
                       >
                         <div className="shrink-0">
                           <ChatSettingsEmpty
@@ -1039,9 +1037,22 @@ export const Chat = memo(({ appName }: Props) => {
                           style={{ height: inputHeight }}
                         />
                       </div>
-                    ) : (
+                    ),
+                )}
+              </div>
+              <div className="flex w-full">
+                {selectedConversations.map((conv) => (
+                  <div
+                    key={conv.id}
+                    className={`relative ${
+                      isCompareMode && selectedConversations.length > 1
+                        ? 'w-[50%]'
+                        : 'w-full'
+                    }`}
+                  >
+                    {conv.messages.length !== 0 &&
                       enabledFeatures.has('top-settings') && (
-                        <div className={`z-10 flex h-full flex-col `}>
+                        <div className={`z-10 flex flex-col `}>
                           <ChatHeader
                             messageIsStreaming={messageIsStreaming}
                             conversation={conv}
@@ -1073,7 +1084,7 @@ export const Chat = memo(({ appName }: Props) => {
                           />
 
                           {isShowChatSettings && (
-                            <div className="absolute top-0 z-10 flex h-full w-full items-start bg-gray-900/30 p-5 dark:bg-gray-900/70">
+                            <div className="absolute top-0 z-50 flex max-h-[90vh] w-full items-start overflow-auto bg-gray-900/30 p-5 dark:bg-gray-900/70">
                               <ChatSettings
                                 conversation={conv}
                                 defaultModelId={
@@ -1082,28 +1093,33 @@ export const Chat = memo(({ appName }: Props) => {
                                 model={modelsMap[conv.model.id]}
                                 prompts={prompts}
                                 addons={addons}
-                                onSelectModel={(conv: Conversation, modelId: string) =>
-                                  handleSelectModel(conv, modelId)
-                                }
+                                onSelectModel={(
+                                  conv: Conversation,
+                                  modelId: string,
+                                ) => handleSelectModel(conv, modelId)}
                                 onChangePrompt={(conv: Conversation, prompt) =>
                                   handleChangePrompt(conv, prompt)
                                 }
-                                onChangeTemperature={(conv: Conversation, temperature) =>
-                                  handleChangeTemperature(conv, temperature)
-                                }
-                                onSelectAssistantSubModel={(conv: Conversation, modelId: string) =>
+                                onChangeTemperature={(
+                                  conv: Conversation,
+                                  temperature,
+                                ) => handleChangeTemperature(conv, temperature)}
+                                onSelectAssistantSubModel={(
+                                  conv: Conversation,
+                                  modelId: string,
+                                ) =>
                                   handleSelectAssistantSubModel(conv, modelId)
                                 }
-                                onChangeAddon={(conv: Conversation, addonId: string) =>
-                                  handleOnChangeAddon(conv, addonId)
-                                }
+                                onChangeAddon={(
+                                  conv: Conversation,
+                                  addonId: string,
+                                ) => handleOnChangeAddon(conv, addonId)}
                                 onClose={() => setIsShowChatSettings(false)}
                               />
                             </div>
                           )}
                         </div>
-                      )
-                    )}
+                      )}
                   </div>
                 ))}
               </div>
