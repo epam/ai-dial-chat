@@ -1,9 +1,4 @@
-import {
-  IconArrowDown,
-  IconPlayerStop,
-  IconRepeat,
-  IconSend,
-} from '@tabler/icons-react';
+import { IconPlayerStop } from '@tabler/icons-react';
 import {
   ForwardedRef,
   KeyboardEvent,
@@ -25,6 +20,9 @@ import { Prompt } from '@/types/prompt';
 
 import HomeContext from '@/pages/api/home/home.context';
 
+import ArrowNarrowDown from '../../public/images/icons/arrow-narrow-down.svg';
+import RefreshCWAlt from '../../public/images/icons/refresh-cw-alt.svg';
+import SendAlt1 from '../../public/images/icons/send-alt-1.svg';
 import { FooterMessage } from './FooterMessage';
 import { PromptList } from './PromptList';
 import { VariableModal } from './VariableModal';
@@ -256,29 +254,32 @@ export const ChatInput = forwardRef(
         ref={ref}
         className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 pt-6 dark:border-white/20 dark:via-gray-900 dark:to-gray-900 md:pt-2"
       >
-        <div className="mx-2 mt-4 flex flex-row gap-3 last:mb-2 md:mx-4 md:mt-[52px] md:last:mb-6 lg:mx-auto lg:max-w-3xl">
+        <div className="mx-2 mt-8 flex flex-row gap-3 last:mb-2 md:mx-4 md:mt-[52px] md:last:mb-6 lg:mx-auto lg:max-w-3xl">
           {messageIsStreaming && (
             <button
-              className="absolute inset-x-0 top-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white px-4 py-2 text-black hover:opacity-50 dark:border-neutral-600 dark:bg-[#343541] dark:text-white md:mb-0 md:mt-2"
+              className="absolute inset-x-0 top-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600"
               onClick={onStopConversation}
             >
-              <IconPlayerStop size={16} /> {t('Stop generating')}
+              <IconPlayerStop size={18} /> {t('Stop generating')}
             </button>
           )}
 
           {!messageIsStreaming && isMessagesPresented && (
             <button
-              className="absolute inset-x-0 top-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white px-4 py-2 text-black hover:opacity-50 dark:border-neutral-600 dark:bg-[#343541] dark:text-white md:mb-0 md:mt-2"
+              className="absolute inset-x-0 top-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600"
               onClick={onRegenerate}
             >
-              <IconRepeat size={16} /> {t('Regenerate response')}
+              <span className="text-gray-500">
+                <RefreshCWAlt width={18} height={18} />
+              </span>
+              {t('Regenerate response')}
             </button>
           )}
 
-          <div className="relative mx-2 flex w-full grow flex-col rounded-md border border-black/10 bg-gray-100 shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:border-gray-900/50 dark:bg-gray-700 dark:shadow-[0_0_15px_rgba(0,0,0,0.10)] sm:mx-4">
+          <div className="relative flex w-full grow flex-col">
             <textarea
               ref={textareaRef}
-              className="m-0 w-full resize-none border-0 bg-transparent p-3 dark:bg-transparent"
+              className="m-0 w-full resize-none rounded border border-transparent bg-gray-100 px-4 py-3 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:bg-gray-700"
               style={{
                 resize: 'none',
                 bottom: `${textareaRef?.current?.scrollHeight}px`,
@@ -303,23 +304,25 @@ export const ChatInput = forwardRef(
             />
 
             <button
-              className="absolute right-2 top-2 rounded-sm p-1 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
+              className="absolute right-4 top-2.5 rounded"
               onClick={handleSend}
             >
               {messageIsStreaming ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-neutral-800 opacity-60 dark:border-neutral-100"></div>
+                <div className="h-5 w-5 animate-spin rounded-full border-t-2 border-gray-500 text-current"></div>
               ) : (
-                <IconSend size={18} />
+                <span className="hover:text-blue-500">
+                  <SendAlt1 width={24} height={24} />
+                </span>
               )}
             </button>
 
             {showScrollDownButton && (
-              <div className="absolute bottom-12 right-0 lg:-right-10 lg:bottom-0">
+              <div className="absolute bottom-0 right-0 aspect-square h-full lg:bottom-0 lg:right-[-70px]">
                 <button
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-300 text-gray-800 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-neutral-200"
+                  className="flex h-full w-full items-center justify-center rounded-full bg-gray-100 p-2 hover:bg-gray-400 dark:bg-gray-700 hover:dark:bg-gray-600"
                   onClick={onScrollDownClick}
                 >
-                  <IconArrowDown size={18} />
+                  <ArrowNarrowDown width={24} height={24} />
                 </button>
               </div>
             )}
