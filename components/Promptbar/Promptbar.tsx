@@ -154,7 +154,7 @@ const Promptbar = () => {
 
   const actionsBlock = (
     <button
-      className="flex shrink-0 cursor-pointer select-none items-center gap-3 p-3 transition-colors duration-200 disabled:cursor-not-allowed"
+      className="flex shrink-0 cursor-pointer select-none items-center gap-3 p-3 transition-colors duration-200 hover:bg-violet/[15%] disabled:cursor-not-allowed"
       onClick={() => {
         handleCreatePrompt();
         promptDispatch({ field: 'searchTerm', value: '' });
@@ -163,14 +163,6 @@ const Promptbar = () => {
       <PlusIcon className="text-gray-500" width={18} height={18} />
       {t('Add new prompt')}
     </button>
-
-    // <button
-    //   className="flex h-full shrink-0 cursor-pointer items-center gap-3 rounded-md border border-white/20 p-3 text-sm transition-colors duration-200 hover:bg-gray-500/10"
-    //   onClick={() => handleCreateFolder(t('New folder'), 'prompt')}
-    // >
-    //   <IconFolderPlus size={16} />
-    // </button>
-    // </div>
   );
 
   return (

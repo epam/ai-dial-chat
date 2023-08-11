@@ -22,6 +22,7 @@ import classNames from 'classnames';
 interface ContextMenuProps {
   item: Conversation | Prompt;
   featureType: FeatureType;
+  onOpenMoveToModal: () => void;
   moveToFolder?: (folderId: string) => void;
   onDelete: MouseEventHandler<unknown>;
   onRename: MouseEventHandler<unknown>;
@@ -43,6 +44,7 @@ export const ContextMenu = ({
   isEmptyConversation,
   className,
   moveToFolder,
+  onOpenMoveToModal,
 }: ContextMenuProps) => {
   const { t } = useTranslation('sidebar');
   const {
@@ -133,7 +135,21 @@ export const ContextMenu = ({
           }
           onClick={onExport}
         />
+        <MenuItem
+          className="md:hidden"
+          onClick={onOpenMoveToModal}
+          label="Move to"
+          Icon={
+            <FileRightIcon
+              className="text-gray-500"
+              width={18}
+              height={18}
+              size={18}
+            />
+          }
+        />
         <Menu
+          className="max-md:hidden"
           label="Move to"
           Icon={
             <FileRightIcon
@@ -145,7 +161,7 @@ export const ContextMenu = ({
           }
         >
           <MenuItem
-            className="border-b border-gray-400 dark:border-gray-600"
+            className="border-b border-gray-400 dark:border-gray-600 max-md:hidden"
             label="New folder"
             onClick={moveToNewFolder}
             Icon={
@@ -162,6 +178,7 @@ export const ContextMenu = ({
             .sort((a, b) => a.name.localeCompare(b.name))
             .map((folder) => (
               <MenuItem
+                className="max-md:hidden"
                 key={folder.id}
                 label={folder.name}
                 onClick={() => {

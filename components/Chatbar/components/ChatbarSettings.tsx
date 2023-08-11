@@ -6,6 +6,7 @@ import { DEFAULT_CONVERSATION_NAME } from '@/utils/app/const';
 
 import HomeContext from '@/pages/api/home/home.context';
 
+import FileLeftIcon from '../../../public/images/icons/file-arrow-left.svg';
 import FileRightIcon from '../../../public/images/icons/file-arrow-right.svg';
 import FolderPlusIcon from '../../../public/images/icons/folder-plus.svg';
 import CompareIcon from '../../../public/images/icons/scale-balanced.svg';
@@ -53,51 +54,37 @@ export const ChatbarSettings = () => {
           className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center"
           onClick={handleClearConversations}
         >
-          <TrashIcon width={24} height={24} />
+          <TrashIcon className="hover:text-green" width={24} height={24} />
         </div>
       ) : null}
 
-      <Import onImport={handleImportConversations} />
+      <Import
+        onImport={handleImportConversations}
+        icon={
+          <FileLeftIcon className="hover:text-green" width={24} height={24} />
+        }
+      />
       <div
-        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center"
+        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center hover:text-green"
         onClick={() => handleExportConversations()}
       >
         <FileRightIcon width={24} height={24} />
       </div>
 
       <div
-        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center"
+        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center hover:text-green"
         onClick={() => handleCreateFolder(t('New folder'), 'chat')}
       >
         <FolderPlusIcon width={24} height={24} />
       </div>
       <div
-        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center"
+        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center hover:text-green"
         onClick={() => {
           handleToggleCompare();
         }}
       >
         <CompareIcon width={24} height={24} />
       </div>
-      {/*
-      <SidebarButton
-        text={t('Export conversations')}
-        icon={<IconFileExport size={18} />}
-        onClick={() => handleExportConversations()}
-      /> */}
-      {/* <button
-        className="flex h-full shrink-0 cursor-pointer items-center gap-3 rounded-md border border-white/20 p-3 text-sm transition-colors duration-200 hover:bg-gray-500/10 disabled:cursor-not-allowed"
-        onClick={handleToggleCompare}
-        disabled={!!messageIsStreaming}
-      >
-        <IconScale size={16} />
-      </button>
-      <button
-        className="flex h-full shrink-0 cursor-pointer items-center gap-3 rounded-md border border-white/20 p-3 text-sm transition-colors duration-200 hover:bg-gray-500/10"
-        onClick={() => handleCreateFolder(t('New folder'), 'chat')}
-      >
-        <IconFolderPlus size={16} />
-      </button> */}
     </div>
   );
 };

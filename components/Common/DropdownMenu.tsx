@@ -68,7 +68,7 @@ export const MenuComponent = forwardRef<
   HTMLButtonElement,
   MenuProps & HTMLProps<HTMLButtonElement>
 >(function MenuComponent(
-  { children, style, label, Icon, ...props },
+  { children, style, className, label, Icon, ...props },
   forwardedRef,
 ) {
   const [isOpen, setIsOpen] = useState(false);
@@ -176,6 +176,7 @@ export const MenuComponent = forwardRef<
         className={classNames(
           menuItemClassNames,
           isNested ? 'h-[42px] w-full hover:bg-green/[15%]' : 'pr-0',
+          className,
         )}
         {...getReferenceProps(
           parent.getItemProps({

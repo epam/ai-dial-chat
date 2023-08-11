@@ -4,8 +4,11 @@ import {
   ReactElement,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
+
+import useOutsideAlerter from '@/hooks/useOutsideAlerter';
 
 import { FolderInterface } from '@/types/folder';
 
@@ -22,6 +25,7 @@ import { FolderContextMenu } from '../Common/FolderContextMenu';
 import classNames from 'classnames';
 
 interface Props {
+  highlightColor: string;
   currentFolder: FolderInterface;
   searchTerm: string;
   handleDrop: (e: any, folder: FolderInterface) => void;
@@ -48,6 +52,7 @@ const Folder = ({
   searchTerm,
   handleDrop,
   folderComponent,
+  highlightColor,
 }: Props) => {
   const { handleDeleteFolder, handleUpdateFolder } = useContext(HomeContext);
 
@@ -55,7 +60,8 @@ const Folder = ({
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const [isShowContextMenuButton, setIsShowContextMenuButton] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
+  const wrapperRef = useRef(null);
 
   const handleEnterDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter') {
@@ -119,13 +125,16 @@ const Folder = ({
     }
   }, [searchTerm]);
 
+  useOutsideAlerter(wrapperRef, setIsSelected);
+
   return (
     <>
       <div
         className={classNames(
-          'relative flex h-[42px] items-center rounded-[3px] hover:bg-green/[15%]',
-          isRenaming || isDeleting ? 'bg-green/[15%]' : '',
+          `group relative flex h-[42px] items-center rounded-[3px] hover:bg-${highlightColor}`,
+          isRenaming || isDeleting || isSelected ? `bg-${highlightColor}` : '',
         )}
+        ref={wrapperRef}
       >
         {isRenaming ? (
           <div className="flex w-full items-center gap-3 px-3">
@@ -142,27 +151,31 @@ const Folder = ({
           </div>
         ) : (
           <button
-            className={`flex w-full cursor-pointer items-center gap-3 p-3 transition-colors duration-200`}
-            onClick={() => setIsOpen(!isOpen)}
+            className="flex w-full cursor-pointer items-center gap-3 p-3 transition-colors duration-200"
+            onClick={() => {
+              setIsOpen(!isOpen);
+              setIsSelected(true);
+            }}
             onDrop={(e) => dropHandler(e)}
             onDragOver={allowDrop}
             onDragEnter={highlightDrop}
             onDragLeave={removeHighlight}
-            onMouseOver={() => {
-              setIsShowContextMenuButton(true);
-            }}
-            onMouseLeave={() => {
-              setIsShowContextMenuButton(false);
-            }}
           >
             <CaretIconComponent isOpen={isOpen} />
 
-            <div className="relative max-h-5 flex-1 truncate break-all text-left text-[12.5px] leading-3">
+            <div className="relative max-h-5 flex-1 truncate break-all text-left leading-3">
               {currentFolder.name}
             </div>
 
-            {!isDeleting && !isRenaming && isShowContextMenuButton && (
-              <FolderContextMenu onRename={onRename} onDelete={onDelete} />
+            {!isDeleting && !isRenaming && (
+              <div
+                className={classNames(
+                  'invisible absolute right-0 z-50 flex justify-end md:group-hover:visible',
+                  isSelected ? 'max-md:visible' : '',
+                )}
+              >
+                <FolderContextMenu onRename={onRename} onDelete={onDelete} />
+              </div>
             )}
           </button>
         )}
