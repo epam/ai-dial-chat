@@ -32,6 +32,7 @@
     "@tabler/icons-react": "^2.9.0",
     "classnames": "^2.3.2",
     "css.escape": "^1.5.1",
+    "downshift": "^8.1.0",
     "eventsource-parser": "^0.1.0",
     "i18next": "^22.4.13",
     "isomorphic-dompurify": "^1.8.0",
@@ -39,6 +40,7 @@
     "next-auth": "^4.22.1",
     "next-i18next": "^13.2.2",
     "node-fetch": "^3.3.2",
+    "rc-slider": "^10.2.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hot-toast": "^2.4.0",
@@ -50,6 +52,7 @@
     "rehype-raw": "^6.1.1",
     "rehype-sanitize": "^5.0.1",
     "remark-gfm": "^3.0.1",
+    "svgo": "^3.0.2",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

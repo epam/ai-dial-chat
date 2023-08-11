@@ -1,4 +1,5 @@
-import { FC, useContext, useEffect, useRef, useState } from 'react';
+import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
+import { FC, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -18,7 +19,7 @@ import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
 
 interface Props {
-  selectedModelId: string;
+  selectedModelId: string | undefined;
   isOpen: boolean;
   onModelSelect: (selectedModelId: string) => void;
   onClose: () => void;
@@ -47,7 +48,6 @@ export const ModelsDialog: FC<Props> = ({
     state: { models, lightMode },
     handleUpdateRecentModels,
   } = useContext(HomeContext);
-  const modalRef = useRef<HTMLDivElement>(null);
   const [entityTypes, setEntityTypes] = useState<
     (
       | OpenAIEntityModelType
@@ -65,24 +65,14 @@ export const ModelsDialog: FC<Props> = ({
     useState<OpenAIEntity[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        window.addEventListener('mouseup', handleMouseUp);
-      }
-    };
-
-    const handleMouseUp = () => {
-      window.removeEventListener('mouseup', handleMouseUp);
+  const { refs, context } = useFloating({
+    open: isOpen,
+    onOpenChange: () => {
       onClose();
-    };
-
-    window.addEventListener('mousedown', handleMouseDown);
-
-    return () => {
-      window.removeEventListener('mousedown', handleMouseDown);
-    };
-  }, [onClose]);
+    },
+  });
+  const dismiss = useDismiss(context);
+  const { getFloatingProps } = useInteractions([dismiss]);
 
   useEffect(() => {
     const newFilteredEntities = getFilteredEntities(
@@ -105,6 +95,11 @@ export const ModelsDialog: FC<Props> = ({
   const handleSearch = (searchValue: string) => {
     setSearchTerm(searchValue.trim().toLowerCase());
   };
+
+  useEffect(() => {
+    setSearchTerm('');
+    setEntityTypes(['model', 'assistant', 'application']);
+  }, [isOpen]);
 
   const handleFilterType = (
     entityType:
@@ -178,94 +173,93 @@ export const ModelsDialog: FC<Props> = ({
   // Render the dialog.
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/70">
-      <div className="fixed inset-0 z-10 overflow-hidden">
-        <div className="flex h-screen items-center justify-center p-3 text-center">
-          <div
-            ref={modalRef}
-            className="flex h-full w-[calc(100%-12px)] grow flex-col gap-4 overflow-y-auto rounded bg-gray-100 px-5 py-4 text-left dark:bg-gray-700 md:w-[790px] md:grow-0"
-            role="dialog"
+      <div
+        className="flex h-[90%] w-[calc(100%-12px)] grow flex-col gap-4 rounded bg-gray-100 px-5 py-4 text-left dark:bg-gray-700 md:w-[790px] md:grow-0"
+        role="dialog"
+        ref={refs.setFloating}
+        {...getFloatingProps()}
+      >
+        <div className="flex justify-between">
+          {t('Talk to')}
+          <button onClick={onClose} className="text-gray-500">
+            <XMark height={24} width={24} />
+          </button>
+        </div>
+
+        <div>
+          <input
+            name="titleInput"
+            placeholder={t('Search model, assistant or application') || ''}
+            type="text"
+            onChange={(e) => {
+              handleSearch(e.target.value);
+            }}
+            className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
+          ></input>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            className={`rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:bg-gray-600 ${
+              entityTypes.includes('model')
+                ? 'border-blue-500 bg-blue-500/20'
+                : 'bg-gray-400'
+            }`}
+            onClick={() => {
+              handleFilterType('model');
+            }}
           >
-            <div className="flex justify-between">
-              {t('Talk to')}
-              <button onClick={onClose} className="text-gray-500">
-                <XMark height={24} width={24} />
-              </button>
-            </div>
+            {t('Models')}
+          </button>
+          <button
+            className={`rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:bg-gray-600 ${
+              entityTypes.includes('assistant')
+                ? 'border-blue-500 bg-blue-500/20'
+                : 'bg-gray-400'
+            }`}
+            onClick={() => {
+              handleFilterType('assistant');
+            }}
+          >
+            {t('Assistants')}
+          </button>
+          <button
+            className={`rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:bg-gray-600 ${
+              entityTypes.includes('application')
+                ? 'border-blue-500 bg-blue-500/20'
+                : 'bg-gray-400'
+            }`}
+            onClick={() => {
+              handleFilterType('application');
+            }}
+          >
+            {t('Applications')}
+          </button>
+        </div>
 
-            <div>
-              <input
-                name="titleInput"
-                placeholder={t('Search model, assistant or application') || ''}
-                type="text"
-                onChange={(e) => {
-                  handleSearch(e.target.value);
-                }}
-                className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 dark:border-gray-600"
-              ></input>
+        <div className="flex flex-col gap-4 overflow-auto">
+          {filteredModelsEntities?.length > 0 ||
+          filteredAssistantsEntities?.length > 0 ||
+          filteredApplicationsEntities?.length > 0 ? (
+            <>
+              {filteredModelsEntities.length > 0 &&
+                getEntityListingTemplate(filteredModelsEntities, t('Models'))}
+              {filteredAssistantsEntities.length > 0 &&
+                getEntityListingTemplate(
+                  filteredAssistantsEntities,
+                  t('Assistants'),
+                )}
+              {filteredApplicationsEntities.length > 0 &&
+                getEntityListingTemplate(
+                  filteredApplicationsEntities,
+                  t('Applications'),
+                )}
+            </>
+          ) : (
+            <div className="flex grow items-center justify-center">
+              <NoResultsFound />
             </div>
-
-            <div className="flex gap-2">
-              <button
-                className={`rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:bg-gray-600 ${
-                  entityTypes.includes('model')
-                    ? 'border-blue-500 bg-blue-500/20'
-                    : 'bg-gray-400'
-                }`}
-                onClick={() => {
-                  handleFilterType('model');
-                }}
-              >
-                {t('Models')}
-              </button>
-              <button
-                className={`rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:bg-gray-600 ${
-                  entityTypes.includes('assistant')
-                    ? 'border-blue-500 bg-blue-500/20'
-                    : 'bg-gray-400'
-                }`}
-                onClick={() => {
-                  handleFilterType('assistant');
-                }}
-              >
-                {t('Assistants')}
-              </button>
-              <button
-                className={`rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:bg-gray-600 ${
-                  entityTypes.includes('application')
-                    ? 'border-blue-500 bg-blue-500/20'
-                    : 'bg-gray-400'
-                }`}
-                onClick={() => {
-                  handleFilterType('application');
-                }}
-              >
-                {t('Applications')}
-              </button>
-            </div>
-
-            {filteredModelsEntities?.length > 0 ||
-            filteredAssistantsEntities?.length > 0 ||
-            filteredApplicationsEntities?.length > 0 ? (
-              <>
-                {filteredModelsEntities.length > 0 &&
-                  getEntityListingTemplate(filteredModelsEntities, t('Models'))}
-                {filteredAssistantsEntities.length > 0 &&
-                  getEntityListingTemplate(
-                    filteredAssistantsEntities,
-                    t('Assistants'),
-                  )}
-                {filteredApplicationsEntities.length > 0 &&
-                  getEntityListingTemplate(
-                    filteredApplicationsEntities,
-                    t('Applications'),
-                  )}
-              </>
-            ) : (
-              <div className="flex grow items-center justify-center ">
-                <NoResultsFound />
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </div>

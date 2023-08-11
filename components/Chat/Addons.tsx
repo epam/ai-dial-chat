@@ -1,84 +1,133 @@
-import { MouseEventHandler, useEffect, useState } from 'react';
+import { Fragment, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { OpenAIEntityAddon, OpenAIEntityAddonID } from '@/types/openai';
+import HomeContext from '@/pages/api/home/home.context';
 
-interface AddonButtonProps {
-  addonName: string;
-  addonId: string;
-  onChangeAddon: (addonId: string) => void;
-  isPreselected?: boolean;
-  isAddonSelected?: boolean;
-}
+import { ModelIcon } from '../Chatbar/components/ModelIcon';
+
+import XMark from '../../public/images/icons/xmark.svg';
+import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
+import { AddonsDialog } from './AddonsDialog';
 
 interface AddonsProps {
-  addons: OpenAIEntityAddon[];
-  preselectedAddons: OpenAIEntityAddonID[];
-  selectedAddons: string[];
+  preselectedAddonsIds: string[];
+  selectedAddonsIds: string[];
   onChangeAddon: (addonId: string) => void;
+  onApplyAddons: (addonsIds: string[]) => void;
 }
 
-export const AddonButton = ({
-  isPreselected,
-  isAddonSelected,
-  addonName,
-  addonId,
-  onChangeAddon,
-}: AddonButtonProps) => {
-  const [isSelected, setIsSelected] = useState(isAddonSelected);
-
-  const onClickHandlerAddon: MouseEventHandler<HTMLButtonElement> = (e) => {
-    e.preventDefault();
-    if (!isPreselected) {
-      onChangeAddon(addonId);
-      setIsSelected((prev) => !prev);
-    }
-  };
-  useEffect(() => {
-    if (isAddonSelected) {
-      setIsSelected(true);
-    }
-  }, [isAddonSelected]);
-  return (
-    <button
-      className={`min-h-[80px]  rounded border-2  p-1 text-neutral-600 dark:text-white ${
-        isSelected ? 'border-2 border-[#0075ff]' : 'dark:border-neutral-300'
-      } ${
-        isPreselected
-          ? 'cursor-not-allowed border-2 border-[#0075ff] bg-[#7f7f7f] text-white'
-          : ''
-      }`}
-      onClick={onClickHandlerAddon}
-    >
-      <span>{addonName}</span>
-    </button>
-  );
-};
 export const Addons = ({
-  addons,
+  preselectedAddonsIds,
+  selectedAddonsIds,
   onChangeAddon,
-  preselectedAddons,
-  selectedAddons,
+  onApplyAddons,
 }: AddonsProps) => {
-  return (
-    <div>
-      <div
-        className={`grid max-h-[80px] grid-cols-2 gap-8 overflow-auto sm:grid-cols-4`}
+  const {
+    state: { addonsMap, lightMode, recentAddonsIds },
+  } = useContext(HomeContext);
+  const { t } = useTranslation('chat');
+  const [filteredRecentAddons, setFilteredRecentAddons] = useState<string[]>(
+    () => {
+      return recentAddonsIds.filter((id) => !selectedAddonsIds.includes(id));
+    },
+  );
+  const [isAddonsDialogOpen, setIsAddonsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    setFilteredRecentAddons(
+      recentAddonsIds.filter((id) => !selectedAddonsIds.includes(id)),
+    );
+  }, [selectedAddonsIds, recentAddonsIds]);
+
+  const getAddon = (addonId: string, isSelected = false) => {
+    const description = addonsMap[addonId]?.description;
+    const template = (
+      <button
+        className={`flex items-center gap-2 px-3 py-2  ${
+          isSelected ? 'bg-blue-500/20' : 'bg-gray-100 dark:bg-gray-700'
+        }`}
+        disabled={preselectedAddonsIds.includes(addonId)}
+        onClick={() => {
+          onChangeAddon(addonId);
+        }}
       >
-        {addons.map((addon) => {
-          const isPreselected = preselectedAddons.some((id) => id === addon.id);
-          const isSelected = selectedAddons.some((id) => id === addon.id);
-          return (
-            <AddonButton
-              key={addon.id}
-              addonName={addon.name}
-              addonId={addon.id}
-              onChangeAddon={onChangeAddon}
-              isPreselected={isPreselected}
-              isAddonSelected={isSelected}
-            />
-          );
-        })}
-      </div>
+        <ModelIcon
+          entity={addonsMap[addonId]}
+          entityId={addonId}
+          size={15}
+          inverted={!addonsMap[addonId]?.iconUrl && lightMode === 'dark'}
+        />
+        <span>{addonsMap[addonId]?.name || addonId}</span>
+        {isSelected && !preselectedAddonsIds.includes(addonId) && (
+          <XMark height={12} width={12} className="text-gray-500" />
+        )}
+      </button>
+    );
+
+    return (
+      <Fragment key={addonId}>
+        {description ? (
+          <Tooltip>
+            <TooltipTrigger className="flex shrink-0">
+              {template}
+            </TooltipTrigger>
+            <TooltipContent>
+              <EntityMarkdownDescription>
+                {description}
+              </EntityMarkdownDescription>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          template
+        )}
+      </Fragment>
+    );
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <span>{t('Addons (max 10)')}</span>
+
+      {selectedAddonsIds?.length > 0 && (
+        <>
+          <span className="text-gray-500">{t('Selected')}</span>
+          <div className="flex flex-wrap gap-1">
+            {selectedAddonsIds.map((addon) => getAddon(addon, true))}
+          </div>
+        </>
+      )}
+      {(!selectedAddonsIds || selectedAddonsIds.length < 11) && (
+        <>
+          {filteredRecentAddons?.length > 0 && (
+            <>
+              <span className="text-gray-500">{t('Recent')}</span>
+              <div className="flex flex-wrap gap-1">
+                {filteredRecentAddons.map((addon) => getAddon(addon, false))}
+              </div>
+            </>
+          )}
+          <div>
+            <button
+              className="mt-3 inline text-left text-blue-500"
+              onClick={() => {
+                setIsAddonsDialogOpen(true);
+              }}
+            >
+              {t('See all addons...')}
+            </button>
+          </div>
+          <AddonsDialog
+            isOpen={isAddonsDialogOpen}
+            selectedAddonsIds={selectedAddonsIds}
+            preselectedAddonsIds={preselectedAddonsIds}
+            onClose={() => {
+              setIsAddonsDialogOpen(false);
+            }}
+            onAddonsSelected={onApplyAddons}
+          />
+        </>
+      )}
     </div>
   );
 };

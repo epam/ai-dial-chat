@@ -20,14 +20,14 @@ module.exports = {
         },
         violet: 'rgb(var(--violet, 148 89 241) / <alpha-value>)', // #9459F1
         gray: {
-          100: 'rgb(var(--gray-100, 252 252 252) / <alpha-value>)', // #FCFCFC
-          200: 'rgb(var(--gray-200, 243 244 246) / <alpha-value>)', // #F3F4F6
+          100: 'rgb(var(--gray-100, 252 252 252) / <alpha-value>)', // #FCFCFC, L3 (white)
+          200: 'rgb(var(--gray-200, 243 244 246) / <alpha-value>)', // #F3F4F6, L2 (white), text (dark)
           300: 'rgb(var(--gray-300, 234 237 240) / <alpha-value>)', // #EAEDF0
           400: 'rgb(var(--gray-400, 221 225 230) / <alpha-value>)', // #DDE1E6, L4 (white)
           500: 'rgb(var(--gray-500, 127 135 146) / <alpha-value>)', // #7F8792, icons, sec text
           600: 'rgb(var(--gray-600, 51 57 66) / <alpha-value>)', // #333942, L4 (dark)
-          700: 'rgb(var(--gray-700, 34 41 50) / <alpha-value>)', // #222932
-          800: 'rgb(var(--gray-800, 20 26 35) / <alpha-value>)', // #141A23
+          700: 'rgb(var(--gray-700, 34 41 50) / <alpha-value>)', // #222932, L3 (dark)
+          800: 'rgb(var(--gray-800, 20 26 35) / <alpha-value>)', // #141A23, L2 (dark), text(white)
           900: 'rgb(var(--gray-900, 9 13 19) / <alpha-value>)', // #090D13
         },
         black: 'rgb(var(--black, 0 0 0) / <alpha-value>)', // #000000

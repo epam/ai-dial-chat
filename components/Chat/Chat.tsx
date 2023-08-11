@@ -24,11 +24,12 @@ import { ChatBody, Conversation, Message } from '@/types/chat';
 import HomeContext from '@/pages/api/home/home.context';
 
 import { ChatCompareSelect } from './ChatCompareSelect';
-import { ChatEmpty } from './ChatEmpty';
+import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput';
 import { ChatLoader } from './ChatLoader';
 import ChatReplayControls from './ChatReplayControls';
 import { ChatSettings } from './ChatSettings';
+import { ChatSettingsEmpty } from './ChatSettingsEmpty';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
@@ -157,6 +158,7 @@ export const Chat = memo(({ appName }: Props) => {
   const abortController = useRef<AbortController>();
   const [isNotAllowedModel, setIsNotAllowedModel] = useState(false);
   const isStopGenerating = useRef(false);
+
   useEffect(() => {
     if (
       inputRef.current?.clientHeight &&
@@ -726,14 +728,12 @@ export const Chat = memo(({ appName }: Props) => {
 
   const onClickReplayStart: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.preventDefault();
-    setIsShowChatSettings(false);
     setIsReplayPaused(false);
     handleReplay();
   };
 
   const onClickReplayReStart: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.preventDefault();
-    setIsShowChatSettings(false);
 
     if (isLastMessageFromAssistant) {
       handleReplay(2, activeReplayIndex, false);
@@ -759,7 +759,10 @@ export const Chat = memo(({ appName }: Props) => {
     }
   };
 
-  const handleSelectModel = (conversation: Conversation, modelId: string) => {
+  const handleSelectModel = (
+    conversation: Conversation,
+    modelId: string,
+  ): Conversation => {
     const newAiEntity = models.find(
       ({ id }) => id === modelId,
     ) as OpenAIEntityModel;
@@ -794,22 +797,29 @@ export const Chat = memo(({ appName }: Props) => {
         value: undefined,
       });
     }
+    return updatedConversation;
   };
 
   const handleSelectAssistantSubModel = (
     conversation: Conversation,
     modelId: string,
-  ) => {
+  ): Conversation => {
     handleUpdateConversation(conversation, {
       key: 'assistantModelId',
       value: modelId,
     });
+
+    return { ...conversation, assistantModelId: modelId };
   };
 
-  const handleOnChangeAddon = (conversation: Conversation, addonId: string) => {
+  const handleOnChangeAddon = (
+    conversation: Conversation,
+    addonId: string,
+  ): Conversation => {
     const isAddonInConversation = conversation.selectedAddons.some(
       (id) => id === addonId,
     );
+    let updatedConversation = conversation;
     if (isAddonInConversation) {
       const filteredAddons = conversation.selectedAddons.filter(
         (id) => id !== addonId,
@@ -818,28 +828,51 @@ export const Chat = memo(({ appName }: Props) => {
         key: 'selectedAddons',
         value: filteredAddons,
       });
+      updatedConversation = {
+        ...conversation,
+        selectedAddons: filteredAddons,
+      };
     } else {
       handleUpdateConversation(conversation, {
         key: 'selectedAddons',
         value: conversation.selectedAddons.concat(addonId),
       });
+      updatedConversation = {
+        ...conversation,
+        selectedAddons: conversation.selectedAddons.concat(addonId),
+      };
     }
+
+    return updatedConversation;
   };
 
-  const handleChangePrompt = (conversation: Conversation, prompt: string) =>
+  const handleChangePrompt = (
+    conversation: Conversation,
+    prompt: string,
+  ): Conversation => {
     handleUpdateConversation(conversation, {
       key: 'prompt',
       value: prompt,
     });
 
+    return {
+      ...conversation,
+      prompt,
+    };
+  };
   const handleChangeTemperature = (
     conversation: Conversation,
     temperature: number,
-  ) =>
+  ) => {
     handleUpdateConversation(conversation, {
       key: 'temperature',
       value: temperature,
     });
+    return {
+      ...conversation,
+      temperature,
+    };
+  };
 
   const handleDeleteMessage = (message: Message) => {
     selectedConversations.forEach((conversation) => {
@@ -871,7 +904,6 @@ export const Chat = memo(({ appName }: Props) => {
   };
 
   const onSendMessage = (message: Message) => {
-    setIsShowChatSettings(false);
     localConversations.current = conversations;
     selectedConversations.forEach((conv) => {
       handleSend(conv, message, 0);
@@ -879,7 +911,6 @@ export const Chat = memo(({ appName }: Props) => {
   };
 
   const onRegenerateMessage = () => {
-    setIsShowChatSettings(false);
     localConversations.current = conversations;
     selectedConversations.forEach((conv) => {
       const lastUserMessageIndex = conv.messages
@@ -930,33 +961,33 @@ export const Chat = memo(({ appName }: Props) => {
   }, [selectedConversationIds]);
 
   return (
-    <div className="relative flex-1 overflow-hidden">
+    <div className="relative flex-1">
       {modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : (
         <>
-          <div className="flex h-full overflow-hidden">
+          <div className="flex h-full">
             <div
-              className={`flex h-full flex-col overflow-hidden ${
+              className={`flex h-full flex-col ${
                 isCompareMode && selectedConversations.length < 2
                   ? 'w-[50%]'
                   : 'w-full'
               }`}
             >
               <div className="flex max-h-full w-full">
-                {selectedConversations.map((conv) => (
-                  <div
-                    key={conv.id}
-                    className={`${
-                      isCompareMode && selectedConversations.length > 1
-                        ? 'w-[50%]'
-                        : 'w-full'
-                    }`}
-                  >
-                    {conv.messages.length === 0 ? (
-                      <div className={`flex h-full flex-col`}>
-                        <div className="overflow-auto">
-                          <ChatEmpty
+                {selectedConversations.map(
+                  (conv) =>
+                    conv.messages.length === 0 && (
+                      <div
+                        key={conv.id}
+                        className={`flex h-full flex-col justify-between overflow-auto ${
+                          selectedConversations.length > 1
+                            ? 'w-[50%]'
+                            : 'w-full'
+                        }`}
+                      >
+                        <div className="shrink-0">
+                          <ChatSettingsEmpty
                             conversation={conv}
                             models={models}
                             addons={addons}
@@ -988,73 +1019,56 @@ export const Chat = memo(({ appName }: Props) => {
 
                         <div
                           className="shrink-0"
-                          style={{ height: inputHeight - 20 }}
+                          style={{ height: inputHeight }}
                         />
                       </div>
-                    ) : (
+                    ),
+                )}
+              </div>
+              <div className="flex w-full">
+                {selectedConversations.map((conv) => (
+                  <div
+                    key={conv.id}
+                    className={`${
+                      isCompareMode && selectedConversations.length > 1
+                        ? 'w-[50%]'
+                        : 'w-full'
+                    }`}
+                  >
+                    {conv.messages.length !== 0 &&
                       enabledFeatures.has('top-settings') && (
-                        <div className={`flex h-full flex-col`}>
-                          <div
-                            className={`overflow-auto`}
-                            style={{
-                              maxHeight: isShowChatSettings
-                                ? window.innerHeight - inputHeight - 40
-                                : '',
+                        <div className={`z-10 flex flex-col `}>
+                          <ChatHeader
+                            messageIsStreaming={messageIsStreaming}
+                            conversation={conv}
+                            isCompareMode={isCompareMode}
+                            isShowChatInfo={enabledFeatures.has(
+                              'top-chat-info',
+                            )}
+                            isShowClearConversation={enabledFeatures.has(
+                              'top-clear-conversation',
+                            )}
+                            isShowModelSelect={enabledFeatures.has(
+                              'top-chat-model-settings',
+                            )}
+                            isShowSettings={isShowChatSettings}
+                            setShowSettings={setIsShowChatSettings}
+                            selectedConversationIds={selectedConversationIds}
+                            onClearConversation={() =>
+                              handleClearConversation(conv)
+                            }
+                            onUnselectConversation={() => {
+                              const filteredSelectedConversation =
+                                selectedConversations.filter(
+                                  ({ id }) => id !== conv.id,
+                                )[0];
+                              handleSelectConversation(
+                                filteredSelectedConversation,
+                              );
                             }}
-                          >
-                            <ChatSettings
-                              messageIsStreaming={messageIsStreaming}
-                              conversation={conv}
-                              defaultModelId={
-                                defaultModelId || OpenAIEntityModelID.GPT_3_5
-                              }
-                              prompts={prompts}
-                              addons={addons}
-                              isCompareMode={isCompareMode}
-                              isShowChatInfo={enabledFeatures.has(
-                                'top-chat-info',
-                              )}
-                              isShowClearConversation={enabledFeatures.has(
-                                'top-clear-conversation',
-                              )}
-                              isShowModelSelect={enabledFeatures.has(
-                                'top-chat-model-settings',
-                              )}
-                              isShowSettings={isShowChatSettings}
-                              setShowSettings={setIsShowChatSettings}
-                              selectedConversationIds={selectedConversationIds}
-                              onClearConversation={() =>
-                                handleClearConversation(conv)
-                              }
-                              onSelectModel={(modelId: string) =>
-                                handleSelectModel(conv, modelId)
-                              }
-                              onUnselectConversation={() => {
-                                const filteredSelectedConversation =
-                                  selectedConversations.filter(
-                                    ({ id }) => id !== conv.id,
-                                  )[0];
-                                handleSelectConversation(
-                                  filteredSelectedConversation,
-                                );
-                              }}
-                              onChangePrompt={(prompt) =>
-                                handleChangePrompt(conv, prompt)
-                              }
-                              onChangeTemperature={(temperature) =>
-                                handleChangeTemperature(conv, temperature)
-                              }
-                              onSelectAssistantSubModel={(modelId: string) =>
-                                handleSelectAssistantSubModel(conv, modelId)
-                              }
-                              onChangeAddon={(addonId: string) =>
-                                handleOnChangeAddon(conv, addonId)
-                              }
-                            />
-                          </div>
+                          />
                         </div>
-                      )
-                    )}
+                      )}
                   </div>
                 ))}
               </div>
@@ -1140,6 +1154,49 @@ export const Chat = memo(({ appName }: Props) => {
                 </div>
               )}
             </div>
+            {isShowChatSettings && (
+              <div
+                className={`absolute left-0 top-0 grid h-full w-full ${
+                  selectedConversations.length === 1
+                    ? 'grid-cols-1'
+                    : 'grid-cols-2'
+                }`}
+              >
+                {selectedConversations.map((conv) => (
+                  <div className="relative h-full" key={conv.id}>
+                    {
+                      <ChatSettings
+                        conversation={conv}
+                        defaultModelId={
+                          defaultModelId || OpenAIEntityModelID.GPT_3_5
+                        }
+                        model={modelsMap[conv.model.id]}
+                        prompts={prompts}
+                        addons={addons}
+                        onSelectModel={(conv: Conversation, modelId: string) =>
+                          handleSelectModel(conv, modelId)
+                        }
+                        onChangePrompt={(conv: Conversation, prompt) =>
+                          handleChangePrompt(conv, prompt)
+                        }
+                        onChangeTemperature={(
+                          conv: Conversation,
+                          temperature,
+                        ) => handleChangeTemperature(conv, temperature)}
+                        onSelectAssistantSubModel={(
+                          conv: Conversation,
+                          modelId: string,
+                        ) => handleSelectAssistantSubModel(conv, modelId)}
+                        onChangeAddon={(conv: Conversation, addonId: string) =>
+                          handleOnChangeAddon(conv, addonId)
+                        }
+                        onClose={() => setIsShowChatSettings(false)}
+                      />
+                    }
+                  </div>
+                ))}
+              </div>
+            )}
             {isCompareMode && selectedConversations.length < 2 && (
               <div className="w-[50%]">
                 <ChatCompareSelect

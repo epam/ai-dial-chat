@@ -11,21 +11,23 @@ import { useTranslation } from 'next-i18next';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/utils/app/const';
 
-import { Conversation } from '@/types/chat';
+import { OpenAIEntityModel } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 import { PromptList } from './PromptList';
 import { VariableModal } from './VariableModal';
 
 interface Props {
-  conversation: Conversation;
+  model: OpenAIEntityModel;
+  prompt: string | undefined;
   prompts: Prompt[];
   onChangePrompt: (prompt: string) => void;
 }
 
 export const SystemPrompt: FC<Props> = ({
-  conversation,
   prompts,
+  model,
+  prompt,
   onChangePrompt,
 }) => {
   const { t } = useTranslation('chat');
@@ -46,7 +48,7 @@ export const SystemPrompt: FC<Props> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
-    const maxLength = conversation.model.maxLength;
+    const maxLength = model.maxLength;
 
     if (value.length > maxLength) {
       alert(
@@ -165,12 +167,12 @@ export const SystemPrompt: FC<Props> = ({
   }, [value]);
 
   useEffect(() => {
-    if (conversation.prompt) {
-      setValue(conversation.prompt);
+    if (prompt) {
+      setValue(prompt);
     } else {
       setValue(DEFAULT_SYSTEM_PROMPT);
     }
-  }, [conversation]);
+  }, [prompt]);
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -191,12 +193,10 @@ export const SystemPrompt: FC<Props> = ({
 
   return (
     <div className="flex flex-col">
-      <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
-        {t('System Prompt')}
-      </label>
+      <label className="mb-4 text-left">{t('System Prompt')}</label>
       <textarea
         ref={textareaRef}
-        className="w-full rounded-lg border border-neutral-200 bg-transparent px-4 py-3 text-neutral-900 dark:border-neutral-600 dark:text-neutral-100"
+        className="w-full rounded border border-gray-400 bg-transparent px-4 py-3 outline-none placeholder:text-gray-500 focus-within:border-gray-800 dark:border-gray-600 focus-within:dark:border-gray-200"
         style={{
           resize: 'none',
           bottom: `${textareaRef?.current?.scrollHeight}px`,
