@@ -23,9 +23,8 @@ export const TemperatureSlider: FC<Props> = ({
   });
   const { t } = useTranslation('chat');
   const handleChange = (value: number) => {
-    const newValue = parseFloat(value);
-    setCurrentTemperature(newValue);
-    onChangeTemperature(newValue);
+    setCurrentTemperature(value);
+    onChangeTemperature(value);
   };
 
   const HandleElement = ({ props }: any) => {
