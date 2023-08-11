@@ -175,7 +175,7 @@ export const MenuComponent = forwardRef<
         data-focus-inside={hasFocusInside ? '' : undefined}
         className={classNames(
           menuItemClassNames,
-          isNested ? 'h-[42px] w-full hover:bg-green/[15%]' : 'pr-0',
+          isNested ? 'h-[42px] w-full' : 'pr-0',
           className,
         )}
         {...getReferenceProps(
@@ -254,11 +254,7 @@ export const MenuItem = forwardRef<
       ref={useMergeRefs([item.ref, forwardedRef])}
       type="button"
       role="menuitem"
-      className={classNames(
-        menuItemClassNames,
-        'h-[42px] w-full hover:bg-green/20',
-        className,
-      )}
+      className={classNames(menuItemClassNames, 'h-[42px] w-full', className)}
       tabIndex={isActive ? 0 : -1}
       disabled={disabled}
       {...menu.getItemProps({

@@ -22,6 +22,7 @@ import classNames from 'classnames';
 interface ContextMenuProps {
   item: Conversation | Prompt;
   featureType: FeatureType;
+  highlightColor: string;
   onOpenMoveToModal: () => void;
   moveToFolder?: (folderId: string) => void;
   onDelete: MouseEventHandler<unknown>;
@@ -45,6 +46,7 @@ export const ContextMenu = ({
   className,
   moveToFolder,
   onOpenMoveToModal,
+  highlightColor,
 }: ContextMenuProps) => {
   const { t } = useTranslation('sidebar');
   const {
@@ -84,6 +86,7 @@ export const ContextMenu = ({
         }
       >
         <MenuItem
+          className={classNames(`hover:bg-${highlightColor}`)}
           label={t('Edit')}
           Icon={
             <PenIcon
@@ -97,6 +100,7 @@ export const ContextMenu = ({
         />
         {onCompare && (
           <MenuItem
+            className={classNames(`hover:bg-${highlightColor}`)}
             label={t('Compare')}
             Icon={
               <CompareIcon
@@ -111,6 +115,7 @@ export const ContextMenu = ({
         )}
         {!isEmptyConversation && onReplay && (
           <MenuItem
+            className={classNames(`hover:bg-${highlightColor}`)}
             label={t('Replay')}
             Icon={
               <ReplayIcon
@@ -124,6 +129,7 @@ export const ContextMenu = ({
           />
         )}
         <MenuItem
+          className={classNames(`hover:bg-${highlightColor}`)}
           label={t('Export')}
           Icon={
             <FileLeftIcon
@@ -136,7 +142,7 @@ export const ContextMenu = ({
           onClick={onExport}
         />
         <MenuItem
-          className="md:hidden"
+          className={classNames('md:hidden', `hover:bg-${highlightColor}`)}
           onClick={onOpenMoveToModal}
           label="Move to"
           Icon={
@@ -149,7 +155,7 @@ export const ContextMenu = ({
           }
         />
         <Menu
-          className="max-md:hidden"
+          className={classNames('max-md:hidden', `hover:bg-${highlightColor}`)}
           label="Move to"
           Icon={
             <FileRightIcon
@@ -161,7 +167,10 @@ export const ContextMenu = ({
           }
         >
           <MenuItem
-            className="border-b border-gray-400 dark:border-gray-600 max-md:hidden"
+            className={classNames(
+              'border-b border-gray-400 dark:border-gray-600 max-md:hidden',
+              `hover:bg-${highlightColor}`,
+            )}
             label="New folder"
             onClick={moveToNewFolder}
             Icon={
@@ -178,7 +187,10 @@ export const ContextMenu = ({
             .sort((a, b) => a.name.localeCompare(b.name))
             .map((folder) => (
               <MenuItem
-                className="max-md:hidden"
+                className={classNames(
+                  'max-md:hidden',
+                  `hover:bg-${highlightColor}`,
+                )}
                 key={folder.id}
                 label={folder.name}
                 onClick={() => {
@@ -190,6 +202,7 @@ export const ContextMenu = ({
             ))}
         </Menu>
         <MenuItem
+          className={classNames(`hover:bg-${highlightColor}`)}
           label={t('Delete')}
           Icon={
             <TrashIcon

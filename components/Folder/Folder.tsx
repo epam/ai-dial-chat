@@ -174,7 +174,11 @@ const Folder = ({
                   isSelected ? 'max-md:visible' : '',
                 )}
               >
-                <FolderContextMenu onRename={onRename} onDelete={onDelete} />
+                <FolderContextMenu
+                  onRename={onRename}
+                  onDelete={onDelete}
+                  highlightColor={highlightColor}
+                />
               </div>
             )}
           </button>

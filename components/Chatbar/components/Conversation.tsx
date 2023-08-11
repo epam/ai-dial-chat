@@ -210,6 +210,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
             onReplay={handleStartReplay}
             isEmptyConversation={isEmptyConversation}
             featureType="chat"
+            highlightColor="green/[15%]"
           />
         </div>
       )}

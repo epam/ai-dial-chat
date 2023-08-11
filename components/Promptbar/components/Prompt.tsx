@@ -170,6 +170,7 @@ export const PromptComponent = ({ prompt }: Props) => {
               setIsShowMoveToModal(true);
             }}
             item={prompt}
+            highlightColor="violet/[15%]"
           />
         </div>
       )}
