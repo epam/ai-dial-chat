@@ -14,6 +14,7 @@ import XMark from '../../public/images/icons/xmark.svg';
 import { Combobox } from '../Common/Combobox';
 import { Addons } from './Addons';
 import { ConversationSettingsModel } from './ConversationSettingsModels';
+import { ModelDescription } from './ModelDescription';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 
@@ -97,8 +98,13 @@ export const ConversationSettings = ({
         </div>
         {model ? (
           <div className="flex max-h-full shrink flex-col gap-[1px] overflow-auto">
+            {model.type === 'application' && (
+              <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
+                <ModelDescription model={model} />
+              </div>
+            )}
             {model.type === 'assistant' && assistantSubModel && (
-              <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
+              <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
                 <Combobox
                   label="Model"
                   items={models.filter((model) => model.type === 'model')}
@@ -115,7 +121,7 @@ export const ConversationSettings = ({
               </div>
             )}
             {model.type === 'model' && (
-              <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
+              <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
                 <SystemPrompt
                   model={model}
                   prompt={prompt}
@@ -126,7 +132,7 @@ export const ConversationSettings = ({
             )}
 
             {model.type !== 'application' && (
-              <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
+              <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
                 <TemperatureSlider
                   label={t('Temperature')}
                   onChangeTemperature={onChangeTemperature}
@@ -136,7 +142,7 @@ export const ConversationSettings = ({
             )}
 
             {model.type !== 'application' && (
-              <div className="bg-gray-200 px-5 py-4 dark:bg-gray-800">
+              <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
                 <Addons
                   preselectedAddonsIds={model.selectedAddons || []}
                   selectedAddonsIds={selectedAddons}

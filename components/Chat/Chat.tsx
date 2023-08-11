@@ -31,7 +31,6 @@ import { ChatLoader } from './ChatLoader';
 import ChatReplayControls from './ChatReplayControls';
 import { ChatSettings } from './ChatSettings';
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
-import { ConversationSettings } from './ConversationSettings';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NoApiKeySet } from './NoApiKeySet';
