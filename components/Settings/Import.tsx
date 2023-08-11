@@ -1,14 +1,17 @@
 import { FC, ReactNode, useRef } from 'react';
 
+import { HighlightColor } from '@/types/components';
+
 import { ImportConversationsHandler } from '../Chatbar/Chatbar.context';
 import { ImportPromptsHandler } from '../Promptbar/PromptBar.context';
 
 interface Props {
   onImport: ImportConversationsHandler | ImportPromptsHandler;
   icon: ReactNode;
+  highlightColor: HighlightColor;
 }
 
-export const Import: FC<Props> = ({ onImport, icon }) => {
+export const Import: FC<Props> = ({ onImport, icon, highlightColor }) => {
   const ref = useRef<HTMLInputElement>(null);
   return (
     <>
@@ -32,7 +35,11 @@ export const Import: FC<Props> = ({ onImport, icon }) => {
         }}
       />
       <div
-        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center"
+        className={`flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded  md:h-[42px] md:w-[42px] ${
+          highlightColor === 'green'
+            ? 'hover:bg-green/15 hover:text-green'
+            : 'hover:bg-violet/15 hover:text-violet'
+        }`}
         onClick={() => {
           const importFile = ref.current;
           if (importFile) {

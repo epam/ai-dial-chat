@@ -127,14 +127,16 @@ const Folder = ({
   }, [searchTerm]);
 
   useOutsideAlerter(wrapperRef, setIsSelected);
+
   const hoverColor =
     highlightColor === 'green' ? 'hover:bg-green/15' : 'hover:bg-violet/15';
+  const bgColor = highlightColor === 'green' ? 'bg-green/15' : 'bg-violet/15';
   return (
     <>
       <div
         className={classNames(
           'group relative flex h-[42px] items-center rounded',
-          isRenaming || isDeleting || isSelected ? hoverColor : '',
+          isRenaming || isDeleting ? bgColor : '',
           hoverColor,
         )}
         ref={wrapperRef}

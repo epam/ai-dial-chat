@@ -51,34 +51,33 @@ export const ChatbarSettings = () => {
     <div className="flex items-start gap-1 p-2 text-gray-500">
       {conversations.length > 0 ? (
         <div
-          className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center"
+          className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
           onClick={handleClearConversations}
         >
-          <TrashIcon className="hover:text-green" width={24} height={24} />
+          <TrashIcon width={24} height={24} />
         </div>
       ) : null}
 
       <Import
+        highlightColor="green"
         onImport={handleImportConversations}
-        icon={
-          <FileLeftIcon className="hover:text-green" width={24} height={24} />
-        }
+        icon={<FileLeftIcon width={24} height={24} />}
       />
       <div
-        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center hover:text-green"
+        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
         onClick={() => handleExportConversations()}
       >
         <FileRightIcon width={24} height={24} />
       </div>
 
       <div
-        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center hover:text-green"
+        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
         onClick={() => handleCreateFolder(t('New folder'), 'chat')}
       >
         <FolderPlusIcon width={24} height={24} />
       </div>
       <div
-        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center hover:text-green"
+        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
         onClick={() => {
           handleToggleCompare();
         }}
