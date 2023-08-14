@@ -300,9 +300,7 @@ export const Chat = memo(({ appName }: Props) => {
         conversation.selectedAddons.length > 0 &&
         modelsMap[conversation.model.id]?.type !== 'application'
       ) {
-        conversation.selectedAddons.forEach((selectedAddon) => {
-          handleUpdateRecentAddons(selectedAddon);
-        });
+        handleUpdateRecentAddons(conversation.selectedAddons);
       }
 
       let updatedConversation: Conversation = {

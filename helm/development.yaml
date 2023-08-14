@@ -35,6 +35,7 @@ env:
   AVAILABLE_ADDONS_USERS_LIMITATIONS: ''
   THEMES_CONFIG_HOST: 'https://dial-chat-themes.staging.deltixhub.io'
   RECENT_MODELS_IDS: 'gpt-35-turbo,gpt-4,chat-bison@001,anthropic.claude-instant-v1,assistant-10k,gpt-world,mirror'
+  RECENT_ADDONS_IDS: 'addon-epam10k-golden-qna,addon-epam10k-semantic-search,addon-wolfram'
 
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
 
