@@ -38,7 +38,6 @@ export interface Message {
   };
   like?: number;
   errorMessage?: string;
-  state?: object;
   model?: Partial<OpenAIEntityModel>;
   responseId?: string;
 }

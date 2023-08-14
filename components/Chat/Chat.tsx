@@ -109,6 +109,16 @@ const filterUnfinishedStages = (messages: Message[]): Message[] => {
   });
 };
 
+const clearStateForMessages = (messages: Message[]): Message[] => {
+  return messages.map((message) => ({
+    ...message,
+    custom_content: {
+      ...message.custom_content,
+      state: undefined,
+    },
+  }));
+};
+
 export const Chat = memo(({ appName }: Props) => {
   const { t } = useTranslation('chat');
 
@@ -779,21 +789,16 @@ export const Chat = memo(({ appName }: Props) => {
       model: newAiEntity,
       selectedAddons,
     };
+    handleUpdateConversation(conversation, {
+      key: 'model',
+      value: newAiEntity,
+    });
     if (newAiEntity.type === 'assistant') {
-      handleUpdateConversation(conversation, {
-        key: 'model',
-        value: newAiEntity,
-      });
-
       handleUpdateConversation(updatedConversation, {
         key: 'assistantModelId',
         value: DEFAULT_ASSISTANT_SUBMODEL.id,
       });
     } else {
-      handleUpdateConversation(conversation, {
-        key: 'model',
-        value: newAiEntity,
-      });
       handleUpdateConversation(updatedConversation, {
         key: 'assistantModelId',
         value: undefined,
@@ -977,6 +982,10 @@ export const Chat = memo(({ appName }: Props) => {
         | undefined =
         selectedConversationsTemporarySettings.current[conversation.id];
       if (temporarySettings) {
+        localConv = {
+          ...localConv,
+          messages: clearStateForMessages(localConv.messages),
+        };
         if (temporarySettings.modelId) {
           localConv = handleSelectModel(localConv, temporarySettings.modelId);
         }
