@@ -419,15 +419,17 @@ const Home = ({
       JSON.stringify(recentFilteredModels),
     );
   };
-  const handleUpdateRecentAddons = (addonId: string): void => {
-    const recentFilteredAddons = recentAddonsIds.filter((id) => id !== addonId);
-
-    recentFilteredAddons.unshift(addonId);
-    dispatch({ field: 'recentAddonsIds', value: recentFilteredAddons });
-    localStorage.setItem(
-      'recentAddonsIds',
-      JSON.stringify(recentFilteredAddons),
+  const handleUpdateRecentAddons = (addonIds: string[]): void => {
+    const recentFilteredAddons = recentAddonsIds.filter(
+      (id) => !addonIds.includes(id),
     );
+    const updatedAddonsIds = [...addonIds, ...recentFilteredAddons];
+
+    dispatch({
+      field: 'recentAddonsIds',
+      value: updatedAddonsIds,
+    });
+    localStorage.setItem('recentAddonsIds', JSON.stringify(updatedAddonsIds));
   };
 
   const handleNewReplayConversation = (conversation: Conversation) => {
