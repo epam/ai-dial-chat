@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/utils/app/const';
 
@@ -20,18 +20,15 @@ interface Props {
   prompts: Prompt[];
   defaultModelId: OpenAIEntityModelID;
   addons: OpenAIEntityAddon[];
-  onChangeAddon: (conv: Conversation, addonId: string) => Conversation;
-  onChangePrompt: (conv: Conversation, prompt: string) => Conversation;
-  onChangeTemperature: (
-    conv: Conversation,
-    temperature: number,
-  ) => Conversation;
-  onSelectModel: (conv: Conversation, modelId: string) => Conversation;
-  onSelectAssistantSubModel: (
-    conv: Conversation,
-    modelId: string,
-  ) => Conversation;
   onClose: () => void;
+  onChangeSettings: (args: {
+    modelId: string | undefined;
+    prompt: string;
+    temperature: number;
+    currentAssistentModelId: string | undefined;
+    addonsIds: string[];
+  }) => void;
+  onApplySettings: () => void;
 }
 
 export const ChatSettings = ({
@@ -39,12 +36,9 @@ export const ChatSettings = ({
   defaultModelId,
   conversation,
   prompts,
-  onSelectModel,
-  onSelectAssistantSubModel,
-  onChangePrompt,
-  onChangeTemperature,
-  onChangeAddon,
   onClose,
+  onChangeSettings,
+  onApplySettings,
 }: Props) => {
   const {
     state: { modelsMap },
@@ -64,22 +58,25 @@ export const ChatSettings = ({
     conversation.selectedAddons || [],
   );
 
-  const handleApplyChanges = () => {
-    let conv = conversation;
-    if (currentModel) {
-      conv = onSelectModel(conv, currentModel.id);
-    }
-    conv = onChangePrompt(conv, currentPrompt);
-    conv = onChangeTemperature(conv, currentTemperature);
-    if (currentAssistentModelId) {
-      conv = onSelectAssistantSubModel(conv, currentAssistentModelId);
-    }
-    currentSelectedAddonsIds.forEach((addonId) => {
-      conv = onChangeAddon(conv, addonId);
+  const handleChangeSettings = () => {
+    onChangeSettings({
+      modelId: currentModel?.id,
+      currentAssistentModelId,
+      prompt: currentPrompt,
+      temperature: currentTemperature,
+      addonsIds: currentSelectedAddonsIds,
     });
-
-    onClose();
   };
+
+  useEffect(() => {
+    handleChangeSettings();
+  }, [
+    currentModel,
+    currentPrompt,
+    currentAssistentModelId,
+    currentTemperature,
+    currentSelectedAddonsIds,
+  ]);
 
   return (
     <div className="absolute top-0 z-50 flex h-full w-full grow items-start overflow-auto bg-gray-900/30 p-5 dark:bg-gray-900/70">
@@ -93,9 +90,9 @@ export const ChatSettings = ({
           prompt={currentPrompt}
           selectedAddons={currentSelectedAddonsIds}
           temperature={currentTemperature}
-          onSelectModel={(modelId: string) =>
-            setCurrentModel(modelsMap[modelId])
-          }
+          onSelectModel={(modelId: string) => {
+            setCurrentModel(modelsMap[modelId]);
+          }}
           onChangePrompt={(prompt) => setCurrentPrompt(prompt)}
           onChangeTemperature={(temperature) =>
             setCurrentTemperature(temperature)
@@ -113,7 +110,10 @@ export const ChatSettings = ({
             })
           }
           onApplyAddons={(addons) => setCurrentSelectedAddonsIds(addons)}
-          onApplySettings={handleApplyChanges}
+          onApplySettings={() => {
+            onClose();
+            onApplySettings();
+          }}
           onClose={() => onClose()}
         />
       </div>
