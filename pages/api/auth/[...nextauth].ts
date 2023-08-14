@@ -80,26 +80,11 @@ const allProviders: (Provider | boolean)[] = [
       issuer: process.env.AUTH_KEYCLOAK_HOST,
       userinfo: {
         async request(context) {
-          const token = await context.client.introspect(
-            context.tokens.id_token as string,
-          );
           const userinfo = await context.client.userinfo(
             context.tokens.access_token as string,
           );
-
-          return {
-            ...token,
-            ...userinfo,
-          };
+          return userinfo;
         },
-      },
-      profile(profile) {
-        return {
-          id: profile.sub,
-          name: profile.name,
-          email: profile.email,
-          image: profile.picture || profile.photo,
-        };
       },
     }),
 
