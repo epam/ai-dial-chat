@@ -187,7 +187,10 @@ export const ModelsDialog: FC<Props> = ({
         >
           <div className="flex justify-between">
             {t('Talk to')}
-            <button onClick={onClose} className="text-gray-500">
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-blue-500"
+            >
               <XMark height={24} width={24} />
             </button>
           </div>

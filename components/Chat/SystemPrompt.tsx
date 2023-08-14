@@ -193,10 +193,10 @@ export const SystemPrompt: FC<Props> = ({
 
   return (
     <div className="flex flex-col">
-      <label className="mb-4 text-left">{t('System Prompt')}</label>
+      <label className="mb-4 text-left">{t('System prompt')}</label>
       <textarea
         ref={textareaRef}
-        className="w-full rounded border border-gray-400 bg-transparent px-4 py-3 outline-none placeholder:text-gray-500 focus-within:border-gray-800 dark:border-gray-600 focus-within:dark:border-gray-200"
+        className="w-full rounded border border-gray-400 bg-transparent px-4 py-3 outline-none placeholder:text-gray-500 focus-within:border-blue-500 dark:border-gray-600"
         style={{
           resize: 'none',
           bottom: `${textareaRef?.current?.scrollHeight}px`,
