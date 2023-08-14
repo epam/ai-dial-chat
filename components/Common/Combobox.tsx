@@ -1,5 +1,4 @@
 import {
-  FloatingPortal,
   autoUpdate,
   flip,
   offset,
@@ -143,44 +142,42 @@ export const Combobox = ({
           </button>
         </div>
       </div>
-      <FloatingPortal id="theme-main">
-        <ul
-          className={`z-10 max-h-80 overflow-auto rounded bg-gray-100 dark:bg-gray-700 ${
-            !isOpen && 'hidden'
-          }`}
-          {...getMenuProps(
-            { ref: refs.floating as any },
-            { suppressRefError: true },
-          )}
-          style={{
-            position: strategy,
-            top: y ?? '',
-            left: x ?? '',
-            width: `${floatingWidth}px`,
-          }}
-        >
-          {isOpen &&
-            (displayedItems?.length > 0 ? (
-              displayedItems.map((item, index) => (
-                <li
-                  className={`flex cursor-pointer flex-col px-3 py-2 ${
-                    highlightedIndex === index ? 'bg-blue-500/20' : ''
-                  } ${selectedItem === item ? 'bg-blue-500/20' : ''}`}
-                  key={`${getItemValue(item)}${index}`}
-                  {...getItemProps({ item, index })}
-                >
-                  {itemRow
-                    ? createElement(itemRow, item)
-                    : getItemLabel(item) || item.toString()}
-                </li>
-              ))
-            ) : (
-              <li className="px-3 py-2">
-                {notFoundPlaceholder || t('No available items')}
+      <ul
+        className={`z-10 max-h-80 overflow-auto rounded bg-gray-100 dark:bg-gray-700 ${
+          !isOpen && 'hidden'
+        }`}
+        {...getMenuProps(
+          { ref: refs.floating as any },
+          { suppressRefError: true },
+        )}
+        style={{
+          position: strategy,
+          top: y ?? '',
+          left: x ?? '',
+          width: `${floatingWidth}px`,
+        }}
+      >
+        {isOpen &&
+          (displayedItems?.length > 0 ? (
+            displayedItems.map((item, index) => (
+              <li
+                className={`flex cursor-pointer flex-col px-3 py-2 ${
+                  highlightedIndex === index ? 'bg-blue-500/20' : ''
+                } ${selectedItem === item ? 'bg-blue-500/20' : ''}`}
+                key={`${getItemValue(item)}${index}`}
+                {...getItemProps({ item, index })}
+              >
+                {itemRow
+                  ? createElement(itemRow, item)
+                  : getItemLabel(item) || item.toString()}
               </li>
-            ))}
-        </ul>
-      </FloatingPortal>
+            ))
+          ) : (
+            <li className="px-3 py-2">
+              {notFoundPlaceholder || t('No available items')}
+            </li>
+          ))}
+      </ul>
     </div>
   );
 };
