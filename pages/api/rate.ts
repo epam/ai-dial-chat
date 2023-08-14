@@ -10,6 +10,7 @@ import { RateBody } from '../../types/chat';
 import { authOptions } from './auth/[...nextauth]';
 
 import { errorsMessages } from '@/constants/errors';
+import fetch from 'node-fetch';
 import { validate } from 'uuid';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
