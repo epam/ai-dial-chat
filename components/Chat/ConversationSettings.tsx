@@ -88,7 +88,7 @@ export const ConversationSettings = ({
   };
 
   return (
-    <div className="flex min-w-[50%] flex-col gap-[1px]">
+    <div className="flex flex-col gap-[1px] overflow-hidden rounded-b bg-gray-300 dark:bg-gray-900 [&:first-child]:rounded-t">
       <div className="relative grid w-full gap-[1px] xl:grid-cols-2">
         <div className="shrink overflow-auto bg-gray-200 px-5 py-4 dark:bg-gray-800">
           <ConversationSettingsModel
@@ -167,7 +167,7 @@ export const ConversationSettings = ({
         )}
       </div>
       {isApplyEnabled && onApplySettings && (
-        <div className="flex items-center justify-center bg-gray-200 px-5 py-4 dark:bg-gray-800">
+        <div className="flex items-center justify-center overflow-hidden bg-gray-200 px-5 py-4 dark:bg-gray-800">
           <button
             className="rounded bg-blue-500 px-3 py-2.5"
             onClick={() => {
