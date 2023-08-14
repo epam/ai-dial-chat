@@ -132,7 +132,7 @@ export const ChatHeader = ({
                 <Tooltip isTriggerClickable={true}>
                   <TooltipTrigger>
                     <button
-                      className="cursor-pointer hover:opacity-50"
+                      className="cursor-pointer hover:text-blue-500"
                       onClick={() => {
                         setShowSettings(!isShowSettings);
                       }}
@@ -147,7 +147,7 @@ export const ChatHeader = ({
                 <Tooltip isTriggerClickable={true}>
                   <TooltipTrigger>
                     <button
-                      className="cursor-pointer hover:opacity-50"
+                      className="cursor-pointer hover:text-blue-500"
                       onClick={onClearConversation}
                     >
                       <BroomIcon width={18} height={18} />
@@ -159,13 +159,20 @@ export const ChatHeader = ({
                 </Tooltip>
               )}
               {isCompareMode && selectedConversationIds.length > 1 && (
-                <button
-                  className="cursor-pointer hover:opacity-50 disabled:cursor-not-allowed"
-                  onClick={onUnselectConversation}
-                  disabled={messageIsStreaming}
-                >
-                  <IconX size={18} />
-                </button>
+                <Tooltip isTriggerClickable={true}>
+                  <TooltipTrigger>
+                    <button
+                      className="cursor-pointer hover:text-blue-500 disabled:cursor-not-allowed"
+                      onClick={onUnselectConversation}
+                      disabled={messageIsStreaming}
+                    >
+                      <IconX size={18} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t('Remove conversation from compare mode')}
+                  </TooltipContent>
+                </Tooltip>
               )}
             </div>
           </div>
