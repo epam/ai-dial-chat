@@ -1,6 +1,5 @@
 import { IconX } from '@tabler/icons-react';
 import { useContext, useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
 
 import { useTranslation } from 'next-i18next';
 
@@ -48,22 +47,9 @@ export const ChatHeader = ({
   const {
     state: { modelsMap, addonsMap, lightMode },
   } = useContext(HomeContext);
-  const errorSwitchingMessage = t(
-    'Switching is not allowed. You are currently talk to {{model}} which maintains internal state, which might be corrupted by a different system.',
-    { model: conversation.model.name },
-  );
-  const [isModelSelectDisabled, setIsModelSelectDisabled] = useState(() =>
-    conversation.messages.some((message) => !!message.custom_content?.state),
-  );
   const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });
-
-  useEffect(() => {
-    setIsModelSelectDisabled(
-      conversation.messages.some((message) => !!message.custom_content?.state),
-    );
-  }, [conversation.messages]);
 
   useEffect(() => {
     setModel(modelsMap[conversation.model.id]);
@@ -148,10 +134,6 @@ export const ChatHeader = ({
                     <button
                       className="cursor-pointer hover:opacity-50"
                       onClick={() => {
-                        if (isModelSelectDisabled) {
-                          toast.error(errorSwitchingMessage);
-                          return;
-                        }
                         setShowSettings(!isShowSettings);
                       }}
                     >

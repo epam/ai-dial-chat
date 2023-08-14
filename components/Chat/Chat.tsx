@@ -109,6 +109,16 @@ const filterUnfinishedStages = (messages: Message[]): Message[] => {
   });
 };
 
+const clearStateForMessages = (messages: Message[]): Message[] => {
+  return messages.map((message) => ({
+    ...message,
+    custom_content: {
+      ...message.custom_content,
+      state: undefined,
+    },
+  }));
+};
+
 export const Chat = memo(({ appName }: Props) => {
   const { t } = useTranslation('chat');
 
@@ -147,6 +157,9 @@ export const Chat = memo(({ appName }: Props) => {
   const [isReplayPaused, setIsReplayPaused] = useState<boolean>(true);
   const [isReplay, setIsReplay] = useState<boolean>(false);
   const [isShowChatSettings, setIsShowChatSettings] = useState(false);
+  const selectedConversationsTemporarySettings = useRef<Record<string, any>>(
+    {},
+  );
 
   const localConversations = useRef<Conversation[]>(conversations);
 
@@ -776,21 +789,16 @@ export const Chat = memo(({ appName }: Props) => {
       model: newAiEntity,
       selectedAddons,
     };
+    handleUpdateConversation(conversation, {
+      key: 'model',
+      value: newAiEntity,
+    });
     if (newAiEntity.type === 'assistant') {
-      handleUpdateConversation(conversation, {
-        key: 'model',
-        value: newAiEntity,
-      });
-
       handleUpdateConversation(updatedConversation, {
         key: 'assistantModelId',
         value: DEFAULT_ASSISTANT_SUBMODEL.id,
       });
     } else {
-      handleUpdateConversation(conversation, {
-        key: 'model',
-        value: newAiEntity,
-      });
       handleUpdateConversation(updatedConversation, {
         key: 'assistantModelId',
         value: undefined,
@@ -958,6 +966,73 @@ export const Chat = memo(({ appName }: Props) => {
       }
     }
   }, [selectedConversationIds]);
+
+  const handleApplyChatSettings = () => {
+    let localConversations = conversations;
+    selectedConversations.forEach((conversation) => {
+      let localConv = conversation;
+      const temporarySettings:
+        | {
+            modelId: string | undefined;
+            prompt: string;
+            temperature: number;
+            currentAssistentModelId: string | undefined;
+            addonsIds: string[];
+          }
+        | undefined =
+        selectedConversationsTemporarySettings.current[conversation.id];
+      if (temporarySettings) {
+        localConv = {
+          ...localConv,
+          messages: clearStateForMessages(localConv.messages),
+        };
+        if (temporarySettings.modelId) {
+          localConv = handleSelectModel(localConv, temporarySettings.modelId);
+        }
+        localConv = handleChangePrompt(localConv, temporarySettings.prompt);
+        localConv = handleChangeTemperature(
+          localConv,
+          temporarySettings.temperature,
+        );
+        if (temporarySettings.currentAssistentModelId) {
+          localConv = handleSelectAssistantSubModel(
+            localConv,
+            temporarySettings.currentAssistentModelId,
+          );
+        }
+        temporarySettings.addonsIds?.forEach((addonId) => {
+          localConv = handleOnChangeAddon(localConv, addonId);
+        });
+
+        // Hack for syncing state after multiple updates
+        localConversations = localConversations.map((conv) => {
+          if (conv.id === localConv.id) {
+            return localConv;
+          }
+
+          return conv;
+        });
+        localConversations = handleUpdateConversation(
+          localConv,
+          { key: 'id', value: localConv.id },
+          localConversations,
+        );
+      }
+    });
+  };
+
+  const handleTemporarySettingsSave = (
+    conversation: Conversation,
+    args: {
+      modelId: string | undefined;
+      prompt: string;
+      temperature: number;
+      currentAssistentModelId: string | undefined;
+      addonsIds: string[];
+    },
+  ) => {
+    selectedConversationsTemporarySettings.current[conversation.id] = args;
+  };
 
   return (
     <div className="relative flex-1">
@@ -1181,37 +1256,20 @@ export const Chat = memo(({ appName }: Props) => {
                 >
                   {selectedConversations.map((conv) => (
                     <div className="relative h-full" key={conv.id}>
-                      {
-                        <ChatSettings
-                          conversation={conv}
-                          defaultModelId={
-                            defaultModelId || OpenAIEntityModelID.GPT_3_5
-                          }
-                          model={modelsMap[conv.model.id]}
-                          prompts={prompts}
-                          addons={addons}
-                          onSelectModel={(
-                            conv: Conversation,
-                            modelId: string,
-                          ) => handleSelectModel(conv, modelId)}
-                          onChangePrompt={(conv: Conversation, prompt) =>
-                            handleChangePrompt(conv, prompt)
-                          }
-                          onChangeTemperature={(
-                            conv: Conversation,
-                            temperature,
-                          ) => handleChangeTemperature(conv, temperature)}
-                          onSelectAssistantSubModel={(
-                            conv: Conversation,
-                            modelId: string,
-                          ) => handleSelectAssistantSubModel(conv, modelId)}
-                          onChangeAddon={(
-                            conv: Conversation,
-                            addonId: string,
-                          ) => handleOnChangeAddon(conv, addonId)}
-                          onClose={() => setIsShowChatSettings(false)}
-                        />
-                      }
+                      <ChatSettings
+                        conversation={conv}
+                        defaultModelId={
+                          defaultModelId || OpenAIEntityModelID.GPT_3_5
+                        }
+                        model={modelsMap[conv.model.id]}
+                        prompts={prompts}
+                        addons={addons}
+                        onChangeSettings={(args) => {
+                          handleTemporarySettingsSave(conv, args);
+                        }}
+                        onApplySettings={handleApplyChatSettings}
+                        onClose={() => setIsShowChatSettings(false)}
+                      />
                     </div>
                   ))}
                 </div>
