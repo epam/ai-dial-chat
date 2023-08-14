@@ -2,7 +2,7 @@ import { MouseEventHandler, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Conversation } from '@/types/chat';
-import { FeatureType } from '@/types/components';
+import { FeatureType, HighlightColor } from '@/types/components';
 import { Prompt } from '@/types/prompt';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -22,6 +22,8 @@ import classNames from 'classnames';
 interface ContextMenuProps {
   item: Conversation | Prompt;
   featureType: FeatureType;
+  highlightColor: HighlightColor;
+  onOpenMoveToModal: () => void;
   moveToFolder?: (folderId: string) => void;
   onDelete: MouseEventHandler<unknown>;
   onRename: MouseEventHandler<unknown>;
@@ -43,6 +45,8 @@ export const ContextMenu = ({
   isEmptyConversation,
   className,
   moveToFolder,
+  onOpenMoveToModal,
+  highlightColor,
 }: ContextMenuProps) => {
   const { t } = useTranslation('sidebar');
   const {
@@ -82,6 +86,11 @@ export const ContextMenu = ({
         }
       >
         <MenuItem
+          className={`${
+            highlightColor === 'green'
+              ? 'hover:bg-green/15'
+              : 'hover:bg-violet/15'
+          }`}
           label={t('Edit')}
           Icon={
             <PenIcon
@@ -95,6 +104,11 @@ export const ContextMenu = ({
         />
         {onCompare && (
           <MenuItem
+            className={`${
+              highlightColor === 'green'
+                ? 'hover:bg-green/15'
+                : 'hover:bg-violet/15'
+            }`}
             label={t('Compare')}
             Icon={
               <CompareIcon
@@ -109,6 +123,11 @@ export const ContextMenu = ({
         )}
         {!isEmptyConversation && onReplay && (
           <MenuItem
+            className={`${
+              highlightColor === 'green'
+                ? 'hover:bg-green/15'
+                : 'hover:bg-violet/15'
+            }`}
             label={t('Replay')}
             Icon={
               <ReplayIcon
@@ -122,6 +141,11 @@ export const ContextMenu = ({
           />
         )}
         <MenuItem
+          className={`${
+            highlightColor === 'green'
+              ? 'hover:bg-green/15'
+              : 'hover:bg-violet/15'
+          }`}
           label={t('Export')}
           Icon={
             <FileLeftIcon
@@ -133,7 +157,35 @@ export const ContextMenu = ({
           }
           onClick={onExport}
         />
+        <MenuItem
+          className={classNames(
+            'md:hidden',
+            `${
+              highlightColor === 'green'
+                ? 'hover:bg-green/15'
+                : 'hover:bg-violet/15'
+            }`,
+          )}
+          onClick={onOpenMoveToModal}
+          label="Move to"
+          Icon={
+            <FileRightIcon
+              className="text-gray-500"
+              width={18}
+              height={18}
+              size={18}
+            />
+          }
+        />
         <Menu
+          className={classNames(
+            'max-md:hidden',
+            `${
+              highlightColor === 'green'
+                ? 'hover:bg-green/15'
+                : 'hover:bg-violet/15'
+            }`,
+          )}
           label="Move to"
           Icon={
             <FileRightIcon
@@ -145,7 +197,14 @@ export const ContextMenu = ({
           }
         >
           <MenuItem
-            className="border-b border-gray-400 dark:border-gray-600"
+            className={classNames(
+              'border-b border-gray-400 dark:border-gray-600 max-md:hidden',
+              `${
+                highlightColor === 'green'
+                  ? 'hover:bg-green/15'
+                  : 'hover:bg-violet/15'
+              }`,
+            )}
             label="New folder"
             onClick={moveToNewFolder}
             Icon={
@@ -162,6 +221,14 @@ export const ContextMenu = ({
             .sort((a, b) => a.name.localeCompare(b.name))
             .map((folder) => (
               <MenuItem
+                className={classNames(
+                  'max-md:hidden',
+                  `${
+                    highlightColor === 'green'
+                      ? 'hover:bg-green/15'
+                      : 'hover:bg-violet/15'
+                  }`,
+                )}
                 key={folder.id}
                 label={folder.name}
                 onClick={() => {
@@ -173,6 +240,11 @@ export const ContextMenu = ({
             ))}
         </Menu>
         <MenuItem
+          className={`${
+            highlightColor === 'green'
+              ? 'hover:bg-green/15'
+              : 'hover:bg-violet/15'
+          }`}
           label={t('Delete')}
           Icon={
             <TrashIcon

@@ -1,16 +1,17 @@
-import { FC, useRef } from 'react';
+import { FC, ReactNode, useRef } from 'react';
 
-import FileLeftIcon from '../../public/images/icons/file-arrow-left.svg';
+import { HighlightColor } from '@/types/components';
+
 import { ImportConversationsHandler } from '../Chatbar/Chatbar.context';
 import { ImportPromptsHandler } from '../Promptbar/PromptBar.context';
 
-// import { SidebarButton } from '../Sidebar/SidebarButton';
-
 interface Props {
   onImport: ImportConversationsHandler | ImportPromptsHandler;
+  icon: ReactNode;
+  highlightColor: HighlightColor;
 }
 
-export const Import: FC<Props> = ({ onImport }) => {
+export const Import: FC<Props> = ({ onImport, icon, highlightColor }) => {
   const ref = useRef<HTMLInputElement>(null);
   return (
     <>
@@ -34,7 +35,11 @@ export const Import: FC<Props> = ({ onImport }) => {
         }}
       />
       <div
-        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center"
+        className={`flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded  md:h-[42px] md:w-[42px] ${
+          highlightColor === 'green'
+            ? 'hover:bg-green/15 hover:text-green'
+            : 'hover:bg-violet/15 hover:text-violet'
+        }`}
         onClick={() => {
           const importFile = ref.current;
           if (importFile) {
@@ -42,18 +47,8 @@ export const Import: FC<Props> = ({ onImport }) => {
           }
         }}
       >
-        <FileLeftIcon width={24} height={24} />
+        {icon}
       </div>
-      {/* <SidebarButton
-        text={text}
-        icon={<IconFileImport size={18} />}
-        onClick={() => {
-          const importFile = ref.current;
-          if (importFile) {
-            importFile.click();
-          }
-        }}
-      /> */}
     </>
   );
 };

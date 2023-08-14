@@ -14,6 +14,7 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
 import ChatbarContext from '@/components/Chatbar/Chatbar.context';
+import { MoveToFolderMobileModal } from '@/components/Common/MoveToFolderMobileModal';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
 import XmarkIcon from '../../../public/images/icons/xmark.svg';
@@ -46,7 +47,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
-  const [isShowContextMenuButton, setIsShowContextMenuButton] = useState(false);
+  const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const wrapperRef = useRef(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -120,21 +121,12 @@ export const ConversationComponent = ({ conversation }: Props) => {
     }
   }, [isRenaming, isDeleting]);
 
-  const onMouseOverHandler: MouseEventHandler = (e) => {
-    e.stopPropagation();
-    setIsShowContextMenuButton(true);
-  };
-  const onMouseLeaveHandler: MouseEventHandler = (e) => {
-    e.stopPropagation();
-    setIsShowContextMenuButton(false);
-  };
-
   return (
     <div
       className={classNames(
-        'relative flex h-[42px] items-center rounded-[3px] hover:bg-green/[15%]',
+        'group relative flex h-[42px] items-center rounded hover:bg-green/15',
         selectedConversationIds.includes(conversation.id)
-          ? 'border-l-2 border-l-green bg-green/[15%]'
+          ? 'border-l-2 border-l-green bg-green/15'
           : '',
       )}
     >
@@ -158,7 +150,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
         </div>
       ) : (
         <button
-          className={`flex w-full cursor-pointer items-center gap-3 px-3 transition-colors duration-200 ${
+          className={`flex h-full w-full cursor-pointer items-center gap-3 px-3 transition-colors duration-200 ${
             messageIsStreaming ? 'disabled:cursor-not-allowed' : ''
           }`}
           onClick={() => {
@@ -166,8 +158,6 @@ export const ConversationComponent = ({ conversation }: Props) => {
             setIsRenaming(false);
             handleSelectConversation(conversation);
           }}
-          onMouseOver={onMouseOverHandler}
-          onMouseLeave={onMouseLeaveHandler}
           disabled={messageIsStreaming}
           draggable="true"
           onDragStart={(e) => handleDragStart(e, conversation)}
@@ -191,35 +181,50 @@ export const ConversationComponent = ({ conversation }: Props) => {
         </button>
       )}
 
-      {isShowContextMenuButton &&
-        !isDeleting &&
-        !isRenaming &&
-        !messageIsStreaming && (
-          <div
-            className="absolute right-1 z-50 flex"
-            ref={wrapperRef}
-            onMouseOver={onMouseOverHandler}
-            onMouseLeave={onMouseLeaveHandler}
-          >
-            <ContextMenu
-              item={conversation}
-              onDelete={handleOpenDeleteModal}
-              onRename={handleOpenRenameModal}
-              onExport={() => {
-                handleExportConversation(conversation.id);
-              }}
-              onCompare={() => {
-                dispatch({
-                  field: 'isCompareMode',
-                  value: true,
-                });
-              }}
-              onReplay={handleStartReplay}
-              isEmptyConversation={isEmptyConversation}
-              featureType="chat"
-            />
-          </div>
+      {!isDeleting && !isRenaming && !messageIsStreaming && (
+        <div
+          className={classNames(
+            'invisible absolute right-0 z-50 flex justify-end md:group-hover:visible',
+            selectedConversationIds.includes(conversation.id)
+              ? 'max-md:visible'
+              : '',
+          )}
+          ref={wrapperRef}
+        >
+          <ContextMenu
+            item={conversation}
+            onOpenMoveToModal={() => {
+              setIsShowMoveToModal(true);
+            }}
+            onDelete={handleOpenDeleteModal}
+            onRename={handleOpenRenameModal}
+            onExport={() => {
+              handleExportConversation(conversation.id);
+            }}
+            onCompare={() => {
+              dispatch({
+                field: 'isCompareMode',
+                value: true,
+              });
+            }}
+            onReplay={handleStartReplay}
+            isEmptyConversation={isEmptyConversation}
+            featureType="chat"
+            highlightColor="green"
+          />
+        </div>
+      )}
+      <div className="md:hidden">
+        {isShowMoveToModal && (
+          <MoveToFolderMobileModal
+            onClose={() => {
+              setIsShowMoveToModal(false);
+            }}
+            featureType="chat"
+            item={conversation}
+          />
         )}
+      </div>
 
       {(isDeleting || isRenaming) &&
         selectedConversationIds.includes(conversation.id) && (

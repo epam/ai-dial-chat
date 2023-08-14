@@ -68,7 +68,7 @@ export const MenuComponent = forwardRef<
   HTMLButtonElement,
   MenuProps & HTMLProps<HTMLButtonElement>
 >(function MenuComponent(
-  { children, style, label, Icon, ...props },
+  { children, style, className, label, Icon, ...props },
   forwardedRef,
 ) {
   const [isOpen, setIsOpen] = useState(false);
@@ -175,7 +175,8 @@ export const MenuComponent = forwardRef<
         data-focus-inside={hasFocusInside ? '' : undefined}
         className={classNames(
           menuItemClassNames,
-          isNested ? 'h-[42px] w-full hover:bg-green/[15%]' : 'pr-0',
+          isNested ? 'h-[42px] w-full' : 'pr-0',
+          className,
         )}
         {...getReferenceProps(
           parent.getItemProps({
@@ -210,7 +211,7 @@ export const MenuComponent = forwardRef<
                 returnFocus={!isNested}
               >
                 <div
-                  className="z-50 w-max rounded-[3px] bg-gray-100 text-gray-800 focus-visible:outline-none dark:bg-black dark:text-gray-200"
+                  className="z-50 w-max rounded bg-gray-100 text-gray-800 focus-visible:outline-none dark:bg-black dark:text-gray-200"
                   ref={refs.setFloating}
                   style={{
                     ...floatingStyles,
@@ -253,11 +254,7 @@ export const MenuItem = forwardRef<
       ref={useMergeRefs([item.ref, forwardedRef])}
       type="button"
       role="menuitem"
-      className={classNames(
-        menuItemClassNames,
-        'h-[42px] w-full hover:bg-green/20',
-        className,
-      )}
+      className={classNames(menuItemClassNames, 'h-[42px] w-full', className)}
       tabIndex={isActive ? 0 : -1}
       disabled={disabled}
       {...menu.getItemProps({

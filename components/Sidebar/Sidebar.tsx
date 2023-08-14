@@ -56,7 +56,7 @@ const Sidebar = <T,>({
   return isOpen ? (
     <div
       className={classNames(
-        `fixed top-12 z-40 flex h-full w-[260px] flex-none shrink-0 flex-col space-y-2 divide-y divide-gray-100 border-r border-gray-300 bg-gray-100 text-[14px] text-gray-800 transition-all dark:divide-gray-900 dark:border-gray-900 dark:bg-gray-700 dark:text-gray-200 lg:relative lg:top-0`,
+        `fixed top-12 z-40 flex h-full w-[260px] flex-none shrink-0 flex-col divide-y  divide-gray-300 border-r border-gray-300 bg-gray-100 text-gray-800 transition-all dark:divide-gray-900 dark:border-gray-900 dark:bg-gray-700 dark:text-gray-200 max-md:h-[calc(100%-48px)] lg:relative lg:top-0`,
         `${side}-0`,
       )}
     >
@@ -73,7 +73,7 @@ const Sidebar = <T,>({
 
         {items?.length > 0 ? (
           <div
-            className="h-[full-46px] border-t border-gray-100 dark:border-gray-900"
+            className="min-w-[42px] border-t border-gray-100 dark:border-gray-900"
             onDrop={handleDrop}
             onDragOver={allowDrop}
             onDragEnter={highlightDrop}
@@ -87,7 +87,6 @@ const Sidebar = <T,>({
           </div>
         )}
       </div>
-
       {footerComponent}
     </div>
   ) : null;
