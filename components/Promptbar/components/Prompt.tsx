@@ -14,6 +14,7 @@ import { exportPrompt } from '@/utils/app/importExport';
 import { Prompt } from '@/types/prompt';
 
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
+import { MoveToFolderMobileModal } from '@/components/Common/MoveToFolderMobileModal';
 import { ContextMenu } from '@/components/Common/NewContextMenu';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
@@ -39,7 +40,7 @@ export const PromptComponent = ({ prompt }: Props) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
-  const [isShowContextMenuButton, setIsShowContextMenuButton] = useState(false);
+  const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
 
   const wrapperRef = useRef(null);
 
@@ -118,22 +119,13 @@ export const PromptComponent = ({ prompt }: Props) => {
   }, [isRenaming, isDeleting]);
 
   useOutsideAlerter(wrapperRef, setIsSelected);
-  const onMouseOverHandler: MouseEventHandler = (e) => {
-    e.stopPropagation();
-    setIsShowContextMenuButton(true);
-  };
-  const onMouseLeaveHandler: MouseEventHandler = (e) => {
-    e.stopPropagation();
-    setIsShowContextMenuButton(false);
-  };
+
   return (
     <div
       className={classNames(
-        'relative flex  h-[42px] cursor-pointer items-center rounded-[3px] transition-colors duration-200 hover:bg-green/[15%]',
-        isSelected ? 'border-l-2 border-l-green bg-green/[15%]' : '',
+        'group relative flex h-[42px] cursor-pointer items-center rounded transition-colors duration-200 hover:bg-violet/15',
+        isSelected ? 'border-l-2 border-l-violet bg-violet/15' : '',
       )}
-      onMouseOver={onMouseOverHandler}
-      onMouseLeave={onMouseLeaveHandler}
       ref={wrapperRef}
       onClick={handleOnClickPrompt}
     >
@@ -160,11 +152,13 @@ export const PromptComponent = ({ prompt }: Props) => {
           </SidebarActionButton>
         </div>
       )}
-      {isShowContextMenuButton && !isDeleting && !isRenaming && (
+      {!isDeleting && !isRenaming && (
         <div
-          className="absolute right-1 z-50 flex"
-          onMouseOver={onMouseOverHandler}
-          onMouseLeave={onMouseLeaveHandler}
+          className={classNames(
+            'invisible absolute right-0 z-50 flex justify-end md:group-hover:visible',
+            isSelected ? 'max-md:visible' : '',
+          )}
+          ref={wrapperRef}
         >
           <ContextMenu
             featureType="prompt"
@@ -172,11 +166,26 @@ export const PromptComponent = ({ prompt }: Props) => {
             onDelete={handleOpenDeleteModal}
             onRename={handleOpenRenameModal}
             onExport={handleExportPrompt}
+            onOpenMoveToModal={() => {
+              setIsShowMoveToModal(true);
+            }}
             item={prompt}
+            highlightColor="violet"
           />
         </div>
       )}
-
+      <div className="md:hidden">
+        {isShowMoveToModal && (
+          <MoveToFolderMobileModal
+            featureType="prompt"
+            item={prompt}
+            moveToFolder={movePromptToFolder}
+            onClose={() => {
+              setIsShowMoveToModal(false);
+            }}
+          />
+        )}
+      </div>
       {showModal && (
         <PromptModal
           prompt={prompt}

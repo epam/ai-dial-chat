@@ -1,5 +1,7 @@
 import { useContext, useState } from 'react';
 
+import { DEFAULT_ASSISTANT_SUBMODEL } from '@/utils/app/const';
+
 import { Conversation } from '@/types/chat';
 import {
   OpenAIEntityAddon,
@@ -56,7 +58,7 @@ export const ChatSettings = ({
     conversation.temperature,
   );
   const [currentAssistentModelId, setCurrentAssistentModelId] = useState(
-    model?.id,
+    conversation.assistantModelId || DEFAULT_ASSISTANT_SUBMODEL?.id,
   );
   const [currentSelectedAddonsIds, setCurrentSelectedAddonsIds] = useState(
     conversation.selectedAddons || [],
