@@ -169,7 +169,7 @@ export const ConversationSettings = ({
       {isApplyEnabled && onApplySettings && (
         <div className="flex items-center justify-center overflow-hidden bg-gray-200 px-5 py-4 dark:bg-gray-800">
           <button
-            className="rounded bg-blue-500 px-3 py-2.5"
+            className="rounded bg-blue-500 px-3 py-2.5 text-gray-100 hover:bg-blue-700"
             onClick={() => {
               onClose?.();
               onApplySettings();

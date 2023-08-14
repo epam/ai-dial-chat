@@ -172,7 +172,7 @@ export const AddonsDialog: FC<Props> = ({
               onClick={() => {
                 onClose();
               }}
-              className="text-gray-500"
+              className="text-gray-500 hover:text-blue-500"
             >
               <XMark height={24} width={24} />
             </button>
@@ -220,7 +220,7 @@ export const AddonsDialog: FC<Props> = ({
           <div className="relative h-0 grow">
             <div className="absolute bottom-0 flex h-[80px] w-full items-end justify-center bg-gradient-to-b from-transparent via-gray-100 to-gray-100 dark:via-gray-700 dark:to-gray-700">
               <button
-                className="rounded bg-blue-500 px-3 py-2.5"
+                className="rounded bg-blue-500 px-3 py-2.5 text-gray-100 hover:bg-blue-700"
                 onClick={() => {
                   onClose();
                   onAddonsSelected(selectedAddons.map(({ id }) => id));
