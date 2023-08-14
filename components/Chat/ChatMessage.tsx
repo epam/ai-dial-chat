@@ -53,7 +53,7 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
     <button
       type={type}
       className={classNames(
-        'text-gray-500 hover:text-gray-700 focus:visible dark:text-gray-400 dark:hover:text-gray-300',
+        'text-gray-500 hover:text-blue-500 focus:visible',
         className,
       )}
       {...props}
@@ -186,10 +186,10 @@ export const ChatMessage: FC<Props> = memo(
             {isUser ? (
               <div className="flex">
                 {isEditing ? (
-                  <div className="flex w-full flex-col">
+                  <div className="flex w-full flex-col gap-3 pr-[60px]">
                     <textarea
                       ref={textareaRef}
-                      className="w-full resize-none whitespace-pre-wrap rounded border border-gray-600 px-3 py-2 focus-visible:outline-none dark:bg-transparent"
+                      className="min-h-[100px] w-full resize-none whitespace-pre-wrap rounded border border-gray-400 px-3 py-2 focus-visible:border-blue-500 focus-visible:outline-none dark:border-gray-600 dark:bg-transparent"
                       value={messageContent}
                       onChange={handleInputChange}
                       onKeyDown={handlePressEnter}
@@ -204,16 +204,16 @@ export const ChatMessage: FC<Props> = memo(
                       }}
                     />
 
-                    <div className="mt-10 flex justify-center space-x-4">
+                    <div className="flex justify-end gap-3">
                       <button
-                        className="h-[40px] rounded-md bg-blue-500 px-4 py-1 text-sm font-medium disabled:opacity-50"
+                        className="h-[38px] rounded bg-blue-500 px-3 py-2.5 leading-none text-gray-100 hover:bg-blue-700 disabled:bg-gray-500"
                         onClick={handleEditMessage}
                         disabled={messageContent.trim().length <= 0}
                       >
                         {t('Save & Submit')}
                       </button>
                       <button
-                        className="h-[40px] rounded-md border border-gray-600 px-4 py-1 text-sm font-medium"
+                        className="h-[38px] rounded border border-gray-400 px-3 py-2.5 leading-none hover:bg-gray-400 dark:border-gray-600 hover:dark:bg-gray-600"
                         onClick={() => {
                           setMessageContent(message.content);
                           setIsEditing(false);
@@ -224,22 +224,24 @@ export const ChatMessage: FC<Props> = memo(
                     </div>
                   </div>
                 ) : (
-                  <div className="prose flex-1 whitespace-pre-wrap dark:prose-invert">
-                    {message.content}
-                  </div>
+                  message.content && (
+                    <div className="prose flex-1 whitespace-pre-wrap dark:prose-invert">
+                      {message.content}
+                    </div>
+                  )
                 )}
 
                 {!isEditing && (
                   <div className="flex w-[60px] flex-col items-center justify-end gap-4 md:flex-row md:items-start md:justify-start md:gap-1">
                     <button
-                      className="invisible text-gray-500 hover:text-gray-700 focus:visible disabled:cursor-not-allowed group-hover:visible dark:text-gray-400 dark:hover:text-gray-300"
+                      className="invisible text-gray-500 hover:text-blue-500 focus:visible disabled:cursor-not-allowed group-hover:visible"
                       onClick={toggleEditing}
                       disabled={editDisabled}
                     >
                       <IconEdit size={20} />
                     </button>
                     <button
-                      className="invisible text-gray-500 hover:text-gray-700 focus:visible group-hover:visible dark:text-gray-400 dark:hover:text-gray-300"
+                      className="invisible text-gray-500 hover:text-blue-500 focus:visible group-hover:visible dark:hover:text-gray-300"
                       onClick={handleDeleteMessage}
                     >
                       <IconTrash size={20} />
@@ -286,8 +288,9 @@ export const ChatMessage: FC<Props> = memo(
                             className={
                               message.like !== 1
                                 ? void 0
-                                : 'visible text-gray-700 dark:text-gray-300'
+                                : 'visible text-gray-500'
                             }
+                            disabled={message.like === 1}
                           >
                             <IconThumbUp size={24} />
                           </Button>
@@ -298,8 +301,9 @@ export const ChatMessage: FC<Props> = memo(
                             className={
                               message.like !== -1
                                 ? void 0
-                                : 'visible text-gray-700 dark:text-gray-300'
+                                : 'visible text-gray-500'
                             }
+                            disabled={message.like === -1}
                           >
                             <IconThumbDown size={24} />
                           </Button>
