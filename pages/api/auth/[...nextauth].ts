@@ -214,7 +214,7 @@ export const authOptions: AuthOptions = {
   callbacks: {
     jwt: async (options) => {
       if (options.account) {
-        options.token.jobTitle = (options.profile as any).job_title;
+        options.token.jobTitle = (options.profile as any)?.job_title;
         options.token.access_token = options.account?.access_token;
       }
 
