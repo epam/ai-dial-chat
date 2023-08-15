@@ -236,15 +236,15 @@ export const Chatbar = () => {
 
   const actionsBlock = (
     <button
-      className={`flex shrink-0 cursor-pointer select-none items-center gap-3 p-3 transition-colors duration-200  hover:bg-green/15disabled:cursor-not-allowed`}
-        onClick={() => {
-          handleNewConversation();
-          chatDispatch({ field: 'searchTerm', value: '' });
-        }}
-        disabled={!!messageIsStreaming}
-        data-qa="new-chat"
-      >
-        <PlusIcon className="text-gray-500" width={18} height={18} />
+      className={`hover:bg-green/15disabled:cursor-not-allowed flex shrink-0 cursor-pointer select-none items-center gap-3 p-3 transition-colors  duration-200`}
+      onClick={() => {
+        handleNewConversation();
+        chatDispatch({ field: 'searchTerm', value: '' });
+      }}
+      disabled={!!messageIsStreaming}
+      data-qa="new-chat"
+    >
+      <PlusIcon className="text-gray-500" width={18} height={18} />
       {t('Add new chat')}
     </button>
   );
