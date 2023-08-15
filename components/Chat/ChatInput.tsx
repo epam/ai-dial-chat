@@ -267,7 +267,8 @@ export const ChatInput = forwardRef(
           {!messageIsStreaming && isMessagesPresented && (
             <button
               className="absolute inset-x-0 top-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600"
-              onClick={onRegenerate} data-qa="regenerate"
+              onClick={onRegenerate}
+              data-qa="regenerate"
             >
               <span className="text-gray-500">
                 <RefreshCWAlt width={18} height={18} />
@@ -276,10 +277,7 @@ export const ChatInput = forwardRef(
             </button>
           )}
 
-          <div
-            className="relative flex w-full grow flex-col"
-            data-qa="message"
-          >
+          <div className="relative flex w-full grow flex-col" data-qa="message">
             <textarea
               ref={textareaRef}
               className="m-0 min-h-[40px] w-full resize-none rounded border border-transparent bg-gray-100 py-3 pl-4 pr-10 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:bg-gray-700"

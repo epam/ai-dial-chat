@@ -128,7 +128,8 @@ export const ConversationComponent = ({ conversation }: Props) => {
         selectedConversationIds.includes(conversation.id)
           ? 'border-l-2 border-l-green bg-green/15'
           : '',
-      )} data-qa="conversation"
+      )}
+      data-qa="conversation"
     >
       {isRenaming && selectedConversationIds.includes(conversation.id) ? (
         <div className="flex w-full items-center gap-3 px-3">

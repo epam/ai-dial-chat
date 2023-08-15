@@ -25,5 +25,5 @@ export const ChatSelectors = {
   modelSelector: '[data-qa="model-selector"]',
   modelMenu: '[class$=MenuList]',
   listOptions: '[role="listbox"] > [role="option"]',
-  combobox: '[role="combobox"]'
+  combobox: '[role="combobox"]',
 };

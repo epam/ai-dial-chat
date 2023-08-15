@@ -5,7 +5,6 @@ import { Message } from '@/types/chat';
 import { OpenAIEntityModel } from '@/types/openai';
 
 import { ConversationBuilder } from '@/e2e/src/testData';
-
 import { FolderBuilder } from '@/e2e/src/testData/conversationHistory/folderBuilder';
 
 export class ConversationData {

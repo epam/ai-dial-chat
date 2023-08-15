@@ -165,7 +165,8 @@ export const AddonsDialog: FC<Props> = ({
           role="dialog"
           ref={refs.setFloating}
           {...getFloatingProps()}
-        data-qa="addons-dialog">
+          data-qa="addons-dialog"
+        >
           <div className="flex justify-between">
             {t('Addons (max 10)')}
             <button

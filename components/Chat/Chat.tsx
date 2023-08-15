@@ -1163,7 +1163,8 @@ export const Chat = memo(({ appName }: Props) => {
                     className="flex max-h-full flex-col overflow-x-hidden"
                     ref={chatContainerRef}
                     onScroll={handleScroll}
-                  data-qa="chat-messages">
+                    data-qa="chat-messages"
+                  >
                     {mergedMessages.map(
                       (
                         mergedStr: [Conversation, Message, number][],
