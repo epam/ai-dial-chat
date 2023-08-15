@@ -1,6 +1,6 @@
 import { ChatSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
-import { EntitySelectorMenu } from './entitySelectorMenu';
+import { RecentEntities } from './recentEntities';
 
 import { Page } from '@playwright/test';
 
@@ -9,19 +9,15 @@ export class EntitySelector extends BaseElement {
     super(page, ChatSelectors.entitySelector);
   }
 
-  private entitySelectorMenu!: EntitySelectorMenu;
+  private recentEntities!: RecentEntities;
+  private seeFullListButton = this.getChildElementBySelector(
+    ChatSelectors.seeFullList,
+  );
 
-  getEntitySelectorMenu(): EntitySelectorMenu {
-    if (!this.entitySelectorMenu) {
-      this.entitySelectorMenu = new EntitySelectorMenu(this.page);
+  getRecentEntities(): RecentEntities {
+    if (!this.recentEntities) {
+      this.recentEntities = new RecentEntities(this.page);
     }
-    return this.entitySelectorMenu;
-  }
-
-  public async selectEntity(name: string) {
-    await this.click();
-    const entitySelectorMenu = await this.getEntitySelectorMenu();
-    await entitySelectorMenu.waitForState();
-    await entitySelectorMenu.selectEntity(name);
+    return this.recentEntities;
   }
 }

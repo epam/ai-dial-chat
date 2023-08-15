@@ -162,7 +162,7 @@ export const ChatMessage: FC<Props> = memo(
             ? 'border-b border-gray-400 bg-gray-200 dark:border-gray-700 dark:bg-gray-800'
             : 'border-b border-gray-400  dark:border-gray-700'
         }`}
-        style={{ overflowWrap: 'anywhere' }}
+        style={{ overflowWrap: 'anywhere' }} data-qa="chat-message"
       >
         <div className="relative m-auto flex h-full p-4 text-base md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
           <div className="min-w-[40px] font-bold" data-qa="message-icon">
@@ -212,6 +212,7 @@ export const ChatMessage: FC<Props> = memo(
                         className="h-[38px] rounded bg-blue-500 px-3 py-2.5 leading-none text-gray-100 hover:bg-blue-700 disabled:bg-gray-500"
                         onClick={handleEditMessage}
                         disabled={messageContent.trim().length <= 0}
+                        data-qa="save-and-submit"
                       >
                         {t('Save & Submit')}
                       </button>

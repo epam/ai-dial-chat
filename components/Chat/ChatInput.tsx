@@ -267,7 +267,7 @@ export const ChatInput = forwardRef(
           {!messageIsStreaming && isMessagesPresented && (
             <button
               className="absolute inset-x-0 top-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600"
-              onClick={onRegenerate}
+              onClick={onRegenerate} data-qa="regenerate"
             >
               <span className="text-gray-500">
                 <RefreshCWAlt width={18} height={18} />

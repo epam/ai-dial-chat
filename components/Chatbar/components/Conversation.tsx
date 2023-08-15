@@ -190,6 +190,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
               : '',
           )}
           ref={wrapperRef}
+          data-qa="dots-menu"
         >
           <ContextMenu
             item={conversation}

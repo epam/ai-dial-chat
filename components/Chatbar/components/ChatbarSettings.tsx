@@ -73,6 +73,7 @@ export const ChatbarSettings = () => {
       <div
         className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
         onClick={() => handleCreateFolder(t('New folder'), 'chat')}
+        data-qa="create-folder"
       >
         <FolderPlusIcon width={24} height={24} />
       </div>

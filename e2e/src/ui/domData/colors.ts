@@ -1,3 +1,3 @@
 export enum Colors {
-  notSelectedAddon = 'rgb(212, 212, 212)',
+  selectedEntity = 'rgb(90, 140, 233)',
 }

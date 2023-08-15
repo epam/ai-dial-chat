@@ -42,10 +42,10 @@ export const ConversationSettingsModel = ({
   }, [recentModelsIds, modelsMap]);
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-qa="entity-selector">
       <div className="mb-4">{t('Talk to')}</div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3" data-qa="recent">
         <div className="text-gray-500">{t('Recent')}</div>
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           {recentModels.map((entity) => (
@@ -102,6 +102,7 @@ export const ConversationSettingsModel = ({
       <button
         className="mt-3 inline text-left text-blue-500"
         onClick={() => setIsModelsDialogOpen(true)}
+        data-qa="see-full-list"
       >
         {t('See full list...')}
       </button>

@@ -113,7 +113,7 @@ export const Combobox = ({
   }, [isOpen, update, refs.floating, refs.reference]);
 
   return (
-    <div className="relative">
+    <div className="relative" data-qa="model-selector">
       <div className="flex w-full flex-col gap-1">
         {label && (
           <label className="w-fit" {...getLabelProps()}>

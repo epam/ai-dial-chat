@@ -97,7 +97,7 @@ export const ConversationSettings = ({
           />
         </div>
         {model ? (
-          <div className="flex max-h-full shrink flex-col gap-[1px] overflow-auto">
+          <div className="flex max-h-full shrink flex-col gap-[1px] overflow-auto" data-qa="entity-settings">
             {model.type === 'application' && (
               <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
                 <ModelDescription model={model} />

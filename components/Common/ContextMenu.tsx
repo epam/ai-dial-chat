@@ -47,6 +47,7 @@ export const ContextMenu = ({
   return (
     <div
       className={`absolute right-0 z-20 min-w-[50px] rounded-lg border border-neutral-600 bg-[#202123] p-2 ${classes.current}`}
+      data-qa="context-menu"
     >
       <ul className="flex flex-col gap-2">
         <li

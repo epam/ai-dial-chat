@@ -5,9 +5,10 @@ import { BasePage } from './basePage';
 
 export class LoginPage extends BasePage {
   private tokenInput = new BaseElement(this.page, LoginSelectors.token);
-  private signInButton = new BaseElement(this.page, LoginSelectors.signIn)
-    .getRootLocator()
-    .getByText(ExpectedConstants.signInButtonTitle);
+  private signInButton = new BaseElement(
+    this.page,
+    LoginSelectors.signIn,
+  ).getElementLocatorByText(ExpectedConstants.signInButtonTitle);
 
   async loginToChatBot() {
     await this.tokenInput.typeInInput(

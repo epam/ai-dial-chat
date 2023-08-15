@@ -9,5 +9,11 @@ export class BasePage {
 
   async openHomePage() {
     await this.page.goto('/');
+    await this.page.waitForLoadState('networkidle');
+  }
+
+  async reloadPage() {
+    await this.page.reload();
+    await this.page.waitForLoadState('networkidle');
   }
 }

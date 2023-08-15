@@ -92,7 +92,7 @@ export const Addons = ({
       {selectedAddonsIds?.length > 0 && (
         <>
           <span className="text-gray-500">{t('Selected')}</span>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1" data-qa="addon">
             {selectedAddonsIds.map((addon) => getAddon(addon, true))}
           </div>
         </>
@@ -113,6 +113,7 @@ export const Addons = ({
               onClick={() => {
                 setIsAddonsDialogOpen(true);
               }}
+              data-qa="see-all-addons"
             >
               {t('See all addons...')}
             </button>

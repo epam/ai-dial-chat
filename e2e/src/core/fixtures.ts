@@ -1,9 +1,26 @@
+import { LocalStorageManager } from '../core/localStorageManager ';
 import { DialHomePage } from '../ui/pages';
 import { LoginPage } from '../ui/pages';
-import { Chat, Conversation, ConversationSettings } from '../ui/webElements';
+import {
+  Chat,
+  ChatMessages,
+  ConversationSettings,
+  Conversations,
+  EntitySelector,
+  RecentEntities,
+  SendMessage,
+} from '../ui/webElements';
 import { ChatBar } from '../ui/webElements';
 import { PromptBar } from '../ui/webElements';
 
+import { ConversationData } from '@/e2e/src/testData';
+import { Addons } from '@/e2e/src/ui/webElements/addons';
+import { AddonsDialog } from '@/e2e/src/ui/webElements/addonsDialog';
+import { DropdownMenu } from '@/e2e/src/ui/webElements/dropdownMenu';
+import { EntitySettings } from '@/e2e/src/ui/webElements/entitySettings';
+import { FolderConversations } from '@/e2e/src/ui/webElements/folderConversations';
+import { ModelSelector } from '@/e2e/src/ui/webElements/modelSelector';
+import { TemperatureSlider } from '@/e2e/src/ui/webElements/temperatureSlider';
 import { test as base } from '@playwright/test';
 
 const test = base.extend<
@@ -13,8 +30,22 @@ const test = base.extend<
     chatBar: ChatBar;
     promptBar: PromptBar;
     chat: Chat;
-    conversation: Conversation;
+    chatMessages: ChatMessages;
+    sendMessage: SendMessage;
+    conversations: Conversations;
+    folderConversations: FolderConversations;
     conversationSettings: ConversationSettings;
+    talkToSelector: EntitySelector;
+    recentEntities: RecentEntities;
+    entitySettings: EntitySettings;
+    modelSelector: ModelSelector;
+    temperatureSlider: TemperatureSlider;
+    addons: Addons;
+    addonsDialog: AddonsDialog;
+    conversationData: ConversationData;
+    localStorageManager: LocalStorageManager;
+    conversationDropdownMenu: DropdownMenu;
+    folderDropdownMenu: DropdownMenu;
   },
   { workerStorageState: string }
 >({
@@ -38,13 +69,70 @@ const test = base.extend<
     const chat = dialHomePage.getChat();
     await use(chat);
   },
-  conversation: async ({ chatBar }, use) => {
+  chatMessages: async ({ chat }, use) => {
+    const chatMessages = chat.getChatMessages();
+    await use(chatMessages);
+  },
+  sendMessage: async ({ chat }, use) => {
+    const sendMessage = chat.getSendMessage();
+    await use(sendMessage);
+  },
+  conversations: async ({ chatBar }, use) => {
     const conversation = chatBar.getConversations();
     await use(conversation);
+  },
+  folderConversations: async ({ chatBar }, use) => {
+    const folderConversations = chatBar.getFolderConversations();
+    await use(folderConversations);
   },
   conversationSettings: async ({ chat }, use) => {
     const conversationSettings = chat.getConversationSettings();
     await use(conversationSettings);
+  },
+  talkToSelector: async ({ conversationSettings }, use) => {
+    const talkToSelector = conversationSettings.getTalkToSelector();
+    await use(talkToSelector);
+  },
+  recentEntities: async ({ talkToSelector }, use) => {
+    const recentEntities = talkToSelector.getRecentEntities();
+    await use(recentEntities);
+  },
+  entitySettings: async ({ conversationSettings }, use) => {
+    const entitySettings = conversationSettings.getEntitySettings();
+    await use(entitySettings);
+  },
+  temperatureSlider: async ({ entitySettings }, use) => {
+    const temperatureSlider = entitySettings.getTemperatureSlider();
+    await use(temperatureSlider);
+  },
+  addons: async ({ entitySettings }, use) => {
+    const addons = entitySettings.getAddons();
+    await use(addons);
+  },
+  addonsDialog: async ({ addons }, use) => {
+    const addonsDialog = addons.getAddonsDialog();
+    await use(addonsDialog);
+  },
+  modelSelector: async ({ entitySettings }, use) => {
+    const modelSelector = entitySettings.getModelSelector();
+    await use(modelSelector);
+  },
+  conversationDropdownMenu: async ({ conversations }, use) => {
+    const conversationDropdownMenu = conversations.getDropdownMenu();
+    await use(conversationDropdownMenu);
+  },
+  folderDropdownMenu: async ({ folderConversations }, use) => {
+    const folderDropdownMenu = folderConversations.getDropdownMenu();
+    await use(folderDropdownMenu);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  conversationData: async ({}, use) => {
+    const conversationData = new ConversationData();
+    await use(conversationData);
+  },
+  localStorageManager: async ({ page }, use) => {
+    const localStorageManager = new LocalStorageManager(page);
+    await use(localStorageManager);
   },
 });
 

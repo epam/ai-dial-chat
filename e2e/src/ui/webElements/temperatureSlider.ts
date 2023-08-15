@@ -1,5 +1,3 @@
-import { Attributes } from '../domData';
-import { Tags } from '../domData';
 import { ChatSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
@@ -9,9 +7,19 @@ export class TemperatureSlider extends BaseElement {
   constructor(page: Page) {
     super(page, ChatSelectors.temperatureSlider);
   }
-  private slider = this.getChildElementBySelector(Tags.input);
+  public slider = this.getChildElementBySelector(ChatSelectors.slider);
 
-  async getTemperatureValue() {
-    return this.slider.getAttribute(Attributes.value);
+  async getTemperature() {
+    return this.slider.getElementContent();
+  }
+
+  async setTemperature(temperature: number) {
+    const bounding = await this.slider.getElementBoundingBox();
+    await this.page.mouse.move(
+      bounding!.x + bounding!.width! * temperature,
+      bounding!.y + bounding!.height! / 2,
+    );
+    await this.page.mouse.down();
+    await this.page.mouse.up();
   }
 }

@@ -3,4 +3,5 @@ export enum Tags {
   textarea = 'textarea',
   button = 'button',
   input = 'input',
+  div = 'div',
 }

@@ -4,7 +4,7 @@ import { BaseElement } from './baseElement';
 
 import { Page } from '@playwright/test';
 
-export class Message extends BaseElement {
+export class SendMessage extends BaseElement {
   constructor(page: Page) {
     super(page, ChatSelectors.message);
   }
@@ -12,7 +12,7 @@ export class Message extends BaseElement {
   public messageInput = this.getChildElementBySelector(Tags.textarea);
   public sendMessageButton = this.getChildElementBySelector(Tags.button);
 
-  public async sendMessage(message: string) {
+  public async send(message: string) {
     await this.messageInput.fillInInput(message);
     await this.sendMessageButton.click();
   }

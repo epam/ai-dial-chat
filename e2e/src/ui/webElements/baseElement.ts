@@ -13,14 +13,6 @@ export class BaseElement {
     this.rootSelector = selector;
   }
 
-  public getRootSelector() {
-    return this.rootSelector;
-  }
-
-  public getRootLocator() {
-    return this.rootLocator;
-  }
-
   public createElementFromLocator(locator: Locator): BaseElement {
     return new BaseElement(this.page, '', locator);
   }
@@ -30,7 +22,11 @@ export class BaseElement {
   }
 
   public getElementLocatorByText(text: string, index?: number): Locator {
-    return this.rootLocator.getByText(text).nth(index ?? 0);
+    return this.rootLocator.filter({ hasText: text }).nth(index ?? 0);
+  }
+
+  public getNthElement(index: number): Locator {
+    return this.rootLocator.nth(index - 1);
   }
 
   async typeInInput(
@@ -60,7 +56,15 @@ export class BaseElement {
   }
 
   async getElementContent() {
+    return this.rootLocator.textContent();
+  }
+
+  async getElementInnerContent() {
     return this.rootLocator.innerText();
+  }
+
+  async getElementsInnerContent() {
+    return this.rootLocator.allInnerTexts();
   }
 
   async isVisible(options?: { timeout?: number }) {
@@ -82,7 +86,11 @@ export class BaseElement {
     return this.rootLocator.getAttribute(attribute);
   }
 
-  async getAllBorderBottomColors() {
+  async getElementBoundingBox() {
+    return this.rootLocator.boundingBox();
+  }
+
+  async getAllBorderColors() {
     const allBorderColors: {
       bottomBorderColors: string[];
       topBorderColors: string[];

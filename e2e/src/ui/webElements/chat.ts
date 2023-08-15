@@ -2,7 +2,7 @@ import { ChatSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 import { ChatMessages } from './chatMessages';
 import { ConversationSettings } from './conversationSettings';
-import { Message } from './message';
+import { SendMessage } from './sendMessage';
 
 import { Page } from '@playwright/test';
 
@@ -12,8 +12,9 @@ export class Chat extends BaseElement {
   }
 
   private conversationSettings!: ConversationSettings;
-  private message!: Message;
+  private sendMessage!: SendMessage;
   private chatMessages!: ChatMessages;
+  private regenerate = new BaseElement(this.page, ChatSelectors.regenerate);
 
   getConversationSettings(): ConversationSettings {
     if (!this.conversationSettings) {
@@ -22,11 +23,11 @@ export class Chat extends BaseElement {
     return this.conversationSettings;
   }
 
-  getMessage(): Message {
-    if (!this.message) {
-      this.message = new Message(this.page);
+  getSendMessage(): SendMessage {
+    if (!this.sendMessage) {
+      this.sendMessage = new SendMessage(this.page);
     }
-    return this.message;
+    return this.sendMessage;
   }
 
   getChatMessages(): ChatMessages {
@@ -36,9 +37,13 @@ export class Chat extends BaseElement {
     return this.chatMessages;
   }
 
-  public async waitForResponseReceived() {
-    await this.getChatMessages().loadingCursor.waitForState({
-      state: 'detached',
-    });
+  public async sendRequest(message: string) {
+    await this.getSendMessage().send(message);
+    await this.getChatMessages().waitForResponseReceived();
+  }
+
+  public async regenerateResponse() {
+    await this.regenerate.click();
+    await this.getChatMessages().waitForResponseReceived();
   }
 }
