@@ -1,6 +1,5 @@
 import { IconX } from '@tabler/icons-react';
 import { useContext, useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
 
 import { useTranslation } from 'next-i18next';
 
@@ -48,22 +47,9 @@ export const ChatHeader = ({
   const {
     state: { modelsMap, addonsMap, lightMode },
   } = useContext(HomeContext);
-  const errorSwitchingMessage = t(
-    'Switching is not allowed. You are currently talk to {{model}} which maintains internal state, which might be corrupted by a different system.',
-    { model: conversation.model.name },
-  );
-  const [isModelSelectDisabled, setIsModelSelectDisabled] = useState(() =>
-    conversation.messages.some((message) => !!message.custom_content?.state),
-  );
   const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });
-
-  useEffect(() => {
-    setIsModelSelectDisabled(
-      conversation.messages.some((message) => !!message.custom_content?.state),
-    );
-  }, [conversation.messages]);
 
   useEffect(() => {
     setModel(modelsMap[conversation.model.id]);
@@ -146,12 +132,8 @@ export const ChatHeader = ({
                 <Tooltip isTriggerClickable={true}>
                   <TooltipTrigger>
                     <button
-                      className="cursor-pointer hover:opacity-50"
+                      className="cursor-pointer hover:text-blue-500"
                       onClick={() => {
-                        if (isModelSelectDisabled) {
-                          toast.error(errorSwitchingMessage);
-                          return;
-                        }
                         setShowSettings(!isShowSettings);
                       }}
                     >
@@ -165,7 +147,7 @@ export const ChatHeader = ({
                 <Tooltip isTriggerClickable={true}>
                   <TooltipTrigger>
                     <button
-                      className="cursor-pointer hover:opacity-50"
+                      className="cursor-pointer hover:text-blue-500"
                       onClick={onClearConversation}
                     >
                       <BroomIcon width={18} height={18} />
@@ -177,13 +159,20 @@ export const ChatHeader = ({
                 </Tooltip>
               )}
               {isCompareMode && selectedConversationIds.length > 1 && (
-                <button
-                  className="cursor-pointer hover:opacity-50 disabled:cursor-not-allowed"
-                  onClick={onUnselectConversation}
-                  disabled={messageIsStreaming}
-                >
-                  <IconX size={18} />
-                </button>
+                <Tooltip isTriggerClickable={true}>
+                  <TooltipTrigger>
+                    <button
+                      className="cursor-pointer hover:text-blue-500 disabled:cursor-not-allowed"
+                      onClick={onUnselectConversation}
+                      disabled={messageIsStreaming}
+                    >
+                      <IconX size={18} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t('Remove conversation from compare mode')}
+                  </TooltipContent>
+                </Tooltip>
               )}
             </div>
           </div>

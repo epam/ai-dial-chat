@@ -282,7 +282,7 @@ export const ChatInput = forwardRef(
           >
             <textarea
               ref={textareaRef}
-              className="m-0 w-full resize-none rounded border border-transparent bg-gray-100 px-4 py-3 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:bg-gray-700"
+              className="m-0 min-h-[40px] w-full resize-none rounded border border-transparent bg-gray-100 py-3 pl-4 pr-10 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:bg-gray-700"
               style={{
                 resize: 'none',
                 bottom: `${textareaRef?.current?.scrollHeight}px`,
@@ -320,7 +320,7 @@ export const ChatInput = forwardRef(
             </button>
 
             {showScrollDownButton && (
-              <div className="absolute bottom-0 right-0 aspect-square h-full lg:bottom-0 lg:right-[-70px]">
+              <div className="absolute -top-14 right-0 aspect-square h-11 lg:bottom-0 lg:right-[-70px] lg:top-auto">
                 <button
                   className="flex h-full w-full items-center justify-center rounded-full bg-gray-100 p-2 hover:bg-gray-400 dark:bg-gray-700 hover:dark:bg-gray-600"
                   onClick={onScrollDownClick}

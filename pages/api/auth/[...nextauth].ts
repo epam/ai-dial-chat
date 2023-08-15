@@ -16,21 +16,6 @@ const DEFAULT_NAME = 'SSO';
 
 const TEST_TOKENS = new Set((process.env.AUTH_TEST_TOKEN ?? '').split(','));
 
-interface IGraphUser {
-  '@odata.context': string;
-  businessPhones: string[];
-  displayName: string;
-  givenName: string;
-  jobTitle: string;
-  mail: string;
-  mobilePhone: string;
-  officeLocation: string;
-  preferredLanguage: string;
-  surname: string;
-  userPrincipalName: string;
-  id: string;
-}
-
 const allProviders: (Provider | boolean)[] = [
   !!process.env.AUTH_AZURE_AD_CLIENT_ID &&
     !!process.env.AUTH_AZURE_AD_SECRET &&
@@ -93,6 +78,14 @@ const allProviders: (Provider | boolean)[] = [
       clientSecret: process.env.AUTH_KEYCLOAK_SECRET,
       name: process.env.AUTH_KEYCLOAK_NAME ?? DEFAULT_NAME,
       issuer: process.env.AUTH_KEYCLOAK_HOST,
+      userinfo: {
+        async request(context) {
+          const userinfo = await context.client.userinfo(
+            context.tokens.access_token as string,
+          );
+          return userinfo;
+        },
+      },
     }),
 
   !!process.env.AUTH_TEST_TOKEN &&
@@ -206,7 +199,7 @@ export const authOptions: AuthOptions = {
   callbacks: {
     jwt: async (options) => {
       if (options.account) {
-        options.token.jobTitle = options.account.jobTitle;
+        options.token.jobTitle = (options.profile as any)?.job_title;
         options.token.access_token = options.account?.access_token;
       }
 
@@ -225,22 +218,6 @@ export const authOptions: AuthOptions = {
         return false;
       }
 
-      if (process.env.USE_USER_JOB_TITLE === 'true') {
-        let jobTitle = 'unknown';
-        try {
-          const user = (await fetch('https://graph.microsoft.com/v1.0/me', {
-            headers: {
-              Authorization: `${options.account.token_type} ${options.account.access_token}`,
-              Accept: 'application/json',
-            },
-          }).then((r) => r.json())) as IGraphUser;
-          jobTitle = user.jobTitle ?? 'unknown';
-        } catch {
-          // Do nothing
-        }
-
-        options.account.jobTitle = jobTitle;
-      }
       return true;
     },
     session: async (options) => {
