@@ -49,7 +49,7 @@ const Header = () => {
       <Tooltip>
         <TooltipTrigger>
           <div
-            className="flex-none cursor-pointer border-r border-gray-300 px-5 py-3 dark:border-gray-900"
+            className="flex-none cursor-pointer border-r border-gray-300 p-3 dark:border-gray-900 md:px-5"
             onClick={handleToggleChatbar}
           >
             {showChatbar ? (
@@ -101,7 +101,7 @@ const Header = () => {
       <Tooltip>
         <TooltipTrigger>
           <div
-            className="flex-none cursor-pointer border-l border-gray-300 px-5 py-3 dark:border-gray-900"
+            className="flex-none cursor-pointer border-l border-gray-300 p-3 dark:border-gray-900 md:px-5"
             onClick={handleTogglePromtbar}
           >
             {showPromptbar ? (
