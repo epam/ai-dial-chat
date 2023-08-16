@@ -93,7 +93,7 @@ const Header = () => {
             backgroundImage: `var(--app-logo-dark)`,
           }}
         ></span>
-        <div className="max-md:border-l max-md:border-gray-300 max-md:dark:border-gray-900 xl:min-w-[195px]">
+        <div className="w-[48px] max-md:border-l max-md:border-gray-300 max-md:dark:border-gray-900 md:w-auto">
           <User />
         </div>
       </div>

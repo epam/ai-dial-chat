@@ -76,7 +76,8 @@ export const ContextMenu = ({
   return (
     <>
       <Menu
-        Icon={
+        type="contextMenu"
+        trigger={
           <DotsIcon
             className={classNames('text-gray-500', className)}
             width={18}
@@ -91,14 +92,16 @@ export const ContextMenu = ({
               ? 'hover:bg-green/15'
               : 'hover:bg-violet/15'
           }`}
-          label={t('Edit')}
-          Icon={
-            <PenIcon
-              className="text-gray-500"
-              width={18}
-              height={18}
-              size={18}
-            />
+          item={
+            <div className="flex items-center gap-3">
+              <PenIcon
+                className="shrink-0 text-gray-500"
+                width={18}
+                height={18}
+                size={18}
+              />
+              <span>{t('Edit')}</span>
+            </div>
           }
           onClick={onRename}
         />
@@ -109,14 +112,16 @@ export const ContextMenu = ({
                 ? 'hover:bg-green/15'
                 : 'hover:bg-violet/15'
             }`}
-            label={t('Compare')}
-            Icon={
-              <CompareIcon
-                className="text-gray-500"
-                width={18}
-                height={18}
-                size={18}
-              />
+            item={
+              <div className="flex items-center gap-3">
+                <CompareIcon
+                  className="shrink-0 text-gray-500"
+                  width={18}
+                  height={18}
+                  size={18}
+                />
+                <span>{t('Compare')}</span>
+              </div>
             }
             onClick={onCompare}
           />
@@ -128,14 +133,16 @@ export const ContextMenu = ({
                 ? 'hover:bg-green/15'
                 : 'hover:bg-violet/15'
             }`}
-            label={t('Replay')}
-            Icon={
-              <ReplayIcon
-                className="text-gray-500"
-                width={18}
-                height={18}
-                size={18}
-              />
+            item={
+              <div className="flex items-center gap-3">
+                <ReplayIcon
+                  className="shrink-0 text-gray-500"
+                  width={18}
+                  height={18}
+                  size={18}
+                />
+                <span>{t('Replay')}</span>
+              </div>
             }
             onClick={onReplay}
           />
@@ -146,14 +153,16 @@ export const ContextMenu = ({
               ? 'hover:bg-green/15'
               : 'hover:bg-violet/15'
           }`}
-          label={t('Export')}
-          Icon={
-            <FileLeftIcon
-              className="text-gray-500"
-              width={18}
-              height={18}
-              size={18}
-            />
+          item={
+            <div className="flex items-center gap-3">
+              <FileLeftIcon
+                className="shrink-0 text-gray-500"
+                width={18}
+                height={18}
+                size={18}
+              />
+              <span>{t('Export')}</span>
+            </div>
           }
           onClick={onExport}
         />
@@ -167,14 +176,16 @@ export const ContextMenu = ({
             }`,
           )}
           onClick={onOpenMoveToModal}
-          label="Move to"
-          Icon={
-            <FileRightIcon
-              className="text-gray-500"
-              width={18}
-              height={18}
-              size={18}
-            />
+          item={
+            <div className="flex items-center gap-3">
+              <FileRightIcon
+                className="shrink-0 text-gray-500"
+                width={18}
+                height={18}
+                size={18}
+              />
+              <span>{t('Move to')}</span>
+            </div>
           }
         />
         <Menu
@@ -186,34 +197,43 @@ export const ContextMenu = ({
                 : 'hover:bg-violet/15'
             }`,
           )}
-          label="Move to"
-          Icon={
-            <FileRightIcon
-              className="text-gray-500"
-              width={18}
-              height={18}
-              size={18}
-            />
+          trigger={
+            <div className="flex items-center gap-3">
+              <FileRightIcon
+                className="shrink-0 text-gray-500"
+                width={18}
+                height={18}
+                size={18}
+              />
+              <span>{t('Move to')}</span>
+            </div>
           }
         >
           <MenuItem
             className={classNames(
-              'border-b border-gray-400 dark:border-gray-600 max-md:hidden',
+              `${
+                folders?.length > 0
+                  ? 'border-b border-gray-400 dark:border-gray-600'
+                  : ''
+              }`,
+              'max-md:hidden',
               `${
                 highlightColor === 'green'
                   ? 'hover:bg-green/15'
                   : 'hover:bg-violet/15'
               }`,
             )}
-            label="New folder"
             onClick={moveToNewFolder}
-            Icon={
-              <FolderPlusIcon
-                className="text-gray-500"
-                width={18}
-                height={18}
-                size={18}
-              />
+            item={
+              <div className="flex items-center gap-3">
+                <FolderPlusIcon
+                  className="shrink-0 text-gray-500"
+                  width={18}
+                  height={18}
+                  size={18}
+                />
+                <span>{t('New folder')}</span>
+              </div>
             }
           />
           {folders
@@ -245,14 +265,16 @@ export const ContextMenu = ({
               ? 'hover:bg-green/15'
               : 'hover:bg-violet/15'
           }`}
-          label={t('Delete')}
-          Icon={
-            <TrashIcon
-              className="text-gray-500"
-              width={18}
-              height={18}
-              size={18}
-            />
+          item={
+            <div className="flex items-center gap-3">
+              <TrashIcon
+                className="shrink-0 text-gray-500"
+                width={18}
+                height={18}
+                size={18}
+              />
+              <span>{t('Delete')}</span>
+            </div>
           }
           onClick={onDelete}
         />

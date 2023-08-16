@@ -150,7 +150,7 @@ export const TooltipTrigger = forwardRef<
   return (
     <span
       ref={ref}
-      className="flex items-center justify-center"
+      className="flex h-full items-center justify-center"
       // The user can style the trigger based on the state
       data-state={context.open ? 'open' : 'closed'}
       {...context.getReferenceProps(props)}
@@ -173,7 +173,7 @@ export const TooltipContent = forwardRef<
     <FloatingPortal id="theme-main">
       <div
         ref={ref}
-        className="z-50 rounded bg-gray-100 px-2 py-1  dark:bg-black "
+        className="z-50 rounded bg-gray-100 px-2 py-1  shadow dark:bg-black"
         style={{
           ...context.floatingStyles,
           ...style,
