@@ -17,6 +17,9 @@ interface Props {
   isCustomTooltip?: boolean;
 }
 
+const defaultModelIcon = `var(--default-model, url(/images/icons/message-square-lines-alt.svg))`;
+const defaultAddonIcon = `var(--default-addon, url(/images/icons/message-square-lines-alt.svg))`;
+
 export const ModelIcon = ({
   entity,
   entityId,
@@ -35,7 +38,9 @@ export const ModelIcon = ({
           style={{ height: `${size}px`, width: `${size}px` }}
         >
           <Image
-            className={`${inverted ? 'invert' : ''} `}
+            className={`${
+              inverted && entity.type === 'model' ? 'invert' : ''
+            } `}
             src={entity.iconUrl as string}
             fill
             style={{ objectFit: 'contain' }}
@@ -47,7 +52,8 @@ export const ModelIcon = ({
           style={{
             width: size,
             height: size,
-            backgroundImage: `var(--default-model, url(/images/icons/message-square-lines-alt.svg))`,
+            backgroundImage:
+              entity?.type === 'model' ? defaultModelIcon : defaultAddonIcon,
           }}
           className={`inline-block shrink-0 bg-contain bg-no-repeat ${
             inverted ? 'invert' : ''
