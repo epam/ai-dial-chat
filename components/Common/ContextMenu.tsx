@@ -189,6 +189,7 @@ export const ContextMenu = ({
           }
         />
         <Menu
+          type="contextMenu"
           className={classNames(
             'max-md:hidden',
             `${

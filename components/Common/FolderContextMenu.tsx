@@ -22,6 +22,7 @@ export const FolderContextMenu = ({
 
   return (
     <Menu
+      type="contextMenu"
       className="justify-self-end"
       trigger={
         <DotsIcon
