@@ -130,6 +130,8 @@ const Folder = ({
 
   const hoverColor =
     highlightColor === 'green' ? 'hover:bg-green/15' : 'hover:bg-violet/15';
+  const hoverIconColor =
+    highlightColor === 'green' ? 'hover:text-green' : 'hover:text-violet';
   const bgColor = highlightColor === 'green' ? 'bg-green/15' : 'bg-violet/15';
   return (
     <>
@@ -208,7 +210,12 @@ const Folder = ({
                 setIsRenaming(false);
               }}
             >
-              <CheckIcon width={18} height={18} size={18} />
+              <CheckIcon
+                width={18}
+                height={18}
+                size={18}
+                className={hoverIconColor}
+              />
             </SidebarActionButton>
             <SidebarActionButton
               handleClick={(e) => {
@@ -217,7 +224,13 @@ const Folder = ({
                 setIsRenaming(false);
               }}
             >
-              <XmarkIcon width={18} height={18} size={18} strokeWidth="2" />
+              <XmarkIcon
+                width={18}
+                height={18}
+                size={18}
+                className={hoverIconColor}
+                strokeWidth="2"
+              />
             </SidebarActionButton>
           </div>
         )}
