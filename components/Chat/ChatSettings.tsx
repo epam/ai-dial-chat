@@ -90,7 +90,18 @@ export const ChatSettings = ({
         selectedAddons={currentSelectedAddonsIds}
         temperature={currentTemperature}
         onSelectModel={(modelId: string) => {
-          setCurrentModel(modelsMap[modelId]);
+          const newModel = modelsMap[modelId];
+          if (newModel) {
+            setCurrentModel(newModel);
+
+            const selectedAddons = Array.from(
+              new Set([
+                ...currentSelectedAddonsIds,
+                ...(newModel.selectedAddons ?? []),
+              ]),
+            );
+            setCurrentSelectedAddonsIds(selectedAddons);
+          }
         }}
         onChangePrompt={(prompt) => setCurrentPrompt(prompt)}
         onChangeTemperature={(temperature) =>
