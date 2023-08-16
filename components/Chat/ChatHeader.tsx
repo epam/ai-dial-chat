@@ -132,7 +132,7 @@ export const ChatHeader = ({
                 <Tooltip isTriggerClickable={true}>
                   <TooltipTrigger>
                     <button
-                      className="cursor-pointer hover:text-blue-500"
+                      className="cursor-pointer text-gray-500 hover:text-blue-500"
                       onClick={() => {
                         setShowSettings(!isShowSettings);
                       }}
@@ -147,7 +147,7 @@ export const ChatHeader = ({
                 <Tooltip isTriggerClickable={true}>
                   <TooltipTrigger>
                     <button
-                      className="cursor-pointer hover:text-blue-500"
+                      className="cursor-pointer text-gray-500 hover:text-blue-500"
                       onClick={onClearConversation}
                     >
                       <BroomIcon width={18} height={18} />
@@ -162,7 +162,7 @@ export const ChatHeader = ({
                 <Tooltip isTriggerClickable={true}>
                   <TooltipTrigger>
                     <button
-                      className="cursor-pointer hover:text-blue-500 disabled:cursor-not-allowed"
+                      className="cursor-pointer text-gray-500 hover:text-blue-500 disabled:cursor-not-allowed"
                       onClick={onUnselectConversation}
                       disabled={messageIsStreaming}
                     >

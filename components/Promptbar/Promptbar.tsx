@@ -154,7 +154,7 @@ const Promptbar = () => {
 
   const actionsBlock = (
     <button
-      className="flex shrink-0 cursor-pointer select-none items-center gap-3 p-3 transition-colors duration-200 hover:bg-violet/15 disabled:cursor-not-allowed"
+      className="flex shrink-0 cursor-pointer select-none items-center gap-3 px-5 py-3 transition-colors duration-200 hover:bg-violet/15 disabled:cursor-not-allowed"
       onClick={() => {
         handleCreatePrompt();
         promptDispatch({ field: 'searchTerm', value: '' });

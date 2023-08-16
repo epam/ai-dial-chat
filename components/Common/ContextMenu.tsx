@@ -8,8 +8,8 @@ import { Prompt } from '@/types/prompt';
 import HomeContext from '@/pages/api/home/home.context';
 
 import DotsIcon from '../../public/images/icons/dots-vertical.svg';
-import FileLeftIcon from '../../public/images/icons/file-arrow-left.svg';
 import FileRightIcon from '../../public/images/icons/file-arrow-right.svg';
+import FolderRightIcon from '../../public/images/icons/folder-arrow-right.svg';
 import FolderPlusIcon from '../../public/images/icons/folder-plus.svg';
 import PenIcon from '../../public/images/icons/pen-line.svg';
 import ReplayIcon from '../../public/images/icons/replay.svg';
@@ -155,7 +155,7 @@ export const ContextMenu = ({
           }`}
           item={
             <div className="flex items-center gap-3">
-              <FileLeftIcon
+              <FileRightIcon
                 className="shrink-0 text-gray-500"
                 width={18}
                 height={18}
@@ -178,7 +178,7 @@ export const ContextMenu = ({
           onClick={onOpenMoveToModal}
           item={
             <div className="flex items-center gap-3">
-              <FileRightIcon
+              <FolderRightIcon
                 className="shrink-0 text-gray-500"
                 width={18}
                 height={18}
@@ -189,6 +189,7 @@ export const ContextMenu = ({
           }
         />
         <Menu
+          type="contextMenu"
           className={classNames(
             'max-md:hidden',
             `${
@@ -199,7 +200,7 @@ export const ContextMenu = ({
           )}
           trigger={
             <div className="flex items-center gap-3">
-              <FileRightIcon
+              <FolderRightIcon
                 className="shrink-0 text-gray-500"
                 width={18}
                 height={18}

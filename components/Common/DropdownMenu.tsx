@@ -43,7 +43,7 @@ import {
 import classNames from 'classnames';
 
 const menuItemClassNames =
-  'flex focus-visible:border-none focus-visible:outline-none gap-3 cursor-pointer px-3 items-center';
+  'flex focus-visible:border-none focus-visible:outline-none gap-3 cursor-pointer px-3 items-center max-w-[300px]';
 
 const MenuContext = createContext<{
   getItemProps: (userProps?: HTMLProps<HTMLElement>) => Record<string, unknown>;
@@ -211,7 +211,9 @@ export const MenuComponent = forwardRef<
         )}
       >
         {trigger}
-        {!trigger && label && <span>{label}</span>}
+        {!trigger && label && (
+          <span className={`inline-block truncate`}>{label}</span>
+        )}
       </button>
       <MenuContext.Provider
         value={{
@@ -293,7 +295,9 @@ export const MenuItem = forwardRef<
       })}
     >
       {ItemComponent}
-      {!ItemComponent && label && <span>{label}</span>}
+      {!ItemComponent && label && (
+        <span className="inline-block truncate">{label}</span>
+      )}
     </button>
   );
 });
