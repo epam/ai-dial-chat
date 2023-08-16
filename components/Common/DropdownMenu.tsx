@@ -59,7 +59,7 @@ const MenuContext = createContext<{
 });
 
 interface MenuProps {
-  Icon?: ReactNode;
+  trigger?: ReactNode;
   nested?: boolean;
   children?: ReactNode;
 }
@@ -68,7 +68,7 @@ export const MenuComponent = forwardRef<
   HTMLButtonElement,
   MenuProps & HTMLProps<HTMLButtonElement>
 >(function MenuComponent(
-  { children, style, className, label, Icon, ...props },
+  { children, style, className, label, trigger, ...props },
   forwardedRef,
 ) {
   const [isOpen, setIsOpen] = useState(false);
@@ -91,11 +91,7 @@ export const MenuComponent = forwardRef<
     open: isOpen,
     onOpenChange: setIsOpen,
     placement: isNested ? 'right-start' : 'bottom-start',
-    middleware: [
-      offset({ mainAxis: 0, alignmentAxis: isNested ? -4 : 0 }),
-      flip(),
-      shift(),
-    ],
+    middleware: [offset(0), flip(), shift()],
     whileElementsMounted: autoUpdate,
   });
 
@@ -189,8 +185,8 @@ export const MenuComponent = forwardRef<
           }),
         )}
       >
-        {Icon}
-        {label && <span>{label}</span>}
+        {trigger}
+        {!trigger && label && <span>{label}</span>}
       </button>
       <MenuContext.Provider
         value={{
@@ -211,7 +207,7 @@ export const MenuComponent = forwardRef<
                 returnFocus={!isNested}
               >
                 <div
-                  className="z-50 w-max rounded bg-gray-100 text-gray-800 focus-visible:outline-none dark:bg-black dark:text-gray-200"
+                  className="z-50 w-max rounded bg-gray-100 text-gray-800 shadow focus-visible:outline-none dark:bg-black dark:text-gray-200"
                   ref={refs.setFloating}
                   style={{
                     ...floatingStyles,
@@ -231,8 +227,8 @@ export const MenuComponent = forwardRef<
 });
 
 interface MenuItemProps {
-  label: string;
-  Icon?: ReactNode;
+  label?: string;
+  item?: ReactNode;
   disabled?: boolean;
 }
 
@@ -240,7 +236,7 @@ export const MenuItem = forwardRef<
   HTMLButtonElement,
   MenuItemProps & ButtonHTMLAttributes<HTMLButtonElement>
 >(function MenuItem(
-  { className, label, Icon, disabled, ...props },
+  { className, label, item: ItemComponent, disabled, ...props },
   forwardedRef,
 ) {
   const menu = useContext(MenuContext);
@@ -268,8 +264,8 @@ export const MenuItem = forwardRef<
         },
       })}
     >
-      {Icon}
-      {label && <span>{label}</span>}
+      {ItemComponent}
+      {!ItemComponent && label && <span>{label}</span>}
     </button>
   );
 });

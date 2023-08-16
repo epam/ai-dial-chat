@@ -23,7 +23,7 @@ export const FolderContextMenu = ({
   return (
     <Menu
       className="justify-self-end"
-      Icon={
+      trigger={
         <DotsIcon
           className="text-gray-500"
           width={18}
@@ -41,9 +41,16 @@ export const FolderContextMenu = ({
             ? 'hover:bg-green/15'
             : 'hover:bg-violet/15'
         }`}
-        label={t('Edit')}
-        Icon={
-          <PenIcon className="text-gray-500" width={18} height={18} size={18} />
+        item={
+          <div className="flex items-center gap-3">
+            <PenIcon
+              className="shrink-0 text-gray-500"
+              width={18}
+              height={18}
+              size={18}
+            />
+            <span>{t('Edit')}</span>
+          </div>
         }
         onClick={onRename}
       />
@@ -53,14 +60,16 @@ export const FolderContextMenu = ({
             ? 'hover:bg-green/15'
             : 'hover:bg-violet/15'
         }`}
-        label={t('Delete')}
-        Icon={
-          <TrashIcon
-            className="text-gray-500"
-            width={18}
-            height={18}
-            size={18}
-          />
+        item={
+          <div className="flex items-center gap-3">
+            <TrashIcon
+              className="shrink-0 text-gray-500"
+              width={18}
+              height={18}
+              size={18}
+            />
+            <span>{t('Delete')}</span>
+          </div>
         }
         onClick={onDelete}
       />
