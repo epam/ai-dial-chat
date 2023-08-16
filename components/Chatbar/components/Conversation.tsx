@@ -161,6 +161,9 @@ export const ConversationComponent = ({ conversation }: Props) => {
           disabled={messageIsStreaming}
           draggable="true"
           onDragStart={(e) => handleDragStart(e, conversation)}
+          onDragOver={(e) => {
+            e.preventDefault();
+          }}
           ref={buttonRef}
         >
           <ModelIcon

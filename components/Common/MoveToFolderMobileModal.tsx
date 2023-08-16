@@ -48,7 +48,7 @@ export const MoveToFolderMobileModal = ({
     }
   };
   return (
-    <FloatingOverlay className="flex items-center justify-center bg-gray-900/70 p-3">
+    <FloatingOverlay className="z-50 flex items-center justify-center bg-gray-900/70 p-3">
       <div className="flex h-full w-full flex-col divide-y divide-gray-300 bg-gray-100 dark:divide-gray-900 dark:bg-gray-700">
         <div className="flex items-end justify-between px-3 pb-2 pt-4">
           <span className="h-min">Move to</span>

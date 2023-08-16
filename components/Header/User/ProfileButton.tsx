@@ -1,5 +1,8 @@
+import { useSession } from 'next-auth/react';
 import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import Image from 'next/image';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -13,6 +16,7 @@ export const ProfileButton = () => {
     dispatch: homeDispatch,
   } = useContext(HomeContext);
   const { t } = useTranslation('sidebar');
+  const { data: session } = useSession();
 
   const onClick = () => {
     homeDispatch({ field: 'isProfileOpen', value: !isProfileOpen });
@@ -23,8 +27,16 @@ export const ProfileButton = () => {
         <button className="flex h-full items-center" onClick={onClick}>
           {isProfileOpen ? (
             <XmarkIcon className="text-gray-500" width={24} height={24} />
+          ) : session?.user?.image ? (
+            <Image
+              className="rounded"
+              src={session?.user?.image}
+              width={24}
+              height={24}
+              alt={t(`User avatar`)}
+            />
           ) : (
-            <UserIcon className="text-gray-500" width={24} height={24} />
+            <UserIcon width={18} height={18} />
           )}
         </button>
       </TooltipTrigger>

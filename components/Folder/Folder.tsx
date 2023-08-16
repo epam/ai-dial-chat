@@ -63,6 +63,8 @@ const Folder = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const wrapperRef = useRef(null);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const dragDropElement = useRef<HTMLButtonElement>(null);
 
   const handleEnterDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter') {
@@ -83,7 +85,7 @@ const Folder = ({
 
       handleDrop(e, currentFolder);
 
-      e.target.style.background = 'none';
+      setIsDraggingOver(false);
     }
   };
 
@@ -91,12 +93,19 @@ const Folder = ({
     e.preventDefault();
   };
 
-  const highlightDrop = (e: any) => {
-    e.target.style.background = '#343541';
+  const highlightDrop = (evt: any) => {
+    if (
+      dragDropElement.current?.contains(evt.target) ||
+      dragDropElement.current === evt.target
+    ) {
+      setIsDraggingOver(true);
+    }
   };
 
-  const removeHighlight = (e: any) => {
-    e.target.style.background = 'none';
+  const removeHighlight = (evt: any) => {
+    if (evt.target === dragDropElement.current) {
+      setIsDraggingOver(false);
+    }
   };
 
   const onRename: MouseEventHandler = (e) => {
@@ -130,12 +139,16 @@ const Folder = ({
 
   const hoverColor =
     highlightColor === 'green' ? 'hover:bg-green/15' : 'hover:bg-violet/15';
+  const draggingColor =
+    highlightColor === 'green' ? 'bg-green/15' : 'bg-violet/15';
+  const hoverIconColor =
+    highlightColor === 'green' ? 'hover:text-green' : 'hover:text-violet';
   const bgColor = highlightColor === 'green' ? 'bg-green/15' : 'bg-violet/15';
   return (
     <>
       <div
         className={classNames(
-          'group relative flex h-[42px] items-center rounded',
+          ' relative flex h-[42px] items-center rounded',
           isRenaming || isDeleting ? bgColor : '',
           hoverColor,
         )}
@@ -156,7 +169,9 @@ const Folder = ({
           </div>
         ) : (
           <button
-            className="flex w-full cursor-pointer items-center gap-3 p-3 transition-colors duration-200"
+            className={`group flex h-full w-full cursor-pointer items-center gap-3 px-3 transition-colors duration-200 ${
+              isDraggingOver ? `${draggingColor}` : ''
+            }`}
             onClick={() => {
               setIsOpen(!isOpen);
               setIsSelected(true);
@@ -165,17 +180,22 @@ const Folder = ({
             onDragOver={allowDrop}
             onDragEnter={highlightDrop}
             onDragLeave={removeHighlight}
+            ref={dragDropElement}
           >
             <CaretIconComponent isOpen={isOpen} />
 
-            <div className="relative max-h-5 flex-1 truncate break-all text-left leading-3">
+            <div
+              className={`pointer-events-none relative max-h-5 flex-1 truncate break-all text-left leading-3 ${
+                isRenaming || isDeleting ? 'pr-10' : 'group-hover:pr-5'
+              }`}
+            >
               {currentFolder.name}
             </div>
 
             {!isDeleting && !isRenaming && (
               <div
                 className={classNames(
-                  'invisible absolute right-0 z-50 flex justify-end md:group-hover:visible',
+                  'invisible absolute right-3 z-50 flex justify-end md:group-hover:visible',
                   isSelected ? 'max-md:visible' : '',
                 )}
               >
@@ -204,7 +224,12 @@ const Folder = ({
                 setIsRenaming(false);
               }}
             >
-              <CheckIcon width={18} height={18} size={18} />
+              <CheckIcon
+                width={18}
+                height={18}
+                size={18}
+                className={hoverIconColor}
+              />
             </SidebarActionButton>
             <SidebarActionButton
               handleClick={(e) => {
@@ -213,7 +238,13 @@ const Folder = ({
                 setIsRenaming(false);
               }}
             >
-              <XmarkIcon width={18} height={18} size={18} strokeWidth="2" />
+              <XmarkIcon
+                width={18}
+                height={18}
+                size={18}
+                className={hoverIconColor}
+                strokeWidth="2"
+              />
             </SidebarActionButton>
           </div>
         )}

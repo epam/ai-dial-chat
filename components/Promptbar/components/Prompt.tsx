@@ -130,11 +130,16 @@ export const PromptComponent = ({ prompt }: Props) => {
       onClick={handleOnClickPrompt}
     >
       <button
-        className="flex w-full items-center gap-3  px-3 "
+        className="flex h-full w-full items-center gap-3 px-3 "
         draggable="true"
         onDragStart={(e) => handleDragStart(e, prompt)}
       >
-        <LightbulbIcon width={18} height={18} size={18} />
+        <LightbulbIcon
+          width={18}
+          height={18}
+          size={18}
+          className="text-gray-500"
+        />
 
         <div className="relative max-h-5 flex-1 truncate break-all pr-4 text-left leading-3">
           {prompt.name}
