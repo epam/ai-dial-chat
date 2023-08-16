@@ -156,7 +156,7 @@ const Folder = ({
           </div>
         ) : (
           <button
-            className="flex w-full cursor-pointer items-center gap-3 p-3 transition-colors duration-200"
+            className="flex w-full cursor-pointer items-center gap-3 px-3 transition-colors duration-200"
             onClick={() => {
               setIsOpen(!isOpen);
               setIsSelected(true);
@@ -168,14 +168,18 @@ const Folder = ({
           >
             <CaretIconComponent isOpen={isOpen} />
 
-            <div className="relative max-h-5 flex-1 truncate break-all text-left leading-3">
+            <div
+              className={`relative max-h-5 flex-1 truncate break-all text-left leading-3 ${
+                isRenaming || isDeleting ? 'pr-10' : 'group-hover:pr-5'
+              }`}
+            >
               {currentFolder.name}
             </div>
 
             {!isDeleting && !isRenaming && (
               <div
                 className={classNames(
-                  'invisible absolute right-0 z-50 flex justify-end md:group-hover:visible',
+                  'invisible absolute right-3 z-50 flex justify-end md:group-hover:visible',
                   isSelected ? 'max-md:visible' : '',
                 )}
               >
