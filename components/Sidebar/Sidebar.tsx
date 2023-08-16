@@ -58,9 +58,9 @@ const Sidebar = <T,>({
 
   const removeHighlight = (e: any) => {
     if (
-      e.target === dragDropElement.current ||
-      (dragDropElement.current?.contains(e.target) &&
-        !dragDropElement.current?.contains(e.relatedTarget))
+      (e.target === dragDropElement.current ||
+        dragDropElement.current?.contains(e.target)) &&
+      !dragDropElement.current?.contains(e.relatedTarget)
     ) {
       setIsDraggingOver(false);
     }
