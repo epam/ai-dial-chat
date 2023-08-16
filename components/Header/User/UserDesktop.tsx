@@ -27,7 +27,7 @@ export const UserDesktop = () => {
       className="w-full"
       onOpenChange={setIsOpen}
       trigger={
-        <div className="flex min-w-[120px] items-center justify-between gap-2 px-3">
+        <div className="flex min-w-[120px] items-center justify-between gap-2 pr-3">
           <div className="flex items-center gap-3">
             {session?.user?.image ? (
               <Image
