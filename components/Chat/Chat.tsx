@@ -1,5 +1,6 @@
 import {
   MouseEventHandler,
+  MutableRefObject,
   memo,
   useCallback,
   useContext,
@@ -20,6 +21,7 @@ import { throttle } from '@/utils/data/throttle';
 
 import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
+import { KeyValuePair } from '@/types/data';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -117,6 +119,40 @@ const clearStateForMessages = (messages: Message[]): Message[] => {
       state: undefined,
     },
   }));
+};
+
+const setInitialNameForNewChat = (
+  updatedConversation: Conversation,
+  message: Message,
+  localConversations: MutableRefObject<Conversation[]>,
+  handleUpdateConversation: (
+    conversation: Conversation,
+    data: KeyValuePair,
+    localConversations?: Conversation[] | undefined,
+  ) => Conversation[],
+) => {
+  if (
+    updatedConversation.messages.length === 1 &&
+    !updatedConversation.replay.isReplay &&
+    updatedConversation.name === DEFAULT_CONVERSATION_NAME
+  ) {
+    const { content } = message;
+    const customName =
+      content.length > 160 ? content.substring(0, 160) + '...' : content;
+    updatedConversation = {
+      ...updatedConversation,
+      name: customName,
+    };
+    localConversations.current = handleUpdateConversation(
+      updatedConversation,
+      {
+        key: 'name',
+        value: customName,
+      },
+      localConversations.current,
+    );
+  }
+  return updatedConversation;
 };
 
 export const Chat = memo(({ appName }: Props) => {
@@ -363,6 +399,13 @@ export const Chat = memo(({ appName }: Props) => {
       homeDispatch({ field: 'loading', value: true });
       handleMessageIsStreamingChange(1);
 
+      updatedConversation = setInitialNameForNewChat(
+        updatedConversation,
+        message,
+        localConversations,
+        handleUpdateConversation,
+      );
+
       const lastModel = models.find(
         (model) => model.id === conversation.model.id,
       ) as OpenAIEntityModel;
@@ -469,27 +512,6 @@ export const Chat = memo(({ appName }: Props) => {
         return { error: true };
       }
 
-      if (
-        updatedConversation.messages.length === 1 &&
-        !updatedConversation.replay.isReplay &&
-        updatedConversation.name === DEFAULT_CONVERSATION_NAME
-      ) {
-        const { content } = message;
-        const customName =
-          content.length > 30 ? content.substring(0, 30) + '...' : content;
-        updatedConversation = {
-          ...updatedConversation,
-          name: customName,
-        };
-        localConversations.current = handleUpdateConversation(
-          updatedConversation,
-          {
-            key: 'name',
-            value: customName,
-          },
-          localConversations.current,
-        );
-      }
       homeDispatch({ field: 'loading', value: false });
       const reader = data.getReader();
       const decoder = new TextDecoder();
@@ -853,6 +875,22 @@ export const Chat = memo(({ appName }: Props) => {
     return updatedConversation;
   };
 
+  const handleOnApplyAddons = (
+    conversation: Conversation,
+    addonIds: string[],
+  ): Conversation => {
+    const updatedConversation: Conversation = {
+      ...conversation,
+      selectedAddons: addonIds,
+    };
+    handleUpdateConversation(updatedConversation, {
+      key: 'selectedAddons',
+      value: addonIds,
+    });
+
+    return updatedConversation;
+  };
+
   const handleChangePrompt = (
     conversation: Conversation,
     prompt: string,
@@ -1000,9 +1038,12 @@ export const Chat = memo(({ appName }: Props) => {
             temporarySettings.currentAssistentModelId,
           );
         }
-        temporarySettings.addonsIds?.forEach((addonId) => {
-          localConv = handleOnChangeAddon(localConv, addonId);
-        });
+        if (temporarySettings.addonsIds) {
+          localConv = handleOnApplyAddons(
+            localConv,
+            temporarySettings.addonsIds,
+          );
+        }
 
         // Hack for syncing state after multiple updates
         localConversations = localConversations.map((conv) => {
