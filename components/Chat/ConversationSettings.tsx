@@ -105,8 +105,10 @@ export const ConversationSettings = ({
             )}
             {model.type === 'assistant' && assistantSubModel && (
               <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
+                <label className="mb-4 inline-block text-left">
+                  {t('Model')}
+                </label>
                 <Combobox
-                  label="Model"
                   items={models.filter((model) => model.type === 'model')}
                   initialSelectedItem={assistantSubModel}
                   getItemLabel={(model: OpenAIEntityModel) =>
