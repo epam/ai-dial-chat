@@ -82,13 +82,13 @@ const Header = () => {
       <CreateNewChatMobile />
       <div className="flex grow justify-between">
         <span
-          className="bg-center bg-no-repeat dark:hidden max-md:grow xl:min-w-[195px]"
+          className="min-w-[110px] grow bg-center bg-no-repeat dark:hidden md:ml-5 md:grow-0"
           style={{
             backgroundImage: `var(--app-logo)`,
           }}
         ></span>
         <span
-          className="hidden bg-center bg-no-repeat dark:block max-md:grow xl:min-w-[195px]"
+          className="hidden min-w-[110px] grow bg-center bg-no-repeat dark:block md:ml-5 md:grow-0"
           style={{
             backgroundImage: `var(--app-logo-dark)`,
           }}
