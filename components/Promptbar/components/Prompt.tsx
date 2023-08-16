@@ -130,7 +130,7 @@ export const PromptComponent = ({ prompt }: Props) => {
       onClick={handleOnClickPrompt}
     >
       <button
-        className="flex w-full items-center gap-3  px-3 "
+        className="flex h-full w-full items-center gap-3 px-3 "
         draggable="true"
         onDragStart={(e) => handleDragStart(e, prompt)}
       >

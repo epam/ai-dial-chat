@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { FeatureType } from '@/types/components';
@@ -40,17 +40,30 @@ const Sidebar = <T,>({
   handleDrop,
 }: Props<T>) => {
   const { t } = useTranslation('promptbar');
-
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const dragDropElement = useRef<HTMLDivElement>(null);
+  const draggingColor = side === 'left' ? 'bg-green/15' : 'bg-violet/15';
   const allowDrop = (e: any) => {
     e.preventDefault();
   };
 
   const highlightDrop = (e: any) => {
-    e.target.style.background = '#343541';
+    if (
+      dragDropElement.current?.contains(e.target) ||
+      dragDropElement.current === e.target
+    ) {
+      setIsDraggingOver(true);
+    }
   };
 
   const removeHighlight = (e: any) => {
-    e.target.style.background = 'none';
+    if (
+      e.target === dragDropElement.current ||
+      (dragDropElement.current?.contains(e.target) &&
+        !dragDropElement.current?.contains(e.relatedTarget))
+    ) {
+      setIsDraggingOver(false);
+    }
   };
 
   return isOpen ? (
@@ -73,8 +86,14 @@ const Sidebar = <T,>({
 
         {items?.length > 0 ? (
           <div
-            className="min-w-[42px] border-t border-gray-100 dark:border-gray-900"
-            onDrop={handleDrop}
+            ref={dragDropElement}
+            className={`min-h-[100px] min-w-[42px] grow border-t border-gray-100 dark:border-gray-900 ${
+              isDraggingOver ? draggingColor : ''
+            }`}
+            onDrop={(e) => {
+              setIsDraggingOver(false);
+              handleDrop(e);
+            }}
             onDragOver={allowDrop}
             onDragEnter={highlightDrop}
             onDragLeave={removeHighlight}

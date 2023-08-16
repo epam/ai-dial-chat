@@ -213,7 +213,6 @@ export const Chatbar = () => {
         value: 0,
       });
       chatDispatch({ field: 'searchTerm', value: '' });
-      e.target.style.background = 'none';
     }
   };
 
