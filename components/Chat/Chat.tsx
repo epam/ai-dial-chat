@@ -853,6 +853,22 @@ export const Chat = memo(({ appName }: Props) => {
     return updatedConversation;
   };
 
+  const handleOnApplyAddons = (
+    conversation: Conversation,
+    addonIds: string[],
+  ): Conversation => {
+    const updatedConversation: Conversation = {
+      ...conversation,
+      selectedAddons: addonIds,
+    };
+    handleUpdateConversation(updatedConversation, {
+      key: 'selectedAddons',
+      value: addonIds,
+    });
+
+    return updatedConversation;
+  };
+
   const handleChangePrompt = (
     conversation: Conversation,
     prompt: string,
@@ -1000,9 +1016,12 @@ export const Chat = memo(({ appName }: Props) => {
             temporarySettings.currentAssistentModelId,
           );
         }
-        temporarySettings.addonsIds?.forEach((addonId) => {
-          localConv = handleOnChangeAddon(localConv, addonId);
-        });
+        if (temporarySettings.addonsIds) {
+          localConv = handleOnApplyAddons(
+            localConv,
+            temporarySettings.addonsIds,
+          );
+        }
 
         // Hack for syncing state after multiple updates
         localConversations = localConversations.map((conv) => {
