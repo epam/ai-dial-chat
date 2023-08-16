@@ -71,6 +71,7 @@ export const Combobox = ({
     highlightedIndex,
     selectedItem,
     inputValue,
+    setInputValue,
   } = useCombobox({
     onInputValueChange({ inputValue }) {
       setDisplayedItems(
@@ -89,6 +90,7 @@ export const Combobox = ({
     itemToString: getItemLabel,
     onSelectedItemChange: ({ selectedItem: newSelectedItem }) => {
       onSelectItem(getItemValue(newSelectedItem));
+      setInputValue('');
     },
     defaultInputValue: '',
   });
