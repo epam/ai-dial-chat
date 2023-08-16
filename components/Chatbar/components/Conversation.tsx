@@ -18,7 +18,7 @@ import { MoveToFolderMobileModal } from '@/components/Common/MoveToFolderMobileM
 
 import CheckIcon from '../../../public/images/icons/check.svg';
 import XmarkIcon from '../../../public/images/icons/xmark.svg';
-import { ContextMenu } from '../../Common/NewContextMenu';
+import { ContextMenu } from '../../Common/ContextMenu';
 import { ModelIcon } from './ModelIcon';
 
 import classNames from 'classnames';
@@ -130,7 +130,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
           : '',
       )}
     >
-      {isRenaming && selectedConversationIds.includes(conversation.id) ? (
+      {isRenaming ? (
         <div className="flex w-full items-center gap-3 px-3">
           <ModelIcon
             size={18}
@@ -150,7 +150,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
         </div>
       ) : (
         <button
-          className={`flex h-full w-full cursor-pointer items-center gap-3 px-3 transition-colors duration-200 ${
+          className={`group flex h-full w-full cursor-pointer items-center gap-3 px-3 transition-colors duration-200 ${
             messageIsStreaming ? 'disabled:cursor-not-allowed' : ''
           }`}
           onClick={() => {
@@ -170,10 +170,8 @@ export const ConversationComponent = ({ conversation }: Props) => {
             inverted={lightMode === 'dark'}
           />
           <div
-            className={`relative max-h-5 flex-1 truncate break-all text-left leading-3 ${
-              selectedConversationIds.includes(conversation.id)
-                ? 'pr-12'
-                : 'pr-1'
+            className={`relative max-h-5 flex-1 truncate break-all text-left leading-3  ${
+              isDeleting || isRenaming ? 'pr-10' : 'group-hover:pr-5'
             }`}
           >
             {conversation.name}
@@ -184,7 +182,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
       {!isDeleting && !isRenaming && !messageIsStreaming && (
         <div
           className={classNames(
-            'invisible absolute right-0 z-50 flex justify-end md:group-hover:visible',
+            'invisible absolute right-3 z-50 flex justify-end md:group-hover:visible',
             selectedConversationIds.includes(conversation.id)
               ? 'max-md:visible'
               : '',
@@ -202,6 +200,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
               handleExportConversation(conversation.id);
             }}
             onCompare={() => {
+              handleSelectConversation(conversation);
               dispatch({
                 field: 'isCompareMode',
                 value: true,
@@ -226,17 +225,27 @@ export const ConversationComponent = ({ conversation }: Props) => {
         )}
       </div>
 
-      {(isDeleting || isRenaming) &&
-        selectedConversationIds.includes(conversation.id) && (
-          <div className="absolute right-1 z-10 flex">
-            <SidebarActionButton handleClick={handleConfirm}>
-              <CheckIcon width={18} height={18} size={18} />
-            </SidebarActionButton>
-            <SidebarActionButton handleClick={handleCancel}>
-              <XmarkIcon width={18} height={18} size={18} strokeWidth="2" />
-            </SidebarActionButton>
-          </div>
-        )}
+      {(isDeleting || isRenaming) && (
+        <div className="absolute right-1 z-10 flex">
+          <SidebarActionButton handleClick={handleConfirm}>
+            <CheckIcon
+              width={18}
+              height={18}
+              size={18}
+              className="hover:text-green"
+            />
+          </SidebarActionButton>
+          <SidebarActionButton handleClick={handleCancel}>
+            <XmarkIcon
+              width={18}
+              height={18}
+              size={18}
+              strokeWidth="2"
+              className="hover:text-green"
+            />
+          </SidebarActionButton>
+        </div>
+      )}
     </div>
   );
 };

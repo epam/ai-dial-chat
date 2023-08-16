@@ -54,6 +54,7 @@ export const Chatbar = () => {
       defaultModelId,
       folders,
       messageIsStreaming,
+      selectedConversationIds,
     },
     dispatch: homeDispatch,
     handleNewConversation,
@@ -155,14 +156,16 @@ export const Chatbar = () => {
     saveConversations(updatedConversations);
 
     if (updatedConversations.length > 0) {
-      homeDispatch({
-        field: 'selectedConversationIds',
-        value: [updatedConversations[updatedConversations.length - 1].id],
-      });
+      if (selectedConversationIds.includes(conversation.id)) {
+        homeDispatch({
+          field: 'selectedConversationIds',
+          value: [updatedConversations[updatedConversations.length - 1].id],
+        });
 
-      saveSelectedConversationIds([
-        updatedConversations[updatedConversations.length - 1].id,
-      ]);
+        saveSelectedConversationIds([
+          updatedConversations[updatedConversations.length - 1].id,
+        ]);
+      }
     } else {
       const newConversation: Conversation = {
         id: uuidv4(),
