@@ -82,7 +82,7 @@ const Sidebar = <T,>({
             {itemComponent}
           </div>
         ) : (
-          <div className="flex h-full content-center justify-center">
+          <div className="flex content-center justify-center">
             <NoResultsFound />
           </div>
         )}
