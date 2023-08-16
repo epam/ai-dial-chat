@@ -9,6 +9,7 @@ import {
   offset,
   safePolygon,
   shift,
+  size,
   useClick,
   useDismiss,
   useFloating,
@@ -62,18 +63,30 @@ interface MenuProps {
   trigger?: ReactNode;
   nested?: boolean;
   children?: ReactNode;
+  type?: 'dropdown' | 'contextMenu';
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
 export const MenuComponent = forwardRef<
   HTMLButtonElement,
   MenuProps & HTMLProps<HTMLButtonElement>
 >(function MenuComponent(
-  { children, style, className, label, trigger, ...props },
+  {
+    children,
+    style,
+    className,
+    label,
+    trigger,
+    type = 'dropdown',
+    onOpenChange,
+    ...props
+  },
   forwardedRef,
 ) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasFocusInside, setHasFocusInside] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [floatingWidth, setFloatingWidth] = useState(0);
 
   const elementsRef = useRef<HTMLButtonElement[]>([]);
   const labelsRef = useRef<string[]>([]);
@@ -89,9 +102,21 @@ export const MenuComponent = forwardRef<
   const { floatingStyles, refs, context } = useFloating<HTMLButtonElement>({
     nodeId,
     open: isOpen,
-    onOpenChange: setIsOpen,
+    onOpenChange: (isOpened) => {
+      setIsOpen(isOpened);
+      onOpenChange?.(isOpened);
+    },
     placement: isNested ? 'right-start' : 'bottom-start',
-    middleware: [offset(0), flip(), shift()],
+    middleware: [
+      offset(0),
+      flip(),
+      shift(),
+      size({
+        apply({ rects }) {
+          setFloatingWidth(rects.reference.width);
+        },
+      }),
+    ],
     whileElementsMounted: autoUpdate,
   });
 
@@ -171,7 +196,7 @@ export const MenuComponent = forwardRef<
         data-focus-inside={hasFocusInside ? '' : undefined}
         className={classNames(
           menuItemClassNames,
-          isNested ? 'h-[42px] w-full' : 'pr-0',
+          isNested ? 'h-[42px] w-full' : 'h-full pr-0',
           className,
         )}
         {...getReferenceProps(
@@ -207,11 +232,14 @@ export const MenuComponent = forwardRef<
                 returnFocus={!isNested}
               >
                 <div
-                  className="z-50 w-max rounded bg-gray-100 text-gray-800 shadow focus-visible:outline-none dark:bg-black dark:text-gray-200"
+                  className="z-50 overflow-hidden rounded bg-gray-100 text-gray-800 shadow focus-visible:outline-none dark:bg-black dark:text-gray-200"
                   ref={refs.setFloating}
                   style={{
                     ...floatingStyles,
                     ...style,
+                    ...(type === 'dropdown' && {
+                      width: `${floatingWidth}px`,
+                    }),
                   }}
                   {...getFloatingProps()}
                 >

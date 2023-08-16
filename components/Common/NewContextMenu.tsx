@@ -76,6 +76,7 @@ export const ContextMenu = ({
   return (
     <>
       <Menu
+        type="contextMenu"
         trigger={
           <DotsIcon
             className={classNames('text-gray-500', className)}

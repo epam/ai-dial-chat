@@ -150,7 +150,7 @@ export const TooltipTrigger = forwardRef<
   return (
     <span
       ref={ref}
-      className="flex items-center justify-center"
+      className="flex h-full items-center justify-center"
       // The user can style the trigger based on the state
       data-state={context.open ? 'open' : 'closed'}
       {...context.getReferenceProps(props)}
