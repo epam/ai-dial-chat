@@ -206,13 +206,6 @@ export const ChatMessage: FC<Props> = memo(
 
                     <div className="flex justify-end gap-3">
                       <button
-                        className="h-[38px] rounded bg-blue-500 px-3 py-2.5 leading-none text-gray-100 hover:bg-blue-700 disabled:bg-gray-500"
-                        onClick={handleEditMessage}
-                        disabled={messageContent.trim().length <= 0}
-                      >
-                        {t('Save & Submit')}
-                      </button>
-                      <button
                         className="h-[38px] rounded border border-gray-400 px-3 py-2.5 leading-none hover:bg-gray-400 dark:border-gray-600 hover:dark:bg-gray-600"
                         onClick={() => {
                           setMessageContent(message.content);
@@ -220,6 +213,13 @@ export const ChatMessage: FC<Props> = memo(
                         }}
                       >
                         {t('Cancel')}
+                      </button>
+                      <button
+                        className="h-[38px] rounded bg-blue-500 px-3 py-2.5 leading-none text-gray-100 hover:bg-blue-700 disabled:bg-gray-500"
+                        onClick={handleEditMessage}
+                        disabled={messageContent.trim().length <= 0}
+                      >
+                        {t('Save & Submit')}
                       </button>
                     </div>
                   </div>

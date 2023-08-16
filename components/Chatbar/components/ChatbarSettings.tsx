@@ -1,10 +1,12 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/utils/app/const';
 
 import HomeContext from '@/pages/api/home/home.context';
+
+import { ConfirmDialog } from '@/components/Common/ConfirmDialog';
 
 import FileLeftIcon from '../../../public/images/icons/file-arrow-left.svg';
 import FileRightIcon from '../../../public/images/icons/file-arrow-right.svg';
@@ -16,6 +18,7 @@ import ChatbarContext from '../Chatbar.context';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation('sidebar');
+  const [isOpen, setIsOpen] = useState(false);
 
   const {
     state: { conversations },
@@ -52,7 +55,9 @@ export const ChatbarSettings = () => {
       {conversations.length > 0 ? (
         <div
           className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
-          onClick={handleClearConversations}
+          onClick={() => {
+            setIsOpen(true);
+          }}
         >
           <TrashIcon width={24} height={24} />
         </div>
@@ -84,6 +89,22 @@ export const ChatbarSettings = () => {
       >
         <CompareIcon width={24} height={24} />
       </div>
+
+      <ConfirmDialog
+        isOpen={isOpen}
+        heading={t('Confirm clearing all conversations')}
+        description={
+          t('Are you sure that you want to delete all conversations?') || ''
+        }
+        confirmLabel={t('Clear')}
+        cancelLabel={t('Cancel')}
+        onClose={(result) => {
+          setIsOpen(false);
+          if (result) {
+            handleClearConversations();
+          }
+        }}
+      />
     </div>
   );
 };
