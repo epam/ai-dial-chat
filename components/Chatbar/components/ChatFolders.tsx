@@ -36,7 +36,10 @@ export const ChatFolders = ({ searchTerm }: Props) => {
         .map((conversation, index) => {
           if (conversation.folderId === currentFolder.id) {
             return (
-              <div key={index} className="ml-5 gap-2 border-l pl-2">
+              <div
+                key={index}
+                className="ml-5 gap-2 border-l border-gray-500 pl-2"
+              >
                 <ConversationComponent conversation={conversation} />
               </div>
             );
@@ -46,7 +49,7 @@ export const ChatFolders = ({ searchTerm }: Props) => {
   };
 
   return (
-    <div className="flex w-full flex-col pt-2">
+    <div className="flex w-full flex-col">
       {folders
         .filter((folder) => folder.type === 'chat')
         .sort((a, b) => a.name.localeCompare(b.name))
