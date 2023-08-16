@@ -57,7 +57,7 @@ export const UserDesktop = () => {
         className={`hover:bg-blue-500/20`}
         item={
           <div className="flex">
-            <GearIcon width={18} height={18} />
+            <GearIcon width={18} height={18} className="text-gray-500" />
             <span className="ml-3">{t('Settings')}</span>
           </div>
         }
@@ -69,7 +69,11 @@ export const UserDesktop = () => {
         className={`hover:bg-blue-500/20`}
         item={
           <div className="flex gap-3">
-            <FileArrowRightIcon width={18} height={18} />
+            <FileArrowRightIcon
+              width={18}
+              height={18}
+              className="text-gray-500"
+            />
             <span>{session ? t('Log out') : t('Login')}</span>
           </div>
         }
