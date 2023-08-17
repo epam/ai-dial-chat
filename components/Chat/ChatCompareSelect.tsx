@@ -1,6 +1,8 @@
 import { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isMobile } from '@/utils/app/mobile';
+
 import { Conversation } from '@/types/chat';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -115,7 +117,7 @@ export const ChatCompareSelect = ({
                 ? t('Select conversation')
                 : t('No conversations available')) as string
             }
-            disabled={!comparableConversations?.length}
+            disabled={!comparableConversations?.length || isMobile()}
             notFoundPlaceholder={t('No conversations available') || ''}
             onSelectItem={(itemID: string) => {
               const selectedConversation = comparableConversations.filter(
