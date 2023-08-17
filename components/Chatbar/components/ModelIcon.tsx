@@ -39,7 +39,7 @@ export const ModelIcon = ({
         >
           <Image
             className={`${
-              inverted && entity.type === 'model' ? 'invert' : ''
+              inverted && entity.type !== 'addon' ? 'invert' : ''
             } `}
             src={entity.iconUrl as string}
             fill
