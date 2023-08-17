@@ -210,17 +210,18 @@ export const Chat = memo(({ appName }: Props) => {
   const isStopGenerating = useRef(false);
 
   useEffect(() => {
-    const event = window.addEventListener('resize', () => {
+    const resizeHandler = () => {
       if (
         inputRef.current?.clientHeight &&
         inputRef.current?.clientHeight !== inputHeight
       ) {
         setInputHeight(inputRef.current?.clientHeight);
       }
-    });
+    };
+    window.addEventListener('resize', resizeHandler);
 
     return () => {
-      window.removeEventListener(event);
+      window.removeEventListener('resize', resizeHandler);
     };
   }, []);
 
