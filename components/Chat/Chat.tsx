@@ -219,7 +219,7 @@ export const Chat = memo(({ appName }: Props) => {
       }
     };
     window.addEventListener('resize', resizeHandler);
-
+    resizeHandler();
     return () => {
       window.removeEventListener('resize', resizeHandler);
     };

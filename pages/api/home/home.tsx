@@ -522,12 +522,14 @@ const Home = ({
 
   useEffect(() => {
     // Hack for ios 100vh issue
-    window.addEventListener('resize', () => {
+    const handleSetProperVHPoints = () => {
       document.documentElement.style.setProperty(
         '--vh',
         window.innerHeight * 0.01 + 'px',
       );
-    });
+    };
+    handleSetProperVHPoints();
+    window.addEventListener('resize', handleSetProperVHPoints);
 
     const settings = getSettings();
     if (settings.theme) {
