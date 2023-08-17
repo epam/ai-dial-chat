@@ -75,7 +75,7 @@ const Header = () => {
             )}
           </div>
         </TooltipTrigger>
-        <TooltipContent>{t('Conversations list')}</TooltipContent>
+        <TooltipContent>{t('Conversation list')}</TooltipContent>
       </Tooltip>
       <CreateNewChatMobile />
       <div className="flex grow justify-between">
