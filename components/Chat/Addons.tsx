@@ -44,7 +44,7 @@ export const Addons = ({
     const description = addonsMap[addonId]?.description;
     const template = (
       <button
-        className={`flex items-center gap-2 rounded px-3 py-2  ${
+        className={`flex items-center gap-2 rounded px-3 py-2 text-left ${
           isSelected
             ? 'bg-blue-500/20'
             : 'bg-gray-100 hover:bg-gray-400 dark:bg-gray-700 hover:dark:bg-gray-600'
