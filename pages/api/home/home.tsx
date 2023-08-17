@@ -707,10 +707,10 @@ const Home = ({
       </Head>
 
       {isIframe && !authDisabled && session.status !== 'authenticated' ? (
-        <div className="grid h-full min-h-[100px] w-full place-items-center text-[#123123]">
+        <div className="grid h-full min-h-[100px] w-full place-items-center text-sm dark:bg-gray-900 dark:text-gray-200 ">
           <button
             onClick={handleIframeAuth}
-            className="appearance-none rounded-lg border-gray-200 bg-[#343541] p-3 text-gray-200"
+            className="appearance-none rounded-lg border-gray-600 p-3 hover:bg-gray-600"
           >
             {t('Login')}
           </button>
@@ -723,7 +723,7 @@ const Home = ({
               id="theme-main"
             >
               <div className={`flex h-full w-full flex-col sm:pt-0`}>
-                <Header />
+                {enabledFeaturesSet.has('header') && <Header />}
                 <div className="flex w-full grow overflow-auto">
                   {enabledFeaturesSet.has('conversations-section') && (
                     <Chatbar />
