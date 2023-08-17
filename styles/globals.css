@@ -30,6 +30,10 @@
   .dark ::-webkit-calendar-picker-indicator {
     filter: invert(1);
   }
+
+  html {
+    @apply bg-gray-900 text-gray-200;
+  }
 }
 
 @media (max-width: 720px) {
