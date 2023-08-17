@@ -44,8 +44,10 @@ export const Addons = ({
     const description = addonsMap[addonId]?.description;
     const template = (
       <button
-        className={`flex items-center gap-2 px-3 py-2  ${
-          isSelected ? 'bg-blue-500/20' : 'bg-gray-100 dark:bg-gray-700'
+        className={`flex items-center gap-2 rounded px-3 py-2  ${
+          isSelected
+            ? 'bg-blue-500/20'
+            : 'bg-gray-100 hover:bg-gray-400 dark:bg-gray-700 hover:dark:bg-gray-600'
         }`}
         disabled={preselectedAddonsIds.includes(addonId)}
         onClick={() => {
