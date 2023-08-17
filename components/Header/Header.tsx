@@ -46,7 +46,7 @@ const Header = () => {
 
   return (
     <div className="flex h-[48px] w-full border-b border-gray-300 bg-gray-100 dark:border-gray-900 dark:bg-gray-700">
-      <Tooltip>
+      <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <div
             className="flex-none cursor-pointer border-r border-gray-300 p-3 dark:border-gray-900 md:px-5"
@@ -75,9 +75,7 @@ const Header = () => {
             )}
           </div>
         </TooltipTrigger>
-        <TooltipContent>
-          {showChatbar ? t('Close chat menu') : t('Open chat menu')}
-        </TooltipContent>
+        <TooltipContent>{t('Conversations list')}</TooltipContent>
       </Tooltip>
       <CreateNewChatMobile />
       <div className="flex grow justify-between">
@@ -98,7 +96,7 @@ const Header = () => {
         </div>
       </div>
 
-      <Tooltip>
+      <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <div
             className="flex-none cursor-pointer border-l border-gray-300 p-3 dark:border-gray-900 md:px-5"
@@ -127,9 +125,7 @@ const Header = () => {
             )}
           </div>
         </TooltipTrigger>
-        <TooltipContent>
-          {showPromptbar ? t('Close prompt menu') : t('Open prompt menu')}
-        </TooltipContent>
+        <TooltipContent>{t('Prompt list')}</TooltipContent>
       </Tooltip>
       <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
     </div>

@@ -119,7 +119,7 @@ export const ChatbarSettings = () => {
             <CompareIcon width={24} height={24} />
           </div>
         </TooltipTrigger>
-        <TooltipContent>{t('Compare chats')}</TooltipContent>
+        <TooltipContent>{t('Compare mode')}</TooltipContent>
       </Tooltip>
 
       <ConfirmDialog
