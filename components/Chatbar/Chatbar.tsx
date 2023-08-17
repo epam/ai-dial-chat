@@ -246,7 +246,7 @@ export const Chatbar = () => {
       disabled={!!messageIsStreaming}
     >
       <PlusIcon className="text-gray-500" width={18} height={18} />
-      {t('Add new chat')}
+      {t('New Conversation')}
     </button>
   );
 

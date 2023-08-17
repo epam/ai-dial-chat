@@ -159,7 +159,7 @@ const Promptbar = () => {
       }}
     >
       <PlusIcon className="text-gray-500" width={18} height={18} />
-      {t('Add new prompt')}
+      {t('New prompt')}
     </button>
   );
 
