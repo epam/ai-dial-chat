@@ -522,12 +522,14 @@ const Home = ({
 
   useEffect(() => {
     // Hack for ios 100vh issue
-    window.addEventListener('resize', () => {
+    const handleSetProperVHPoints = () => {
       document.documentElement.style.setProperty(
         '--vh',
         window.innerHeight * 0.01 + 'px',
       );
-    });
+    };
+    handleSetProperVHPoints();
+    window.addEventListener('resize', handleSetProperVHPoints);
 
     const settings = getSettings();
     if (settings.theme) {
@@ -707,7 +709,7 @@ const Home = ({
       </Head>
 
       {isIframe && !authDisabled && session.status !== 'authenticated' ? (
-        <div className="grid h-full min-h-[100px] w-full place-items-center text-sm dark:bg-gray-900 dark:text-gray-200 ">
+        <div className="grid h-full min-h-[100px] w-full place-items-center bg-gray-900 text-sm text-gray-200 ">
           <button
             onClick={handleIframeAuth}
             className="appearance-none rounded-lg border-gray-600 p-3 hover:bg-gray-600"
