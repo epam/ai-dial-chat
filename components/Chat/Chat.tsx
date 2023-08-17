@@ -210,13 +210,19 @@ export const Chat = memo(({ appName }: Props) => {
   const isStopGenerating = useRef(false);
 
   useEffect(() => {
-    if (
-      inputRef.current?.clientHeight &&
-      inputRef.current?.clientHeight !== inputHeight
-    ) {
-      setInputHeight(inputRef.current?.clientHeight);
-    }
-  });
+    const event = window.addEventListener('resize', () => {
+      if (
+        inputRef.current?.clientHeight &&
+        inputRef.current?.clientHeight !== inputHeight
+      ) {
+        setInputHeight(inputRef.current?.clientHeight);
+      }
+    });
+
+    return () => {
+      window.removeEventListener(event);
+    };
+  }, []);
 
   const handleMessageIsStreamingChange = (amount: number) => {
     messageIsStreamingAmount.current += amount;
@@ -1113,7 +1119,12 @@ export const Chat = memo(({ appName }: Props) => {
                               : 'w-full'
                           }`}
                         >
-                          <div className="shrink-0">
+                          <div
+                            className="shrink-0"
+                            style={{
+                              height: `calc(100%-${inputHeight})`,
+                            }}
+                          >
                             <ChatSettingsEmpty
                               conversation={conv}
                               models={models}
