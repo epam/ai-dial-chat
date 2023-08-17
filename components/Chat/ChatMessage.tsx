@@ -25,6 +25,7 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
+import { ConfirmDialog } from '../Common/ConfirmDialog';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachments } from './MessageAttachments';
 import { MessageError } from './MessageError';
@@ -84,6 +85,8 @@ export const ChatMessage: FC<Props> = memo(
     const [isTyping, setIsTyping] = useState<boolean>(false);
     const [messageContent, setMessageContent] = useState(message.content);
     const [messagedCopied, setMessageCopied] = useState(false);
+    const [isRemoveConfirmationOpened, setIsRemoveConfirmationOpened] =
+      useState(false);
 
     const isLastMessage =
       messageIndex == (conversation?.messages.length ?? 0) - 1;
@@ -242,10 +245,30 @@ export const ChatMessage: FC<Props> = memo(
                     </button>
                     <button
                       className="invisible text-gray-500 hover:text-blue-500 focus:visible group-hover:visible dark:hover:text-gray-300"
-                      onClick={handleDeleteMessage}
+                      onClick={() => {
+                        setIsRemoveConfirmationOpened(true);
+                      }}
                     >
                       <IconTrash size={20} />
                     </button>
+
+                    <ConfirmDialog
+                      isOpen={isRemoveConfirmationOpened}
+                      heading={t('Confirm removing message')}
+                      description={
+                        t(
+                          'Are you sure that you want to remove the message? All newer messages also will be removed',
+                        ) || ''
+                      }
+                      confirmLabel={t('Remove')}
+                      cancelLabel={t('Cancel')}
+                      onClose={(result) => {
+                        setIsRemoveConfirmationOpened(false);
+                        if (result) {
+                          handleDeleteMessage();
+                        }
+                      }}
+                    />
                   </div>
                 )}
               </div>

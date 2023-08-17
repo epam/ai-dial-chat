@@ -52,7 +52,7 @@ export const ConfirmDialog = ({
             initialFocus={confirmLabelRef}
           >
             <div
-              className="z-50 flex min-w-[90%] flex-col items-center gap-4 rounded bg-gray-100 p-6 text-center dark:bg-gray-700 md:min-w-[400px]"
+              className="z-50 flex min-w-[90%] flex-col items-center gap-4 rounded bg-gray-100 p-6 text-center dark:bg-gray-700 md:min-w-[300px] md:max-w-[500px]"
               ref={refs.setFloating}
               aria-labelledby={headingId}
               aria-describedby={descriptionId}
