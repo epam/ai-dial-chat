@@ -6,6 +6,7 @@ export type Feature =
   | 'top-chat-info'
   | 'top-chat-model-settings'
   | 'empty-chat-settings'
+  | 'header'
   | 'footer'
   | 'request-api-key'
   | 'report-an-issue'
