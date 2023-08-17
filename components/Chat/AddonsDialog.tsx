@@ -107,7 +107,9 @@ export const AddonsDialog: FC<Props> = ({
     return (
       <button
         className={`flex flex-col gap-3 rounded border p-3 ${
-          isPreselected ? 'bg-blue-500/20' : 'hover:border-gray-200'
+          isPreselected
+            ? 'bg-blue-500/20'
+            : 'hover:border-gray-800 dark:hover:border-gray-200'
         } ${
           isSelected
             ? 'border-blue-500'

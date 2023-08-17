@@ -45,14 +45,14 @@ export const ConfirmDialog = ({
       {isOpen && (
         <FloatingOverlay
           lockScroll
-          className="z-50 flex items-center justify-center bg-gray-900/70 dark:bg-gray-900/30"
+          className="z-50 flex items-center justify-center bg-gray-900/70 p-3 dark:bg-gray-900/30"
         >
           <FloatingFocusManager
             context={context}
             initialFocus={confirmLabelRef}
           >
             <div
-              className="z-50 flex min-w-[400px] flex-col items-center gap-4 rounded bg-gray-100 p-6 text-center dark:bg-gray-700"
+              className="z-50 flex min-w-[90%] flex-col items-center gap-4 rounded bg-gray-100 p-6 text-center dark:bg-gray-700 md:min-w-[400px]"
               ref={refs.setFloating}
               aria-labelledby={headingId}
               aria-describedby={descriptionId}

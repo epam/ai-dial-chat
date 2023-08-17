@@ -88,7 +88,7 @@ export const ConversationSettings = ({
   };
 
   return (
-    <div className="flex flex-col gap-[1px] overflow-hidden rounded-b bg-gray-300 dark:bg-gray-900 [&:first-child]:rounded-t">
+    <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-gray-300 dark:bg-gray-900 [&:first-child]:rounded-t">
       <div className="relative grid w-full gap-[1px] xl:grid-cols-2">
         <div className="shrink overflow-auto bg-gray-200 px-5 py-4 dark:bg-gray-800">
           <ConversationSettingsModel

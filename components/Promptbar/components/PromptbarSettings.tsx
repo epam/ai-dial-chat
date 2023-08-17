@@ -1,10 +1,16 @@
-import { FC, useContext } from 'react';
+import { FC, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Prompt } from '@/types/prompt';
 
 import HomeContext from '@/pages/api/home/home.context';
 
+import { ConfirmDialog } from '@/components/Common/ConfirmDialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/Common/Tooltip';
 import { Import } from '@/components/Settings/Import';
 
 import FileLeftIcon from '../../../public/images/icons/file-arrow-left.svg';
@@ -23,37 +29,82 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
   const { handleExportPrompts, handleImportPrompts, handleClearAllPrompts } =
     useContext(PromptbarContext);
   const { handleCreateFolder } = useContext(HomeContext);
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <div className="flex items-start gap-1 p-2 text-gray-500">
       {allPrompts.length > 0 ? (
-        <div
-          className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet md:h-[42px] md:w-[42px]"
-          onClick={handleClearAllPrompts}
-        >
-          <TrashIcon width={24} height={24} />
-        </div>
+        <Tooltip isTriggerClickable={true}>
+          <TooltipTrigger>
+            <div
+              className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet md:h-[42px] md:w-[42px]"
+              onClick={() => {
+                setIsOpen(true);
+              }}
+            >
+              <TrashIcon width={24} height={24} />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>{t('Delete all prompts')}</TooltipContent>
+        </Tooltip>
       ) : null}
 
-      <Import
-        highlightColor="violet"
-        onImport={handleImportPrompts}
-        icon={
-          <FileLeftIcon className="hover:text-violet" width={24} height={24} />
-        }
-      />
-      <div
-        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet md:h-[42px] md:w-[42px]"
-        onClick={() => handleExportPrompts()}
-      >
-        <FileRightIcon width={24} height={24} />
-      </div>
+      <Tooltip isTriggerClickable={true}>
+        <TooltipTrigger>
+          <Import
+            highlightColor="violet"
+            onImport={handleImportPrompts}
+            icon={
+              <FileLeftIcon
+                className="hover:text-violet"
+                width={24}
+                height={24}
+              />
+            }
+          />
+        </TooltipTrigger>
+        <TooltipContent>{t('Import prompts')}</TooltipContent>
+      </Tooltip>
 
-      <div
-        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet md:h-[42px] md:w-[42px]"
-        onClick={() => handleCreateFolder(t('New folder'), 'prompt')}
-      >
-        <FolderPlusIcon width={24} height={24} />
-      </div>
+      <Tooltip isTriggerClickable={true}>
+        <TooltipTrigger>
+          <div
+            className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet md:h-[42px] md:w-[42px]"
+            onClick={() => handleExportPrompts()}
+          >
+            <FileRightIcon width={24} height={24} />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>{t('Export prompts')}</TooltipContent>
+      </Tooltip>
+
+      <Tooltip isTriggerClickable={true}>
+        <TooltipTrigger>
+          <div
+            className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet md:h-[42px] md:w-[42px]"
+            onClick={() => handleCreateFolder(t('New folder'), 'prompt')}
+          >
+            <FolderPlusIcon width={24} height={24} />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>{t('Create new folder')}</TooltipContent>
+      </Tooltip>
+
+      <ConfirmDialog
+        isOpen={isOpen}
+        heading={t('Confirm clearing all prompts')}
+        description={
+          t('Are you sure that you want to delete all prompts?') || ''
+        }
+        confirmLabel={t('Clear')}
+        cancelLabel={t('Cancel')}
+        onClose={(result) => {
+          setIsOpen(false);
+          if (result) {
+            handleClearAllPrompts();
+          }
+        }}
+      />
     </div>
   );
 };

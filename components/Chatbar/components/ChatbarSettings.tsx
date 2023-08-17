@@ -7,6 +7,11 @@ import { DEFAULT_CONVERSATION_NAME } from '@/utils/app/const';
 import HomeContext from '@/pages/api/home/home.context';
 
 import { ConfirmDialog } from '@/components/Common/ConfirmDialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/Common/Tooltip';
 
 import FileLeftIcon from '../../../public/images/icons/file-arrow-left.svg';
 import FileRightIcon from '../../../public/images/icons/file-arrow-right.svg';
@@ -53,42 +58,69 @@ export const ChatbarSettings = () => {
   return (
     <div className="flex items-start gap-1 p-2 text-gray-500">
       {conversations.length > 0 ? (
-        <div
-          className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
-          onClick={() => {
-            setIsOpen(true);
-          }}
-        >
-          <TrashIcon width={24} height={24} />
-        </div>
+        <Tooltip isTriggerClickable={true}>
+          <TooltipTrigger>
+            <div
+              className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
+              onClick={() => {
+                setIsOpen(true);
+              }}
+            >
+              <TrashIcon width={24} height={24} />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>{t('Delete all conversations')}</TooltipContent>
+        </Tooltip>
       ) : null}
 
-      <Import
-        highlightColor="green"
-        onImport={handleImportConversations}
-        icon={<FileLeftIcon width={24} height={24} />}
-      />
-      <div
-        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
-        onClick={() => handleExportConversations()}
-      >
-        <FileRightIcon width={24} height={24} />
-      </div>
+      <Tooltip isTriggerClickable={true}>
+        <TooltipTrigger>
+          <Import
+            highlightColor="green"
+            onImport={handleImportConversations}
+            icon={<FileLeftIcon width={24} height={24} />}
+          />
+        </TooltipTrigger>
+        <TooltipContent>{t('Import conversations')}</TooltipContent>
+      </Tooltip>
 
-      <div
-        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
-        onClick={() => handleCreateFolder(t('New folder'), 'chat')}
-      >
-        <FolderPlusIcon width={24} height={24} />
-      </div>
-      <div
-        className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
-        onClick={() => {
-          handleToggleCompare();
-        }}
-      >
-        <CompareIcon width={24} height={24} />
-      </div>
+      <Tooltip isTriggerClickable={true}>
+        <TooltipTrigger>
+          <div
+            className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
+            onClick={() => handleExportConversations()}
+          >
+            <FileRightIcon width={24} height={24} />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>{t('Export conversations')}</TooltipContent>
+      </Tooltip>
+
+      <Tooltip isTriggerClickable={true}>
+        <TooltipTrigger>
+          <div
+            className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
+            onClick={() => handleCreateFolder(t('New folder'), 'chat')}
+          >
+            <FolderPlusIcon width={24} height={24} />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>{t('Create new folder')}</TooltipContent>
+      </Tooltip>
+
+      <Tooltip isTriggerClickable={true}>
+        <TooltipTrigger>
+          <div
+            className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
+            onClick={() => {
+              handleToggleCompare();
+            }}
+          >
+            <CompareIcon width={24} height={24} />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>{t('Compare chats')}</TooltipContent>
+      </Tooltip>
 
       <ConfirmDialog
         isOpen={isOpen}
