@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { FeatureType } from '@/types/components';
 import { FolderInterface } from '@/types/folder';
 
+import { NoData } from '../Common/NoData';
 import { NoResultsFound } from '../Common/NoResultsFound';
 import Search from '../Search';
 
@@ -13,6 +14,7 @@ interface Props<T> {
   isOpen: boolean;
   side: 'left' | 'right';
   items: T[];
+  filteredItems: T[];
   itemComponent: ReactNode;
   folderComponent: ReactNode;
   actionButtons: ReactNode;
@@ -30,6 +32,7 @@ const Sidebar = <T,>({
   actionButtons,
   side,
   items,
+  filteredItems,
   itemComponent,
   folderComponent,
   folders,
@@ -84,7 +87,7 @@ const Sidebar = <T,>({
           <div className="flex p-2">{folderComponent}</div>
         )}
 
-        {items?.length > 0 ? (
+        {filteredItems?.length > 0 ? (
           <div
             ref={dragDropElement}
             className={`min-h-[100px] min-w-[42px] grow border-t border-gray-100 dark:border-gray-900 ${
@@ -100,9 +103,13 @@ const Sidebar = <T,>({
           >
             {itemComponent}
           </div>
-        ) : (
-          <div className="flex content-center justify-center">
+        ) : items.length !== 0 ? (
+          <div className="flex grow content-center justify-center">
             <NoResultsFound />
+          </div>
+        ) : (
+          <div className="flex grow content-center justify-center">
+            <NoData />
           </div>
         )}
       </div>

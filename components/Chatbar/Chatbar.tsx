@@ -269,7 +269,8 @@ export const Chatbar = () => {
         itemComponent={<Conversations conversations={filteredConversations} />}
         folderComponent={<ChatFolders searchTerm={searchTerm} />}
         folders={chatFolders}
-        items={filteredConversations}
+        items={conversations}
+        filteredItems={filteredConversations}
         searchTerm={searchTerm}
         handleSearchTerm={(searchTerm: string) =>
           chatDispatch({ field: 'searchTerm', value: searchTerm })

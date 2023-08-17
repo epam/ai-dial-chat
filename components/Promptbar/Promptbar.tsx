@@ -187,7 +187,8 @@ const Promptbar = () => {
         actionButtons={actionsBlock}
         folderComponent={<PromptFolders />}
         folders={promptFolders}
-        items={filteredPrompts}
+        items={prompts}
+        filteredItems={filteredPrompts}
         searchTerm={searchTerm}
         handleSearchTerm={(searchTerm: string) =>
           promptDispatch({ field: 'searchTerm', value: searchTerm })
