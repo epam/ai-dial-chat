@@ -66,7 +66,7 @@ export const ConfirmDialog = ({
               </div>
               <div className="flex items-center gap-3">
                 <button
-                  className="rounded border border-gray-400 px-3 py-2.5 dark:border-gray-600"
+                  className="rounded border border-gray-400 px-3 py-2.5 hover:bg-gray-400 dark:border-gray-600 hover:dark:bg-gray-600"
                   onClick={() => {
                     onClose(false);
                   }}
@@ -75,7 +75,7 @@ export const ConfirmDialog = ({
                 </button>
                 <button
                   ref={confirmLabelRef}
-                  className="rounded bg-blue-500 px-3 py-2.5 text-gray-100"
+                  className="rounded bg-blue-500 px-3 py-2.5 text-gray-100 hover:bg-blue-700"
                   onClick={() => onClose(true)}
                 >
                   {confirmLabel}
