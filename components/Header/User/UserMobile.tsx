@@ -34,7 +34,7 @@ const UserSettings = () => {
 
   return (
     <div className="flex h-[42px] items-center gap-2 px-2" onClick={onClick}>
-      <GearIcon className="dark:text-gray-500" width={18} height={18} />
+      <GearIcon className="text-gray-500" width={18} height={18} />
       <span>{t('Settings')}</span>
     </div>
   );
@@ -63,11 +63,7 @@ const Logout = () => {
           setIsLogoutConfirmationOpened(true);
         }}
       >
-        <FileArrowRightIcon
-          className="dark:text-gray-500"
-          width={18}
-          height={18}
-        />
+        <FileArrowRightIcon className="text-gray-500" width={18} height={18} />
         <span>{session ? t('Log out') : t('Login')}</span>
       </div>
       <ConfirmDialog
