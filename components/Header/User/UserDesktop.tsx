@@ -22,7 +22,9 @@ export const UserDesktop = () => {
   const { data: session } = useSession();
   const { dispatch: homeDispatch } = useContext(HomeContext);
   const handleLogout = useCallback(() => {
-    session ? signOut() : signIn();
+    session
+      ? signOut({ redirect: true })
+      : signIn('azure-ad', { redirect: true });
   }, [session]);
 
   return (
