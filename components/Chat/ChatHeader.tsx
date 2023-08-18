@@ -69,7 +69,7 @@ export const ChatHeader = ({
           </Tooltip>
         )}
         {model && (
-          <div className="flex md:[&>*:first-child]:border-l-[1px] md:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-gray-500 [&>*]:pl-2">
+          <div className="flex lg:[&>*:first-child]:border-l-[1px] lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-gray-500 [&>*]:pl-2">
             {isShowChatInfo && (
               <>
                 <span className="flex items-center">
@@ -113,7 +113,7 @@ export const ChatHeader = ({
                 </span>
                 {model.type !== 'application' &&
                   conversation.selectedAddons.length > 0 && (
-                    <span className="flex items-center">
+                    <span className="flex items-center gap-2">
                       {conversation.selectedAddons?.map((addon) => (
                         <ModelIcon
                           key={addon}

@@ -246,7 +246,7 @@ export const ModelsDialog: FC<Props> = ({
             </button>
           </div>
 
-          <div className="flex flex-col gap-4 overflow-auto">
+          <div className="flex flex-col gap-4 overflow-auto pb-2">
             {filteredModelsEntities?.length > 0 ||
             filteredAssistantsEntities?.length > 0 ||
             filteredApplicationsEntities?.length > 0 ? (

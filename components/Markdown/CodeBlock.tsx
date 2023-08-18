@@ -1,7 +1,9 @@
 import { FC, memo, useContext, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { defaultStyle } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
-import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import {
+  oneDark,
+  oneLight,
+} from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
 import { useTranslation } from 'next-i18next';
 
@@ -19,13 +21,14 @@ import Download from '../../public/images/icons/download.svg';
 interface Props {
   language: string;
   value: string;
+  isInner?: boolean;
 }
 const codeBlockTheme = {
   dark: oneDark,
-  light: defaultStyle,
+  light: oneLight,
 };
 
-export const CodeBlock: FC<Props> = memo(({ language, value }) => {
+export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
   const { t } = useTranslation('markdown');
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
@@ -74,11 +77,19 @@ export const CodeBlock: FC<Props> = memo(({ language, value }) => {
     URL.revokeObjectURL(url);
   };
   return (
-    <div className="codeblock relative border border-gray-400 bg-gray-300 font-sans dark:border-gray-700 dark:bg-gray-900">
-      <div className="flex items-center justify-between p-3">
+    <div
+      className={`codeblock relative overflow-hidden rounded border border-gray-400 font text-sm text-gray-800 dark:border-gray-700 dark:text-gray-200`}
+    >
+      <div
+        className={`mb-[1px] flex items-center justify-between p-3 ${
+          isInner
+            ? 'bg-gray-100 dark:bg-gray-700'
+            : 'bg-gray-300 dark:bg-gray-900'
+        }`}
+      >
         <span className="lowercase">{language}</span>
 
-        <div className="flex items-center gap-3 border-b border-gray-400 dark:border-gray-700">
+        <div className="flex items-center gap-3 text-gray-500">
           <button
             className="flex items-center [&:not(:disabled)]:hover:text-blue-500"
             onClick={copyToClipboard}
@@ -102,7 +113,24 @@ export const CodeBlock: FC<Props> = memo(({ language, value }) => {
       <SyntaxHighlighter
         language={language}
         style={codeBlockTheme[lightMode]}
-        customStyle={{ margin: 0, borderRadius: 0 }}
+        customStyle={{
+          margin: 0,
+          borderRadius: 0,
+          fontSize: 14,
+          padding: 12,
+          letterSpacing: 0,
+          fontFamily: 'var(--font-inter)',
+        }}
+        className={`${
+          isInner
+            ? '!bg-gray-100 dark:!bg-gray-700'
+            : '!bg-gray-300 dark:!bg-gray-900'
+        }`}
+        codeTagProps={{
+          style: {
+            fontFamily: 'var(--font-inter)',
+          },
+        }}
       >
         {value}
       </SyntaxHighlighter>

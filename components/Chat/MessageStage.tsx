@@ -1,13 +1,11 @@
-import {
-  IconAlertCircleFilled,
-  IconChevronDown,
-  IconCircleCheckFilled,
-  IconLoader,
-} from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 
 import { Stage } from '@/types/chat';
 
+import ChevronDown from '../../public/images/icons/chevron-down.svg';
+import CircleCheck from '../../public/images/icons/circle-check.svg';
+import CircleExclamation from '../../public/images/icons/circle-exclamation.svg';
+import Loader from '../../public/images/icons/loader.svg';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachments } from './MessageAttachments';
 
@@ -30,19 +28,22 @@ export const MessageStage = ({ stage }: Props) => {
       className={`grid min-w-0 grid-flow-col items-center gap-3 overflow-hidden`}
     >
       {stage.status == null ? (
-        <IconLoader
-          size={20}
-          className="shrink-0 grow-0 basis-auto animate-spin"
+        <Loader
+          height={20}
+          width={20}
+          className="shrink-0 grow-0 basis-auto animate-spin text-gray-500"
         />
       ) : stage.status === 'completed' ? (
-        <IconCircleCheckFilled
-          size={20}
-          className="shrink-0 grow-0 basis-auto"
+        <CircleCheck
+          height={20}
+          width={20}
+          className="shrink-0 grow-0 basis-auto text-gray-500"
         />
       ) : (
-        <IconAlertCircleFilled
-          size={20}
-          className="shrink-0 grow-0 basis-auto"
+        <CircleExclamation
+          height={20}
+          width={20}
+          className="shrink-0 grow-0 basis-auto text-gray-500"
         />
       )}
       <span className={`block ${isOpened ? 'max-w-full' : 'truncate'}`}>
@@ -61,32 +62,40 @@ export const MessageStage = ({ stage }: Props) => {
           }}
         >
           {stageTitle}
-          <IconChevronDown
-            size={20}
-            className={`shrink-0 transition ${isOpened ? 'rotate-180' : ''}`}
+          <ChevronDown
+            height={20}
+            width={20}
+            className={`shrink-0 text-gray-500 transition ${
+              isOpened ? 'rotate-180' : ''
+            }`}
           />
         </button>
       ) : (
         <div className="flex p-2">{stageTitle}</div>
       )}
 
-      <div
-        className={`grid max-w-full grid-flow-row overflow-auto ${
-          isOpened ? 'p-2' : 'h-0'
-        }`}
-      >
-        {stage.content && (
-          <span className="inline-block overflow-auto">
-            <ChatMDComponent
-              isShowResponseLoader={false}
-              content={stage.content}
-            />
-          </span>
-        )}
-        {stage.attachments?.length && (
-          <MessageAttachments attachments={stage.attachments} />
-        )}
-      </div>
+      {(stage.content || stage.attachments) && (
+        <div
+          className={`grid max-w-full grid-flow-row overflow-auto  ${
+            isOpened
+              ? 'border-t border-gray-400 p-2 dark:border-gray-700'
+              : 'h-0'
+          }`}
+        >
+          {stage.content && (
+            <span className="inline-block overflow-auto">
+              <ChatMDComponent
+                isShowResponseLoader={false}
+                content={stage.content}
+                isInner={true}
+              />
+            </span>
+          )}
+          {stage.attachments?.length && (
+            <MessageAttachments attachments={stage.attachments} />
+          )}
+        </div>
+      )}
     </div>
   );
 };

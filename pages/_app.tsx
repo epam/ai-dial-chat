@@ -9,14 +9,18 @@ import { Inter } from 'next/font/google';
 
 import '@/styles/globals.css';
 
-const inter = Inter({ subsets: ['latin'], weight: 'variable' });
+const inter = Inter({
+  subsets: ['latin'],
+  weight: 'variable',
+  variable: '--font-inter',
+});
 
 function App({ Component, pageProps }: AppProps<SessionProviderProps>) {
   const queryClient = new QueryClient();
 
   return (
     <SessionProvider session={pageProps.session}>
-      <div className={inter.className}>
+      <div className={`${inter.variable} font`}>
         <Toaster toastOptions={{ duration: 9000 }}>
           {(t) => (
             <ToastBar toast={t}>

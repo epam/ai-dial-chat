@@ -168,7 +168,7 @@ export const ChatMessage: FC<Props> = memo(
         style={{ overflowWrap: 'anywhere' }}
       >
         <div className="relative m-auto flex h-full p-4 md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
-          <div className="min-w-[40px] font-bold">
+          <div className="flex min-w-[40px] justify-center font-bold">
             {isAssistant ? (
               <ModelIcon
                 entityId={message.model?.id ?? conversation.model.id}

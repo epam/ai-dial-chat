@@ -16,9 +16,13 @@ export const replaceCursor = (cursorSign: string) =>
 interface ChatMDComponentProps {
   isShowResponseLoader: boolean;
   content: string;
+  isInner?: boolean;
 }
 
-export const getMDComponents = (isShowResponseLoader: boolean): Components => {
+export const getMDComponents = (
+  isShowResponseLoader: boolean,
+  isInner: boolean,
+): Components => {
   return {
     code({ inline, className, children, ...props }) {
       if (children.length) {
@@ -39,6 +43,7 @@ export const getMDComponents = (isShowResponseLoader: boolean): Components => {
           key={Math.random()}
           language={(match && match[1]) || ''}
           value={String(children).replace(/\n$/, '')}
+          isInner={isInner}
           {...props}
         />
       ) : (
@@ -85,13 +90,14 @@ export const getMDComponents = (isShowResponseLoader: boolean): Components => {
 const ChatMDComponent = ({
   isShowResponseLoader,
   content,
+  isInner = false,
 }: ChatMDComponentProps) => {
   return (
     <>
       <MemoizedReactMarkdown
         className={`prose flex-1 dark:prose-invert`}
         remarkPlugins={[remarkGfm]}
-        components={getMDComponents(isShowResponseLoader)}
+        components={getMDComponents(isShowResponseLoader, isInner)}
       >
         {`${content}${
           isShowResponseLoader ? modelCursorSignWithBackquote : ''
