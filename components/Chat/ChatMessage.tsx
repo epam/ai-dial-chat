@@ -168,21 +168,23 @@ export const ChatMessage: FC<Props> = memo(
         style={{ overflowWrap: 'anywhere' }}
       >
         <div className="relative m-auto flex h-full p-4 md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
-          <div className="flex min-w-[40px] justify-center font-bold">
-            {isAssistant ? (
-              <ModelIcon
-                entityId={message.model?.id ?? conversation.model.id}
-                entity={
-                  (message.model?.id && modelsMap[message.model?.id]) ||
-                  undefined
-                }
-                inverted={lightMode === 'dark'}
-                animate={isShowResponseLoader}
-                size={28}
-              />
-            ) : (
-              <IconUser size={30} />
-            )}
+          <div className="min-w-[40px] font-bold">
+            <div className="flex justify-center">
+              {isAssistant ? (
+                <ModelIcon
+                  entityId={message.model?.id ?? conversation.model.id}
+                  entity={
+                    (message.model?.id && modelsMap[message.model?.id]) ||
+                    undefined
+                  }
+                  inverted={lightMode === 'dark'}
+                  animate={isShowResponseLoader}
+                  size={28}
+                />
+              ) : (
+                <IconUser size={30} />
+              )}
+            </div>
           </div>
 
           <div className="mt-[-2px] w-full min-w-0 shrink">
