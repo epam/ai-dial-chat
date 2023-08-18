@@ -807,16 +807,9 @@ export const Chat = memo(({ appName }: Props) => {
     const newAiEntity = models.find(
       ({ id }) => id === modelId,
     ) as OpenAIEntityModel;
-    const selectedAddons = Array.from(
-      new Set([
-        ...conversation.selectedAddons,
-        ...(newAiEntity.selectedAddons ?? []),
-      ]),
-    );
     const updatedConversation: Conversation = {
       ...conversation,
       model: newAiEntity,
-      selectedAddons,
     };
     handleUpdateConversation(conversation, {
       key: 'model',

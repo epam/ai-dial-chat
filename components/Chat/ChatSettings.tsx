@@ -93,14 +93,6 @@ export const ChatSettings = ({
           const newModel = modelsMap[modelId];
           if (newModel) {
             setCurrentModel(newModel);
-
-            const selectedAddons = Array.from(
-              new Set([
-                ...currentSelectedAddonsIds,
-                ...(newModel.selectedAddons ?? []),
-              ]),
-            );
-            setCurrentSelectedAddonsIds(selectedAddons);
           }
         }}
         onChangePrompt={(prompt) => setCurrentPrompt(prompt)}
@@ -110,15 +102,15 @@ export const ChatSettings = ({
         onSelectAssistantSubModel={(modelId: string) =>
           setCurrentAssistentModelId(modelId)
         }
-        onChangeAddon={(addonId: string) =>
+        onChangeAddon={(addonId: string) => {
           setCurrentSelectedAddonsIds((addons) => {
             if (addons.includes(addonId)) {
               return addons.filter((id) => id !== addonId);
             }
 
             return [...addons, addonId];
-          })
-        }
+          });
+        }}
         onApplyAddons={(addons) => setCurrentSelectedAddonsIds(addons)}
         onApplySettings={() => {
           onClose();
