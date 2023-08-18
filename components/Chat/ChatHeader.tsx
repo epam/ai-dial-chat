@@ -112,9 +112,11 @@ export const ChatHeader = ({
                   </Tooltip>
                 </span>
                 {model.type !== 'application' &&
-                  conversation.selectedAddons.length > 0 && (
+                  (conversation.selectedAddons.length > 0 ||
+                    (model.selectedAddons &&
+                      model.selectedAddons.length > 0)) && (
                     <span className="flex items-center gap-2">
-                      {conversation.selectedAddons?.map((addon) => (
+                      {model.selectedAddons?.map((addon) => (
                         <ModelIcon
                           key={addon}
                           entityId={addon}
@@ -123,6 +125,17 @@ export const ChatHeader = ({
                           inverted={lightMode === 'dark'}
                         />
                       ))}
+                      {conversation.selectedAddons
+                        ?.filter((id) => !model.selectedAddons?.includes(id))
+                        .map((addon) => (
+                          <ModelIcon
+                            key={addon}
+                            entityId={addon}
+                            size={18}
+                            entity={addonsMap[addon]}
+                            inverted={lightMode === 'dark'}
+                          />
+                        ))}
                     </span>
                   )}
               </>

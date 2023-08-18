@@ -147,9 +147,11 @@ export const AddonsDialog: FC<Props> = ({
   useEffect(() => {
     setSearchTerm('');
     setSelectedAddons(
-      selectedAddonsIds
-        .map((id) => addonsMap[id])
-        .filter(Boolean) as OpenAIEntity[],
+      (
+        selectedAddonsIds
+          .map((id) => addonsMap[id])
+          .filter(Boolean) as OpenAIEntity[]
+      ).filter((addon) => !preselectedAddonsIds.includes(addon.id)),
     );
   }, [isOpen]);
 
@@ -192,11 +194,23 @@ export const AddonsDialog: FC<Props> = ({
             ></input>
           </div>
           <div className="flex flex-col gap-4">
-            {selectedAddons?.length > 0 && (
+            {(selectedAddons?.length > 0 ||
+              preselectedAddonsIds?.length > 0) && (
               <div className="flex flex-col gap-3">
                 <span className="text-gray-500">{t('Selected')}</span>
 
                 <div className="flex flex-wrap gap-1">
+                  {preselectedAddonsIds.map((addonID) => {
+                    const addon = addonsMap[addonID];
+                    if (
+                      !addon ||
+                      selectedAddons.map((addon) => addon.id).includes(addonID)
+                    ) {
+                      return <></>;
+                    }
+
+                    return getSelectedAddonTemplate(addon);
+                  })}
                   {selectedAddons.map((addon) =>
                     getSelectedAddonTemplate(addon),
                   )}
@@ -227,7 +241,9 @@ export const AddonsDialog: FC<Props> = ({
                   onClose();
                   onAddonsSelected(selectedAddons.map(({ id }) => id));
                 }}
-                disabled={selectedAddons.length > 10}
+                disabled={
+                  selectedAddons.length + preselectedAddonsIds.length > 10
+                }
               >
                 {t('Apply addons')}
               </button>
