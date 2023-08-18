@@ -1,31 +1,34 @@
 /* eslint-disable @next/next/no-img-element */
-import {
-  IconChevronDown,
-  IconExternalLink,
-  IconPaperclip,
-} from '@tabler/icons-react';
+import { IconPaperclip } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Attachment, AttachmentMIMEType } from '@/types/chat';
 
+import Link from '../../public/images/icons/arrow-up-right-from-square.svg';
+import ChevronDown from '../../public/images/icons/chevron-down.svg';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 
 import { sanitize } from 'isomorphic-dompurify';
 
 interface Props {
   attachment: Attachment;
+  isInner?: boolean;
 }
 
-export const MessageAttachment = ({ attachment }: Props) => {
+export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const { t } = useTranslation('chat');
   const [isOpened, setIsOpened] = useState(false);
   const imageTypes: AttachmentMIMEType[] = ['image/jpeg', 'image/png'];
 
   return (
     <div
-      className={`rounded border border-gray-400 bg-gray-300 px-1 py-2 dark:border-gray-700 dark:bg-gray-900 ${
+      className={`rounded   px-1 py-2   ${
         isOpened ? 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3' : ''
+      } ${
+        isInner
+          ? 'bg-gray-100 dark:bg-gray-700'
+          : 'border border-gray-400 bg-gray-300 dark:border-gray-700 dark:bg-gray-900'
       }`}
     >
       <div className={`flex items-center gap-3 px-2`}>
@@ -36,10 +39,17 @@ export const MessageAttachment = ({ attachment }: Props) => {
               target="_blank"
               className="shrink-0"
             >
-              <IconExternalLink size={18} />
+              <Link
+                height={18}
+                width={18}
+                className="text-gray-500 hover:text-blue-500"
+              />
             </a>
           ) : (
-            <IconPaperclip size={18} className="shrink-0" />
+            <IconPaperclip
+              size={18}
+              className="shrink-0 text-gray-500 hover:text-blue-500"
+            />
           )}
         </div>
         <button
@@ -49,22 +59,26 @@ export const MessageAttachment = ({ attachment }: Props) => {
           className="flex grow items-center justify-between overflow-hidden"
         >
           <span
-            className={`shrink text-left text-sm font-semibold ${
+            className={`shrink text-left text-sm ${
               isOpened ? 'max-w-full' : 'max-w-[calc(100%-30px)] truncate'
             }`}
             title={attachment.title}
           >
             {attachment.title || t('Attachment')}
           </span>
-          <IconChevronDown
-            className={`shrink-0 transition ${isOpened ? 'rotate-180' : ''}`}
+          <ChevronDown
+            height={18}
+            width={18}
+            className={`shrink-0 text-gray-500 transition ${
+              isOpened ? 'rotate-180' : ''
+            }`}
           />
         </button>
       </div>
       {(attachment.data || attachment.url) && (
         <div
-          className={`relative w-full overflow-hidden text-sm ${
-            isOpened ? 'mt-2 h-auto pt-4 transition-all' : 'h-0'
+          className={`relative w-full overflow-hidden text-sm duration-200 ${
+            isOpened ? 'mt-2 h-auto p-3 pt-4' : 'h-0'
           }`}
         >
           {imageTypes.includes(attachment.type) ? (
@@ -79,7 +93,7 @@ export const MessageAttachment = ({ attachment }: Props) => {
           ) : attachment.type === 'text/html' ? (
             <div className="flex max-w-full overflow-auto">
               <span
-                className="prose shrink-0 whitespace-pre dark:prose-invert"
+                className="prose shrink-0 whitespace-pre text-sm dark:prose-invert"
                 dangerouslySetInnerHTML={{
                   __html: sanitize(attachment.data || ''),
                 }}
@@ -87,7 +101,7 @@ export const MessageAttachment = ({ attachment }: Props) => {
             </div>
           ) : attachment.type === 'text/plain' ? (
             <div className="max-w-full overflow-hidden">
-              <span className="prose whitespace-pre-wrap dark:prose-invert">
+              <span className="prose whitespace-pre-wrap text-sm dark:prose-invert">
                 {attachment.data}
               </span>
             </div>
@@ -97,6 +111,7 @@ export const MessageAttachment = ({ attachment }: Props) => {
               <ChatMDComponent
                 isShowResponseLoader={false}
                 content={attachment.data}
+                isInner={isInner}
               />
             )
           )}
@@ -105,9 +120,9 @@ export const MessageAttachment = ({ attachment }: Props) => {
             <a
               href={attachment.reference_url}
               target="_blank"
-              className="mt-3 block font-bold underline"
+              className="mt-3 block text-blue-500"
             >
-              {t('Reference')}
+              {t('Reference...')}
             </a>
           )}
         </div>

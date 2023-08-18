@@ -168,7 +168,7 @@ export const ChatMessage: FC<Props> = memo(
         style={{ overflowWrap: 'anywhere' }}
       >
         <div className="relative m-auto flex h-full p-4 md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
-          <div className="min-w-[40px] font-bold">
+          <div className="flex min-w-[40px] justify-center font-bold">
             {isAssistant ? (
               <ModelIcon
                 entityId={message.model?.id ?? conversation.model.id}
@@ -244,7 +244,7 @@ export const ChatMessage: FC<Props> = memo(
                       <IconEdit size={20} />
                     </button>
                     <button
-                      className="invisible text-gray-500 hover:text-blue-500 focus:visible group-hover:visible dark:hover:text-gray-300"
+                      className="invisible text-gray-500 hover:text-blue-500 focus:visible group-hover:visible"
                       onClick={() => {
                         setIsRemoveConfirmationOpened(true);
                       }}
@@ -257,7 +257,7 @@ export const ChatMessage: FC<Props> = memo(
                       heading={t('Confirm removing message')}
                       description={
                         t(
-                          'Are you sure that you want to remove the message? All newer messages also will be removed',
+                          'Are you sure that you want to remove the message?',
                         ) || ''
                       }
                       confirmLabel={t('Remove')}

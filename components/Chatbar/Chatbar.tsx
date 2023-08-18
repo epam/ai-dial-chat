@@ -238,7 +238,7 @@ export const Chatbar = () => {
 
   const actionsBlock = (
     <button
-      className={`flex shrink-0 cursor-pointer select-none items-center gap-3 px-5 py-5 transition-colors duration-200 hover:bg-green/15 disabled:cursor-not-allowed`}
+      className={`flex shrink-0 cursor-pointer select-none items-center gap-3 p-5 transition-colors duration-200 hover:bg-green/15 disabled:cursor-not-allowed`}
       onClick={() => {
         handleNewConversation();
         chatDispatch({ field: 'searchTerm', value: '' });
