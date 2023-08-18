@@ -100,7 +100,7 @@ export const ContextMenu = ({
                 height={18}
                 size={18}
               />
-              <span>{t('Rename')}</span>
+              <span>{featureType === 'chat' ? t('Rename') : t('Edit')}</span>
             </div>
           }
           onClick={onRename}
