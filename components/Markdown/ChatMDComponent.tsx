@@ -54,21 +54,21 @@ export const getMDComponents = (
     },
     table({ children }) {
       return (
-        <table className="border-collapse border border-black px-3 py-1 dark:border-white">
+        <table className="border-collapse border border-black px-3 py-1 text-sm dark:border-white">
           {children}
         </table>
       );
     },
     th({ children }) {
       return (
-        <th className="break-words border border-black bg-gray-500 px-3 py-1 text-white dark:border-white">
+        <th className="break-words border border-black bg-gray-500 px-3 py-1 text-sm text-white dark:border-white">
           {children}
         </th>
       );
     },
     td({ children }) {
       return (
-        <td className="break-words border border-black px-3 py-1 dark:border-white">
+        <td className="break-words border border-black px-3 py-1 text-sm dark:border-white">
           {children}
         </td>
       );
@@ -82,7 +82,9 @@ export const getMDComponents = (
       if (children[0] == modelCursorSignWithBackquote) {
         children[0] = replaceCursor(children[0] as string);
       }
-      return <p className={className}>{children}</p>;
+      return (
+        <p className={`${className} ${isInner ? 'text-sm' : ''}`}>{children}</p>
+      );
     },
   };
 };

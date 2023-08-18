@@ -17,6 +17,7 @@ import HomeContext from '@/pages/api/home/home.context';
 import Check from '../../public/images/icons/check.svg';
 import Clone from '../../public/images/icons/clone.svg';
 import Download from '../../public/images/icons/download.svg';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 
 interface Props {
   language: string;
@@ -96,17 +97,32 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
             disabled={isCopied}
           >
             {isCopied ? (
-              <Check width={18} height={18} />
+              <Tooltip>
+                <TooltipTrigger>
+                  <Check width={18} height={18} />
+                </TooltipTrigger>
+                <TooltipContent>{t('Copied!')}</TooltipContent>
+              </Tooltip>
             ) : (
-              <Clone width={18} height={18} />
+              <Tooltip isTriggerClickable={true}>
+                <TooltipTrigger>
+                  <Clone width={18} height={18} />
+                </TooltipTrigger>
+                <TooltipContent>{t('Copy code')}</TooltipContent>
+              </Tooltip>
             )}
           </button>
-          <button
-            className="flex items-center rounded bg-none hover:text-blue-500"
-            onClick={downloadAsFile}
-          >
-            <Download width={18} height={18} />
-          </button>
+          <Tooltip isTriggerClickable={true}>
+            <TooltipTrigger>
+              <button
+                className="flex items-center rounded bg-none hover:text-blue-500"
+                onClick={downloadAsFile}
+              >
+                <Download width={18} height={18} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{t('Download')}</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 

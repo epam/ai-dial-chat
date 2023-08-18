@@ -23,12 +23,12 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
 
   return (
     <div
-      className={`rounded border border-gray-400  px-1 py-2 dark:border-gray-700  ${
+      className={`rounded   px-1 py-2   ${
         isOpened ? 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3' : ''
       } ${
         isInner
           ? 'bg-gray-100 dark:bg-gray-700'
-          : 'bg-gray-300 dark:bg-gray-900'
+          : 'border border-gray-400 bg-gray-300 dark:border-gray-700 dark:bg-gray-900'
       }`}
     >
       <div className={`flex items-center gap-3 px-2`}>
@@ -59,7 +59,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           className="flex grow items-center justify-between overflow-hidden"
         >
           <span
-            className={`shrink text-left text-sm font-semibold ${
+            className={`shrink text-left text-sm ${
               isOpened ? 'max-w-full' : 'max-w-[calc(100%-30px)] truncate'
             }`}
             title={attachment.title}
@@ -93,7 +93,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           ) : attachment.type === 'text/html' ? (
             <div className="flex max-w-full overflow-auto">
               <span
-                className="prose shrink-0 whitespace-pre dark:prose-invert"
+                className="prose shrink-0 whitespace-pre text-sm dark:prose-invert"
                 dangerouslySetInnerHTML={{
                   __html: sanitize(attachment.data || ''),
                 }}
@@ -101,7 +101,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             </div>
           ) : attachment.type === 'text/plain' ? (
             <div className="max-w-full overflow-hidden">
-              <span className="prose whitespace-pre-wrap dark:prose-invert">
+              <span className="prose whitespace-pre-wrap text-sm dark:prose-invert">
                 {attachment.data}
               </span>
             </div>
@@ -111,6 +111,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               <ChatMDComponent
                 isShowResponseLoader={false}
                 content={attachment.data}
+                isInner={isInner}
               />
             )
           )}
