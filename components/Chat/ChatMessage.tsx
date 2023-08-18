@@ -25,6 +25,7 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
+import Clone from '../../public/images/icons/clone.svg';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachments } from './MessageAttachments';
@@ -54,7 +55,7 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
     <button
       type={type}
       className={classNames(
-        'text-gray-500 hover:text-blue-500 focus:visible',
+        'text-gray-500 focus:visible [&:not(:disabled)]:hover:text-blue-500',
         className,
       )}
       {...props}
@@ -297,10 +298,10 @@ export const ChatMessage: FC<Props> = memo(
                 <div className="flex w-[60px] shrink-0 flex-col justify-between">
                   <div className="ml-1 flex flex-col items-center justify-end gap-4 md:-mr-8 md:ml-0 md:flex-row md:items-start md:justify-start md:gap-1">
                     {messagedCopied ? (
-                      <IconCheck size={20} />
+                      <IconCheck size={20} className="text-gray-500" />
                     ) : (
                       <Button onClick={copyOnClick}>
-                        <IconCopy size={20} />
+                        <Clone height={20} width={20} />
                       </Button>
                     )}
                   </div>

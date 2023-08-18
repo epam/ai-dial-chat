@@ -50,7 +50,7 @@ export const FolderContextMenu = ({
               height={18}
               size={18}
             />
-            <span>{t('Edit')}</span>
+            <span>{t('Rename')}</span>
           </div>
         }
         onClick={onRename}
