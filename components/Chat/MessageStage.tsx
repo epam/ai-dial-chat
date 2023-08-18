@@ -92,7 +92,10 @@ export const MessageStage = ({ stage }: Props) => {
             </span>
           )}
           {stage.attachments?.length && (
-            <MessageAttachments attachments={stage.attachments} isInner={true}/>
+            <MessageAttachments
+              attachments={stage.attachments}
+              isInner={true}
+            />
           )}
         </div>
       )}
