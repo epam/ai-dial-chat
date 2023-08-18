@@ -1,6 +1,5 @@
 import {
   IconCheck,
-  IconCopy,
   IconEdit,
   IconThumbDown,
   IconThumbUp,
