@@ -34,6 +34,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const addons: ProxyOpenAIEntity[] = await getEntities(
       'addon',
       token?.access_token as string,
+      token?.jobTitle as string,
     ).catch((error) => {
       console.error(error.message);
       return [];

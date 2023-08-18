@@ -40,28 +40,23 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   try {
     let entities: OpenAIEntityModel[] = [];
-
+    const accessToken = token?.access_token as string;
+    const jobTitle = token?.jobTitle as string;
     const models: ProxyOpenAIEntity<OpenAIEntityModelType>[] =
-      await getEntities('model', token?.access_token as string).catch(
-        (error) => {
-          console.error(error.message);
-          return [];
-        },
-      );
+      await getEntities('model', accessToken, jobTitle).catch((error) => {
+        console.error(error.message);
+        return [];
+      });
     const applications: ProxyOpenAIEntity<OpenAIEntityApplicationType>[] =
-      await getEntities('application', token?.access_token as string).catch(
-        (error) => {
-          console.error(error.message);
-          return [];
-        },
-      );
+      await getEntities('application', accessToken, jobTitle).catch((error) => {
+        console.error(error.message);
+        return [];
+      });
     const assistants: ProxyOpenAIEntity<OpenAIEntityAssistantType>[] =
-      await getEntities('assistant', token?.access_token as string).catch(
-        (error) => {
-          console.error(error.message);
-          return [];
-        },
-      );
+      await getEntities('assistant', accessToken, jobTitle).catch((error) => {
+        console.error(error.message);
+        return [];
+      });
 
     for (const entity of [...models, ...applications, ...assistants]) {
       if (

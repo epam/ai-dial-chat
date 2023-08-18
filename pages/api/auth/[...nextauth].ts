@@ -220,11 +220,6 @@ export const authOptions: AuthOptions = {
 
       return true;
     },
-    session: async (options) => {
-      (options as any).session.jobTitle = options.token.jobTitle;
-
-      return options.session;
-    },
   },
   session: {
     strategy: 'jwt',
