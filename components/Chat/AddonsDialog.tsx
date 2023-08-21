@@ -106,7 +106,7 @@ export const AddonsDialog: FC<Props> = ({
 
     return (
       <button
-        className={`flex flex-col gap-3 rounded border p-3 ${
+        className={`flex flex-col gap-3 rounded border p-3 text-left ${
           isPreselected
             ? 'bg-blue-500/20'
             : 'hover:border-gray-800 dark:hover:border-gray-200'
@@ -136,9 +136,11 @@ export const AddonsDialog: FC<Props> = ({
           <span className="text-left">{addon.name}</span>
         </div>
         {addon.description && (
-          <EntityMarkdownDescription>
-            {addon.description}
-          </EntityMarkdownDescription>
+          <span className="text-gray-500">
+            <EntityMarkdownDescription>
+              {addon.description}
+            </EntityMarkdownDescription>
+          </span>
         )}
       </button>
     );
@@ -193,7 +195,7 @@ export const AddonsDialog: FC<Props> = ({
               className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
             ></input>
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 text-xs">
             {(selectedAddons?.length > 0 ||
               preselectedAddonsIds?.length > 0) && (
               <div className="flex flex-col gap-3">

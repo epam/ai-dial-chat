@@ -23,22 +23,16 @@ export const ConversationSettingsModel = ({
   const {
     state: { modelsMap, recentModelsIds, lightMode },
   } = useContext(HomeContext);
-  const [recentModels, setRecentModels] = useState<OpenAIEntityModel[]>([]);
-  const [recentNonModels, setRecentNonModels] = useState<OpenAIEntityModel[]>(
-    [],
-  );
+  const [mappedEntities, setMappedEntities] = useState<OpenAIEntityModel[]>([]);
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
   useEffect(() => {
-    const mappedEntities = Array.from(recentModelsIds)
-      .map((id) => modelsMap[id])
-      .filter(Boolean) as OpenAIEntityModel[];
-    setRecentModels(
-      mappedEntities.filter((entity) => entity.type === 'model').slice(0, 4),
-    );
-    setRecentNonModels(
-      mappedEntities.filter((entity) => entity.type !== 'model').slice(0, 3),
-    );
+    const mappedEntities = (
+      Array.from(recentModelsIds)
+        .map((id) => modelsMap[id])
+        .filter(Boolean) as OpenAIEntityModel[]
+    ).slice(0, 5);
+    setMappedEntities(mappedEntities);
   }, [recentModelsIds, modelsMap]);
 
   return (
@@ -47,29 +41,8 @@ export const ConversationSettingsModel = ({
 
       <div className="flex flex-col gap-3">
         <div className="text-gray-500">{t('Recent')}</div>
-        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-          {recentModels.map((entity) => (
-            <button
-              className={`flex items-center gap-3 rounded border p-3 text-left text-xs ${
-                modelId === entity.id
-                  ? 'border-blue-500'
-                  : 'border-gray-400 hover:border-gray-800 dark:border-gray-600 hover:dark:border-gray-200'
-              }`}
-              key={entity.id}
-              onClick={() => onModelSelect(entity.id)}
-            >
-              <ModelIcon
-                entityId={entity.id}
-                entity={entity}
-                size={24}
-                inverted={lightMode === 'dark'}
-              />
-              {entity.name}
-            </button>
-          ))}
-        </div>
         <div className="grid grid-cols-1 gap-3">
-          {recentNonModels.map((entity) => (
+          {mappedEntities.map((entity) => (
             <button
               className={`flex items-center gap-3 rounded border p-3 text-left text-xs ${
                 modelId === entity.id
@@ -90,7 +63,10 @@ export const ConversationSettingsModel = ({
                 {entity.description && (
                   <span className="text-gray-500">
                     <EntityMarkdownDescription>
-                      {entity.description}
+                      {entity.description.slice(
+                        0,
+                        entity.description.indexOf('\n\n'),
+                      )}
                     </EntityMarkdownDescription>
                   </span>
                 )}
