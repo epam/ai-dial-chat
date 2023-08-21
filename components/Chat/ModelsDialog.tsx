@@ -148,11 +148,8 @@ export const ModelsDialog: FC<Props> = ({
           <span>{entity.name}</span>
           <span className="text-gray-500">
             {entity.description && (
-              <EntityMarkdownDescription>
-                {entity.description.slice(
-                  0,
-                  entity.description.indexOf('\n\n'),
-                )}
+              <EntityMarkdownDescription isShortDescription={true}>
+                {entity.description}
               </EntityMarkdownDescription>
             )}
           </span>

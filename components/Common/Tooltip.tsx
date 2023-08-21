@@ -77,6 +77,10 @@ export function useTooltip({
     move: false,
     enabled: controlledOpen == null,
     mouseOnly: isTriggerClickable,
+    delay: {
+      open: 500,
+      close: 0,
+    },
   });
   const focus = useFocus(context, {
     enabled: controlledOpen == null,
