@@ -59,10 +59,6 @@ pre:has(div.codeblock) {
   .temperature-slider .rc-slider-track {
     @apply rounded-full bg-blue-500;
   }
-
-  .markdown a {
-    @apply text-blue-500;
-  }
 }
 
 .h-screen {
