@@ -19,7 +19,7 @@ export const EntityMarkdownDescription = ({
 
   useEffect(() => {
     if (isShortDescription) {
-      const indexOfDelimiter = children.lastIndexOf('\n\n');
+      const indexOfDelimiter = children.indexOf('\n\n');
       setTransformedChildren(
         children.slice(
           0,
