@@ -70,6 +70,8 @@ export interface Conversation {
   temperature: number;
   folderId: string | null;
   replay: Replay;
+
+  // Addons selected by user clicks
   selectedAddons: string[];
   assistantModelId?: string;
   lastActivityDate?: number;

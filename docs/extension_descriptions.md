@@ -1,6 +1,6 @@
 # GPT World 
 
-This application producing answer based on the curated set of LLM related publications from [arxiv.org](https://arxiv.org/).
+This application producing answer based on the curated set of LLM related publications from [arxiv.org](https://arxiv.org).
 
 GPT World is classic example of conversational semantic search application.
 On every new user question, it performs summarization using GPT-4, calculates embedding using text-embedding-ada-002 model and then it uses chunks of text from curated set.
@@ -23,11 +23,13 @@ Every user question is rephrased with GPT-4, then we perform search of the close
 (Former EPAM10K Golden QnA App)
 
 This application is designed to provide curated answers from the pre-sales FAQ documents. 
+
 It uses [e5-large-v2](https://huggingface.co/intfloat/e5-large-v2) embeddings to identify related questions. And then uses GPT-4 to identify if user question could be fully answered with one of the FAQ entries.
 
 # EPAM Pre-sales FAQ+Search
 (Former EPAM10K)
 This application is combination of “EPAM pre-sales FAQ” and “Ask EPAM pre-sales”. 
+
 It first tries to find curated answer and if it fails, it allows GPT-4 to synthesize reply. It implements hybrid hallucination-suppression solution described [here](https://epam-rail.com/custom-framework).
 
 # Pre-Sales Assistant
