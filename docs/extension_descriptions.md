@@ -1,6 +1,6 @@
 # GPT World 
 
-This application producing answer based on the curated set of LLM related publications from [arxiv.org](https://arxiv.org/).
+This application producing answer based on the curated set of LLM related publications from [arxiv.org](https://arxiv.org).
 
 GPT World is classic example of conversational semantic search application.
 On every new user question, it performs summarization using GPT-4, calculates embedding using text-embedding-ada-002 model and then it uses chunks of text from curated set.
