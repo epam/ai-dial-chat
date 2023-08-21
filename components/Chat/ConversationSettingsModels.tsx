@@ -62,11 +62,8 @@ export const ConversationSettingsModel = ({
                 <span>{entity.name}</span>
                 {entity.description && (
                   <span className="text-gray-500">
-                    <EntityMarkdownDescription>
-                      {entity.description.slice(
-                        0,
-                        entity.description.indexOf('\n\n'),
-                      )}
+                    <EntityMarkdownDescription isShortDescription={true}>
+                      {entity.description}
                     </EntityMarkdownDescription>
                   </span>
                 )}

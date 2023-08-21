@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 import { MemoizedReactMarkdown } from '../Markdown/MemoizedReactMarkdown';
 
 import rehypeRaw from 'rehype-raw';
@@ -6,9 +8,29 @@ import remarkGfm from 'remark-gfm';
 
 interface Props {
   children: string;
+  isShortDescription?: boolean;
 }
 
-export const EntityMarkdownDescription = ({ children }: Props) => {
+export const EntityMarkdownDescription = ({
+  children,
+  isShortDescription,
+}: Props) => {
+  const [transformedChildren, setTransformedChildren] = useState('');
+
+  useEffect(() => {
+    if (isShortDescription) {
+      const indexOfDelimiter = children.lastIndexOf('\n\n');
+      setTransformedChildren(
+        children.slice(
+          0,
+          indexOfDelimiter === -1 ? children.length : indexOfDelimiter,
+        ),
+      );
+    } else {
+      setTransformedChildren(children);
+    }
+  }, [children, isShortDescription]);
+
   return (
     <MemoizedReactMarkdown
       className="markdown"
@@ -27,7 +49,7 @@ export const EntityMarkdownDescription = ({ children }: Props) => {
         ],
       ]}
     >
-      {children}
+      {transformedChildren}
     </MemoizedReactMarkdown>
   );
 };
