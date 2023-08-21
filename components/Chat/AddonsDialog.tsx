@@ -138,7 +138,7 @@ export const AddonsDialog: FC<Props> = ({
         {addon.description && (
           <span className="text-gray-500">
             <EntityMarkdownDescription>
-              {addon.description.slice(0, addon.description.indexOf('\n\n'))}
+              {addon.description}
             </EntityMarkdownDescription>
           </span>
         )}
