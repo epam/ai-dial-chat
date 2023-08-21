@@ -194,8 +194,7 @@ export const AddonsDialog: FC<Props> = ({
             ></input>
           </div>
           <div className="flex flex-col gap-4 text-xs">
-            {(selectedAddons?.length > 0 ||
-              preselectedAddonsIds?.length > 0) && (
+            {selectedAddons?.length > 0 && (
               <div className="flex flex-col gap-3">
                 <span className="text-gray-500">{t('Selected')}</span>
 
