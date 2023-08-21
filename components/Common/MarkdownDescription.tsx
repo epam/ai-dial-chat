@@ -11,6 +11,7 @@ interface Props {
 export const EntityMarkdownDescription = ({ children }: Props) => {
   return (
     <MemoizedReactMarkdown
+      className="markdown"
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[
         rehypeRaw,

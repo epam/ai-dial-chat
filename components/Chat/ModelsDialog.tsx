@@ -144,13 +144,18 @@ export const ModelsDialog: FC<Props> = ({
           size={24}
           inverted={lightMode === 'dark'}
         />
-        <div className="flex flex-col text-left">
+        <div className="flex flex-col gap-1 text-left">
           <span>{entity.name}</span>
-          {entity.description && (
-            <EntityMarkdownDescription>
-              {entity.description}
-            </EntityMarkdownDescription>
-          )}
+          <span className="text-gray-500">
+            {entity.description && (
+              <EntityMarkdownDescription>
+                {entity.description.slice(
+                  0,
+                  entity.description.indexOf('\n\n'),
+                )}
+              </EntityMarkdownDescription>
+            )}
+          </span>
         </div>
       </button>
     );
