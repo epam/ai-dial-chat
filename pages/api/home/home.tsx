@@ -341,6 +341,7 @@ const Home = ({
 
     addNewConversationToStore([newConversation]);
     dispatch({ field: 'loading', value: false });
+    handleUpdateRecentModels(newConversation.model.id);
 
     return newConversation;
   };
