@@ -47,7 +47,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             </a>
           ) : (
             <IconPaperclip
-              size={18} 
+              size={18}
               className="shrink-0 text-gray-500 hover:text-blue-500"
             />
           )}
