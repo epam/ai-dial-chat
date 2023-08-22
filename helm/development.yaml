@@ -32,7 +32,7 @@ env:
   AVAILABLE_MODELS_USERS_LIMITATIONS: ''
   AVAILABLE_ADDONS_USERS_LIMITATIONS: ''
   THEMES_CONFIG_HOST: 'https://epam-dial-themes.staging.deltixhub.io'
-  RECENT_MODELS_IDS: 'gpt-35-turbo,gpt-4,assistant-10k,gpt-world,mirror'
+  RECENT_MODELS_IDS: 'gpt-35-turbo,gpt-4,epam10k-semantic-search,gpt-world,mirror'
   RECENT_ADDONS_IDS: 'addon-epam10k-golden-qna,addon-epam10k-semantic-search,addon-wolfram'
 
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
