@@ -1,3 +1,8 @@
+import {
+  IconFileArrowLeft,
+  IconFileArrowRight,
+  IconTrashX,
+} from '@tabler/icons-react';
 import { FC, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,10 +18,7 @@ import {
 } from '@/components/Common/Tooltip';
 import { Import } from '@/components/Settings/Import';
 
-import FileLeftIcon from '../../../public/images/icons/file-arrow-left.svg';
-import FileRightIcon from '../../../public/images/icons/file-arrow-right.svg';
-import FolderPlusIcon from '../../../public/images/icons/folder-plus.svg';
-import TrashIcon from '../../../public/images/icons/trash.svg';
+import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import PromptbarContext from '../PromptBar.context';
 
 interface PromptbarSettingsProps {
@@ -42,7 +44,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
                 setIsOpen(true);
               }}
             >
-              <TrashIcon width={24} height={24} />
+              <IconTrashX size={24} />
             </div>
           </TooltipTrigger>
           <TooltipContent>{t('Delete all prompts')}</TooltipContent>
@@ -54,13 +56,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
           <Import
             highlightColor="violet"
             onImport={handleImportPrompts}
-            icon={
-              <FileLeftIcon
-                className="hover:text-violet"
-                width={24}
-                height={24}
-              />
-            }
+            icon={<IconFileArrowLeft className="hover:text-violet" size={24} />}
           />
         </TooltipTrigger>
         <TooltipContent>{t('Import prompts')}</TooltipContent>
@@ -72,7 +68,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
             className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet md:h-[42px] md:w-[42px]"
             onClick={() => handleExportPrompts()}
           >
-            <FileRightIcon width={24} height={24} />
+            <IconFileArrowRight size={24} />
           </div>
         </TooltipTrigger>
         <TooltipContent>{t('Export prompts')}</TooltipContent>
@@ -84,7 +80,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
             className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet md:h-[42px] md:w-[42px]"
             onClick={() => handleCreateFolder(t('New folder'), 'prompt')}
           >
-            <FolderPlusIcon width={24} height={24} />
+            <FolderPlus height={24} width={24} />
           </div>
         </TooltipTrigger>
         <TooltipContent>{t('Create new folder')}</TooltipContent>

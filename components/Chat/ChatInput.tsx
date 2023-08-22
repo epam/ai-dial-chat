@@ -1,4 +1,4 @@
-import { IconPlayerStop } from '@tabler/icons-react';
+import { IconPlayerStop, IconSend } from '@tabler/icons-react';
 import {
   ForwardedRef,
   KeyboardEvent,
@@ -22,7 +22,6 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import ArrowNarrowDown from '../../public/images/icons/arrow-narrow-down.svg';
 import RefreshCWAlt from '../../public/images/icons/refresh-cw-alt.svg';
-import SendAlt1 from '../../public/images/icons/send-alt-1.svg';
 import { FooterMessage } from './FooterMessage';
 import { PromptList } from './PromptList';
 import { VariableModal } from './VariableModal';
@@ -260,7 +259,11 @@ export const ChatInput = forwardRef(
               className="absolute inset-x-0 top-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600"
               onClick={onStopConversation}
             >
-              <IconPlayerStop size={18} className="text-gray-500" />{' '}
+              <IconPlayerStop
+                size={18}
+                className="text-gray-500"
+                strokeWidth="1.5"
+              />{' '}
               {t('Stop generating')}
             </button>
           )}
@@ -312,7 +315,7 @@ export const ChatInput = forwardRef(
                 <div className="h-5 w-5 animate-spin rounded-full border-t-2 border-gray-500 text-current"></div>
               ) : (
                 <span className="hover:text-blue-500">
-                  <SendAlt1 width={24} height={24} />
+                  <IconSend size={24} stroke="1.5" />
                 </span>
               )}
             </button>

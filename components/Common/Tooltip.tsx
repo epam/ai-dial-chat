@@ -177,12 +177,14 @@ export const TooltipContent = forwardRef<
     <FloatingPortal id="theme-main">
       <div
         ref={ref}
-        className="z-50 rounded bg-gray-100 px-2 py-1  shadow dark:bg-black"
         style={{
           ...context.floatingStyles,
           ...style,
         }}
         {...context.getFloatingProps(props)}
+        className={`z-50 rounded bg-gray-100 px-2 py-1 text-left shadow dark:bg-black ${
+          context.getFloatingProps(props).className
+        }`}
       >
         {props.children}
         <FloatingArrow

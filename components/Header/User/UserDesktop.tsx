@@ -1,3 +1,4 @@
+import { IconSettings } from '@tabler/icons-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useCallback, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +12,6 @@ import { Menu, MenuItem } from '@/components/Common/DropdownMenu';
 
 import ChevronDownIcon from '../../../public/images/icons/chevron-down.svg';
 import FileArrowRightIcon from '../../../public/images/icons/file-arrow-right.svg';
-import GearIcon from '../../../public/images/icons/gear.svg';
 import UserIcon from '../../../public/images/icons/user.svg';
 
 export const UserDesktop = () => {
@@ -63,7 +63,7 @@ export const UserDesktop = () => {
           className={`hover:bg-blue-500/20`}
           item={
             <div className="flex">
-              <GearIcon width={18} height={18} className="text-gray-500" />
+              <IconSettings size={18} className="text-gray-500" />
               <span className="ml-3">{t('Settings')}</span>
             </div>
           }

@@ -80,7 +80,7 @@ export const Addons = ({
             <TooltipTrigger className="flex shrink-0">
               {template}
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent className="max-w-[220px]">
               <EntityMarkdownDescription>
                 {description}
               </EntityMarkdownDescription>
