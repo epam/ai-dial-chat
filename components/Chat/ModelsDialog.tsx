@@ -45,7 +45,7 @@ const Entity = ({
         selectedModelId === entity.id
           ? 'border-blue-500'
           : 'border-gray-400 dark:border-gray-600'
-      } ${isOpened ? 'col-span-2' : ''}`}
+      } ${isOpened ? 'md:col-span-2' : 'md:col-span-1'}`}
       onClick={() => {
         onSelect(entity.id);
       }}
