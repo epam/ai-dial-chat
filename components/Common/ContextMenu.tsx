@@ -1,3 +1,12 @@
+import {
+  IconFileArrowRight,
+  IconFolderPlus,
+  IconFolderShare,
+  IconPencilMinus,
+  IconRefreshDot,
+  IconScale,
+  IconTrashX,
+} from '@tabler/icons-react';
 import { MouseEventHandler, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -8,13 +17,6 @@ import { Prompt } from '@/types/prompt';
 import HomeContext from '@/pages/api/home/home.context';
 
 import DotsIcon from '../../public/images/icons/dots-vertical.svg';
-import FileRightIcon from '../../public/images/icons/file-arrow-right.svg';
-import FolderRightIcon from '../../public/images/icons/folder-arrow-right.svg';
-import FolderPlusIcon from '../../public/images/icons/folder-plus.svg';
-import PenIcon from '../../public/images/icons/pen-line.svg';
-import ReplayIcon from '../../public/images/icons/replay.svg';
-import CompareIcon from '../../public/images/icons/scale-balanced.svg';
-import TrashIcon from '../../public/images/icons/trash.svg';
 import { Menu, MenuItem } from './DropdownMenu';
 
 import classNames from 'classnames';
@@ -94,12 +96,7 @@ export const ContextMenu = ({
           }`}
           item={
             <div className="flex items-center gap-3">
-              <PenIcon
-                className="shrink-0 text-gray-500"
-                width={18}
-                height={18}
-                size={18}
-              />
+              <IconPencilMinus className="shrink-0 text-gray-500" size={18} />
               <span>{featureType === 'chat' ? t('Rename') : t('Edit')}</span>
             </div>
           }
@@ -114,12 +111,7 @@ export const ContextMenu = ({
             }`}
             item={
               <div className="flex items-center gap-3">
-                <CompareIcon
-                  className="shrink-0 text-gray-500"
-                  width={18}
-                  height={18}
-                  size={18}
-                />
+                <IconScale className="shrink-0 text-gray-500" size={18} />
                 <span>{t('Compare')}</span>
               </div>
             }
@@ -135,12 +127,7 @@ export const ContextMenu = ({
             }`}
             item={
               <div className="flex items-center gap-3">
-                <ReplayIcon
-                  className="shrink-0 text-gray-500"
-                  width={18}
-                  height={18}
-                  size={18}
-                />
+                <IconRefreshDot className="shrink-0 text-gray-500" size={18} />
                 <span>{t('Replay')}</span>
               </div>
             }
@@ -155,10 +142,8 @@ export const ContextMenu = ({
           }`}
           item={
             <div className="flex items-center gap-3">
-              <FileRightIcon
+              <IconFileArrowRight
                 className="shrink-0 text-gray-500"
-                width={18}
-                height={18}
                 size={18}
               />
               <span>{t('Export')}</span>
@@ -178,12 +163,7 @@ export const ContextMenu = ({
           onClick={onOpenMoveToModal}
           item={
             <div className="flex items-center gap-3">
-              <FolderRightIcon
-                className="shrink-0 text-gray-500"
-                width={18}
-                height={18}
-                size={18}
-              />
+              <IconFolderShare className="shrink-0 text-gray-500" size={18} />
               <span>{t('Move to')}</span>
             </div>
           }
@@ -200,12 +180,7 @@ export const ContextMenu = ({
           )}
           trigger={
             <div className="flex items-center gap-3">
-              <FolderRightIcon
-                className="shrink-0 text-gray-500"
-                width={18}
-                height={18}
-                size={18}
-              />
+              <IconFolderShare className="shrink-0 text-gray-500" size={18} />
               <span>{t('Move to')}</span>
             </div>
           }
@@ -227,12 +202,7 @@ export const ContextMenu = ({
             onClick={moveToNewFolder}
             item={
               <div className="flex items-center gap-3">
-                <FolderPlusIcon
-                  className="shrink-0 text-gray-500"
-                  width={18}
-                  height={18}
-                  size={18}
-                />
+                <IconFolderPlus className="shrink-0 text-gray-500" size={18} />
                 <span>{t('New folder')}</span>
               </div>
             }
@@ -268,12 +238,7 @@ export const ContextMenu = ({
           }`}
           item={
             <div className="flex items-center gap-3">
-              <TrashIcon
-                className="shrink-0 text-gray-500"
-                width={18}
-                height={18}
-                size={18}
-              />
+              <IconTrashX className="shrink-0 text-gray-500" size={18} />
               <span>{t('Delete')}</span>
             </div>
           }

@@ -1,3 +1,10 @@
+import {
+  IconFileArrowLeft,
+  IconFileArrowRight,
+  IconFolderPlus,
+  IconScale,
+  IconTrashX,
+} from '@tabler/icons-react';
 import { useContext, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -13,11 +20,6 @@ import {
   TooltipTrigger,
 } from '@/components/Common/Tooltip';
 
-import FileLeftIcon from '../../../public/images/icons/file-arrow-left.svg';
-import FileRightIcon from '../../../public/images/icons/file-arrow-right.svg';
-import FolderPlusIcon from '../../../public/images/icons/folder-plus.svg';
-import CompareIcon from '../../../public/images/icons/scale-balanced.svg';
-import TrashIcon from '../../../public/images/icons/trash.svg';
 import { Import } from '../../Settings/Import';
 import ChatbarContext from '../Chatbar.context';
 
@@ -66,7 +68,7 @@ export const ChatbarSettings = () => {
                 setIsOpen(true);
               }}
             >
-              <TrashIcon width={24} height={24} />
+              <IconTrashX size={24} />
             </div>
           </TooltipTrigger>
           <TooltipContent>{t('Delete all conversations')}</TooltipContent>
@@ -78,7 +80,7 @@ export const ChatbarSettings = () => {
           <Import
             highlightColor="green"
             onImport={handleImportConversations}
-            icon={<FileLeftIcon width={24} height={24} />}
+            icon={<IconFileArrowLeft size={24} />}
           />
         </TooltipTrigger>
         <TooltipContent>{t('Import conversations')}</TooltipContent>
@@ -90,7 +92,7 @@ export const ChatbarSettings = () => {
             className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
             onClick={() => handleExportConversations()}
           >
-            <FileRightIcon width={24} height={24} />
+            <IconFileArrowRight size={24} />
           </div>
         </TooltipTrigger>
         <TooltipContent>{t('Export conversations')}</TooltipContent>
@@ -102,7 +104,7 @@ export const ChatbarSettings = () => {
             className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
             onClick={() => handleCreateFolder(t('New folder'), 'chat')}
           >
-            <FolderPlusIcon width={24} height={24} />
+            <IconFolderPlus size={24} />
           </div>
         </TooltipTrigger>
         <TooltipContent>{t('Create new folder')}</TooltipContent>
@@ -116,7 +118,7 @@ export const ChatbarSettings = () => {
               handleToggleCompare();
             }}
           >
-            <CompareIcon width={24} height={24} />
+            <IconScale size={24} />
           </div>
         </TooltipTrigger>
         <TooltipContent>{t('Compare mode')}</TooltipContent>

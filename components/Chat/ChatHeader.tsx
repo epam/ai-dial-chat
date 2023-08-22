@@ -1,4 +1,4 @@
-import { IconX } from '@tabler/icons-react';
+import { IconEraser, IconSettings, IconX } from '@tabler/icons-react';
 import { useContext, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -10,8 +10,6 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
-import BroomIcon from '../../public/images/icons/broom.svg';
-import GearIcon from '../../public/images/icons/gear.svg';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
 
@@ -150,7 +148,7 @@ export const ChatHeader = ({
                         setShowSettings(!isShowSettings);
                       }}
                     >
-                      <GearIcon width={18} height={18} />
+                      <IconSettings size={18} />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>{t('Conversation settings')}</TooltipContent>
@@ -163,7 +161,7 @@ export const ChatHeader = ({
                       className="cursor-pointer text-gray-500 hover:text-blue-500"
                       onClick={onClearConversation}
                     >
-                      <BroomIcon width={18} height={18} />
+                      <IconEraser size={18} />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>

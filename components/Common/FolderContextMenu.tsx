@@ -1,11 +1,10 @@
+import { IconPencilMinus, IconTrashX } from '@tabler/icons-react';
 import { MouseEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { HighlightColor } from '@/types/components';
 
 import DotsIcon from '../../public/images/icons/dots-vertical.svg';
-import PenIcon from '../../public/images/icons/pen-line.svg';
-import TrashIcon from '../../public/images/icons/trash.svg';
 import { Menu, MenuItem } from './DropdownMenu';
 
 interface FolderContextMenuProps {
@@ -44,12 +43,7 @@ export const FolderContextMenu = ({
         }`}
         item={
           <div className="flex items-center gap-3">
-            <PenIcon
-              className="shrink-0 text-gray-500"
-              width={18}
-              height={18}
-              size={18}
-            />
+            <IconPencilMinus className="shrink-0 text-gray-500" size={18} />
             <span>{t('Rename')}</span>
           </div>
         }
@@ -63,12 +57,7 @@ export const FolderContextMenu = ({
         }`}
         item={
           <div className="flex items-center gap-3">
-            <TrashIcon
-              className="shrink-0 text-gray-500"
-              width={18}
-              height={18}
-              size={18}
-            />
+            <IconTrashX className="shrink-0 text-gray-500" size={18} />
             <span>{t('Delete')}</span>
           </div>
         }
