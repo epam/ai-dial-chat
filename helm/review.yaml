@@ -26,7 +26,7 @@ env:
   ENABLED_FEATURES: 'conversations-section,prompts-section,top-settings,top-clear-conversation,top-chat-info,top-chat-model-settings,empty-chat-settings,header,footer,request-api-key,report-an-issue,likes'
   AUTH_DISABLED: 'false'
   IS_IFRAME: 'false'
-  THEMES_CONFIG_HOST: 'https://dial-chat-themes.staging.deltixhub.io'
+  THEMES_CONFIG_HOST: 'https://epam-dial-themes.staging.deltixhub.io'
   RECENT_MODELS_IDS: 'gpt-35-turbo,gpt-4,assistant-10k,gpt-world,mirror'
   RECENT_ADDONS_IDS: 'addon-epam10k-golden-qna,addon-epam10k-semantic-search,addon-wolfram'
 
