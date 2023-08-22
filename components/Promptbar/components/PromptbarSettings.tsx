@@ -1,7 +1,6 @@
 import {
   IconFileArrowLeft,
   IconFileArrowRight,
-  IconFolderPlus,
   IconTrashX,
 } from '@tabler/icons-react';
 import { FC, useContext, useState } from 'react';
@@ -19,6 +18,7 @@ import {
 } from '@/components/Common/Tooltip';
 import { Import } from '@/components/Settings/Import';
 
+import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import PromptbarContext from '../PromptBar.context';
 
 interface PromptbarSettingsProps {
@@ -80,7 +80,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
             className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet md:h-[42px] md:w-[42px]"
             onClick={() => handleCreateFolder(t('New folder'), 'prompt')}
           >
-            <IconFolderPlus size={24} />
+            <FolderPlus height={24} width={24} />
           </div>
         </TooltipTrigger>
         <TooltipContent>{t('Create new folder')}</TooltipContent>

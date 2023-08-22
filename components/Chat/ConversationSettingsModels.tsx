@@ -40,7 +40,6 @@ export const ConversationSettingsModel = ({
       <div className="mb-4">{t('Talk to')}</div>
 
       <div className="flex flex-col gap-3">
-        <div className="text-gray-500">{t('Recent')}</div>
         <div className="grid grid-cols-1 gap-3">
           {mappedEntities.map((entity) => (
             <button

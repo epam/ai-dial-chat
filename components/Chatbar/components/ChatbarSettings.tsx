@@ -20,6 +20,7 @@ import {
   TooltipTrigger,
 } from '@/components/Common/Tooltip';
 
+import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { Import } from '../../Settings/Import';
 import ChatbarContext from '../Chatbar.context';
 
@@ -104,7 +105,7 @@ export const ChatbarSettings = () => {
             className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
             onClick={() => handleCreateFolder(t('New folder'), 'chat')}
           >
-            <IconFolderPlus size={24} />
+            <FolderPlus height={24} width={24} />
           </div>
         </TooltipTrigger>
         <TooltipContent>{t('Create new folder')}</TooltipContent>

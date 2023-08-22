@@ -182,7 +182,7 @@ export const TooltipContent = forwardRef<
           ...style,
         }}
         {...context.getFloatingProps(props)}
-        className={`z-50 rounded bg-gray-100 px-2 py-1 text-center shadow dark:bg-black ${
+        className={`z-50 rounded bg-gray-100 px-2 py-1 text-left shadow dark:bg-black ${
           context.getFloatingProps(props).className
         }`}
       >
