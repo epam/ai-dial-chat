@@ -1,7 +1,6 @@
 import {
   IconFileArrowLeft,
   IconFileArrowRight,
-  IconFolderPlus,
   IconScale,
   IconTrashX,
 } from '@tabler/icons-react';
