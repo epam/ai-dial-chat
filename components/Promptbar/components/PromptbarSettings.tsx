@@ -44,7 +44,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
                 setIsOpen(true);
               }}
             >
-              <IconTrashX size={24} />
+              <IconTrashX size={24} strokeWidth="1.5" />
             </div>
           </TooltipTrigger>
           <TooltipContent>{t('Delete all prompts')}</TooltipContent>
@@ -56,7 +56,13 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
           <Import
             highlightColor="violet"
             onImport={handleImportPrompts}
-            icon={<IconFileArrowLeft className="hover:text-violet" size={24} />}
+            icon={
+              <IconFileArrowLeft
+                className="hover:text-violet"
+                size={24}
+                strokeWidth="1.5"
+              />
+            }
           />
         </TooltipTrigger>
         <TooltipContent>{t('Import prompts')}</TooltipContent>
@@ -68,7 +74,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
             className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet md:h-[42px] md:w-[42px]"
             onClick={() => handleExportPrompts()}
           >
-            <IconFileArrowRight size={24} />
+            <IconFileArrowRight size={24} strokeWidth="1.5" />
           </div>
         </TooltipTrigger>
         <TooltipContent>{t('Export prompts')}</TooltipContent>
