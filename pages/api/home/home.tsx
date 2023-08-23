@@ -1,4 +1,4 @@
-import { useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 
@@ -669,6 +669,10 @@ const Home = ({
           JSON.stringify(defaultRecentModelsIds),
         );
       }
+    }
+
+    if ((session as any)?.error === 'RefreshAccessTokenError') {
+      signIn('azure-ad', { redirect: true }); // Force sign in to hopefully resolve error
     }
   }, [defaultModelId, dispatch]);
 
