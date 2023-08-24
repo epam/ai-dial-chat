@@ -65,7 +65,7 @@ export const ChatInfoTooltip = ({
         getModelTemplate(subModel, lightMode, t('Assistant model'))}
       {prompt && (
         <>
-          <span className="text-gray-500">{t('System Prompt')}:</span>
+          <span className="text-gray-500">{t('System prompt')}:</span>
           <div className="whitespace-pre-wrap">{prompt}</div>
         </>
       )}

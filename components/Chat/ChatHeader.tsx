@@ -1,4 +1,4 @@
-import { IconX } from '@tabler/icons-react';
+import { IconEraser, IconSettings, IconX } from '@tabler/icons-react';
 import { useContext, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -10,8 +10,6 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
-import BroomIcon from '../../public/images/icons/broom.svg';
-import GearIcon from '../../public/images/icons/gear.svg';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
 
@@ -69,7 +67,7 @@ export const ChatHeader = ({
           </Tooltip>
         )}
         {model && (
-          <div className="flex md:[&>*:first-child]:border-l-[1px] md:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-gray-500 [&>*]:pl-2">
+          <div className="flex lg:[&>*:first-child]:border-l-[1px] lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-gray-500 [&>*]:pl-2">
             {isShowChatInfo && (
               <>
                 <span className="flex items-center">
@@ -112,9 +110,11 @@ export const ChatHeader = ({
                   </Tooltip>
                 </span>
                 {model.type !== 'application' &&
-                  conversation.selectedAddons.length > 0 && (
-                    <span className="flex items-center">
-                      {conversation.selectedAddons?.map((addon) => (
+                  (conversation.selectedAddons.length > 0 ||
+                    (model.selectedAddons &&
+                      model.selectedAddons.length > 0)) && (
+                    <span className="flex items-center gap-2">
+                      {model.selectedAddons?.map((addon) => (
                         <ModelIcon
                           key={addon}
                           entityId={addon}
@@ -123,6 +123,17 @@ export const ChatHeader = ({
                           inverted={lightMode === 'dark'}
                         />
                       ))}
+                      {conversation.selectedAddons
+                        ?.filter((id) => !model.selectedAddons?.includes(id))
+                        .map((addon) => (
+                          <ModelIcon
+                            key={addon}
+                            entityId={addon}
+                            size={18}
+                            entity={addonsMap[addon]}
+                            inverted={lightMode === 'dark'}
+                          />
+                        ))}
                     </span>
                   )}
               </>
@@ -132,12 +143,12 @@ export const ChatHeader = ({
                 <Tooltip isTriggerClickable={true}>
                   <TooltipTrigger>
                     <button
-                      className="cursor-pointer hover:text-blue-500"
+                      className="cursor-pointer text-gray-500 hover:text-blue-500"
                       onClick={() => {
                         setShowSettings(!isShowSettings);
                       }}
                     >
-                      <GearIcon width={18} height={18} />
+                      <IconSettings size={18} />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>{t('Conversation settings')}</TooltipContent>
@@ -147,10 +158,10 @@ export const ChatHeader = ({
                 <Tooltip isTriggerClickable={true}>
                   <TooltipTrigger>
                     <button
-                      className="cursor-pointer hover:text-blue-500"
+                      className="cursor-pointer text-gray-500 hover:text-blue-500"
                       onClick={onClearConversation}
                     >
-                      <BroomIcon width={18} height={18} />
+                      <IconEraser size={18} />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -162,7 +173,7 @@ export const ChatHeader = ({
                 <Tooltip isTriggerClickable={true}>
                   <TooltipTrigger>
                     <button
-                      className="cursor-pointer hover:text-blue-500 disabled:cursor-not-allowed"
+                      className="cursor-pointer text-gray-500 hover:text-blue-500 disabled:cursor-not-allowed"
                       onClick={onUnselectConversation}
                       disabled={messageIsStreaming}
                     >

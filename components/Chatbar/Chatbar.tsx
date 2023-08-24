@@ -54,6 +54,7 @@ export const Chatbar = () => {
       defaultModelId,
       folders,
       messageIsStreaming,
+      selectedConversationIds,
     },
     dispatch: homeDispatch,
     handleNewConversation,
@@ -155,14 +156,16 @@ export const Chatbar = () => {
     saveConversations(updatedConversations);
 
     if (updatedConversations.length > 0) {
-      homeDispatch({
-        field: 'selectedConversationIds',
-        value: [updatedConversations[updatedConversations.length - 1].id],
-      });
+      if (selectedConversationIds.includes(conversation.id)) {
+        homeDispatch({
+          field: 'selectedConversationIds',
+          value: [updatedConversations[updatedConversations.length - 1].id],
+        });
 
-      saveSelectedConversationIds([
-        updatedConversations[updatedConversations.length - 1].id,
-      ]);
+        saveSelectedConversationIds([
+          updatedConversations[updatedConversations.length - 1].id,
+        ]);
+      }
     } else {
       const newConversation: Conversation = {
         id: uuidv4(),
@@ -210,7 +213,6 @@ export const Chatbar = () => {
         value: 0,
       });
       chatDispatch({ field: 'searchTerm', value: '' });
-      e.target.style.background = 'none';
     }
   };
 
@@ -236,7 +238,7 @@ export const Chatbar = () => {
 
   const actionsBlock = (
     <button
-      className={`hover:bg-green/15disabled:cursor-not-allowed flex shrink-0 cursor-pointer select-none items-center gap-3 p-3 transition-colors  duration-200`}
+      className={`hover:bg-green/15disabled:cursor-not-allowed flex shrink-0 cursor-pointer select-none items-center gap-3 p-5 transition-colors  duration-200`}
       onClick={() => {
         handleNewConversation();
         chatDispatch({ field: 'searchTerm', value: '' });
@@ -245,7 +247,7 @@ export const Chatbar = () => {
       data-qa="new-chat"
     >
       <PlusIcon className="text-gray-500" width={18} height={18} />
-      {t('Add new chat')}
+      {t('New conversation')}
     </button>
   );
 
@@ -268,7 +270,8 @@ export const Chatbar = () => {
         itemComponent={<Conversations conversations={filteredConversations} />}
         folderComponent={<ChatFolders searchTerm={searchTerm} />}
         folders={chatFolders}
-        items={filteredConversations}
+        items={conversations}
+        filteredItems={filteredConversations}
         searchTerm={searchTerm}
         handleSearchTerm={(searchTerm: string) =>
           chatDispatch({ field: 'searchTerm', value: searchTerm })

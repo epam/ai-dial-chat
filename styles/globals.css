@@ -32,6 +32,10 @@
   }
 }
 
+html {
+  @apply bg-gray-900 text-gray-200;
+}
+
 @media (max-width: 720px) {
   pre {
     width: calc(100vw - 110px);
@@ -55,4 +59,9 @@ pre:has(div.codeblock) {
   .temperature-slider .rc-slider-track {
     @apply rounded-full bg-blue-500;
   }
+}
+
+.h-screen {
+  height: 100vh; /* Fallback for browsers that do not support Custom Properties */
+  height: calc(var(--vh, 1vh) * 100);
 }

@@ -4,6 +4,7 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
+import { IconChevronDown } from '@tabler/icons-react';
 import { FC, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -22,6 +23,75 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 import XMark from '../../public/images/icons/xmark.svg';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
+
+const Entity = ({
+  entity,
+  selectedModelId,
+  onSelect,
+}: {
+  entity: OpenAIEntity;
+  selectedModelId: string | undefined;
+  onSelect: (id: string) => void;
+}) => {
+  const [isOpened, setIsOpened] = useState(false);
+  const {
+    state: { lightMode },
+  } = useContext(HomeContext);
+
+  return (
+    <button
+      key={entity.id}
+      className={`flex items-center gap-3 rounded border px-3 py-2 hover:border-gray-800 dark:hover:border-gray-200 ${
+        selectedModelId === entity.id
+          ? 'border-blue-500'
+          : 'border-gray-400 dark:border-gray-600'
+      } ${isOpened ? 'md:col-span-2' : 'md:col-span-1'}`}
+      onClick={() => {
+        onSelect(entity.id);
+      }}
+    >
+      <ModelIcon
+        entityId={entity.id}
+        entity={entity}
+        size={24}
+        inverted={lightMode === 'dark'}
+      />
+      <div className="flex flex-col gap-1 text-left">
+        <span>{entity.name}</span>
+        <span
+          className="text-gray-500"
+          onClick={(e) => {
+            if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
+              e.stopPropagation();
+            }
+          }}
+        >
+          {entity.description && (
+            <EntityMarkdownDescription isShortDescription={!isOpened}>
+              {entity.description}
+            </EntityMarkdownDescription>
+          )}
+        </span>
+      </div>
+      {entity.description && entity.description.indexOf('\n\n') !== -1 && (
+        <span>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsOpened((isOpened) => !isOpened);
+            }}
+          >
+            <IconChevronDown
+              size={18}
+              className={`transition-all ${isOpened ? 'rotate-180' : ''}`}
+            />
+          </button>
+        </span>
+      )}
+    </button>
+  );
+};
 
 interface Props {
   selectedModelId: string | undefined;
@@ -50,7 +120,7 @@ export const ModelsDialog: FC<Props> = ({
 }) => {
   const { t } = useTranslation('chat');
   const {
-    state: { models, lightMode },
+    state: { models },
     handleUpdateRecentModels,
   } = useContext(HomeContext);
   const [entityTypes, setEntityTypes] = useState<
@@ -123,39 +193,6 @@ export const ModelsDialog: FC<Props> = ({
     });
   };
 
-  const getEntityTemplate = (entity: OpenAIEntity) => {
-    return (
-      <button
-        key={entity.id}
-        className={`flex items-center gap-3 rounded border px-3 py-2  ${
-          selectedModelId === entity.id
-            ? 'border-blue-500'
-            : 'border-gray-400 dark:border-gray-600'
-        }`}
-        onClick={() => {
-          onModelSelect(entity.id);
-          handleUpdateRecentModels(entity.id);
-          onClose();
-        }}
-      >
-        <ModelIcon
-          entityId={entity.id}
-          entity={entity}
-          size={24}
-          inverted={lightMode === 'dark'}
-        />
-        <div className="flex flex-col text-left">
-          <span>{entity.name}</span>
-          {entity.description && (
-            <EntityMarkdownDescription>
-              {entity.description}
-            </EntityMarkdownDescription>
-          )}
-        </div>
-      </button>
-    );
-  };
-
   const getEntityListingTemplate = (
     entities: OpenAIEntity[],
     heading: string,
@@ -164,7 +201,18 @@ export const ModelsDialog: FC<Props> = ({
       <div className="flex flex-col gap-3 text-xs">
         <span className="text-gray-500">{heading}</span>
         <div className="grid min-h-0 shrink grid-cols-1 gap-3 overflow-y-auto md:grid-cols-2">
-          {entities.map((entity) => getEntityTemplate(entity))}
+          {entities.map((entity) => (
+            <Entity
+              key={entity.id}
+              entity={entity}
+              selectedModelId={selectedModelId}
+              onSelect={(id) => {
+                onModelSelect(id);
+                handleUpdateRecentModels(id);
+                onClose();
+              }}
+            />
+          ))}
         </div>
       </div>
     );
@@ -246,7 +294,7 @@ export const ModelsDialog: FC<Props> = ({
             </button>
           </div>
 
-          <div className="flex flex-col gap-4 overflow-auto">
+          <div className="flex flex-col gap-4 overflow-auto pb-2">
             {filteredModelsEntities?.length > 0 ||
             filteredAssistantsEntities?.length > 0 ||
             filteredApplicationsEntities?.length > 0 ? (

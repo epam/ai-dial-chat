@@ -1,6 +1,5 @@
 import {
   IconCheck,
-  IconCopy,
   IconEdit,
   IconThumbDown,
   IconThumbUp,
@@ -25,6 +24,8 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
+import Clone from '../../public/images/icons/clone.svg';
+import { ConfirmDialog } from '../Common/ConfirmDialog';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachments } from './MessageAttachments';
 import { MessageError } from './MessageError';
@@ -53,7 +54,7 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
     <button
       type={type}
       className={classNames(
-        'text-gray-500 hover:text-blue-500 focus:visible',
+        'text-gray-500 focus:visible [&:not(:disabled)]:hover:text-blue-500',
         className,
       )}
       {...props}
@@ -84,6 +85,8 @@ export const ChatMessage: FC<Props> = memo(
     const [isTyping, setIsTyping] = useState<boolean>(false);
     const [messageContent, setMessageContent] = useState(message.content);
     const [messagedCopied, setMessageCopied] = useState(false);
+    const [isRemoveConfirmationOpened, setIsRemoveConfirmationOpened] =
+      useState(false);
 
     const isLastMessage =
       messageIndex == (conversation?.messages.length ?? 0) - 1;
@@ -165,22 +168,24 @@ export const ChatMessage: FC<Props> = memo(
         style={{ overflowWrap: 'anywhere' }}
         data-qa="chat-message"
       >
-        <div className="relative m-auto flex h-full p-4 text-base md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
+        <div className="relative m-auto flex h-full p-4 md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
           <div className="min-w-[40px] font-bold" data-qa="message-icon">
-            {isAssistant ? (
-              <ModelIcon
-                entityId={message.model?.id ?? conversation.model.id}
-                entity={
-                  (message.model?.id && modelsMap[message.model?.id]) ||
-                  undefined
-                }
-                inverted={lightMode === 'dark'}
-                animate={isShowResponseLoader}
-                size={28}
-              />
-            ) : (
-              <IconUser size={30} />
-            )}
+            <div className="flex justify-center">
+              {isAssistant ? (
+                <ModelIcon
+                  entityId={message.model?.id ?? conversation.model.id}
+                  entity={
+                    (message.model?.id && modelsMap[message.model?.id]) ||
+                    undefined
+                  }
+                  inverted={lightMode === 'dark'}
+                  animate={isShowResponseLoader}
+                  size={28}
+                />
+              ) : (
+                <IconUser size={30} />
+              )}
+            </div>
           </div>
 
           <div
@@ -210,21 +215,21 @@ export const ChatMessage: FC<Props> = memo(
 
                     <div className="flex justify-end gap-3">
                       <button
-                        className="h-[38px] rounded bg-blue-500 px-3 py-2.5 leading-none text-gray-100 hover:bg-blue-700 disabled:bg-gray-500"
-                        onClick={handleEditMessage}
-                        disabled={messageContent.trim().length <= 0}
-                        data-qa="save-and-submit"
-                      >
-                        {t('Save & Submit')}
-                      </button>
-                      <button
                         className="h-[38px] rounded border border-gray-400 px-3 py-2.5 leading-none hover:bg-gray-400 dark:border-gray-600 hover:dark:bg-gray-600"
                         onClick={() => {
                           setMessageContent(message.content);
                           setIsEditing(false);
                         }}
+                        data-qa="save-and-submit"
                       >
                         {t('Cancel')}
+                      </button>
+                      <button
+                        className="h-[38px] rounded bg-blue-500 px-3 py-2.5 leading-none text-gray-100 hover:bg-blue-700 disabled:bg-gray-500"
+                        onClick={handleEditMessage}
+                        disabled={messageContent.trim().length <= 0}
+                      >
+                        {t('Save & Submit')}
                       </button>
                     </div>
                   </div>
@@ -246,11 +251,31 @@ export const ChatMessage: FC<Props> = memo(
                       <IconEdit size={20} />
                     </button>
                     <button
-                      className="invisible text-gray-500 hover:text-blue-500 focus:visible group-hover:visible dark:hover:text-gray-300"
-                      onClick={handleDeleteMessage}
+                      className="invisible text-gray-500 hover:text-blue-500 focus:visible group-hover:visible"
+                      onClick={() => {
+                        setIsRemoveConfirmationOpened(true);
+                      }}
                     >
                       <IconTrash size={20} />
                     </button>
+
+                    <ConfirmDialog
+                      isOpen={isRemoveConfirmationOpened}
+                      heading={t('Confirm removing message')}
+                      description={
+                        t(
+                          'Are you sure that you want to remove the message?',
+                        ) || ''
+                      }
+                      confirmLabel={t('Remove')}
+                      cancelLabel={t('Cancel')}
+                      onClose={(result) => {
+                        setIsRemoveConfirmationOpened(false);
+                        if (result) {
+                          handleDeleteMessage();
+                        }
+                      }}
+                    />
                   </div>
                 )}
               </div>
@@ -277,10 +302,10 @@ export const ChatMessage: FC<Props> = memo(
                 <div className="flex w-[60px] shrink-0 flex-col justify-between">
                   <div className="ml-1 flex flex-col items-center justify-end gap-4 md:-mr-8 md:ml-0 md:flex-row md:items-start md:justify-start md:gap-1">
                     {messagedCopied ? (
-                      <IconCheck size={20} />
+                      <IconCheck size={20} className="text-gray-500" />
                     ) : (
                       <Button onClick={copyOnClick}>
-                        <IconCopy size={20} />
+                        <Clone height={20} width={20} />
                       </Button>
                     )}
                   </div>

@@ -113,7 +113,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     tokenCount += 3;
-
     const stream = await OpenAIStream({
       model,
       systemPrompt: promptToSend,
@@ -123,6 +122,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       assistantModelId: assistantModelId as OpenAIEntityModelID | undefined,
       userJWT: token?.access_token as string,
       chatId: id,
+      jobTitle: token?.jobTitle as string,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
 

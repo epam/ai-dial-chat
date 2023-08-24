@@ -46,10 +46,10 @@ const Header = () => {
 
   return (
     <div className="flex h-[48px] w-full border-b border-gray-300 bg-gray-100 dark:border-gray-900 dark:bg-gray-700">
-      <Tooltip>
+      <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <div
-            className="flex-none cursor-pointer border-r border-gray-300 px-5 py-3 dark:border-gray-900"
+            className="flex-none cursor-pointer border-r border-gray-300 p-3 dark:border-gray-900 md:px-5"
             onClick={handleToggleChatbar}
           >
             {showChatbar ? (
@@ -75,33 +75,31 @@ const Header = () => {
             )}
           </div>
         </TooltipTrigger>
-        <TooltipContent>
-          {showChatbar ? t('Close chat menu') : t('Open chat menu')}
-        </TooltipContent>
+        <TooltipContent>{t('Conversation list')}</TooltipContent>
       </Tooltip>
       <CreateNewChatMobile />
       <div className="flex grow justify-between">
         <span
-          className="bg-center bg-no-repeat dark:hidden max-md:grow xl:min-w-[195px]"
+          className="min-w-[110px] grow bg-center bg-no-repeat dark:hidden md:ml-5 md:grow-0 lg:bg-left"
           style={{
             backgroundImage: `var(--app-logo)`,
           }}
         ></span>
         <span
-          className="hidden bg-center bg-no-repeat dark:block max-md:grow xl:min-w-[195px]"
+          className="hidden min-w-[110px] grow bg-center bg-no-repeat dark:block md:ml-5 md:grow-0 lg:bg-left"
           style={{
             backgroundImage: `var(--app-logo-dark)`,
           }}
         ></span>
-        <div className="max-md:border-l max-md:border-gray-300 max-md:dark:border-gray-900 xl:min-w-[195px]">
+        <div className="w-[48px] max-md:border-l max-md:border-gray-300 max-md:dark:border-gray-900 md:w-auto">
           <User />
         </div>
       </div>
 
-      <Tooltip>
+      <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <div
-            className="flex-none cursor-pointer border-l border-gray-300 px-5 py-3 dark:border-gray-900"
+            className="flex-none cursor-pointer border-l border-gray-300 p-3 dark:border-gray-900 md:px-5"
             onClick={handleTogglePromtbar}
           >
             {showPromptbar ? (
@@ -127,9 +125,7 @@ const Header = () => {
             )}
           </div>
         </TooltipTrigger>
-        <TooltipContent>
-          {showPromptbar ? t('Close prompt menu') : t('Open prompt menu')}
-        </TooltipContent>
+        <TooltipContent>{t('Prompt list')}</TooltipContent>
       </Tooltip>
       <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
     </div>

@@ -1,6 +1,8 @@
-import { IconPlayerPlay } from '@tabler/icons-react';
 import { FC, MouseEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import Play from '../../public/images/icons/play.svg';
+import RefreshCW from '../../public/images/icons/refresh-cw.svg';
 
 interface ChatReplayControlsProps {
   onClickReplayReStart: MouseEventHandler<HTMLButtonElement>;
@@ -15,31 +17,33 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
   const { t } = useTranslation('chat');
   return (
     <div
-      className={`absolute w-full 
-      ${showReplayStart ? 'bottom-20' : 'bottom-0'} 
-      border-transparent bg-gradient-to-b from-transparent via-white to-white pb-8 dark:border-white/20 dark:via-[#343541] dark:to-[#343541] md:pb-6`}
+      className={`absolute bottom-3 flex w-full 
+      justify-center border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 dark:border-white/20 dark:via-gray-900 dark:to-gray-900 md:bottom-5`}
     >
       {showReplayStart ? (
         <button
-          className={`mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white px-4 py-2
-           text-black opacity-50 hover:opacity-100 dark:border-neutral-600 dark:bg-[#343541] dark:text-white md:mb-0 md:mt-2`}
+          className={`mx-3 flex w-fit shrink-0 items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600`}
           onClick={onClickReplayStart}
         >
+          <Play height={18} width={18} className="shrink-0 text-gray-500" />
           <span>{t('Start replay')}</span>
-          <IconPlayerPlay size={30} />
         </button>
       ) : (
         <button
-          className={`mx-auto flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white px-4 py-2 
-          text-black opacity-50 hover:opacity-100 dark:border-neutral-600 dark:bg-[#343541] dark:text-white md:mb-0 md:mt-2`}
+          className={`mx-3 flex w-fit shrink-0 items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600`}
           onClick={onClickReplayReStart}
         >
+          <RefreshCW
+            height={18}
+            width={18}
+            className="shrink-0 text-gray-500"
+          />
+
           <span>
             {t(
               'Looks like something went wrong. Do you want to restart replay?',
             )}
           </span>
-          <IconPlayerPlay size={30} />
         </button>
       )}
     </div>

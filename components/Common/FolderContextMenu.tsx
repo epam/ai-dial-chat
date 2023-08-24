@@ -1,11 +1,10 @@
+import { IconPencilMinus, IconTrashX } from '@tabler/icons-react';
 import { MouseEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { HighlightColor } from '@/types/components';
 
 import DotsIcon from '../../public/images/icons/dots-vertical.svg';
-import PenIcon from '../../public/images/icons/pen-line.svg';
-import TrashIcon from '../../public/images/icons/trash.svg';
 import { Menu, MenuItem } from './DropdownMenu';
 
 interface FolderContextMenuProps {
@@ -22,8 +21,9 @@ export const FolderContextMenu = ({
 
   return (
     <Menu
+      type="contextMenu"
       className="justify-self-end"
-      Icon={
+      trigger={
         <DotsIcon
           className="text-gray-500"
           width={18}
@@ -41,9 +41,11 @@ export const FolderContextMenu = ({
             ? 'hover:bg-green/15'
             : 'hover:bg-violet/15'
         }`}
-        label={t('Edit')}
-        Icon={
-          <PenIcon className="text-gray-500" width={18} height={18} size={18} />
+        item={
+          <div className="flex items-center gap-3">
+            <IconPencilMinus className="shrink-0 text-gray-500" size={18} />
+            <span>{t('Rename')}</span>
+          </div>
         }
         onClick={onRename}
       />
@@ -53,14 +55,11 @@ export const FolderContextMenu = ({
             ? 'hover:bg-green/15'
             : 'hover:bg-violet/15'
         }`}
-        label={t('Delete')}
-        Icon={
-          <TrashIcon
-            className="text-gray-500"
-            width={18}
-            height={18}
-            size={18}
-          />
+        item={
+          <div className="flex items-center gap-3">
+            <IconTrashX className="shrink-0 text-gray-500" size={18} />
+            <span>{t('Delete')}</span>
+          </div>
         }
         onClick={onDelete}
       />

@@ -9,6 +9,7 @@ import {
   offset,
   safePolygon,
   shift,
+  size,
   useClick,
   useDismiss,
   useFloating,
@@ -42,7 +43,7 @@ import {
 import classNames from 'classnames';
 
 const menuItemClassNames =
-  'flex focus-visible:border-none focus-visible:outline-none gap-3 cursor-pointer px-3 items-center';
+  'flex focus-visible:border-none focus-visible:outline-none gap-3 cursor-pointer px-3 items-center max-w-[300px]';
 
 const MenuContext = createContext<{
   getItemProps: (userProps?: HTMLProps<HTMLElement>) => Record<string, unknown>;
@@ -59,21 +60,33 @@ const MenuContext = createContext<{
 });
 
 interface MenuProps {
-  Icon?: ReactNode;
+  trigger?: ReactNode;
   nested?: boolean;
   children?: ReactNode;
+  type?: 'dropdown' | 'contextMenu';
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
 export const MenuComponent = forwardRef<
   HTMLButtonElement,
   MenuProps & HTMLProps<HTMLButtonElement>
 >(function MenuComponent(
-  { children, style, className, label, Icon, ...props },
+  {
+    children,
+    style,
+    className,
+    label,
+    trigger,
+    type = 'dropdown',
+    onOpenChange,
+    ...props
+  },
   forwardedRef,
 ) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasFocusInside, setHasFocusInside] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [floatingWidth, setFloatingWidth] = useState(0);
 
   const elementsRef = useRef<HTMLButtonElement[]>([]);
   const labelsRef = useRef<string[]>([]);
@@ -89,12 +102,20 @@ export const MenuComponent = forwardRef<
   const { floatingStyles, refs, context } = useFloating<HTMLButtonElement>({
     nodeId,
     open: isOpen,
-    onOpenChange: setIsOpen,
+    onOpenChange: (isOpened) => {
+      setIsOpen(isOpened);
+      onOpenChange?.(isOpened);
+    },
     placement: isNested ? 'right-start' : 'bottom-start',
     middleware: [
-      offset({ mainAxis: 0, alignmentAxis: isNested ? -4 : 0 }),
+      offset(0),
       flip(),
       shift(),
+      size({
+        apply({ rects }) {
+          setFloatingWidth(rects.reference.width);
+        },
+      }),
     ],
     whileElementsMounted: autoUpdate,
   });
@@ -175,7 +196,7 @@ export const MenuComponent = forwardRef<
         data-focus-inside={hasFocusInside ? '' : undefined}
         className={classNames(
           menuItemClassNames,
-          isNested ? 'h-[42px] w-full' : 'pr-0',
+          isNested ? 'h-[42px] w-full' : 'h-full pr-0',
           className,
         )}
         {...getReferenceProps(
@@ -189,8 +210,10 @@ export const MenuComponent = forwardRef<
           }),
         )}
       >
-        {Icon}
-        {label && <span>{label}</span>}
+        {trigger}
+        {!trigger && label && (
+          <span className={`inline-block truncate`}>{label}</span>
+        )}
       </button>
       <MenuContext.Provider
         value={{
@@ -211,12 +234,15 @@ export const MenuComponent = forwardRef<
                 returnFocus={!isNested}
               >
                 <div
-                  className="z-50 w-max rounded bg-gray-100 text-gray-800 focus-visible:outline-none dark:bg-black dark:text-gray-200"
+                  className="z-50 overflow-hidden rounded bg-gray-100 text-gray-800 shadow focus-visible:outline-none dark:bg-black dark:text-gray-200"
                   data-qa="dropdown-menu"
                   ref={refs.setFloating}
                   style={{
                     ...floatingStyles,
                     ...style,
+                    ...(type === 'dropdown' && {
+                      width: `${floatingWidth}px`,
+                    }),
                   }}
                   {...getFloatingProps()}
                 >
@@ -232,8 +258,8 @@ export const MenuComponent = forwardRef<
 });
 
 interface MenuItemProps {
-  label: string;
-  Icon?: ReactNode;
+  label?: string;
+  item?: ReactNode;
   disabled?: boolean;
 }
 
@@ -241,7 +267,7 @@ export const MenuItem = forwardRef<
   HTMLButtonElement,
   MenuItemProps & ButtonHTMLAttributes<HTMLButtonElement>
 >(function MenuItem(
-  { className, label, Icon, disabled, ...props },
+  { className, label, item: ItemComponent, disabled, ...props },
   forwardedRef,
 ) {
   const menu = useContext(MenuContext);
@@ -269,8 +295,10 @@ export const MenuItem = forwardRef<
         },
       })}
     >
-      {Icon}
-      {label && <span>{label}</span>}
+      {ItemComponent}
+      {!ItemComponent && label && (
+        <span className="inline-block truncate">{label}</span>
+      )}
     </button>
   );
 });

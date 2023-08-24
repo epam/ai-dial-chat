@@ -8,7 +8,9 @@ export const User = () => {
         <ProfileButton />
       </div>
 
-      <UserDesktop />
+      <div className="hidden h-full w-full md:block">
+        <UserDesktop />
+      </div>
     </>
   );
 };

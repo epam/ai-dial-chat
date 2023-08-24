@@ -73,6 +73,7 @@ export const OpenAIStream = async ({
   assistantModelId,
   chatId,
   userJWT,
+  jobTitle,
 }: {
   model: OpenAIEntityModel;
   systemPrompt: string | undefined;
@@ -82,6 +83,7 @@ export const OpenAIStream = async ({
   assistantModelId: OpenAIEntityModelID | undefined;
   userJWT: string;
   chatId: string;
+  jobTitle: string | undefined;
 }) => {
   const isAddonsAdded: boolean =
     Array.isArray(selectedAddons) && selectedAddons?.length > 0;
@@ -90,6 +92,7 @@ export const OpenAIStream = async ({
   const requestHeaders = getApiHeaders({
     chatId,
     jwt: userJWT,
+    jobTitle,
   });
 
   const body = JSON.stringify({

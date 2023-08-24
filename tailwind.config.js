@@ -44,6 +44,23 @@ module.exports = {
       opacity: {
         15: '15%',
       },
+      boxShadow: {
+        DEFAULT: '0 0 4px 0 rgb(var(--gray-900, 9 13 19) / 15%)',
+      },
+      fontFamily: {
+        DEFAULT: ['var(--font-inter)'],
+      },
+      typography: {
+        DEFAULT: {
+          css: {
+            pre: {
+              border: 'none',
+              borderRadius: '0',
+              backgroundColor: 'transparent',
+            },
+          },
+        },
+      },
     },
   },
   variants: {

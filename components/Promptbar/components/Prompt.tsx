@@ -1,3 +1,4 @@
+import { IconBulb } from '@tabler/icons-react';
 import {
   DragEvent,
   MouseEventHandler,
@@ -14,11 +15,10 @@ import { exportPrompt } from '@/utils/app/importExport';
 import { Prompt } from '@/types/prompt';
 
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
+import { ContextMenu } from '@/components/Common/ContextMenu';
 import { MoveToFolderMobileModal } from '@/components/Common/MoveToFolderMobileModal';
-import { ContextMenu } from '@/components/Common/NewContextMenu';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
-import LightbulbIcon from '../../../public/images/icons/lightbulb.svg';
 import XmarkIcon from '../../../public/images/icons/xmark.svg';
 import PromptbarContext from '../PromptBar.context';
 import { PromptModal } from './PromptModal';
@@ -130,25 +130,36 @@ export const PromptComponent = ({ prompt }: Props) => {
       onClick={handleOnClickPrompt}
     >
       <button
-        className="flex w-full items-center gap-3  px-3 "
+        className="flex h-full w-full items-center gap-3 px-3 "
         draggable="true"
         onDragStart={(e) => handleDragStart(e, prompt)}
       >
-        <LightbulbIcon width={18} height={18} size={18} />
+        <IconBulb size={18} className="text-gray-500" />
 
         <div className="relative max-h-5 flex-1 truncate break-all pr-4 text-left leading-3">
           {prompt.name}
         </div>
       </button>
 
-      {(isDeleting || isRenaming) && (
+      {isDeleting && (
         <div className="absolute right-1 z-10 flex">
           <SidebarActionButton handleClick={handleDelete}>
-            <CheckIcon width={18} height={18} size={18} />
+            <CheckIcon
+              width={18}
+              height={18}
+              size={18}
+              className="hover:text-violet"
+            />
           </SidebarActionButton>
 
           <SidebarActionButton handleClick={handleCancelDelete}>
-            <XmarkIcon width={18} height={18} size={18} strokeWidth="2" />
+            <XmarkIcon
+              width={18}
+              height={18}
+              size={18}
+              strokeWidth="2"
+              className="hover:text-violet"
+            />
           </SidebarActionButton>
         </div>
       )}

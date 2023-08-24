@@ -1,4 +1,4 @@
-import { IconPlayerStop } from '@tabler/icons-react';
+import { IconPlayerStop, IconSend } from '@tabler/icons-react';
 import {
   ForwardedRef,
   KeyboardEvent,
@@ -22,7 +22,6 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import ArrowNarrowDown from '../../public/images/icons/arrow-narrow-down.svg';
 import RefreshCWAlt from '../../public/images/icons/refresh-cw-alt.svg';
-import SendAlt1 from '../../public/images/icons/send-alt-1.svg';
 import { FooterMessage } from './FooterMessage';
 import { PromptList } from './PromptList';
 import { VariableModal } from './VariableModal';
@@ -254,13 +253,18 @@ export const ChatInput = forwardRef(
         ref={ref}
         className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 pt-6 dark:border-white/20 dark:via-gray-900 dark:to-gray-900 md:pt-2"
       >
-        <div className="mx-2 mt-8 flex flex-row gap-3 last:mb-2 md:mx-4 md:mt-[52px] md:last:mb-6 lg:mx-auto lg:max-w-3xl">
+        <div className="mx-2 mb-2 mt-8 flex flex-row gap-3 md:mx-4 md:mb-0 md:mt-[52px] md:last:mb-6 lg:mx-auto lg:max-w-3xl">
           {messageIsStreaming && (
             <button
               className="absolute inset-x-0 top-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600"
               onClick={onStopConversation}
             >
-              <IconPlayerStop size={18} /> {t('Stop generating')}
+              <IconPlayerStop
+                size={18}
+                className="text-gray-500"
+                strokeWidth="1.5"
+              />{' '}
+              {t('Stop generating')}
             </button>
           )}
 
@@ -312,13 +316,13 @@ export const ChatInput = forwardRef(
                 <div className="h-5 w-5 animate-spin rounded-full border-t-2 border-gray-500 text-current"></div>
               ) : (
                 <span className="hover:text-blue-500">
-                  <SendAlt1 width={24} height={24} />
+                  <IconSend size={24} stroke="1.5" />
                 </span>
               )}
             </button>
 
             {showScrollDownButton && (
-              <div className="absolute -top-14 right-0 aspect-square h-11 lg:bottom-0 lg:right-[-70px] lg:top-auto">
+              <div className="absolute -top-14 right-0 aspect-square h-11 xl:bottom-0 xl:right-[-70px] xl:top-auto">
                 <button
                   className="flex h-full w-full items-center justify-center rounded-full bg-gray-100 p-2 hover:bg-gray-400 dark:bg-gray-700 hover:dark:bg-gray-600"
                   onClick={onScrollDownClick}

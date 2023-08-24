@@ -106,8 +106,10 @@ export const AddonsDialog: FC<Props> = ({
 
     return (
       <button
-        className={`flex flex-col gap-3 rounded border p-3 ${
-          isPreselected ? 'bg-blue-500/20' : 'hover:border-gray-200'
+        className={`flex flex-col gap-3 rounded border p-3 text-left ${
+          isPreselected
+            ? 'bg-blue-500/20'
+            : 'hover:border-gray-800 dark:hover:border-gray-200'
         } ${
           isSelected
             ? 'border-blue-500'
@@ -134,9 +136,11 @@ export const AddonsDialog: FC<Props> = ({
           <span className="text-left">{addon.name}</span>
         </div>
         {addon.description && (
-          <EntityMarkdownDescription>
-            {addon.description}
-          </EntityMarkdownDescription>
+          <span className="text-gray-500">
+            <EntityMarkdownDescription>
+              {addon.description}
+            </EntityMarkdownDescription>
+          </span>
         )}
       </button>
     );
@@ -145,9 +149,11 @@ export const AddonsDialog: FC<Props> = ({
   useEffect(() => {
     setSearchTerm('');
     setSelectedAddons(
-      selectedAddonsIds
-        .map((id) => addonsMap[id])
-        .filter(Boolean) as OpenAIEntity[],
+      (
+        selectedAddonsIds
+          .map((id) => addonsMap[id])
+          .filter(Boolean) as OpenAIEntity[]
+      ).filter((addon) => !preselectedAddonsIds.includes(addon.id)),
     );
   }, [isOpen]);
 
@@ -190,12 +196,24 @@ export const AddonsDialog: FC<Props> = ({
               className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
             ></input>
           </div>
-          <div className="flex flex-col gap-4" data-qa="addon-search-results">
-            {selectedAddons?.length > 0 && (
+          <div className="flex flex-col gap-4 text-xs" data-qa="addon-search-results">
+            {(selectedAddons?.length > 0 ||
+              preselectedAddonsIds?.length > 0) && (
               <div className="flex flex-col gap-3">
                 <span className="text-gray-500">{t('Selected')}</span>
 
                 <div className="flex flex-wrap gap-1">
+                  {preselectedAddonsIds.map((addonID) => {
+                    const addon = addonsMap[addonID];
+                    if (
+                      !addon ||
+                      selectedAddons.map((addon) => addon.id).includes(addonID)
+                    ) {
+                      return <></>;
+                    }
+
+                    return getSelectedAddonTemplate(addon);
+                  })}
                   {selectedAddons.map((addon) =>
                     getSelectedAddonTemplate(addon),
                   )}
@@ -226,7 +244,9 @@ export const AddonsDialog: FC<Props> = ({
                   onClose();
                   onAddonsSelected(selectedAddons.map(({ id }) => id));
                 }}
-                disabled={selectedAddons.length > 10}
+                disabled={
+                  selectedAddons.length + preselectedAddonsIds.length > 10
+                }
               >
                 {t('Apply addons')}
               </button>

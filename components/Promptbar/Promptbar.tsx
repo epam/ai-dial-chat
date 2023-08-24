@@ -113,8 +113,6 @@ const Promptbar = () => {
       };
 
       handleUpdatePrompt(updatedPrompt);
-
-      e.target.style.background = 'none';
     }
   };
 
@@ -154,14 +152,14 @@ const Promptbar = () => {
 
   const actionsBlock = (
     <button
-      className="flex shrink-0 cursor-pointer select-none items-center gap-3 p-3 transition-colors duration-200 hover:bg-violet/15 disabled:cursor-not-allowed"
+      className="flex shrink-0 cursor-pointer select-none items-center gap-3 p-5 transition-colors duration-200 hover:bg-violet/15 disabled:cursor-not-allowed"
       onClick={() => {
         handleCreatePrompt();
         promptDispatch({ field: 'searchTerm', value: '' });
       }}
     >
       <PlusIcon className="text-gray-500" width={18} height={18} />
-      {t('Add new prompt')}
+      {t('New prompt')}
     </button>
   );
 
@@ -189,7 +187,8 @@ const Promptbar = () => {
         actionButtons={actionsBlock}
         folderComponent={<PromptFolders />}
         folders={promptFolders}
-        items={filteredPrompts}
+        items={prompts}
+        filteredItems={filteredPrompts}
         searchTerm={searchTerm}
         handleSearchTerm={(searchTerm: string) =>
           promptDispatch({ field: 'searchTerm', value: searchTerm })

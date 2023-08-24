@@ -1,133 +1,250 @@
 import {
-  IconFileExport,
-  IconPencil,
+  IconFileArrowRight,
+  IconFolderPlus,
+  IconFolderShare,
+  IconPencilMinus,
   IconRefreshDot,
   IconScale,
-  IconTrash,
+  IconTrashX,
 } from '@tabler/icons-react';
-import { MouseEventHandler, RefObject, useRef } from 'react';
+import { MouseEventHandler, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { FeatureType } from '@/types/components';
+import { Conversation } from '@/types/chat';
+import { FeatureType, HighlightColor } from '@/types/components';
+import { Prompt } from '@/types/prompt';
 
-import MoveIcone from '../../public/images/icons/file-arrow-right.svg';
+import HomeContext from '@/pages/api/home/home.context';
 
-interface Props {
-  parentRef: RefObject<HTMLDivElement>;
+import DotsIcon from '../../public/images/icons/dots-vertical.svg';
+import { Menu, MenuItem } from './DropdownMenu';
+
+import classNames from 'classnames';
+
+interface ContextMenuProps {
+  item: Conversation | Prompt;
   featureType: FeatureType;
+  highlightColor: HighlightColor;
+  onOpenMoveToModal: () => void;
+  moveToFolder?: (folderId: string) => void;
   onDelete: MouseEventHandler<unknown>;
   onRename: MouseEventHandler<unknown>;
   onExport: MouseEventHandler<unknown>;
-  onReplay?: MouseEventHandler<HTMLLIElement>;
+  onReplay?: MouseEventHandler<HTMLButtonElement>;
   onCompare?: MouseEventHandler<unknown>;
   isEmptyConversation?: boolean;
+  className?: string;
 }
 
 export const ContextMenu = ({
-  parentRef,
+  item,
+  featureType,
   onDelete,
   onRename,
   onExport,
   onReplay,
   onCompare,
   isEmptyConversation,
-  featureType,
-}: Props) => {
+  className,
+  moveToFolder,
+  onOpenMoveToModal,
+  highlightColor,
+}: ContextMenuProps) => {
   const { t } = useTranslation('sidebar');
-  const contextMenuHeight = 230;
-  const classes = useRef('');
+  const {
+    state: { folders },
+    handleCreateFolder,
+    handleUpdateConversation,
+  } = useContext(HomeContext);
 
-  const isConversation = featureType === 'chat';
+  const moveConversationToFolder = (folderId: string) => {
+    if (featureType === 'chat') {
+      handleUpdateConversation(item as Conversation, {
+        key: 'folderId',
+        value: folderId,
+      });
+    }
+  };
 
-  classes.current = getContextMenuPositioningClasses(
-    parentRef,
-    contextMenuHeight,
-  );
-
+  const moveToNewFolder = () => {
+    const newFolder = handleCreateFolder(t('New folder'), featureType);
+    if (featureType === 'chat') {
+      moveConversationToFolder(newFolder.id);
+    }
+    if (moveToFolder) {
+      moveToFolder(newFolder.id);
+    }
+  };
   return (
-    <div
-      className={`absolute right-0 z-20 min-w-[50px] rounded-lg border border-neutral-600 bg-[#202123] p-2 ${classes.current}`}
-      data-qa="context-menu"
-    >
-      <ul className="flex flex-col gap-2">
-        <li
+    <>
+      <Menu
+        type="contextMenu"
+        trigger={
+          <DotsIcon
+            className={classNames('text-gray-500', className)}
+            width={18}
+            height={18}
+            size={18}
+          />
+        }
+      >
+        <MenuItem
+          className={`${
+            highlightColor === 'green'
+              ? 'hover:bg-green/15'
+              : 'hover:bg-violet/15'
+          }`}
+          item={
+            <div className="flex items-center gap-3">
+              <IconPencilMinus className="shrink-0 text-gray-500" size={18} />
+              <span>{featureType === 'chat' ? t('Rename') : t('Edit')}</span>
+            </div>
+          }
           onClick={onRename}
-          className="flex cursor-pointer rounded-lg p-2 hover:bg-[#343541]"
-        >
-          <IconPencil size={18} />
-          <span className="ml-2">
-            {t(`${isConversation ? 'Rename' : 'Edit'}`)}
-          </span>
-        </li>
+        />
         {onCompare && (
-          <li
+          <MenuItem
+            className={`${
+              highlightColor === 'green'
+                ? 'hover:bg-green/15'
+                : 'hover:bg-violet/15'
+            }`}
+            item={
+              <div className="flex items-center gap-3">
+                <IconScale className="shrink-0 text-gray-500" size={18} />
+                <span>{t('Compare')}</span>
+              </div>
+            }
             onClick={onCompare}
-            className="flex cursor-pointer rounded-lg p-2 hover:bg-[#343541]"
-          >
-            <IconScale size={18} />
-            <span className="ml-2">{t('Compare')}</span>
-          </li>
+          />
         )}
         {!isEmptyConversation && onReplay && (
-          <li
+          <MenuItem
+            className={`${
+              highlightColor === 'green'
+                ? 'hover:bg-green/15'
+                : 'hover:bg-violet/15'
+            }`}
+            item={
+              <div className="flex items-center gap-3">
+                <IconRefreshDot className="shrink-0 text-gray-500" size={18} />
+                <span>{t('Replay')}</span>
+              </div>
+            }
             onClick={onReplay}
-            className="flex cursor-pointer rounded-lg p-2 hover:bg-[#343541]"
-          >
-            <IconRefreshDot size={18} />
-            <span className="ml-2">{t('Replay')}</span>
-          </li>
+          />
         )}
-        <li
+        <MenuItem
+          className={`${
+            highlightColor === 'green'
+              ? 'hover:bg-green/15'
+              : 'hover:bg-violet/15'
+          }`}
+          item={
+            <div className="flex items-center gap-3">
+              <IconFileArrowRight
+                className="shrink-0 text-gray-500"
+                size={18}
+              />
+              <span>{t('Export')}</span>
+            </div>
+          }
           onClick={onExport}
-          className="flex cursor-pointer rounded-lg p-2 hover:bg-[#343541]"
+        />
+        <MenuItem
+          className={classNames(
+            'md:hidden',
+            `${
+              highlightColor === 'green'
+                ? 'hover:bg-green/15'
+                : 'hover:bg-violet/15'
+            }`,
+          )}
+          onClick={onOpenMoveToModal}
+          item={
+            <div className="flex items-center gap-3">
+              <IconFolderShare className="shrink-0 text-gray-500" size={18} />
+              <span>{t('Move to')}</span>
+            </div>
+          }
+        />
+        <Menu
+          type="contextMenu"
+          className={classNames(
+            'max-md:hidden',
+            `${
+              highlightColor === 'green'
+                ? 'hover:bg-green/15'
+                : 'hover:bg-violet/15'
+            }`,
+          )}
+          trigger={
+            <div className="flex items-center gap-3">
+              <IconFolderShare className="shrink-0 text-gray-500" size={18} />
+              <span>{t('Move to')}</span>
+            </div>
+          }
         >
-          <IconFileExport size={18} />
-          <span className="ml-2">{t('Export')}</span>
-        </li>
-        <li className="flex cursor-pointer rounded-lg p-2 hover:bg-[#343541]">
-          <MoveIcone width={18} height={18} />
-          <span className="ml-2">{t('Move to')}</span>
-        </li>
-        <li
+          <MenuItem
+            className={classNames(
+              `${
+                folders?.length > 0
+                  ? 'border-b border-gray-400 dark:border-gray-600'
+                  : ''
+              }`,
+              'max-md:hidden',
+              `${
+                highlightColor === 'green'
+                  ? 'hover:bg-green/15'
+                  : 'hover:bg-violet/15'
+              }`,
+            )}
+            onClick={moveToNewFolder}
+            item={
+              <div className="flex items-center gap-3">
+                <IconFolderPlus className="shrink-0 text-gray-500" size={18} />
+                <span>{t('New folder')}</span>
+              </div>
+            }
+          />
+          {folders
+            .filter((folder) => folder.type === featureType)
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((folder) => (
+              <MenuItem
+                className={classNames(
+                  'max-md:hidden',
+                  `${
+                    highlightColor === 'green'
+                      ? 'hover:bg-green/15'
+                      : 'hover:bg-violet/15'
+                  }`,
+                )}
+                key={folder.id}
+                label={folder.name}
+                onClick={() => {
+                  moveToFolder
+                    ? moveToFolder(folder.id)
+                    : moveConversationToFolder(folder.id);
+                }}
+              />
+            ))}
+        </Menu>
+        <MenuItem
+          className={`${
+            highlightColor === 'green'
+              ? 'hover:bg-green/15'
+              : 'hover:bg-violet/15'
+          }`}
+          item={
+            <div className="flex items-center gap-3">
+              <IconTrashX className="shrink-0 text-gray-500" size={18} />
+              <span>{t('Delete')}</span>
+            </div>
+          }
           onClick={onDelete}
-          className="flex cursor-pointer rounded-lg p-2 hover:bg-[#343541]"
-        >
-          <IconTrash size={18} />
-          <span className="ml-2">{t('Delete')}</span>
-        </li>
-      </ul>
-    </div>
+        />
+      </Menu>
+    </>
   );
 };
-
-function getContextMenuPositioningClasses(
-  parentRef: RefObject<HTMLDivElement>,
-  contextMenuHeight: number,
-): string {
-  const padding = 20;
-  const classesTop = `top-5 bottom-auto`;
-  const classesBottom = `bottom-5 top-auto`;
-  let parent = parentRef.current as HTMLDivElement | null;
-
-  while (parent) {
-    const parentStyle = window.getComputedStyle(parent);
-
-    if (parentStyle.overflowY === 'auto') {
-      const directParentRefRect = (
-        parentRef.current as HTMLDivElement
-      ).getBoundingClientRect();
-      const parentRect = parent.getBoundingClientRect();
-
-      if (
-        parentRect.bottom - contextMenuHeight - padding >=
-        directParentRefRect.top
-      ) {
-        return classesTop;
-      }
-      return classesBottom;
-    }
-    parent = parent.parentNode as HTMLDivElement | null;
-  }
-
-  return classesTop;
-}

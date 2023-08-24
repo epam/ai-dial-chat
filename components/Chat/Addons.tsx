@@ -29,23 +29,31 @@ export const Addons = ({
   const { t } = useTranslation('chat');
   const [filteredRecentAddons, setFilteredRecentAddons] = useState<string[]>(
     () => {
-      return recentAddonsIds.filter((id) => !selectedAddonsIds.includes(id));
+      return recentAddonsIds.filter(
+        (id) =>
+          !selectedAddonsIds.includes(id) && !preselectedAddonsIds.includes(id),
+      );
     },
   );
   const [isAddonsDialogOpen, setIsAddonsDialogOpen] = useState(false);
 
   useEffect(() => {
     setFilteredRecentAddons(
-      recentAddonsIds.filter((id) => !selectedAddonsIds.includes(id)),
+      recentAddonsIds.filter(
+        (id) =>
+          !selectedAddonsIds.includes(id) && !preselectedAddonsIds.includes(id),
+      ),
     );
-  }, [selectedAddonsIds, recentAddonsIds]);
+  }, [selectedAddonsIds, preselectedAddonsIds, recentAddonsIds]);
 
   const getAddon = (addonId: string, isSelected = false) => {
     const description = addonsMap[addonId]?.description;
     const template = (
       <button
-        className={`flex items-center gap-2 px-3 py-2  ${
-          isSelected ? 'bg-blue-500/20' : 'bg-gray-100 dark:bg-gray-700'
+        className={`flex items-center gap-2 rounded px-3 py-2 text-left ${
+          isSelected
+            ? 'bg-blue-500/20'
+            : 'bg-gray-100 hover:bg-gray-400 dark:bg-gray-700 hover:dark:bg-gray-600'
         }`}
         disabled={preselectedAddonsIds.includes(addonId)}
         onClick={() => {
@@ -72,7 +80,7 @@ export const Addons = ({
             <TooltipTrigger className="flex shrink-0">
               {template}
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent className="max-w-[220px]">
               <EntityMarkdownDescription>
                 {description}
               </EntityMarkdownDescription>
@@ -89,15 +97,19 @@ export const Addons = ({
     <div className="flex flex-col gap-3" data-qa="addons">
       <span>{t('Addons (max 10)')}</span>
 
-      {selectedAddonsIds?.length > 0 && (
+      {(selectedAddonsIds?.length > 0 || preselectedAddonsIds?.length > 0) && (
         <>
           <span className="text-gray-500">{t('Selected')}</span>
           <div className="flex flex-wrap gap-1" data-qa="addon">
-            {selectedAddonsIds.map((addon) => getAddon(addon, true))}
+            {preselectedAddonsIds.map((addon) => getAddon(addon, true))}
+            {selectedAddonsIds
+              .filter((id) => !preselectedAddonsIds.includes(id))
+              .map((addon) => getAddon(addon, true))}
           </div>
         </>
       )}
-      {(!selectedAddonsIds || selectedAddonsIds.length < 11) && (
+      {(!selectedAddonsIds ||
+        selectedAddonsIds.length + preselectedAddonsIds.length < 11) && (
         <>
           {filteredRecentAddons?.length > 0 && (
             <>

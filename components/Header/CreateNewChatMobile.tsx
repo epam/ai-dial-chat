@@ -11,7 +11,7 @@ export const CreateNewChatMobile = () => {
   const { t } = useTranslation('sidebar');
 
   return (
-    <Tooltip>
+    <Tooltip isTriggerClickable={true}>
       <TooltipTrigger>
         <div
           className="flex border-r border-gray-300 p-3 dark:border-gray-900 md:hidden"
@@ -22,7 +22,7 @@ export const CreateNewChatMobile = () => {
           <CirclePlusIcon className="text-gray-500" width={24} height={24} />
         </div>
       </TooltipTrigger>
-      <TooltipContent>{t('New chat')}</TooltipContent>
+      <TooltipContent>{t('New conversation')}</TooltipContent>
     </Tooltip>
   );
 };

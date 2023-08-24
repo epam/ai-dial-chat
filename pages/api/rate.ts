@@ -33,6 +33,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       headers: getApiHeaders({
         chatId: id,
         jwt: token?.access_token as string,
+        jobTitle: token?.jobTitle as string,
       }),
       method: 'POST',
       body: JSON.stringify({
