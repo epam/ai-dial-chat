@@ -1,4 +1,4 @@
-import { IconFileArrowRight, IconSettings } from '@tabler/icons-react';
+import { IconSettings } from '@tabler/icons-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useCallback, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,7 @@ import HomeContext from '@/pages/api/home/home.context';
 import { FooterMessage } from '@/components/Chat/FooterMessage';
 import { ConfirmDialog } from '@/components/Common/ConfirmDialog';
 
+import LogOutIcon from '../../../public/images/icons/log-out.svg';
 import UserIcon from '../../../public/images/icons/user.svg';
 
 const UserInfo = () => {
@@ -62,7 +63,7 @@ const Logout = () => {
           setIsLogoutConfirmationOpened(true);
         }}
       >
-        <IconFileArrowRight className="text-gray-500" size={18} />
+        <LogOutIcon className="text-gray-500" width={18} height={18} />
         <span>{session ? t('Log out') : t('Login')}</span>
       </div>
       <ConfirmDialog
