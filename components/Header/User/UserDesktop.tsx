@@ -11,7 +11,7 @@ import { ConfirmDialog } from '@/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/components/Common/DropdownMenu';
 
 import ChevronDownIcon from '../../../public/images/icons/chevron-down.svg';
-import FileArrowRightIcon from '../../../public/images/icons/file-arrow-right.svg';
+import LogOutIcon from '../../../public/images/icons/log-out.svg';
 import UserIcon from '../../../public/images/icons/user.svg';
 
 export const UserDesktop = () => {
@@ -75,11 +75,7 @@ export const UserDesktop = () => {
           className={`hover:bg-blue-500/20`}
           item={
             <div className="flex gap-3">
-              <FileArrowRightIcon
-                width={18}
-                height={18}
-                className="text-gray-500"
-              />
+              <LogOutIcon width={18} height={18} className="text-gray-500" />
               <span>{session ? t('Log out') : t('Login')}</span>
             </div>
           }
