@@ -24,7 +24,7 @@ import {
   withLatestFrom,
 } from 'rxjs';
 
-const getModelsEpic = (
+const getAddonsEpic = (
   action$: Observable<any>,
   state$: Observable<RootState>,
 ) =>
@@ -55,7 +55,7 @@ const getModelsEpic = (
     }),
   );
 
-const updateRecentModelsEpic = (
+const updateRecentAddonsEpic = (
   action$: Observable<any>,
   state$: Observable<RootState>,
 ) =>
@@ -69,6 +69,6 @@ const updateRecentModelsEpic = (
     ignoreElements(),
   );
 
-const ModelsEpics: any = combineEpics(getModelsEpic, updateRecentModelsEpic);
+const AddonsEpics: any = combineEpics(getAddonsEpic, updateRecentAddonsEpic);
 
-export default ModelsEpics;
+export default AddonsEpics;
