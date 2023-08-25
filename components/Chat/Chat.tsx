@@ -42,9 +42,9 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   getModels,
   selectDefaultModelId,
-  selectError,
-  selectIsLoading,
   selectModels,
+  selectModelsError,
+  selectModelsIsLoading,
   selectModelsMap,
   updateRecentModels,
 } from '@/store/models/models.reducers';
@@ -190,8 +190,8 @@ export const Chat = memo(({ appName }: Props) => {
   const dispatch = useAppDispatch();
   const models = useAppSelector(selectModels);
   const modelsMap = useAppSelector(selectModelsMap);
-  const modelError = useAppSelector(selectError);
-  const modelsIsLoading = useAppSelector(selectIsLoading);
+  const modelError = useAppSelector(selectModelsError);
+  const modelsIsLoading = useAppSelector(selectModelsIsLoading);
   const defaultModelId = useAppSelector(selectDefaultModelId);
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);

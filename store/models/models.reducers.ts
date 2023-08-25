@@ -96,10 +96,10 @@ export const modelsSlice = createSlice({
 //
 const rootSelector = (state: RootState) => state.models;
 
-export const selectIsLoading = createSelector([rootSelector], (state) => {
+export const selectModelsIsLoading = createSelector([rootSelector], (state) => {
   return state.isLoading;
 });
-export const selectError = createSelector([rootSelector], (state) => {
+export const selectModelsError = createSelector([rootSelector], (state) => {
   return state.error;
 });
 export const selectModels = createSelector([rootSelector], (state) => {

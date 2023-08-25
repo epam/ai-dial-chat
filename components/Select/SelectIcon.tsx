@@ -23,7 +23,7 @@ export const SelectIcon = ({ modelId, children }: SelectIconProps) => {
         size={18}
         entityId={modelId}
         entity={modelsMap[modelId]}
-      inverted={lightMode === 'dark'}
+        inverted={lightMode === 'dark'}
       />
       <span className="truncate break-all">{children}</span>
     </span>

@@ -27,7 +27,7 @@ import { PromptList } from './PromptList';
 import { VariableModal } from './VariableModal';
 
 import { useAppSelector } from '@/store/hooks';
-import { selectIsLoading, selectModels } from '@/store/models/models.reducers';
+import { selectModelsIsLoading } from '@/store/models/models.reducers';
 
 interface Props {
   onSend: (message: Message) => void;
@@ -74,7 +74,7 @@ export const ChatInput = forwardRef(
     const [variables, setVariables] = useState<string[]>([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [showPluginSelect, setShowPluginSelect] = useState(false);
-    const isModelsLoading = useAppSelector(selectIsLoading);
+    const isModelsLoading = useAppSelector(selectModelsIsLoading);
 
     const promptListRef = useRef<HTMLUListElement | null>(null);
 
