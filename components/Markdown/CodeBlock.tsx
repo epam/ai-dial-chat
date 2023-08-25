@@ -1,4 +1,4 @@
-import { FC, memo, useContext, useState } from 'react';
+import { FC, memo, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import {
   oneDark,
@@ -12,12 +12,13 @@ import {
   programmingLanguages,
 } from '@/utils/app/codeblock';
 
-import HomeContext from '@/pages/api/home/home.context';
-
 import Check from '../../public/images/icons/check.svg';
 import Clone from '../../public/images/icons/clone.svg';
 import Download from '../../public/images/icons/download.svg';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
+
+import { useAppSelector } from '@/store/hooks';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
 
 interface Props {
   language: string;
@@ -33,9 +34,8 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
   const { t } = useTranslation('markdown');
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
-  const {
-    state: { lightMode },
-  } = useContext(HomeContext);
+  //New Redux state
+  const theme = useAppSelector(selectThemeState);
 
   const copyToClipboard = () => {
     if (!navigator.clipboard || !navigator.clipboard.writeText) {
@@ -128,7 +128,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
 
       <SyntaxHighlighter
         language={language}
-        style={codeBlockTheme[lightMode]}
+        style={codeBlockTheme[theme]}
         customStyle={{
           margin: 0,
           borderRadius: 0,

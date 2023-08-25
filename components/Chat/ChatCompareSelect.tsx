@@ -11,6 +11,9 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import { Combobox } from '../Common/Combobox';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
+
 interface Props {
   conversations: Conversation[];
   selectedConversations: Conversation[];
@@ -24,8 +27,12 @@ export const ChatCompareSelect = ({
 }: Props) => {
   const { t } = useTranslation('chat');
   const {
-    state: { modelsMap, defaultModelId, lightMode },
+    state: { modelsMap, defaultModelId },
   } = useContext(HomeContext);
+
+  //New Redux state
+  const theme = useAppSelector(selectThemeState);
+
   const [comparableConversations, setComparableConversations] = useState<
     Conversation[]
   >([]);
@@ -84,7 +91,7 @@ export const ChatCompareSelect = ({
           entity={model}
           entityId={model.id}
           size={24}
-          inverted={lightMode === 'dark'}
+          inverted={theme === 'dark'}
         />
         <span>{item.name}</span>
       </div>

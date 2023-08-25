@@ -17,6 +17,9 @@ import XMark from '../../public/images/icons/xmark.svg';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
+
 interface Props {
   selectedAddonsIds: string[];
   preselectedAddonsIds: string[];
@@ -34,8 +37,12 @@ export const AddonsDialog: FC<Props> = ({
 }) => {
   const { t } = useTranslation('chat');
   const {
-    state: { addonsMap, addons, lightMode },
+    state: { addonsMap, addons },
   } = useContext(HomeContext);
+
+  //New Redux state
+  const theme = useAppSelector(selectThemeState);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAddons, setSelectedAddons] = useState<OpenAIEntity[]>(() => {
     return selectedAddonsIds
@@ -86,7 +93,7 @@ export const AddonsDialog: FC<Props> = ({
           entity={addon}
           entityId={addon.id}
           size={15}
-          inverted={!addon.iconUrl && lightMode === 'dark'}
+          inverted={!addon.iconUrl && theme === 'dark'}
         />
         <span>{addon.name}</span>
         {!isPreselected && (
@@ -131,7 +138,7 @@ export const AddonsDialog: FC<Props> = ({
             entity={addon}
             entityId={addon.id}
             size={24}
-            inverted={!addon.iconUrl && lightMode === 'dark'}
+            inverted={!addon.iconUrl && theme === 'dark'}
           />
           <span className="text-left">{addon.name}</span>
         </div>

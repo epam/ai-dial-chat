@@ -13,6 +13,9 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
+
 interface Props {
   conversation: Conversation;
   isCompareMode: boolean;
@@ -43,8 +46,12 @@ export const ChatHeader = ({
   const { t } = useTranslation('chat');
 
   const {
-    state: { modelsMap, addonsMap, lightMode },
+    state: { modelsMap, addonsMap },
   } = useContext(HomeContext);
+
+  //New Redux state
+  const theme = useAppSelector(selectThemeState);
+
   const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });
@@ -77,7 +84,7 @@ export const ChatHeader = ({
                         entityId={conversation.model.id}
                         entity={model}
                         size={18}
-                        inverted={lightMode === 'dark'}
+                        inverted={theme === 'dark'}
                         isCustomTooltip={true}
                       />
                     </TooltipTrigger>
@@ -120,7 +127,7 @@ export const ChatHeader = ({
                           entityId={addon}
                           size={18}
                           entity={addonsMap[addon]}
-                          inverted={lightMode === 'dark'}
+                          inverted={theme === 'dark'}
                         />
                       ))}
                       {conversation.selectedAddons
@@ -131,7 +138,7 @@ export const ChatHeader = ({
                             entityId={addon}
                             size={18}
                             entity={addonsMap[addon]}
-                            inverted={lightMode === 'dark'}
+                            inverted={theme === 'dark'}
                           />
                         ))}
                     </span>

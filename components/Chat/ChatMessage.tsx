@@ -31,6 +31,8 @@ import { MessageAttachments } from './MessageAttachments';
 import { MessageError } from './MessageError';
 import { MessageStages } from './MessageStages';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
 import classNames from 'classnames';
 
 export interface Props {
@@ -78,8 +80,11 @@ export const ChatMessage: FC<Props> = memo(
     const { t } = useTranslation('chat');
 
     const {
-      state: { messageIsStreaming, modelsMap, lightMode },
+      state: { messageIsStreaming, modelsMap },
     } = useContext(HomeContext);
+
+    //New Redux state
+    const theme = useAppSelector(selectThemeState);
 
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [isTyping, setIsTyping] = useState<boolean>(false);
@@ -177,7 +182,7 @@ export const ChatMessage: FC<Props> = memo(
                     (message.model?.id && modelsMap[message.model?.id]) ||
                     undefined
                   }
-                  inverted={lightMode === 'dark'}
+                  inverted={theme === 'dark'}
                   animate={isShowResponseLoader}
                   size={28}
                 />

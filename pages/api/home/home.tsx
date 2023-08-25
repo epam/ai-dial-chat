@@ -56,6 +56,8 @@ import { authOptions } from '../auth/[...nextauth]';
 import HomeContext from './home.context';
 import { HomeInitialState, initialState } from './home.state';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
 import { v4 as uuidv4 } from 'uuid';
 
 interface Props {
@@ -95,7 +97,6 @@ const Home = ({
 
   const {
     state: {
-      lightMode,
       folders,
       conversations,
       selectedConversationIds,
@@ -109,6 +110,9 @@ const Home = ({
     },
     dispatch,
   } = contextValue;
+
+  //New Redux state
+  const theme = useAppSelector(selectThemeState);
 
   const { data: modelsData, error: modelsError } = useQuery(
     ['GetModels'],
@@ -720,7 +724,7 @@ const Home = ({
         </div>
       ) : (
         selectedConversationNames.length > 0 && (
-          <main className={`${lightMode} `}>
+          <main className={`${theme} `}>
             <div
               className={`theme-main flex h-screen w-screen flex-col bg-gray-300 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-200`}
               id="theme-main"

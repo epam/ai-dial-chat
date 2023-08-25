@@ -1,3 +1,6 @@
+import UIEpics from './ui-store/ui.epics';
+import uiReducer from './ui-store/ui.reducers';
+
 import { configureStore } from '@reduxjs/toolkit';
 import { combineEpics, createEpicMiddleware } from 'redux-observable';
 
@@ -7,10 +10,12 @@ import { combineEpics, createEpicMiddleware } from 'redux-observable';
 
 const epicMiddleware = createEpicMiddleware();
 
-export const rootEpic = combineEpics();
+export const rootEpic = combineEpics(UIEpics);
 
 export const store = configureStore({
-  reducer: {},
+  reducer: {
+    ui: uiReducer,
+  },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(epicMiddleware),
 });

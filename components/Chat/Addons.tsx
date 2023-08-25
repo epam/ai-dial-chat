@@ -10,6 +10,9 @@ import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 import { AddonsDialog } from './AddonsDialog';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
+
 interface AddonsProps {
   preselectedAddonsIds: string[];
   selectedAddonsIds: string[];
@@ -24,8 +27,12 @@ export const Addons = ({
   onApplyAddons,
 }: AddonsProps) => {
   const {
-    state: { addonsMap, lightMode, recentAddonsIds },
+    state: { addonsMap, recentAddonsIds },
   } = useContext(HomeContext);
+
+  //New Redux state
+  const theme = useAppSelector(selectThemeState);
+
   const { t } = useTranslation('chat');
   const [filteredRecentAddons, setFilteredRecentAddons] = useState<string[]>(
     () => {
@@ -64,7 +71,7 @@ export const Addons = ({
           entity={addonsMap[addonId]}
           entityId={addonId}
           size={15}
-          inverted={!addonsMap[addonId]?.iconUrl && lightMode === 'dark'}
+          inverted={!addonsMap[addonId]?.iconUrl && theme === 'dark'}
         />
         <span>{addonsMap[addonId]?.name || addonId}</span>
         {isSelected && !preselectedAddonsIds.includes(addonId) && (

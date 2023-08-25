@@ -38,6 +38,8 @@ import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 
 import { errorsMessages } from '@/constants/errors';
+import { useAppSelector } from '@/store/hooks';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
 
 interface Props {
   appName: string;
@@ -171,7 +173,6 @@ export const Chat = memo(({ appName }: Props) => {
       isCompareMode,
       messageIsStreaming,
       enabledFeatures,
-      lightMode,
       modelsMap,
     },
     handleUpdateConversation,
@@ -181,6 +182,9 @@ export const Chat = memo(({ appName }: Props) => {
     handleUpdateRecentAddons,
     dispatch: homeDispatch,
   } = useContext(HomeContext);
+
+  //New Redux state
+  const theme = useAppSelector(selectThemeState);
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
@@ -1275,10 +1279,7 @@ export const Chat = memo(({ appName }: Props) => {
                                   : 'w-full'
                               }`}
                             >
-                              <ChatLoader
-                                modelId={model.id}
-                                theme={lightMode}
-                              />
+                              <ChatLoader modelId={model.id} theme={theme} />
                             </div>
                           );
                         })}

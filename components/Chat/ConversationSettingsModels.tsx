@@ -10,6 +10,9 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelsDialog } from './ModelsDialog';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
+
 interface Props {
   modelId: string | undefined;
   onModelSelect: (modelId: string) => void;
@@ -21,8 +24,12 @@ export const ConversationSettingsModel = ({
 }: Props) => {
   const { t } = useTranslation();
   const {
-    state: { modelsMap, recentModelsIds, lightMode },
+    state: { modelsMap, recentModelsIds },
   } = useContext(HomeContext);
+
+  //New Redux state
+  const theme = useAppSelector(selectThemeState);
+
   const [mappedEntities, setMappedEntities] = useState<OpenAIEntityModel[]>([]);
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
@@ -55,7 +62,7 @@ export const ConversationSettingsModel = ({
                 entityId={entity.id}
                 entity={entity}
                 size={24}
-                inverted={lightMode === 'dark'}
+                inverted={theme === 'dark'}
               />
               <div className="flex flex-col gap-1">
                 <span>{entity.name}</span>

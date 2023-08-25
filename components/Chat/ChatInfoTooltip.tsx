@@ -1,11 +1,12 @@
-import { useCallback, useContext } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 
-import HomeContext from '@/pages/api/home/home.context';
-
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
+
+import { useAppSelector } from '@/store/hooks';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
 
 interface Props {
   model: OpenAIEntityModel;
@@ -17,7 +18,7 @@ interface Props {
 
 const getModelTemplate = (
   model: OpenAIEntityModel,
-  lightMode: 'dark' | 'light',
+  theme: 'dark' | 'light',
   label: string,
 ) => {
   return (
@@ -28,7 +29,7 @@ const getModelTemplate = (
           entityId={model.id}
           entity={model}
           size={18}
-          inverted={lightMode === 'dark'}
+          inverted={theme === 'dark'}
         />
         {model.name}
       </div>
@@ -43,9 +44,9 @@ export const ChatInfoTooltip = ({
   prompt,
   temperature,
 }: Props) => {
-  const {
-    state: { lightMode },
-  } = useContext(HomeContext);
+  //New Redux state
+  const theme = useAppSelector(selectThemeState);
+
   const { t } = useTranslation('chat');
   const getModelLabel = useCallback(() => {
     switch (model.type) {
@@ -60,9 +61,9 @@ export const ChatInfoTooltip = ({
 
   return (
     <div className="grid max-w-[880px] grid-cols-[max-content_1fr] gap-4 px-2 py-3">
-      {model && getModelTemplate(model, lightMode, getModelLabel())}
+      {model && getModelTemplate(model, theme, getModelLabel())}
       {subModel != null &&
-        getModelTemplate(subModel, lightMode, t('Assistant model'))}
+        getModelTemplate(subModel, theme, t('Assistant model'))}
       {prompt && (
         <>
           <span className="text-gray-500">{t('System prompt')}:</span>
@@ -88,7 +89,7 @@ export const ChatInfoTooltip = ({
                   entityId={addon.id}
                   entity={addon}
                   size={18}
-                  inverted={lightMode === 'dark'}
+                  inverted={theme === 'dark'}
                 />
                 {addon.name}
               </span>

@@ -18,6 +18,9 @@ import { ModelDescription } from './ModelDescription';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
+
 interface Props {
   model: OpenAIEntityModel | undefined;
   assistantModelId: string | undefined;
@@ -56,8 +59,12 @@ export const ConversationSettings = ({
   onApplySettings,
 }: Props) => {
   const {
-    state: { modelsMap, models, lightMode },
+    state: { modelsMap, models },
   } = useContext(HomeContext);
+
+  //New Redux state
+  const theme = useAppSelector(selectThemeState);
+
   const { t } = useTranslation('chat');
   const [assistantSubModel, setAssistantSubModel] = useState(() => {
     return modelsMap[assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id];
@@ -77,7 +84,7 @@ export const ConversationSettings = ({
             entity={model}
             entityId={model.id}
             size={18}
-            inverted={lightMode === 'dark'}
+            inverted={theme === 'dark'}
           />
           <span>{model.name || model.id}</span>
         </div>
