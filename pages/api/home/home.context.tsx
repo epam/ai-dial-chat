@@ -27,7 +27,6 @@ export interface HomeContextProps {
     localConversations?: Conversation[],
   ) => Conversation[];
   handleNewReplayConversation: (conversation: Conversation) => void;
-  handleUpdateRecentAddons: (addonIds: string[]) => void;
 }
 
 const HomeContext = createContext<HomeContextProps>(undefined!);

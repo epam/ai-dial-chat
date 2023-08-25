@@ -1,7 +1,6 @@
 import { IconX } from '@tabler/icons-react';
 import { SessionProvider, SessionProviderProps } from 'next-auth/react';
 import toast, { ToastBar, Toaster } from 'react-hot-toast';
-import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 
 import { appWithTranslation } from 'next-i18next';
@@ -18,8 +17,6 @@ const inter = Inter({
 });
 
 function App({ Component, pageProps }: AppProps<SessionProviderProps>) {
-  const queryClient = new QueryClient();
-
   return (
     <SessionProvider session={pageProps.session}>
       <Provider store={store}>
@@ -41,9 +38,7 @@ function App({ Component, pageProps }: AppProps<SessionProviderProps>) {
               </ToastBar>
             )}
           </Toaster>
-          <QueryClientProvider client={queryClient}>
-            <Component {...pageProps} />
-          </QueryClientProvider>
+          <Component {...pageProps} />
         </div>
       </Provider>
     </SessionProvider>
