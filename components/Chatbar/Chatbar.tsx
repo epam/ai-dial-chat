@@ -26,6 +26,9 @@ import { Conversation, Replay } from '@/types/chat';
 import { SupportedExportFormats } from '@/types/export';
 import { OpenAIEntityModelID, OpenAIEntityModels } from '@/types/openai';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectDefaultModelId } from '@/store/models/models.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import { ChatFolders } from './components/ChatFolders';
@@ -51,16 +54,16 @@ export const Chatbar = () => {
     state: {
       conversations,
       showChatbar,
-      defaultModelId,
       folders,
       messageIsStreaming,
       selectedConversationIds,
     },
     dispatch: homeDispatch,
     handleNewConversation,
-
     handleUpdateConversation,
   } = useContext(HomeContext);
+
+  const defaultModelId = useAppSelector(selectDefaultModelId);
 
   const {
     state: { searchTerm, filteredConversations },

@@ -1,0 +1,10 @@
+**/.git
+**/.svn
+**/.hg
+**/node_modules
+
+.next
+.github
+dist
+helm
+__tests__

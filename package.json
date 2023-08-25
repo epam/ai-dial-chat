@@ -10,9 +10,9 @@
     "build": "npm run build:overlay && next build",
     "build:overlay": "tsc overlay/script.ts --target es6 --skipLibCheck --outDir public/overlay",
     "start": "next start",
-    "lint": "next lint && prettier --check 'components' 'constants' 'overlay' pages services types utils",
-    "lint:fix": "next lint --fix && prettier --write 'components' 'constants' 'overlay' pages services types utils",
-    "format": "prettier --write .",
+    "lint": "next lint && prettier --check '**/**.{ts,tsx,js}'",
+    "lint:fix": "next lint --fix && prettier --write '**/**.{ts,tsx,js}'",
+    "format": "prettier --write '**/**.{ts,tsx,js}'",
     "test": "vitest",
     "coverage": "vitest run --coverage"
   },
@@ -54,6 +54,7 @@
     "rehype-raw": "^6.1.1",
     "rehype-sanitize": "^5.0.1",
     "remark-gfm": "^3.0.1",
+    "rxjs": "^7.8.1",
     "svgo": "^3.0.2",
     "uuid": "^9.0.0"
   },
