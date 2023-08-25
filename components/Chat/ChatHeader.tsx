@@ -13,6 +13,9 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
+
 interface Props {
   conversation: Conversation;
   isCompareMode: boolean;
@@ -43,8 +46,9 @@ export const ChatHeader = ({
   const { t } = useTranslation('chat');
 
   const {
-    state: { modelsMap, addonsMap, lightMode },
+    state: { addonsMap, lightMode },
   } = useContext(HomeContext);
+  const modelsMap = useAppSelector(selectModelsMap);
   const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });

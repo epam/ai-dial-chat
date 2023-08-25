@@ -21,6 +21,8 @@ import XmarkIcon from '../../../public/images/icons/xmark.svg';
 import { ContextMenu } from '../../Common/ContextMenu';
 import { ModelIcon } from './ModelIcon';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
 import classNames from 'classnames';
 
 interface Props {
@@ -29,17 +31,14 @@ interface Props {
 
 export const ConversationComponent = ({ conversation }: Props) => {
   const {
-    state: {
-      messageIsStreaming,
-      selectedConversationIds,
-      modelsMap,
-      lightMode,
-    },
+    state: { messageIsStreaming, selectedConversationIds, lightMode },
     handleSelectConversation,
     handleUpdateConversation,
     handleNewReplayConversation,
     dispatch,
   } = useContext(HomeContext);
+  const modelsMap = useAppSelector(selectModelsMap);
+
   const { handleExportConversation } = useContext(ChatbarContext);
 
   const { handleDeleteConversation } = useContext(ChatbarContext);

@@ -10,6 +10,12 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelsDialog } from './ModelsDialog';
 
+import { useAppSelector } from '@/store/hooks';
+import {
+  selectModelsMap,
+  selectRecentModelsIds,
+} from '@/store/models/models.reducers';
+
 interface Props {
   modelId: string | undefined;
   onModelSelect: (modelId: string) => void;
@@ -21,8 +27,10 @@ export const ConversationSettingsModel = ({
 }: Props) => {
   const { t } = useTranslation();
   const {
-    state: { modelsMap, recentModelsIds, lightMode },
+    state: { lightMode },
   } = useContext(HomeContext);
+  const modelsMap = useAppSelector(selectModelsMap);
+  const recentModelsIds = useAppSelector(selectRecentModelsIds);
   const [mappedEntities, setMappedEntities] = useState<OpenAIEntityModel[]>([]);
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 

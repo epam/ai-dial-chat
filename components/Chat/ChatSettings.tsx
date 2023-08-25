@@ -1,24 +1,21 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/utils/app/const';
 
 import { Conversation } from '@/types/chat';
-import {
-  OpenAIEntityAddon,
-  OpenAIEntityModel,
-  OpenAIEntityModelID,
-} from '@/types/openai';
+import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
-import HomeContext from '@/pages/api/home/home.context';
-
 import { ConversationSettings } from './ConversationSettings';
+
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
 
 interface Props {
   conversation: Conversation;
   model: OpenAIEntityModel | undefined;
   prompts: Prompt[];
-  defaultModelId: OpenAIEntityModelID;
+  defaultModelId: string;
   addons: OpenAIEntityAddon[];
   onClose: () => void;
   onChangeSettings: (args: {
@@ -40,9 +37,7 @@ export const ChatSettings = ({
   onChangeSettings,
   onApplySettings,
 }: Props) => {
-  const {
-    state: { modelsMap },
-  } = useContext(HomeContext);
+  const modelsMap = useAppSelector(selectModelsMap);
 
   const [currentModel, setCurrentModel] = useState(
     modelsMap[model?.id || defaultModelId],

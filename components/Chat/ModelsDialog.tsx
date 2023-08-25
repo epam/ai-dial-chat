@@ -24,6 +24,12 @@ import XMark from '../../public/images/icons/xmark.svg';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
 
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+  selectModels,
+  updateRecentModels,
+} from '@/store/models/models.reducers';
+
 const Entity = ({
   entity,
   selectedModelId,
@@ -119,10 +125,9 @@ export const ModelsDialog: FC<Props> = ({
   onClose,
 }) => {
   const { t } = useTranslation('chat');
-  const {
-    state: { models },
-    handleUpdateRecentModels,
-  } = useContext(HomeContext);
+  const dispatch = useAppDispatch();
+  const models = useAppSelector(selectModels);
+
   const [entityTypes, setEntityTypes] = useState<
     (
       | OpenAIEntityModelType
@@ -208,7 +213,7 @@ export const ModelsDialog: FC<Props> = ({
               selectedModelId={selectedModelId}
               onSelect={(id) => {
                 onModelSelect(id);
-                handleUpdateRecentModels(id);
+                dispatch(updateRecentModels({ modelId: id }));
                 onClose();
               }}
             />

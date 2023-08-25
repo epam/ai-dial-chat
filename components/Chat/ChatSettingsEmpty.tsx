@@ -1,11 +1,7 @@
 import { useContext } from 'react';
 
 import { Conversation } from '@/types/chat';
-import {
-  OpenAIEntityAddon,
-  OpenAIEntityModel,
-  OpenAIEntityModelID,
-} from '@/types/openai';
+import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -13,12 +9,15 @@ import HomeContext from '@/pages/api/home/home.context';
 import Spinner from '../Spinner';
 import { ConversationSettings } from './ConversationSettings';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
+
 interface Props {
   models: OpenAIEntityModel[];
   addons: OpenAIEntityAddon[];
   conversation: Conversation;
   prompts: Prompt[];
-  defaultModelId: OpenAIEntityModelID;
+  defaultModelId: string;
   isShowSettings: boolean;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
@@ -41,10 +40,9 @@ export const ChatSettingsEmpty = ({
   onSelectAssistantSubModel,
   onChangeAddon,
 }: Props) => {
-  const {
-    state: { modelsMap },
-    handleUpdateConversation,
-  } = useContext(HomeContext);
+  const { handleUpdateConversation } = useContext(HomeContext);
+
+  const modelsMap = useAppSelector(selectModelsMap);
 
   return (
     <>

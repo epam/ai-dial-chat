@@ -31,6 +31,8 @@ import { MessageAttachments } from './MessageAttachments';
 import { MessageError } from './MessageError';
 import { MessageStages } from './MessageStages';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
 import classNames from 'classnames';
 
 export interface Props {
@@ -78,8 +80,9 @@ export const ChatMessage: FC<Props> = memo(
     const { t } = useTranslation('chat');
 
     const {
-      state: { messageIsStreaming, modelsMap, lightMode },
+      state: { messageIsStreaming, lightMode },
     } = useContext(HomeContext);
+    const modelsMap = useAppSelector(selectModelsMap);
 
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [isTyping, setIsTyping] = useState<boolean>(false);

@@ -24,6 +24,8 @@ import PromptbarContext from './PromptBar.context';
 import { PromptbarInitialState, initialState } from './Promptbar.state';
 
 import { errorsMessages } from '@/constants/errors';
+import { useAppSelector } from '@/store/hooks';
+import { selectDefaultModelId } from '@/store/models/models.reducers';
 import { v4 as uuidv4 } from 'uuid';
 
 const Promptbar = () => {
@@ -34,9 +36,10 @@ const Promptbar = () => {
   });
 
   const {
-    state: { prompts, defaultModelId, showPromptbar, folders },
+    state: { prompts, showPromptbar, folders },
     dispatch: homeDispatch,
   } = useContext(HomeContext);
+  const defaultModelId = useAppSelector(selectDefaultModelId);
 
   const {
     state: { searchTerm, filteredPrompts },

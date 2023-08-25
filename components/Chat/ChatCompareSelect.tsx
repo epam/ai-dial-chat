@@ -11,6 +11,12 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import { Combobox } from '../Common/Combobox';
 
+import { useAppSelector } from '@/store/hooks';
+import {
+  selectDefaultModelId,
+  selectModelsMap,
+} from '@/store/models/models.reducers';
+
 interface Props {
   conversations: Conversation[];
   selectedConversations: Conversation[];
@@ -24,8 +30,11 @@ export const ChatCompareSelect = ({
 }: Props) => {
   const { t } = useTranslation('chat');
   const {
-    state: { modelsMap, defaultModelId, lightMode },
+    state: { lightMode },
   } = useContext(HomeContext);
+  const modelsMap = useAppSelector(selectModelsMap);
+  const defaultModelId = useAppSelector(selectDefaultModelId);
+
   const [comparableConversations, setComparableConversations] = useState<
     Conversation[]
   >([]);

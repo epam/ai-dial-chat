@@ -38,6 +38,8 @@ import ChatbarContext from './Chatbar.context';
 import { ChatbarInitialState, initialState } from './Chatbar.state';
 
 import { errorsMessages } from '@/constants/errors';
+import { useAppSelector } from '@/store/hooks';
+import { selectDefaultModelId } from '@/store/models/models.reducers';
 import { v4 as uuidv4 } from 'uuid';
 
 export const Chatbar = () => {
@@ -51,16 +53,16 @@ export const Chatbar = () => {
     state: {
       conversations,
       showChatbar,
-      defaultModelId,
       folders,
       messageIsStreaming,
       selectedConversationIds,
     },
     dispatch: homeDispatch,
     handleNewConversation,
-
     handleUpdateConversation,
   } = useContext(HomeContext);
+
+  const defaultModelId = useAppSelector(selectDefaultModelId);
 
   const {
     state: { searchTerm, filteredConversations },

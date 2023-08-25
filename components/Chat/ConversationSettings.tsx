@@ -18,6 +18,9 @@ import { ModelDescription } from './ModelDescription';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectModels, selectModelsMap } from '@/store/models/models.reducers';
+
 interface Props {
   model: OpenAIEntityModel | undefined;
   assistantModelId: string | undefined;
@@ -56,9 +59,11 @@ export const ConversationSettings = ({
   onApplySettings,
 }: Props) => {
   const {
-    state: { modelsMap, models, lightMode },
+    state: { lightMode },
   } = useContext(HomeContext);
   const { t } = useTranslation('chat');
+  const models = useAppSelector(selectModels);
+  const modelsMap = useAppSelector(selectModelsMap);
   const [assistantSubModel, setAssistantSubModel] = useState(() => {
     return modelsMap[assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id];
   });
