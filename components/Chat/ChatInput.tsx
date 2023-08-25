@@ -26,6 +26,9 @@ import { FooterMessage } from './FooterMessage';
 import { PromptList } from './PromptList';
 import { VariableModal } from './VariableModal';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectIsLoading, selectModels } from '@/store/models/models.reducers';
+
 interface Props {
   onSend: (message: Message) => void;
   onRegenerate: () => void;
@@ -71,6 +74,7 @@ export const ChatInput = forwardRef(
     const [variables, setVariables] = useState<string[]>([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [showPluginSelect, setShowPluginSelect] = useState(false);
+    const isModelsLoading = useAppSelector(selectIsLoading);
 
     const promptListRef = useRef<HTMLUListElement | null>(null);
 
@@ -310,8 +314,9 @@ export const ChatInput = forwardRef(
             <button
               className="absolute right-4 top-2.5 rounded"
               onClick={handleSend}
+              disabled={messageIsStreaming || isModelsLoading}
             >
-              {messageIsStreaming ? (
+              {messageIsStreaming || isModelsLoading ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-t-2 border-gray-500 text-current"></div>
               ) : (
                 <span className="hover:text-blue-500">

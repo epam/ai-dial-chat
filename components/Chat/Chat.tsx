@@ -43,6 +43,7 @@ import {
   getModels,
   selectDefaultModelId,
   selectError,
+  selectIsLoading,
   selectModels,
   selectModelsMap,
   updateRecentModels,
@@ -190,6 +191,7 @@ export const Chat = memo(({ appName }: Props) => {
   const models = useAppSelector(selectModels);
   const modelsMap = useAppSelector(selectModelsMap);
   const modelError = useAppSelector(selectError);
+  const modelsIsLoading = useAppSelector(selectIsLoading);
   const defaultModelId = useAppSelector(selectDefaultModelId);
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
@@ -299,12 +301,16 @@ export const Chat = memo(({ appName }: Props) => {
   }, [selectedConversationIds, conversations]);
 
   useEffect(() => {
-    const modelIds = models.map((model) => model.id);
-    setIsNotAllowedModel(
-      models.length > 0 &&
-        selectedConversations.some((conv) => !modelIds.includes(conv.model.id)),
-    );
-  }, [selectedConversations, models]);
+    if (!modelsIsLoading) {
+      const modelIds = models.map((model) => model.id);
+      setIsNotAllowedModel(
+        models.length === 0 ||
+          selectedConversations.some(
+            (conv) => !modelIds.includes(conv.model.id),
+          ),
+      );
+    }
+  }, [selectedConversations, models, modelsIsLoading]);
 
   function handleErrorMessage({
     updatedConversation,
