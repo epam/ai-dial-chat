@@ -23,6 +23,11 @@ import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
 import { KeyValuePair } from '@/types/data';
 
+import {
+  getAddons,
+  selectAddons,
+  updateRecentAddons,
+} from '@/store/addons/addons.reducers';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   getModels,
@@ -173,7 +178,6 @@ export const Chat = memo(({ appName }: Props) => {
     state: {
       conversations,
       selectedConversationIds,
-      addons,
       loading,
       prompts,
       isCompareMode,
@@ -184,7 +188,6 @@ export const Chat = memo(({ appName }: Props) => {
     handleUpdateConversation,
     handleSelectConversation,
     handleSelectConversations,
-    handleUpdateRecentAddons,
     dispatch: homeDispatch,
   } = useContext(HomeContext);
 
@@ -194,6 +197,7 @@ export const Chat = memo(({ appName }: Props) => {
   const modelError = useAppSelector(selectModelsError);
   const modelsIsLoading = useAppSelector(selectModelsIsLoading);
   const defaultModelId = useAppSelector(selectDefaultModelId);
+  const addons = useAppSelector(selectAddons);
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
@@ -373,7 +377,7 @@ export const Chat = memo(({ appName }: Props) => {
         conversation.selectedAddons.length > 0 &&
         modelsMap[conversation.model.id]?.type !== 'application'
       ) {
-        handleUpdateRecentAddons(conversation.selectedAddons);
+        dispatch(updateRecentAddons({ addonIds: conversation.selectedAddons }));
       }
 
       let updatedConversation: Conversation = {
@@ -1204,6 +1208,7 @@ export const Chat = memo(({ appName }: Props) => {
                               setShowSettings={(isShow) => {
                                 if (isShow) {
                                   dispatch(getModels());
+                                  dispatch(getAddons());
                                 }
                                 setIsShowChatSettings(isShow);
                               }}

@@ -1,4 +1,3 @@
-// REDUCERS
 import { i18n } from 'next-i18next';
 
 import { ErrorMessage } from '@/types/error';
@@ -88,13 +87,13 @@ export const modelsSlice = createSlice({
       const recentFilteredModels = state.recentModelsIds.filter(
         (recentModelId) => recentModelId !== payload.modelId,
       );
-
       recentFilteredModels.unshift(payload.modelId);
+
+      state.recentModelsIds = recentFilteredModels;
     },
   },
 });
 
-//
 const rootSelector = (state: RootState) => state.models;
 
 export const selectModelsIsLoading = createSelector([rootSelector], (state) => {
