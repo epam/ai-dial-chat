@@ -1,4 +1,6 @@
 // REDUCERS
+import { i18n } from 'next-i18next';
+
 import { ErrorMessage } from '@/types/error';
 import { OpenAIEntityModel } from '@/types/openai';
 
@@ -6,7 +8,6 @@ import { RootState } from '../index';
 
 import { errorsMessages } from '@/constants/errors';
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
-import i18next from 'i18next';
 
 export interface ModelsState {
   isLoading: boolean;
@@ -58,11 +59,11 @@ export const modelsSlice = createSlice({
     getModelsFail: (state, { payload }: PayloadAction<{ error: any }>) => {
       state.isLoading = false;
       state.error = {
-        title: i18next.t('Error fetching models.'),
+        title: i18n?.t('Error fetching models.'),
         code: payload.error.status || 'unknown',
         messageLines: payload.error.statusText
           ? [payload.error.statusText]
-          : [i18next.t(errorsMessages.generalServer)],
+          : [i18n?.t(errorsMessages.generalServer)],
       } as ErrorMessage;
     },
     initRecentModels: (

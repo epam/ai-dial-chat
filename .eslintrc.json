@@ -18,6 +18,10 @@
     "@typescript-eslint/no-unused-vars": [
       "error",
       { "argsIgnorePattern": "^_" }
+    ],
+    "no-restricted-imports": [
+      "error",
+      { "paths": ["react-i18next", "i18next"] }
     ]
   }
 }

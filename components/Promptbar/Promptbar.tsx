@@ -1,6 +1,7 @@
 import { useContext, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
+
+import { useTranslation } from 'next-i18next';
 
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 

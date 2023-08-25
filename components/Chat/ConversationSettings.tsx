@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+
+import { useTranslation } from 'next-i18next';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/utils/app/const';
 
