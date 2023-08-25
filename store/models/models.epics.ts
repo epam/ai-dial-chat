@@ -33,7 +33,7 @@ const getModelsEpic = (
     withLatestFrom(state$),
     switchMap(() => {
       return from(
-        fetch('/api/models123', {
+        fetch('/api/models', {
           headers: {
             'Content-Type': 'application/json',
           },
