@@ -6,17 +6,17 @@ import { isMobile } from '@/utils/app/mobile';
 
 import { Conversation } from '@/types/chat';
 
-import HomeContext from '@/pages/api/home/home.context';
-
-import { ModelIcon } from '../Chatbar/components/ModelIcon';
-
-import { Combobox } from '../Common/Combobox';
-
 import { useAppSelector } from '@/store/hooks';
 import {
   selectDefaultModelId,
   selectModelsMap,
 } from '@/store/models/models.reducers';
+
+import HomeContext from '@/pages/api/home/home.context';
+
+import { ModelIcon } from '../Chatbar/components/ModelIcon';
+
+import { Combobox } from '../Common/Combobox';
 
 interface Props {
   conversations: Conversation[];

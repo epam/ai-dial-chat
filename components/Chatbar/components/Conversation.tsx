@@ -10,6 +10,9 @@ import {
 
 import { Conversation } from '@/types/chat';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
@@ -21,8 +24,6 @@ import XmarkIcon from '../../../public/images/icons/xmark.svg';
 import { ContextMenu } from '../../Common/ContextMenu';
 import { ModelIcon } from './ModelIcon';
 
-import { useAppSelector } from '@/store/hooks';
-import { selectModelsMap } from '@/store/models/models.reducers';
 import classNames from 'classnames';
 
 interface Props {

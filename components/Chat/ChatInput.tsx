@@ -18,6 +18,9 @@ import { isMobile } from '@/utils/app/mobile';
 import { Message } from '@/types/chat';
 import { Prompt } from '@/types/prompt';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsIsLoading } from '@/store/models/models.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import ArrowNarrowDown from '../../public/images/icons/arrow-narrow-down.svg';
@@ -25,9 +28,6 @@ import RefreshCWAlt from '../../public/images/icons/refresh-cw-alt.svg';
 import { FooterMessage } from './FooterMessage';
 import { PromptList } from './PromptList';
 import { VariableModal } from './VariableModal';
-
-import { useAppSelector } from '@/store/hooks';
-import { selectModelsIsLoading } from '@/store/models/models.reducers';
 
 interface Props {
   onSend: (message: Message) => void;

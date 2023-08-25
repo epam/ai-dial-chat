@@ -6,10 +6,10 @@ import { Conversation } from '@/types/chat';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
-import { ConversationSettings } from './ConversationSettings';
-
 import { useAppSelector } from '@/store/hooks';
 import { selectModelsMap } from '@/store/models/models.reducers';
+
+import { ConversationSettings } from './ConversationSettings';
 
 interface Props {
   conversation: Conversation;

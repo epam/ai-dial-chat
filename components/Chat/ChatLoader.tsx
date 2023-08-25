@@ -2,12 +2,12 @@ import { FC } from 'react';
 
 import { Settings } from '@/types/settings';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
+
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import { modelCursorSign } from './chatConstants';
-
-import { useAppSelector } from '@/store/hooks';
-import { selectModelsMap } from '@/store/models/models.reducers';
 
 interface ChatLoaderProps {
   theme: Settings['theme'];

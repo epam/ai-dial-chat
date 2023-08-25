@@ -23,6 +23,17 @@ import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
 import { KeyValuePair } from '@/types/data';
 
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+  getModels,
+  selectDefaultModelId,
+  selectModels,
+  selectModelsError,
+  selectModelsIsLoading,
+  selectModelsMap,
+  updateRecentModels,
+} from '@/store/models/models.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import { ChatCompareRotate } from './ChatCompareRotate';
@@ -38,16 +49,6 @@ import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 
 import { errorsMessages } from '@/constants/errors';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import {
-  getModels,
-  selectDefaultModelId,
-  selectModels,
-  selectModelsError,
-  selectModelsIsLoading,
-  selectModelsMap,
-  updateRecentModels,
-} from '@/store/models/models.reducers';
 
 interface Props {
   appName: string;

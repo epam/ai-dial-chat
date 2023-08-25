@@ -17,6 +17,12 @@ import {
   OpenAIEntityModelType,
 } from '@/types/openai';
 
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+  selectModels,
+  updateRecentModels,
+} from '@/store/models/models.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
@@ -24,12 +30,6 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 import XMark from '../../public/images/icons/xmark.svg';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
-
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import {
-  selectModels,
-  updateRecentModels,
-} from '@/store/models/models.reducers';
 
 const Entity = ({
   entity,

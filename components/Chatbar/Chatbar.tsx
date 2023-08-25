@@ -26,6 +26,9 @@ import { Conversation, Replay } from '@/types/chat';
 import { SupportedExportFormats } from '@/types/export';
 import { OpenAIEntityModelID, OpenAIEntityModels } from '@/types/openai';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectDefaultModelId } from '@/store/models/models.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import { ChatFolders } from './components/ChatFolders';
@@ -38,8 +41,6 @@ import ChatbarContext from './Chatbar.context';
 import { ChatbarInitialState, initialState } from './Chatbar.state';
 
 import { errorsMessages } from '@/constants/errors';
-import { useAppSelector } from '@/store/hooks';
-import { selectDefaultModelId } from '@/store/models/models.reducers';
 import { v4 as uuidv4 } from 'uuid';
 
 export const Chatbar = () => {

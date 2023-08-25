@@ -6,15 +6,15 @@ import { useTranslation } from 'next-i18next';
 import { Conversation } from '@/types/chat';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
-
-import { useAppSelector } from '@/store/hooks';
-import { selectModelsMap } from '@/store/models/models.reducers';
 
 interface Props {
   conversation: Conversation;

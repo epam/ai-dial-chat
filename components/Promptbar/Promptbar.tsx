@@ -13,6 +13,9 @@ import { FolderInterface } from '@/types/folder';
 import { OpenAIEntityModels } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectDefaultModelId } from '@/store/models/models.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import { PromptFolders } from './components/PromptFolders';
@@ -25,8 +28,6 @@ import PromptbarContext from './PromptBar.context';
 import { PromptbarInitialState, initialState } from './Promptbar.state';
 
 import { errorsMessages } from '@/constants/errors';
-import { useAppSelector } from '@/store/hooks';
-import { selectDefaultModelId } from '@/store/models/models.reducers';
 import { v4 as uuidv4 } from 'uuid';
 
 const Promptbar = () => {

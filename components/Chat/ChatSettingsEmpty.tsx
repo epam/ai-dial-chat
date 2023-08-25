@@ -4,13 +4,13 @@ import { Conversation } from '@/types/chat';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import Spinner from '../Spinner';
 import { ConversationSettings } from './ConversationSettings';
-
-import { useAppSelector } from '@/store/hooks';
-import { selectModelsMap } from '@/store/models/models.reducers';
 
 interface Props {
   models: OpenAIEntityModel[];

@@ -45,6 +45,17 @@ import {
 } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+  getModels,
+  initRecentModels,
+  selectDefaultModelId,
+  selectModels,
+  selectModelsMap,
+  setDefaultModelId,
+  updateRecentModels,
+} from '@/store/models/models.reducers';
+
 import { Chat } from '@/components/Chat/Chat';
 import { Chatbar } from '@/components/Chatbar/Chatbar';
 import Header from '@/components/Header/Header';
@@ -56,16 +67,6 @@ import { authOptions } from '../auth/[...nextauth]';
 import HomeContext from './home.context';
 import { HomeInitialState, initialState } from './home.state';
 
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import {
-  getModels,
-  initRecentModels,
-  selectDefaultModelId,
-  selectModels,
-  selectModelsMap,
-  setDefaultModelId,
-  updateRecentModels,
-} from '@/store/models/models.reducers';
 import { v4 as uuidv4 } from 'uuid';
 
 interface Props {

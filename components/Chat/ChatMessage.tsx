@@ -20,6 +20,9 @@ import { useTranslation } from 'next-i18next';
 
 import { Conversation, Message } from '@/types/chat';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
@@ -31,8 +34,6 @@ import { MessageAttachments } from './MessageAttachments';
 import { MessageError } from './MessageError';
 import { MessageStages } from './MessageStages';
 
-import { useAppSelector } from '@/store/hooks';
-import { selectModelsMap } from '@/store/models/models.reducers';
 import classNames from 'classnames';
 
 export interface Props {

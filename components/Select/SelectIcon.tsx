@@ -1,11 +1,11 @@
 import { ReactNode, useContext } from 'react';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
-
-import { useAppSelector } from '@/store/hooks';
-import { selectModelsMap } from '@/store/models/models.reducers';
 
 export interface SelectIconProps {
   modelId: string;
