@@ -2,8 +2,10 @@ import { ChangeEventHandler, FC, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { Theme } from '@/types/settings';
+
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { Theme, UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
+import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
 
 interface Props {
   open: boolean;
