@@ -387,7 +387,6 @@ const Home = ({
   useEffect(() => {
     if (window.innerWidth < 640) {
       dispatch(setShowChatbar(false));
-      // oldDispatch({ field: 'showChatbar', value: false });
     }
   }, [selectedConversationIds]);
 

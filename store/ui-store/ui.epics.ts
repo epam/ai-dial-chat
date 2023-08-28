@@ -9,10 +9,10 @@ import {
 } from './ui.reducers';
 
 import { Action } from '@reduxjs/toolkit';
-import { combineEpics, ofType } from 'redux-observable';
+import { Epic, combineEpics, ofType } from 'redux-observable';
 import { Observable, ignoreElements, map, tap, withLatestFrom } from 'rxjs';
 
-const saveThemeEpic = (
+const saveThemeEpic: Epic = (
   action$: Observable<Action>,
 
   state$: Observable<RootState>,
@@ -27,7 +27,7 @@ const saveThemeEpic = (
     }),
     ignoreElements(),
   );
-const saveShowChatbarEpic = (
+const saveShowChatbarEpic: Epic = (
   action$: Observable<Action>,
 
   state$: Observable<RootState>,
@@ -43,7 +43,7 @@ const saveShowChatbarEpic = (
     ignoreElements(),
   );
 
-const saveShowPromptbarEpic = (
+const saveShowPromptbarEpic: Epic = (
   action$: Observable<Action>,
 
   state$: Observable<RootState>,
@@ -58,7 +58,7 @@ const saveShowPromptbarEpic = (
     }),
     ignoreElements(),
   );
-const UIEpics: any = combineEpics(
+const UIEpics = combineEpics(
   saveThemeEpic,
   saveShowChatbarEpic,
   saveShowPromptbarEpic,

@@ -38,24 +38,16 @@ const Header = () => {
   const handleToggleChatbar = () => {
     if (!showChatbar && isMediaQuery('(width <= 767px)')) {
       dispatch(setShowPromptbar(false));
-      // oldHomeDispatch({ field: 'showPromptbar', value: false });
-      // localStorage.setItem('showPromptbar', JSON.stringify(false));
     }
     dispatch(setShowChatbar(!showChatbar));
-    // oldHomeDispatch({ field: 'showChatbar', value: !showChatbar });
-    // localStorage.setItem('showChatbar', JSON.stringify(!showChatbar));
   };
   const handleTogglePromtbar = () => {
     if (!showPromptbar && isMediaQuery('(width <= 767px)')) {
       dispatch(setShowChatbar(false));
-      // oldHomeDispatch({ field: 'showChatbar', value: false });
-      // localStorage.setItem('showChatbar', JSON.stringify(false));
 
       oldHomeDispatch({ field: 'isProfileOpen', value: false });
     }
     dispatch(setShowPromptbar(!showPromptbar));
-    // oldHomeDispatch({ field: 'showPromptbar', value: !showPromptbar });
-    // localStorage.setItem('showPromptbar', JSON.stringify(!showPromptbar));
   };
 
   const onClose = () => {

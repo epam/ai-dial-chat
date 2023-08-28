@@ -5,7 +5,6 @@ import { Prompt } from '@/types/prompt';
 
 export interface HomeInitialState {
   loading: boolean;
-  lightMode: 'light' | 'dark';
   messageIsStreaming: boolean;
   folders: FolderInterface[];
   conversations: Conversation[];
@@ -13,8 +12,6 @@ export interface HomeInitialState {
   currentMessage: Message | undefined;
   prompts: Prompt[];
   temperature: number;
-  showChatbar: boolean;
-  showPromptbar: boolean;
   currentFolder: FolderInterface | undefined;
   messageError: boolean;
   searchTerm: string;
@@ -30,7 +27,6 @@ export interface HomeInitialState {
 
 export const initialState: HomeInitialState = {
   loading: false,
-  lightMode: 'dark',
   messageIsStreaming: false,
   folders: [],
   conversations: [],
@@ -38,8 +34,6 @@ export const initialState: HomeInitialState = {
   currentMessage: undefined,
   prompts: [],
   temperature: 1,
-  showPromptbar: true,
-  showChatbar: true,
   currentFolder: undefined,
   messageError: false,
   searchTerm: '',
