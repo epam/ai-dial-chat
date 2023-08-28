@@ -1,9 +1,8 @@
 import { ChangeEventHandler, FC, useEffect, useRef } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { useTranslation } from 'next-i18next';
 
-import { useAppSelector } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   ThemeType,
   selectThemeState,
@@ -16,10 +15,9 @@ interface Props {
 }
 
 export const SettingDialog: FC<Props> = ({ open, onClose }) => {
-  //New Redux state
   const theme = useAppSelector(selectThemeState);
 
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const { t } = useTranslation('settings');
 

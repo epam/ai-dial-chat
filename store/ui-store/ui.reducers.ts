@@ -28,6 +28,18 @@ export const uiSlice = createSlice({
     setTheme: (state, { payload }: PayloadAction<ThemeType>) => {
       state.theme = payload;
     },
+    setShowChatbar: (
+      state,
+      { payload }: PayloadAction<UIState['showChatbar']>,
+    ) => {
+      state.showChatbar = payload;
+    },
+    setShowPromptbar: (
+      state,
+      { payload }: PayloadAction<UIState['showPromptbar']>,
+    ) => {
+      state.showPromptbar = payload;
+    },
   },
 });
 
@@ -36,4 +48,10 @@ const rootSelector = (state: RootState) => state.ui;
 export const selectThemeState = createSelector([rootSelector], (state) => {
   return state.theme;
 });
-export const { setTheme } = uiSlice.actions;
+export const selectShowChatbar = createSelector([rootSelector], (state) => {
+  return state.showChatbar;
+});
+export const selectShowPromptbar = createSelector([rootSelector], (state) => {
+  return state.showPromptbar;
+});
+export const { setTheme, setShowChatbar, setShowPromptbar } = uiSlice.actions;

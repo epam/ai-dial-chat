@@ -28,6 +28,7 @@ import { OpenAIEntityModelID, OpenAIEntityModels } from '@/types/openai';
 
 import { useAppSelector } from '@/store/hooks';
 import { selectDefaultModelId } from '@/store/models/models.reducers';
+import { selectShowChatbar } from '@/store/ui-store/ui.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -53,7 +54,6 @@ export const Chatbar = () => {
   const {
     state: {
       conversations,
-      showChatbar,
       folders,
       messageIsStreaming,
       selectedConversationIds,
@@ -64,6 +64,7 @@ export const Chatbar = () => {
   } = useContext(HomeContext);
 
   const defaultModelId = useAppSelector(selectDefaultModelId);
+  const showChatbar = useAppSelector(selectShowChatbar);
 
   const {
     state: { searchTerm, filteredConversations },

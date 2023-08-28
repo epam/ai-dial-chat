@@ -4,6 +4,14 @@ import { useTranslation } from 'next-i18next';
 
 import { isMediaQuery } from '@/utils/app/styleHelpers';
 
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+  selectShowChatbar,
+  selectShowPromptbar,
+  setShowChatbar,
+  setShowPromptbar,
+} from '@/store/ui-store/ui.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import MoveLeftIcon from '../../public/images/icons/move-left.svg';
@@ -16,33 +24,42 @@ import { User } from './User/User';
 
 const Header = () => {
   const {
-    state: { showChatbar, showPromptbar, isUserSettingsOpen },
-    dispatch: homeDispatch,
+    state: { isUserSettingsOpen },
+    dispatch: oldHomeDispatch,
   } = useContext(HomeContext);
+
+  const showChatbar = useAppSelector(selectShowChatbar);
+  const showPromptbar = useAppSelector(selectShowPromptbar);
+
+  const dispatch = useAppDispatch();
 
   const { t } = useTranslation('sidebar');
 
   const handleToggleChatbar = () => {
     if (!showChatbar && isMediaQuery('(width <= 767px)')) {
-      homeDispatch({ field: 'showPromptbar', value: false });
-      localStorage.setItem('showPromptbar', JSON.stringify(false));
+      dispatch(setShowPromptbar(false));
+      // oldHomeDispatch({ field: 'showPromptbar', value: false });
+      // localStorage.setItem('showPromptbar', JSON.stringify(false));
     }
-    homeDispatch({ field: 'showChatbar', value: !showChatbar });
-    localStorage.setItem('showChatbar', JSON.stringify(!showChatbar));
+    dispatch(setShowChatbar(!showChatbar));
+    // oldHomeDispatch({ field: 'showChatbar', value: !showChatbar });
+    // localStorage.setItem('showChatbar', JSON.stringify(!showChatbar));
   };
   const handleTogglePromtbar = () => {
     if (!showPromptbar && isMediaQuery('(width <= 767px)')) {
-      homeDispatch({ field: 'showChatbar', value: false });
-      localStorage.setItem('showChatbar', JSON.stringify(false));
+      dispatch(setShowChatbar(false));
+      // oldHomeDispatch({ field: 'showChatbar', value: false });
+      // localStorage.setItem('showChatbar', JSON.stringify(false));
 
-      homeDispatch({ field: 'isProfileOpen', value: false });
+      oldHomeDispatch({ field: 'isProfileOpen', value: false });
     }
-    homeDispatch({ field: 'showPromptbar', value: !showPromptbar });
-    localStorage.setItem('showPromptbar', JSON.stringify(!showPromptbar));
+    dispatch(setShowPromptbar(!showPromptbar));
+    // oldHomeDispatch({ field: 'showPromptbar', value: !showPromptbar });
+    // localStorage.setItem('showPromptbar', JSON.stringify(!showPromptbar));
   };
 
   const onClose = () => {
-    homeDispatch({ field: 'isUserSettingsOpen', value: false });
+    oldHomeDispatch({ field: 'isUserSettingsOpen', value: false });
   };
 
   return (
