@@ -1,8 +1,9 @@
-import { FC, useContext } from 'react';
+import { FC } from 'react';
 
 import { Settings } from '@/types/settings';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -14,9 +15,7 @@ interface ChatLoaderProps {
 }
 
 export const ChatLoader: FC<ChatLoaderProps> = ({ theme, modelId }) => {
-  const {
-    state: { modelsMap },
-  } = useContext(HomeContext);
+  const modelsMap = useAppSelector(selectModelsMap);
   return (
     <div
       className="group border-b border-gray-400 bg-gray-200 dark:border-gray-700 dark:bg-gray-800 md:px-4"

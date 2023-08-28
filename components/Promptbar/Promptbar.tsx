@@ -1,6 +1,7 @@
 import { useContext, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
+
+import { useTranslation } from 'next-i18next';
 
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
@@ -11,6 +12,9 @@ import { PromptsHistory } from '@/types/export';
 import { FolderInterface } from '@/types/folder';
 import { OpenAIEntityModels } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
+
+import { useAppSelector } from '@/store/hooks';
+import { selectDefaultModelId } from '@/store/models/models.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -34,9 +38,10 @@ const Promptbar = () => {
   });
 
   const {
-    state: { prompts, defaultModelId, showPromptbar, folders },
+    state: { prompts, showPromptbar, folders },
     dispatch: homeDispatch,
   } = useContext(HomeContext);
+  const defaultModelId = useAppSelector(selectDefaultModelId);
 
   const {
     state: { searchTerm, filteredPrompts },

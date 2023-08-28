@@ -10,6 +10,9 @@ import {
 
 import { Conversation } from '@/types/chat';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
@@ -29,17 +32,14 @@ interface Props {
 
 export const ConversationComponent = ({ conversation }: Props) => {
   const {
-    state: {
-      messageIsStreaming,
-      selectedConversationIds,
-      modelsMap,
-      lightMode,
-    },
+    state: { messageIsStreaming, selectedConversationIds, lightMode },
     handleSelectConversation,
     handleUpdateConversation,
     handleNewReplayConversation,
     dispatch,
   } = useContext(HomeContext);
+  const modelsMap = useAppSelector(selectModelsMap);
+
   const { handleExportConversation } = useContext(ChatbarContext);
 
   const { handleDeleteConversation } = useContext(ChatbarContext);

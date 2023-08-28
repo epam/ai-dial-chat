@@ -4,7 +4,8 @@ import {
   IconTrashX,
 } from '@tabler/icons-react';
 import { FC, useContext, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+
+import { useTranslation } from 'next-i18next';
 
 import { Prompt } from '@/types/prompt';
 

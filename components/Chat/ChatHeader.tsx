@@ -6,6 +6,10 @@ import { useTranslation } from 'next-i18next';
 import { Conversation } from '@/types/chat';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 
+import { selectAddonsMap } from '@/store/addons/addons.reducers';
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
@@ -43,8 +47,10 @@ export const ChatHeader = ({
   const { t } = useTranslation('chat');
 
   const {
-    state: { modelsMap, addonsMap, lightMode },
+    state: { lightMode },
   } = useContext(HomeContext);
+  const modelsMap = useAppSelector(selectModelsMap);
+  const addonsMap = useAppSelector(selectAddonsMap);
   const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });

@@ -1,7 +1,7 @@
 import { useSession } from 'next-auth/react';
 import { useContext } from 'react';
-import { useTranslation } from 'react-i18next';
 
+import { useTranslation } from 'next-i18next';
 import Image from 'next/image';
 
 import HomeContext from '@/pages/api/home/home.context';

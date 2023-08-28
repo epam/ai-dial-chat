@@ -6,7 +6,8 @@ import {
 } from '@floating-ui/react';
 import { IconChevronDown } from '@tabler/icons-react';
 import { FC, useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+
+import { useTranslation } from 'next-i18next';
 
 import {
   OpenAIEntity,
@@ -15,6 +16,12 @@ import {
   OpenAIEntityModel,
   OpenAIEntityModelType,
 } from '@/types/openai';
+
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+  selectModels,
+  updateRecentModels,
+} from '@/store/models/models.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -119,10 +126,9 @@ export const ModelsDialog: FC<Props> = ({
   onClose,
 }) => {
   const { t } = useTranslation('chat');
-  const {
-    state: { models },
-    handleUpdateRecentModels,
-  } = useContext(HomeContext);
+  const dispatch = useAppDispatch();
+  const models = useAppSelector(selectModels);
+
   const [entityTypes, setEntityTypes] = useState<
     (
       | OpenAIEntityModelType
@@ -208,7 +214,7 @@ export const ModelsDialog: FC<Props> = ({
               selectedModelId={selectedModelId}
               onSelect={(id) => {
                 onModelSelect(id);
-                handleUpdateRecentModels(id);
+                dispatch(updateRecentModels({ modelId: id }));
                 onClose();
               }}
             />

@@ -1,9 +1,16 @@
 import { useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+
+import { useTranslation } from 'next-i18next';
 
 import { isMobile } from '@/utils/app/mobile';
 
 import { Conversation } from '@/types/chat';
+
+import { useAppSelector } from '@/store/hooks';
+import {
+  selectDefaultModelId,
+  selectModelsMap,
+} from '@/store/models/models.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -24,8 +31,11 @@ export const ChatCompareSelect = ({
 }: Props) => {
   const { t } = useTranslation('chat');
   const {
-    state: { modelsMap, defaultModelId, lightMode },
+    state: { lightMode },
   } = useContext(HomeContext);
+  const modelsMap = useAppSelector(selectModelsMap);
+  const defaultModelId = useAppSelector(selectDefaultModelId);
+
   const [comparableConversations, setComparableConversations] = useState<
     Conversation[]
   >([]);

@@ -23,6 +23,22 @@ import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
 import { KeyValuePair } from '@/types/data';
 
+import {
+  getAddons,
+  selectAddons,
+  updateRecentAddons,
+} from '@/store/addons/addons.reducers';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+  getModels,
+  selectDefaultModelId,
+  selectModels,
+  selectModelsError,
+  selectModelsIsLoading,
+  selectModelsMap,
+  updateRecentModels,
+} from '@/store/models/models.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import { ChatCompareRotate } from './ChatCompareRotate';
@@ -162,25 +178,26 @@ export const Chat = memo(({ appName }: Props) => {
     state: {
       conversations,
       selectedConversationIds,
-      models,
-      addons,
-      modelError,
       loading,
       prompts,
-      defaultModelId,
       isCompareMode,
       messageIsStreaming,
       enabledFeatures,
       lightMode,
-      modelsMap,
     },
     handleUpdateConversation,
     handleSelectConversation,
     handleSelectConversations,
-    handleUpdateRecentModels,
-    handleUpdateRecentAddons,
     dispatch: homeDispatch,
   } = useContext(HomeContext);
+
+  const dispatch = useAppDispatch();
+  const models = useAppSelector(selectModels);
+  const modelsMap = useAppSelector(selectModelsMap);
+  const modelError = useAppSelector(selectModelsError);
+  const modelsIsLoading = useAppSelector(selectModelsIsLoading);
+  const defaultModelId = useAppSelector(selectDefaultModelId);
+  const addons = useAppSelector(selectAddons);
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
@@ -289,12 +306,16 @@ export const Chat = memo(({ appName }: Props) => {
   }, [selectedConversationIds, conversations]);
 
   useEffect(() => {
-    const modelIds = models.map((model) => model.id);
-    setIsNotAllowedModel(
-      models.length > 0 &&
-        selectedConversations.some((conv) => !modelIds.includes(conv.model.id)),
-    );
-  }, [selectedConversations, models]);
+    if (!modelsIsLoading) {
+      const modelIds = models.map((model) => model.id);
+      setIsNotAllowedModel(
+        models.length === 0 ||
+          selectedConversations.some(
+            (conv) => !modelIds.includes(conv.model.id),
+          ),
+      );
+    }
+  }, [selectedConversations, models, modelsIsLoading]);
 
   function handleErrorMessage({
     updatedConversation,
@@ -351,12 +372,12 @@ export const Chat = memo(({ appName }: Props) => {
         return;
       }
 
-      handleUpdateRecentModels(conversation.model.id);
+      dispatch(updateRecentModels({ modelId: conversation.model.id }));
       if (
         conversation.selectedAddons.length > 0 &&
         modelsMap[conversation.model.id]?.type !== 'application'
       ) {
-        handleUpdateRecentAddons(conversation.selectedAddons);
+        dispatch(updateRecentAddons({ addonIds: conversation.selectedAddons }));
       }
 
       let updatedConversation: Conversation = {
@@ -502,10 +523,13 @@ export const Chat = memo(({ appName }: Props) => {
       }
 
       if (!response.ok) {
-        await showAPIToastError(response, t(errorsMessages.generalServer));
+        await showAPIToastError(
+          response,
+          t(errorsMessages.generalServer, { ns: 'common' }),
+        );
         handleErrorMessage({
           updatedConversation,
-          errorText: t(errorsMessages.generalServer),
+          errorText: t(errorsMessages.generalServer, { ns: 'common' }),
         });
         return;
       }
@@ -513,7 +537,7 @@ export const Chat = memo(({ appName }: Props) => {
       if (!data) {
         handleErrorMessage({
           updatedConversation,
-          errorText: t(errorsMessages.generalServer),
+          errorText: t(errorsMessages.generalServer, { ns: 'common' }),
         });
 
         return { error: true };
@@ -1184,7 +1208,13 @@ export const Chat = memo(({ appName }: Props) => {
                                 'top-chat-model-settings',
                               )}
                               isShowSettings={isShowChatSettings}
-                              setShowSettings={setIsShowChatSettings}
+                              setShowSettings={(isShow) => {
+                                if (isShow) {
+                                  dispatch(getModels());
+                                  dispatch(getAddons());
+                                }
+                                setIsShowChatSettings(isShow);
+                              }}
                               selectedConversationIds={selectedConversationIds}
                               onClearConversation={() =>
                                 handleClearConversation(conv)

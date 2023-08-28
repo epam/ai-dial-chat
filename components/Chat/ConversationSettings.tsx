@@ -1,10 +1,14 @@
 import { useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+
+import { useTranslation } from 'next-i18next';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/utils/app/const';
 
 import { OpenAIEntityModel } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
+
+import { useAppSelector } from '@/store/hooks';
+import { selectModels, selectModelsMap } from '@/store/models/models.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -56,9 +60,11 @@ export const ConversationSettings = ({
   onApplySettings,
 }: Props) => {
   const {
-    state: { modelsMap, models, lightMode },
+    state: { lightMode },
   } = useContext(HomeContext);
   const { t } = useTranslation('chat');
+  const models = useAppSelector(selectModels);
+  const modelsMap = useAppSelector(selectModelsMap);
   const [assistantSubModel, setAssistantSubModel] = useState(() => {
     return modelsMap[assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id];
   });

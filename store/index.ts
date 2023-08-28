@@ -1,16 +1,20 @@
+import { AddonsEpics } from './addons/addons.epics';
+import { addonsSlice } from './addons/addons.reducers';
+import { ModelsEpics } from './models/models.epics';
+import { modelsSlice } from './models/models.reducers';
+
 import { configureStore } from '@reduxjs/toolkit';
 import { combineEpics, createEpicMiddleware } from 'redux-observable';
 
-// Reducers
-
-// Epics
-
 const epicMiddleware = createEpicMiddleware();
 
-export const rootEpic = combineEpics();
+export const rootEpic = combineEpics(ModelsEpics, AddonsEpics);
 
 export const store = configureStore({
-  reducer: {},
+  reducer: {
+    models: modelsSlice.reducer,
+    addons: addonsSlice.reducer,
+  },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(epicMiddleware),
 });

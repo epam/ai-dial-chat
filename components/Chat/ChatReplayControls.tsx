@@ -1,5 +1,6 @@
 import { FC, MouseEventHandler } from 'react';
-import { useTranslation } from 'react-i18next';
+
+import { useTranslation } from 'next-i18next';
 
 import Play from '../../public/images/icons/play.svg';
 import RefreshCW from '../../public/images/icons/refresh-cw.svg';
