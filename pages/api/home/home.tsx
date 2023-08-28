@@ -45,6 +45,18 @@ import {
 } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+  getModels,
+  initRecentModels,
+  selectDefaultModelId,
+  selectModels,
+  selectModelsMap,
+  setDefaultModelId,
+  updateRecentModels,
+} from '@/store/models/models.reducers';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
+
 import { Chat } from '@/components/Chat/Chat';
 import { Chatbar } from '@/components/Chatbar/Chatbar';
 import Header from '@/components/Header/Header';
@@ -56,8 +68,6 @@ import { authOptions } from '../auth/[...nextauth]';
 import HomeContext from './home.context';
 import { HomeInitialState, initialState } from './home.state';
 
-import { useAppSelector } from '@/store/hooks';
-import { selectThemeState } from '@/store/ui-store/ui.reducers';
 import { v4 as uuidv4 } from 'uuid';
 
 interface Props {
@@ -85,11 +95,16 @@ const Home = ({
 
   const enabledFeaturesSet = new Set(enabledFeatures);
   const { t } = useTranslation('chat');
-  const { getModels, getAddons } = useApiService();
+  const { getAddons } = useApiService();
   const { getModelsError } = useErrorService();
   const [selectedConversationNames, setSelectedConversationNames] = useState<
     string[]
   >([]);
+
+  const dispatch = useAppDispatch();
+  const clientDefaultModelId = useAppSelector(selectDefaultModelId);
+  const models = useAppSelector(selectModels);
+  const modelsMap = useAppSelector(selectModelsMap);
 
   const contextValue = useCreateReducer<HomeInitialState>({
     initialState,
@@ -101,53 +116,13 @@ const Home = ({
       conversations,
       selectedConversationIds,
       prompts,
-      defaultModelId: clientDefaultModelId,
-      models,
-      modelsMap,
-      recentModelsIds,
       recentAddonsIds,
       isProfileOpen,
     },
-    dispatch,
+    dispatch: oldDispatch,
   } = contextValue;
 
-  //New Redux state
   const theme = useAppSelector(selectThemeState);
-
-  const { data: modelsData, error: modelsError } = useQuery(
-    ['GetModels'],
-    ({ signal }) => {
-      return getModels(signal);
-    },
-    { enabled: true, refetchOnMount: false, staleTime: 60000 },
-  );
-
-  useEffect(() => {
-    if (modelsData) {
-      dispatch({ field: 'models', value: modelsData });
-      dispatch({
-        field: 'modelsMap',
-        value: (modelsData as any as OpenAIEntityModel[]).reduce(
-          (acc, model) => {
-            acc[model.id] = model;
-
-            return acc;
-          },
-          {} as Record<string, OpenAIEntityModel>,
-        ),
-      });
-
-      const defaultModelId = (modelsData as any as OpenAIEntityModel[]).find(
-        (model) => model.isDefault,
-      )?.id;
-
-      dispatch({ field: 'defaultModelId', value: defaultModelId });
-    }
-  }, [modelsData, dispatch]);
-
-  useEffect(() => {
-    dispatch({ field: 'modelError', value: getModelsError(modelsError) });
-  }, [dispatch, modelsError, getModelsError]);
 
   const { data: addonsData, error: addonsError } = useQuery(
     ['GetAddons'],
@@ -159,9 +134,9 @@ const Home = ({
 
   useEffect(() => {
     if (addonsData) {
-      dispatch({ field: 'addons', value: addonsData });
+      oldDispatch({ field: 'addons', value: addonsData });
 
-      dispatch({
+      oldDispatch({
         field: 'addonsMap',
         value: (addonsData as any as OpenAIEntityAddon[]).reduce(
           (acc, addon) => {
@@ -173,22 +148,22 @@ const Home = ({
         ),
       });
     }
-  }, [addonsData, dispatch]);
+  }, [addonsData, oldDispatch]);
 
   useEffect(() => {
-    dispatch({ field: 'addonError', value: getModelsError(addonsError) });
-  }, [dispatch, addonsError, getModelsError]);
+    oldDispatch({ field: 'addonError', value: getModelsError(addonsError) });
+  }, [oldDispatch, addonsError, getModelsError]);
 
   // FETCH MODELS ----------------------------------------------
 
   const handleSelectConversation = (conversation: Conversation) => {
     const newSelectedIds = [conversation.id];
-    dispatch({
+    oldDispatch({
       field: 'selectedConversationIds',
       value: newSelectedIds,
     });
 
-    dispatch({
+    oldDispatch({
       field: 'isCompareMode',
       value: false,
     });
@@ -200,7 +175,7 @@ const Home = ({
     const newSelectedIds = Array.from(
       new Set(conversations.map(({ id }) => id)),
     );
-    dispatch({
+    oldDispatch({
       field: 'selectedConversationIds',
       value: newSelectedIds,
     });
@@ -222,14 +197,14 @@ const Home = ({
 
     const updatedFolders = [...folders, newFolder];
 
-    dispatch({ field: 'folders', value: updatedFolders });
+    oldDispatch({ field: 'folders', value: updatedFolders });
     saveFolders(updatedFolders);
     return newFolder;
   };
 
   const handleDeleteFolder = (folderId: string) => {
     const updatedFolders = folders.filter((f) => f.id !== folderId);
-    dispatch({ field: 'folders', value: updatedFolders });
+    oldDispatch({ field: 'folders', value: updatedFolders });
     saveFolders(updatedFolders);
 
     const updatedConversations: Conversation[] = conversations.map((c) => {
@@ -243,7 +218,7 @@ const Home = ({
       return c;
     });
 
-    dispatch({ field: 'conversations', value: updatedConversations });
+    oldDispatch({ field: 'conversations', value: updatedConversations });
     saveConversations(updatedConversations);
 
     const updatedPrompts: Prompt[] = prompts.map((p) => {
@@ -257,7 +232,7 @@ const Home = ({
       return p;
     });
 
-    dispatch({ field: 'prompts', value: updatedPrompts });
+    oldDispatch({ field: 'prompts', value: updatedPrompts });
     savePrompts(updatedPrompts);
   };
 
@@ -273,7 +248,7 @@ const Home = ({
       return f;
     });
 
-    dispatch({ field: 'folders', value: updatedFolders });
+    oldDispatch({ field: 'folders', value: updatedFolders });
 
     saveFolders(updatedFolders);
   };
@@ -283,7 +258,7 @@ const Home = ({
   const updateAllConversationsStore = (
     updatedConversations: Conversation[],
   ) => {
-    dispatch({ field: 'conversations', value: updatedConversations });
+    oldDispatch({ field: 'conversations', value: updatedConversations });
 
     saveConversations(updatedConversations);
   };
@@ -293,11 +268,11 @@ const Home = ({
     const ids = newConversations.map(({ id }) => id);
     updateAllConversationsStore(updatedConversations);
 
-    dispatch({
+    oldDispatch({
       field: 'selectedConversationIds',
       value: ids,
     });
-    dispatch({
+    oldDispatch({
       field: 'isCompareMode',
       value: false,
     });
@@ -313,6 +288,8 @@ const Home = ({
   const handleNewConversation = (
     name = DEFAULT_CONVERSATION_NAME,
   ): Conversation | undefined => {
+    dispatch(getModels());
+
     if (!clientDefaultModelId) {
       return;
     }
@@ -344,8 +321,9 @@ const Home = ({
     };
 
     addNewConversationToStore([newConversation]);
-    dispatch({ field: 'loading', value: false });
-    handleUpdateRecentModels(newConversation.model.id);
+    oldDispatch({ field: 'loading', value: false });
+
+    dispatch(updateRecentModels({ modelId: newConversation.model.id }));
 
     return newConversation;
   };
@@ -387,7 +365,7 @@ const Home = ({
     }
 
     addNewConversationToStore(newConversations);
-    dispatch({ field: 'loading', value: false });
+    oldDispatch({ field: 'loading', value: false });
 
     return newConversations;
   };
@@ -407,30 +385,18 @@ const Home = ({
       localConversations || conversations,
     );
 
-    dispatch({ field: 'conversations', value: allConversation });
+    oldDispatch({ field: 'conversations', value: allConversation });
 
     return allConversation;
   };
 
-  const handleUpdateRecentModels = (modelId: string): void => {
-    const recentFilteredModels = recentModelsIds.filter(
-      (recentModelId) => recentModelId !== modelId,
-    );
-
-    recentFilteredModels.unshift(modelId);
-    dispatch({ field: 'recentModelsIds', value: recentFilteredModels });
-    localStorage.setItem(
-      'recentModelsIds',
-      JSON.stringify(recentFilteredModels),
-    );
-  };
   const handleUpdateRecentAddons = (addonIds: string[]): void => {
     const recentFilteredAddons = recentAddonsIds.filter(
       (id) => !addonIds.includes(id),
     );
     const updatedAddonsIds = [...addonIds, ...recentFilteredAddons];
 
-    dispatch({
+    oldDispatch({
       field: 'recentAddonsIds',
       value: updatedAddonsIds,
     });
@@ -463,35 +429,41 @@ const Home = ({
 
   useEffect(() => {
     if (window.innerWidth < 640) {
-      dispatch({ field: 'showChatbar', value: false });
+      oldDispatch({ field: 'showChatbar', value: false });
     }
   }, [selectedConversationIds]);
 
-  useEffect(() => {
-    defaultModelId &&
-      dispatch({
-        field: 'defaultModelId',
-        value: defaultModelId,
-      });
+  // ON LOAD --------------------------------------------
 
+  useEffect(() => {
+    defaultModelId && dispatch(setDefaultModelId({ defaultModelId }));
     footerHtmlMessage &&
-      dispatch({
+      oldDispatch({
         field: 'footerHtmlMessage',
         value: footerHtmlMessage,
       });
     enabledFeaturesSet &&
-      dispatch({
+      oldDispatch({
         field: 'enabledFeatures',
         value: enabledFeaturesSet,
       });
     isIframe &&
-      dispatch({
+      oldDispatch({
         field: 'isIframe',
         value: isIframe,
       });
-  }, [defaultModelId, footerHtmlMessage, enabledFeatures]);
+    defaultRecentModelsIds &&
+      dispatch(
+        initRecentModels({
+          defaultRecentModelsIds,
+          localStorageRecentModelsIds: JSON.parse(
+            localStorage.getItem('recentModelsIds') || '[]',
+          ),
+        }),
+      );
 
-  // ON LOAD --------------------------------------------
+    dispatch(getModels());
+  }, []);
 
   const handleIframeAuth = async () => {
     const timeout = 30 * 1000;
@@ -538,35 +510,35 @@ const Home = ({
 
     const settings = getSettings();
     if (settings.theme) {
-      dispatch({
+      oldDispatch({
         field: 'lightMode',
         value: settings.theme,
       });
     }
 
     if (window.innerWidth < 640) {
-      dispatch({ field: 'showChatbar', value: false });
-      dispatch({ field: 'showPromptbar', value: false });
+      oldDispatch({ field: 'showChatbar', value: false });
+      oldDispatch({ field: 'showPromptbar', value: false });
     }
 
     const showChatbar = localStorage.getItem('showChatbar');
     if (showChatbar) {
-      dispatch({ field: 'showChatbar', value: showChatbar === 'true' });
+      oldDispatch({ field: 'showChatbar', value: showChatbar === 'true' });
     }
 
     const showPromptbar = localStorage.getItem('showPromptbar');
     if (showPromptbar) {
-      dispatch({ field: 'showPromptbar', value: showPromptbar === 'true' });
+      oldDispatch({ field: 'showPromptbar', value: showPromptbar === 'true' });
     }
 
     const folders = localStorage.getItem('folders');
     if (folders) {
-      dispatch({ field: 'folders', value: JSON.parse(folders) });
+      oldDispatch({ field: 'folders', value: JSON.parse(folders) });
     }
 
     const prompts = localStorage.getItem('prompts');
     if (prompts) {
-      dispatch({ field: 'prompts', value: JSON.parse(prompts) });
+      oldDispatch({ field: 'prompts', value: JSON.parse(prompts) });
     }
 
     const conversationHistory = localStorage.getItem('conversationHistory');
@@ -578,7 +550,10 @@ const Home = ({
         parsedConversationHistory,
       );
 
-      dispatch({ field: 'conversations', value: cleanedConversationHistory });
+      oldDispatch({
+        field: 'conversations',
+        value: cleanedConversationHistory,
+      });
     }
 
     const selectedConversationIds = localStorage.getItem(
@@ -595,13 +570,13 @@ const Home = ({
       filteredSelectedConversationIds?.length > 0 &&
       cleanedConversationHistory.length > 0
     ) {
-      dispatch({
+      oldDispatch({
         field: 'selectedConversationIds',
         value: filteredSelectedConversationIds,
       });
 
       if (filteredSelectedConversationIds.length > 1) {
-        dispatch({
+        oldDispatch({
           field: 'isCompareMode',
           value: true,
         });
@@ -628,7 +603,7 @@ const Home = ({
       const updatedConversations: Conversation[] =
         cleanedConversationHistory.concat(newConversation);
 
-      dispatch({
+      oldDispatch({
         field: 'selectedConversationIds',
         value: [newConversation.id],
       });
@@ -639,13 +614,13 @@ const Home = ({
 
     const recentAddonsIds = localStorage.getItem('recentAddonsIds');
     if (recentAddonsIds) {
-      dispatch({
+      oldDispatch({
         field: 'recentAddonsIds',
         value: JSON.parse(recentAddonsIds),
       });
     } else {
       if (defaultRecentAddonsIds) {
-        dispatch({
+        oldDispatch({
           field: 'recentAddonsIds',
           value: defaultRecentAddonsIds,
         });
@@ -655,26 +630,7 @@ const Home = ({
         );
       }
     }
-
-    const recentModelsIds = localStorage.getItem('recentModelsIds');
-    if (recentModelsIds) {
-      dispatch({
-        field: 'recentModelsIds',
-        value: JSON.parse(recentModelsIds),
-      });
-    } else {
-      if (defaultRecentModelsIds) {
-        dispatch({
-          field: 'recentModelsIds',
-          value: defaultRecentModelsIds,
-        });
-        localStorage.setItem(
-          'recentModelsIds',
-          JSON.stringify(defaultRecentModelsIds),
-        );
-      }
-    }
-  }, [defaultModelId, dispatch]);
+  }, []);
 
   useEffect(() => {
     if (selectedConversationIds.length > 0) {
@@ -699,7 +655,6 @@ const Home = ({
         handleSelectConversations,
         handleUpdateConversation,
         handleNewReplayConversation,
-        handleUpdateRecentModels,
         handleUpdateRecentAddons,
       }}
     >

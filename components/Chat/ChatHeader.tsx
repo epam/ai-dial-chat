@@ -6,15 +6,16 @@ import { useTranslation } from 'next-i18next';
 import { Conversation } from '@/types/chat';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
-
-import { useAppSelector } from '@/store/hooks';
-import { selectThemeState } from '@/store/ui-store/ui.reducers';
 
 interface Props {
   conversation: Conversation;
@@ -46,10 +47,9 @@ export const ChatHeader = ({
   const { t } = useTranslation('chat');
 
   const {
-    state: { modelsMap, addonsMap },
+    state: { addonsMap },
   } = useContext(HomeContext);
-
-  //New Redux state
+  const modelsMap = useAppSelector(selectModelsMap);
   const theme = useAppSelector(selectThemeState);
 
   const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {

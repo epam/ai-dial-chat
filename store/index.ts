@@ -1,20 +1,19 @@
+import ModelsEpics from './models/models.epics';
+import { modelsSlice } from './models/models.reducers';
 import UIEpics from './ui-store/ui.epics';
-import uiReducer from './ui-store/ui.reducers';
+import { uiSlice } from './ui-store/ui.reducers';
 
 import { configureStore } from '@reduxjs/toolkit';
 import { combineEpics, createEpicMiddleware } from 'redux-observable';
 
-// Reducers
-
-// Epics
-
 const epicMiddleware = createEpicMiddleware();
 
-export const rootEpic = combineEpics(UIEpics);
+export const rootEpic = combineEpics(ModelsEpics, UIEpics);
 
 export const store = configureStore({
   reducer: {
-    ui: uiReducer,
+    models: modelsSlice.reducer,
+    ui: uiSlice.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(epicMiddleware),

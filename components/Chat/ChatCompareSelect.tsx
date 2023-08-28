@@ -1,18 +1,21 @@
-import { useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from 'react';
+
+import { useTranslation } from 'next-i18next';
 
 import { isMobile } from '@/utils/app/mobile';
 
 import { Conversation } from '@/types/chat';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { useAppSelector } from '@/store/hooks';
+import {
+  selectDefaultModelId,
+  selectModelsMap,
+} from '@/store/models/models.reducers';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import { Combobox } from '../Common/Combobox';
-
-import { useAppSelector } from '@/store/hooks';
-import { selectThemeState } from '@/store/ui-store/ui.reducers';
 
 interface Props {
   conversations: Conversation[];
@@ -26,11 +29,9 @@ export const ChatCompareSelect = ({
   onConversationSelect,
 }: Props) => {
   const { t } = useTranslation('chat');
-  const {
-    state: { modelsMap, defaultModelId },
-  } = useContext(HomeContext);
 
-  //New Redux state
+  const modelsMap = useAppSelector(selectModelsMap);
+  const defaultModelId = useAppSelector(selectDefaultModelId);
   const theme = useAppSelector(selectThemeState);
 
   const [comparableConversations, setComparableConversations] = useState<

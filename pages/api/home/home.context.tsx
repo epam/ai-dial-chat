@@ -27,7 +27,6 @@ export interface HomeContextProps {
     localConversations?: Conversation[],
   ) => Conversation[];
   handleNewReplayConversation: (conversation: Conversation) => void;
-  handleUpdateRecentModels: (modelId: string) => void;
   handleUpdateRecentAddons: (addonIds: string[]) => void;
 }
 

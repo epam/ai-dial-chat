@@ -1,17 +1,20 @@
-import { useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from 'react';
+
+import { useTranslation } from 'next-i18next';
 
 import { OpenAIEntityModel } from '@/types/openai';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { useAppSelector } from '@/store/hooks';
+import {
+  selectModelsMap,
+  selectRecentModelsIds,
+} from '@/store/models/models.reducers';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelsDialog } from './ModelsDialog';
-
-import { useAppSelector } from '@/store/hooks';
-import { selectThemeState } from '@/store/ui-store/ui.reducers';
 
 interface Props {
   modelId: string | undefined;
@@ -23,13 +26,10 @@ export const ConversationSettingsModel = ({
   onModelSelect,
 }: Props) => {
   const { t } = useTranslation();
-  const {
-    state: { modelsMap, recentModelsIds },
-  } = useContext(HomeContext);
-
   //New Redux state
   const theme = useAppSelector(selectThemeState);
-
+  const modelsMap = useAppSelector(selectModelsMap);
+  const recentModelsIds = useAppSelector(selectRecentModelsIds);
   const [mappedEntities, setMappedEntities] = useState<OpenAIEntityModel[]>([]);
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 

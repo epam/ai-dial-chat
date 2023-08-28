@@ -1,20 +1,17 @@
-import { ReactNode, useContext } from 'react';
-
-import HomeContext from '@/pages/api/home/home.context';
-
-import { ModelIcon } from '../Chatbar/components/ModelIcon';
+import { ReactNode } from 'react';
 
 import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
 import { selectThemeState } from '@/store/ui-store/ui.reducers';
+
+import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 export interface SelectIconProps {
   modelId: string;
   children: ReactNode;
 }
 export const SelectIcon = ({ modelId, children }: SelectIconProps) => {
-  const {
-    state: { modelsMap },
-  } = useContext(HomeContext);
+  const modelsMap = useAppSelector(selectModelsMap);
 
   //New Redux state
   const theme = useAppSelector(selectThemeState);

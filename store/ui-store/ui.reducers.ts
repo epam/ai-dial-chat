@@ -21,7 +21,7 @@ const initialState: UIState = {
   isCompareMode: false,
 };
 
-export const uiStoreSlice = createSlice({
+export const uiSlice = createSlice({
   name: 'uiState',
   initialState,
   reducers: {
@@ -36,6 +36,4 @@ const rootSelector = (state: RootState) => state.ui;
 export const selectThemeState = createSelector([rootSelector], (state) => {
   return state.theme;
 });
-const { actions, reducer } = uiStoreSlice;
-export const { setTheme } = actions;
-export default reducer;
+export const { setTheme } = uiSlice.actions;

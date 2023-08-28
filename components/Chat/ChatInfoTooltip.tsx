@@ -1,12 +1,13 @@
 import { useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+
+import { useTranslation } from 'next-i18next';
 
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 
-import { ModelIcon } from '../Chatbar/components/ModelIcon';
-
 import { useAppSelector } from '@/store/hooks';
 import { selectThemeState } from '@/store/ui-store/ui.reducers';
+
+import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 interface Props {
   model: OpenAIEntityModel;

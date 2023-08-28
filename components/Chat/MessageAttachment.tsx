@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 import { IconPaperclip } from '@tabler/icons-react';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+
+import { useTranslation } from 'next-i18next';
 
 import { Attachment, AttachmentMIMEType } from '@/types/chat';
 

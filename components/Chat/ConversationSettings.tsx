@@ -1,12 +1,15 @@
-import { useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from 'react';
+
+import { useTranslation } from 'next-i18next';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/utils/app/const';
 
 import { OpenAIEntityModel } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { useAppSelector } from '@/store/hooks';
+import { selectModels, selectModelsMap } from '@/store/models/models.reducers';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -17,9 +20,6 @@ import { ConversationSettingsModel } from './ConversationSettingsModels';
 import { ModelDescription } from './ModelDescription';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
-
-import { useAppSelector } from '@/store/hooks';
-import { selectThemeState } from '@/store/ui-store/ui.reducers';
 
 interface Props {
   model: OpenAIEntityModel | undefined;
@@ -58,14 +58,12 @@ export const ConversationSettings = ({
   onApplyAddons,
   onApplySettings,
 }: Props) => {
-  const {
-    state: { modelsMap, models },
-  } = useContext(HomeContext);
-
   //New Redux state
   const theme = useAppSelector(selectThemeState);
 
   const { t } = useTranslation('chat');
+  const models = useAppSelector(selectModels);
+  const modelsMap = useAppSelector(selectModelsMap);
   const [assistantSubModel, setAssistantSubModel] = useState(() => {
     return modelsMap[assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id];
   });

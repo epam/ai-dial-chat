@@ -10,6 +10,10 @@ import {
 
 import { Conversation } from '@/types/chat';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
@@ -21,8 +25,6 @@ import XmarkIcon from '../../../public/images/icons/xmark.svg';
 import { ContextMenu } from '../../Common/ContextMenu';
 import { ModelIcon } from './ModelIcon';
 
-import { useAppSelector } from '@/store/hooks';
-import { selectThemeState } from '@/store/ui-store/ui.reducers';
 import classNames from 'classnames';
 
 interface Props {
@@ -31,7 +33,7 @@ interface Props {
 
 export const ConversationComponent = ({ conversation }: Props) => {
   const {
-    state: { messageIsStreaming, selectedConversationIds, modelsMap },
+    state: { messageIsStreaming, selectedConversationIds },
     handleSelectConversation,
     handleUpdateConversation,
     handleNewReplayConversation,
@@ -40,6 +42,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
 
   //New Redux state
   const theme = useAppSelector(selectThemeState);
+  const modelsMap = useAppSelector(selectModelsMap);
 
   const { handleExportConversation } = useContext(ChatbarContext);
 

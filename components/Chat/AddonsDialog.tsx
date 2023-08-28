@@ -5,7 +5,8 @@ import {
   useInteractions,
 } from '@floating-ui/react';
 import { FC, useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+
+import { useTranslation } from 'next-i18next';
 
 import { OpenAIEntity } from '@/types/openai';
 

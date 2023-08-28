@@ -5,8 +5,9 @@ import {
   useInteractions,
 } from '@floating-ui/react';
 import { IconChevronDown } from '@tabler/icons-react';
-import { FC, useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { FC, useEffect, useState } from 'react';
+
+import { useTranslation } from 'next-i18next';
 
 import {
   OpenAIEntity,
@@ -16,16 +17,18 @@ import {
   OpenAIEntityModelType,
 } from '@/types/openai';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+  selectModels,
+  updateRecentModels,
+} from '@/store/models/models.reducers';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import XMark from '../../public/images/icons/xmark.svg';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
-
-import { useAppSelector } from '@/store/hooks';
-import { selectThemeState } from '@/store/ui-store/ui.reducers';
 
 const Entity = ({
   entity,
@@ -122,10 +125,9 @@ export const ModelsDialog: FC<Props> = ({
   onClose,
 }) => {
   const { t } = useTranslation('chat');
-  const {
-    state: { models },
-    handleUpdateRecentModels,
-  } = useContext(HomeContext);
+  const dispatch = useAppDispatch();
+  const models = useAppSelector(selectModels);
+
   const [entityTypes, setEntityTypes] = useState<
     (
       | OpenAIEntityModelType
@@ -211,7 +213,7 @@ export const ModelsDialog: FC<Props> = ({
               selectedModelId={selectedModelId}
               onSelect={(id) => {
                 onModelSelect(id);
-                handleUpdateRecentModels(id);
+                dispatch(updateRecentModels({ modelId: id }));
                 onClose();
               }}
             />

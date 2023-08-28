@@ -20,6 +20,10 @@ import { useTranslation } from 'next-i18next';
 
 import { Conversation, Message } from '@/types/chat';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
@@ -31,8 +35,6 @@ import { MessageAttachments } from './MessageAttachments';
 import { MessageError } from './MessageError';
 import { MessageStages } from './MessageStages';
 
-import { useAppSelector } from '@/store/hooks';
-import { selectThemeState } from '@/store/ui-store/ui.reducers';
 import classNames from 'classnames';
 
 export interface Props {
@@ -80,8 +82,9 @@ export const ChatMessage: FC<Props> = memo(
     const { t } = useTranslation('chat');
 
     const {
-      state: { messageIsStreaming, modelsMap },
+      state: { messageIsStreaming },
     } = useContext(HomeContext);
+    const modelsMap = useAppSelector(selectModelsMap);
 
     //New Redux state
     const theme = useAppSelector(selectThemeState);
