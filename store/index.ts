@@ -1,6 +1,6 @@
-import AddonsEpics from './addons/addons.epics';
+import { AddonsEpics } from './addons/addons.epics';
 import { addonsSlice } from './addons/addons.reducers';
-import ModelsEpics from './models/models.epics';
+import { ModelsEpics } from './models/models.epics';
 import { modelsSlice } from './models/models.reducers';
 
 import { configureStore } from '@reduxjs/toolkit';

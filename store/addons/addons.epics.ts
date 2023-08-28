@@ -10,10 +10,12 @@ import {
   updateRecentAddons,
 } from './addons.reducers';
 
-import { combineEpics, ofType } from 'redux-observable';
+import { Action } from '@reduxjs/toolkit';
+import { Epic, combineEpics } from 'redux-observable';
 import {
   Observable,
   catchError,
+  filter,
   from,
   ignoreElements,
   map,
@@ -24,12 +26,12 @@ import {
   withLatestFrom,
 } from 'rxjs';
 
-const getAddonsEpic = (
-  action$: Observable<any>,
+const getAddonsEpic: Epic = (
+  action$: Observable<Action>,
   state$: Observable<RootState>,
 ) =>
   action$.pipe(
-    ofType(getAddons),
+    filter(getAddons.match),
     withLatestFrom(state$),
     switchMap(() => {
       return from(
@@ -55,12 +57,15 @@ const getAddonsEpic = (
     }),
   );
 
-const updateRecentAddonsEpic = (
-  action$: Observable<any>,
+const updateRecentAddonsEpic: Epic = (
+  action$: Observable<Action>,
   state$: Observable<RootState>,
 ) =>
   action$.pipe(
-    ofType<any, any>(initRecentAddons, updateRecentAddons),
+    filter(
+      (action) =>
+        initRecentAddons.match(action) || updateRecentAddons.match(action),
+    ),
     withLatestFrom(state$),
     map(([_action, state]) => selectRecentAddonsIds(state)),
     tap((recentModelIds) => {
@@ -69,6 +74,4 @@ const updateRecentAddonsEpic = (
     ignoreElements(),
   );
 
-const AddonsEpics: any = combineEpics(getAddonsEpic, updateRecentAddonsEpic);
-
-export default AddonsEpics;
+export const AddonsEpics = combineEpics(getAddonsEpic, updateRecentAddonsEpic);

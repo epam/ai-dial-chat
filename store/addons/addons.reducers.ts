@@ -54,7 +54,7 @@ export const addonsSlice = createSlice({
         code: payload.error.status || 'unknown',
         messageLines: payload.error.statusText
           ? [payload.error.statusText]
-          : [i18n?.t(errorsMessages.generalServer)],
+          : [i18n?.t(errorsMessages.generalServer, { ns: 'common' })],
       } as ErrorMessage;
     },
     initRecentAddons: (
