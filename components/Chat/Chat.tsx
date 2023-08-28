@@ -23,6 +23,11 @@ import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
 import { KeyValuePair } from '@/types/data';
 
+import {
+  getAddons,
+  selectAddons,
+  updateRecentAddons,
+} from '@/store/addons/addons.reducers';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   getModels,
@@ -174,7 +179,6 @@ export const Chat = memo(({ appName }: Props) => {
     state: {
       conversations,
       selectedConversationIds,
-      addons,
       loading,
       prompts,
       isCompareMode,
@@ -184,7 +188,6 @@ export const Chat = memo(({ appName }: Props) => {
     handleUpdateConversation,
     handleSelectConversation,
     handleSelectConversations,
-    handleUpdateRecentAddons,
     dispatch: homeDispatch,
   } = useContext(HomeContext);
 
@@ -195,6 +198,7 @@ export const Chat = memo(({ appName }: Props) => {
   const modelsIsLoading = useAppSelector(selectModelsIsLoading);
   const defaultModelId = useAppSelector(selectDefaultModelId);
   const theme = useAppSelector(selectThemeState);
+  const addons = useAppSelector(selectAddons);
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
@@ -374,7 +378,7 @@ export const Chat = memo(({ appName }: Props) => {
         conversation.selectedAddons.length > 0 &&
         modelsMap[conversation.model.id]?.type !== 'application'
       ) {
-        handleUpdateRecentAddons(conversation.selectedAddons);
+        dispatch(updateRecentAddons({ addonIds: conversation.selectedAddons }));
       }
 
       let updatedConversation: Conversation = {
@@ -520,10 +524,13 @@ export const Chat = memo(({ appName }: Props) => {
       }
 
       if (!response.ok) {
-        await showAPIToastError(response, t(errorsMessages.generalServer));
+        await showAPIToastError(
+          response,
+          t(errorsMessages.generalServer, { ns: 'common' }),
+        );
         handleErrorMessage({
           updatedConversation,
-          errorText: t(errorsMessages.generalServer),
+          errorText: t(errorsMessages.generalServer, { ns: 'common' }),
         });
         return;
       }
@@ -531,7 +538,7 @@ export const Chat = memo(({ appName }: Props) => {
       if (!data) {
         handleErrorMessage({
           updatedConversation,
-          errorText: t(errorsMessages.generalServer),
+          errorText: t(errorsMessages.generalServer, { ns: 'common' }),
         });
 
         return { error: true };
@@ -1205,6 +1212,7 @@ export const Chat = memo(({ appName }: Props) => {
                               setShowSettings={(isShow) => {
                                 if (isShow) {
                                   dispatch(getModels());
+                                  dispatch(getAddons());
                                 }
                                 setIsShowChatSettings(isShow);
                               }}

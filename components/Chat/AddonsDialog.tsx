@@ -4,22 +4,21 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import { FC, useContext, useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { OpenAIEntity } from '@/types/openai';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { selectAddons, selectAddonsMap } from '@/store/addons/addons.reducers';
+import { useAppSelector } from '@/store/hooks';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import XMark from '../../public/images/icons/xmark.svg';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
-
-import { useAppSelector } from '@/store/hooks';
-import { selectThemeState } from '@/store/ui-store/ui.reducers';
 
 interface Props {
   selectedAddonsIds: string[];
@@ -37,13 +36,10 @@ export const AddonsDialog: FC<Props> = ({
   onClose,
 }) => {
   const { t } = useTranslation('chat');
-  const {
-    state: { addonsMap, addons },
-  } = useContext(HomeContext);
 
-  //New Redux state
+  const addons = useAppSelector(selectAddons);
+  const addonsMap = useAppSelector(selectAddonsMap);
   const theme = useAppSelector(selectThemeState);
-
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAddons, setSelectedAddons] = useState<OpenAIEntity[]>(() => {
     return selectedAddonsIds

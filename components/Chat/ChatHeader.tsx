@@ -1,16 +1,15 @@
 import { IconEraser, IconSettings, IconX } from '@tabler/icons-react';
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/types/chat';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 
+import { selectAddonsMap } from '@/store/addons/addons.reducers';
 import { useAppSelector } from '@/store/hooks';
 import { selectModelsMap } from '@/store/models/models.reducers';
 import { selectThemeState } from '@/store/ui-store/ui.reducers';
-
-import HomeContext from '@/pages/api/home/home.context';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -46,12 +45,9 @@ export const ChatHeader = ({
 }: Props) => {
   const { t } = useTranslation('chat');
 
-  const {
-    state: { addonsMap },
-  } = useContext(HomeContext);
   const modelsMap = useAppSelector(selectModelsMap);
+  const addonsMap = useAppSelector(selectAddonsMap);
   const theme = useAppSelector(selectThemeState);
-
   const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });

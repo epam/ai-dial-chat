@@ -1,17 +1,12 @@
 import { Conversation, Message } from '@/types/chat';
-import { ErrorMessage } from '@/types/error';
 import { Feature } from '@/types/features';
 import { FolderInterface } from '@/types/folder';
-import { OpenAIEntityAddon } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 export interface HomeInitialState {
   loading: boolean;
   lightMode: 'light' | 'dark';
   messageIsStreaming: boolean;
-  addonError: ErrorMessage | null;
-  addons: OpenAIEntityAddon[];
-  addonsMap: Partial<Record<string, OpenAIEntityAddon>>;
   folders: FolderInterface[];
   conversations: Conversation[];
   selectedConversationIds: string[];
@@ -30,7 +25,6 @@ export interface HomeInitialState {
   isUserSettingsOpen: boolean;
   enabledFeatures: Set<Feature>;
 
-  recentAddonsIds: string[];
   isProfileOpen: boolean;
 }
 
@@ -38,9 +32,6 @@ export const initialState: HomeInitialState = {
   loading: false,
   lightMode: 'dark',
   messageIsStreaming: false,
-  addonError: null,
-  addons: [],
-  addonsMap: {},
   folders: [],
   conversations: [],
   selectedConversationIds: [],
@@ -59,6 +50,5 @@ export const initialState: HomeInitialState = {
 
   enabledFeatures: new Set([]),
 
-  recentAddonsIds: [],
   isProfileOpen: false,
 };

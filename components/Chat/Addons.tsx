@@ -1,8 +1,13 @@
-import { Fragment, useContext, useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import HomeContext from '@/pages/api/home/home.context';
+import {
+  selectAddonsMap,
+  selectRecentAddonsIds,
+} from '@/store/addons/addons.reducers';
+import { useAppSelector } from '@/store/hooks';
+import { selectThemeState } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -10,9 +15,6 @@ import XMark from '../../public/images/icons/xmark.svg';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 import { AddonsDialog } from './AddonsDialog';
-
-import { useAppSelector } from '@/store/hooks';
-import { selectThemeState } from '@/store/ui-store/ui.reducers';
 
 interface AddonsProps {
   preselectedAddonsIds: string[];
@@ -27,14 +29,11 @@ export const Addons = ({
   onChangeAddon,
   onApplyAddons,
 }: AddonsProps) => {
-  const {
-    state: { addonsMap, recentAddonsIds },
-  } = useContext(HomeContext);
-
-  //New Redux state
   const theme = useAppSelector(selectThemeState);
 
   const { t } = useTranslation('chat');
+  const recentAddonsIds = useAppSelector(selectRecentAddonsIds);
+  const addonsMap = useAppSelector(selectAddonsMap);
   const [filteredRecentAddons, setFilteredRecentAddons] = useState<string[]>(
     () => {
       return recentAddonsIds.filter(

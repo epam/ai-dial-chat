@@ -1,14 +1,14 @@
-import { OpenAIEntityModel } from '@/types/openai';
+import { OpenAIEntityAddon } from '@/types/openai';
 
 import { RootState } from '../index';
 import {
-  getModels,
-  getModelsFail,
-  getModelsSuccess,
-  initRecentModels,
-  selectRecentModelsIds,
-  updateRecentModels,
-} from './models.reducers';
+  getAddons,
+  getAddonsFail,
+  getAddonsSuccess,
+  initRecentAddons,
+  selectRecentAddonsIds,
+  updateRecentAddons,
+} from './addons.reducers';
 
 import { Action } from '@reduxjs/toolkit';
 import { Epic, combineEpics } from 'redux-observable';
@@ -26,16 +26,16 @@ import {
   withLatestFrom,
 } from 'rxjs';
 
-const getModelsEpic: Epic = (
+const getAddonsEpic: Epic = (
   action$: Observable<Action>,
   state$: Observable<RootState>,
 ) =>
   action$.pipe(
-    filter(getModels.match),
+    filter(getAddons.match),
     withLatestFrom(state$),
     switchMap(() => {
       return from(
-        fetch('/api/models', {
+        fetch('/api/addons', {
           headers: {
             'Content-Type': 'application/json',
           },
@@ -47,31 +47,31 @@ const getModelsEpic: Epic = (
           }
           return from(resp.json());
         }),
-        map((response: OpenAIEntityModel[]) =>
-          getModelsSuccess({ models: response }),
+        map((response: OpenAIEntityAddon[]) =>
+          getAddonsSuccess({ addons: response }),
         ),
         catchError((err) => {
-          return of(getModelsFail({ error: err }));
+          return of(getAddonsFail({ error: err }));
         }),
       );
     }),
   );
 
-const updateRecentModelsEpic: Epic = (
+const updateRecentAddonsEpic: Epic = (
   action$: Observable<Action>,
   state$: Observable<RootState>,
 ) =>
   action$.pipe(
     filter(
       (action) =>
-        initRecentModels.match(action) || updateRecentModels.match(action),
+        initRecentAddons.match(action) || updateRecentAddons.match(action),
     ),
     withLatestFrom(state$),
-    map(([_action, state]) => selectRecentModelsIds(state)),
+    map(([_action, state]) => selectRecentAddonsIds(state)),
     tap((recentModelIds) => {
-      localStorage.setItem('recentModelsIds', JSON.stringify(recentModelIds));
+      localStorage.setItem('recentAddonsIds', JSON.stringify(recentModelIds));
     }),
     ignoreElements(),
   );
 
-export const ModelsEpics = combineEpics(getModelsEpic, updateRecentModelsEpic);
+export const AddonsEpics = combineEpics(getAddonsEpic, updateRecentAddonsEpic);

@@ -1,6 +1,5 @@
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
 
 import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
@@ -9,9 +8,6 @@ import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import Head from 'next/head';
 
 import { useCreateReducer } from '@/hooks/useCreateReducer';
-
-import useErrorService from '@/services/errorService';
-import useApiService from '@/services/useApiService';
 
 import { AuthWindowLocationLike } from '@/utils/app/auth/authWindowLocationLike';
 import { delay } from '@/utils/app/auth/delay';
@@ -36,7 +32,6 @@ import { KeyValuePair } from '@/types/data';
 import { Feature } from '@/types/features';
 import { FolderInterface, FolderType } from '@/types/folder';
 import {
-  OpenAIEntityAddon,
   OpenAIEntityModel,
   OpenAIEntityModelID,
   OpenAIEntityModels,
@@ -45,6 +40,7 @@ import {
 } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
+import { getAddons, initRecentAddons } from '@/store/addons/addons.reducers';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   getModels,
@@ -100,8 +96,6 @@ const Home = ({
 
   const enabledFeaturesSet = new Set(enabledFeatures);
   const { t } = useTranslation('chat');
-  const { getAddons } = useApiService();
-  const { getModelsError } = useErrorService();
   const [selectedConversationNames, setSelectedConversationNames] = useState<
     string[]
   >([]);
@@ -121,44 +115,12 @@ const Home = ({
       conversations,
       selectedConversationIds,
       prompts,
-      recentAddonsIds,
       isProfileOpen,
     },
     dispatch: oldDispatch,
   } = contextValue;
 
   const theme = useAppSelector(selectThemeState);
-
-  const { data: addonsData, error: addonsError } = useQuery(
-    ['GetAddons'],
-    ({ signal }) => {
-      return getAddons(signal);
-    },
-    { enabled: true, refetchOnMount: false, staleTime: 60000 },
-  );
-
-  useEffect(() => {
-    if (addonsData) {
-      oldDispatch({ field: 'addons', value: addonsData });
-
-      oldDispatch({
-        field: 'addonsMap',
-        value: (addonsData as any as OpenAIEntityAddon[]).reduce(
-          (acc, addon) => {
-            acc[addon.id] = addon;
-
-            return acc;
-          },
-          {} as Record<string, OpenAIEntityAddon>,
-        ),
-      });
-    }
-  }, [addonsData, oldDispatch]);
-
-  useEffect(() => {
-    oldDispatch({ field: 'addonError', value: getModelsError(addonsError) });
-  }, [oldDispatch, addonsError, getModelsError]);
-
   // FETCH MODELS ----------------------------------------------
 
   const handleSelectConversation = (conversation: Conversation) => {
@@ -294,6 +256,7 @@ const Home = ({
     name = DEFAULT_CONVERSATION_NAME,
   ): Conversation | undefined => {
     dispatch(getModels());
+    dispatch(getAddons());
 
     if (!clientDefaultModelId) {
       return;
@@ -337,6 +300,8 @@ const Home = ({
     name = DEFAULT_CONVERSATION_NAME,
     count = 2,
   ): Conversation[] | undefined => {
+    dispatch(getModels());
+    dispatch(getAddons());
     if (!clientDefaultModelId) {
       return;
     }
@@ -393,19 +358,6 @@ const Home = ({
     oldDispatch({ field: 'conversations', value: allConversation });
 
     return allConversation;
-  };
-
-  const handleUpdateRecentAddons = (addonIds: string[]): void => {
-    const recentFilteredAddons = recentAddonsIds.filter(
-      (id) => !addonIds.includes(id),
-    );
-    const updatedAddonsIds = [...addonIds, ...recentFilteredAddons];
-
-    oldDispatch({
-      field: 'recentAddonsIds',
-      value: updatedAddonsIds,
-    });
-    localStorage.setItem('recentAddonsIds', JSON.stringify(updatedAddonsIds));
   };
 
   const handleNewReplayConversation = (conversation: Conversation) => {
@@ -467,8 +419,18 @@ const Home = ({
           ),
         }),
       );
+    defaultRecentAddonsIds &&
+      dispatch(
+        initRecentAddons({
+          defaultRecentAddonsIds,
+          localStorageRecentAddonsIds: JSON.parse(
+            localStorage.getItem('recentAddonsIds') || '[]',
+          ),
+        }),
+      );
 
     dispatch(getModels());
+    dispatch(getAddons());
   }, []);
 
   const handleIframeAuth = async () => {
@@ -614,25 +576,6 @@ const Home = ({
       updateAllConversationsStore(updatedConversations);
       saveSelectedConversationIds([newConversation.id]);
     }
-
-    const recentAddonsIds = localStorage.getItem('recentAddonsIds');
-    if (recentAddonsIds) {
-      oldDispatch({
-        field: 'recentAddonsIds',
-        value: JSON.parse(recentAddonsIds),
-      });
-    } else {
-      if (defaultRecentAddonsIds) {
-        oldDispatch({
-          field: 'recentAddonsIds',
-          value: defaultRecentAddonsIds,
-        });
-        localStorage.setItem(
-          'recentAddonsIds',
-          JSON.stringify(defaultRecentAddonsIds),
-        );
-      }
-    }
   }, []);
 
   useEffect(() => {
@@ -658,7 +601,6 @@ const Home = ({
         handleSelectConversations,
         handleUpdateConversation,
         handleNewReplayConversation,
-        handleUpdateRecentAddons,
       }}
     >
       <Head>
