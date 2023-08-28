@@ -523,10 +523,13 @@ export const Chat = memo(({ appName }: Props) => {
       }
 
       if (!response.ok) {
-        await showAPIToastError(response, t(errorsMessages.generalServer));
+        await showAPIToastError(
+          response,
+          t(errorsMessages.generalServer, { ns: 'common' }),
+        );
         handleErrorMessage({
           updatedConversation,
-          errorText: t(errorsMessages.generalServer),
+          errorText: t(errorsMessages.generalServer, { ns: 'common' }),
         });
         return;
       }
@@ -534,7 +537,7 @@ export const Chat = memo(({ appName }: Props) => {
       if (!data) {
         handleErrorMessage({
           updatedConversation,
-          errorText: t(errorsMessages.generalServer),
+          errorText: t(errorsMessages.generalServer, { ns: 'common' }),
         });
 
         return { error: true };

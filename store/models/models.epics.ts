@@ -10,10 +10,12 @@ import {
   updateRecentModels,
 } from './models.reducers';
 
-import { combineEpics, ofType } from 'redux-observable';
+import { Action } from '@reduxjs/toolkit';
+import { Epic, combineEpics, ofType } from 'redux-observable';
 import {
   Observable,
   catchError,
+  filter,
   from,
   ignoreElements,
   map,
@@ -24,8 +26,8 @@ import {
   withLatestFrom,
 } from 'rxjs';
 
-const getModelsEpic = (
-  action$: Observable<any>,
+const getModelsEpic: Epic = (
+  action$: Observable<Action>,
   state$: Observable<RootState>,
 ) =>
   action$.pipe(
@@ -55,12 +57,15 @@ const getModelsEpic = (
     }),
   );
 
-const updateRecentModelsEpic = (
-  action$: Observable<any>,
+const updateRecentModelsEpic: Epic = (
+  action$: Observable<Action>,
   state$: Observable<RootState>,
 ) =>
   action$.pipe(
-    ofType<any, any>(initRecentModels, updateRecentModels),
+    filter(
+      (action) =>
+        initRecentModels.match(action) || updateRecentModels.match(action),
+    ),
     withLatestFrom(state$),
     map(([_action, state]) => selectRecentModelsIds(state)),
     tap((recentModelIds) => {
@@ -69,6 +74,4 @@ const updateRecentModelsEpic = (
     ignoreElements(),
   );
 
-const ModelsEpics: any = combineEpics(getModelsEpic, updateRecentModelsEpic);
-
-export default ModelsEpics;
+export const ModelsEpics = combineEpics(getModelsEpic, updateRecentModelsEpic);

@@ -418,7 +418,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                   } else {
                     showAPIToastError(
                       response,
-                      t(errorsMessages.generalServer),
+                      t(errorsMessages.generalServer, { ns: 'common' }),
                       loadingToast,
                     );
                   }
