@@ -38,7 +38,7 @@ import {
   selectModelsMap,
   updateRecentModels,
 } from '@/store/models/models.reducers';
-import { selectThemeState } from '@/store/ui-store/ui.reducers';
+import { uiSelectors } from '@/store/ui-store/ui.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -181,7 +181,6 @@ export const Chat = memo(({ appName }: Props) => {
       selectedConversationIds,
       loading,
       prompts,
-      isCompareMode,
       messageIsStreaming,
       enabledFeatures,
     },
@@ -197,8 +196,9 @@ export const Chat = memo(({ appName }: Props) => {
   const modelError = useAppSelector(selectModelsError);
   const modelsIsLoading = useAppSelector(selectModelsIsLoading);
   const defaultModelId = useAppSelector(selectDefaultModelId);
-  const theme = useAppSelector(selectThemeState);
+  const theme = useAppSelector(uiSelectors.selectThemeState);
   const addons = useAppSelector(selectAddons);
+  const isCompareMode = useAppSelector(uiSelectors.selectIsCompareMode);
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =

@@ -12,13 +12,13 @@ import {
   programmingLanguages,
 } from '@/utils/app/codeblock';
 
+import { useAppSelector } from '@/store/hooks';
+import { uiSelectors } from '@/store/ui-store/ui.reducers';
+
 import Check from '../../public/images/icons/check.svg';
 import Clone from '../../public/images/icons/clone.svg';
 import Download from '../../public/images/icons/download.svg';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
-
-import { useAppSelector } from '@/store/hooks';
-import { selectThemeState } from '@/store/ui-store/ui.reducers';
 
 interface Props {
   language: string;
@@ -34,8 +34,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
   const { t } = useTranslation('markdown');
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
-  //New Redux state
-  const theme = useAppSelector(selectThemeState);
+  const theme = useAppSelector(uiSelectors.selectThemeState);
 
   const copyToClipboard = () => {
     if (!navigator.clipboard || !navigator.clipboard.writeText) {

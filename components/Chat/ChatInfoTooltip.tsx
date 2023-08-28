@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 
 import { useAppSelector } from '@/store/hooks';
-import { selectThemeState } from '@/store/ui-store/ui.reducers';
+import { uiSelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -46,7 +46,7 @@ export const ChatInfoTooltip = ({
   temperature,
 }: Props) => {
   //New Redux state
-  const theme = useAppSelector(selectThemeState);
+  const theme = useAppSelector(uiSelectors.selectThemeState);
 
   const { t } = useTranslation('chat');
   const getModelLabel = useCallback(() => {

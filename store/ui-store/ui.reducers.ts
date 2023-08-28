@@ -46,26 +46,41 @@ export const uiSlice = createSlice({
     ) => {
       state.isUserSettingsOpen = payload;
     },
+    setIsProfileOpen: (
+      state,
+      { payload }: PayloadAction<UIState['isProfileOpen']>,
+    ) => {
+      state.isProfileOpen = payload;
+    },
+    setIsCompareMode: (
+      state,
+      { payload }: PayloadAction<UIState['isCompareMode']>,
+    ) => {
+      state.isCompareMode = payload;
+    },
   },
 });
 
 const rootSelector = (state: RootState) => state.ui;
 
-export const selectThemeState = createSelector([rootSelector], (state) => {
+const selectThemeState = createSelector([rootSelector], (state) => {
   return state.theme;
 });
-export const selectShowChatbar = createSelector([rootSelector], (state) => {
+const selectShowChatbar = createSelector([rootSelector], (state) => {
   return state.showChatbar;
 });
-export const selectShowPromptbar = createSelector([rootSelector], (state) => {
+const selectShowPromptbar = createSelector([rootSelector], (state) => {
   return state.showPromptbar;
 });
-export const selectIsUserSettingsOpen = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.isUserSettingsOpen;
-  },
-);
+const selectIsUserSettingsOpen = createSelector([rootSelector], (state) => {
+  return state.isUserSettingsOpen;
+});
+const selectIsProfileOpen = createSelector([rootSelector], (state) => {
+  return state.isProfileOpen;
+});
+const selectIsCompareMode = createSelector([rootSelector], (state) => {
+  return state.isCompareMode;
+});
 export const uiActions = uiSlice.actions;
 
 export const uiSelectors = {
@@ -73,4 +88,6 @@ export const uiSelectors = {
   selectShowChatbar,
   selectShowPromptbar,
   selectIsUserSettingsOpen,
+  selectIsProfileOpen,
+  selectIsCompareMode,
 };

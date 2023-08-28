@@ -22,7 +22,7 @@ import { Conversation, Message } from '@/types/chat';
 
 import { useAppSelector } from '@/store/hooks';
 import { selectModelsMap } from '@/store/models/models.reducers';
-import { selectThemeState } from '@/store/ui-store/ui.reducers';
+import { uiSelectors } from '@/store/ui-store/ui.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -86,8 +86,7 @@ export const ChatMessage: FC<Props> = memo(
     } = useContext(HomeContext);
     const modelsMap = useAppSelector(selectModelsMap);
 
-    //New Redux state
-    const theme = useAppSelector(selectThemeState);
+    const theme = useAppSelector(uiSelectors.selectThemeState);
 
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [isTyping, setIsTyping] = useState<boolean>(false);

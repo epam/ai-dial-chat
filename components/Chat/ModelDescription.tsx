@@ -3,7 +3,7 @@ import { useTranslation } from 'next-i18next';
 import { OpenAIEntityModel } from '@/types/openai';
 
 import { useAppSelector } from '@/store/hooks';
-import { selectThemeState } from '@/store/ui-store/ui.reducers';
+import { uiSelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -14,8 +14,7 @@ interface Props {
 }
 
 export const ModelDescription = ({ model }: Props) => {
-  //New Redux state
-  const theme = useAppSelector(selectThemeState);
+  const theme = useAppSelector(uiSelectors.selectThemeState);
 
   const { t } = useTranslation('chat');
 

@@ -1,13 +1,9 @@
-import { useContext } from 'react';
-
 import { useTranslation } from 'next-i18next';
 
 import { isMediaQuery } from '@/utils/app/styleHelpers';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { uiActions, uiSelectors } from '@/store/ui-store/ui.reducers';
-
-import HomeContext from '@/pages/api/home/home.context';
 
 import MoveLeftIcon from '../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../public/images/icons/move-right.svg';
@@ -18,8 +14,6 @@ import { CreateNewChatMobile } from './CreateNewChatMobile';
 import { User } from './User/User';
 
 const Header = () => {
-  const { dispatch: oldHomeDispatch } = useContext(HomeContext);
-
   const showChatbar = useAppSelector(uiSelectors.selectShowChatbar);
   const showPromptbar = useAppSelector(uiSelectors.selectShowPromptbar);
   const isUserSettingsOpen = useAppSelector(
@@ -39,8 +33,7 @@ const Header = () => {
   const handleTogglePromtbar = () => {
     if (!showPromptbar && isMediaQuery('(width <= 767px)')) {
       dispatch(uiActions.setShowChatbar(false));
-
-      oldHomeDispatch({ field: 'isProfileOpen', value: false });
+      dispatch(uiActions.setIsProfileOpen(false));
     }
     dispatch(uiActions.setShowPromptbar(!showPromptbar));
   };

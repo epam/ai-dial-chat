@@ -15,7 +15,7 @@ import { Prompt } from '@/types/prompt';
 
 import { useAppSelector } from '@/store/hooks';
 import { selectDefaultModelId } from '@/store/models/models.reducers';
-import { selectShowPromptbar } from '@/store/ui-store/ui.reducers';
+import { uiSelectors } from '@/store/ui-store/ui.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -43,7 +43,7 @@ const Promptbar = () => {
     dispatch: homeDispatch,
   } = useContext(HomeContext);
   const defaultModelId = useAppSelector(selectDefaultModelId);
-  const showPromptbar = useAppSelector(selectShowPromptbar);
+  const showPromptbar = useAppSelector(uiSelectors.selectShowPromptbar);
 
   const {
     state: { searchTerm, filteredPrompts },

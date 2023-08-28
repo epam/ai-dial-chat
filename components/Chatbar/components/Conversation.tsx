@@ -10,9 +10,9 @@ import {
 
 import { Conversation } from '@/types/chat';
 
-import { useAppSelector } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectModelsMap } from '@/store/models/models.reducers';
-import { selectThemeState } from '@/store/ui-store/ui.reducers';
+import { uiActions, uiSelectors } from '@/store/ui-store/ui.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -37,12 +37,12 @@ export const ConversationComponent = ({ conversation }: Props) => {
     handleSelectConversation,
     handleUpdateConversation,
     handleNewReplayConversation,
-    dispatch,
   } = useContext(HomeContext);
 
-  //New Redux state
-  const theme = useAppSelector(selectThemeState);
+  const theme = useAppSelector(uiSelectors.selectThemeState);
   const modelsMap = useAppSelector(selectModelsMap);
+
+  const dispatch = useAppDispatch();
 
   const { handleExportConversation } = useContext(ChatbarContext);
 
@@ -208,10 +208,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
             }}
             onCompare={() => {
               handleSelectConversation(conversation);
-              dispatch({
-                field: 'isCompareMode',
-                value: true,
-              });
+              dispatch(uiActions.setIsCompareMode(true));
             }}
             onReplay={handleStartReplay}
             isEmptyConversation={isEmptyConversation}

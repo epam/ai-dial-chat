@@ -105,17 +105,12 @@ const Home = ({
   });
 
   const {
-    state: {
-      folders,
-      conversations,
-      selectedConversationIds,
-      prompts,
-      isProfileOpen,
-    },
+    state: { folders, conversations, selectedConversationIds, prompts },
     dispatch: oldDispatch,
   } = contextValue;
 
   const theme = useAppSelector(uiSelectors.selectThemeState);
+  const isProfileOpen = useAppSelector(uiSelectors.selectIsProfileOpen);
   // FETCH MODELS ----------------------------------------------
 
   const handleSelectConversation = (conversation: Conversation) => {
@@ -125,10 +120,7 @@ const Home = ({
       value: newSelectedIds,
     });
 
-    oldDispatch({
-      field: 'isCompareMode',
-      value: false,
-    });
+    dispatch(uiActions.setIsCompareMode(false));
 
     saveSelectedConversationIds(newSelectedIds);
   };
@@ -234,10 +226,7 @@ const Home = ({
       field: 'selectedConversationIds',
       value: ids,
     });
-    oldDispatch({
-      field: 'isCompareMode',
-      value: false,
-    });
+    dispatch(uiActions.setIsCompareMode(false));
 
     saveSelectedConversationIds(ids);
   };
@@ -535,10 +524,7 @@ const Home = ({
       });
 
       if (filteredSelectedConversationIds.length > 1) {
-        oldDispatch({
-          field: 'isCompareMode',
-          value: true,
-        });
+        dispatch(uiActions.setIsCompareMode(true));
       }
     } else {
       const lastConversation =

@@ -15,13 +15,10 @@ export interface HomeInitialState {
   currentFolder: FolderInterface | undefined;
   messageError: boolean;
   searchTerm: string;
-  isCompareMode: boolean;
   isIframe: boolean;
   footerHtmlMessage: string;
 
   enabledFeatures: Set<Feature>;
-
-  isProfileOpen: boolean;
 }
 
 export const initialState: HomeInitialState = {
@@ -36,11 +33,8 @@ export const initialState: HomeInitialState = {
   currentFolder: undefined,
   messageError: false,
   searchTerm: '',
-  isCompareMode: false,
   isIframe: false,
   footerHtmlMessage: '',
 
   enabledFeatures: new Set([]),
-
-  isProfileOpen: false,
 };

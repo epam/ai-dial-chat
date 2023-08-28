@@ -22,7 +22,7 @@ import {
   selectModels,
   updateRecentModels,
 } from '@/store/models/models.reducers';
-import { selectThemeState } from '@/store/ui-store/ui.reducers';
+import { uiSelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -39,8 +39,7 @@ const Entity = ({
   selectedModelId: string | undefined;
   onSelect: (id: string) => void;
 }) => {
-  //New Redux state
-  const theme = useAppSelector(selectThemeState);
+  const theme = useAppSelector(uiSelectors.selectThemeState);
 
   const [isOpened, setIsOpened] = useState(false);
 
