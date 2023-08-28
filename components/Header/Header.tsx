@@ -5,12 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { isMediaQuery } from '@/utils/app/styleHelpers';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import {
-  selectShowChatbar,
-  selectShowPromptbar,
-  setShowChatbar,
-  setShowPromptbar,
-} from '@/store/ui-store/ui.reducers';
+import { uiActions, uiSelectors } from '@/store/ui-store/ui.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -23,13 +18,13 @@ import { CreateNewChatMobile } from './CreateNewChatMobile';
 import { User } from './User/User';
 
 const Header = () => {
-  const {
-    state: { isUserSettingsOpen },
-    dispatch: oldHomeDispatch,
-  } = useContext(HomeContext);
+  const { dispatch: oldHomeDispatch } = useContext(HomeContext);
 
-  const showChatbar = useAppSelector(selectShowChatbar);
-  const showPromptbar = useAppSelector(selectShowPromptbar);
+  const showChatbar = useAppSelector(uiSelectors.selectShowChatbar);
+  const showPromptbar = useAppSelector(uiSelectors.selectShowPromptbar);
+  const isUserSettingsOpen = useAppSelector(
+    uiSelectors.selectIsUserSettingsOpen,
+  );
 
   const dispatch = useAppDispatch();
 
@@ -37,21 +32,21 @@ const Header = () => {
 
   const handleToggleChatbar = () => {
     if (!showChatbar && isMediaQuery('(width <= 767px)')) {
-      dispatch(setShowPromptbar(false));
+      dispatch(uiActions.setShowPromptbar(false));
     }
-    dispatch(setShowChatbar(!showChatbar));
+    dispatch(uiActions.setShowChatbar(!showChatbar));
   };
   const handleTogglePromtbar = () => {
     if (!showPromptbar && isMediaQuery('(width <= 767px)')) {
-      dispatch(setShowChatbar(false));
+      dispatch(uiActions.setShowChatbar(false));
 
       oldHomeDispatch({ field: 'isProfileOpen', value: false });
     }
-    dispatch(setShowPromptbar(!showPromptbar));
+    dispatch(uiActions.setShowPromptbar(!showPromptbar));
   };
 
   const onClose = () => {
-    oldHomeDispatch({ field: 'isUserSettingsOpen', value: false });
+    dispatch(uiActions.setIsUserSettingsOpen(false));
   };
 
   return (

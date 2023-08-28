@@ -1,12 +1,12 @@
-import { ChangeEventHandler, FC, useEffect, useRef } from 'react';
+import { ChangeEventHandler, FC, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   ThemeType,
-  selectThemeState,
-  setTheme,
+  uiActions,
+  uiSelectors,
 } from '@/store/ui-store/ui.reducers';
 
 interface Props {
@@ -15,7 +15,9 @@ interface Props {
 }
 
 export const SettingDialog: FC<Props> = ({ open, onClose }) => {
-  const theme = useAppSelector(selectThemeState);
+  const theme = useAppSelector(uiSelectors.selectThemeState);
+
+  const [localTheme, setLocalTheme] = useState(theme);
 
   const dispatch = useAppDispatch();
 
@@ -46,9 +48,12 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     event,
   ) => {
     const theme = event.target.value as ThemeType;
-    dispatch(setTheme(theme));
+    setLocalTheme(theme);
   };
 
+  const handleSave = () => {
+    dispatch(uiActions.setTheme(localTheme));
+  };
   // Render nothing if the dialog is not open.
   if (!open) {
     return <></>;
@@ -79,7 +84,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
 
             <select
               className="w-full cursor-pointer bg-transparent p-2 text-neutral-700 dark:text-neutral-200"
-              value={theme}
+              value={localTheme}
               onChange={onThemeChangeHandler}
             >
               <option
@@ -96,16 +101,16 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
               </option>
             </select>
 
-            {/* <button
+            <button
               type="button"
               className="mt-6 w-full rounded-lg border border-neutral-500 px-4 py-2 text-neutral-900 shadow hover:bg-neutral-100 focus:outline-none dark:border-neutral-800 dark:border-opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-300"
               onClick={() => {
-                // handleSave();
+                handleSave();
                 onClose();
               }}
             >
               {t('Save')}
-            </button> */}
+            </button>
           </div>
         </div>
       </div>

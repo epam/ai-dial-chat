@@ -4,6 +4,9 @@ import { useCallback, useContext, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { useAppDispatch } from '@/store/hooks';
+import { uiActions } from '@/store/ui-store/ui.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import { FooterMessage } from '@/components/Chat/FooterMessage';
@@ -26,11 +29,11 @@ const UserInfo = () => {
 };
 
 const UserSettings = () => {
-  const { dispatch: homeDispatch } = useContext(HomeContext);
+  const dispatch = useAppDispatch();
   const { t } = useTranslation('sidebar');
 
   const onClick = () => {
-    homeDispatch({ field: 'isUserSettingsOpen', value: true });
+    dispatch(uiActions.setIsUserSettingsOpen);
   };
 
   return (

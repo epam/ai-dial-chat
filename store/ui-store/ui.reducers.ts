@@ -40,6 +40,12 @@ export const uiSlice = createSlice({
     ) => {
       state.showPromptbar = payload;
     },
+    setIsUserSettingsOpen: (
+      state,
+      { payload }: PayloadAction<UIState['isUserSettingsOpen']>,
+    ) => {
+      state.isUserSettingsOpen = payload;
+    },
   },
 });
 
@@ -54,4 +60,17 @@ export const selectShowChatbar = createSelector([rootSelector], (state) => {
 export const selectShowPromptbar = createSelector([rootSelector], (state) => {
   return state.showPromptbar;
 });
-export const { setTheme, setShowChatbar, setShowPromptbar } = uiSlice.actions;
+export const selectIsUserSettingsOpen = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.isUserSettingsOpen;
+  },
+);
+export const uiActions = uiSlice.actions;
+
+export const uiSelectors = {
+  selectThemeState,
+  selectShowChatbar,
+  selectShowPromptbar,
+  selectIsUserSettingsOpen,
+};

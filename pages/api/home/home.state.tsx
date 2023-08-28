@@ -19,7 +19,6 @@ export interface HomeInitialState {
   isIframe: boolean;
   footerHtmlMessage: string;
 
-  isUserSettingsOpen: boolean;
   enabledFeatures: Set<Feature>;
 
   isProfileOpen: boolean;
@@ -40,7 +39,6 @@ export const initialState: HomeInitialState = {
   isCompareMode: false,
   isIframe: false,
   footerHtmlMessage: '',
-  isUserSettingsOpen: false,
 
   enabledFeatures: new Set([]),
 

@@ -51,12 +51,7 @@ import {
   setDefaultModelId,
   updateRecentModels,
 } from '@/store/models/models.reducers';
-import {
-  selectThemeState,
-  setShowChatbar,
-  setShowPromptbar,
-  setTheme,
-} from '@/store/ui-store/ui.reducers';
+import { uiActions, uiSelectors } from '@/store/ui-store/ui.reducers';
 
 import { Chat } from '@/components/Chat/Chat';
 import { Chatbar } from '@/components/Chatbar/Chatbar';
@@ -120,7 +115,7 @@ const Home = ({
     dispatch: oldDispatch,
   } = contextValue;
 
-  const theme = useAppSelector(selectThemeState);
+  const theme = useAppSelector(uiSelectors.selectThemeState);
   // FETCH MODELS ----------------------------------------------
 
   const handleSelectConversation = (conversation: Conversation) => {
@@ -386,7 +381,7 @@ const Home = ({
 
   useEffect(() => {
     if (window.innerWidth < 640) {
-      dispatch(setShowChatbar(false));
+      dispatch(uiActions.setShowChatbar(false));
     }
   }, [selectedConversationIds]);
 
@@ -477,22 +472,22 @@ const Home = ({
 
     const settings = getSettings();
     if (settings.theme) {
-      dispatch(setTheme(settings.theme));
+      dispatch(uiActions.setTheme(settings.theme));
     }
 
     if (window.innerWidth < 640) {
-      dispatch(setShowChatbar(false));
-      dispatch(setShowPromptbar(false));
+      dispatch(uiActions.setShowChatbar(false));
+      dispatch(uiActions.setShowPromptbar(false));
     }
 
     const showChatbar = localStorage.getItem('showChatbar');
     if (showChatbar) {
-      dispatch(setShowChatbar(showChatbar === 'true'));
+      dispatch(uiActions.setShowChatbar(showChatbar === 'true'));
     }
 
     const showPromptbar = localStorage.getItem('showPromptbar');
     if (showPromptbar) {
-      dispatch(setShowPromptbar(showPromptbar === 'true'));
+      dispatch(uiActions.setShowPromptbar(showPromptbar === 'true'));
     }
 
     const folders = localStorage.getItem('folders');

@@ -1,16 +1,16 @@
 import { RootState } from '..';
-import {
-  selectShowChatbar,
-  selectShowPromptbar,
-  selectThemeState,
-  setShowChatbar,
-  setShowPromptbar,
-  setTheme,
-} from './ui.reducers';
+import { uiActions, uiSelectors } from './ui.reducers';
 
 import { Action } from '@reduxjs/toolkit';
-import { Epic, combineEpics, ofType } from 'redux-observable';
-import { Observable, ignoreElements, map, tap, withLatestFrom } from 'rxjs';
+import { Epic, combineEpics } from 'redux-observable';
+import {
+  Observable,
+  filter,
+  ignoreElements,
+  map,
+  tap,
+  withLatestFrom,
+} from 'rxjs';
 
 const saveThemeEpic: Epic = (
   action$: Observable<Action>,
@@ -18,10 +18,10 @@ const saveThemeEpic: Epic = (
   state$: Observable<RootState>,
 ) =>
   action$.pipe(
-    ofType<any, any>(setTheme),
+    filter(uiActions.setTheme.match),
     withLatestFrom(state$),
 
-    map(([_action, state]) => selectThemeState(state)),
+    map(([_action, state]) => uiSelectors.selectThemeState(state)),
     tap((theme) => {
       localStorage.setItem('settings', JSON.stringify({ theme }));
     }),
@@ -33,10 +33,10 @@ const saveShowChatbarEpic: Epic = (
   state$: Observable<RootState>,
 ) =>
   action$.pipe(
-    ofType<any, any>(setShowChatbar),
+    filter(uiActions.setShowChatbar.match),
     withLatestFrom(state$),
 
-    map(([_action, state]) => selectShowChatbar(state)),
+    map(([_action, state]) => uiSelectors.selectShowChatbar(state)),
     tap((showChatbar) => {
       localStorage.setItem('showChatbar', JSON.stringify(showChatbar));
     }),
@@ -49,10 +49,10 @@ const saveShowPromptbarEpic: Epic = (
   state$: Observable<RootState>,
 ) =>
   action$.pipe(
-    ofType<any, any>(setShowPromptbar),
+    filter(uiActions.setShowPromptbar.match),
     withLatestFrom(state$),
 
-    map(([_action, state]) => selectShowPromptbar(state)),
+    map(([_action, state]) => uiSelectors.selectShowPromptbar(state)),
     tap((showPromptbar) => {
       localStorage.setItem('showPromptbar', JSON.stringify(showPromptbar));
     }),
