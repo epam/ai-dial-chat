@@ -1,10 +1,11 @@
+import { Theme } from '@/types/settings';
+
 import { RootState } from '..';
 
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-export type ThemeType = 'light' | 'dark';
 export interface UIState {
-  theme: ThemeType;
+  theme: Theme;
   showChatbar: boolean;
   showPromptbar: boolean;
   isUserSettingsOpen: boolean;
@@ -25,7 +26,7 @@ export const uiSlice = createSlice({
   name: 'uiState',
   initialState,
   reducers: {
-    setTheme: (state, { payload }: PayloadAction<ThemeType>) => {
+    setTheme: (state, { payload }: PayloadAction<Theme>) => {
       state.theme = payload;
     },
     setShowChatbar: (
@@ -66,24 +67,30 @@ const rootSelector = (state: RootState) => state.ui;
 const selectThemeState = createSelector([rootSelector], (state) => {
   return state.theme;
 });
+
 const selectShowChatbar = createSelector([rootSelector], (state) => {
   return state.showChatbar;
 });
+
 const selectShowPromptbar = createSelector([rootSelector], (state) => {
   return state.showPromptbar;
 });
+
 const selectIsUserSettingsOpen = createSelector([rootSelector], (state) => {
   return state.isUserSettingsOpen;
 });
+
 const selectIsProfileOpen = createSelector([rootSelector], (state) => {
   return state.isProfileOpen;
 });
+
 const selectIsCompareMode = createSelector([rootSelector], (state) => {
   return state.isCompareMode;
 });
-export const uiActions = uiSlice.actions;
 
-export const uiSelectors = {
+export const UIActions = uiSlice.actions;
+
+export const UISelectors = {
   selectThemeState,
   selectShowChatbar,
   selectShowPromptbar,

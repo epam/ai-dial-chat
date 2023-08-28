@@ -9,7 +9,7 @@ import {
   selectModelsMap,
   selectRecentModelsIds,
 } from '@/store/models/models.reducers';
-import { uiSelectors } from '@/store/ui-store/ui.reducers';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -26,7 +26,7 @@ export const ConversationSettingsModel = ({
   onModelSelect,
 }: Props) => {
   const { t } = useTranslation();
-  const theme = useAppSelector(uiSelectors.selectThemeState);
+  const theme = useAppSelector(UISelectors.selectThemeState);
   const modelsMap = useAppSelector(selectModelsMap);
   const recentModelsIds = useAppSelector(selectRecentModelsIds);
   const [mappedEntities, setMappedEntities] = useState<OpenAIEntityModel[]>([]);

@@ -5,7 +5,7 @@ import { useCallback, useContext, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { useAppDispatch } from '@/store/hooks';
-import { uiActions } from '@/store/ui-store/ui.reducers';
+import { UIActions } from '@/store/ui-store/ui.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -33,7 +33,7 @@ const UserSettings = () => {
   const { t } = useTranslation('sidebar');
 
   const onClick = () => {
-    dispatch(uiActions.setIsUserSettingsOpen);
+    dispatch(UIActions.setIsUserSettingsOpen);
   };
 
   return (

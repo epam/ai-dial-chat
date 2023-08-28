@@ -11,7 +11,7 @@ import { useTranslation } from 'next-i18next';
 import { DEFAULT_CONVERSATION_NAME } from '@/utils/app/const';
 
 import { useAppDispatch } from '@/store/hooks';
-import { uiActions } from '@/store/ui-store/ui.reducers';
+import { UIActions } from '@/store/ui-store/ui.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -55,7 +55,7 @@ export const ChatbarSettings = () => {
     }
 
     handleSelectConversations(newConversations);
-    dispatch(uiActions.setIsCompareMode(true));
+    dispatch(UIActions.setIsCompareMode(true));
   };
 
   return (

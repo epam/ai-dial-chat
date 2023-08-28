@@ -28,7 +28,7 @@ import { OpenAIEntityModelID, OpenAIEntityModels } from '@/types/openai';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectDefaultModelId } from '@/store/models/models.reducers';
-import { uiActions, uiSelectors } from '@/store/ui-store/ui.reducers';
+import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -64,7 +64,7 @@ export const Chatbar = () => {
   } = useContext(HomeContext);
 
   const defaultModelId = useAppSelector(selectDefaultModelId);
-  const showChatbar = useAppSelector(uiSelectors.selectShowChatbar);
+  const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
 
   const dispatch = useAppDispatch();
 
@@ -101,7 +101,7 @@ export const Chatbar = () => {
         value: [history[history.length - 1].id],
       });
 
-      dispatch(uiActions.setIsCompareMode(false));
+      dispatch(UIActions.setIsCompareMode(false));
 
       oldHomeDispatch({ field: 'folders', value: folders });
       oldHomeDispatch({ field: 'prompts', value: prompts });
@@ -132,7 +132,7 @@ export const Chatbar = () => {
       value: newSelectedConversationIds,
     });
 
-    dispatch(uiActions.setIsCompareMode(false));
+    dispatch(UIActions.setIsCompareMode(false));
     defaultModelId &&
       oldHomeDispatch({
         field: 'conversations',
@@ -198,7 +198,7 @@ export const Chatbar = () => {
       saveConversations([newConversation]);
       saveSelectedConversationIds([newConversation.id]);
     }
-    dispatch(uiActions.setIsCompareMode(false));
+    dispatch(UIActions.setIsCompareMode(false));
   };
 
   const handleDrop = (e: any) => {

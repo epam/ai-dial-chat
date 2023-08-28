@@ -4,20 +4,20 @@ import { useTranslation } from 'next-i18next';
 import Image from 'next/image';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { uiActions, uiSelectors } from '@/store/ui-store/ui.reducers';
+import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
 
 import UserIcon from '../../../public/images/icons/user.svg';
 import XmarkIcon from '../../../public/images/icons/xmark.svg';
 
 export const ProfileButton = () => {
-  const isProfileOpen = useAppSelector(uiSelectors.selectIsProfileOpen);
+  const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation('sidebar');
   const { data: session } = useSession();
 
   const onClick = () => {
-    dispatch(uiActions.setIsProfileOpen(false));
+    dispatch(UIActions.setIsProfileOpen(false));
   };
   return (
     <button

@@ -3,7 +3,7 @@ import { useTranslation } from 'next-i18next';
 import { isMediaQuery } from '@/utils/app/styleHelpers';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { uiActions, uiSelectors } from '@/store/ui-store/ui.reducers';
+import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
 
 import MoveLeftIcon from '../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../public/images/icons/move-right.svg';
@@ -14,10 +14,10 @@ import { CreateNewChatMobile } from './CreateNewChatMobile';
 import { User } from './User/User';
 
 const Header = () => {
-  const showChatbar = useAppSelector(uiSelectors.selectShowChatbar);
-  const showPromptbar = useAppSelector(uiSelectors.selectShowPromptbar);
+  const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
+  const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
   const isUserSettingsOpen = useAppSelector(
-    uiSelectors.selectIsUserSettingsOpen,
+    UISelectors.selectIsUserSettingsOpen,
   );
 
   const dispatch = useAppDispatch();
@@ -26,20 +26,20 @@ const Header = () => {
 
   const handleToggleChatbar = () => {
     if (!showChatbar && isMediaQuery('(width <= 767px)')) {
-      dispatch(uiActions.setShowPromptbar(false));
+      dispatch(UIActions.setShowPromptbar(false));
     }
-    dispatch(uiActions.setShowChatbar(!showChatbar));
+    dispatch(UIActions.setShowChatbar(!showChatbar));
   };
   const handleTogglePromtbar = () => {
     if (!showPromptbar && isMediaQuery('(width <= 767px)')) {
-      dispatch(uiActions.setShowChatbar(false));
-      dispatch(uiActions.setIsProfileOpen(false));
+      dispatch(UIActions.setShowChatbar(false));
+      dispatch(UIActions.setIsProfileOpen(false));
     }
-    dispatch(uiActions.setShowPromptbar(!showPromptbar));
+    dispatch(UIActions.setShowPromptbar(!showPromptbar));
   };
 
   const onClose = () => {
-    dispatch(uiActions.setIsUserSettingsOpen(false));
+    dispatch(UIActions.setIsUserSettingsOpen(false));
   };
 
   return (

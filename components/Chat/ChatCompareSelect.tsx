@@ -11,7 +11,7 @@ import {
   selectDefaultModelId,
   selectModelsMap,
 } from '@/store/models/models.reducers';
-import { uiSelectors } from '@/store/ui-store/ui.reducers';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -32,7 +32,7 @@ export const ChatCompareSelect = ({
 
   const modelsMap = useAppSelector(selectModelsMap);
   const defaultModelId = useAppSelector(selectDefaultModelId);
-  const theme = useAppSelector(uiSelectors.selectThemeState);
+  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const [comparableConversations, setComparableConversations] = useState<
     Conversation[]

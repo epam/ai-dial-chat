@@ -1,5 +1,5 @@
 import { RootState } from '..';
-import { uiActions, uiSelectors } from './ui.reducers';
+import { UIActions, UISelectors } from './ui.reducers';
 
 import { Action } from '@reduxjs/toolkit';
 import { Epic, combineEpics } from 'redux-observable';
@@ -14,29 +14,26 @@ import {
 
 const saveThemeEpic: Epic = (
   action$: Observable<Action>,
-
   state$: Observable<RootState>,
 ) =>
   action$.pipe(
-    filter(uiActions.setTheme.match),
+    filter(UIActions.setTheme.match),
     withLatestFrom(state$),
-
-    map(([_action, state]) => uiSelectors.selectThemeState(state)),
+    map(([_action, state]) => UISelectors.selectThemeState(state)),
     tap((theme) => {
       localStorage.setItem('settings', JSON.stringify({ theme }));
     }),
     ignoreElements(),
   );
+
 const saveShowChatbarEpic: Epic = (
   action$: Observable<Action>,
-
   state$: Observable<RootState>,
 ) =>
   action$.pipe(
-    filter(uiActions.setShowChatbar.match),
+    filter(UIActions.setShowChatbar.match),
     withLatestFrom(state$),
-
-    map(([_action, state]) => uiSelectors.selectShowChatbar(state)),
+    map(([_action, state]) => UISelectors.selectShowChatbar(state)),
     tap((showChatbar) => {
       localStorage.setItem('showChatbar', JSON.stringify(showChatbar));
     }),
@@ -45,22 +42,22 @@ const saveShowChatbarEpic: Epic = (
 
 const saveShowPromptbarEpic: Epic = (
   action$: Observable<Action>,
-
   state$: Observable<RootState>,
 ) =>
   action$.pipe(
-    filter(uiActions.setShowPromptbar.match),
+    filter(UIActions.setShowPromptbar.match),
     withLatestFrom(state$),
-
-    map(([_action, state]) => uiSelectors.selectShowPromptbar(state)),
+    map(([_action, state]) => UISelectors.selectShowPromptbar(state)),
     tap((showPromptbar) => {
       localStorage.setItem('showPromptbar', JSON.stringify(showPromptbar));
     }),
     ignoreElements(),
   );
+
 const UIEpics = combineEpics(
   saveThemeEpic,
   saveShowChatbarEpic,
   saveShowPromptbarEpic,
 );
+
 export default UIEpics;

@@ -12,7 +12,7 @@ import { Conversation } from '@/types/chat';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectModelsMap } from '@/store/models/models.reducers';
-import { uiActions, uiSelectors } from '@/store/ui-store/ui.reducers';
+import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -39,7 +39,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
     handleNewReplayConversation,
   } = useContext(HomeContext);
 
-  const theme = useAppSelector(uiSelectors.selectThemeState);
+  const theme = useAppSelector(UISelectors.selectThemeState);
   const modelsMap = useAppSelector(selectModelsMap);
 
   const dispatch = useAppDispatch();
@@ -208,7 +208,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
             }}
             onCompare={() => {
               handleSelectConversation(conversation);
-              dispatch(uiActions.setIsCompareMode(true));
+              dispatch(UIActions.setIsCompareMode(true));
             }}
             onReplay={handleStartReplay}
             isEmptyConversation={isEmptyConversation}

@@ -9,7 +9,7 @@ import { Prompt } from '@/types/prompt';
 
 import { useAppSelector } from '@/store/hooks';
 import { selectModels, selectModelsMap } from '@/store/models/models.reducers';
-import { uiSelectors } from '@/store/ui-store/ui.reducers';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -58,7 +58,7 @@ export const ConversationSettings = ({
   onApplyAddons,
   onApplySettings,
 }: Props) => {
-  const theme = useAppSelector(uiSelectors.selectThemeState);
+  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const { t } = useTranslation('chat');
   const models = useAppSelector(selectModels);

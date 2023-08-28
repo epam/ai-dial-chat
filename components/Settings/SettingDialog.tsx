@@ -3,11 +3,7 @@ import { ChangeEventHandler, FC, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import {
-  ThemeType,
-  uiActions,
-  uiSelectors,
-} from '@/store/ui-store/ui.reducers';
+import { Theme, UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
 
 interface Props {
   open: boolean;
@@ -15,7 +11,7 @@ interface Props {
 }
 
 export const SettingDialog: FC<Props> = ({ open, onClose }) => {
-  const theme = useAppSelector(uiSelectors.selectThemeState);
+  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const [localTheme, setLocalTheme] = useState(theme);
 
@@ -47,12 +43,12 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const onThemeChangeHandler: ChangeEventHandler<HTMLSelectElement> = (
     event,
   ) => {
-    const theme = event.target.value as ThemeType;
+    const theme = event.target.value as Theme;
     setLocalTheme(theme);
   };
 
   const handleSave = () => {
-    dispatch(uiActions.setTheme(localTheme));
+    dispatch(UIActions.setTheme(localTheme));
   };
   // Render nothing if the dialog is not open.
   if (!open) {

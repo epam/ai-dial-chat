@@ -7,7 +7,7 @@ import {
   selectRecentAddonsIds,
 } from '@/store/addons/addons.reducers';
 import { useAppSelector } from '@/store/hooks';
-import { uiSelectors } from '@/store/ui-store/ui.reducers';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -29,7 +29,7 @@ export const Addons = ({
   onChangeAddon,
   onApplyAddons,
 }: AddonsProps) => {
-  const theme = useAppSelector(uiSelectors.selectThemeState);
+  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const { t } = useTranslation('chat');
   const recentAddonsIds = useAppSelector(selectRecentAddonsIds);

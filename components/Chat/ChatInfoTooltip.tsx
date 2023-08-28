@@ -3,9 +3,10 @@ import { useCallback } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
+import { Theme } from '@/types/settings';
 
 import { useAppSelector } from '@/store/hooks';
-import { uiSelectors } from '@/store/ui-store/ui.reducers';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -19,7 +20,7 @@ interface Props {
 
 const getModelTemplate = (
   model: OpenAIEntityModel,
-  theme: 'dark' | 'light',
+  theme: Theme,
   label: string,
 ) => {
   return (
@@ -45,8 +46,7 @@ export const ChatInfoTooltip = ({
   prompt,
   temperature,
 }: Props) => {
-  //New Redux state
-  const theme = useAppSelector(uiSelectors.selectThemeState);
+  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const { t } = useTranslation('chat');
   const getModelLabel = useCallback(() => {

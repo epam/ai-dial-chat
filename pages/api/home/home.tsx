@@ -51,7 +51,7 @@ import {
   setDefaultModelId,
   updateRecentModels,
 } from '@/store/models/models.reducers';
-import { uiActions, uiSelectors } from '@/store/ui-store/ui.reducers';
+import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { Chat } from '@/components/Chat/Chat';
 import { Chatbar } from '@/components/Chatbar/Chatbar';
@@ -109,8 +109,8 @@ const Home = ({
     dispatch: oldDispatch,
   } = contextValue;
 
-  const theme = useAppSelector(uiSelectors.selectThemeState);
-  const isProfileOpen = useAppSelector(uiSelectors.selectIsProfileOpen);
+  const theme = useAppSelector(UISelectors.selectThemeState);
+  const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
   // FETCH MODELS ----------------------------------------------
 
   const handleSelectConversation = (conversation: Conversation) => {
@@ -120,7 +120,7 @@ const Home = ({
       value: newSelectedIds,
     });
 
-    dispatch(uiActions.setIsCompareMode(false));
+    dispatch(UIActions.setIsCompareMode(false));
 
     saveSelectedConversationIds(newSelectedIds);
   };
@@ -226,7 +226,7 @@ const Home = ({
       field: 'selectedConversationIds',
       value: ids,
     });
-    dispatch(uiActions.setIsCompareMode(false));
+    dispatch(UIActions.setIsCompareMode(false));
 
     saveSelectedConversationIds(ids);
   };
@@ -370,7 +370,7 @@ const Home = ({
 
   useEffect(() => {
     if (window.innerWidth < 640) {
-      dispatch(uiActions.setShowChatbar(false));
+      dispatch(UIActions.setShowChatbar(false));
     }
   }, [selectedConversationIds]);
 
@@ -461,22 +461,22 @@ const Home = ({
 
     const settings = getSettings();
     if (settings.theme) {
-      dispatch(uiActions.setTheme(settings.theme));
+      dispatch(UIActions.setTheme(settings.theme));
     }
 
     if (window.innerWidth < 640) {
-      dispatch(uiActions.setShowChatbar(false));
-      dispatch(uiActions.setShowPromptbar(false));
+      dispatch(UIActions.setShowChatbar(false));
+      dispatch(UIActions.setShowPromptbar(false));
     }
 
     const showChatbar = localStorage.getItem('showChatbar');
     if (showChatbar) {
-      dispatch(uiActions.setShowChatbar(showChatbar === 'true'));
+      dispatch(UIActions.setShowChatbar(showChatbar === 'true'));
     }
 
     const showPromptbar = localStorage.getItem('showPromptbar');
     if (showPromptbar) {
-      dispatch(uiActions.setShowPromptbar(showPromptbar === 'true'));
+      dispatch(UIActions.setShowPromptbar(showPromptbar === 'true'));
     }
 
     const folders = localStorage.getItem('folders');
@@ -524,7 +524,7 @@ const Home = ({
       });
 
       if (filteredSelectedConversationIds.length > 1) {
-        dispatch(uiActions.setIsCompareMode(true));
+        dispatch(UIActions.setIsCompareMode(true));
       }
     } else {
       const lastConversation =

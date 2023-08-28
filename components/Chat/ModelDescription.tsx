@@ -3,7 +3,7 @@ import { useTranslation } from 'next-i18next';
 import { OpenAIEntityModel } from '@/types/openai';
 
 import { useAppSelector } from '@/store/hooks';
-import { uiSelectors } from '@/store/ui-store/ui.reducers';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -14,7 +14,7 @@ interface Props {
 }
 
 export const ModelDescription = ({ model }: Props) => {
-  const theme = useAppSelector(uiSelectors.selectThemeState);
+  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const { t } = useTranslation('chat');
 
