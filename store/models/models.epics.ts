@@ -11,7 +11,7 @@ import {
 } from './models.reducers';
 
 import { Action } from '@reduxjs/toolkit';
-import { Epic, combineEpics, ofType } from 'redux-observable';
+import { Epic, combineEpics } from 'redux-observable';
 import {
   Observable,
   catchError,
@@ -31,7 +31,7 @@ const getModelsEpic: Epic = (
   state$: Observable<RootState>,
 ) =>
   action$.pipe(
-    ofType(getModels),
+    filter(getModels.match),
     withLatestFrom(state$),
     switchMap(() => {
       return from(
