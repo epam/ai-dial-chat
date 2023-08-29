@@ -60,7 +60,10 @@ test(`Cancel folder renaming on "x"`, async ({
   await dialHomePage.openHomePage();
   await folderConversations.openFolderDropdownMenu(folder.name);
   await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-  const folderInput = await folderConversations.editFolderName(folder.name, newName);
+  const folderInput = await folderConversations.editFolderName(
+    folder.name,
+    newName,
+  );
   await folderInput.clickCancelButton();
   expect
     .soft(

@@ -200,7 +200,10 @@ export const AddonsDialog: FC<Props> = ({
               className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
             ></input>
           </div>
-          <div className="flex flex-col gap-4 text-xs" data-qa="addon-search-results">
+          <div
+            className="flex flex-col gap-4 text-xs"
+            data-qa="addon-search-results"
+          >
             {(selectedAddons?.length > 0 ||
               preselectedAddonsIds?.length > 0) && (
               <div className="flex flex-col gap-3">

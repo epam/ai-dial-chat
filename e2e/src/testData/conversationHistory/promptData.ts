@@ -28,8 +28,8 @@ export class PromptData {
 
   public prepareFolder(name?: string) {
     return this.folderBuilder
-        .withName(name ?? GeneratorUtil.randomString(7))
-        .build();
+      .withName(name ?? GeneratorUtil.randomString(7))
+      .build();
   }
 
   public prepareDefaultPromptInFolder() {

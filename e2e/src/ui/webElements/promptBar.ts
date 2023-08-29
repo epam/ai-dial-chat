@@ -1,7 +1,4 @@
-import {
-  PromptBarSelectors,
-  SideBarSelectors,
-} from '../selectors';
+import { PromptBarSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { FolderPrompts } from '@/e2e/src/ui/webElements/folderPrompts';

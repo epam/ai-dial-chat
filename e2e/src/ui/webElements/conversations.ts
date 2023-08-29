@@ -18,7 +18,7 @@ export class Conversations extends BaseElement {
   }
   public conversationDotsMenu = (name: string, index?: number) => {
     return this.getConversationByName(name, index).locator(
-        SideBarSelectors.dotsMenu,
+      SideBarSelectors.dotsMenu,
     );
   };
 
