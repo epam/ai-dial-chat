@@ -60,6 +60,7 @@ stages:
   - build
   - publish # publush docker images
   - deploy
+  - e2e
   - promote # copy docker image to public repo
   - production # Stage name used in include. Not used. ToDo - delete this
 
@@ -147,6 +148,34 @@ destroy_review:
       when: manual
       allow_failure: true
 
+e2e_tests:
+  image: mcr.microsoft.com/playwright:v1.36.0-jammy
+  stage: e2e
+  script:
+    - export E2E_HOST=${review_ENV_URL}
+    - apt-get update
+    - apt-get install -y openjdk-17-jdk openjdk-17-jre
+    - cd chatbot-ui
+    - npm i -D @playwright/test allure-playwright
+    - npm run test-ci
+  after_script:
+    - wget https://github.com/allure-framework/allure2/releases/download/2.24.0/allure-2.24.0.tgz
+    - tar zxvf allure-2.24.0.tgz
+    - ./allure-2.24.0/bin/allure generate ./chatbot-ui/e2e/allure-results -o ./chatbot-ui/e2e/allure-report --clean
+  artifacts:
+    name: "${CI_JOB_ID}_${CI_JOB_NAME }"
+    when: always
+    expire_in: 30 days
+    paths:
+      - chatbot-ui/e2e/allure-report
+  tags:
+    - AWS
+    - DockerExecutor
+  rules:
+    - if: "$CI_COMMIT_BRANCH == 'development'"
+    - if: "$CI_COMMIT_TAG"
+    - if: "$CI_PIPELINE_SOURCE == 'merge_request_event'"
+
 publish:
   image: dockerhub.deltixhub.com/docker:stable
   variables:
@@ -163,7 +192,7 @@ publish:
     - imageUrl=$REPOSITORY/${ARTIFACTORY_DOCKER_PATH}
     - docker build -t $imageUrl:${DOCKER_TAG} -t $imageUrl:${DOCKER_ADDITIONAL_TAG} .
     - docker push $imageUrl:${DOCKER_TAG}
-    - docker push $imageUrl:${DOCKER_ADDITIONAL_TAG} 
+    - docker push $imageUrl:${DOCKER_ADDITIONAL_TAG}
   rules:
     - if: $CI_COMMIT_TAG
       variables:
