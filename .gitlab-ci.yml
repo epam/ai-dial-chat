@@ -157,12 +157,12 @@ e2e_tests:
 #    - apt-get install -y openjdk-17-jdk openjdk-17-jre
     - ls node_modules
 #    - npm i -D @playwright/test allure-playwright
-    - npx playwright install
+    - npx playwright install-deps
     - npm run test-ci
   after_script:
 #    - wget https://github.com/allure-framework/allure2/releases/download/2.24.0/allure-2.24.0.tgz
 #    - tar zxvf allure-2.24.0.tgz
-    - allure generate ./e2e/allure-results -o ./e2e/allure-report --clean
+    - npx allure generate ./e2e/allure-results -o ./e2e/allure-report --clean
   artifacts:
     name: "${CI_JOB_ID}_${CI_JOB_NAME }"
     when: always
