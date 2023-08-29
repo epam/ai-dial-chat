@@ -1,5 +1,4 @@
 import { Conversation, Message } from '@/types/chat';
-import { Feature } from '@/types/features';
 import { FolderInterface } from '@/types/folder';
 import { Prompt } from '@/types/prompt';
 
@@ -15,10 +14,6 @@ export interface HomeInitialState {
   currentFolder: FolderInterface | undefined;
   messageError: boolean;
   searchTerm: string;
-  isIframe: boolean;
-  footerHtmlMessage: string;
-
-  enabledFeatures: Set<Feature>;
 }
 
 export const initialState: HomeInitialState = {
@@ -33,8 +28,4 @@ export const initialState: HomeInitialState = {
   currentFolder: undefined,
   messageError: false,
   searchTerm: '',
-  isIframe: false,
-  footerHtmlMessage: '',
-
-  enabledFeatures: new Set([]),
 };
