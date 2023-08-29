@@ -152,23 +152,22 @@ e2e_tests:
   image: mcr.microsoft.com/playwright:v1.36.0-jammy
   stage: e2e
   script:
-    - ls
     - export E2E_HOST=${review_ENV_URL}
-#    - apt-get update
-#    - apt-get install -y openjdk-17-jdk openjdk-17-jre
-#    - cd chatbot-ui
-#    - npm i -D @playwright/test allure-playwright
-#    - npm run test-ci
-#  after_script:
-#    - wget https://github.com/allure-framework/allure2/releases/download/2.24.0/allure-2.24.0.tgz
-#    - tar zxvf allure-2.24.0.tgz
-#    - ./allure-2.24.0/bin/allure generate ./chatbot-ui/e2e/allure-results -o ./chatbot-ui/e2e/allure-report --clean
-#  artifacts:
-#    name: "${CI_JOB_ID}_${CI_JOB_NAME }"
-#    when: always
-#    expire_in: 30 days
-#    paths:
-#      - chatbot-ui/e2e/allure-report
+    - apt-get update
+    - apt-get install -y openjdk-17-jdk openjdk-17-jre
+    - ls
+    - npm i -D @playwright/test allure-playwright
+    - npm run test-ci
+  after_script:
+    - wget https://github.com/allure-framework/allure2/releases/download/2.24.0/allure-2.24.0.tgz
+    - tar zxvf allure-2.24.0.tgz
+    - ./allure-2.24.0/bin/allure generate ./e2e/allure-results -o ./e2e/allure-report --clean
+  artifacts:
+    name: "${CI_JOB_ID}_${CI_JOB_NAME }"
+    when: always
+    expire_in: 30 days
+    paths:
+      - e2e/allure-report
   tags:
     - AWS
     - DockerExecutor
