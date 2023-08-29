@@ -26,8 +26,9 @@ import { Conversation, Replay } from '@/types/chat';
 import { SupportedExportFormats } from '@/types/export';
 import { OpenAIEntityModelID, OpenAIEntityModels } from '@/types/openai';
 
-import { useAppSelector } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { ModelsSelectors } from '@/store/models/models.reducers';
+import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -53,17 +54,19 @@ export const Chatbar = () => {
   const {
     state: {
       conversations,
-      showChatbar,
       folders,
       messageIsStreaming,
       selectedConversationIds,
     },
-    dispatch: homeDispatch,
+    dispatch: oldHomeDispatch,
     handleNewConversation,
     handleUpdateConversation,
   } = useContext(HomeContext);
 
   const defaultModelId = useAppSelector(ModelsSelectors.selectDefaultModelId);
+  const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
+
+  const dispatch = useAppDispatch();
 
   const {
     state: { searchTerm, filteredConversations },
@@ -92,17 +95,16 @@ export const Chatbar = () => {
     if (isError) {
       toast.error(t(errorsMessages.unsupportedDataFormat));
     } else {
-      homeDispatch({ field: 'conversations', value: history });
-      homeDispatch({
+      oldHomeDispatch({ field: 'conversations', value: history });
+      oldHomeDispatch({
         field: 'selectedConversationIds',
         value: [history[history.length - 1].id],
       });
-      homeDispatch({
-        field: 'isCompareMode',
-        value: false,
-      });
-      homeDispatch({ field: 'folders', value: folders });
-      homeDispatch({ field: 'prompts', value: prompts });
+
+      dispatch(UIActions.setIsCompareMode(false));
+
+      oldHomeDispatch({ field: 'folders', value: folders });
+      oldHomeDispatch({ field: 'prompts', value: prompts });
     }
   };
 
@@ -125,16 +127,14 @@ export const Chatbar = () => {
     const newConversations: Conversation[] = [newConversation];
     const newSelectedConversationIds: string[] = [newConversation.id];
 
-    homeDispatch({
+    oldHomeDispatch({
       field: 'selectedConversationIds',
       value: newSelectedConversationIds,
     });
-    homeDispatch({
-      field: 'isCompareMode',
-      value: false,
-    });
+
+    dispatch(UIActions.setIsCompareMode(false));
     defaultModelId &&
-      homeDispatch({
+      oldHomeDispatch({
         field: 'conversations',
         value: newConversations,
       });
@@ -143,7 +143,7 @@ export const Chatbar = () => {
 
     const updatedFolders = folders.filter((f) => f.type !== 'chat');
 
-    homeDispatch({ field: 'folders', value: updatedFolders });
+    oldHomeDispatch({ field: 'folders', value: updatedFolders });
     saveConversations(newConversations);
     saveFolders(updatedFolders);
     saveSelectedConversationIds(newSelectedConversationIds);
@@ -154,13 +154,13 @@ export const Chatbar = () => {
       (c) => c.id !== conversation.id,
     );
 
-    homeDispatch({ field: 'conversations', value: updatedConversations });
+    oldHomeDispatch({ field: 'conversations', value: updatedConversations });
     chatDispatch({ field: 'searchTerm', value: '' });
     saveConversations(updatedConversations);
 
     if (updatedConversations.length > 0) {
       if (selectedConversationIds.includes(conversation.id)) {
-        homeDispatch({
+        oldHomeDispatch({
           field: 'selectedConversationIds',
           value: [updatedConversations[updatedConversations.length - 1].id],
         });
@@ -186,11 +186,11 @@ export const Chatbar = () => {
       };
 
       defaultModelId &&
-        homeDispatch({
+        oldHomeDispatch({
           field: 'conversations',
           value: [newConversation],
         });
-      homeDispatch({
+      oldHomeDispatch({
         field: 'selectedConversationIds',
         value: [newConversation.id],
       });
@@ -198,10 +198,7 @@ export const Chatbar = () => {
       saveConversations([newConversation]);
       saveSelectedConversationIds([newConversation.id]);
     }
-    homeDispatch({
-      field: 'isCompareMode',
-      value: false,
-    });
+    dispatch(UIActions.setIsCompareMode(false));
   };
 
   const handleDrop = (e: any) => {

@@ -1,5 +1,5 @@
 import { IconEraser, IconSettings, IconX } from '@tabler/icons-react';
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -9,8 +9,7 @@ import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 import { AddonsSelectors } from '@/store/addons/addons.reducers';
 import { useAppSelector } from '@/store/hooks';
 import { ModelsSelectors } from '@/store/models/models.reducers';
-
-import HomeContext from '@/pages/api/home/home.context';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -46,11 +45,9 @@ export const ChatHeader = ({
 }: Props) => {
   const { t } = useTranslation('chat');
 
-  const {
-    state: { lightMode },
-  } = useContext(HomeContext);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
+  const theme = useAppSelector(UISelectors.selectThemeState);
   const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });
@@ -83,7 +80,7 @@ export const ChatHeader = ({
                         entityId={conversation.model.id}
                         entity={model}
                         size={18}
-                        inverted={lightMode === 'dark'}
+                        inverted={theme === 'dark'}
                         isCustomTooltip={true}
                       />
                     </TooltipTrigger>
@@ -126,7 +123,7 @@ export const ChatHeader = ({
                           entityId={addon}
                           size={18}
                           entity={addonsMap[addon]}
-                          inverted={lightMode === 'dark'}
+                          inverted={theme === 'dark'}
                         />
                       ))}
                       {conversation.selectedAddons
@@ -137,7 +134,7 @@ export const ChatHeader = ({
                             entityId={addon}
                             size={18}
                             entity={addonsMap[addon]}
-                            inverted={lightMode === 'dark'}
+                            inverted={theme === 'dark'}
                           />
                         ))}
                     </span>

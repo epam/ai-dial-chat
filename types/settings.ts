@@ -1,3 +1,4 @@
+export type Theme = 'light' | 'dark';
 export interface Settings {
-  theme: 'light' | 'dark';
+  theme: Theme;
 }

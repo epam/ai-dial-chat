@@ -1,31 +1,32 @@
 import {
-  memo, MouseEventHandler,
-  MutableRefObject, useCallback,
+  MouseEventHandler,
+  MutableRefObject,
+  memo,
+  useCallback,
   useContext,
   useEffect,
   useRef,
-  useState
+  useState,
 } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import {
   DEFAULT_ASSISTANT_SUBMODEL,
-  DEFAULT_CONVERSATION_NAME
+  DEFAULT_CONVERSATION_NAME,
 } from '@/utils/app/const';
 import { showAPIToastError } from '@/utils/app/errors';
 import { mergeMessages, parseStreamMessages } from '@/utils/app/merge-streams';
 import { throttle } from '@/utils/data/throttle';
 
+import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
 import { KeyValuePair } from '@/types/data';
-import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
 
 import { AddonsActions, AddonsSelectors } from '@/store/addons/addons.reducers';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import {
-  ModelsActions, ModelsSelectors
-} from '@/store/models/models.reducers';
+import { ModelsActions, ModelsSelectors } from '@/store/models/models.reducers';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -168,10 +169,8 @@ export const Chat = memo(({ appName }: Props) => {
       selectedConversationIds,
       loading,
       prompts,
-      isCompareMode,
       messageIsStreaming,
       enabledFeatures,
-      lightMode,
     },
     handleUpdateConversation,
     handleSelectConversation,
@@ -186,6 +185,8 @@ export const Chat = memo(({ appName }: Props) => {
   const modelsIsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const defaultModelId = useAppSelector(ModelsSelectors.selectDefaultModelId);
   const addons = useAppSelector(AddonsSelectors.selectAddons);
+  const theme = useAppSelector(UISelectors.selectThemeState);
+  const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
@@ -360,7 +361,9 @@ export const Chat = memo(({ appName }: Props) => {
         return;
       }
 
-      dispatch(ModelsActions.updateRecentModels({ modelId: conversation.model.id }));
+      dispatch(
+        ModelsActions.updateRecentModels({ modelId: conversation.model.id }),
+      );
       if (
         conversation.selectedAddons.length > 0 &&
         modelsMap[conversation.model.id]?.type !== 'application'
@@ -1297,10 +1300,7 @@ export const Chat = memo(({ appName }: Props) => {
                                   : 'w-full'
                               }`}
                             >
-                              <ChatLoader
-                                modelId={model.id}
-                                theme={lightMode}
-                              />
+                              <ChatLoader modelId={model.id} theme={theme} />
                             </div>
                           );
                         })}

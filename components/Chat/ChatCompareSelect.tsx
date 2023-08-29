@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -8,8 +8,7 @@ import { Conversation } from '@/types/chat';
 
 import { useAppSelector } from '@/store/hooks';
 import { ModelsSelectors } from '@/store/models/models.reducers';
-
-import HomeContext from '@/pages/api/home/home.context';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -27,11 +26,10 @@ export const ChatCompareSelect = ({
   onConversationSelect,
 }: Props) => {
   const { t } = useTranslation('chat');
-  const {
-    state: { lightMode },
-  } = useContext(HomeContext);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const defaultModelId = useAppSelector(ModelsSelectors.selectDefaultModelId);
+
+  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const [comparableConversations, setComparableConversations] = useState<
     Conversation[]
@@ -91,7 +89,7 @@ export const ChatCompareSelect = ({
           entity={model}
           entityId={model.id}
           size={24}
-          inverted={lightMode === 'dark'}
+          inverted={theme === 'dark'}
         />
         <span>{item.name}</span>
       </div>

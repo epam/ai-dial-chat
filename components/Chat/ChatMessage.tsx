@@ -22,6 +22,7 @@ import { Conversation, Message } from '@/types/chat';
 
 import { useAppSelector } from '@/store/hooks';
 import { ModelsSelectors } from '@/store/models/models.reducers';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -81,9 +82,11 @@ export const ChatMessage: FC<Props> = memo(
     const { t } = useTranslation('chat');
 
     const {
-      state: { messageIsStreaming, lightMode },
+      state: { messageIsStreaming },
     } = useContext(HomeContext);
     const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+
+    const theme = useAppSelector(UISelectors.selectThemeState);
 
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [isTyping, setIsTyping] = useState<boolean>(false);
@@ -181,7 +184,7 @@ export const ChatMessage: FC<Props> = memo(
                     (message.model?.id && modelsMap[message.model?.id]) ||
                     undefined
                   }
-                  inverted={lightMode === 'dark'}
+                  inverted={theme === 'dark'}
                   animate={isShowResponseLoader}
                   size={28}
                 />

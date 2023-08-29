@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -9,8 +9,7 @@ import { Prompt } from '@/types/prompt';
 
 import { useAppSelector } from '@/store/hooks';
 import { ModelsSelectors } from '@/store/models/models.reducers';
-
-import HomeContext from '@/pages/api/home/home.context';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -59,9 +58,8 @@ export const ConversationSettings = ({
   onApplyAddons,
   onApplySettings,
 }: Props) => {
-  const {
-    state: { lightMode },
-  } = useContext(HomeContext);
+  const theme = useAppSelector(UISelectors.selectThemeState);
+
   const { t } = useTranslation('chat');
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -83,7 +81,7 @@ export const ConversationSettings = ({
             entity={model}
             entityId={model.id}
             size={18}
-            inverted={lightMode === 'dark'}
+            inverted={theme === 'dark'}
           />
           <span>{model.name || model.id}</span>
         </div>
