@@ -20,6 +20,7 @@ import { Prompt } from '@/types/prompt';
 
 import { useAppSelector } from '@/store/hooks';
 import { selectModelsIsLoading } from '@/store/models/models.reducers';
+import { SettingsSelectors } from '@/store/settings/settings.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -57,13 +58,7 @@ export const ChatInput = forwardRef(
     const { t } = useTranslation('chat');
 
     const {
-      state: {
-        messageIsStreaming,
-        prompts,
-        footerHtmlMessage,
-        enabledFeatures,
-        isIframe,
-      },
+      state: { messageIsStreaming, prompts },
     } = useContext(HomeContext);
 
     const [content, setContent] = useState<string>();
@@ -75,6 +70,13 @@ export const ChatInput = forwardRef(
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [showPluginSelect, setShowPluginSelect] = useState(false);
     const isModelsLoading = useAppSelector(selectModelsIsLoading);
+    const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
+    const footerHtmlMessage = useAppSelector(
+      SettingsSelectors.selectFooterHtmlMessage,
+    );
+    const enabledFeatures = useAppSelector(
+      SettingsSelectors.selectEnabledFeatures,
+    );
 
     const promptListRef = useRef<HTMLUListElement | null>(null);
 

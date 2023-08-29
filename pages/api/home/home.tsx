@@ -51,6 +51,7 @@ import {
   setDefaultModelId,
   updateRecentModels,
 } from '@/store/models/models.reducers';
+import { SettingsActions } from '@/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { Chat } from '@/components/Chat/Chat';
@@ -379,20 +380,13 @@ const Home = ({
   useEffect(() => {
     defaultModelId && dispatch(setDefaultModelId({ defaultModelId }));
     footerHtmlMessage &&
-      oldDispatch({
-        field: 'footerHtmlMessage',
-        value: footerHtmlMessage,
-      });
+      dispatch(SettingsActions.setFooterHtmlMessage(footerHtmlMessage));
+
     enabledFeaturesSet &&
-      oldDispatch({
-        field: 'enabledFeatures',
-        value: enabledFeaturesSet,
-      });
-    isIframe &&
-      oldDispatch({
-        field: 'isIframe',
-        value: isIframe,
-      });
+      dispatch(SettingsActions.setEnabledFeatures(enabledFeaturesSet));
+
+    isIframe && dispatch(SettingsActions.setIsIframe(isIframe));
+
     defaultRecentModelsIds &&
       dispatch(
         initRecentModels({
