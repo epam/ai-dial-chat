@@ -1,14 +1,11 @@
-import { FC, useContext, useEffect, useRef } from 'react';
+import { ChangeEventHandler, FC, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { useCreateReducer } from '@/hooks/useCreateReducer';
+import { Theme } from '@/types/settings';
 
-import { getSettings, saveSettings } from '@/utils/app/settings';
-
-import { Settings } from '@/types/settings';
-
-import HomeContext from '@/pages/api/home/home.context';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
 
 interface Props {
   open: boolean;
@@ -16,12 +13,14 @@ interface Props {
 }
 
 export const SettingDialog: FC<Props> = ({ open, onClose }) => {
+  const theme = useAppSelector(UISelectors.selectThemeState);
+
+  const [localTheme, setLocalTheme] = useState(theme);
+
+  const dispatch = useAppDispatch();
+
   const { t } = useTranslation('settings');
-  const settings: Settings = getSettings();
-  const { state, dispatch } = useCreateReducer<Settings>({
-    initialState: settings,
-  });
-  const { dispatch: homeDispatch } = useContext(HomeContext);
+
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,11 +42,16 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     };
   }, [onClose]);
 
-  const handleSave = () => {
-    homeDispatch({ field: 'lightMode', value: state.theme });
-    saveSettings(state);
+  const onThemeChangeHandler: ChangeEventHandler<HTMLSelectElement> = (
+    event,
+  ) => {
+    const theme = event.target.value as Theme;
+    setLocalTheme(theme);
   };
 
+  const handleSave = () => {
+    dispatch(UIActions.setTheme(localTheme));
+  };
   // Render nothing if the dialog is not open.
   if (!open) {
     return <></>;
@@ -55,7 +59,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
 
   // Render the dialog.
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="fixed inset-0 z-10 overflow-hidden">
         <div className="flex min-h-screen items-center justify-center px-4 pb-20 pt-4 text-center sm:block sm:p-0">
           <div
@@ -78,10 +82,8 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
 
             <select
               className="w-full cursor-pointer bg-transparent p-2 text-neutral-700 dark:text-neutral-200"
-              value={state.theme}
-              onChange={(event) =>
-                dispatch({ field: 'theme', value: event.target.value })
-              }
+              value={localTheme}
+              onChange={onThemeChangeHandler}
             >
               <option
                 className="!dark:hover:bg-black appearance-none dark:bg-[#343541]"

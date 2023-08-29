@@ -5,7 +5,7 @@ import {
   useInteractions,
 } from '@floating-ui/react';
 import { IconChevronDown } from '@tabler/icons-react';
-import { FC, useContext, useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -22,8 +22,7 @@ import {
   selectModels,
   updateRecentModels,
 } from '@/store/models/models.reducers';
-
-import HomeContext from '@/pages/api/home/home.context';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -40,10 +39,9 @@ const Entity = ({
   selectedModelId: string | undefined;
   onSelect: (id: string) => void;
 }) => {
+  const theme = useAppSelector(UISelectors.selectThemeState);
+
   const [isOpened, setIsOpened] = useState(false);
-  const {
-    state: { lightMode },
-  } = useContext(HomeContext);
 
   return (
     <button
@@ -61,7 +59,7 @@ const Entity = ({
         entityId={entity.id}
         entity={entity}
         size={24}
-        inverted={lightMode === 'dark'}
+        inverted={theme === 'dark'}
       />
       <div className="flex flex-col gap-1 text-left">
         <span>{entity.name}</span>

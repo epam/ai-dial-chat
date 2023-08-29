@@ -10,6 +10,9 @@ import { useTranslation } from 'next-i18next';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/utils/app/const';
 
+import { useAppDispatch } from '@/store/hooks';
+import { UIActions } from '@/store/ui-store/ui.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import { ConfirmDialog } from '@/components/Common/ConfirmDialog';
@@ -29,7 +32,6 @@ export const ChatbarSettings = () => {
 
   const {
     state: { conversations },
-    dispatch: homeDispatch,
     handleCreateFolder,
     handleNewConversations,
     handleSelectConversations,
@@ -41,6 +43,8 @@ export const ChatbarSettings = () => {
     handleExportConversations,
   } = useContext(ChatbarContext);
 
+  const dispatch = useAppDispatch();
+
   const handleToggleCompare = () => {
     const newConversations = handleNewConversations(
       DEFAULT_CONVERSATION_NAME,
@@ -51,10 +55,7 @@ export const ChatbarSettings = () => {
     }
 
     handleSelectConversations(newConversations);
-    homeDispatch({
-      field: 'isCompareMode',
-      value: true,
-    });
+    dispatch(UIActions.setIsCompareMode(true));
   };
 
   return (

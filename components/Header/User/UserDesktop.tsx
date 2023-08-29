@@ -1,11 +1,12 @@
 import { IconSettings } from '@tabler/icons-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
-import { useCallback, useContext, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import Image from 'next/image';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { useAppDispatch } from '@/store/hooks';
+import { UIActions } from '@/store/ui-store/ui.reducers';
 
 import { ConfirmDialog } from '@/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/components/Common/DropdownMenu';
@@ -20,7 +21,7 @@ export const UserDesktop = () => {
   const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
     useState(false);
   const { data: session } = useSession();
-  const { dispatch: homeDispatch } = useContext(HomeContext);
+  const dispatch = useAppDispatch();
   const handleLogout = useCallback(() => {
     session
       ? signOut({ redirect: true })
@@ -68,7 +69,7 @@ export const UserDesktop = () => {
             </div>
           }
           onClick={() => {
-            homeDispatch({ field: 'isUserSettingsOpen', value: true });
+            dispatch(UIActions.setIsUserSettingsOpen(true));
           }}
         />
         <MenuItem

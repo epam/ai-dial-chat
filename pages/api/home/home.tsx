@@ -51,6 +51,7 @@ import {
   setDefaultModelId,
   updateRecentModels,
 } from '@/store/models/models.reducers';
+import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { Chat } from '@/components/Chat/Chat';
 import { Chatbar } from '@/components/Chatbar/Chatbar';
@@ -104,17 +105,12 @@ const Home = ({
   });
 
   const {
-    state: {
-      lightMode,
-      folders,
-      conversations,
-      selectedConversationIds,
-      prompts,
-      isProfileOpen,
-    },
+    state: { folders, conversations, selectedConversationIds, prompts },
     dispatch: oldDispatch,
   } = contextValue;
 
+  const theme = useAppSelector(UISelectors.selectThemeState);
+  const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
   // FETCH MODELS ----------------------------------------------
 
   const handleSelectConversation = (conversation: Conversation) => {
@@ -124,10 +120,7 @@ const Home = ({
       value: newSelectedIds,
     });
 
-    oldDispatch({
-      field: 'isCompareMode',
-      value: false,
-    });
+    dispatch(UIActions.setIsCompareMode(false));
 
     saveSelectedConversationIds(newSelectedIds);
   };
@@ -233,10 +226,7 @@ const Home = ({
       field: 'selectedConversationIds',
       value: ids,
     });
-    oldDispatch({
-      field: 'isCompareMode',
-      value: false,
-    });
+    dispatch(UIActions.setIsCompareMode(false));
 
     saveSelectedConversationIds(ids);
   };
@@ -380,7 +370,7 @@ const Home = ({
 
   useEffect(() => {
     if (window.innerWidth < 640) {
-      oldDispatch({ field: 'showChatbar', value: false });
+      dispatch(UIActions.setShowChatbar(false));
     }
   }, [selectedConversationIds]);
 
@@ -471,25 +461,22 @@ const Home = ({
 
     const settings = getSettings();
     if (settings.theme) {
-      oldDispatch({
-        field: 'lightMode',
-        value: settings.theme,
-      });
+      dispatch(UIActions.setTheme(settings.theme));
     }
 
     if (window.innerWidth < 640) {
-      oldDispatch({ field: 'showChatbar', value: false });
-      oldDispatch({ field: 'showPromptbar', value: false });
+      dispatch(UIActions.setShowChatbar(false));
+      dispatch(UIActions.setShowPromptbar(false));
     }
 
     const showChatbar = localStorage.getItem('showChatbar');
     if (showChatbar) {
-      oldDispatch({ field: 'showChatbar', value: showChatbar === 'true' });
+      dispatch(UIActions.setShowChatbar(showChatbar === 'true'));
     }
 
     const showPromptbar = localStorage.getItem('showPromptbar');
     if (showPromptbar) {
-      oldDispatch({ field: 'showPromptbar', value: showPromptbar === 'true' });
+      dispatch(UIActions.setShowPromptbar(showPromptbar === 'true'));
     }
 
     const folders = localStorage.getItem('folders');
@@ -537,10 +524,7 @@ const Home = ({
       });
 
       if (filteredSelectedConversationIds.length > 1) {
-        oldDispatch({
-          field: 'isCompareMode',
-          value: true,
-        });
+        dispatch(UIActions.setIsCompareMode(true));
       }
     } else {
       const lastConversation =
@@ -620,7 +604,7 @@ const Home = ({
         </div>
       ) : (
         selectedConversationNames.length > 0 && (
-          <main className={`${lightMode} `}>
+          <main className={`${theme} `}>
             <div
               className={`theme-main flex h-screen w-screen flex-col bg-gray-300 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-200`}
               id="theme-main"

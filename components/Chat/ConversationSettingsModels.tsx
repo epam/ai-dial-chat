@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -9,8 +9,7 @@ import {
   selectModelsMap,
   selectRecentModelsIds,
 } from '@/store/models/models.reducers';
-
-import HomeContext from '@/pages/api/home/home.context';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -27,9 +26,7 @@ export const ConversationSettingsModel = ({
   onModelSelect,
 }: Props) => {
   const { t } = useTranslation();
-  const {
-    state: { lightMode },
-  } = useContext(HomeContext);
+  const theme = useAppSelector(UISelectors.selectThemeState);
   const modelsMap = useAppSelector(selectModelsMap);
   const recentModelsIds = useAppSelector(selectRecentModelsIds);
   const [mappedEntities, setMappedEntities] = useState<OpenAIEntityModel[]>([]);
@@ -64,7 +61,7 @@ export const ConversationSettingsModel = ({
                 entityId={entity.id}
                 entity={entity}
                 size={24}
-                inverted={lightMode === 'dark'}
+                inverted={theme === 'dark'}
               />
               <div className="flex flex-col gap-1">
                 <span>{entity.name}</span>
