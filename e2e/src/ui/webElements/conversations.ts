@@ -1,4 +1,4 @@
-import { ChatBarSelectors } from '../selectors';
+import { ChatBarSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Chronology } from '@/e2e/src/testData';
@@ -18,7 +18,7 @@ export class Conversations extends BaseElement {
   }
   public conversationDotsMenu = (name: string, index?: number) => {
     return this.getConversationByName(name, index).locator(
-      ChatBarSelectors.dotsMenu,
+        SideBarSelectors.dotsMenu,
     );
   };
 
@@ -28,7 +28,7 @@ export class Conversations extends BaseElement {
     if (!this.conversationInput) {
       this.conversationInput = new Input(
         this.page,
-        `${ChatBarSelectors.conversation} >> ${ChatBarSelectors.renameInput(
+        `${ChatBarSelectors.conversation} >> ${SideBarSelectors.renameInput(
           name,
         )}`,
       );
@@ -120,13 +120,18 @@ export class Conversations extends BaseElement {
   }
 
   public async editConversationNameWithTick(name: string, newName: string) {
-    const input = await this.getConversationInput(name);
-    await input.editValue(newName);
+    const input = await this.openEditConversationNameMode(name, newName);
     await input.clickTickButton();
   }
 
   public async editConversationNameWithEnter(name: string, newName: string) {
-    await this.getConversationInput(name).editValue(newName);
+    await this.openEditConversationNameMode(name, newName);
     await this.page.keyboard.press(keys.enter);
+  }
+
+  public async openEditConversationNameMode(name: string, newName: string) {
+    const input = await this.getConversationInput(name);
+    await input.editValue(newName);
+    return input;
   }
 }

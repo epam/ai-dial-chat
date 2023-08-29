@@ -14,12 +14,17 @@ import { ChatBar } from '../ui/webElements';
 import { PromptBar } from '../ui/webElements';
 
 import { ConversationData } from '@/e2e/src/testData';
+import { PromptData } from '@/e2e/src/testData/conversationHistory/promptData';
 import { Addons } from '@/e2e/src/ui/webElements/addons';
 import { AddonsDialog } from '@/e2e/src/ui/webElements/addonsDialog';
+import { ConfirmationDialog } from '@/e2e/src/ui/webElements/confirmationDialog';
 import { DropdownMenu } from '@/e2e/src/ui/webElements/dropdownMenu';
 import { EntitySettings } from '@/e2e/src/ui/webElements/entitySettings';
 import { FolderConversations } from '@/e2e/src/ui/webElements/folderConversations';
+import { FolderPrompts } from '@/e2e/src/ui/webElements/folderPrompts';
 import { ModelSelector } from '@/e2e/src/ui/webElements/modelSelector';
+import { PromptModalDialog } from '@/e2e/src/ui/webElements/promptModalDialog';
+import { Prompts } from '@/e2e/src/ui/webElements/prompts';
 import { TemperatureSlider } from '@/e2e/src/ui/webElements/temperatureSlider';
 import { test as base } from '@playwright/test';
 
@@ -33,7 +38,9 @@ const test = base.extend<
     chatMessages: ChatMessages;
     sendMessage: SendMessage;
     conversations: Conversations;
+    prompts: Prompts;
     folderConversations: FolderConversations;
+    folderPrompts: FolderPrompts;
     conversationSettings: ConversationSettings;
     talkToSelector: EntitySelector;
     recentEntities: RecentEntities;
@@ -43,9 +50,13 @@ const test = base.extend<
     addons: Addons;
     addonsDialog: AddonsDialog;
     conversationData: ConversationData;
+    promptData: PromptData;
     localStorageManager: LocalStorageManager;
     conversationDropdownMenu: DropdownMenu;
     folderDropdownMenu: DropdownMenu;
+    promptDropdownMenu: DropdownMenu;
+    confirmationDialog: ConfirmationDialog;
+    promptModalDialog: PromptModalDialog;
   },
   { workerStorageState: string }
 >({
@@ -78,12 +89,20 @@ const test = base.extend<
     await use(sendMessage);
   },
   conversations: async ({ chatBar }, use) => {
-    const conversation = chatBar.getConversations();
-    await use(conversation);
+    const conversations = chatBar.getConversations();
+    await use(conversations);
+  },
+  prompts: async ({ promptBar }, use) => {
+    const prompts = promptBar.getPrompts();
+    await use(prompts);
   },
   folderConversations: async ({ chatBar }, use) => {
     const folderConversations = chatBar.getFolderConversations();
     await use(folderConversations);
+  },
+  folderPrompts: async ({ promptBar }, use) => {
+    const folderPrompts = promptBar.getFolderPrompts();
+    await use(folderPrompts);
   },
   conversationSettings: async ({ chat }, use) => {
     const conversationSettings = chat.getConversationSettings();
@@ -125,10 +144,27 @@ const test = base.extend<
     const folderDropdownMenu = folderConversations.getDropdownMenu();
     await use(folderDropdownMenu);
   },
+  promptDropdownMenu: async ({ prompts }, use) => {
+    const promptDropdownMenu = prompts.getDropdownMenu();
+    await use(promptDropdownMenu);
+  },
+  confirmationDialog: async ({ page }, use) => {
+    const confirmationDialog = new ConfirmationDialog(page);
+    await use(confirmationDialog);
+  },
+  promptModalDialog: async ({ page }, use) => {
+    const promptModalDialog = new PromptModalDialog(page);
+    await use(promptModalDialog);
+  },
   // eslint-disable-next-line no-empty-pattern
   conversationData: async ({}, use) => {
     const conversationData = new ConversationData();
     await use(conversationData);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  promptData: async ({}, use) => {
+    const promptData = new PromptData();
+    await use(promptData);
   },
   localStorageManager: async ({ page }, use) => {
     const localStorageManager = new LocalStorageManager(page);

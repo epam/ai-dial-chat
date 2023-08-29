@@ -164,6 +164,7 @@ const Promptbar = () => {
         handleCreatePrompt();
         promptDispatch({ field: 'searchTerm', value: '' });
       }}
+      data-qa="new-prompt"
     >
       <PlusIcon className="text-gray-500" width={18} height={18} />
       {t('New prompt')}

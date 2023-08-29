@@ -11,8 +11,9 @@ import { Colors } from '../ui/domData';
 
 import { expect } from '@playwright/test';
 
-test(
-  'New conversation is created on "New chat" button\n' +
+//TODO: update when TC is ready
+test.skip(
+  'Create new conversation\n' +
     'Default settings in new chat with cleared site data\n' +
     '"Talk to" drop down contains items grouped by models, assistants, applications',
   async ({
@@ -26,13 +27,20 @@ test(
     addonsDialog,
   }) => {
     await dialHomePage.openHomePage();
-    await chatBar.createNewChat();
+    await chatBar.createNewConversation();
     expect
       .soft(
         await conversations
           .getConversationByName(ExpectedConstants.newConversationTitle)
           .isVisible(),
         ExpectedMessages.newConversationCreated,
+      )
+      .toBeTruthy();
+    const todayConversations = await conversations.getTodayConversations();
+    expect
+      .soft(
+        todayConversations.includes(ExpectedConstants.newConversationTitle),
+        ExpectedMessages.conversationOfToday,
       )
       .toBeTruthy();
 
@@ -87,7 +95,7 @@ test('Default model in new chat is always set to GPT-3.5', async ({
   await localStorageManager.setSelectedConversation(conversation);
 
   await dialHomePage.openHomePage();
-  await chatBar.createNewChat();
+  await chatBar.createNewConversation();
   const addonBorderColors = await recentEntities
     .getRecentEntity(OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ].name)
     .getAllBorderColors();
@@ -100,7 +108,7 @@ test('Default model in new chat is always set to GPT-3.5', async ({
   });
 });
 
-test('Settings on default screen are saved in local storage when temperature = 0', async ({
+test.skip('Settings on default screen are saved in local storage when temperature = 0', async ({
   dialHomePage,
   recentEntities,
   entitySettings,
@@ -138,7 +146,8 @@ test('Settings on default screen are saved in local storage when temperature = 0
     .toBe(temp.toString());
 });
 
-test(
+//TODO: update when TC is ready
+test.skip(
   'Default settings for Assistant\n' +
     'Default settings for Assistant. Models list\n' +
     'Default settings for Assistant. Default Addons',

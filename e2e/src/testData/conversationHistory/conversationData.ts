@@ -44,6 +44,12 @@ export class ConversationData {
     return this.folderBuilder.build();
   }
 
+  public prepareFolder(name?: string) {
+    return this.folderBuilder
+      .withName(name ?? GeneratorUtil.randomString(7))
+      .build();
+  }
+
   public prepareDefaultConversationInFolder(model?: OpenAIEntityModel) {
     const conversation = this.prepareDefaultConversation(model);
     const folder = this.prepareDefaultFolder();

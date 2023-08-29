@@ -49,7 +49,7 @@ export const PromptFolders = () => {
       });
 
   return (
-    <div className="flex w-full flex-col">
+    <div className="flex w-full flex-col" data-qa="prompt-folders">
       {folders
         .filter((folder) => folder.type === 'prompt')
         .sort((a, b) => a.name.localeCompare(b.name))

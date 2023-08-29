@@ -36,7 +36,7 @@ test(`Rename chat folder when it's empty using Enter`, async ({
   const newName = 'updated folder name';
   await dialHomePage.openHomePage();
   await folderConversations.openFolderDropdownMenu(folder.name);
-  await folderDropdownMenu.selectMenuOption(MenuOptions.edit);
+  await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
   await folderConversations.editFolderNameWithEnter(folder.name, newName);
   expect
     .soft(
@@ -53,13 +53,15 @@ test(`Cancel folder renaming on "x"`, async ({
   localStorageManager,
   conversationDropdownMenu,
 }) => {
+  const newName = 'updated folder name';
   const folder = conversationData.prepareDefaultFolder();
   await localStorageManager.setFolders(folder);
 
   await dialHomePage.openHomePage();
   await folderConversations.openFolderDropdownMenu(folder.name);
-  await conversationDropdownMenu.selectMenuOption(MenuOptions.edit);
-  await folderConversations.getFolderInput(folder.name).clickCancelButton();
+  await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
+  const folderInput = await folderConversations.editFolderName(folder.name, newName);
+  await folderInput.clickCancelButton();
   expect
     .soft(
       await folderConversations.getFolderByName(folder.name).isVisible(),
@@ -87,7 +89,7 @@ test('Rename chat folder when chats are inside using check button', async ({
   await folderConversations.openFolderDropdownMenu(
     conversationInFolder.folders.name,
   );
-  await folderDropdownMenu.selectMenuOption(MenuOptions.edit);
+  await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
   await folderConversations.editFolderNameWithTick(
     conversationInFolder.folders.name,
     newName,
@@ -116,17 +118,22 @@ test('Folders can expand and collapse', async ({
 
   await dialHomePage.openHomePage();
   await folderConversations.expandCollapseFolder(folderName);
-  let conversations = await folderConversations.getFolderConversations(
-    folderName,
-  );
+  let isConversationVisible =
+    await folderConversations.isFolderConversationVisible(
+      folderName,
+      conversationInFolder.conversations.name,
+    );
   expect
-    .soft(await conversations.isVisible(), ExpectedMessages.folderExpanded)
+    .soft(isConversationVisible, ExpectedMessages.folderExpanded)
     .toBeTruthy();
 
   await folderConversations.expandCollapseFolder(folderName);
-  conversations = await folderConversations.getFolderConversations(folderName);
+  isConversationVisible = await folderConversations.isFolderConversationVisible(
+    folderName,
+    conversationInFolder.conversations.name,
+  );
   expect
-    .soft(await conversations.isVisible(), ExpectedMessages.folderCollapsed)
+    .soft(isConversationVisible, ExpectedMessages.folderCollapsed)
     .toBeFalsy();
 });
 
@@ -148,6 +155,47 @@ test('Delete folder. Cancel', async ({
     .soft(
       await folderConversations.getFolderByName(folder.name).isVisible(),
       ExpectedMessages.folderNotDeleted,
+    )
+    .toBeTruthy();
+});
+
+test('Delete folder when there are some chats inside', async ({
+  dialHomePage,
+  conversationData,
+  folderConversations,
+  localStorageManager,
+  conversationDropdownMenu,
+  conversations,
+}) => {
+  const conversationInFolder =
+    conversationData.prepareDefaultConversationInFolder();
+  await localStorageManager.setFolders(conversationInFolder.folders);
+  await localStorageManager.setConversationHistory(
+    conversationInFolder.conversations,
+  );
+
+  await dialHomePage.openHomePage();
+  await folderConversations.openFolderDropdownMenu(
+    conversationInFolder.folders.name,
+  );
+  await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+  await folderConversations
+    .getFolderInput(conversationInFolder.folders.name)
+    .clickTickButton();
+  expect
+    .soft(
+      await folderConversations
+        .getFolderByName(conversationInFolder.folders.name)
+        .isVisible(),
+      ExpectedMessages.folderDeleted,
+    )
+    .toBeFalsy();
+
+  const todayConversations = await conversations.getTodayConversations();
+  expect
+    .soft(
+      todayConversations.includes(conversationInFolder.conversations.name),
+      ExpectedMessages.conversationOfToday,
     )
     .toBeTruthy();
 });

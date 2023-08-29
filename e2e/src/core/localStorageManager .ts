@@ -1,5 +1,6 @@
 import { Conversation } from '@/types/chat';
 import { FolderInterface } from '@/types/folder';
+import { Prompt } from '@/types/prompt';
 
 import { Page } from '@playwright/test';
 
@@ -26,5 +27,11 @@ export class LocalStorageManager {
     await this.page.addInitScript((folders) => {
       window.localStorage.setItem('folders', folders);
     }, JSON.stringify(folders));
+  }
+
+  async setPrompts(...prompt: Prompt[]) {
+    await this.page.addInitScript((prompts) => {
+      window.localStorage.setItem('prompts', prompts);
+    }, JSON.stringify(prompt));
   }
 }

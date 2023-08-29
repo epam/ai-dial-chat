@@ -68,6 +68,7 @@ export const ChatbarSettings = () => {
               onClick={() => {
                 setIsOpen(true);
               }}
+              data-qa="delete-conversations"
             >
               <IconTrashX size={24} strokeWidth="1.5" />
             </div>

@@ -86,6 +86,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
           <div
             className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet md:h-[42px] md:w-[42px]"
             onClick={() => handleCreateFolder(t('New folder'), 'prompt')}
+            data-qa="create-prompt-folder"
           >
             <FolderPlus height={24} width={24} />
           </div>

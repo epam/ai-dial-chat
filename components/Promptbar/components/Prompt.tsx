@@ -128,6 +128,7 @@ export const PromptComponent = ({ prompt }: Props) => {
       )}
       ref={wrapperRef}
       onClick={handleOnClickPrompt}
+      data-qa="prompt"
     >
       <button
         className="flex h-full w-full items-center gap-3 px-3 "

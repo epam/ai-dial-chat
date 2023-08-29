@@ -13,13 +13,18 @@ export class ChatBar extends BaseElement {
   private conversations!: Conversations;
   private folderConversations!: FolderConversations;
 
-  public newChatButton = new BaseElement(
+  public newConversationButton = new BaseElement(
     this.page,
-    ChatBarSelectors.newChatButton,
+    ChatBarSelectors.newConversationButton,
   );
   public newFolderButton = new BaseElement(
     this.page,
     ChatBarSelectors.newFolder,
+  );
+
+  public deleteAllConversationsButton = new BaseElement(
+    this.page,
+    ChatBarSelectors.deleteConversations,
   );
 
   getConversations(): Conversations {
@@ -36,11 +41,15 @@ export class ChatBar extends BaseElement {
     return this.folderConversations;
   }
 
-  public async createNewChat() {
-    await this.newChatButton.click();
+  public async createNewConversation() {
+    await this.newConversationButton.click();
   }
 
   public async createNewFolder() {
     await this.newFolderButton.click();
+  }
+
+  public async deleteAllConversations() {
+    await this.deleteAllConversationsButton.click();
   }
 }

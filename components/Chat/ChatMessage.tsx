@@ -227,7 +227,7 @@ export const ChatMessage: FC<Props> = memo(
                           setMessageContent(message.content);
                           setIsEditing(false);
                         }}
-                        data-qa="save-and-submit"
+                        data-qa="cancel"
                       >
                         {t('Cancel')}
                       </button>
@@ -235,6 +235,7 @@ export const ChatMessage: FC<Props> = memo(
                         className="h-[38px] rounded bg-blue-500 px-3 py-2.5 leading-none text-gray-100 hover:bg-blue-700 disabled:bg-gray-500"
                         onClick={handleEditMessage}
                         disabled={messageContent.trim().length <= 0}
+                        data-qa="save-and-submit"
                       >
                         {t('Save & Submit')}
                       </button>

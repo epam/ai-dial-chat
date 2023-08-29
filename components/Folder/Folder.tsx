@@ -153,7 +153,7 @@ const Folder = ({
           hoverColor,
         )}
         ref={wrapperRef}
-        data-qa="chat-folder"
+        data-qa="folder"
       >
         {isRenaming ? (
           <div className="flex w-full items-center gap-3 px-3">
