@@ -17,7 +17,7 @@ export const ProfileButton = () => {
   const { data: session } = useSession();
 
   const onClick = () => {
-    dispatch(UIActions.setIsProfileOpen(false));
+    dispatch(UIActions.setIsProfileOpen(!isProfileOpen));
   };
   return (
     <button
