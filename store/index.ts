@@ -2,6 +2,7 @@ import { AddonsEpics } from './addons/addons.epics';
 import { addonsSlice } from './addons/addons.reducers';
 import { ModelsEpics } from './models/models.epics';
 import { modelsSlice } from './models/models.reducers';
+import { settingsSlice } from './settings/settings.reducers';
 import UIEpics from './ui-store/ui.epics';
 import { uiSlice } from './ui-store/ui.reducers';
 
@@ -16,6 +17,7 @@ export const store = configureStore({
     models: modelsSlice.reducer,
     addons: addonsSlice.reducer,
     ui: uiSlice.reducer,
+    settings: settingsSlice.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(epicMiddleware),
