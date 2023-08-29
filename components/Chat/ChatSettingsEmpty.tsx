@@ -5,7 +5,7 @@ import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 import { useAppSelector } from '@/store/hooks';
-import { selectModelsMap } from '@/store/models/models.reducers';
+import { ModelsSelectors } from '@/store/models/models.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -42,7 +42,7 @@ export const ChatSettingsEmpty = ({
 }: Props) => {
   const { handleUpdateConversation } = useContext(HomeContext);
 
-  const modelsMap = useAppSelector(selectModelsMap);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   return (
     <>

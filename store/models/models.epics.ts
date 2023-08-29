@@ -1,14 +1,7 @@
 import { OpenAIEntityModel } from '@/types/openai';
 
 import { RootState } from '../index';
-import {
-  getModels,
-  getModelsFail,
-  getModelsSuccess,
-  initRecentModels,
-  selectRecentModelsIds,
-  updateRecentModels,
-} from './models.reducers';
+import { ModelsActions, ModelsSelectors } from './models.reducers';
 
 import { Action } from '@reduxjs/toolkit';
 import { Epic, combineEpics } from 'redux-observable';
@@ -31,7 +24,7 @@ const getModelsEpic: Epic = (
   state$: Observable<RootState>,
 ) =>
   action$.pipe(
-    filter(getModels.match),
+    filter(ModelsActions.getModels.match),
     withLatestFrom(state$),
     switchMap(() => {
       return from(
@@ -48,26 +41,24 @@ const getModelsEpic: Epic = (
           return from(resp.json());
         }),
         map((response: OpenAIEntityModel[]) =>
-          getModelsSuccess({ models: response }),
+          ModelsActions.getModelsSuccess({ models: response }),
         ),
         catchError((err) => {
-          return of(getModelsFail({ error: err }));
+          return of(ModelsActions.getModelsFail({ error: err }));
         }),
       );
     }),
   );
 
-const updateRecentModelsEpic: Epic = (
-  action$: Observable<Action>,
-  state$: Observable<RootState>,
-) =>
+const updateRecentModelsEpic: Epic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>
-        initRecentModels.match(action) || updateRecentModels.match(action),
+        ModelsActions.initRecentModels.match(action) ||
+        ModelsActions.updateRecentModels.match(action),
     ),
     withLatestFrom(state$),
-    map(([_action, state]) => selectRecentModelsIds(state)),
+    map(([_action, state]) => ModelsSelectors.selectRecentModelsIds(state)),
     tap((recentModelIds) => {
       localStorage.setItem('recentModelsIds', JSON.stringify(recentModelIds));
     }),

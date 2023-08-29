@@ -14,7 +14,7 @@ import { OpenAIEntityModels } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 import { useAppSelector } from '@/store/hooks';
-import { selectDefaultModelId } from '@/store/models/models.reducers';
+import { ModelsSelectors } from '@/store/models/models.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -41,7 +41,7 @@ const Promptbar = () => {
     state: { prompts, showPromptbar, folders },
     dispatch: homeDispatch,
   } = useContext(HomeContext);
-  const defaultModelId = useAppSelector(selectDefaultModelId);
+  const defaultModelId = useAppSelector(ModelsSelectors.selectDefaultModelId);
 
   const {
     state: { searchTerm, filteredPrompts },

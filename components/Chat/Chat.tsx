@@ -1,42 +1,30 @@
 import {
-  MouseEventHandler,
-  MutableRefObject,
-  memo,
-  useCallback,
+  memo, MouseEventHandler,
+  MutableRefObject, useCallback,
   useContext,
   useEffect,
   useRef,
-  useState,
+  useState
 } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import {
   DEFAULT_ASSISTANT_SUBMODEL,
-  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_CONVERSATION_NAME
 } from '@/utils/app/const';
 import { showAPIToastError } from '@/utils/app/errors';
 import { mergeMessages, parseStreamMessages } from '@/utils/app/merge-streams';
 import { throttle } from '@/utils/data/throttle';
 
-import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
 import { KeyValuePair } from '@/types/data';
+import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
 
-import {
-  getAddons,
-  selectAddons,
-  updateRecentAddons,
-} from '@/store/addons/addons.reducers';
+import { AddonsActions, AddonsSelectors } from '@/store/addons/addons.reducers';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
-  getModels,
-  selectDefaultModelId,
-  selectModels,
-  selectModelsError,
-  selectModelsIsLoading,
-  selectModelsMap,
-  updateRecentModels,
+  ModelsActions, ModelsSelectors
 } from '@/store/models/models.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -192,12 +180,12 @@ export const Chat = memo(({ appName }: Props) => {
   } = useContext(HomeContext);
 
   const dispatch = useAppDispatch();
-  const models = useAppSelector(selectModels);
-  const modelsMap = useAppSelector(selectModelsMap);
-  const modelError = useAppSelector(selectModelsError);
-  const modelsIsLoading = useAppSelector(selectModelsIsLoading);
-  const defaultModelId = useAppSelector(selectDefaultModelId);
-  const addons = useAppSelector(selectAddons);
+  const models = useAppSelector(ModelsSelectors.selectModels);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const modelError = useAppSelector(ModelsSelectors.selectModelsError);
+  const modelsIsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const defaultModelId = useAppSelector(ModelsSelectors.selectDefaultModelId);
+  const addons = useAppSelector(AddonsSelectors.selectAddons);
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
@@ -372,12 +360,16 @@ export const Chat = memo(({ appName }: Props) => {
         return;
       }
 
-      dispatch(updateRecentModels({ modelId: conversation.model.id }));
+      dispatch(ModelsActions.updateRecentModels({ modelId: conversation.model.id }));
       if (
         conversation.selectedAddons.length > 0 &&
         modelsMap[conversation.model.id]?.type !== 'application'
       ) {
-        dispatch(updateRecentAddons({ addonIds: conversation.selectedAddons }));
+        dispatch(
+          AddonsActions.updateRecentAddons({
+            addonIds: conversation.selectedAddons,
+          }),
+        );
       }
 
       let updatedConversation: Conversation = {
@@ -1210,8 +1202,8 @@ export const Chat = memo(({ appName }: Props) => {
                               isShowSettings={isShowChatSettings}
                               setShowSettings={(isShow) => {
                                 if (isShow) {
-                                  dispatch(getModels());
-                                  dispatch(getAddons());
+                                  dispatch(ModelsActions.getModels());
+                                  dispatch(AddonsActions.getAddons());
                                 }
                                 setIsShowChatSettings(isShow);
                               }}

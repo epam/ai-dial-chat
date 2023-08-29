@@ -7,10 +7,7 @@ import { isMobile } from '@/utils/app/mobile';
 import { Conversation } from '@/types/chat';
 
 import { useAppSelector } from '@/store/hooks';
-import {
-  selectDefaultModelId,
-  selectModelsMap,
-} from '@/store/models/models.reducers';
+import { ModelsSelectors } from '@/store/models/models.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -33,8 +30,8 @@ export const ChatCompareSelect = ({
   const {
     state: { lightMode },
   } = useContext(HomeContext);
-  const modelsMap = useAppSelector(selectModelsMap);
-  const defaultModelId = useAppSelector(selectDefaultModelId);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const defaultModelId = useAppSelector(ModelsSelectors.selectDefaultModelId);
 
   const [comparableConversations, setComparableConversations] = useState<
     Conversation[]

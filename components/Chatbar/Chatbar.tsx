@@ -27,7 +27,7 @@ import { SupportedExportFormats } from '@/types/export';
 import { OpenAIEntityModelID, OpenAIEntityModels } from '@/types/openai';
 
 import { useAppSelector } from '@/store/hooks';
-import { selectDefaultModelId } from '@/store/models/models.reducers';
+import { ModelsSelectors } from '@/store/models/models.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -63,7 +63,7 @@ export const Chatbar = () => {
     handleUpdateConversation,
   } = useContext(HomeContext);
 
-  const defaultModelId = useAppSelector(selectDefaultModelId);
+  const defaultModelId = useAppSelector(ModelsSelectors.selectDefaultModelId);
 
   const {
     state: { searchTerm, filteredConversations },

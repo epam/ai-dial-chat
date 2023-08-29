@@ -7,7 +7,7 @@ import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 import { useAppSelector } from '@/store/hooks';
-import { selectModelsMap } from '@/store/models/models.reducers';
+import { ModelsSelectors } from '@/store/models/models.reducers';
 
 import { ConversationSettings } from './ConversationSettings';
 
@@ -37,7 +37,7 @@ export const ChatSettings = ({
   onChangeSettings,
   onApplySettings,
 }: Props) => {
-  const modelsMap = useAppSelector(selectModelsMap);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const [currentModel, setCurrentModel] = useState(
     modelsMap[model?.id || defaultModelId],

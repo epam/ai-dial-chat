@@ -2,10 +2,7 @@ import { Fragment, useContext, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import {
-  selectAddonsMap,
-  selectRecentAddonsIds,
-} from '@/store/addons/addons.reducers';
+import { AddonsSelectors } from '@/store/addons/addons.reducers';
 import { useAppSelector } from '@/store/hooks';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -34,8 +31,8 @@ export const Addons = ({
     state: { lightMode },
   } = useContext(HomeContext);
   const { t } = useTranslation('chat');
-  const recentAddonsIds = useAppSelector(selectRecentAddonsIds);
-  const addonsMap = useAppSelector(selectAddonsMap);
+  const recentAddonsIds = useAppSelector(AddonsSelectors.selectRecentAddonsIds);
+  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const [filteredRecentAddons, setFilteredRecentAddons] = useState<string[]>(
     () => {
       return recentAddonsIds.filter(

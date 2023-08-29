@@ -11,7 +11,7 @@ import {
 import { Conversation } from '@/types/chat';
 
 import { useAppSelector } from '@/store/hooks';
-import { selectModelsMap } from '@/store/models/models.reducers';
+import { ModelsSelectors } from '@/store/models/models.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -38,7 +38,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
     handleNewReplayConversation,
     dispatch,
   } = useContext(HomeContext);
-  const modelsMap = useAppSelector(selectModelsMap);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const { handleExportConversation } = useContext(ChatbarContext);
 

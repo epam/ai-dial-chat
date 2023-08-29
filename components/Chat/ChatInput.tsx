@@ -19,7 +19,7 @@ import { Message } from '@/types/chat';
 import { Prompt } from '@/types/prompt';
 
 import { useAppSelector } from '@/store/hooks';
-import { selectModelsIsLoading } from '@/store/models/models.reducers';
+import { ModelsSelectors } from '@/store/models/models.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -74,7 +74,9 @@ export const ChatInput = forwardRef(
     const [variables, setVariables] = useState<string[]>([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [showPluginSelect, setShowPluginSelect] = useState(false);
-    const isModelsLoading = useAppSelector(selectModelsIsLoading);
+    const isModelsLoading = useAppSelector(
+      ModelsSelectors.selectModelsIsLoading,
+    );
 
     const promptListRef = useRef<HTMLUListElement | null>(null);
 

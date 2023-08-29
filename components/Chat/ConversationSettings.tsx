@@ -8,7 +8,7 @@ import { OpenAIEntityModel } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
 import { useAppSelector } from '@/store/hooks';
-import { selectModels, selectModelsMap } from '@/store/models/models.reducers';
+import { ModelsSelectors } from '@/store/models/models.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -63,8 +63,8 @@ export const ConversationSettings = ({
     state: { lightMode },
   } = useContext(HomeContext);
   const { t } = useTranslation('chat');
-  const models = useAppSelector(selectModels);
-  const modelsMap = useAppSelector(selectModelsMap);
+  const models = useAppSelector(ModelsSelectors.selectModels);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const [assistantSubModel, setAssistantSubModel] = useState(() => {
     return modelsMap[assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id];
   });

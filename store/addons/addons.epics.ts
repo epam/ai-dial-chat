@@ -1,14 +1,7 @@
 import { OpenAIEntityAddon } from '@/types/openai';
 
 import { RootState } from '../index';
-import {
-  getAddons,
-  getAddonsFail,
-  getAddonsSuccess,
-  initRecentAddons,
-  selectRecentAddonsIds,
-  updateRecentAddons,
-} from './addons.reducers';
+import { AddonsActions, AddonsSelectors } from './addons.reducers';
 
 import { Action } from '@reduxjs/toolkit';
 import { Epic, combineEpics } from 'redux-observable';
@@ -31,7 +24,7 @@ const getAddonsEpic: Epic = (
   state$: Observable<RootState>,
 ) =>
   action$.pipe(
-    filter(getAddons.match),
+    filter(AddonsActions.getAddons.match),
     withLatestFrom(state$),
     switchMap(() => {
       return from(
@@ -48,10 +41,10 @@ const getAddonsEpic: Epic = (
           return from(resp.json());
         }),
         map((response: OpenAIEntityAddon[]) =>
-          getAddonsSuccess({ addons: response }),
+          AddonsActions.getAddonsSuccess({ addons: response }),
         ),
         catchError((err) => {
-          return of(getAddonsFail({ error: err }));
+          return of(AddonsActions.getAddonsFail({ error: err }));
         }),
       );
     }),
@@ -64,10 +57,11 @@ const updateRecentAddonsEpic: Epic = (
   action$.pipe(
     filter(
       (action) =>
-        initRecentAddons.match(action) || updateRecentAddons.match(action),
+        AddonsActions.initRecentAddons.match(action) ||
+        AddonsActions.updateRecentAddons.match(action),
     ),
     withLatestFrom(state$),
-    map(([_action, state]) => selectRecentAddonsIds(state)),
+    map(([_action, state]) => AddonsSelectors.selectRecentAddonsIds(state)),
     tap((recentModelIds) => {
       localStorage.setItem('recentAddonsIds', JSON.stringify(recentModelIds));
     }),

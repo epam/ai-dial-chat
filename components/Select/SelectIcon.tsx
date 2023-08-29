@@ -1,7 +1,7 @@
 import { ReactNode, useContext } from 'react';
 
 import { useAppSelector } from '@/store/hooks';
-import { selectModelsMap } from '@/store/models/models.reducers';
+import { ModelsSelectors } from '@/store/models/models.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -15,7 +15,7 @@ export const SelectIcon = ({ modelId, children }: SelectIconProps) => {
   const {
     state: { lightMode },
   } = useContext(HomeContext);
-  const modelsMap = useAppSelector(selectModelsMap);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   return (
     <span className="flex max-w-full !shrink-0 flex-row items-center gap-2">

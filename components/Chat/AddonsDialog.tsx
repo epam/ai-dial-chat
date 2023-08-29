@@ -10,7 +10,7 @@ import { useTranslation } from 'next-i18next';
 
 import { OpenAIEntity } from '@/types/openai';
 
-import { selectAddons, selectAddonsMap } from '@/store/addons/addons.reducers';
+import { AddonsSelectors } from '@/store/addons/addons.reducers';
 import { useAppSelector } from '@/store/hooks';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -40,8 +40,8 @@ export const AddonsDialog: FC<Props> = ({
   const {
     state: { lightMode },
   } = useContext(HomeContext);
-  const addons = useAppSelector(selectAddons);
-  const addonsMap = useAppSelector(selectAddonsMap);
+  const addons = useAppSelector(AddonsSelectors.selectAddons);
+  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAddons, setSelectedAddons] = useState<OpenAIEntity[]>(() => {
     return selectedAddonsIds

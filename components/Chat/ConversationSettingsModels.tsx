@@ -5,10 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { OpenAIEntityModel } from '@/types/openai';
 
 import { useAppSelector } from '@/store/hooks';
-import {
-  selectModelsMap,
-  selectRecentModelsIds,
-} from '@/store/models/models.reducers';
+import { ModelsSelectors } from '@/store/models/models.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -30,8 +27,8 @@ export const ConversationSettingsModel = ({
   const {
     state: { lightMode },
   } = useContext(HomeContext);
-  const modelsMap = useAppSelector(selectModelsMap);
-  const recentModelsIds = useAppSelector(selectRecentModelsIds);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
   const [mappedEntities, setMappedEntities] = useState<OpenAIEntityModel[]>([]);
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
