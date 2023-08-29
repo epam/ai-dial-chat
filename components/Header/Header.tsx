@@ -1,10 +1,9 @@
-import { useContext } from 'react';
-
 import { useTranslation } from 'next-i18next';
 
 import { isMediaQuery } from '@/utils/app/styleHelpers';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
 
 import MoveLeftIcon from '../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../public/images/icons/move-right.svg';
@@ -15,34 +14,32 @@ import { CreateNewChatMobile } from './CreateNewChatMobile';
 import { User } from './User/User';
 
 const Header = () => {
-  const {
-    state: { showChatbar, showPromptbar, isUserSettingsOpen },
-    dispatch: homeDispatch,
-  } = useContext(HomeContext);
+  const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
+  const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
+  const isUserSettingsOpen = useAppSelector(
+    UISelectors.selectIsUserSettingsOpen,
+  );
+
+  const dispatch = useAppDispatch();
 
   const { t } = useTranslation('sidebar');
 
   const handleToggleChatbar = () => {
     if (!showChatbar && isMediaQuery('(width <= 767px)')) {
-      homeDispatch({ field: 'showPromptbar', value: false });
-      localStorage.setItem('showPromptbar', JSON.stringify(false));
+      dispatch(UIActions.setShowPromptbar(false));
     }
-    homeDispatch({ field: 'showChatbar', value: !showChatbar });
-    localStorage.setItem('showChatbar', JSON.stringify(!showChatbar));
+    dispatch(UIActions.setShowChatbar(!showChatbar));
   };
   const handleTogglePromtbar = () => {
     if (!showPromptbar && isMediaQuery('(width <= 767px)')) {
-      homeDispatch({ field: 'showChatbar', value: false });
-      localStorage.setItem('showChatbar', JSON.stringify(false));
-
-      homeDispatch({ field: 'isProfileOpen', value: false });
+      dispatch(UIActions.setShowChatbar(false));
+      dispatch(UIActions.setIsProfileOpen(false));
     }
-    homeDispatch({ field: 'showPromptbar', value: !showPromptbar });
-    localStorage.setItem('showPromptbar', JSON.stringify(!showPromptbar));
+    dispatch(UIActions.setShowPromptbar(!showPromptbar));
   };
 
   const onClose = () => {
-    homeDispatch({ field: 'isUserSettingsOpen', value: false });
+    dispatch(UIActions.setIsUserSettingsOpen(false));
   };
 
   return (

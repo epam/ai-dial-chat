@@ -10,8 +10,9 @@ import {
 
 import { Conversation } from '@/types/chat';
 
-import { useAppSelector } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectModelsMap } from '@/store/models/models.reducers';
+import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -32,13 +33,16 @@ interface Props {
 
 export const ConversationComponent = ({ conversation }: Props) => {
   const {
-    state: { messageIsStreaming, selectedConversationIds, lightMode },
+    state: { messageIsStreaming, selectedConversationIds },
     handleSelectConversation,
     handleUpdateConversation,
     handleNewReplayConversation,
-    dispatch,
   } = useContext(HomeContext);
+
+  const theme = useAppSelector(UISelectors.selectThemeState);
   const modelsMap = useAppSelector(selectModelsMap);
+
+  const dispatch = useAppDispatch();
 
   const { handleExportConversation } = useContext(ChatbarContext);
 
@@ -134,7 +138,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
         <div className="flex w-full items-center gap-3 px-3">
           <ModelIcon
             size={18}
-            inverted={lightMode === 'dark'}
+            inverted={theme === 'dark'}
             entityId={conversation.model.id}
             entity={modelsMap[conversation.model.id]}
           />
@@ -170,7 +174,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
             size={18}
             entityId={conversation.model.id}
             entity={modelsMap[conversation.model.id]}
-            inverted={lightMode === 'dark'}
+            inverted={theme === 'dark'}
           />
           <div
             className={`relative max-h-5 flex-1 truncate break-all text-left leading-3  ${
@@ -204,10 +208,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
             }}
             onCompare={() => {
               handleSelectConversation(conversation);
-              dispatch({
-                field: 'isCompareMode',
-                value: true,
-              });
+              dispatch(UIActions.setIsCompareMode(true));
             }}
             onReplay={handleStartReplay}
             isEmptyConversation={isEmptyConversation}

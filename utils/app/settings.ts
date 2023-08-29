@@ -9,7 +9,7 @@ export const getSettings = (): Settings => {
   const settingsJson = localStorage.getItem(STORAGE_KEY);
   if (settingsJson) {
     try {
-      let savedSettings = JSON.parse(settingsJson) as Settings;
+      const savedSettings = JSON.parse(settingsJson) as Settings;
       settings = Object.assign(settings, savedSettings);
     } catch (e) {
       console.error(e);

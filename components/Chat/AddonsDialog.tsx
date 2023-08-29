@@ -4,7 +4,7 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import { FC, useContext, useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -12,8 +12,7 @@ import { OpenAIEntity } from '@/types/openai';
 
 import { selectAddons, selectAddonsMap } from '@/store/addons/addons.reducers';
 import { useAppSelector } from '@/store/hooks';
-
-import HomeContext from '@/pages/api/home/home.context';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -37,11 +36,10 @@ export const AddonsDialog: FC<Props> = ({
   onClose,
 }) => {
   const { t } = useTranslation('chat');
-  const {
-    state: { lightMode },
-  } = useContext(HomeContext);
+
   const addons = useAppSelector(selectAddons);
   const addonsMap = useAppSelector(selectAddonsMap);
+  const theme = useAppSelector(UISelectors.selectThemeState);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAddons, setSelectedAddons] = useState<OpenAIEntity[]>(() => {
     return selectedAddonsIds
@@ -92,7 +90,7 @@ export const AddonsDialog: FC<Props> = ({
           entity={addon}
           entityId={addon.id}
           size={15}
-          inverted={!addon.iconUrl && lightMode === 'dark'}
+          inverted={!addon.iconUrl && theme === 'dark'}
         />
         <span>{addon.name}</span>
         {!isPreselected && (
@@ -137,7 +135,7 @@ export const AddonsDialog: FC<Props> = ({
             entity={addon}
             entityId={addon.id}
             size={24}
-            inverted={!addon.iconUrl && lightMode === 'dark'}
+            inverted={!addon.iconUrl && theme === 'dark'}
           />
           <span className="text-left">{addon.name}</span>
         </div>
