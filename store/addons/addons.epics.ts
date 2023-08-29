@@ -1,6 +1,6 @@
 import { OpenAIEntityAddon } from '@/types/openai';
+import { AppEpic } from '@/types/store';
 
-import { RootState } from '../index';
 import {
   getAddons,
   getAddonsFail,
@@ -10,10 +10,8 @@ import {
   updateRecentAddons,
 } from './addons.reducers';
 
-import { Action } from '@reduxjs/toolkit';
-import { Epic, combineEpics } from 'redux-observable';
+import { combineEpics } from 'redux-observable';
 import {
-  Observable,
   catchError,
   filter,
   from,
@@ -26,10 +24,7 @@ import {
   withLatestFrom,
 } from 'rxjs';
 
-const getAddonsEpic: Epic = (
-  action$: Observable<Action>,
-  state$: Observable<RootState>,
-) =>
+const getAddonsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(getAddons.match),
     withLatestFrom(state$),
@@ -57,10 +52,7 @@ const getAddonsEpic: Epic = (
     }),
   );
 
-const updateRecentAddonsEpic: Epic = (
-  action$: Observable<Action>,
-  state$: Observable<RootState>,
-) =>
+const updateRecentAddonsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>

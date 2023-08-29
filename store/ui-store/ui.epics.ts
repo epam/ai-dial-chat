@@ -1,34 +1,33 @@
-import { UIActions, UISelectors } from './ui.reducers';
+import { AppEpic } from '@/types/store';
 
-import { Epic, combineEpics } from 'redux-observable';
-import { filter, ignoreElements, map, tap } from 'rxjs';
+import { UIActions } from './ui.reducers';
 
-const saveThemeEpic: Epic = (action$, state$) =>
+import { combineEpics } from 'redux-observable';
+import { filter, ignoreElements, tap } from 'rxjs';
+
+const saveThemeEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.setTheme.match),
-    map((_action) => UISelectors.selectThemeState(state$.value)),
-    tap((theme) => {
-      localStorage.setItem('settings', JSON.stringify({ theme }));
+    tap(({ payload }) => {
+      localStorage.setItem('settings', JSON.stringify({ theme: payload }));
     }),
     ignoreElements(),
   );
 
-const saveShowChatbarEpic: Epic = (action$, state$) =>
+const saveShowChatbarEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.setShowChatbar.match),
-    map((_action) => UISelectors.selectShowChatbar(state$.value)),
-    tap((showChatbar) => {
-      localStorage.setItem('showChatbar', JSON.stringify(showChatbar));
+    tap(({ payload }) => {
+      localStorage.setItem('showChatbar', JSON.stringify(payload));
     }),
     ignoreElements(),
   );
 
-const saveShowPromptbarEpic: Epic = (action$, state$) =>
+const saveShowPromptbarEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.setShowPromptbar.match),
-    map((_action) => UISelectors.selectShowPromptbar(state$.value)),
-    tap((showPromptbar) => {
-      localStorage.setItem('showPromptbar', JSON.stringify(showPromptbar));
+    tap(({ payload }) => {
+      localStorage.setItem('showPromptbar', JSON.stringify(payload));
     }),
     ignoreElements(),
   );

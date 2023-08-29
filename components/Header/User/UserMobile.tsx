@@ -33,7 +33,7 @@ const UserSettings = () => {
   const { t } = useTranslation('sidebar');
 
   const onClick = () => {
-    dispatch(UIActions.setIsUserSettingsOpen);
+    dispatch(UIActions.setIsUserSettingsOpen(true));
   };
 
   return (
