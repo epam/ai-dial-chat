@@ -149,14 +149,14 @@ destroy_review:
       allow_failure: true
 
 e2e_tests:
-  image: mcr.microsoft.com/playwright:v1.36.0-jammy
+  image: timbru31/java-node
   stage: e2e
   script:
     - export E2E_HOST=${review_ENV_URL}
-    - apt-get update
-    - apt-get install -y openjdk-17-jdk openjdk-17-jre
-    - ls
-    - npm i -D @playwright/test allure-playwright
+#    - apt-get update
+#    - apt-get install -y openjdk-17-jdk openjdk-17-jre
+    - ls node_modules
+#    - npm i -D @playwright/test allure-playwright
     - npm run test-ci
   after_script:
     - wget https://github.com/allure-framework/allure2/releases/download/2.24.0/allure-2.24.0.tgz
