@@ -154,14 +154,13 @@ e2e_tests:
   script:
     - export E2E_HOST=${review_ENV_URL}
     - export AUTH_TEST_TOKEN=${AUTH_TEST_TOKEN}
-    - apt-get update
-    - apt-get install -y openjdk-17-jdk openjdk-17-jre
-    - apt-get install -y allure
+    - apt-get update && apt-get install -y openjdk-17-jdk
+    - wget https://github.com/allure-framework/allure2/releases/download/2.24.0/allure-2.24.0.tgz
+    - tar zxvf allure-2.24.0.tgz
     - npm run test-ci
   after_script:
-#    - wget https://github.com/allure-framework/allure2/releases/download/2.24.0/allure-2.24.0.tgz
-#    - tar zxvf allure-2.24.0.tgz
     - npx allure generate ./e2e/allure-results -o ./e2e/allure-report --clean
+    - mv e2e/allure-report public/
   artifacts:
     name: "${CI_JOB_ID}_${CI_JOB_NAME}"
     when: always
@@ -169,6 +168,7 @@ e2e_tests:
     paths:
       - e2e/allure-report
       - e2e/auth
+      - public
   tags:
     - AWS
     - DockerExecutor

@@ -1,7 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import { config } from 'dotenv';
 import * as path from 'path';
-import * as process from 'process';
 
 /**
  * Read environment variables from file.
@@ -10,8 +9,6 @@ import * as process from 'process';
 config({ path: './.env.local' });
 
 export const STORAGE_STATE = path.join(__dirname, '../auth/desktopUser.json');
-
-console.log('Auth: ' + process.env.AUTH_TEST_TOKEN);
 
 /**
  * See https://playwright.dev/docs/test-configuration.
