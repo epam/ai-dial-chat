@@ -153,7 +153,7 @@ e2e_tests:
   stage: e2e
   script:
     - export E2E_HOST=${review_ENV_URL}
-    - echo $E2E_HOST
+    - export AUTH_TEST_TOKEN=${AUTH_TEST_TOKEN}
     - apt-get update
     - apt-get install -y openjdk-17-jdk openjdk-17-jre
     - npm run test-ci
