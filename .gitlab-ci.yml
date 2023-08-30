@@ -167,6 +167,7 @@ e2e_tests:
     expire_in: 30 days
     paths:
       - e2e/allure-report
+      - e2e/auth
   tags:
     - AWS
     - DockerExecutor
