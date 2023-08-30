@@ -52,10 +52,11 @@ export const ChatHeader = ({
     return modelsMap[conversation.model.id];
   });
   const selectedAddons = () => {
-    if (model && model.type !== 'application' && model.selectedAddons) {
+    if (model && model.type !== 'application') {
+      const preselectedAddons = model.selectedAddons ?? [];
       const addonsSet = new Set([
+        ...preselectedAddons,
         ...conversation.selectedAddons,
-        ...model.selectedAddons,
       ]);
       const selectedAddons = Array.from(addonsSet)
         .map((addon) => addonsMap[addon])
