@@ -51,6 +51,19 @@ export const ChatHeader = ({
   const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });
+  const selectedAddons = () => {
+    if (model && model.type !== 'application' && model.selectedAddons) {
+      const addonsSet = new Set([
+        ...conversation.selectedAddons,
+        ...model.selectedAddons,
+      ]);
+      const selectedAddons = Array.from(addonsSet)
+        .map((addon) => addonsMap[addon])
+        .filter(Boolean) as OpenAIEntityAddon[];
+      return selectedAddons;
+    }
+    return null;
+  };
 
   useEffect(() => {
     setModel(modelsMap[conversation.model.id]);
@@ -87,13 +100,7 @@ export const ChatHeader = ({
                     <TooltipContent>
                       <ChatInfoTooltip
                         model={model}
-                        selectedAddons={
-                          model.type !== 'application'
-                            ? (conversation.selectedAddons
-                                .map((addon) => addonsMap[addon])
-                                .filter(Boolean) as OpenAIEntityAddon[])
-                            : null
-                        }
+                        selectedAddons={selectedAddons()}
                         subModel={
                           conversation.assistantModelId &&
                           model.type === 'assistant'
