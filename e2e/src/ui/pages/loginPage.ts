@@ -11,6 +11,7 @@ export class LoginPage extends BasePage {
   ).getElementLocatorByText(ExpectedConstants.signInButtonTitle);
 
   async loginToChatBot() {
+    console.log('Auth: ' + process.env.AUTH_TEST_TOKEN!.length);
     await this.tokenInput.typeInInput(
       process.env.AUTH_TEST_TOKEN!.split(',')[0],
     );
