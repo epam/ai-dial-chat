@@ -156,7 +156,7 @@ e2e_tests:
     - export AUTH_TEST_TOKEN=${AUTH_TEST_TOKEN}
     - apt-get update
     - apt-get install -y openjdk-17-jdk openjdk-17-jre
-    - apt-get install allure
+    - apt-get install -y allure
     - npm run test-ci
   after_script:
 #    - wget https://github.com/allure-framework/allure2/releases/download/2.24.0/allure-2.24.0.tgz
