@@ -158,6 +158,7 @@ e2e_tests:
     - ls node_modules
 #    - npm i -D @playwright/test allure-playwright
     - npx playwright install-deps
+    - npx playwright install
     - npm run test-ci
   after_script:
 #    - wget https://github.com/allure-framework/allure2/releases/download/2.24.0/allure-2.24.0.tgz
