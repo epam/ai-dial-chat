@@ -54,8 +54,6 @@ variables:
   review_HELM_CUSTOM_VALUES_OVERLAY10K: "ingress.hosts[0]=${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}-overlay10k.staging.deltixhub.io,fullnameOverride=mr-${CI_MERGE_REQUEST_IID}-overlay10k,image.tag=mr-${CI_MERGE_REQUEST_IID},serviceAccount.name=mr-${CI_MERGE_REQUEST_IID}-overlay10k,env.NEXTAUTH_URL=https://${CI_PROJECT_NAME}-mr-${CI_MERGE_REQUEST_IID}-overlay10k.staging.deltixhub.io"
   review_RELEASE_OVERLAY10K: ${CHART}-overlay10k-mr-${CI_MERGE_REQUEST_IID}
 
-  AUTH_TEST_TOKEN: ${AUTH_TEST_TOKEN}
-
 stages:
   - test
   - prepare
@@ -155,7 +153,10 @@ e2e_tests:
   stage: e2e
   script:
     - export E2E_HOST=${review_ENV_URL}
-    - export AUTH_TEST_TOKEN=${AUTH_TEST_TOKEN}
+    - export AUTH_TEST_TOKEN=$AUTH_TEST_TOKEN
+    - echo AUTH_TEST_TOKEN
+    - export AUTH_TEST_TOKEN=$AUTH_TEST_TOKEN >> ".env.local"
+    - echo AUTH_TEST_TOKEN
     - apt-get update
     - apt-get install -y openjdk-17-jdk openjdk-17-jre
     - npm run test-ci
