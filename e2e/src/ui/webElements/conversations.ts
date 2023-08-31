@@ -52,6 +52,7 @@ export class Conversations extends BaseElement {
   }
 
   public async getConversationsByChronology() {
+    await this.waitForState({ state: 'attached' });
     const allConversations = await this.getElementInnerContent();
     const conversationsChronology: ConversationsChronologyType[] = [];
     const chronologyIndexes: number[] = [];
