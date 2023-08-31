@@ -39,7 +39,7 @@ export const AddonsDialog: FC<Props> = ({
   const addons = useAppSelector(AddonsSelectors.selectAddons);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const theme = useAppSelector(UISelectors.selectThemeState);
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAddons, setSelectedAddons] = useState<OpenAIEntity[]>(() => {
     return selectedAddonsIds

@@ -2,22 +2,24 @@ import {
   DragEvent,
   KeyboardEvent,
   MouseEventHandler,
-  useContext,
   useEffect,
   useRef,
   useState,
 } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { Conversation } from '@/types/chat';
 
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { ModelsSelectors } from '@/store/models/models.reducers';
 import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
 
-import HomeContext from '@/pages/api/home/home.context';
-
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
-import ChatbarContext from '@/components/Chatbar/Chatbar.context';
 import { MoveToFolderMobileModal } from '@/components/Common/MoveToFolderMobileModal';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
@@ -26,27 +28,27 @@ import { ContextMenu } from '../../Common/ContextMenu';
 import { ModelIcon } from './ModelIcon';
 
 import classNames from 'classnames';
+import { v4 as uuidv4 } from 'uuid';
 
 interface Props {
   conversation: Conversation;
 }
 
 export const ConversationComponent = ({ conversation }: Props) => {
-  const {
-    state: { messageIsStreaming, selectedConversationIds },
-    handleSelectConversation,
-    handleUpdateConversation,
-    handleNewReplayConversation,
-  } = useContext(HomeContext);
+  const { t } = useTranslation('chat');
+  const dispatch = useAppDispatch();
+
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const theme = useAppSelector(UISelectors.selectThemeState);
 
-  const dispatch = useAppDispatch();
-
-  const { handleExportConversation } = useContext(ChatbarContext);
-
-  const { handleDeleteConversation } = useContext(ChatbarContext);
+  const selectedConversationIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
+  const messageIsStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
+  const folders = useAppSelector(ConversationsSelectors.selectFolders);
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -75,10 +77,14 @@ export const ConversationComponent = ({ conversation }: Props) => {
 
   const handleRename = (conversation: Conversation) => {
     if (renameValue.trim().length > 0) {
-      handleUpdateConversation(conversation, {
-        key: 'name',
-        value: renameValue,
-      });
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: conversation.id,
+          values: {
+            name: renameValue,
+          },
+        }),
+      );
       setRenameValue('');
       setIsRenaming(false);
     }
@@ -87,7 +93,11 @@ export const ConversationComponent = ({ conversation }: Props) => {
   const handleConfirm: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();
     if (isDeleting) {
-      handleDeleteConversation(conversation);
+      dispatch(
+        ConversationsActions.deleteConversation({
+          conversationId: conversation.id,
+        }),
+      );
     } else if (isRenaming) {
       handleRename(conversation);
     }
@@ -114,7 +124,9 @@ export const ConversationComponent = ({ conversation }: Props) => {
   const handleStartReplay: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();
 
-    handleNewReplayConversation(conversation);
+    dispatch(
+      ConversationsActions.createNewReplayConversation({ conversation }),
+    );
   };
 
   useEffect(() => {
@@ -124,6 +136,31 @@ export const ConversationComponent = ({ conversation }: Props) => {
       setIsRenaming(false);
     }
   }, [isRenaming, isDeleting]);
+
+  const handleMoveToFolder = ({
+    folderId,
+    isNewFolder,
+  }: {
+    folderId?: string;
+    isNewFolder?: boolean;
+  }) => {
+    let localFolderId = folderId;
+    if (isNewFolder) {
+      localFolderId = uuidv4();
+      dispatch(
+        ConversationsActions.createFolder({
+          name: t('New folder'),
+          folderId: localFolderId,
+        }),
+      );
+    }
+    dispatch(
+      ConversationsActions.updateConversation({
+        id: conversation.id,
+        values: { folderId: localFolderId },
+      }),
+    );
+  };
 
   return (
     <div
@@ -160,7 +197,11 @@ export const ConversationComponent = ({ conversation }: Props) => {
           onClick={() => {
             setIsDeleting(false);
             setIsRenaming(false);
-            handleSelectConversation(conversation);
+            dispatch(
+              ConversationsActions.selectConversations({
+                conversationIds: [conversation.id],
+              }),
+            );
           }}
           disabled={messageIsStreaming}
           draggable="true"
@@ -197,23 +238,32 @@ export const ConversationComponent = ({ conversation }: Props) => {
           ref={wrapperRef}
         >
           <ContextMenu
-            item={conversation}
+            isEmptyConversation={isEmptyConversation}
+            folders={folders}
+            featureType="chat"
+            highlightColor="green"
             onOpenMoveToModal={() => {
               setIsShowMoveToModal(true);
             }}
+            onMoveToFolder={handleMoveToFolder}
             onDelete={handleOpenDeleteModal}
             onRename={handleOpenRenameModal}
             onExport={() => {
-              handleExportConversation(conversation.id);
+              dispatch(
+                ConversationsActions.exportConversation({
+                  conversationId: conversation.id,
+                }),
+              );
             }}
             onCompare={() => {
-              handleSelectConversation(conversation);
+              dispatch(
+                ConversationsActions.selectConversations({
+                  conversationIds: [conversation.id],
+                }),
+              );
               dispatch(UIActions.setIsCompareMode(true));
             }}
             onReplay={handleStartReplay}
-            isEmptyConversation={isEmptyConversation}
-            featureType="chat"
-            highlightColor="green"
           />
         </div>
       )}
@@ -223,8 +273,8 @@ export const ConversationComponent = ({ conversation }: Props) => {
             onClose={() => {
               setIsShowMoveToModal(false);
             }}
-            featureType="chat"
-            item={conversation}
+            folders={folders}
+            onMoveToFolder={handleMoveToFolder}
           />
         )}
       </div>

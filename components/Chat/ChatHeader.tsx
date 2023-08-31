@@ -20,13 +20,12 @@ interface Props {
   conversation: Conversation;
   isCompareMode: boolean;
   selectedConversationIds: string[];
-  messageIsStreaming: boolean;
   isShowChatInfo: boolean;
   isShowModelSelect: boolean;
   isShowClearConversation: boolean;
   isShowSettings: boolean;
   onClearConversation: () => void;
-  onUnselectConversation: () => void;
+  onUnselectConversation: (conversationId: string) => void;
   setShowSettings: (isShow: boolean) => void;
 }
 
@@ -34,7 +33,6 @@ export const ChatHeader = ({
   conversation,
   isCompareMode,
   selectedConversationIds,
-  messageIsStreaming,
   isShowChatInfo,
   isShowModelSelect,
   isShowClearConversation,
@@ -177,8 +175,11 @@ export const ChatHeader = ({
                   <TooltipTrigger>
                     <button
                       className="cursor-pointer text-gray-500 hover:text-blue-500 disabled:cursor-not-allowed"
-                      onClick={onUnselectConversation}
-                      disabled={messageIsStreaming}
+                      onClick={() => onUnselectConversation(conversation.id)}
+                      disabled={
+                        conversation.isMessageStreaming ||
+                        conversation.isLoading
+                      }
                     >
                       <IconX size={18} />
                     </button>

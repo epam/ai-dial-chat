@@ -18,8 +18,10 @@ import { isMobile } from '@/utils/app/mobile';
 import { Message } from '@/types/chat';
 import { Prompt } from '@/types/prompt';
 
+import { ConversationsSelectors } from '@/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/store/hooks';
 import { ModelsSelectors } from '@/store/models/models.reducers';
+import { PromptsSelectors } from '@/store/prompts/prompts.reducers';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -57,13 +59,7 @@ export const ChatInput = forwardRef(
     const { t } = useTranslation('chat');
 
     const {
-      state: {
-        messageIsStreaming,
-        prompts,
-        footerHtmlMessage,
-        enabledFeatures,
-        isIframe,
-      },
+      state: { footerHtmlMessage, enabledFeatures, isIframe },
     } = useContext(HomeContext);
 
     const [content, setContent] = useState<string>();
@@ -76,6 +72,10 @@ export const ChatInput = forwardRef(
     const [showPluginSelect, setShowPluginSelect] = useState(false);
     const isModelsLoading = useAppSelector(
       ModelsSelectors.selectModelsIsLoading,
+    );
+    const prompts = useAppSelector(PromptsSelectors.selectPrompts);
+    const messageIsStreaming = useAppSelector(
+      ConversationsSelectors.selectIsConversationsStreaming,
     );
 
     const promptListRef = useRef<HTMLUListElement | null>(null);
