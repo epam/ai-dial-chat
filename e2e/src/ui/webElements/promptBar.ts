@@ -37,11 +37,20 @@ export class PromptBar extends BaseElement {
     PromptBarSelectors.newPromptButton,
   );
 
+  public deleteAllPromptsButton = new BaseElement(
+    this.page,
+    PromptBarSelectors.deletePrompts,
+  );
+
   public async createNewFolder() {
     await this.newFolderButton.click();
   }
 
   public async createNewPrompt() {
     await this.newPromptButton.click();
+  }
+
+  public async deleteAllPrompts() {
+    await this.deleteAllPromptsButton.click();
   }
 }

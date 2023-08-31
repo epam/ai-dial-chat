@@ -20,7 +20,7 @@ export class ConversationData {
     return new ConversationData();
   }
 
-  public prepareDefaultConversation(model?: OpenAIEntityModel) {
+  public prepareDefaultConversation(model?: OpenAIEntityModel, name?: string) {
     const modelToUse =
       model ?? this.conversationBuilder.getConversation().model;
     const userMessage: Message = {
@@ -36,7 +36,9 @@ export class ConversationData {
       .withMessage(userMessage)
       .withMessage(assistantMessage)
       .withModel(modelToUse)
-      .withName('test conversation' + GeneratorUtil.randomIntegerNumber())
+      .withName(
+        name ?? 'test conversation' + GeneratorUtil.randomIntegerNumber(),
+      )
       .build();
   }
 
@@ -50,27 +52,36 @@ export class ConversationData {
       .build();
   }
 
-  public prepareDefaultConversationInFolder(model?: OpenAIEntityModel) {
-    const conversation = this.prepareDefaultConversation(model);
+  public prepareDefaultConversationInFolder(
+    model?: OpenAIEntityModel,
+    name?: string,
+  ) {
+    const conversation = this.prepareDefaultConversation(model, name);
     const folder = this.prepareDefaultFolder();
     conversation.folderId = folder.id;
     return { conversations: conversation, folders: folder };
   }
 
-  public prepareYesterdayConversation(model?: OpenAIEntityModel) {
-    const conversation = this.prepareDefaultConversation(model);
+  public prepareYesterdayConversation(
+    model?: OpenAIEntityModel,
+    name?: string,
+  ) {
+    const conversation = this.prepareDefaultConversation(model, name);
     conversation.lastActivityDate = DateUtil.getYesterdayDate();
     return conversation;
   }
 
-  public prepareLastWeekConversation(model?: OpenAIEntityModel) {
-    const conversation = this.prepareDefaultConversation(model);
+  public prepareLastWeekConversation(model?: OpenAIEntityModel, name?: string) {
+    const conversation = this.prepareDefaultConversation(model, name);
     conversation.lastActivityDate = DateUtil.getLastWeekDate();
     return conversation;
   }
 
-  public prepareLastMonthConversation(model?: OpenAIEntityModel) {
-    const conversation = this.prepareDefaultConversation(model);
+  public prepareLastMonthConversation(
+    model?: OpenAIEntityModel,
+    name?: string,
+  ) {
+    const conversation = this.prepareDefaultConversation(model, name);
     conversation.lastActivityDate = DateUtil.getLastMonthDate();
     return conversation;
   }

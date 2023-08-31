@@ -23,7 +23,6 @@ export const ChatSelectors = {
   addonsDialog: '[data-qa="addons-dialog"]',
   addonSearchResults: '[data-qa="addon-search-results"]',
   modelSelector: '[data-qa="model-selector"]',
-  modelMenu: '[class$=MenuList]',
   listOptions: '[role="listbox"] > [role="option"]',
   combobox: '[role="combobox"]',
 };

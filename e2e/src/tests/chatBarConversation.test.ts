@@ -237,14 +237,17 @@ test(
   }) => {
     const yesterdayConversation = conversationData.prepareYesterdayConversation(
       OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
+      'yesterday',
     );
     conversationData = conversationData.resetData();
     const lastWeekConversation = conversationData.prepareLastWeekConversation(
       OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
+      'last week',
     );
     conversationData = conversationData.resetData();
     const lastMonthConversation = conversationData.prepareLastMonthConversation(
       OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
+      'last month',
     );
     await localStorageManager.setConversationHistory(
       yesterdayConversation,

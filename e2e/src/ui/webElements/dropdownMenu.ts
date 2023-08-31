@@ -1,11 +1,11 @@
 import { Attributes, Tags } from '@/e2e/src/ui/domData';
-import { ChatBarSelectors } from '@/e2e/src/ui/selectors';
+import { SideBarSelectors } from '@/e2e/src/ui/selectors';
 import { BaseElement } from '@/e2e/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
 
 export class DropdownMenu extends BaseElement {
   constructor(page: Page) {
-    super(page, ChatBarSelectors.dropdownMenu);
+    super(page, SideBarSelectors.dropdownMenu);
   }
 
   public menuOptions = () =>

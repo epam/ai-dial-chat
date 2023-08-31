@@ -7,6 +7,7 @@ export const SideBarSelectors = {
   dotsMenu: '[aria-haspopup="menu"]',
   renameInput: (value: string) =>
     `${Tags.input}[${Attributes.value}="${value}"]`,
+  dropdownMenu: '[data-qa="dropdown-menu"]',
 };
 
 export const ChatBarSelectors = {
@@ -17,7 +18,6 @@ export const ChatBarSelectors = {
   conversation: '[data-qa="conversation"]',
   chatFolders: '[data-qa="chat-folders"]',
   actionButton: '[data-qa="action-button"]',
-  dropdownMenu: '[data-qa="dropdown-menu"]',
 };
 
 export const PromptBarSelectors = {
@@ -26,4 +26,5 @@ export const PromptBarSelectors = {
   newPromptButton: '[data-qa="new-prompt"]',
   prompts: '[data-qa="prompts"]',
   prompt: '[data-qa="prompt"]',
+  deletePrompts: '[data-qa="delete-prompts"]',
 };

@@ -266,3 +266,37 @@ test('Delete folder. Cancel', async ({
     )
     .toBeTruthy();
 });
+
+test('Delete prompt in the folder', async ({
+  dialHomePage,
+  promptData,
+  folderPrompts,
+  localStorageManager,
+  promptDropdownMenu,
+}) => {
+  const promptInFolder = promptData.prepareDefaultPromptInFolder();
+  await localStorageManager.setFolders(promptInFolder.folders);
+  await localStorageManager.setPrompts(promptInFolder.prompts);
+
+  await dialHomePage.openHomePage();
+  await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
+  await folderPrompts.openFolderPromptDropdownMenu(
+    promptInFolder.folders.name,
+    promptInFolder.prompts.name,
+  );
+  await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
+  await folderPrompts
+    .getFolderInput(promptInFolder.prompts.name)
+    .clickTickButton();
+  expect
+    .soft(
+      await folderPrompts
+        .getFolderPrompt(
+          promptInFolder.folders.name,
+          promptInFolder.prompts.name,
+        )
+        .isVisible(),
+      ExpectedMessages.promptDeleted,
+    )
+    .toBeFalsy();
+});

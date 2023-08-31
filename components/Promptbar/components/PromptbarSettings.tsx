@@ -44,6 +44,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
               onClick={() => {
                 setIsOpen(true);
               }}
+              data-qa="delete-prompts"
             >
               <IconTrashX size={24} strokeWidth="1.5" />
             </div>
