@@ -87,7 +87,7 @@ test('Rename chat before starting the conversation', async ({
     .toBeTruthy();
 });
 
-test.only('Rename chat after starting the conversation', async ({
+test('Rename chat after starting the conversation', async ({
   dialHomePage,
   conversations,
   conversationDropdownMenu,
@@ -221,7 +221,7 @@ test('Delete chat located in the root', async ({
     .toBeFalsy();
 });
 
-test.only(
+test(
   'Chat sorting. Yesterday\n' +
     'Chat sorting.  Last 7 days when chat with lastActivityDate is the day before yesterday\n' +
     'Chat sorting. Last 30 days when chat with lastActivityDate is the 8th day\n' +

@@ -28,38 +28,35 @@ import { Prompts } from '@/e2e/src/ui/webElements/prompts';
 import { TemperatureSlider } from '@/e2e/src/ui/webElements/temperatureSlider';
 import { test as base } from '@playwright/test';
 
-const test = base.extend<
-  {
-    dialHomePage: DialHomePage;
-    loginPage: LoginPage;
-    chatBar: ChatBar;
-    promptBar: PromptBar;
-    chat: Chat;
-    chatMessages: ChatMessages;
-    sendMessage: SendMessage;
-    conversations: Conversations;
-    prompts: Prompts;
-    folderConversations: FolderConversations;
-    folderPrompts: FolderPrompts;
-    conversationSettings: ConversationSettings;
-    talkToSelector: EntitySelector;
-    recentEntities: RecentEntities;
-    entitySettings: EntitySettings;
-    modelSelector: ModelSelector;
-    temperatureSlider: TemperatureSlider;
-    addons: Addons;
-    addonsDialog: AddonsDialog;
-    conversationData: ConversationData;
-    promptData: PromptData;
-    localStorageManager: LocalStorageManager;
-    conversationDropdownMenu: DropdownMenu;
-    folderDropdownMenu: DropdownMenu;
-    promptDropdownMenu: DropdownMenu;
-    confirmationDialog: ConfirmationDialog;
-    promptModalDialog: PromptModalDialog;
-  },
-  { workerStorageState: string }
->({
+const test = base.extend<{
+  dialHomePage: DialHomePage;
+  loginPage: LoginPage;
+  chatBar: ChatBar;
+  promptBar: PromptBar;
+  chat: Chat;
+  chatMessages: ChatMessages;
+  sendMessage: SendMessage;
+  conversations: Conversations;
+  prompts: Prompts;
+  folderConversations: FolderConversations;
+  folderPrompts: FolderPrompts;
+  conversationSettings: ConversationSettings;
+  talkToSelector: EntitySelector;
+  recentEntities: RecentEntities;
+  entitySettings: EntitySettings;
+  modelSelector: ModelSelector;
+  temperatureSlider: TemperatureSlider;
+  addons: Addons;
+  addonsDialog: AddonsDialog;
+  conversationData: ConversationData;
+  promptData: PromptData;
+  localStorageManager: LocalStorageManager;
+  conversationDropdownMenu: DropdownMenu;
+  folderDropdownMenu: DropdownMenu;
+  promptDropdownMenu: DropdownMenu;
+  confirmationDialog: ConfirmationDialog;
+  promptModalDialog: PromptModalDialog;
+}>({
   dialHomePage: async ({ page }, use) => {
     const dialHomePage = new DialHomePage(page);
     await use(dialHomePage);
