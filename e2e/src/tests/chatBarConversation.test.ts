@@ -8,7 +8,7 @@ import {
 } from '@/e2e/src/testData';
 import { expect } from '@playwright/test';
 
-test.only(
+test(
   'Chat name equals to the first message\n' +
     'Chat sorting. Today for newly created chat',
   async ({ dialHomePage, conversations, chat }) => {
