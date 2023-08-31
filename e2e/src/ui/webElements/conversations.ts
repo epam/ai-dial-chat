@@ -127,6 +127,7 @@ export class Conversations extends BaseElement {
   public async editConversationNameWithEnter(name: string, newName: string) {
     await this.openEditConversationNameMode(name, newName);
     await this.page.keyboard.press(keys.enter);
+    await this.getConversationByName(name).waitFor({ state: 'hidden' });
   }
 
   public async openEditConversationNameMode(name: string, newName: string) {

@@ -292,3 +292,110 @@ test('Clear prompts. Cancel', async ({
     .soft(isSinglePromptVisible, ExpectedMessages.promptNotDeleted)
     .toBeTruthy();
 });
+
+test('Clear prompts. Clear', async ({
+  dialHomePage,
+  conversations,
+  conversationData,
+  promptData,
+  localStorageManager,
+  folderConversations,
+  folderPrompts,
+  promptBar,
+  confirmationDialog,
+  prompts,
+}) => {
+  const emptyPromptFolder = promptData.prepareFolder();
+  promptData = promptData.resetData();
+  const singlePrompt = promptData.prepareDefaultPrompt();
+  promptData = promptData.resetData();
+  const promptInFolder = promptData.prepareDefaultPromptInFolder();
+
+  const emptyConversationFolder = conversationData.prepareFolder();
+  conversationData = conversationData.resetData();
+  const singleConversation = conversationData.prepareDefaultConversation();
+  conversationData = conversationData.resetData();
+  const conversationInFolder =
+    conversationData.prepareDefaultConversationInFolder();
+
+  await localStorageManager.setPrompts(singlePrompt, promptInFolder.prompts);
+  await localStorageManager.setConversationHistory(
+    singleConversation,
+    conversationInFolder.conversations,
+  );
+  await localStorageManager.setFolders(
+    emptyPromptFolder,
+    emptyConversationFolder,
+    promptInFolder.folders,
+    conversationInFolder.folders,
+  );
+
+  await dialHomePage.openHomePage();
+  await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
+  await folderConversations.expandCollapseFolder(
+    conversationInFolder.folders.name,
+  );
+  await promptBar.deleteAllPrompts();
+  await confirmationDialog.confirm();
+
+  const isEmptyConversationFolderVisible = await folderConversations
+    .getFolderByName(emptyConversationFolder.name)
+    .isVisible();
+  expect
+    .soft(isEmptyConversationFolderVisible, ExpectedMessages.folderNotDeleted)
+    .toBeTruthy();
+
+  const isFolderConversationVisible =
+    await folderConversations.isFolderConversationVisible(
+      conversationInFolder.folders.name,
+      conversationInFolder.conversations.name,
+    );
+  expect
+    .soft(isFolderConversationVisible, ExpectedMessages.conversationNotDeleted)
+    .toBeTruthy();
+
+  const isSingleConversationVisible = await conversations
+    .getConversationByName(singleConversation.name)
+    .isVisible();
+  expect
+    .soft(isSingleConversationVisible, ExpectedMessages.conversationNotDeleted)
+    .toBeTruthy();
+
+  const isPromptFolderVisible = await folderPrompts
+    .getFolderByName(emptyPromptFolder.name)
+    .isVisible();
+  expect
+    .soft(isPromptFolderVisible, ExpectedMessages.folderDeleted)
+    .toBeFalsy();
+
+  const isFolderPromptVisible = await folderPrompts.isFolderPromptVisible(
+    promptInFolder.folders.name,
+    promptInFolder.prompts.name,
+  );
+  expect
+    .soft(isFolderPromptVisible, ExpectedMessages.promptDeleted)
+    .toBeFalsy();
+
+  const isSinglePromptVisible = await prompts
+    .getPromptByName(singlePrompt.name)
+    .isVisible();
+  expect
+    .soft(isSinglePromptVisible, ExpectedMessages.promptDeleted)
+    .toBeFalsy();
+});
+
+test(`[UI] Delete all prompts button doesn't exist if not prompts are created`, async ({
+  dialHomePage,
+  promptBar,
+}) => {
+  await dialHomePage.openHomePage();
+
+  const isDeleteAllPromptVisible =
+    await promptBar.deleteAllPromptsButton.isVisible();
+  expect
+    .soft(
+      isDeleteAllPromptVisible,
+      ExpectedMessages.deleteAllPromptsButtonNotVisible,
+    )
+    .toBeFalsy();
+});

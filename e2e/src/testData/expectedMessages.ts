@@ -41,4 +41,5 @@ export enum ExpectedMessages {
   promptValueUpdated = 'Prompt value is updated',
   promptMovedToFolder = 'Prompt is moved to a folder',
   promptIsVisible = 'Prompt is visible',
+  deleteAllPromptsButtonNotVisible = 'Delete All Prompts button is not visible',
 }
