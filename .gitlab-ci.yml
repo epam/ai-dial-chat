@@ -165,6 +165,9 @@ e2e_tests:
     expire_in: 30 days
     paths:
       - e2e/allure-report
+  tags:
+    - AWS
+    - DockerExecutor
   rules:
     - if: "$CI_COMMIT_BRANCH == 'development'"
     - if: "$CI_COMMIT_TAG"
