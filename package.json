@@ -16,7 +16,8 @@
     "test": "vitest",
     "coverage": "vitest run --coverage",
     "test-local": "playwright test --config=./e2e/config/local.playwright.config.ts",
-    "test-ci": "playwright test --config=./e2e/config/playwright.config.ts"
+    "test-ci": "playwright test --config=./e2e/config/playwright.config.ts",
+    "allure:serve": "allure serve ./e2e/allure-results"
   },
   "dependencies": {
     "@aashutoshrathi/word-wrap": "^1.2.6",

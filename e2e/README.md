@@ -4,7 +4,7 @@ The package contains Dial end-to-end tests. Tests are implemented using [Playwri
 
 ## Prerequisites
 
-Before running tests, setup USER_TOKEN and E2E_HOST env variables in .env file
+Before running tests, setup PREVIEW_TEST_TOKEN and E2E_HOST env variables in .env file
 
 ## Running tests
 
@@ -35,7 +35,7 @@ Image version should correspond Playwright version
 
 To generate Allure report:
 
-`allure serve allure-results`
+`npm run allure:serve`
 
 To run a specific test:
 
