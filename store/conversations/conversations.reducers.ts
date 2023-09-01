@@ -178,6 +178,7 @@ export const conversationsSlice = createSlice({
       const newFolder: FolderInterface = {
         id: payload.folderId || uuidv4(),
         name: payload.name,
+        type: 'chat',
       };
 
       state.folders = state.folders.concat(newFolder);

@@ -88,6 +88,7 @@ export const promptsSlice = createSlice({
       const newFolder: FolderInterface = {
         id: payload.folderId || uuidv4(),
         name: payload.name,
+        type: 'prompt',
       };
 
       state.folders = state.folders.concat(newFolder);

@@ -194,7 +194,7 @@ export const Chat = memo(({ appName }: Props) => {
     return () => {
       window.removeEventListener('resize', resizeHandler);
     };
-  }, []);
+  }, [inputRef.current]);
 
   const isSelectedConversations =
     !!selectedConversations && selectedConversations.length > 0;
@@ -245,15 +245,12 @@ export const Chat = memo(({ appName }: Props) => {
   }, [selectedConversations]);
 
   useEffect(() => {
-    if (!modelsIsLoading) {
-      const modelIds = models.map((model) => model.id);
-      setIsNotAllowedModel(
-        models.length === 0 ||
-          selectedConversations.some(
-            (conv) => !modelIds.includes(conv.model.id),
-          ),
-      );
-    }
+    const modelIds = models.map((model) => model.id);
+    const isNotAllowed = modelsIsLoading
+      ? false
+      : models.length === 0 ||
+        selectedConversations.some((conv) => !modelIds.includes(conv.model.id));
+    setIsNotAllowedModel(isNotAllowed);
   }, [selectedConversations, models, modelsIsLoading]);
 
   const setInitialNameForNewChat = (
