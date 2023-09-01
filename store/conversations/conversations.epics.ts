@@ -6,7 +6,7 @@ import {
   saveConversations,
   saveSelectedConversationIds,
 } from '@/utils/app/conversation';
-import { saveConversationsFolders } from '@/utils/app/folders';
+import { saveFolders } from '@/utils/app/folders';
 import {
   CleanDataResponse,
   exportConversation,
@@ -19,6 +19,7 @@ import { AppEpic } from '@/types/store';
 
 import { AddonsActions } from '../addons/addons.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
+import { PromptsSelectors } from '../prompts/prompts.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import {
   ConversationsActions,
@@ -88,9 +89,12 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         ConversationsActions.renameFolder.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action),
     ),
-    map(() => ConversationsSelectors.selectFolders(state$.value)),
-    tap((folders) => {
-      saveConversationsFolders(folders);
+    map(() => ({
+      conversationsFolders: ConversationsSelectors.selectFolders(state$.value),
+      promptsFolders: PromptsSelectors.selectFolders(state$.value),
+    })),
+    tap(({ conversationsFolders, promptsFolders }) => {
+      saveFolders(conversationsFolders.concat(promptsFolders));
     }),
     ignoreElements(),
   );

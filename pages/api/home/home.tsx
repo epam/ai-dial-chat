@@ -177,7 +177,6 @@ const Home = ({
       dispatch(UIActions.setShowPromptbar(showPromptbar === 'true'));
     }
 
-    // TODO: create a migration process for old local storage
     const folders = localStorage.getItem('folders');
     if (folders) {
       const parsedFolders: FolderInterface[] = JSON.parse(folders);
@@ -189,27 +188,6 @@ const Home = ({
       dispatch(
         PromptsActions.setFolders({
           folders: parsedFolders.filter(({ type }) => type === 'prompt'),
-        }),
-      );
-      localStorage.removeItem('folders');
-    }
-    ////////////////////
-
-    const conversationsFolders = localStorage.getItem('conversationFolders');
-    if (conversationsFolders) {
-      const parsedFolders: FolderInterface[] = JSON.parse(conversationsFolders);
-      dispatch(
-        ConversationsActions.setFolders({
-          folders: parsedFolders,
-        }),
-      );
-    }
-    const promptsFolders = localStorage.getItem('conversationFolders');
-    if (promptsFolders) {
-      const parsedFolders: FolderInterface[] = JSON.parse(promptsFolders);
-      dispatch(
-        ConversationsActions.setFolders({
-          folders: parsedFolders,
         }),
       );
     }

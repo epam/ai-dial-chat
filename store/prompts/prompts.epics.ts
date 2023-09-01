@@ -1,11 +1,12 @@
 import { toast } from 'react-hot-toast';
 
-import { savePromptsFolders } from '@/utils/app/folders';
+import { saveFolders } from '@/utils/app/folders';
 import { exportPrompts, importPrompts } from '@/utils/app/importExport';
 import { savePrompts } from '@/utils/app/prompts';
 
 import { AppEpic } from '@/types/store';
 
+import { ConversationsSelectors } from '../conversations/conversations.reducers';
 import { ModelsSelectors } from '../models/models.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
@@ -62,9 +63,12 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         PromptsActions.clearPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action),
     ),
-    map(() => PromptsSelectors.selectFolders(state$.value)),
-    tap((folders) => {
-      savePromptsFolders(folders);
+    map(() => ({
+      conversationsFolders: ConversationsSelectors.selectFolders(state$.value),
+      promptsFolders: PromptsSelectors.selectFolders(state$.value),
+    })),
+    tap(({ conversationsFolders, promptsFolders }) => {
+      saveFolders(conversationsFolders.concat(promptsFolders));
     }),
     ignoreElements(),
   );
