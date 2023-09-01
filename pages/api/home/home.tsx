@@ -7,10 +7,10 @@ import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import Head from 'next/head';
 
-import { AuthWindowLocationLike } from '@/utils/app/auth/authWindowLocationLike';
-import { delay } from '@/utils/app/auth/delay';
-import { timeoutAsync } from '@/utils/app/auth/timeoutAsync';
 import { getSettings } from '@/utils/app/settings';
+import { AuthWindowLocationLike } from '@/utils/auth/authWindowLocationLike';
+import { delay } from '@/utils/auth/delay';
+import { timeoutAsync } from '@/utils/auth/timeoutAsync';
 
 import { Feature } from '@/types/features';
 import { FolderInterface } from '@/types/folder';

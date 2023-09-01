@@ -48,16 +48,26 @@ export const PromptFolders = () => {
   return (
     <div className="flex w-full flex-col">
       {folders
-        .filter((folder) => folder.type === 'prompt')
         .sort((a, b) => a.name.localeCompare(b.name))
         .map((folder, index) => (
           <Folder
             key={index}
             searchTerm={searchTerm}
             currentFolder={folder}
-            handleDrop={handleDrop}
-            folderComponent={PromptFolders(folder)}
             highlightColor="violet"
+            folderComponent={PromptFolders(folder)}
+            handleDrop={handleDrop}
+            onRenameFolder={(newName) => {
+              dispatch(
+                PromptsActions.renameFolder({
+                  folderId: folder.id,
+                  name: newName,
+                }),
+              );
+            }}
+            onDeleteFolder={() =>
+              dispatch(PromptsActions.deleteFolder({ folderId: folder.id }))
+            }
           />
         ))}
     </div>

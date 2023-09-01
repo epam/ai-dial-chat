@@ -1,13 +1,10 @@
-import { useContext } from 'react';
-
 import { Conversation } from '@/types/chat';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 
-import { useAppSelector } from '@/store/hooks';
+import { ConversationsActions } from '@/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { ModelsSelectors } from '@/store/models/models.reducers';
-
-import HomeContext from '@/pages/api/home/home.context';
 
 import Spinner from '../Spinner';
 import { ConversationSettings } from './ConversationSettings';
@@ -40,8 +37,7 @@ export const ChatSettingsEmpty = ({
   onSelectAssistantSubModel,
   onChangeAddon,
 }: Props) => {
-  const { handleUpdateConversation } = useContext(HomeContext);
-
+  const dispatch = useAppDispatch();
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   return (
@@ -77,10 +73,12 @@ export const ChatSettingsEmpty = ({
                 onSelectModel={onSelectModel}
                 onChangeAddon={onChangeAddon}
                 onApplyAddons={(addons) => {
-                  handleUpdateConversation(conversation, {
-                    key: 'selectedAddons',
-                    value: addons,
-                  });
+                  dispatch(
+                    ConversationsActions.updateConversation({
+                      id: conversation.id,
+                      values: { selectedAddons: addons },
+                    }),
+                  );
                 }}
               />
             </>
