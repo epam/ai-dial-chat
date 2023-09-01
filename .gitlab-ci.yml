@@ -152,7 +152,8 @@ e2e_tests:
   image: mcr.microsoft.com/playwright:v1.37.1-jammy
   stage: e2e
   script:
-    - export E2E_HOST=${review_ENV_URL}
+    - if [[ "$CI_COMMIT_BRANCH" = "development" ]]; then E2E_HOST=${development_ENV_URL}; else E2E_HOST=${review_ENV_URL}; fi
+    - echo ${E2E_HOST}
     - apt-get update && apt-get install -y openjdk-17-jdk
     - wget https://github.com/allure-framework/allure2/releases/download/2.24.0/allure-2.24.0.tgz
     - tar zxvf allure-2.24.0.tgz
