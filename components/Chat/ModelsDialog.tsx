@@ -5,8 +5,9 @@ import {
   useInteractions,
 } from '@floating-ui/react';
 import { IconChevronDown } from '@tabler/icons-react';
-import { FC, useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { FC, useEffect, useState } from 'react';
+
+import { useTranslation } from 'next-i18next';
 
 import {
   OpenAIEntity,
@@ -16,7 +17,12 @@ import {
   OpenAIEntityModelType,
 } from '@/types/openai';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+  selectModels,
+  updateRecentModels,
+} from '@/store/models/models.reducers';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -33,10 +39,9 @@ const Entity = ({
   selectedModelId: string | undefined;
   onSelect: (id: string) => void;
 }) => {
+  const theme = useAppSelector(UISelectors.selectThemeState);
+
   const [isOpened, setIsOpened] = useState(false);
-  const {
-    state: { lightMode },
-  } = useContext(HomeContext);
 
   return (
     <button
@@ -54,7 +59,7 @@ const Entity = ({
         entityId={entity.id}
         entity={entity}
         size={24}
-        inverted={lightMode === 'dark'}
+        inverted={theme === 'dark'}
       />
       <div className="flex flex-col gap-1 text-left">
         <span>{entity.name}</span>
@@ -119,10 +124,9 @@ export const ModelsDialog: FC<Props> = ({
   onClose,
 }) => {
   const { t } = useTranslation('chat');
-  const {
-    state: { models },
-    handleUpdateRecentModels,
-  } = useContext(HomeContext);
+  const dispatch = useAppDispatch();
+  const models = useAppSelector(selectModels);
+
   const [entityTypes, setEntityTypes] = useState<
     (
       | OpenAIEntityModelType
@@ -208,7 +212,7 @@ export const ModelsDialog: FC<Props> = ({
               selectedModelId={selectedModelId}
               onSelect={(id) => {
                 onModelSelect(id);
-                handleUpdateRecentModels(id);
+                dispatch(updateRecentModels({ modelId: id }));
                 onClose();
               }}
             />

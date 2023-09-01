@@ -1,24 +1,23 @@
 import { useSession } from 'next-auth/react';
-import { useContext } from 'react';
-import { useTranslation } from 'react-i18next';
 
+import { useTranslation } from 'next-i18next';
 import Image from 'next/image';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
 
 import UserIcon from '../../../public/images/icons/user.svg';
 import XmarkIcon from '../../../public/images/icons/xmark.svg';
 
 export const ProfileButton = () => {
-  const {
-    state: { isProfileOpen },
-    dispatch: homeDispatch,
-  } = useContext(HomeContext);
+  const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
+  const dispatch = useAppDispatch();
+
   const { t } = useTranslation('sidebar');
   const { data: session } = useSession();
 
   const onClick = () => {
-    homeDispatch({ field: 'isProfileOpen', value: !isProfileOpen });
+    dispatch(UIActions.setIsProfileOpen(!isProfileOpen));
   };
   return (
     <button

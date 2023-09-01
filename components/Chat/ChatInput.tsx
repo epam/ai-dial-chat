@@ -18,6 +18,10 @@ import { isMobile } from '@/utils/app/mobile';
 import { Message } from '@/types/chat';
 import { Prompt } from '@/types/prompt';
 
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsIsLoading } from '@/store/models/models.reducers';
+import { SettingsSelectors } from '@/store/settings/settings.reducers';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import ArrowNarrowDown from '../../public/images/icons/arrow-narrow-down.svg';
@@ -54,13 +58,7 @@ export const ChatInput = forwardRef(
     const { t } = useTranslation('chat');
 
     const {
-      state: {
-        messageIsStreaming,
-        prompts,
-        footerHtmlMessage,
-        enabledFeatures,
-        isIframe,
-      },
+      state: { messageIsStreaming, prompts },
     } = useContext(HomeContext);
 
     const [content, setContent] = useState<string>();
@@ -71,6 +69,14 @@ export const ChatInput = forwardRef(
     const [variables, setVariables] = useState<string[]>([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [showPluginSelect, setShowPluginSelect] = useState(false);
+    const isModelsLoading = useAppSelector(selectModelsIsLoading);
+    const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
+    const footerHtmlMessage = useAppSelector(
+      SettingsSelectors.selectFooterHtmlMessage,
+    );
+    const enabledFeatures = useAppSelector(
+      SettingsSelectors.selectEnabledFeatures,
+    );
 
     const promptListRef = useRef<HTMLUListElement | null>(null);
 
@@ -310,8 +316,9 @@ export const ChatInput = forwardRef(
             <button
               className="absolute right-4 top-2.5 rounded"
               onClick={handleSend}
+              disabled={messageIsStreaming || isModelsLoading}
             >
-              {messageIsStreaming ? (
+              {messageIsStreaming || isModelsLoading ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-t-2 border-gray-500 text-current"></div>
               ) : (
                 <span className="hover:text-blue-500">

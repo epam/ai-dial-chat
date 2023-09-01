@@ -1,4 +1,4 @@
-import { FC, memo, useContext, useState } from 'react';
+import { FC, memo, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import {
   oneDark,
@@ -12,7 +12,8 @@ import {
   programmingLanguages,
 } from '@/utils/app/codeblock';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { useAppSelector } from '@/store/hooks';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import Check from '../../public/images/icons/check.svg';
 import Clone from '../../public/images/icons/clone.svg';
@@ -33,9 +34,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
   const { t } = useTranslation('markdown');
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
-  const {
-    state: { lightMode },
-  } = useContext(HomeContext);
+  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const copyToClipboard = () => {
     if (!navigator.clipboard || !navigator.clipboard.writeText) {
@@ -128,7 +127,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
 
       <SyntaxHighlighter
         language={language}
-        style={codeBlockTheme[lightMode]}
+        style={codeBlockTheme[theme]}
         customStyle={{
           margin: 0,
           borderRadius: 0,

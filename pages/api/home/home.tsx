@@ -1,6 +1,5 @@
 import { signIn, useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
 
 import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
@@ -9,9 +8,6 @@ import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import Head from 'next/head';
 
 import { useCreateReducer } from '@/hooks/useCreateReducer';
-
-import useErrorService from '@/services/errorService';
-import useApiService from '@/services/useApiService';
 
 import { AuthWindowLocationLike } from '@/utils/app/auth/authWindowLocationLike';
 import { delay } from '@/utils/app/auth/delay';
@@ -36,7 +32,6 @@ import { KeyValuePair } from '@/types/data';
 import { Feature } from '@/types/features';
 import { FolderInterface, FolderType } from '@/types/folder';
 import {
-  OpenAIEntityAddon,
   OpenAIEntityModel,
   OpenAIEntityModelID,
   OpenAIEntityModels,
@@ -44,6 +39,20 @@ import {
   fallbackModelID,
 } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
+
+import { getAddons, initRecentAddons } from '@/store/addons/addons.reducers';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+  getModels,
+  initRecentModels,
+  selectDefaultModelId,
+  selectModels,
+  selectModelsMap,
+  setDefaultModelId,
+  updateRecentModels,
+} from '@/store/models/models.reducers';
+import { SettingsActions } from '@/store/settings/settings.reducers';
+import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { Chat } from '@/components/Chat/Chat';
 import { Chatbar } from '@/components/Chatbar/Chatbar';
@@ -83,111 +92,36 @@ const Home = ({
 
   const enabledFeaturesSet = new Set(enabledFeatures);
   const { t } = useTranslation('chat');
-  const { getModels, getAddons } = useApiService();
-  const { getModelsError } = useErrorService();
   const [selectedConversationNames, setSelectedConversationNames] = useState<
     string[]
   >([]);
+
+  const dispatch = useAppDispatch();
+  const clientDefaultModelId = useAppSelector(selectDefaultModelId);
+  const models = useAppSelector(selectModels);
+  const modelsMap = useAppSelector(selectModelsMap);
 
   const contextValue = useCreateReducer<HomeInitialState>({
     initialState,
   });
 
   const {
-    state: {
-      lightMode,
-      folders,
-      conversations,
-      selectedConversationIds,
-      prompts,
-      defaultModelId: clientDefaultModelId,
-      models,
-      modelsMap,
-      recentModelsIds,
-      recentAddonsIds,
-      isProfileOpen,
-    },
-    dispatch,
+    state: { folders, conversations, selectedConversationIds, prompts },
+    dispatch: oldDispatch,
   } = contextValue;
 
-  const { data: modelsData, error: modelsError } = useQuery(
-    ['GetModels'],
-    ({ signal }) => {
-      return getModels(signal);
-    },
-    { enabled: true, refetchOnMount: false, staleTime: 60000 },
-  );
-
-  useEffect(() => {
-    if (modelsData) {
-      dispatch({ field: 'models', value: modelsData });
-      dispatch({
-        field: 'modelsMap',
-        value: (modelsData as any as OpenAIEntityModel[]).reduce(
-          (acc, model) => {
-            acc[model.id] = model;
-
-            return acc;
-          },
-          {} as Record<string, OpenAIEntityModel>,
-        ),
-      });
-
-      const defaultModelId = (modelsData as any as OpenAIEntityModel[]).find(
-        (model) => model.isDefault,
-      )?.id;
-
-      dispatch({ field: 'defaultModelId', value: defaultModelId });
-    }
-  }, [modelsData, dispatch]);
-
-  useEffect(() => {
-    dispatch({ field: 'modelError', value: getModelsError(modelsError) });
-  }, [dispatch, modelsError, getModelsError]);
-
-  const { data: addonsData, error: addonsError } = useQuery(
-    ['GetAddons'],
-    ({ signal }) => {
-      return getAddons(signal);
-    },
-    { enabled: true, refetchOnMount: false, staleTime: 60000 },
-  );
-
-  useEffect(() => {
-    if (addonsData) {
-      dispatch({ field: 'addons', value: addonsData });
-
-      dispatch({
-        field: 'addonsMap',
-        value: (addonsData as any as OpenAIEntityAddon[]).reduce(
-          (acc, addon) => {
-            acc[addon.id] = addon;
-
-            return acc;
-          },
-          {} as Record<string, OpenAIEntityAddon>,
-        ),
-      });
-    }
-  }, [addonsData, dispatch]);
-
-  useEffect(() => {
-    dispatch({ field: 'addonError', value: getModelsError(addonsError) });
-  }, [dispatch, addonsError, getModelsError]);
-
+  const theme = useAppSelector(UISelectors.selectThemeState);
+  const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
   // FETCH MODELS ----------------------------------------------
 
   const handleSelectConversation = (conversation: Conversation) => {
     const newSelectedIds = [conversation.id];
-    dispatch({
+    oldDispatch({
       field: 'selectedConversationIds',
       value: newSelectedIds,
     });
 
-    dispatch({
-      field: 'isCompareMode',
-      value: false,
-    });
+    dispatch(UIActions.setIsCompareMode(false));
 
     saveSelectedConversationIds(newSelectedIds);
   };
@@ -196,7 +130,7 @@ const Home = ({
     const newSelectedIds = Array.from(
       new Set(conversations.map(({ id }) => id)),
     );
-    dispatch({
+    oldDispatch({
       field: 'selectedConversationIds',
       value: newSelectedIds,
     });
@@ -218,14 +152,14 @@ const Home = ({
 
     const updatedFolders = [...folders, newFolder];
 
-    dispatch({ field: 'folders', value: updatedFolders });
+    oldDispatch({ field: 'folders', value: updatedFolders });
     saveFolders(updatedFolders);
     return newFolder;
   };
 
   const handleDeleteFolder = (folderId: string) => {
     const updatedFolders = folders.filter((f) => f.id !== folderId);
-    dispatch({ field: 'folders', value: updatedFolders });
+    oldDispatch({ field: 'folders', value: updatedFolders });
     saveFolders(updatedFolders);
 
     const updatedConversations: Conversation[] = conversations.map((c) => {
@@ -239,7 +173,7 @@ const Home = ({
       return c;
     });
 
-    dispatch({ field: 'conversations', value: updatedConversations });
+    oldDispatch({ field: 'conversations', value: updatedConversations });
     saveConversations(updatedConversations);
 
     const updatedPrompts: Prompt[] = prompts.map((p) => {
@@ -253,7 +187,7 @@ const Home = ({
       return p;
     });
 
-    dispatch({ field: 'prompts', value: updatedPrompts });
+    oldDispatch({ field: 'prompts', value: updatedPrompts });
     savePrompts(updatedPrompts);
   };
 
@@ -269,7 +203,7 @@ const Home = ({
       return f;
     });
 
-    dispatch({ field: 'folders', value: updatedFolders });
+    oldDispatch({ field: 'folders', value: updatedFolders });
 
     saveFolders(updatedFolders);
   };
@@ -279,7 +213,7 @@ const Home = ({
   const updateAllConversationsStore = (
     updatedConversations: Conversation[],
   ) => {
-    dispatch({ field: 'conversations', value: updatedConversations });
+    oldDispatch({ field: 'conversations', value: updatedConversations });
 
     saveConversations(updatedConversations);
   };
@@ -289,14 +223,11 @@ const Home = ({
     const ids = newConversations.map(({ id }) => id);
     updateAllConversationsStore(updatedConversations);
 
-    dispatch({
+    oldDispatch({
       field: 'selectedConversationIds',
       value: ids,
     });
-    dispatch({
-      field: 'isCompareMode',
-      value: false,
-    });
+    dispatch(UIActions.setIsCompareMode(false));
 
     saveSelectedConversationIds(ids);
   };
@@ -309,6 +240,9 @@ const Home = ({
   const handleNewConversation = (
     name = DEFAULT_CONVERSATION_NAME,
   ): Conversation | undefined => {
+    dispatch(getModels());
+    dispatch(getAddons());
+
     if (!clientDefaultModelId) {
       return;
     }
@@ -340,8 +274,9 @@ const Home = ({
     };
 
     addNewConversationToStore([newConversation]);
-    dispatch({ field: 'loading', value: false });
-    handleUpdateRecentModels(newConversation.model.id);
+    oldDispatch({ field: 'loading', value: false });
+
+    dispatch(updateRecentModels({ modelId: newConversation.model.id }));
 
     return newConversation;
   };
@@ -350,6 +285,8 @@ const Home = ({
     name = DEFAULT_CONVERSATION_NAME,
     count = 2,
   ): Conversation[] | undefined => {
+    dispatch(getModels());
+    dispatch(getAddons());
     if (!clientDefaultModelId) {
       return;
     }
@@ -383,7 +320,7 @@ const Home = ({
     }
 
     addNewConversationToStore(newConversations);
-    dispatch({ field: 'loading', value: false });
+    oldDispatch({ field: 'loading', value: false });
 
     return newConversations;
   };
@@ -403,34 +340,9 @@ const Home = ({
       localConversations || conversations,
     );
 
-    dispatch({ field: 'conversations', value: allConversation });
+    oldDispatch({ field: 'conversations', value: allConversation });
 
     return allConversation;
-  };
-
-  const handleUpdateRecentModels = (modelId: string): void => {
-    const recentFilteredModels = recentModelsIds.filter(
-      (recentModelId) => recentModelId !== modelId,
-    );
-
-    recentFilteredModels.unshift(modelId);
-    dispatch({ field: 'recentModelsIds', value: recentFilteredModels });
-    localStorage.setItem(
-      'recentModelsIds',
-      JSON.stringify(recentFilteredModels),
-    );
-  };
-  const handleUpdateRecentAddons = (addonIds: string[]): void => {
-    const recentFilteredAddons = recentAddonsIds.filter(
-      (id) => !addonIds.includes(id),
-    );
-    const updatedAddonsIds = [...addonIds, ...recentFilteredAddons];
-
-    dispatch({
-      field: 'recentAddonsIds',
-      value: updatedAddonsIds,
-    });
-    localStorage.setItem('recentAddonsIds', JSON.stringify(updatedAddonsIds));
   };
 
   const handleNewReplayConversation = (conversation: Conversation) => {
@@ -459,35 +371,44 @@ const Home = ({
 
   useEffect(() => {
     if (window.innerWidth < 640) {
-      dispatch({ field: 'showChatbar', value: false });
+      dispatch(UIActions.setShowChatbar(false));
     }
   }, [selectedConversationIds]);
 
-  useEffect(() => {
-    defaultModelId &&
-      dispatch({
-        field: 'defaultModelId',
-        value: defaultModelId,
-      });
-
-    footerHtmlMessage &&
-      dispatch({
-        field: 'footerHtmlMessage',
-        value: footerHtmlMessage,
-      });
-    enabledFeaturesSet &&
-      dispatch({
-        field: 'enabledFeatures',
-        value: enabledFeaturesSet,
-      });
-    isIframe &&
-      dispatch({
-        field: 'isIframe',
-        value: isIframe,
-      });
-  }, [defaultModelId, footerHtmlMessage, enabledFeatures]);
-
   // ON LOAD --------------------------------------------
+
+  useEffect(() => {
+    defaultModelId && dispatch(setDefaultModelId({ defaultModelId }));
+    footerHtmlMessage &&
+      dispatch(SettingsActions.setFooterHtmlMessage(footerHtmlMessage));
+
+    enabledFeaturesSet &&
+      dispatch(SettingsActions.setEnabledFeatures(enabledFeaturesSet));
+
+    isIframe && dispatch(SettingsActions.setIsIframe(isIframe));
+
+    defaultRecentModelsIds &&
+      dispatch(
+        initRecentModels({
+          defaultRecentModelsIds,
+          localStorageRecentModelsIds: JSON.parse(
+            localStorage.getItem('recentModelsIds') || '[]',
+          ),
+        }),
+      );
+    defaultRecentAddonsIds &&
+      dispatch(
+        initRecentAddons({
+          defaultRecentAddonsIds,
+          localStorageRecentAddonsIds: JSON.parse(
+            localStorage.getItem('recentAddonsIds') || '[]',
+          ),
+        }),
+      );
+
+    dispatch(getModels());
+    dispatch(getAddons());
+  }, []);
 
   const handleIframeAuth = async () => {
     const timeout = 30 * 1000;
@@ -534,35 +455,32 @@ const Home = ({
 
     const settings = getSettings();
     if (settings.theme) {
-      dispatch({
-        field: 'lightMode',
-        value: settings.theme,
-      });
+      dispatch(UIActions.setTheme(settings.theme));
     }
 
     if (window.innerWidth < 640) {
-      dispatch({ field: 'showChatbar', value: false });
-      dispatch({ field: 'showPromptbar', value: false });
+      dispatch(UIActions.setShowChatbar(false));
+      dispatch(UIActions.setShowPromptbar(false));
     }
 
     const showChatbar = localStorage.getItem('showChatbar');
     if (showChatbar) {
-      dispatch({ field: 'showChatbar', value: showChatbar === 'true' });
+      dispatch(UIActions.setShowChatbar(showChatbar === 'true'));
     }
 
     const showPromptbar = localStorage.getItem('showPromptbar');
     if (showPromptbar) {
-      dispatch({ field: 'showPromptbar', value: showPromptbar === 'true' });
+      dispatch(UIActions.setShowPromptbar(showPromptbar === 'true'));
     }
 
     const folders = localStorage.getItem('folders');
     if (folders) {
-      dispatch({ field: 'folders', value: JSON.parse(folders) });
+      oldDispatch({ field: 'folders', value: JSON.parse(folders) });
     }
 
     const prompts = localStorage.getItem('prompts');
     if (prompts) {
-      dispatch({ field: 'prompts', value: JSON.parse(prompts) });
+      oldDispatch({ field: 'prompts', value: JSON.parse(prompts) });
     }
 
     const conversationHistory = localStorage.getItem('conversationHistory');
@@ -574,7 +492,10 @@ const Home = ({
         parsedConversationHistory,
       );
 
-      dispatch({ field: 'conversations', value: cleanedConversationHistory });
+      oldDispatch({
+        field: 'conversations',
+        value: cleanedConversationHistory,
+      });
     }
 
     const selectedConversationIds = localStorage.getItem(
@@ -591,16 +512,13 @@ const Home = ({
       filteredSelectedConversationIds?.length > 0 &&
       cleanedConversationHistory.length > 0
     ) {
-      dispatch({
+      oldDispatch({
         field: 'selectedConversationIds',
         value: filteredSelectedConversationIds,
       });
 
       if (filteredSelectedConversationIds.length > 1) {
-        dispatch({
-          field: 'isCompareMode',
-          value: true,
-        });
+        dispatch(UIActions.setIsCompareMode(true));
       }
     } else {
       const lastConversation =
@@ -624,7 +542,7 @@ const Home = ({
       const updatedConversations: Conversation[] =
         cleanedConversationHistory.concat(newConversation);
 
-      dispatch({
+      oldDispatch({
         field: 'selectedConversationIds',
         value: [newConversation.id],
       });
@@ -633,48 +551,10 @@ const Home = ({
       saveSelectedConversationIds([newConversation.id]);
     }
 
-    const recentAddonsIds = localStorage.getItem('recentAddonsIds');
-    if (recentAddonsIds) {
-      dispatch({
-        field: 'recentAddonsIds',
-        value: JSON.parse(recentAddonsIds),
-      });
-    } else {
-      if (defaultRecentAddonsIds) {
-        dispatch({
-          field: 'recentAddonsIds',
-          value: defaultRecentAddonsIds,
-        });
-        localStorage.setItem(
-          'recentAddonsIds',
-          JSON.stringify(defaultRecentAddonsIds),
-        );
-      }
-    }
-
-    const recentModelsIds = localStorage.getItem('recentModelsIds');
-    if (recentModelsIds) {
-      dispatch({
-        field: 'recentModelsIds',
-        value: JSON.parse(recentModelsIds),
-      });
-    } else {
-      if (defaultRecentModelsIds) {
-        dispatch({
-          field: 'recentModelsIds',
-          value: defaultRecentModelsIds,
-        });
-        localStorage.setItem(
-          'recentModelsIds',
-          JSON.stringify(defaultRecentModelsIds),
-        );
-      }
-    }
-
     if ((session as any)?.error === 'RefreshAccessTokenError') {
       signIn('azure-ad', { redirect: true }); // Force sign in to hopefully resolve error
     }
-  }, [defaultModelId, dispatch]);
+  }, []);
 
   useEffect(() => {
     if (selectedConversationIds.length > 0) {
@@ -699,8 +579,6 @@ const Home = ({
         handleSelectConversations,
         handleUpdateConversation,
         handleNewReplayConversation,
-        handleUpdateRecentModels,
-        handleUpdateRecentAddons,
       }}
     >
       <Head>
@@ -724,7 +602,7 @@ const Home = ({
         </div>
       ) : (
         selectedConversationNames.length > 0 && (
-          <main className={`${lightMode} `}>
+          <main className={`${theme} `}>
             <div
               className={`theme-main flex h-screen w-screen flex-col bg-gray-300 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-200`}
               id="theme-main"

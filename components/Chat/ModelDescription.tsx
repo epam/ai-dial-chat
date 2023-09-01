@@ -1,9 +1,9 @@
-import { useContext } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'next-i18next';
 
 import { OpenAIEntityModel } from '@/types/openai';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { useAppSelector } from '@/store/hooks';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -14,10 +14,10 @@ interface Props {
 }
 
 export const ModelDescription = ({ model }: Props) => {
+  const theme = useAppSelector(UISelectors.selectThemeState);
+
   const { t } = useTranslation('chat');
-  const {
-    state: { lightMode },
-  } = useContext(HomeContext);
+
   return (
     <div className="flex flex-col gap-3">
       <span>{t('More info')}</span>
@@ -26,7 +26,7 @@ export const ModelDescription = ({ model }: Props) => {
           entity={model}
           entityId={model.id}
           size={24}
-          inverted={lightMode === 'dark'}
+          inverted={theme === 'dark'}
         />
         <span>{model.name}</span>
       </div>

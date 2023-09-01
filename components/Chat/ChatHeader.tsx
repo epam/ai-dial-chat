@@ -1,12 +1,15 @@
 import { IconEraser, IconSettings, IconX } from '@tabler/icons-react';
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/types/chat';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { selectAddonsMap } from '@/store/addons/addons.reducers';
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -42,12 +45,26 @@ export const ChatHeader = ({
 }: Props) => {
   const { t } = useTranslation('chat');
 
-  const {
-    state: { modelsMap, addonsMap, lightMode },
-  } = useContext(HomeContext);
+  const modelsMap = useAppSelector(selectModelsMap);
+  const addonsMap = useAppSelector(selectAddonsMap);
+  const theme = useAppSelector(UISelectors.selectThemeState);
   const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });
+  const selectedAddons = useMemo(() => {
+    if (model && model.type !== 'application') {
+      const preselectedAddons = model.selectedAddons ?? [];
+      const addonsSet = new Set([
+        ...preselectedAddons,
+        ...conversation.selectedAddons,
+      ]);
+      const selectedAddons = Array.from(addonsSet)
+        .map((addon) => addonsMap[addon])
+        .filter(Boolean) as OpenAIEntityAddon[];
+      return selectedAddons;
+    }
+    return null;
+  }, [conversation, model, addonsMap]);
 
   useEffect(() => {
     setModel(modelsMap[conversation.model.id]);
@@ -77,20 +94,14 @@ export const ChatHeader = ({
                         entityId={conversation.model.id}
                         entity={model}
                         size={18}
-                        inverted={lightMode === 'dark'}
+                        inverted={theme === 'dark'}
                         isCustomTooltip={true}
                       />
                     </TooltipTrigger>
                     <TooltipContent>
                       <ChatInfoTooltip
                         model={model}
-                        selectedAddons={
-                          model.type !== 'application'
-                            ? (conversation.selectedAddons
-                                .map((addon) => addonsMap[addon])
-                                .filter(Boolean) as OpenAIEntityAddon[])
-                            : null
-                        }
+                        selectedAddons={selectedAddons}
                         subModel={
                           conversation.assistantModelId &&
                           model.type === 'assistant'
@@ -120,7 +131,7 @@ export const ChatHeader = ({
                           entityId={addon}
                           size={18}
                           entity={addonsMap[addon]}
-                          inverted={lightMode === 'dark'}
+                          inverted={theme === 'dark'}
                         />
                       ))}
                       {conversation.selectedAddons
@@ -131,7 +142,7 @@ export const ChatHeader = ({
                             entityId={addon}
                             size={18}
                             entity={addonsMap[addon]}
-                            inverted={lightMode === 'dark'}
+                            inverted={theme === 'dark'}
                           />
                         ))}
                     </span>

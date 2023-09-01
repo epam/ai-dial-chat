@@ -1,7 +1,13 @@
-import { Fragment, useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Fragment, useEffect, useState } from 'react';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { useTranslation } from 'next-i18next';
+
+import {
+  selectAddonsMap,
+  selectRecentAddonsIds,
+} from '@/store/addons/addons.reducers';
+import { useAppSelector } from '@/store/hooks';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -23,10 +29,11 @@ export const Addons = ({
   onChangeAddon,
   onApplyAddons,
 }: AddonsProps) => {
-  const {
-    state: { addonsMap, lightMode, recentAddonsIds },
-  } = useContext(HomeContext);
+  const theme = useAppSelector(UISelectors.selectThemeState);
+
   const { t } = useTranslation('chat');
+  const recentAddonsIds = useAppSelector(selectRecentAddonsIds);
+  const addonsMap = useAppSelector(selectAddonsMap);
   const [filteredRecentAddons, setFilteredRecentAddons] = useState<string[]>(
     () => {
       return recentAddonsIds.filter(
@@ -64,7 +71,7 @@ export const Addons = ({
           entity={addonsMap[addonId]}
           entityId={addonId}
           size={15}
-          inverted={!addonsMap[addonId]?.iconUrl && lightMode === 'dark'}
+          inverted={!addonsMap[addonId]?.iconUrl && theme === 'dark'}
         />
         <span>{addonsMap[addonId]?.name || addonId}</span>
         {isSelected && !preselectedAddonsIds.includes(addonId) && (

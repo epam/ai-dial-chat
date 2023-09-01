@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'next-i18next';
 
 import Magnifier from '../../public/images/icons/search-alt.svg';
 

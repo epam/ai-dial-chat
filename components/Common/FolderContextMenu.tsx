@@ -1,6 +1,7 @@
 import { IconPencilMinus, IconTrashX } from '@tabler/icons-react';
 import { MouseEventHandler } from 'react';
-import { useTranslation } from 'react-i18next';
+
+import { useTranslation } from 'next-i18next';
 
 import { HighlightColor } from '@/types/components';
 

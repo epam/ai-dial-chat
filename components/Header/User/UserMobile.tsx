@@ -1,13 +1,17 @@
-import { IconFileArrowRight, IconSettings } from '@tabler/icons-react';
+import { IconSettings } from '@tabler/icons-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
-import { useCallback, useContext, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useCallback, useState } from 'react';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { useTranslation } from 'next-i18next';
+
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { SettingsSelectors } from '@/store/settings/settings.reducers';
+import { UIActions } from '@/store/ui-store/ui.reducers';
 
 import { FooterMessage } from '@/components/Chat/FooterMessage';
 import { ConfirmDialog } from '@/components/Common/ConfirmDialog';
 
+import LogOutIcon from '../../../public/images/icons/log-out.svg';
 import UserIcon from '../../../public/images/icons/user.svg';
 
 const UserInfo = () => {
@@ -24,11 +28,11 @@ const UserInfo = () => {
 };
 
 const UserSettings = () => {
-  const { dispatch: homeDispatch } = useContext(HomeContext);
+  const dispatch = useAppDispatch();
   const { t } = useTranslation('sidebar');
 
   const onClick = () => {
-    homeDispatch({ field: 'isUserSettingsOpen', value: true });
+    dispatch(UIActions.setIsUserSettingsOpen(true));
   };
 
   return (
@@ -62,7 +66,7 @@ const Logout = () => {
           setIsLogoutConfirmationOpened(true);
         }}
       >
-        <IconFileArrowRight className="text-gray-500" size={18} />
+        <LogOutIcon className="text-gray-500" width={18} height={18} />
         <span>{session ? t('Log out') : t('Login')}</span>
       </div>
       <ConfirmDialog
@@ -91,9 +95,14 @@ const UserMenu = () => {
 };
 
 export const UserMobile = () => {
-  const {
-    state: { footerHtmlMessage, enabledFeatures },
-  } = useContext(HomeContext);
+  const footerHtmlMessage = useAppSelector(
+    SettingsSelectors.selectFooterHtmlMessage,
+  );
+
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+
   return (
     <div
       className="fixed right-0 top-12 z-40 flex w-[260px] flex-col border-gray-300 bg-gray-100 dark:border-gray-900 dark:bg-gray-700"

@@ -1,17 +1,18 @@
 import { IconSettings } from '@tabler/icons-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
-import { useCallback, useContext, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useCallback, useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
 import Image from 'next/image';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { useAppDispatch } from '@/store/hooks';
+import { UIActions } from '@/store/ui-store/ui.reducers';
 
 import { ConfirmDialog } from '@/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/components/Common/DropdownMenu';
 
 import ChevronDownIcon from '../../../public/images/icons/chevron-down.svg';
-import FileArrowRightIcon from '../../../public/images/icons/file-arrow-right.svg';
+import LogOutIcon from '../../../public/images/icons/log-out.svg';
 import UserIcon from '../../../public/images/icons/user.svg';
 
 export const UserDesktop = () => {
@@ -20,7 +21,7 @@ export const UserDesktop = () => {
   const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
     useState(false);
   const { data: session } = useSession();
-  const { dispatch: homeDispatch } = useContext(HomeContext);
+  const dispatch = useAppDispatch();
   const handleLogout = useCallback(() => {
     session
       ? signOut({ redirect: true })
@@ -68,18 +69,14 @@ export const UserDesktop = () => {
             </div>
           }
           onClick={() => {
-            homeDispatch({ field: 'isUserSettingsOpen', value: true });
+            dispatch(UIActions.setIsUserSettingsOpen(true));
           }}
         />
         <MenuItem
           className={`hover:bg-blue-500/20`}
           item={
             <div className="flex gap-3">
-              <FileArrowRightIcon
-                width={18}
-                height={18}
-                className="text-gray-500"
-              />
+              <LogOutIcon width={18} height={18} className="text-gray-500" />
               <span>{session ? t('Log out') : t('Login')}</span>
             </div>
           }

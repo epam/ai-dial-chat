@@ -1,6 +1,8 @@
-import { ReactNode, useContext } from 'react';
+import { ReactNode } from 'react';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { useAppSelector } from '@/store/hooks';
+import { selectModelsMap } from '@/store/models/models.reducers';
+import { UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -9,9 +11,9 @@ export interface SelectIconProps {
   children: ReactNode;
 }
 export const SelectIcon = ({ modelId, children }: SelectIconProps) => {
-  const {
-    state: { modelsMap, lightMode },
-  } = useContext(HomeContext);
+  const modelsMap = useAppSelector(selectModelsMap);
+
+  const theme = useAppSelector(UISelectors.selectThemeState);
 
   return (
     <span className="flex max-w-full !shrink-0 flex-row items-center gap-2">
@@ -19,7 +21,7 @@ export const SelectIcon = ({ modelId, children }: SelectIconProps) => {
         size={18}
         entityId={modelId}
         entity={modelsMap[modelId]}
-        inverted={lightMode === 'dark'}
+        inverted={theme === 'dark'}
       />
       <span className="truncate break-all">{children}</span>
     </span>
