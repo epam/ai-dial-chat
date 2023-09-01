@@ -14,7 +14,7 @@ import { ChatBar } from '../ui/webElements';
 import { PromptBar } from '../ui/webElements';
 
 import { ConversationData } from '@/e2e/src/testData';
-import { PromptData } from '@/e2e/src/testData/conversationHistory/promptData';
+import { PromptData } from '@/e2e/src/testData/prompts/promptData';
 import { Addons } from '@/e2e/src/ui/webElements/addons';
 import { AddonsDialog } from '@/e2e/src/ui/webElements/addonsDialog';
 import { ConfirmationDialog } from '@/e2e/src/ui/webElements/confirmationDialog';

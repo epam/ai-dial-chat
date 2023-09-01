@@ -1,7 +1,7 @@
 import { GeneratorUtil } from '@/e2e/src/utils/generatorUtil';
 
 import { FolderBuilder } from '@/e2e/src/testData/conversationHistory/folderBuilder';
-import { PromptBuilder } from '@/e2e/src/testData/conversationHistory/promptBuilder';
+import { PromptBuilder } from '@/e2e/src/testData/prompts/promptBuilder';
 
 export class PromptData {
   private promptBuilder: PromptBuilder;
