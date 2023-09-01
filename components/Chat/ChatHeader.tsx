@@ -1,5 +1,5 @@
 import { IconEraser, IconSettings, IconX } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -49,6 +49,20 @@ export const ChatHeader = ({
   const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });
+  const selectedAddons = useMemo(() => {
+    if (model && model.type !== 'application') {
+      const preselectedAddons = model.selectedAddons ?? [];
+      const addonsSet = new Set([
+        ...preselectedAddons,
+        ...conversation.selectedAddons,
+      ]);
+      const selectedAddons = Array.from(addonsSet)
+        .map((addon) => addonsMap[addon])
+        .filter(Boolean) as OpenAIEntityAddon[];
+      return selectedAddons;
+    }
+    return null;
+  }, [conversation, model, addonsMap]);
 
   useEffect(() => {
     setModel(modelsMap[conversation.model.id]);
@@ -85,13 +99,7 @@ export const ChatHeader = ({
                     <TooltipContent>
                       <ChatInfoTooltip
                         model={model}
-                        selectedAddons={
-                          model.type !== 'application'
-                            ? (conversation.selectedAddons
-                                .map((addon) => addonsMap[addon])
-                                .filter(Boolean) as OpenAIEntityAddon[])
-                            : null
-                        }
+                        selectedAddons={selectedAddons}
                         subModel={
                           conversation.assistantModelId &&
                           model.type === 'assistant'

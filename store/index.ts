@@ -6,6 +6,7 @@ import { ModelsEpics } from './models/models.epics';
 import { modelsSlice } from './models/models.reducers';
 import { PromptsEpics } from './prompts/prompts.epics';
 import { promptsSlice } from './prompts/prompts.reducers';
+import { settingsSlice } from './settings/settings.reducers';
 import UIEpics from './ui-store/ui.epics';
 import { uiSlice } from './ui-store/ui.reducers';
 
@@ -28,6 +29,7 @@ export const store = configureStore({
     ui: uiSlice.reducer,
     conversations: conversationsSlice.reducer,
     prompts: promptsSlice.reducer,
+    settings: settingsSlice.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(epicMiddleware),

@@ -5,7 +5,6 @@ import {
   MutableRefObject,
   forwardRef,
   useCallback,
-  useContext,
   useEffect,
   useRef,
   useState,
@@ -22,8 +21,7 @@ import { ConversationsSelectors } from '@/store/conversations/conversations.redu
 import { useAppSelector } from '@/store/hooks';
 import { ModelsSelectors } from '@/store/models/models.reducers';
 import { PromptsSelectors } from '@/store/prompts/prompts.reducers';
-
-import HomeContext from '@/pages/api/home/home.context';
+import { SettingsSelectors } from '@/store/settings/settings.reducers';
 
 import ArrowNarrowDown from '../../public/images/icons/arrow-narrow-down.svg';
 import RefreshCWAlt from '../../public/images/icons/refresh-cw-alt.svg';
@@ -58,10 +56,6 @@ export const ChatInput = forwardRef(
   ) => {
     const { t } = useTranslation('chat');
 
-    const {
-      state: { footerHtmlMessage, enabledFeatures, isIframe },
-    } = useContext(HomeContext);
-
     const [content, setContent] = useState<string>();
     const [isTyping, setIsTyping] = useState<boolean>(false);
     const [showPromptList, setShowPromptList] = useState(false);
@@ -76,6 +70,13 @@ export const ChatInput = forwardRef(
     const prompts = useAppSelector(PromptsSelectors.selectPrompts);
     const messageIsStreaming = useAppSelector(
       ConversationsSelectors.selectIsConversationsStreaming,
+    );
+    const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
+    const footerHtmlMessage = useAppSelector(
+      SettingsSelectors.selectFooterHtmlMessage,
+    );
+    const enabledFeatures = useAppSelector(
+      SettingsSelectors.selectEnabledFeatures,
     );
 
     const promptListRef = useRef<HTMLUListElement | null>(null);

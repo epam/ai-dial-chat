@@ -7,8 +7,6 @@ import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import Head from 'next/head';
 
-import { useCreateReducer } from '@/hooks/useCreateReducer';
-
 import { AuthWindowLocationLike } from '@/utils/app/auth/authWindowLocationLike';
 import { delay } from '@/utils/app/auth/delay';
 import { timeoutAsync } from '@/utils/app/auth/timeoutAsync';
@@ -26,6 +24,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { ModelsActions } from '@/store/models/models.reducers';
 import { PromptsActions } from '@/store/prompts/prompts.reducers';
+import { SettingsActions } from '@/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
 
 import { Chat } from '@/components/Chat/Chat';
@@ -36,8 +35,6 @@ import Promptbar from '@/components/Promptbar';
 
 import packageJSON from '../../../package.json';
 import { authOptions } from '../auth/[...nextauth]';
-import HomeContext from './home.context';
-import { HomeInitialState, initialState } from './home.state';
 
 interface Props {
   appName: string;
@@ -67,12 +64,6 @@ const Home = ({
 
   const dispatch = useAppDispatch();
 
-  const contextValue = useCreateReducer<HomeInitialState>({
-    initialState,
-  });
-
-  const { dispatch: oldDispatch } = contextValue;
-
   const theme = useAppSelector(UISelectors.selectThemeState);
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
   const selectedConversationIds = useAppSelector(
@@ -93,20 +84,13 @@ const Home = ({
     defaultModelId &&
       dispatch(ModelsActions.setDefaultModelId({ defaultModelId }));
     footerHtmlMessage &&
-      oldDispatch({
-        field: 'footerHtmlMessage',
-        value: footerHtmlMessage,
-      });
+      dispatch(SettingsActions.setFooterHtmlMessage(footerHtmlMessage));
+
     enabledFeaturesSet &&
-      oldDispatch({
-        field: 'enabledFeatures',
-        value: enabledFeaturesSet,
-      });
-    isIframe &&
-      oldDispatch({
-        field: 'isIframe',
-        value: isIframe,
-      });
+      dispatch(SettingsActions.setEnabledFeatures(enabledFeaturesSet));
+
+    isIframe && dispatch(SettingsActions.setIsIframe(isIframe));
+
     defaultRecentModelsIds &&
       dispatch(
         ModelsActions.initRecentModels({
@@ -243,11 +227,7 @@ const Home = ({
   }, []);
 
   return (
-    <HomeContext.Provider
-      value={{
-        ...contextValue,
-      }}
-    >
+    <>
       <Head>
         <title>{appName}</title>
         <meta name="description" content="ChatGPT but better." />
@@ -289,7 +269,7 @@ const Home = ({
           </div>
         </main>
       )}
-    </HomeContext.Provider>
+    </>
   );
 };
 export default Home;

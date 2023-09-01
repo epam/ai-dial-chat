@@ -2,7 +2,6 @@ import {
   MouseEventHandler,
   memo,
   useCallback,
-  useContext,
   useEffect,
   useRef,
   useState,
@@ -29,9 +28,8 @@ import {
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { ModelsActions, ModelsSelectors } from '@/store/models/models.reducers';
 import { PromptsSelectors } from '@/store/prompts/prompts.reducers';
+import { SettingsSelectors } from '@/store/settings/settings.reducers';
 import { UISelectors } from '@/store/ui-store/ui.reducers';
-
-import HomeContext from '@/pages/api/home/home.context';
 
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
@@ -132,10 +130,6 @@ const clearStateForMessages = (messages: Message[]): Message[] => {
 export const Chat = memo(({ appName }: Props) => {
   const { t } = useTranslation('chat');
 
-  const {
-    state: { enabledFeatures },
-  } = useContext(HomeContext);
-
   const dispatch = useAppDispatch();
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -161,6 +155,9 @@ export const Chat = memo(({ appName }: Props) => {
     ConversationsSelectors.selectConversations,
   );
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =

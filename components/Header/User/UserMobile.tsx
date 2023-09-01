@@ -1,13 +1,12 @@
 import { IconSettings } from '@tabler/icons-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
-import { useCallback, useContext, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { useAppDispatch } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { SettingsSelectors } from '@/store/settings/settings.reducers';
 import { UIActions } from '@/store/ui-store/ui.reducers';
-
-import HomeContext from '@/pages/api/home/home.context';
 
 import { FooterMessage } from '@/components/Chat/FooterMessage';
 import { ConfirmDialog } from '@/components/Common/ConfirmDialog';
@@ -96,9 +95,14 @@ const UserMenu = () => {
 };
 
 export const UserMobile = () => {
-  const {
-    state: { footerHtmlMessage, enabledFeatures },
-  } = useContext(HomeContext);
+  const footerHtmlMessage = useAppSelector(
+    SettingsSelectors.selectFooterHtmlMessage,
+  );
+
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+
   return (
     <div
       className="fixed right-0 top-12 z-40 flex w-[260px] flex-col border-gray-300 bg-gray-100 dark:border-gray-900 dark:bg-gray-700"
