@@ -29,7 +29,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { ModelsActions, ModelsSelectors } from '@/store/models/models.reducers';
 import { PromptsSelectors } from '@/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/store/settings/settings.reducers';
-import { UISelectors } from '@/store/ui-store/ui.reducers';
+import { UISelectors } from '@/store/ui/ui.reducers';
 
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';

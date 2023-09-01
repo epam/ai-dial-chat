@@ -19,7 +19,7 @@ import { AppEpic } from '@/types/store';
 
 import { AddonsActions } from '../addons/addons.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
-import { UIActions } from '../ui-store/ui.reducers';
+import { UIActions } from '../ui/ui.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,

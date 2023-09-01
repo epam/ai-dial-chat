@@ -17,7 +17,7 @@ import {
 } from '@/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { ModelsSelectors } from '@/store/models/models.reducers';
-import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
+import { UIActions, UISelectors } from '@/store/ui/ui.reducers';
 
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
 import { MoveToFolderMobileModal } from '@/components/Common/MoveToFolderMobileModal';

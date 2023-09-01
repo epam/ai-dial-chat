@@ -9,7 +9,7 @@ import {
   ConversationsSelectors,
 } from '@/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { UISelectors } from '@/store/ui-store/ui.reducers';
+import { UISelectors } from '@/store/ui/ui.reducers';
 
 import { ChatFolders } from './components/ChatFolders';
 import { ChatbarSettings } from './components/ChatbarSettings';

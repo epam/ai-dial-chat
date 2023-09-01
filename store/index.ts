@@ -7,8 +7,8 @@ import { modelsSlice } from './models/models.reducers';
 import { PromptsEpics } from './prompts/prompts.epics';
 import { promptsSlice } from './prompts/prompts.reducers';
 import { settingsSlice } from './settings/settings.reducers';
-import UIEpics from './ui-store/ui.epics';
-import { uiSlice } from './ui-store/ui.reducers';
+import UIEpics from './ui/ui.epics';
+import { uiSlice } from './ui/ui.reducers';
 
 import { configureStore } from '@reduxjs/toolkit';
 import { Epic, combineEpics, createEpicMiddleware } from 'redux-observable';

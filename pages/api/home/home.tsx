@@ -25,7 +25,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { ModelsActions } from '@/store/models/models.reducers';
 import { PromptsActions } from '@/store/prompts/prompts.reducers';
 import { SettingsActions } from '@/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
+import { UIActions, UISelectors } from '@/store/ui/ui.reducers';
 
 import { Chat } from '@/components/Chat/Chat';
 import { Chatbar } from '@/components/Chatbar/Chatbar';

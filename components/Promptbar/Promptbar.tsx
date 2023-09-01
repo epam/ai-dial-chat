@@ -7,7 +7,7 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/store/prompts/prompts.reducers';
-import { UISelectors } from '@/store/ui-store/ui.reducers';
+import { UISelectors } from '@/store/ui/ui.reducers';
 
 import { PromptFolders } from './components/PromptFolders';
 import { PromptbarSettings } from './components/PromptbarSettings';
