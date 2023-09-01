@@ -49,52 +49,53 @@ export const mergeMessages = (
   source: Message,
   newMessages: Partial<Message>[],
 ) => {
+  const newSource = structuredClone(source);
   newMessages.forEach((newData) => {
     if (newData.role) {
-      source.role = newData.role;
+      newSource.role = newData.role;
     }
 
     if (newData.responseId) {
-      source.responseId = newData.responseId;
+      newSource.responseId = newData.responseId;
     }
 
     if (newData.content) {
-      if (!source.content) {
-        source.content = '';
+      if (!newSource.content) {
+        newSource.content = '';
       }
-      source.content += newData.content;
+      newSource.content += newData.content;
     }
 
     if (newData.custom_content) {
-      if (!source.custom_content) {
-        source.custom_content = {};
+      if (!newSource.custom_content) {
+        newSource.custom_content = {};
       }
 
       if (newData.custom_content.attachments) {
-        if (!source.custom_content.attachments) {
-          source.custom_content.attachments = [];
+        if (!newSource.custom_content.attachments) {
+          newSource.custom_content.attachments = [];
         }
 
-        source.custom_content.attachments =
-          source.custom_content.attachments.concat(
+        newSource.custom_content.attachments =
+          newSource.custom_content.attachments.concat(
             newData.custom_content.attachments,
           );
       }
 
       if (newData.custom_content.stages) {
-        if (!source.custom_content.stages) {
-          source.custom_content.stages = [];
+        if (!newSource.custom_content.stages) {
+          newSource.custom_content.stages = [];
         }
-        source.custom_content.stages = mergeStages(
-          source.custom_content.stages,
+        newSource.custom_content.stages = mergeStages(
+          newSource.custom_content.stages,
           newData.custom_content.stages,
         );
       }
 
       if (newData.custom_content.state) {
-        source.custom_content.state = newData.custom_content.state;
+        newSource.custom_content.state = newData.custom_content.state;
       }
     }
   });
-  return source;
+  return newSource;
 };

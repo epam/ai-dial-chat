@@ -61,7 +61,7 @@ export const conversationsSlice = createSlice({
         model: OpenAIEntityModel;
       }>,
     ) => {
-      const newConversations = payload.names.map((name) => {
+      const newConversations: Conversation[] = payload.names.map((name) => {
         return {
           id: uuidv4(),
           name,
@@ -80,6 +80,8 @@ export const conversationsSlice = createSlice({
           replay: defaultReplay,
           selectedAddons: payload.model.selectedAddons ?? [],
           lastActivityDate: Date.now(),
+          isLoading: false,
+          isMessageStreaming: false,
         };
       });
       state.conversations = state.conversations.concat(newConversations);

@@ -80,9 +80,19 @@ export const ChatInput = forwardRef(
 
     const promptListRef = useRef<HTMLUListElement | null>(null);
 
-    const filteredPrompts = prompts.filter((prompt) =>
-      prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
+    const [filteredPrompts, setFilteredPrompts] = useState(() =>
+      prompts.filter((prompt) =>
+        prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
+      ),
     );
+
+    useEffect(() => {
+      setFilteredPrompts(
+        prompts.filter((prompt) =>
+          prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
+        ),
+      );
+    }, [prompts, promptInputValue]);
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const value = e.target.value;

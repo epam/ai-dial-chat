@@ -233,9 +233,9 @@ const Home = ({
     const prompts = localStorage.getItem('prompts');
     if (prompts) {
       dispatch(
-        PromptsActions.updatePrompts(
-          JSON.parse(localStorage.getItem('prompts') || '[]'),
-        ),
+        PromptsActions.updatePrompts({
+          prompts: JSON.parse(localStorage.getItem('prompts') || '[]'),
+        }),
       );
     }
 
