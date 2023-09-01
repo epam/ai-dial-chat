@@ -822,27 +822,18 @@ export const Chat = memo(({ appName }: Props) => {
       ({ id }) => id === modelId,
     ) as OpenAIEntityModel;
 
-    if (newAiEntity.type === 'assistant') {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: {
-            model: newAiEntity,
-            assistantModelId: DEFAULT_ASSISTANT_SUBMODEL.id,
-          },
-        }),
-      );
-    } else {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: {
-            model: newAiEntity,
-            assistantModelId: undefined,
-          },
-        }),
-      );
-    }
+    dispatch(
+      ConversationsActions.updateConversation({
+        id: conversation.id,
+        values: {
+          model: newAiEntity,
+          assistantModelId:
+            newAiEntity.type === 'assistant'
+              ? DEFAULT_ASSISTANT_SUBMODEL.id
+              : undefined,
+        },
+      }),
+    );
   };
 
   const handleSelectAssistantSubModel = (
