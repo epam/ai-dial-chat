@@ -30,6 +30,7 @@ import {
 } from '@/utils/app/importExport';
 
 import { Conversation } from '@/types/chat';
+import { OpenAIEntityModelID, OpenAIEntityModels } from '@/types/openai';
 import { AppEpic } from '@/types/store';
 
 import { AddonsActions } from '../addons/addons.reducers';
@@ -58,11 +59,9 @@ const createNewConversationEpic: AppEpic = (action$, state$) =>
     })),
     switchMap(
       ({ names, lastConversation, modelsMap, models, defaultModelId }) => {
-        const model =
-          (defaultModelId && modelsMap[defaultModelId]) || models[0];
-        if (!model) {
-          return EMPTY;
-        }
+        const model = defaultModelId
+          ? modelsMap[defaultModelId] || models[0]
+          : OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ];
 
         return of(
           ConversationsActions.createNewConversationsSuccess({
@@ -203,12 +202,22 @@ const clearConversationsEpic: AppEpic = (action$) =>
 const deleteConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.deleteConversation.match),
-    map(() => ConversationsSelectors.selectConversations(state$.value)),
-    switchMap((conversations) => {
+    map(() => ({
+      conversations: ConversationsSelectors.selectConversations(state$.value),
+      selectedConversationsIds:
+        ConversationsSelectors.selectSelectedConversationsIds(state$.value),
+    })),
+    switchMap(({ conversations, selectedConversationsIds }) => {
       if (conversations.length === 0) {
         return of(
           ConversationsActions.createNewConversations({
             names: [(i18n as any).t(DEFAULT_CONVERSATION_NAME)],
+          }),
+        );
+      } else if (selectedConversationsIds.length === 0) {
+        return of(
+          ConversationsActions.selectConversations({
+            conversationIds: [conversations[conversations.length - 1].id],
           }),
         );
       }

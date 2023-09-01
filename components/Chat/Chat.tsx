@@ -194,7 +194,7 @@ export const Chat = memo(({ appName }: Props) => {
     return () => {
       window.removeEventListener('resize', resizeHandler);
     };
-  }, [inputRef.current]);
+  }, [inputHeight]);
 
   const isSelectedConversations =
     !!selectedConversations && selectedConversations.length > 0;

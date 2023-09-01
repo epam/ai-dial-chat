@@ -112,41 +112,7 @@ const Home = ({
 
     dispatch(ModelsActions.getModels());
     dispatch(AddonsActions.getAddons());
-  }, []);
 
-  const handleIframeAuth = async () => {
-    const timeout = 30 * 1000;
-    let complete = false;
-    await Promise.race([
-      timeoutAsync(timeout),
-      (async () => {
-        const authWindowLocation = new AuthWindowLocationLike(
-          '/api/auth/signin',
-        );
-
-        await authWindowLocation.ready; // ready after redirects
-        const t = Math.max(100, timeout / 1000);
-        // wait for redirection to back
-        while (!complete) {
-          try {
-            if (authWindowLocation.href === window.location.href) {
-              complete = true;
-              authWindowLocation.destroy();
-              break;
-            }
-          } catch {
-            // Do nothing
-          }
-          await delay(t);
-        }
-        window.location.reload();
-
-        return;
-      })(),
-    ]);
-  };
-
-  useEffect(() => {
     // Hack for ios 100vh issue
     const handleSetProperVHPoints = () => {
       document.documentElement.style.setProperty(
@@ -203,6 +169,38 @@ const Home = ({
 
     dispatch(ConversationsActions.initConversations());
   }, []);
+
+  const handleIframeAuth = async () => {
+    const timeout = 30 * 1000;
+    let complete = false;
+    await Promise.race([
+      timeoutAsync(timeout),
+      (async () => {
+        const authWindowLocation = new AuthWindowLocationLike(
+          '/api/auth/signin',
+        );
+
+        await authWindowLocation.ready; // ready after redirects
+        const t = Math.max(100, timeout / 1000);
+        // wait for redirection to back
+        while (!complete) {
+          try {
+            if (authWindowLocation.href === window.location.href) {
+              complete = true;
+              authWindowLocation.destroy();
+              break;
+            }
+          } catch {
+            // Do nothing
+          }
+          await delay(t);
+        }
+        window.location.reload();
+
+        return;
+      })(),
+    ]);
+  };
 
   return (
     <>
