@@ -1,9 +1,3 @@
-import { OpenAIEntityAddon } from '@/types/openai';
-import { AppEpic } from '@/types/store';
-
-import { AddonsActions, AddonsSelectors } from './addons.reducers';
-
-import { combineEpics } from 'redux-observable';
 import {
   catchError,
   filter,
@@ -16,6 +10,13 @@ import {
   throwError,
   withLatestFrom,
 } from 'rxjs';
+
+import { OpenAIEntityAddon } from '@/types/openai';
+import { AppEpic } from '@/types/store';
+
+import { AddonsActions, AddonsSelectors } from './addons.reducers';
+
+import { combineEpics } from 'redux-observable';
 
 const getAddonsEpic: AppEpic = (action$, state$) =>
   action$.pipe(

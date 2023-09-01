@@ -1,5 +1,20 @@
 import toast from 'react-hot-toast';
 
+import { i18n } from 'next-i18next';
+
+import {
+  EMPTY,
+  concat,
+  filter,
+  ignoreElements,
+  iif,
+  map,
+  merge,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
+
 import { cleanConversationHistory } from '@/utils/app/clean';
 import { DEFAULT_CONVERSATION_NAME } from '@/utils/app/const';
 import {
@@ -28,18 +43,6 @@ import {
 
 import { errorsMessages } from '@/constants/errors';
 import { combineEpics } from 'redux-observable';
-import {
-  EMPTY,
-  concat,
-  filter,
-  ignoreElements,
-  iif,
-  map,
-  merge,
-  of,
-  switchMap,
-  tap,
-} from 'rxjs';
 
 const createNewConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -191,7 +194,7 @@ const clearConversationsEpic: AppEpic = (action$) =>
     switchMap(() => {
       return of(
         ConversationsActions.createNewConversations({
-          names: [DEFAULT_CONVERSATION_NAME],
+          names: [(i18n as any).t(DEFAULT_CONVERSATION_NAME)],
         }),
       );
     }),
@@ -205,7 +208,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
       if (conversations.length === 0) {
         return of(
           ConversationsActions.createNewConversations({
-            names: [DEFAULT_CONVERSATION_NAME],
+            names: [(i18n as any).t(DEFAULT_CONVERSATION_NAME)],
           }),
         );
       }
@@ -263,7 +266,7 @@ const initConversationsEpic: AppEpic = (action$) =>
         actions.push(
           of(
             ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
+              names: [(i18n as any).t(DEFAULT_CONVERSATION_NAME)],
             }),
           ),
         );

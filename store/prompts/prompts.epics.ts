@@ -1,5 +1,7 @@
 import { toast } from 'react-hot-toast';
 
+import { EMPTY, filter, ignoreElements, map, of, switchMap, tap } from 'rxjs';
+
 import { saveFolders } from '@/utils/app/folders';
 import { exportPrompts, importPrompts } from '@/utils/app/importExport';
 import { savePrompts } from '@/utils/app/prompts';
@@ -12,7 +14,6 @@ import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
 import { errorsMessages } from '@/constants/errors';
 import { combineEpics } from 'redux-observable';
-import { EMPTY, filter, ignoreElements, map, of, switchMap, tap } from 'rxjs';
 
 const createNewPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(

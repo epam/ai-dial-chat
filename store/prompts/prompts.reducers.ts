@@ -1,3 +1,5 @@
+import { i18n } from 'next-i18next';
+
 import { PromptsHistory } from '@/types/export';
 import { FolderInterface } from '@/types/folder';
 import { OpenAIEntityModel } from '@/types/openai';
@@ -31,7 +33,7 @@ export const promptsSlice = createSlice({
     ) => {
       const newPrompt: Prompt = {
         id: uuidv4(),
-        name: `Prompt ${state.prompts.length + 1}`,
+        name: (i18n as any).t(`Prompt ${state.prompts.length + 1}`),
         description: '',
         content: '',
         model: payload.model,

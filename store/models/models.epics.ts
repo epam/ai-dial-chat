@@ -1,9 +1,3 @@
-import { OpenAIEntityModel } from '@/types/openai';
-import { AppEpic } from '@/types/store';
-
-import { ModelsActions, ModelsSelectors } from './models.reducers';
-
-import { combineEpics } from 'redux-observable';
 import {
   catchError,
   filter,
@@ -16,6 +10,13 @@ import {
   throwError,
   withLatestFrom,
 } from 'rxjs';
+
+import { OpenAIEntityModel } from '@/types/openai';
+import { AppEpic } from '@/types/store';
+
+import { ModelsActions, ModelsSelectors } from './models.reducers';
+
+import { combineEpics } from 'redux-observable';
 
 const getModelsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
