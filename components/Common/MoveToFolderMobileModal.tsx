@@ -38,19 +38,17 @@ export const MoveToFolderMobileModal = ({
           <span>{t('New folder')}</span>
         </div>
         <div className="py-2">
-          {folders
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((folder) => (
-              <div
-                key={folder.id}
-                className="flex h-[42px] items-center rounded px-6 hover:bg-green/15"
-                onClick={() => {
-                  onMoveToFolder({ folderId: folder.id });
-                }}
-              >
-                <span>{folder.name}</span>
-              </div>
-            ))}
+          {folders.map((folder) => (
+            <div
+              key={folder.id}
+              className="flex h-[42px] items-center rounded px-6 hover:bg-green/15"
+              onClick={() => {
+                onMoveToFolder({ folderId: folder.id });
+              }}
+            >
+              <span>{folder.name}</span>
+            </div>
+          ))}
         </div>
       </div>
     </FloatingOverlay>
