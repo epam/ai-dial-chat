@@ -47,7 +47,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
     });
   };
   const downloadAsFile = () => {
-    const fileExtension = programmingLanguages[language] || '.file';
+    const fileExtension = programmingLanguages[language] || '.txt';
     const suggestedFileName = `ai-chat-code${fileExtension}`;
     const fileName = window.prompt(
       t('Enter file name') || '',
