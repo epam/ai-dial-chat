@@ -383,7 +383,7 @@ const Home = ({
       dispatch(SettingsActions.setFooterHtmlMessage(footerHtmlMessage));
 
     enabledFeaturesSet &&
-      dispatch(SettingsActions.setEnabledFeatures(enabledFeaturesSet));
+      dispatch(SettingsActions.setEnabledFeatures(enabledFeatures));
 
     isIframe && dispatch(SettingsActions.setIsIframe(isIframe));
 
