@@ -1,9 +1,10 @@
 import { IconAsterisk, IconX } from '@tabler/icons-react';
-import { FC, MutableRefObject, useEffect, useRef } from 'react';
+import { FC, MutableRefObject, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { useTranslation } from 'next-i18next';
 
+import { onChangeHandler } from '@/utils/app/componentsHelpers';
 import { showAPIToastError } from '@/utils/app/errors';
 
 import { ReportIssueBody } from '@/types/report-issue';
@@ -62,6 +63,9 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const inputs = [titleInputRef, descriptionInputRef];
 
+  const [title, setTitle] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
@@ -118,10 +122,14 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
               <input
                 ref={titleInputRef}
                 name="titleInput"
+                value={title}
                 required
                 type="text"
                 onBlur={(e) => {
                   e.target.classList.add('invalid:border-red-500');
+                }}
+                onChange={() => {
+                  onChangeHandler(titleInputRef, setTitle);
                 }}
                 className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
               ></input>
@@ -137,9 +145,13 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
               <textarea
                 ref={descriptionInputRef}
                 name="descriptionInput"
+                value={description}
                 required
                 onBlur={(e) => {
                   e.target.classList.add('invalid:border-red-500');
+                }}
+                onChange={() => {
+                  onChangeHandler(descriptionInputRef, setDescription);
                 }}
                 className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
               ></textarea>
@@ -162,14 +174,16 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
                   onClose();
 
                   const response = await reportIssue({
-                    title: titleInputRef.current?.value as string,
-                    description: descriptionInputRef.current?.value as string,
+                    title,
+                    description,
                   });
 
                   if (response.ok) {
                     toast.success(t('Issue reported successfully'), {
                       id: loadingToast,
                     });
+                    setTitle('');
+                    setDescription('');
                   } else {
                     showAPIToastError(
                       response,
