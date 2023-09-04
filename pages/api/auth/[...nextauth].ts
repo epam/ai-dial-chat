@@ -1,6 +1,6 @@
 import type { AuthOptions, CookiesOptions } from 'next-auth';
 import NextAuth from 'next-auth/next';
-import { Provider } from 'next-auth/providers';
+import { Provider, TokenEndpointHandler } from 'next-auth/providers';
 import Auth0Provider from 'next-auth/providers/auth0';
 import AzureProvider from 'next-auth/providers/azure-ad';
 import CredentialsProvider from 'next-auth/providers/credentials';
@@ -10,11 +10,36 @@ import KeycloakProvider from 'next-auth/providers/keycloak';
 import { GitLab } from '../../../utils/auth/customGitlab';
 import PingId from '../../../utils/auth/pingIdentity';
 
+import { Client } from 'openid-client';
 import { v5 as uuid } from 'uuid';
 
 const DEFAULT_NAME = 'SSO';
 
 const TEST_TOKENS = new Set((process.env.AUTH_TEST_TOKEN ?? '').split(','));
+
+// Need to be set for all providers
+const tokenConfig: TokenEndpointHandler = {
+  request: async (context) => {
+    (NextAuth as any).client = context.client;
+
+    let tokens;
+
+    if (context.provider.idToken) {
+      tokens = await context.client.callback(
+        context.provider.callbackUrl,
+        context.params,
+        context.checks,
+      );
+    } else {
+      tokens = await context.client.oauthCallback(
+        context.provider.callbackUrl,
+        context.params,
+        context.checks,
+      );
+    }
+    return { tokens };
+  },
+};
 
 const allProviders: (Provider | boolean)[] = [
   !!process.env.AUTH_AZURE_AD_CLIENT_ID &&
@@ -25,7 +50,10 @@ const allProviders: (Provider | boolean)[] = [
       clientSecret: process.env.AUTH_AZURE_AD_SECRET,
       tenantId: process.env.AUTH_AZURE_AD_TENANT_ID,
       name: process.env.AUTH_AZURE_AD_NAME ?? DEFAULT_NAME,
-      authorization: { params: { scope: 'openid profile user.Read email' } },
+      authorization: {
+        params: { scope: 'openid profile user.Read email offline_access' },
+      },
+      token: tokenConfig,
     }),
 
   !!process.env.AUTH_GITLAB_CLIENT_ID &&
@@ -35,6 +63,10 @@ const allProviders: (Provider | boolean)[] = [
       clientSecret: process.env.AUTH_GITLAB_SECRET,
       name: process.env.AUTH_GITLAB_NAME ?? DEFAULT_NAME,
       gitlabHost: process.env.AUTH_GITLAB_HOST,
+      authorization: {
+        params: { scope: 'read_user offline_access' },
+      },
+      token: tokenConfig,
     }),
 
   !!process.env.AUTH_GOOGLE_CLIENT_ID &&
@@ -43,6 +75,12 @@ const allProviders: (Provider | boolean)[] = [
       clientId: process.env.AUTH_GOOGLE_CLIENT_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
       name: process.env.AUTH_GOOGLE_NAME ?? DEFAULT_NAME,
+      authorization: {
+        params: {
+          scope: 'openid email profile offline_access',
+        },
+      },
+      token: tokenConfig,
     }),
 
   !!process.env.AUTH_AUTH0_CLIENT_ID &&
@@ -56,8 +94,10 @@ const allProviders: (Provider | boolean)[] = [
       authorization: {
         params: {
           audience: process.env.AUTH_AUTH0_AUDIENCE,
+          scope: 'openid email profile offline_access',
         },
       },
+      token: tokenConfig,
     }),
 
   !!process.env.AUTH_PING_ID_CLIENT_ID &&
@@ -68,6 +108,12 @@ const allProviders: (Provider | boolean)[] = [
       clientSecret: process.env.AUTH_PING_ID_SECRET,
       name: process.env.AUTH_PING_ID_NAME ?? DEFAULT_NAME,
       issuer: process.env.AUTH_PING_ID_HOST,
+      authorization: {
+        params: {
+          scope: 'offline_access',
+        },
+      },
+      token: tokenConfig,
     }),
 
   !!process.env.AUTH_KEYCLOAK_CLIENT_ID &&
@@ -86,6 +132,12 @@ const allProviders: (Provider | boolean)[] = [
           return userinfo;
         },
       },
+      authorization: {
+        params: {
+          scope: 'openid email profile offline_access',
+        },
+      },
+      token: tokenConfig,
     }),
 
   !!process.env.AUTH_TEST_TOKEN &&
@@ -190,89 +242,6 @@ function defaultCookies(
   };
 }
 
-const getProviderRefreshUrl = (providerName: string, token: any) => {
-  const providerUrls: Record<string, string | undefined> = {
-    ...(!!process.env.AUTH_AZURE_AD_CLIENT_ID &&
-      !!process.env.AUTH_AZURE_AD_SECRET &&
-      !!process.env.AUTH_AZURE_AD_TENANT_ID && {
-        ['azure']:
-          `https://login.microsoftonline.com/${process.env.AUTH_AZURE_AD_TENANT_ID}/oauth2/v2.0/token?` +
-          new URLSearchParams({
-            client_id: process.env.AUTH_AZURE_AD_CLIENT_ID,
-            client_secret: process.env.AUTH_AZURE_AD_SECRET,
-            grant_type: 'refresh_token',
-            scope: 'openid profile user.Read email',
-            refresh_token: token.refreshToken,
-          }),
-      }),
-    ...(!!process.env.AUTH_GITLAB_CLIENT_ID &&
-      !!process.env.AUTH_GITLAB_SECRET && {
-        ['gitlab']:
-          `${
-            process.env.AUTH_GITLAB_HOST ?? 'https://gitlab.com'
-          }/oauth/token?` +
-          new URLSearchParams({
-            client_id: process.env.AUTH_GITLAB_CLIENT_ID,
-            code_verifier: process.env.AUTH_GITLAB_SECRET,
-            grant_type: 'refresh_token',
-            scope: 'read_user',
-            refresh_token: token.refreshToken,
-          }),
-      }),
-    ...(!!process.env.AUTH_GOOGLE_CLIENT_ID &&
-      !!process.env.AUTH_GOOGLE_SECRET && {
-        ['google']:
-          'https://oauth2.googleapis.com/token?' +
-          new URLSearchParams({
-            client_id: process.env.AUTH_GOOGLE_CLIENT_ID,
-            client_secret: process.env.AUTH_GOOGLE_SECRET,
-            grant_type: 'refresh_token',
-            scope: 'openid email profile',
-            refresh_token: token.refreshToken,
-          }),
-      }),
-    ...(!!process.env.AUTH_AUTH0_CLIENT_ID &&
-      !!process.env.AUTH_AUTH0_SECRET &&
-      !!process.env.AUTH_AUTH0_HOST && {
-        ['auth0']:
-          `${process.env.AUTH_AUTH0_HOST}/oauth/token?` +
-          new URLSearchParams({
-            client_id: process.env.AUTH_AUTH0_CLIENT_ID,
-            client_secret: process.env.AUTH_AUTH0_SECRET,
-            grant_type: 'refresh_token',
-            scope: 'openid email profile',
-            refresh_token: token.refreshToken,
-          }),
-      }),
-    ...(!!process.env.AUTH_PING_ID_CLIENT_ID &&
-      !!process.env.AUTH_PING_ID_SECRET &&
-      !!process.env.AUTH_PING_ID_HOST && {
-        ['ping-id']:
-          `${process.env.AUTH_PING_ID_HOST}/as/token.oauth2?` +
-          new URLSearchParams({
-            client_id: process.env.AUTH_PING_ID_CLIENT_ID,
-            client_secret: process.env.AUTH_PING_ID_SECRET,
-            grant_type: 'refresh_token',
-            refresh_token: token.refreshToken,
-          }),
-      }),
-    ...(!!process.env.AUTH_KEYCLOAK_CLIENT_ID &&
-      !!process.env.AUTH_KEYCLOAK_SECRET &&
-      !!process.env.AUTH_KEYCLOAK_HOST && {
-        ['keycloak']:
-          `${process.env.AUTH_KEYCLOAK_HOST}/as/token.oauth2?` +
-          new URLSearchParams({
-            client_id: process.env.AUTH_KEYCLOAK_CLIENT_ID,
-            client_secret: process.env.AUTH_KEYCLOAK_SECRET,
-            grant_type: 'refresh_token',
-            refresh_token: token.refreshToken,
-          }),
-      }),
-  };
-
-  return providerUrls[providerName];
-};
-
 /**
  * Takes a token, and returns a new token with updated
  * `accessToken` and `accessTokenExpires`. If an error occurs,
@@ -280,33 +249,30 @@ const getProviderRefreshUrl = (providerName: string, token: any) => {
  */
 async function refreshAccessToken(token: any) {
   try {
-    const url = getProviderRefreshUrl(token.authProvider, token);
-    if (!url) {
-      throw new Error(
-        `Refresh tokens is not supported by ${token.authProvider} auth provider`,
-      );
+    const client: Client = (NextAuth as any).client;
+    if (!client) {
+      throw new Error('No openid client set');
     }
 
-    const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      method: 'POST',
-    });
+    const refreshedTokens = await client.refresh(token.refreshToken);
 
-    const refreshedTokens = await response.json();
-
-    if (!response.ok) {
-      throw refreshedTokens;
+    if (
+      !refreshedTokens ||
+      (!refreshedTokens.expires_in && !refreshedTokens.expires_at)
+    ) {
+      throw new Error('Error while refreshing token');
     }
 
     return {
       ...token,
       access_token: refreshedTokens.access_token,
-      accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
+      accessTokenExpires: refreshedTokens.expires_in
+        ? Date.now() + refreshedTokens.expires_in * 1000
+        : (refreshedTokens.expires_at as number) * 1000,
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
     };
-  } catch (error) {
+  } catch (error: any) {
+    console.error(error);
     return {
       ...token,
       error: 'RefreshAccessTokenError',
@@ -320,6 +286,7 @@ const isSecure =
 export const authOptions: AuthOptions = {
   providers,
   cookies: defaultCookies(isSecure, isSecure ? 'none' : 'lax'),
+
   callbacks: {
     jwt: async (options) => {
       if (options.account) {
@@ -327,9 +294,11 @@ export const authOptions: AuthOptions = {
           ...options.token,
           jobTitle: (options.profile as any).job_title,
           access_token: options.account.access_token,
-          accessTokenExpires: options.account.expires_in,
+          accessTokenExpires:
+            typeof options.account.expires_in === 'number'
+              ? Date.now() + options.account.expires_in * 1000
+              : (options.account.expires_at as number) * 1000,
           refreshToken: options.account.refresh_token,
-          authProvider: options.account.provider,
         };
       }
 
@@ -360,7 +329,7 @@ export const authOptions: AuthOptions = {
       return true;
     },
     session: async (options) => {
-      if (options.token) {
+      if (options.token?.error) {
         (options.session as any).error = options.token.error;
       }
       return options.session;

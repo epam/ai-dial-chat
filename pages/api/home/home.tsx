@@ -1,4 +1,4 @@
-import { signIn, useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 
 import { GetServerSideProps } from 'next';
@@ -550,10 +550,6 @@ const Home = ({
       updateAllConversationsStore(updatedConversations);
       saveSelectedConversationIds([newConversation.id]);
     }
-
-    if ((session as any)?.error === 'RefreshAccessTokenError') {
-      signIn('azure-ad', { redirect: true }); // Force sign in to hopefully resolve error
-    }
   }, []);
 
   useEffect(() => {
@@ -644,7 +640,11 @@ export const getServerSideProps: GetServerSideProps = async ({
       : 'frame-ancestors none',
   );
   const session = await getServerSession(req, res, authOptions);
-  if (!isIframe && process.env.AUTH_DISABLED !== 'true' && !session) {
+  if (
+    !isIframe &&
+    process.env.AUTH_DISABLED !== 'true' &&
+    (!session || (session as any).error === 'RefreshAccessTokenError')
+  ) {
     return {
       redirect: {
         permanent: false,
