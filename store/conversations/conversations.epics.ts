@@ -4,6 +4,7 @@ import { i18n } from 'next-i18next';
 
 import {
   EMPTY,
+  Observable,
   concat,
   filter,
   ignoreElements,
@@ -12,6 +13,7 @@ import {
   merge,
   of,
   switchMap,
+  take,
   tap,
 } from 'rxjs';
 
@@ -30,7 +32,6 @@ import {
 } from '@/utils/app/importExport';
 
 import { Conversation } from '@/types/chat';
-import { OpenAIEntityModelID, OpenAIEntityModels } from '@/types/openai';
 import { AppEpic } from '@/types/store';
 
 import { AddonsActions } from '../addons/addons.reducers';
@@ -43,6 +44,7 @@ import {
 } from './conversations.reducers';
 
 import { errorsMessages } from '@/constants/errors';
+import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 const createNewConversationEpic: AppEpic = (action$, state$) =>
@@ -59,9 +61,11 @@ const createNewConversationEpic: AppEpic = (action$, state$) =>
     })),
     switchMap(
       ({ names, lastConversation, modelsMap, models, defaultModelId }) => {
-        const model = defaultModelId
-          ? modelsMap[defaultModelId] || models[0]
-          : OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ];
+        const model = defaultModelId ? modelsMap[defaultModelId] : models[0];
+
+        if (!model) {
+          return EMPTY;
+        }
 
         return of(
           ConversationsActions.createNewConversationsSuccess({
@@ -226,62 +230,71 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const initConversationsEpic: AppEpic = (action$) =>
+const initConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.initConversations.match),
-    map(() => {
-      const conversationHistory = localStorage.getItem('conversationHistory');
-      if (conversationHistory) {
-        const parsedConversationHistory: Conversation[] =
-          JSON.parse(conversationHistory);
-        return cleanConversationHistory(parsedConversationHistory);
-      }
+    switchMap(() => {
+      return state$.pipe(
+        map((state) => ModelsSelectors.selectModels(state)),
+        filter((models) => models.length > 0),
+        take(1),
+        map(() => {
+          const conversationHistory = localStorage.getItem(
+            'conversationHistory',
+          );
+          if (conversationHistory) {
+            const parsedConversationHistory: Conversation[] =
+              JSON.parse(conversationHistory);
+            return cleanConversationHistory(parsedConversationHistory);
+          }
 
-      return [];
-    }),
-    map((conversations) => {
-      if (!conversations.length) {
-        return {
-          conversations,
-          selectedConversationsIds: [],
-        };
-      }
+          return [];
+        }),
+        map((conversations) => {
+          if (!conversations.length) {
+            return {
+              conversations,
+              selectedConversationsIds: [],
+            };
+          }
 
-      const selectedConversationsIds = (
-        JSON.parse(
-          localStorage.getItem('selectedConversationIds') || '[]',
-        ) as string[]
-      ).filter((id) => conversations.some((conv) => conv.id === id));
+          const selectedConversationsIds = (
+            JSON.parse(
+              localStorage.getItem('selectedConversationIds') || '[]',
+            ) as string[]
+          ).filter((id) => conversations.some((conv) => conv.id === id));
 
-      return {
-        conversations,
-        selectedConversationsIds,
-      };
-    }),
-    switchMap(({ conversations, selectedConversationsIds }) => {
-      const actions = [];
-      actions.push(
-        of(ConversationsActions.updateConversations({ conversations })),
+          return {
+            conversations,
+            selectedConversationsIds,
+          };
+        }),
+        switchMap(({ conversations, selectedConversationsIds }) => {
+          const actions: Observable<AnyAction>[] = [];
+          actions.push(
+            of(ConversationsActions.updateConversations({ conversations })),
+          );
+          actions.push(
+            of(
+              ConversationsActions.selectConversations({
+                conversationIds: selectedConversationsIds,
+              }),
+            ),
+          );
+
+          if (!conversations.length || !selectedConversationsIds.length) {
+            actions.push(
+              of(
+                ConversationsActions.createNewConversations({
+                  names: [(i18n as any).t(DEFAULT_CONVERSATION_NAME)],
+                }),
+              ),
+            );
+          }
+
+          return concat(...actions);
+        }),
       );
-      actions.push(
-        of(
-          ConversationsActions.selectConversations({
-            conversationIds: selectedConversationsIds,
-          }),
-        ),
-      );
-
-      if (!conversations.length || !selectedConversationsIds.length) {
-        actions.push(
-          of(
-            ConversationsActions.createNewConversations({
-              names: [(i18n as any).t(DEFAULT_CONVERSATION_NAME)],
-            }),
-          ),
-        );
-      }
-
-      return concat(...actions);
     }),
   );
 
