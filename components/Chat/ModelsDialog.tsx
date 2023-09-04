@@ -18,11 +18,8 @@ import {
 } from '@/types/openai';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import {
-  selectModels,
-  updateRecentModels,
-} from '@/store/models/models.reducers';
-import { UISelectors } from '@/store/ui-store/ui.reducers';
+import { ModelsActions, ModelsSelectors } from '@/store/models/models.reducers';
+import { UISelectors } from '@/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -125,7 +122,7 @@ export const ModelsDialog: FC<Props> = ({
 }) => {
   const { t } = useTranslation('chat');
   const dispatch = useAppDispatch();
-  const models = useAppSelector(selectModels);
+  const models = useAppSelector(ModelsSelectors.selectModels);
 
   const [entityTypes, setEntityTypes] = useState<
     (
@@ -212,7 +209,7 @@ export const ModelsDialog: FC<Props> = ({
               selectedModelId={selectedModelId}
               onSelect={(id) => {
                 onModelSelect(id);
-                dispatch(updateRecentModels({ modelId: id }));
+                dispatch(ModelsActions.updateRecentModels({ modelId: id }));
                 onClose();
               }}
             />

@@ -96,30 +96,32 @@ export const modelsSlice = createSlice({
 
 const rootSelector = (state: RootState) => state.models;
 
-export const selectModelsIsLoading = createSelector([rootSelector], (state) => {
+const selectModelsIsLoading = createSelector([rootSelector], (state) => {
   return state.isLoading;
 });
-export const selectModelsError = createSelector([rootSelector], (state) => {
+const selectModelsError = createSelector([rootSelector], (state) => {
   return state.error;
 });
-export const selectModels = createSelector([rootSelector], (state) => {
+const selectModels = createSelector([rootSelector], (state) => {
   return state.models;
 });
-export const selectModelsMap = createSelector([rootSelector], (state) => {
+const selectModelsMap = createSelector([rootSelector], (state) => {
   return state.modelsMap;
 });
-export const selectDefaultModelId = createSelector([rootSelector], (state) => {
+const selectDefaultModelId = createSelector([rootSelector], (state) => {
   return state.defaultModelId;
 });
-export const selectRecentModelsIds = createSelector([rootSelector], (state) => {
+const selectRecentModelsIds = createSelector([rootSelector], (state) => {
   return state.recentModelsIds;
 });
 
-export const {
-  getModels,
-  getModelsFail,
-  getModelsSuccess,
-  setDefaultModelId,
-  initRecentModels,
-  updateRecentModels,
-} = modelsSlice.actions;
+export const ModelsSelectors = {
+  selectModelsIsLoading,
+  selectModelsError,
+  selectModels,
+  selectModelsMap,
+  selectDefaultModelId,
+  selectRecentModelsIds,
+};
+
+export const ModelsActions = modelsSlice.actions;

@@ -10,7 +10,6 @@ import {
   ButtonHTMLAttributes,
   FC,
   memo,
-  useContext,
   useEffect,
   useRef,
   useState,
@@ -21,10 +20,8 @@ import { useTranslation } from 'next-i18next';
 import { Conversation, Message } from '@/types/chat';
 
 import { useAppSelector } from '@/store/hooks';
-import { selectModelsMap } from '@/store/models/models.reducers';
-import { UISelectors } from '@/store/ui-store/ui.reducers';
-
-import HomeContext from '@/pages/api/home/home.context';
+import { ModelsSelectors } from '@/store/models/models.reducers';
+import { UISelectors } from '@/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -81,10 +78,7 @@ export const ChatMessage: FC<Props> = memo(
   }) => {
     const { t } = useTranslation('chat');
 
-    const {
-      state: { messageIsStreaming },
-    } = useContext(HomeContext);
-    const modelsMap = useAppSelector(selectModelsMap);
+    const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
     const theme = useAppSelector(UISelectors.selectThemeState);
 
@@ -98,7 +92,8 @@ export const ChatMessage: FC<Props> = memo(
     const isLastMessage =
       messageIndex == (conversation?.messages.length ?? 0) - 1;
 
-    const isShowResponseLoader: boolean = messageIsStreaming && isLastMessage;
+    const isShowResponseLoader: boolean =
+      conversation.isMessageStreaming && isLastMessage;
     const isUser = message.role === 'user';
     const isAssistant = message.role === 'assistant';
 

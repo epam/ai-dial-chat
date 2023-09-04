@@ -75,6 +75,9 @@ export interface Conversation {
   selectedAddons: string[];
   assistantModelId?: string;
   lastActivityDate?: number;
+
+  isLoading: boolean;
+  isMessageStreaming: boolean;
 }
 export interface Replay {
   isReplay: boolean;

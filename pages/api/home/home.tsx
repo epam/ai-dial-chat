@@ -1,5 +1,5 @@
 import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
@@ -7,52 +7,25 @@ import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import Head from 'next/head';
 
-import { useCreateReducer } from '@/hooks/useCreateReducer';
-
-import { AuthWindowLocationLike } from '@/utils/app/auth/authWindowLocationLike';
-import { delay } from '@/utils/app/auth/delay';
-import { timeoutAsync } from '@/utils/app/auth/timeoutAsync';
-import { cleanConversationHistory } from '@/utils/app/clean';
-import {
-  DEFAULT_CONVERSATION_NAME,
-  DEFAULT_SYSTEM_PROMPT,
-  DEFAULT_TEMPERATURE,
-} from '@/utils/app/const';
-import {
-  saveConversations,
-  saveSelectedConversationIds,
-  updateConversation,
-} from '@/utils/app/conversation';
-import { saveFolders } from '@/utils/app/folders';
-import { savePrompts } from '@/utils/app/prompts';
 import { getSettings } from '@/utils/app/settings';
+import { AuthWindowLocationLike } from '@/utils/auth/authWindowLocationLike';
+import { delay } from '@/utils/auth/delay';
+import { timeoutAsync } from '@/utils/auth/timeoutAsync';
 
-import { Conversation, Replay } from '@/types/chat';
-import { KeyValuePair } from '@/types/data';
 import { Feature } from '@/types/features';
-import { FolderInterface, FolderType } from '@/types/folder';
-import {
-  OpenAIEntityModel,
-  OpenAIEntityModelID,
-  OpenAIEntityModels,
-  defaultModelLimits,
-  fallbackModelID,
-} from '@/types/openai';
-import { Prompt } from '@/types/prompt';
+import { FolderInterface } from '@/types/folder';
+import { OpenAIEntityModelID, fallbackModelID } from '@/types/openai';
 
-import { getAddons, initRecentAddons } from '@/store/addons/addons.reducers';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { AddonsActions } from '@/store/addons/addons.reducers';
 import {
-  getModels,
-  initRecentModels,
-  selectDefaultModelId,
-  selectModels,
-  selectModelsMap,
-  setDefaultModelId,
-  updateRecentModels,
-} from '@/store/models/models.reducers';
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { ModelsActions } from '@/store/models/models.reducers';
+import { PromptsActions } from '@/store/prompts/prompts.reducers';
 import { SettingsActions } from '@/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
+import { UIActions, UISelectors } from '@/store/ui/ui.reducers';
 
 import { Chat } from '@/components/Chat/Chat';
 import { Chatbar } from '@/components/Chatbar/Chatbar';
@@ -62,10 +35,6 @@ import Promptbar from '@/components/Promptbar';
 
 import packageJSON from '../../../package.json';
 import { authOptions } from '../auth/[...nextauth]';
-import HomeContext from './home.context';
-import { HomeInitialState, initialState } from './home.state';
-
-import { v4 as uuidv4 } from 'uuid';
 
 interface Props {
   appName: string;
@@ -92,280 +61,14 @@ const Home = ({
 
   const enabledFeaturesSet = new Set(enabledFeatures);
   const { t } = useTranslation('chat');
-  const [selectedConversationNames, setSelectedConversationNames] = useState<
-    string[]
-  >([]);
 
   const dispatch = useAppDispatch();
-  const clientDefaultModelId = useAppSelector(selectDefaultModelId);
-  const models = useAppSelector(selectModels);
-  const modelsMap = useAppSelector(selectModelsMap);
-
-  const contextValue = useCreateReducer<HomeInitialState>({
-    initialState,
-  });
-
-  const {
-    state: { folders, conversations, selectedConversationIds, prompts },
-    dispatch: oldDispatch,
-  } = contextValue;
 
   const theme = useAppSelector(UISelectors.selectThemeState);
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
-  // FETCH MODELS ----------------------------------------------
-
-  const handleSelectConversation = (conversation: Conversation) => {
-    const newSelectedIds = [conversation.id];
-    oldDispatch({
-      field: 'selectedConversationIds',
-      value: newSelectedIds,
-    });
-
-    dispatch(UIActions.setIsCompareMode(false));
-
-    saveSelectedConversationIds(newSelectedIds);
-  };
-
-  const handleSelectConversations = (conversations: Conversation[]) => {
-    const newSelectedIds = Array.from(
-      new Set(conversations.map(({ id }) => id)),
-    );
-    oldDispatch({
-      field: 'selectedConversationIds',
-      value: newSelectedIds,
-    });
-
-    saveSelectedConversationIds(newSelectedIds);
-  };
-
-  // FOLDER OPERATIONS  --------------------------------------------
-
-  const handleCreateFolder = (
-    name: string,
-    type: FolderType,
-  ): FolderInterface => {
-    const newFolder: FolderInterface = {
-      id: uuidv4(),
-      name,
-      type,
-    };
-
-    const updatedFolders = [...folders, newFolder];
-
-    oldDispatch({ field: 'folders', value: updatedFolders });
-    saveFolders(updatedFolders);
-    return newFolder;
-  };
-
-  const handleDeleteFolder = (folderId: string) => {
-    const updatedFolders = folders.filter((f) => f.id !== folderId);
-    oldDispatch({ field: 'folders', value: updatedFolders });
-    saveFolders(updatedFolders);
-
-    const updatedConversations: Conversation[] = conversations.map((c) => {
-      if (c.folderId === folderId) {
-        return {
-          ...c,
-          folderId: null,
-        };
-      }
-
-      return c;
-    });
-
-    oldDispatch({ field: 'conversations', value: updatedConversations });
-    saveConversations(updatedConversations);
-
-    const updatedPrompts: Prompt[] = prompts.map((p) => {
-      if (p.folderId === folderId) {
-        return {
-          ...p,
-          folderId: null,
-        };
-      }
-
-      return p;
-    });
-
-    oldDispatch({ field: 'prompts', value: updatedPrompts });
-    savePrompts(updatedPrompts);
-  };
-
-  const handleUpdateFolder = (folderId: string, name: string) => {
-    const updatedFolders = folders.map((f) => {
-      if (f.id === folderId) {
-        return {
-          ...f,
-          name,
-        };
-      }
-
-      return f;
-    });
-
-    oldDispatch({ field: 'folders', value: updatedFolders });
-
-    saveFolders(updatedFolders);
-  };
-
-  // CONVERSATION OPERATIONS  --------------------------------------------
-
-  const updateAllConversationsStore = (
-    updatedConversations: Conversation[],
-  ) => {
-    oldDispatch({ field: 'conversations', value: updatedConversations });
-
-    saveConversations(updatedConversations);
-  };
-
-  const addNewConversationToStore = (newConversations: Conversation[]) => {
-    const updatedConversations = [...conversations, ...newConversations];
-    const ids = newConversations.map(({ id }) => id);
-    updateAllConversationsStore(updatedConversations);
-
-    oldDispatch({
-      field: 'selectedConversationIds',
-      value: ids,
-    });
-    dispatch(UIActions.setIsCompareMode(false));
-
-    saveSelectedConversationIds(ids);
-  };
-
-  const defaultReplay: Replay = {
-    isReplay: false,
-    replayUserMessagesStack: [],
-    activeReplayIndex: 0,
-  };
-  const handleNewConversation = (
-    name = DEFAULT_CONVERSATION_NAME,
-  ): Conversation | undefined => {
-    dispatch(getModels());
-    dispatch(getAddons());
-
-    if (!clientDefaultModelId) {
-      return;
-    }
-
-    const lastConversation = conversations[conversations.length - 1];
-    const model = modelsMap[clientDefaultModelId] || models[0];
-
-    if (!model) {
-      return;
-    }
-
-    const newConversation: Conversation = {
-      id: uuidv4(),
-      name: t(name),
-      messages: [],
-      model: {
-        id: model.id,
-        name: model.name,
-        maxLength: model.maxLength ?? defaultModelLimits.maxLength,
-        requestLimit: model.requestLimit ?? defaultModelLimits.requestLimit,
-        type: model.type,
-      },
-      prompt: DEFAULT_SYSTEM_PROMPT,
-      temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
-      folderId: null,
-      replay: defaultReplay,
-      selectedAddons: model.selectedAddons ?? [],
-      lastActivityDate: Date.now(),
-    };
-
-    addNewConversationToStore([newConversation]);
-    oldDispatch({ field: 'loading', value: false });
-
-    dispatch(updateRecentModels({ modelId: newConversation.model.id }));
-
-    return newConversation;
-  };
-
-  const handleNewConversations = (
-    name = DEFAULT_CONVERSATION_NAME,
-    count = 2,
-  ): Conversation[] | undefined => {
-    dispatch(getModels());
-    dispatch(getAddons());
-    if (!clientDefaultModelId) {
-      return;
-    }
-    const lastConversation = conversations[conversations.length - 1];
-    const model = modelsMap[clientDefaultModelId] || models[0];
-
-    if (!model) {
-      return;
-    }
-    const newConversations = [];
-    for (let i = 0; i < count; i++) {
-      const newConversation: Conversation = {
-        id: uuidv4(),
-        name: t(name),
-        messages: [],
-        model: {
-          id: model.id,
-          name: model.name,
-          maxLength: model.maxLength ?? defaultModelLimits.maxLength,
-          requestLimit: model.requestLimit ?? defaultModelLimits.requestLimit,
-          type: model.type,
-        },
-        prompt: DEFAULT_SYSTEM_PROMPT,
-        temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
-        folderId: null,
-        replay: defaultReplay,
-        selectedAddons: model.selectedAddons ?? [],
-        lastActivityDate: Date.now(),
-      };
-      newConversations.push(newConversation);
-    }
-
-    addNewConversationToStore(newConversations);
-    oldDispatch({ field: 'loading', value: false });
-
-    return newConversations;
-  };
-
-  const handleUpdateConversation = (
-    conversation: Conversation,
-    data: KeyValuePair,
-    localConversations?: Conversation[],
-  ): Conversation[] => {
-    const updatedConversation = {
-      ...conversation,
-      [data.key]: data.value,
-    };
-
-    const allConversation = updateConversation(
-      updatedConversation,
-      localConversations || conversations,
-    );
-
-    oldDispatch({ field: 'conversations', value: allConversation });
-
-    return allConversation;
-  };
-
-  const handleNewReplayConversation = (conversation: Conversation) => {
-    const newConversationName = `[Replay] ${conversation.name}`;
-
-    const userMessages = conversation.messages.filter(
-      ({ role }) => role === 'user',
-    );
-    const newConversation: Conversation = {
-      ...conversation,
-      id: uuidv4(),
-      name: newConversationName,
-      messages: [],
-
-      replay: {
-        isReplay: true,
-        replayUserMessagesStack: userMessages,
-        activeReplayIndex: 0,
-      },
-    };
-
-    addNewConversationToStore([newConversation]);
-  };
+  const selectedConversationIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
 
   // EFFECTS  --------------------------------------------
 
@@ -378,7 +81,8 @@ const Home = ({
   // ON LOAD --------------------------------------------
 
   useEffect(() => {
-    defaultModelId && dispatch(setDefaultModelId({ defaultModelId }));
+    defaultModelId &&
+      dispatch(ModelsActions.setDefaultModelId({ defaultModelId }));
     footerHtmlMessage &&
       dispatch(SettingsActions.setFooterHtmlMessage(footerHtmlMessage));
 
@@ -389,7 +93,7 @@ const Home = ({
 
     defaultRecentModelsIds &&
       dispatch(
-        initRecentModels({
+        ModelsActions.initRecentModels({
           defaultRecentModelsIds,
           localStorageRecentModelsIds: JSON.parse(
             localStorage.getItem('recentModelsIds') || '[]',
@@ -398,7 +102,7 @@ const Home = ({
       );
     defaultRecentAddonsIds &&
       dispatch(
-        initRecentAddons({
+        AddonsActions.initRecentAddons({
           defaultRecentAddonsIds,
           localStorageRecentAddonsIds: JSON.parse(
             localStorage.getItem('recentAddonsIds') || '[]',
@@ -406,8 +110,64 @@ const Home = ({
         }),
       );
 
-    dispatch(getModels());
-    dispatch(getAddons());
+    dispatch(ModelsActions.getModels());
+    dispatch(AddonsActions.getAddons());
+
+    // Hack for ios 100vh issue
+    const handleSetProperVHPoints = () => {
+      document.documentElement.style.setProperty(
+        '--vh',
+        window.innerHeight * 0.01 + 'px',
+      );
+    };
+    handleSetProperVHPoints();
+    window.addEventListener('resize', handleSetProperVHPoints);
+
+    const settings = getSettings();
+    if (settings.theme) {
+      dispatch(UIActions.setTheme(settings.theme));
+    }
+
+    if (window.innerWidth < 640) {
+      dispatch(UIActions.setShowChatbar(false));
+      dispatch(UIActions.setShowPromptbar(false));
+    }
+
+    const showChatbar = localStorage.getItem('showChatbar');
+    if (showChatbar) {
+      dispatch(UIActions.setShowChatbar(showChatbar === 'true'));
+    }
+
+    const showPromptbar = localStorage.getItem('showPromptbar');
+    if (showPromptbar) {
+      dispatch(UIActions.setShowPromptbar(showPromptbar === 'true'));
+    }
+
+    const folders = localStorage.getItem('folders');
+    if (folders) {
+      const parsedFolders: FolderInterface[] = JSON.parse(folders);
+      dispatch(
+        ConversationsActions.setFolders({
+          folders: parsedFolders.filter(({ type }) => type === 'chat'),
+        }),
+      );
+      dispatch(
+        PromptsActions.setFolders({
+          folders: parsedFolders.filter(({ type }) => type === 'prompt'),
+        }),
+      );
+    }
+
+    const prompts = localStorage.getItem('prompts');
+    if (prompts) {
+      dispatch(
+        PromptsActions.updatePrompts({
+          prompts: JSON.parse(localStorage.getItem('prompts') || '[]'),
+        }),
+      );
+    }
+
+    dispatch(ConversationsActions.initConversations());
   }, []);
 
   const handleIframeAuth = async () => {
@@ -442,141 +202,8 @@ const Home = ({
     ]);
   };
 
-  useEffect(() => {
-    // Hack for ios 100vh issue
-    const handleSetProperVHPoints = () => {
-      document.documentElement.style.setProperty(
-        '--vh',
-        window.innerHeight * 0.01 + 'px',
-      );
-    };
-    handleSetProperVHPoints();
-    window.addEventListener('resize', handleSetProperVHPoints);
-
-    const settings = getSettings();
-    if (settings.theme) {
-      dispatch(UIActions.setTheme(settings.theme));
-    }
-
-    if (window.innerWidth < 640) {
-      dispatch(UIActions.setShowChatbar(false));
-      dispatch(UIActions.setShowPromptbar(false));
-    }
-
-    const showChatbar = localStorage.getItem('showChatbar');
-    if (showChatbar) {
-      dispatch(UIActions.setShowChatbar(showChatbar === 'true'));
-    }
-
-    const showPromptbar = localStorage.getItem('showPromptbar');
-    if (showPromptbar) {
-      dispatch(UIActions.setShowPromptbar(showPromptbar === 'true'));
-    }
-
-    const folders = localStorage.getItem('folders');
-    if (folders) {
-      oldDispatch({ field: 'folders', value: JSON.parse(folders) });
-    }
-
-    const prompts = localStorage.getItem('prompts');
-    if (prompts) {
-      oldDispatch({ field: 'prompts', value: JSON.parse(prompts) });
-    }
-
-    const conversationHistory = localStorage.getItem('conversationHistory');
-    let cleanedConversationHistory: Conversation[] = [];
-    if (conversationHistory) {
-      const parsedConversationHistory: Conversation[] =
-        JSON.parse(conversationHistory);
-      cleanedConversationHistory = cleanConversationHistory(
-        parsedConversationHistory,
-      );
-
-      oldDispatch({
-        field: 'conversations',
-        value: cleanedConversationHistory,
-      });
-    }
-
-    const selectedConversationIds = localStorage.getItem(
-      'selectedConversationIds',
-    );
-    const parsedSelectedConversationsIds: string[] = JSON.parse(
-      selectedConversationIds || '[]',
-    );
-    const filteredSelectedConversationIds =
-      parsedSelectedConversationsIds.filter((convId) =>
-        cleanedConversationHistory.some((conv) => conv.id === convId),
-      );
-    if (
-      filteredSelectedConversationIds?.length > 0 &&
-      cleanedConversationHistory.length > 0
-    ) {
-      oldDispatch({
-        field: 'selectedConversationIds',
-        value: filteredSelectedConversationIds,
-      });
-
-      if (filteredSelectedConversationIds.length > 1) {
-        dispatch(UIActions.setIsCompareMode(true));
-      }
-    } else {
-      const lastConversation =
-        cleanedConversationHistory[conversations.length - 1];
-      const defaultModel: OpenAIEntityModel =
-        OpenAIEntityModels[defaultModelId];
-
-      const newConversation: Conversation = {
-        id: uuidv4(),
-        name: t(DEFAULT_CONVERSATION_NAME),
-        messages: [],
-        model: defaultModel,
-        prompt: DEFAULT_SYSTEM_PROMPT,
-        temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
-        folderId: null,
-        replay: defaultReplay,
-        selectedAddons: OpenAIEntityModels[defaultModelId].selectedAddons ?? [],
-        lastActivityDate: Date.now(),
-      };
-
-      const updatedConversations: Conversation[] =
-        cleanedConversationHistory.concat(newConversation);
-
-      oldDispatch({
-        field: 'selectedConversationIds',
-        value: [newConversation.id],
-      });
-
-      updateAllConversationsStore(updatedConversations);
-      saveSelectedConversationIds([newConversation.id]);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (selectedConversationIds.length > 0) {
-      setSelectedConversationNames(
-        conversations
-          .filter((conv) => selectedConversationIds.includes(conv.id))
-          .map((conv) => conv.name),
-      );
-    }
-  }, [selectedConversationIds, conversations]);
-
   return (
-    <HomeContext.Provider
-      value={{
-        ...contextValue,
-        handleNewConversation,
-        handleNewConversations,
-        handleCreateFolder,
-        handleDeleteFolder,
-        handleUpdateFolder,
-        handleSelectConversation,
-        handleSelectConversations,
-        handleUpdateConversation,
-        handleNewReplayConversation,
-      }}
-    >
+    <>
       <Head>
         <title>{appName}</title>
         <meta name="description" content="ChatGPT but better." />
@@ -597,32 +224,28 @@ const Home = ({
           </button>
         </div>
       ) : (
-        selectedConversationNames.length > 0 && (
-          <main className={`${theme} `}>
-            <div
-              className={`theme-main flex h-screen w-screen flex-col bg-gray-300 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-200`}
-              id="theme-main"
-            >
-              <div className={`flex h-full w-full flex-col sm:pt-0`}>
-                {enabledFeaturesSet.has('header') && <Header />}
-                <div className="flex w-full grow overflow-auto">
-                  {enabledFeaturesSet.has('conversations-section') && (
-                    <Chatbar />
-                  )}
+        <main className={`${theme} `}>
+          <div
+            className={`theme-main flex h-screen w-screen flex-col bg-gray-300 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-200`}
+            id="theme-main"
+          >
+            <div className={`flex h-full w-full flex-col sm:pt-0`}>
+              {enabledFeaturesSet.has('header') && <Header />}
+              <div className="flex w-full grow overflow-auto">
+                {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
 
-                  <div className="flex flex-1">
-                    <Chat appName={appName} />
-                  </div>
-
-                  {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
-                  {isProfileOpen && <UserMobile />}
+                <div className="flex flex-1">
+                  <Chat appName={appName} />
                 </div>
+
+                {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
+                {isProfileOpen && <UserMobile />}
               </div>
             </div>
-          </main>
-        )
+          </div>
+        </main>
       )}
-    </HomeContext.Provider>
+    </>
   );
 };
 export default Home;

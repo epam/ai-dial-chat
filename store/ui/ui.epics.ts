@@ -1,9 +1,10 @@
+import { filter, ignoreElements, tap } from 'rxjs';
+
 import { AppEpic } from '@/types/store';
 
 import { UIActions } from './ui.reducers';
 
 import { combineEpics } from 'redux-observable';
-import { filter, ignoreElements, tap } from 'rxjs';
 
 const saveThemeEpic: AppEpic = (action$) =>
   action$.pipe(

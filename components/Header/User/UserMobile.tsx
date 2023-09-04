@@ -6,7 +6,7 @@ import { useTranslation } from 'next-i18next';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { SettingsSelectors } from '@/store/settings/settings.reducers';
-import { UIActions } from '@/store/ui-store/ui.reducers';
+import { UIActions } from '@/store/ui/ui.reducers';
 
 import { FooterMessage } from '@/components/Chat/FooterMessage';
 import { ConfirmDialog } from '@/components/Common/ConfirmDialog';

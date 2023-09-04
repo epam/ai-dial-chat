@@ -1,16 +1,3 @@
-import { OpenAIEntityModel } from '@/types/openai';
-import { AppEpic } from '@/types/store';
-
-import {
-  getModels,
-  getModelsFail,
-  getModelsSuccess,
-  initRecentModels,
-  selectRecentModelsIds,
-  updateRecentModels,
-} from './models.reducers';
-
-import { combineEpics } from 'redux-observable';
 import {
   catchError,
   filter,
@@ -24,9 +11,16 @@ import {
   withLatestFrom,
 } from 'rxjs';
 
+import { OpenAIEntityModel } from '@/types/openai';
+import { AppEpic } from '@/types/store';
+
+import { ModelsActions, ModelsSelectors } from './models.reducers';
+
+import { combineEpics } from 'redux-observable';
+
 const getModelsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(getModels.match),
+    filter(ModelsActions.getModels.match),
     withLatestFrom(state$),
     switchMap(() => {
       return from(
@@ -43,10 +37,10 @@ const getModelsEpic: AppEpic = (action$, state$) =>
           return from(resp.json());
         }),
         map((response: OpenAIEntityModel[]) =>
-          getModelsSuccess({ models: response }),
+          ModelsActions.getModelsSuccess({ models: response }),
         ),
         catchError((err) => {
-          return of(getModelsFail({ error: err }));
+          return of(ModelsActions.getModelsFail({ error: err }));
         }),
       );
     }),
@@ -56,10 +50,11 @@ const updateRecentModelsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>
-        initRecentModels.match(action) || updateRecentModels.match(action),
+        ModelsActions.initRecentModels.match(action) ||
+        ModelsActions.updateRecentModels.match(action),
     ),
     withLatestFrom(state$),
-    map(([_action, state]) => selectRecentModelsIds(state)),
+    map(([_action, state]) => ModelsSelectors.selectRecentModelsIds(state)),
     tap((recentModelIds) => {
       localStorage.setItem('recentModelsIds', JSON.stringify(recentModelIds));
     }),

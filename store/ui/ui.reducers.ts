@@ -23,7 +23,7 @@ const initialState: UIState = {
 };
 
 export const uiSlice = createSlice({
-  name: 'uiState',
+  name: 'ui',
   initialState,
   reducers: {
     setTheme: (state, { payload }: PayloadAction<Theme>) => {

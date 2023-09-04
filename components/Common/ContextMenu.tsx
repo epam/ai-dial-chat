@@ -7,15 +7,12 @@ import {
   IconScale,
   IconTrashX,
 } from '@tabler/icons-react';
-import { MouseEventHandler, useContext } from 'react';
+import { MouseEventHandler } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { Conversation } from '@/types/chat';
 import { FeatureType, HighlightColor } from '@/types/components';
-import { Prompt } from '@/types/prompt';
-
-import HomeContext from '@/pages/api/home/home.context';
+import { FolderInterface } from '@/types/folder';
 
 import DotsIcon from '../../public/images/icons/dots-vertical.svg';
 import { Menu, MenuItem } from './DropdownMenu';
@@ -23,59 +20,35 @@ import { Menu, MenuItem } from './DropdownMenu';
 import classNames from 'classnames';
 
 interface ContextMenuProps {
-  item: Conversation | Prompt;
+  folders: FolderInterface[];
   featureType: FeatureType;
   highlightColor: HighlightColor;
+  isEmptyConversation?: boolean;
+  className?: string;
   onOpenMoveToModal: () => void;
-  moveToFolder?: (folderId: string) => void;
+  onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
   onDelete: MouseEventHandler<unknown>;
   onRename: MouseEventHandler<unknown>;
   onExport: MouseEventHandler<unknown>;
   onReplay?: MouseEventHandler<HTMLButtonElement>;
   onCompare?: MouseEventHandler<unknown>;
-  isEmptyConversation?: boolean;
-  className?: string;
 }
 
 export const ContextMenu = ({
-  item,
   featureType,
+  isEmptyConversation,
+  className,
+  highlightColor,
+  folders,
   onDelete,
   onRename,
   onExport,
   onReplay,
   onCompare,
-  isEmptyConversation,
-  className,
-  moveToFolder,
+  onMoveToFolder,
   onOpenMoveToModal,
-  highlightColor,
 }: ContextMenuProps) => {
   const { t } = useTranslation('sidebar');
-  const {
-    state: { folders },
-    handleCreateFolder,
-    handleUpdateConversation,
-  } = useContext(HomeContext);
-
-  const moveConversationToFolder = (folderId: string) => {
-    if (featureType === 'chat') {
-      handleUpdateConversation(item as Conversation, {
-        key: 'folderId',
-        value: folderId,
-      });
-    }
-  };
-
-  const moveToNewFolder = () => {
-    const newFolder = handleCreateFolder(t('New folder'), featureType);
-    if (featureType === 'chat') {
-      moveConversationToFolder(newFolder.id);
-    }
-    if (moveToFolder) {
-      moveToFolder(newFolder.id);
-    }
-  };
   return (
     <>
       <Menu
@@ -200,7 +173,9 @@ export const ContextMenu = ({
                   : 'hover:bg-violet/15'
               }`,
             )}
-            onClick={moveToNewFolder}
+            onClick={() => {
+              onMoveToFolder({ isNewFolder: true });
+            }}
             item={
               <div className="flex items-center gap-3">
                 <IconFolderPlus className="shrink-0 text-gray-500" size={18} />
@@ -209,7 +184,6 @@ export const ContextMenu = ({
             }
           />
           {folders
-            .filter((folder) => folder.type === featureType)
             .sort((a, b) => a.name.localeCompare(b.name))
             .map((folder) => (
               <MenuItem
@@ -224,9 +198,7 @@ export const ContextMenu = ({
                 key={folder.id}
                 label={folder.name}
                 onClick={() => {
-                  moveToFolder
-                    ? moveToFolder(folder.id)
-                    : moveConversationToFolder(folder.id);
+                  onMoveToFolder({ folderId: folder.id });
                 }}
               />
             ))}

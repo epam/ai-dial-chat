@@ -2,12 +2,9 @@ import { Fragment, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import {
-  selectAddonsMap,
-  selectRecentAddonsIds,
-} from '@/store/addons/addons.reducers';
+import { AddonsSelectors } from '@/store/addons/addons.reducers';
 import { useAppSelector } from '@/store/hooks';
-import { UISelectors } from '@/store/ui-store/ui.reducers';
+import { UISelectors } from '@/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -32,8 +29,8 @@ export const Addons = ({
   const theme = useAppSelector(UISelectors.selectThemeState);
 
   const { t } = useTranslation('chat');
-  const recentAddonsIds = useAppSelector(selectRecentAddonsIds);
-  const addonsMap = useAppSelector(selectAddonsMap);
+  const recentAddonsIds = useAppSelector(AddonsSelectors.selectRecentAddonsIds);
+  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const [filteredRecentAddons, setFilteredRecentAddons] = useState<string[]>(
     () => {
       return recentAddonsIds.filter(

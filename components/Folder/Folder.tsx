@@ -2,7 +2,6 @@ import {
   KeyboardEvent,
   MouseEventHandler,
   ReactElement,
-  useContext,
   useEffect,
   useRef,
   useState,
@@ -12,8 +11,6 @@ import useOutsideAlerter from '@/hooks/useOutsideAlerter';
 
 import { HighlightColor } from '@/types/components';
 import { FolderInterface } from '@/types/folder';
-
-import HomeContext from '@/pages/api/home/home.context';
 
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
 
@@ -29,8 +26,10 @@ interface Props {
   highlightColor: HighlightColor;
   currentFolder: FolderInterface;
   searchTerm: string;
-  handleDrop: (e: any, folder: FolderInterface) => void;
   folderComponent: (ReactElement | undefined)[];
+  handleDrop: (e: any, folder: FolderInterface) => void;
+  onRenameFolder: (newName: string) => void;
+  onDeleteFolder: () => void;
 }
 
 interface CaretIconComponentProps {
@@ -51,12 +50,12 @@ const CaretIconComponent = ({ isOpen }: CaretIconComponentProps) => {
 const Folder = ({
   currentFolder,
   searchTerm,
-  handleDrop,
   folderComponent,
   highlightColor,
+  handleDrop,
+  onRenameFolder,
+  onDeleteFolder,
 }: Props) => {
-  const { handleDeleteFolder, handleUpdateFolder } = useContext(HomeContext);
-
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -74,7 +73,7 @@ const Folder = ({
   };
 
   const handleRename = () => {
-    handleUpdateFolder(currentFolder.id, renameValue);
+    onRenameFolder(renameValue);
     setRenameValue('');
     setIsRenaming(false);
   };
@@ -215,7 +214,7 @@ const Folder = ({
                 e.stopPropagation();
 
                 if (isDeleting) {
-                  handleDeleteFolder(currentFolder.id);
+                  onDeleteFolder();
                 } else if (isRenaming) {
                   handleRename();
                 }

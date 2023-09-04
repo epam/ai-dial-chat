@@ -1,34 +1,31 @@
-import { useContext } from 'react';
-
 import { FolderInterface } from '@/types/folder';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+  PromptsActions,
+  PromptsSelectors,
+} from '@/store/prompts/prompts.reducers';
 
 import Folder from '@/components/Folder';
 import { PromptComponent } from '@/components/Promptbar/components/Prompt';
 
-import PromptbarContext from '../PromptBar.context';
-
 export const PromptFolders = () => {
-  const {
-    state: { folders },
-  } = useContext(HomeContext);
-
-  const {
-    state: { searchTerm, filteredPrompts },
-    handleUpdatePrompt,
-  } = useContext(PromptbarContext);
+  const dispatch = useAppDispatch();
+  const filteredPrompts = useAppSelector(
+    PromptsSelectors.selectSearchedPrompts,
+  );
+  const folders = useAppSelector(PromptsSelectors.selectFolders);
+  const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
 
   const handleDrop = (e: any, folder: FolderInterface) => {
     if (e.dataTransfer) {
       const prompt = JSON.parse(e.dataTransfer.getData('prompt'));
-
-      const updatedPrompt = {
-        ...prompt,
-        folderId: folder.id,
-      };
-
-      handleUpdatePrompt(updatedPrompt);
+      dispatch(
+        PromptsActions.updatePrompt({
+          promptId: prompt.id,
+          values: { folderId: folder.id },
+        }),
+      );
     }
   };
 
@@ -51,16 +48,26 @@ export const PromptFolders = () => {
   return (
     <div className="flex w-full flex-col">
       {folders
-        .filter((folder) => folder.type === 'prompt')
         .sort((a, b) => a.name.localeCompare(b.name))
         .map((folder, index) => (
           <Folder
             key={index}
             searchTerm={searchTerm}
             currentFolder={folder}
-            handleDrop={handleDrop}
-            folderComponent={PromptFolders(folder)}
             highlightColor="violet"
+            folderComponent={PromptFolders(folder)}
+            handleDrop={handleDrop}
+            onRenameFolder={(newName) => {
+              dispatch(
+                PromptsActions.renameFolder({
+                  folderId: folder.id,
+                  name: newName,
+                }),
+              );
+            }}
+            onDeleteFolder={() =>
+              dispatch(PromptsActions.deleteFolder({ folderId: folder.id }))
+            }
           />
         ))}
     </div>

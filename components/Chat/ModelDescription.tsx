@@ -3,7 +3,7 @@ import { useTranslation } from 'next-i18next';
 import { OpenAIEntityModel } from '@/types/openai';
 
 import { useAppSelector } from '@/store/hooks';
-import { UISelectors } from '@/store/ui-store/ui.reducers';
+import { UISelectors } from '@/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
