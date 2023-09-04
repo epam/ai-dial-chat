@@ -183,25 +183,23 @@ export const ContextMenu = ({
               </div>
             }
           />
-          {folders
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((folder) => (
-              <MenuItem
-                className={classNames(
-                  'max-md:hidden',
-                  `${
-                    highlightColor === 'green'
-                      ? 'hover:bg-green/15'
-                      : 'hover:bg-violet/15'
-                  }`,
-                )}
-                key={folder.id}
-                label={folder.name}
-                onClick={() => {
-                  onMoveToFolder({ folderId: folder.id });
-                }}
-              />
-            ))}
+          {folders.map((folder) => (
+            <MenuItem
+              className={classNames(
+                'max-md:hidden',
+                `${
+                  highlightColor === 'green'
+                    ? 'hover:bg-green/15'
+                    : 'hover:bg-violet/15'
+                }`,
+              )}
+              key={folder.id}
+              label={folder.name}
+              onClick={() => {
+                onMoveToFolder({ folderId: folder.id });
+              }}
+            />
+          ))}
         </Menu>
         <MenuItem
           className={`${

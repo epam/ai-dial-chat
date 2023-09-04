@@ -55,31 +55,27 @@ export const ChatFolders = ({ searchTerm }: Props) => {
 
   return (
     <div className="flex w-full flex-col">
-      {folders
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map((folder, index) => (
-          <Folder
-            key={index}
-            searchTerm={searchTerm}
-            currentFolder={folder}
-            folderComponent={ChatFolders(folder)}
-            highlightColor="green"
-            handleDrop={handleDrop}
-            onRenameFolder={(newName) => {
-              dispatch(
-                ConversationsActions.renameFolder({
-                  folderId: folder.id,
-                  name: newName,
-                }),
-              );
-            }}
-            onDeleteFolder={() =>
-              dispatch(
-                ConversationsActions.deleteFolder({ folderId: folder.id }),
-              )
-            }
-          />
-        ))}
+      {folders.map((folder, index) => (
+        <Folder
+          key={index}
+          searchTerm={searchTerm}
+          currentFolder={folder}
+          folderComponent={ChatFolders(folder)}
+          highlightColor="green"
+          handleDrop={handleDrop}
+          onRenameFolder={(newName) => {
+            dispatch(
+              ConversationsActions.renameFolder({
+                folderId: folder.id,
+                name: newName,
+              }),
+            );
+          }}
+          onDeleteFolder={() =>
+            dispatch(ConversationsActions.deleteFolder({ folderId: folder.id }))
+          }
+        />
+      ))}
     </div>
   );
 };
