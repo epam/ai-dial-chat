@@ -13,7 +13,7 @@ import {
 } from '@/utils/app/codeblock';
 
 import { useAppSelector } from '@/store/hooks';
-import { UISelectors } from '@/store/ui-store/ui.reducers';
+import { UISelectors } from '@/store/ui/ui.reducers';
 
 import Check from '../../public/images/icons/check.svg';
 import Clone from '../../public/images/icons/clone.svg';

@@ -103,7 +103,9 @@ export default class ChatAIOverlay {
     iconWidth: 60,
     iconSvg: getDefaultSVG(45, 45),
     overlayZIndex: '5',
-    onLoad: (chatAIOverlay: ChatAIOverlay) => {},
+    onLoad: () => {
+      return;
+    },
   };
   private config: ChatAIOverlayConfigModel;
   private isMobileView = this.getIsMobileView();
@@ -315,7 +317,7 @@ export default class ChatAIOverlay {
   }
 
   private createOverlay() {
-    let overlay = document.createElement('div');
+    const overlay = document.createElement('div');
     return this.updateOverlay(overlay);
   }
 
@@ -381,7 +383,7 @@ export default class ChatAIOverlay {
   }
 
   private createOverlayButton(position: PositionModel) {
-    let button = document.createElement('button');
+    const button = document.createElement('button');
     button.id = 'chatButton';
 
     this.setStyles(button, {

@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { Theme } from '@/types/settings';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
+import { UIActions, UISelectors } from '@/store/ui/ui.reducers';
 
 interface Props {
   open: boolean;

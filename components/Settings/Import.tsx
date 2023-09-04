@@ -2,11 +2,8 @@ import { FC, ReactNode, useRef } from 'react';
 
 import { HighlightColor } from '@/types/components';
 
-import { ImportConversationsHandler } from '../Chatbar/Chatbar.context';
-import { ImportPromptsHandler } from '../Promptbar/PromptBar.context';
-
 interface Props {
-  onImport: ImportConversationsHandler | ImportPromptsHandler;
+  onImport: (importJSON: any) => void;
   icon: ReactNode;
   highlightColor: HighlightColor;
 }

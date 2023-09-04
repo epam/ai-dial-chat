@@ -49,7 +49,7 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
           conversation.assistantModelId,
         );
 
-        let cleanConversation: Conversation = {
+        const cleanConversation: Conversation = {
           id: conversation.id || v4(),
           name: conversation.name || DEFAULT_CONVERSATION_NAME,
           model: model,
@@ -65,6 +65,8 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
               []),
           assistantModelId,
           lastActivityDate: conversation.lastActivityDate,
+          isLoading: false,
+          isMessageStreaming: false,
         };
 
         acc.push(cleanConversation);

@@ -10,9 +10,9 @@ import { useTranslation } from 'next-i18next';
 
 import { OpenAIEntity } from '@/types/openai';
 
-import { selectAddons, selectAddonsMap } from '@/store/addons/addons.reducers';
+import { AddonsSelectors } from '@/store/addons/addons.reducers';
 import { useAppSelector } from '@/store/hooks';
-import { UISelectors } from '@/store/ui-store/ui.reducers';
+import { UISelectors } from '@/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -36,10 +36,10 @@ export const AddonsDialog: FC<Props> = ({
   onClose,
 }) => {
   const { t } = useTranslation('chat');
-
-  const addons = useAppSelector(selectAddons);
-  const addonsMap = useAppSelector(selectAddonsMap);
+  const addons = useAppSelector(AddonsSelectors.selectAddons);
+  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const theme = useAppSelector(UISelectors.selectThemeState);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAddons, setSelectedAddons] = useState<OpenAIEntity[]>(() => {
     return selectedAddonsIds

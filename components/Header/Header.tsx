@@ -3,7 +3,7 @@ import { useTranslation } from 'next-i18next';
 import { isMediaQuery } from '@/utils/app/styleHelpers';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
+import { UIActions, UISelectors } from '@/store/ui/ui.reducers';
 
 import MoveLeftIcon from '../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../public/images/icons/move-right.svg';

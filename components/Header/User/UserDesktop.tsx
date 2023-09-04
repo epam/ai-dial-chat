@@ -6,7 +6,7 @@ import { useTranslation } from 'next-i18next';
 import Image from 'next/image';
 
 import { useAppDispatch } from '@/store/hooks';
-import { UIActions } from '@/store/ui-store/ui.reducers';
+import { UIActions } from '@/store/ui/ui.reducers';
 
 import { ConfirmDialog } from '@/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/components/Common/DropdownMenu';

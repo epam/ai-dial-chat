@@ -1,6 +1,4 @@
-interface languageMap {
-  [key: string]: string | undefined;
-}
+type languageMap = Record<string, string | undefined>;
 
 export const programmingLanguages: languageMap = {
   javascript: '.js',

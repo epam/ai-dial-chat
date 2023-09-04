@@ -4,16 +4,17 @@ import {
   IconScale,
   IconTrashX,
 } from '@tabler/icons-react';
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/utils/app/const';
 
-import { useAppDispatch } from '@/store/hooks';
-import { UIActions } from '@/store/ui-store/ui.reducers';
-
-import HomeContext from '@/pages/api/home/home.context';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 
 import { ConfirmDialog } from '@/components/Common/ConfirmDialog';
 import {
@@ -24,38 +25,23 @@ import {
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { Import } from '../../Settings/Import';
-import ChatbarContext from '../Chatbar.context';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation('sidebar');
   const [isOpen, setIsOpen] = useState(false);
 
-  const {
-    state: { conversations },
-    handleCreateFolder,
-    handleNewConversations,
-    handleSelectConversations,
-  } = useContext(HomeContext);
-
-  const {
-    handleClearConversations,
-    handleImportConversations,
-    handleExportConversations,
-  } = useContext(ChatbarContext);
-
   const dispatch = useAppDispatch();
 
-  const handleToggleCompare = () => {
-    const newConversations = handleNewConversations(
-      DEFAULT_CONVERSATION_NAME,
-      2,
-    );
-    if (!newConversations) {
-      return;
-    }
+  const conversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
+  );
 
-    handleSelectConversations(newConversations);
-    dispatch(UIActions.setIsCompareMode(true));
+  const handleToggleCompare = () => {
+    dispatch(
+      ConversationsActions.createNewConversations({
+        names: [DEFAULT_CONVERSATION_NAME, DEFAULT_CONVERSATION_NAME],
+      }),
+    );
   };
 
   return (
@@ -81,7 +67,11 @@ export const ChatbarSettings = () => {
         <TooltipTrigger>
           <Import
             highlightColor="green"
-            onImport={handleImportConversations}
+            onImport={(importJSON) => {
+              dispatch(
+                ConversationsActions.importConversations({ data: importJSON }),
+              );
+            }}
             icon={<IconFileArrowLeft size={24} strokeWidth="1.5" />}
           />
         </TooltipTrigger>
@@ -92,7 +82,9 @@ export const ChatbarSettings = () => {
         <TooltipTrigger>
           <div
             className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
-            onClick={() => handleExportConversations()}
+            onClick={() => {
+              dispatch(ConversationsActions.exportConversations());
+            }}
           >
             <IconFileArrowRight size={24} strokeWidth="1.5" />
           </div>
@@ -104,7 +96,11 @@ export const ChatbarSettings = () => {
         <TooltipTrigger>
           <div
             className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
-            onClick={() => handleCreateFolder(t('New folder'), 'chat')}
+            onClick={() =>
+              dispatch(
+                ConversationsActions.createFolder({ name: t('New folder') }),
+              )
+            }
             data-qa="create-folder"
           >
             <FolderPlus height={24} width={24} />
@@ -138,7 +134,7 @@ export const ChatbarSettings = () => {
         onClose={(result) => {
           setIsOpen(false);
           if (result) {
-            handleClearConversations();
+            dispatch(ConversationsActions.clearConversations());
           }
         }}
       />

@@ -2,11 +2,12 @@ import { IconBulb } from '@tabler/icons-react';
 import {
   DragEvent,
   MouseEventHandler,
-  useContext,
   useEffect,
   useRef,
   useState,
 } from 'react';
+
+import { useTranslation } from 'next-i18next';
 
 import useOutsideAlerter from '@/hooks/useOutsideAlerter';
 
@@ -14,27 +15,32 @@ import { exportPrompt } from '@/utils/app/importExport';
 
 import { Prompt } from '@/types/prompt';
 
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+  PromptsActions,
+  PromptsSelectors,
+} from '@/store/prompts/prompts.reducers';
+
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
 import { ContextMenu } from '@/components/Common/ContextMenu';
 import { MoveToFolderMobileModal } from '@/components/Common/MoveToFolderMobileModal';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
 import XmarkIcon from '../../../public/images/icons/xmark.svg';
-import PromptbarContext from '../PromptBar.context';
 import { PromptModal } from './PromptModal';
 
 import classNames from 'classnames';
+import { v4 as uuidv4 } from 'uuid';
 
 interface Props {
   prompt: Prompt;
 }
 
 export const PromptComponent = ({ prompt }: Props) => {
-  const {
-    dispatch: promptDispatch,
-    handleUpdatePrompt,
-    handleDeletePrompt,
-  } = useContext(PromptbarContext);
+  const { t } = useTranslation('chat');
+  const dispatch = useAppDispatch();
+
+  const folders = useAppSelector(PromptsSelectors.selectFolders);
 
   const [showModal, setShowModal] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -45,8 +51,10 @@ export const PromptComponent = ({ prompt }: Props) => {
   const wrapperRef = useRef(null);
 
   const handleUpdate = (prompt: Prompt) => {
-    handleUpdatePrompt(prompt);
-    promptDispatch({ field: 'searchTerm', value: '' });
+    dispatch(
+      PromptsActions.updatePrompt({ promptId: prompt.id, values: prompt }),
+    );
+    dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
     setIsRenaming(false);
   };
 
@@ -55,8 +63,8 @@ export const PromptComponent = ({ prompt }: Props) => {
     e.preventDefault();
 
     if (isDeleting) {
-      handleDeletePrompt(prompt);
-      promptDispatch({ field: 'searchTerm', value: '' });
+      dispatch(PromptsActions.deletePrompt({ promptId: prompt.id }));
+      dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
     }
 
     setIsDeleting(false);
@@ -104,10 +112,30 @@ export const PromptComponent = ({ prompt }: Props) => {
 
     exportPrompt(prompt.id);
   };
-  const movePromptToFolder = (folderId: string) => {
-    const newPrompt = { ...prompt, folderId: folderId };
-    prompt.folderId;
-    handleUpdatePrompt(newPrompt);
+
+  const handleMoveToFolder = ({
+    folderId,
+    isNewFolder,
+  }: {
+    folderId?: string;
+    isNewFolder?: boolean;
+  }) => {
+    let localFolderId = folderId;
+    if (isNewFolder) {
+      localFolderId = uuidv4();
+      dispatch(
+        PromptsActions.createFolder({
+          name: t('New folder'),
+          folderId: localFolderId,
+        }),
+      );
+    }
+    dispatch(
+      PromptsActions.updatePrompt({
+        promptId: prompt.id,
+        values: { folderId: localFolderId },
+      }),
+    );
   };
 
   useEffect(() => {
@@ -174,14 +202,14 @@ export const PromptComponent = ({ prompt }: Props) => {
         >
           <ContextMenu
             featureType="prompt"
-            moveToFolder={movePromptToFolder}
+            folders={folders}
+            onMoveToFolder={handleMoveToFolder}
             onDelete={handleOpenDeleteModal}
             onRename={handleOpenRenameModal}
             onExport={handleExportPrompt}
             onOpenMoveToModal={() => {
               setIsShowMoveToModal(true);
             }}
-            item={prompt}
             highlightColor="violet"
           />
         </div>
@@ -189,9 +217,8 @@ export const PromptComponent = ({ prompt }: Props) => {
       <div className="md:hidden">
         {isShowMoveToModal && (
           <MoveToFolderMobileModal
-            featureType="prompt"
-            item={prompt}
-            moveToFolder={movePromptToFolder}
+            folders={folders}
+            onMoveToFolder={handleMoveToFolder}
             onClose={() => {
               setIsShowMoveToModal(false);
             }}

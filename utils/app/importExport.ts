@@ -34,8 +34,8 @@ export function isPromtsFormat(obj: any) {
   return (
     obj &&
     typeof obj === 'object' &&
-    !obj.hasOwnProperty('version') &&
-    obj.hasOwnProperty('prompts')
+    !Object.prototype.hasOwnProperty.call(obj, 'version') &&
+    Object.prototype.hasOwnProperty.call(obj, 'prompts')
   );
 }
 
@@ -148,86 +148,39 @@ const triggerDownloadPrompt = (data: PromptsHistory) => {
   triggerDownload(data, 'prompt');
 };
 
-export const exportConversation = (conversationId: string) => {
-  let history = localStorage.getItem('conversationHistory');
-  let folders = localStorage.getItem('folders');
-
-  let conversation: Conversation | undefined;
-  let convertedHistory;
-  let convertedFolders;
-
-  if (history) {
-    convertedHistory = JSON.parse(history) as Conversation[];
-    conversation = convertedHistory.filter(
-      ({ id }) => id === conversationId,
-    )[0];
-
-    if (typeof conversation !== 'undefined') {
-      convertedHistory = [conversation];
-    }
-  }
-
-  if (folders) {
-    convertedFolders = JSON.parse(folders) as FolderInterface[];
-
-    if (typeof conversation !== 'undefined') {
-      convertedFolders = convertedFolders.filter(
-        ({ id }) => id === conversation?.folderId,
-      );
-    }
-  }
-
+export const exportConversation = (
+  conversation: Conversation,
+  folder: FolderInterface | undefined,
+) => {
   const data: ExportConversationsFormatV4 = {
     version: 4,
-    history: convertedHistory || [],
-    folders: convertedFolders || [],
+    history: [conversation] || [],
+    folders: folder ? [folder] : [],
   };
 
   triggerDownloadConversation(data);
 };
 
-export const exportConversations = () => {
-  let history = localStorage.getItem('conversationHistory');
-  const localFolders = localStorage.getItem('folders');
-  let folders: any[] = [];
-
-  if (history) {
-    history = JSON.parse(history);
-  }
-
-  if (localFolders) {
-    const foldersParsed: FolderInterface[] = JSON.parse(localFolders);
-    folders = foldersParsed.filter(({ type }) => type === 'chat');
-  }
-
+export const exportConversations = (
+  conversations: Conversation[],
+  folders: FolderInterface[],
+) => {
   const data = {
     version: 4,
-    history: history || [],
+    history: conversations || [],
     folders: folders || [],
   } as ExportConversationsFormatV4;
 
   triggerDownloadConversationsHistory(data);
 };
 
-export const exportPrompts = () => {
-  let prompts = localStorage.getItem('prompts');
-  const promptFolders = localStorage.getItem('folders');
-  let promptsToExport: Prompt[] = [];
-  let promptFoldersToExport: FolderInterface[] = [];
-
-  if (prompts) {
-    promptsToExport = JSON.parse(prompts);
-  }
-
-  if (promptFolders) {
-    const parsedPromptFolders: FolderInterface[] = JSON.parse(promptFolders);
-    promptFoldersToExport = parsedPromptFolders.filter(
-      ({ type }) => type === 'prompt',
-    );
-  }
+export const exportPrompts = (
+  prompts: Prompt[],
+  folders: FolderInterface[],
+) => {
   const data = {
-    prompts: promptsToExport,
-    folders: promptFoldersToExport,
+    prompts,
+    folders,
   };
   triggerDownloadPromptsHistory(data);
 };
@@ -317,11 +270,11 @@ export const importData = (data: SupportedExportFormats): CleanDataResponse => {
   };
 };
 
-export type ImportPromtsResponse = {
+export interface ImportPromtsResponse {
   prompts: Prompt[];
   folders: FolderInterface[];
   isError: boolean;
-};
+}
 export const importPrompts = (
   promptsHistory: PromptsHistory,
 ): ImportPromtsResponse => {

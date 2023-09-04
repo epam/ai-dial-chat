@@ -5,11 +5,8 @@ import { useTranslation } from 'next-i18next';
 import { OpenAIEntityModel } from '@/types/openai';
 
 import { useAppSelector } from '@/store/hooks';
-import {
-  selectModelsMap,
-  selectRecentModelsIds,
-} from '@/store/models/models.reducers';
-import { UISelectors } from '@/store/ui-store/ui.reducers';
+import { ModelsSelectors } from '@/store/models/models.reducers';
+import { UISelectors } from '@/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -26,9 +23,9 @@ export const ConversationSettingsModel = ({
   onModelSelect,
 }: Props) => {
   const { t } = useTranslation();
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
   const theme = useAppSelector(UISelectors.selectThemeState);
-  const modelsMap = useAppSelector(selectModelsMap);
-  const recentModelsIds = useAppSelector(selectRecentModelsIds);
   const [mappedEntities, setMappedEntities] = useState<OpenAIEntityModel[]>([]);
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 

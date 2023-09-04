@@ -4,7 +4,7 @@ import { useTranslation } from 'next-i18next';
 import Image from 'next/image';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { UIActions, UISelectors } from '@/store/ui-store/ui.reducers';
+import { UIActions, UISelectors } from '@/store/ui/ui.reducers';
 
 import UserIcon from '../../../public/images/icons/user.svg';
 import XmarkIcon from '../../../public/images/icons/xmark.svg';

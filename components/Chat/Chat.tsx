@@ -1,9 +1,7 @@
 import {
   MouseEventHandler,
-  MutableRefObject,
   memo,
   useCallback,
-  useContext,
   useEffect,
   useRef,
   useState,
@@ -21,27 +19,17 @@ import { throttle } from '@/utils/data/throttle';
 
 import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
 import { ChatBody, Conversation, Message } from '@/types/chat';
-import { KeyValuePair } from '@/types/data';
 
+import { AddonsActions, AddonsSelectors } from '@/store/addons/addons.reducers';
 import {
-  getAddons,
-  selectAddons,
-  updateRecentAddons,
-} from '@/store/addons/addons.reducers';
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import {
-  getModels,
-  selectDefaultModelId,
-  selectModels,
-  selectModelsError,
-  selectModelsIsLoading,
-  selectModelsMap,
-  updateRecentModels,
-} from '@/store/models/models.reducers';
+import { ModelsActions, ModelsSelectors } from '@/store/models/models.reducers';
+import { PromptsSelectors } from '@/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/store/settings/settings.reducers';
-import { UISelectors } from '@/store/ui-store/ui.reducers';
-
-import HomeContext from '@/pages/api/home/home.context';
+import { UISelectors } from '@/store/ui/ui.reducers';
 
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
@@ -84,10 +72,10 @@ const handleRate = (
 };
 
 const findSelectedConversations = (
-  selectedConversationIds: string[],
+  selectedConversationsIds: string[],
   conversations: Conversation[],
 ) => {
-  const ids = new Set(selectedConversationIds);
+  const ids = new Set(selectedConversationsIds);
 
   return conversations.filter((i) => i != null && ids.has(i.id));
 };
@@ -139,66 +127,34 @@ const clearStateForMessages = (messages: Message[]): Message[] => {
   }));
 };
 
-const setInitialNameForNewChat = (
-  updatedConversation: Conversation,
-  message: Message,
-  localConversations: MutableRefObject<Conversation[]>,
-  handleUpdateConversation: (
-    conversation: Conversation,
-    data: KeyValuePair,
-    localConversations?: Conversation[] | undefined,
-  ) => Conversation[],
-) => {
-  if (
-    updatedConversation.messages.length === 1 &&
-    !updatedConversation.replay.isReplay &&
-    updatedConversation.name === DEFAULT_CONVERSATION_NAME
-  ) {
-    const { content } = message;
-    const customName =
-      content.length > 160 ? content.substring(0, 160) + '...' : content;
-    updatedConversation = {
-      ...updatedConversation,
-      name: customName,
-    };
-    localConversations.current = handleUpdateConversation(
-      updatedConversation,
-      {
-        key: 'name',
-        value: customName,
-      },
-      localConversations.current,
-    );
-  }
-  return updatedConversation;
-};
-
 export const Chat = memo(({ appName }: Props) => {
   const { t } = useTranslation('chat');
 
-  const {
-    state: {
-      conversations,
-      selectedConversationIds,
-      loading,
-      prompts,
-      messageIsStreaming,
-    },
-    handleUpdateConversation,
-    handleSelectConversation,
-    handleSelectConversations,
-    dispatch: homeDispatch,
-  } = useContext(HomeContext);
-
   const dispatch = useAppDispatch();
-  const models = useAppSelector(selectModels);
-  const modelsMap = useAppSelector(selectModelsMap);
-  const modelError = useAppSelector(selectModelsError);
-  const modelsIsLoading = useAppSelector(selectModelsIsLoading);
-  const defaultModelId = useAppSelector(selectDefaultModelId);
+  const models = useAppSelector(ModelsSelectors.selectModels);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const modelError = useAppSelector(ModelsSelectors.selectModelsError);
+  const modelsIsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const defaultModelId = useAppSelector(ModelsSelectors.selectDefaultModelId);
+  const addons = useAppSelector(AddonsSelectors.selectAddons);
   const theme = useAppSelector(UISelectors.selectThemeState);
-  const addons = useAppSelector(selectAddons);
   const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
+  const selectedConversationsIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
+  const messageIsStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
+  const isConversationsLoading = useAppSelector(
+    ConversationsSelectors.selectIsConversationsLoading,
+  );
+  const conversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
+  );
+  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
@@ -207,9 +163,6 @@ export const Chat = memo(({ appName }: Props) => {
   const [showScrollDownButton, setShowScrollDownButton] =
     useState<boolean>(false);
   const [activeReplayIndex, setActiveReplayIndex] = useState<number>(0);
-  const [selectedConversations, setSelectedConversations] = useState<
-    Conversation[]
-  >([]);
   const [mergedMessages, setMergedMessages] = useState<any>([]);
   const [isReplayPaused, setIsReplayPaused] = useState<boolean>(true);
   const [isReplay, setIsReplay] = useState<boolean>(false);
@@ -218,14 +171,11 @@ export const Chat = memo(({ appName }: Props) => {
     {},
   );
 
-  const localConversations = useRef<Conversation[]>(conversations);
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLDivElement>(null);
   const [inputHeight, setInputHeight] = useState<number>(142);
-  const messageIsStreamingAmount = useRef<number>(0);
   const abortController = useRef<AbortController>();
   const [isNotAllowedModel, setIsNotAllowedModel] = useState(false);
   const isStopGenerating = useRef(false);
@@ -244,15 +194,7 @@ export const Chat = memo(({ appName }: Props) => {
     return () => {
       window.removeEventListener('resize', resizeHandler);
     };
-  }, []);
-
-  const handleMessageIsStreamingChange = (amount: number) => {
-    messageIsStreamingAmount.current += amount;
-    homeDispatch({
-      field: 'messageIsStreaming',
-      value: messageIsStreamingAmount.current !== 0,
-    });
-  };
+  }, [inputHeight]);
 
   const isSelectedConversations =
     !!selectedConversations && selectedConversations.length > 0;
@@ -287,14 +229,7 @@ export const Chat = memo(({ appName }: Props) => {
     isLastActiveReplayIndex && isLastMessageFromAssistant;
 
   useEffect(() => {
-    localConversations.current = conversations;
-    if (selectedConversationIds.length > 0) {
-      const selectedConversations = findSelectedConversations(
-        selectedConversationIds,
-        conversations,
-      );
-      setSelectedConversations(selectedConversations);
-
+    if (selectedConversations.length > 0) {
       const mergedMessages = [];
       for (let i = 0; i < selectedConversations[0].messages.length; i++) {
         mergedMessages.push(
@@ -307,19 +242,42 @@ export const Chat = memo(({ appName }: Props) => {
       }
       setMergedMessages([...mergedMessages]);
     }
-  }, [selectedConversationIds, conversations]);
+  }, [selectedConversations]);
 
   useEffect(() => {
-    if (!modelsIsLoading) {
-      const modelIds = models.map((model) => model.id);
-      setIsNotAllowedModel(
-        models.length === 0 ||
-          selectedConversations.some(
-            (conv) => !modelIds.includes(conv.model.id),
-          ),
+    const modelIds = models.map((model) => model.id);
+    const isNotAllowed = modelsIsLoading
+      ? false
+      : models.length === 0 ||
+        selectedConversations.some((conv) => !modelIds.includes(conv.model.id));
+    setIsNotAllowedModel(isNotAllowed);
+  }, [selectedConversations, models, modelsIsLoading]);
+
+  const setInitialNameForNewChat = (
+    updatedConversation: Conversation,
+    message: Message,
+  ) => {
+    if (
+      updatedConversation.messages.length === 1 &&
+      !updatedConversation.replay.isReplay &&
+      updatedConversation.name === DEFAULT_CONVERSATION_NAME
+    ) {
+      const { content } = message;
+      const customName =
+        content.length > 160 ? content.substring(0, 160) + '...' : content;
+      updatedConversation = {
+        ...updatedConversation,
+        name: customName,
+      };
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: updatedConversation.id,
+          values: updatedConversation,
+        }),
       );
     }
-  }, [selectedConversations, models, modelsIsLoading]);
+    return updatedConversation;
+  };
 
   function handleErrorMessage({
     updatedConversation,
@@ -330,8 +288,12 @@ export const Chat = memo(({ appName }: Props) => {
     errorText: string;
     error?: any;
   }) {
-    homeDispatch({ field: 'loading', value: false });
-    handleMessageIsStreamingChange(-1);
+    dispatch(
+      ConversationsActions.updateConversation({
+        id: updatedConversation.id,
+        values: { isLoading: false, isMessageStreaming: false },
+      }),
+    );
 
     const lastMessage =
       updatedConversation.messages[updatedConversation.messages.length - 1];
@@ -350,19 +312,38 @@ export const Chat = memo(({ appName }: Props) => {
             role: 'assistant',
             errorMessage: errorText,
           };
-    localConversations.current = handleUpdateConversation(
-      updatedConversation,
-      {
-        key: 'messages',
-        value: [...otherMessages, assistantErrorMessage],
-      },
-      localConversations.current,
+    dispatch(
+      ConversationsActions.updateConversation({
+        id: updatedConversation.id,
+        values: {
+          messages: [...otherMessages, assistantErrorMessage],
+        },
+      }),
     );
 
     if (error) {
       console.error(error);
     }
   }
+
+  const updateConversation = (
+    conversation: Conversation,
+    updatedValues: Partial<Conversation>,
+  ) => {
+    const updatedConversation = {
+      ...conversation,
+      ...updatedValues,
+    };
+
+    dispatch(
+      ConversationsActions.updateConversation({
+        id: conversation.id,
+        values: updatedConversation,
+      }),
+    );
+
+    return updatedConversation;
+  };
 
   const handleSend = useCallback(
     async (
@@ -371,72 +352,66 @@ export const Chat = memo(({ appName }: Props) => {
       deleteCount = 0,
       activeReplayIndex = 0,
     ) => {
+      let localUpdatedConversation: Conversation = conversation;
       isStopGenerating.current = false;
       if (!conversation) {
         return;
       }
 
-      dispatch(updateRecentModels({ modelId: conversation.model.id }));
+      dispatch(
+        ModelsActions.updateRecentModels({ modelId: conversation.model.id }),
+      );
       if (
         conversation.selectedAddons.length > 0 &&
         modelsMap[conversation.model.id]?.type !== 'application'
       ) {
-        dispatch(updateRecentAddons({ addonIds: conversation.selectedAddons }));
+        dispatch(
+          AddonsActions.updateRecentAddons({
+            addonIds: conversation.selectedAddons,
+          }),
+        );
       }
 
-      let updatedConversation: Conversation = {
-        ...conversation,
+      localUpdatedConversation = updateConversation(localUpdatedConversation, {
         lastActivityDate: Date.now(),
-      };
+      });
 
       if (deleteCount) {
         const updatedMessages = [...conversation.messages];
         for (let i = 0; i < deleteCount; i++) {
           updatedMessages.pop();
         }
-        updatedConversation = {
-          ...updatedConversation,
-          messages: [...updatedMessages, message],
-          replay: {
-            ...updatedConversation.replay,
-            activeReplayIndex: activeReplayIndex,
-          },
-        };
-        localConversations.current = handleUpdateConversation(
-          updatedConversation,
+        localUpdatedConversation = updateConversation(
+          localUpdatedConversation,
           {
-            key: 'messages',
-            value: [...updatedMessages, message],
+            messages: [...updatedMessages, message],
+            replay: {
+              ...localUpdatedConversation.replay,
+              activeReplayIndex: activeReplayIndex,
+            },
           },
-          localConversations.current,
         );
       } else {
-        updatedConversation = {
-          ...updatedConversation,
-          messages: [...conversation.messages, message],
-          replay: {
-            ...updatedConversation.replay,
-            activeReplayIndex: activeReplayIndex,
-          },
-        };
-        localConversations.current = handleUpdateConversation(
-          updatedConversation,
+        localUpdatedConversation = updateConversation(
+          localUpdatedConversation,
           {
-            key: 'messages',
-            value: [...conversation.messages, message],
+            messages: [...conversation.messages, message],
+            replay: {
+              ...localUpdatedConversation.replay,
+              activeReplayIndex: activeReplayIndex,
+            },
           },
-          localConversations.current,
         );
       }
-      homeDispatch({ field: 'loading', value: true });
-      handleMessageIsStreamingChange(1);
 
-      updatedConversation = setInitialNameForNewChat(
-        updatedConversation,
+      localUpdatedConversation = setInitialNameForNewChat(
+        localUpdatedConversation,
         message,
-        localConversations,
-        handleUpdateConversation,
       );
+      localUpdatedConversation = updateConversation(localUpdatedConversation, {
+        isLoading: true,
+        isMessageStreaming: true,
+      });
 
       const lastModel = models.find(
         (model) => model.id === conversation.model.id,
@@ -452,23 +427,23 @@ export const Chat = memo(({ appName }: Props) => {
       const conversationModelType = conversation.model.type;
       let modelAdditionalSettings = {};
 
-      if (conversationModelType === 'model')
+      if (conversationModelType === 'model') {
         modelAdditionalSettings = {
-          prompt: updatedConversation.prompt,
-          temperature: updatedConversation.temperature,
+          prompt: localUpdatedConversation.prompt,
+          temperature: localUpdatedConversation.temperature,
           selectedAddons,
         };
-
-      if (conversationModelType === 'assistant' && assistantModelId)
+      }
+      if (conversationModelType === 'assistant' && assistantModelId) {
         modelAdditionalSettings = {
-          temperature: updatedConversation.temperature,
+          temperature: localUpdatedConversation.temperature,
           selectedAddons,
           assistantModelId,
         };
-
+      }
       const chatBody: ChatBody = {
         model: conversation.model,
-        messages: updatedConversation.messages.map((message) => ({
+        messages: localUpdatedConversation.messages.map((message) => ({
           content: message.content,
           role: message.role,
           like: void 0,
@@ -501,13 +476,18 @@ export const Chat = memo(({ appName }: Props) => {
         if (error.name === 'AbortError') {
           // Do not show error for user abort
           if (isStopGenerating.current) {
-            homeDispatch({ field: 'loading', value: false });
-            handleMessageIsStreamingChange(-1);
+            localUpdatedConversation = updateConversation(
+              localUpdatedConversation,
+              {
+                isLoading: false,
+                isMessageStreaming: false,
+              },
+            );
             return;
           }
 
           handleErrorMessage({
-            updatedConversation,
+            updatedConversation: localUpdatedConversation,
             errorText: t(errorsMessages.timeoutError),
             error,
           });
@@ -515,7 +495,7 @@ export const Chat = memo(({ appName }: Props) => {
         }
 
         handleErrorMessage({
-          updatedConversation,
+          updatedConversation: localUpdatedConversation,
           errorText: t(errorsMessages.generalClient),
           error,
         });
@@ -532,7 +512,7 @@ export const Chat = memo(({ appName }: Props) => {
           t(errorsMessages.generalServer, { ns: 'common' }),
         );
         handleErrorMessage({
-          updatedConversation,
+          updatedConversation: localUpdatedConversation,
           errorText: t(errorsMessages.generalServer, { ns: 'common' }),
         });
         return;
@@ -540,22 +520,25 @@ export const Chat = memo(({ appName }: Props) => {
       const data = response.body;
       if (!data) {
         handleErrorMessage({
-          updatedConversation,
+          updatedConversation: localUpdatedConversation,
           errorText: t(errorsMessages.generalServer, { ns: 'common' }),
         });
 
         return { error: true };
       }
 
-      homeDispatch({ field: 'loading', value: false });
+      localUpdatedConversation = updateConversation(localUpdatedConversation, {
+        isLoading: false,
+        isMessageStreaming: true,
+      });
       const reader = data.getReader();
       const decoder = new TextDecoder();
       const messageModel: Message['model'] = {
-        id: updatedConversation.model.id,
-        name: updatedConversation.model.name,
+        id: localUpdatedConversation.model.id,
+        name: localUpdatedConversation.model.name,
       };
       let done = false;
-      const newMessage: Message = {
+      let newMessage: Message = {
         content: '',
         model: messageModel,
         role: 'assistant',
@@ -566,7 +549,7 @@ export const Chat = memo(({ appName }: Props) => {
 
       timeoutId = undefined;
       let updatedMessages: Message[] = [
-        ...updatedConversation.messages,
+        ...localUpdatedConversation.messages,
         newMessage,
       ];
       while (!done) {
@@ -579,29 +562,29 @@ export const Chat = memo(({ appName }: Props) => {
           doneReading = result.done;
         } catch (error: any) {
           updatedMessages = filterUnfinishedStages(updatedMessages);
-          updatedConversation = {
-            ...updatedConversation,
-            messages: updatedMessages,
-          };
+          localUpdatedConversation = updateConversation(
+            localUpdatedConversation,
+            {
+              messages: updatedMessages,
+              isLoading: false,
+              isMessageStreaming: false,
+            },
+          );
 
           if (error.name === 'AbortError') {
             // Do not show error for user abort
             if (isStopGenerating.current) {
-              homeDispatch({ field: 'loading', value: false });
-              handleMessageIsStreamingChange(-1);
-              localConversations.current = handleUpdateConversation(
-                updatedConversation,
-                {
-                  key: 'messages',
-                  value: updatedMessages,
-                },
-                localConversations.current,
+              dispatch(
+                ConversationsActions.updateConversation({
+                  id: conversation.id,
+                  values: localUpdatedConversation,
+                }),
               );
               return;
             }
 
             handleErrorMessage({
-              updatedConversation,
+              updatedConversation: localUpdatedConversation,
               errorText: t(errorsMessages.timeoutError),
               error,
             });
@@ -609,7 +592,7 @@ export const Chat = memo(({ appName }: Props) => {
           }
 
           handleErrorMessage({
-            updatedConversation,
+            updatedConversation: localUpdatedConversation,
             errorText: t(errorsMessages.generalClient),
             error,
           });
@@ -627,7 +610,7 @@ export const Chat = memo(({ appName }: Props) => {
         }
         const chunkValue = parseStreamMessages(eventData);
         eventData = '';
-        mergeMessages(newMessage, chunkValue);
+        newMessage = mergeMessages(newMessage, chunkValue);
 
         updatedMessages = updatedMessages.map((message, index) => {
           if (index === updatedMessages.length - 1) {
@@ -635,22 +618,23 @@ export const Chat = memo(({ appName }: Props) => {
           }
           return message;
         });
-        updatedConversation = {
-          ...updatedConversation,
-          messages: updatedMessages,
-        };
-        localConversations.current = handleUpdateConversation(
-          updatedConversation,
+        localUpdatedConversation = updateConversation(
+          localUpdatedConversation,
           {
-            key: 'messages',
-            value: updatedMessages,
+            messages: updatedMessages,
           },
-          localConversations.current,
         );
       }
 
-      homeDispatch({ field: 'loading', value: false });
-      handleMessageIsStreamingChange(-1);
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: localUpdatedConversation.id,
+          values: {
+            isLoading: false,
+            isMessageStreaming: false,
+          },
+        }),
+      );
     },
     [conversations, models],
   );
@@ -662,13 +646,15 @@ export const Chat = memo(({ appName }: Props) => {
       }
       const messages = [...conversation.messages];
       messages[index] = editedMessage;
-      handleUpdateConversation(conversation, {
-        key: 'messages',
-        value: messages,
-      });
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: conversation.id,
+          values: { messages },
+        }),
+      );
       handleRate(conversation.id, editedMessage, conversation.model);
     },
-    [handleUpdateConversation],
+    [dispatch],
   );
 
   useEffect(() => {
@@ -741,10 +727,12 @@ export const Chat = memo(({ appName }: Props) => {
       confirm(t<string>('Are you sure you want to clear all messages?')) &&
       conversation
     ) {
-      handleUpdateConversation(conversation, {
-        key: 'messages',
-        value: [],
-      });
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: conversation.id,
+          values: { messages: [] },
+        }),
+      );
     }
   };
 
@@ -754,12 +742,7 @@ export const Chat = memo(({ appName }: Props) => {
     isError = isErrorMessage,
   ) => {
     if (replayUserMessagesStack && !!replayUserMessagesStack[replayIndex]) {
-      const selectedConversationsLocal = findSelectedConversations(
-        selectedConversationIds,
-        [...localConversations.current],
-      );
-
-      const sendToAllSelectedConversations = selectedConversationsLocal.map(
+      const sendToAllSelectedConversations = selectedConversations.map(
         (conversation) => {
           return handleSend(
             conversation,
@@ -813,138 +796,112 @@ export const Chat = memo(({ appName }: Props) => {
   };
   const handleReplayStop = () => {
     if (isReplayFinished) {
-      const selectedConversations = findSelectedConversations(
-        selectedConversationIds,
-        localConversations.current,
-      );
       selectedConversations.forEach((conv) => {
         const updatedReplay = {
           ...conv.replay,
           isReplay: false,
         };
-        handleUpdateConversation(conv, { key: 'replay', value: updatedReplay });
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: conv.id,
+            values: {
+              replay: updatedReplay,
+            },
+          }),
+        );
       });
       setIsReplayPaused(true);
     }
   };
 
-  const handleSelectModel = (
-    conversation: Conversation,
-    modelId: string,
-  ): Conversation => {
+  const handleSelectModel = (conversation: Conversation, modelId: string) => {
     const newAiEntity = models.find(
       ({ id }) => id === modelId,
     ) as OpenAIEntityModel;
-    const updatedConversation: Conversation = {
-      ...conversation,
-      model: newAiEntity,
-    };
-    handleUpdateConversation(conversation, {
-      key: 'model',
-      value: newAiEntity,
-    });
-    if (newAiEntity.type === 'assistant') {
-      handleUpdateConversation(updatedConversation, {
-        key: 'assistantModelId',
-        value: DEFAULT_ASSISTANT_SUBMODEL.id,
-      });
-    } else {
-      handleUpdateConversation(updatedConversation, {
-        key: 'assistantModelId',
-        value: undefined,
-      });
-    }
-    return updatedConversation;
+
+    dispatch(
+      ConversationsActions.updateConversation({
+        id: conversation.id,
+        values: {
+          model: newAiEntity,
+          assistantModelId:
+            newAiEntity.type === 'assistant'
+              ? DEFAULT_ASSISTANT_SUBMODEL.id
+              : undefined,
+        },
+      }),
+    );
   };
 
   const handleSelectAssistantSubModel = (
     conversation: Conversation,
     modelId: string,
-  ): Conversation => {
-    handleUpdateConversation(conversation, {
-      key: 'assistantModelId',
-      value: modelId,
-    });
-
-    return { ...conversation, assistantModelId: modelId };
+  ) => {
+    dispatch(
+      ConversationsActions.updateConversation({
+        id: conversation.id,
+        values: { assistantModelId: modelId },
+      }),
+    );
   };
 
-  const handleOnChangeAddon = (
-    conversation: Conversation,
-    addonId: string,
-  ): Conversation => {
+  const handleOnChangeAddon = (conversation: Conversation, addonId: string) => {
     const isAddonInConversation = conversation.selectedAddons.some(
       (id) => id === addonId,
     );
-    let updatedConversation = conversation;
     if (isAddonInConversation) {
       const filteredAddons = conversation.selectedAddons.filter(
         (id) => id !== addonId,
       );
-      handleUpdateConversation(conversation, {
-        key: 'selectedAddons',
-        value: filteredAddons,
-      });
-      updatedConversation = {
-        ...conversation,
-        selectedAddons: filteredAddons,
-      };
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: conversation.id,
+          values: { selectedAddons: filteredAddons },
+        }),
+      );
     } else {
-      handleUpdateConversation(conversation, {
-        key: 'selectedAddons',
-        value: conversation.selectedAddons.concat(addonId),
-      });
-      updatedConversation = {
-        ...conversation,
-        selectedAddons: conversation.selectedAddons.concat(addonId),
-      };
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: conversation.id,
+          values: {
+            selectedAddons: conversation.selectedAddons.concat(addonId),
+          },
+        }),
+      );
     }
-
-    return updatedConversation;
   };
 
   const handleOnApplyAddons = (
     conversation: Conversation,
     addonIds: string[],
-  ): Conversation => {
-    const updatedConversation: Conversation = {
-      ...conversation,
-      selectedAddons: addonIds,
-    };
-    handleUpdateConversation(updatedConversation, {
-      key: 'selectedAddons',
-      value: addonIds,
-    });
-
-    return updatedConversation;
+  ) => {
+    dispatch(
+      ConversationsActions.updateConversation({
+        id: conversation.id,
+        values: { selectedAddons: addonIds },
+      }),
+    );
   };
 
-  const handleChangePrompt = (
-    conversation: Conversation,
-    prompt: string,
-  ): Conversation => {
-    handleUpdateConversation(conversation, {
-      key: 'prompt',
-      value: prompt,
-    });
-
-    return {
-      ...conversation,
-      prompt,
-    };
+  const handleChangePrompt = (conversation: Conversation, prompt: string) => {
+    dispatch(
+      ConversationsActions.updateConversation({
+        id: conversation.id,
+        values: { prompt },
+      }),
+    );
   };
+
   const handleChangeTemperature = (
     conversation: Conversation,
     temperature: number,
   ) => {
-    handleUpdateConversation(conversation, {
-      key: 'temperature',
-      value: temperature,
-    });
-    return {
-      ...conversation,
-      temperature,
-    };
+    dispatch(
+      ConversationsActions.updateConversation({
+        id: conversation.id,
+        values: { temperature },
+      }),
+    );
   };
 
   const handleDeleteMessage = (message: Message) => {
@@ -964,27 +921,23 @@ export const Chat = memo(({ appName }: Props) => {
       } else {
         messages.splice(findIndex, 1);
       }
-      const updatedConversation = {
-        ...conversation,
-        messages,
-      };
 
-      handleUpdateConversation(updatedConversation, {
-        key: 'messages',
-        value: messages,
-      });
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: conversation.id,
+          values: { messages },
+        }),
+      );
     });
   };
 
   const onSendMessage = (message: Message) => {
-    localConversations.current = conversations;
     selectedConversations.forEach((conv) => {
       handleSend(conv, message, 0);
     });
   };
 
   const onRegenerateMessage = () => {
-    localConversations.current = conversations;
     selectedConversations.forEach((conv) => {
       const lastUserMessageIndex = conv.messages
         .map((msg) => msg.role)
@@ -1000,7 +953,7 @@ export const Chat = memo(({ appName }: Props) => {
   useEffect(() => {
     if (
       isReplay &&
-      !loading &&
+      !isConversationsLoading &&
       !messageIsStreaming &&
       !isEmptySelectedConversation &&
       isLastMessageFromAssistant &&
@@ -1016,9 +969,9 @@ export const Chat = memo(({ appName }: Props) => {
   }, [messageIsStreaming, activeReplayIndex, selectedConversations]);
 
   useEffect(() => {
-    if (selectedConversationIds.length > 0) {
+    if (selectedConversationsIds.length > 0) {
       const selectedConversations = findSelectedConversations(
-        selectedConversationIds,
+        selectedConversationsIds,
         conversations,
       );
 
@@ -1031,12 +984,10 @@ export const Chat = memo(({ appName }: Props) => {
         );
       }
     }
-  }, [selectedConversationIds]);
+  }, [selectedConversationsIds]);
 
   const handleApplyChatSettings = () => {
-    let localConversations = conversations;
     selectedConversations.forEach((conversation) => {
-      let localConv = conversation;
       const temporarySettings:
         | {
             modelId: string | undefined;
@@ -1048,44 +999,26 @@ export const Chat = memo(({ appName }: Props) => {
         | undefined =
         selectedConversationsTemporarySettings.current[conversation.id];
       if (temporarySettings) {
-        localConv = {
-          ...localConv,
-          messages: clearStateForMessages(localConv.messages),
-        };
-        if (temporarySettings.modelId) {
-          localConv = handleSelectModel(localConv, temporarySettings.modelId);
-        }
-        localConv = handleChangePrompt(localConv, temporarySettings.prompt);
-        localConv = handleChangeTemperature(
-          localConv,
-          temporarySettings.temperature,
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: conversation.id,
+            values: { messages: clearStateForMessages(conversation.messages) },
+          }),
         );
+        if (temporarySettings.modelId) {
+          handleSelectModel(conversation, temporarySettings.modelId);
+        }
+        handleChangePrompt(conversation, temporarySettings.prompt);
+        handleChangeTemperature(conversation, temporarySettings.temperature);
         if (temporarySettings.currentAssistentModelId) {
-          localConv = handleSelectAssistantSubModel(
-            localConv,
+          handleSelectAssistantSubModel(
+            conversation,
             temporarySettings.currentAssistentModelId,
           );
         }
         if (temporarySettings.addonsIds) {
-          localConv = handleOnApplyAddons(
-            localConv,
-            temporarySettings.addonsIds,
-          );
+          handleOnApplyAddons(conversation, temporarySettings.addonsIds);
         }
-
-        // Hack for syncing state after multiple updates
-        localConversations = localConversations.map((conv) => {
-          if (conv.id === localConv.id) {
-            return localConv;
-          }
-
-          return conv;
-        });
-        localConversations = handleUpdateConversation(
-          localConv,
-          { key: 'id', value: localConv.id },
-          localConversations,
-        );
       }
     });
   };
@@ -1199,7 +1132,6 @@ export const Chat = memo(({ appName }: Props) => {
                         enabledFeatures.has('top-settings') && (
                           <div className={`z-10 flex flex-col `}>
                             <ChatHeader
-                              messageIsStreaming={messageIsStreaming}
                               conversation={conv}
                               isCompareMode={isCompareMode}
                               isShowChatInfo={enabledFeatures.has(
@@ -1214,22 +1146,20 @@ export const Chat = memo(({ appName }: Props) => {
                               isShowSettings={isShowChatSettings}
                               setShowSettings={(isShow) => {
                                 if (isShow) {
-                                  dispatch(getModels());
-                                  dispatch(getAddons());
+                                  dispatch(ModelsActions.getModels());
+                                  dispatch(AddonsActions.getAddons());
                                 }
                                 setIsShowChatSettings(isShow);
                               }}
-                              selectedConversationIds={selectedConversationIds}
+                              selectedConversationIds={selectedConversationsIds}
                               onClearConversation={() =>
                                 handleClearConversation(conv)
                               }
-                              onUnselectConversation={() => {
-                                const filteredSelectedConversation =
-                                  selectedConversations.filter(
-                                    ({ id }) => id !== conv.id,
-                                  )[0];
-                                handleSelectConversation(
-                                  filteredSelectedConversation,
+                              onUnselectConversation={(id) => {
+                                dispatch(
+                                  ConversationsActions.unselectConversations({
+                                    conversationIds: [id],
+                                  }),
                                 );
                               }}
                             />
@@ -1297,25 +1227,22 @@ export const Chat = memo(({ appName }: Props) => {
                         </div>
                       ),
                     )}
-                    {loading && (
-                      <div className={'flex w-full'}>
-                        {selectedConversations.map(({ model, id }) => {
-                          return (
-                            <div
-                              key={id}
-                              className={`${
-                                isCompareMode &&
-                                selectedConversations.length > 1
-                                  ? 'w-[50%]'
-                                  : 'w-full'
-                              }`}
-                            >
-                              <ChatLoader modelId={model.id} theme={theme} />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                    <div className={'flex w-full'}>
+                      {selectedConversations.map(({ model, id, isLoading }) => (
+                        <div
+                          key={id}
+                          className={`${
+                            isCompareMode && selectedConversations.length > 1
+                              ? 'w-[50%]'
+                              : 'w-full'
+                          }`}
+                        >
+                          {isLoading && (
+                            <ChatLoader modelId={model.id} theme={theme} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
                     <div
                       className="shrink-0 "
                       style={{ height: inputHeight - 10 }}
@@ -1358,10 +1285,14 @@ export const Chat = memo(({ appName }: Props) => {
                     conversations={conversations}
                     selectedConversations={selectedConversations}
                     onConversationSelect={(conversation) => {
-                      handleSelectConversations([
-                        selectedConversations[0],
-                        conversation,
-                      ]);
+                      dispatch(
+                        ConversationsActions.selectConversations({
+                          conversationIds: [
+                            selectedConversations[0].id,
+                            conversation.id,
+                          ],
+                        }),
+                      );
                     }}
                   />
                   <div

@@ -5,7 +5,6 @@ import {
   MutableRefObject,
   forwardRef,
   useCallback,
-  useContext,
   useEffect,
   useRef,
   useState,
@@ -18,11 +17,11 @@ import { isMobile } from '@/utils/app/mobile';
 import { Message } from '@/types/chat';
 import { Prompt } from '@/types/prompt';
 
+import { ConversationsSelectors } from '@/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/store/hooks';
-import { selectModelsIsLoading } from '@/store/models/models.reducers';
+import { ModelsSelectors } from '@/store/models/models.reducers';
+import { PromptsSelectors } from '@/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/store/settings/settings.reducers';
-
-import HomeContext from '@/pages/api/home/home.context';
 
 import ArrowNarrowDown from '../../public/images/icons/arrow-narrow-down.svg';
 import RefreshCWAlt from '../../public/images/icons/refresh-cw-alt.svg';
@@ -57,10 +56,6 @@ export const ChatInput = forwardRef(
   ) => {
     const { t } = useTranslation('chat');
 
-    const {
-      state: { messageIsStreaming, prompts },
-    } = useContext(HomeContext);
-
     const [content, setContent] = useState<string>();
     const [isTyping, setIsTyping] = useState<boolean>(false);
     const [showPromptList, setShowPromptList] = useState(false);
@@ -69,7 +64,13 @@ export const ChatInput = forwardRef(
     const [variables, setVariables] = useState<string[]>([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [showPluginSelect, setShowPluginSelect] = useState(false);
-    const isModelsLoading = useAppSelector(selectModelsIsLoading);
+    const isModelsLoading = useAppSelector(
+      ModelsSelectors.selectModelsIsLoading,
+    );
+    const prompts = useAppSelector(PromptsSelectors.selectPrompts);
+    const messageIsStreaming = useAppSelector(
+      ConversationsSelectors.selectIsConversationsStreaming,
+    );
     const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
     const footerHtmlMessage = useAppSelector(
       SettingsSelectors.selectFooterHtmlMessage,
@@ -80,9 +81,19 @@ export const ChatInput = forwardRef(
 
     const promptListRef = useRef<HTMLUListElement | null>(null);
 
-    const filteredPrompts = prompts.filter((prompt) =>
-      prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
+    const [filteredPrompts, setFilteredPrompts] = useState(() =>
+      prompts.filter((prompt) =>
+        prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
+      ),
     );
+
+    useEffect(() => {
+      setFilteredPrompts(
+        prompts.filter((prompt) =>
+          prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
+        ),
+      );
+    }, [prompts, promptInputValue]);
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const value = e.target.value;

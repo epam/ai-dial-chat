@@ -19,9 +19,6 @@
       "error",
       { "argsIgnorePattern": "^_" }
     ],
-    "no-restricted-imports": [
-      "error",
-      { "paths": ["react-i18next", "i18next"] }
-    ]
+    "no-restricted-imports": ["error", { "paths": ["react-i18next"] }]
   }
 }
