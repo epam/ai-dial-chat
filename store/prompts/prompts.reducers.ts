@@ -134,7 +134,7 @@ const selectPrompts = createSelector([rootSelector], (state) => {
   return state.prompts;
 });
 const selectFolders = createSelector([rootSelector], (state) => {
-  return state.folders;
+  return [...state.folders].sort((a, b) => a.name.localeCompare(b.name));
 });
 const selectSearchTerm = createSelector([rootSelector], (state) => {
   return state.searchTerm;
