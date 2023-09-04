@@ -122,7 +122,9 @@ export const Addons = ({
             <>
               <span className="text-gray-500">{t('Recent')}</span>
               <div className="flex flex-wrap gap-1">
-                {filteredRecentAddons.map((addon) => getAddon(addon, false))}
+                {filteredRecentAddons
+                  .map((addon) => getAddon(addon, false))
+                  .filter(Boolean)}
               </div>
             </>
           )}
