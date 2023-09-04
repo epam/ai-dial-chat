@@ -13,6 +13,7 @@ export class AuthWindowLocationLike {
     this.authWindow.onload = this.resolve;
     this.authWindow.onerror = this.reject;
     this.authWindow.onabort = this.reject;
+    this.authWindow.opener = null;
   }
 
   protected readiness = new Promise<void>((resolve, reject) => {
