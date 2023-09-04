@@ -95,8 +95,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     let tokenCount = prompt_tokens.length + tokens_per_message;
     let messagesToSend: Message[] = [];
 
-    messages.splice(1000);
-    for (let i = messages.length - 1; i >= 0; i--) {
+    const length = Math.min(messages.length, 1000);
+    for (let i = length - 1; i >= 0; i--) {
       if (!messages[i]) {
         break;
       }
