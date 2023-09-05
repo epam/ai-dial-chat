@@ -7,13 +7,13 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 export interface SettingsState {
   isIframe: boolean;
   footerHtmlMessage: string;
-  enabledFeatures: Set<Feature>;
+  enabledFeatures: Feature[];
 }
 
 const initialState: SettingsState = {
   isIframe: false,
   footerHtmlMessage: '',
-  enabledFeatures: new Set([]),
+  enabledFeatures: [],
 };
 
 export const settingsSlice = createSlice({
@@ -52,7 +52,7 @@ const selectFooterHtmlMessage = createSelector([rootSelector], (state) => {
 });
 
 const selectEnabledFeatures = createSelector([rootSelector], (state) => {
-  return state.enabledFeatures;
+  return new Set(state.enabledFeatures);
 });
 
 export const SettingsActions = settingsSlice.actions;

@@ -8,14 +8,14 @@ import {
   isExportFormatV3,
   isExportFormatV4,
   isLatestExportFormat,
-  isPromtsFormat,
+  isPromtsFormat
 } from '@/utils/app/importExport';
 
 import {
   ExportFormatV1,
   ExportFormatV2,
   ExportFormatV4,
-  PromptsHistory,
+  PromptsHistory
 } from '@/types/export';
 import { OpenAIEntityModelID, OpenAIEntityModels } from '@/types/openai';
 
@@ -115,6 +115,8 @@ describe('cleanData Functions', () => {
             replay: defaultReplay,
             selectedAddons: [],
             assistantModelId: undefined,
+            isLoading: false,
+            isMessageStreaming: false,
           },
         ],
         folders: [],
@@ -175,6 +177,8 @@ describe('cleanData Functions', () => {
             replay: defaultReplay,
             selectedAddons: [],
             assistantModelId: undefined,
+            isLoading: false,
+            isMessageStreaming: false,
           },
         ],
         folders: [
@@ -258,6 +262,8 @@ describe('cleanData Functions', () => {
             replay: defaultReplay,
             selectedAddons: [],
             assistantModelId: undefined,
+            isLoading: false,
+            isMessageStreaming: false,
           },
         ],
         folders: [

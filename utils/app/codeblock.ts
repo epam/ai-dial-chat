@@ -1,6 +1,4 @@
-interface languageMap {
-  [key: string]: string | undefined;
-}
+type languageMap = Record<string, string | undefined>;
 
 export const programmingLanguages: languageMap = {
   javascript: '.js',
@@ -27,13 +25,4 @@ export const programmingLanguages: languageMap = {
   html: '.html',
   css: '.css',
   // add more file extensions here, make sure the key is same as language prop in CodeBlock.tsx component
-};
-
-export const generateRandomString = (length: number, lowercase = false) => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXY3456789'; // excluding similar looking characters like Z, 2, I, 1, O, 0
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return lowercase ? result.toLowerCase() : result;
 };

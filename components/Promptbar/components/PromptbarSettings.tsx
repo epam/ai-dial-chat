@@ -3,13 +3,14 @@ import {
   IconFileArrowRight,
   IconTrashX,
 } from '@tabler/icons-react';
-import { FC, useContext, useState } from 'react';
+import { FC, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { Prompt } from '@/types/prompt';
 
-import HomeContext from '@/pages/api/home/home.context';
+import { useAppDispatch } from '@/store/hooks';
+import { PromptsActions } from '@/store/prompts/prompts.reducers';
 
 import { ConfirmDialog } from '@/components/Common/ConfirmDialog';
 import {
@@ -20,7 +21,6 @@ import {
 import { Import } from '@/components/Settings/Import';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
-import PromptbarContext from '../PromptBar.context';
 
 interface PromptbarSettingsProps {
   allPrompts: Prompt[];
@@ -29,9 +29,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
   allPrompts,
 }) => {
   const { t } = useTranslation('promptbar');
-  const { handleExportPrompts, handleImportPrompts, handleClearAllPrompts } =
-    useContext(PromptbarContext);
-  const { handleCreateFolder } = useContext(HomeContext);
+  const dispatch = useAppDispatch();
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -56,7 +54,11 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
         <TooltipTrigger>
           <Import
             highlightColor="violet"
-            onImport={handleImportPrompts}
+            onImport={(promptsJSON) => {
+              dispatch(
+                PromptsActions.importPrompts({ promptsHistory: promptsJSON }),
+              );
+            }}
             icon={
               <IconFileArrowLeft
                 className="hover:text-violet"
@@ -73,7 +75,9 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
         <TooltipTrigger>
           <div
             className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet md:h-[42px] md:w-[42px]"
-            onClick={() => handleExportPrompts()}
+            onClick={() => {
+              dispatch(PromptsActions.exportPrompts());
+            }}
           >
             <IconFileArrowRight size={24} strokeWidth="1.5" />
           </div>
@@ -85,7 +89,9 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
         <TooltipTrigger>
           <div
             className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet md:h-[42px] md:w-[42px]"
-            onClick={() => handleCreateFolder(t('New folder'), 'prompt')}
+            onClick={() => {
+              dispatch(PromptsActions.createFolder({ name: t('New folder') }));
+            }}
           >
             <FolderPlus height={24} width={24} />
           </div>
@@ -104,7 +110,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
         onClose={(result) => {
           setIsOpen(false);
           if (result) {
-            handleClearAllPrompts();
+            dispatch(PromptsActions.clearPrompts());
           }
         }}
       />

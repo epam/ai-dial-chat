@@ -95,7 +95,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     let tokenCount = prompt_tokens.length + tokens_per_message;
     let messagesToSend: Message[] = [];
 
-    for (let i = messages.length - 1; i >= 0; i--) {
+    const length = Math.min(messages.length, 1000);
+    for (let i = length - 1; i >= 0; i--) {
+      if (!messages[i]) {
+        break;
+      }
       const message = {
         role: messages[i].role,
         content: messages[i].content,
@@ -153,7 +157,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         return res.status(500).send(errorsMessages[429]);
       }
       // return new Response('Error', { status: 500, statusText: error.message });
-      return res.status(500).send(error.message);
+      return res.status(500).send(errorsMessages.generalServer);
     } else {
       // return new Response('Error', { status: 500 });
       return res.status(500).send('Error');

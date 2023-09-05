@@ -39,6 +39,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               href={attachment.reference_url}
               target="_blank"
               className="shrink-0"
+              rel="noopener noreferrer"
             >
               <Link
                 height={18}
@@ -121,6 +122,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             <a
               href={attachment.reference_url}
               target="_blank"
+              rel="noopener noreferrer"
               className="mt-3 block text-blue-500"
             >
               {t('Reference...')}

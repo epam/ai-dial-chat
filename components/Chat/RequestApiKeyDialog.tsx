@@ -1,9 +1,10 @@
 import { IconAsterisk, IconX } from '@tabler/icons-react';
-import { FC, MutableRefObject, useEffect, useRef } from 'react';
+import { FC, MutableRefObject, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { useTranslation } from 'next-i18next';
 
+import { onChangeHandler } from '@/utils/app/componentsHelpers';
 import { showAPIToastError } from '@/utils/app/errors';
 
 import { RequestAPIKeyBody } from '@/types/request-api-key';
@@ -94,6 +95,15 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
     notClientProjectUsageAgreementInputRef,
   ];
 
+  const [projectName, setProjectName] = useState<string>('');
+  const [scenario, setScenario] = useState<string>('');
+  const [businessJustification, setBusinessJustification] =
+    useState<string>('');
+  const [projectEndDate, setProjectEndDate] = useState<string>('');
+  const [techLeadName, setTechLeadName] = useState<string>('');
+  const [streamName, setStreamName] = useState<string>('');
+  const [cost, setCost] = useState<string>('');
+
   const date = new Date();
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -157,10 +167,14 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               <input
                 ref={projectNameInputRef}
                 name="projectNameInput"
+                value={projectName}
                 required
                 type="text"
                 onBlur={(e) => {
                   e.target.classList.add('invalid:border-red-500');
+                }}
+                onChange={() => {
+                  onChangeHandler(projectNameInputRef, setProjectName);
                 }}
                 className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
               ></input>
@@ -176,10 +190,14 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               <input
                 ref={streamNameInputRef}
                 name="streamNameInput"
+                value={streamName}
                 required
                 type="text"
                 onBlur={(e) => {
                   e.target.classList.add('invalid:border-red-500');
+                }}
+                onChange={() => {
+                  onChangeHandler(streamNameInputRef, setStreamName);
                 }}
                 className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
               ></input>
@@ -197,10 +215,14 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               <input
                 ref={techLeadNameInputRef}
                 name="techLeadNameInput"
+                value={techLeadName}
                 required
                 type="text"
                 onBlur={(e) => {
                   e.target.classList.add('invalid:border-red-500');
+                }}
+                onChange={() => {
+                  onChangeHandler(techLeadNameInputRef, setTechLeadName);
                 }}
                 className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
               ></input>
@@ -216,9 +238,16 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               <textarea
                 ref={businessJustificationInputRef}
                 name="businessJustificationInput"
+                value={businessJustification}
                 required
                 onBlur={(e) => {
                   e.target.classList.add('invalid:border-red-500');
+                }}
+                onChange={() => {
+                  onChangeHandler(
+                    businessJustificationInputRef,
+                    setBusinessJustification,
+                  );
                 }}
                 className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
               ></textarea>
@@ -234,11 +263,15 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               <input
                 ref={projectEndDateInputRef}
                 name="projectEndDateInput"
+                value={projectEndDate}
                 required
                 type="date"
                 min={minDate}
                 onBlur={(e) => {
                   e.target.classList.add('invalid:border-red-500');
+                }}
+                onChange={() => {
+                  onChangeHandler(projectEndDateInputRef, setProjectEndDate);
                 }}
                 className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
               ></input>
@@ -253,6 +286,10 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               <textarea
                 ref={scenarioInputRef}
                 name="scenarioInput"
+                value={scenario}
+                onChange={() => {
+                  onChangeHandler(scenarioInputRef, setScenario);
+                }}
                 className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
               ></textarea>
             </div>
@@ -279,9 +316,13 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               <textarea
                 ref={costInputRef}
                 name="costInput"
+                value={cost}
                 required
                 onBlur={(e) => {
                   e.target.classList.add('invalid:border-red-500');
+                }}
+                onChange={() => {
+                  onChangeHandler(costInputRef, setCost);
                 }}
                 className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
               ></textarea>
@@ -388,30 +429,24 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                   onClose();
 
                   const response = await requestApiKey({
-                    access_scenario: (
-                      scenarioInputRef.current?.value as string
-                    ).trim(),
-                    business_reason: (
-                      businessJustificationInputRef.current?.value as string
-                    ).trim(),
-                    project_end: transformDateString(
-                      projectEndDateInputRef.current?.value as string,
-                    ),
-                    project_id: (
-                      projectNameInputRef.current?.value as string
-                    ).trim(),
-                    project_lead: (
-                      techLeadNameInputRef.current?.value as string
-                    ).trim(),
-                    project_stream: (
-                      streamNameInputRef.current?.value as string
-                    ).trim(),
-                    workload_pattern: (
-                      costInputRef.current?.value as string
-                    ).trim(),
+                    access_scenario: scenario,
+                    business_reason: businessJustification,
+                    project_end: transformDateString(projectEndDate),
+                    project_id: projectName,
+                    project_lead: techLeadName,
+                    project_stream: streamName,
+                    workload_pattern: cost,
                   });
 
                   if (response.ok) {
+                    setScenario('');
+                    setBusinessJustification('');
+                    setProjectEndDate('');
+                    setProjectName('');
+                    setTechLeadName('');
+                    setStreamName('');
+                    setCost('');
+
                     toast.success(t('API Key requested succesfully'), {
                       id: loadingToast,
                     });

@@ -88,26 +88,28 @@ export const addonsSlice = createSlice({
 
 const rootSelector = (state: RootState) => state.addons;
 
-export const selectAddonsIsLoading = createSelector([rootSelector], (state) => {
+const selectAddonsIsLoading = createSelector([rootSelector], (state) => {
   return state.isLoading;
 });
-export const selectAddonsError = createSelector([rootSelector], (state) => {
+const selectAddonsError = createSelector([rootSelector], (state) => {
   return state.error;
 });
-export const selectAddons = createSelector([rootSelector], (state) => {
+const selectAddons = createSelector([rootSelector], (state) => {
   return state.addons;
 });
-export const selectAddonsMap = createSelector([rootSelector], (state) => {
+const selectAddonsMap = createSelector([rootSelector], (state) => {
   return state.addonsMap;
 });
-export const selectRecentAddonsIds = createSelector([rootSelector], (state) => {
+const selectRecentAddonsIds = createSelector([rootSelector], (state) => {
   return state.recentAddonsIds;
 });
 
-export const {
-  getAddons,
-  getAddonsFail,
-  getAddonsSuccess,
-  initRecentAddons,
-  updateRecentAddons,
-} = addonsSlice.actions;
+export const AddonsSelectors = {
+  selectAddonsIsLoading,
+  selectAddonsError,
+  selectAddons,
+  selectAddonsMap,
+  selectRecentAddonsIds,
+};
+
+export const AddonsActions = addonsSlice.actions;

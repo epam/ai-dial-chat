@@ -7,13 +7,10 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
-import {
-  generateRandomString,
-  programmingLanguages,
-} from '@/utils/app/codeblock';
+import { programmingLanguages } from '@/utils/app/codeblock';
 
 import { useAppSelector } from '@/store/hooks';
-import { UISelectors } from '@/store/ui-store/ui.reducers';
+import { UISelectors } from '@/store/ui/ui.reducers';
 
 import Check from '../../public/images/icons/check.svg';
 import Clone from '../../public/images/icons/clone.svg';
@@ -50,11 +47,8 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
     });
   };
   const downloadAsFile = () => {
-    const fileExtension = programmingLanguages[language] || '.file';
-    const suggestedFileName = `file-${generateRandomString(
-      3,
-      true,
-    )}${fileExtension}`;
+    const fileExtension = programmingLanguages[language] || '.txt';
+    const suggestedFileName = `ai-chat-code${fileExtension}`;
     const fileName = window.prompt(
       t('Enter file name') || '',
       suggestedFileName,

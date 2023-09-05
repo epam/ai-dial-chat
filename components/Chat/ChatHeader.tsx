@@ -6,10 +6,10 @@ import { useTranslation } from 'next-i18next';
 import { Conversation } from '@/types/chat';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/types/openai';
 
-import { selectAddonsMap } from '@/store/addons/addons.reducers';
+import { AddonsSelectors } from '@/store/addons/addons.reducers';
 import { useAppSelector } from '@/store/hooks';
-import { selectModelsMap } from '@/store/models/models.reducers';
-import { UISelectors } from '@/store/ui-store/ui.reducers';
+import { ModelsSelectors } from '@/store/models/models.reducers';
+import { UISelectors } from '@/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -20,13 +20,12 @@ interface Props {
   conversation: Conversation;
   isCompareMode: boolean;
   selectedConversationIds: string[];
-  messageIsStreaming: boolean;
   isShowChatInfo: boolean;
   isShowModelSelect: boolean;
   isShowClearConversation: boolean;
   isShowSettings: boolean;
   onClearConversation: () => void;
-  onUnselectConversation: () => void;
+  onUnselectConversation: (conversationId: string) => void;
   setShowSettings: (isShow: boolean) => void;
 }
 
@@ -34,7 +33,6 @@ export const ChatHeader = ({
   conversation,
   isCompareMode,
   selectedConversationIds,
-  messageIsStreaming,
   isShowChatInfo,
   isShowModelSelect,
   isShowClearConversation,
@@ -45,8 +43,8 @@ export const ChatHeader = ({
 }: Props) => {
   const { t } = useTranslation('chat');
 
-  const modelsMap = useAppSelector(selectModelsMap);
-  const addonsMap = useAppSelector(selectAddonsMap);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const theme = useAppSelector(UISelectors.selectThemeState);
   const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
@@ -185,8 +183,11 @@ export const ChatHeader = ({
                   <TooltipTrigger>
                     <button
                       className="cursor-pointer text-gray-500 hover:text-blue-500 disabled:cursor-not-allowed"
-                      onClick={onUnselectConversation}
-                      disabled={messageIsStreaming}
+                      onClick={() => onUnselectConversation(conversation.id)}
+                      disabled={
+                        conversation.isMessageStreaming ||
+                        conversation.isLoading
+                      }
                     >
                       <IconX size={18} />
                     </button>
