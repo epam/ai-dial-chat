@@ -1,11 +1,41 @@
 import { Client } from 'openid-client';
 
+export interface RefreshToken {
+  isRefreshing: boolean;
+  token: any | undefined;
+}
+
+const globalObj = globalThis as unknown as any;
+
 class NextClient {
-  public static set client(clientLocal: Client | null) {
-    (globalThis as unknown as any)._client = clientLocal;
+  public static setClient(
+    clientLocal: Client | null,
+    provider: { id: string },
+  ) {
+    globalObj._client = globalObj._client || {};
+
+    globalObj._client[provider.id] = clientLocal;
   }
-  public static get client(): Client | null {
-    return (globalThis as unknown as any)._client;
+  public static getClient(providerId: string): Client | null {
+    return globalObj._client[providerId] || null;
+  }
+
+  public static getRefreshToken(
+    userId: string,
+  ): Promise<RefreshToken | undefined> {
+    globalObj._refreshTokenMap = globalObj._refreshTokenMap || {};
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(globalObj._refreshTokenMap[userId]);
+      }, 50);
+    });
+  }
+  public static setIsRefreshTokenStart(
+    userId: string,
+    refreshToken: RefreshToken,
+  ): void {
+    globalObj._refreshTokenMap[userId] = refreshToken;
   }
 }
 

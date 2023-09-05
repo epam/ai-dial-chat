@@ -1,7 +1,7 @@
 import { Account, CallbacksOptions, Profile } from 'next-auth';
 import { TokenEndpointHandler } from 'next-auth/providers';
 
-import NextClient from './nextauth-client';
+import NextClient, { RefreshToken } from './nextauth-client';
 
 export const TEST_TOKENS = new Set(
   (process.env.AUTH_TEST_TOKEN ?? '').split(','),
@@ -12,7 +12,7 @@ export const tokenConfig: TokenEndpointHandler = {
   request: async (context) => {
     let tokens;
 
-    NextClient.client = context.client;
+    NextClient.setClient(context.client, context.provider);
 
     if (context.provider.idToken) {
       tokens = await context.client.callback(
@@ -38,11 +38,35 @@ export const tokenConfig: TokenEndpointHandler = {
  */
 async function refreshAccessToken(token: any) {
   try {
-    if (!NextClient.client) {
-      throw new Error('No openid client set');
+    if (!token.providerId) {
+      throw new Error('No provider avaliable');
+    }
+    const client = NextClient.getClient(token.providerId);
+    if (!client) {
+      throw new Error('No client for appropriate provider set');
     }
 
-    const refreshedTokens = await NextClient.client.refresh(token.refreshToken);
+    while (true) {
+      const refresh = await NextClient.getRefreshToken(token.userId);
+
+      if (!refresh || !refresh.isRefreshing) {
+        const localToken: RefreshToken = refresh || {
+          isRefreshing: true,
+          token,
+        };
+        if (
+          typeof localToken.token.accessTokenExpires === 'number' &&
+          Date.now() < localToken.token.accessTokenExpires
+        ) {
+          return localToken.token;
+        }
+
+        NextClient.setIsRefreshTokenStart(token.userId, localToken);
+        break;
+      }
+    }
+
+    const refreshedTokens = await client.refresh(token.refreshToken);
 
     if (
       !refreshedTokens ||
@@ -51,7 +75,7 @@ async function refreshAccessToken(token: any) {
       throw new Error('Error while refreshing token');
     }
 
-    return {
+    const returnToken = {
       ...token,
       access_token: refreshedTokens.access_token,
       accessTokenExpires: refreshedTokens.expires_in
@@ -59,8 +83,15 @@ async function refreshAccessToken(token: any) {
         : (refreshedTokens.expires_at as number) * 1000,
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
     };
+
+    NextClient.setIsRefreshTokenStart(token.userId, {
+      isRefreshing: false,
+      token: returnToken,
+    });
+    return returnToken;
   } catch (error: any) {
     console.error(error);
+
     return {
       ...token,
       error: 'RefreshAccessTokenError',
@@ -80,13 +111,16 @@ export const callbacks: Partial<CallbacksOptions<Profile, Account>> = {
             ? Date.now() + options.account.expires_in * 1000
             : (options.account.expires_at as number) * 1000,
         refreshToken: options.account.refresh_token,
+        providerId: options.account.provider,
+        userId: options.user.id,
       };
     }
 
     // Return previous token if the access token has not expired yet
     if (
-      typeof options.token.accessTokenExpires === 'number' &&
-      Date.now() < options.token.accessTokenExpires
+      options.token.providerId === 'credentials' ||
+      (typeof options.token.accessTokenExpires === 'number' &&
+        Date.now() < options.token.accessTokenExpires - 1800000)
     ) {
       return options.token;
     }
