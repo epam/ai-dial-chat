@@ -9,6 +9,7 @@ import KeycloakProvider from 'next-auth/providers/keycloak';
 
 import { GitLab } from '../../../utils/auth/customGitlab';
 import PingId from '../../../utils/auth/pingIdentity';
+import { callbacks, tokenConfig } from '@/utils/app/auth/nextauth';
 
 import { v5 as uuid } from 'uuid';
 
@@ -25,7 +26,10 @@ const allProviders: (Provider | boolean)[] = [
       clientSecret: process.env.AUTH_AZURE_AD_SECRET,
       tenantId: process.env.AUTH_AZURE_AD_TENANT_ID,
       name: process.env.AUTH_AZURE_AD_NAME ?? DEFAULT_NAME,
-      authorization: { params: { scope: 'openid profile user.Read email' } },
+      authorization: {
+        params: { scope: 'openid profile user.Read email offline_access' },
+      },
+      token: tokenConfig,
     }),
 
   !!process.env.AUTH_GITLAB_CLIENT_ID &&
@@ -35,6 +39,10 @@ const allProviders: (Provider | boolean)[] = [
       clientSecret: process.env.AUTH_GITLAB_SECRET,
       name: process.env.AUTH_GITLAB_NAME ?? DEFAULT_NAME,
       gitlabHost: process.env.AUTH_GITLAB_HOST,
+      authorization: {
+        params: { scope: 'read_user offline_access' },
+      },
+      token: tokenConfig,
     }),
 
   !!process.env.AUTH_GOOGLE_CLIENT_ID &&
@@ -43,6 +51,12 @@ const allProviders: (Provider | boolean)[] = [
       clientId: process.env.AUTH_GOOGLE_CLIENT_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
       name: process.env.AUTH_GOOGLE_NAME ?? DEFAULT_NAME,
+      authorization: {
+        params: {
+          scope: 'openid email profile offline_access',
+        },
+      },
+      token: tokenConfig,
     }),
 
   !!process.env.AUTH_AUTH0_CLIENT_ID &&
@@ -56,8 +70,10 @@ const allProviders: (Provider | boolean)[] = [
       authorization: {
         params: {
           audience: process.env.AUTH_AUTH0_AUDIENCE,
+          scope: 'openid email profile offline_access',
         },
       },
+      token: tokenConfig,
     }),
 
   !!process.env.AUTH_PING_ID_CLIENT_ID &&
@@ -68,6 +84,12 @@ const allProviders: (Provider | boolean)[] = [
       clientSecret: process.env.AUTH_PING_ID_SECRET,
       name: process.env.AUTH_PING_ID_NAME ?? DEFAULT_NAME,
       issuer: process.env.AUTH_PING_ID_HOST,
+      authorization: {
+        params: {
+          scope: 'offline_access',
+        },
+      },
+      token: tokenConfig,
     }),
 
   !!process.env.AUTH_KEYCLOAK_CLIENT_ID &&
@@ -86,6 +108,12 @@ const allProviders: (Provider | boolean)[] = [
           return userinfo;
         },
       },
+      authorization: {
+        params: {
+          scope: 'openid email profile offline_access',
+        },
+      },
+      token: tokenConfig,
     }),
 
   !!process.env.AUTH_TEST_TOKEN &&
@@ -196,33 +224,10 @@ const isSecure =
 export const authOptions: AuthOptions = {
   providers,
   cookies: defaultCookies(isSecure, isSecure ? 'none' : 'lax'),
-  callbacks: {
-    jwt: async (options) => {
-      if (options.account) {
-        options.token.jobTitle = (options.profile as any)?.job_title;
-        options.token.access_token = options.account?.access_token;
-      }
-
-      return options.token;
-    },
-    signIn: async (options) => {
-      if (
-        options.account?.type === 'credentials' &&
-        !!options.credentials?.access_token &&
-        TEST_TOKENS.has(options.credentials.access_token as string)
-      ) {
-        return true;
-      }
-
-      if (!options.account?.access_token) {
-        return false;
-      }
-
-      return true;
-    },
-  },
+  callbacks,
   session: {
     strategy: 'jwt',
   },
 };
+
 export default NextAuth(authOptions);
