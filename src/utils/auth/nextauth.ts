@@ -120,7 +120,7 @@ export const callbacks: Partial<CallbacksOptions<Profile, Account>> = {
     if (
       options.token.providerId === 'credentials' ||
       (typeof options.token.accessTokenExpires === 'number' &&
-        Date.now() < options.token.accessTokenExpires - 1800000)
+        Date.now() < options.token.accessTokenExpires)
     ) {
       return options.token;
     }
