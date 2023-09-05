@@ -10,9 +10,9 @@
     "build": "npm run build:overlay && next build",
     "build:overlay": "tsc overlay/script.ts --target es6 --skipLibCheck --outDir public/overlay",
     "start": "next start",
-    "lint": "eslint '**/**.{ts,tsx,js}' && prettier --check '**/**.{ts,tsx,js}'",
-    "lint:fix": "eslint '**/**.{ts,tsx,js}' --fix && prettier --write '**/**.{ts,tsx,js}'",
-    "format": "prettier --write '**/**.{ts,tsx,js}'",
+    "lint": "eslint src && prettier --check src",
+    "lint:fix": "eslint src --fix && prettier --write src",
+    "format": "prettier --write src",
     "test": "vitest",
     "coverage": "vitest run --coverage"
   },
