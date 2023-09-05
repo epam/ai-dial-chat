@@ -1,4 +1,4 @@
-import { useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 
 import { GetServerSideProps } from 'next';
@@ -77,6 +77,16 @@ const Home = ({
       dispatch(UIActions.setShowChatbar(false));
     }
   }, [selectedConversationIds]);
+
+  useEffect(() => {
+    if (
+      !isIframe &&
+      !authDisabled &&
+      (!session || (session as any).data?.error === 'RefreshAccessTokenError')
+    ) {
+      signIn();
+    }
+  }, [isIframe, authDisabled, session]);
 
   // ON LOAD --------------------------------------------
 
@@ -263,11 +273,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       : 'frame-ancestors none',
   );
   const session = await getServerSession(req, res, authOptions);
-  if (
-    !isIframe &&
-    process.env.AUTH_DISABLED !== 'true' &&
-    (!session || (session as any).error === 'RefreshAccessTokenError')
-  ) {
+  if (!isIframe && process.env.AUTH_DISABLED !== 'true' && !session) {
     return {
       redirect: {
         permanent: false,
