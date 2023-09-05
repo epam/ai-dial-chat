@@ -3,7 +3,7 @@ import {
   OpenAIEntityAddons,
   OpenAIEntityModelID,
   OpenAIEntityModels,
-} from '@/types/openai';
+} from '@/src/types/openai';
 
 import test from '../core/fixtures';
 import { ExpectedConstants, ExpectedMessages } from '../testData';

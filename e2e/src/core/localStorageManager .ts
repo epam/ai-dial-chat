@@ -1,6 +1,6 @@
-import { Conversation } from '@/types/chat';
-import { FolderInterface } from '@/types/folder';
-import { Prompt } from '@/types/prompt';
+import { Conversation } from '@/src/types/chat';
+import { FolderInterface } from '@/src/types/folder';
+import { Prompt } from '@/src/types/prompt';
 
 import { Page } from '@playwright/test';
 

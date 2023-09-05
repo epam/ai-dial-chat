@@ -1,4 +1,4 @@
-import { OpenAIEntityModelID, OpenAIEntityModels } from '@/types/openai';
+import { OpenAIEntityModelID, OpenAIEntityModels } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
 import {

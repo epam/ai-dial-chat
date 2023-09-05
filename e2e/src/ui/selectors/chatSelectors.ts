@@ -19,7 +19,6 @@ export const ChatSelectors = {
   addons: '[data-qa="addons"]',
   selectedAddons: '[data-qa="selected-addons"]',
   recentAddons: '[data-qa="recent-addons"]',
-  deleteAddonIcon: '[data-qa="delete-icon"]',
   seeAllSelectors: '[data-qa="see-all-addons"]',
   regenerate: '[data-qa="regenerate"]',
   editIcon: '.tabler-icon-edit',

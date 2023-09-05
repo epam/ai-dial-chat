@@ -1,8 +1,8 @@
 import { DateUtil } from '@/e2e/src/utils/dateUtil';
 import { GeneratorUtil } from '@/e2e/src/utils/generatorUtil';
 
-import { Message } from '@/types/chat';
-import { OpenAIEntityModel } from '@/types/openai';
+import { Message } from '@/src/types/chat';
+import { OpenAIEntityModel } from '@/src/types/openai';
 
 import { ConversationBuilder } from '@/e2e/src/testData';
 import { FolderBuilder } from '@/e2e/src/testData/conversationHistory/folderBuilder';

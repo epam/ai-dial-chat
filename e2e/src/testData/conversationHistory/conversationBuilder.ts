@@ -1,17 +1,16 @@
-import {
-  DEFAULT_CONVERSATION_NAME,
-  DEFAULT_SYSTEM_PROMPT,
-  DEFAULT_TEMPERATURE,
-} from '@/utils/app/const';
-import { defaultReplay } from '@/utils/app/defaultStateConstants';
-
-import { Conversation, Message, Replay } from '@/types/chat';
+import { Conversation, Message, Replay } from '@/src/types/chat';
 import {
   OpenAIEntityModel,
   OpenAIEntityModelID,
   OpenAIEntityModels,
-} from '@/types/openai';
+} from '@/src/types/openai';
 
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+} from '@/src/constants/default-settings';
+import { defaultReplay } from '@/src/constants/replay';
 import { v4 as uuidv4 } from 'uuid';
 
 export class ConversationBuilder {

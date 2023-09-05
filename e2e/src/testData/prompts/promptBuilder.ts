@@ -2,8 +2,8 @@ import {
   OpenAIEntityModel,
   OpenAIEntityModelID,
   OpenAIEntityModels,
-} from '@/types/openai';
-import { Prompt } from '@/types/prompt';
+} from '@/src/types/openai';
+import { Prompt } from '@/src/types/prompt';
 
 import { ExpectedConstants } from '@/e2e/src/testData';
 import { v4 as uuidv4 } from 'uuid';

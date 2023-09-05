@@ -157,7 +157,7 @@ e2e_tests:
     - apt-get update && apt-get install -y openjdk-17-jdk
     - wget https://github.com/allure-framework/allure2/releases/download/2.24.0/allure-2.24.0.tgz
     - tar zxvf allure-2.24.0.tgz
-    - npm run test-ci
+    - npm run test:e2e-ci
   after_script:
     - ./allure-2.24.0/bin/allure generate ./e2e/allure-results -o ./e2e/allure-report --clean
   artifacts:

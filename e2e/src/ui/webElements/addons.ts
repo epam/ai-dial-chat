@@ -43,9 +43,7 @@ export class Addons extends BaseElement {
   }
 
   public async isAddonRemovable(addon: string) {
-    return this.selectedAddon(addon)
-      .locator(ChatSelectors.deleteAddonIcon)
-      .isVisible();
+    return this.selectedAddon(addon).locator(Tags.svg).isVisible();
   }
 
   public async seeAllAddons() {

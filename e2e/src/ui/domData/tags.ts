@@ -4,4 +4,5 @@ export enum Tags {
   button = 'button',
   input = 'input',
   div = 'div',
+  svg = 'svg',
 }

@@ -28,7 +28,7 @@ docker run --rm --network host -v "$(pwd)":/test/ -w /test/ -it mcr.microsoft.co
 docker run --rm --network host -v ${pwd}:/test/ -w /test/ -it mcr.microsoft.com/playwright:v1.36.0-jammy /bin/bash
 
 npm i
-npm run test-local
+npm run test:e2e
 ```
 
 Image version should correspond Playwright version

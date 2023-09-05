@@ -15,8 +15,8 @@
     "format": "prettier --write src",
     "test": "vitest",
     "coverage": "vitest run --coverage",
-    "test-local": "playwright test --config=./e2e/config/local.playwright.config.ts",
-    "test-ci": "playwright test --config=./e2e/config/playwright.config.ts",
+    "test:e2e": "playwright test --config=./e2e/config/local.playwright.config.ts",
+    "test:e2e-ci": "playwright test --config=./e2e/config/playwright.config.ts",
     "allure:serve": "allure serve ./e2e/allure-results"
   },
   "dependencies": {
@@ -58,8 +58,7 @@
     "remark-gfm": "^3.0.1",
     "rxjs": "^7.8.1",
     "svgo": "^3.0.2",
-    "uuid": "^9.0.0",
-    "dotenv": "^16.3.1"
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@mozilla/readability": "^0.4.4",
@@ -91,7 +90,8 @@
     "typescript": "^4.9.5",
     "vitest": "^0.29.7",
     "@playwright/test": "^1.37.1",
-    "allure-playwright": "^2.6.0"
+    "allure-playwright": "^2.6.0",
+    "dotenv": "^16.3.1"
   },
   "overrides": {
     "word-wrap": "$@aashutoshrathi/word-wrap"
