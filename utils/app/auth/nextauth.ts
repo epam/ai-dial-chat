@@ -73,7 +73,7 @@ export const callbacks: Partial<CallbacksOptions<Profile, Account>> = {
     if (options.account) {
       return {
         ...options.token,
-        jobTitle: (options.profile as any).job_title,
+        jobTitle: (options.profile as any)?.job_title,
         access_token: options.account.access_token,
         accessTokenExpires:
           typeof options.account.expires_in === 'number'
