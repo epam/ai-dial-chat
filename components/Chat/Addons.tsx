@@ -104,7 +104,7 @@ export const Addons = ({
       {(selectedAddonsIds?.length > 0 || preselectedAddonsIds?.length > 0) && (
         <>
           <span className="text-gray-500">{t('Selected')}</span>
-          <div className="flex flex-wrap gap-1" data-qa="addon">
+          <div className="flex flex-wrap gap-1" data-qa="selected-addons">
             {preselectedAddonsIds.map((addon) => getAddon(addon, true))}
             {selectedAddonsIds
               .filter((id) => !preselectedAddonsIds.includes(id))
@@ -118,7 +118,7 @@ export const Addons = ({
           {filteredRecentAddons?.length > 0 && (
             <>
               <span className="text-gray-500">{t('Recent')}</span>
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1" data-qa="recent-addons">
                 {filteredRecentAddons
                   .map((addon) => getAddon(addon, false))
                   .filter(Boolean)}

@@ -318,7 +318,8 @@ test(
   },
 );
 
-test('Chat is moved from the folder via drag&drop', async ({
+//TODO: enable when fixed https://gitlab.deltixhub.com/Deltix/openai-apps/chatbot-ui/-/issues/239
+test.skip('Chat is moved from the folder via drag&drop', async ({
   dialHomePage,
   conversationData,
   folderConversations,

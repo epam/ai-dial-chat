@@ -25,6 +25,10 @@ export class BaseElement {
     return this.rootLocator.filter({ hasText: text }).nth(index ?? 0);
   }
 
+  public getElementByPlaceholder(placeholder: string): Locator {
+    return this.rootLocator.getByPlaceholder(placeholder);
+  }
+
   public getNthElement(index: number): Locator {
     return this.rootLocator.nth(index - 1);
   }

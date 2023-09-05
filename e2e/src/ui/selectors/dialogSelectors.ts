@@ -11,3 +11,19 @@ export const PromptModal = {
   promptValue: '[data-qa="prompt-value"]',
   savePrompt: '[data-qa="save-prompt"]',
 };
+
+export const VariableModal = {
+  variableModalDialog: '[data-qa="variable-modal"]',
+  variablePromptName: '[data-qa="variable-prompt-name"]',
+  variablePromptDescription: '[data-qa="variable-prompt-descr"]',
+  submitVariable: '[data-qa="submit-variable"]',
+};
+
+export const ModelDialog = {
+  modelDialog: '[data-qa="models-dialog"]',
+  talkToGroup: '[data-qa="talk-to-group"]',
+  groupEntity: '[data-qa="group-entity"]',
+  groupEntityName: '[data-qa="group-entity-name"]',
+  groupEntityDescr: '[data-qa="group-entity-descr"]',
+  expandGroupEntity: '[data-qa="expand-group-entity"]',
+};

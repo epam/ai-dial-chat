@@ -30,6 +30,8 @@ export class ConversationBuilder {
       selectedAddons:
         OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ].selectedAddons ?? [],
       lastActivityDate: Date.now(),
+      isLoading: false,
+      isMessageStreaming: false,
     };
   }
 

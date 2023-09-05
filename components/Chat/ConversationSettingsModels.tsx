@@ -61,9 +61,9 @@ export const ConversationSettingsModel = ({
                 inverted={theme === 'dark'}
               />
               <div className="flex flex-col gap-1">
-                <span>{entity.name}</span>
+                <span data-qa="entity-name">{entity.name}</span>
                 {entity.description && (
-                  <span className="text-gray-500">
+                  <span className="text-gray-500" data-qa="entity-descr">
                     <EntityMarkdownDescription isShortDescription={true}>
                       {entity.description}
                     </EntityMarkdownDescription>

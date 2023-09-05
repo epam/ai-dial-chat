@@ -19,18 +19,36 @@ export class Addons extends BaseElement {
     return this.addonsDialog;
   }
 
-  public getAllAddons = this.getChildElementBySelector(
-    `${ChatSelectors.addon} > ${Tags.button}`,
+  public selectedAddons = this.getChildElementBySelector(
+    `${ChatSelectors.selectedAddons} >> ${Tags.button}`,
   );
 
-  public getAddon = (name: string) =>
-    this.getAllAddons.getElementLocatorByText(name);
+  public selectedAddon = (addon: string) =>
+    this.selectedAddons.getElementLocatorByText(addon);
+
+  public recentAddons = this.getChildElementBySelector(
+    `${ChatSelectors.recentAddons} >> ${Tags.button}`,
+  );
 
   public seeAllAddonsButton = this.getChildElementBySelector(
     ChatSelectors.seeAllSelectors,
   );
 
-  async getSelectedAddons() {
-    return this.getAllAddons.getElementsInnerContent();
+  public async getSelectedAddons() {
+    return this.selectedAddons.getElementsInnerContent();
+  }
+
+  public async getRecentAddons() {
+    return this.recentAddons.getElementsInnerContent();
+  }
+
+  public async isAddonRemovable(addon: string) {
+    return this.selectedAddon(addon)
+      .locator(ChatSelectors.deleteAddonIcon)
+      .isVisible();
+  }
+
+  public async seeAllAddons() {
+    await this.seeAllAddonsButton.click();
   }
 }

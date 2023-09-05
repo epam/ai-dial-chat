@@ -9,6 +9,13 @@ export class RecentEntities extends BaseElement {
     super(page, ChatSelectors.recentEntities);
   }
 
+  public recentEntityNames = this.getChildElementBySelector(
+    ChatSelectors.recentEntityNames,
+  );
+  public recentEntityDescriptions = this.getChildElementBySelector(
+    ChatSelectors.recentEntityDescr,
+  );
+
   public getRecentEntity = (entity: string) =>
     this.createElementFromLocator(
       this.getChildElementBySelector(Tags.button).getElementLocatorByText(
@@ -18,5 +25,9 @@ export class RecentEntities extends BaseElement {
 
   public async selectEntity(option: string) {
     await this.getRecentEntity(option).click();
+  }
+
+  public async getRecentEntityNames() {
+    return this.recentEntityNames.getElementsInnerContent();
   }
 }

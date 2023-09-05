@@ -7,6 +7,7 @@ import {
   ConversationSettings,
   Conversations,
   EntitySelector,
+  ModelsDialog,
   RecentEntities,
   SendMessage,
 } from '../ui/webElements';
@@ -26,6 +27,7 @@ import { ModelSelector } from '@/e2e/src/ui/webElements/modelSelector';
 import { PromptModalDialog } from '@/e2e/src/ui/webElements/promptModalDialog';
 import { Prompts } from '@/e2e/src/ui/webElements/prompts';
 import { TemperatureSlider } from '@/e2e/src/ui/webElements/temperatureSlider';
+import { VariableModalDialog } from '@/e2e/src/ui/webElements/variableModalDialog';
 import { test as base } from '@playwright/test';
 
 const test = base.extend<{
@@ -56,6 +58,8 @@ const test = base.extend<{
   promptDropdownMenu: DropdownMenu;
   confirmationDialog: ConfirmationDialog;
   promptModalDialog: PromptModalDialog;
+  variableModalDialog: VariableModalDialog;
+  modelsDialog: ModelsDialog;
 }>({
   dialHomePage: async ({ page }, use) => {
     const dialHomePage = new DialHomePage(page);
@@ -152,6 +156,14 @@ const test = base.extend<{
   promptModalDialog: async ({ page }, use) => {
     const promptModalDialog = new PromptModalDialog(page);
     await use(promptModalDialog);
+  },
+  variableModalDialog: async ({ page }, use) => {
+    const variableModalDialog = new VariableModalDialog(page);
+    await use(variableModalDialog);
+  },
+  modelsDialog: async ({ page }, use) => {
+    const modelsDialog = new ModelsDialog(page);
+    await use(modelsDialog);
   },
   // eslint-disable-next-line no-empty-pattern
   conversationData: async ({}, use) => {

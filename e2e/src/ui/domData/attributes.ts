@@ -3,4 +3,5 @@ export enum Attributes {
   span = 'span',
   class = 'class',
   hidden = 'hidden',
+  placeholder = 'placeholder',
 }

@@ -38,4 +38,12 @@ export class PromptData {
     prompt.folderId = folder.id;
     return { prompts: prompt, folders: folder };
   }
+
+  public preparePrompt(content: string, description?: string) {
+    return this.promptBuilder
+      .withName('test prompt' + GeneratorUtil.randomIntegerNumber())
+      .withDescription(description ?? '')
+      .withContent(content)
+      .build();
+  }
 }

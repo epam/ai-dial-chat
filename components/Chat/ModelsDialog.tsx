@@ -51,6 +51,7 @@ const Entity = ({
       onClick={() => {
         onSelect(entity.id);
       }}
+      data-qa="group-entity"
     >
       <ModelIcon
         entityId={entity.id}
@@ -59,7 +60,7 @@ const Entity = ({
         inverted={theme === 'dark'}
       />
       <div className="flex flex-col gap-1 text-left">
-        <span>{entity.name}</span>
+        <span data-qa="group-entity-name">{entity.name}</span>
         <span
           className="text-gray-500"
           onClick={(e) => {
@@ -67,6 +68,7 @@ const Entity = ({
               e.stopPropagation();
             }
           }}
+          data-qa="group-entity-descr"
         >
           {entity.description && (
             <EntityMarkdownDescription isShortDescription={!isOpened}>
@@ -83,6 +85,7 @@ const Entity = ({
               e.stopPropagation();
               setIsOpened((isOpened) => !isOpened);
             }}
+            data-qa="expand-group-entity"
           >
             <IconChevronDown
               size={18}
@@ -199,7 +202,7 @@ export const ModelsDialog: FC<Props> = ({
     heading: string,
   ) => {
     return (
-      <div className="flex flex-col gap-3 text-xs">
+      <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
         <span className="text-gray-500">{heading}</span>
         <div className="grid min-h-0 shrink grid-cols-1 gap-3 overflow-y-auto md:grid-cols-2">
           {entities.map((entity) => (
@@ -233,6 +236,7 @@ export const ModelsDialog: FC<Props> = ({
           role="dialog"
           ref={refs.setFloating}
           {...getFloatingProps()}
+          data-qa="models-dialog"
         >
           <div className="flex justify-between">
             {t('Talk to')}

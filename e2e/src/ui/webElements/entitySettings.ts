@@ -3,6 +3,7 @@ import { BaseElement } from './baseElement';
 
 import { Addons } from '@/e2e/src/ui/webElements/addons';
 import { ModelSelector } from '@/e2e/src/ui/webElements/modelSelector';
+import { PromptList } from '@/e2e/src/ui/webElements/promptList';
 import { TemperatureSlider } from '@/e2e/src/ui/webElements/temperatureSlider';
 import { Page } from '@playwright/test';
 
@@ -15,11 +16,17 @@ export class EntitySettings extends BaseElement {
     ChatSelectors.systemPrompt,
   );
   private temperatureSlider!: TemperatureSlider;
-  private seeFullListButton = this.getChildElementBySelector(
-    ChatSelectors.seeFullList,
-  );
   private addons!: Addons;
   private modelSelector!: ModelSelector;
+
+  private promptList!: PromptList;
+
+  getPromptList() {
+    if (!this.promptList) {
+      this.promptList = new PromptList(this.page);
+    }
+    return this.promptList;
+  }
 
   getTemperatureSlider(): TemperatureSlider {
     if (!this.temperatureSlider) {

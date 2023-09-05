@@ -20,4 +20,8 @@ export class EntitySelector extends BaseElement {
     }
     return this.recentEntities;
   }
+
+  public async seeFullList() {
+    await this.seeFullListButton.click();
+  }
 }

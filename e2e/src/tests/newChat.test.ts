@@ -11,11 +11,9 @@ import { Colors } from '../ui/domData';
 
 import { expect } from '@playwright/test';
 
-//TODO: update when TC is ready
-test.skip(
+test(
   'Create new conversation\n' +
-    'Default settings in new chat with cleared site data\n' +
-    '"Talk to" drop down contains items grouped by models, assistants, applications',
+    'Default settings in new chat with cleared site data\n',
   async ({
     dialHomePage,
     chatBar,
@@ -24,7 +22,6 @@ test.skip(
     entitySettings,
     temperatureSlider,
     addons,
-    addonsDialog,
   }) => {
     await dialHomePage.openHomePage();
     await chatBar.createNewConversation();
@@ -44,16 +41,27 @@ test.skip(
       )
       .toBeTruthy();
 
-    const addonBorderColors = await recentEntities
+    const modelBorderColors = await recentEntities
       .getRecentEntity(OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ].name)
       .getAllBorderColors();
-    Object.values(addonBorderColors).forEach((borders) => {
+    Object.values(modelBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
         expect
           .soft(borderColor, ExpectedMessages.defaultTalkToIsValid)
           .toBe(Colors.selectedEntity);
       });
     });
+
+    const recentTalkTo = await recentEntities.getRecentEntityNames();
+    expect
+      .soft(recentTalkTo, ExpectedMessages.recentEntitiesVisible)
+      .toEqual([
+        OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ].name,
+        OpenAIEntityModels[OpenAIEntityModelID.GPT_4].name,
+        ExpectedConstants.askEpamPresaleApp,
+        OpenAIEntityModels[OpenAIEntityModelID.GPT_WORLD].name,
+        OpenAIEntityModels[OpenAIEntityModelID.MIRROR].name,
+      ]);
 
     const defaultSystemPrompt = await entitySettings.getSystemPrompt();
     expect
@@ -68,14 +76,12 @@ test.skip(
     const selectedAddons = await addons.getSelectedAddons();
     expect.soft(selectedAddons, ExpectedMessages.noAddonsSelected).toEqual([]);
 
-    await addons.seeAllAddonsButton.click();
-    const searchResults = await addonsDialog.getSearchResults();
+    const recentAddons = await addons.getRecentAddons();
     expect
-      .soft(searchResults, ExpectedMessages.addonResultsValid)
+      .soft(recentAddons, ExpectedMessages.recentAddonsVisible)
       .toEqual([
-        OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_EPAM10K_GOLDEN_QNA].name,
-        OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_EPAM10K_SEMANTIC_SEARCH]
-          .name,
+        ExpectedConstants.epamPresalesFAQAddon,
+        ExpectedConstants.epamPresalesSearchAddon,
         OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
       ]);
   },
@@ -108,7 +114,7 @@ test('Default model in new chat is always set to GPT-3.5', async ({
   });
 });
 
-test.skip('Settings on default screen are saved in local storage when temperature = 0', async ({
+test('Settings on default screen are saved in local storage when temperature = 0', async ({
   dialHomePage,
   recentEntities,
   entitySettings,
@@ -116,7 +122,7 @@ test.skip('Settings on default screen are saved in local storage when temperatur
 }) => {
   await dialHomePage.openHomePage();
   await recentEntities.selectEntity(
-    OpenAIEntityModels[OpenAIEntityModelID.BISON_001].name,
+    OpenAIEntityModels[OpenAIEntityModelID.GPT_4].name,
   );
   const sysPrompt = 'test prompt';
   const temp = 0;
@@ -124,10 +130,10 @@ test.skip('Settings on default screen are saved in local storage when temperatur
   await temperatureSlider.setTemperature(temp);
   await dialHomePage.reloadPage();
 
-  const addonBorderColors = await recentEntities
-    .getRecentEntity(OpenAIEntityModels[OpenAIEntityModelID.BISON_001].name)
+  const modelBorderColors = await recentEntities
+    .getRecentEntity(OpenAIEntityModels[OpenAIEntityModelID.GPT_4].name)
     .getAllBorderColors();
-  Object.values(addonBorderColors).forEach((borders) => {
+  Object.values(modelBorderColors).forEach((borders) => {
     borders.forEach((borderColor) => {
       expect
         .soft(borderColor, ExpectedMessages.defaultTalkToIsValid)
@@ -146,32 +152,73 @@ test.skip('Settings on default screen are saved in local storage when temperatur
     .toBe(temp.toString());
 });
 
-//TODO: update when TC is ready
-test.skip(
+test(
   'Default settings for Assistant\n' +
     'Default settings for Assistant. Models list\n' +
-    'Default settings for Assistant. Default Addons',
+    'Default settings for Assistant. Default Addons impossible to remove',
   async ({
     dialHomePage,
     addons,
     recentEntities,
     modelSelector,
     entitySettings,
+    talkToSelector,
+    modelsDialog,
+    temperatureSlider,
   }) => {
     await dialHomePage.openHomePage();
-    await recentEntities.selectEntity(
-      OpenAIEntityModels[OpenAIEntityModelID.ASSISTANT10K].name,
-    );
+    await talkToSelector.seeFullList();
+    await modelsDialog.selectAssistant(ExpectedConstants.presalesAssistant);
 
-    const selectedModel = await modelSelector.getSelectedModel();
+    const assistantBorderColors = await recentEntities
+      .getRecentEntity(ExpectedConstants.presalesAssistant)
+      .getAllBorderColors();
+    Object.values(assistantBorderColors).forEach((borders) => {
+      borders.forEach((borderColor) => {
+        expect
+          .soft(borderColor, ExpectedMessages.defaultTalkToIsValid)
+          .toBe(Colors.selectedEntity);
+      });
+    });
+
+    const isSystemPromptVisible = await entitySettings.systemPrompt.isVisible();
     expect
-      .soft(selectedModel, ExpectedMessages.defaultAssistantModelIsValid)
+      .soft(isSystemPromptVisible, ExpectedMessages.systemPromptNotVisible)
+      .toBeFalsy();
+
+    const isTemperatureSliderVisible = await temperatureSlider.isVisible();
+    expect
+      .soft(
+        isTemperatureSliderVisible,
+        ExpectedMessages.temperatureSliderVisible,
+      )
+      .toBeTruthy();
+
+    const assistantModel = await modelSelector.getSelectedModel();
+    expect
+      .soft(assistantModel, ExpectedMessages.defaultAssistantModelIsValid)
       .toBe(OpenAIEntityModels[OpenAIEntityModelID.GPT_4].name);
+
+    const selectedAddons = await addons.getSelectedAddons();
+    expect
+      .soft(selectedAddons, ExpectedMessages.noAddonsSelected)
+      .toEqual([
+        ExpectedConstants.epamPresalesSearchAddon,
+        ExpectedConstants.epamPresalesFAQAddon,
+      ]);
+    for (const addon of selectedAddons) {
+      expect
+        .soft(
+          await addons.isAddonRemovable(addon),
+          ExpectedMessages.cannotDeleteSelectedAddon,
+        )
+        .toBeFalsy();
+    }
 
     await modelSelector.click();
     const listEntities = await modelSelector.getListOptions();
     const expectedModels = [
-      OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5].name,
+      OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ].name,
       OpenAIEntityModels[OpenAIEntityModelID.GPT_4].name,
       OpenAIEntityModels[OpenAIEntityModelID.GPT_4_32K].name,
       OpenAIEntityModels[OpenAIEntityModelID.BISON_001].name,
@@ -180,29 +227,14 @@ test.skip(
       OpenAIEntityModels[OpenAIEntityModelID.AI21_J2_JUMBO_INSTRUCT].name,
       OpenAIEntityModels[OpenAIEntityModelID.ANTHROPIC_CLAUDE_INSTANT_V1].name,
       OpenAIEntityModels[OpenAIEntityModelID.ANTHROPIC_CLAUDE_V1].name,
-      'Anthropic (Claude V2)',
+      ExpectedConstants.anthropicCloudV2Model,
       OpenAIEntityModels[OpenAIEntityModelID.STABILITY_STABLE_DIFFUSION_XL]
         .name,
-      'Dolly',
+      ExpectedConstants.dollyModel,
+      ExpectedConstants.llama2,
     ];
     expect
-      .soft(listEntities, ExpectedMessages.entitiesAreGrouped)
+      .soft(listEntities, ExpectedMessages.assistantModelsValid)
       .toEqual(expectedModels);
-
-    await modelSelector.click();
-    const systemPrompt = await entitySettings.systemPrompt.isVisible();
-    expect
-      .soft(systemPrompt, ExpectedMessages.systemPromptNotVisible)
-      .toBeFalsy();
-
-    const expectedAssistantAddons = [
-      OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_EPAM10K_SEMANTIC_SEARCH]
-        .name,
-      OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_EPAM10K_GOLDEN_QNA].name,
-    ];
-    const assistantAddons = await addons.getSelectedAddons();
-    expect
-      .soft(assistantAddons, ExpectedMessages.entitiesAreGrouped)
-      .toEqual(expectedAssistantAddons);
   },
 );
