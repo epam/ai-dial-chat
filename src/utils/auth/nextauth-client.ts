@@ -20,22 +20,24 @@ class NextClient {
     return globalObj._client[providerId] || null;
   }
 
-  public static getRefreshToken(
-    userId: string,
-  ): Promise<RefreshToken | undefined> {
+  public static getRefreshToken(userId: string): RefreshToken | undefined {
     globalObj._refreshTokenMap = globalObj._refreshTokenMap || {};
 
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(globalObj._refreshTokenMap[userId]);
-      }, 50);
-    });
+    return globalObj._refreshTokenMap[userId];
   }
   public static setIsRefreshTokenStart(
     userId: string,
     refreshToken: RefreshToken,
   ): void {
     globalObj._refreshTokenMap[userId] = refreshToken;
+  }
+
+  public static delay(): Promise<undefined> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(undefined);
+      }, 50);
+    });
   }
 }
 

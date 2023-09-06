@@ -46,8 +46,9 @@ async function refreshAccessToken(token: any) {
       throw new Error('No client for appropriate provider set');
     }
 
+    let msWaiting = 0;
     while (true) {
-      const refresh = await NextClient.getRefreshToken(token.userId);
+      const refresh = NextClient.getRefreshToken(token.userId);
 
       if (!refresh || !refresh.isRefreshing) {
         const localToken: RefreshToken = refresh || {
@@ -63,6 +64,13 @@ async function refreshAccessToken(token: any) {
 
         NextClient.setIsRefreshTokenStart(token.userId, localToken);
         break;
+      }
+
+      await NextClient.delay();
+      msWaiting += 50;
+
+      if (msWaiting >= 20000) {
+        throw new Error('Waiting more than 20 seconds for refreshing token');
       }
     }
 
