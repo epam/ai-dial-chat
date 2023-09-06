@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
+import { Session } from 'next-auth';
+import { JWT, getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { limitEntitiesAccordingToUser } from '@/utils/server/entitiesPermissions';
@@ -30,6 +31,69 @@ function setDefaultModel(models: OpenAIEntityModel[]) {
   return models;
 }
 
+export const getAllEntities = async (
+  token: JWT | null,
+  session: Session | null,
+) => {
+  let entities: OpenAIEntityModel[] = [];
+  const accessToken = token?.access_token as string;
+  const jobTitle = token?.jobTitle as string;
+  const models: ProxyOpenAIEntity<OpenAIEntityModelType>[] = await getEntities(
+    'model',
+    accessToken,
+    jobTitle,
+  ).catch((error) => {
+    console.error(error.message);
+    return [];
+  });
+  const applications: ProxyOpenAIEntity<OpenAIEntityApplicationType>[] =
+    await getEntities('application', accessToken, jobTitle).catch((error) => {
+      console.error(error.message);
+      return [];
+    });
+  const assistants: ProxyOpenAIEntity<OpenAIEntityAssistantType>[] =
+    await getEntities('assistant', accessToken, jobTitle).catch((error) => {
+      console.error(error.message);
+      return [];
+    });
+
+  for (const entity of [...models, ...applications, ...assistants]) {
+    if (
+      entity.capabilities?.embeddings ||
+      (entity.object === 'model' &&
+        entity.capabilities?.chat_completion !== true)
+    ) {
+      continue;
+    }
+
+    const existingModelMapping: OpenAIEntityModel | undefined =
+      OpenAIEntityModels[entity.id];
+
+    entities.push({
+      id: entity.id,
+      name: entity.display_name ?? existingModelMapping?.name ?? entity.id,
+      description: entity.description,
+      iconUrl: entity.icon_url,
+      type: entity.object,
+      selectedAddons: entity.addons,
+      ...(existingModelMapping
+        ? {
+            maxLength: existingModelMapping.maxLength,
+            requestLimit: existingModelMapping.requestLimit,
+          }
+        : defaultModelLimits),
+    });
+  }
+
+  entities = limitEntitiesAccordingToUser(
+    entities,
+    session,
+    process.env.AVAILABLE_MODELS_USERS_LIMITATIONS,
+  );
+  entities = setDefaultModel(entities);
+  return entities;
+};
+
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
   if (process.env.AUTH_DISABLED !== 'true' && !session) {
@@ -39,59 +103,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const token = await getToken({ req });
 
   try {
-    let entities: OpenAIEntityModel[] = [];
-    const accessToken = token?.access_token as string;
-    const jobTitle = token?.jobTitle as string;
-    const models: ProxyOpenAIEntity<OpenAIEntityModelType>[] =
-      await getEntities('model', accessToken, jobTitle).catch((error) => {
-        console.error(error.message);
-        return [];
-      });
-    const applications: ProxyOpenAIEntity<OpenAIEntityApplicationType>[] =
-      await getEntities('application', accessToken, jobTitle).catch((error) => {
-        console.error(error.message);
-        return [];
-      });
-    const assistants: ProxyOpenAIEntity<OpenAIEntityAssistantType>[] =
-      await getEntities('assistant', accessToken, jobTitle).catch((error) => {
-        console.error(error.message);
-        return [];
-      });
-
-    for (const entity of [...models, ...applications, ...assistants]) {
-      if (
-        entity.capabilities?.embeddings ||
-        (entity.object === 'model' &&
-          entity.capabilities?.chat_completion !== true)
-      ) {
-        continue;
-      }
-
-      const existingModelMapping: OpenAIEntityModel | undefined =
-        OpenAIEntityModels[entity.id];
-
-      entities.push({
-        id: entity.id,
-        name: entity.display_name ?? existingModelMapping?.name ?? entity.id,
-        description: entity.description,
-        iconUrl: entity.icon_url,
-        type: entity.object,
-        selectedAddons: entity.addons,
-        ...(existingModelMapping
-          ? {
-              maxLength: existingModelMapping.maxLength,
-              requestLimit: existingModelMapping.requestLimit,
-            }
-          : defaultModelLimits),
-      });
-    }
-
-    entities = limitEntitiesAccordingToUser(
-      entities,
-      session,
-      process.env.AVAILABLE_MODELS_USERS_LIMITATIONS,
-    );
-    entities = setDefaultModel(entities);
+    const entities = await getAllEntities(token, session);
 
     return res.status(200).json(entities);
   } catch (error) {

@@ -442,7 +442,7 @@ export const Chat = memo(({ appName }: Props) => {
         };
       }
       const chatBody: ChatBody = {
-        model: conversation.model,
+        modelId: conversation.model.id,
         messages: localUpdatedConversation.messages.map((message) => ({
           content: message.content,
           role: message.role,

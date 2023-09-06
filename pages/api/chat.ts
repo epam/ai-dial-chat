@@ -9,6 +9,7 @@ import { OpenAIEntityAddonID, OpenAIEntityModelID } from '../../types/openai';
 import { ChatBody, Message } from '@/types/chat';
 
 import { authOptions } from './auth/[...nextauth]';
+import { getAllEntities } from './models';
 
 import { errorsMessages } from '@/constants/errors';
 // 1@ts-expect-error
@@ -41,7 +42,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   try {
     const {
-      model,
+      modelId,
       messages,
       prompt,
       temperature,
@@ -64,91 +65,97 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     const token = await getToken({ req });
-
-    let promptToSend = prompt;
-    if (!promptToSend && model.type === 'model') {
-      promptToSend = DEFAULT_SYSTEM_PROMPT;
-    }
-
-    let temperatureToUse = temperature;
-    if (temperatureToUse && model.type !== 'application') {
-      temperatureToUse = DEFAULT_TEMPERATURE;
-    }
-
-    const promptToEncode: string = promptToSend ?? '';
-    const prompt_tokens = encoding.encode(promptToEncode);
-
-    let tokens_per_message = 0;
-    if (
-      model.id == OpenAIEntityModelID.GPT_3_5 ||
-      model.id == OpenAIEntityModelID.GPT_3_5_AZ
-    ) {
-      tokens_per_message = 5;
-    } else if (
-      model.id == OpenAIEntityModelID.GPT_4 ||
-      model.id == OpenAIEntityModelID.GPT_4_32K ||
-      model.id === OpenAIEntityModelID.BISON_001
-    ) {
-      tokens_per_message = 4;
-    }
-
-    let tokenCount = prompt_tokens.length + tokens_per_message;
-    let messagesToSend: Message[] = [];
-
-    const length = Math.min(messages.length, 1000);
-    for (let i = length - 1; i >= 0; i--) {
-      if (!messages[i]) {
-        break;
+    const models = await getAllEntities(token, session);
+    const model = models.find(({ id }) => id === modelId);
+    if (model) {
+      let promptToSend = prompt;
+      if (!promptToSend && model.type === 'model') {
+        promptToSend = DEFAULT_SYSTEM_PROMPT;
       }
-      const message = {
-        role: messages[i].role,
-        content: messages[i].content,
-        ...(messages[i].custom_content?.state && {
-          custom_content: { state: messages[i].custom_content?.state },
-        }),
-      };
-      const tokens = encoding.encode(message.content);
 
-      if (tokenCount + tokens.length > model.requestLimit) {
-        break;
+      let temperatureToUse = temperature;
+      if (temperatureToUse && model.type !== 'application') {
+        temperatureToUse = DEFAULT_TEMPERATURE;
       }
-      tokenCount += tokens.length + tokens_per_message;
-      messagesToSend = [message, ...messagesToSend];
-    }
 
-    tokenCount += 3;
-    const stream = await OpenAIStream({
-      model,
-      systemPrompt: promptToSend,
-      temperature: temperatureToUse,
-      messages: messagesToSend,
-      selectedAddons: selectedAddons as OpenAIEntityAddonID[],
-      assistantModelId: assistantModelId as OpenAIEntityModelID | undefined,
-      userJWT: token?.access_token as string,
-      chatId: id,
-      jobTitle: token?.jobTitle as string,
-    });
-    res.setHeader('Transfer-Encoding', 'chunked');
+      const promptToEncode: string = promptToSend ?? '';
+      const prompt_tokens = encoding.encode(promptToEncode);
 
-    const reader = stream.getReader();
-    const processStream = async () => {
-      try {
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) {
-            break;
-          }
-          res.write(value);
+      let tokens_per_message = 0;
+      if (
+        model.id == OpenAIEntityModelID.GPT_3_5 ||
+        model.id == OpenAIEntityModelID.GPT_3_5_AZ
+      ) {
+        tokens_per_message = 5;
+      } else if (
+        model.id == OpenAIEntityModelID.GPT_4 ||
+        model.id == OpenAIEntityModelID.GPT_4_32K ||
+        model.id === OpenAIEntityModelID.BISON_001
+      ) {
+        tokens_per_message = 4;
+      }
+
+      let tokenCount = prompt_tokens.length + tokens_per_message;
+      let messagesToSend: Message[] = [];
+
+      const length = Math.min(messages.length, 1000);
+      for (let i = length - 1; i >= 0; i--) {
+        if (!messages[i]) {
+          break;
         }
-      } catch (error) {
-        console.error('Error reading stream:', error);
-        res.status(500);
-      } finally {
-        res.end();
-      }
-    };
+        const message = {
+          role: messages[i].role,
+          content: messages[i].content,
+          ...(messages[i].custom_content?.state && {
+            custom_content: { state: messages[i].custom_content?.state },
+          }),
+        };
+        const tokens = encoding.encode(message.content);
 
-    await processStream();
+        if (tokenCount + tokens.length > model.requestLimit) {
+          break;
+        }
+        tokenCount += tokens.length + tokens_per_message;
+        messagesToSend = [message, ...messagesToSend];
+      }
+
+      tokenCount += 3;
+
+      const stream = await OpenAIStream({
+        model,
+        systemPrompt: promptToSend,
+        temperature: temperatureToUse,
+        messages: messagesToSend,
+        selectedAddons: selectedAddons as OpenAIEntityAddonID[],
+        assistantModelId: assistantModelId as OpenAIEntityModelID | undefined,
+        userJWT: token?.access_token as string,
+        chatId: id,
+        jobTitle: token?.jobTitle as string,
+      });
+      res.setHeader('Transfer-Encoding', 'chunked');
+
+      const reader = stream.getReader();
+      const processStream = async () => {
+        try {
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) {
+              break;
+            }
+            res.write(value);
+          }
+        } catch (error) {
+          console.error('Error reading stream:', error);
+          res.status(500);
+        } finally {
+          res.end();
+        }
+      };
+
+      await processStream();
+    } else {
+      return res.status(400).send(errorsMessages[400]);
+    }
   } catch (error) {
     console.error(error);
     if (error instanceof OpenAIError) {
