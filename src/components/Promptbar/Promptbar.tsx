@@ -58,6 +58,7 @@ const Promptbar = () => {
         dispatch(PromptsActions.createNewPrompt());
         dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
       }}
+      data-qa="new-prompt"
     >
       <PlusIcon className="text-gray-500" width={18} height={18} />
       {t('New prompt')}

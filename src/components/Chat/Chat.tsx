@@ -1046,7 +1046,7 @@ export const Chat = memo(({ appName }: Props) => {
   };
 
   return (
-    <div className="relative flex-1">
+    <div className="relative flex-1" data-qa="chat">
       {modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : (
@@ -1182,6 +1182,7 @@ export const Chat = memo(({ appName }: Props) => {
                     className="flex max-h-full flex-col overflow-x-hidden"
                     ref={chatContainerRef}
                     onScroll={handleScroll}
+                    data-qa="chat-messages"
                   >
                     {mergedMessages.map(
                       (

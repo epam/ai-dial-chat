@@ -65,6 +65,7 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
             ref={modalRef}
             className="dark:border-netural-400 inline-block max-h-[400px] overflow-y-auto rounded-lg border border-gray-300 bg-white px-4 pb-4 pt-5 text-left align-bottom shadow-xl transition-all dark:bg-[#202123] sm:my-8 sm:max-h-[600px] sm:w-full sm:max-w-lg sm:p-6 sm:align-middle"
             role="dialog"
+            data-qa="prompt-modal"
           >
             <div className="text-sm font-bold text-black dark:text-neutral-200">
               {t('Name')}
@@ -75,6 +76,7 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
               placeholder={t('A name for your prompt.') || ''}
               value={name}
               onChange={(e) => setName(e.target.value)}
+              data-qa="prompt-name"
             />
 
             <div className="mt-6 text-sm font-bold text-black dark:text-neutral-200">
@@ -87,6 +89,7 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
+              data-qa="prompt-descr"
             />
 
             <div className="mt-6 text-sm font-bold text-black dark:text-neutral-200">
@@ -103,6 +106,7 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={10}
+              data-qa="prompt-value"
             />
 
             <button
@@ -119,6 +123,7 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
                 onUpdatePrompt(updatedPrompt);
                 onClose();
               }}
+              data-qa="save-prompt"
             >
               {t('Save')}
             </button>

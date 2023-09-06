@@ -21,6 +21,7 @@ export const PromptList: FC<Props> = ({
     <ul
       ref={promptListRef}
       className="z-10 max-h-52 w-full overflow-auto rounded bg-gray-100 dark:bg-gray-700"
+      data-qa="prompt-list"
     >
       {prompts.map((prompt, index) => (
         <li
@@ -33,6 +34,7 @@ export const PromptList: FC<Props> = ({
             e.stopPropagation();
             onSelect();
           }}
+          data-qa="prompt-option"
           onMouseEnter={() => onMouseOver(index)}
         >
           {prompt.name}

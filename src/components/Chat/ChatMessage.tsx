@@ -168,9 +168,10 @@ export const ChatMessage: FC<Props> = memo(
             : 'border-b border-gray-400  dark:border-gray-700'
         }`}
         style={{ overflowWrap: 'anywhere' }}
+        data-qa="chat-message"
       >
         <div className="relative m-auto flex h-full p-4 md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
-          <div className="min-w-[40px] font-bold">
+          <div className="min-w-[40px] font-bold" data-qa="message-icon">
             <div className="flex justify-center">
               {isAssistant ? (
                 <ModelIcon
@@ -189,7 +190,10 @@ export const ChatMessage: FC<Props> = memo(
             </div>
           </div>
 
-          <div className="mt-[-2px] w-full min-w-0 shrink">
+          <div
+            className="mt-[-2px] w-full min-w-0 shrink"
+            data-qa="message-content"
+          >
             {isUser ? (
               <div className="flex">
                 {isEditing ? (
@@ -218,6 +222,7 @@ export const ChatMessage: FC<Props> = memo(
                           setMessageContent(message.content);
                           setIsEditing(false);
                         }}
+                        data-qa="cancel"
                       >
                         {t('Cancel')}
                       </button>
@@ -225,6 +230,7 @@ export const ChatMessage: FC<Props> = memo(
                         className="h-[38px] rounded bg-blue-500 px-3 py-2.5 leading-none text-gray-100 hover:bg-blue-700 disabled:bg-gray-500"
                         onClick={handleEditMessage}
                         disabled={messageContent.trim().length <= 0}
+                        data-qa="save-and-submit"
                       >
                         {t('Save & Submit')}
                       </button>

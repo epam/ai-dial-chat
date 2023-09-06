@@ -170,6 +170,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
           ? 'border-l-2 border-l-green bg-green/15'
           : '',
       )}
+      data-qa="conversation"
     >
       {isRenaming ? (
         <div className="flex w-full items-center gap-3 px-3">
@@ -236,6 +237,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
               : '',
           )}
           ref={wrapperRef}
+          data-qa="dots-menu"
         >
           <ContextMenu
             isEmptyConversation={isEmptyConversation}

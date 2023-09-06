@@ -93,7 +93,10 @@ export const ConversationSettings = ({
 
   return (
     <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-gray-300 dark:bg-gray-900 [&:first-child]:rounded-t">
-      <div className="relative grid w-full gap-[1px] xl:grid-cols-2">
+      <div
+        className="relative grid w-full gap-[1px] xl:grid-cols-2"
+        data-qa="conversation-settings"
+      >
         <div className="shrink overflow-auto bg-gray-200 px-5 py-4 dark:bg-gray-800">
           <ConversationSettingsModel
             modelId={model?.id}
@@ -101,7 +104,10 @@ export const ConversationSettings = ({
           />
         </div>
         {model ? (
-          <div className="flex max-h-full shrink flex-col gap-[1px] overflow-auto">
+          <div
+            className="flex max-h-full shrink flex-col gap-[1px] overflow-auto"
+            data-qa="entity-settings"
+          >
             {model.type === 'application' && (
               <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
                 <ModelDescription model={model} />
