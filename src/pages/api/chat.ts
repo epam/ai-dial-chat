@@ -3,6 +3,7 @@ import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { OpenAIError, OpenAIStream } from '@/src/utils/server';
+import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 
 import { OpenAIEntityAddonID, OpenAIEntityModelID } from '../../types/openai';
 import { ChatBody, Message } from '@/src/types/chat';
@@ -44,7 +45,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   try {
     const {
-      model,
+      modelId,
       messages,
       prompt,
       temperature,
@@ -67,6 +68,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     const token = await getToken({ req });
+    const models = await getSortedEntities(token, session);
+    const model = models.find(({ id }) => id === modelId);
+
+    if (!model) {
+      return res.status(403);
+    }
 
     let promptToSend = prompt;
     if (!promptToSend && model.type === 'model') {
@@ -120,6 +127,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     tokenCount += 3;
+
     const stream = await OpenAIStream({
       model,
       systemPrompt: promptToSend,
