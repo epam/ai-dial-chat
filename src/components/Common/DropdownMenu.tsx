@@ -235,6 +235,7 @@ export const MenuComponent = forwardRef<
               >
                 <div
                   className="z-50 overflow-hidden rounded bg-gray-100 text-gray-800 shadow focus-visible:outline-none dark:bg-black dark:text-gray-200"
+                  data-qa="dropdown-menu"
                   ref={refs.setFloating}
                   style={{
                     ...floatingStyles,

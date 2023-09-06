@@ -6,7 +6,11 @@ interface Props {
 }
 
 const SidebarActionButton = ({ handleClick, children }: Props) => (
-  <button className={`min-w-[20px] p-1 text-gray-500`} onClick={handleClick}>
+  <button
+    className={`min-w-[20px] p-1 text-gray-500`}
+    onClick={handleClick}
+    data-qa="action-button"
+  >
     {children}
   </button>
 );

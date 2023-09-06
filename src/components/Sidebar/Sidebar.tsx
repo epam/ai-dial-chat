@@ -76,6 +76,7 @@ const Sidebar = <T,>({
         `fixed top-12 z-40 flex h-full w-[260px] flex-none shrink-0 flex-col divide-y divide-gray-300 border-r border-gray-300 bg-gray-100 transition-all dark:divide-gray-900 dark:border-gray-900 dark:bg-gray-700  max-lg:h-[calc(100%-48px)] lg:relative lg:top-0`,
         `${side}-0`,
       )}
+      data-qa="sidebar"
     >
       <Search
         placeholder={t('Search {{name}}...', { name: featureType })}

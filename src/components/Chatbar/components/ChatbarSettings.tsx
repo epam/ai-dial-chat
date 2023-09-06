@@ -54,6 +54,7 @@ export const ChatbarSettings = () => {
               onClick={() => {
                 setIsOpen(true);
               }}
+              data-qa="delete-conversations"
             >
               <IconTrashX size={24} strokeWidth="1.5" />
             </div>
@@ -100,6 +101,7 @@ export const ChatbarSettings = () => {
                 ConversationsActions.createFolder({ name: t('New folder') }),
               )
             }
+            data-qa="create-folder"
           >
             <FolderPlus height={24} width={24} />
           </div>

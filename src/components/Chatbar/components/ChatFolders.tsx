@@ -54,7 +54,7 @@ export const ChatFolders = ({ searchTerm }: Props) => {
   };
 
   return (
-    <div className="flex w-full flex-col">
+    <div className="flex w-full flex-col" data-qa="chat-folders">
       {folders.map((folder, index) => (
         <Folder
           key={index}

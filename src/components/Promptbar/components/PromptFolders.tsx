@@ -46,7 +46,7 @@ export const PromptFolders = () => {
       });
 
   return (
-    <div className="flex w-full flex-col">
+    <div className="flex w-full flex-col" data-qa="prompt-folders">
       {folders.map((folder, index) => (
         <Folder
           key={index}

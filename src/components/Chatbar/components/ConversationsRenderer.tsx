@@ -14,7 +14,12 @@ export const ConversationsRenderer = ({
     <>
       {conversations.length > 0 && (
         <div className="px-2 pt-2">
-          <div className="px-3 py-1 text-[12px] text-gray-500">{label}</div>
+          <div
+            className="px-3 py-1 text-[12px] text-gray-500"
+            data-qa="chronology"
+          >
+            {label}
+          </div>
           {conversations.map((conversation) => (
             <ConversationComponent
               key={conversation.id}

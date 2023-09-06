@@ -41,7 +41,7 @@ export const TemperatureSlider: FC<Props> = ({
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3" data-qa="temp-slider">
       <label className="text-left">{label}</label>
       <span className="text-sm text-gray-500">
         {t(

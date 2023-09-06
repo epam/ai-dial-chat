@@ -42,6 +42,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
               onClick={() => {
                 setIsOpen(true);
               }}
+              data-qa="delete-prompts"
             >
               <IconTrashX size={24} strokeWidth="1.5" />
             </div>
@@ -92,6 +93,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
             onClick={() => {
               dispatch(PromptsActions.createFolder({ name: t('New folder') }));
             }}
+            data-qa="create-prompt-folder"
           >
             <FolderPlus height={24} width={24} />
           </div>

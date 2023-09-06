@@ -98,13 +98,13 @@ export const Addons = ({
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3" data-qa="addons">
       <span>{t('Addons (max 10)')}</span>
 
       {(selectedAddonsIds?.length > 0 || preselectedAddonsIds?.length > 0) && (
         <>
           <span className="text-gray-500">{t('Selected')}</span>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1" data-qa="selected-addons">
             {preselectedAddonsIds.map((addon) => getAddon(addon, true))}
             {selectedAddonsIds
               .filter((id) => !preselectedAddonsIds.includes(id))
@@ -118,7 +118,7 @@ export const Addons = ({
           {filteredRecentAddons?.length > 0 && (
             <>
               <span className="text-gray-500">{t('Recent')}</span>
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1" data-qa="recent-addons">
                 {filteredRecentAddons
                   .map((addon) => getAddon(addon, false))
                   .filter(Boolean)}
@@ -131,6 +131,7 @@ export const Addons = ({
               onClick={() => {
                 setIsAddonsDialogOpen(true);
               }}
+              data-qa="see-all-addons"
             >
               {t('See all addons...')}
             </button>

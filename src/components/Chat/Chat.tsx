@@ -429,7 +429,7 @@ export const Chat = memo(({ appName }: Props) => {
         };
       }
       const chatBody: ChatBody = {
-        model: conversation.model,
+        modelId: conversation.model.id,
         messages: localUpdatedConversation.messages.map((message) => ({
           content: message.content,
           role: message.role,
@@ -1019,7 +1019,7 @@ export const Chat = memo(({ appName }: Props) => {
   };
 
   return (
-    <div className="relative flex-1">
+    <div className="relative flex-1" data-qa="chat">
       {modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : (
@@ -1155,6 +1155,7 @@ export const Chat = memo(({ appName }: Props) => {
                     className="flex max-h-full flex-col overflow-x-hidden"
                     ref={chatContainerRef}
                     onScroll={handleScroll}
+                    data-qa="chat-messages"
                   >
                     {mergedMessages.map(
                       (

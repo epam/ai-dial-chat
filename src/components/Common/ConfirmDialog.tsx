@@ -57,6 +57,7 @@ export const ConfirmDialog = ({
               aria-labelledby={headingId}
               aria-describedby={descriptionId}
               {...getFloatingProps()}
+              data-qa="confirmation-dialog"
             >
               <div className="flex flex-col gap-2">
                 <h2 id={headingId} className="text-base font-semibold">
@@ -70,6 +71,7 @@ export const ConfirmDialog = ({
                   onClick={() => {
                     onClose(false);
                   }}
+                  data-qa="cancel-dialog"
                 >
                   {cancelLabel}
                 </button>
@@ -77,6 +79,7 @@ export const ConfirmDialog = ({
                   ref={confirmLabelRef}
                   className="rounded bg-blue-500 px-3 py-2.5 text-gray-100 hover:bg-blue-700"
                   onClick={() => onClose(true)}
+                  data-qa="confirm"
                 >
                   {confirmLabel}
                 </button>
