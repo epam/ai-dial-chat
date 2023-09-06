@@ -1,6 +1,6 @@
-import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
-import { getAssitantModelId } from '@/utils/app/conversation';
-import { defaultReplay } from '@/utils/app/defaultStateConstants';
+import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/src/constants/default-settings';
+import { defaultReplay } from '@/src/constants/replay';
+import { getAssitantModelId } from '@/src/utils/app/conversation';
 import {
   cleanData,
   isExportFormatV1,
@@ -9,15 +9,15 @@ import {
   isExportFormatV4,
   isLatestExportFormat,
   isPromtsFormat
-} from '@/utils/app/importExport';
+} from '@/src/utils/app/import-export';
 
 import {
   ExportFormatV1,
   ExportFormatV2,
   ExportFormatV4,
   PromptsHistory
-} from '@/types/export';
-import { OpenAIEntityModelID, OpenAIEntityModels } from '@/types/openai';
+} from '@/src/types/export';
+import { OpenAIEntityModelID, OpenAIEntityModels } from '@/src/types/openai';
 
 import { describe, expect, it } from 'vitest';
 

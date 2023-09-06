@@ -28,7 +28,7 @@ env:
   ENABLED_FEATURES: 'top-settings,top-chat-info,top-clear-conversation'
   AUTH_DISABLED: 'false'
   IS_IFRAME: 'true'
-  ALLOWED_IFRAME_ORIGINS: 'https://chatbot-ui-staging.eu.auth0.com/* https://rail-landing.staging.deltixhub.io/'
+  ALLOWED_IFRAME_ORIGINS: 'https://chatbot-ui-staging.eu.auth0.com/* https://rail-landing.staging.deltixhub.io/ http://localhost:8000'
 #  AZURE_FUNCTIONS_API_HOST: "https://ai-proxy-function.azurewebsites.net"
 
 # podLabels:
