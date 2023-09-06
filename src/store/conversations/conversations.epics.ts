@@ -5,8 +5,10 @@ import { i18n } from 'next-i18next';
 import {
   EMPTY,
   Observable,
+  catchError,
   concat,
   filter,
+  from,
   ignoreElements,
   iif,
   map,
@@ -15,6 +17,7 @@ import {
   switchMap,
   take,
   tap,
+  throwError,
 } from 'rxjs';
 
 import { cleanConversationHistory } from '@/src/utils/app/clean';
@@ -30,7 +33,7 @@ import {
   importData,
 } from '@/src/utils/app/import-export';
 
-import { Conversation } from '@/src/types/chat';
+import { Conversation, RateBody } from '@/src/types/chat';
 import { AppEpic } from '@/src/types/store';
 
 import { AddonsActions } from '../addons/addons.reducers';
@@ -298,6 +301,122 @@ const initConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const rateMessageEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.rateMessage.match),
+    map(({ payload }) => ({
+      payload,
+      conversations: ConversationsSelectors.selectConversations(state$.value),
+    })),
+    switchMap(({ conversations, payload }) => {
+      const conversation = conversations.find(
+        (conv) => conv.id === payload.conversationId,
+      );
+      if (!conversation) {
+        return of(
+          ConversationsActions.rateMessageFail(
+            (i18n as any).t(
+              'No conversation exists for rating with provided conversation id',
+            ),
+          ),
+        );
+      }
+      const message = conversation.messages[payload.messageIndex];
+
+      if (!message || !message.responseId) {
+        return of(
+          ConversationsActions.rateMessageFail(
+            (i18n as any).t('Message cannot be rated'),
+          ),
+        );
+      }
+
+      const rateBody: RateBody = {
+        responseId: message.responseId,
+        modelId: conversation.model.id,
+        id: conversation.id,
+        value: payload.rate > 0 ? true : false,
+      };
+
+      return from(
+        fetch('/api/rate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(rateBody),
+        }),
+      ).pipe(
+        switchMap((resp) => {
+          if (!resp.ok) {
+            return throwError(() => resp);
+          }
+          return from(resp.json());
+        }),
+        map(() => {
+          return ConversationsActions.rateMessageSuccess(payload);
+        }),
+        catchError((e: Response) => {
+          return of(
+            ConversationsActions.rateMessageFail({
+              error: e,
+            }),
+          );
+        }),
+      );
+    }),
+  );
+
+const updateMessageEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.updateMessage.match),
+    map(({ payload }) => ({
+      payload,
+      conversations: ConversationsSelectors.selectConversations(state$.value),
+    })),
+    switchMap(({ conversations, payload }) => {
+      const conversation = conversations.find(
+        (conv) => conv.id === payload.conversationId,
+      );
+      if (!conversation || !conversation.messages[payload.messageIndex]) {
+        return of(
+          ConversationsActions.rateMessageFail(
+            (i18n as any).t('Message cannot be rated'),
+          ),
+        );
+      }
+      const messages = [...conversation.messages];
+      messages[payload.messageIndex] = {
+        ...messages[payload.messageIndex],
+        ...payload.values,
+      };
+      return of(
+        ConversationsActions.updateConversation({
+          id: payload.conversationId,
+          values: {
+            messages: [...messages],
+          },
+        }),
+      );
+    }),
+  );
+
+const rateMessageSuccessEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.rateMessageSuccess.match),
+    switchMap(({ payload }) => {
+      return of(
+        ConversationsActions.updateMessage({
+          conversationId: payload.conversationId,
+          messageIndex: payload.messageIndex,
+          values: {
+            like: payload.rate,
+          },
+        }),
+      );
+    }),
+  );
+
 const selectConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
@@ -354,4 +473,7 @@ export const ConversationsEpics = combineEpics(
   clearConversationsEpic,
   deleteConversationsEpic,
   initConversationsEpic,
+  updateMessageEpic,
+  rateMessageEpic,
+  rateMessageSuccessEpic,
 );

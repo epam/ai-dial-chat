@@ -55,7 +55,7 @@ export interface ChatBody {
 }
 
 export interface RateBody {
-  model: OpenAIEntityModel;
+  modelId: string;
   responseId: string;
   id: string;
   value: boolean;

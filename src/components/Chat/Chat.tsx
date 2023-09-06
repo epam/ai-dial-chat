@@ -58,28 +58,6 @@ interface Props {
   appName: string;
 }
 
-const handleRate = (
-  chatId: string,
-  message: Message,
-  model: OpenAIEntityModel,
-) => {
-  if (!message.like || !message.responseId) {
-    return;
-  }
-  fetch('/api/rate', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      responseId: message.responseId,
-      model,
-      id: chatId,
-      value: message.like > 0 ? true : false,
-    }),
-  }).then();
-};
-
 const findSelectedConversations = (
   selectedConversationsIds: string[],
   conversations: Conversation[],
@@ -649,19 +627,14 @@ export const Chat = memo(({ appName }: Props) => {
   );
 
   const onLikeHandler = useCallback(
-    (index: number, conversation: Conversation) => (editedMessage: Message) => {
-      if (!conversation) {
-        return;
-      }
-      const messages = [...conversation.messages];
-      messages[index] = editedMessage;
+    (index: number, conversation: Conversation) => (rate: number) => {
       dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: { messages },
+        ConversationsActions.rateMessage({
+          conversationId: conversation.id,
+          messageIndex: index,
+          rate,
         }),
       );
-      handleRate(conversation.id, editedMessage, conversation.model);
     },
     [dispatch],
   );

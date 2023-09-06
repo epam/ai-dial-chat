@@ -1,4 +1,4 @@
-import { Conversation } from '@/src/types/chat';
+import { Conversation, Message } from '@/src/types/chat';
 import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface } from '@/src/types/folder';
 import { OpenAIEntityModel, defaultModelLimits } from '@/src/types/openai';
@@ -215,6 +215,32 @@ export const conversationsSlice = createSlice({
     ) => {
       state.searchTerm = payload.searchTerm;
     },
+    updateMessage: (
+      state,
+      _action: PayloadAction<{
+        conversationId: string;
+        messageIndex: number;
+        values: Partial<Message>;
+      }>,
+    ) => state,
+    rateMessage: (
+      state,
+      _action: PayloadAction<{
+        conversationId: string;
+        messageIndex: number;
+        rate: number;
+      }>,
+    ) => state,
+    rateMessageSuccess: (
+      state,
+      _action: PayloadAction<{
+        conversationId: string;
+        messageIndex: number;
+        rate: number;
+      }>,
+    ) => state,
+    rateMessageFail: (state, _action: PayloadAction<{ error: Response }>) =>
+      state,
   },
 });
 
