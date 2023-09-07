@@ -1,0 +1,15 @@
+**/.git
+**/.svn
+**/.hg
+**/node_modules
+
+.next
+next.config.js
+next-i18next.config.js
+public
+
+dist
+
+.github
+helm
+__tests__
