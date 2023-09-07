@@ -72,7 +72,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const model = models.find(({ id }) => id === modelId);
 
     if (!model) {
-      throw new Error(errorsMessages[403], { cause: { code: 403 } });
+      return res.status(403).send(errorsMessages[403]);
     }
 
     let promptToSend = prompt;
@@ -170,9 +170,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       // return new Response('Error', { status: 500, statusText: error.message });
       return res.status(500).send(errorsMessages.generalServer);
     } else {
-      if (error.cause.code === 403) {
-        return res.status(403).send(errorsMessages[403]);
-      }
       return res.status(500).send('Error');
     }
   }
