@@ -32,7 +32,9 @@ export const store = configureStore({
     settings: settingsSlice.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(epicMiddleware),
+    getDefaultMiddleware({ thunk: false, serializableCheck: false }).concat(
+      epicMiddleware,
+    ),
 });
 
 epicMiddleware.run(rootEpic as unknown as Epic);

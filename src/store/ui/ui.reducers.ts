@@ -59,6 +59,14 @@ export const uiSlice = createSlice({
     ) => {
       state.isCompareMode = payload;
     },
+    showToast: (
+      state,
+      _action: PayloadAction<{
+        message?: string | null;
+        type?: 'error' | 'loading' | 'success';
+        response?: Response;
+      }>,
+    ) => state,
   },
 });
 
