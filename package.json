@@ -3,6 +3,7 @@
   "version": "1.9.0",
   "private": true,
   "scripts": {
+    "postinstall": "npx playwright install",
     "dev": "next dev",
     "watch:overlay": "tsc overlay/script.ts --watch --target es6 --skipLibCheck --outDir dist/overlay",
     "dev:overlay": "npx cpy-cli ./overlay/example.html ./dist --rename=index.html && npx http-server ./dist/overlay --c-1",
@@ -16,6 +17,7 @@
     "test": "vitest",
     "coverage": "vitest run --coverage",
     "test:e2e": "playwright test --config=./e2e/config/local.playwright.config.ts",
+    "test:e2e:html": "playwright test --config=./e2e/config/local.playwright.config.ts",
     "test:e2e-ci": "playwright test --config=./e2e/config/playwright.config.ts",
     "allure:serve": "allure serve ./e2e/allure-results"
   },

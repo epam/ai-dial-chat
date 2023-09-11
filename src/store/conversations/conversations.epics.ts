@@ -464,7 +464,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         messages: updatedMessages,
         name:
           !payload.conversation.replay.isReplay &&
-          updatedMessages.length === 1 &&
+          updatedMessages.length === 2 &&
           payload.conversation.name === DEFAULT_CONVERSATION_NAME
             ? payload.message.content.length > 160
               ? payload.message.content.substring(0, 160) + '...'
