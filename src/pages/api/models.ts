@@ -17,7 +17,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const token = await getToken({ req });
 
   try {
-    const entities = await getSortedEntities(token, session);
+    const entities = await getSortedEntities(token);
 
     return res.status(200).json(entities);
   } catch (error) {

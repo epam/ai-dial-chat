@@ -68,7 +68,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     const token = await getToken({ req });
-    const models = await getSortedEntities(token, session);
+    const models = await getSortedEntities(token);
     const model = models.find(({ id }) => id === modelId);
 
     if (!model) {

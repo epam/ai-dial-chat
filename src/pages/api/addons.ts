@@ -2,7 +2,6 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
-import { limitEntitiesAccordingToUser } from '@/src/utils/server/entities-permissions';
 import { getEntities } from '@/src/utils/server/get-entities';
 
 import {
@@ -29,7 +28,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const token = await getToken({ req });
 
   try {
-    let entities: OpenAIEntity[] = [];
+    const entities: OpenAIEntity[] = [];
 
     const addons: ProxyOpenAIEntity[] = await getEntities(
       'addon',
@@ -51,12 +50,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         type: addon.object,
       });
     }
-
-    entities = limitEntitiesAccordingToUser(
-      entities,
-      session,
-      process.env.AVAILABLE_ADDONS_USERS_LIMITATIONS,
-    );
 
     return res.status(200).json(entities);
   } catch (error) {
