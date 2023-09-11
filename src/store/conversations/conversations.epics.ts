@@ -554,8 +554,8 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
         messages: payload.conversation.messages
           .filter(
             (message, index) =>
-              message.role === 'assistant' &&
-              index === payload.conversation.messages.length - 1,
+              message.role !== 'assistant' ||
+              index !== payload.conversation.messages.length - 1,
           )
           .map((message) => ({
             content: message.content,
