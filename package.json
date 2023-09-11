@@ -17,7 +17,6 @@
     "test": "vitest",
     "coverage": "vitest run --coverage",
     "test:e2e": "playwright test --config=./e2e/config/local.playwright.config.ts",
-    "test:e2e:html": "playwright test --config=./e2e/config/local.playwright.config.ts",
     "test:e2e-ci": "playwright test --config=./e2e/config/playwright.config.ts",
     "allure:serve": "allure serve ./e2e/allure-results"
   },
