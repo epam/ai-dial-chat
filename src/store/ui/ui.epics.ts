@@ -2,12 +2,13 @@ import { toast } from 'react-hot-toast';
 
 import { filter, forkJoin, ignoreElements, of, switchMap, tap } from 'rxjs';
 
+import { combineEpics } from 'redux-observable';
+
 import { AppEpic } from '@/src/types/store';
 
 import { UIActions } from './ui.reducers';
 
 import { errorsMessages } from '@/src/constants/errors';
-import { combineEpics } from 'redux-observable';
 
 const saveThemeEpic: AppEpic = (action$) =>
   action$.pipe(

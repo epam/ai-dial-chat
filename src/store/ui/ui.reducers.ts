@@ -1,8 +1,8 @@
+import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+
 import { Theme } from '@/src/types/settings';
 
 import { RootState } from '..';
-
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 export interface UIState {
   theme: Theme;

@@ -1,3 +1,7 @@
+import { configureStore } from '@reduxjs/toolkit';
+
+import { Epic, combineEpics, createEpicMiddleware } from 'redux-observable';
+
 import { AddonsEpics } from './addons/addons.epics';
 import { addonsSlice } from './addons/addons.reducers';
 import { ConversationsEpics } from './conversations/conversations.epics';
@@ -9,9 +13,6 @@ import { promptsSlice } from './prompts/prompts.reducers';
 import { settingsSlice } from './settings/settings.reducers';
 import UIEpics from './ui/ui.epics';
 import { uiSlice } from './ui/ui.reducers';
-
-import { configureStore } from '@reduxjs/toolkit';
-import { Epic, combineEpics, createEpicMiddleware } from 'redux-observable';
 
 export const rootEpic = combineEpics(
   ModelsEpics,
