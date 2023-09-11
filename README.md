@@ -1,124 +1,144 @@
-# FORKED REPOSITORY
+OPEN QUESTIONS:
+1. Do we need to mention parent project (chatbot-ui)
+2. Do we need to have contributing section? (We have CONTRIBUTING.md in docs file which should be updated)
+3. Do we need to update security documentation?
+4. Do we need to remove CHANGELOG.md file due to it's not working right now 
 
-This repository was forked from github.com/mckaywrigley/chatbot-ui.git . The code was scanned by Snyk (no major vulnerabilities) - and, later, [with OpenAI](./testme.ipynb) - and we didn't see data flowing anywhere but OpenAI API).
-It's forked and "frozen" to minimize the risk. In future we will, hopefully, have someone responsible for this project - but as of now we want to provide the service ASAP.
+# DIAL Chat
 
+This is an example README file for a Next.js project. Make sure to edit this template with your project's relevant information.
 
-# Chatbot UI
+## Overview
 
-Chatbot UI is an open source chat UI for AI models.
+This project is a web application built using [Next.js](https://nextjs.org/), a React framework with server-rendering capabilities. It can be easily customized and adapted to your needs by following the steps mentioned below.
 
-See a [demo](https://twitter.com/mckaywrigley/status/1640380021423603713?s=46&t=AowqkodyK6B4JccSOxSPew).
+## Developer Environment
 
-![Chatbot UI](./public/screenshots/screenshot-0402023.jpg)
+Before diving into the development environment, you should have Node.js (version >=14.6.0) and npm (version >=6.14.6) installed on your system. If you don't already have them, follow the instructions [here](https://nodejs.org/en/download/).
 
-## Updates
+Once you've installed Node.js and npm, follow these steps to set up your developer environment:
 
-Chatbot UI will be updated over time.
-
-Expect frequent improvements.
-
-**Next up:**
-
-- [ ] Sharing
-- [ ] "Bots"
-
-## Deploy
-
-**Vercel**
-
-Host your own live version of Chatbot UI with Vercel.
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmckaywrigley%2Fchatbot-ui)
-
-**Docker**
-
-Build locally:
-
-```shell
-docker build -t chatgpt-ui .
-docker run -e OPENAI_API_KEY=xxxxxxxx -e AUTH_AZURE_AD_CLIENT_ID=xxxxxxxx -e AUTH_AZURE_AD_TENANT_ID=xxxxxxxx -e AUTH_AZURE_AD_SECRET=xxxxxxxx -e NEXTAUTH_SECRET=xxxxxxxx -p 3000:3000 chatgpt-ui
-```
-
-Pull from ghcr:
+1. Clone the repository:
 
 ```
-docker run -e OPENAI_API_KEY=xxxxxxxx -p 3000:3000 ghcr.io/mckaywrigley/chatbot-ui:main
+git clone https://gitlab.deltixhub.com/Deltix/openai-apps/chatbot-ui
 ```
 
-## Running Locally
+2. Navigate to the project directory:
 
-**1. Clone Repo**
+```
+cd chatbot-ui
+```
+
+3. Install project dependencies:
 
 ```bash
-git clone https://github.com/mckaywrigley/chatbot-ui.git
+npm install
 ```
 
-**2. Install Dependencies**
+4. To start the development server, run:
 
-```bash
-npm i
 ```
-
-**3. Provide OpenAI API Key**
-
-Create a .env.local file in the root of the repo with your OpenAI API Key:
-
-```bash
-OPENAI_API_KEY=YOUR_KEY
-```
-
-> You can set `OPENAI_API_HOST` where access to the official OpenAI host is restricted or unavailable, allowing users to configure an alternative host for their specific needs.
-
-> Additionally, if you have multiple OpenAI Organizations, you can set `OPENAI_ORGANIZATION` to specify one.
-
-**4. Configure SSO for Auth0**
-
-Add variables .env.local:
-```bash
-AUTH_AUTH0_CLIENT_ID="QXHosbmuKaegHNn9MMSAKUhRNb6JXvNp"
-AUTH_AUTH0_SECRET="N-uPvuwXXluEkIT69E2RvEYxA7lHoUh4zMtjPzlGlJDCNdPzJhMTBjknGcSY9WGl"
-AUTH_AUTH0_HOST="https://chatbot-ui-staging.eu.auth0.com"
-NEXTAUTH_SECRET=xxxxx
-```
-
-where `NEXTAUTH_SECRET` is random string (`openssl rand -base64 32`)
-
-**5. Run App**
-
-```bash
 npm run dev
 ```
 
-**6. Use It**
+## Build
 
-You should be able to start chatting.
+To create an optimized build of your application, run the following command:
 
-## Configuration
+```
+npm run build
+```
 
-When deploying the application, the following environment variables can be set:
+After running the command, you'll see a `.next` folder created in your project directory which contains the optimized output.
 
-| Environment Variable              | Default value                  | Description                                                                                                                               |
-| --------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| AUTH_AZURE_AD_CLIENT_ID           |                                | Client ID from Azure AD
-| AUTH_AZURE_AD_TENANT_ID           |                                | Tenant ID from Azure AD
-| AUTH_AZURE_AD_SECRET              |                                | Client Secret from Azure AD
-| NEXTAUTH_SECRET                   |                                | Random crypto-string
-| OPENAI_API_KEY                    |                                | The default API key used for authentication with OpenAI                                                                                   |
-| OPENAI_API_HOST                   | `https://api.openai.com`       | The base url, for Azure use `https://<endpoint>.openai.azure.com`                                                                         |
-| OPENAI_API_VERSION                | `2023-03-15-preview`           | Only applicable for Azure OpenAI                                                                                                          |
-| OPENAI_ORGANIZATION               |                                | Your OpenAI organization ID                                                                                                               |
-| DEFAULT_MODEL | `gpt-3.5-turbo` _(OpenAI)_ `gpt-35-turbo` _(Azure)_ | The default model to use on new conversations |
-| NEXT_PUBLIC_DEFAULT_TEMPERATURE   | 1                              | The default temperature to use on new conversations                                                                                       |
-| GOOGLE_API_KEY                    |                                | See [Custom Search JSON API documentation][GCSE]                                                                                          |
-| GOOGLE_CSE_ID                     |                                | See [Custom Search JSON API documentation][GCSE]                                                                                          |
+## Run
 
-If you do not provide an OpenAI API key with `OPENAI_API_KEY`, users will have to provide their own key.
+To start the development server, run:
 
-If you don't have an OpenAI API key, you can get one [here](https://platform.openai.com/account/api-keys).
+```
+npm run dev
+```
 
-## Contact
+Once the server is up and running, open `http://localhost:3000` in your browser to view your application.
 
-If you have any questions, feel free to reach out to Mckay on [Twitter](https://twitter.com/mckaywrigley).
+To run the optimized production build, first build the app and then run:
 
-[GCSE]: https://developers.google.com/custom-search/v1/overview
+```
+npm start
+```
+
+This will start a production server on the default port 3000.
+
+## Test
+
+To run the unit tests suite for your application, execute the following command:
+
+```
+npm test
+```
+
+To run the e2e tests run the following command:
+
+```
+npm run test:e2e
+```
+
+For more infor check [E2E tests documentation](e2e/README.md)
+
+## Environment Variables
+
+This project leverages environment variables for configuration. You should create a `.env.local` file in the root directory of your project with the following format:
+
+| Variable                          | EXAMPLE VALUE                                                        | Description                                                                                                                                                         |
+| --------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| NEXTAUTH_SECRET                   | `Generate Random Secret - openssl rand -base64 32`                   | The secret for Next.js authentication.                                                                                                                              |
+| OPENAI_API_HOST                   | `TODO: update host example value`                                    | The endpoint for making API requests to the AI model host.                                                                                                          |
+| DEFAULT_MODEL                     | gpt-35-turbo                                                         | The default AI model to use for text generation.                                                                                                                    |
+| DEFAULT_ASSISTANT_SUB_MODEL       | gpt-4                                                                | The default sub-model for the AI assistant.                                                                                                                         |
+| OPENAI_API_VERSION                | 2023-03-15-preview                                                   | The version of the AI service provider's API.                                                                                                                       |
+| OPENAI_API_KEY                    | `TODO: Update api key example value`                                 | The API key needed for authentication to the AI service provider.                                                                                                   |
+| NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT |                                                                      | The default system prompt used in the app.                                                                                                                          |
+| NEXT_PUBLIC_APP_NAME              | AI Chat Configurable name                                            | The configurable name of the app.                                                                                                                                   |
+| USE_USER_JOB_TITLE                | false                                                                | A flag to enable or disable the usage of user job title in the app.                                                                                                 |
+| ENABLED_FEATURES                  |                                                                      | A list of enabled features in the app. All available features can be found in src/types/features.ts                                                                 |
+| FOOTER_HTML_MESSAGE               |                                                                      | A custom HTML message displayed in the footer.                                                                                                                      |
+| THEMES_CONFIG_HOST                |                                                                      | The host URL for custom themes configuration. Models images is located in this host. More info in [Themes configuration documentation](docs/THEME-CUSTOMIZATION.md) |
+| AUTH_DISABLED                     | false                                                                | A flag to enable or disable authentication.                                                                                                                         |
+| RECENT_MODELS_IDS                 | gpt-35-turbo,gpt-4,epam10k-semantic-search,gpt-world,mirror          | A list of IDs for recently used AI models.                                                                                                                          |
+| RECENT_ADDONS_IDS                 | addon-epam10k-golden-qna,addon-epam10k-semantic-search,addon-wolfram | A list of IDs for recently used AI model addons.                                                                                                                    |
+| AUTH_TEST_TOKEN                   | `For local use any value`                                            | A test token for e2e authentification. More info in [E2E tests documentation](e2e/README.md)                                                                        |
+| PREVIEW_TEST_TOKEN                | `For local use same value as in PREVIEW_TEST_TOKEN `                 | A test token for e2e authentification. More info in [E2E tests documentation](e2e/README.md)                                                                        |
+| E2E_HOST                          | http://localhost:3000                                                | The host URL for end-to-end testing. More info in [E2E tests documentation](e2e/README.md)                                                                          |
+
+The .env file contains environment variables that can be used to configure your app's settings and behavior. These values can be changed as needed to suit your specific requirements.
+
+Also we have a lot of auth provider specific env variables:
+
+| Variable                | Description                                       |
+| ----------------------- | ------------------------------------------------- |
+| AUTH_AZURE_AD_CLIENT_ID | The Azure AD client ID for authentication.        |
+| AUTH_AZURE_AD_SECRET    | The Azure AD client secret for authentication.    |
+| AUTH_AZURE_AD_TENANT_ID | The Azure AD tenant ID for authentication.        |
+| AUTH_AZURE_AD_NAME      | The Azure AD app display name for authentication. |
+| AUTH_GITLAB_CLIENT_ID   | The GitLab client ID for authentication.          |
+| AUTH_GITLAB_SECRET      | The GitLab client secret for authentication.      |
+| AUTH_GITLAB_NAME        | The GitLab app display name for authentication.   |
+| AUTH_GITLAB_HOST        | The GitLab host URL for authentication.           |
+| AUTH_GOOGLE_CLIENT_ID   | The Google client ID for authentication.          |
+| AUTH_GOOGLE_SECRET      | The Google client secret for authentication.      |
+| AUTH_GOOGLE_NAME        | The Google app display name for authentication.   |
+| AUTH_AUTH0_CLIENT_ID    | The Auth0 client ID for authentication.           |
+| AUTH_AUTH0_SECRET       | The Auth0 client secret for authentication.       |
+| AUTH_AUTH0_NAME         | The Auth0 app display name for authentication.    |
+| AUTH_AUTH0_HOST         | The Auth0 host URL for authentication.            |
+| AUTH_AUTH0_AUDIENCE     | The Auth0 audience for authentication.            |
+| AUTH_PING_ID_CLIENT_ID  | The Ping ID client ID for authentication.         |
+| AUTH_PING_ID_SECRET     | The Ping ID client secret for authentication.     |
+| AUTH_PING_ID_NAME       | The Ping ID app display name for authentication.  |
+| AUTH_PING_ID_HOST       | The Ping ID host URL for authentication.          |
+| AUTH_KEYCLOAK_CLIENT_ID | The Keycloak client ID for authentication.        |
+| AUTH_KEYCLOAK_SECRET    | The Keycloak client secret for authentication.    |
+| AUTH_KEYCLOAK_NAME      | The Keycloak app display name for authentication. |
+| AUTH_KEYCLOAK_HOST      | The Keycloak host URL for authentication.         |
+| AUTH_TEST_TOKEN         | A test token for authentication.                  |
