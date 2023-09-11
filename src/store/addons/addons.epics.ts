@@ -10,26 +10,25 @@ import {
   throwError,
   withLatestFrom,
 } from 'rxjs';
+import { fromFetch } from 'rxjs/fetch';
+
+import { combineEpics } from 'redux-observable';
 
 import { OpenAIEntityAddon } from '@/src/types/openai';
 import { AppEpic } from '@/src/types/store';
 
 import { AddonsActions, AddonsSelectors } from './addons.reducers';
 
-import { combineEpics } from 'redux-observable';
-
 const getAddonsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(AddonsActions.getAddons.match),
     withLatestFrom(state$),
     switchMap(() => {
-      return from(
-        fetch('/api/addons', {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }),
-      ).pipe(
+      return fromFetch('/api/addons', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).pipe(
         switchMap((resp) => {
           if (!resp.ok) {
             return throwError(() => resp);

@@ -4,9 +4,11 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'next-i18next';
 
 import { onChangeHandler } from '@/src/utils/app/components-helpers';
-import { showAPIToastError } from '@/src/utils/app/errors';
 
 import { ReportIssueBody } from '@/src/types/report-issue';
+
+import { useAppDispatch } from '@/src/store/hooks';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import XMark from '../../../public/images/icons/xmark.svg';
 
@@ -66,6 +68,8 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
 
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
+
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
@@ -190,10 +194,13 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
                       setTitle('');
                       setDescription('');
                     } else {
-                      showAPIToastError(
-                        response,
-                        t(errorsMessages.generalServer, { ns: 'common' }),
-                        loadingToast,
+                      dispatch(
+                        UIActions.showToast({
+                          message: t(errorsMessages.generalServer, {
+                            ns: 'common',
+                          }),
+                          type: 'error',
+                        }),
                       );
                     }
                   }

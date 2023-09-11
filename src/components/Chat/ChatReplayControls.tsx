@@ -1,4 +1,4 @@
-import { FC, MouseEventHandler } from 'react';
+import { FC } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -6,8 +6,8 @@ import Play from '../../../public/images/icons/play.svg';
 import RefreshCW from '../../../public/images/icons/refresh-cw.svg';
 
 interface ChatReplayControlsProps {
-  onClickReplayReStart: MouseEventHandler<HTMLButtonElement>;
-  onClickReplayStart: MouseEventHandler<HTMLButtonElement>;
+  onClickReplayReStart: () => void;
+  onClickReplayStart: () => void;
   showReplayStart: boolean;
 }
 const ChatReplayControls: FC<ChatReplayControlsProps> = ({
