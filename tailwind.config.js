@@ -29,10 +29,10 @@ module.exports = {
       },
       black: 'rgb(var(--black, 0 0 0) / <alpha-value>)', // #000000
       red: {
-        200: 'rgb(var(--red-200, 243 214 216) / <alpha-value>)', // #F3D6D8
-        400: 'rgb(var(--red-400, 247 100 100) / <alpha-value>)', // #F76464
-        800: 'rgb(var(--red-800, 174 47 47) / <alpha-value>)', // #AE2F2F
-        900: 'rgb(var(--red-900, 64 32 39) / <alpha-value>)', // #402027
+        200: 'rgb(var(--red-200, 243 214 216) / <alpha-value>)', // #F3D6D8, Error-bg
+        400: 'rgb(var(--red-400, 247 100 100) / <alpha-value>)', // #F76464, Error-text, error-stroke(dark)
+        800: 'rgb(var(--red-800, 174 47 47) / <alpha-value>)', // #AE2F2F, Error-text, error-stroke
+        900: 'rgb(var(--red-900, 64 32 39) / <alpha-value>)', // #402027, Error-bg (dark)
       },
     },
     extend: {

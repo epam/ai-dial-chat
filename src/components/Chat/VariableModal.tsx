@@ -83,33 +83,25 @@ export const VariableModal: FC<Props> = ({
     >
       <div
         ref={modalRef}
-        className="dark:border-netural-400 inline-block max-h-[400px] overflow-y-auto rounded-lg border border-gray-300 bg-white px-4 pb-4 pt-5 text-left align-bottom shadow-xl transition-all dark:bg-[#202123] sm:my-8 sm:max-h-[600px] sm:w-full sm:max-w-lg sm:p-6 sm:align-middle"
+        className="inline-block max-h-[400px] overflow-y-auto rounded border border-gray-300 px-4 pb-4 pt-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:max-h-[600px] sm:w-full sm:max-w-lg sm:p-6 sm:align-middle"
         role="dialog"
         data-qa="variable-modal"
       >
-        <div
-          className="mb-4 text-xl font-bold text-black dark:text-neutral-200"
-          data-qa="variable-prompt-name"
-        >
+        <div className="mb-4 font-bold" data-qa="variable-prompt-name">
           {prompt.name}
         </div>
 
-        <div
-          className="mb-4 text-sm italic text-black dark:text-neutral-200"
-          data-qa="variable-prompt-descr"
-        >
+        <div className="mb-4 italic" data-qa="variable-prompt-descr">
           {prompt.description}
         </div>
 
         {updatedVariables.map((variable, index) => (
           <div className="mb-4" key={index}>
-            <div className="mb-2 text-sm font-bold text-neutral-600 dark:text-neutral-200">
-              {variable.key}
-            </div>
+            <div className="mb-2 font-bold">{variable.key}</div>
 
             <textarea
               ref={index === 0 ? nameInputRef : undefined}
-              className="mt-1 w-full rounded-lg border border-neutral-500 px-4 py-2 text-neutral-900 shadow focus:outline-none dark:border-neutral-800 dark:border-opacity-50 dark:bg-[#40414F] dark:text-neutral-100"
+              className="mt-1 w-full rounded border px-4 py-2 shadow focus:outline-none"
               style={{ resize: 'none' }}
               placeholder={`Enter a value for ${variable.key}...`}
               value={variable.value}
@@ -120,7 +112,7 @@ export const VariableModal: FC<Props> = ({
         ))}
 
         <button
-          className="mt-6 w-full rounded-lg border border-neutral-500 px-4 py-2 text-neutral-900 shadow hover:bg-neutral-100 focus:outline-none dark:border-neutral-800 dark:border-opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-300"
+          className="mt-6 w-full rounded border px-4 py-2 shadow focus:outline-none"
           onClick={handleSubmit}
           data-qa="submit-variable"
         >
