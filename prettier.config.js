@@ -13,6 +13,8 @@ module.exports = {
     '^next/.*$', // Next-related imports
     '.*next$', // Next-related imports
     '^rxjs', // rxjs imports
+    '^@reduxjs/.*$', // rxjs imports
+    '^redux-observable$', // rxjs imports
     '^.*/hooks/.*$', // Hooks
     '^.*/services/.*$', // Services
     '^.*/utils/.*$', // Utils

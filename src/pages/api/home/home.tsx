@@ -17,10 +17,7 @@ import { FolderInterface } from '@/src/types/folder';
 import { OpenAIEntityModelID, fallbackModelID } from '@/src/types/openai';
 
 import { AddonsActions } from '@/src/store/addons/addons.reducers';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsActions } from '@/src/store/models/models.reducers';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
@@ -66,18 +63,8 @@ const Home = ({
 
   const theme = useAppSelector(UISelectors.selectThemeState);
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
-  const selectedConversationIds = useAppSelector(
-    ConversationsSelectors.selectSelectedConversationsIds,
-  );
 
   // EFFECTS  --------------------------------------------
-
-  useEffect(() => {
-    if (window.innerWidth < 640) {
-      dispatch(UIActions.setShowChatbar(false));
-    }
-  }, [selectedConversationIds]);
-
   useEffect(() => {
     if (
       !isIframe &&
@@ -96,7 +83,7 @@ const Home = ({
     footerHtmlMessage &&
       dispatch(SettingsActions.setFooterHtmlMessage(footerHtmlMessage));
 
-    enabledFeaturesSet &&
+    enabledFeatures &&
       dispatch(SettingsActions.setEnabledFeatures(enabledFeatures));
 
     isIframe && dispatch(SettingsActions.setIsIframe(isIframe));
@@ -178,7 +165,15 @@ const Home = ({
     }
 
     dispatch(ConversationsActions.initConversations());
-  }, []);
+  }, [
+    defaultModelId,
+    footerHtmlMessage,
+    enabledFeatures,
+    isIframe,
+    defaultRecentModelsIds,
+    defaultRecentAddonsIds,
+    dispatch,
+  ]);
 
   const handleIframeAuth = async () => {
     const timeout = 30 * 1000;

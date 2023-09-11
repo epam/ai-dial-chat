@@ -20,7 +20,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const { responseId, model, value, id } = req.body as RateBody;
+    const { responseId, modelId, value, id } = req.body as RateBody;
 
     if (!id || !validate(id) || !responseId) {
       return res.status(400).send(errorsMessages[400]);
@@ -37,7 +37,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }),
       method: 'POST',
       body: JSON.stringify({
-        model: model.id,
+        model: modelId,
         rate: value,
         responseId,
       }),

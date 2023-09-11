@@ -1,8 +1,8 @@
+import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+
 import { Feature } from '@/src/types/features';
 
 import { RootState } from '..';
-
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 export interface SettingsState {
   isIframe: boolean;

@@ -184,10 +184,7 @@ export const ChatHeader = ({
                     <button
                       className="cursor-pointer text-gray-500 hover:text-blue-500 disabled:cursor-not-allowed"
                       onClick={() => onUnselectConversation(conversation.id)}
-                      disabled={
-                        conversation.isMessageStreaming ||
-                        conversation.isLoading
-                      }
+                      disabled={conversation.isMessageStreaming}
                     >
                       <IconX size={18} />
                     </button>

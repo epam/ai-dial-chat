@@ -1,12 +1,13 @@
 import { i18n } from 'next-i18next';
 
+import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+
 import { ErrorMessage } from '@/src/types/error';
 import { OpenAIEntityAddon } from '@/src/types/openai';
 
 import { RootState } from '../index';
 
 import { errorsMessages } from '@/src/constants/errors';
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 export interface AddonsState {
   isLoading: boolean;
