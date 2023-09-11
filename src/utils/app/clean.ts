@@ -64,7 +64,6 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
               []),
           assistantModelId,
           lastActivityDate: conversation.lastActivityDate,
-          isLoading: false,
           isMessageStreaming: false,
         };
 

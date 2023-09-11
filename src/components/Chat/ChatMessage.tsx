@@ -41,7 +41,7 @@ export interface Props {
   isLikesEnabled: boolean;
   editDisabled: boolean;
   onEdit: (editedMessage: Message) => void;
-  onLike: (editedMessage: Message) => void;
+  onLike: (likeStatus: number) => void;
   onDelete: (deletedMessage: Message) => void;
 }
 
@@ -105,7 +105,7 @@ export const ChatMessage: FC<Props> = memo(
 
     const setLike = (likeStatus: number) => () => {
       if (conversation && onLike) {
-        onLike({ ...message, like: likeStatus });
+        onLike(likeStatus);
       }
     };
 

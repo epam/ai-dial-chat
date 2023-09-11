@@ -1,13 +1,14 @@
 import { IconAsterisk, IconX } from '@tabler/icons-react';
 import { FC, MutableRefObject, useEffect, useRef, useState } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { useTranslation } from 'next-i18next';
 
 import { onChangeHandler } from '@/src/utils/app/components-helpers';
-import { showAPIToastError } from '@/src/utils/app/errors';
 
 import { RequestAPIKeyBody } from '@/src/types/request-api-key';
+
+import { useAppDispatch } from '@/src/store/hooks';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -69,6 +70,9 @@ interface Props {
 
 export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
   const { t } = useTranslation('settings');
+
+  const dispatch = useAppDispatch();
+
   const modalRef = useRef<HTMLDivElement>(null);
   const projectNameInputRef = useRef<HTMLInputElement>(null);
   const streamNameInputRef = useRef<HTMLInputElement>(null);
@@ -423,8 +427,11 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                     >[],
                   )
                 ) {
-                  const loadingToast = toast.loading(
-                    t('Requesting API key in progress...'),
+                  dispatch(
+                    UIActions.showToast({
+                      message: t('Requesting API key in progress...'),
+                      type: 'loading',
+                    }),
                   );
                   onClose();
 
@@ -447,14 +454,20 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                     setStreamName('');
                     setCost('');
 
-                    toast.success(t('API Key requested succesfully'), {
-                      id: loadingToast,
-                    });
+                    dispatch(
+                      UIActions.showToast({
+                        message: t('API Key requested succesfully'),
+                        type: 'success',
+                      }),
+                    );
                   } else {
-                    showAPIToastError(
-                      response,
-                      t(errorsMessages.generalServer, { ns: 'common' }),
-                      loadingToast,
+                    dispatch(
+                      UIActions.showToast({
+                        message: t(errorsMessages.generalServer, {
+                          ns: 'common',
+                        }),
+                        type: 'error',
+                      }),
                     );
                   }
                 }

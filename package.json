@@ -3,6 +3,7 @@
   "version": "1.9.0",
   "private": true,
   "scripts": {
+    "postinstall": "npx playwright install",
     "dev": "next dev",
     "watch:overlay": "tsc overlay/script.ts --watch --target es6 --skipLibCheck --outDir dist/overlay",
     "dev:overlay": "npx cpy-cli ./overlay/example.html ./dist --rename=index.html && npx http-server ./dist/overlay --c-1",

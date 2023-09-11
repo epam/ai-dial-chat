@@ -6,30 +6,30 @@ import {
   map,
   of,
   switchMap,
+  takeUntil,
   tap,
   throwError,
   withLatestFrom,
 } from 'rxjs';
+import { fromFetch } from 'rxjs/fetch';
+
+import { combineEpics } from 'redux-observable';
 
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { AppEpic } from '@/src/types/store';
 
 import { ModelsActions, ModelsSelectors } from './models.reducers';
 
-import { combineEpics } from 'redux-observable';
-
 const getModelsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ModelsActions.getModels.match),
     withLatestFrom(state$),
     switchMap(() => {
-      return from(
-        fetch('/api/models', {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }),
-      ).pipe(
+      return fromFetch('/api/models', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).pipe(
         switchMap((resp) => {
           if (!resp.ok) {
             return throwError(() => resp);
@@ -42,6 +42,7 @@ const getModelsEpic: AppEpic = (action$, state$) =>
         catchError((err) => {
           return of(ModelsActions.getModelsFail({ error: err }));
         }),
+        takeUntil(action$.pipe(filter(ModelsActions.getModels.match))),
       );
     }),
   );

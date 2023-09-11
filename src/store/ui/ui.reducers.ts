@@ -1,8 +1,8 @@
+import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+
 import { Theme } from '@/src/types/settings';
 
 import { RootState } from '..';
-
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 export interface UIState {
   theme: Theme;
@@ -59,6 +59,14 @@ export const uiSlice = createSlice({
     ) => {
       state.isCompareMode = payload;
     },
+    showToast: (
+      state,
+      _action: PayloadAction<{
+        message?: string | null;
+        type?: 'error' | 'loading' | 'success';
+        response?: Response;
+      }>,
+    ) => state,
   },
 });
 

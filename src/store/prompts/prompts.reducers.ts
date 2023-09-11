@@ -1,5 +1,7 @@
 import { i18n } from 'next-i18next';
 
+import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+
 import { PromptsHistory } from '@/src/types/export';
 import { FolderInterface } from '@/src/types/folder';
 import { OpenAIEntityModel } from '@/src/types/openai';
@@ -7,7 +9,6 @@ import { Prompt } from '@/src/types/prompt';
 
 import { RootState } from '../index';
 
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface PromptsState {

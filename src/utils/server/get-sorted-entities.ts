@@ -1,4 +1,3 @@
-import { Session } from 'next-auth';
 import { JWT } from 'next-auth/jwt';
 
 import {
@@ -12,7 +11,6 @@ import {
   fallbackModelID,
 } from '@/src/types/openai';
 
-import { limitEntitiesAccordingToUser } from './entities-permissions';
 import { getEntities } from './get-entities';
 
 function setDefaultModel(models: OpenAIEntityModel[]) {
@@ -25,10 +23,7 @@ function setDefaultModel(models: OpenAIEntityModel[]) {
   return models;
 }
 
-export const getSortedEntities = async (
-  token: JWT | null,
-  session: Session | null,
-) => {
+export const getSortedEntities = async (token: JWT | null) => {
   let entities: OpenAIEntityModel[] = [];
   const accessToken = token?.access_token as string;
   const jobTitle = token?.jobTitle as string;
@@ -79,11 +74,6 @@ export const getSortedEntities = async (
     });
   }
 
-  entities = limitEntitiesAccordingToUser(
-    entities,
-    session,
-    process.env.AVAILABLE_MODELS_USERS_LIMITATIONS,
-  );
   entities = setDefaultModel(entities);
   return entities;
 };

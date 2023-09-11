@@ -17,6 +17,8 @@ class NextClient {
     globalObj._client[provider.id] = clientLocal;
   }
   public static getClient(providerId: string): Client | null {
+    globalObj._client = globalObj._client || {};
+
     return globalObj._client[providerId] || null;
   }
 
