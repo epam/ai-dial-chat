@@ -268,7 +268,7 @@ export const ChatInput = forwardRef(
     return (
       <div
         ref={ref}
-        className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 pt-6 dark:border-white/20 dark:via-gray-900 dark:to-gray-900 md:pt-2"
+        className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 pt-6 dark:via-gray-900 dark:to-gray-900 md:pt-2"
       >
         <div className="mx-2 mb-2 mt-8 flex flex-row gap-3 md:mx-4 md:mb-0 md:mt-[52px] md:last:mb-6 lg:mx-auto lg:max-w-3xl">
           {messageIsStreaming && (
@@ -331,7 +331,7 @@ export const ChatInput = forwardRef(
               disabled={messageIsStreaming || isModelsLoading}
             >
               {messageIsStreaming || isModelsLoading ? (
-                <div className="h-5 w-5 animate-spin rounded-full border-t-2 border-gray-500 text-current"></div>
+                <div className="h-5 w-5 animate-spin rounded-full border-t-2 border-gray-500"></div>
               ) : (
                 <span className="hover:text-blue-500">
                   <IconSend size={24} stroke="1.5" />
