@@ -19,7 +19,7 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
   return (
     <div
       className={`absolute bottom-3 flex w-full 
-      justify-center border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 dark:border-white/20 dark:via-gray-900 dark:to-gray-900 md:bottom-5`}
+      justify-center border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 dark:via-gray-900 dark:to-gray-900 md:bottom-5`}
     >
       {showReplayStart ? (
         <button

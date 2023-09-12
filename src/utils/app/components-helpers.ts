@@ -5,6 +5,6 @@ export const onChangeHandler = (
   setValue: Dispatch<SetStateAction<string>>,
 ) => {
   if (ref && ref.current) {
-    setValue(ref.current.value.trim());
+    setValue(ref.current.value);
   }
 };

@@ -231,7 +231,7 @@ const Home = ({
       ) : (
         <main className={`${theme} `}>
           <div
-            className={`theme-main flex h-screen w-screen flex-col bg-gray-300 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-200`}
+            className={`h-screen w-screen flex-col bg-gray-300 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-200`}
             id="theme-main"
           >
             <div className={`flex h-full w-full flex-col sm:pt-0`}>

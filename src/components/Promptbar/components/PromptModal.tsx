@@ -51,7 +51,7 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/70"
       onKeyDown={handleEnter}
     >
       <div className="fixed inset-0 z-10 overflow-hidden">
@@ -63,27 +63,23 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
 
           <div
             ref={modalRef}
-            className="dark:border-netural-400 inline-block max-h-[400px] overflow-y-auto rounded-lg border border-gray-300 bg-white px-4 pb-4 pt-5 text-left align-bottom shadow-xl transition-all dark:bg-[#202123] sm:my-8 sm:max-h-[600px] sm:w-full sm:max-w-lg sm:p-6 sm:align-middle"
+            className="inline-block max-h-[400px] overflow-y-auto rounded border border-gray-300 bg-gray-100 px-4 pb-4 pt-5 text-left align-bottom shadow-xl transition-all dark:bg-gray-700 sm:my-8 sm:max-h-[600px] sm:w-full sm:max-w-lg sm:p-6 sm:align-middle"
             role="dialog"
             data-qa="prompt-modal"
           >
-            <div className="text-sm font-bold text-black dark:text-neutral-200">
-              {t('Name')}
-            </div>
+            <div className="text-sm font-bold">{t('Name')}</div>
             <input
               ref={nameInputRef}
-              className="mt-2 w-full rounded-lg border border-neutral-500 px-4 py-2 text-neutral-900 shadow focus:outline-none dark:border-neutral-800 dark:border-opacity-50 dark:bg-[#40414F] dark:text-neutral-100"
+              className="mt-2 w-full rounded border px-4 py-2 shadow focus:outline-none dark:bg-gray-700"
               placeholder={t('A name for your prompt.') || ''}
               value={name}
               onChange={(e) => setName(e.target.value)}
               data-qa="prompt-name"
             />
 
-            <div className="mt-6 text-sm font-bold text-black dark:text-neutral-200">
-              {t('Description')}
-            </div>
+            <div className="mt-6 text-sm font-bold">{t('Description')}</div>
             <textarea
-              className="mt-2 w-full rounded-lg border border-neutral-500 px-4 py-2 text-neutral-900 shadow focus:outline-none dark:border-neutral-800 dark:border-opacity-50 dark:bg-[#40414F] dark:text-neutral-100"
+              className="mt-2 w-full rounded border px-4 py-2 shadow placeholder:text-gray-500 focus:outline-none dark:bg-gray-700"
               style={{ resize: 'none' }}
               placeholder={t('A description for your prompt.') || ''}
               value={description}
@@ -92,11 +88,9 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
               data-qa="prompt-descr"
             />
 
-            <div className="mt-6 text-sm font-bold text-black dark:text-neutral-200">
-              {t('Prompt')}
-            </div>
+            <div className="mt-6 text-sm font-bold">{t('Prompt')}</div>
             <textarea
-              className="mt-2 w-full rounded-lg border border-neutral-500 px-4 py-2 text-neutral-900 shadow focus:outline-none dark:border-neutral-800 dark:border-opacity-50 dark:bg-[#40414F] dark:text-neutral-100"
+              className="mt-2 w-full rounded border px-4 py-2 shadow focus:outline-none dark:bg-gray-700"
               style={{ resize: 'none' }}
               placeholder={
                 t(
@@ -111,7 +105,7 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
 
             <button
               type="button"
-              className="mt-6 w-full rounded-lg border border-neutral-500 px-4 py-2 text-neutral-900 shadow hover:bg-neutral-100 focus:outline-none dark:border-neutral-800 dark:border-opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-300"
+              className="mt-6 w-full rounded border px-4 py-2 shadow focus:outline-none"
               onClick={() => {
                 const updatedPrompt = {
                   ...prompt,

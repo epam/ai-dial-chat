@@ -551,14 +551,20 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       }
       const chatBody: ChatBody = {
         modelId: payload.conversation.model.id,
-        messages: payload.conversation.messages.map((message) => ({
-          content: message.content,
-          role: message.role,
-          like: void 0,
-          ...(message.custom_content?.state && {
-            custom_content: { state: message.custom_content?.state },
-          }),
-        })),
+        messages: payload.conversation.messages
+          .filter(
+            (message, index) =>
+              message.role !== 'assistant' ||
+              index !== payload.conversation.messages.length - 1,
+          )
+          .map((message) => ({
+            content: message.content,
+            role: message.role,
+            like: void 0,
+            ...(message.custom_content?.state && {
+              custom_content: { state: message.custom_content?.state },
+            }),
+          })),
         id: payload.conversation.id.toLowerCase(),
         ...modelAdditionalSettings,
       };

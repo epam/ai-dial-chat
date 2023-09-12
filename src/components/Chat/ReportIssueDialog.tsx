@@ -1,4 +1,3 @@
-import { IconAsterisk, IconX } from '@tabler/icons-react';
 import { FC, MutableRefObject, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -10,6 +9,8 @@ import { ReportIssueBody } from '@/src/types/report-issue';
 
 import { useAppDispatch } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
+
+import XMark from '../../../public/images/icons/xmark.svg';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -96,7 +97,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
 
   // Render the dialog.
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/70">
       <div className="fixed inset-0 z-10 overflow-hidden">
         <div className="flex max-h-screen min-h-screen items-center justify-center px-4 pb-20 pt-4 text-center sm:block sm:p-0">
           <div
@@ -106,22 +107,25 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
 
           <div
             ref={modalRef}
-            className="dark:border-netural-400 inline-block max-h-[800px] overflow-y-auto rounded-lg border border-gray-300 bg-white px-4 pb-4 pt-5 text-left align-bottom shadow-xl transition-all dark:bg-[#202123] sm:my-8 sm:max-h-[700px] sm:w-full sm:max-w-[550px] sm:p-6 sm:align-middle"
+            className="inline-block max-h-[800px] overflow-y-auto rounded bg-gray-100 px-4 pb-4 pt-5 text-left align-bottom shadow-xl transition-all dark:bg-gray-700 sm:my-8 sm:max-h-[700px] sm:w-full sm:max-w-[550px] sm:p-6 sm:align-middle "
             role="dialog"
           >
-            <div className="flex justify-between pb-4 text-lg font-bold text-black dark:text-neutral-200">
-              {t('Report an issue')}
+            <div className="flex justify-end text-gray-500">
               <button onClick={onClose}>
-                <IconX></IconX>
+                <XMark height={24} width={24} />
               </button>
             </div>
+            <div className="flex justify-between pb-4 text-base font-bold">
+              {t('Report an issue')}
+            </div>
 
-            <div className="mb-5 text-sm font-bold text-black dark:text-neutral-200">
-              <label className="mb-2 flex" htmlFor="projectNameInput">
+            <div className="mb-5">
+              <label
+                className="mb-2 flex text-xs text-gray-500"
+                htmlFor="projectNameInput"
+              >
                 {t('Title')}
-                <span className="inline text-red-500">
-                  <IconAsterisk size={10} />
-                </span>
+                <span className="ml-1 inline text-blue-500">*</span>
               </label>
               <input
                 ref={titleInputRef}
@@ -130,21 +134,22 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
                 required
                 type="text"
                 onBlur={(e) => {
-                  e.target.classList.add('invalid:border-red-500');
+                  e.target.classList.add('invalid:border-red-400');
                 }}
                 onChange={() => {
                   onChangeHandler(titleInputRef, setTitle);
                 }}
-                className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
+                className="m-0 w-full rounded border border-gray-400 bg-transparent p-3 dark:border-gray-600"
               ></input>
             </div>
 
-            <div className="mb-5 text-sm font-bold text-black dark:text-neutral-200">
-              <label className="mb-2 flex" htmlFor="businessJustificationInput">
+            <div className="mb-5">
+              <label
+                className="mb-2 flex text-xs text-gray-500"
+                htmlFor="businessJustificationInput"
+              >
                 {t('Description')}
-                <span className="inline text-red-500">
-                  <IconAsterisk size={10} />
-                </span>
+                <span className="ml-1 inline text-blue-500">*</span>
               </label>
               <textarea
                 ref={descriptionInputRef}
@@ -152,57 +157,58 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
                 value={description}
                 required
                 onBlur={(e) => {
-                  e.target.classList.add('invalid:border-red-500');
+                  e.target.classList.add('invalid:border-red-400');
                 }}
                 onChange={() => {
                   onChangeHandler(descriptionInputRef, setDescription);
                 }}
-                className="m-0 w-full rounded-md border border-neutral-600 bg-white p-0 py-3 pl-3 pr-8 font-normal text-black shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)]"
+                className="m-0 h-[200px] w-full rounded border border-gray-400 bg-transparent p-3 dark:border-gray-600"
               ></textarea>
             </div>
-
-            <button
-              type="button"
-              className="mt-6 flex h-8 w-full items-center justify-center rounded-lg border border-neutral-500 px-4 py-2 text-neutral-900 shadow hover:bg-neutral-100 focus:outline-none dark:border-neutral-800 dark:border-opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-300"
-              onClick={async () => {
-                if (
-                  checkValidity(
-                    inputs as unknown as MutableRefObject<
-                      HTMLInputElement | HTMLTextAreaElement
-                    >[],
-                  )
-                ) {
-                  const loadingToast = toast.loading(
-                    t('Reporting an issue in progress...'),
-                  );
-                  onClose();
-
-                  const response = await reportIssue({
-                    title,
-                    description,
-                  });
-
-                  if (response.ok) {
-                    toast.success(t('Issue reported successfully'), {
-                      id: loadingToast,
-                    });
-                    setTitle('');
-                    setDescription('');
-                  } else {
-                    dispatch(
-                      UIActions.showToast({
-                        message: t(errorsMessages.generalServer, {
-                          ns: 'common',
-                        }),
-                        type: 'error',
-                      }),
+            <div className="flex justify-end">
+              <button
+                type="button"
+                className="rounded bg-blue-500 p-3 text-gray-100"
+                onClick={async () => {
+                  if (
+                    checkValidity(
+                      inputs as unknown as MutableRefObject<
+                        HTMLInputElement | HTMLTextAreaElement
+                      >[],
+                    )
+                  ) {
+                    const loadingToast = toast.loading(
+                      t('Reporting an issue in progress...'),
                     );
+                    onClose();
+
+                    const response = await reportIssue({
+                      title,
+                      description,
+                    });
+
+                    if (response.ok) {
+                      toast.success(t('Issue reported successfully'), {
+                        id: loadingToast,
+                      });
+                      setTitle('');
+                      setDescription('');
+                    } else {
+                      dispatch(
+                        UIActions.showToast({
+                          message: t(errorsMessages.generalServer, {
+                            ns: 'common',
+                          }),
+                          type: 'error',
+                        }),
+                      );
+                    }
                   }
-                }
-              }}
-            >
-              {t('Report an issue')}
-            </button>
+                }}
+              >
+                {t('Report an issue')}
+              </button>
+            </div>
           </div>
         </div>
       </div>
