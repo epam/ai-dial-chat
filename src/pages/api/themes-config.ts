@@ -1,5 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
+import { logger } from '@/src/utils/server/logger';
+
 import { errorsMessages } from '@/src/constants/errors';
 import cssEscape from 'css.escape';
 import fetch from 'node-fetch';
@@ -99,7 +101,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   );
 
   if (!response.ok) {
-    console.error(
+    logger.error(
       `Received error when fetching config file: ${response.status} ${
         response.statusText
       } ${await response.text()}`,

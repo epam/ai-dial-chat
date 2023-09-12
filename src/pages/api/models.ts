@@ -3,6 +3,7 @@ import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
+import { logger } from '@/src/utils/server/logger';
 
 import { authOptions } from './auth/[...nextauth]';
 
@@ -21,7 +22,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     return res.status(200).json(entities);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return res.status(500).send('Error');
   }
 };

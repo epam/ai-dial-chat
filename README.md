@@ -1,12 +1,6 @@
-OPEN QUESTIONS:
-1. Do we need to mention parent project (chatbot-ui)
-2. Do we need to have contributing section? (We have CONTRIBUTING.md in docs file which should be updated)
-3. Do we need to update security documentation?
-4. Do we need to remove CHANGELOG.md file due to it's not working right now 
-
 # DIAL Chat
 
-This is an example README file for a Next.js project. Make sure to edit this template with your project's relevant information.
+TODO: This is an example README file for a Next.js project. Make sure to edit this template with your project's relevant information.
 
 ## Overview
 
@@ -26,7 +20,7 @@ git clone https://gitlab.deltixhub.com/Deltix/openai-apps/chatbot-ui
 
 2. Navigate to the project directory:
 
-```
+```bash
 cd chatbot-ui
 ```
 
@@ -38,7 +32,7 @@ npm install
 
 4. To start the development server, run:
 
-```
+```bash
 npm run dev
 ```
 
@@ -46,7 +40,7 @@ npm run dev
 
 To create an optimized build of your application, run the following command:
 
-```
+```bash
 npm run build
 ```
 
@@ -56,7 +50,7 @@ After running the command, you'll see a `.next` folder created in your project d
 
 To start the development server, run:
 
-```
+```bash
 npm run dev
 ```
 
@@ -64,7 +58,7 @@ Once the server is up and running, open `http://localhost:3000` in your browser 
 
 To run the optimized production build, first build the app and then run:
 
-```
+```bash
 npm start
 ```
 
@@ -74,13 +68,13 @@ This will start a production server on the default port 3000.
 
 To run the unit tests suite for your application, execute the following command:
 
-```
+```bash
 npm test
 ```
 
 To run the e2e tests run the following command:
 
-```
+```bash
 npm run test:e2e
 ```
 

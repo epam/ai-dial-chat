@@ -49,4 +49,4 @@ pnpm-lock.yaml
 /e2e/test-results/
 /e2e/allure-results/
 /e2e/auth/
-/playwright-report
+/e2e/html-report/

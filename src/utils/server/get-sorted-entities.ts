@@ -12,6 +12,7 @@ import {
 } from '@/src/types/openai';
 
 import { getEntities } from './get-entities';
+import { logger } from './logger';
 
 function setDefaultModel(models: OpenAIEntityModel[]) {
   const defaultModelId = process.env.DEFAULT_MODEL || fallbackModelID;
@@ -32,17 +33,17 @@ export const getSortedEntities = async (token: JWT | null) => {
     accessToken,
     jobTitle,
   ).catch((error) => {
-    console.error(error.message);
+    logger.error(error.message);
     return [];
   });
   const applications: ProxyOpenAIEntity<OpenAIEntityApplicationType>[] =
     await getEntities('application', accessToken, jobTitle).catch((error) => {
-      console.error(error.message);
+      logger.error(error.message);
       return [];
     });
   const assistants: ProxyOpenAIEntity<OpenAIEntityAssistantType>[] =
     await getEntities('assistant', accessToken, jobTitle).catch((error) => {
-      console.error(error.message);
+      logger.error(error.message);
       return [];
     });
 
