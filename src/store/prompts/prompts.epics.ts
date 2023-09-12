@@ -1,4 +1,4 @@
-import { toast } from 'react-hot-toast';
+import { i18n } from 'next-i18next';
 
 import { EMPTY, filter, ignoreElements, map, of, switchMap, tap } from 'rxjs';
 
@@ -12,6 +12,7 @@ import { AppEpic } from '@/src/types/store';
 
 import { ConversationsSelectors } from '../conversations/conversations.reducers';
 import { ModelsSelectors } from '../models/models.reducers';
+import { UIActions } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -119,7 +120,14 @@ const importPromptsEpic: AppEpic = (action$) =>
     map(({ payload }) => importPrompts(payload.promptsHistory)),
     switchMap(({ prompts, folders, isError }) => {
       if (isError) {
-        toast.error(errorsMessages.unsupportedDataFormat);
+        of(
+          UIActions.showToast({
+            message: (i18n as any).t(errorsMessages.unsupportedDataFormat, {
+              ns: 'common',
+            }),
+            type: 'error',
+          }),
+        );
         return EMPTY;
       }
 

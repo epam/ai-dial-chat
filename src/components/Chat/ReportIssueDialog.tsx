@@ -1,5 +1,4 @@
 import { FC, MutableRefObject, useEffect, useRef, useState } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { useTranslation } from 'next-i18next';
 
@@ -177,8 +176,11 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
                       >[],
                     )
                   ) {
-                    const loadingToast = toast.loading(
-                      t('Reporting an issue in progress...'),
+                    dispatch(
+                      UIActions.showToast({
+                        message: t('Reporting an issue in progress...'),
+                        type: 'loading',
+                      }),
                     );
                     onClose();
 
@@ -188,9 +190,12 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
                     });
 
                     if (response.ok) {
-                      toast.success(t('Issue reported successfully'), {
-                        id: loadingToast,
-                      });
+                      dispatch(
+                        UIActions.showToast({
+                          message: t('Issue reported successfully'),
+                          type: 'success',
+                        }),
+                      );
                       setTitle('');
                       setDescription('');
                     } else {
