@@ -1,6 +1,6 @@
 # DIAL Chat
 
-This is an example README file for a Next.js project. Make sure to edit this template with your project's relevant information.
+TODO: This is an example README file for a Next.js project. Make sure to edit this template with your project's relevant information.
 
 ## Overview
 
