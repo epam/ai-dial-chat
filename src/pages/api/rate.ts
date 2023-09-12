@@ -3,6 +3,7 @@ import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { getApiHeaders } from '../../utils/server/get-headers';
+import { logger } from '@/src/utils/server/logger';
 
 import { RateBody } from '../../types/chat';
 
@@ -43,7 +44,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }),
     }).then((r) => r.status);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
   }
 
   return res.status(200).json({});

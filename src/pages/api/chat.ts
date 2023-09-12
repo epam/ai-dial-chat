@@ -4,6 +4,10 @@ import { getServerSession } from 'next-auth/next';
 
 import { OpenAIError, OpenAIStream } from '@/src/utils/server';
 import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
+// 1@ts-expect-error
+// import wasm from '../../node_modules/@dqbd/tiktoken/lite/tiktoken_bg.wasm?module';
+// import wasm from '@dqbd/tiktoken/lite/tiktoken_bg.wasm';
+import { logger } from '@/src/utils/server/logger';
 
 import { OpenAIEntityAddonID, OpenAIEntityModelID } from '../../types/openai';
 import { ChatBody, Message } from '@/src/types/chat';
@@ -15,9 +19,6 @@ import {
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
-// 1@ts-expect-error
-// import wasm from '../../node_modules/@dqbd/tiktoken/lite/tiktoken_bg.wasm?module';
-// import wasm from '@dqbd/tiktoken/lite/tiktoken_bg.wasm';
 import tiktokenModel from '@dqbd/tiktoken/encoders/cl100k_base.json';
 import { Tiktoken, init } from '@dqbd/tiktoken/lite/init';
 import { readFileSync } from 'fs';
@@ -152,7 +153,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           res.write(value);
         }
       } catch (error) {
-        console.error('Error reading stream:', error);
+        logger.error('Error reading stream:', error);
         res.status(500);
       } finally {
         res.end();
@@ -161,7 +162,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     await processStream();
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     if (error instanceof OpenAIError) {
       // Rate limit errors and gateway errors https://platform.openai.com/docs/guides/error-codes/api-errors
       if (['429', '504'].includes(error.code)) {
