@@ -20,7 +20,7 @@ git clone https://gitlab.deltixhub.com/Deltix/openai-apps/chatbot-ui
 
 2. Navigate to the project directory:
 
-```
+```bash
 cd chatbot-ui
 ```
 
@@ -32,7 +32,7 @@ npm install
 
 4. To start the development server, run:
 
-```
+```bash
 npm run dev
 ```
 
@@ -40,7 +40,7 @@ npm run dev
 
 To create an optimized build of your application, run the following command:
 
-```
+```bash
 npm run build
 ```
 
@@ -50,7 +50,7 @@ After running the command, you'll see a `.next` folder created in your project d
 
 To start the development server, run:
 
-```
+```bash
 npm run dev
 ```
 
@@ -58,7 +58,7 @@ Once the server is up and running, open `http://localhost:3000` in your browser 
 
 To run the optimized production build, first build the app and then run:
 
-```
+```bash
 npm start
 ```
 
@@ -68,13 +68,13 @@ This will start a production server on the default port 3000.
 
 To run the unit tests suite for your application, execute the following command:
 
-```
+```bash
 npm test
 ```
 
 To run the e2e tests run the following command:
 
-```
+```bash
 npm run test:e2e
 ```
 
