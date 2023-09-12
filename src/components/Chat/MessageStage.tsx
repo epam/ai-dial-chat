@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Stage } from '@/src/types/chat';
 
@@ -8,6 +8,42 @@ import CircleExclamation from '../../../public/images/icons/circle-exclamation.s
 import Loader from '../../../public/images/icons/loader.svg';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachments } from './MessageAttachments';
+
+interface StageTitleProps {
+  isOpened: boolean;
+  stage: Stage;
+}
+
+const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
+  return (
+    <div
+      className={`grid min-w-0 grid-flow-col items-center gap-3 overflow-hidden`}
+    >
+      {stage.status == null ? (
+        <Loader
+          height={20}
+          width={20}
+          className="shrink-0 grow-0 basis-auto animate-spin text-gray-500"
+        />
+      ) : stage.status === 'completed' ? (
+        <CircleCheck
+          height={20}
+          width={20}
+          className="shrink-0 grow-0 basis-auto text-gray-500"
+        />
+      ) : (
+        <CircleExclamation
+          height={20}
+          width={20}
+          className="shrink-0 grow-0 basis-auto text-gray-500"
+        />
+      )}
+      <span className={`block ${isOpened ? 'max-w-full' : 'truncate'}`}>
+        {stage.name}
+      </span>
+    </div>
+  );
+};
 
 export interface Props {
   stage: Stage;
@@ -23,38 +59,6 @@ export const MessageStage = ({ stage }: Props) => {
     setHasContent(!!(stage?.content || stage?.attachments?.length));
   }, [stage?.content, stage?.attachments?.length]);
 
-  const stageTitle = useMemo(
-    () => (
-      <div
-        className={`grid min-w-0 grid-flow-col items-center gap-3 overflow-hidden`}
-      >
-        {stage.status == null ? (
-          <Loader
-            height={20}
-            width={20}
-            className="shrink-0 grow-0 basis-auto animate-spin text-gray-500"
-          />
-        ) : stage.status === 'completed' ? (
-          <CircleCheck
-            height={20}
-            width={20}
-            className="shrink-0 grow-0 basis-auto text-gray-500"
-          />
-        ) : (
-          <CircleExclamation
-            height={20}
-            width={20}
-            className="shrink-0 grow-0 basis-auto text-gray-500"
-          />
-        )}
-        <span className={`block ${isOpened ? 'max-w-full' : 'truncate'}`}>
-          {stage.name}
-        </span>
-      </div>
-    ),
-    [isOpened, stage.name, stage.status],
-  );
-
   return (
     <div className="block min-w-0 shrink rounded border border-gray-400 bg-gray-300 dark:border-gray-700 dark:bg-gray-900">
       {hasContent ? (
@@ -64,7 +68,7 @@ export const MessageStage = ({ stage }: Props) => {
             setIsOpened((opened) => !opened);
           }}
         >
-          {stageTitle}
+          <StageTitle isOpened={isOpened} stage={stage} />
           <ChevronDown
             height={20}
             width={20}
@@ -74,7 +78,9 @@ export const MessageStage = ({ stage }: Props) => {
           />
         </button>
       ) : (
-        <div className="flex p-2">{stageTitle}</div>
+        <div className="flex p-2">
+          <StageTitle isOpened={isOpened} stage={stage} />
+        </div>
       )}
 
       {(stage.content || stage.attachments) && (
