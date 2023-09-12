@@ -13,12 +13,12 @@ async function getJwksUrl(baseUrl) {
   }
 
   const json = await response.json();
-  return json["jwks_uri"];
+  return json['jwks_uri'];
 }
 
 function log(msg) {
   /* eslint-disable no-console */
-  console.log("%s %s", new Date(), msg);
+  console.log('%s %s', new Date(), msg);
   /* eslint-enable no-console */
 }
 
@@ -27,7 +27,7 @@ function printToken(token: string) {
     const protectedHeader = JSON.stringify(jose.decodeProtectedHeader(token));
     log(`protectedHeader -> ${protectedHeader}`);
   } catch (error) {
-     log(`error occurred at decoding protectedHeader: ${error}`);
+    log(`error occurred at decoding protectedHeader: ${error}`);
   }
   try {
     const claims = jose.decodeJwt(token);
@@ -44,18 +44,18 @@ export async function validateToken(token: string) {
   if (global.jwks === undefined) {
     if (process.env.AUTH_KEYCLOAK_HOST) {
       const jwksUrl = await getJwksUrl(process.env.AUTH_KEYCLOAK_HOST);
-      global.jwks = jose.createRemoteJWKSet(new URL(jwksUrl))
+      global.jwks = jose.createRemoteJWKSet(new URL(jwksUrl));
     } else {
       global.jwks = null;
     }
   }
   if (jwks) {
     jose.jwtVerify(token, jwks).catch((error) => {
-     log(`error occurred at verifying token: ${error}`);
-     printToken(token);
+      log(`error occurred at verifying token: ${error}`);
+      printToken(token);
     });
   } else {
-    log("Env var AUTH_KEYCLOAK_HOST is not set");
+    log('Env var AUTH_KEYCLOAK_HOST is not set');
     printToken(token);
   }
 }
