@@ -17,7 +17,9 @@ async function getJwksUrl(baseUrl) {
 }
 
 function log(msg) {
+  /* eslint-disable no-console */
   console.log("%s %s", new Date(), msg);
+  /* eslint-enable no-console */
 }
 
 function printToken(token: string) {
