@@ -1,9 +1,3 @@
-OPEN QUESTIONS:
-1. Do we need to mention parent project (chatbot-ui)
-2. Do we need to have contributing section? (We have CONTRIBUTING.md in docs file which should be updated)
-3. Do we need to update security documentation?
-4. Do we need to remove CHANGELOG.md file due to it's not working right now 
-
 # DIAL Chat
 
 This is an example README file for a Next.js project. Make sure to edit this template with your project's relevant information.
