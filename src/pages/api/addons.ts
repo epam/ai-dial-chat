@@ -3,6 +3,7 @@ import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { getEntities } from '@/src/utils/server/get-entities';
+import { logger } from '@/src/utils/server/logger';
 
 import {
   OpenAIEntity,
@@ -35,7 +36,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       token?.access_token as string,
       token?.jobTitle as string,
     ).catch((error) => {
-      console.error(error.message);
+      logger.error(error.message);
       return [];
     });
 
@@ -53,7 +54,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     return res.status(200).json(entities);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return res.status(500).send('Error');
   }
 };

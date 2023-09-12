@@ -10,6 +10,7 @@ import KeycloakProvider from 'next-auth/providers/keycloak';
 import { GitLab } from '../../../utils/auth/custom-gitlab';
 import PingId from '../../../utils/auth/ping-identity';
 import { callbacks, tokenConfig } from '@/src/utils/auth/nextauth';
+import { logger } from '@/src/utils/server/logger';
 
 import { v5 as uuid } from 'uuid';
 
@@ -147,7 +148,7 @@ const allProviders: (Provider | boolean)[] = [
 const providers = allProviders.filter(Boolean) as Provider[];
 
 if (!providers.length) {
-  console.error('No auth providers!');
+  logger.error('No auth providers!');
 }
 // https://github.com/nextauthjs/next-auth/blob/a8dfc8ebb11ccb96fd694db888e52f0d20395e64/packages/core/src/lib/cookie.ts#L53
 function defaultCookies(

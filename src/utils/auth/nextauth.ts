@@ -1,6 +1,7 @@
 import { Account, CallbacksOptions, Profile } from 'next-auth';
 import { TokenEndpointHandler } from 'next-auth/providers';
 
+import { logger } from '../server/logger';
 import NextClient, { RefreshToken } from './nextauth-client';
 
 export const TEST_TOKENS = new Set(
@@ -98,7 +99,7 @@ async function refreshAccessToken(token: any) {
     });
     return returnToken;
   } catch (error: any) {
-    console.error(error);
+    logger.error(error);
 
     return {
       ...token,
