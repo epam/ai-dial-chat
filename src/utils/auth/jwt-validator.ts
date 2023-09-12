@@ -1,7 +1,13 @@
 import * as jose from 'jose';
 import fetch from 'node-fetch';
 
-async function getJwksUrl(baseUrl) {
+interface OpenIdConfig {
+    jwks_uri: string;
+}
+
+const globalObj = globalThis as unknown as any;
+
+async function getJwksUrl(baseUrl: string) : Promise<string> {
   const url = `${baseUrl}/.well-known/openid-configuration`;
   const errMsg = `Request for openid-configuration returned an error`;
   const response = await fetch(url).catch((error) => {
@@ -12,11 +18,11 @@ async function getJwksUrl(baseUrl) {
     throw new Error(`${errMsg} ${response.status}: ${await response.text()}`);
   }
 
-  const json = await response.json();
-  return json['jwks_uri'];
+  const config = (await response.json()) as OpenIdConfig;
+  return config.jwks_uri;
 }
 
-function log(msg) {
+function log(msg: any) {
   /* eslint-disable no-console */
   console.log('%s %s', new Date(), msg);
   /* eslint-enable no-console */
@@ -41,16 +47,16 @@ function printToken(token: string) {
 }
 
 export async function validateToken(token: string) {
-  if (global.jwks === undefined) {
+  if (globalObj.jwks === undefined) {
     if (process.env.AUTH_KEYCLOAK_HOST) {
       const jwksUrl = await getJwksUrl(process.env.AUTH_KEYCLOAK_HOST);
-      global.jwks = jose.createRemoteJWKSet(new URL(jwksUrl));
+      globalObj.jwks = jose.createRemoteJWKSet(new URL(jwksUrl));
     } else {
-      global.jwks = null;
+      globalObj.jwks = null;
     }
   }
-  if (jwks) {
-    jose.jwtVerify(token, jwks).catch((error) => {
+  if (globalObj.jwks) {
+    jose.jwtVerify(token, globalObj.jwks).catch((error) => {
       log(`error occurred at verifying token: ${error}`);
       printToken(token);
     });
