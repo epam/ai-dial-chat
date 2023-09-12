@@ -2,6 +2,8 @@ import { Fragment, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { OpenAIEntityAddon } from '@/src/types/openai';
+
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
@@ -20,6 +22,20 @@ interface AddonsProps {
   onApplyAddons: (addonsIds: string[]) => void;
 }
 
+const filterRecentAddons = (
+  recentAddonsIds: string[],
+  selectedAddonsIds: string[],
+  preselectedAddonsIds: string[],
+  addonsMap: Partial<Record<string, OpenAIEntityAddon>>,
+) => {
+  return recentAddonsIds.filter(
+    (id) =>
+      addonsMap[id] &&
+      !selectedAddonsIds.includes(id) &&
+      !preselectedAddonsIds.includes(id),
+  );
+};
+
 export const Addons = ({
   preselectedAddonsIds,
   selectedAddonsIds,
@@ -32,23 +48,25 @@ export const Addons = ({
   const recentAddonsIds = useAppSelector(AddonsSelectors.selectRecentAddonsIds);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const [filteredRecentAddons, setFilteredRecentAddons] = useState<string[]>(
-    () => {
-      return recentAddonsIds.filter(
-        (id) =>
-          !selectedAddonsIds.includes(id) && !preselectedAddonsIds.includes(id),
-      );
-    },
+    filterRecentAddons(
+      recentAddonsIds,
+      selectedAddonsIds,
+      preselectedAddonsIds,
+      addonsMap,
+    ),
   );
   const [isAddonsDialogOpen, setIsAddonsDialogOpen] = useState(false);
 
   useEffect(() => {
     setFilteredRecentAddons(
-      recentAddonsIds.filter(
-        (id) =>
-          !selectedAddonsIds.includes(id) && !preselectedAddonsIds.includes(id),
+      filterRecentAddons(
+        recentAddonsIds,
+        selectedAddonsIds,
+        preselectedAddonsIds,
+        addonsMap,
       ),
     );
-  }, [selectedAddonsIds, preselectedAddonsIds, recentAddonsIds]);
+  }, [selectedAddonsIds, preselectedAddonsIds, recentAddonsIds, addonsMap]);
 
   const getAddon = (addonId: string, isSelected = false) => {
     const description = addonsMap[addonId]?.description;
