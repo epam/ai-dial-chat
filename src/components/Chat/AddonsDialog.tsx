@@ -20,6 +20,101 @@ import XMark from '../../../public/images/icons/xmark.svg';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
 
+interface AddonProps {
+  addon: OpenAIEntity;
+  preselectedAddonsIds: string[];
+  selectedAddons: OpenAIEntity[];
+  onSelectAddons: (addon: OpenAIEntity, isSelected: boolean) => void;
+}
+
+const Addon = ({
+  addon,
+  preselectedAddonsIds,
+  selectedAddons,
+  onSelectAddons,
+}: AddonProps) => {
+  const theme = useAppSelector(UISelectors.selectThemeState);
+
+  const isPreselected = preselectedAddonsIds.includes(addon.id);
+  const isSelected = selectedAddons.map(({ id }) => id).includes(addon.id);
+
+  return (
+    <button
+      className={`flex flex-col gap-3 rounded border p-3 text-left ${
+        isPreselected
+          ? 'bg-blue-500/20'
+          : 'hover:border-gray-800 dark:hover:border-gray-200'
+      } ${
+        isSelected ? 'border-blue-500' : 'border-gray-400 dark:border-gray-600'
+      }`}
+      key={addon.id}
+      disabled={isPreselected}
+      onClick={() => {
+        onSelectAddons(addon, isSelected);
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <ModelIcon
+          entity={addon}
+          entityId={addon.id}
+          size={24}
+          inverted={!addon.iconUrl && theme === 'dark'}
+        />
+        <span className="text-left">{addon.name}</span>
+      </div>
+      {addon.description && (
+        <span className="text-gray-500">
+          <EntityMarkdownDescription>
+            {addon.description}
+          </EntityMarkdownDescription>
+        </span>
+      )}
+    </button>
+  );
+};
+
+interface SelectedAddonProps {
+  addon: OpenAIEntity;
+  preselectedAddonsIds: string[];
+  selectedAddons: OpenAIEntity[];
+  onSelectAddons: (addon: OpenAIEntity, isSelected: boolean) => void;
+}
+
+const SelectedAddon = ({
+  addon,
+  preselectedAddonsIds,
+  onSelectAddons,
+}: SelectedAddonProps) => {
+  const isPreselected = preselectedAddonsIds.includes(addon.id);
+  const theme = useAppSelector(UISelectors.selectThemeState);
+
+  return (
+    <button
+      className="flex items-center gap-3 rounded bg-blue-500/20 px-3 py-2"
+      key={addon.id}
+      disabled={isPreselected}
+      onClick={() => {
+        onSelectAddons(addon, true);
+      }}
+    >
+      <ModelIcon
+        entity={addon}
+        entityId={addon.id}
+        size={15}
+        inverted={!addon.iconUrl && theme === 'dark'}
+      />
+      <span>{addon.name}</span>
+      {!isPreselected && (
+        <XMark
+          height={12}
+          width={12}
+          className="text-gray-500 hover:text-blue-500"
+        />
+      )}
+    </button>
+  );
+};
+
 interface Props {
   selectedAddonsIds: string[];
   preselectedAddonsIds: string[];
@@ -38,7 +133,6 @@ export const AddonsDialog: FC<Props> = ({
   const { t } = useTranslation('chat');
   const addons = useAppSelector(AddonsSelectors.selectAddons);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
-  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAddons, setSelectedAddons] = useState<OpenAIEntity[]>(() => {
@@ -61,9 +155,9 @@ export const AddonsDialog: FC<Props> = ({
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
 
-  const handleSearch = (searchValue: string) => {
+  const handleSearch = useCallback((searchValue: string) => {
     setSearchTerm(searchValue.trim().toLowerCase());
-  };
+  }, []);
 
   useEffect(() => {
     setDisplayedAddons(
@@ -72,89 +166,6 @@ export const AddonsDialog: FC<Props> = ({
       ),
     );
   }, [searchTerm, addons, selectedAddons]);
-
-  const getSelectedAddonTemplate = useCallback(
-    (addon: OpenAIEntity) => {
-      const isPreselected = preselectedAddonsIds.includes(addon.id);
-      return (
-        <button
-          className="flex items-center gap-3 rounded bg-blue-500/20 px-3 py-2"
-          key={addon.id}
-          disabled={isPreselected}
-          onClick={() => {
-            setSelectedAddons((addons) =>
-              addons.filter((el) => el.id !== addon.id),
-            );
-          }}
-        >
-          <ModelIcon
-            entity={addon}
-            entityId={addon.id}
-            size={15}
-            inverted={!addon.iconUrl && theme === 'dark'}
-          />
-          <span>{addon.name}</span>
-          {!isPreselected && (
-            <XMark
-              height={12}
-              width={12}
-              className="text-gray-500 hover:text-blue-500"
-            />
-          )}
-        </button>
-      );
-    },
-    [preselectedAddonsIds, theme],
-  );
-
-  const getAddonTemplate = useCallback(
-    (addon: OpenAIEntity) => {
-      const isPreselected = preselectedAddonsIds.includes(addon.id);
-      const isSelected = selectedAddons.map(({ id }) => id).includes(addon.id);
-
-      return (
-        <button
-          className={`flex flex-col gap-3 rounded border p-3 text-left ${
-            isPreselected
-              ? 'bg-blue-500/20'
-              : 'hover:border-gray-800 dark:hover:border-gray-200'
-          } ${
-            isSelected
-              ? 'border-blue-500'
-              : 'border-gray-400 dark:border-gray-600'
-          }`}
-          key={addon.id}
-          disabled={isPreselected}
-          onClick={() => {
-            setSelectedAddons((addons) => {
-              if (isSelected) {
-                return addons.filter((el) => el.id !== addon.id);
-              }
-              return [...addons, addon];
-            });
-          }}
-        >
-          <div className="flex items-center gap-2">
-            <ModelIcon
-              entity={addon}
-              entityId={addon.id}
-              size={24}
-              inverted={!addon.iconUrl && theme === 'dark'}
-            />
-            <span className="text-left">{addon.name}</span>
-          </div>
-          {addon.description && (
-            <span className="text-gray-500">
-              <EntityMarkdownDescription>
-                {addon.description}
-              </EntityMarkdownDescription>
-            </span>
-          )}
-        </button>
-      );
-    },
-    [preselectedAddonsIds, selectedAddons, theme],
-  );
 
   useEffect(() => {
     setSearchTerm('');
@@ -166,6 +177,18 @@ export const AddonsDialog: FC<Props> = ({
       ).filter((addon) => !preselectedAddonsIds.includes(addon.id)),
     );
   }, [addonsMap, isOpen, preselectedAddonsIds, selectedAddonsIds]);
+
+  const handleSelectAddon = useCallback(
+    (addon: OpenAIEntity, isSelected: boolean) => {
+      setSelectedAddons((addons) => {
+        if (isSelected) {
+          return addons.filter((el) => el.id !== addon.id);
+        }
+        return [...addons, addon];
+      });
+    },
+    [],
+  );
 
   // Render nothing if the dialog is not open.
   if (!isOpen) {
@@ -225,11 +248,25 @@ export const AddonsDialog: FC<Props> = ({
                       return <></>;
                     }
 
-                    return getSelectedAddonTemplate(addon);
+                    return (
+                      <SelectedAddon
+                        key={addon.id}
+                        addon={addon}
+                        preselectedAddonsIds={preselectedAddonsIds}
+                        selectedAddons={selectedAddons}
+                        onSelectAddons={handleSelectAddon}
+                      />
+                    );
                   })}
-                  {selectedAddons.map((addon) =>
-                    getSelectedAddonTemplate(addon),
-                  )}
+                  {selectedAddons.map((addon) => (
+                    <SelectedAddon
+                      key={addon.id}
+                      addon={addon}
+                      preselectedAddonsIds={preselectedAddonsIds}
+                      selectedAddons={selectedAddons}
+                      onSelectAddons={handleSelectAddon}
+                    />
+                  ))}
                 </div>
               </div>
             )}
@@ -238,7 +275,15 @@ export const AddonsDialog: FC<Props> = ({
                 <span className="text-gray-500">{t('Search results')}</span>
 
                 <div className="grid grid-cols-2 flex-wrap gap-3 md:grid-cols-3">
-                  {displayedAddons.map((addon) => getAddonTemplate(addon))}
+                  {displayedAddons.map((addon) => (
+                    <Addon
+                      key={addon.id}
+                      addon={addon}
+                      preselectedAddonsIds={preselectedAddonsIds}
+                      selectedAddons={selectedAddons}
+                      onSelectAddons={handleSelectAddon}
+                    />
+                  ))}
                 </div>
               </div>
             ) : (

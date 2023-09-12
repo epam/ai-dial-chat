@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -13,6 +13,68 @@ import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 import { AddonsDialog } from './AddonsDialog';
 
+interface AddonProps {
+  addonId: string;
+  isSelected: boolean;
+  preselectedAddonsIds: string[];
+  onChangeAddon: (addonId: string) => void;
+}
+
+const Addon = ({
+  addonId,
+  preselectedAddonsIds,
+  isSelected = false,
+  onChangeAddon,
+}: AddonProps) => {
+  const theme = useAppSelector(UISelectors.selectThemeState);
+  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
+
+  const description = useMemo(
+    () => addonsMap[addonId]?.description,
+    [addonId, addonsMap],
+  );
+
+  const template = (
+    <button
+      className={`flex items-center gap-2 rounded px-3 py-2 text-left ${
+        isSelected
+          ? 'bg-blue-500/20'
+          : 'bg-gray-100 hover:bg-gray-400 dark:bg-gray-700 hover:dark:bg-gray-600'
+      }`}
+      disabled={preselectedAddonsIds.includes(addonId)}
+      onClick={() => {
+        onChangeAddon(addonId);
+      }}
+    >
+      <ModelIcon
+        entity={addonsMap[addonId]}
+        entityId={addonId}
+        size={15}
+        inverted={!addonsMap[addonId]?.iconUrl && theme === 'dark'}
+      />
+      <span>{addonsMap[addonId]?.name || addonId}</span>
+      {isSelected && !preselectedAddonsIds.includes(addonId) && (
+        <XMark height={12} width={12} className="text-gray-500" />
+      )}
+    </button>
+  );
+
+  return (
+    <Fragment key={addonId}>
+      {description ? (
+        <Tooltip>
+          <TooltipTrigger className="flex shrink-0">{template}</TooltipTrigger>
+          <TooltipContent className="max-w-[220px]">
+            <EntityMarkdownDescription>{description}</EntityMarkdownDescription>
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        template
+      )}
+    </Fragment>
+  );
+};
+
 interface AddonsProps {
   preselectedAddonsIds: string[];
   selectedAddonsIds: string[];
@@ -26,11 +88,8 @@ export const Addons = ({
   onChangeAddon,
   onApplyAddons,
 }: AddonsProps) => {
-  const theme = useAppSelector(UISelectors.selectThemeState);
-
   const { t } = useTranslation('chat');
   const recentAddonsIds = useAppSelector(AddonsSelectors.selectRecentAddonsIds);
-  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const [filteredRecentAddons, setFilteredRecentAddons] = useState<string[]>(
     () => {
       return recentAddonsIds.filter(
@@ -50,56 +109,6 @@ export const Addons = ({
     );
   }, [selectedAddonsIds, preselectedAddonsIds, recentAddonsIds]);
 
-  const getAddon = useCallback(
-    (addonId: string, isSelected = false) => {
-      const description = addonsMap[addonId]?.description;
-      const template = (
-        <button
-          className={`flex items-center gap-2 rounded px-3 py-2 text-left ${
-            isSelected
-              ? 'bg-blue-500/20'
-              : 'bg-gray-100 hover:bg-gray-400 dark:bg-gray-700 hover:dark:bg-gray-600'
-          }`}
-          disabled={preselectedAddonsIds.includes(addonId)}
-          onClick={() => {
-            onChangeAddon(addonId);
-          }}
-        >
-          <ModelIcon
-            entity={addonsMap[addonId]}
-            entityId={addonId}
-            size={15}
-            inverted={!addonsMap[addonId]?.iconUrl && theme === 'dark'}
-          />
-          <span>{addonsMap[addonId]?.name || addonId}</span>
-          {isSelected && !preselectedAddonsIds.includes(addonId) && (
-            <XMark height={12} width={12} className="text-gray-500" />
-          )}
-        </button>
-      );
-
-      return (
-        <Fragment key={addonId}>
-          {description ? (
-            <Tooltip>
-              <TooltipTrigger className="flex shrink-0">
-                {template}
-              </TooltipTrigger>
-              <TooltipContent className="max-w-[220px]">
-                <EntityMarkdownDescription>
-                  {description}
-                </EntityMarkdownDescription>
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            template
-          )}
-        </Fragment>
-      );
-    },
-    [addonsMap, onChangeAddon, preselectedAddonsIds, theme],
-  );
-
   return (
     <div className="flex flex-col gap-3" data-qa="addons">
       <span>{t('Addons (max 10)')}</span>
@@ -108,10 +117,26 @@ export const Addons = ({
         <>
           <span className="text-gray-500">{t('Selected')}</span>
           <div className="flex flex-wrap gap-1" data-qa="selected-addons">
-            {preselectedAddonsIds.map((addon) => getAddon(addon, true))}
+            {preselectedAddonsIds.map((addon) => (
+              <Addon
+                key={addon}
+                addonId={addon}
+                isSelected={true}
+                onChangeAddon={onChangeAddon}
+                preselectedAddonsIds={preselectedAddonsIds}
+              />
+            ))}
             {selectedAddonsIds
               .filter((id) => !preselectedAddonsIds.includes(id))
-              .map((addon) => getAddon(addon, true))}
+              .map((addon) => (
+                <Addon
+                  key={addon}
+                  addonId={addon}
+                  isSelected={true}
+                  onChangeAddon={onChangeAddon}
+                  preselectedAddonsIds={preselectedAddonsIds}
+                />
+              ))}
           </div>
         </>
       )}
@@ -123,7 +148,15 @@ export const Addons = ({
               <span className="text-gray-500">{t('Recent')}</span>
               <div className="flex flex-wrap gap-1" data-qa="recent-addons">
                 {filteredRecentAddons
-                  .map((addon) => getAddon(addon, false))
+                  .map((addon) => (
+                    <Addon
+                      key={addon}
+                      addonId={addon}
+                      isSelected={false}
+                      onChangeAddon={onChangeAddon}
+                      preselectedAddonsIds={preselectedAddonsIds}
+                    />
+                  ))
                   .filter(Boolean)}
               </div>
             </>
