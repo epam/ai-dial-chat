@@ -174,14 +174,14 @@ export const Chat = memo(({ appName }: Props) => {
     throttledScrollDown();
   }, [conversations, throttledScrollDown]);
 
-  const handleScrollDown = () => {
+  const handleScrollDown = useCallback(() => {
     chatContainerRef.current?.scrollTo({
       top: chatContainerRef.current.scrollHeight,
       behavior: 'smooth',
     });
-  };
+  }, []);
 
-  const handleScroll = () => {
+  const handleScroll = useCallback(() => {
     if (chatContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } =
         chatContainerRef.current;
@@ -195,7 +195,7 @@ export const Chat = memo(({ appName }: Props) => {
         setShowScrollDownButton(false);
       }
     }
-  };
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -221,27 +221,30 @@ export const Chat = memo(({ appName }: Props) => {
     };
   }, [messagesEndRef]);
 
-  const handleClearConversation = (conversation: Conversation) => {
-    if (
-      confirm(t<string>('Are you sure you want to clear all messages?')) &&
-      conversation
-    ) {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: { messages: [] },
-        }),
-      );
-    }
-  };
+  const handleClearConversation = useCallback(
+    (conversation: Conversation) => {
+      if (
+        confirm(t<string>('Are you sure you want to clear all messages?')) &&
+        conversation
+      ) {
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: conversation.id,
+            values: { messages: [] },
+          }),
+        );
+      }
+    },
+    [dispatch, t],
+  );
 
-  const handleReplayStart = () => {
+  const handleReplayStart = useCallback(() => {
     selectedConversationsIds.map((id) => {
       dispatch(ConversationsActions.replayConversation({ conversationId: id }));
     });
-  };
+  }, [selectedConversationsIds, dispatch]);
 
-  const handleReplayReStart = () => {
+  const handleReplayReStart = useCallback(() => {
     selectedConversationsIds.map((id) => {
       dispatch(
         ConversationsActions.replayConversation({
@@ -250,139 +253,154 @@ export const Chat = memo(({ appName }: Props) => {
         }),
       );
     });
-  };
+  }, [dispatch, selectedConversationsIds]);
 
-  const handleSelectModel = (conversation: Conversation, modelId: string) => {
-    const newAiEntity = models.find(
-      ({ id }) => id === modelId,
-    ) as OpenAIEntityModel;
+  const handleSelectModel = useCallback(
+    (conversation: Conversation, modelId: string) => {
+      const newAiEntity = models.find(
+        ({ id }) => id === modelId,
+      ) as OpenAIEntityModel;
 
-    dispatch(
-      ConversationsActions.updateConversation({
-        id: conversation.id,
-        values: {
-          model: newAiEntity,
-          assistantModelId:
-            newAiEntity.type === 'assistant'
-              ? DEFAULT_ASSISTANT_SUBMODEL.id
-              : undefined,
-        },
-      }),
-    );
-  };
-
-  const handleSelectAssistantSubModel = (
-    conversation: Conversation,
-    modelId: string,
-  ) => {
-    dispatch(
-      ConversationsActions.updateConversation({
-        id: conversation.id,
-        values: { assistantModelId: modelId },
-      }),
-    );
-  };
-
-  const handleOnChangeAddon = (conversation: Conversation, addonId: string) => {
-    const isAddonInConversation = conversation.selectedAddons.some(
-      (id) => id === addonId,
-    );
-    if (isAddonInConversation) {
-      const filteredAddons = conversation.selectedAddons.filter(
-        (id) => id !== addonId,
-      );
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: { selectedAddons: filteredAddons },
-        }),
-      );
-    } else {
       dispatch(
         ConversationsActions.updateConversation({
           id: conversation.id,
           values: {
-            selectedAddons: conversation.selectedAddons.concat(addonId),
+            model: newAiEntity,
+            assistantModelId:
+              newAiEntity.type === 'assistant'
+                ? DEFAULT_ASSISTANT_SUBMODEL.id
+                : undefined,
           },
         }),
       );
-    }
-  };
+    },
+    [dispatch, models],
+  );
 
-  const handleOnApplyAddons = (
-    conversation: Conversation,
-    addonIds: string[],
-  ) => {
-    dispatch(
-      ConversationsActions.updateConversation({
-        id: conversation.id,
-        values: { selectedAddons: addonIds },
-      }),
-    );
-  };
-
-  const handleChangePrompt = (conversation: Conversation, prompt: string) => {
-    dispatch(
-      ConversationsActions.updateConversation({
-        id: conversation.id,
-        values: { prompt },
-      }),
-    );
-  };
-
-  const handleChangeTemperature = (
-    conversation: Conversation,
-    temperature: number,
-  ) => {
-    dispatch(
-      ConversationsActions.updateConversation({
-        id: conversation.id,
-        values: { temperature },
-      }),
-    );
-  };
-
-  const handleDeleteMessage = (message: Message) => {
-    selectedConversations.forEach((conversation) => {
-      const { messages } = conversation;
-      const findIndex = messages.findIndex(
-        ({ content }) => content === message.content,
-      );
-
-      if (findIndex < 0) return;
-
-      if (
-        findIndex < messages.length - 1 &&
-        messages[findIndex + 1].role === 'assistant'
-      ) {
-        messages.splice(findIndex, 2);
-      } else {
-        messages.splice(findIndex, 1);
-      }
-
+  const handleSelectAssistantSubModel = useCallback(
+    (conversation: Conversation, modelId: string) => {
       dispatch(
         ConversationsActions.updateConversation({
           id: conversation.id,
-          values: { messages },
+          values: { assistantModelId: modelId },
         }),
       );
-    });
-  };
+    },
+    [dispatch],
+  );
 
-  const onSendMessage = (message: Message) => {
-    selectedConversations.forEach((conv) => {
+  const handleOnChangeAddon = useCallback(
+    (conversation: Conversation, addonId: string) => {
+      const isAddonInConversation = conversation.selectedAddons.some(
+        (id) => id === addonId,
+      );
+      if (isAddonInConversation) {
+        const filteredAddons = conversation.selectedAddons.filter(
+          (id) => id !== addonId,
+        );
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: conversation.id,
+            values: { selectedAddons: filteredAddons },
+          }),
+        );
+      } else {
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: conversation.id,
+            values: {
+              selectedAddons: conversation.selectedAddons.concat(addonId),
+            },
+          }),
+        );
+      }
+    },
+    [dispatch],
+  );
+
+  const handleOnApplyAddons = useCallback(
+    (conversation: Conversation, addonIds: string[]) => {
       dispatch(
-        ConversationsActions.sendMessage({
-          conversation: conv,
-          message,
-          deleteCount: 0,
-          activeReplayIndex: 0,
+        ConversationsActions.updateConversation({
+          id: conversation.id,
+          values: { selectedAddons: addonIds },
         }),
       );
-    });
-  };
+    },
+    [dispatch],
+  );
 
-  const onRegenerateMessage = () => {
+  const handleChangePrompt = useCallback(
+    (conversation: Conversation, prompt: string) => {
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: conversation.id,
+          values: { prompt },
+        }),
+      );
+    },
+    [dispatch],
+  );
+
+  const handleChangeTemperature = useCallback(
+    (conversation: Conversation, temperature: number) => {
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: conversation.id,
+          values: { temperature },
+        }),
+      );
+    },
+    [dispatch],
+  );
+
+  const handleDeleteMessage = useCallback(
+    (message: Message) => {
+      selectedConversations.forEach((conversation) => {
+        const { messages } = conversation;
+        const findIndex = messages.findIndex(
+          ({ content }) => content === message.content,
+        );
+
+        if (findIndex < 0) return;
+
+        if (
+          findIndex < messages.length - 1 &&
+          messages[findIndex + 1].role === 'assistant'
+        ) {
+          messages.splice(findIndex, 2);
+        } else {
+          messages.splice(findIndex, 1);
+        }
+
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: conversation.id,
+            values: { messages },
+          }),
+        );
+      });
+    },
+    [dispatch, selectedConversations],
+  );
+
+  const onSendMessage = useCallback(
+    (message: Message) => {
+      selectedConversations.forEach((conv) => {
+        dispatch(
+          ConversationsActions.sendMessage({
+            conversation: conv,
+            message,
+            deleteCount: 0,
+            activeReplayIndex: 0,
+          }),
+        );
+      });
+    },
+    [dispatch, selectedConversations],
+  );
+
+  const onRegenerateMessage = useCallback(() => {
     selectedConversations.forEach((conv) => {
       const lastUserMessageIndex = conv.messages
         .map((msg) => msg.role)
@@ -396,9 +414,9 @@ export const Chat = memo(({ appName }: Props) => {
         }),
       );
     });
-  };
+  }, [dispatch, selectedConversations]);
 
-  const handleApplyChatSettings = () => {
+  const handleApplyChatSettings = useCallback(() => {
     selectedConversations.forEach((conversation) => {
       const temporarySettings:
         | {
@@ -433,20 +451,31 @@ export const Chat = memo(({ appName }: Props) => {
         }
       }
     });
-  };
+  }, [
+    selectedConversations,
+    dispatch,
+    handleChangePrompt,
+    handleChangeTemperature,
+    handleSelectModel,
+    handleSelectAssistantSubModel,
+    handleOnApplyAddons,
+  ]);
 
-  const handleTemporarySettingsSave = (
-    conversation: Conversation,
-    args: {
-      modelId: string | undefined;
-      prompt: string;
-      temperature: number;
-      currentAssistentModelId: string | undefined;
-      addonsIds: string[];
+  const handleTemporarySettingsSave = useCallback(
+    (
+      conversation: Conversation,
+      args: {
+        modelId: string | undefined;
+        prompt: string;
+        temperature: number;
+        currentAssistentModelId: string | undefined;
+        addonsIds: string[];
+      },
+    ) => {
+      selectedConversationsTemporarySettings.current[conversation.id] = args;
     },
-  ) => {
-    selectedConversationsTemporarySettings.current[conversation.id] = args;
-  };
+    [],
+  );
 
   return (
     <div className="relative flex-1" data-qa="chat">

@@ -1,3 +1,5 @@
+import { useCallback, useMemo } from 'react';
+
 import { useTranslation } from 'next-i18next';
 
 import { Prompt } from '@/src/types/prompt';
@@ -28,41 +30,39 @@ const Promptbar = () => {
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
 
-  const handleDrop = (e: any) => {
-    if (e.dataTransfer) {
-      const prompt = JSON.parse(e.dataTransfer.getData('prompt'));
+  const handleDrop = useCallback(
+    (e: any) => {
+      if (e.dataTransfer) {
+        const prompt = JSON.parse(e.dataTransfer.getData('prompt'));
 
-      dispatch(
-        PromptsActions.updatePrompt({
-          promptId: prompt.id,
-          values: {
-            folderId: e.target.dataset.folderId,
-          },
-        }),
-      );
-    }
-  };
+        dispatch(
+          PromptsActions.updatePrompt({
+            promptId: prompt.id,
+            values: {
+              folderId: e.target.dataset.folderId,
+            },
+          }),
+        );
+      }
+    },
+    [dispatch],
+  );
 
-  // const handleExportPrompts = () => {
-  //   dispatch(PromptsActions.exportPrompts());
-  // };
-
-  // const handleImportPrompts = (promptsJSON: PromptsHistory) => {
-  //   dispatch(PromptsActions.importPrompts({ promptsHistory: promptsJSON }));
-  // };
-
-  const actionsBlock = (
-    <button
-      className="flex shrink-0 cursor-pointer select-none items-center gap-3 p-5 transition-colors duration-200 hover:bg-violet/15 disabled:cursor-not-allowed"
-      onClick={() => {
-        dispatch(PromptsActions.createNewPrompt());
-        dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
-      }}
-      data-qa="new-prompt"
-    >
-      <PlusIcon className="text-gray-500" width={18} height={18} />
-      {t('New prompt')}
-    </button>
+  const actionsBlock = useMemo(
+    () => (
+      <button
+        className="flex shrink-0 cursor-pointer select-none items-center gap-3 p-5 transition-colors duration-200 hover:bg-violet/15 disabled:cursor-not-allowed"
+        onClick={() => {
+          dispatch(PromptsActions.createNewPrompt());
+          dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
+        }}
+        data-qa="new-prompt"
+      >
+        <PlusIcon className="text-gray-500" width={18} height={18} />
+        {t('New prompt')}
+      </button>
+    ),
+    [dispatch, t],
   );
 
   return (

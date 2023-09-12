@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -73,7 +73,7 @@ export const ConversationSettings = ({
     );
   }, [assistantModelId, modelsMap]);
 
-  const getModelSelectRow = () => {
+  const getModelSelectRow = useCallback(() => {
     const ModelSelectRow = (model: OpenAIEntityModel) => {
       return (
         <div className="flex items-center gap-2">
@@ -89,7 +89,7 @@ export const ConversationSettings = ({
     };
 
     return ModelSelectRow;
-  };
+  }, [theme]);
 
   return (
     <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-gray-300 dark:bg-gray-900 [&:first-child]:rounded-t">

@@ -1,4 +1,11 @@
-import { ChangeEventHandler, FC, useEffect, useRef, useState } from 'react';
+import {
+  ChangeEventHandler,
+  FC,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -42,16 +49,16 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     };
   }, [onClose]);
 
-  const onThemeChangeHandler: ChangeEventHandler<HTMLSelectElement> = (
-    event,
-  ) => {
-    const theme = event.target.value as Theme;
-    setLocalTheme(theme);
-  };
+  const onThemeChangeHandler: ChangeEventHandler<HTMLSelectElement> =
+    useCallback((event) => {
+      const theme = event.target.value as Theme;
+      setLocalTheme(theme);
+    }, []);
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     dispatch(UIActions.setTheme(localTheme));
-  };
+  }, [dispatch, localTheme]);
+
   // Render nothing if the dialog is not open.
   if (!open) {
     return <></>;

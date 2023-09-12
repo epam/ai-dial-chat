@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { FolderInterface } from '@/src/types/folder';
 
 import {
@@ -22,36 +24,42 @@ export const ChatFolders = ({ searchTerm }: Props) => {
   );
   const folders = useAppSelector(ConversationsSelectors.selectFolders);
 
-  const handleDrop = (e: any, folder: FolderInterface) => {
-    if (e.dataTransfer) {
-      const conversation = JSON.parse(e.dataTransfer.getData('conversation'));
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: {
-            folderId: folder.id,
-          },
-        }),
-      );
-    }
-  };
+  const handleDrop = useCallback(
+    (e: any, folder: FolderInterface) => {
+      if (e.dataTransfer) {
+        const conversation = JSON.parse(e.dataTransfer.getData('conversation'));
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: conversation.id,
+            values: {
+              folderId: folder.id,
+            },
+          }),
+        );
+      }
+    },
+    [dispatch],
+  );
 
-  const ChatFolders = (currentFolder: FolderInterface) => {
-    return conversations
-      .filter((conversation) => conversation.folderId)
-      .map((conversation, index) => {
-        if (conversation.folderId === currentFolder.id) {
-          return (
-            <div
-              key={index}
-              className="ml-5 gap-2 border-l border-gray-500 pl-2"
-            >
-              <ConversationComponent conversation={conversation} />
-            </div>
-          );
-        }
-      });
-  };
+  const ChatFolders = useCallback(
+    (currentFolder: FolderInterface) => {
+      return conversations
+        .filter((conversation) => conversation.folderId)
+        .map((conversation, index) => {
+          if (conversation.folderId === currentFolder.id) {
+            return (
+              <div
+                key={index}
+                className="ml-5 gap-2 border-l border-gray-500 pl-2"
+              >
+                <ConversationComponent conversation={conversation} />
+              </div>
+            );
+          }
+        });
+    },
+    [conversations],
+  );
 
   return (
     <div className="flex w-full flex-col" data-qa="chat-folders">

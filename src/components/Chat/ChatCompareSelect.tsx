@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -74,27 +74,30 @@ export const ChatCompareSelect = ({
     }
   }, [conversations, selectedConversations]);
 
-  const Option = (item: Conversation) => {
-    const model =
-      modelsMap[item.model?.id] ||
-      (defaultModelId && modelsMap[defaultModelId]);
+  const Option = useCallback(
+    (item: Conversation) => {
+      const model =
+        modelsMap[item.model?.id] ||
+        (defaultModelId && modelsMap[defaultModelId]);
 
-    if (!model) {
-      return <></>;
-    }
+      if (!model) {
+        return <></>;
+      }
 
-    return (
-      <div className="flex items-center gap-3 pl-1">
-        <ModelIcon
-          entity={model}
-          entityId={model.id}
-          size={24}
-          inverted={theme === 'dark'}
-        />
-        <span>{item.name}</span>
-      </div>
-    );
-  };
+      return (
+        <div className="flex items-center gap-3 pl-1">
+          <ModelIcon
+            entity={model}
+            entityId={model.id}
+            size={24}
+            inverted={theme === 'dark'}
+          />
+          <span>{item.name}</span>
+        </div>
+      );
+    },
+    [defaultModelId, modelsMap, theme],
+  );
 
   return (
     <div className="flex grow flex-col items-center justify-center p-5 py-2">

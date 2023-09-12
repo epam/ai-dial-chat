@@ -1,4 +1,4 @@
-import { FC, useState } from 'react';
+import { FC, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -26,19 +26,22 @@ export const TemperatureSlider: FC<Props> = ({
     onChangeTemperature(value);
   };
 
-  const HandleElement = ({ props }: any) => {
-    return (
-      <div
-        className="absolute top-[calc(50%-20px)] flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700"
-        style={props.style}
-        onKeyDown={props.onKeyDown}
-        onMouseDown={props.onMouseDown}
-        onTouchStart={props.onTouchStart}
-      >
-        {currentTemperature}
-      </div>
-    );
-  };
+  const HandleElement = useCallback(
+    ({ props }: any) => {
+      return (
+        <div
+          className="absolute top-[calc(50%-20px)] flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700"
+          style={props.style}
+          onKeyDown={props.onKeyDown}
+          onMouseDown={props.onMouseDown}
+          onTouchStart={props.onTouchStart}
+        >
+          {currentTemperature}
+        </div>
+      );
+    },
+    [currentTemperature],
+  );
 
   return (
     <div className="flex flex-col gap-3" data-qa="temp-slider">

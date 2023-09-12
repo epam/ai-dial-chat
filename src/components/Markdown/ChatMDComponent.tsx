@@ -1,10 +1,10 @@
 import { Components } from 'react-markdown';
 
-import BlinkingCursor from '../Chat/BlinkingCursor';
 import {
   modelCursorSign,
   modelCursorSignWithBackquote,
-} from '../Chat/chatConstants';
+} from '../../constants/chat';
+import BlinkingCursor from '../Chat/BlinkingCursor';
 import { CodeBlock } from './CodeBlock';
 import { MemoizedReactMarkdown } from './MemoizedReactMarkdown';
 

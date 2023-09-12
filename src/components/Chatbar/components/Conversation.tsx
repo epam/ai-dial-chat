@@ -2,6 +2,7 @@ import {
   DragEvent,
   KeyboardEvent,
   MouseEventHandler,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -59,75 +60,95 @@ export const ConversationComponent = ({ conversation }: Props) => {
 
   const isEmptyConversation = conversation.messages.length === 0;
 
-  const handleEnterDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleRename(conversation);
-    }
-  };
+  const handleRename = useCallback(
+    (conversation: Conversation) => {
+      if (renameValue.trim().length > 0) {
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: conversation.id,
+            values: {
+              name: renameValue,
+            },
+          }),
+        );
+        setRenameValue('');
+        setIsRenaming(false);
+      }
+    },
+    [dispatch, renameValue],
+  );
 
-  const handleDragStart = (
-    e: DragEvent<HTMLButtonElement>,
-    conversation: Conversation,
-  ) => {
-    if (e.dataTransfer) {
-      e.dataTransfer.setData('conversation', JSON.stringify(conversation));
-    }
-  };
+  const handleEnterDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleRename(conversation);
+      }
+    },
+    [conversation, handleRename],
+  );
 
-  const handleRename = (conversation: Conversation) => {
-    if (renameValue.trim().length > 0) {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: {
-            name: renameValue,
-          },
-        }),
-      );
-      setRenameValue('');
+  const handleDragStart = useCallback(
+    (e: DragEvent<HTMLButtonElement>, conversation: Conversation) => {
+      if (e.dataTransfer) {
+        e.dataTransfer.setData('conversation', JSON.stringify(conversation));
+      }
+    },
+    [],
+  );
+
+  const handleConfirm: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (e) => {
+      e.stopPropagation();
+      if (isDeleting) {
+        dispatch(
+          ConversationsActions.deleteConversation({
+            conversationId: conversation.id,
+          }),
+        );
+      } else if (isRenaming) {
+        handleRename(conversation);
+      }
+      setIsDeleting(false);
       setIsRenaming(false);
-    }
-  };
+    },
+    [conversation, dispatch, handleRename, isDeleting, isRenaming],
+  );
 
-  const handleConfirm: MouseEventHandler<HTMLButtonElement> = (e) => {
-    e.stopPropagation();
-    if (isDeleting) {
-      dispatch(
-        ConversationsActions.deleteConversation({
-          conversationId: conversation.id,
-        }),
-      );
-    } else if (isRenaming) {
-      handleRename(conversation);
-    }
-    setIsDeleting(false);
-    setIsRenaming(false);
-  };
+  const handleCancel: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (e) => {
+      e.stopPropagation();
+      setIsDeleting(false);
+      setIsRenaming(false);
+    },
+    [],
+  );
 
-  const handleCancel: MouseEventHandler<HTMLButtonElement> = (e) => {
-    e.stopPropagation();
-    setIsDeleting(false);
-    setIsRenaming(false);
-  };
-
-  const handleOpenRenameModal: MouseEventHandler<HTMLButtonElement> = (e) => {
-    e.stopPropagation();
-    setIsRenaming(true);
-    setRenameValue(conversation.name);
-  };
-  const handleOpenDeleteModal: MouseEventHandler<HTMLButtonElement> = (e) => {
-    e.stopPropagation();
-    setIsDeleting(true);
-  };
-
-  const handleStartReplay: MouseEventHandler<HTMLButtonElement> = (e) => {
-    e.stopPropagation();
-
-    dispatch(
-      ConversationsActions.createNewReplayConversation({ conversation }),
+  const handleOpenRenameModal: MouseEventHandler<HTMLButtonElement> =
+    useCallback(
+      (e) => {
+        e.stopPropagation();
+        setIsRenaming(true);
+        setRenameValue(conversation.name);
+      },
+      [conversation.name],
     );
-  };
+  const handleOpenDeleteModal: MouseEventHandler<HTMLButtonElement> =
+    useCallback((e) => {
+      e.stopPropagation();
+      setIsDeleting(true);
+    }, []);
+
+  const handleStartReplay: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (e) => {
+      e.stopPropagation();
+
+      dispatch(
+        ConversationsActions.createNewReplayConversation({ conversation }),
+      );
+    },
+    [conversation, dispatch],
+  );
 
   useEffect(() => {
     if (isRenaming) {
@@ -137,30 +158,33 @@ export const ConversationComponent = ({ conversation }: Props) => {
     }
   }, [isRenaming, isDeleting]);
 
-  const handleMoveToFolder = ({
-    folderId,
-    isNewFolder,
-  }: {
-    folderId?: string;
-    isNewFolder?: boolean;
-  }) => {
-    let localFolderId = folderId;
-    if (isNewFolder) {
-      localFolderId = uuidv4();
+  const handleMoveToFolder = useCallback(
+    ({
+      folderId,
+      isNewFolder,
+    }: {
+      folderId?: string;
+      isNewFolder?: boolean;
+    }) => {
+      let localFolderId = folderId;
+      if (isNewFolder) {
+        localFolderId = uuidv4();
+        dispatch(
+          ConversationsActions.createFolder({
+            name: t('New folder'),
+            folderId: localFolderId,
+          }),
+        );
+      }
       dispatch(
-        ConversationsActions.createFolder({
-          name: t('New folder'),
-          folderId: localFolderId,
+        ConversationsActions.updateConversation({
+          id: conversation.id,
+          values: { folderId: localFolderId },
         }),
       );
-    }
-    dispatch(
-      ConversationsActions.updateConversation({
-        id: conversation.id,
-        values: { folderId: localFolderId },
-      }),
-    );
-  };
+    },
+    [conversation.id, dispatch, t],
+  );
 
   return (
     <div

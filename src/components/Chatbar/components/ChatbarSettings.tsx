@@ -4,7 +4,7 @@ import {
   IconScale,
   IconTrashX,
 } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -36,13 +36,13 @@ export const ChatbarSettings = () => {
     ConversationsSelectors.selectConversations,
   );
 
-  const handleToggleCompare = () => {
+  const handleToggleCompare = useCallback(() => {
     dispatch(
       ConversationsActions.createNewConversations({
         names: [DEFAULT_CONVERSATION_NAME, DEFAULT_CONVERSATION_NAME],
       }),
     );
-  };
+  }, [dispatch]);
 
   return (
     <div className="flex items-start gap-1 p-2 text-gray-500">

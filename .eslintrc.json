@@ -5,6 +5,7 @@
     "plugin:@typescript-eslint/stylistic",
     "prettier",
     "plugin:tailwindcss/recommended",
+    "eslint-config-next",
     "next/core-web-vitals"
   ],
   "parser": "@typescript-eslint/parser",

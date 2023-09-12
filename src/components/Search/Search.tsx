@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -12,9 +12,12 @@ interface Props {
 const Search: FC<Props> = ({ placeholder, searchTerm, onSearch }) => {
   const { t } = useTranslation('sidebar');
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onSearch(e.target.value);
-  };
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onSearch(e.target.value);
+    },
+    [onSearch],
+  );
 
   return (
     <div className="relative flex items-center px-5 py-1">

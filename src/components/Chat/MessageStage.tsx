@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Stage } from '@/src/types/chat';
 
@@ -23,33 +23,36 @@ export const MessageStage = ({ stage }: Props) => {
     setHasContent(!!(stage?.content || stage?.attachments?.length));
   }, [stage?.content, stage?.attachments?.length]);
 
-  const stageTitle = (
-    <div
-      className={`grid min-w-0 grid-flow-col items-center gap-3 overflow-hidden`}
-    >
-      {stage.status == null ? (
-        <Loader
-          height={20}
-          width={20}
-          className="shrink-0 grow-0 basis-auto animate-spin text-gray-500"
-        />
-      ) : stage.status === 'completed' ? (
-        <CircleCheck
-          height={20}
-          width={20}
-          className="shrink-0 grow-0 basis-auto text-gray-500"
-        />
-      ) : (
-        <CircleExclamation
-          height={20}
-          width={20}
-          className="shrink-0 grow-0 basis-auto text-gray-500"
-        />
-      )}
-      <span className={`block ${isOpened ? 'max-w-full' : 'truncate'}`}>
-        {stage.name}
-      </span>
-    </div>
+  const stageTitle = useMemo(
+    () => (
+      <div
+        className={`grid min-w-0 grid-flow-col items-center gap-3 overflow-hidden`}
+      >
+        {stage.status == null ? (
+          <Loader
+            height={20}
+            width={20}
+            className="shrink-0 grow-0 basis-auto animate-spin text-gray-500"
+          />
+        ) : stage.status === 'completed' ? (
+          <CircleCheck
+            height={20}
+            width={20}
+            className="shrink-0 grow-0 basis-auto text-gray-500"
+          />
+        ) : (
+          <CircleExclamation
+            height={20}
+            width={20}
+            className="shrink-0 grow-0 basis-auto text-gray-500"
+          />
+        )}
+        <span className={`block ${isOpened ? 'max-w-full' : 'truncate'}`}>
+          {stage.name}
+        </span>
+      </div>
+    ),
+    [isOpened, stage.name, stage.status],
   );
 
   return (

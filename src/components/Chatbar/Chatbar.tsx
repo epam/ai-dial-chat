@@ -1,3 +1,5 @@
+import { useCallback, useMemo } from 'react';
+
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/src/types/chat';
@@ -35,38 +37,47 @@ export const Chatbar = () => {
     ConversationsSelectors.selectSearchedConversations,
   );
 
-  const chatFolders = folders.filter(({ type }) => type === 'chat');
+  const chatFolders = useMemo(
+    () => folders.filter(({ type }) => type === 'chat'),
+    [folders],
+  );
 
-  const handleDrop = (e: any) => {
-    if (e.dataTransfer) {
-      const conversation = JSON.parse(e.dataTransfer.getData('conversation'));
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: { folderId: '0' },
-        }),
-      );
-      dispatch(ConversationsActions.setSearchTerm({ searchTerm: '' }));
-    }
-  };
-
-  const actionsBlock = (
-    <button
-      className={`hover:bg-green/15disabled:cursor-not-allowed flex shrink-0 cursor-pointer select-none items-center gap-3 p-5 transition-colors  duration-200`}
-      onClick={() => {
+  const handleDrop = useCallback(
+    (e: any) => {
+      if (e.dataTransfer) {
+        const conversation = JSON.parse(e.dataTransfer.getData('conversation'));
         dispatch(
-          ConversationsActions.createNewConversations({
-            names: [DEFAULT_CONVERSATION_NAME],
+          ConversationsActions.updateConversation({
+            id: conversation.id,
+            values: { folderId: '0' },
           }),
         );
         dispatch(ConversationsActions.setSearchTerm({ searchTerm: '' }));
-      }}
-      disabled={!!messageIsStreaming}
-      data-qa="new-chat"
-    >
-      <PlusIcon className="text-gray-500" width={18} height={18} />
-      {t('New conversation')}
-    </button>
+      }
+    },
+    [dispatch],
+  );
+
+  const actionsBlock = useMemo(
+    () => (
+      <button
+        className={`hover:bg-green/15disabled:cursor-not-allowed flex shrink-0 cursor-pointer select-none items-center gap-3 p-5 transition-colors  duration-200`}
+        onClick={() => {
+          dispatch(
+            ConversationsActions.createNewConversations({
+              names: [DEFAULT_CONVERSATION_NAME],
+            }),
+          );
+          dispatch(ConversationsActions.setSearchTerm({ searchTerm: '' }));
+        }}
+        disabled={!!messageIsStreaming}
+        data-qa="new-chat"
+      >
+        <PlusIcon className="text-gray-500" width={18} height={18} />
+        {t('New conversation')}
+      </button>
+    ),
+    [dispatch, messageIsStreaming, t],
   );
 
   return (

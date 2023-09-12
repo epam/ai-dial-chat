@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { useTranslation } from 'next-i18next';
 
 import { isMediaQuery } from '@/src/utils/app/style-helpers';
@@ -24,19 +26,20 @@ const Header = () => {
 
   const { t } = useTranslation('sidebar');
 
-  const handleToggleChatbar = () => {
+  const handleToggleChatbar = useCallback(() => {
     if (!showChatbar && isMediaQuery('(width <= 767px)')) {
       dispatch(UIActions.setShowPromptbar(false));
     }
     dispatch(UIActions.setShowChatbar(!showChatbar));
-  };
-  const handleTogglePromtbar = () => {
+  }, [dispatch, showChatbar]);
+
+  const handleTogglePromtbar = useCallback(() => {
     if (!showPromptbar && isMediaQuery('(width <= 767px)')) {
       dispatch(UIActions.setShowChatbar(false));
       dispatch(UIActions.setIsProfileOpen(false));
     }
     dispatch(UIActions.setShowPromptbar(!showPromptbar));
-  };
+  }, [dispatch, showPromptbar]);
 
   const onClose = () => {
     dispatch(UIActions.setIsUserSettingsOpen(false));

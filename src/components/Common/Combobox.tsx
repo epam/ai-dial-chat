@@ -107,7 +107,7 @@ export const Combobox = ({
           : true,
       ),
     );
-  }, [items]);
+  }, [getItemLabel, inputValue, items]);
 
   useLayoutEffect(() => {
     if (isOpen && refs.reference.current && refs.floating.current) {

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -50,52 +50,55 @@ export const Addons = ({
     );
   }, [selectedAddonsIds, preselectedAddonsIds, recentAddonsIds]);
 
-  const getAddon = (addonId: string, isSelected = false) => {
-    const description = addonsMap[addonId]?.description;
-    const template = (
-      <button
-        className={`flex items-center gap-2 rounded px-3 py-2 text-left ${
-          isSelected
-            ? 'bg-blue-500/20'
-            : 'bg-gray-100 hover:bg-gray-400 dark:bg-gray-700 hover:dark:bg-gray-600'
-        }`}
-        disabled={preselectedAddonsIds.includes(addonId)}
-        onClick={() => {
-          onChangeAddon(addonId);
-        }}
-      >
-        <ModelIcon
-          entity={addonsMap[addonId]}
-          entityId={addonId}
-          size={15}
-          inverted={!addonsMap[addonId]?.iconUrl && theme === 'dark'}
-        />
-        <span>{addonsMap[addonId]?.name || addonId}</span>
-        {isSelected && !preselectedAddonsIds.includes(addonId) && (
-          <XMark height={12} width={12} className="text-gray-500" />
-        )}
-      </button>
-    );
+  const getAddon = useCallback(
+    (addonId: string, isSelected = false) => {
+      const description = addonsMap[addonId]?.description;
+      const template = (
+        <button
+          className={`flex items-center gap-2 rounded px-3 py-2 text-left ${
+            isSelected
+              ? 'bg-blue-500/20'
+              : 'bg-gray-100 hover:bg-gray-400 dark:bg-gray-700 hover:dark:bg-gray-600'
+          }`}
+          disabled={preselectedAddonsIds.includes(addonId)}
+          onClick={() => {
+            onChangeAddon(addonId);
+          }}
+        >
+          <ModelIcon
+            entity={addonsMap[addonId]}
+            entityId={addonId}
+            size={15}
+            inverted={!addonsMap[addonId]?.iconUrl && theme === 'dark'}
+          />
+          <span>{addonsMap[addonId]?.name || addonId}</span>
+          {isSelected && !preselectedAddonsIds.includes(addonId) && (
+            <XMark height={12} width={12} className="text-gray-500" />
+          )}
+        </button>
+      );
 
-    return (
-      <Fragment key={addonId}>
-        {description ? (
-          <Tooltip>
-            <TooltipTrigger className="flex shrink-0">
-              {template}
-            </TooltipTrigger>
-            <TooltipContent className="max-w-[220px]">
-              <EntityMarkdownDescription>
-                {description}
-              </EntityMarkdownDescription>
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          template
-        )}
-      </Fragment>
-    );
-  };
+      return (
+        <Fragment key={addonId}>
+          {description ? (
+            <Tooltip>
+              <TooltipTrigger className="flex shrink-0">
+                {template}
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[220px]">
+                <EntityMarkdownDescription>
+                  {description}
+                </EntityMarkdownDescription>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            template
+          )}
+        </Fragment>
+      );
+    },
+    [addonsMap, onChangeAddon, preselectedAddonsIds, theme],
+  );
 
   return (
     <div className="flex flex-col gap-3" data-qa="addons">

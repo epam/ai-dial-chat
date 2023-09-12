@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { FolderInterface } from '@/src/types/folder';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -17,33 +19,39 @@ export const PromptFolders = () => {
   const folders = useAppSelector(PromptsSelectors.selectFolders);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
 
-  const handleDrop = (e: any, folder: FolderInterface) => {
-    if (e.dataTransfer) {
-      const prompt = JSON.parse(e.dataTransfer.getData('prompt'));
-      dispatch(
-        PromptsActions.updatePrompt({
-          promptId: prompt.id,
-          values: { folderId: folder.id },
-        }),
-      );
-    }
-  };
+  const handleDrop = useCallback(
+    (e: any, folder: FolderInterface) => {
+      if (e.dataTransfer) {
+        const prompt = JSON.parse(e.dataTransfer.getData('prompt'));
+        dispatch(
+          PromptsActions.updatePrompt({
+            promptId: prompt.id,
+            values: { folderId: folder.id },
+          }),
+        );
+      }
+    },
+    [dispatch],
+  );
 
-  const PromptFolders = (currentFolder: FolderInterface) =>
-    filteredPrompts
-      .filter((p) => p.folderId)
-      .map((prompt, index) => {
-        if (prompt.folderId === currentFolder.id) {
-          return (
-            <div
-              key={index}
-              className="ml-5 gap-2 border-l border-gray-500 pl-2"
-            >
-              <PromptComponent prompt={prompt} />
-            </div>
-          );
-        }
-      });
+  const PromptFolders = useCallback(
+    (currentFolder: FolderInterface) =>
+      filteredPrompts
+        .filter((p) => p.folderId)
+        .map((prompt, index) => {
+          if (prompt.folderId === currentFolder.id) {
+            return (
+              <div
+                key={index}
+                className="ml-5 gap-2 border-l border-gray-500 pl-2"
+              >
+                <PromptComponent prompt={prompt} />
+              </div>
+            );
+          }
+        }),
+    [filteredPrompts],
+  );
 
   return (
     <div className="flex w-full flex-col" data-qa="prompt-folders">

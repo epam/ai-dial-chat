@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import Image from 'next/image';
 
 import { OpenAIEntity } from '@/src/types/openai';
@@ -28,41 +30,52 @@ export const ModelIcon = ({
   inverted,
   isCustomTooltip,
 }: Props) => {
-  const template = (
-    <>
-      {entity?.iconUrl != null ? (
-        <span
-          className={`relative inline-block shrink-0 leading-none ${
-            animate ? 'animate-bounce' : ''
-          }`}
-          style={{ height: `${size}px`, width: `${size}px` }}
-        >
-          <Image
-            className={`${
-              inverted && entity.type !== 'addon' ? 'invert' : ''
-            } `}
-            src={entity.iconUrl as string}
-            fill
-            style={{ objectFit: 'contain' }}
-            alt={`${entity.id} icon`}
-          ></Image>
-        </span>
-      ) : (
-        <span
-          style={{
-            width: size,
-            height: size,
-            backgroundImage:
-              entity?.type === 'model' ? defaultModelIcon : defaultAddonIcon,
-          }}
-          className={`inline-block shrink-0 bg-contain bg-no-repeat ${
-            inverted ? 'invert' : ''
-          } ${animate ? 'animate-bounce' : ''}`}
-          role="img"
-          aria-label={`${entityId} icon`}
-        ></span>
-      )}
-    </>
+  const template = useMemo(
+    () => (
+      <>
+        {entity?.iconUrl != null ? (
+          <span
+            className={`relative inline-block shrink-0 leading-none ${
+              animate ? 'animate-bounce' : ''
+            }`}
+            style={{ height: `${size}px`, width: `${size}px` }}
+          >
+            <Image
+              className={`${
+                inverted && entity.type !== 'addon' ? 'invert' : ''
+              } `}
+              src={entity.iconUrl as string}
+              fill
+              style={{ objectFit: 'contain' }}
+              alt={`${entity.id} icon`}
+            ></Image>
+          </span>
+        ) : (
+          <span
+            style={{
+              width: size,
+              height: size,
+              backgroundImage:
+                entity?.type === 'model' ? defaultModelIcon : defaultAddonIcon,
+            }}
+            className={`inline-block shrink-0 bg-contain bg-no-repeat ${
+              inverted ? 'invert' : ''
+            } ${animate ? 'animate-bounce' : ''}`}
+            role="img"
+            aria-label={`${entityId} icon`}
+          ></span>
+        )}
+      </>
+    ),
+    [
+      animate,
+      entity?.iconUrl,
+      entity?.id,
+      entity?.type,
+      entityId,
+      inverted,
+      size,
+    ],
   );
 
   return (
