@@ -1,5 +1,6 @@
 import * as jose from 'jose';
 import fetch from 'node-fetch';
+import { logger } from '@/src/utils/server/logger';
 
 interface OpenIdConfig {
   jwks_uri: string;
@@ -22,27 +23,21 @@ async function getJwksUrl(baseUrl: string): Promise<string> {
   return config.jwks_uri;
 }
 
-function log(msg: any) {
-  /* eslint-disable no-console */
-  console.log('%s %s', new Date(), msg);
-  /* eslint-enable no-console */
-}
-
 function printToken(token: string) {
   try {
     const protectedHeader = JSON.stringify(jose.decodeProtectedHeader(token));
-    log(`protectedHeader -> ${protectedHeader}`);
+    logger.info(`protectedHeader -> ${protectedHeader}`);
   } catch (error) {
-    log(`error occurred at decoding protectedHeader: ${error}`);
+    logger.error(`error occurred at decoding protectedHeader: ${error}`);
   }
   try {
     const claims = jose.decodeJwt(token);
     const exp = claims.exp;
     const iat = claims.iat;
     const iss = claims.iss;
-    log(`claims ->  exp: ${exp}, iat: ${iat}, iss: ${iss}`);
+    logger.info(`claims ->  exp: ${exp}, iat: ${iat}, iss: ${iss}`);
   } catch (error) {
-    log(`error occurred at decoding claims: ${error}`);
+    logger.error(`error occurred at decoding claims: ${error}`);
   }
 }
 
@@ -57,11 +52,11 @@ export async function validateToken(token: string) {
   }
   if (globalObj.jwks) {
     jose.jwtVerify(token, globalObj.jwks).catch((error) => {
-      log(`error occurred at verifying token: ${error}`);
+      logger.error(`error occurred at verifying token: ${error}`);
       printToken(token);
     });
   } else {
-    log('Env var AUTH_KEYCLOAK_HOST is not set');
+    logger.info('Env var AUTH_KEYCLOAK_HOST is not set');
     printToken(token);
   }
 }
