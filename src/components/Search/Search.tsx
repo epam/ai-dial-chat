@@ -24,7 +24,7 @@ const Search: FC<Props> = ({ placeholder, searchTerm, onSearch }) => {
         height={18}
       />
       <input
-        className="w-full bg-inherit py-3 pl-8 text-[14px] leading-3 text-inherit outline-none placeholder:text-gray-500"
+        className="w-full bg-transparent py-3 pl-8 text-[14px] leading-3 outline-none placeholder:text-gray-500"
         type="text"
         placeholder={t(placeholder) || ''}
         value={searchTerm}

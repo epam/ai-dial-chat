@@ -4,7 +4,7 @@
 
 @layer base {
   ::-webkit-scrollbar-track {
-    background-color: transparent;
+    @apply bg-transparent;
   }
 
   ::-webkit-scrollbar-thumb {
@@ -19,7 +19,7 @@
     @apply bg-transparent;
   }
   ::-webkit-scrollbar-corner {
-    background-color: transparent;
+    @apply bg-transparent;
   }
 
   ::-webkit-scrollbar {

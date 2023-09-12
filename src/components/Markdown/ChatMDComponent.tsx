@@ -54,23 +54,21 @@ export const getMDComponents = (
     },
     table({ children }) {
       return (
-        <table className="border-collapse border border-black px-3 py-1 text-sm dark:border-white">
+        <table className="border-collapse border px-3 py-1 text-sm">
           {children}
         </table>
       );
     },
     th({ children }) {
       return (
-        <th className="break-words border border-black bg-gray-500 px-3 py-1 text-sm text-white dark:border-white">
+        <th className="break-words border border-black bg-gray-500 px-3 py-1 text-sm">
           {children}
         </th>
       );
     },
     td({ children }) {
       return (
-        <td className="break-words border border-black px-3 py-1 text-sm dark:border-white">
-          {children}
-        </td>
+        <td className="break-words border px-3 py-1 text-sm">{children}</td>
       );
     },
     p({ children, className }) {
