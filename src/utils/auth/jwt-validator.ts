@@ -1,6 +1,7 @@
+import { logger } from '@/src/utils/server/logger';
+
 import * as jose from 'jose';
 import fetch from 'node-fetch';
-import { logger } from '@/src/utils/server/logger';
 
 interface OpenIdConfig {
   jwks_uri: string;
