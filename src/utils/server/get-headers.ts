@@ -1,3 +1,5 @@
+import { validateToken } from '../auth/jwt-validator';
+
 export const getApiHeaders = ({
   chatId,
   jwt,
@@ -15,6 +17,7 @@ export const getApiHeaders = ({
     headers['X-CONVERSATION-ID'] = chatId;
   }
   if (jwt) {
+    validateToken(jwt);
     headers['authorization'] = 'Bearer ' + jwt;
   }
   if (jobTitle) {
