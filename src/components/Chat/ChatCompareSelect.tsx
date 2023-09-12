@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -14,6 +14,39 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import { Combobox } from '../Common/Combobox';
 
+interface OptionProps {
+  item: Conversation;
+}
+
+const Option = ({ item }: OptionProps) => {
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const defaultModelId = useAppSelector(ModelsSelectors.selectDefaultModelId);
+  const theme = useAppSelector(UISelectors.selectThemeState);
+
+  const model = useMemo(
+    () =>
+      modelsMap[item.model?.id] ||
+      (defaultModelId && modelsMap[defaultModelId]),
+    [defaultModelId, item.model?.id, modelsMap],
+  );
+
+  if (!model) {
+    return <></>;
+  }
+
+  return (
+    <div className="flex items-center gap-3 pl-1">
+      <ModelIcon
+        entity={model}
+        entityId={model.id}
+        size={24}
+        inverted={theme === 'dark'}
+      />
+      <span>{item.name}</span>
+    </div>
+  );
+};
+
 interface Props {
   conversations: Conversation[];
   selectedConversations: Conversation[];
@@ -26,10 +59,6 @@ export const ChatCompareSelect = ({
   onConversationSelect,
 }: Props) => {
   const { t } = useTranslation('chat');
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const defaultModelId = useAppSelector(ModelsSelectors.selectDefaultModelId);
-
-  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const [comparableConversations, setComparableConversations] = useState<
     Conversation[]
@@ -73,31 +102,6 @@ export const ChatCompareSelect = ({
       setComparableConversations(comparableConversations);
     }
   }, [conversations, selectedConversations]);
-
-  const Option = useCallback(
-    (item: Conversation) => {
-      const model =
-        modelsMap[item.model?.id] ||
-        (defaultModelId && modelsMap[defaultModelId]);
-
-      if (!model) {
-        return <></>;
-      }
-
-      return (
-        <div className="flex items-center gap-3 pl-1">
-          <ModelIcon
-            entity={model}
-            entityId={model.id}
-            size={24}
-            inverted={theme === 'dark'}
-          />
-          <span>{item.name}</span>
-        </div>
-      );
-    },
-    [defaultModelId, modelsMap, theme],
-  );
 
   return (
     <div className="flex grow flex-col items-center justify-center p-5 py-2">
