@@ -84,7 +84,13 @@ export const addonsSlice = createSlice({
       const recentFilteredAddons = state.recentAddonsIds.filter(
         (id) => !payload.addonIds.includes(id),
       );
-      const updatedAddonsIds = [...payload.addonIds, ...recentFilteredAddons];
+      const payloadFilteredAddonsIds = payload.addonIds.filter(
+        (id) => state.addonsMap[id],
+      );
+      const updatedAddonsIds = [
+        ...payloadFilteredAddonsIds,
+        ...recentFilteredAddons,
+      ];
 
       state.recentAddonsIds = updatedAddonsIds;
     },

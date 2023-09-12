@@ -133,7 +133,11 @@ export const ChatHeader = ({
                         />
                       ))}
                       {conversation.selectedAddons
-                        ?.filter((id) => !model.selectedAddons?.includes(id))
+                        ?.filter(
+                          (id) =>
+                            addonsMap[id] &&
+                            !model.selectedAddons?.includes(id),
+                        )
                         .map((addon) => (
                           <ModelIcon
                             key={addon}

@@ -51,7 +51,7 @@ import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { ChatBody, Conversation, Message, RateBody } from '@/src/types/chat';
 import { AppEpic } from '@/src/types/store';
 
-import { AddonsActions } from '../addons/addons.reducers';
+import { AddonsActions, AddonsSelectors } from '../addons/addons.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { PromptsSelectors } from '../prompts/prompts.reducers';
 import { UIActions } from '../ui/ui.reducers';
@@ -434,8 +434,9 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
     map(({ payload }) => ({
       payload,
       modelsMap: ModelsSelectors.selectModelsMap(state$.value),
+      addonsMap: AddonsSelectors.selectAddonsMap(state$.value),
     })),
-    map(({ payload, modelsMap }) => {
+    map(({ payload, modelsMap, addonsMap }) => {
       const messageModel: Message['model'] = {
         id: payload.conversation.model.id,
         name: modelsMap[payload.conversation.model.id]?.name,
@@ -471,6 +472,9 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
               : payload.message.content
             : payload.conversation.name,
         isMessageStreaming: true,
+        selectedAddons: payload.conversation.selectedAddons.filter(
+          (id) => addonsMap[id],
+        ),
       };
 
       return {
