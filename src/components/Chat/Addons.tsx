@@ -107,7 +107,9 @@ export const Addons = ({
           <div className="flex flex-wrap gap-1" data-qa="selected-addons">
             {preselectedAddonsIds.map((addon) => getAddon(addon, true))}
             {selectedAddonsIds
-              .filter((id) => !preselectedAddonsIds.includes(id))
+              .filter(
+                (id) => addonsMap[id] && !preselectedAddonsIds.includes(id),
+              )
               .map((addon) => getAddon(addon, true))}
           </div>
         </>
