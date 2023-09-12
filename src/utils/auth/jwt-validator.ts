@@ -2,12 +2,12 @@ import * as jose from 'jose';
 import fetch from 'node-fetch';
 
 interface OpenIdConfig {
-    jwks_uri: string;
+  jwks_uri: string;
 }
 
 const globalObj = globalThis as unknown as any;
 
-async function getJwksUrl(baseUrl: string) : Promise<string> {
+async function getJwksUrl(baseUrl: string): Promise<string> {
   const url = `${baseUrl}/.well-known/openid-configuration`;
   const errMsg = `Request for openid-configuration returned an error`;
   const response = await fetch(url).catch((error) => {
