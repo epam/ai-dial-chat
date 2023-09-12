@@ -33,7 +33,7 @@ export default defineConfig({
     navigationTimeout: 20000,
     actionTimeout: 20000,
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.E2E_HOST,
+    baseURL: process.env.E2E_HOST ?? 'http://localhost:3000/',
     video: 'off',
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'off',
@@ -85,12 +85,4 @@ export default defineConfig({
     //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     // },
   ],
-
-  /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run dev',
-  //   url: 'http://127.0.0.1:3000',
-  //   reuseExistingServer: !process.env.CI,
-  //   timeout: 180000
-  // },
 });
