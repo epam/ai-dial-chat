@@ -34,7 +34,6 @@ export function isPromtsFormat(obj: any) {
   return (
     obj &&
     typeof obj === 'object' &&
-    !Object.prototype.hasOwnProperty.call(obj, 'version') &&
     Object.prototype.hasOwnProperty.call(obj, 'prompts')
   );
 }
@@ -232,26 +231,15 @@ export const importData = (data: SupportedExportFormats): CleanDataResponse => {
     (conversation, index, self) =>
       index === self.findIndex((c) => c.id === conversation.id),
   );
-  localStorage.setItem('conversationHistory', JSON.stringify(newHistory));
-  if (newHistory.length > 0) {
-    localStorage.setItem(
-      'selectedConversationIds',
-      JSON.stringify([newHistory[newHistory.length - 1].id]),
-    );
-  } else {
-    localStorage.removeItem('selectedConversationIds');
-  }
 
   const oldFolders = localStorage.getItem('folders');
   const oldFoldersParsed = oldFolders ? JSON.parse(oldFolders) : [];
-  const newFolders: FolderInterface[] = [
-    ...oldFoldersParsed,
-    ...folders,
-  ].filter(
-    (folder, index, self) =>
-      index === self.findIndex((f) => f.id === folder.id),
-  );
-  localStorage.setItem('folders', JSON.stringify(newFolders));
+  const newFolders: FolderInterface[] = [...oldFoldersParsed, ...folders]
+    .filter(
+      (folder, index, self) =>
+        index === self.findIndex((f) => f.id === folder.id),
+    )
+    .filter((folder) => folder.type === 'chat');
 
   const oldPrompts = localStorage.getItem('prompts');
   const oldPromptsParsed = oldPrompts ? JSON.parse(oldPrompts) : [];
@@ -259,7 +247,6 @@ export const importData = (data: SupportedExportFormats): CleanDataResponse => {
     (prompt, index, self) =>
       index === self.findIndex((p) => p.id === prompt.id),
   );
-  localStorage.setItem('prompts', JSON.stringify(newPrompts));
 
   return {
     version: 4,
@@ -299,10 +286,8 @@ export const importPrompts = (
       .filter(
         (folder, index, self) =>
           index === self.findIndex((p) => p.id === folder.id),
-      );
-
-    localStorage.setItem('prompts', JSON.stringify(newPrompts));
-    localStorage.setItem('folders', JSON.stringify(newFolders));
+      )
+      .filter((folder) => folder.type === 'prompt');
 
     return { prompts: newPrompts, folders: newFolders, isError: false };
   }

@@ -120,7 +120,7 @@ const importPromptsEpic: AppEpic = (action$) =>
     map(({ payload }) => importPrompts(payload.promptsHistory)),
     switchMap(({ prompts, folders, isError }) => {
       if (isError) {
-        of(
+        return of(
           UIActions.showToast({
             message: (i18n as any).t(errorsMessages.unsupportedDataFormat, {
               ns: 'common',
@@ -128,7 +128,6 @@ const importPromptsEpic: AppEpic = (action$) =>
             type: 'error',
           }),
         );
-        return EMPTY;
       }
 
       return of(PromptsActions.importPromptsSuccess({ prompts, folders }));
