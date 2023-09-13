@@ -83,21 +83,10 @@ export const ChatCompareSelect = ({
           return false;
         }
 
-        let isNotSame = false;
-        for (let i = 0; i < convUserMessages.length; i++) {
-          if (
-            convUserMessages[i].content !== selectedConvUserMessages[i].content
-          ) {
-            isNotSame = true;
-          }
-          break;
-        }
-
-        if (isNotSame) {
-          return false;
-        }
-
-        return true;
+        return selectedConvUserMessages.every(
+          (message, index) =>
+            message.content === convUserMessages[index].content,
+        );
       });
       setComparableConversations(comparableConversations);
     }
