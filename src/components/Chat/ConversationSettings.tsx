@@ -21,6 +21,26 @@ import { TemperatureSlider } from './Temperature';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 
+interface ModelSelectRowProps {
+  item: OpenAIEntityModel;
+}
+
+const ModelSelectRow = ({ item }: ModelSelectRowProps) => {
+  const theme = useAppSelector(UISelectors.selectThemeState);
+
+  return (
+    <div className="flex items-center gap-2">
+      <ModelIcon
+        entity={item}
+        entityId={item.id}
+        size={18}
+        inverted={theme === 'dark'}
+      />
+      <span>{item.name || item.id}</span>
+    </div>
+  );
+};
+
 interface Props {
   model: OpenAIEntityModel | undefined;
   assistantModelId: string | undefined;
@@ -58,8 +78,6 @@ export const ConversationSettings = ({
   onApplyAddons,
   onApplySettings,
 }: Props) => {
-  const theme = useAppSelector(UISelectors.selectThemeState);
-
   const { t } = useTranslation('chat');
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -72,24 +90,6 @@ export const ConversationSettings = ({
       modelsMap[assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id],
     );
   }, [assistantModelId, modelsMap]);
-
-  const getModelSelectRow = () => {
-    const ModelSelectRow = (model: OpenAIEntityModel) => {
-      return (
-        <div className="flex items-center gap-2">
-          <ModelIcon
-            entity={model}
-            entityId={model.id}
-            size={18}
-            inverted={theme === 'dark'}
-          />
-          <span>{model.name || model.id}</span>
-        </div>
-      );
-    };
-
-    return ModelSelectRow;
-  };
 
   return (
     <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-gray-300 dark:bg-gray-900 [&:first-child]:rounded-t">
@@ -125,7 +125,7 @@ export const ConversationSettings = ({
                     model.name || model.id
                   }
                   getItemValue={(model: OpenAIEntityModel) => model.id}
-                  itemRow={getModelSelectRow()}
+                  itemRow={ModelSelectRow}
                   onSelectItem={(itemID: string) => {
                     onSelectAssistantSubModel(itemID);
                   }}

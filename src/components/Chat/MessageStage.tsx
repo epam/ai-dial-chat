@@ -9,21 +9,13 @@ import Loader from '../../../public/images/icons/loader.svg';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachments } from './MessageAttachments';
 
-export interface Props {
+interface StageTitleProps {
+  isOpened: boolean;
   stage: Stage;
 }
 
-export const MessageStage = ({ stage }: Props) => {
-  const [isOpened, setIsOpened] = useState(false);
-  const [hasContent, setHasContent] = useState(
-    () => !!(stage?.content || stage?.attachments?.length),
-  );
-
-  useEffect(() => {
-    setHasContent(!!(stage?.content || stage?.attachments?.length));
-  }, [stage?.content, stage?.attachments?.length]);
-
-  const stageTitle = (
+const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
+  return (
     <div
       className={`grid min-w-0 grid-flow-col items-center gap-3 overflow-hidden`}
     >
@@ -51,6 +43,21 @@ export const MessageStage = ({ stage }: Props) => {
       </span>
     </div>
   );
+};
+
+export interface Props {
+  stage: Stage;
+}
+
+export const MessageStage = ({ stage }: Props) => {
+  const [isOpened, setIsOpened] = useState(false);
+  const [hasContent, setHasContent] = useState(
+    () => !!(stage?.content || stage?.attachments?.length),
+  );
+
+  useEffect(() => {
+    setHasContent(!!(stage?.content || stage?.attachments?.length));
+  }, [stage?.content, stage?.attachments?.length]);
 
   return (
     <div className="block min-w-0 shrink rounded border border-gray-400 bg-gray-300 dark:border-gray-700 dark:bg-gray-900">
@@ -61,7 +68,7 @@ export const MessageStage = ({ stage }: Props) => {
             setIsOpened((opened) => !opened);
           }}
         >
-          {stageTitle}
+          <StageTitle isOpened={isOpened} stage={stage} />
           <ChevronDown
             height={20}
             width={20}
@@ -71,7 +78,9 @@ export const MessageStage = ({ stage }: Props) => {
           />
         </button>
       ) : (
-        <div className="flex p-2">{stageTitle}</div>
+        <div className="flex p-2">
+          <StageTitle isOpened={isOpened} stage={stage} />
+        </div>
       )}
 
       {(stage.content || stage.attachments) && (

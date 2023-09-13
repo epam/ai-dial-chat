@@ -46,48 +46,6 @@ export const SystemPrompt: FC<Props> = ({
     prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
   );
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
-    const maxLength = model.maxLength;
-
-    if (value.length > maxLength) {
-      alert(
-        t(
-          `Prompt limit is {{maxLength}} characters. You have entered {{valueLength}} characters.`,
-          { maxLength, valueLength: value.length },
-        ),
-      );
-      return;
-    }
-
-    setValue(value);
-    updatePromptListVisibility(value);
-
-    onChangePrompt(value);
-  };
-
-  const handleInitModal = () => {
-    const selectedPrompt = filteredPrompts[activePromptIndex];
-    setValue((prevVal) => {
-      const newContent = prevVal?.replace(/\/\w*$/, selectedPrompt.content);
-      return newContent;
-    });
-    handlePromptSelect(selectedPrompt);
-    setShowPromptList(false);
-  };
-
-  const parseVariables = (content: string) => {
-    const regex = /{{(.*?)}}/g;
-    const foundVariables = [];
-    let match;
-
-    while ((match = regex.exec(content)) !== null) {
-      foundVariables.push(match[1]);
-    }
-
-    return foundVariables;
-  };
-
   const updatePromptListVisibility = useCallback((text: string) => {
     const match = text.match(/\/\w*$/);
 
@@ -100,64 +58,118 @@ export const SystemPrompt: FC<Props> = ({
     }
   }, []);
 
-  const handlePromptSelect = (prompt: Prompt) => {
-    const parsedVariables = parseVariables(prompt.content);
-    setVariables(parsedVariables);
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const value = e.target.value;
+      const maxLength = model.maxLength;
 
-    if (parsedVariables.length > 0) {
-      setIsModalVisible(true);
-    } else {
-      const updatedContent = value?.replace(/\/\w*$/, prompt.content);
-
-      setValue(updatedContent);
-      onChangePrompt(updatedContent);
-
-      updatePromptListVisibility(prompt.content);
-    }
-  };
-
-  const handleSubmit = (updatedVariables: string[]) => {
-    const newContent = value?.replace(/{{(.*?)}}/g, (match, variable) => {
-      const index = variables.indexOf(variable);
-      return updatedVariables[index];
-    });
-
-    setValue(newContent);
-    onChangePrompt(newContent);
-
-    if (textareaRef && textareaRef.current) {
-      textareaRef.current.focus();
-    }
-  };
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (showPromptList) {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setActivePromptIndex((prevIndex) =>
-          prevIndex < prompts.length - 1 ? prevIndex + 1 : prevIndex,
+      if (value.length > maxLength) {
+        alert(
+          t(
+            `Prompt limit is {{maxLength}} characters. You have entered {{valueLength}} characters.`,
+            { maxLength, valueLength: value.length },
+          ),
         );
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setActivePromptIndex((prevIndex) =>
-          prevIndex > 0 ? prevIndex - 1 : prevIndex,
-        );
-      } else if (e.key === 'Tab') {
-        e.preventDefault();
-        setActivePromptIndex((prevIndex) =>
-          prevIndex < prompts.length - 1 ? prevIndex + 1 : 0,
-        );
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        handleInitModal();
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        setShowPromptList(false);
-      } else {
-        setActivePromptIndex(0);
+        return;
       }
+
+      setValue(value);
+      updatePromptListVisibility(value);
+
+      onChangePrompt(value);
+    },
+    [model.maxLength, onChangePrompt, t, updatePromptListVisibility],
+  );
+
+  const parseVariables = useCallback((content: string) => {
+    const regex = /{{(.*?)}}/g;
+    const foundVariables = [];
+    let match;
+
+    while ((match = regex.exec(content)) !== null) {
+      foundVariables.push(match[1]);
     }
-  };
+
+    return foundVariables;
+  }, []);
+
+  const handlePromptSelect = useCallback(
+    (prompt: Prompt) => {
+      const parsedVariables = parseVariables(prompt.content);
+      setVariables(parsedVariables);
+
+      if (parsedVariables.length > 0) {
+        setIsModalVisible(true);
+      } else {
+        const updatedContent = value?.replace(/\/\w*$/, prompt.content);
+
+        setValue(updatedContent);
+        onChangePrompt(updatedContent);
+
+        updatePromptListVisibility(prompt.content);
+      }
+    },
+    [onChangePrompt, parseVariables, updatePromptListVisibility, value],
+  );
+
+  const handleInitModal = useCallback(() => {
+    const selectedPrompt = filteredPrompts[activePromptIndex];
+    setValue((prevVal) => {
+      const newContent = prevVal?.replace(/\/\w*$/, selectedPrompt.content);
+      return newContent;
+    });
+    handlePromptSelect(selectedPrompt);
+    setShowPromptList(false);
+  }, [activePromptIndex, filteredPrompts, handlePromptSelect]);
+
+  const handleSubmit = useCallback(
+    (updatedVariables: string[]) => {
+      const newContent = value?.replace(/{{(.*?)}}/g, (match, variable) => {
+        const index = variables.indexOf(variable);
+        return updatedVariables[index];
+      });
+
+      setValue(newContent);
+      onChangePrompt(newContent);
+
+      if (textareaRef && textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    },
+    [onChangePrompt, value, variables],
+  );
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (showPromptList) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          setActivePromptIndex((prevIndex) =>
+            prevIndex < prompts.length - 1 ? prevIndex + 1 : prevIndex,
+          );
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          setActivePromptIndex((prevIndex) =>
+            prevIndex > 0 ? prevIndex - 1 : prevIndex,
+          );
+        } else if (e.key === 'Tab') {
+          e.preventDefault();
+          setActivePromptIndex((prevIndex) =>
+            prevIndex < prompts.length - 1 ? prevIndex + 1 : 0,
+          );
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          handleInitModal();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          setShowPromptList(false);
+        } else {
+          setActivePromptIndex(0);
+        }
+      }
+    },
+    [handleInitModal, prompts.length, showPromptList],
+  );
 
   useEffect(() => {
     if (textareaRef && textareaRef.current) {

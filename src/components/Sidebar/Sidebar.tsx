@@ -1,4 +1,4 @@
-import { ReactNode, useRef, useState } from 'react';
+import { ReactNode, useCallback, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -47,20 +47,20 @@ const Sidebar = <T,>({
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const dragDropElement = useRef<HTMLDivElement>(null);
   const draggingColor = side === 'left' ? 'bg-green/15' : 'bg-violet/15';
-  const allowDrop = (e: any) => {
+  const allowDrop = useCallback((e: any) => {
     e.preventDefault();
-  };
+  }, []);
 
-  const highlightDrop = (e: any) => {
+  const highlightDrop = useCallback((e: any) => {
     if (
       dragDropElement.current?.contains(e.target) ||
       dragDropElement.current === e.target
     ) {
       setIsDraggingOver(true);
     }
-  };
+  }, []);
 
-  const removeHighlight = (e: any) => {
+  const removeHighlight = useCallback((e: any) => {
     if (
       (e.target === dragDropElement.current ||
         dragDropElement.current?.contains(e.target)) &&
@@ -68,7 +68,7 @@ const Sidebar = <T,>({
     ) {
       setIsDraggingOver(false);
     }
-  };
+  }, []);
 
   return isOpen ? (
     <div

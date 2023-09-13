@@ -2,6 +2,7 @@ import {
   KeyboardEvent,
   MouseEventHandler,
   ReactElement,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -26,7 +27,7 @@ interface Props {
   highlightColor: HighlightColor;
   currentFolder: FolderInterface;
   searchTerm: string;
-  folderComponent: (ReactElement | undefined)[];
+  folderComponent: ReactElement;
   handleDrop: (e: any, folder: FolderInterface) => void;
   onRenameFolder: (newName: string) => void;
   onDeleteFolder: () => void;
@@ -65,58 +66,67 @@ const Folder = ({
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const dragDropElement = useRef<HTMLButtonElement>(null);
 
-  const handleEnterDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleRename();
-    }
-  };
-
-  const handleRename = () => {
+  const handleRename = useCallback(() => {
     onRenameFolder(renameValue);
     setRenameValue('');
     setIsRenaming(false);
-  };
+  }, [onRenameFolder, renameValue]);
 
-  const dropHandler = (e: any) => {
-    if (e.dataTransfer) {
-      setIsOpen(true);
+  const handleEnterDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleRename();
+      }
+    },
+    [handleRename],
+  );
 
-      handleDrop(e, currentFolder);
+  const dropHandler = useCallback(
+    (e: any) => {
+      if (e.dataTransfer) {
+        setIsOpen(true);
 
-      setIsDraggingOver(false);
-    }
-  };
+        handleDrop(e, currentFolder);
 
-  const allowDrop = (e: any) => {
+        setIsDraggingOver(false);
+      }
+    },
+    [currentFolder, handleDrop],
+  );
+
+  const allowDrop = useCallback((e: any) => {
     e.preventDefault();
-  };
+  }, []);
 
-  const highlightDrop = (evt: any) => {
+  const highlightDrop = useCallback((evt: any) => {
     if (
       dragDropElement.current?.contains(evt.target) ||
       dragDropElement.current === evt.target
     ) {
       setIsDraggingOver(true);
     }
-  };
+  }, []);
 
-  const removeHighlight = (evt: any) => {
+  const removeHighlight = useCallback((evt: any) => {
     if (evt.target === dragDropElement.current) {
       setIsDraggingOver(false);
     }
-  };
+  }, []);
 
-  const onRename: MouseEventHandler = (e) => {
-    e.stopPropagation();
-    setIsRenaming(true);
-    setRenameValue(currentFolder.name);
-  };
+  const onRename: MouseEventHandler = useCallback(
+    (e) => {
+      e.stopPropagation();
+      setIsRenaming(true);
+      setRenameValue(currentFolder.name);
+    },
+    [currentFolder.name],
+  );
 
-  const onDelete: MouseEventHandler = (e) => {
+  const onDelete: MouseEventHandler = useCallback((e) => {
     e.stopPropagation();
     setIsDeleting(true);
-  };
+  }, []);
 
   useEffect(() => {
     if (isRenaming) {
@@ -143,6 +153,7 @@ const Folder = ({
   const hoverIconColor =
     highlightColor === 'green' ? 'hover:text-green' : 'hover:text-violet';
   const bgColor = highlightColor === 'green' ? 'bg-green/15' : 'bg-violet/15';
+
   return (
     <>
       <div

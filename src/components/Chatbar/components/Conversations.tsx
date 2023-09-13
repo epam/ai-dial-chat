@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -57,11 +57,12 @@ export const Conversations = ({ conversations }: Props) => {
 
   const { t } = useTranslation('sidebar');
 
-  const conversationsToDisplay = conversations.filter(
-    (conversation) => !conversation.folderId,
+  const conversationsToDisplay = useMemo(
+    () => conversations.filter((conversation) => !conversation.folderId),
+    [conversations],
   );
 
-  const todayDate = new Date().setHours(0, 0, 0);
+  const todayDate = useMemo(() => new Date().setHours(0, 0, 0), []);
   const oneDayMilliseconds = 8.64e7;
   const yesterdayDate = todayDate - oneDayMilliseconds;
   const lastSevenDate = todayDate - oneDayMilliseconds * 6;
@@ -145,7 +146,13 @@ export const Conversations = ({ conversations }: Props) => {
         name: conversationsDateBlocksNames.other,
       },
     });
-  }, [conversations]);
+  }, [
+    conversationsToDisplay,
+    lastSevenDate,
+    lastThirtyDate,
+    todayDate,
+    yesterdayDate,
+  ]);
 
   return (
     <div className="flex w-full flex-col gap-1" data-qa="conversations">

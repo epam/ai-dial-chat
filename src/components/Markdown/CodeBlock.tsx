@@ -1,4 +1,4 @@
-import { FC, memo, useState } from 'react';
+import { FC, memo, useCallback, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import {
   oneDark,
@@ -33,7 +33,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
 
   const theme = useAppSelector(UISelectors.selectThemeState);
 
-  const copyToClipboard = () => {
+  const copyToClipboard = useCallback(() => {
     if (!navigator.clipboard || !navigator.clipboard.writeText) {
       return;
     }
@@ -45,8 +45,9 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
         setIsCopied(false);
       }, 2000);
     });
-  };
-  const downloadAsFile = () => {
+  }, [value]);
+
+  const downloadAsFile = useCallback(() => {
     const fileExtension = programmingLanguages[language] || '.txt';
     const suggestedFileName = `ai-chat-code${fileExtension}`;
     const fileName = window.prompt(
@@ -69,7 +70,8 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  };
+  }, [language, t, value]);
+
   return (
     <div
       className={`codeblock relative overflow-hidden rounded border border-gray-400 font text-sm text-gray-800 dark:border-gray-700 dark:text-gray-200`}
