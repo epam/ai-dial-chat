@@ -2,8 +2,6 @@ import { Fragment, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { OpenAIEntityAddon } from '@/src/types/openai';
-
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
@@ -93,13 +91,10 @@ const filterRecentAddons = (
   recentAddonsIds: string[],
   selectedAddonsIds: string[],
   preselectedAddonsIds: string[],
-  addonsMap: Partial<Record<string, OpenAIEntityAddon>>,
 ) => {
   return recentAddonsIds.filter(
     (id) =>
-      addonsMap[id] &&
-      !selectedAddonsIds.includes(id) &&
-      !preselectedAddonsIds.includes(id),
+      !selectedAddonsIds.includes(id) && !preselectedAddonsIds.includes(id),
   );
 };
 
@@ -110,7 +105,9 @@ export const Addons = ({
   onApplyAddons,
 }: AddonsProps) => {
   const { t } = useTranslation('chat');
-  const recentAddonsIds = useAppSelector(AddonsSelectors.selectRecentAddonsIds);
+  const recentAddonsIds = useAppSelector(
+    AddonsSelectors.selectAllowedRecentAddonsIds,
+  );
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
 
   const [filteredRecentAddons, setFilteredRecentAddons] = useState<string[]>(
@@ -118,7 +115,6 @@ export const Addons = ({
       recentAddonsIds,
       selectedAddonsIds,
       preselectedAddonsIds,
-      addonsMap,
     ),
   );
   const [isAddonsDialogOpen, setIsAddonsDialogOpen] = useState(false);
@@ -129,10 +125,9 @@ export const Addons = ({
         recentAddonsIds,
         selectedAddonsIds,
         preselectedAddonsIds,
-        addonsMap,
       ),
     );
-  }, [selectedAddonsIds, preselectedAddonsIds, recentAddonsIds, addonsMap]);
+  }, [selectedAddonsIds, preselectedAddonsIds, recentAddonsIds]);
 
   return (
     <div className="flex flex-col gap-3" data-qa="addons">
