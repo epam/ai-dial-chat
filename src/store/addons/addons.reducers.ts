@@ -68,11 +68,7 @@ export const addonsSlice = createSlice({
       }>,
     ) => {
       if (payload.localStorageRecentAddonsIds.length !== 0) {
-        const filteredLocalStorageRecentAddonsIds =
-          payload.localStorageRecentAddonsIds.filter(
-            (id) => state.addonsMap[id],
-          );
-        state.recentAddonsIds = filteredLocalStorageRecentAddonsIds;
+        state.recentAddonsIds = payload.localStorageRecentAddonsIds;
       } else {
         state.recentAddonsIds = payload.defaultRecentAddonsIds;
       }
