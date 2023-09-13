@@ -68,11 +68,7 @@ export const addonsSlice = createSlice({
       }>,
     ) => {
       if (payload.localStorageRecentAddonsIds.length !== 0) {
-        const filteredLocalStorageRecentAddonsIds =
-          payload.localStorageRecentAddonsIds.filter(
-            (id) => state.addonsMap[id],
-          );
-        state.recentAddonsIds = filteredLocalStorageRecentAddonsIds;
+        state.recentAddonsIds = payload.localStorageRecentAddonsIds;
       } else {
         state.recentAddonsIds = payload.defaultRecentAddonsIds;
       }
@@ -105,9 +101,12 @@ const selectAddons = createSelector([rootSelector], (state) => {
 const selectAddonsMap = createSelector([rootSelector], (state) => {
   return state.addonsMap;
 });
-const selectRecentAddonsIds = createSelector([rootSelector], (state) => {
-  return state.recentAddonsIds;
-});
+const selectRecentAddonsIds = createSelector(
+  [rootSelector, selectAddonsMap],
+  ({ recentAddonsIds, addonsMap }) => {
+    return recentAddonsIds.filter((id) => addonsMap[id]);
+  },
+);
 
 export const AddonsSelectors = {
   selectAddonsIsLoading,
