@@ -1,4 +1,11 @@
-import { FC, KeyboardEvent, useEffect, useRef, useState } from 'react';
+import {
+  FC,
+  KeyboardEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { Prompt } from '@/src/types/prompt';
 
@@ -29,15 +36,15 @@ export const VariableModal: FC<Props> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleChange = (index: number, value: string) => {
+  const handleChange = useCallback((index: number, value: string) => {
     setUpdatedVariables((prev) => {
       const updated = [...prev];
       updated[index].value = value;
       return updated;
     });
-  };
+  }, []);
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     if (updatedVariables.some((variable) => variable.value === '')) {
       alert('Please fill out all variables');
       return;
@@ -45,16 +52,19 @@ export const VariableModal: FC<Props> = ({
 
     onSubmit(updatedVariables.map((variable) => variable.value));
     onClose();
-  };
+  }, [onClose, onSubmit, updatedVariables]);
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    } else if (e.key === 'Escape') {
-      onClose();
-    }
-  };
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSubmit();
+      } else if (e.key === 'Escape') {
+        onClose();
+      }
+    },
+    [handleSubmit, onClose],
+  );
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -78,7 +88,7 @@ export const VariableModal: FC<Props> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onKeyDown={handleKeyDown}
     >
       <div

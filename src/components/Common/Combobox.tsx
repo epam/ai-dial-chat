@@ -5,13 +5,7 @@ import {
   size,
   useFloating,
 } from '@floating-ui/react';
-import {
-  FunctionComponent,
-  createElement,
-  useEffect,
-  useLayoutEffect,
-  useState,
-} from 'react';
+import { FC, createElement, useEffect, useLayoutEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -25,7 +19,7 @@ interface Props<T = any> {
   label?: string;
   placeholder?: string;
   notFoundPlaceholder?: string;
-  itemRow?: FunctionComponent<T>;
+  itemRow?: FC<{ item: T }>;
   disabled?: boolean;
   getItemLabel: (item: T | undefined) => string;
   getItemValue: (item: T | undefined) => string;
@@ -107,7 +101,7 @@ export const Combobox = ({
           : true,
       ),
     );
-  }, [items]);
+  }, [getItemLabel, inputValue, items]);
 
   useLayoutEffect(() => {
     if (isOpen && refs.reference.current && refs.floating.current) {
@@ -132,7 +126,7 @@ export const Combobox = ({
           />
           {!inputValue && itemRow && selectedItem && (
             <div className="pointer-events-none absolute left-3 top-2.5 flex items-center">
-              {createElement(itemRow, selectedItem)}
+              {createElement(itemRow, { item: selectedItem })}
             </div>
           )}
           <button
@@ -171,7 +165,7 @@ export const Combobox = ({
                 {...getItemProps({ item, index })}
               >
                 {itemRow
-                  ? createElement(itemRow, item)
+                  ? createElement(itemRow, { item })
                   : getItemLabel(item) || item.toString()}
               </li>
             ))

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { Conversation } from '@/src/types/chat';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
@@ -53,7 +53,7 @@ export const ChatSettings = ({
     conversation.selectedAddons || [],
   );
 
-  const handleChangeSettings = () => {
+  const handleChangeSettings = useCallback(() => {
     onChangeSettings({
       modelId: currentModel?.id,
       currentAssistentModelId,
@@ -61,17 +61,18 @@ export const ChatSettings = ({
       temperature: currentTemperature,
       addonsIds: currentSelectedAddonsIds,
     });
-  };
+  }, [
+    currentAssistentModelId,
+    currentModel?.id,
+    currentPrompt,
+    currentSelectedAddonsIds,
+    currentTemperature,
+    onChangeSettings,
+  ]);
 
   useEffect(() => {
     handleChangeSettings();
-  }, [
-    currentModel,
-    currentPrompt,
-    currentAssistentModelId,
-    currentTemperature,
-    currentSelectedAddonsIds,
-  ]);
+  }, [handleChangeSettings]);
 
   return (
     <div className="absolute top-0 z-50 flex h-full w-full grow items-start justify-center overflow-auto bg-gray-900/30 p-5 dark:bg-gray-900/70">

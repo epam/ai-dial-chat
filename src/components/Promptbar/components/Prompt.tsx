@@ -2,6 +2,7 @@ import { IconBulb } from '@tabler/icons-react';
 import {
   DragEvent,
   MouseEventHandler,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -50,93 +51,108 @@ export const PromptComponent = ({ prompt }: Props) => {
 
   const wrapperRef = useRef(null);
 
-  const handleUpdate = (prompt: Prompt) => {
-    dispatch(
-      PromptsActions.updatePrompt({ promptId: prompt.id, values: prompt }),
-    );
-    dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
-    setIsRenaming(false);
-  };
-
-  const handleDelete: MouseEventHandler = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-
-    if (isDeleting) {
-      dispatch(PromptsActions.deletePrompt({ promptId: prompt.id }));
+  const handleUpdate = useCallback(
+    (prompt: Prompt) => {
+      dispatch(
+        PromptsActions.updatePrompt({ promptId: prompt.id, values: prompt }),
+      );
       dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
-    }
+      setIsRenaming(false);
+    },
+    [dispatch],
+  );
 
-    setIsDeleting(false);
-    setIsSelected(false);
-  };
+  const handleDelete: MouseEventHandler = useCallback(
+    (e) => {
+      e.stopPropagation();
+      e.preventDefault();
 
-  const handleCancelDelete: MouseEventHandler = (e) => {
+      if (isDeleting) {
+        dispatch(PromptsActions.deletePrompt({ promptId: prompt.id }));
+        dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
+      }
+
+      setIsDeleting(false);
+      setIsSelected(false);
+    },
+    [dispatch, isDeleting, prompt.id],
+  );
+
+  const handleCancelDelete: MouseEventHandler = useCallback((e) => {
     e.stopPropagation();
     e.preventDefault();
 
     setIsDeleting(false);
-  };
+  }, []);
 
-  const handleOpenDeleteModal: MouseEventHandler = (e) => {
+  const handleOpenDeleteModal: MouseEventHandler = useCallback((e) => {
     e.stopPropagation();
     e.preventDefault();
 
     setIsDeleting(true);
-  };
+  }, []);
 
-  const handleDragStart = (e: DragEvent<HTMLButtonElement>, prompt: Prompt) => {
-    if (e.dataTransfer) {
-      e.dataTransfer.setData('prompt', JSON.stringify(prompt));
-    }
-  };
+  const handleDragStart = useCallback(
+    (e: DragEvent<HTMLButtonElement>, prompt: Prompt) => {
+      if (e.dataTransfer) {
+        e.dataTransfer.setData('prompt', JSON.stringify(prompt));
+      }
+    },
+    [],
+  );
 
-  const handleOpenRenameModal: MouseEventHandler = (e) => {
+  const handleOpenRenameModal: MouseEventHandler = useCallback((e) => {
     e.stopPropagation();
     e.preventDefault();
 
     setShowModal(true);
     setIsRenaming(true);
-  };
+  }, []);
 
-  const handleOnClickPrompt: MouseEventHandler = (e) => {
+  const handleOnClickPrompt: MouseEventHandler = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
 
     setIsSelected(true);
-  };
+  }, []);
 
-  const handleExportPrompt: MouseEventHandler = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleExportPrompt: MouseEventHandler = useCallback(
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-    exportPrompt(prompt.id);
-  };
+      exportPrompt(prompt.id);
+    },
+    [prompt.id],
+  );
 
-  const handleMoveToFolder = ({
-    folderId,
-    isNewFolder,
-  }: {
-    folderId?: string;
-    isNewFolder?: boolean;
-  }) => {
-    let localFolderId = folderId;
-    if (isNewFolder) {
-      localFolderId = uuidv4();
+  const handleMoveToFolder = useCallback(
+    ({
+      folderId,
+      isNewFolder,
+    }: {
+      folderId?: string;
+      isNewFolder?: boolean;
+    }) => {
+      let localFolderId = folderId;
+      if (isNewFolder) {
+        localFolderId = uuidv4();
+        dispatch(
+          PromptsActions.createFolder({
+            name: t('New folder'),
+            folderId: localFolderId,
+          }),
+        );
+      }
       dispatch(
-        PromptsActions.createFolder({
-          name: t('New folder'),
-          folderId: localFolderId,
+        PromptsActions.updatePrompt({
+          promptId: prompt.id,
+          values: { folderId: localFolderId },
         }),
       );
-    }
-    dispatch(
-      PromptsActions.updatePrompt({
-        promptId: prompt.id,
-        values: { folderId: localFolderId },
-      }),
-    );
-  };
+    },
+    [dispatch, prompt.id, t],
+  );
 
   useEffect(() => {
     if (isRenaming) {

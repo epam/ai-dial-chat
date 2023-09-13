@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { FolderInterface } from '@/src/types/folder';
 
 import {
@@ -10,6 +12,35 @@ import Folder from '@/src/components/Folder';
 
 import { ConversationComponent } from './Conversation';
 
+interface ChatFoldersProps {
+  folder: FolderInterface;
+}
+
+const ChatFoldersTemplate = ({ folder }: ChatFoldersProps) => {
+  const conversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
+  );
+
+  return (
+    <>
+      {conversations
+        .filter((conversation) => conversation.folderId)
+        .map((conversation, index) => {
+          if (conversation.folderId === folder.id) {
+            return (
+              <div
+                key={index}
+                className="ml-5 gap-2 border-l border-gray-500 pl-2"
+              >
+                <ConversationComponent conversation={conversation} />
+              </div>
+            );
+          }
+        })}
+    </>
+  );
+};
+
 interface Props {
   searchTerm: string;
 }
@@ -17,41 +48,24 @@ interface Props {
 export const ChatFolders = ({ searchTerm }: Props) => {
   const dispatch = useAppDispatch();
 
-  const conversations = useAppSelector(
-    ConversationsSelectors.selectConversations,
-  );
   const folders = useAppSelector(ConversationsSelectors.selectFolders);
 
-  const handleDrop = (e: any, folder: FolderInterface) => {
-    if (e.dataTransfer) {
-      const conversation = JSON.parse(e.dataTransfer.getData('conversation'));
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: {
-            folderId: folder.id,
-          },
-        }),
-      );
-    }
-  };
-
-  const ChatFolders = (currentFolder: FolderInterface) => {
-    return conversations
-      .filter((conversation) => conversation.folderId)
-      .map((conversation, index) => {
-        if (conversation.folderId === currentFolder.id) {
-          return (
-            <div
-              key={index}
-              className="ml-5 gap-2 border-l border-gray-500 pl-2"
-            >
-              <ConversationComponent conversation={conversation} />
-            </div>
-          );
-        }
-      });
-  };
+  const handleDrop = useCallback(
+    (e: any, folder: FolderInterface) => {
+      if (e.dataTransfer) {
+        const conversation = JSON.parse(e.dataTransfer.getData('conversation'));
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: conversation.id,
+            values: {
+              folderId: folder.id,
+            },
+          }),
+        );
+      }
+    },
+    [dispatch],
+  );
 
   return (
     <div className="flex w-full flex-col" data-qa="chat-folders">
@@ -60,7 +74,7 @@ export const ChatFolders = ({ searchTerm }: Props) => {
           key={index}
           searchTerm={searchTerm}
           currentFolder={folder}
-          folderComponent={ChatFolders(folder)}
+          folderComponent={<ChatFoldersTemplate folder={folder} />}
           highlightColor="green"
           handleDrop={handleDrop}
           onRenameFolder={(newName) => {

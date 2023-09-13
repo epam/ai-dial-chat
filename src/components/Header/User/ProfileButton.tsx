@@ -1,4 +1,5 @@
 import { useSession } from 'next-auth/react';
+import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import Image from 'next/image';
@@ -16,9 +17,10 @@ export const ProfileButton = () => {
   const { t } = useTranslation('sidebar');
   const { data: session } = useSession();
 
-  const onClick = () => {
+  const onClick = useCallback(() => {
     dispatch(UIActions.setIsProfileOpen(!isProfileOpen));
-  };
+  }, [dispatch, isProfileOpen]);
+
   return (
     <button
       className="flex h-full w-full items-center justify-center"

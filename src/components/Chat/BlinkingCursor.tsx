@@ -1,6 +1,6 @@
 import { FC } from 'react';
 
-import { modelCursorSign } from './chatConstants';
+import { modelCursorSign } from '../../constants/chat';
 
 interface BlinkingCursorProps {
   isShowing: boolean;

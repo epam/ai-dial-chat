@@ -5,7 +5,7 @@ import {
   useInteractions,
 } from '@floating-ui/react';
 import { IconChevronDown } from '@tabler/icons-react';
-import { FC, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -101,6 +101,38 @@ const Entity = ({
   );
 };
 
+interface EntityListingProps {
+  entities: OpenAIEntity[];
+  heading: string;
+  selectedModelId: string | undefined;
+  onSelect: (entityId: string) => void;
+}
+
+const EntityListing = ({
+  entities,
+  heading,
+  selectedModelId,
+  onSelect,
+}: EntityListingProps) => {
+  return (
+    <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
+      <span className="text-gray-500">{heading}</span>
+      <div className="grid min-h-0 shrink grid-cols-1 gap-3 overflow-y-auto md:grid-cols-2">
+        {entities.map((entity) => (
+          <Entity
+            key={entity.id}
+            entity={entity}
+            selectedModelId={selectedModelId}
+            onSelect={(id) => {
+              onSelect(id);
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 interface Props {
   selectedModelId: string | undefined;
   isOpen: boolean;
@@ -174,56 +206,43 @@ export const ModelsDialog: FC<Props> = ({
     );
   }, [models, entityTypes, searchTerm]);
 
-  const handleSearch = (searchValue: string) => {
+  const handleSearch = useCallback((searchValue: string) => {
     setSearchTerm(searchValue.trim().toLowerCase());
-  };
+  }, []);
 
   useEffect(() => {
     setSearchTerm('');
     setEntityTypes(['model', 'assistant', 'application']);
   }, [isOpen]);
 
-  const handleFilterType = (
-    entityType:
-      | OpenAIEntityModelType
-      | OpenAIEntityApplicationType
-      | OpenAIEntityAssistantType,
-  ) => {
-    setEntityTypes((entityTypes) => {
-      if (entityTypes.includes(entityType)) {
-        return entityTypes.filter(
-          (currentEntityType) => currentEntityType !== entityType,
-        );
-      }
+  const handleFilterType = useCallback(
+    (
+      entityType:
+        | OpenAIEntityModelType
+        | OpenAIEntityApplicationType
+        | OpenAIEntityAssistantType,
+    ) => {
+      setEntityTypes((entityTypes) => {
+        if (entityTypes.includes(entityType)) {
+          return entityTypes.filter(
+            (currentEntityType) => currentEntityType !== entityType,
+          );
+        }
 
-      return [...entityTypes, entityType];
-    });
-  };
+        return [...entityTypes, entityType];
+      });
+    },
+    [],
+  );
 
-  const getEntityListingTemplate = (
-    entities: OpenAIEntity[],
-    heading: string,
-  ) => {
-    return (
-      <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
-        <span className="text-gray-500">{heading}</span>
-        <div className="grid min-h-0 shrink grid-cols-1 gap-3 overflow-y-auto md:grid-cols-2">
-          {entities.map((entity) => (
-            <Entity
-              key={entity.id}
-              entity={entity}
-              selectedModelId={selectedModelId}
-              onSelect={(id) => {
-                onModelSelect(id);
-                dispatch(ModelsActions.updateRecentModels({ modelId: id }));
-                onClose();
-              }}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  };
+  const handleSelectModel = useCallback(
+    (entityId: string) => {
+      onModelSelect(entityId);
+      dispatch(ModelsActions.updateRecentModels({ modelId: entityId }));
+      onClose();
+    },
+    [dispatch, onClose, onModelSelect],
+  );
 
   // Render nothing if the dialog is not open.
   if (!isOpen) {
@@ -307,18 +326,30 @@ export const ModelsDialog: FC<Props> = ({
             filteredAssistantsEntities?.length > 0 ||
             filteredApplicationsEntities?.length > 0 ? (
               <>
-                {filteredModelsEntities.length > 0 &&
-                  getEntityListingTemplate(filteredModelsEntities, t('Models'))}
-                {filteredAssistantsEntities.length > 0 &&
-                  getEntityListingTemplate(
-                    filteredAssistantsEntities,
-                    t('Assistants'),
-                  )}
-                {filteredApplicationsEntities.length > 0 &&
-                  getEntityListingTemplate(
-                    filteredApplicationsEntities,
-                    t('Applications'),
-                  )}
+                {filteredModelsEntities.length > 0 && (
+                  <EntityListing
+                    entities={filteredModelsEntities}
+                    heading={t('Models')}
+                    onSelect={handleSelectModel}
+                    selectedModelId={selectedModelId}
+                  />
+                )}
+                {filteredAssistantsEntities.length > 0 && (
+                  <EntityListing
+                    entities={filteredAssistantsEntities}
+                    heading={t('Assistants')}
+                    onSelect={handleSelectModel}
+                    selectedModelId={selectedModelId}
+                  />
+                )}
+                {filteredApplicationsEntities.length > 0 && (
+                  <EntityListing
+                    entities={filteredApplicationsEntities}
+                    heading={t('Applications')}
+                    onSelect={handleSelectModel}
+                    selectedModelId={selectedModelId}
+                  />
+                )}
               </>
             ) : (
               <div className="flex grow items-center justify-center">

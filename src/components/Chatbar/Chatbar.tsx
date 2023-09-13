@@ -1,3 +1,5 @@
+import { useCallback, useMemo } from 'react';
+
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/src/types/chat';
@@ -18,39 +20,14 @@ import Sidebar from '../Sidebar';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 
-export const Chatbar = () => {
+const ChatActionsBlock = () => {
   const { t } = useTranslation('sidebar');
   const dispatch = useAppDispatch();
-
-  const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
-  const folders = useAppSelector(ConversationsSelectors.selectFolders);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
-  const conversations = useAppSelector(
-    ConversationsSelectors.selectConversations,
-  );
-  const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
-  const filteredConversations = useAppSelector(
-    ConversationsSelectors.selectSearchedConversations,
-  );
 
-  const chatFolders = folders.filter(({ type }) => type === 'chat');
-
-  const handleDrop = (e: any) => {
-    if (e.dataTransfer) {
-      const conversation = JSON.parse(e.dataTransfer.getData('conversation'));
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: { folderId: '0' },
-        }),
-      );
-      dispatch(ConversationsActions.setSearchTerm({ searchTerm: '' }));
-    }
-  };
-
-  const actionsBlock = (
+  return (
     <button
       className={`hover:bg-green/15disabled:cursor-not-allowed flex shrink-0 cursor-pointer select-none items-center gap-3 p-5 transition-colors  duration-200`}
       onClick={() => {
@@ -68,12 +45,47 @@ export const Chatbar = () => {
       {t('New conversation')}
     </button>
   );
+};
+
+export const Chatbar = () => {
+  const dispatch = useAppDispatch();
+
+  const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
+  const folders = useAppSelector(ConversationsSelectors.selectFolders);
+  const conversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
+  );
+  const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
+  const filteredConversations = useAppSelector(
+    ConversationsSelectors.selectSearchedConversations,
+  );
+
+  const chatFolders = useMemo(
+    () => folders.filter(({ type }) => type === 'chat'),
+    [folders],
+  );
+
+  const handleDrop = useCallback(
+    (e: any) => {
+      if (e.dataTransfer) {
+        const conversation = JSON.parse(e.dataTransfer.getData('conversation'));
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: conversation.id,
+            values: { folderId: '0' },
+          }),
+        );
+        dispatch(ConversationsActions.setSearchTerm({ searchTerm: '' }));
+      }
+    },
+    [dispatch],
+  );
 
   return (
     <Sidebar<Conversation>
       featureType="chat"
       side={'left'}
-      actionButtons={actionsBlock}
+      actionButtons={<ChatActionsBlock />}
       isOpen={showChatbar}
       itemComponent={<Conversations conversations={filteredConversations} />}
       folderComponent={<ChatFolders searchTerm={searchTerm} />}

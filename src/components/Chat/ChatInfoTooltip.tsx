@@ -58,7 +58,7 @@ export const ChatInfoTooltip = ({
       default:
         return t('Model');
     }
-  }, [model.type]);
+  }, [model.type, t]);
 
   return (
     <div className="grid max-w-[880px] grid-cols-[max-content_1fr] gap-4 px-2 py-3">

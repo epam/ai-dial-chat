@@ -10,6 +10,7 @@ import {
   ButtonHTMLAttributes,
   FC,
   memo,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -99,38 +100,42 @@ export const ChatMessage: FC<Props> = memo(
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const toggleEditing = () => {
-      setIsEditing(!isEditing);
-    };
+    const toggleEditing = useCallback(() => {
+      setIsEditing((val) => !val);
+    }, []);
 
-    const setLike = (likeStatus: number) => () => {
-      if (conversation && onLike) {
-        onLike(likeStatus);
-      }
-    };
+    const setLike = useCallback(
+      (likeStatus: number) => () => {
+        if (conversation && onLike) {
+          onLike(likeStatus);
+        }
+      },
+      [conversation, onLike],
+    );
 
-    const handleInputChange = (
-      event: React.ChangeEvent<HTMLTextAreaElement>,
-    ) => {
-      setMessageContent(event.target.value);
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'inherit';
-        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-      }
-    };
+    const handleInputChange = useCallback(
+      (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setMessageContent(event.target.value);
+        if (textareaRef.current) {
+          textareaRef.current.style.height = 'inherit';
+          textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+      },
+      [],
+    );
 
-    const handleEditMessage = () => {
+    const handleEditMessage = useCallback(() => {
       if (message.content != messageContent) {
         if (conversation && onEdit) {
           onEdit({ ...message, content: messageContent });
         }
       }
       setIsEditing(false);
-    };
+    }, [conversation, message, messageContent, onEdit]);
 
-    const handleDeleteMessage = () => {
+    const handleDeleteMessage = useCallback(() => {
       onDelete(message);
-    };
+    }, [message, onDelete]);
 
     const handlePressEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
@@ -160,6 +165,7 @@ export const ChatMessage: FC<Props> = memo(
         textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
       }
     }, [isEditing]);
+
     return (
       <div
         className={`group h-full md:px-4 ${

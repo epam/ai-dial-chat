@@ -31,9 +31,9 @@ const UserSettings = () => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation('sidebar');
 
-  const onClick = () => {
+  const onClick = useCallback(() => {
     dispatch(UIActions.setIsUserSettingsOpen(true));
-  };
+  }, [dispatch]);
 
   return (
     <div className="flex h-[42px] items-center gap-2 px-2" onClick={onClick}>
