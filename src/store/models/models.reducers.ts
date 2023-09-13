@@ -115,6 +115,12 @@ const selectDefaultModelId = createSelector([rootSelector], (state) => {
 const selectRecentModelsIds = createSelector([rootSelector], (state) => {
   return state.recentModelsIds;
 });
+const selectRecentModels = createSelector(
+  [selectRecentModelsIds, selectModelsMap],
+  (recentModelsIds, modelsMap) => {
+    return recentModelsIds.map((id) => modelsMap[id]).filter(Boolean);
+  },
+);
 
 export const ModelsSelectors = {
   selectModelsIsLoading,
@@ -123,6 +129,7 @@ export const ModelsSelectors = {
   selectModelsMap,
   selectDefaultModelId,
   selectRecentModelsIds,
+  selectRecentModels,
 };
 
 export const ModelsActions = modelsSlice.actions;

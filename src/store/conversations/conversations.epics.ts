@@ -71,27 +71,23 @@ const createNewConversationEpic: AppEpic = (action$, state$) =>
       lastConversation: ConversationsSelectors.selectLastConversation(
         state$.value,
       ),
-      modelsMap: ModelsSelectors.selectModelsMap(state$.value),
-      models: ModelsSelectors.selectModels(state$.value),
-      defaultModelId: ModelsSelectors.selectDefaultModelId(state$.value),
+      recentModels: ModelsSelectors.selectRecentModels(state$.value),
     })),
-    switchMap(
-      ({ names, lastConversation, modelsMap, models, defaultModelId }) => {
-        const model = defaultModelId ? modelsMap[defaultModelId] : models[0];
+    switchMap(({ names, lastConversation, recentModels }) => {
+      const model = recentModels[0];
 
-        if (!model) {
-          return EMPTY;
-        }
+      if (!model) {
+        return EMPTY;
+      }
 
-        return of(
-          ConversationsActions.createNewConversationsSuccess({
-            names,
-            temperature: lastConversation?.temperature,
-            model,
-          }),
-        );
-      },
-    ),
+      return of(
+        ConversationsActions.createNewConversationsSuccess({
+          names,
+          temperature: lastConversation?.temperature,
+          model,
+        }),
+      );
+    }),
   );
 
 const createNewConversationSuccessEpic: AppEpic = (action$) =>
