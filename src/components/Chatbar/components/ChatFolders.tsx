@@ -12,6 +12,35 @@ import Folder from '@/src/components/Folder';
 
 import { ConversationComponent } from './Conversation';
 
+interface ChatFoldersProps {
+  folder: FolderInterface;
+}
+
+const ChatFoldersTemplate = ({ folder }: ChatFoldersProps) => {
+  const conversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
+  );
+
+  return (
+    <>
+      {conversations
+        .filter((conversation) => conversation.folderId)
+        .map((conversation, index) => {
+          if (conversation.folderId === folder.id) {
+            return (
+              <div
+                key={index}
+                className="ml-5 gap-2 border-l border-gray-500 pl-2"
+              >
+                <ConversationComponent conversation={conversation} />
+              </div>
+            );
+          }
+        })}
+    </>
+  );
+};
+
 interface Props {
   searchTerm: string;
 }
@@ -19,9 +48,6 @@ interface Props {
 export const ChatFolders = ({ searchTerm }: Props) => {
   const dispatch = useAppDispatch();
 
-  const conversations = useAppSelector(
-    ConversationsSelectors.selectConversations,
-  );
   const folders = useAppSelector(ConversationsSelectors.selectFolders);
 
   const handleDrop = useCallback(
@@ -41,26 +67,6 @@ export const ChatFolders = ({ searchTerm }: Props) => {
     [dispatch],
   );
 
-  const ChatFolders = useCallback(
-    (currentFolder: FolderInterface) => {
-      return conversations
-        .filter((conversation) => conversation.folderId)
-        .map((conversation, index) => {
-          if (conversation.folderId === currentFolder.id) {
-            return (
-              <div
-                key={index}
-                className="ml-5 gap-2 border-l border-gray-500 pl-2"
-              >
-                <ConversationComponent conversation={conversation} />
-              </div>
-            );
-          }
-        });
-    },
-    [conversations],
-  );
-
   return (
     <div className="flex w-full flex-col" data-qa="chat-folders">
       {folders.map((folder, index) => (
@@ -68,7 +74,7 @@ export const ChatFolders = ({ searchTerm }: Props) => {
           key={index}
           searchTerm={searchTerm}
           currentFolder={folder}
-          folderComponent={ChatFolders(folder)}
+          folderComponent={<ChatFoldersTemplate folder={folder} />}
           highlightColor="green"
           handleDrop={handleDrop}
           onRenameFolder={(newName) => {

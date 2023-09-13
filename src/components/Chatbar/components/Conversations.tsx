@@ -64,18 +64,9 @@ export const Conversations = ({ conversations }: Props) => {
 
   const todayDate = useMemo(() => new Date().setHours(0, 0, 0), []);
   const oneDayMilliseconds = 8.64e7;
-  const yesterdayDate = useMemo(
-    () => todayDate - oneDayMilliseconds,
-    [todayDate],
-  );
-  const lastSevenDate = useMemo(
-    () => todayDate - oneDayMilliseconds * 6,
-    [todayDate],
-  );
-  const lastThirtyDate = useMemo(
-    () => todayDate - oneDayMilliseconds * 29,
-    [todayDate],
-  );
+  const yesterdayDate = todayDate - oneDayMilliseconds;
+  const lastSevenDate = todayDate - oneDayMilliseconds * 6;
+  const lastThirtyDate = todayDate - oneDayMilliseconds * 29;
 
   useEffect(() => {
     const allConversations: AllConversations = {

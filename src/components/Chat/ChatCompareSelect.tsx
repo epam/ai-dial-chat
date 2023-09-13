@@ -31,7 +31,7 @@ const Option = ({ item }: OptionProps) => {
   );
 
   if (!model) {
-    return <></>;
+    return null;
   }
 
   return (

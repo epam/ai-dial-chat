@@ -1,10 +1,24 @@
-import { FC, useCallback, useState } from 'react';
+import { FC, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-settings';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
+
+const TemperatureIndicator = ({ props, children }: any) => {
+  return (
+    <div
+      className="absolute top-[calc(50%-20px)] flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700"
+      style={props.style}
+      onKeyDown={props.onKeyDown}
+      onMouseDown={props.onMouseDown}
+      onTouchStart={props.onTouchStart}
+    >
+      {children}
+    </div>
+  );
+};
 
 interface Props {
   label: string;
@@ -21,27 +35,11 @@ export const TemperatureSlider: FC<Props> = ({
     return temperature ?? DEFAULT_TEMPERATURE;
   });
   const { t } = useTranslation('chat');
+
   const handleChange = (value: number) => {
     setCurrentTemperature(value);
     onChangeTemperature(value);
   };
-
-  const HandleElement = useCallback(
-    ({ props }: any) => {
-      return (
-        <div
-          className="absolute top-[calc(50%-20px)] flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700"
-          style={props.style}
-          onKeyDown={props.onKeyDown}
-          onMouseDown={props.onMouseDown}
-          onTouchStart={props.onTouchStart}
-        >
-          {currentTemperature}
-        </div>
-      );
-    },
-    [currentTemperature],
-  );
 
   return (
     <div className="flex flex-col gap-3" data-qa="temp-slider">
@@ -64,7 +62,11 @@ export const TemperatureSlider: FC<Props> = ({
         min={0}
         max={1}
         step={0.1}
-        handleRender={HandleElement}
+        handleRender={({ props }) => (
+          <TemperatureIndicator props={props}>
+            {currentTemperature}
+          </TemperatureIndicator>
+        )}
       />
     </div>
   );

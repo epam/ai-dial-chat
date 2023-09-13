@@ -20,6 +20,8 @@ import XMark from '../../../public/images/icons/xmark.svg';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
 
+import classNames from 'classnames';
+
 interface AddonProps {
   addon: OpenAIEntity;
   preselectedAddonsIds: string[];
@@ -40,13 +42,17 @@ const Addon = ({
 
   return (
     <button
-      className={`flex flex-col gap-3 rounded border p-3 text-left ${
-        isPreselected
-          ? 'bg-blue-500/20'
-          : 'hover:border-gray-800 dark:hover:border-gray-200'
-      } ${
-        isSelected ? 'border-blue-500' : 'border-gray-400 dark:border-gray-600'
-      }`}
+      className={classNames(
+        `flex flex-col gap-3 rounded border p-3 text-left`,
+        {
+          'bg-blue-500/20': isPreselected,
+          'hover:border-gray-800 dark:hover:border-gray-200': !isPreselected,
+        },
+        {
+          'border-blue-500': isSelected,
+          'border-gray-400 dark:border-gray-600': !isSelected,
+        },
+      )}
       key={addon.id}
       disabled={isPreselected}
       onClick={() => {

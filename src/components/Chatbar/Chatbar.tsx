@@ -20,15 +20,38 @@ import Sidebar from '../Sidebar';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 
-export const Chatbar = () => {
+const ChatActionsBlock = () => {
   const { t } = useTranslation('sidebar');
+  const dispatch = useAppDispatch();
+  const messageIsStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
+
+  return (
+    <button
+      className={`hover:bg-green/15disabled:cursor-not-allowed flex shrink-0 cursor-pointer select-none items-center gap-3 p-5 transition-colors  duration-200`}
+      onClick={() => {
+        dispatch(
+          ConversationsActions.createNewConversations({
+            names: [DEFAULT_CONVERSATION_NAME],
+          }),
+        );
+        dispatch(ConversationsActions.setSearchTerm({ searchTerm: '' }));
+      }}
+      disabled={!!messageIsStreaming}
+      data-qa="new-chat"
+    >
+      <PlusIcon className="text-gray-500" width={18} height={18} />
+      {t('New conversation')}
+    </button>
+  );
+};
+
+export const Chatbar = () => {
   const dispatch = useAppDispatch();
 
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
   const folders = useAppSelector(ConversationsSelectors.selectFolders);
-  const messageIsStreaming = useAppSelector(
-    ConversationsSelectors.selectIsConversationsStreaming,
-  );
   const conversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
@@ -58,33 +81,11 @@ export const Chatbar = () => {
     [dispatch],
   );
 
-  const actionsBlock = useMemo(
-    () => (
-      <button
-        className={`hover:bg-green/15disabled:cursor-not-allowed flex shrink-0 cursor-pointer select-none items-center gap-3 p-5 transition-colors  duration-200`}
-        onClick={() => {
-          dispatch(
-            ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
-            }),
-          );
-          dispatch(ConversationsActions.setSearchTerm({ searchTerm: '' }));
-        }}
-        disabled={!!messageIsStreaming}
-        data-qa="new-chat"
-      >
-        <PlusIcon className="text-gray-500" width={18} height={18} />
-        {t('New conversation')}
-      </button>
-    ),
-    [dispatch, messageIsStreaming, t],
-  );
-
   return (
     <Sidebar<Conversation>
       featureType="chat"
       side={'left'}
-      actionButtons={actionsBlock}
+      actionButtons={<ChatActionsBlock />}
       isOpen={showChatbar}
       itemComponent={<Conversations conversations={filteredConversations} />}
       folderComponent={<ChatFolders searchTerm={searchTerm} />}

@@ -11,11 +11,38 @@ import {
 import Folder from '@/src/components/Folder';
 import { PromptComponent } from '@/src/components/Promptbar/components/Prompt';
 
-export const PromptFolders = () => {
-  const dispatch = useAppDispatch();
+interface PromptFoldersProps {
+  folder: FolderInterface;
+}
+
+const PromptFoldersTemplate = ({ folder }: PromptFoldersProps) => {
   const filteredPrompts = useAppSelector(
     PromptsSelectors.selectSearchedPrompts,
   );
+
+  return (
+    <>
+      {filteredPrompts
+        .filter((p) => p.folderId)
+        .map((prompt, index) => {
+          if (prompt.folderId === folder.id) {
+            return (
+              <div
+                key={index}
+                className="ml-5 gap-2 border-l border-gray-500 pl-2"
+              >
+                <PromptComponent prompt={prompt} />
+              </div>
+            );
+          }
+        })}
+    </>
+  );
+};
+
+export const PromptFolders = () => {
+  const dispatch = useAppDispatch();
+
   const folders = useAppSelector(PromptsSelectors.selectFolders);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
 
@@ -34,25 +61,6 @@ export const PromptFolders = () => {
     [dispatch],
   );
 
-  const PromptFolders = useCallback(
-    (currentFolder: FolderInterface) =>
-      filteredPrompts
-        .filter((p) => p.folderId)
-        .map((prompt, index) => {
-          if (prompt.folderId === currentFolder.id) {
-            return (
-              <div
-                key={index}
-                className="ml-5 gap-2 border-l border-gray-500 pl-2"
-              >
-                <PromptComponent prompt={prompt} />
-              </div>
-            );
-          }
-        }),
-    [filteredPrompts],
-  );
-
   return (
     <div className="flex w-full flex-col" data-qa="prompt-folders">
       {folders.map((folder, index) => (
@@ -61,7 +69,7 @@ export const PromptFolders = () => {
           searchTerm={searchTerm}
           currentFolder={folder}
           highlightColor="violet"
-          folderComponent={PromptFolders(folder)}
+          folderComponent={<PromptFoldersTemplate folder={folder} />}
           handleDrop={handleDrop}
           onRenameFolder={(newName) => {
             dispatch(

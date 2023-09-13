@@ -15,6 +15,8 @@ import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 import { AddonsDialog } from './AddonsDialog';
 
+import classNames from 'classnames';
+
 interface AddonProps {
   addonId: string;
   isSelected: boolean;
@@ -38,11 +40,14 @@ const Addon = ({
 
   const template = (
     <button
-      className={`flex items-center gap-2 rounded px-3 py-2 text-left ${
-        isSelected
-          ? 'bg-blue-500/20'
-          : 'bg-gray-100 hover:bg-gray-400 dark:bg-gray-700 hover:dark:bg-gray-600'
-      }`}
+      className={classNames(
+        `flex items-center gap-2 rounded px-3 py-2 text-left`,
+        { 'bg-blue-500/20': isSelected },
+        {
+          'bg-gray-100 hover:bg-gray-400 dark:bg-gray-700 hover:dark:bg-gray-600':
+            !isSelected,
+        },
+      )}
       disabled={preselectedAddonsIds.includes(addonId)}
       onClick={() => {
         onChangeAddon(addonId);

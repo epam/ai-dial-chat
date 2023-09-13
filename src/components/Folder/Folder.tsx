@@ -27,7 +27,7 @@ interface Props {
   highlightColor: HighlightColor;
   currentFolder: FolderInterface;
   searchTerm: string;
-  folderComponent: (ReactElement | undefined)[];
+  folderComponent: ReactElement;
   handleDrop: (e: any, folder: FolderInterface) => void;
   onRenameFolder: (newName: string) => void;
   onDeleteFolder: () => void;

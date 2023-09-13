@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo } from 'react';
 
 import Image from 'next/image';
 
@@ -19,19 +19,15 @@ interface Props {
   isCustomTooltip?: boolean;
 }
 
-const defaultModelIcon = `var(--default-model, url(/images/icons/message-square-lines-alt.svg))`;
-const defaultAddonIcon = `var(--default-addon, url(/images/icons/message-square-lines-alt.svg))`;
-
-export const ModelIcon = ({
-  entity,
-  entityId,
-  size,
-  animate,
-  inverted,
-  isCustomTooltip,
-}: Props) => {
-  const template = useMemo(
-    () => (
+const ModelIconTemplate = memo(
+  ({
+    entity,
+    entityId,
+    size,
+    animate,
+    inverted,
+  }: Omit<Props, 'isCustomTooltip'>) => {
+    return (
       <>
         {entity?.iconUrl != null ? (
           <span
@@ -66,25 +62,43 @@ export const ModelIcon = ({
           ></span>
         )}
       </>
-    ),
-    [
-      animate,
-      entity?.iconUrl,
-      entity?.id,
-      entity?.type,
-      entityId,
-      inverted,
-      size,
-    ],
-  );
+    );
+  },
+);
+ModelIconTemplate.displayName = 'ModelIconTemplate';
 
+const defaultModelIcon = `var(--default-model, url(/images/icons/message-square-lines-alt.svg))`;
+const defaultAddonIcon = `var(--default-addon, url(/images/icons/message-square-lines-alt.svg))`;
+
+export const ModelIcon = ({
+  entity,
+  entityId,
+  size,
+  animate,
+  inverted,
+  isCustomTooltip,
+}: Props) => {
   return (
     <>
       {isCustomTooltip ? (
-        template
+        <ModelIconTemplate
+          entity={entity}
+          entityId={entityId}
+          size={size}
+          animate={animate}
+          inverted={inverted}
+        />
       ) : (
         <Tooltip>
-          <TooltipTrigger className="flex shrink-0">{template}</TooltipTrigger>
+          <TooltipTrigger className="flex shrink-0">
+            <ModelIconTemplate
+              entity={entity}
+              entityId={entityId}
+              size={size}
+              animate={animate}
+              inverted={inverted}
+            />
+          </TooltipTrigger>
           <TooltipContent>{entity?.name || entityId}</TooltipContent>
         </Tooltip>
       )}
