@@ -101,9 +101,12 @@ const selectAddons = createSelector([rootSelector], (state) => {
 const selectAddonsMap = createSelector([rootSelector], (state) => {
   return state.addonsMap;
 });
-const selectRecentAddonsIds = createSelector(
-  [rootSelector, selectAddonsMap],
-  ({ recentAddonsIds, addonsMap }) => {
+const selectRecentAddonsIds = createSelector([rootSelector], (state) => {
+  return state.recentAddonsIds;
+});
+const selectAllowedRecentAddonsIds = createSelector(
+  [selectRecentAddonsIds, selectAddonsMap],
+  (recentAddonsIds, addonsMap) => {
     return recentAddonsIds.filter((id) => addonsMap[id]);
   },
 );
@@ -114,6 +117,7 @@ export const AddonsSelectors = {
   selectAddons,
   selectAddonsMap,
   selectRecentAddonsIds,
+  selectAllowedRecentAddonsIds,
 };
 
 export const AddonsActions = addonsSlice.actions;
