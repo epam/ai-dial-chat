@@ -1,0 +1,11 @@
+---
+resolutions:
+  issues:
+    - message: "ERROR: NO_LICENSE_IN_DEPENDENCY - NPM::ansi-color:0.2.1 - No license information is available for dependency 'NPM::ansi-color:0.2.1'."
+      reason: "SCANNER_ISSUE"
+      comment: >-
+        The error can be ignored because ansi-color package contains good enough license.
+    - message: "ERROR: NO_LICENSE_IN_DEPENDENCY - NPM::process:0.10.1 - No license information is available for dependency 'NPM::process:0.10.1'."
+      reason: "SCANNER_ISSUE"
+      comment: >-
+        The error can be ignored because node-process package contains good enough license.
