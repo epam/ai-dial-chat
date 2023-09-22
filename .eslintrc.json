@@ -1,0 +1,25 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/stylistic",
+    "prettier",
+    "plugin:tailwindcss/recommended",
+    "next/core-web-vitals"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint", "tailwindcss"],
+  "root": true,
+  "rules": {
+    "no-empty": "warn",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "no-console": ["error", { "allow": ["warn", "error"] }],
+    "no-constant-condition": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_" }
+    ],
+    "no-restricted-imports": ["error", { "paths": ["react-i18next"] }],
+    "tailwindcss/no-custom-classname": "error"
+  }
+}

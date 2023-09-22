@@ -1,0 +1,7 @@
+.env
+.env.local
+node_modules
+test-results
+e2e
+helm
+.next
