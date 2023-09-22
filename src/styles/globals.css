@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-[10px] bg-gray-400;
+    border-radius: 10px;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-gray-600;
+  }
+
+  ::-webkit-scrollbar-track:hover {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-corner {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .dark ::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+}
+
+html {
+  @apply bg-gray-900 text-gray-200;
+}
+
+@media (max-width: 720px) {
+  pre {
+    width: calc(100vw - 110px);
+  }
+}
+
+pre:has(div.codeblock) {
+  padding: 0;
+}
+
+@layer components {
+  .temperature-slider .rc-slider-rail,
+  .temperature-slider .rc-slider-track {
+    @apply top-[calc(50%-6px)] h-3;
+  }
+
+  .temperature-slider .rc-slider-rail {
+    @apply rounded-full;
+  }
+
+  .temperature-slider .rc-slider-track {
+    @apply rounded-full bg-blue-500;
+  }
+}
+
+.h-screen {
+  height: 100vh; /* Fallback for browsers that do not support Custom Properties */
+  height: calc(var(--vh, 1vh) * 100);
+}

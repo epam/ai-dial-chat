@@ -38,3 +38,15 @@ yarn-error.log*
 next-env.d.ts
 .idea
 pnpm-lock.yaml
+
+# overlay
+/public/overlay
+
+# editors
+.vscode
+
+# e2e
+/e2e/test-results/
+/e2e/allure-results/
+/e2e/auth/
+/e2e/html-report/

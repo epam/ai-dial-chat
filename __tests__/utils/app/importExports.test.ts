@@ -1,4 +1,6 @@
-import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/utils/app/const';
+import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/src/constants/default-settings';
+import { defaultReplay } from '@/src/constants/replay';
+import { getAssitantModelId } from '@/src/utils/app/conversation';
 import {
   cleanData,
   isExportFormatV1,
@@ -6,10 +8,16 @@ import {
   isExportFormatV3,
   isExportFormatV4,
   isLatestExportFormat,
-} from '@/utils/app/importExport';
+  isPromtsFormat
+} from '@/src/utils/app/import-export';
 
-import { ExportFormatV1, ExportFormatV2, ExportFormatV4 } from '@/types/export';
-import { OpenAIModelID, OpenAIModels } from '@/types/openai';
+import {
+  ExportFormatV1,
+  ExportFormatV2,
+  ExportFormatV4,
+  PromptsHistory
+} from '@/src/types/export';
+import { OpenAIEntityModelID, OpenAIEntityModels } from '@/src/types/openai';
 
 import { describe, expect, it } from 'vitest';
 
@@ -100,14 +108,19 @@ describe('cleanData Functions', () => {
                 content: 'Hi',
               },
             ],
-            model: OpenAIModels[OpenAIModelID.GPT_3_5],
+            model: OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: DEFAULT_TEMPERATURE,
             folderId: null,
+            replay: defaultReplay,
+            selectedAddons: [],
+            assistantModelId: undefined,
+            isMessageStreaming: false,
           },
         ],
         folders: [],
         prompts: [],
+        isError: false,
       });
     });
   });
@@ -156,10 +169,14 @@ describe('cleanData Functions', () => {
                 content: 'Hi',
               },
             ],
-            model: OpenAIModels[OpenAIModelID.GPT_3_5],
+            model: OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: DEFAULT_TEMPERATURE,
             folderId: null,
+            replay: defaultReplay,
+            selectedAddons: [],
+            assistantModelId: undefined,
+            isMessageStreaming: false,
           },
         ],
         folders: [
@@ -170,12 +187,13 @@ describe('cleanData Functions', () => {
           },
         ],
         prompts: [],
+        isError: false,
       });
     });
   });
 
   describe('cleaning v4 data', () => {
-    it('should return the latest format', () => {
+    it('old v4 data should return the latest format', () => {
       const data = {
         version: 4,
         history: [
@@ -192,7 +210,7 @@ describe('cleanData Functions', () => {
                 content: 'Hi',
               },
             ],
-            model: OpenAIModels[OpenAIModelID.GPT_3_5],
+            model: OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: DEFAULT_TEMPERATURE,
             folderId: null,
@@ -211,7 +229,7 @@ describe('cleanData Functions', () => {
             name: 'prompt 1',
             description: '',
             content: '',
-            model: OpenAIModels[OpenAIModelID.GPT_3_5],
+            model: OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
             folderId: null,
           },
         ],
@@ -235,10 +253,14 @@ describe('cleanData Functions', () => {
                 content: 'Hi',
               },
             ],
-            model: OpenAIModels[OpenAIModelID.GPT_3_5],
+            model: OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: DEFAULT_TEMPERATURE,
             folderId: null,
+            replay: defaultReplay,
+            selectedAddons: [],
+            assistantModelId: undefined,
+            isMessageStreaming: false,
           },
         ],
         folders: [
@@ -254,11 +276,74 @@ describe('cleanData Functions', () => {
             name: 'prompt 1',
             description: '',
             content: '',
-            model: OpenAIModels[OpenAIModelID.GPT_3_5],
+            model: OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
             folderId: null,
           },
         ],
+        isError: false,
       });
     });
+  });
+});
+
+describe('Export helpers functions', () => {
+  it('Should return false for non-prompts data', () => {
+    const testData = [{ id: 1 }];
+    expect(isPromtsFormat(testData)).toBeFalsy();
+  });
+
+  it('Should return true for prompts data', () => {
+    const testData: PromptsHistory = {
+      prompts: [
+        {
+          id: '1',
+          name: 'prompt 1',
+          description: '',
+          content: '',
+          model: OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
+          folderId: null,
+        },
+      ],
+      folders: [
+        {
+          id: 'pf-1',
+          name: 'Test folder',
+          type: 'prompt',
+        },
+      ],
+    };
+    expect(isPromtsFormat(testData)).toBeTruthy();
+  });
+  describe('getAssitantModelId', () => {
+    it('should return default assistant model id', () => {
+      expect(
+        getAssitantModelId('assistant', OpenAIEntityModelID.GPT_4),
+      ).toEqual(OpenAIEntityModelID.GPT_4);
+    });
+  });
+  it('should return assistant model id', () => {
+    expect(
+      getAssitantModelId(
+        'assistant',
+        OpenAIEntityModelID.GPT_4,
+        OpenAIEntityModelID.GPT_3_5_AZ,
+      ),
+    ).toEqual(OpenAIEntityModelID.GPT_3_5_AZ);
+  });
+  it('should return udefined', () => {
+    expect(
+      getAssitantModelId(
+        'model',
+        OpenAIEntityModelID.GPT_4,
+        OpenAIEntityModelID.GPT_3_5_AZ,
+      ),
+    ).toBeUndefined();
+    expect(
+      getAssitantModelId(
+        'application',
+        OpenAIEntityModelID.GPT_4,
+        OpenAIEntityModelID.GPT_3_5_AZ,
+      ),
+    ).toBeUndefined();
   });
 });
