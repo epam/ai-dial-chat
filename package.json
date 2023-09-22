@@ -1,6 +1,6 @@
 {
   "name": "dial-chat",
-  "version": "0.1.0-rc",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
