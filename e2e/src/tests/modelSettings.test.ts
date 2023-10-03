@@ -1,7 +1,7 @@
 import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
-import { ExpectedMessages, Groups } from '@/e2e/src/testData';
+import { ExpectedMessages } from '@/e2e/src/testData';
 import { Colors } from '@/e2e/src/ui/domData';
 import { GeneratorUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
@@ -27,6 +27,7 @@ test('Selected settings are saved if to switch from Model1 to Model2', async ({
 }) => {
   setTestIds('EPMRTC-1046');
   await dialHomePage.openHomePage();
+  await dialHomePage.waitForPageLoaded();
   let modelNames = models.filter((m) => m.type === 'model').map((m) => m.name);
   modelNames = modelNames.filter((m) => m !== defaultModel);
   const randomModel = GeneratorUtil.randomArrayElement(modelNames);
@@ -39,7 +40,7 @@ test('Selected settings are saved if to switch from Model1 to Model2', async ({
   );
   await addons.selectAddon(randomAddon);
 
-  await talkToSelector.selectEntity(randomModel, Groups.models);
+  await talkToSelector.selectModel(randomModel);
   const modelBorderColors = await recentEntities
     .getRecentEntity(randomModel)
     .getAllBorderColors();
@@ -78,6 +79,7 @@ test('Selected settings are saved if to switch from Model to Application to Mode
 }) => {
   setTestIds('EPMRTC-417');
   await dialHomePage.openHomePage();
+  await dialHomePage.waitForPageLoaded();
   await entitySettings.setSystemPrompt(sysPrompt);
   await temperatureSlider.setTemperature(temp);
 
@@ -93,8 +95,8 @@ test('Selected settings are saved if to switch from Model to Application to Mode
     .map((m) => m.name);
   const randomApp = GeneratorUtil.randomArrayElement(appNames);
 
-  await talkToSelector.selectEntity(randomApp, Groups.applications);
-  await talkToSelector.selectEntity(randomModel, Groups.models);
+  await talkToSelector.selectApplication(randomApp);
+  await talkToSelector.selectModel(randomModel);
 
   const modelBorderColors = await recentEntities
     .getRecentEntity(randomModel)
@@ -137,6 +139,7 @@ test('System prompt contains combinations with :', async ({
     'test test. test:',
   ];
   await dialHomePage.openHomePage();
+  await dialHomePage.waitForPageLoaded();
   for (const prompt of prompts) {
     await entitySettings.setSystemPrompt(prompt);
     const systemPrompt = await entitySettings.getSystemPrompt();

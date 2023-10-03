@@ -231,7 +231,7 @@ export const authOptions: AuthOptions = {
   },
   theme: {
     logo: process.env.THEMES_CONFIG_HOST
-      ? '/api/themes-image?name=favicon'
+      ? `${process.env.APP_BASE_PATH || ''}/api/themes-image?name=favicon`
       : undefined,
   },
 };

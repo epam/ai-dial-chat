@@ -9,9 +9,9 @@ import { ReportIssueBody } from '@/src/types/report-issue';
 import { useAppDispatch } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import XMark from '../../../public/images/icons/xmark.svg';
-
 import { errorsMessages } from '@/src/constants/errors';
+
+import XMark from '../../../public/images/icons/xmark.svg';
 
 const checkValidity = (
   inputsRefs: MutableRefObject<HTMLInputElement | HTMLTextAreaElement>[],

@@ -24,6 +24,8 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
+
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
 import { ChatHeader } from './ChatHeader';
@@ -34,8 +36,6 @@ import { ChatSettingsEmpty } from './ChatSettingsEmpty';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
-
-import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 
 interface Props {
   appName: string;
@@ -483,6 +483,7 @@ export const Chat = memo(({ appName }: Props) => {
                     ? 'w-[50%]'
                     : 'w-full'
                 }`}
+                data-qa={isCompareMode ? 'compare-mode' : 'chat-mode'}
               >
                 <div className="flex max-h-full w-full">
                   {selectedConversations.map(
@@ -602,7 +603,15 @@ export const Chat = memo(({ appName }: Props) => {
                         mergedStr: [Conversation, Message, number][],
                         i: number,
                       ) => (
-                        <div key={i} className="flex w-full">
+                        <div
+                          key={i}
+                          className="flex w-full"
+                          data-qa={
+                            isCompareMode
+                              ? 'compare-message-row'
+                              : 'message-row'
+                          }
+                        >
                           {mergedStr.map(
                             ([conv, message, index]: [
                               Conversation,

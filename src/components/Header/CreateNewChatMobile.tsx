@@ -3,10 +3,10 @@ import { useTranslation } from 'next-i18next';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
+
 import CirclePlusIcon from '../../../public/images/icons/circle-plus.svg';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
-
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 
 export const CreateNewChatMobile = () => {
   const { t } = useTranslation('sidebar');

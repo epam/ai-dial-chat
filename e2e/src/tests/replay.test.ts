@@ -11,7 +11,6 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
-  Groups,
   MenuOptions,
 } from '@/e2e/src/testData';
 import { Colors } from '@/e2e/src/ui/domData';
@@ -62,14 +61,14 @@ test('[Replay]chat has the same defaults at its parent', async ({
     );
   });
 
-  await test.step('Open Reply drop-down menu for one conversation', async () => {
+  await test.step('Open Replay drop-down menu for one conversation', async () => {
     await dialHomePage.openHomePage();
-    await chat.waitForState();
+    await dialHomePage.waitForPageLoaded();
     await conversations.openConversationDropdownMenu(replayConversation!.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
   });
 
-  await test.step('Verify new Reply conversation is created and Reply button appears', async () => {
+  await test.step('Verify new Replay conversation is created and Replay button appears', async () => {
     expect
       .soft(
         await conversations
@@ -87,7 +86,7 @@ test('[Replay]chat has the same defaults at its parent', async ({
       .toBeTruthy();
   });
 
-  await test.step('Verify Reply conversation setting are the same as for initial one', async () => {
+  await test.step('Verify Replay conversation setting are the same as for initial one', async () => {
     const modelBorderColors = await recentEntities
       .getRecentEntity(OpenAIEntityModels[OpenAIEntityModelID.GPT_4].name)
       .getAllBorderColors();
@@ -122,7 +121,6 @@ test('[Replay]chat is created in the same folder where its parent is located', a
   folderConversations,
   localStorageManager,
   setTestIds,
-  chat,
   conversationDropdownMenu,
 }) => {
   setTestIds('EPMRTC-503');
@@ -137,9 +135,9 @@ test('[Replay]chat is created in the same folder where its parent is located', a
     );
   });
 
-  await test.step('Open Reply drop-down menu for conversation inside folder', async () => {
+  await test.step('Open Replay drop-down menu for conversation inside folder', async () => {
     await dialHomePage.openHomePage();
-    await chat.waitForState();
+    await dialHomePage.waitForPageLoaded();
     await folderConversations.expandCollapseFolder(
       conversationInFolder!.folders.name,
     );
@@ -151,7 +149,7 @@ test('[Replay]chat is created in the same folder where its parent is located', a
     await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
   });
 
-  await test.step('Verify new Reply conversation is created inside folder', async () => {
+  await test.step('Verify new Replay conversation is created inside folder', async () => {
     const isConversationVisible =
       await folderConversations.isFolderConversationVisible(
         conversationInFolder!.folders.name,
@@ -185,7 +183,7 @@ test('Start replay with the new Model settings', async ({
   const replayAddonId = GeneratorUtil.randomArrayElement(
     ExpectedConstants.recentAddonIds.split(','),
   );
-  const replayAddon = await apiHelper.getAddonNameById(replayAddonId);
+  const replayAddon = await apiHelper.getAddonById(replayAddonId);
   const replayModel = await apiHelper.getEntity(
     OpenAIEntityModels[OpenAIEntityModelID.BISON_001],
   );
@@ -195,7 +193,7 @@ test('Start replay with the new Model settings', async ({
       OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
     );
     const replayConversation =
-      conversationData.prepareDefaultReplyConversation(conversation);
+      conversationData.prepareDefaultReplayConversation(conversation);
     await localStorageManager.setConversationHistory(
       conversation,
       replayConversation,
@@ -204,12 +202,11 @@ test('Start replay with the new Model settings', async ({
   });
 
   let replayRequest: ChatBody;
-  await test.step('Change model and settings for reply conversation and press Start replay', async () => {
+  await test.step('Change model and settings for replay conversation and press Start replay', async () => {
     await dialHomePage.openHomePage();
-    await chat.waitForState();
-    await talkToSelector.selectEntity(
+    await dialHomePage.waitForPageLoaded();
+    await talkToSelector.selectModel(
       OpenAIEntityModels[OpenAIEntityModelID.BISON_001].name,
-      Groups.models,
     );
     await entitySettings.setSystemPrompt(replayPrompt);
     await temperatureSlider.setTemperature(replayTemp);
@@ -321,7 +318,7 @@ test('Start replay with new Assistant settings', async ({
       OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
     );
     const replayConversation =
-      conversationData.prepareDefaultReplyConversation(conversation);
+      conversationData.prepareDefaultReplayConversation(conversation);
     await localStorageManager.setConversationHistory(
       conversation,
       replayConversation,
@@ -332,11 +329,8 @@ test('Start replay with new Assistant settings', async ({
   let replayRequest: ChatBody;
   await test.step('Change settings to assistant with model and press Start replay', async () => {
     await dialHomePage.openHomePage();
-    await chat.waitForState();
-    await talkToSelector.selectEntity(
-      ExpectedConstants.presalesAssistant,
-      Groups.assistants,
-    );
+    await dialHomePage.waitForPageLoaded();
+    await talkToSelector.selectAssistant(ExpectedConstants.presalesAssistant);
     await temperatureSlider.setTemperature(replayTemp);
     replayRequest = await chat.startReplay();
   });
@@ -463,7 +457,7 @@ test('Start replay with new Application', async ({
       OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
     );
     const replayConversation =
-      conversationData.prepareDefaultReplyConversation(conversation);
+      conversationData.prepareDefaultReplayConversation(conversation);
     await localStorageManager.setConversationHistory(
       conversation,
       replayConversation,
@@ -474,10 +468,9 @@ test('Start replay with new Application', async ({
   let replayRequest: ChatBody;
   await test.step('Change model to application and press Start replay', async () => {
     await dialHomePage.openHomePage();
-    await chat.waitForState();
-    await talkToSelector.selectEntity(
+    await dialHomePage.waitForPageLoaded();
+    await talkToSelector.selectApplication(
       OpenAIEntityModels[OpenAIEntityModelID.MIRROR].name,
-      Groups.applications,
     );
     replayRequest = await chat.startReplay();
   });
@@ -508,9 +501,9 @@ test('Start replay with new Application', async ({
       .soft(appInfo, ExpectedMessages.chatInfoAppIsValid)
       .toBe(OpenAIEntityModels[OpenAIEntityModelID.MIRROR].name);
 
-    const modelInfoIcon = await chatInfoTooltip.getApplicationIcon();
+    const appInfoIcon = await chatInfoTooltip.getApplicationIcon();
     expect
-      .soft(modelInfoIcon, ExpectedMessages.chatInfoAppIconIsValid)
+      .soft(appInfoIcon, ExpectedMessages.chatInfoAppIconIsValid)
       .toBe(replayApp!.iconUrl);
   });
 });
@@ -527,10 +520,12 @@ test('Replay after Stop generating', async ({
   let conversation: Conversation;
   const userRequest = 'write down 100 adjectives';
   await test.step('Prepare model conversation to replay', async () => {
-    conversation =
-      conversationData.prepareModelConversationBasedOnRequest(userRequest);
+    conversation = conversationData.prepareModelConversationBasedOnRequests(
+      OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
+      [userRequest],
+    );
     const replayConversation =
-      conversationData.prepareDefaultReplyConversation(conversation);
+      conversationData.preparePartiallyRepliedConversation(conversation);
     await localStorageManager.setConversationHistory(
       conversation,
       replayConversation,
@@ -540,18 +535,13 @@ test('Replay after Stop generating', async ({
 
   await test.step('Press Start replay and stop until full response received', async () => {
     await dialHomePage.openHomePage();
-    await chat.waitForState();
-    await chat.startReplay(userRequest);
-    await chatMessages.waitForPartialMessageReceived(
-      conversation.messages.length,
-    );
-    await chat.stopReplay();
+    await dialHomePage.waitForPageLoaded();
     expect
       .soft(
         await chat.proceedGenerating.getElementInnerContent(),
         ExpectedMessages.proceedReplayIsVisible,
       )
-      .toBe(ExpectedConstants.proceedReplyLabel);
+      .toBe(ExpectedConstants.proceedReplayLabel);
   });
 
   await test.step('Proceed generating the answer and verify received content is preserved', async () => {
@@ -578,18 +568,23 @@ test('Replay after Stop generating in Assistant model', async ({
   localStorageManager,
   setTestIds,
   chatMessages,
+  apiHelper,
 }) => {
   setTestIds('EPMRTC-513');
-  test.slow();
   let conversation: Conversation;
   await test.step('Prepare assistant conversation with addons to replay', async () => {
-    conversation = conversationData.prepareAddonsConversation(
-      OpenAIEntityModels[OpenAIEntityModelID.ASSISTANT10K],
-      OpenAIEntityAddonID.ADDON_EPAM10K_GOLDEN_QNA,
-      OpenAIEntityAddonID.ADDON_EPAM10K_SEMANTIC_SEARCH,
+    const assistantEntity = await apiHelper.getAssistant(
+      ExpectedConstants.presalesAssistant,
+    );
+    conversation = conversationData.prepareAssistantConversation(
+      assistantEntity!,
+      [
+        OpenAIEntityAddonID.ADDON_EPAM10K_GOLDEN_QNA,
+        OpenAIEntityAddonID.ADDON_EPAM10K_SEMANTIC_SEARCH,
+      ],
     );
     const replayConversation =
-      conversationData.prepareDefaultReplyConversation(conversation);
+      conversationData.preparePartiallyReplayedConversation(conversation);
     await localStorageManager.setConversationHistory(
       conversation,
       replayConversation,
@@ -599,19 +594,13 @@ test('Replay after Stop generating in Assistant model', async ({
 
   await test.step('Press Start replay and stop when first stage received', async () => {
     await dialHomePage.openHomePage();
-    await chat.waitForState();
-    await chat.startReplay();
-    await chatMessages.waitForMessageStageReceived(
-      conversation.messages.length,
-      1,
-    );
-    await chat.stopReplay();
+    await dialHomePage.waitForPageLoaded();
     expect
       .soft(
         await chat.proceedGenerating.getElementInnerContent(),
         ExpectedMessages.proceedReplayIsVisible,
       )
-      .toBe(ExpectedConstants.proceedReplyLabel);
+      .toBe(ExpectedConstants.proceedReplayLabel);
   });
 
   await test.step('Proceed generating the answer and verify all stages are regenerated', async () => {
@@ -625,3 +614,70 @@ test('Replay after Stop generating in Assistant model', async ({
       .toBeFalsy();
   });
 });
+
+test(
+  'Restart replay after error appeared on browser refresh.\n' +
+    'Restart replay after error appeared on network interruption',
+  async ({
+    dialHomePage,
+    conversationData,
+    chat,
+    localStorageManager,
+    setTestIds,
+    setIssueIds,
+    chatMessages,
+    context,
+  }) => {
+    setTestIds('EPMRTC-514', 'EPMRTC-1165');
+    setIssueIds('275');
+    let conversation: Conversation;
+    await test.step('Prepare conversation to replay', async () => {
+      conversation = conversationData.prepareDefaultConversation(
+        OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
+      );
+      const replayConversation =
+        conversationData.prepareDefaultReplayConversation(conversation);
+      await localStorageManager.setConversationHistory(
+        conversation,
+        replayConversation,
+      );
+      await localStorageManager.setSelectedConversation(replayConversation);
+    });
+
+    await test.step('Press Start replay and interrupt it with network error', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+      await context.setOffline(true);
+      await chat.startReplay();
+    });
+
+    await test.step('Verify error message is displayed', async () => {
+      const generatedContent = await chatMessages.getLastMessageContent();
+      expect
+        .soft(generatedContent, ExpectedMessages.errorReceivedOnReplay)
+        .toBe(ExpectedConstants.answerError);
+      expect
+        .soft(
+          await chat.proceedGenerating.getElementInnerContent(),
+          ExpectedMessages.proceedReplayIsVisible,
+        )
+        .toBe(ExpectedConstants.proceedReplayLabel);
+    });
+
+    await test.step('Proceed replaying and verify response received', async () => {
+      await context.setOffline(false);
+      await chat.proceedReplaying(true);
+      const generatedContent = await chatMessages.getGeneratedChatContent(
+        conversation.messages.length,
+      );
+      expect
+        .soft(
+          generatedContent.includes(
+            conversation.messages.find((m) => m.role === 'user')!.content,
+          ),
+          ExpectedMessages.replayContinuesFromReceivedContent,
+        )
+        .toBeTruthy();
+    });
+  },
+);

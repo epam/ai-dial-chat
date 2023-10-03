@@ -25,7 +25,7 @@ const getModelsEpic: AppEpic = (action$, state$) =>
     filter(ModelsActions.getModels.match),
     withLatestFrom(state$),
     switchMap(() => {
-      return fromFetch('/api/models', {
+      return fromFetch('api/models', {
         headers: {
           'Content-Type': 'application/json',
         },

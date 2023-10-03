@@ -1,4 +1,3 @@
-import { LocalStorageManager } from '../core/localStorageManager ';
 import { DialHomePage } from '../ui/pages';
 import { LoginPage } from '../ui/pages';
 import {
@@ -15,6 +14,7 @@ import {
 } from '../ui/webElements';
 import { ChatBar } from '../ui/webElements';
 import { PromptBar } from '../ui/webElements';
+import { LocalStorageManager } from './localStorageManager';
 
 import { ConversationData } from '@/e2e/src/testData';
 import { ApiHelper } from '@/e2e/src/testData/api/apiHelper';
@@ -22,6 +22,7 @@ import { PromptData } from '@/e2e/src/testData/prompts/promptData';
 import { Addons } from '@/e2e/src/ui/webElements/addons';
 import { AddonsDialog } from '@/e2e/src/ui/webElements/addonsDialog';
 import { ChatInfoTooltip } from '@/e2e/src/ui/webElements/chatInfoTooltip';
+import { Compare } from '@/e2e/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/e2e/src/ui/webElements/confirmationDialog';
 import { DropdownMenu } from '@/e2e/src/ui/webElements/dropdownMenu';
 import { EntitySettings } from '@/e2e/src/ui/webElements/entitySettings';
@@ -75,6 +76,12 @@ const test = base.extend<
     moreInfo: MoreInfo;
     apiHelper: ApiHelper;
     chatInfoTooltip: ChatInfoTooltip;
+    compare: Compare;
+    compareConversationSelector: ModelSelector;
+    rightConversationSettings: ConversationSettings;
+    leftConversationSettings: ConversationSettings;
+    rightChatHeader: ChatHeader;
+    leftChatHeader: ChatHeader;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -204,8 +211,8 @@ const test = base.extend<
     const moreInfo = entitySettings.getMoreInfo();
     await use(moreInfo);
   },
-  chatHeader: async ({ page }, use) => {
-    const chatHeader = new ChatHeader(page);
+  chatHeader: async ({ chat }, use) => {
+    const chatHeader = chat.getChatHeader();
     await use(chatHeader);
   },
   // eslint-disable-next-line no-empty-pattern
@@ -229,6 +236,32 @@ const test = base.extend<
   chatInfoTooltip: async ({ page }, use) => {
     const chatInfoTooltip = new ChatInfoTooltip(page);
     await use(chatInfoTooltip);
+  },
+  compare: async ({ chat }, use) => {
+    const compare = chat.getCompare();
+    await use(compare);
+  },
+  compareConversationSelector: async ({ compare }, use) => {
+    const compareConversationSelector = compare
+      .getConversationToCompare()
+      .getConversationSelector();
+    await use(compareConversationSelector);
+  },
+  rightConversationSettings: async ({ compare }, use) => {
+    const rightConversationSettings = compare.getRightConversationSettings();
+    await use(rightConversationSettings);
+  },
+  leftConversationSettings: async ({ compare }, use) => {
+    const leftConversationSettings = compare.getLeftConversationSettings();
+    await use(leftConversationSettings);
+  },
+  rightChatHeader: async ({ compare }, use) => {
+    const rightChatHeader = compare.getRightChatHeader();
+    await use(rightChatHeader);
+  },
+  leftChatHeader: async ({ compare }, use) => {
+    const leftChatHeader = compare.getLeftChatHeader();
+    await use(leftChatHeader);
   },
 });
 

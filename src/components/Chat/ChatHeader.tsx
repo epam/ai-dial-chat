@@ -166,6 +166,7 @@ export const ChatHeader = ({
                       onClick={() => {
                         setShowSettings(!isShowSettings);
                       }}
+                      data-qa="conversation-setting"
                     >
                       <IconSettings size={18} />
                     </button>
@@ -179,6 +180,7 @@ export const ChatHeader = ({
                     <button
                       className="cursor-pointer text-gray-500 hover:text-blue-500"
                       onClick={onClearConversation}
+                      data-qa="clear-conversation"
                     >
                       <IconEraser size={18} />
                     </button>
@@ -195,6 +197,7 @@ export const ChatHeader = ({
                       className="cursor-pointer text-gray-500 hover:text-blue-500 disabled:cursor-not-allowed"
                       onClick={() => onUnselectConversation(conversation.id)}
                       disabled={conversation.isMessageStreaming}
+                      data-qa="remove-from-compare"
                     >
                       <IconX size={18} />
                     </button>

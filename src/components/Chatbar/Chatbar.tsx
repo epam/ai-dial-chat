@@ -11,14 +11,14 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
+
 import { ChatFolders } from './components/ChatFolders';
 import { ChatbarSettings } from './components/ChatbarSettings';
 import { Conversations } from './components/Conversations';
 
 import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import Sidebar from '../Sidebar';
-
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 
 const ChatActionsBlock = () => {
   const { t } = useTranslation('sidebar');

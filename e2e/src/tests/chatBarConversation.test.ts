@@ -14,7 +14,7 @@ test(
   async ({ dialHomePage, conversations, chat, setTestIds }) => {
     setTestIds('EPMRTC-583', 'EPMRTC-776');
     await dialHomePage.openHomePage();
-    await chat.waitForState();
+    await dialHomePage.waitForPageLoaded();
     const messageToSend = 'Hi';
     await chat.sendRequest(messageToSend);
     expect
@@ -38,13 +38,12 @@ test('Rename chat. Cancel', async ({
   dialHomePage,
   conversations,
   conversationDropdownMenu,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-588');
   const newName = 'new name to cancel';
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await conversations.openConversationDropdownMenu(
     ExpectedConstants.newConversationTitle,
   );
@@ -72,7 +71,7 @@ test('Rename chat before starting the conversation', async ({
   setTestIds('EPMRTC-584');
   const newName = 'new conversation name';
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await conversations.openConversationDropdownMenu(
     ExpectedConstants.newConversationTitle,
   );
@@ -102,7 +101,6 @@ test('Rename chat after starting the conversation', async ({
   conversationDropdownMenu,
   conversationData,
   localStorageManager,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-585');
@@ -112,7 +110,7 @@ test('Rename chat after starting the conversation', async ({
   await localStorageManager.setSelectedConversation(conversation);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await conversations.openConversationDropdownMenu(conversation.name);
   await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
   await conversations.editConversationNameWithEnter(conversation.name, newName);
@@ -128,12 +126,11 @@ test('Menu for New conversation', async ({
   dialHomePage,
   conversations,
   conversationDropdownMenu,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-594');
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await conversations.openConversationDropdownMenu(
     ExpectedConstants.newConversationTitle,
   );
@@ -155,7 +152,6 @@ test('Menu for conversation with history', async ({
   conversationDropdownMenu,
   conversationData,
   localStorageManager,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-595');
@@ -164,7 +160,7 @@ test('Menu for conversation with history', async ({
   await localStorageManager.setSelectedConversation(conversation);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await conversations.openConversationDropdownMenu(conversation.name);
   const menuOptions = await conversationDropdownMenu.getAllMenuOptions();
   expect
@@ -185,7 +181,6 @@ test('Delete chat in the folder', async ({
   conversationData,
   localStorageManager,
   conversationDropdownMenu,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-607');
@@ -200,7 +195,7 @@ test('Delete chat in the folder', async ({
   );
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderConversations.expandCollapseFolder(
     conversationInFolder.folders.name,
   );
@@ -229,7 +224,6 @@ test('Delete chat located in the root', async ({
   conversationDropdownMenu,
   conversationData,
   localStorageManager,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-608');
@@ -238,7 +232,7 @@ test('Delete chat located in the root', async ({
   await localStorageManager.setSelectedConversation(conversation);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await conversations.openConversationDropdownMenu(conversation.name);
   await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
   await conversations.getConversationInput(conversation.name).clickTickButton();
@@ -294,7 +288,7 @@ test(
     await localStorageManager.setSelectedConversation(yesterdayConversation);
 
     await dialHomePage.openHomePage();
-    await chat.waitForState();
+    await dialHomePage.waitForPageLoaded();
     const yesterdayConversations =
       await conversations.getYesterdayConversations();
     expect
@@ -361,7 +355,6 @@ test('Chat is moved from the folder via drag&drop', async ({
   folderConversations,
   localStorageManager,
   conversations,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-861');
@@ -373,7 +366,7 @@ test('Chat is moved from the folder via drag&drop', async ({
   );
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderConversations.expandCollapseFolder(
     conversationInFolder.folders.name,
   );
@@ -407,7 +400,6 @@ test('Chat is moved to folder created from Move to', async ({
   conversationData,
   localStorageManager,
   folderConversations,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-864');
@@ -416,7 +408,7 @@ test('Chat is moved to folder created from Move to', async ({
   await localStorageManager.setSelectedConversation(conversation);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await conversations.openConversationDropdownMenu(conversation.name);
   await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
   await conversationDropdownMenu.selectMenuOption(MenuOptions.newFolder);
@@ -444,7 +436,6 @@ test('Chat is moved to folder from Move to list', async ({
   conversationData,
   localStorageManager,
   folderConversations,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-863');
@@ -455,7 +446,7 @@ test('Chat is moved to folder from Move to list', async ({
   await localStorageManager.setSelectedConversation(conversation);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderConversations.expandCollapseFolder(folderToMoveIn.name);
 
   await conversations.openConversationDropdownMenu(conversation.name);
@@ -483,7 +474,6 @@ test('Delete all conversations. Cancel', async ({
   folderConversations,
   chatBar,
   confirmationDialog,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-610');
@@ -503,7 +493,7 @@ test('Delete all conversations. Cancel', async ({
   );
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderConversations.expandCollapseFolder(
     conversationInFolder.folders.name,
   );
@@ -543,12 +533,9 @@ test('Delete all conversations. Clear', async ({
   confirmationDialog,
   folderPrompts,
   prompts,
-  chat,
   setTestIds,
-  setIssueIds,
 }) => {
   setTestIds('EPMRTC-611');
-  setIssueIds('269');
   const emptyFolder = conversationData.prepareFolder();
   conversationData = conversationData.resetData();
   const singleConversation = conversationData.prepareDefaultConversation();
@@ -561,20 +548,23 @@ test('Delete all conversations. Clear', async ({
   const promptInFolder = promptData.prepareDefaultPromptInFolder();
   promptData = await promptData.resetData();
   const singlePrompt = promptData.prepareDefaultPrompt();
-  await localStorageManager.setConversationHistory(
+
+  await dialHomePage.openHomePage();
+  await dialHomePage.waitForPageLoaded();
+  await localStorageManager.updateConversationHistory(
     singleConversation,
     conversationInFolder.conversations,
   );
-  await localStorageManager.setPrompts(singlePrompt, promptInFolder.prompts);
-  await localStorageManager.setFolders(
+  await localStorageManager.updatePrompts(singlePrompt, promptInFolder.prompts);
+  await localStorageManager.updateFolders(
     emptyFolder,
     conversationInFolder.folders,
     emptyPromptFolder,
     promptInFolder.folders,
   );
 
-  await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.reloadPage();
+  await dialHomePage.waitForPageLoaded();
   await folderConversations.expandCollapseFolder(
     conversationInFolder.folders.name,
   );
@@ -636,7 +626,7 @@ test('Delete all conversations. Clear', async ({
 
     if (i > 1) {
       await dialHomePage.reloadPage();
-      await chat.waitForState();
+      await dialHomePage.waitForPageLoaded();
     }
     i--;
   }

@@ -19,6 +19,15 @@ export class ChatMessages extends BaseElement {
     ChatSelectors.chatMessage,
   );
 
+  public compareChatMessageRows = this.getChildElementBySelector(
+    ChatSelectors.compareChatMessage,
+  );
+
+  public compareChatMessages =
+    this.compareChatMessageRows.getChildElementBySelector(
+      ChatSelectors.chatMessage,
+    );
+
   public messageStage = (messagesIndex: number, stageIndex: number) =>
     this.chatMessages
       .getNthElement(messagesIndex)
@@ -31,9 +40,19 @@ export class ChatMessages extends BaseElement {
     );
 
   public async waitForResponseReceived() {
-    await this.loadingCursor.waitForState({
-      state: 'detached',
-    });
+    const loadingCursorCount = await this.loadingCursor.getElementsCount();
+    for (let i = 1; i <= loadingCursorCount; i++) {
+      await this.loadingCursor.getNthElement(i).waitFor({
+        state: 'detached',
+      });
+    }
+  }
+
+  public async waitForOneCompareConversationResponseReceived() {
+    const loadingCursorCount = await this.loadingCursor.getElementsCount();
+    if (loadingCursorCount === 2) {
+      await this.waitForOneCompareConversationResponseReceived();
+    }
   }
 
   public getChatMessage(message: string) {
@@ -43,6 +62,15 @@ export class ChatMessages extends BaseElement {
   public async getGeneratedChatContent(messagesCount: number) {
     const chatContent = await this.chatMessages.getElementsInnerContent();
     return chatContent.slice(0, messagesCount - 1).join('\n');
+  }
+
+  public async getLastMessageContent() {
+    const messagesCount = await this.chatMessages.getElementsCount();
+    return this.chatMessages.getNthElement(messagesCount).innerText();
+  }
+
+  public async getLastRowCompareMessagesCount() {
+    return this.compareChatMessages.getElementsCount();
   }
 
   public async waitForPartialMessageReceived(messagesIndex: number) {

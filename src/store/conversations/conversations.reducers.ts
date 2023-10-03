@@ -5,13 +5,14 @@ import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface } from '@/src/types/folder';
 import { OpenAIEntityModel, defaultModelLimits } from '@/src/types/openai';
 
-import { RootState } from '../index';
-
 import {
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-settings';
 import { defaultReplay } from '@/src/constants/replay';
+
+import { RootState } from '../index';
+
 import { v4 as uuidv4 } from 'uuid';
 
 export interface ConversationsState {

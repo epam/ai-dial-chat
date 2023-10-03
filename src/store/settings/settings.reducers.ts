@@ -8,12 +8,14 @@ export interface SettingsState {
   isIframe: boolean;
   footerHtmlMessage: string;
   enabledFeatures: Feature[];
+  codeWarning: string;
 }
 
 const initialState: SettingsState = {
   isIframe: false,
   footerHtmlMessage: '',
   enabledFeatures: [],
+  codeWarning: '',
 };
 
 export const settingsSlice = createSlice({
@@ -38,6 +40,12 @@ export const settingsSlice = createSlice({
     ) => {
       state.enabledFeatures = payload;
     },
+    setCodeWarning: (
+      state,
+      { payload }: PayloadAction<SettingsState['codeWarning']>,
+    ) => {
+      state.codeWarning = payload;
+    },
   },
 });
 
@@ -55,9 +63,14 @@ const selectEnabledFeatures = createSelector([rootSelector], (state) => {
   return new Set(state.enabledFeatures);
 });
 
+const selectCodeWarning = createSelector([rootSelector], (state) => {
+  return state.codeWarning;
+});
+
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectIsIframe,
   selectFooterHtmlMessage,
   selectEnabledFeatures,
+  selectCodeWarning,
 };

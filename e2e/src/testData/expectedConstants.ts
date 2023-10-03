@@ -16,11 +16,11 @@ export const ExpectedConstants = {
   recentAddonIds:
     'addon-epam10k-golden-qna,addon-epam10k-semantic-search,addon-wolfram',
   replayConversation: '[Replay] ',
-  proceedReplyLabel:
+  proceedReplayLabel:
     'Looks like something went wrong. Do you want to restart replay?',
   answerError:
     'Error happened during answering. Please check your internet connection and try again.',
-  chatAPIUrl: '**/api/chat',
+  noConversationsAvailable: 'No conversations available',
 };
 
 export enum Groups {
@@ -47,4 +47,10 @@ export const Chronology = {
   lastThirtyDays: 'Last 30 days',
   older: 'Older',
   other: 'Other',
+};
+
+export const API = {
+  modelsHost: '/api/models',
+  addonsHost: '/api/addons',
+  chatHost: '/api/chat',
 };

@@ -11,9 +11,10 @@ import {
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
 } from '../../constants/default-settings';
+import { defaultReplay } from '@/src/constants/replay';
+
 import { getAssitantModelId } from './conversation';
 
-import { defaultReplay } from '@/src/constants/replay';
 import { v4 } from 'uuid';
 
 export const cleanConversationHistory = (history: any[]): Conversation[] => {

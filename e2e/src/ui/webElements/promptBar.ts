@@ -47,6 +47,7 @@ export class PromptBar extends BaseElement {
   }
 
   public async createNewPrompt() {
+    await this.newPromptButton.waitForState();
     await this.newPromptButton.click();
   }
 

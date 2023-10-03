@@ -7,10 +7,11 @@ import { logger } from '@/src/utils/server/logger';
 
 import { RateBody } from '../../types/chat';
 
-import { authOptions } from './auth/[...nextauth]';
-
 import { OPENAI_API_HOST } from '@/src/constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
+
+import { authOptions } from './auth/[...nextauth]';
+
 import fetch from 'node-fetch';
 import { validate } from 'uuid';
 

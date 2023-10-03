@@ -14,6 +14,8 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
+
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import {
   Tooltip,
@@ -23,8 +25,6 @@ import {
 
 import FolderPlus from '../../../../public/images/icons/folder-plus.svg';
 import { Import } from '../../Settings/Import';
-
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation('sidebar');
@@ -120,6 +120,7 @@ export const ChatbarSettings = () => {
               handleToggleCompare();
             }}
             disabled={isStreaming}
+            data-qa="compare"
           >
             <IconScale size={24} strokeWidth="1.5" />
           </button>

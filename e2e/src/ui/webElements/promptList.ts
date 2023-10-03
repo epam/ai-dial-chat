@@ -1,11 +1,11 @@
 import { ChatSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class PromptList extends BaseElement {
-  constructor(page: Page) {
-    super(page, ChatSelectors.promptList);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, ChatSelectors.promptList, parentLocator);
   }
 
   public getPromptByName(name: string) {

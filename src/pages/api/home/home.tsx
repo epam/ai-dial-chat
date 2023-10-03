@@ -42,6 +42,7 @@ interface Props {
   defaultModelId: OpenAIEntityModelID;
   defaultRecentModelsIds: string[];
   defaultRecentAddonsIds: string[];
+  codeWarning: string;
 }
 
 const Home = ({
@@ -53,6 +54,7 @@ const Home = ({
   authDisabled,
   defaultRecentModelsIds,
   defaultRecentAddonsIds,
+  codeWarning,
 }: Props) => {
   const session = useSession();
 
@@ -144,6 +146,8 @@ const Home = ({
     enabledFeatures &&
       dispatch(SettingsActions.setEnabledFeatures(enabledFeatures));
 
+    codeWarning && dispatch(SettingsActions.setCodeWarning(codeWarning));
+
     isIframe && dispatch(SettingsActions.setIsIframe(isIframe));
 
     defaultRecentModelsIds &&
@@ -165,13 +169,14 @@ const Home = ({
         }),
       );
   }, [
+    dispatch,
     defaultModelId,
     footerHtmlMessage,
     enabledFeatures,
     isIframe,
     defaultRecentModelsIds,
     defaultRecentAddonsIds,
-    dispatch,
+    codeWarning,
   ]);
 
   const handleIframeAuth = async () => {
@@ -181,7 +186,7 @@ const Home = ({
       timeoutAsync(timeout),
       (async () => {
         const authWindowLocation = new AuthWindowLocationLike(
-          '/api/auth/signin',
+          `api/auth/signin`,
         );
 
         await authWindowLocation.ready; // ready after redirects
@@ -217,13 +222,13 @@ const Home = ({
         />
         <link
           rel="icon"
-          href="/api/themes-image?name=favicon"
+          href={`api/themes-image?name=favicon`}
           sizes="any"
           type="image/png"
         />
         <link
           rel="apple-touch-icon"
-          href="/api/themes-image?name=favicon"
+          href={`api/themes-image?name=favicon`}
           type="image/png"
         />
       </Head>
@@ -279,7 +284,7 @@ export const getServerSideProps: GetServerSideProps = async ({
     return {
       redirect: {
         permanent: false,
-        destination: '/api/auth/signin',
+        destination: `${process.env.APP_BASE_PATH || ''}/api/auth/signin`,
       },
     };
   }
@@ -304,6 +309,7 @@ export const getServerSideProps: GetServerSideProps = async ({
         (process.env.RECENT_ADDONS_IDS &&
           process.env.RECENT_ADDONS_IDS.split(',')) ||
         [],
+      codeWarning: process.env.CODE_GENERATION_WARNING ?? '',
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',

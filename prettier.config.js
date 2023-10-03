@@ -20,7 +20,8 @@ module.exports = {
     '^.*/utils/.*$', // Utils
     '^.*/types/.*$', // Types
     '^.*/store/.*$', // Store
-    '^.*/pages/.*$', // Components
+    '^.*/constants/.*$', // Constants
+    '^.*/pages/.*$', // Pages
     '^.*/components/.*$', // Components
     '^[./]', // Other imports
     '.*', // Any uncaught imports

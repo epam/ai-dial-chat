@@ -1,5 +1,6 @@
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 
+import { API } from '@/e2e/src/testData';
 import { APIRequestContext } from '@playwright/test';
 
 export class ApiHelper {
@@ -12,36 +13,41 @@ export class ApiHelper {
 
   public async getModelNames() {
     const allEntities = await this.getModels();
-    return allEntities.filter((e) => e.type === 'model').map((m) => m.name);
+    return allEntities.map((m) => m.name);
   }
 
   public async getEntity(entity: OpenAIEntityModel) {
-    const allEntities = await this.getModels();
+    const allEntities = await this.getModelEntities();
     return allEntities.find((e) => e.id === entity.id);
   }
 
   public async getApplicationNames() {
-    const allEntities = await this.getModels();
+    const allEntities = await this.getModelEntities();
     return allEntities
       .filter((e) => e.type === 'application')
       .map((app) => app.name);
   }
 
-  public async getAddonNameById(addonId: string) {
+  public async getAddonById(addonId: string) {
     const allEntities = await this.getAddons();
     return allEntities.find((e) => e.type === 'addon' && e.id === addonId);
   }
 
   public async getAssistant(assistant: string) {
-    const allEntities = await this.getModels();
+    const allEntities = await this.getModelEntities();
     return allEntities.find(
       (e) => e.type === 'assistant' && e.name === assistant,
     );
   }
 
   public async getApplication(app: string) {
-    const allEntities = await this.getModels();
+    const allEntities = await this.getModelEntities();
     return allEntities.find((e) => e.type === 'application' && e.name === app);
+  }
+
+  public async getModel(model: string) {
+    const allEntities = await this.getModels();
+    return allEntities.find((e) => e.name === model);
   }
 
   public async getApplicationDescription(app: string) {
@@ -86,7 +92,7 @@ export class ApiHelper {
   }
 
   public async getEntitySelectedAddons(entity: string) {
-    const allEntities = await this.getModels();
+    const allEntities = await this.getModelEntities();
     const entityObject = allEntities.find((e) => e.name === entity);
     const selectedAddons: string[] = [];
     const entityAddonObjects = entityObject!.selectedAddons;
@@ -100,7 +106,12 @@ export class ApiHelper {
   }
 
   public async getModels() {
-    const response = await this.request.get('/api/models', {
+    const modelEntities = await this.getModelEntities();
+    return modelEntities.filter((e) => e.type === 'model');
+  }
+
+  public async getModelEntities() {
+    const response = await this.request.get(API.modelsHost, {
       failOnStatusCode: true,
       timeout: ApiHelper.requestTimeout,
     });
@@ -109,7 +120,7 @@ export class ApiHelper {
   }
 
   public async getAddons() {
-    const response = await this.request.get('/api/addons', {
+    const response = await this.request.get(API.addonsHost, {
       failOnStatusCode: true,
       timeout: ApiHelper.requestTimeout,
     });

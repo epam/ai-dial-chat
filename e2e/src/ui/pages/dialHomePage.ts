@@ -26,4 +26,13 @@ export class DialHomePage extends BasePage {
     }
     return this.promptBar;
   }
+
+  public async waitForPageLoaded() {
+    await this.getChatBar().waitForState({ state: 'attached' });
+    await this.getPromptBar().waitForState({ state: 'attached' });
+    const chat = this.getChat();
+    await chat.waitForState({ state: 'attached' });
+    await chat.waitForChatLoaded();
+    await chat.getSendMessage().waitForMessageInputLoaded();
+  }
 }

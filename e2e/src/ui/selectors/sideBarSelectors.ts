@@ -14,6 +14,7 @@ export const ChatBarSelectors = {
   newConversationButton: '[data-qa="new-chat"]',
   newFolder: '[data-qa="create-folder"]',
   deleteConversations: '[data-qa="delete-conversations"]',
+  compare: '[data-qa="compare"]',
   conversations: '[data-qa="conversations"]',
   conversation: '[data-qa="conversation"]',
   chatFolders: '[data-qa="chat-folders"]',
