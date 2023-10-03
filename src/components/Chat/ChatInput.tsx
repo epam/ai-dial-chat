@@ -359,7 +359,10 @@ export const ChatInput = forwardRef(
               disabled={messageIsStreaming || isModelsLoading}
             >
               {messageIsStreaming || isModelsLoading ? (
-                <div className="h-5 w-5 animate-spin rounded-full border-t-2 border-gray-500"></div>
+                <div
+                  className="h-5 w-5 animate-spin rounded-full border-t-2 border-gray-500"
+                  data-qa="message-input-spinner"
+                ></div>
               ) : (
                 <span className="hover:text-blue-500">
                   <IconSend size={24} stroke="1.5" />

@@ -24,7 +24,7 @@ const getAddonsEpic: AppEpic = (action$, state$) =>
     filter(AddonsActions.getAddons.match),
     withLatestFrom(state$),
     switchMap(() => {
-      return fromFetch('/api/addons', {
+      return fromFetch('api/addons', {
         headers: {
           'Content-Type': 'application/json',
         },

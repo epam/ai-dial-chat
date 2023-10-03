@@ -4,11 +4,11 @@ import { RecentEntities } from './recentEntities';
 
 import { Groups } from '@/e2e/src/testData';
 import { ModelsDialog } from '@/e2e/src/ui/webElements/modelsDialog';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class EntitySelector extends BaseElement {
-  constructor(page: Page) {
-    super(page, ChatSelectors.entitySelector);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, ChatSelectors.entitySelector, parentLocator);
   }
 
   private recentEntities!: RecentEntities;
@@ -19,7 +19,7 @@ export class EntitySelector extends BaseElement {
 
   getRecentEntities(): RecentEntities {
     if (!this.recentEntities) {
-      this.recentEntities = new RecentEntities(this.page);
+      this.recentEntities = new RecentEntities(this.page, this.rootLocator);
     }
     return this.recentEntities;
   }

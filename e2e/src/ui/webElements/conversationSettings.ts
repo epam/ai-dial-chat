@@ -6,8 +6,12 @@ import { EntitySettings } from '@/e2e/src/ui/webElements/entitySettings';
 import { Page } from '@playwright/test';
 
 export class ConversationSettings extends BaseElement {
-  constructor(page: Page) {
-    super(page, ChatSelectors.conversationSettingsSelector);
+  constructor(page: Page, index?: number) {
+    const elementLocator = new BaseElement(
+      page,
+      ChatSelectors.conversationSettingsSelector,
+    ).getNthElement(index ?? 1);
+    super(page, '', elementLocator);
   }
 
   private talkToSelector!: EntitySelector;
@@ -15,14 +19,14 @@ export class ConversationSettings extends BaseElement {
 
   getTalkToSelector(): EntitySelector {
     if (!this.talkToSelector) {
-      this.talkToSelector = new EntitySelector(this.page);
+      this.talkToSelector = new EntitySelector(this.page, this.rootLocator);
     }
     return this.talkToSelector;
   }
 
   getEntitySettings(): EntitySettings {
     if (!this.entitySettings) {
-      this.entitySettings = new EntitySettings(this.page);
+      this.entitySettings = new EntitySettings(this.page, this.rootLocator);
     }
     return this.entitySettings;
   }

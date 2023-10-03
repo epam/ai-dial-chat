@@ -52,6 +52,9 @@ import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { ChatBody, Conversation, Message, RateBody } from '@/src/types/chat';
 import { AppEpic } from '@/src/types/store';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
+import { errorsMessages } from '@/src/constants/errors';
+
 import { AddonsActions } from '../addons/addons.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { PromptsSelectors } from '../prompts/prompts.reducers';
@@ -60,9 +63,6 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from './conversations.reducers';
-
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
-import { errorsMessages } from '@/src/constants/errors';
 
 const createNewConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -333,7 +333,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         value: payload.rate > 0 ? true : false,
       };
 
-      return fromFetch('/api/rate', {
+      return fromFetch(`api/rate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

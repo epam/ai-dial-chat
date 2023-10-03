@@ -3,9 +3,10 @@ import { getServerSession } from 'next-auth/next';
 
 import { logger } from '@/src/utils/server/logger';
 
+import { errorsMessages } from '@/src/constants/errors';
+
 import { authOptions } from './auth/[...nextauth]';
 
-import { errorsMessages } from '@/src/constants/errors';
 import fetch from 'node-fetch';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {

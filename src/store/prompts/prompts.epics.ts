@@ -10,12 +10,12 @@ import { savePrompts } from '@/src/utils/app/prompts';
 
 import { AppEpic } from '@/src/types/store';
 
+import { errorsMessages } from '@/src/constants/errors';
+
 import { ConversationsSelectors } from '../conversations/conversations.reducers';
 import { ModelsSelectors } from '../models/models.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
-
-import { errorsMessages } from '@/src/constants/errors';
 
 const createNewPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(

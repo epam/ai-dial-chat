@@ -6,11 +6,11 @@ import { ModelSelector } from '@/e2e/src/ui/webElements/modelSelector';
 import { MoreInfo } from '@/e2e/src/ui/webElements/moreInfo';
 import { PromptList } from '@/e2e/src/ui/webElements/promptList';
 import { TemperatureSlider } from '@/e2e/src/ui/webElements/temperatureSlider';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class EntitySettings extends BaseElement {
-  constructor(page: Page) {
-    super(page, ChatSelectors.entitySettings);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, ChatSelectors.entitySettings, parentLocator);
   }
 
   public systemPrompt = this.getChildElementBySelector(
@@ -24,35 +24,38 @@ export class EntitySettings extends BaseElement {
 
   getPromptList() {
     if (!this.promptList) {
-      this.promptList = new PromptList(this.page);
+      this.promptList = new PromptList(this.page, this.rootLocator);
     }
     return this.promptList;
   }
 
   getTemperatureSlider(): TemperatureSlider {
     if (!this.temperatureSlider) {
-      this.temperatureSlider = new TemperatureSlider(this.page);
+      this.temperatureSlider = new TemperatureSlider(
+        this.page,
+        this.rootLocator,
+      );
     }
     return this.temperatureSlider;
   }
 
   getAddons(): Addons {
     if (!this.addons) {
-      this.addons = new Addons(this.page);
+      this.addons = new Addons(this.page, this.rootLocator);
     }
     return this.addons;
   }
 
   getModelSelector(): ModelSelector {
     if (!this.modelSelector) {
-      this.modelSelector = new ModelSelector(this.page);
+      this.modelSelector = new ModelSelector(this.page, this.rootLocator);
     }
     return this.modelSelector;
   }
 
   getMoreInfo(): MoreInfo {
     if (!this.moreInfo) {
-      this.moreInfo = new MoreInfo(this.page);
+      this.moreInfo = new MoreInfo(this.page, this.rootLocator);
     }
     return this.moreInfo;
   }

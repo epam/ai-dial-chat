@@ -6,9 +6,9 @@ import { combineEpics } from 'redux-observable';
 
 import { AppEpic } from '@/src/types/store';
 
-import { UIActions } from './ui.reducers';
-
 import { errorsMessages } from '@/src/constants/errors';
+
+import { UIActions } from './ui.reducers';
 
 const saveThemeEpic: AppEpic = (action$) =>
   action$.pipe(

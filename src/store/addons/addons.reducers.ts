@@ -5,9 +5,9 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { ErrorMessage } from '@/src/types/error';
 import { OpenAIEntityAddon } from '@/src/types/openai';
 
-import { RootState } from '../index';
-
 import { errorsMessages } from '@/src/constants/errors';
+
+import { RootState } from '../index';
 
 export interface AddonsState {
   isLoading: boolean;

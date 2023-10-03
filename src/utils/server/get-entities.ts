@@ -2,6 +2,7 @@ import {
   OPENAI_API_HOST,
   OPENAI_API_VERSION,
 } from '../../constants/default-settings';
+
 import { getApiHeaders } from './get-headers';
 
 import fetch from 'node-fetch';

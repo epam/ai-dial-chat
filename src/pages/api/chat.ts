@@ -12,13 +12,14 @@ import { logger } from '@/src/utils/server/logger';
 import { OpenAIEntityAddonID, OpenAIEntityModelID } from '../../types/openai';
 import { ChatBody, Message } from '@/src/types/chat';
 
-import { authOptions } from './auth/[...nextauth]';
-
 import {
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
+
+import { authOptions } from './auth/[...nextauth]';
+
 import tiktokenModel from '@dqbd/tiktoken/encoders/cl100k_base.json';
 import { Tiktoken, init } from '@dqbd/tiktoken/lite/init';
 import { readFileSync } from 'fs';

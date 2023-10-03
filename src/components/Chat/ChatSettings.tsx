@@ -7,9 +7,9 @@ import { Prompt } from '@/src/types/prompt';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import { ConversationSettings } from './ConversationSettings';
-
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
+
+import { ConversationSettings } from './ConversationSettings';
 
 interface Props {
   conversation: Conversation;

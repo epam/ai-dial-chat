@@ -5,9 +5,9 @@ import { getServerSession } from 'next-auth/next';
 import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 import { logger } from '@/src/utils/server/logger';
 
-import { authOptions } from './auth/[...nextauth]';
-
 import { errorsMessages } from '@/src/constants/errors';
+
+import { authOptions } from './auth/[...nextauth]';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);

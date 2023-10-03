@@ -4,8 +4,9 @@ import { ChatMessages } from './chatMessages';
 import { ConversationSettings } from './conversationSettings';
 import { SendMessage } from './sendMessage';
 
-import { ExpectedConstants } from '@/e2e/src/testData';
+import { API } from '@/e2e/src/testData';
 import { ChatHeader } from '@/e2e/src/ui/webElements/chatHeader';
+import { Compare } from '@/e2e/src/ui/webElements/compare';
 import { Page } from '@playwright/test';
 
 export class Chat extends BaseElement {
@@ -17,8 +18,13 @@ export class Chat extends BaseElement {
   private conversationSettings!: ConversationSettings;
   private sendMessage!: SendMessage;
   private chatMessages!: ChatMessages;
-  private regenerate = new BaseElement(this.page, ChatSelectors.regenerate);
+  private compare!: Compare;
+  public regenerate = new BaseElement(this.page, ChatSelectors.regenerate);
   public replay = new BaseElement(this.page, ChatSelectors.startReplay);
+  public applyChanges = (index?: number) =>
+    new BaseElement(this.page, ChatSelectors.applyChanges).getNthElement(
+      index ?? 1,
+    );
   public stopGenerating = new BaseElement(
     this.page,
     ChatSelectors.stopGenerating,
@@ -27,6 +33,7 @@ export class Chat extends BaseElement {
     this.page,
     ChatSelectors.proceedGenerating,
   );
+  public chatSpinner = this.getChildElementBySelector(ChatSelectors.spinner);
 
   getChatHeader(): ChatHeader {
     if (!this.chatHeader) {
@@ -44,7 +51,7 @@ export class Chat extends BaseElement {
 
   getSendMessage(): SendMessage {
     if (!this.sendMessage) {
-      this.sendMessage = new SendMessage(this.page);
+      this.sendMessage = new SendMessage(this.page, this.rootLocator);
     }
     return this.sendMessage;
   }
@@ -56,9 +63,19 @@ export class Chat extends BaseElement {
     return this.chatMessages;
   }
 
-  public async sendRequest(message: string) {
+  getCompare(): Compare {
+    if (!this.compare) {
+      this.compare = new Compare(this.page);
+    }
+    return this.compare;
+  }
+
+  public async sendRequest(message: string, waitForAnswer = true) {
+    const requestPromise = this.waitForRequestSent(message);
     await this.getSendMessage().send(message);
-    await this.waitForResponse(true);
+    const request = await requestPromise;
+    await this.waitForResponse(waitForAnswer);
+    return request.postDataJSON();
   }
 
   public async regenerateResponse() {
@@ -68,15 +85,40 @@ export class Chat extends BaseElement {
 
   public async startReplay(userRequest?: string, waitForAnswer = false) {
     await this.replay.waitForState();
-    const requestPromise = userRequest
-      ? this.page.waitForRequest((request) =>
-          request.postData()!.includes(userRequest),
-        )
-      : this.page.waitForRequest(ExpectedConstants.chatAPIUrl);
+    const requestPromise = this.waitForRequestSent(userRequest);
     await this.replay.click();
     const request = await requestPromise;
     await this.waitForResponse(waitForAnswer);
     return request.postDataJSON();
+  }
+
+  public async sendRequestInCompareMode(
+    message: string,
+    comparedEntities: { rightEntity: string; leftEntity: string },
+    waitForAnswer = false,
+  ) {
+    const rightRequestPromise = this.waitForRequestSent(
+      comparedEntities.rightEntity,
+    );
+    const leftRequestPromise = this.waitForRequestSent(
+      comparedEntities.leftEntity,
+    );
+    await this.getSendMessage().send(message);
+    const rightRequest = await rightRequestPromise;
+    const leftRequest = await leftRequestPromise;
+    await this.waitForResponse(waitForAnswer);
+    return {
+      rightRequest: rightRequest.postDataJSON(),
+      leftRequest: leftRequest.postDataJSON(),
+    };
+  }
+
+  public waitForRequestSent(userRequest: string | undefined) {
+    return userRequest
+      ? this.page.waitForRequest((request) =>
+          request.postData()!.includes(userRequest),
+        )
+      : this.page.waitForRequest(API.chatHost);
   }
 
   public async stopReplay() {
@@ -85,9 +127,7 @@ export class Chat extends BaseElement {
   }
 
   public async proceedReplaying(waitForAnswer = false) {
-    const requestPromise = this.page.waitForRequest(
-      ExpectedConstants.chatAPIUrl,
-    );
+    const requestPromise = this.page.waitForRequest(API.chatHost);
     await this.proceedGenerating.click();
     const request = await requestPromise;
     await this.waitForResponse(waitForAnswer);
@@ -98,5 +138,9 @@ export class Chat extends BaseElement {
     if (waitForAnswer) {
       await this.getChatMessages().waitForResponseReceived();
     }
+  }
+
+  public async waitForChatLoaded() {
+    await this.chatSpinner.waitForState({ state: 'detached' });
   }
 }

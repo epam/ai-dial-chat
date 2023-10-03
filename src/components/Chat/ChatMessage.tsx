@@ -22,6 +22,7 @@ import { Conversation, Message } from '@/src/types/chat';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
@@ -82,6 +83,8 @@ export const ChatMessage: FC<Props> = memo(
     const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
     const theme = useAppSelector(UISelectors.selectThemeState);
+
+    const codeWarning = useAppSelector(SettingsSelectors.selectCodeWarning);
 
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [isTyping, setIsTyping] = useState<boolean>(false);
@@ -301,12 +304,13 @@ export const ChatMessage: FC<Props> = memo(
                     isShowResponseLoader={isShowResponseLoader}
                     content={message.content}
                   />
-                  {codeDetection(message.content) && (
-                    <div className="text-xxs text-red-800 dark:text-red-400">
-                      {t(`Full responsibility for code correctness, security and licensing lies
-        solely with the user, not with DIAL platform or LLM vendor.`)}
-                    </div>
-                  )}
+                  {codeWarning &&
+                    codeWarning.length !== 0 &&
+                    codeDetection(message.content) && (
+                      <div className="text-xxs text-red-800 dark:text-red-400">
+                        {t(codeWarning)}
+                      </div>
+                    )}
                   {!!message.custom_content?.attachments?.length && (
                     <MessageAttachments
                       attachments={message.custom_content.attachments}
