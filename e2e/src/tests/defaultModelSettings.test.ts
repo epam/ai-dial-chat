@@ -1,7 +1,7 @@
 import { OpenAIEntityModelID, OpenAIEntityModels } from '@/src/types/openai';
 
 import test from '../core/fixtures';
-import { ExpectedConstants, ExpectedMessages, Groups } from '../testData';
+import { ExpectedConstants, ExpectedMessages } from '../testData';
 import { Colors } from '../ui/domData';
 
 import { GeneratorUtil } from '@/e2e/src/utils';
@@ -20,12 +20,12 @@ test(
     addons,
     setTestIds,
     apiHelper,
-    chat,
   }) => {
     setTestIds('EPMRTC-933', 'EPMRTC-398');
     await dialHomePage.openHomePage();
-    await chat.waitForState();
+    await dialHomePage.waitForPageLoaded();
     await chatBar.createNewConversation();
+
     const todayConversations = await conversations.getTodayConversations();
     expect
       .soft(todayConversations.length, ExpectedMessages.newConversationCreated)
@@ -36,8 +36,8 @@ test(
         .toBe(ExpectedConstants.newConversationTitle);
     }
 
-    const expectedModels = await apiHelper.getModels();
-    const expectedDefaultModel = expectedModels.find(
+    const expectedModelEntities = await apiHelper.getModelEntities();
+    const expectedDefaultModel = expectedModelEntities.find(
       (e) => e.isDefault === true,
     )!.name;
     const modelBorderColors = await recentEntities
@@ -54,7 +54,7 @@ test(
     const expectedDefaultRecentEntities = [];
     for (const entity of ExpectedConstants.recentModelIds.split(',')) {
       expectedDefaultRecentEntities.push(
-        expectedModels.find((e) => e.id === entity)!.name,
+        expectedModelEntities.find((e) => e.id === entity)!.name,
       );
     }
 
@@ -106,9 +106,9 @@ test('Default model in new chat is set as in previous chat', async ({
   setTestIds('EPMRTC-400');
 
   await dialHomePage.openHomePage();
-  await talkToSelector.selectEntity(
+  await dialHomePage.waitForPageLoaded();
+  await talkToSelector.selectModel(
     OpenAIEntityModels[OpenAIEntityModelID.BISON_001].name,
-    Groups.models,
   );
   await chat.sendRequest('test');
   await chatBar.createNewConversation();
@@ -142,21 +142,22 @@ test('Settings on default screen are saved in local storage when temperature = 0
 }) => {
   setTestIds('EPMRTC-406');
   await dialHomePage.openHomePage();
-
+  await dialHomePage.waitForPageLoaded();
   const randomModel = GeneratorUtil.randomArrayElement(
     await apiHelper.getModelNames(),
   );
   const randomAddonId = GeneratorUtil.randomArrayElement(
     ExpectedConstants.recentAddonIds.split(','),
   );
-  const randomAddon = await apiHelper.getAddonNameById(randomAddonId);
-  await talkToSelector.selectEntity(randomModel, Groups.models);
+  const randomAddon = await apiHelper.getAddonById(randomAddonId);
+  await talkToSelector.selectModel(randomModel);
   const sysPrompt = 'test prompt';
   const temp = 0;
   await entitySettings.setSystemPrompt(sysPrompt);
   await temperatureSlider.setTemperature(temp);
   await addons.selectAddon(randomAddon!.name);
   await dialHomePage.reloadPage();
+  await dialHomePage.waitForPageLoaded();
 
   const modelBorderColors = await recentEntities
     .getRecentEntity(randomModel)
@@ -195,10 +196,9 @@ test('Recent "Talk to" list is updated', async ({
 }) => {
   setTestIds('EPMRTC-1044');
   await dialHomePage.openHomePage();
-  await chat.waitForState();
-  await talkToSelector.selectEntity(
+  await dialHomePage.waitForPageLoaded();
+  await talkToSelector.selectApplication(
     OpenAIEntityModels[OpenAIEntityModelID.MIRROR].name,
-    Groups.applications,
   );
   await chat.sendRequest('test message');
   await chatBar.createNewConversation();

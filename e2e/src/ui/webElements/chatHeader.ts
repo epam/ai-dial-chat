@@ -10,13 +10,26 @@ export interface Icons {
 }
 
 export class ChatHeader extends BaseElement {
-  constructor(page: Page) {
-    super(page, ChatSelectors.chatHeader);
+  constructor(page: Page, index?: number) {
+    const elementLocator = new BaseElement(
+      page,
+      ChatSelectors.chatHeader,
+    ).getNthElement(index ?? 1);
+    super(page, '', elementLocator);
   }
 
   public chatTitle = new BaseElement(this.page, ChatSelectors.chatTitle);
   public icons = this.getChildElementBySelector(ChatSelectors.chatIcon);
   public chatModel = this.getChildElementBySelector(ChatSelectors.chatModel);
+  public removeConversationFromComparison = this.getChildElementBySelector(
+    ChatSelectors.removeFromCompareIcon,
+  );
+  public openConversationSettings = this.getChildElementBySelector(
+    ChatSelectors.conversationSettingsIcon,
+  );
+  public clearConversation = this.getChildElementBySelector(
+    ChatSelectors.clearConversationIcon,
+  );
 
   async getHeaderIcons() {
     const allIcons: Icons[] = [];

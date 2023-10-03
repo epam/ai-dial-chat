@@ -1,9 +1,9 @@
 import { DateUtil } from '@/e2e/src/utils/dateUtil';
 import { GeneratorUtil } from '@/e2e/src/utils/generatorUtil';
 
-import { Conversation, Message } from '@/src/types/chat';
+import { Conversation, Message, Stage } from '@/src/types/chat';
 import { FolderInterface } from '@/src/types/folder';
-import { OpenAIEntityAddonID, OpenAIEntityModel } from '@/src/types/openai';
+import { OpenAIEntityModel, OpenAIEntityModelID } from '@/src/types/openai';
 
 import { ConversationBuilder, ExpectedConstants } from '@/e2e/src/testData';
 import { FolderBuilder } from '@/e2e/src/testData/conversationHistory/folderBuilder';
@@ -43,9 +43,7 @@ export class ConversationData {
       .withMessage(userMessage)
       .withMessage(assistantMessage)
       .withModel(modelToUse)
-      .withName(
-        name ?? 'test conversation' + GeneratorUtil.randomIntegerNumber(),
-      )
+      .withName(name ?? GeneratorUtil.randomString(10))
       .build();
   }
 
@@ -64,45 +62,79 @@ export class ConversationData {
       .build();
   }
 
-  public prepareModelConversationBasedOnRequest(
-    request: string,
-    model?: OpenAIEntityModel,
+  public prepareModelConversationBasedOnRequests(
+    model: OpenAIEntityModel,
+    requests: string[],
+    name?: string,
   ) {
-    const basicConversation = this.prepareDefaultConversation(model);
-    basicConversation.messages.push(
-      { role: 'user', content: request },
-      {
-        role: 'assistant',
-        content: `response on ${request}`,
-        model: { id: basicConversation.id, name: basicConversation.name },
-      },
-    );
+    const basicConversation = this.prepareEmptyConversation(model, name);
+    requests.forEach((r) => {
+      basicConversation.messages.push(
+        { role: 'user', content: r },
+        {
+          role: 'assistant',
+          content: `response on ${r}`,
+          model: {
+            id: basicConversation.model.id,
+            name: basicConversation.model.name,
+          },
+        },
+      );
+    });
     this.conversationBuilder.setConversation(basicConversation);
     return this.conversationBuilder.build();
   }
 
-  public prepareDefaultReplyConversation(conversation: Conversation) {
-    const userMessages = conversation.messages.filter((m) => m.role === 'user');
-    const replayConversation = JSON.parse(JSON.stringify(conversation));
-    replayConversation.id = uuidv4();
-    replayConversation.name = `${ExpectedConstants.replayConversation}${conversation.name}`;
-    replayConversation.messages = [];
-    replayConversation.replay.isReplay = true;
-    replayConversation.replay.activeReplayIndex = 0;
-    replayConversation.replay.replayUserMessagesStack = userMessages;
+  public prepareEmptyConversation(model?: OpenAIEntityModel, name?: string) {
+    const conversation = this.prepareDefaultConversation(model, name);
+    conversation.messages = [];
+    return conversation;
+  }
+
+  public prepareDefaultReplayConversation(conversation: Conversation) {
+    const userMessages = conversation.messages.find((m) => m.role === 'user');
+    return this.fillReplayData(conversation, userMessages!);
+  }
+
+  public preparePartiallyReplayedConversation(conversation: Conversation) {
+    const userMessages = conversation.messages.find((m) => m.role === 'user');
+    const assistantMessage = conversation.messages.filter(
+      (m) => m.role === 'assistant',
+    )[0];
+    const partialStage: Stage[] = [assistantMessage.custom_content!.stages![0]];
+    const partialAssistantResponse: Message = {
+      content: '',
+      role: assistantMessage.role,
+      model: assistantMessage.model,
+      custom_content: { stages: partialStage },
+    };
+    const replayConversation = this.fillReplayData(conversation, userMessages!);
+    replayConversation.messages.push(userMessages!, partialAssistantResponse);
     return replayConversation;
+  }
+
+  public preparePartiallyRepliedConversation(conversation: Conversation) {
+    const defaultReplayConversation =
+      this.prepareDefaultReplayConversation(conversation);
+    const assistantMessages = conversation.messages.find(
+      (m) => m.role === 'assistant',
+    );
+    assistantMessages!.content = 'partial response';
+    defaultReplayConversation.messages = conversation.messages;
+    return defaultReplayConversation;
   }
 
   public prepareAddonsConversation(
     model: OpenAIEntityModel,
-    ...addons: OpenAIEntityAddonID[]
+    addons: string[],
+    request?: string,
   ) {
     const conversation = this.conversationBuilder.getConversation();
     conversation.model = model;
     conversation.selectedAddons = addons;
     const userMessage: Message = {
       role: 'user',
-      content: 'what is epam? what is epam revenue in 2020?',
+      content: request ?? 'what is epam? what is epam revenue in 2020?',
     };
     const assistantMessage: Message = {
       role: 'assistant',
@@ -113,24 +145,36 @@ export class ConversationData {
         stages: [
           {
             index: 0,
-            name: 'stage 1',
+            name: `stage 1("what is epam?")`,
             content: 'stage content 1',
             status: 'completed',
           },
           {
             index: 1,
-            name: 'stage 2',
+            name: `stage 2("what is epam revenue in 2020?")`,
             content: 'stage content 2',
             status: 'completed',
           },
         ],
         state: {
-          invocations: [{ id: 0, request: 'request', response: 'response' }],
+          invocations: [{ index: 0, request: 'request', response: 'response' }],
         },
       },
     };
     conversation.messages.push(userMessage, assistantMessage);
     return this.conversationBuilder.build();
+  }
+
+  public prepareAssistantConversation(
+    assistant: OpenAIEntityModel,
+    addons: string[],
+    assistantModel?: OpenAIEntityModel,
+  ) {
+    const conversation = this.prepareAddonsConversation(assistant, addons);
+    conversation.assistantModelId = assistantModel
+      ? assistantModel.id
+      : OpenAIEntityModelID.GPT_4;
+    return conversation;
   }
 
   public prepareDefaultFolder() {
@@ -175,5 +219,19 @@ export class ConversationData {
     const conversation = this.prepareDefaultConversation(model, name);
     conversation.lastActivityDate = DateUtil.getLastMonthDate();
     return conversation;
+  }
+
+  private fillReplayData(
+    conversation: Conversation,
+    userMessages: Message,
+  ): Conversation {
+    const replayConversation = JSON.parse(JSON.stringify(conversation));
+    replayConversation.id = uuidv4();
+    replayConversation.name = `${ExpectedConstants.replayConversation}${conversation.name}`;
+    replayConversation.messages = [];
+    replayConversation.replay.isReplay = true;
+    replayConversation.replay.activeReplayIndex = 0;
+    replayConversation.replay.replayUserMessagesStack.push(userMessages);
+    return replayConversation;
   }
 }

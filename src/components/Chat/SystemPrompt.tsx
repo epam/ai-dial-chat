@@ -12,10 +12,10 @@ import { useTranslation } from 'next-i18next';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 
+import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-settings';
+
 import { PromptList } from './PromptList';
 import { VariableModal } from './VariableModal';
-
-import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-settings';
 
 interface Props {
   model: OpenAIEntityModel;

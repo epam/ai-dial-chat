@@ -14,12 +14,13 @@ test('Create new prompt', async ({
   dialHomePage,
   promptBar,
   prompts,
-  chat,
+  conversationSettings,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-945');
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
+  await conversationSettings.waitForState();
   await promptBar.createNewPrompt();
   expect
     .soft(
@@ -38,14 +39,13 @@ test('Prompt menu', async ({
   localStorageManager,
   promptDropdownMenu,
   setTestIds,
-  chat,
 }) => {
   setTestIds('EPMRTC-952');
   const prompt = promptData.prepareDefaultPrompt();
   await localStorageManager.setPrompts(prompt);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await prompts.openPromptDropdownMenu(prompt.name);
 
   const menuOptions = await promptDropdownMenu.getAllMenuOptions();
@@ -68,14 +68,13 @@ test('Edit prompt. Cancel', async ({
   promptModalDialog,
   promptBar,
   setTestIds,
-  chat,
 }) => {
   setTestIds('EPMRTC-953');
   const prompt = promptData.prepareDefaultPrompt();
   await localStorageManager.setPrompts(prompt);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await prompts.openPromptDropdownMenu(prompt.name);
   await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
   await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
@@ -99,7 +98,6 @@ test('Edit prompt. Save', async ({
   localStorageManager,
   promptDropdownMenu,
   promptModalDialog,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-954');
@@ -107,7 +105,7 @@ test('Edit prompt. Save', async ({
   await localStorageManager.setPrompts(prompt);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await prompts.openPromptDropdownMenu(prompt.name);
   await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
   await promptModalDialog.updatePromptDetails(newName, newDescr, newValue);
@@ -146,7 +144,6 @@ test('Edit prompt on Enter', async ({
   localStorageManager,
   promptDropdownMenu,
   promptModalDialog,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-955');
@@ -154,7 +151,7 @@ test('Edit prompt on Enter', async ({
   await localStorageManager.setPrompts(prompt);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await prompts.openPromptDropdownMenu(prompt.name);
   await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
   await promptModalDialog.updatePromptDetailsWithEnter(
@@ -196,7 +193,6 @@ test('Delete prompt located in the root', async ({
   prompts,
   localStorageManager,
   promptDropdownMenu,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-969');
@@ -204,7 +200,7 @@ test('Delete prompt located in the root', async ({
   await localStorageManager.setPrompts(prompt);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await prompts.openPromptDropdownMenu(prompt.name);
   await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
   await prompts.getPromptInput(prompt.name).clickTickButton();
@@ -222,7 +218,6 @@ test('Delete prompt. Cancel', async ({
   prompts,
   localStorageManager,
   promptDropdownMenu,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-970');
@@ -230,7 +225,7 @@ test('Delete prompt. Cancel', async ({
   await localStorageManager.setPrompts(prompt);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await prompts.openPromptDropdownMenu(prompt.name);
   await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
   await prompts.getPromptInput(prompt.name).clickCancelButton();
@@ -253,7 +248,6 @@ test('Clear prompts. Cancel', async ({
   promptBar,
   confirmationDialog,
   prompts,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-971');
@@ -280,7 +274,7 @@ test('Clear prompts. Cancel', async ({
   );
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
   await folderConversations.expandCollapseFolder(
     conversationInFolder.folders.name,
@@ -338,12 +332,9 @@ test('Clear prompts. Clear', async ({
   promptBar,
   confirmationDialog,
   prompts,
-  chat,
   setTestIds,
-  setIssueIds,
 }) => {
   setTestIds('EPMRTC-972');
-  setIssueIds('269');
   const emptyPromptFolder = promptData.prepareFolder();
   promptData = promptData.resetData();
   const singlePrompt = promptData.prepareDefaultPrompt();
@@ -357,57 +348,46 @@ test('Clear prompts. Clear', async ({
   const conversationInFolder =
     conversationData.prepareDefaultConversationInFolder();
 
-  await localStorageManager.setPrompts(singlePrompt, promptInFolder.prompts);
-  await localStorageManager.setConversationHistory(
+  await dialHomePage.openHomePage();
+  await dialHomePage.waitForPageLoaded();
+  await localStorageManager.updatePrompts(singlePrompt, promptInFolder.prompts);
+  await localStorageManager.updateConversationHistory(
     singleConversation,
     conversationInFolder.conversations,
   );
-  await localStorageManager.setFolders(
+  await localStorageManager.updateFolders(
     emptyPromptFolder,
     emptyConversationFolder,
     promptInFolder.folders,
     conversationInFolder.folders,
   );
+  await localStorageManager.updateSelectedConversation(singleConversation);
 
-  await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.reloadPage();
+  await dialHomePage.waitForPageLoaded();
   await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
   await folderConversations.expandCollapseFolder(
     conversationInFolder.folders.name,
   );
+  await conversations.getConversationByName(singleConversation.name).waitFor();
+
   await promptBar.deleteAllPrompts();
   await confirmationDialog.confirm();
 
   let i = 2;
   while (i > 0) {
-    const isEmptyConversationFolderVisible = await folderConversations
+    await folderConversations
       .getFolderByName(emptyConversationFolder.name)
-      .isVisible();
-    expect
-      .soft(isEmptyConversationFolderVisible, ExpectedMessages.folderNotDeleted)
-      .toBeTruthy();
-
-    const isFolderConversationVisible =
-      await folderConversations.isFolderConversationVisible(
+      .waitFor();
+    await folderConversations
+      .getFolderConversation(
         conversationInFolder.folders.name,
         conversationInFolder.conversations.name,
-      );
-    expect
-      .soft(
-        isFolderConversationVisible,
-        ExpectedMessages.conversationNotDeleted,
       )
-      .toBeTruthy();
-
-    const isSingleConversationVisible = await conversations
+      .waitFor();
+    await conversations
       .getConversationByName(singleConversation.name)
-      .isVisible();
-    expect
-      .soft(
-        isSingleConversationVisible,
-        ExpectedMessages.conversationNotDeleted,
-      )
-      .toBeTruthy();
+      .waitFor();
 
     const isPromptFolderVisible = await folderPrompts
       .getFolderByName(emptyPromptFolder.name)
@@ -433,6 +413,10 @@ test('Clear prompts. Clear', async ({
 
     if (i > 1) {
       await dialHomePage.reloadPage();
+      await dialHomePage.waitForPageLoaded();
+      await folderConversations.expandCollapseFolder(
+        conversationInFolder.folders.name,
+      );
     }
     i--;
   }
@@ -445,6 +429,7 @@ test(`[UI] Delete all prompts button doesn't exist if not prompts are created`, 
 }) => {
   setTestIds('EPMRTC-973');
   await dialHomePage.openHomePage();
+  await dialHomePage.waitForPageLoaded();
 
   const isDeleteAllPromptVisible =
     await promptBar.deleteAllPromptsButton.isVisible();
@@ -469,6 +454,7 @@ test('Use simple prompt in system prompt', async ({
   await localStorageManager.setPrompts(prompt);
 
   await dialHomePage.openHomePage();
+  await dialHomePage.waitForPageLoaded();
   await entitySettings.setSystemPrompt('/');
   await entitySettings.getPromptList().selectPrompt(prompt.name);
   const actualPrompt = await entitySettings.getSystemPrompt();
@@ -483,7 +469,6 @@ test('Use prompt with parameters', async ({
   localStorageManager,
   sendMessage,
   variableModalDialog,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-1012');
@@ -497,7 +482,7 @@ test('Use prompt with parameters', async ({
   await localStorageManager.setPrompts(prompt);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await sendMessage.messageInput.fillInInput('/');
   await sendMessage.getPromptList().selectPrompt(prompt.name);
 
@@ -534,7 +519,6 @@ test('Check that all parameters in prompt are required', async ({
   localStorageManager,
   sendMessage,
   variableModalDialog,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-1013');
@@ -548,7 +532,7 @@ test('Check that all parameters in prompt are required', async ({
   await localStorageManager.setPrompts(prompt);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await sendMessage.messageInput.fillInInput('/');
   await sendMessage.getPromptList().selectPrompt(prompt.name);
 

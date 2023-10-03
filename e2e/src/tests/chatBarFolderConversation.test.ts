@@ -10,12 +10,11 @@ test('Create new chat folder', async ({
   dialHomePage,
   chatBar,
   folderConversations,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-569');
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await chatBar.createNewFolder();
   expect
     .soft(
@@ -33,7 +32,6 @@ test(`Rename chat folder when it's empty using Enter`, async ({
   folderConversations,
   localStorageManager,
   folderDropdownMenu,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-571');
@@ -42,7 +40,7 @@ test(`Rename chat folder when it's empty using Enter`, async ({
 
   const newName = 'updated folder name';
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderConversations.openFolderDropdownMenu(folder.name);
   await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
   await folderConversations.editFolderNameWithEnter(folder.name, newName);
@@ -60,7 +58,6 @@ test(`Cancel folder renaming on "x"`, async ({
   folderConversations,
   localStorageManager,
   conversationDropdownMenu,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-572');
@@ -69,7 +66,7 @@ test(`Cancel folder renaming on "x"`, async ({
   await localStorageManager.setFolders(folder);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderConversations.openFolderDropdownMenu(folder.name);
   await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
   const folderInput = await folderConversations.editFolderName(
@@ -91,7 +88,6 @@ test('Rename chat folder when chats are inside using check button', async ({
   folderConversations,
   localStorageManager,
   folderDropdownMenu,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-573');
@@ -104,7 +100,7 @@ test('Rename chat folder when chats are inside using check button', async ({
 
   const newName = 'updated folder name';
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderConversations.openFolderDropdownMenu(
     conversationInFolder.folders.name,
   );
@@ -126,7 +122,6 @@ test('Folders can expand and collapse', async ({
   conversationData,
   folderConversations,
   localStorageManager,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-579');
@@ -139,7 +134,7 @@ test('Folders can expand and collapse', async ({
   const folderName = conversationInFolder.folders.name;
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderConversations.expandCollapseFolder(folderName);
   let isConversationVisible =
     await folderConversations.isFolderConversationVisible(
@@ -166,7 +161,6 @@ test('Delete folder. Cancel', async ({
   folderConversations,
   localStorageManager,
   conversationDropdownMenu,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-606');
@@ -174,7 +168,7 @@ test('Delete folder. Cancel', async ({
   await localStorageManager.setFolders(folder);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderConversations.openFolderDropdownMenu(folder.name);
   await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
   await folderConversations.getFolderInput(folder.name).clickCancelButton();
@@ -193,7 +187,6 @@ test('Delete folder when there are some chats inside', async ({
   localStorageManager,
   conversationDropdownMenu,
   conversations,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-605');
@@ -205,7 +198,7 @@ test('Delete folder when there are some chats inside', async ({
   );
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderConversations.openFolderDropdownMenu(
     conversationInFolder.folders.name,
   );

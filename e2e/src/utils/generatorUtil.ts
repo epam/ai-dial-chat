@@ -9,7 +9,7 @@ export class GeneratorUtil {
     return Math.floor(Math.random() * range);
   }
 
-  static randomArrayElement(array: string[]) {
+  static randomArrayElement<T>(array: T[]) {
     const index = this.randomNumberInRange(array.length);
     return array[index];
   }

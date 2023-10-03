@@ -3,6 +3,7 @@ import { FC, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-settings';
+
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 

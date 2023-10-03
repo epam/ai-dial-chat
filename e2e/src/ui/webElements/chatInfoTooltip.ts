@@ -71,7 +71,9 @@ export class ChatInfoTooltip extends BaseElement {
   }
 
   public async getPromptInfo() {
-    return this.promptInfo.getElementInnerContent();
+    return (await this.promptInfo.isVisible())
+      ? await this.promptInfo.getElementInnerContent()
+      : '';
   }
 
   public async getTemperatureInfo() {

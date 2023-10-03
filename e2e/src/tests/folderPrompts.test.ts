@@ -10,12 +10,11 @@ test('Create new prompt folder', async ({
   dialHomePage,
   promptBar,
   folderPrompts,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-944');
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await promptBar.createNewFolder();
   expect
     .soft(
@@ -32,7 +31,6 @@ test('Prompt folder can expand and collapse', async ({
   promptData,
   folderPrompts,
   localStorageManager,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-946');
@@ -42,7 +40,7 @@ test('Prompt folder can expand and collapse', async ({
   const folderName = promptInFolder.folders.name;
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderPrompts.expandCollapseFolder(folderName);
   let isPromptVisible = await folderPrompts.isFolderPromptVisible(
     folderName,
@@ -64,7 +62,6 @@ test('Rename prompt folder on Enter', async ({
   folderPrompts,
   localStorageManager,
   folderDropdownMenu,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-948');
@@ -73,7 +70,7 @@ test('Rename prompt folder on Enter', async ({
   await localStorageManager.setFolders(folder);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderPrompts.openFolderDropdownMenu(folder.name);
   await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
   await folderPrompts.editFolderNameWithEnter(folder.name, newName);
@@ -91,7 +88,6 @@ test('Cancel folder renaming on "x"', async ({
   folderPrompts,
   localStorageManager,
   folderDropdownMenu,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-949');
@@ -100,7 +96,7 @@ test('Cancel folder renaming on "x"', async ({
   await localStorageManager.setFolders(folder);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderPrompts.openFolderDropdownMenu(folder.name);
   await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
   const folderInput = await folderPrompts.editFolderName(folder.name, newName);
@@ -120,7 +116,6 @@ test('Rename prompt folder when prompts are inside using check button', async ({
   localStorageManager,
   folderDropdownMenu,
   setTestIds,
-  chat,
 }) => {
   setTestIds('EPMRTC-950');
   const promptInFolder = promptData.prepareDefaultPromptInFolder();
@@ -129,7 +124,7 @@ test('Rename prompt folder when prompts are inside using check button', async ({
 
   const newName = 'updated folder name';
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderPrompts.openFolderDropdownMenu(promptInFolder.folders.name);
   await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
   await folderPrompts.editFolderNameWithTick(
@@ -150,7 +145,6 @@ test('Prompt is moved out of the folder via drag&drop', async ({
   folderPrompts,
   localStorageManager,
   prompts,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-961');
@@ -159,7 +153,7 @@ test('Prompt is moved out of the folder via drag&drop', async ({
   await localStorageManager.setPrompts(promptInFolder.prompts);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
   await folderPrompts.dropPromptFromFolder(
     promptInFolder.folders.name,
@@ -189,14 +183,13 @@ test('Prompt is moved to folder created from Move to', async ({
   localStorageManager,
   folderPrompts,
   setTestIds,
-  chat,
 }) => {
   setTestIds('EPMRTC-962');
   const prompt = promptData.prepareDefaultPrompt();
   await localStorageManager.setPrompts(prompt);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await prompts.openPromptDropdownMenu(prompt.name);
   await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
   await promptDropdownMenu.selectMenuOption(MenuOptions.newFolder);
@@ -219,7 +212,6 @@ test('Prompt is moved to folder from Move to list', async ({
   localStorageManager,
   folderPrompts,
   setTestIds,
-  chat,
 }) => {
   setTestIds('EPMRTC-963');
   const folderToMoveIn = promptData.prepareFolder();
@@ -228,7 +220,7 @@ test('Prompt is moved to folder from Move to list', async ({
   await localStorageManager.setFolders(folderToMoveIn);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderPrompts.expandCollapseFolder(folderToMoveIn.name);
 
   await prompts.openPromptDropdownMenu(prompt.name);
@@ -252,7 +244,6 @@ test('Delete folder when there are some prompts inside', async ({
   promptDropdownMenu,
   prompts,
   setTestIds,
-  chat,
 }) => {
   setTestIds('EPMRTC-966');
   const promptInFolder = promptData.prepareDefaultPromptInFolder();
@@ -260,7 +251,7 @@ test('Delete folder when there are some prompts inside', async ({
   await localStorageManager.setPrompts(promptInFolder.prompts);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderPrompts.openFolderDropdownMenu(promptInFolder.folders.name);
   await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
   await folderPrompts
@@ -287,7 +278,6 @@ test('Delete folder. Cancel', async ({
   folderPrompts,
   localStorageManager,
   promptDropdownMenu,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-967');
@@ -295,7 +285,7 @@ test('Delete folder. Cancel', async ({
   await localStorageManager.setFolders(folder);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderPrompts.openFolderDropdownMenu(folder.name);
   await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
   await folderPrompts.getFolderInput(folder.name).clickCancelButton();
@@ -313,7 +303,6 @@ test('Delete prompt in the folder', async ({
   folderPrompts,
   localStorageManager,
   promptDropdownMenu,
-  chat,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-968');
@@ -322,7 +311,7 @@ test('Delete prompt in the folder', async ({
   await localStorageManager.setPrompts(promptInFolder.prompts);
 
   await dialHomePage.openHomePage();
-  await chat.waitForState();
+  await dialHomePage.waitForPageLoaded();
   await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
   await folderPrompts.openFolderPromptDropdownMenu(
     promptInFolder.folders.name,

@@ -4,12 +4,16 @@ import { Locator, Page } from '@playwright/test';
 
 export class BaseElement {
   protected page: Page;
-  private rootSelector: string;
-  private rootLocator: Locator;
+  protected rootSelector: string;
+  protected rootLocator: Locator;
 
   constructor(page: Page, selector: string, locator?: Locator) {
     this.page = page;
-    this.rootLocator = locator ?? this.page.locator(selector);
+    if (locator) {
+      this.rootLocator = selector ? locator.locator(selector) : locator;
+    } else {
+      this.rootLocator = this.page.locator(selector);
+    }
     this.rootSelector = selector;
   }
 

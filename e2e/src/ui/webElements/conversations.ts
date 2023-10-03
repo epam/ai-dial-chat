@@ -1,7 +1,12 @@
-import { ChatBarSelectors, SideBarSelectors } from '../selectors';
+import {
+  ChatBarSelectors,
+  ChatSelectors,
+  SideBarSelectors,
+} from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Chronology } from '@/e2e/src/testData';
+import { Attributes } from '@/e2e/src/ui/domData';
 import { keys } from '@/e2e/src/ui/keyboard';
 import { DropdownMenu } from '@/e2e/src/ui/webElements/dropdownMenu';
 import { Input } from '@/e2e/src/ui/webElements/input';
@@ -49,6 +54,12 @@ export class Conversations extends BaseElement {
     return this.getChildElementBySelector(
       ChatBarSelectors.conversation,
     ).getElementLocatorByText(name, index);
+  }
+
+  public getConversationIcon(name: string, index?: number) {
+    return this.getConversationByName(name, index).locator(
+      ChatSelectors.chatIcon,
+    );
   }
 
   public async getConversationsByChronology() {
@@ -135,5 +146,15 @@ export class Conversations extends BaseElement {
     const input = await this.getConversationInput(name);
     await input.editValue(newName);
     return input;
+  }
+
+  public async getConversationIconAttributes(name: string, index?: number) {
+    const icon = this.getConversationIcon(name, index);
+    const iconEntity = await icon.getAttribute(Attributes.alt);
+    const iconUrl = await icon.getAttribute(Attributes.src);
+    return {
+      iconEntity: iconEntity!.replaceAll(' icon', ''),
+      iconUrl: iconUrl!,
+    };
   }
 }

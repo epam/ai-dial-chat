@@ -1,11 +1,11 @@
 import { ChatSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class TemperatureSlider extends BaseElement {
-  constructor(page: Page) {
-    super(page, ChatSelectors.temperatureSlider);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, ChatSelectors.temperatureSlider, parentLocator);
   }
   public slider = this.getChildElementBySelector(ChatSelectors.slider);
 

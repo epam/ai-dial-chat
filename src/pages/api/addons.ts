@@ -13,9 +13,9 @@ import {
   ProxyOpenAIEntity,
 } from '@/src/types/openai';
 
-import { authOptions } from './auth/[...nextauth]';
-
 import { errorsMessages } from '@/src/constants/errors';
+
+import { authOptions } from './auth/[...nextauth]';
 
 // export const config = {
 //   runtime: 'edge',

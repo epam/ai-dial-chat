@@ -3,11 +3,11 @@ import { BaseElement } from './baseElement';
 
 import { Tags } from '@/e2e/src/ui/domData';
 import { AddonsDialog } from '@/e2e/src/ui/webElements/addonsDialog';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class Addons extends BaseElement {
-  constructor(page: Page) {
-    super(page, ChatSelectors.addons);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, ChatSelectors.addons, parentLocator);
   }
 
   private addonsDialog!: AddonsDialog;

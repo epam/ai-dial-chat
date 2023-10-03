@@ -28,3 +28,5 @@ export * from './modelsDialog';
 export * from './moreInfo';
 export * from './chatHeader';
 export * from './chatInfoTooltip';
+export * from './compare';
+export * from './conversationToCompare';

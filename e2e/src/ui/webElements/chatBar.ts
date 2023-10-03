@@ -2,6 +2,7 @@ import { ChatBarSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 import { Conversations } from './conversations';
 
+import { API } from '@/e2e/src/testData';
 import { FolderConversations } from '@/e2e/src/ui/webElements/folderConversations';
 import { Page } from '@playwright/test';
 
@@ -27,6 +28,8 @@ export class ChatBar extends BaseElement {
     ChatBarSelectors.deleteConversations,
   );
 
+  public compareButton = new BaseElement(this.page, ChatBarSelectors.compare);
+
   getConversations(): Conversations {
     if (!this.conversations) {
       this.conversations = new Conversations(this.page);
@@ -42,7 +45,11 @@ export class ChatBar extends BaseElement {
   }
 
   public async createNewConversation() {
+    const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
+    const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
     await this.newConversationButton.click();
+    await modelsResponsePromise;
+    await addonsResponsePromise;
   }
 
   public async createNewFolder() {
@@ -51,5 +58,13 @@ export class ChatBar extends BaseElement {
 
   public async deleteAllConversations() {
     await this.deleteAllConversationsButton.click();
+  }
+
+  public async openCompareMode() {
+    const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
+    const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
+    await this.compareButton.click();
+    await modelsResponsePromise;
+    await addonsResponsePromise;
   }
 }

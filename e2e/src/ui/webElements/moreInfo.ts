@@ -1,11 +1,11 @@
 import { ChatSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class MoreInfo extends BaseElement {
-  constructor(page: Page) {
-    super(page, ChatSelectors.moreInfo);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, ChatSelectors.moreInfo, parentLocator);
   }
 
   public infoApplication = this.getChildElementBySelector(

@@ -2,11 +2,11 @@ import { Tags } from '../domData';
 import { ChatSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class RecentEntities extends BaseElement {
-  constructor(page: Page) {
-    super(page, ChatSelectors.recentEntities);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, ChatSelectors.recentEntities, parentLocator);
   }
 
   public recentEntityNames = this.getChildElementBySelector(
