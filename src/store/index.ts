@@ -8,8 +8,6 @@ import { ConversationsEpics } from './conversations/conversations.epics';
 import { conversationsSlice } from './conversations/conversations.reducers';
 import { ModelsEpics } from './models/models.epics';
 import { modelsSlice } from './models/models.reducers';
-import { OverlayEventsEpics } from './overlay-events/overlay-events.epics';
-import { overlayEventsSlice } from './overlay-events/overlay-events.reducers';
 import { PromptsEpics } from './prompts/prompts.epics';
 import { promptsSlice } from './prompts/prompts.reducers';
 import { settingsSlice } from './settings/settings.reducers';
@@ -22,7 +20,6 @@ export const rootEpic = combineEpics(
   UIEpics,
   PromptsEpics,
   ConversationsEpics,
-  OverlayEventsEpics,
 );
 const epicMiddleware = createEpicMiddleware();
 
@@ -34,7 +31,6 @@ export const store = configureStore({
     conversations: conversationsSlice.reducer,
     prompts: promptsSlice.reducer,
     settings: settingsSlice.reducer,
-    overlayEvents: overlayEventsSlice.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ thunk: false, serializableCheck: false }).concat(
