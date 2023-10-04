@@ -1,6 +1,8 @@
 import { Chat, ChatBar, PromptBar } from '../webElements';
 import { BasePage } from './basePage';
 
+import { ExpectedConstants } from '@/e2e/src/testData';
+
 export class DialHomePage extends BasePage {
   private chat!: Chat;
   private chatBar!: ChatBar;
@@ -27,12 +29,19 @@ export class DialHomePage extends BasePage {
     return this.promptBar;
   }
 
-  public async waitForPageLoaded() {
-    await this.getChatBar().waitForState({ state: 'attached' });
+  public async waitForPageLoaded(isEmptyHistory = false) {
+    const chatBar = this.getChatBar();
+    await chatBar.waitForState({ state: 'attached' });
     await this.getPromptBar().waitForState({ state: 'attached' });
     const chat = this.getChat();
     await chat.waitForState({ state: 'attached' });
     await chat.waitForChatLoaded();
     await chat.getSendMessage().waitForMessageInputLoaded();
+    if (isEmptyHistory) {
+      await chatBar
+        .getConversations()
+        .getConversationByName(ExpectedConstants.newConversationTitle)
+        .waitFor();
+    }
   }
 }

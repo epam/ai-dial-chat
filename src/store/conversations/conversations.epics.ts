@@ -606,7 +606,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           observer();
           return observable;
         }),
-        timeout(20000),
+        timeout(120000),
         mergeMap((resp) =>
           iif(
             () => resp.done,

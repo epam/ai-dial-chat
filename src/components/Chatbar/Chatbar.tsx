@@ -28,22 +28,24 @@ const ChatActionsBlock = () => {
   );
 
   return (
-    <button
-      className={`flex shrink-0 cursor-pointer select-none items-center gap-3 p-5 transition-colors duration-200 hover:bg-green/15  disabled:cursor-not-allowed`}
-      onClick={() => {
-        dispatch(
-          ConversationsActions.createNewConversations({
-            names: [DEFAULT_CONVERSATION_NAME],
-          }),
-        );
-        dispatch(ConversationsActions.setSearchTerm({ searchTerm: '' }));
-      }}
-      disabled={!!messageIsStreaming}
-      data-qa="new-chat"
-    >
-      <PlusIcon className="text-gray-500" width={18} height={18} />
-      {t('New conversation')}
-    </button>
+    <div className="flex p-2">
+      <button
+        className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded p-3 transition-colors duration-200 hover:bg-green/15 disabled:cursor-not-allowed"
+        onClick={() => {
+          dispatch(
+            ConversationsActions.createNewConversations({
+              names: [DEFAULT_CONVERSATION_NAME],
+            }),
+          );
+          dispatch(ConversationsActions.setSearchTerm({ searchTerm: '' }));
+        }}
+        disabled={!!messageIsStreaming}
+        data-qa="new-chat"
+      >
+        <PlusIcon className="text-gray-500" width={18} height={18} />
+        {t('New conversation')}
+      </button>
+    </div>
   );
 };
 

@@ -185,6 +185,7 @@ export const TooltipContent = forwardRef<
         className={`z-50 rounded bg-gray-100 px-2 py-1 text-left shadow dark:bg-black ${
           context.getFloatingProps(props).className
         }`}
+        data-qa="tooltip"
       >
         {props.children}
         <FloatingArrow

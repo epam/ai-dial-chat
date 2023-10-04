@@ -219,9 +219,10 @@ export const ConversationComponent = ({ conversation }: Props) => {
         </div>
       ) : (
         <button
-          className={`group flex h-full w-full cursor-pointer items-center gap-3 px-3 transition-colors duration-200 ${
-            messageIsStreaming ? 'disabled:cursor-not-allowed' : ''
-          }`}
+          className={classNames(
+            'group flex h-full w-full cursor-pointer items-center gap-3 pl-3 pr-0.5 transition-colors duration-200',
+            messageIsStreaming && 'disabled:cursor-not-allowed',
+          )}
           onClick={() => {
             setIsDeleting(false);
             setIsRenaming(false);
@@ -246,9 +247,10 @@ export const ConversationComponent = ({ conversation }: Props) => {
             inverted={theme === 'dark'}
           />
           <div
-            className={`relative max-h-5 flex-1 truncate break-all text-left leading-3  ${
-              isDeleting || isRenaming ? 'pr-10' : 'group-hover:pr-5'
-            }`}
+            className={classNames(
+              'relative max-h-5 flex-1 truncate break-all text-left',
+              isDeleting || isRenaming ? 'pr-10' : 'group-hover:pr-5',
+            )}
           >
             {conversation.name}
           </div>

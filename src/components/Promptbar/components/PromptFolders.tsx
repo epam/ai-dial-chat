@@ -21,22 +21,19 @@ const PromptFoldersTemplate = ({ folder }: PromptFoldersProps) => {
   );
 
   return (
-    <>
+    <div className="ml-5 flex flex-col gap-1 border-l border-gray-500">
       {filteredPrompts
         .filter((p) => p.folderId)
         .map((prompt, index) => {
           if (prompt.folderId === folder.id) {
             return (
-              <div
-                key={index}
-                className="ml-5 gap-2 border-l border-gray-500 pl-2"
-              >
+              <div key={index} className="pl-2">
                 <PromptComponent prompt={prompt} />
               </div>
             );
           }
         })}
-    </>
+    </div>
   );
 };
 

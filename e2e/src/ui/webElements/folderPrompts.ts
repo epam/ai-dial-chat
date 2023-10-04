@@ -17,7 +17,7 @@ export class FolderPrompts extends Folders {
 
   public getFolderPrompts(name: string, index?: number) {
     return this.getFolderByName(name, index).locator(
-      `~${Tags.div} > ${PromptBarSelectors.prompt}`,
+      `~${Tags.div} ${PromptBarSelectors.prompt}`,
     );
   }
 

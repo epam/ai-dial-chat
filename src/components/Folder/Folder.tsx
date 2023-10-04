@@ -64,7 +64,7 @@ const Folder = ({
   const [isSelected, setIsSelected] = useState(false);
   const wrapperRef = useRef(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
-  const dragDropElement = useRef<HTMLButtonElement>(null);
+  const dragDropElement = useRef<HTMLDivElement>(null);
 
   const handleRename = useCallback(() => {
     onRenameFolder(renameValue);
@@ -108,8 +108,12 @@ const Folder = ({
     }
   }, []);
 
-  const removeHighlight = useCallback((evt: any) => {
-    if (evt.target === dragDropElement.current) {
+  const removeHighlight = useCallback((e: any) => {
+    if (
+      (e.target === dragDropElement.current ||
+        dragDropElement.current?.contains(e.target)) &&
+      !dragDropElement.current?.contains(e.relatedTarget)
+    ) {
       setIsDraggingOver(false);
     }
   }, []);
@@ -155,10 +159,20 @@ const Folder = ({
   const bgColor = highlightColor === 'green' ? 'bg-green/15' : 'bg-violet/15';
 
   return (
-    <>
+    <div
+      className={classNames(
+        'rounded transition-colors duration-200',
+        isDraggingOver && draggingColor,
+      )}
+      onDrop={dropHandler}
+      onDragOver={allowDrop}
+      onDragEnter={highlightDrop}
+      onDragLeave={removeHighlight}
+      ref={dragDropElement}
+    >
       <div
         className={classNames(
-          ' relative flex h-[42px] items-center rounded',
+          'relative flex h-[42px] items-center rounded',
           isRenaming || isDeleting ? bgColor : '',
           hoverColor,
         )}
@@ -180,23 +194,16 @@ const Folder = ({
           </div>
         ) : (
           <button
-            className={`group flex h-full w-full cursor-pointer items-center gap-3 px-3 transition-colors duration-200 ${
-              isDraggingOver ? `${draggingColor}` : ''
-            }`}
+            className={`group flex h-full w-full cursor-pointer items-center gap-3 px-3`}
             onClick={() => {
               setIsOpen(!isOpen);
               setIsSelected(true);
             }}
-            onDrop={(e) => dropHandler(e)}
-            onDragOver={allowDrop}
-            onDragEnter={highlightDrop}
-            onDragLeave={removeHighlight}
-            ref={dragDropElement}
           >
             <CaretIconComponent isOpen={isOpen} />
 
             <div
-              className={`pointer-events-none relative max-h-5 flex-1 truncate break-all text-left leading-3 ${
+              className={`pointer-events-none relative max-h-5 flex-1 truncate break-all text-left ${
                 isRenaming || isDeleting ? 'pr-10' : 'group-hover:pr-5'
               }`}
             >
@@ -262,7 +269,7 @@ const Folder = ({
       </div>
 
       {isOpen ? folderComponent : null}
-    </>
+    </div>
   );
 };
 

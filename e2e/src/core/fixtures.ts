@@ -22,6 +22,7 @@ import { PromptData } from '@/e2e/src/testData/prompts/promptData';
 import { Addons } from '@/e2e/src/ui/webElements/addons';
 import { AddonsDialog } from '@/e2e/src/ui/webElements/addonsDialog';
 import { ChatInfoTooltip } from '@/e2e/src/ui/webElements/chatInfoTooltip';
+import { ChatTitleTooltip } from '@/e2e/src/ui/webElements/chatTitleTooltip';
 import { Compare } from '@/e2e/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/e2e/src/ui/webElements/confirmationDialog';
 import { DropdownMenu } from '@/e2e/src/ui/webElements/dropdownMenu';
@@ -82,6 +83,7 @@ const test = base.extend<
     leftConversationSettings: ConversationSettings;
     rightChatHeader: ChatHeader;
     leftChatHeader: ChatHeader;
+    chatTitleTooltip: ChatTitleTooltip;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -262,6 +264,10 @@ const test = base.extend<
   leftChatHeader: async ({ compare }, use) => {
     const leftChatHeader = compare.getLeftChatHeader();
     await use(leftChatHeader);
+  },
+  chatTitleTooltip: async ({ page }, use) => {
+    const chatTitleTooltip = new ChatTitleTooltip(page);
+    await use(chatTitleTooltip);
   },
 });
 

@@ -1,5 +1,5 @@
-export const ClearConversationsDialog = {
-  clearConversationsDialog: '[data-qa="confirmation-dialog"]',
+export const Dialog = {
+  confirmationDialog: '[data-qa="confirmation-dialog"]',
   cancelDialog: '[data-qa="cancel-dialog"]',
   confirm: '[data-qa="confirm"]',
 };
@@ -37,4 +37,5 @@ export const InfoTooltip = {
   promptInfo: '[data-qa="prompt-info"]',
   tempInfo: '[data-qa="temp-info"]',
   addonsInfo: '[data-qa="addons-info"]',
+  tooltip: '[data-qa="tooltip"]',
 };

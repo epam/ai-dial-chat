@@ -23,7 +23,7 @@ test(
   }) => {
     setTestIds('EPMRTC-933', 'EPMRTC-398');
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
+    await dialHomePage.waitForPageLoaded(true);
     await chatBar.createNewConversation();
 
     const todayConversations = await conversations.getTodayConversations();
@@ -95,40 +95,54 @@ test(
   },
 );
 
-test('Default model in new chat is set as in previous chat', async ({
-  dialHomePage,
-  chatBar,
-  recentEntities,
-  talkToSelector,
-  chat,
-  setTestIds,
-}) => {
-  setTestIds('EPMRTC-400');
+test(
+  'Default model in new chat is set as in previous chat.\n' +
+    'Error message is shown if to send an empty message.\n' +
+    'Chat name is shown in chat header',
+  async ({
+    dialHomePage,
+    chatBar,
+    recentEntities,
+    talkToSelector,
+    chat,
+    sendMessage,
+    chatHeader,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-400', 'EPMRTC-474', 'EPMRTC-817');
+    const request = 'test';
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded(true);
+    await talkToSelector.selectModel(
+      OpenAIEntityModels[OpenAIEntityModelID.BISON_001].name,
+    );
+    await dialHomePage.acceptBrowserDialog(ExpectedConstants.enterMessageAlert);
+    await sendMessage.send('');
 
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
-  await talkToSelector.selectModel(
-    OpenAIEntityModels[OpenAIEntityModelID.BISON_001].name,
-  );
-  await chat.sendRequest('test');
-  await chatBar.createNewConversation();
+    await chat.sendRequestWithButton(request);
+    const chatTitle = await chatHeader.chatTitle.getElementInnerContent();
+    expect
+      .soft(chatTitle, ExpectedMessages.headerTitleCorrespondRequest)
+      .toBe(request);
 
-  const addonBorderColors = await recentEntities
-    .getRecentEntity(OpenAIEntityModels[OpenAIEntityModelID.MIRROR].name)
-    .getAllBorderColors();
-  Object.values(addonBorderColors).forEach((borders) => {
-    borders.forEach((borderColor) => {
-      expect
-        .soft(borderColor, ExpectedMessages.defaultTalkToIsValid)
-        .toBe(Colors.highlightedEntity);
+    await chatBar.createNewConversation();
+    const addonBorderColors = await recentEntities
+      .getRecentEntity(OpenAIEntityModels[OpenAIEntityModelID.MIRROR].name)
+      .getAllBorderColors();
+    Object.values(addonBorderColors).forEach((borders) => {
+      borders.forEach((borderColor) => {
+        expect
+          .soft(borderColor, ExpectedMessages.defaultTalkToIsValid)
+          .toBe(Colors.highlightedEntity);
+      });
     });
-  });
 
-  const recentTalkTo = await recentEntities.getRecentEntityNames();
-  expect
-    .soft(recentTalkTo[0], ExpectedMessages.recentEntitiesIsOnTop)
-    .toBe(OpenAIEntityModels[OpenAIEntityModelID.BISON_001].name);
-});
+    const recentTalkTo = await recentEntities.getRecentEntityNames();
+    expect
+      .soft(recentTalkTo[0], ExpectedMessages.recentEntitiesIsOnTop)
+      .toBe(OpenAIEntityModels[OpenAIEntityModelID.BISON_001].name);
+  },
+);
 
 test('Settings on default screen are saved in local storage when temperature = 0', async ({
   dialHomePage,
@@ -142,7 +156,7 @@ test('Settings on default screen are saved in local storage when temperature = 0
 }) => {
   setTestIds('EPMRTC-406');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   const randomModel = GeneratorUtil.randomArrayElement(
     await apiHelper.getModelNames(),
   );
@@ -196,11 +210,11 @@ test('Recent "Talk to" list is updated', async ({
 }) => {
   setTestIds('EPMRTC-1044');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   await talkToSelector.selectApplication(
     OpenAIEntityModels[OpenAIEntityModelID.MIRROR].name,
   );
-  await chat.sendRequest('test message');
+  await chat.sendRequestWithButton('test message');
   await chatBar.createNewConversation();
   const appBorderColors = await recentEntities
     .getRecentEntity(OpenAIEntityModels[OpenAIEntityModelID.MIRROR].name)
