@@ -70,17 +70,17 @@ export class Chat extends BaseElement {
     return this.compare;
   }
 
-  public async sendRequest(message: string, waitForAnswer = true) {
-    const requestPromise = this.waitForRequestSent(message);
-    await this.getSendMessage().send(message);
-    const request = await requestPromise;
-    await this.waitForResponse(waitForAnswer);
-    return request.postDataJSON();
+  public async sendRequestWithKeyboard(message: string, waitForAnswer = true) {
+    return this.sendRequest(
+      message,
+      () => this.getSendMessage().sendWithEnterKey(message),
+      waitForAnswer,
+    );
   }
 
-  public async regenerateResponse() {
+  public async regenerateResponse(waitForAnswer = true) {
     await this.regenerate.click();
-    await this.waitForResponse(true);
+    await this.waitForResponse(waitForAnswer);
   }
 
   public async startReplay(userRequest?: string, waitForAnswer = false) {
@@ -121,11 +121,6 @@ export class Chat extends BaseElement {
       : this.page.waitForRequest(API.chatHost);
   }
 
-  public async stopReplay() {
-    await this.stopGenerating.click();
-    await this.proceedGenerating.waitForState();
-  }
-
   public async proceedReplaying(waitForAnswer = false) {
     const requestPromise = this.page.waitForRequest(API.chatHost);
     await this.proceedGenerating.click();
@@ -142,5 +137,24 @@ export class Chat extends BaseElement {
 
   public async waitForChatLoaded() {
     await this.chatSpinner.waitForState({ state: 'detached' });
+  }
+
+  private async sendRequest(
+    message: string,
+    sendMethod: () => Promise<void>,
+    waitForAnswer = true,
+  ) {
+    const requestPromise = this.waitForRequestSent(message);
+    await sendMethod();
+    const request = await requestPromise;
+    await this.waitForResponse(waitForAnswer);
+    return request.postDataJSON();
+  }
+  public async sendRequestWithButton(message: string, waitForAnswer = true) {
+    return this.sendRequest(
+      message,
+      () => this.getSendMessage().send(message),
+      waitForAnswer,
+    );
   }
 }

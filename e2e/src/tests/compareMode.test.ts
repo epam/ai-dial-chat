@@ -32,7 +32,7 @@ test('Compare mode button creates two new chats and opens them in compare mode',
   setTestIds('EPMRTC-537');
   await test.step('Click on compare button on bottom of chat bar and verify compare mode is opened for new two chats', async () => {
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
+    await dialHomePage.waitForPageLoaded(true);
     await chatBar.openCompareMode();
     await compare.waitForState();
     const chatsCount = await compare.gerConversationsCount();
@@ -137,7 +137,7 @@ test('Check the list of available conversations', async ({
 
 test(
   'Check replay chats are not included in Select conversation drop down list.\n' +
-    'Compare mode is closed  if to switch to another chat',
+    'Compare mode is closed if to switch to another chat',
   async ({
     dialHomePage,
     setTestIds,
@@ -332,6 +332,7 @@ test('Generate new response for two chats in compare mode. GPT models', async ({
   setTestIds,
   conversationData,
   localStorageManager,
+  compare,
 }) => {
   setTestIds('EPMRTC-552');
 
@@ -370,6 +371,7 @@ test('Generate new response for two chats in compare mode. GPT models', async ({
   await test.step('Send new message in compare chat and verify response is displayed for both and API requests are correct', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    await compare.waitForComparedConversationsLoaded();
     const requestsData = await chat.sendRequestInCompareMode(
       'test message',
       {
@@ -379,7 +381,7 @@ test('Generate new response for two chats in compare mode. GPT models', async ({
       true,
     );
 
-    const messagesCount = await chatMessages.getLastRowCompareMessagesCount();
+    const messagesCount = await chatMessages.getCompareMessagesCount();
     expect
       .soft(
         messagesCount,
@@ -431,7 +433,8 @@ test('Generate new response for two chats in compare mode. GPT models', async ({
   });
 });
 
-test('Generate new response for two chats in compare mode. Bison and GPT-4-32 which have different response time', async ({
+//TODO: enable when chat API for Gtp-4 is fixed
+test.skip('Generate new response for two chats in compare mode. Bison and GPT-4-32 which have different response time', async ({
   dialHomePage,
   chat,
   chatMessages,
@@ -920,5 +923,60 @@ test('Apply changes with new settings for both chats in compare mode and check c
     expect
       .soft(leftAddonsInfo.length, ExpectedMessages.chatInfoAddonsCountIsValid)
       .toBe(0);
+  });
+});
+
+test('Stop regenerating in compare mode', async ({
+  dialHomePage,
+  chat,
+  chatMessages,
+  setTestIds,
+  conversationData,
+  localStorageManager,
+  compare,
+  setIssueIds,
+}) => {
+  setTestIds('EPMRTC-556');
+  setIssueIds('285');
+  let firstConversation: Conversation;
+  let secondConversation: Conversation;
+
+  await test.step('Prepare two conversations for comparing', async () => {
+    firstConversation = conversationData.prepareDefaultConversation(
+      OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
+    );
+    conversationData = conversationData.resetData();
+    secondConversation = conversationData.prepareDefaultConversation(
+      OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
+    );
+    await localStorageManager.setConversationHistory(
+      firstConversation,
+      secondConversation,
+    );
+    await localStorageManager.setSelectedConversation(
+      firstConversation,
+      secondConversation,
+    );
+  });
+
+  await test.step('Send new message in compare chat and stop generation', async () => {
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded();
+    await compare.waitForComparedConversationsLoaded();
+    await chat.sendRequestInCompareMode('write down 30 adjectives', {
+      rightEntity: firstConversation.model.id,
+      leftEntity: secondConversation.model.id,
+    });
+    await chat.stopGenerating.click();
+  });
+  await test.step('Verify response is not received by both chats, stop is done immediately', async () => {
+    const isResponseLoading = await chatMessages.isResponseLoading();
+    expect
+      .soft(isResponseLoading, ExpectedMessages.responseLoadingStopped)
+      .toBeFalsy();
+    const isStopButtonVisible = await chat.stopGenerating.isVisible();
+    expect
+      .soft(isStopButtonVisible, ExpectedMessages.responseLoadingStopped)
+      .toBeFalsy();
   });
 });

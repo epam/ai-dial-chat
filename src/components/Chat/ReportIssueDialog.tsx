@@ -1,8 +1,17 @@
-import { FC, MutableRefObject, useEffect, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  FC,
+  FormEvent,
+  MutableRefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { onChangeHandler } from '@/src/utils/app/components-helpers';
+import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { ReportIssueBody } from '@/src/types/report-issue';
 
@@ -12,6 +21,9 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { errorsMessages } from '@/src/constants/errors';
 
 import XMark from '../../../public/images/icons/xmark.svg';
+import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
+
+import classNames from 'classnames';
 
 const checkValidity = (
   inputsRefs: MutableRefObject<HTMLInputElement | HTMLTextAreaElement>[],
@@ -22,7 +34,9 @@ const checkValidity = (
   inputsRefs.forEach(({ current }) => {
     if (
       current.required &&
-      (!current.value || (current.value === 'on' && !(current as any).checked))
+      (!current.value ||
+        (current.value === 'on' && !(current as any).checked) ||
+        !current.validity.valid)
     ) {
       isValid = false;
       current.focus();
@@ -60,15 +74,82 @@ interface Props {
 
 export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
   const { t } = useTranslation('settings');
-  const modalRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLFormElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
-  const inputs = [titleInputRef, descriptionInputRef];
 
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
 
+  const [submitted, setSubmitted] = useState(false);
+
   const dispatch = useAppDispatch();
+
+  const handleClose = useCallback(() => {
+    setSubmitted(false);
+    onClose();
+  }, [onClose]);
+
+  const onChangeTitle = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
+  }, []);
+
+  const onChangeDescription = useCallback(
+    (e: ChangeEvent<HTMLTextAreaElement>) => {
+      setDescription(e.target.value);
+    },
+    [],
+  );
+
+  const handleSubmit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      setSubmitted(true);
+      const inputs = [titleInputRef, descriptionInputRef];
+
+      if (
+        checkValidity(
+          inputs as unknown as MutableRefObject<
+            HTMLInputElement | HTMLTextAreaElement
+          >[],
+        )
+      ) {
+        dispatch(
+          UIActions.showToast({
+            message: t('Reporting an issue in progress...'),
+            type: 'loading',
+          }),
+        );
+        handleClose();
+
+        const response = await reportIssue({
+          title,
+          description,
+        });
+
+        if (response.ok) {
+          dispatch(
+            UIActions.showToast({
+              message: t('Issue reported successfully'),
+              type: 'success',
+            }),
+          );
+          setTitle('');
+          setDescription('');
+        } else {
+          dispatch(
+            UIActions.showToast({
+              message: t(errorsMessages.generalServer, {
+                ns: 'common',
+              }),
+              type: 'error',
+            }),
+          );
+        }
+      }
+    },
+    [description, dispatch, handleClose, t, title],
+  );
 
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
@@ -79,7 +160,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
 
     const handleMouseUp = () => {
       window.removeEventListener('mouseup', handleMouseUp);
-      onClose();
+      handleClose();
     };
 
     window.addEventListener('mousedown', handleMouseDown);
@@ -87,12 +168,16 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
     return () => {
       window.removeEventListener('mousedown', handleMouseDown);
     };
-  }, [onClose]);
+  }, [handleClose]);
 
   // Render nothing if the dialog is not open.
   if (!isOpen) {
     return <></>;
   }
+
+  const inputClassName = classNames('input-form', 'peer', {
+    'input-invalid': submitted,
+  });
 
   // Render the dialog.
   return (
@@ -104,23 +189,27 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
             aria-hidden="true"
           />
 
-          <div
+          <form
             ref={modalRef}
-            className="inline-block max-h-[800px] overflow-y-auto rounded bg-gray-100 px-4 pb-4 pt-5 text-left align-bottom shadow-xl transition-all dark:bg-gray-700 sm:my-8 sm:max-h-[700px] sm:w-full sm:max-w-[550px] sm:p-6 sm:align-middle"
+            noValidate
+            className="relative inline-block max-h-[800px] overflow-y-auto rounded bg-gray-100 px-4 pb-4 pt-5 text-left align-bottom shadow-xl transition-all dark:bg-gray-700 sm:my-8 sm:max-h-[700px] sm:w-full sm:max-w-[550px] sm:p-6 sm:align-middle"
             role="dialog"
+            onSubmit={handleSubmit}
           >
-            <div className="flex justify-end text-gray-500">
-              <button onClick={onClose}>
-                <XMark height={24} width={24} />
-              </button>
-            </div>
+            <button
+              className="absolute right-2 top-2 rounded text-gray-500 hover:text-blue-700"
+              onClick={handleClose}
+            >
+              <XMark height={24} width={24} />
+            </button>
+
             <div className="flex justify-between pb-4 text-base font-bold">
               {t('Report an issue')}
             </div>
 
-            <div className="mb-5">
+            <div className="mb-4">
               <label
-                className="mb-2 flex text-xs text-gray-500"
+                className="mb-1 flex text-xs text-gray-500"
                 htmlFor="projectNameInput"
               >
                 {t('Title')}
@@ -131,20 +220,19 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
                 name="titleInput"
                 value={title}
                 required
+                pattern="(?:\s+)*\w+(?:\s+\w+)*(?:\s+)*"
+                title=""
                 type="text"
-                onBlur={(e) => {
-                  e.target.classList.add('invalid:border-red-400');
-                }}
-                onChange={() => {
-                  onChangeHandler(titleInputRef, setTitle);
-                }}
-                className="m-0 w-full rounded border border-gray-400 bg-transparent p-3 dark:border-gray-600"
+                onBlur={onBlur}
+                onChange={onChangeTitle}
+                className={inputClassName}
               ></input>
+              <EmptyRequiredInputMessage />
             </div>
 
             <div className="mb-5">
               <label
-                className="mb-2 flex text-xs text-gray-500"
+                className="mb-1 flex text-xs text-gray-500"
                 htmlFor="businessJustificationInput"
               >
                 {t('Description')}
@@ -155,66 +243,22 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
                 name="descriptionInput"
                 value={description}
                 required
-                onBlur={(e) => {
-                  e.target.classList.add('invalid:border-red-400');
-                }}
-                onChange={() => {
-                  onChangeHandler(descriptionInputRef, setDescription);
-                }}
-                className="m-0 h-[200px] w-full rounded border border-gray-400 bg-transparent p-3 dark:border-gray-600"
+                title=""
+                onBlur={onBlur}
+                onChange={onChangeDescription}
+                className={inputClassName}
               ></textarea>
+              <EmptyRequiredInputMessage />
             </div>
-            <div className="flex justify-end">
+            <div className="flex  justify-end">
               <button
-                type="button"
+                type="submit"
                 className="rounded bg-blue-500 p-3 text-gray-100 hover:bg-blue-700 focus:border focus:border-gray-800 focus-visible:outline-none dark:focus:border-gray-200"
-                onClick={async () => {
-                  if (
-                    checkValidity(
-                      inputs as unknown as MutableRefObject<
-                        HTMLInputElement | HTMLTextAreaElement
-                      >[],
-                    )
-                  ) {
-                    dispatch(
-                      UIActions.showToast({
-                        message: t('Reporting an issue in progress...'),
-                        type: 'loading',
-                      }),
-                    );
-                    onClose();
-
-                    const response = await reportIssue({
-                      title,
-                      description,
-                    });
-
-                    if (response.ok) {
-                      dispatch(
-                        UIActions.showToast({
-                          message: t('Issue reported successfully'),
-                          type: 'success',
-                        }),
-                      );
-                      setTitle('');
-                      setDescription('');
-                    } else {
-                      dispatch(
-                        UIActions.showToast({
-                          message: t(errorsMessages.generalServer, {
-                            ns: 'common',
-                          }),
-                          type: 'error',
-                        }),
-                      );
-                    }
-                  }
-                }}
               >
                 {t('Report an issue')}
               </button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import { ChatSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { Tags } from '@/e2e/src/ui/domData';
+import { Attributes, Tags } from '@/e2e/src/ui/domData';
 import { keys } from '@/e2e/src/ui/keyboard';
 import { Page } from '@playwright/test';
 
@@ -55,6 +55,11 @@ export class ChatMessages extends BaseElement {
     }
   }
 
+  public async isResponseLoading() {
+    const loadingCursorCount = await this.loadingCursor.getElementsCount();
+    return loadingCursorCount > 0;
+  }
+
   public getChatMessage(message: string) {
     return this.chatMessages.getElementLocatorByText(message);
   }
@@ -69,7 +74,20 @@ export class ChatMessages extends BaseElement {
     return this.chatMessages.getNthElement(messagesCount).innerText();
   }
 
-  public async getLastRowCompareMessagesCount() {
+  public async getLastMessageIconAttributes() {
+    const messagesCount = await this.chatMessages.getElementsCount();
+    const lastMessageIcon = await this.chatMessages
+      .getNthElement(messagesCount)
+      .locator(ChatSelectors.chatIcon);
+    const iconEntity = await lastMessageIcon.getAttribute(Attributes.alt);
+    const iconUrl = await lastMessageIcon.getAttribute(Attributes.src);
+    return {
+      iconEntity: iconEntity!.replaceAll(' icon', ''),
+      iconUrl: iconUrl!,
+    };
+  }
+
+  public async getCompareMessagesCount() {
     return this.compareChatMessages.getElementsCount();
   }
 
@@ -104,28 +122,50 @@ export class ChatMessages extends BaseElement {
     return this.messageStage(messagesIndex, stageIndex).isVisible();
   }
 
-  public getChatMessageTextarea(message: string) {
-    return this.getChatMessage(message).locator(Tags.textarea);
+  public getChatMessageTextarea() {
+    return this.getChildElementBySelector(Tags.textarea);
   }
 
-  public editIcon = new BaseElement(this.page, ChatSelectors.editIcon);
+  public messageEditIcon = (message: string) =>
+    this.getChatMessage(message).locator(ChatSelectors.editIcon);
   public saveAndSubmit = new BaseElement(
     this.page,
     ChatSelectors.saveAndSubmit,
   );
+  public cancel = new BaseElement(this.page, ChatSelectors.cancelEdit);
+
+  public messageDeleteIcon = (message: string) =>
+    this.getChatMessage(message).locator(ChatSelectors.deleteIcon);
 
   public async openEditMessageMode(message: string) {
     const chatMessage = await this.getChatMessage(message);
     await chatMessage.hover();
-    await this.editIcon.click();
+    await this.messageEditIcon(message).click();
   }
 
-  public async editMessage(currentMessage: string, newMessage: string) {
-    const textArea = this.getChatMessageTextarea(currentMessage);
-    await textArea.click();
-    await this.page.keyboard.press(keys.ctrlPlusA);
-    await textArea.fill(newMessage);
+  public async editMessage(newMessage: string) {
+    await this.fillEditData(newMessage);
     await this.saveAndSubmit.click();
     await this.waitForResponseReceived();
+  }
+
+  public async fillEditData(newMessage: string) {
+    const textArea = this.getChatMessageTextarea();
+    await textArea.click();
+    await this.page.keyboard.press(keys.ctrlPlusA);
+    await textArea.fillInInput(newMessage);
+  }
+
+  public async isSaveButtonEnabled() {
+    const disabledAttributeValue = await this.saveAndSubmit.getAttribute(
+      Attributes.disabled,
+    );
+    return disabledAttributeValue === undefined;
+  }
+
+  public async openDeleteMessageDialog(message: string) {
+    const chatMessage = await this.getChatMessage(message);
+    await chatMessage.hover();
+    await this.messageDeleteIcon(message).click();
   }
 }

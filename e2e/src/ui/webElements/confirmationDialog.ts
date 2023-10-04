@@ -1,20 +1,14 @@
-import { ClearConversationsDialog } from '@/e2e/src/ui/selectors/dialogSelectors';
+import { Dialog } from '@/e2e/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/e2e/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
 
 export class ConfirmationDialog extends BaseElement {
   constructor(page: Page) {
-    super(page, ClearConversationsDialog.clearConversationsDialog);
+    super(page, Dialog.confirmationDialog);
   }
 
-  public cancelButton = new BaseElement(
-    this.page,
-    ClearConversationsDialog.cancelDialog,
-  );
-  public confirmButton = new BaseElement(
-    this.page,
-    ClearConversationsDialog.confirm,
-  );
+  public cancelButton = new BaseElement(this.page, Dialog.cancelDialog);
+  public confirmButton = new BaseElement(this.page, Dialog.confirm);
 
   public async cancelDialog() {
     await this.cancelButton.click();

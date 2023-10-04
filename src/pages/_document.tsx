@@ -19,9 +19,24 @@ export default function Document(props: Props) {
           name="apple-mobile-web-app-title"
           content={process.env.NEXT_PUBLIC_APP_NAME || 'Chatbot UI'}
         ></meta>
+        <meta
+          name="viewport"
+          content="height=device-height ,width=device-width, initial-scale=1, user-scalable=no"
+        />
         {!!process.env.THEMES_CONFIG_HOST && (
           <link rel="stylesheet" href={`api/themes-config`} />
         )}
+        <link
+          rel="icon"
+          href={`api/themes-image?name=favicon`}
+          sizes="any"
+          type="image/png"
+        />
+        <link
+          rel="apple-touch-icon"
+          href={`api/themes-image?name=favicon`}
+          type="image/png"
+        />
       </Head>
       <body>
         <Script id="theme-script" strategy="beforeInteractive">

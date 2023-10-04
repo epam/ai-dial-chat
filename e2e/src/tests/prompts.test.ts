@@ -19,7 +19,7 @@ test('Create new prompt', async ({
 }) => {
   setTestIds('EPMRTC-945');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   await conversationSettings.waitForState();
   await promptBar.createNewPrompt();
   expect
@@ -429,7 +429,7 @@ test(`[UI] Delete all prompts button doesn't exist if not prompts are created`, 
 }) => {
   setTestIds('EPMRTC-973');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
 
   const isDeleteAllPromptVisible =
     await promptBar.deleteAllPromptsButton.isVisible();
@@ -513,7 +513,6 @@ test('Use prompt with parameters', async ({
 });
 
 test('Check that all parameters in prompt are required', async ({
-  page,
   dialHomePage,
   promptData,
   localStorageManager,
@@ -538,7 +537,9 @@ test('Check that all parameters in prompt are required', async ({
 
   const firstVariableValue = '20';
   const secondVariableValue = '30';
-  page.on('dialog', (dialog) => dialog.accept('Please fill out all variables'));
+  await dialHomePage.acceptBrowserDialog(
+    ExpectedConstants.fillVariablesAlertText,
+  );
   await variableModalDialog.submitButton.click();
   await variableModalDialog.setVariable(aVariable, firstVariableValue);
   await variableModalDialog.setVariable(bVariable, secondVariableValue);

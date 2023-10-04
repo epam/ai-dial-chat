@@ -84,9 +84,9 @@ const Sidebar = <T,>({
         onSearch={handleSearchTerm}
       />
       {actionButtons}
-      <div className="flex grow flex-col gap-[1px] divide-y divide-gray-300 overflow-auto dark:divide-gray-900">
+      <div className="flex grow flex-col gap-[1px] divide-y divide-gray-300 overflow-y-scroll dark:divide-gray-900">
         {folders?.length > 0 && (
-          <div className="flex p-2">{folderComponent}</div>
+          <div className="flex py-2 pl-2 pr-0.5">{folderComponent}</div>
         )}
 
         {filteredItems?.length > 0 ? (

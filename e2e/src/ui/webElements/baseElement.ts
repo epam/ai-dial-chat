@@ -147,4 +147,10 @@ export class BaseElement {
       );
     }, property);
   }
+
+  public async isElementWidthTruncated() {
+    const clientWidth = await this.rootLocator.evaluate((t) => t.clientWidth);
+    const scrollWidth = await this.rootLocator.evaluate((t) => t.scrollWidth);
+    return scrollWidth > clientWidth;
+  }
 }

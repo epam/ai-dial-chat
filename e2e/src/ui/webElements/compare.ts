@@ -74,4 +74,13 @@ export class Compare extends BaseElement {
   public async isConversationToCompareVisible() {
     return this.getConversationToCompare().isVisible();
   }
+
+  public async waitForComparedConversationsLoaded() {
+    await this.waitForState();
+    await this.getRightChatHeader().waitForState();
+    await this.getLeftChatHeader().waitForState();
+    const chatMessages = this.getChatMessages().compareChatMessages;
+    await chatMessages.getNthElement(0).waitFor();
+    await chatMessages.getNthElement(1).waitFor();
+  }
 }
