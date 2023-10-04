@@ -6,4 +6,5 @@ export enum Attributes {
   placeholder = 'placeholder',
   alt = 'alt',
   src = 'src',
+  disabled = 'disabled',
 }

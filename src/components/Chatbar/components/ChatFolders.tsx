@@ -22,22 +22,19 @@ const ChatFoldersTemplate = ({ folder }: ChatFoldersProps) => {
   );
 
   return (
-    <>
+    <div className="ml-5 flex flex-col gap-1 border-l border-gray-500">
       {conversations
         .filter((conversation) => conversation.folderId)
         .map((conversation, index) => {
           if (conversation.folderId === folder.id) {
             return (
-              <div
-                key={index}
-                className="ml-5 gap-2 border-l border-gray-500 pl-2"
-              >
+              <div key={index} className="pl-2">
                 <ConversationComponent conversation={conversation} />
               </div>
             );
           }
         })}
-    </>
+    </div>
   );
 };
 

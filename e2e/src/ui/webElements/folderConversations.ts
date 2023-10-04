@@ -35,7 +35,7 @@ export class FolderConversations extends Folders {
 
   public getFolderConversations(name: string, index?: number) {
     return this.getFolderByName(name, index).locator(
-      `~${Tags.div} > ${ChatBarSelectors.conversation}`,
+      `~${Tags.div} ${ChatBarSelectors.conversation}`,
     );
   }
 

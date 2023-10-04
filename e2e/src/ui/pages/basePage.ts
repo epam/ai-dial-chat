@@ -32,4 +32,8 @@ export class BasePage {
     await newBrowserTab?.bringToFront();
     return newBrowserTab;
   }
+
+  async acceptBrowserDialog(message: string) {
+    await this.page.on('dialog', (dialog) => dialog.accept(message));
+  }
 }

@@ -21,6 +21,8 @@ export const ExpectedConstants = {
   answerError:
     'Error happened during answering. Please check your internet connection and try again.',
   noConversationsAvailable: 'No conversations available',
+  fillVariablesAlertText: 'Please fill out all variables',
+  enterMessageAlert: 'Please enter a message',
 };
 
 export enum Groups {

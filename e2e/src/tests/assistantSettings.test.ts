@@ -36,7 +36,7 @@ test(
   }) => {
     setTestIds('EPMRTC-409', 'EPMRTC-410', 'EPMRTC-411');
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
+    await dialHomePage.waitForPageLoaded(true);
     await talkToSelector.selectAssistant(ExpectedConstants.presalesAssistant);
 
     const assistantBorderColors = await recentEntities
@@ -99,7 +99,7 @@ test('Default settings for Assistant are saved in local storage', async ({
 }) => {
   setTestIds('EPMRTC-412');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   await talkToSelector.selectAssistant(ExpectedConstants.presalesAssistant);
   await modelSelector.click();
   const modelsList = await modelSelector.getListOptions();
@@ -159,7 +159,7 @@ test('Selected settings are saved if to switch from Model to Assistant', async (
 }) => {
   setTestIds('EPMRTC-414');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   await entitySettings.setSystemPrompt(sysPrompt);
   await temperatureSlider.setTemperature(temp);
   await addons.selectAddon(
@@ -221,7 +221,7 @@ test('Selected settings are saved if to switch from Model to Assistant to Model.
 }) => {
   setTestIds('EPMRTC-415');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   const assistantTemp = 0.5;
   await entitySettings.setSystemPrompt(sysPrompt);
   await temperatureSlider.setTemperature(temp);
@@ -289,7 +289,7 @@ test('Selected settings are saved if to switch from Model to Assistant to Model.
 }) => {
   setTestIds('EPMRTC-1047');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   await entitySettings.setSystemPrompt(sysPrompt);
   await temperatureSlider.setTemperature(temp);
   await addons.selectAddon(ExpectedConstants.epamPresalesSearchAddon);
@@ -361,7 +361,7 @@ test('Selected settings are saved if to switch from Assistant to Application to 
   setTestIds('EPMRTC-418');
   setIssueIds('105');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   await talkToSelector.selectAssistant(ExpectedConstants.presalesAssistant);
   const randomModel = GeneratorUtil.randomArrayElement(expectedModels);
   await modelSelector.selectModel(randomModel);
@@ -422,7 +422,7 @@ test(
   }) => {
     setTestIds('EPMRTC-1122', 'EPMRTC-1123');
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
+    await dialHomePage.waitForPageLoaded(true);
     await talkToSelector.seeFullList();
 
     const expectedAssistant = await apiHelper.getAssistant(

@@ -6,6 +6,7 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/e2e/src/testData';
+import { GeneratorUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
 test(
@@ -14,9 +15,9 @@ test(
   async ({ dialHomePage, conversations, chat, setTestIds }) => {
     setTestIds('EPMRTC-583', 'EPMRTC-776');
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
+    await dialHomePage.waitForPageLoaded(true);
     const messageToSend = 'Hi';
-    await chat.sendRequest(messageToSend);
+    await chat.sendRequestWithButton(messageToSend);
     expect
       .soft(
         await conversations.getConversationByName(messageToSend).isVisible(),
@@ -43,7 +44,7 @@ test('Rename chat. Cancel', async ({
   setTestIds('EPMRTC-588');
   const newName = 'new name to cancel';
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   await conversations.openConversationDropdownMenu(
     ExpectedConstants.newConversationTitle,
   );
@@ -71,7 +72,7 @@ test('Rename chat before starting the conversation', async ({
   setTestIds('EPMRTC-584');
   const newName = 'new conversation name';
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   await conversations.openConversationDropdownMenu(
     ExpectedConstants.newConversationTitle,
   );
@@ -86,7 +87,8 @@ test('Rename chat before starting the conversation', async ({
       ExpectedMessages.conversationNameUpdated,
     )
     .toBeTruthy();
-  await chat.sendRequest('one more test message');
+
+  await chat.sendRequestWithButton('one more test message');
   expect
     .soft(
       await conversations.getConversationByName(newName).isVisible(),
@@ -95,32 +97,59 @@ test('Rename chat before starting the conversation', async ({
     .toBeTruthy();
 });
 
-test('Rename chat after starting the conversation', async ({
-  dialHomePage,
-  conversations,
-  conversationDropdownMenu,
-  conversationData,
-  localStorageManager,
-  setTestIds,
-}) => {
-  setTestIds('EPMRTC-585');
-  const newName = 'new conversation name';
-  const conversation = conversationData.prepareDefaultConversation();
-  await localStorageManager.setConversationHistory(conversation);
-  await localStorageManager.setSelectedConversation(conversation);
+test(
+  'Rename chat after starting the conversation.\n' +
+    'Long Chat name is cut in chat header. Named manually.\n' +
+    'Tooltip shows full long chat name in chat header. Named manually',
+  async ({
+    dialHomePage,
+    conversations,
+    conversationDropdownMenu,
+    conversationData,
+    localStorageManager,
+    chatHeader,
+    chatTitleTooltip,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-585', 'EPMRTC-821', 'EPMRTC-822');
+    const newName = GeneratorUtil.randomString(60);
+    const conversation = conversationData.prepareDefaultConversation();
+    await localStorageManager.setConversationHistory(conversation);
+    await localStorageManager.setSelectedConversation(conversation);
 
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
-  await conversations.openConversationDropdownMenu(conversation.name);
-  await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-  await conversations.editConversationNameWithEnter(conversation.name, newName);
-  expect
-    .soft(
-      await conversations.getConversationByName(newName).isVisible(),
-      ExpectedMessages.conversationNameUpdated,
-    )
-    .toBeTruthy();
-});
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded();
+    await conversations.openConversationDropdownMenu(conversation.name);
+    await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
+    await conversations.editConversationNameWithEnter(
+      conversation.name,
+      newName,
+    );
+    expect
+      .soft(
+        await conversations.getConversationByName(newName).isVisible(),
+        ExpectedMessages.conversationNameUpdated,
+      )
+      .toBeTruthy();
+
+    const isChatHeaderTitleTruncated =
+      await chatHeader.chatTitle.isElementWidthTruncated();
+    expect
+      .soft(
+        isChatHeaderTitleTruncated,
+        ExpectedMessages.chatHeaderTitleTruncated,
+      )
+      .toBeTruthy();
+    await chatHeader.chatTitle.hoverOver();
+    const tooltipChatHeaderTitle = await chatTitleTooltip.getChatTitle();
+    expect
+      .soft(
+        tooltipChatHeaderTitle,
+        ExpectedMessages.headerTitleCorrespondRequest,
+      )
+      .toBe(newName);
+  },
+);
 
 test('Menu for New conversation', async ({
   dialHomePage,
@@ -130,7 +159,7 @@ test('Menu for New conversation', async ({
 }) => {
   setTestIds('EPMRTC-594');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   await conversations.openConversationDropdownMenu(
     ExpectedConstants.newConversationTitle,
   );
@@ -328,7 +357,7 @@ test(
     const messageToEdit = lastWeekConversation.messages[0].content;
     await conversations.selectConversation(lastWeekConversation.name);
     await chatMessages.openEditMessageMode(messageToEdit);
-    await chatMessages.editMessage(messageToEdit, 'updated message');
+    await chatMessages.editMessage('updated message');
     todayConversations = await conversations.getTodayConversations();
     expect
       .soft(
@@ -338,7 +367,7 @@ test(
       .toBeTruthy();
 
     await conversations.selectConversation(lastMonthConversation.name);
-    await chat.sendRequest('one more test message');
+    await chat.sendRequestWithButton('one more test message');
     todayConversations = await conversations.getTodayConversations();
     expect
       .soft(

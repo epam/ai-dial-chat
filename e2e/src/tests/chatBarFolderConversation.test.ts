@@ -14,7 +14,7 @@ test('Create new chat folder', async ({
 }) => {
   setTestIds('EPMRTC-569');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   await chatBar.createNewFolder();
   expect
     .soft(

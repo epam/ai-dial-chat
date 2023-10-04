@@ -26,7 +26,7 @@ test('Check default settings screen for Application', async ({
 }) => {
   setTestIds('EPMRTC-413');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   const randomApp = GeneratorUtil.randomArrayElement(expectedAppNames);
   await talkToSelector.selectApplication(randomApp);
 
@@ -92,7 +92,7 @@ test(
     const randomApp = GeneratorUtil.randomArrayElement(expectedAppNames);
 
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
+    await dialHomePage.waitForPageLoaded(true);
     await talkToSelector.seeFullList();
 
     const expectedAppDescr = await apiHelper.getApplicationDescription(
@@ -153,7 +153,7 @@ test('Link from the detailed description opens page in new tab', async ({
 }) => {
   setTestIds('EPMRTC-1064');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   await talkToSelector.seeFullList();
 
   await modelsDialog.expandEntityDescription(

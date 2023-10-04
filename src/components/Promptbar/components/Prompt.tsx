@@ -181,7 +181,7 @@ export const PromptComponent = ({ prompt }: Props) => {
       >
         <IconBulb size={18} className="text-gray-500" />
 
-        <div className="relative max-h-5 flex-1 truncate break-all pr-4 text-left leading-3">
+        <div className="relative max-h-5 flex-1 truncate break-all pr-4 text-left">
           {prompt.name}
         </div>
       </button>

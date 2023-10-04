@@ -216,21 +216,6 @@ const Home = ({
       <Head>
         <title>{appName}</title>
         <meta name="description" content="ChatGPT but better." />
-        <meta
-          name="viewport"
-          content="height=device-height ,width=device-width, initial-scale=1, user-scalable=no"
-        />
-        <link
-          rel="icon"
-          href={`api/themes-image?name=favicon`}
-          sizes="any"
-          type="image/png"
-        />
-        <link
-          rel="apple-touch-icon"
-          href={`api/themes-image?name=favicon`}
-          type="image/png"
-        />
       </Head>
 
       {isIframe && !authDisabled && session.status !== 'authenticated' ? (

@@ -1,3 +1,5 @@
+import { useTranslation } from 'next-i18next';
+
 interface Props {
   text?: string;
 }
@@ -5,6 +7,11 @@ interface Props {
 const EmptyRequiredInputMessage = ({
   text = 'Please fill in all required fields',
 }: Props) => {
-  return <div className="text-xxs text-red-800 dark:text-red-400">{text}</div>;
+  const { t } = useTranslation('settings');
+  return (
+    <div className="invisible text-xxs text-red-800 peer-[.submitted]:peer-invalid:visible dark:text-red-400">
+      {t(text)}
+    </div>
+  );
 };
 export default EmptyRequiredInputMessage;

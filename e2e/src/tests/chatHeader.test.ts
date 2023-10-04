@@ -22,123 +22,130 @@ test.beforeAll(async ({ apiHelper }) => {
     .then((models) => models.filter((m) => m.iconUrl != undefined));
 });
 
-test('Check chat header for Model with three addons, temp = 0', async ({
-  dialHomePage,
-  chat,
-  setTestIds,
-  conversationData,
-  localStorageManager,
-  apiHelper,
-  chatHeader,
-  chatInfoTooltip,
-}) => {
-  setTestIds('EPMRTC-1115');
-  let conversation: Conversation;
-  const temp = 0;
-  const request = 'This is a test request';
-  const model = await apiHelper.getModel(
-    OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ].name,
-  );
-
-  await test.step('Prepare model conversation with all available addons and temperature', async () => {
-    conversation = conversationData.prepareModelConversation(
-      temp,
-      '',
-      addonIds,
-      OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
+test(
+  'Check chat header for Model with three addons, temp = 0.\n' +
+    'Message is send on Enter',
+  async ({
+    dialHomePage,
+    chat,
+    setTestIds,
+    conversationData,
+    localStorageManager,
+    apiHelper,
+    chatHeader,
+    chatInfoTooltip,
+  }) => {
+    setTestIds('EPMRTC-1115', 'EPMRTC-473');
+    let conversation: Conversation;
+    const temp = 0;
+    const request = 'This is a test request';
+    const model = await apiHelper.getModel(
+      OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ].name,
     );
-    await localStorageManager.setConversationHistory(conversation);
-    await localStorageManager.setSelectedConversation(conversation);
-  });
 
-  await test.step('Send new request in chat and verify request is sent with valid data', async () => {
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
-    const requestsData = await chat.sendRequest(request, false);
+    await test.step('Prepare model conversation with all available addons and temperature', async () => {
+      conversation = conversationData.prepareModelConversation(
+        temp,
+        '',
+        addonIds,
+        OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
+      );
+      await localStorageManager.setConversationHistory(conversation);
+      await localStorageManager.setSelectedConversation(conversation);
+    });
 
-    expect
-      .soft(requestsData.modelId, ExpectedMessages.requestModeIdIsValid)
-      .toBe(conversation.model.id);
-    expect
-      .soft(requestsData.prompt, ExpectedMessages.requestPromptIsValid)
-      .toBe(conversation.prompt);
-    expect
-      .soft(requestsData.temperature, ExpectedMessages.requestTempIsValid)
-      .toBe(conversation.temperature);
-    expect
-      .soft(
-        requestsData.selectedAddons,
-        ExpectedMessages.requestSelectedAddonsAreValid,
-      )
-      .toEqual(conversation.selectedAddons);
-  });
+    await test.step('Send new request in chat and verify request is sent with valid data', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+      const requestsData = await chat.sendRequestWithKeyboard(request, false);
 
-  await test.step('Verify chat icons are updated with model, temperature and addons in the header', async () => {
-    const headerIcons = await chatHeader.getHeaderIcons();
-    expect
-      .soft(headerIcons.length, ExpectedMessages.headerIconsCountIsValid)
-      .toBe(1 + addonIds.length);
-    expect
-      .soft(headerIcons[0].iconEntity, ExpectedMessages.headerIconEntityIsValid)
-      .toBe(conversation.model.id);
-    expect
-      .soft(headerIcons[0].iconUrl, ExpectedMessages.headerIconSourceIsValid)
-      .toBe(model!.iconUrl);
-
-    for (let i = 0; i < addonIds.length; i++) {
-      const addon = allAddons.find((a) => a.id === addonIds[i]);
+      expect
+        .soft(requestsData.modelId, ExpectedMessages.requestModeIdIsValid)
+        .toBe(conversation.model.id);
+      expect
+        .soft(requestsData.prompt, ExpectedMessages.requestPromptIsValid)
+        .toBe(conversation.prompt);
+      expect
+        .soft(requestsData.temperature, ExpectedMessages.requestTempIsValid)
+        .toBe(conversation.temperature);
       expect
         .soft(
-          headerIcons[i + 1].iconEntity,
+          requestsData.selectedAddons,
+          ExpectedMessages.requestSelectedAddonsAreValid,
+        )
+        .toEqual(conversation.selectedAddons);
+    });
+
+    await test.step('Verify chat icons are updated with model, temperature and addons in the header', async () => {
+      const headerIcons = await chatHeader.getHeaderIcons();
+      expect
+        .soft(headerIcons.length, ExpectedMessages.headerIconsCountIsValid)
+        .toBe(1 + addonIds.length);
+      expect
+        .soft(
+          headerIcons[0].iconEntity,
           ExpectedMessages.headerIconEntityIsValid,
         )
-        .toBe(addon!.id);
+        .toBe(conversation.model.id);
       expect
-        .soft(
-          headerIcons[i + 1].iconUrl,
-          ExpectedMessages.headerIconSourceIsValid,
-        )
-        .toBe(addon!.iconUrl);
-    }
-  });
+        .soft(headerIcons[0].iconUrl, ExpectedMessages.headerIconSourceIsValid)
+        .toBe(model!.iconUrl);
 
-  await test.step('Hover over chat header and verify chat settings are correct on tooltip', async () => {
-    await chatHeader.chatModel.hoverOver();
-    const modelInfo = await chatInfoTooltip.getModelInfo();
-    expect
-      .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
-      .toBe(conversation.model.name);
+      for (let i = 0; i < addonIds.length; i++) {
+        const addon = allAddons.find((a) => a.id === addonIds[i]);
+        expect
+          .soft(
+            headerIcons[i + 1].iconEntity,
+            ExpectedMessages.headerIconEntityIsValid,
+          )
+          .toBe(addon!.id);
+        expect
+          .soft(
+            headerIcons[i + 1].iconUrl,
+            ExpectedMessages.headerIconSourceIsValid,
+          )
+          .toBe(addon!.iconUrl);
+      }
+    });
 
-    const modelInfoIcon = await chatInfoTooltip.getModelIcon();
-    expect
-      .soft(modelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-      .toBe(model!.iconUrl);
-
-    const promptInfo = await chatInfoTooltip.getPromptInfo();
-    expect.soft(promptInfo, ExpectedMessages.chatInfoPromptIsValid).toBe('');
-
-    const tempInfo = await chatInfoTooltip.getTemperatureInfo();
-    expect
-      .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-      .toBe(conversation.temperature.toString());
-
-    const addonsInfo = await chatInfoTooltip.getAddonsInfo();
-    const addonInfoIcons = await chatInfoTooltip.getAddonIcons();
-    expect
-      .soft(addonsInfo.length, ExpectedMessages.chatInfoAddonsCountIsValid)
-      .toBe(allAddons.length);
-
-    for (let i = 0; i < addonIds.length; i++) {
-      const addon = allAddons.find((a) => a.id === addonIds[i]);
+    await test.step('Hover over chat header and verify chat settings are correct on tooltip', async () => {
+      await chatHeader.chatModel.hoverOver();
+      const modelInfo = await chatInfoTooltip.getModelInfo();
       expect
-        .soft(addonsInfo[i], ExpectedMessages.chatInfoAddonIsValid)
-        .toBe(addon!.name);
+        .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
+        .toBe(conversation.model.name);
+
+      const modelInfoIcon = await chatInfoTooltip.getModelIcon();
       expect
-        .soft(addonInfoIcons[i], ExpectedMessages.chatInfoAddonIconIsValid)
-        .toBe(addon!.iconUrl);
-    }
-  });
-});
+        .soft(modelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
+        .toBe(model!.iconUrl);
+
+      const promptInfo = await chatInfoTooltip.getPromptInfo();
+      expect.soft(promptInfo, ExpectedMessages.chatInfoPromptIsValid).toBe('');
+
+      const tempInfo = await chatInfoTooltip.getTemperatureInfo();
+      expect
+        .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
+        .toBe(conversation.temperature.toString());
+
+      const addonsInfo = await chatInfoTooltip.getAddonsInfo();
+      const addonInfoIcons = await chatInfoTooltip.getAddonIcons();
+      expect
+        .soft(addonsInfo.length, ExpectedMessages.chatInfoAddonsCountIsValid)
+        .toBe(allAddons.length);
+
+      for (let i = 0; i < addonIds.length; i++) {
+        const addon = allAddons.find((a) => a.id === addonIds[i]);
+        expect
+          .soft(addonsInfo[i], ExpectedMessages.chatInfoAddonIsValid)
+          .toBe(addon!.name);
+        expect
+          .soft(addonInfoIcons[i], ExpectedMessages.chatInfoAddonIconIsValid)
+          .toBe(addon!.iconUrl);
+      }
+    });
+  },
+);
 
 test('Check chat header for Assistant with added non default addon', async ({
   dialHomePage,
@@ -180,7 +187,7 @@ test('Check chat header for Assistant with added non default addon', async ({
   await test.step('Send new request in chat and verify request is sent with valid data', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    const requestsData = await chat.sendRequest(
+    const requestsData = await chat.sendRequestWithButton(
       'where the main epam office located?',
       false,
     );
@@ -338,7 +345,7 @@ test('Check chat header for Assistant if to update settings in chat', async ({
   });
 
   await test.step('Send new request in chat and verify request is sent with valid data', async () => {
-    const requestsData = await chat.sendRequest(
+    const requestsData = await chat.sendRequestWithButton(
       'where the main epam office located?',
       false,
     );
@@ -480,7 +487,10 @@ test('Check chat header if to change Application to Application', async ({
   });
 
   await test.step('Verify chat API request is sent with correct settings', async () => {
-    const requestsData = await chat.sendRequest('Test request', false);
+    const requestsData = await chat.sendRequestWithButton(
+      'Test request',
+      false,
+    );
     expect
       .soft(requestsData.modelId, ExpectedMessages.chatRequestModelIsValid)
       .toBe(randomApp.id);

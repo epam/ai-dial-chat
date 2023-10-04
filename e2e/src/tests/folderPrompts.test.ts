@@ -14,7 +14,7 @@ test('Create new prompt folder', async ({
 }) => {
   setTestIds('EPMRTC-944');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   await promptBar.createNewFolder();
   expect
     .soft(

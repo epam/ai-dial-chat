@@ -27,7 +27,7 @@ test('Selected settings are saved if to switch from Model1 to Model2', async ({
 }) => {
   setTestIds('EPMRTC-1046');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   let modelNames = models.filter((m) => m.type === 'model').map((m) => m.name);
   modelNames = modelNames.filter((m) => m !== defaultModel);
   const randomModel = GeneratorUtil.randomArrayElement(modelNames);
@@ -79,7 +79,7 @@ test('Selected settings are saved if to switch from Model to Application to Mode
 }) => {
   setTestIds('EPMRTC-417');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   await entitySettings.setSystemPrompt(sysPrompt);
   await temperatureSlider.setTemperature(temp);
 
@@ -139,7 +139,7 @@ test('System prompt contains combinations with :', async ({
     'test test. test:',
   ];
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded(true);
   for (const prompt of prompts) {
     await entitySettings.setSystemPrompt(prompt);
     const systemPrompt = await entitySettings.getSystemPrompt();

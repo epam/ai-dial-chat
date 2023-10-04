@@ -1,5 +1,7 @@
 import {
+  ChangeEvent,
   FC,
+  FormEvent,
   KeyboardEvent,
   useCallback,
   useEffect,
@@ -9,7 +11,14 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import { onBlur } from '@/src/utils/app/style-helpers';
+
 import { Prompt } from '@/src/types/prompt';
+
+import XMark from '../../../../public/images/icons/xmark.svg';
+import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
+
+import classNames from 'classnames';
 
 interface Props {
   prompt: Prompt;
@@ -23,8 +32,50 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
   const [description, setDescription] = useState(prompt.description);
   const [content, setContent] = useState(prompt.content);
 
-  const modalRef = useRef<HTMLDivElement>(null);
+  const [submitted, setSubmitted] = useState(false);
+
+  const modalRef = useRef<HTMLFormElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
+  const contentInputRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleClose = useCallback(() => {
+    setSubmitted(false);
+    onClose();
+  }, [onClose]);
+
+  const nameOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+  };
+
+  const descriptionOnChangeHandler = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setDescription(e.target.value);
+  };
+
+  const contentOnChangeHandler = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setContent(e.target.value);
+  };
+
+  const handleSubmit = useCallback(
+    (e: FormEvent) => {
+      e.preventDefault();
+      setSubmitted(true);
+
+      if (!name || name.trim() === '') {
+        return;
+      }
+      const updatedPrompt = {
+        ...prompt,
+        name,
+        description,
+        content: content.trim(),
+      };
+
+      onUpdatePrompt(updatedPrompt);
+      handleClose();
+    },
+    [content, description, name, onUpdatePrompt, prompt, handleClose],
+  );
 
   const handleEnter = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
@@ -35,10 +86,10 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
           description,
           content: content.trim(),
         });
-        onClose();
+        handleClose();
       }
     },
-    [content, description, name, onClose, onUpdatePrompt, prompt],
+    [content, description, name, onUpdatePrompt, prompt, handleClose],
   );
 
   useEffect(() => {
@@ -50,7 +101,7 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
 
     const handleMouseUp = () => {
       window.removeEventListener('mouseup', handleMouseUp);
-      onClose();
+      handleClose();
     };
 
     window.addEventListener('mousedown', handleMouseDown);
@@ -58,87 +109,114 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
     return () => {
       window.removeEventListener('mousedown', handleMouseDown);
     };
-  }, [onClose]);
+  }, [modalRef, handleClose]);
 
   useEffect(() => {
     nameInputRef.current?.focus();
   }, []);
+
+  const inputClassName = classNames('input-form', 'peer', {
+    'input-invalid': submitted,
+  });
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/70"
       onKeyDown={handleEnter}
     >
-      <div className="fixed inset-0 z-10 overflow-hidden">
-        <div className="flex min-h-screen items-center justify-center px-4 pb-20 pt-4 text-center sm:block sm:p-0">
-          <div
-            className="hidden sm:inline-block sm:h-screen sm:align-middle"
-            aria-hidden="true"
-          />
-
-          <div
-            ref={modalRef}
-            className="inline-block max-h-[400px] overflow-y-auto rounded border border-gray-300 bg-gray-100 px-4 pb-4 pt-5 text-left align-bottom shadow-xl transition-all dark:bg-gray-700 sm:my-8 sm:max-h-[600px] sm:w-full sm:max-w-lg sm:p-6 sm:align-middle"
-            role="dialog"
-            data-qa="prompt-modal"
-          >
-            <div className="text-sm font-bold">{t('Name')}</div>
-            <input
-              ref={nameInputRef}
-              className="mt-2 w-full rounded border px-4 py-2 shadow focus:outline-none dark:bg-gray-700"
-              placeholder={t('A name for your prompt.') || ''}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              data-qa="prompt-name"
-            />
-
-            <div className="mt-6 text-sm font-bold">{t('Description')}</div>
-            <textarea
-              className="mt-2 w-full rounded border px-4 py-2 shadow placeholder:text-gray-500 focus:outline-none dark:bg-gray-700"
-              style={{ resize: 'none' }}
-              placeholder={t('A description for your prompt.') || ''}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              data-qa="prompt-descr"
-            />
-
-            <div className="mt-6 text-sm font-bold">{t('Prompt')}</div>
-            <textarea
-              className="mt-2 w-full rounded border px-4 py-2 shadow focus:outline-none dark:bg-gray-700"
-              style={{ resize: 'none' }}
-              placeholder={
-                t(
-                  'Prompt content. Use {{}} to denote a variable. Ex: {{name}} is a {{adjective}} {{noun}}',
-                ) || ''
-              }
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={10}
-              data-qa="prompt-value"
-            />
-
-            <button
-              type="button"
-              className="mt-6 w-full rounded border px-4 py-2 shadow focus:outline-none"
-              onClick={() => {
-                const updatedPrompt = {
-                  ...prompt,
-                  name,
-                  description,
-                  content: content.trim(),
-                };
-
-                onUpdatePrompt(updatedPrompt);
-                onClose();
-              }}
-              data-qa="save-prompt"
-            >
-              {t('Save')}
-            </button>
-          </div>
+      <form
+        ref={modalRef}
+        noValidate
+        className="relative inline-block max-h-[600px] overflow-y-auto rounded bg-gray-100 p-4 text-left align-bottom transition-all dark:bg-gray-700 sm:my-8 sm:max-h-fit sm:w-full sm:max-w-lg sm:p-6 sm:align-middle"
+        role="dialog"
+        data-qa="prompt-modal"
+      >
+        <button
+          type="button"
+          role="button"
+          className="absolute right-2 top-2 rounded text-gray-500 hover:text-blue-700"
+          onClick={handleClose}
+        >
+          <XMark height={24} width={24} />
+        </button>
+        <div className="flex justify-between pb-4 text-base font-bold">
+          {t('Edit prompt')}
         </div>
-      </div>
+
+        <div className="mb-4">
+          <label
+            className="mb-1 flex text-xs text-gray-500"
+            htmlFor="promptName"
+          >
+            {t('Name')}
+            <span className="ml-1 inline text-blue-500">*</span>
+          </label>
+          <input
+            ref={nameInputRef}
+            name="promptName"
+            className={inputClassName}
+            placeholder={t('A name for your prompt.') || ''}
+            value={name}
+            required
+            pattern="(?:\s+)*\w+(?:\s+\w+)*(?:\s+)*"
+            type="text"
+            onBlur={onBlur}
+            onChange={nameOnChangeHandler}
+            data-qa="prompt-name"
+          />
+          <EmptyRequiredInputMessage />
+        </div>
+
+        <div className="mb-4">
+          <label
+            className="mb-1 flex text-xs text-gray-500"
+            htmlFor="description"
+          >
+            {t('Description')}
+          </label>
+          <textarea
+            ref={descriptionInputRef}
+            name="description"
+            className={inputClassName}
+            style={{ resize: 'none' }}
+            placeholder={t('A description for your prompt.') || ''}
+            value={description}
+            onChange={descriptionOnChangeHandler}
+            rows={3}
+            data-qa="prompt-descr"
+          />
+        </div>
+        <div className="mb-5">
+          <label className="mb-1 flex text-xs text-gray-500" htmlFor="content">
+            {t('Prompt')}
+          </label>
+          <textarea
+            ref={contentInputRef}
+            name="content"
+            className={inputClassName}
+            style={{ resize: 'none' }}
+            placeholder={
+              t(
+                'Prompt content. Use {{}} to denote a variable. Ex: {{name}} is a {{adjective}} {{noun}}',
+              ) || ''
+            }
+            value={content}
+            onChange={contentOnChangeHandler}
+            rows={10}
+            data-qa="prompt-value"
+          />
+        </div>
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            className="rounded bg-blue-500 p-3 text-gray-100 hover:bg-blue-700 focus:border focus:border-gray-800 focus-visible:outline-none dark:focus:border-gray-200"
+            data-qa="save-prompt"
+            onClick={handleSubmit}
+          >
+            {t('Save')}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };
