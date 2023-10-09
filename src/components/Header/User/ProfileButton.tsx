@@ -2,7 +2,6 @@ import { useSession } from 'next-auth/react';
 import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
-import Image from 'next/image';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
@@ -29,12 +28,12 @@ export const ProfileButton = () => {
       {isProfileOpen ? (
         <XmarkIcon className="text-gray-500" width={24} height={24} />
       ) : session?.user?.image ? (
-        <Image
+        <img
           className="rounded"
           src={session?.user?.image}
           width={24}
           height={24}
-          alt={t(`User avatar`)}
+          alt={t(`User avatar`) || ''}
         />
       ) : (
         <UserIcon width={18} height={18} />

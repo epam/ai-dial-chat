@@ -286,6 +286,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
   // Render the dialog.
   const inputClassName = classNames('input-form', 'peer', {
     'input-invalid': submitted,
+    submitted: submitted,
   });
 
   const checkboxClassName = classNames('checkbox-form', 'peer', {
@@ -332,7 +333,6 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                 name="projectNameInput"
                 value={projectName}
                 required
-                pattern="(?:\s+)*\w+(?:\s+\w+)*(?:\s+)*"
                 title=""
                 type="text"
                 onBlur={onBlur}
@@ -355,7 +355,6 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                 name="streamNameInput"
                 value={streamName}
                 required
-                pattern="(?:\s+)*\w+(?:\s+\w+)*(?:\s+)*"
                 title=""
                 type="text"
                 onBlur={onBlur}
@@ -380,7 +379,6 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                 name="techLeadNameInput"
                 value={techLeadName}
                 required
-                pattern="(?:\s+)*\w+(?:\s+\w+)*(?:\s+)*"
                 title=""
                 type="text"
                 onBlur={onBlur}
@@ -424,7 +422,6 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                 name="projectEndDateInput"
                 value={projectEndDate}
                 required
-                pattern="(?:\s+)*\w+(?:\s+\w+)*(?:\s+)*"
                 title=""
                 type="date"
                 min={minDate}
@@ -609,7 +606,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                 type="submit"
                 className="rounded bg-blue-500 p-3 text-gray-100 hover:bg-blue-700 focus:border focus:border-gray-800 focus-visible:outline-none dark:focus:border-gray-200"
               >
-                {t('Send Request')}
+                {t('Send request')}
               </button>
             </div>
           </form>
