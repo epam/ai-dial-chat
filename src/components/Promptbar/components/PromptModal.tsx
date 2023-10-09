@@ -117,6 +117,7 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
 
   const inputClassName = classNames('input-form', 'peer', {
     'input-invalid': submitted,
+    submitted: submitted,
   });
 
   return (
@@ -158,7 +159,6 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
             placeholder={t('A name for your prompt.') || ''}
             value={name}
             required
-            pattern="(?:\s+)*\w+(?:\s+\w+)*(?:\s+)*"
             type="text"
             onBlur={onBlur}
             onChange={nameOnChangeHandler}

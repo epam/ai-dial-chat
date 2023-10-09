@@ -68,8 +68,8 @@ const ModelIconTemplate = memo(
 );
 ModelIconTemplate.displayName = 'ModelIconTemplate';
 
-const defaultModelIcon = `var(--default-model, url(/images/icons/message-square-lines-alt.svg))`;
-const defaultAddonIcon = `var(--default-addon, url(/images/icons/message-square-lines-alt.svg))`;
+const defaultModelIcon = `var(--default-model, url(images/icons/message-square-lines-alt.svg))`;
+const defaultAddonIcon = `var(--default-addon, url(images/icons/message-square-lines-alt.svg))`;
 
 export const ModelIcon = ({
   entity,

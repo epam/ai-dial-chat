@@ -216,6 +216,10 @@ const Home = ({
       <Head>
         <title>{appName}</title>
         <meta name="description" content="ChatGPT but better." />
+        <meta
+          name="viewport"
+          content="height=device-height ,width=device-width, initial-scale=1, user-scalable=no"
+        />
       </Head>
 
       {isIframe && !authDisabled && session.status !== 'authenticated' ? (
@@ -269,7 +273,7 @@ export const getServerSideProps: GetServerSideProps = async ({
     return {
       redirect: {
         permanent: false,
-        destination: `${process.env.APP_BASE_PATH || ''}/api/auth/signin`,
+        destination: `/api/auth/signin`,
       },
     };
   }
