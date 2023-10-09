@@ -102,6 +102,7 @@ export const VariableModal: FC<Props> = ({
 
   const inputClassName = classNames('input-form', 'peer', {
     'input-invalid': submitted,
+    submitted: submitted,
   });
 
   return (

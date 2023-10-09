@@ -4,7 +4,7 @@ import Script from 'next/script';
 import i18nextConfig from '../../next-i18next.config';
 
 type Props = DocumentProps & {
-  // add custom document props
+  //
 };
 
 export default function Document(props: Props) {
@@ -13,16 +13,16 @@ export default function Document(props: Props) {
   return (
     <Html lang={currentLocale}>
       <Head>
-        <base href={`${process.env.APP_BASE_PATH || ''}/`}></base>
+        {!!process.env.APP_BASE_ORIGIN && !!process.env.APP_BASE_PATH && (
+          <base
+            href={`${process.env.APP_BASE_ORIGIN}${process.env.APP_BASE_PATH}/`}
+          ></base>
+        )}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
           name="apple-mobile-web-app-title"
           content={process.env.NEXT_PUBLIC_APP_NAME || 'Chatbot UI'}
         ></meta>
-        <meta
-          name="viewport"
-          content="height=device-height ,width=device-width, initial-scale=1, user-scalable=no"
-        />
         {!!process.env.THEMES_CONFIG_HOST && (
           <link rel="stylesheet" href={`api/themes-config`} />
         )}

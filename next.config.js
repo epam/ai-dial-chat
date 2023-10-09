@@ -1,5 +1,45 @@
 const { i18n } = require('./next-i18next.config');
 
+class BasePathResolver {
+  [Symbol.toPrimitive](hint) {
+    if (hint === 'string') {
+      return this.toString();
+    }
+    if (hint === 'number') {
+      return NaN;
+    }
+    return this.valueOf();
+  }
+
+  get length() {
+    return this.valueOf().length;
+  }
+
+  valueOf() {
+    return process.env.APP_BASE_PATH || '';
+  }
+
+  toString() {
+    return this.valueOf() || '';
+  }
+
+  startsWith(str) {
+    return this.valueOf().startsWith(str)
+  }
+
+  replace(...args) {
+    return this.valueOf().replace(...args);
+  }
+
+  endsWith(str) {
+    return this.valueOf().endsWith(str)
+  }
+ 
+  toJSON() {
+    return this.toString();
+  }
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   i18n,
@@ -7,8 +47,9 @@ const nextConfig = {
   experimental: {
     instrumentationHook: true,
   },
+  basePath: new BasePathResolver(),
 
-  webpack(config, { isServer, dev }) {
+  webpack(config, options) {
     config.experiments = {
       asyncWebAssembly: true,
       layers: true,
