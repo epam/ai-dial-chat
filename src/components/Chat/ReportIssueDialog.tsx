@@ -177,6 +177,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
 
   const inputClassName = classNames('input-form', 'peer', {
     'input-invalid': submitted,
+    submitted: submitted,
   });
 
   // Render the dialog.
@@ -220,7 +221,6 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
                 name="titleInput"
                 value={title}
                 required
-                pattern="(?:\s+)*\w+(?:\s+\w+)*(?:\s+)*"
                 title=""
                 type="text"
                 onBlur={onBlur}

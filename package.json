@@ -3,6 +3,7 @@
   "version": "0.2.0-rc",
   "private": true,
   "scripts": {
+    "postinstall": "node tools/patch-nextjs.js",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
