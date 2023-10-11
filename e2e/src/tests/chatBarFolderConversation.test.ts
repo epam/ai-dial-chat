@@ -95,7 +95,7 @@ test('Rename chat folder when chats are inside using check button', async ({
     conversationData.prepareDefaultConversationInFolder();
   await localStorageManager.setFolders(conversationInFolder.folders);
   await localStorageManager.setConversationHistory(
-    conversationInFolder.conversations,
+    conversationInFolder.conversations[0],
   );
 
   const newName = 'updated folder name';
@@ -129,7 +129,7 @@ test('Folders can expand and collapse', async ({
     conversationData.prepareDefaultConversationInFolder();
   await localStorageManager.setFolders(conversationInFolder.folders);
   await localStorageManager.setConversationHistory(
-    conversationInFolder.conversations,
+    conversationInFolder.conversations[0],
   );
   const folderName = conversationInFolder.folders.name;
 
@@ -139,7 +139,7 @@ test('Folders can expand and collapse', async ({
   let isConversationVisible =
     await folderConversations.isFolderConversationVisible(
       folderName,
-      conversationInFolder.conversations.name,
+      conversationInFolder.conversations[0].name,
     );
   expect
     .soft(isConversationVisible, ExpectedMessages.folderExpanded)
@@ -148,7 +148,7 @@ test('Folders can expand and collapse', async ({
   await folderConversations.expandCollapseFolder(folderName);
   isConversationVisible = await folderConversations.isFolderConversationVisible(
     folderName,
-    conversationInFolder.conversations.name,
+    conversationInFolder.conversations[0].name,
   );
   expect
     .soft(isConversationVisible, ExpectedMessages.folderCollapsed)
@@ -194,7 +194,7 @@ test('Delete folder when there are some chats inside', async ({
     conversationData.prepareDefaultConversationInFolder();
   await localStorageManager.setFolders(conversationInFolder.folders);
   await localStorageManager.setConversationHistory(
-    conversationInFolder.conversations,
+    conversationInFolder.conversations[0],
   );
 
   await dialHomePage.openHomePage();
@@ -218,7 +218,7 @@ test('Delete folder when there are some chats inside', async ({
   const todayConversations = await conversations.getTodayConversations();
   expect
     .soft(
-      todayConversations.includes(conversationInFolder.conversations.name),
+      todayConversations.includes(conversationInFolder.conversations[0].name),
       ExpectedMessages.conversationOfToday,
     )
     .toBeTruthy();

@@ -77,6 +77,8 @@ export const ChatSettings = ({
   return (
     <div className="absolute top-0 z-50 flex h-full w-full grow items-start justify-center overflow-auto bg-gray-900/30 p-5 dark:bg-gray-900/70">
       <ConversationSettings
+        conversationId={conversation.id}
+        replay={conversation.replay}
         isCloseEnabled={true}
         isApplyEnabled={true}
         model={currentModel}

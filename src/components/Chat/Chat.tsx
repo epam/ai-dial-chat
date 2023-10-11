@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { throttle } from '@/src/utils/data/throttle';
 
 import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
-import { Conversation, Message } from '@/src/types/chat';
+import { Conversation, Message, Replay } from '@/src/types/chat';
 
 import {
   AddonsActions,
@@ -143,7 +143,22 @@ export const Chat = memo(({ appName }: Props) => {
     const isNotAllowed = modelsIsLoading
       ? false
       : models.length === 0 ||
-        selectedConversations.some((conv) => !modelIds.includes(conv.model.id));
+        selectedConversations.some((conv) => {
+          if (
+            conv.replay.isReplay &&
+            conv.replay.replayAsIs &&
+            conv.replay.replayUserMessagesStack &&
+            conv.replay.replayUserMessagesStack[0].model
+          ) {
+            return conv.replay.replayUserMessagesStack.some(
+              (message) =>
+                message.role === 'user' &&
+                message.model?.id &&
+                !modelIds.includes(message.model.id),
+            );
+          }
+          return !modelIds.includes(conv.model.id);
+        });
     setIsNotAllowedModel(isNotAllowed);
   }, [selectedConversations, models, modelsIsLoading]);
 
@@ -243,20 +258,20 @@ export const Chat = memo(({ appName }: Props) => {
   );
 
   const handleReplayStart = useCallback(() => {
-    selectedConversationsIds.map((id) => {
-      dispatch(ConversationsActions.replayConversation({ conversationId: id }));
-    });
+    dispatch(
+      ConversationsActions.replayConversations({
+        conversationsIds: selectedConversationsIds,
+      }),
+    );
   }, [selectedConversationsIds, dispatch]);
 
   const handleReplayReStart = useCallback(() => {
-    selectedConversationsIds.map((id) => {
-      dispatch(
-        ConversationsActions.replayConversation({
-          conversationId: id,
-          isRestart: true,
-        }),
-      );
-    });
+    dispatch(
+      ConversationsActions.replayConversations({
+        conversationsIds: selectedConversationsIds,
+        isRestart: true,
+      }),
+    );
   }, [dispatch, selectedConversationsIds]);
 
   const handleSelectModel = useCallback(
@@ -265,6 +280,12 @@ export const Chat = memo(({ appName }: Props) => {
         ({ id }) => id === modelId,
       ) as OpenAIEntityModel;
 
+      const updatedReplay: Replay = !conversation.replay.isReplay
+        ? conversation.replay
+        : {
+            ...conversation.replay,
+            replayAsIs: false,
+          };
       dispatch(
         ConversationsActions.updateConversation({
           id: conversation.id,
@@ -274,6 +295,7 @@ export const Chat = memo(({ appName }: Props) => {
               newAiEntity.type === 'assistant'
                 ? DEFAULT_ASSISTANT_SUBMODEL.id
                 : undefined,
+            replay: updatedReplay,
           },
         }),
       );
@@ -367,34 +389,31 @@ export const Chat = memo(({ appName }: Props) => {
 
   const onSendMessage = useCallback(
     (message: Message) => {
-      selectedConversations.forEach((conv) => {
-        dispatch(
-          ConversationsActions.sendMessage({
-            conversation: conv,
-            message,
-            deleteCount: 0,
-            activeReplayIndex: 0,
-          }),
-        );
-      });
+      dispatch(
+        ConversationsActions.sendMessages({
+          conversations: selectedConversations,
+          message,
+          deleteCount: 0,
+          activeReplayIndex: 0,
+        }),
+      );
     },
     [dispatch, selectedConversations],
   );
 
   const onRegenerateMessage = useCallback(() => {
-    selectedConversations.forEach((conv) => {
-      const lastUserMessageIndex = conv.messages
-        .map((msg) => msg.role)
-        .lastIndexOf('user');
-      dispatch(
-        ConversationsActions.sendMessage({
-          conversation: conv,
-          message: conv.messages[lastUserMessageIndex],
-          deleteCount: conv.messages.length - lastUserMessageIndex,
-          activeReplayIndex: 0,
-        }),
-      );
-    });
+    const lastUserMessageIndex = selectedConversations[0].messages
+      .map((msg) => msg.role)
+      .lastIndexOf('user');
+    dispatch(
+      ConversationsActions.sendMessages({
+        conversations: selectedConversations,
+        message: selectedConversations[0].messages[lastUserMessageIndex],
+        deleteCount:
+          selectedConversations[0].messages.length - lastUserMessageIndex,
+        activeReplayIndex: 0,
+      }),
+    );
   }, [dispatch, selectedConversations]);
 
   const handleApplyChatSettings = useCallback(() => {

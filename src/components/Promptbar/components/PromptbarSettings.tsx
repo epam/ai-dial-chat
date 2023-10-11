@@ -79,6 +79,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
             onClick={() => {
               dispatch(PromptsActions.exportPrompts());
             }}
+            data-qa="export-prompts"
           >
             <IconFileArrowRight size={24} strokeWidth="1.5" />
           </div>

@@ -217,10 +217,10 @@ test('Delete chat in the folder', async ({
     conversationData.prepareDefaultConversationInFolder();
   await localStorageManager.setFolders(conversationInFolder.folders);
   await localStorageManager.setConversationHistory(
-    conversationInFolder.conversations,
+    conversationInFolder.conversations[0],
   );
   await localStorageManager.setSelectedConversation(
-    conversationInFolder.conversations,
+    conversationInFolder.conversations[0],
   );
 
   await dialHomePage.openHomePage();
@@ -230,17 +230,17 @@ test('Delete chat in the folder', async ({
   );
   await folderConversations.openFolderConversationDropdownMenu(
     conversationInFolder.folders.name,
-    conversationInFolder.conversations.name,
+    conversationInFolder.conversations[0].name,
   );
   await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
   await folderConversations
-    .getFolderConversationInput(conversationInFolder.conversations.name)
+    .getFolderConversationInput(conversationInFolder.conversations[0].name)
     .clickTickButton();
   expect
     .soft(
       await folderConversations.isFolderConversationVisible(
         conversationInFolder.folders.name,
-        conversationInFolder.conversations.name,
+        conversationInFolder.conversations[0].name,
       ),
       ExpectedMessages.folderConversationDeleted,
     )
@@ -299,12 +299,12 @@ test(
       OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
       'yesterday',
     );
-    conversationData = conversationData.resetData();
+    conversationData.resetData();
     const lastWeekConversation = conversationData.prepareLastWeekConversation(
       OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
       'last week',
     );
-    conversationData = conversationData.resetData();
+    conversationData.resetData();
     const lastMonthConversation = conversationData.prepareLastMonthConversation(
       OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
       'last month',
@@ -391,7 +391,7 @@ test('Chat is moved from the folder via drag&drop', async ({
     conversationData.prepareDefaultConversationInFolder();
   await localStorageManager.setFolders(conversationInFolder.folders);
   await localStorageManager.setConversationHistory(
-    conversationInFolder.conversations,
+    conversationInFolder.conversations[0],
   );
 
   await dialHomePage.openHomePage();
@@ -401,13 +401,13 @@ test('Chat is moved from the folder via drag&drop', async ({
   );
   await folderConversations.dropConversationFromFolder(
     conversationInFolder.folders.name,
-    conversationInFolder.conversations.name,
+    conversationInFolder.conversations[0].name,
   );
   expect
     .soft(
       await folderConversations.isFolderConversationVisible(
         conversationInFolder.folders.name,
-        conversationInFolder.conversations.name,
+        conversationInFolder.conversations[0].name,
       ),
       ExpectedMessages.conversationMovedToFolder,
     )
@@ -416,7 +416,7 @@ test('Chat is moved from the folder via drag&drop', async ({
   const todayConversations = await conversations.getTodayConversations();
   expect
     .soft(
-      todayConversations.includes(conversationInFolder.conversations.name),
+      todayConversations.includes(conversationInFolder.conversations[0].name),
       ExpectedMessages.conversationOfToday,
     )
     .toBeTruthy();
@@ -507,14 +507,14 @@ test('Delete all conversations. Cancel', async ({
 }) => {
   setTestIds('EPMRTC-610');
   const emptyFolder = conversationData.prepareFolder();
-  conversationData = conversationData.resetData();
+  conversationData.resetData();
   const singleConversation = conversationData.prepareDefaultConversation();
-  conversationData = conversationData.resetData();
+  conversationData.resetData();
   const conversationInFolder =
     conversationData.prepareDefaultConversationInFolder();
   await localStorageManager.setConversationHistory(
     singleConversation,
-    conversationInFolder.conversations,
+    conversationInFolder.conversations[0],
   );
   await localStorageManager.setFolders(
     emptyFolder,
@@ -532,7 +532,7 @@ test('Delete all conversations. Cancel', async ({
   const isFolderConversationVisible =
     await folderConversations.isFolderConversationVisible(
       conversationInFolder.folders.name,
-      conversationInFolder.conversations.name,
+      conversationInFolder.conversations[0].name,
     );
   expect
     .soft(isFolderConversationVisible, ExpectedMessages.conversationNotDeleted)
@@ -566,9 +566,9 @@ test('Delete all conversations. Clear', async ({
 }) => {
   setTestIds('EPMRTC-611');
   const emptyFolder = conversationData.prepareFolder();
-  conversationData = conversationData.resetData();
+  conversationData.resetData();
   const singleConversation = conversationData.prepareDefaultConversation();
-  conversationData = conversationData.resetData();
+  conversationData.resetData();
   const conversationInFolder =
     conversationData.prepareDefaultConversationInFolder();
 
@@ -582,7 +582,7 @@ test('Delete all conversations. Clear', async ({
   await dialHomePage.waitForPageLoaded();
   await localStorageManager.updateConversationHistory(
     singleConversation,
-    conversationInFolder.conversations,
+    conversationInFolder.conversations[0],
   );
   await localStorageManager.updatePrompts(singlePrompt, promptInFolder.prompts);
   await localStorageManager.updateFolders(
@@ -605,7 +605,7 @@ test('Delete all conversations. Clear', async ({
     const isFolderConversationVisible =
       await folderConversations.isFolderConversationVisible(
         conversationInFolder.folders.name,
-        conversationInFolder.conversations.name,
+        conversationInFolder.conversations[0].name,
       );
     expect
       .soft(isFolderConversationVisible, ExpectedMessages.conversationDeleted)

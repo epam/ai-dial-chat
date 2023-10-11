@@ -34,6 +34,10 @@ export class BasePage {
   }
 
   async acceptBrowserDialog(message: string) {
-    await this.page.on('dialog', (dialog) => dialog.accept(message));
+    await this.page.once('dialog', (dialog) => dialog.accept(message));
+  }
+
+  async dismissBrowserDialog() {
+    await this.page.once('dialog', (dialog) => dialog.dismiss());
   }
 }

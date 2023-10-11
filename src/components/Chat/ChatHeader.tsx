@@ -3,8 +3,10 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { getSelectedAddons } from '@/src/utils/app/conversation';
+
 import { Conversation } from '@/src/types/chat';
-import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
+import { OpenAIEntityModel } from '@/src/types/openai';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -49,20 +51,11 @@ export const ChatHeader = ({
   const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });
-  const selectedAddons = useMemo(() => {
-    if (model && model.type !== 'application') {
-      const preselectedAddons = model.selectedAddons ?? [];
-      const addonsSet = new Set([
-        ...preselectedAddons,
-        ...conversation.selectedAddons,
-      ]);
-      const selectedAddons = Array.from(addonsSet)
-        .map((addon) => addonsMap[addon])
-        .filter(Boolean) as OpenAIEntityAddon[];
-      return selectedAddons;
-    }
-    return null;
-  }, [conversation, model, addonsMap]);
+
+  const selectedAddons = useMemo(
+    () => getSelectedAddons(conversation.selectedAddons, addonsMap, model),
+    [conversation, model, addonsMap],
+  );
 
   useEffect(() => {
     setModel(modelsMap[conversation.model.id]);

@@ -6,7 +6,7 @@ import { ReporterDescription } from '@playwright/test';
  * Config used for a local run
  */
 config.workers = 2;
-config.use!.headless = false;
+config.use!.headless = true;
 config.use!.video = 'on';
 config.use!.trace = 'on';
 (config.reporter as ReporterDescription[]).push([
