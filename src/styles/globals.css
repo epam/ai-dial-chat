@@ -59,6 +59,10 @@ pre:has(div.codeblock) {
   .temperature-slider .rc-slider-track {
     @apply rounded-full bg-blue-500;
   }
+
+  .entity-settings-container {
+    @apply flex max-h-full shrink flex-col gap-[1px] overflow-auto;
+  }
   .input-form {
     @apply m-0.5 w-full rounded border border-gray-400 bg-transparent p-3 placeholder:text-gray-500 hover:border-blue-500 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:hover:border-blue-500 dark:focus:border-blue-500;
   }

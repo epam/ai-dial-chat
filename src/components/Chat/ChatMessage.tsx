@@ -103,7 +103,7 @@ export const ChatMessage: FC<Props> = memo(
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const codeRegEx = /(?:`{1,})|(?:\s{4,})/g;
+    const codeRegEx = /(?:`{1,})/g;
     const codeDetection = (content: string) => content.match(codeRegEx);
 
     const toggleEditing = useCallback(() => {

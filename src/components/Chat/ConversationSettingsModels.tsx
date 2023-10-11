@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react';
+import { IconRefreshDot } from '@tabler/icons-react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { Replay } from '@/src/types/chat';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
@@ -13,21 +16,42 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelsDialog } from './ModelsDialog';
 
+import classNames from 'classnames';
+
 interface Props {
   modelId: string | undefined;
+  conversationId: string;
+  replay: Replay;
   onModelSelect: (modelId: string) => void;
 }
 
 export const ConversationSettingsModel = ({
   modelId,
+  replay,
+  conversationId,
   onModelSelect,
 }: Props) => {
   const { t } = useTranslation();
+  const dispatch = useAppDispatch();
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
   const theme = useAppSelector(UISelectors.selectThemeState);
   const [mappedEntities, setMappedEntities] = useState<OpenAIEntityModel[]>([]);
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
+
+  const handleOnSelectReplayAsIs = useCallback(() => {
+    dispatch(
+      ConversationsActions.updateConversation({
+        id: conversationId,
+        values: {
+          replay: {
+            ...replay,
+            replayAsIs: true,
+          },
+        },
+      }),
+    );
+  }, [conversationId, dispatch, replay]);
 
   useEffect(() => {
     const mappedEntities = (
@@ -38,16 +62,38 @@ export const ConversationSettingsModel = ({
     setMappedEntities(mappedEntities);
   }, [recentModelsIds, modelsMap]);
 
+  const asIsButtonClassName = classNames(
+    'flex items-center gap-3 rounded border p-3 text-left text-xs',
+    {
+      'border-blue-500': replay.replayAsIs,
+      'border-gray-400 hover:border-gray-800 dark:border-gray-600 hover:dark:border-gray-200':
+        !replay.replayAsIs,
+    },
+  );
+
   return (
     <div className="w-full" data-qa="entity-selector">
       <div className="mb-4">{t('Talk to')}</div>
 
       <div className="flex flex-col gap-3" data-qa="recent">
         <div className="grid grid-cols-1 gap-3">
+          {replay.isReplay && (
+            <button
+              className={asIsButtonClassName}
+              onClick={handleOnSelectReplayAsIs}
+            >
+              <span className="relative inline-block shrink-0 leading-none">
+                <IconRefreshDot />
+              </span>
+              <div className="flex flex-col gap-1">
+                <span>{t('Replay as is')}</span>
+              </div>
+            </button>
+          )}
           {mappedEntities.map((entity) => (
             <button
               className={`flex items-center gap-3 rounded border p-3 text-left text-xs ${
-                modelId === entity.id
+                modelId === entity.id && !replay.replayAsIs
                   ? 'border-blue-500'
                   : 'border-gray-400 hover:border-gray-800 dark:border-gray-600 hover:dark:border-gray-200'
               }`}

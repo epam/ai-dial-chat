@@ -8,6 +8,7 @@ export const SideBarSelectors = {
   renameInput: (value: string) =>
     `${Tags.input}[${Attributes.value}="${value}"]`,
   dropdownMenu: '[data-qa="dropdown-menu"]',
+  import: '[data-qa="import"]',
 };
 
 export const ChatBarSelectors = {
@@ -19,6 +20,8 @@ export const ChatBarSelectors = {
   conversation: '[data-qa="conversation"]',
   chatFolders: '[data-qa="chat-folders"]',
   actionButton: '[data-qa="action-button"]',
+  exportConversations: '[data-qa="export-conversations"]',
+  exportPrompts: '[data-qa="export-prompts"]',
 };
 
 export const PromptBarSelectors = {

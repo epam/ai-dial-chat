@@ -7,7 +7,7 @@ import {
 } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
-import { ExpectedMessages } from '@/e2e/src/testData';
+import { ExpectedConstants, ExpectedMessages } from '@/e2e/src/testData';
 import { GeneratorUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
@@ -522,3 +522,57 @@ test('Check chat header if to change Application to Application', async ({
       .toBe(randomApp.iconUrl);
   });
 });
+
+test(
+  'Clear conversations using button in chat. Cancel.\n' +
+    'Clear conversation using button in chat. Ok',
+  async ({
+    dialHomePage,
+    setTestIds,
+    chatMessages,
+    conversationData,
+    localStorageManager,
+    chatHeader,
+    conversationSettings,
+  }) => {
+    setTestIds('EPMRTC-490', 'EPMRTC-491');
+    let conversation: Conversation;
+    await test.step('Prepare conversation with history', async () => {
+      conversation =
+        await conversationData.prepareModelConversationBasedOnRequests(
+          OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
+          ['first request', 'second request', 'third request'],
+        );
+      await localStorageManager.setConversationHistory(conversation);
+      await localStorageManager.setSelectedConversation(conversation);
+    });
+
+    await test.step('Try to clear conversation messages using header button but cancel clearing and verify no messages deleted', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+      await dialHomePage.dismissBrowserDialog();
+      await chatHeader.clearConversation.click();
+
+      const messagesCount = await chatMessages.chatMessages.getElementsCount();
+      expect
+        .soft(messagesCount, ExpectedMessages.messageContentIsValid)
+        .toBe(conversation.messages.length);
+    });
+
+    await test.step('Clear conversation messages using header button and verify messages deleted, setting are shown', async () => {
+      await dialHomePage.acceptBrowserDialog(
+        ExpectedConstants.clearAllConversationsAlert,
+      );
+      await chatHeader.clearConversation.click();
+
+      const isConversationSettingsVisible =
+        await conversationSettings.isVisible();
+      expect
+        .soft(
+          isConversationSettingsVisible,
+          ExpectedMessages.conversationSettingsVisible,
+        )
+        .toBeTruthy();
+    });
+  },
+);

@@ -52,6 +52,13 @@ export class FolderConversations extends Folders {
     return this.getFolderConversation(folderName, conversationName).isVisible();
   }
 
+  public async selectFolderConversation(
+    folderName: string,
+    conversationName: string,
+  ) {
+    return this.getFolderConversation(folderName, conversationName).click();
+  }
+
   public async openFolderConversationDropdownMenu(
     folderName: string,
     conversationName: string,

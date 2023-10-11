@@ -73,12 +73,15 @@ export const modelsSlice = createSlice({
       }: PayloadAction<{
         defaultRecentModelsIds: string[];
         localStorageRecentModelsIds: string[];
+        defaultModelId: string | undefined;
       }>,
     ) => {
       if (payload.localStorageRecentModelsIds.length !== 0) {
         state.recentModelsIds = payload.localStorageRecentModelsIds;
-      } else {
+      } else if (payload.defaultRecentModelsIds.length !== 0) {
         state.recentModelsIds = payload.defaultRecentModelsIds;
+      } else if (payload.defaultModelId) {
+        state.recentModelsIds = [payload.defaultModelId];
       }
     },
     updateRecentModels: (

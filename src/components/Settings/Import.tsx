@@ -43,6 +43,7 @@ export const Import: FC<Props> = ({ onImport, icon, highlightColor }) => {
             importFile.click();
           }
         }}
+        data-qa="import"
       >
         {icon}
       </div>

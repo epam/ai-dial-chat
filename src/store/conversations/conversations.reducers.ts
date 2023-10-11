@@ -83,12 +83,13 @@ export const conversationsSlice = createSlice({
               requestLimit:
                 payload.model.requestLimit ?? defaultModelLimits.requestLimit,
               type: payload.model.type,
+              selectedAddons: payload.model.selectedAddons ?? [],
             },
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: payload.temperature ?? DEFAULT_TEMPERATURE,
             folderId: null,
             replay: defaultReplay,
-            selectedAddons: payload.model.selectedAddons ?? [],
+            selectedAddons: [],
             lastActivityDate: Date.now(),
             isMessageStreaming: false,
           };
@@ -146,6 +147,7 @@ export const conversationsSlice = createSlice({
           isReplay: true,
           replayUserMessagesStack: userMessages,
           activeReplayIndex: 0,
+          replayAsIs: true,
         },
       };
       state.conversations = state.conversations.concat([newConversation]);
@@ -251,6 +253,15 @@ export const conversationsSlice = createSlice({
       state,
     cleanMessage: (state) => state,
     deleteMessage: (state, _action: PayloadAction<{ index: number }>) => state,
+    sendMessages: (
+      state,
+      _action: PayloadAction<{
+        conversations: Conversation[];
+        message: Message;
+        deleteCount: number;
+        activeReplayIndex: number;
+      }>,
+    ) => state,
     sendMessage: (
       state,
       _action: PayloadAction<{
@@ -266,7 +277,8 @@ export const conversationsSlice = createSlice({
         conversation: Conversation;
         message: Message;
       }>,
-    ) => {
+    ) => state,
+    createAbortController: (state) => {
       state.conversationSignal = new AbortController();
     },
     streamMessageFail: (
@@ -274,7 +286,7 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         conversation: Conversation;
         message: string;
-        response?: any;
+        response?: Response;
       }>,
     ) => state,
     streamMessageSuccess: (state) => state,
@@ -286,6 +298,13 @@ export const conversationsSlice = createSlice({
       }>,
     ) => state,
     stopStreamMessage: (state) => state,
+    replayConversations: (
+      state,
+      _action: PayloadAction<{
+        conversationsIds: string[];
+        isRestart?: boolean;
+      }>,
+    ) => state,
     replayConversation: (
       state,
       _action: PayloadAction<{

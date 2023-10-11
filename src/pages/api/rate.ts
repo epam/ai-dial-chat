@@ -3,6 +3,7 @@ import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { getApiHeaders } from '../../utils/server/get-headers';
+import { validateServerSession } from '@/src/utils/auth/session';
 import { logger } from '@/src/utils/server/logger';
 
 import { RateBody } from '../../types/chat';
@@ -17,8 +18,9 @@ import { validate } from 'uuid';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
-  if (process.env.AUTH_DISABLED !== 'true' && !session) {
-    return res.status(401).send(errorsMessages[401]);
+  const isSessionValid = validateServerSession(session, req, res);
+  if (!isSessionValid) {
+    return;
   }
 
   try {

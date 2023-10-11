@@ -147,9 +147,9 @@ const selectSearchedPrompts = createSelector(
       const searchable =
         prompt.name.toLowerCase() +
         ' ' +
-        prompt.description.toLowerCase() +
+        prompt.description?.toLowerCase() +
         ' ' +
-        prompt.content.toLowerCase();
+        prompt.content?.toLowerCase();
       return searchable.includes(searchTerm.toLowerCase());
     });
   },
