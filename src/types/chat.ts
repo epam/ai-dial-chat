@@ -28,6 +28,15 @@ export interface Stage {
   status: StageStatus;
 }
 
+export interface MessageSettings {
+  prompt: string;
+  temperature: number;
+
+  // Addons selected by user clicks
+  selectedAddons: string[];
+  assistantModelId?: string;
+}
+
 export interface Message {
   role: Role;
   content: string;
@@ -39,6 +48,7 @@ export interface Message {
   like?: number;
   errorMessage?: string;
   model?: Partial<OpenAIEntityModel>;
+  settings?: MessageSettings;
   responseId?: string;
 }
 
@@ -79,6 +89,7 @@ export interface Conversation {
   isMessageStreaming: boolean;
 }
 export interface Replay {
+  replayAsIs?: boolean;
   isReplay: boolean;
   replayUserMessagesStack?: Message[];
   activeReplayIndex: number;

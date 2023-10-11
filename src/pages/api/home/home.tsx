@@ -10,6 +10,10 @@ import Head from 'next/head';
 import { getSettings } from '@/src/utils/app/settings';
 import { AuthWindowLocationLike } from '@/src/utils/auth/auth-window-location-like';
 import { delay } from '@/src/utils/auth/delay';
+import {
+  isClientSessionValid,
+  isServerSessionValid,
+} from '@/src/utils/auth/session';
 import { timeoutAsync } from '@/src/utils/auth/timeout-async';
 
 import { Feature } from '@/src/types/features';
@@ -67,11 +71,7 @@ const Home = ({
 
   // EFFECTS  --------------------------------------------
   useEffect(() => {
-    if (
-      !isIframe &&
-      !authDisabled &&
-      (!session || (session as any).data?.error === 'RefreshAccessTokenError')
-    ) {
+    if (!isIframe && !authDisabled && !isClientSessionValid(session)) {
       signIn();
     }
   }, [isIframe, authDisabled, session]);
@@ -150,15 +150,16 @@ const Home = ({
 
     isIframe && dispatch(SettingsActions.setIsIframe(isIframe));
 
-    defaultRecentModelsIds &&
-      dispatch(
-        ModelsActions.initRecentModels({
-          defaultRecentModelsIds,
-          localStorageRecentModelsIds: JSON.parse(
-            localStorage.getItem('recentModelsIds') || '[]',
-          ),
-        }),
-      );
+    dispatch(
+      ModelsActions.initRecentModels({
+        defaultRecentModelsIds,
+        localStorageRecentModelsIds: JSON.parse(
+          localStorage.getItem('recentModelsIds') || '[]',
+        ),
+        defaultModelId,
+      }),
+    );
+
     defaultRecentAddonsIds &&
       dispatch(
         AddonsActions.initRecentAddons({
@@ -268,8 +269,9 @@ export const getServerSideProps: GetServerSideProps = async ({
       ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
       : 'frame-ancestors none',
   );
+
   const session = await getServerSession(req, res, authOptions);
-  if (!isIframe && process.env.AUTH_DISABLED !== 'true' && !session) {
+  if (!isServerSessionValid(session)) {
     return {
       redirect: {
         permanent: false,

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { Replay } from '@/src/types/chat';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 
@@ -18,6 +19,7 @@ import { Combobox } from '../Common/Combobox';
 import { Addons } from './Addons';
 import { ConversationSettingsModel } from './ConversationSettingsModels';
 import { ModelDescription } from './ModelDescription';
+import { ReplayAsIsDescription } from './ReplayAsIsDescription';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 
@@ -48,6 +50,8 @@ interface Props {
   temperature: number | undefined;
   prompts: Prompt[];
   selectedAddons: string[];
+  conversationId: string;
+  replay: Replay;
   isApplyEnabled?: boolean;
   isCloseEnabled?: boolean;
   onChangePrompt: (prompt: string) => void;
@@ -69,6 +73,8 @@ export const ConversationSettings = ({
   selectedAddons,
   isApplyEnabled,
   isCloseEnabled,
+  conversationId,
+  replay,
   onClose,
   onSelectModel,
   onSelectAssistantSubModel,
@@ -85,6 +91,13 @@ export const ConversationSettings = ({
     return modelsMap[assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id];
   });
 
+  const isNoModelInUserMessages = useMemo(() => {
+    return (
+      replay.isReplay &&
+      replay.replayUserMessagesStack &&
+      replay.replayUserMessagesStack.some((message) => !message.model)
+    );
+  }, [replay]);
   useEffect(() => {
     setAssistantSubModel(
       modelsMap[assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id],
@@ -99,75 +112,81 @@ export const ConversationSettings = ({
       >
         <div className="shrink overflow-auto bg-gray-200 px-5 py-4 dark:bg-gray-800">
           <ConversationSettingsModel
+            conversationId={conversationId}
+            replay={replay}
             modelId={model?.id}
             onModelSelect={onSelectModel}
           />
         </div>
-        {model ? (
-          <div
-            className="flex max-h-full shrink flex-col gap-[1px] overflow-auto"
-            data-qa="entity-settings"
-          >
-            {model.type === 'application' && (
-              <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
-                <ModelDescription model={model} />
-              </div>
-            )}
-            {model.type === 'assistant' && assistantSubModel && (
-              <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
-                <label className="mb-4 inline-block text-left">
-                  {t('Model')}
-                </label>
-                <Combobox
-                  items={models.filter((model) => model.type === 'model')}
-                  initialSelectedItem={assistantSubModel}
-                  getItemLabel={(model: OpenAIEntityModel) =>
-                    model.name || model.id
-                  }
-                  getItemValue={(model: OpenAIEntityModel) => model.id}
-                  itemRow={ModelSelectRow}
-                  onSelectItem={(itemID: string) => {
-                    onSelectAssistantSubModel(itemID);
-                  }}
-                />
-              </div>
-            )}
-            {model.type === 'model' && (
-              <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
-                <SystemPrompt
-                  model={model}
-                  prompt={prompt}
-                  prompts={prompts}
-                  onChangePrompt={onChangePrompt}
-                />
-              </div>
-            )}
+        {!replay.replayAsIs ? (
+          model ? (
+            <div
+              className="entity-settings-container"
+              data-qa="entity-settings"
+            >
+              {model.type === 'application' && (
+                <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
+                  <ModelDescription model={model} />
+                </div>
+              )}
+              {model.type === 'assistant' && assistantSubModel && (
+                <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
+                  <label className="mb-4 inline-block text-left">
+                    {t('Model')}
+                  </label>
+                  <Combobox
+                    items={models.filter((model) => model.type === 'model')}
+                    initialSelectedItem={assistantSubModel}
+                    getItemLabel={(model: OpenAIEntityModel) =>
+                      model.name || model.id
+                    }
+                    getItemValue={(model: OpenAIEntityModel) => model.id}
+                    itemRow={ModelSelectRow}
+                    onSelectItem={(itemID: string) => {
+                      onSelectAssistantSubModel(itemID);
+                    }}
+                  />
+                </div>
+              )}
+              {model.type === 'model' && (
+                <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
+                  <SystemPrompt
+                    model={model}
+                    prompt={prompt}
+                    prompts={prompts}
+                    onChangePrompt={onChangePrompt}
+                  />
+                </div>
+              )}
 
-            {model.type !== 'application' && (
-              <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
-                <TemperatureSlider
-                  label={t('Temperature')}
-                  onChangeTemperature={onChangeTemperature}
-                  temperature={temperature}
-                />
-              </div>
-            )}
+              {model.type !== 'application' && (
+                <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
+                  <TemperatureSlider
+                    label={t('Temperature')}
+                    onChangeTemperature={onChangeTemperature}
+                    temperature={temperature}
+                  />
+                </div>
+              )}
 
-            {model.type !== 'application' && (
-              <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
-                <Addons
-                  preselectedAddonsIds={model.selectedAddons || []}
-                  selectedAddonsIds={selectedAddons}
-                  onChangeAddon={onChangeAddon}
-                  onApplyAddons={onApplyAddons}
-                />
-              </div>
-            )}
-          </div>
+              {model.type !== 'application' && (
+                <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
+                  <Addons
+                    preselectedAddonsIds={model.selectedAddons || []}
+                    selectedAddonsIds={selectedAddons}
+                    onChangeAddon={onChangeAddon}
+                    onApplyAddons={onApplyAddons}
+                  />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex justify-center p-3">
+              {t('No settings available')}
+            </div>
+          )
         ) : (
-          <div className="flex justify-center p-3">
-            {t('No settings available')}
-          </div>
+          <ReplayAsIsDescription isModelInMessages={isNoModelInUserMessages} />
         )}
         {isCloseEnabled && (
           <button

@@ -5,12 +5,18 @@ import {
 } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { Chronology } from '@/e2e/src/testData';
+import {
+  Chronology,
+  ExpectedConstants,
+  Import,
+  MenuOptions,
+} from '@/e2e/src/testData';
 import { Attributes } from '@/e2e/src/ui/domData';
 import { keys } from '@/e2e/src/ui/keyboard';
 import { DropdownMenu } from '@/e2e/src/ui/webElements/dropdownMenu';
 import { Input } from '@/e2e/src/ui/webElements/input';
 import { Page } from '@playwright/test';
+import path from 'path';
 
 interface ConversationsChronologyType {
   chronology: string;
@@ -156,5 +162,21 @@ export class Conversations extends BaseElement {
       iconEntity: iconEntity!.replaceAll(' icon', ''),
       iconUrl: iconUrl!,
     };
+  }
+
+  public async isConversationHasDefaultIcon(name: string, index?: number) {
+    const styleAttribute = await this.getConversationByName(name, index)
+      .getByRole('img')
+      .getAttribute(Attributes.style);
+    return styleAttribute?.includes(ExpectedConstants.defaultIconUrl);
+  }
+
+  public async exportConversation() {
+    const downloadPromise = this.page.waitForEvent('download');
+    await this.getDropdownMenu().selectMenuOption(MenuOptions.export);
+    const download = await downloadPromise;
+    const filePath = path.join(Import.exportPath, download.suggestedFilename());
+    await download.saveAs(filePath);
+    return filePath;
   }
 }

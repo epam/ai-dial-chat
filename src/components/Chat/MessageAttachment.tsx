@@ -77,11 +77,9 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           />
         </button>
       </div>
-      {(attachment.data || attachment.url) && (
+      {(attachment.data || attachment.url) && isOpened && (
         <div
-          className={`relative w-full overflow-hidden text-sm duration-200 ${
-            isOpened ? 'mt-2 h-auto p-3 pt-4' : 'h-0'
-          }`}
+          className={`relative mt-2 h-auto w-full overflow-hidden p-3 pt-4 text-sm duration-200`}
         >
           {imageTypes.includes(attachment.type) ? (
             <img

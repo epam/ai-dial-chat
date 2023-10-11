@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 
+import { validateServerSession } from '@/src/utils/auth/session';
 import { logger } from '@/src/utils/server/logger';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -11,8 +12,9 @@ import fetch from 'node-fetch';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
-  if (!session) {
-    return res.status(401).send(errorsMessages[401]);
+  const isSessionValid = validateServerSession(session, req, res);
+  if (!isSessionValid) {
+    return;
   }
 
   if (
@@ -36,7 +38,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       signal: controller.signal,
       body: JSON.stringify({
         ...req.body,
-        requester_email: session.user?.email,
+        requester_email: session!.user?.email,
       }),
     },
   );

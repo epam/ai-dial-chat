@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
+import { validateServerSession } from '@/src/utils/auth/session';
 import { getEntities } from '@/src/utils/server/get-entities';
 import { logger } from '@/src/utils/server/logger';
 
@@ -13,8 +14,6 @@ import {
   ProxyOpenAIEntity,
 } from '@/src/types/openai';
 
-import { errorsMessages } from '@/src/constants/errors';
-
 import { authOptions } from './auth/[...nextauth]';
 
 // export const config = {
@@ -23,9 +22,11 @@ import { authOptions } from './auth/[...nextauth]';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
-  if (process.env.AUTH_DISABLED !== 'true' && !session) {
-    return res.status(401).send(errorsMessages[401]);
+  const isSessionValid = validateServerSession(session, req, res);
+  if (!isSessionValid) {
+    return;
   }
+
   const token = await getToken({ req });
 
   try {

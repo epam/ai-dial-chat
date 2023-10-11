@@ -95,6 +95,10 @@ export const SystemPrompt: FC<Props> = ({
 
   const handlePromptSelect = useCallback(
     (prompt: Prompt) => {
+      if (!prompt.content) {
+        return;
+      }
+
       const parsedVariables = parseVariables(prompt.content);
       setVariables(parsedVariables);
 
@@ -114,8 +118,12 @@ export const SystemPrompt: FC<Props> = ({
 
   const handleInitModal = useCallback(() => {
     const selectedPrompt = filteredPrompts[activePromptIndex];
+
+    if (!selectedPrompt.content) {
+      return;
+    }
     setValue((prevVal) => {
-      const newContent = prevVal?.replace(/\/\w*$/, selectedPrompt.content);
+      const newContent = prevVal?.replace(/\/\w*$/, selectedPrompt.content!);
       return newContent;
     });
     handlePromptSelect(selectedPrompt);
