@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
+import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIError, OpenAIStream } from '@/src/utils/server';
 import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 // 1@ts-expect-error
@@ -41,8 +42,9 @@ let encoding: Tiktoken;
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
-  if (process.env.AUTH_DISABLED !== 'true' && !session) {
-    return res.status(401).send(errorsMessages[401]);
+  const isSessionValid = validateServerSession(session, req, res);
+  if (!isSessionValid) {
+    return;
   }
 
   try {
@@ -154,7 +156,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           res.write(value);
         }
       } catch (error) {
-        logger.error('Error reading stream:', error);
+        logger.error(error, 'Error reading stream:');
         res.status(500);
       } finally {
         res.end();

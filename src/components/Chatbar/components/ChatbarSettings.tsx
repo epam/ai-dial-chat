@@ -88,6 +88,7 @@ export const ChatbarSettings = () => {
             onClick={() => {
               dispatch(ConversationsActions.exportConversations());
             }}
+            data-qa="export-conversations"
           >
             <IconFileArrowRight size={24} strokeWidth="1.5" />
           </button>

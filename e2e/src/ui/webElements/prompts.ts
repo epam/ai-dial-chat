@@ -67,4 +67,10 @@ export class Prompts extends BaseElement {
     await input.editValue(newName);
     return input;
   }
+
+  public async getPromptsCount() {
+    return this.getChildElementBySelector(
+      PromptBarSelectors.prompt,
+    ).getElementsCount();
+  }
 }

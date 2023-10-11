@@ -73,7 +73,7 @@ test('Check the list of available conversations', async ({
     const request = modelConversation.messages.find(
       (m) => m.role === 'user',
     )?.content;
-    conversationData = conversationData.resetData();
+    conversationData.resetData();
     assistantConversation = conversationData.prepareAddonsConversation(
       OpenAIEntityModels[OpenAIEntityModelID.ASSISTANT10K],
       [
@@ -82,12 +82,12 @@ test('Check the list of available conversations', async ({
       ],
       request,
     );
-    conversationData = conversationData.resetData();
+    conversationData.resetData();
     appConversationInFolder =
       conversationData.prepareDefaultConversationInFolder(
         OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
       );
-    conversationData = conversationData.resetData();
+    conversationData.resetData();
     appConversation = conversationData.prepareDefaultConversation(
       OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
     );
@@ -96,7 +96,7 @@ test('Check the list of available conversations', async ({
       modelConversation,
       assistantConversation,
       appConversation,
-      appConversationInFolder.conversations,
+      appConversationInFolder.conversations[0],
     );
     await localStorageManager.setSelectedConversation(appConversation);
   });
@@ -130,7 +130,7 @@ test('Check the list of available conversations', async ({
       .toEqual([
         modelConversation.name,
         assistantConversation.name,
-        appConversationInFolder.conversations.name,
+        appConversationInFolder.conversations[0].name,
       ]);
   });
 });
@@ -158,9 +158,9 @@ test(
       modelConversation = conversationData.prepareDefaultConversation();
       replayConversation =
         conversationData.prepareDefaultReplayConversation(modelConversation);
-      conversationData = conversationData.resetData();
+      conversationData.resetData();
       firstEmptyConversation = conversationData.prepareEmptyConversation();
-      conversationData = conversationData.resetData();
+      conversationData.resetData();
       secondEmptyConversation = conversationData.prepareEmptyConversation();
       await localStorageManager.setConversationHistory(
         modelConversation,
@@ -213,7 +213,7 @@ test(`Compare mode is closed on "x" button in chat1`, async ({
 
   await test.step('Prepare two conversations in compare mode', async () => {
     firstConversation = conversationData.prepareDefaultConversation();
-    conversationData = conversationData.resetData();
+    conversationData.resetData();
     secondConversation = conversationData.prepareDefaultConversation();
     await localStorageManager.setConversationHistory(
       firstConversation,
@@ -262,28 +262,28 @@ test('Check the list of No conversations available', async ({
         [firstRequest, secondRequest],
         'firstConv',
       );
-    conversationData = conversationData.resetData();
+    conversationData.resetData();
     secondConversation =
       conversationData.prepareModelConversationBasedOnRequests(
         OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
         [secondRequest, firstRequest],
         'secondConv',
       );
-    conversationData = conversationData.resetData();
+    conversationData.resetData();
     thirdConversation =
       conversationData.prepareModelConversationBasedOnRequests(
         OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
         [firstRequest],
         'thirdConv',
       );
-    conversationData = conversationData.resetData();
+    conversationData.resetData();
     forthConversation =
       conversationData.prepareModelConversationBasedOnRequests(
         OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
         [firstRequest, thirdRequest],
         'forthConv',
       );
-    conversationData = conversationData.resetData();
+    conversationData.resetData();
     fifthConversation =
       conversationData.prepareModelConversationBasedOnRequests(
         OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
@@ -351,7 +351,7 @@ test('Generate new response for two chats in compare mode. GPT models', async ({
       [],
       OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
     );
-    conversationData = conversationData.resetData();
+    conversationData.resetData();
     secondConversation = conversationData.prepareModelConversation(
       secondTemp,
       secondPrompt,
@@ -451,7 +451,7 @@ test.skip('Generate new response for two chats in compare mode. Bison and GPT-4-
     firstConversation = conversationData.prepareDefaultConversation(
       OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
     );
-    conversationData = conversationData.resetData();
+    conversationData.resetData();
     secondConversation = conversationData.prepareDefaultConversation(
       OpenAIEntityModels[OpenAIEntityModelID.GPT_4_32K],
     );
@@ -515,7 +515,7 @@ test('Generate new response with new settings in compare mode. Assistant and App
       [],
       OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
     );
-    conversationData = conversationData.resetData();
+    conversationData.resetData();
     secondConversation = conversationData.prepareDefaultConversation(
       OpenAIEntityModels[OpenAIEntityModelID.GPT_4],
     );
@@ -742,7 +742,7 @@ test('Apply changes with new settings for both chats in compare mode and check c
       [initRandomAddon.id],
       initRandomModel,
     );
-    conversationData = conversationData.resetData();
+    conversationData.resetData();
     secondConversation =
       conversationData.prepareDefaultConversation(initRandomModel);
     await localStorageManager.setConversationHistory(
@@ -945,7 +945,7 @@ test('Stop regenerating in compare mode', async ({
     firstConversation = conversationData.prepareDefaultConversation(
       OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
     );
-    conversationData = conversationData.resetData();
+    conversationData.resetData();
     secondConversation = conversationData.prepareDefaultConversation(
       OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
     );

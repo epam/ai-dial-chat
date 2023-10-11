@@ -7,4 +7,5 @@ export enum Attributes {
   alt = 'alt',
   src = 'src',
   disabled = 'disabled',
+  style = 'style',
 }

@@ -60,4 +60,19 @@ const updateRecentAddonsEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
-export const AddonsEpics = combineEpics(getAddonsEpic, updateRecentAddonsEpic);
+const getAddonsFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(AddonsActions.getAddonsFail.match),
+    tap(({ payload }) => {
+      if (payload.error.status === 401) {
+        window.location.assign('api/auth/signin');
+      }
+    }),
+    ignoreElements(),
+  );
+
+export const AddonsEpics = combineEpics(
+  getAddonsEpic,
+  updateRecentAddonsEpic,
+  getAddonsFailEpic,
+);

@@ -68,7 +68,7 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
         ...prompt,
         name,
         description,
-        content: content.trim(),
+        content: (content || '').trim(),
       };
 
       onUpdatePrompt(updatedPrompt);
@@ -84,7 +84,7 @@ export const PromptModal: FC<Props> = ({ prompt, onClose, onUpdatePrompt }) => {
           ...prompt,
           name,
           description,
-          content: content.trim(),
+          content: (content || '').trim(),
         });
         handleClose();
       }

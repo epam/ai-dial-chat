@@ -59,6 +59,8 @@ export const ChatSettingsEmpty = ({
           {isShowSettings && models.length !== 0 && (
             <>
               <ConversationSettings
+                conversationId={conversation.id}
+                replay={conversation.replay}
                 model={
                   modelsMap[conversation.model.id] || modelsMap[defaultModelId]
                 }
