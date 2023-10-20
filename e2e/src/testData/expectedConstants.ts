@@ -1,3 +1,5 @@
+import path from 'path';
+
 export const ExpectedConstants = {
   newConversationTitle: 'New conversation',
   newPromptTitle: (index: number) => `Prompt ${index}`,
@@ -21,8 +23,11 @@ export const ExpectedConstants = {
   answerError:
     'Error happened during answering. Please check your internet connection and try again.',
   noConversationsAvailable: 'No conversations available',
+  talkToReply: 'Replay as is',
   fillVariablesAlertText: 'Please fill out all variables',
   enterMessageAlert: 'Please enter a message',
+  clearAllConversationsAlert: 'Are you sure you want to clear all messages?',
+  defaultIconUrl: 'url(images/icons/message-square-lines-alt.svg))',
 };
 
 export enum Groups {
@@ -55,4 +60,13 @@ export const API = {
   modelsHost: '/api/models',
   addonsHost: '/api/addons',
   chatHost: '/api/chat',
+};
+
+export const Import = {
+  importPath: path.resolve(__dirname, 'import'),
+  exportPath: path.resolve(__dirname, 'export'),
+  v14AppFolderName: 'Version 1.4',
+  v14AppFolderChatName: '3-5 GPT math',
+  v14AppBisonChatName: 'bison chat king',
+  v14AppImportedFilename: 'chatbot_ui_history_1-4_version.json',
 };

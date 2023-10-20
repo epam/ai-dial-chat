@@ -1,3 +1,4 @@
+import { IconRefreshDot } from '@tabler/icons-react';
 import {
   DragEvent,
   KeyboardEvent,
@@ -201,12 +202,18 @@ export const ConversationComponent = ({ conversation }: Props) => {
     >
       {isRenaming ? (
         <div className="flex w-full items-center gap-3 px-3">
-          <ModelIcon
-            size={18}
-            inverted={theme === 'dark'}
-            entityId={conversation.model.id}
-            entity={modelsMap[conversation.model.id]}
-          />
+          {conversation.replay.replayAsIs ? (
+            <span className="relative inline-block shrink-0 leading-none">
+              <IconRefreshDot size={18} />
+            </span>
+          ) : (
+            <ModelIcon
+              size={18}
+              inverted={theme === 'dark'}
+              entityId={conversation.model.id}
+              entity={modelsMap[conversation.model.id]}
+            />
+          )}
 
           <input
             className="mr-12 flex-1 overflow-hidden text-ellipsis bg-transparent text-left leading-3 outline-none"
@@ -240,12 +247,19 @@ export const ConversationComponent = ({ conversation }: Props) => {
           }}
           ref={buttonRef}
         >
-          <ModelIcon
-            size={18}
-            entityId={conversation.model.id}
-            entity={modelsMap[conversation.model.id]}
-            inverted={theme === 'dark'}
-          />
+          {conversation.replay.replayAsIs ? (
+            <span className="flex shrink-0">
+              <IconRefreshDot size={18} />
+            </span>
+          ) : (
+            <ModelIcon
+              size={18}
+              entityId={conversation.model.id}
+              entity={modelsMap[conversation.model.id]}
+              inverted={theme === 'dark'}
+            />
+          )}
+
           <div
             className={classNames(
               'relative max-h-5 flex-1 truncate break-all text-left',

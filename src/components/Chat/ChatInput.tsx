@@ -159,6 +159,10 @@ export const ChatInput = forwardRef(
 
     const handlePromptSelect = useCallback(
       (prompt: Prompt) => {
+        if (!prompt.content) {
+          return;
+        }
+
         const parsedVariables = parseVariables(prompt.content);
         setVariables(parsedVariables);
 
@@ -168,7 +172,7 @@ export const ChatInput = forwardRef(
           setContent((prevContent) => {
             const updatedContent = prevContent?.replace(
               /\/\w*$/,
-              prompt.content,
+              prompt.content as string,
             );
             return updatedContent;
           });
@@ -180,11 +184,11 @@ export const ChatInput = forwardRef(
 
     const handleInitModal = useCallback(() => {
       const selectedPrompt = filteredPrompts[activePromptIndex];
-      if (selectedPrompt) {
+      if (selectedPrompt && !!selectedPrompt.content) {
         setContent((prevContent) => {
           const newContent = prevContent?.replace(
             /\/\w*$/,
-            selectedPrompt.content,
+            selectedPrompt.content as string,
           );
           return newContent;
         });

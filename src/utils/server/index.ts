@@ -152,16 +152,22 @@ export const OpenAIStream = async ({
     }
   }
   let idSend = false;
+  let isFinished = false;
   const stream = new ReadableStream({
     async start(controller) {
       const onParse = (event: ParsedEvent | ReconnectInterval) => {
+        if (isFinished) {
+          return;
+        }
+
         if (event.type === 'event') {
-          if (event.data === '[DONE]') {
-            controller.close();
-            return;
-          }
-          const data = event.data;
           try {
+            if (event.data === '[DONE]') {
+              controller.close();
+              isFinished = true;
+              return;
+            }
+            const data = event.data;
             const json = JSON.parse(data);
             if (!idSend) {
               appendChunk(controller, { responseId: json.id });
@@ -172,6 +178,7 @@ export const OpenAIStream = async ({
 
             if (json.choices[0].finish_reason != null) {
               controller.close();
+              isFinished = true;
               return;
             }
           } catch (e) {
@@ -183,6 +190,9 @@ export const OpenAIStream = async ({
       const parser = createParser(onParse);
 
       for await (const chunk of res.body as any) {
+        if (isFinished) {
+          return;
+        }
         parser.feed(decoder.decode(chunk));
       }
     },

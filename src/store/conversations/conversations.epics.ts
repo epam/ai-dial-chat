@@ -410,6 +410,26 @@ const rateMessageSuccessEpic: AppEpic = (action$) =>
     }),
   );
 
+const sendMessagesEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.sendMessages.match),
+    switchMap(({ payload }) => {
+      return concat(
+        of(ConversationsActions.createAbortController()),
+        ...payload.conversations.map((conv) => {
+          return of(
+            ConversationsActions.sendMessage({
+              conversation: conv,
+              message: payload.message,
+              deleteCount: payload.deleteCount,
+              activeReplayIndex: payload.activeReplayIndex,
+            }),
+          );
+        }),
+      );
+    }),
+  );
+
 const sendMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.sendMessage.match),
@@ -422,11 +442,26 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         id: payload.conversation.model.id,
         name: modelsMap[payload.conversation.model.id]?.name,
       };
+      const messageSettings: Message['settings'] = {
+        prompt: payload.conversation.prompt,
+        temperature: payload.conversation.temperature,
+        selectedAddons: payload.conversation.selectedAddons,
+        assistantModelId: payload.conversation.assistantModelId,
+      };
+
       const assistantMessage: Message = {
         content: '',
         model: messageModel,
+        settings: messageSettings,
         role: 'assistant',
       };
+
+      const userMessage: Message = {
+        ...payload.message,
+        model: messageModel,
+        settings: messageSettings,
+      };
+
       const updatedMessages: Message[] = (
         payload.deleteCount > 0
           ? payload.conversation.messages.slice(
@@ -434,7 +469,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
               payload.deleteCount * -1 || undefined,
             )
           : payload.conversation.messages
-      ).concat(payload.message, assistantMessage);
+      ).concat(userMessage, assistantMessage);
 
       const updatedConversation: Conversation = {
         ...payload.conversation,
@@ -606,6 +641,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           observer();
           return observable;
         }),
+        // TODO: get rid of this https://gitlab.deltixhub.com/Deltix/openai-apps/chatbot-ui/-/issues/301
         timeout(120000),
         mergeMap((resp) =>
           iif(
@@ -673,8 +709,10 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             return of(
               ConversationsActions.streamMessageFail({
                 conversation: payload.conversation,
-                message: (i18n as any).t(errorsMessages.generalServer),
-                response: error.cause,
+                message:
+                  (error.cause as any).message ||
+                  (i18n as any).t(errorsMessages.generalServer),
+                response: error.cause as Response,
               }),
             );
           }
@@ -690,10 +728,20 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const streamMessageFailEpic: AppEpic = (action$) =>
+const streamMessageFailEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.streamMessageFail.match),
     switchMap(({ payload }) => {
+      if (payload.response?.status === 401) {
+        window.location.assign('api/auth/signin');
+        return EMPTY;
+      }
+
+      const isReplay =
+        ConversationsSelectors.selectIsReplaySelectedConversations(
+          state$.value,
+        );
+
       return concat(
         of(
           ConversationsActions.updateMessage({
@@ -712,6 +760,7 @@ const streamMessageFailEpic: AppEpic = (action$) =>
             },
           }),
         ),
+        isReplay ? of(ConversationsActions.stopReplayConversation()) : EMPTY,
         of(
           UIActions.showToast({
             message: payload.message,
@@ -806,6 +855,24 @@ const deleteMessageEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const replayConversationsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.replayConversations.match),
+    switchMap(({ payload }) => {
+      return concat(
+        of(ConversationsActions.createAbortController()),
+        ...payload.conversationsIds.map((id) => {
+          return of(
+            ConversationsActions.replayConversation({
+              ...payload,
+              conversationId: id,
+            }),
+          );
+        }),
+      );
+    }),
+  );
+
 const replayConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.replayConversation.match),
@@ -831,11 +898,27 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
           }),
         );
       }
+      const activeMessage = messagesStack[conv.replay.activeReplayIndex];
+      const convWithNewSettings: Conversation =
+        !conv.replay.replayAsIs || !activeMessage.model
+          ? conv
+          : {
+              ...conv,
+              model: { ...conv.model, ...activeMessage.model },
+              prompt: activeMessage.settings?.prompt ?? conv.prompt,
+              temperature:
+                activeMessage.settings?.temperature ?? conv.temperature,
+              selectedAddons:
+                activeMessage.settings?.selectedAddons ?? conv.selectedAddons,
+              assistantModelId:
+                activeMessage.settings?.assistantModelId ??
+                conv.assistantModelId,
+            };
 
       return concat(
         of(
           ConversationsActions.sendMessage({
-            conversation: conv,
+            conversation: convWithNewSettings,
             deleteCount: payload.isRestart
               ? (conversation?.messages.length &&
                   (conversation.messages[conversation.messages.length - 1]
@@ -844,8 +927,8 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
                     : 1)) ||
                 0
               : 0,
-            activeReplayIndex: conv.replay.activeReplayIndex,
-            message: messagesStack[conv.replay.activeReplayIndex],
+            activeReplayIndex: convWithNewSettings.replay.activeReplayIndex,
+            message: activeMessage,
           }),
         ),
         action$.pipe(
@@ -915,6 +998,7 @@ const endReplayConversationEpic: AppEpic = (action$, state$) =>
                 replay: {
                   ...conv.replay,
                   isReplay: false,
+                  replayAsIs: false,
                 },
               },
             }),
@@ -1005,11 +1089,13 @@ export const ConversationsEpics = combineEpics(
   rateMessageEpic,
   rateMessageSuccessEpic,
   sendMessageEpic,
+  sendMessagesEpic,
   stopStreamMessageEpic,
   streamMessageEpic,
   streamMessageFailEpic,
   cleanMessagesEpic,
   replayConversationEpic,
+  replayConversationsEpic,
   endReplayConversationEpic,
   deleteMessageEpic,
 );

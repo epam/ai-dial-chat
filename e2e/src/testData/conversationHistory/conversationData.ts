@@ -10,7 +10,7 @@ import { FolderBuilder } from '@/e2e/src/testData/conversationHistory/folderBuil
 import { v4 as uuidv4 } from 'uuid';
 
 export interface FolderConversation {
-  conversations: Conversation;
+  conversations: Conversation[];
   folders: FolderInterface;
 }
 
@@ -24,7 +24,8 @@ export class ConversationData {
   }
 
   public resetData() {
-    return new ConversationData();
+    this.conversationBuilder = new ConversationBuilder();
+    this.folderBuilder = new FolderBuilder();
   }
 
   public prepareDefaultConversation(model?: OpenAIEntityModel, name?: string) {
@@ -187,6 +188,18 @@ export class ConversationData {
       .build();
   }
 
+  public prepareFolderWithConversations(conversationsCount: number) {
+    const folder = this.prepareFolder();
+    const conversations: Conversation[] = [];
+    for (let i = 1; i <= conversationsCount; i++) {
+      const conversation = this.prepareDefaultConversation();
+      conversation.folderId = folder.id;
+      conversations.push(conversation);
+      this.resetData();
+    }
+    return { conversations: conversations, folders: folder };
+  }
+
   public prepareDefaultConversationInFolder(
     model?: OpenAIEntityModel,
     name?: string,
@@ -194,7 +207,7 @@ export class ConversationData {
     const conversation = this.prepareDefaultConversation(model, name);
     const folder = this.prepareDefaultFolder();
     conversation.folderId = folder.id;
-    return { conversations: conversation, folders: folder };
+    return { conversations: [conversation], folders: folder };
   }
 
   public prepareYesterdayConversation(

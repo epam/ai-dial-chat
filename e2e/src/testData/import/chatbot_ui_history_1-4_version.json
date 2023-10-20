@@ -1,0 +1,89 @@
+{
+  "version": 4,
+  "history": [
+    {
+      "id": "aaa338f1-1da8-4286-8ada-4fb9b1452645",
+      "name": "3-5 GPT math",
+      "messages": [
+        {
+          "role": "user",
+          "content": "11 * 12 ="
+        },
+        {
+          "role": "assistant",
+          "content": "132"
+        }
+      ],
+      "model": {
+        "id": "gpt-35-turbo",
+        "name": "GPT-3.5",
+        "maxLength": 12000,
+        "tokenLimit": 4000
+      },
+      "prompt": "Don't use natural language",
+      "temperature": 1,
+      "folderId": "24843852-7d9c-4132-a427-6c4ac1d1ca4c"
+    },
+    {
+      "id": "b0d4ee70-175b-47a6-af91-973fff752c59",
+      "name": "bison chat king",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Good Morning!"
+        },
+        {
+          "role": "assistant",
+          "content": "Good morning to you!"
+        }
+      ],
+      "model": {
+        "id": "chat-bison",
+        "name": "PaLM2 (bison)"
+      },
+      "prompt": "Type like a king",
+      "temperature": 1,
+      "folderId": null
+    },
+    {
+      "id": "bc66971f-fd89-44db-8d3b-3efa893cc587",
+      "name": "New Conversation",
+      "messages": [],
+      "model": {
+        "id": "gpt-4",
+        "name": "GPT-4"
+      },
+      "prompt": "",
+      "temperature": 1,
+      "folderId": null
+    }
+  ],
+  "folders": [
+    {
+      "id": "b0a8d351-1f7f-463d-a530-b5a51f5e03a6",
+      "name": "Version 1.4",
+      "type": "prompt"
+    },
+    {
+      "id": "24843852-7d9c-4132-a427-6c4ac1d1ca4c",
+      "name": "Version 1.4",
+      "type": "chat"
+    }
+  ],
+  "prompts": [
+    {
+      "id": "39bde32b-c131-4bfd-aaa9-f463b2220075",
+      "name": "Verstion 1.4 A*B",
+      "description": "Prompt created in version 1.4",
+      "content": "{{A}} * {{B}} =",
+      "model": {
+        "id": "gpt-35-turbo",
+        "name": "GPT-3.5",
+        "maxLength": 12000,
+        "tokenLimit": 4000,
+        "requestLimit": 3000
+      },
+      "folderId": "b0a8d351-1f7f-463d-a530-b5a51f5e03a6"
+    }
+  ]
+}

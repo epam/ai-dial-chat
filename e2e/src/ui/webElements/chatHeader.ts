@@ -33,6 +33,7 @@ export class ChatHeader extends BaseElement {
 
   async getHeaderIcons() {
     const allIcons: Icons[] = [];
+    await this.icons.getNthElement(1).waitFor();
     const iconsCount = await this.icons.getElementsCount();
     for (let i = 1; i <= iconsCount; i++) {
       const icon = await this.icons.getNthElement(i);

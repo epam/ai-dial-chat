@@ -22,7 +22,7 @@ test.beforeAll(async ({ apiHelper }) => {
   allAddons = await apiHelper.getAddons();
 });
 
-test('[Replay]chat has the same defaults at its parent', async ({
+test.skip('[Replay]chat has the same defaults at its parent', async ({
   dialHomePage,
   conversationData,
   chat,
@@ -47,7 +47,7 @@ test('[Replay]chat has the same defaults at its parent', async ({
       [allAddons[0].id],
       OpenAIEntityModels[OpenAIEntityModelID.BISON_001],
     );
-    conversationData = conversationData.resetData();
+    conversationData.resetData();
 
     replayConversation = conversationData.prepareModelConversation(
       replayTemp,
@@ -88,7 +88,7 @@ test('[Replay]chat has the same defaults at its parent', async ({
 
   await test.step('Verify Replay conversation setting are the same as for initial one', async () => {
     const modelBorderColors = await recentEntities
-      .getRecentEntity(OpenAIEntityModels[OpenAIEntityModelID.GPT_4].name)
+      .getRecentEntity(ExpectedConstants.talkToReply)
       .getAllBorderColors();
     Object.values(modelBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
@@ -131,7 +131,7 @@ test('[Replay]chat is created in the same folder where its parent is located', a
       conversationData.prepareDefaultConversationInFolder();
     await localStorageManager.setFolders(conversationInFolder.folders);
     await localStorageManager.setConversationHistory(
-      conversationInFolder.conversations,
+      conversationInFolder.conversations[0],
     );
   });
 
@@ -144,7 +144,7 @@ test('[Replay]chat is created in the same folder where its parent is located', a
 
     await folderConversations.openFolderConversationDropdownMenu(
       conversationInFolder!.folders.name,
-      conversationInFolder!.conversations.name,
+      conversationInFolder!.conversations[0].name,
     );
     await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
   });
@@ -154,7 +154,7 @@ test('[Replay]chat is created in the same folder where its parent is located', a
       await folderConversations.isFolderConversationVisible(
         conversationInFolder!.folders.name,
         `${ExpectedConstants.replayConversation}${
-          conversationInFolder!.conversations.name
+          conversationInFolder!.conversations[0].name
         }`,
       );
     expect

@@ -62,4 +62,19 @@ const updateRecentModelsEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
-export const ModelsEpics = combineEpics(getModelsEpic, updateRecentModelsEpic);
+const getModelsFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ModelsActions.getModelsFail.match),
+    tap(({ payload }) => {
+      if (payload.error.status === 401) {
+        window.location.assign('api/auth/signin');
+      }
+    }),
+    ignoreElements(),
+  );
+
+export const ModelsEpics = combineEpics(
+  getModelsEpic,
+  updateRecentModelsEpic,
+  getModelsFailEpic,
+);

@@ -81,7 +81,15 @@ async function refreshAccessToken(token: any) {
       !refreshedTokens ||
       (!refreshedTokens.expires_in && !refreshedTokens.expires_at)
     ) {
-      throw new Error('Error while refreshing token');
+      throw new Error('Error from auth provider while refreshing token');
+    }
+
+    if (!refreshedTokens.refresh_token) {
+      logger.warn(`Auth provider didn't provide new refresh token`);
+    }
+
+    if (!refreshedTokens.refresh_token && !token.refreshToken) {
+      throw new Error('No refresh tokens exists');
     }
 
     const returnToken = {
@@ -99,7 +107,7 @@ async function refreshAccessToken(token: any) {
     });
     return returnToken;
   } catch (error: any) {
-    logger.error(error);
+    logger.error(error, `Error when refreshing token: ${error.message}`);
 
     return {
       ...token,

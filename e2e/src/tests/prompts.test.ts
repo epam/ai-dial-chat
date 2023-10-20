@@ -258,14 +258,14 @@ test('Clear prompts. Cancel', async ({
   const promptInFolder = promptData.prepareDefaultPromptInFolder();
 
   const singleConversation = conversationData.prepareDefaultConversation();
-  conversationData = conversationData.resetData();
+  conversationData.resetData();
   const conversationInFolder =
     conversationData.prepareDefaultConversationInFolder();
 
   await localStorageManager.setPrompts(singlePrompt, promptInFolder.prompts);
   await localStorageManager.setConversationHistory(
     singleConversation,
-    conversationInFolder.conversations,
+    conversationInFolder.conversations[0],
   );
   await localStorageManager.setFolders(
     emptyPromptFolder,
@@ -285,7 +285,7 @@ test('Clear prompts. Cancel', async ({
   const isFolderConversationVisible =
     await folderConversations.isFolderConversationVisible(
       conversationInFolder.folders.name,
-      conversationInFolder.conversations.name,
+      conversationInFolder.conversations[0].name,
     );
   expect
     .soft(isFolderConversationVisible, ExpectedMessages.conversationNotDeleted)
@@ -342,9 +342,9 @@ test('Clear prompts. Clear', async ({
   const promptInFolder = promptData.prepareDefaultPromptInFolder();
 
   const emptyConversationFolder = conversationData.prepareFolder();
-  conversationData = conversationData.resetData();
+  conversationData.resetData();
   const singleConversation = conversationData.prepareDefaultConversation();
-  conversationData = conversationData.resetData();
+  conversationData.resetData();
   const conversationInFolder =
     conversationData.prepareDefaultConversationInFolder();
 
@@ -353,7 +353,7 @@ test('Clear prompts. Clear', async ({
   await localStorageManager.updatePrompts(singlePrompt, promptInFolder.prompts);
   await localStorageManager.updateConversationHistory(
     singleConversation,
-    conversationInFolder.conversations,
+    conversationInFolder.conversations[0],
   );
   await localStorageManager.updateFolders(
     emptyPromptFolder,
@@ -382,7 +382,7 @@ test('Clear prompts. Clear', async ({
     await folderConversations
       .getFolderConversation(
         conversationInFolder.folders.name,
-        conversationInFolder.conversations.name,
+        conversationInFolder.conversations[0].name,
       )
       .waitFor();
     await conversations
