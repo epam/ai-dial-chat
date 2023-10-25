@@ -19,13 +19,13 @@ Once you've installed Node.js and npm, follow these steps to set up your develop
 1. Clone the repository:
 
 ```
-git clone https://gitlab.deltixhub.com/Deltix/openai-apps/chatbot-ui
+git clone https://github.com/epam/ai-dial-chat.git
 ```
 
 2. Navigate to the project directory:
 
 ```bash
-cd chatbot-ui
+cd ai-dial-chat
 ```
 
 3. Install project dependencies:
