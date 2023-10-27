@@ -198,6 +198,7 @@ test('Menu for conversation with history', async ({
       MenuOptions.rename,
       MenuOptions.compare,
       MenuOptions.replay,
+      MenuOptions.playback,
       MenuOptions.export,
       MenuOptions.moveTo,
       MenuOptions.delete,

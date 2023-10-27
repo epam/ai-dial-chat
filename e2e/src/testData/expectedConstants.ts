@@ -41,6 +41,7 @@ export enum MenuOptions {
   edit = 'Edit',
   compare = 'Compare',
   replay = 'Replay',
+  playback = 'Playback',
   export = 'Export',
   moveTo = 'Move to',
   delete = 'Delete',
