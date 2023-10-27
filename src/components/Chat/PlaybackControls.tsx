@@ -1,10 +1,8 @@
 import { IconPlayerPlay, IconPlayerStop } from '@tabler/icons-react';
 import {
-  ForwardedRef,
-  forwardRef,
   useCallback,
   useEffect,
-  useState,
+  useState
 } from 'react';
 
 import { Message, Playback } from '@/src/types/chat';
@@ -21,11 +19,7 @@ interface Props {
   showScrollDownButton: boolean;
   onScrollDownClick: () => void;
 }
-export const PlaybackControls = forwardRef(
-  (
-    { showScrollDownButton, onScrollDownClick }: Props,
-    ref: ForwardedRef<HTMLDivElement>,
-  ) => {
+export const PlaybackControls = ({ showScrollDownButton, onScrollDownClick }: Props) => {
     const dispatch = useAppDispatch();
     const isPlayback = useAppSelector(
       ConversationsSelectors.selectIsPlaybackSelectedConversations,
@@ -187,7 +181,6 @@ export const PlaybackControls = forwardRef(
 
     return (
       <div
-        ref={ref}
         className="absolute bottom-0 left-0 flex w-full items-center gap-1 border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 p-6 dark:via-gray-900 dark:to-gray-900 md:pt-2"
       >
         <button
@@ -230,7 +223,4 @@ export const PlaybackControls = forwardRef(
         )}
       </div>
     );
-  },
-);
-
-PlaybackControls.displayName = 'PlaybackControls';
+  }

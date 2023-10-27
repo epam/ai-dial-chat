@@ -483,6 +483,14 @@ export const Chat = memo(({ appName }: Props) => {
     [],
   );
 
+  useEffect(() => {
+    if (isPlayback) {
+      setInputHeight(175);
+    } else {
+      setInputHeight(142);
+    }
+  }, [isPlayback]);
+
   return (
     <div className="relative flex-1" data-qa="chat">
       {modelError ? (
@@ -806,7 +814,6 @@ export const Chat = memo(({ appName }: Props) => {
 
                     {isPlayback && (
                       <PlaybackControls
-                        ref={inputRef}
                         showScrollDownButton={showScrollDownButton}
                         onScrollDownClick={handleScrollDown}
                       />
