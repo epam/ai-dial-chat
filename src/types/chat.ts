@@ -80,6 +80,7 @@ export interface Conversation {
   temperature: number;
   folderId: string | null;
   replay: Replay;
+  playback?: Playback;
 
   // Addons selected by user clicks
   selectedAddons: string[];
@@ -93,4 +94,10 @@ export interface Replay {
   isReplay: boolean;
   replayUserMessagesStack?: Message[];
   activeReplayIndex: number;
+}
+
+export interface Playback {
+  isPlayback?: boolean;
+  messagesStack: Message[];
+  activePlaybackIndex: number;
 }

@@ -4,8 +4,8 @@ import { useTranslation } from 'next-i18next';
 
 import { throttle } from '@/src/utils/data/throttle';
 
-import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
 import { Conversation, Message, Replay } from '@/src/types/chat';
+import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
 
 import {
   AddonsActions,
@@ -36,6 +36,8 @@ import { ChatSettingsEmpty } from './ChatSettingsEmpty';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
+import { PlaybackControls } from './PlaybackControls';
+import { PlaybackEmptyInfo } from './PlaybackEmptyInfo';
 
 interface Props {
   appName: string;
@@ -84,6 +86,10 @@ export const Chat = memo(({ appName }: Props) => {
   );
   const isReplayPaused = useAppSelector(
     ConversationsSelectors.selectIsReplayPaused,
+  );
+
+  const isPlayback = useAppSelector(
+    ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
@@ -477,6 +483,14 @@ export const Chat = memo(({ appName }: Props) => {
     [],
   );
 
+  useEffect(() => {
+    if (isPlayback) {
+      setInputHeight(175);
+    } else {
+      setInputHeight(142);
+    }
+  }, [isPlayback]);
+
   return (
     <div className="relative flex-1" data-qa="chat">
       {modelError ? (
@@ -507,7 +521,8 @@ export const Chat = memo(({ appName }: Props) => {
                 <div className="flex max-h-full w-full">
                   {selectedConversations.map(
                     (conv) =>
-                      conv.messages.length === 0 && (
+                      conv.messages.length === 0 &&
+                      (!conv.playback?.isPlayback ? (
                         <div
                           key={conv.id}
                           className={`flex h-full flex-col justify-between overflow-auto ${
@@ -557,7 +572,28 @@ export const Chat = memo(({ appName }: Props) => {
                             style={{ height: inputHeight }}
                           />
                         </div>
-                      ),
+                      ) : (
+                        <div
+                          key={conv.id}
+                          className={`flex h-full flex-col justify-between overflow-auto ${
+                            selectedConversations.length > 1
+                              ? 'w-[50%]'
+                              : 'w-full'
+                          }`}
+                        >
+                          <div
+                            className="shrink-0"
+                            style={{
+                              height: `calc(100%-${inputHeight})`,
+                            }}
+                          >
+                            <PlaybackEmptyInfo
+                              conversationName={conv.name}
+                              appName={appName}
+                            />
+                          </div>
+                        </div>
+                      )),
                   )}
                 </div>
                 <div className="flex w-full">
@@ -579,12 +615,15 @@ export const Chat = memo(({ appName }: Props) => {
                               isShowChatInfo={enabledFeatures.has(
                                 'top-chat-info',
                               )}
-                              isShowClearConversation={enabledFeatures.has(
-                                'top-clear-conversation',
-                              )}
-                              isShowModelSelect={enabledFeatures.has(
-                                'top-chat-model-settings',
-                              )}
+                              isShowClearConversation={
+                                enabledFeatures.has('top-clear-conversation') &&
+                                !isPlayback
+                              }
+                              isShowModelSelect={
+                                enabledFeatures.has(
+                                  'top-chat-model-settings',
+                                ) && !isPlayback
+                              }
                               isShowSettings={isShowChatSettings}
                               setShowSettings={(isShow) => {
                                 if (isShow) {
@@ -737,7 +776,7 @@ export const Chat = memo(({ appName }: Props) => {
                 </div>
               )}
             </div>
-            {isNotAllowedModel ? (
+            {!isPlayback && isNotAllowedModel ? (
               <NotAllowedModel />
             ) : (
               <>
@@ -750,25 +789,36 @@ export const Chat = memo(({ appName }: Props) => {
                     )}
                   />
                 ) : (
-                  <ChatInput
-                    ref={inputRef}
-                    textareaRef={textareaRef}
-                    isMessagesPresented={selectedConversations.some(
-                      (val) => val.messages.length > 0,
+                  <>
+                    {!isPlayback && (
+                      <ChatInput
+                        ref={inputRef}
+                        textareaRef={textareaRef}
+                        isMessagesPresented={selectedConversations.some(
+                          (val) => val.messages.length > 0,
+                        )}
+                        maxLength={Math.min(
+                          ...selectedConversations.map(
+                            (conv) => conv.model.maxLength,
+                          ),
+                        )}
+                        showScrollDownButton={showScrollDownButton}
+                        onSend={onSendMessage}
+                        onScrollDownClick={handleScrollDown}
+                        onRegenerate={onRegenerateMessage}
+                        onStopConversation={() => {
+                          dispatch(ConversationsActions.stopStreamMessage());
+                        }}
+                      />
                     )}
-                    maxLength={Math.min(
-                      ...selectedConversations.map(
-                        (conv) => conv.model.maxLength,
-                      ),
+
+                    {isPlayback && (
+                      <PlaybackControls
+                        showScrollDownButton={showScrollDownButton}
+                        onScrollDownClick={handleScrollDown}
+                      />
                     )}
-                    showScrollDownButton={showScrollDownButton}
-                    onSend={onSendMessage}
-                    onScrollDownClick={handleScrollDown}
-                    onRegenerate={onRegenerateMessage}
-                    onStopConversation={() => {
-                      dispatch(ConversationsActions.stopStreamMessage());
-                    }}
-                  />
+                  </>
                 )}
               </>
             )}

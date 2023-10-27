@@ -3,6 +3,7 @@ import {
   IconFolderPlus,
   IconFolderShare,
   IconPencilMinus,
+  IconPlayerPlay,
   IconRefreshDot,
   IconScale,
   IconTrashX,
@@ -32,6 +33,7 @@ interface ContextMenuProps {
   onExport: MouseEventHandler<unknown>;
   onReplay?: MouseEventHandler<HTMLButtonElement>;
   onCompare?: MouseEventHandler<unknown>;
+  onPlayback?: MouseEventHandler<HTMLButtonElement>;
 }
 
 export const ContextMenu = ({
@@ -45,6 +47,7 @@ export const ContextMenu = ({
   onExport,
   onReplay,
   onCompare,
+  onPlayback,
   onMoveToFolder,
   onOpenMoveToModal,
 }: ContextMenuProps) => {
@@ -106,6 +109,18 @@ export const ContextMenu = ({
               </div>
             }
             onClick={onReplay}
+          />
+        )}
+        {!isEmptyConversation && onPlayback && (
+          <MenuItem
+            className="hover:bg-green/15"
+            item={
+              <div className="flex items-center gap-3">
+                <IconPlayerPlay className="shrink-0 text-gray-500" size={18} />
+                <span>{t('Playback')}</span>
+              </div>
+            }
+            onClick={onPlayback}
           />
         )}
         <MenuItem

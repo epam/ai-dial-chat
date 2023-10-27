@@ -23,10 +23,10 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import ArrowNarrowDown from '../../../public/images/icons/arrow-narrow-down.svg';
 import RefreshCWAlt from '../../../public/images/icons/refresh-cw-alt.svg';
 import { FooterMessage } from './FooterMessage';
 import { PromptList } from './PromptList';
+import { ScrollDownButton } from './ScrollDownButton';
 import { VariableModal } from './VariableModal';
 
 interface Props {
@@ -375,14 +375,7 @@ export const ChatInput = forwardRef(
             </button>
 
             {showScrollDownButton && (
-              <div className="absolute -top-14 right-0 aspect-square h-11 xl:bottom-0 xl:right-[-70px] xl:top-auto">
-                <button
-                  className="flex h-full w-full items-center justify-center rounded-full bg-gray-100 p-2 hover:bg-gray-400 dark:bg-gray-700 hover:dark:bg-gray-600"
-                  onClick={onScrollDownClick}
-                >
-                  <ArrowNarrowDown width={24} height={24} />
-                </button>
-              </div>
+              <ScrollDownButton onScrollDownClick={onScrollDownClick} />
             )}
 
             {showPromptList && filteredPrompts.length > 0 && (

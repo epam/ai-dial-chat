@@ -55,6 +55,10 @@ export const ConversationComponent = ({ conversation }: Props) => {
   );
   const folders = useAppSelector(ConversationsSelectors.selectFolders);
 
+  const isPlayback = useAppSelector(
+    ConversationsSelectors.selectIsPlaybackSelectedConversations,
+  );
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -84,6 +88,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
 
   const handleEnterDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
+      e.stopPropagation();
       if (e.key === 'Enter') {
         e.preventDefault();
         handleRename(conversation);
@@ -153,6 +158,13 @@ export const ConversationComponent = ({ conversation }: Props) => {
     },
     [conversation, dispatch],
   );
+
+  const handleCreatePlayback: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      dispatch(
+        ConversationsActions.createNewPlaybackConversation({ conversation }),
+      );
+    }, [conversation, dispatch]);
 
   useEffect(() => {
     if (isRenaming) {
@@ -301,7 +313,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
               );
             }}
             onCompare={
-              !isReplay
+              !isReplay && !isPlayback
                 ? () => {
                     dispatch(
                       ConversationsActions.selectConversations({
@@ -312,7 +324,8 @@ export const ConversationComponent = ({ conversation }: Props) => {
                   }
                 : undefined
             }
-            onReplay={handleStartReplay}
+            onReplay={!isPlayback ? handleStartReplay : undefined}
+            onPlayback={handleCreatePlayback}
           />
         </div>
       )}

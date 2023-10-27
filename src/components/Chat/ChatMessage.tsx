@@ -20,6 +20,7 @@ import { useTranslation } from 'next-i18next';
 
 import { Conversation, Message } from '@/src/types/chat';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -85,6 +86,10 @@ export const ChatMessage: FC<Props> = memo(
     const theme = useAppSelector(UISelectors.selectThemeState);
 
     const codeWarning = useAppSelector(SettingsSelectors.selectCodeWarning);
+
+    const isPlayback = useAppSelector(
+      ConversationsSelectors.selectIsPlaybackSelectedConversations,
+    );
 
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [isTyping, setIsTyping] = useState<boolean>(false);
@@ -256,7 +261,7 @@ export const ChatMessage: FC<Props> = memo(
                   )
                 )}
 
-                {!isEditing && (
+                {!isPlayback && !isEditing && (
                   <div className="flex w-[60px] flex-col items-center justify-end gap-4 md:flex-row md:items-start md:justify-start md:gap-1">
                     <button
                       className="invisible text-gray-500 hover:text-blue-500 focus:visible disabled:cursor-not-allowed group-hover:visible"

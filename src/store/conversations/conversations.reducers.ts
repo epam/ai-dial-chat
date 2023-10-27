@@ -142,12 +142,35 @@ export const conversationsSlice = createSlice({
         id: uuidv4(),
         name: newConversationName,
         messages: [],
+        lastActivityDate: Date.now(),
 
         replay: {
           isReplay: true,
           replayUserMessagesStack: userMessages,
           activeReplayIndex: 0,
           replayAsIs: true,
+        },
+      };
+      state.conversations = state.conversations.concat([newConversation]);
+      state.selectedConversationsIds = [newConversation.id];
+    },
+    createNewPlaybackConversation: (
+      state,
+      { payload }: PayloadAction<{ conversation: Conversation }>,
+    ) => {
+      const newConversationName = `[Playback] ${payload.conversation.name}`;
+
+      const newConversation: Conversation = {
+        ...payload.conversation,
+        id: uuidv4(),
+        name: newConversationName,
+        messages: [],
+        lastActivityDate: Date.now(),
+
+        playback: {
+          messagesStack: payload.conversation.messages,
+          activePlaybackIndex: 0,
+          isPlayback: true,
         },
       };
       state.conversations = state.conversations.concat([newConversation]);
@@ -402,6 +425,16 @@ const selectIsReplaySelectedConversations = createSelector(
     return conversations.some((conv) => conv.replay.isReplay);
   },
 );
+
+const selectIsPlaybackSelectedConversations = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some(
+      (conv) => conv.playback && conv.playback.isPlayback,
+    );
+  },
+);
+
 const selectIsMessagesError = createSelector(
   [selectSelectedConversations],
   (conversations) => {
@@ -426,6 +459,7 @@ export const ConversationsSelectors = {
   selectIsReplayPaused,
   selectIsSendMessageAborted,
   selectIsReplaySelectedConversations,
+  selectIsPlaybackSelectedConversations,
   selectIsMessagesError,
   selectConversation,
 };
