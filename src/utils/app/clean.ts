@@ -5,13 +5,13 @@ import {
   OpenAIEntityModels,
 } from '@/src/types/openai';
 
-import { defaultReplay } from '@/src/constants/replay';
 import {
   DEFAULT_ASSISTANT_SUBMODEL,
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
 } from '../../constants/default-settings';
+import { defaultReplay } from '@/src/constants/replay';
 
 import { getAssitantModelId } from './conversation';
 
