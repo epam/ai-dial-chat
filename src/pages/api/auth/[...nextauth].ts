@@ -147,7 +147,7 @@ const allProviders: (Provider | boolean)[] = [
 
 const providers = allProviders.filter(Boolean) as Provider[];
 
-if (!providers.length) {
+if (!providers.length && process.env.AUTH_DISABLED !== 'true') {
   logger.error('No auth providers!');
 }
 // https://github.com/nextauthjs/next-auth/blob/a8dfc8ebb11ccb96fd694db888e52f0d20395e64/packages/core/src/lib/cookie.ts#L53
