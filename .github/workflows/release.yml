@@ -9,5 +9,5 @@ env:
 
 jobs:
   release:
-    uses: epam/ai-dial-ci/.github/workflows/publish_yarn_docker.yml@0.5.0
+    uses: epam/ai-dial-ci/.github/workflows/publish_yarn_docker.yml@0.3.0
     secrets: inherit
