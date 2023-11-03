@@ -683,7 +683,7 @@ export const Chat = memo(({ appName }: Props) => {
                     )}
                     <div
                       className="shrink-0 "
-                      style={{ height: inputHeight }}
+                      style={{ height: `${inputHeight + 52}px` }}
                       ref={messagesEndRef}
                     />
                   </div>
@@ -733,7 +733,10 @@ export const Chat = memo(({ appName }: Props) => {
                       );
                     }}
                   />
-                  <div className="shrink-0 " style={{ height: inputHeight }} />
+                  <div
+                    className="shrink-0 "
+                    style={{ height: `${inputHeight + 52}px` }}
+                  />
                 </div>
               )}
             </div>
