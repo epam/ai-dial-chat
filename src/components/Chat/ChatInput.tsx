@@ -301,10 +301,10 @@ export const ChatInput = forwardRef(
         ref={ref}
         className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 pt-6 dark:via-gray-900 dark:to-gray-900 md:pt-2"
       >
-        <div className="mx-2 mb-2 mt-8 flex flex-row gap-3 md:mx-4 md:mb-0 md:mt-[52px] md:last:mb-6 lg:mx-auto lg:max-w-3xl">
+        <div className="relative ">
           {messageIsStreaming && (
             <button
-              className="absolute inset-x-0 top-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600"
+              className="absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600"
               onClick={onStopConversation}
               data-qa="stop-generating"
             >
@@ -319,7 +319,7 @@ export const ChatInput = forwardRef(
 
           {!messageIsStreaming && isMessagesPresented && (
             <button
-              className="absolute inset-x-0 top-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600"
+              className="absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600"
               onClick={onRegenerate}
               data-qa="regenerate"
             >
@@ -329,7 +329,9 @@ export const ChatInput = forwardRef(
               {t('Regenerate response')}
             </button>
           )}
+        </div>
 
+        <div className="mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0  md:last:mb-6 lg:mx-auto lg:max-w-3xl">
           <div className="relative flex w-full grow flex-col" data-qa="message">
             <textarea
               ref={textareaRef}
