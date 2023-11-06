@@ -20,14 +20,14 @@ const Search: FC<Props> = ({ placeholder, searchTerm, onSearch }) => {
   );
 
   return (
-    <div className="relative flex items-center px-5 py-1">
+    <div className="relative flex items-center py-1 pl-5 pr-2">
       <SearchIcon
         className="absolute left-5 text-gray-500"
         width={18}
         height={18}
       />
       <input
-        className="w-full bg-transparent py-3 pl-8 text-[14px] leading-3 outline-none placeholder:text-gray-500"
+        className="w-full bg-transparent py-2 pl-8 text-[14px] leading-3 outline-none placeholder:text-gray-500"
         type="text"
         placeholder={t(placeholder) || ''}
         value={searchTerm}

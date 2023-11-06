@@ -9,6 +9,8 @@ import { FC, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import {
   OpenAIEntity,
   OpenAIEntityApplicationType,
@@ -64,21 +66,21 @@ const Entity = ({
       />
       <div className="flex flex-col gap-1 text-left">
         <span data-qa="group-entity-name">{entity.name}</span>
-        <span
-          className="text-gray-500"
-          onClick={(e) => {
-            if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
-              e.stopPropagation();
-            }
-          }}
-          data-qa="group-entity-descr"
-        >
-          {entity.description && (
+        {entity.description && (
+          <span
+            className="text-gray-500"
+            onClick={(e) => {
+              if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
+                e.stopPropagation();
+              }
+            }}
+            data-qa="group-entity-descr"
+          >
             <EntityMarkdownDescription isShortDescription={!isOpened}>
               {entity.description}
             </EntityMarkdownDescription>
-          )}
-        </span>
+          </span>
+        )}
       </div>
       {entity.description && entity.description.indexOf('\n\n') !== -1 && (
         <span>
@@ -251,26 +253,27 @@ export const ModelsDialog: FC<Props> = ({
 
   // Render the dialog.
   return (
-    <FloatingPortal id="theme-main">
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/70">
+    <FloatingPortal id="chat">
+      <div className="fixed inset-0 top-[48px] z-30 flex items-center justify-center bg-gray-900/30 p-3 dark:bg-gray-900/70 md:p-5">
         <div
-          className="flex h-[90%] w-[calc(100%-12px)] grow flex-col gap-4 rounded bg-gray-100 px-5 py-4 text-left dark:bg-gray-700 md:w-[790px] md:grow-0"
+          className="flex h-full w-full grow flex-col gap-4 rounded bg-gray-100 py-4 text-left dark:bg-gray-700 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
           role="dialog"
           ref={refs.setFloating}
           {...getFloatingProps()}
           data-qa="models-dialog"
         >
-          <div className="flex justify-between">
+          <div className="flex justify-between px-3 md:px-5">
             {t('Talk to')}
             <button
               onClick={onClose}
               className="text-gray-500 hover:text-blue-500"
+              data-qa="close-models-dialog"
             >
               <XMark height={24} width={24} />
             </button>
           </div>
 
-          <div>
+          <div className="px-3 md:px-5">
             <input
               name="titleInput"
               placeholder={t('Search model, assistant or application') || ''}
@@ -278,17 +281,18 @@ export const ModelsDialog: FC<Props> = ({
               onChange={(e) => {
                 handleSearch(e.target.value);
               }}
-              className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
+              className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
             ></input>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 px-3 md:px-5">
             <button
-              className={`rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:bg-gray-600 ${
+              className={classNames(
+                'rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:hover:bg-blue-500/20',
                 entityTypes.includes('model')
-                  ? 'border-blue-500 bg-blue-500/20'
-                  : 'bg-gray-400'
-              }`}
+                  ? 'border-blue-500 bg-blue-500/20 dark:bg-blue-500/20'
+                  : 'border-gray-400 bg-gray-400 hover:border-transparent dark:border-gray-600 dark:bg-gray-600 dark:hover:border-transparent',
+              )}
               onClick={() => {
                 handleFilterType('model');
               }}
@@ -296,11 +300,12 @@ export const ModelsDialog: FC<Props> = ({
               {t('Models')}
             </button>
             <button
-              className={`rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:bg-gray-600 ${
+              className={classNames(
+                'rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:hover:bg-blue-500/20',
                 entityTypes.includes('assistant')
-                  ? 'border-blue-500 bg-blue-500/20'
-                  : 'bg-gray-400'
-              }`}
+                  ? 'border-blue-500 bg-blue-500/20 dark:bg-blue-500/20'
+                  : 'border-gray-400 bg-gray-400 hover:border-transparent dark:border-gray-600 dark:bg-gray-600 dark:hover:border-transparent',
+              )}
               onClick={() => {
                 handleFilterType('assistant');
               }}
@@ -308,11 +313,12 @@ export const ModelsDialog: FC<Props> = ({
               {t('Assistants')}
             </button>
             <button
-              className={`rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:bg-gray-600 ${
+              className={classNames(
+                'rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:hover:bg-blue-500/20',
                 entityTypes.includes('application')
-                  ? 'border-blue-500 bg-blue-500/20'
-                  : 'bg-gray-400'
-              }`}
+                  ? 'border-blue-500 bg-blue-500/20 dark:bg-blue-500/20'
+                  : 'border-gray-400 bg-gray-400 hover:border-transparent dark:border-gray-600 dark:bg-gray-600 dark:hover:border-transparent',
+              )}
               onClick={() => {
                 handleFilterType('application');
               }}
@@ -321,7 +327,7 @@ export const ModelsDialog: FC<Props> = ({
             </button>
           </div>
 
-          <div className="flex flex-col gap-4 overflow-auto pb-2">
+          <div className="flex grow flex-col gap-4 overflow-auto px-3 pb-2 md:px-5">
             {filteredModelsEntities?.length > 0 ||
             filteredAssistantsEntities?.length > 0 ||
             filteredApplicationsEntities?.length > 0 ? (

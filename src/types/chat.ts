@@ -52,7 +52,7 @@ export interface Message {
   responseId?: string;
 }
 
-export type Role = 'assistant' | 'user';
+export type Role = 'assistant' | 'user' | 'system';
 
 export interface ChatBody {
   modelId: string;
@@ -78,8 +78,9 @@ export interface Conversation {
   model: OpenAIEntityModel;
   prompt: string;
   temperature: number;
-  folderId: string | null;
+  folderId?: string;
   replay: Replay;
+  playback?: Playback;
 
   // Addons selected by user clicks
   selectedAddons: string[];
@@ -93,4 +94,11 @@ export interface Replay {
   isReplay: boolean;
   replayUserMessagesStack?: Message[];
   activeReplayIndex: number;
+  isError?: boolean;
+}
+
+export interface Playback {
+  isPlayback?: boolean;
+  messagesStack: Message[];
+  activePlaybackIndex: number;
 }

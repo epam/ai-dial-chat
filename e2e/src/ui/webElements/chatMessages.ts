@@ -1,6 +1,7 @@
 import { ChatSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import { Side } from '@/e2e/src/testData';
 import { Attributes, Tags } from '@/e2e/src/ui/domData';
 import { keys } from '@/e2e/src/ui/keyboard';
 import { Page } from '@playwright/test';
@@ -74,21 +75,77 @@ export class ChatMessages extends BaseElement {
     return this.chatMessages.getNthElement(messagesCount).innerText();
   }
 
-  public async getLastMessageIconAttributes() {
+  public async getIconAttributesForMessage(index?: number) {
     const messagesCount = await this.chatMessages.getElementsCount();
-    const lastMessageIcon = await this.chatMessages
-      .getNthElement(messagesCount)
+    const messageIcon = await this.chatMessages
+      .getNthElement(index ?? messagesCount)
       .locator(ChatSelectors.chatIcon);
-    const iconEntity = await lastMessageIcon.getAttribute(Attributes.alt);
-    const iconUrl = await lastMessageIcon.getAttribute(Attributes.src);
+    return this.getElementIconAttributes(messageIcon);
+  }
+
+  public async getMessageIconSize(index?: number) {
+    const messagesCount = await this.chatMessages.getElementsCount();
+    const iconBounding = await this.chatMessages
+      .getNthElement(index ?? messagesCount)
+      .locator(ChatSelectors.chatIcon)
+      .boundingBox();
     return {
-      iconEntity: iconEntity!.replaceAll(' icon', ''),
-      iconUrl: iconUrl!,
+      width: Number(iconBounding!.width.toFixed(2)),
+      height: Number(iconBounding!.height.toFixed(2)),
     };
+  }
+
+  public async getMessageJumpingIcon(index?: number) {
+    const messagesCount = await this.chatMessages.getElementsCount();
+    return this.chatMessages
+      .getNthElement(index ?? messagesCount)
+      .locator(ChatSelectors.iconAnimation)
+      .locator(ChatSelectors.chatIcon);
+  }
+
+  public async getCompareMessageJumpingIcon(
+    comparedMessageSide: Side,
+    rowIndex?: number,
+  ) {
+    const compareRowMessage = await this.getCompareRowMessage(
+      comparedMessageSide,
+      rowIndex,
+    );
+    return compareRowMessage
+      .locator(ChatSelectors.iconAnimation)
+      .locator(ChatSelectors.chatIcon);
+  }
+
+  public async getIconAttributesForCompareMessage(
+    comparedMessageSide: Side,
+    rowIndex?: number,
+  ) {
+    const compareRowMessage = await this.getCompareRowMessage(
+      comparedMessageSide,
+      rowIndex,
+    );
+    const messageIcon = await compareRowMessage.locator(ChatSelectors.chatIcon);
+    return this.getElementIconAttributes(messageIcon);
   }
 
   public async getCompareMessagesCount() {
     return this.compareChatMessages.getElementsCount();
+  }
+
+  public async getCompareMessageRow(rowIndex?: number) {
+    const rowsCount = await this.compareChatMessageRows.getElementsCount();
+    return this.compareChatMessageRows.getNthElement(rowIndex ?? rowsCount);
+  }
+
+  public async getCompareRowMessage(
+    comparedMessageSide: Side,
+    rowIndex?: number,
+  ) {
+    const compareChatMessageRow = await this.getCompareMessageRow(rowIndex);
+    const messageIndex = comparedMessageSide === Side.left ? 0 : 1;
+    return compareChatMessageRow
+      .locator(ChatSelectors.chatMessage)
+      .nth(messageIndex);
   }
 
   public async waitForPartialMessageReceived(messagesIndex: number) {

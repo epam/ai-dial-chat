@@ -55,7 +55,7 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
           model: model,
           prompt: conversation.prompt || DEFAULT_SYSTEM_PROMPT,
           temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
-          folderId: conversation.folderId || null,
+          folderId: conversation.folderId || undefined,
           messages: conversation.messages || [],
           replay: conversation.replay || defaultReplay,
           selectedAddons:
@@ -66,6 +66,9 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
           assistantModelId,
           lastActivityDate: conversation.lastActivityDate,
           isMessageStreaming: false,
+          ...(conversation.playback && {
+            playback: conversation.playback,
+          }),
         };
 
         acc.push(cleanConversation);

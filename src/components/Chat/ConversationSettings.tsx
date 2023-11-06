@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+
+import classNames from 'classnames';
 
 import { Replay } from '@/src/types/chat';
 import { OpenAIEntityModel } from '@/src/types/openai';
@@ -52,7 +54,6 @@ interface Props {
   selectedAddons: string[];
   conversationId: string;
   replay: Replay;
-  isApplyEnabled?: boolean;
   isCloseEnabled?: boolean;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
@@ -60,7 +61,6 @@ interface Props {
   onSelectAssistantSubModel: (modelId: string) => void;
   onApplyAddons: (addonsIds: string[]) => void;
   onChangeAddon: (addonsId: string) => void;
-  onApplySettings?: () => void;
   onClose?: () => void;
 }
 
@@ -71,7 +71,6 @@ export const ConversationSettings = ({
   prompt,
   temperature,
   selectedAddons,
-  isApplyEnabled,
   isCloseEnabled,
   conversationId,
   replay,
@@ -82,7 +81,6 @@ export const ConversationSettings = ({
   onChangeTemperature,
   onChangeAddon,
   onApplyAddons,
-  onApplySettings,
 }: Props) => {
   const { t } = useTranslation('chat');
   const models = useAppSelector(ModelsSelectors.selectModels);
@@ -90,6 +88,8 @@ export const ConversationSettings = ({
   const [assistantSubModel, setAssistantSubModel] = useState(() => {
     return modelsMap[assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id];
   });
+  const [width, setWidth] = useState(0);
+  const ref = useRef<HTMLDivElement | null>(null);
 
   const isNoModelInUserMessages = useMemo(() => {
     return (
@@ -104,13 +104,36 @@ export const ConversationSettings = ({
     );
   }, [assistantModelId, modelsMap]);
 
+  useEffect(() => {
+    if (!ref) {
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      ref.current?.clientWidth && setWidth(ref.current.clientWidth);
+    });
+    ref.current && resizeObserver.observe(ref.current);
+
+    () => {
+      resizeObserver.disconnect();
+    };
+  }, [ref]);
+
   return (
-    <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-gray-300 dark:bg-gray-900 [&:first-child]:rounded-t">
+    <div
+      ref={ref}
+      className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-gray-300 dark:bg-gray-900 [&:first-child]:rounded-t"
+    >
       <div
-        className="relative grid w-full gap-[1px] xl:grid-cols-2"
+        className={classNames(
+          'relative h-full w-full gap-[1px] overflow-auto',
+          {
+            'grid grid-cols-2': width >= 450,
+          },
+        )}
         data-qa="conversation-settings"
       >
-        <div className="shrink overflow-auto bg-gray-200 px-5 py-4 dark:bg-gray-800">
+        <div className="shrink overflow-auto bg-gray-200 px-3 py-4 dark:bg-gray-800 md:px-5">
           <ConversationSettingsModel
             conversationId={conversationId}
             replay={replay}
@@ -121,16 +144,16 @@ export const ConversationSettings = ({
         {!replay.replayAsIs ? (
           model ? (
             <div
-              className="entity-settings-container"
+              className="flex max-h-full shrink flex-col divide-y divide-gray-300 overflow-auto bg-gray-200 dark:divide-gray-900 dark:bg-gray-800"
               data-qa="entity-settings"
             >
               {model.type === 'application' && (
-                <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
+                <div className="grow px-3 py-4 md:px-5">
                   <ModelDescription model={model} />
                 </div>
               )}
               {model.type === 'assistant' && assistantSubModel && (
-                <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
+                <div className="grow px-3 py-4 md:px-5">
                   <label className="mb-4 inline-block text-left">
                     {t('Model')}
                   </label>
@@ -149,7 +172,7 @@ export const ConversationSettings = ({
                 </div>
               )}
               {model.type === 'model' && (
-                <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
+                <div className="grow px-3 py-4 md:px-5">
                   <SystemPrompt
                     model={model}
                     prompt={prompt}
@@ -160,7 +183,7 @@ export const ConversationSettings = ({
               )}
 
               {model.type !== 'application' && (
-                <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
+                <div className="grow px-3 py-4 md:px-5">
                   <TemperatureSlider
                     label={t('Temperature')}
                     onChangeTemperature={onChangeTemperature}
@@ -170,7 +193,7 @@ export const ConversationSettings = ({
               )}
 
               {model.type !== 'application' && (
-                <div className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800">
+                <div className="grow px-3 py-4 md:px-5">
                   <Addons
                     preselectedAddonsIds={model.selectedAddons || []}
                     selectedAddonsIds={selectedAddons}
@@ -186,7 +209,11 @@ export const ConversationSettings = ({
             </div>
           )
         ) : (
-          <ReplayAsIsDescription isModelInMessages={isNoModelInUserMessages} />
+          <div className="flex max-h-full shrink flex-col overflow-auto">
+            <ReplayAsIsDescription
+              isModelInMessages={isNoModelInUserMessages}
+            />
+          </div>
         )}
         {isCloseEnabled && (
           <button
@@ -197,20 +224,6 @@ export const ConversationSettings = ({
           </button>
         )}
       </div>
-      {isApplyEnabled && onApplySettings && (
-        <div className="flex items-center justify-center overflow-hidden bg-gray-200 px-5 py-4 dark:bg-gray-800">
-          <button
-            className="rounded bg-blue-500 px-3 py-2.5 text-gray-100 hover:bg-blue-700"
-            data-qa="apply-changes"
-            onClick={() => {
-              onClose?.();
-              onApplySettings();
-            }}
-          >
-            {t('Apply changes')}
-          </button>
-        </div>
-      )}
     </div>
   );
 };

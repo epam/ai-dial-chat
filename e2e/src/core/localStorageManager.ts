@@ -73,4 +73,16 @@ export class LocalStorageManager {
   async updatePrompts(...prompt: Prompt[]) {
     await this.page.evaluate(this.setPromptsKey(), JSON.stringify(prompt));
   }
+
+  async getRecentAddons() {
+    return this.page.evaluate(
+      () => window.localStorage.getItem('recentAddonsIds') ?? undefined,
+    );
+  }
+
+  async getRecentModels() {
+    return this.page.evaluate(
+      () => window.localStorage.getItem('recentModelsIds') ?? undefined,
+    );
+  }
 }

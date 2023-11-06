@@ -10,16 +10,12 @@ export const ExpectedConstants = {
   signInButtonTitle: 'Sign in with Credentials',
   talkTo: 'Talk to',
   model: 'Model',
-  askEpamPresaleApp: 'Ask EPAM Pre-sales',
-  epamPresalesFAQAddon: 'EPAM Pre-sales FAQ Addon',
-  epamPresalesSearchAddon: 'EPAM Pre-sales Search Addon',
-  presalesAssistant: 'Pre-sales Assistant',
-  recentModelIds: 'gpt-35-turbo,gpt-4,epam10k-semantic-search,gpt-world,mirror',
-  recentAddonIds:
-    'addon-epam10k-golden-qna,addon-epam10k-semantic-search,addon-wolfram',
+  replayAsIsLabel: 'Replay as is',
   replayConversation: '[Replay] ',
-  proceedReplayLabel:
-    'Looks like something went wrong. Do you want to restart replay?',
+  startReplayLabel: 'Start replay',
+  continueReplayLabel: 'Continue replay',
+  continueReplayAfterErrorLabel:
+    'Looks like something went wrong. Do you want to continue replay?',
   answerError:
     'Error happened during answering. Please check your internet connection and try again.',
   noConversationsAvailable: 'No conversations available',
@@ -41,6 +37,7 @@ export enum MenuOptions {
   edit = 'Edit',
   compare = 'Compare',
   replay = 'Replay',
+  playback = 'Playback',
   export = 'Export',
   moveTo = 'Move to',
   delete = 'Delete',
@@ -60,6 +57,7 @@ export const API = {
   modelsHost: '/api/models',
   addonsHost: '/api/addons',
   chatHost: '/api/chat',
+  sessionHost: '/api/auth/session',
 };
 
 export const Import = {
@@ -69,4 +67,29 @@ export const Import = {
   v14AppFolderChatName: '3-5 GPT math',
   v14AppBisonChatName: 'bison chat king',
   v14AppImportedFilename: 'chatbot_ui_history_1-4_version.json',
+  v14AppFolderPromptName: 'Version 1.4 A*B',
 };
+
+export enum Side {
+  right = 'right',
+  left = 'left',
+}
+
+export enum ModelIds {
+  GPT_3_5_AZ = 'gpt-35-turbo',
+  MIRROR = 'mirror',
+  GPT_4 = 'gpt-4',
+  GPT_WORLD = 'gpt-world',
+  GPT_4_32K = 'gpt-4-32k',
+  BISON_001 = 'chat-bison@001',
+}
+
+export enum AssistantIds {
+  ASSISTANT10K = 'assistant-10k',
+}
+
+export enum AddonIds {
+  ADDON_EPAM10K_GOLDEN_QNA = 'addon-epam10k-golden-qna',
+  ADDON_EPAM10K_SEMANTIC_SEARCH = 'addon-epam10k-semantic-search',
+  ADDON_WOLFRAM = 'addon-wolfram',
+}

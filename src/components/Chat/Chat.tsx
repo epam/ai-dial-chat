@@ -1,11 +1,11 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { throttle } from '@/src/utils/data/throttle';
 
-import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
 import { Conversation, Message, Replay } from '@/src/types/chat';
+import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
 
 import {
   AddonsActions,
@@ -36,10 +36,8 @@ import { ChatSettingsEmpty } from './ChatSettingsEmpty';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
-
-interface Props {
-  appName: string;
-}
+import { PlaybackControls } from './PlaybackControls';
+import { PlaybackEmptyInfo } from './PlaybackEmptyInfo';
 
 const clearStateForMessages = (messages: Message[]): Message[] => {
   return messages.map((message) => ({
@@ -51,15 +49,16 @@ const clearStateForMessages = (messages: Message[]): Message[] => {
   }));
 };
 
-export const Chat = memo(({ appName }: Props) => {
+export const Chat = memo(() => {
   const { t } = useTranslation('chat');
 
   const dispatch = useAppDispatch();
+  const appName = useAppSelector(SettingsSelectors.selectAppName);
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
   const modelsIsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
-  const defaultModelId = useAppSelector(ModelsSelectors.selectDefaultModelId);
+  const defaultModelId = useAppSelector(SettingsSelectors.selectDefaultModelId);
   const addons = useAppSelector(AddonsSelectors.selectAddons);
   const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
   const selectedConversationsIds = useAppSelector(
@@ -86,6 +85,10 @@ export const Chat = memo(({ appName }: Props) => {
     ConversationsSelectors.selectIsReplayPaused,
   );
 
+  const isPlayback = useAppSelector(
+    ConversationsSelectors.selectIsPlaybackSelectedConversations,
+  );
+
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
     useState<boolean>(false);
@@ -95,33 +98,25 @@ export const Chat = memo(({ appName }: Props) => {
     {},
   );
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const inputRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const chatContainerRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const nextMessageBoxRef = useRef<HTMLDivElement | null>(null);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const [isNotAllowedModel, setIsNotAllowedModel] = useState(false);
 
-  useEffect(() => {
-    const resizeHandler = () => {
-      if (
-        inputRef.current?.clientHeight &&
-        inputRef.current?.clientHeight !== inputHeight
-      ) {
-        setInputHeight(inputRef.current?.clientHeight);
-      }
-    };
-    window.addEventListener('resize', resizeHandler);
-    resizeHandler();
-    return () => {
-      window.removeEventListener('resize', resizeHandler);
-    };
-  }, [inputHeight]);
+  const showReplayControls = useMemo(() => {
+    return isReplay && !messageIsStreaming && isReplayPaused;
+  }, [isReplay, isReplayPaused, messageIsStreaming]);
 
   useEffect(() => {
+    setIsShowChatSettings(false);
+
     if (selectedConversations.length > 0) {
       const mergedMessages = [];
       for (let i = 0; i < selectedConversations[0].messages.length; i++) {
+        if (selectedConversations[0].messages[i].role === 'system') continue;
+
         mergedMessages.push(
           selectedConversations.map((conv) => [
             conv,
@@ -132,10 +127,10 @@ export const Chat = memo(({ appName }: Props) => {
       }
       setMergedMessages([...mergedMessages]);
     }
-  }, [selectedConversations]);
 
-  useEffect(() => {
-    setIsShowChatSettings(false);
+    if (selectedConversations.some((conv) => conv.messages.length === 0)) {
+      setShowScrollDownButton(false);
+    }
   }, [selectedConversations]);
 
   useEffect(() => {
@@ -176,16 +171,26 @@ export const Chat = memo(({ appName }: Props) => {
   );
 
   useEffect(() => {
-    if (autoScrollEnabled) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      textareaRef.current?.focus();
+    if (!autoScrollEnabled || !chatContainerRef.current) {
+      return;
     }
+
+    chatContainerRef.current.scrollTo({
+      top: chatContainerRef.current.scrollHeight,
+      behavior: 'smooth',
+    });
+    textareaRef.current?.focus();
   }, [autoScrollEnabled]);
 
   const scrollDown = () => {
-    if (autoScrollEnabled) {
-      messagesEndRef.current?.scrollIntoView(true);
+    if (!autoScrollEnabled || !chatContainerRef.current) {
+      return;
     }
+
+    chatContainerRef.current.scrollTo({
+      top: chatContainerRef.current.scrollHeight,
+      behavior: 'smooth',
+    });
   };
   const throttledScrollDown = throttle(scrollDown, 250);
 
@@ -194,7 +199,11 @@ export const Chat = memo(({ appName }: Props) => {
   }, [conversations, throttledScrollDown]);
 
   const handleScrollDown = useCallback(() => {
-    chatContainerRef.current?.scrollTo({
+    if (!chatContainerRef.current) {
+      return;
+    }
+
+    chatContainerRef.current.scrollTo({
       top: chatContainerRef.current.scrollHeight,
       behavior: 'smooth',
     });
@@ -225,7 +234,6 @@ export const Chat = memo(({ appName }: Props) => {
         }
       },
       {
-        root: chatContainerRef.current,
         threshold: 0.1,
       },
     );
@@ -246,10 +254,14 @@ export const Chat = memo(({ appName }: Props) => {
         confirm(t<string>('Are you sure you want to clear all messages?')) &&
         conversation
       ) {
+        const { messages } = conversation;
+
         dispatch(
           ConversationsActions.updateConversation({
             id: conversation.id,
-            values: { messages: [] },
+            values: {
+              messages: messages.filter((message) => message.role === 'system'),
+            },
           }),
         );
       }
@@ -416,6 +428,20 @@ export const Chat = memo(({ appName }: Props) => {
     );
   }, [dispatch, selectedConversations]);
 
+  const onEditMessage = useCallback(
+    (editedMessage: Message, index: number) => {
+      dispatch(
+        ConversationsActions.sendMessages({
+          conversations: selectedConversations,
+          message: editedMessage,
+          deleteCount: selectedConversations[0]?.messages.length - index,
+          activeReplayIndex: 0,
+        }),
+      );
+    },
+    [dispatch, selectedConversations],
+  );
+
   const handleApplyChatSettings = useCallback(() => {
     selectedConversations.forEach((conversation) => {
       const temporarySettings:
@@ -477,8 +503,28 @@ export const Chat = memo(({ appName }: Props) => {
     [],
   );
 
+  const setChatContainerRef = useCallback((ref: HTMLDivElement | null) => {
+    chatContainerRef.current = ref;
+
+    if (!ref) {
+      return;
+    }
+
+    ref.scrollTo({ top: ref.scrollHeight });
+  }, []);
+
+  const onChatInputResize = useCallback((inputHeight: number) => {
+    setInputHeight(inputHeight);
+  }, []);
+
+  useEffect(() => {
+    if (showReplayControls) {
+      setInputHeight(80);
+    }
+  }, [showReplayControls]);
+
   return (
-    <div className="relative flex-1" data-qa="chat">
+    <div className="relative min-w-0 flex-1" data-qa="chat" id="chat">
       {modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : (
@@ -507,10 +553,11 @@ export const Chat = memo(({ appName }: Props) => {
                 <div className="flex max-h-full w-full">
                   {selectedConversations.map(
                     (conv) =>
-                      conv.messages.length === 0 && (
+                      conv.messages.length === 0 &&
+                      (!conv.playback?.isPlayback ? (
                         <div
                           key={conv.id}
-                          className={`flex h-full flex-col justify-between overflow-auto ${
+                          className={`flex h-full flex-col justify-between ${
                             selectedConversations.length > 1
                               ? 'w-[50%]'
                               : 'w-full'
@@ -519,7 +566,7 @@ export const Chat = memo(({ appName }: Props) => {
                           <div
                             className="shrink-0"
                             style={{
-                              height: `calc(100%-${inputHeight})`,
+                              height: `calc(100% - ${inputHeight}px)`,
                             }}
                           >
                             <ChatSettingsEmpty
@@ -530,7 +577,7 @@ export const Chat = memo(({ appName }: Props) => {
                               defaultModelId={
                                 defaultModelId || OpenAIEntityModelID.GPT_3_5
                               }
-                              isShowSettings={enabledFeatures.has(
+                              isShowSettings={enabledFeatures.includes(
                                 'empty-chat-settings',
                               )}
                               onSelectModel={(modelId: string) =>
@@ -557,7 +604,28 @@ export const Chat = memo(({ appName }: Props) => {
                             style={{ height: inputHeight }}
                           />
                         </div>
-                      ),
+                      ) : (
+                        <div
+                          key={conv.id}
+                          className={`flex h-full flex-col justify-between overflow-auto ${
+                            selectedConversations.length > 1
+                              ? 'w-[50%]'
+                              : 'w-full'
+                          }`}
+                        >
+                          <div
+                            className="shrink-0"
+                            style={{
+                              height: `calc(100%-${inputHeight})`,
+                            }}
+                          >
+                            <PlaybackEmptyInfo
+                              conversationName={conv.name}
+                              appName={appName}
+                            />
+                          </div>
+                        </div>
+                      )),
                   )}
                 </div>
                 <div className="flex w-full">
@@ -571,20 +639,24 @@ export const Chat = memo(({ appName }: Props) => {
                       }`}
                     >
                       {conv.messages.length !== 0 &&
-                        enabledFeatures.has('top-settings') && (
+                        enabledFeatures.includes('top-settings') && (
                           <div className={`z-10 flex flex-col `}>
                             <ChatHeader
                               conversation={conv}
                               isCompareMode={isCompareMode}
-                              isShowChatInfo={enabledFeatures.has(
+                              isShowChatInfo={enabledFeatures.includes(
                                 'top-chat-info',
                               )}
-                              isShowClearConversation={enabledFeatures.has(
-                                'top-clear-conversation',
-                              )}
-                              isShowModelSelect={enabledFeatures.has(
-                                'top-chat-model-settings',
-                              )}
+                              isShowClearConversation={
+                                enabledFeatures.includes(
+                                  'top-clear-conversation',
+                                ) && !isPlayback
+                              }
+                              isShowModelSelect={
+                                enabledFeatures.includes(
+                                  'top-chat-model-settings',
+                                ) && !isPlayback
+                              }
                               isShowSettings={isShowChatSettings}
                               setShowSettings={(isShow) => {
                                 if (isShow) {
@@ -613,7 +685,7 @@ export const Chat = memo(({ appName }: Props) => {
                 {mergedMessages?.length > 0 && (
                   <div
                     className="flex max-h-full flex-col overflow-x-hidden"
-                    ref={chatContainerRef}
+                    ref={setChatContainerRef}
                     onScroll={handleScroll}
                     data-qa="chat-messages"
                   >
@@ -652,23 +724,11 @@ export const Chat = memo(({ appName }: Props) => {
                                     message={message}
                                     messageIndex={index}
                                     conversation={conv}
-                                    isLikesEnabled={enabledFeatures.has(
+                                    isLikesEnabled={enabledFeatures.includes(
                                       'likes',
                                     )}
                                     editDisabled={isNotAllowedModel}
-                                    onEdit={(editedMessage) => {
-                                      selectedConversations.forEach((conv) => {
-                                        dispatch(
-                                          ConversationsActions.sendMessage({
-                                            conversation: conv,
-                                            message: editedMessage,
-                                            deleteCount:
-                                              conv?.messages.length - index,
-                                            activeReplayIndex: 0,
-                                          }),
-                                        );
-                                      });
-                                    }}
+                                    onEdit={onEditMessage}
                                     onLike={onLikeHandler(index, conv)}
                                     onDelete={() => {
                                       handleDeleteMessage(index);
@@ -740,11 +800,11 @@ export const Chat = memo(({ appName }: Props) => {
                 </div>
               )}
             </div>
-            {isNotAllowedModel ? (
+            {!isPlayback && isNotAllowedModel ? (
               <NotAllowedModel />
             ) : (
               <>
-                {isReplay && !messageIsStreaming && isReplayPaused ? (
+                {showReplayControls ? (
                   <ChatReplayControls
                     onClickReplayStart={handleReplayStart}
                     onClickReplayReStart={handleReplayReStart}
@@ -753,25 +813,38 @@ export const Chat = memo(({ appName }: Props) => {
                     )}
                   />
                 ) : (
-                  <ChatInput
-                    ref={inputRef}
-                    textareaRef={textareaRef}
-                    isMessagesPresented={selectedConversations.some(
-                      (val) => val.messages.length > 0,
+                  <>
+                    {!isPlayback && (
+                      <ChatInput
+                        textareaRef={textareaRef}
+                        isMessagesPresented={selectedConversations.some(
+                          (val) => val.messages.length > 0,
+                        )}
+                        maxLength={Math.min(
+                          ...selectedConversations.map(
+                            (conv) => conv.model.maxLength,
+                          ),
+                        )}
+                        showScrollDownButton={showScrollDownButton}
+                        onSend={onSendMessage}
+                        onScrollDownClick={handleScrollDown}
+                        onRegenerate={onRegenerateMessage}
+                        onStopConversation={() => {
+                          dispatch(ConversationsActions.stopStreamMessage());
+                        }}
+                        onResize={onChatInputResize}
+                      />
                     )}
-                    maxLength={Math.min(
-                      ...selectedConversations.map(
-                        (conv) => conv.model.maxLength,
-                      ),
+
+                    {isPlayback && (
+                      <PlaybackControls
+                        nextMessageBoxRef={nextMessageBoxRef}
+                        showScrollDownButton={showScrollDownButton}
+                        onScrollDownClick={handleScrollDown}
+                        onResize={onChatInputResize}
+                      />
                     )}
-                    showScrollDownButton={showScrollDownButton}
-                    onSend={onSendMessage}
-                    onScrollDownClick={handleScrollDown}
-                    onRegenerate={onRegenerateMessage}
-                    onStopConversation={() => {
-                      dispatch(ConversationsActions.stopStreamMessage());
-                    }}
-                  />
+                  </>
                 )}
               </>
             )}

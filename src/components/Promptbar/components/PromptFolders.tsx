@@ -1,6 +1,9 @@
 import { useCallback } from 'react';
 
+import classNames from 'classnames';
+
 import { FolderInterface } from '@/src/types/folder';
+import { Prompt } from '@/src/types/prompt';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -9,78 +12,145 @@ import {
 } from '@/src/store/prompts/prompts.reducers';
 
 import Folder from '@/src/components/Folder';
-import { PromptComponent } from '@/src/components/Promptbar/components/Prompt';
 
-interface PromptFoldersProps {
+import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
+import { PromptComponent } from './Prompt';
+
+interface promptFolderProps {
   folder: FolderInterface;
+  index: number;
+  isLast: boolean;
 }
 
-const PromptFoldersTemplate = ({ folder }: PromptFoldersProps) => {
-  const filteredPrompts = useAppSelector(
-    PromptsSelectors.selectSearchedPrompts,
-  );
-
-  return (
-    <div className="ml-5 flex flex-col gap-1 border-l border-gray-500">
-      {filteredPrompts
-        .filter((p) => p.folderId)
-        .map((prompt, index) => {
-          if (prompt.folderId === folder.id) {
-            return (
-              <div key={index} className="pl-2">
-                <PromptComponent prompt={prompt} />
-              </div>
-            );
-          }
-        })}
-    </div>
-  );
-};
-
-export const PromptFolders = () => {
+const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
   const dispatch = useAppDispatch();
 
-  const folders = useAppSelector(PromptsSelectors.selectFolders);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
+  const highlightedFolders = useAppSelector(
+    PromptsSelectors.selectSelectedPromptFoldersIds,
+  );
+  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
+  const conversationFolders = useAppSelector(PromptsSelectors.selectFolders);
 
   const handleDrop = useCallback(
     (e: any, folder: FolderInterface) => {
       if (e.dataTransfer) {
-        const prompt = JSON.parse(e.dataTransfer.getData('prompt'));
-        dispatch(
-          PromptsActions.updatePrompt({
-            promptId: prompt.id,
-            values: { folderId: folder.id },
-          }),
-        );
+        const promptData = e.dataTransfer.getData('prompt');
+        const folderData = e.dataTransfer.getData('folder');
+
+        if (promptData) {
+          const prompt: Prompt = JSON.parse(promptData);
+          dispatch(
+            PromptsActions.updatePrompt({
+              promptId: prompt.id,
+              values: {
+                folderId: folder.id,
+              },
+            }),
+          );
+        } else if (folderData) {
+          const movedFolder: FolderInterface = JSON.parse(folderData);
+          if (
+            movedFolder.id !== folder.id &&
+            movedFolder.folderId !== folder.id
+          ) {
+            dispatch(
+              PromptsActions.moveFolder({
+                folderId: movedFolder.id,
+                newParentFolderId: folder.id,
+                newIndex: 0,
+              }),
+            );
+          }
+        }
       }
     },
     [dispatch],
   );
 
+  const onDropBetweenFolders = useCallback(
+    (
+      folder: FolderInterface,
+      parentFolderId: string | undefined,
+      index: number,
+    ) => {
+      dispatch(
+        PromptsActions.moveFolder({
+          folderId: folder.id,
+          newParentFolderId: parentFolderId,
+          newIndex: index,
+        }),
+      );
+    },
+    [dispatch],
+  );
+
   return (
-    <div className="flex w-full flex-col" data-qa="prompt-folders">
-      {folders.map((folder, index) => (
-        <Folder
-          key={index}
-          searchTerm={searchTerm}
-          currentFolder={folder}
+    <>
+      <BetweenFoldersLine
+        level={0}
+        onDrop={onDropBetweenFolders}
+        index={index}
+        parentFolderId={folder.folderId}
+        highlightColor="violet"
+      />
+      <Folder
+        searchTerm={searchTerm}
+        currentFolder={folder}
+        itemComponent={PromptComponent}
+        allItems={prompts}
+        allFolders={conversationFolders}
+        highlightColor="violet"
+        highlightedFolders={highlightedFolders}
+        handleDrop={handleDrop}
+        onRenameFolder={(newName, folderId) => {
+          dispatch(
+            PromptsActions.renameFolder({
+              folderId,
+              name: newName,
+            }),
+          );
+        }}
+        onDeleteFolder={(folderId: string) =>
+          dispatch(PromptsActions.deleteFolder({ folderId }))
+        }
+        onDropBetweenFolders={onDropBetweenFolders}
+      />
+      {isLast && (
+        <BetweenFoldersLine
+          level={0}
+          onDrop={onDropBetweenFolders}
+          index={index + 1}
+          parentFolderId={folder.folderId}
           highlightColor="violet"
-          folderComponent={<PromptFoldersTemplate folder={folder} />}
-          handleDrop={handleDrop}
-          onRenameFolder={(newName) => {
-            dispatch(
-              PromptsActions.renameFolder({
-                folderId: folder.id,
-                name: newName,
-              }),
-            );
-          }}
-          onDeleteFolder={() =>
-            dispatch(PromptsActions.deleteFolder({ folderId: folder.id }))
-          }
         />
-      ))}
+      )}
+    </>
+  );
+};
+
+export const PromptFolders = () => {
+  const folders = useAppSelector(PromptsSelectors.selectFolders);
+
+  return (
+    <div
+      className={classNames('flex w-full flex-col')}
+      data-qa="prompt-folders"
+    >
+      {folders.map((folder, index, arr) => {
+        if (!folder.folderId) {
+          return (
+            <PromptFolderTemplate
+              key={index}
+              folder={folder}
+              index={index}
+              isLast={index === arr.length - 1}
+            />
+          );
+        }
+
+        return null;
+      })}
     </div>
   );
 };

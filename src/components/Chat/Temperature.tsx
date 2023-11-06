@@ -10,7 +10,7 @@ import 'rc-slider/assets/index.css';
 const TemperatureIndicator = ({ props, children }: any) => {
   return (
     <div
-      className="absolute top-[calc(50%-20px)] flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700"
+      className="absolute top-[calc(50%-20px)] flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-gray-100 shadow dark:bg-gray-700"
       style={props.style}
       onKeyDown={props.onKeyDown}
       onMouseDown={props.onMouseDown}
@@ -56,19 +56,21 @@ export const TemperatureSlider: FC<Props> = ({
         <span className="text-right">{t('Creative')}</span>
       </div>
 
-      <Slider
-        className="temperature-slider !h-10"
-        value={temperature}
-        onChange={(value) => typeof value === 'number' && handleChange(value)}
-        min={0}
-        max={1}
-        step={0.1}
-        handleRender={({ props }) => (
-          <TemperatureIndicator props={props}>
-            {currentTemperature}
-          </TemperatureIndicator>
-        )}
-      />
+      <div className="px-5">
+        <Slider
+          className="temperature-slider !h-10"
+          value={temperature}
+          onChange={(value) => typeof value === 'number' && handleChange(value)}
+          min={0}
+          max={1}
+          step={0.1}
+          handleRender={({ props }) => (
+            <TemperatureIndicator props={props}>
+              {currentTemperature}
+            </TemperatureIndicator>
+          )}
+        />
+      </div>
     </div>
   );
 };

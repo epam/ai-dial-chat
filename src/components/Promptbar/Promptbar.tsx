@@ -23,12 +23,13 @@ const PromptActionsBlock = () => {
   const dispatch = useAppDispatch();
 
   return (
-    <div className="flex p-2">
+    <div className="flex px-2 py-1">
       <button
-        className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded p-3 transition-colors duration-200 hover:bg-violet/15 disabled:cursor-not-allowed"
+        className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-violet/15 disabled:cursor-not-allowed"
         onClick={() => {
           dispatch(PromptsActions.createNewPrompt());
           dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
+          dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
         }}
         data-qa="new-prompt"
       >

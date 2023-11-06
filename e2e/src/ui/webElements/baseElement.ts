@@ -1,6 +1,11 @@
-import { Styles } from '../domData';
+import { Attributes, Styles } from '../domData';
 
 import { Locator, Page } from '@playwright/test';
+
+export interface Icons {
+  iconEntity: string;
+  iconUrl: string | undefined;
+}
 
 export class BaseElement {
   protected page: Page;
@@ -107,6 +112,10 @@ export class BaseElement {
     return this.rootLocator.boundingBox();
   }
 
+  async scrollIntoElementView() {
+    await this.rootLocator.scrollIntoViewIfNeeded();
+  }
+
   async getAllBorderColors() {
     const allBorderColors: {
       bottomBorderColors: string[];
@@ -152,5 +161,29 @@ export class BaseElement {
     const clientWidth = await this.rootLocator.evaluate((t) => t.clientWidth);
     const scrollWidth = await this.rootLocator.evaluate((t) => t.scrollWidth);
     return scrollWidth > clientWidth;
+  }
+
+  public async getElementIconAttributes(
+    elementLocator: Locator,
+  ): Promise<Icons> {
+    const iconEntity = await elementLocator.getAttribute(Attributes.alt);
+    const iconUrl = await elementLocator.getAttribute(Attributes.src);
+    return {
+      iconEntity: iconEntity!.replaceAll(' icon', ''),
+      iconUrl: iconUrl!,
+    };
+  }
+
+  public async getElementDefaultIconAttributes(
+    elementLocator: Locator,
+  ): Promise<Icons> {
+    const defaultIconEntity = await elementLocator.getByRole('img');
+    const defaultIconEntityName = await defaultIconEntity.getAttribute(
+      Attributes.ariaLabel,
+    );
+    return {
+      iconEntity: defaultIconEntityName!.replaceAll(' icon', ''),
+      iconUrl: undefined,
+    };
   }
 }

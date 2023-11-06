@@ -1,4 +1,3 @@
-import { IconRefreshDot } from '@tabler/icons-react';
 import {
   DragEvent,
   KeyboardEvent,
@@ -11,6 +10,8 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { Conversation } from '@/src/types/chat';
 
 import {
@@ -21,22 +22,26 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { emptyImage } from '@/src/constants/drag-and-drop';
+
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
 import CheckIcon from '../../../../public/images/icons/check.svg';
 import XmarkIcon from '../../../../public/images/icons/xmark.svg';
+import { PlaybackIcon } from '../../Chat/PlaybackIcon';
+import { ReplayAsIsIcon } from '../../Chat/ReplayAsIsIcon';
 import { ContextMenu } from '../../Common/ContextMenu';
 import { ModelIcon } from './ModelIcon';
 
-import classNames from 'classnames';
 import { v4 as uuidv4 } from 'uuid';
 
 interface Props {
-  conversation: Conversation;
+  item: Conversation;
+  level?: number;
 }
 
-export const ConversationComponent = ({ conversation }: Props) => {
+export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const { t } = useTranslation('chat');
   const dispatch = useAppDispatch();
 
@@ -55,12 +60,22 @@ export const ConversationComponent = ({ conversation }: Props) => {
   );
   const folders = useAppSelector(ConversationsSelectors.selectFolders);
 
+  const isPlayback = useAppSelector(
+    ConversationsSelectors.selectIsPlaybackSelectedConversations,
+  );
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const wrapperRef = useRef(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const dragImageRef = useRef<HTMLImageElement | null>();
+
+  useEffect(() => {
+    dragImageRef.current = document.createElement('img');
+    dragImageRef.current.src = emptyImage;
+  }, []);
 
   const isEmptyConversation = conversation.messages.length === 0;
 
@@ -84,6 +99,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
 
   const handleEnterDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
+      e.stopPropagation();
       if (e.key === 'Enter') {
         e.preventDefault();
         handleRename(conversation);
@@ -95,6 +111,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLButtonElement>, conversation: Conversation) => {
       if (e.dataTransfer) {
+        e.dataTransfer.setDragImage(dragImageRef.current || new Image(), 0, 0);
         e.dataTransfer.setData('conversation', JSON.stringify(conversation));
       }
     },
@@ -106,8 +123,8 @@ export const ConversationComponent = ({ conversation }: Props) => {
       e.stopPropagation();
       if (isDeleting) {
         dispatch(
-          ConversationsActions.deleteConversation({
-            conversationId: conversation.id,
+          ConversationsActions.deleteConversations({
+            conversationIds: [conversation.id],
           }),
         );
       } else if (isRenaming) {
@@ -154,6 +171,13 @@ export const ConversationComponent = ({ conversation }: Props) => {
     [conversation, dispatch],
   );
 
+  const handleCreatePlayback: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      dispatch(
+        ConversationsActions.createNewPlaybackConversation({ conversation }),
+      );
+    }, [conversation, dispatch]);
+
   useEffect(() => {
     if (isRenaming) {
       setIsDeleting(false);
@@ -193,18 +217,21 @@ export const ConversationComponent = ({ conversation }: Props) => {
   return (
     <div
       className={classNames(
-        'group relative flex h-[42px] items-center rounded hover:bg-green/15',
+        'group relative flex h-[30px] items-center rounded border-l-2 pr-0.5 hover:bg-green/15',
         selectedConversationIds.includes(conversation.id)
-          ? 'border-l-2 border-l-green bg-green/15'
-          : '',
+          ? 'border-l-green bg-green/15'
+          : 'border-l-transparent',
       )}
+      style={{
+        paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
+      }}
       data-qa="conversation"
     >
       {isRenaming ? (
-        <div className="flex w-full items-center gap-3 px-3">
+        <div className="flex w-full items-center gap-2">
           {conversation.replay.replayAsIs ? (
             <span className="relative inline-block shrink-0 leading-none">
-              <IconRefreshDot size={18} />
+              <ReplayAsIsIcon size={18} />
             </span>
           ) : (
             <ModelIcon
@@ -216,7 +243,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
           )}
 
           <input
-            className="mr-12 flex-1 overflow-hidden text-ellipsis bg-transparent text-left leading-3 outline-none"
+            className="mr-12 flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
             type="text"
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
@@ -227,7 +254,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
       ) : (
         <button
           className={classNames(
-            'group flex h-full w-full cursor-pointer items-center gap-3 pl-3 pr-0.5 transition-colors duration-200',
+            'group flex h-full w-full cursor-pointer items-center gap-2 transition-colors duration-200',
             messageIsStreaming && 'disabled:cursor-not-allowed',
           )}
           onClick={() => {
@@ -247,23 +274,32 @@ export const ConversationComponent = ({ conversation }: Props) => {
           }}
           ref={buttonRef}
         >
-          {conversation.replay.replayAsIs ? (
+          {conversation.replay.replayAsIs && (
             <span className="flex shrink-0">
-              <IconRefreshDot size={18} />
+              <ReplayAsIsIcon size={18} />
             </span>
-          ) : (
-            <ModelIcon
-              size={18}
-              entityId={conversation.model.id}
-              entity={modelsMap[conversation.model.id]}
-              inverted={theme === 'dark'}
-            />
           )}
+
+          {conversation.playback && conversation.playback.isPlayback && (
+            <span className="flex shrink-0">
+              <PlaybackIcon size={18} />
+            </span>
+          )}
+
+          {!conversation.replay.replayAsIs &&
+            !conversation.playback?.isPlayback && (
+              <ModelIcon
+                size={18}
+                entityId={conversation.model.id}
+                entity={modelsMap[conversation.model.id]}
+                inverted={theme === 'dark'}
+              />
+            )}
 
           <div
             className={classNames(
               'relative max-h-5 flex-1 truncate break-all text-left',
-              isDeleting || isRenaming ? 'pr-10' : 'group-hover:pr-5',
+              isDeleting || isRenaming ? 'pr-10' : 'group-hover:pr-7',
             )}
           >
             {conversation.name}
@@ -301,7 +337,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
               );
             }}
             onCompare={
-              !isReplay
+              !isReplay && !isPlayback
                 ? () => {
                     dispatch(
                       ConversationsActions.selectConversations({
@@ -312,7 +348,8 @@ export const ConversationComponent = ({ conversation }: Props) => {
                   }
                 : undefined
             }
-            onReplay={handleStartReplay}
+            onReplay={!isPlayback ? handleStartReplay : undefined}
+            onPlayback={handleCreatePlayback}
           />
         </div>
       )}

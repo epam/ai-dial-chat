@@ -1,25 +1,21 @@
 import { Conversation } from '@/src/types/chat';
-import {
-  OpenAIEntityAddon,
-  OpenAIEntityAddonID,
-  OpenAIEntityModel,
-  OpenAIEntityModelID,
-  OpenAIEntityModels,
-} from '@/src/types/openai';
+import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
-import { ExpectedConstants, ExpectedMessages } from '@/e2e/src/testData';
-import { GeneratorUtil } from '@/e2e/src/utils';
+import { AddonIds, AssistantIds, ExpectedMessages } from '@/e2e/src/testData';
+import { GeneratorUtil, ModelsUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
-let allAddons: OpenAIEntityAddon[];
-let assistant: OpenAIEntityModel | undefined;
+let allAddons: OpenAIEntityModel[];
+let assistant: OpenAIEntityModel;
+let defaultModel: OpenAIEntityModel;
+let allModels: OpenAIEntityModel[];
 
-test.beforeAll(async ({ apiHelper }) => {
-  allAddons = await apiHelper.getAddons();
-  assistant = await apiHelper.getEntity(
-    OpenAIEntityModels[OpenAIEntityModelID.ASSISTANT10K],
-  );
+test.beforeAll(async () => {
+  allAddons = ModelsUtil.getAddons();
+  assistant = await ModelsUtil.getAssistant(AssistantIds.ASSISTANT10K)!;
+  defaultModel = ModelsUtil.getDefaultModel()!;
+  allModels = ModelsUtil.getModels();
 });
 
 test('Model settings opened in chat are the same as on New chat defaults', async ({
@@ -30,17 +26,14 @@ test('Model settings opened in chat are the same as on New chat defaults', async
   addons,
   talkToSelector,
   setTestIds,
-  apiHelper,
   conversationData,
   localStorageManager,
 }) => {
   setTestIds('EPMRTC-449');
   let conversation: Conversation;
-  const allModels = await apiHelper.getModelNames();
+  const allModels = ModelsUtil.getModels();
   const randomModel = GeneratorUtil.randomArrayElement(
-    allModels.filter(
-      (m) => m !== OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ].name,
-    ),
+    allModels.filter((m) => m.id !== defaultModel.id),
   );
 
   await test.step('Prepare conversation with default model and settings', async () => {
@@ -53,7 +46,7 @@ test('Model settings opened in chat are the same as on New chat defaults', async
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
     await chatHeader.openConversationSettings.click();
-    await talkToSelector.selectModel(randomModel);
+    await talkToSelector.selectModel(randomModel.name);
   });
 
   await test.step('Verify conversation settings are the same as for initial model', async () => {
@@ -65,9 +58,7 @@ test('Model settings opened in chat are the same as on New chat defaults', async
     expect
       .soft(temperature, ExpectedMessages.defaultTemperatureIsOne)
       .toBe(conversation.temperature.toString());
-    const modelAddons = await apiHelper.getEntitySelectedAddons(
-      OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ].name,
-    );
+    const modelAddons = defaultModel.selectedAddons ?? [];
     const selectedAddons = await addons.getSelectedAddons();
     expect
       .soft(selectedAddons, ExpectedMessages.noAddonsSelected)
@@ -80,18 +71,16 @@ test('Chat header after changing chat settings and continuing chatting. From Mod
   chatHeader,
   talkToSelector,
   setTestIds,
-  apiHelper,
   conversationData,
   localStorageManager,
   chat,
   modelSelector,
   chatInfoTooltip,
+  errorPopup,
 }) => {
   setTestIds('EPMRTC-452');
   let conversation: Conversation;
-  const assistant = await apiHelper.getAssistant(
-    ExpectedConstants.presalesAssistant,
-  );
+  const assistant = ModelsUtil.getAssistant(AssistantIds.ASSISTANT10K);
   const assistantSelectedAddons = assistant!.selectedAddons;
   const secondRandomAddon = GeneratorUtil.randomArrayElement(
     allAddons.filter((a) => !assistantSelectedAddons?.includes(a.id)),
@@ -105,7 +94,7 @@ test('Chat header after changing chat settings and continuing chatting. From Mod
     conversation = conversationData.prepareModelConversation(
       modelTemp,
       modelPrompt,
-      [OpenAIEntityAddonID.ADDON_EPAM10K_SEMANTIC_SEARCH, secondRandomAddon.id],
+      [AddonIds.ADDON_EPAM10K_SEMANTIC_SEARCH, secondRandomAddon.id],
     );
     await localStorageManager.setConversationHistory(conversation);
     await localStorageManager.setSelectedConversation(conversation);
@@ -159,6 +148,7 @@ test('Chat header after changing chat settings and continuing chatting. From Mod
   });
 
   await test.step('Hover over chat header and verify chat settings are correct on tooltip', async () => {
+    await errorPopup.cancelPopup();
     await chatHeader.chatModel.hoverOver();
     const assistantInfo = await chatInfoTooltip.getAssistantInfo();
     expect
@@ -170,7 +160,9 @@ test('Chat header after changing chat settings and continuing chatting. From Mod
       .soft(assistantInfoIcon, ExpectedMessages.chatInfoAssistantIconIsValid)
       .toBe(assistant!.iconUrl);
 
-    const assistantModelEntity = await apiHelper.getModel(assistantModel!);
+    const assistantModelEntity = allModels.find(
+      (m) => m.name === assistantModel,
+    );
     const assistantModelInfo = await chatInfoTooltip.getAssistantModelInfo();
     expect
       .soft(assistantModelInfo, ExpectedMessages.chatInfoAssistantModelIsValid)
@@ -214,19 +206,17 @@ test('Chat header after changing chat settings and continuing chatting. From Ass
   setTestIds,
   conversationData,
   localStorageManager,
-  apiHelper,
   chatHeader,
   chatInfoTooltip,
   talkToSelector,
   temperatureSlider,
+  errorPopup,
 }) => {
   setTestIds('EPMRTC-466');
   let conversation: Conversation;
   const assistantSelectedAddons = assistant?.selectedAddons;
-  const allModels = await apiHelper
-    .getModels()
-    .then((models) => models.filter((m) => m.iconUrl !== undefined));
-  const randomModel = GeneratorUtil.randomArrayElement(allModels);
+  const models = allModels.filter((m) => m.iconUrl !== undefined);
+  const randomModel = GeneratorUtil.randomArrayElement(models);
   const addonIds = allAddons.map((a) => a.id);
   let isSelectedAddon = true;
   let randomAddon = '';
@@ -287,6 +277,7 @@ test('Chat header after changing chat settings and continuing chatting. From Ass
   });
 
   await test.step('Hover over chat header and verify chat settings are correct on tooltip', async () => {
+    await errorPopup.cancelPopup();
     await chatHeader.chatModel.hoverOver();
     const modelInfo = await chatInfoTooltip.getModelInfo();
     expect
@@ -327,18 +318,16 @@ test('Chat header after changing chat settings and continuing chatting. From Ass
   setTestIds,
   conversationData,
   localStorageManager,
-  apiHelper,
   chatHeader,
   chatInfoTooltip,
   talkToSelector,
+  errorPopup,
 }) => {
   setTestIds('EPMRTC-454');
   let conversation: Conversation;
-  const allApps = await apiHelper
-    .getModelEntities()
-    .then((e) =>
-      e.filter((e) => e.type === 'application' && e.iconUrl !== undefined),
-    );
+  const allApps = ModelsUtil.getApplications().filter(
+    (a) => a.iconUrl !== undefined,
+  );
   const randomApp = GeneratorUtil.randomArrayElement(allApps);
 
   await test.step('Prepare assistant conversation with default settings', async () => {
@@ -351,7 +340,12 @@ test('Chat header after changing chat settings and continuing chatting. From Ass
   });
 
   await test.step('Open conversation settings and change assistant to application', async () => {
-    await dialHomePage.openHomePage();
+    const assistantAddonIconUrls = allAddons
+      .filter((addon) => assistant?.selectedAddons?.includes(addon.id))
+      .map((addon) => addon.iconUrl);
+    await dialHomePage.openHomePage({
+      iconsToBeLoaded: [assistant?.iconUrl, ...assistantAddonIconUrls],
+    });
     await dialHomePage.waitForPageLoaded();
     await chatHeader.openConversationSettings.click();
     await talkToSelector.selectApplication(randomApp.name);
@@ -372,6 +366,7 @@ test('Chat header after changing chat settings and continuing chatting. From Ass
   });
 
   await test.step('Hover over chat header and verify chat settings are correct on tooltip', async () => {
+    await errorPopup.cancelPopup();
     await chatHeader.chatModel.hoverOver();
     const appInfo = await chatInfoTooltip.getApplicationInfo();
     expect

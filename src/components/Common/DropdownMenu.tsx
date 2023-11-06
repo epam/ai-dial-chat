@@ -112,8 +112,12 @@ export const MenuComponent = forwardRef<
       flip(),
       shift(),
       size({
-        apply({ rects }) {
+        apply({ rects, availableWidth, availableHeight, elements }) {
           setFloatingWidth(rects.reference.width);
+          Object.assign(elements.floating.style, {
+            maxWidth: `${availableWidth}px`,
+            maxHeight: `${availableHeight}px`,
+          });
         },
       }),
     ],
@@ -234,7 +238,7 @@ export const MenuComponent = forwardRef<
                 returnFocus={!isNested}
               >
                 <div
-                  className="z-50 overflow-hidden rounded bg-gray-100 text-gray-800 shadow focus-visible:outline-none dark:bg-black dark:text-gray-200"
+                  className="z-50 overflow-auto rounded bg-gray-100 text-gray-800 shadow focus-visible:outline-none dark:bg-black dark:text-gray-200"
                   data-qa="dropdown-menu"
                   ref={refs.setFloating}
                   style={{
@@ -276,30 +280,32 @@ export const MenuItem = forwardRef<
   const isActive = item.index === menu.activeIndex;
 
   return (
-    <button
-      {...props}
-      ref={useMergeRefs([item.ref, forwardedRef])}
-      type="button"
-      role="menuitem"
-      className={classNames(menuItemClassNames, 'h-[42px] w-full', className)}
-      tabIndex={isActive ? 0 : -1}
-      disabled={disabled}
-      {...menu.getItemProps({
-        onClick(event: MouseEvent<HTMLButtonElement>) {
-          props.onClick?.(event);
-          tree?.events.emit('click');
-        },
-        onFocus(event: FocusEvent<HTMLButtonElement>) {
-          props.onFocus?.(event);
-          menu.setHasFocusInside(true);
-        },
-      })}
-    >
-      {ItemComponent}
-      {!ItemComponent && label && (
-        <span className="inline-block truncate">{label}</span>
-      )}
-    </button>
+    <div>
+      <button
+        {...props}
+        ref={useMergeRefs([item.ref, forwardedRef])}
+        type="button"
+        role="menuitem"
+        className={classNames(menuItemClassNames, 'h-[42px] w-full', className)}
+        tabIndex={isActive ? 0 : -1}
+        disabled={disabled}
+        {...menu.getItemProps({
+          onClick(event: MouseEvent<HTMLButtonElement>) {
+            props.onClick?.(event);
+            tree?.events.emit('click');
+          },
+          onFocus(event: FocusEvent<HTMLButtonElement>) {
+            props.onFocus?.(event);
+            menu.setHasFocusInside(true);
+          },
+        })}
+      >
+        {ItemComponent}
+        {!ItemComponent && label && (
+          <span className="inline-block truncate">{label}</span>
+        )}
+      </button>
+    </div>
   );
 });
 

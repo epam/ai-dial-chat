@@ -2,10 +2,9 @@ import { ChatBarSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 import { Conversations } from './conversations';
 
-import { API, Import } from '@/e2e/src/testData';
+import { API } from '@/e2e/src/testData';
 import { FolderConversations } from '@/e2e/src/ui/webElements/folderConversations';
 import { Page } from '@playwright/test';
-import path from 'path';
 
 export class ChatBar extends BaseElement {
   constructor(page: Page) {
@@ -72,22 +71,5 @@ export class ChatBar extends BaseElement {
     await this.compareButton.click();
     await modelsResponsePromise;
     await addonsResponsePromise;
-  }
-
-  public async importConversation(filename: string, isExported = true) {
-    const directory = isExported ? '' : Import.importPath;
-    const fileChooserPromise = this.page.waitForEvent('filechooser');
-    await this.importButton.click();
-    const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles(path.join(directory, filename));
-  }
-
-  public async exportConversation() {
-    const downloadPromise = this.page.waitForEvent('download');
-    await this.exportButton.click();
-    const download = await downloadPromise;
-    const filePath = path.join(Import.exportPath, download.suggestedFilename());
-    await download.saveAs(filePath);
-    return filePath;
   }
 }

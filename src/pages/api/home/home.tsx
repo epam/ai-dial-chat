@@ -18,14 +18,17 @@ import { timeoutAsync } from '@/src/utils/auth/timeout-async';
 
 import { Feature } from '@/src/types/features';
 import { FolderInterface } from '@/src/types/folder';
-import { OpenAIEntityModelID, fallbackModelID } from '@/src/types/openai';
+import { fallbackModelID } from '@/src/types/openai';
 
 import { AddonsActions } from '@/src/store/addons/addons.reducers';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsActions } from '@/src/store/models/models.reducers';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { SettingsActions } from '@/src/store/settings/settings.reducers';
+import {
+  SettingsSelectors,
+  SettingsState,
+} from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { Chat } from '@/src/components/Chat/Chat';
@@ -38,36 +41,26 @@ import packageJSON from '../../../../package.json';
 import { authOptions } from '../auth/[...nextauth]';
 
 interface Props {
-  appName: string;
-  footerHtmlMessage: string;
-  enabledFeatures: Feature[];
-  isIframe: boolean;
-  authDisabled: boolean;
-  defaultModelId: OpenAIEntityModelID;
-  defaultRecentModelsIds: string[];
-  defaultRecentAddonsIds: string[];
-  codeWarning: string;
+  initialState: {
+    settings: SettingsState;
+  };
 }
 
-const Home = ({
-  appName,
-  footerHtmlMessage,
-  enabledFeatures,
-  isIframe,
-  defaultModelId,
-  authDisabled,
-  defaultRecentModelsIds,
-  defaultRecentAddonsIds,
-  codeWarning,
-}: Props) => {
+const Home = ({ initialState }: Props) => {
   const session = useSession();
 
-  const enabledFeaturesSet = new Set(enabledFeatures);
   const { t } = useTranslation('chat');
 
   const dispatch = useAppDispatch();
 
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
+
+  const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
+  const authDisabled = useAppSelector(SettingsSelectors.selectIsAuthDisabled);
+
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
 
   // EFFECTS  --------------------------------------------
   useEffect(() => {
@@ -109,6 +102,11 @@ const Home = ({
       dispatch(UIActions.setShowPromptbar(showPromptbar === 'true'));
     }
 
+    const openedFoldersIds = localStorage.getItem('openedFoldersIds');
+    if (openedFoldersIds) {
+      dispatch(UIActions.setOpenedFoldersIds(JSON.parse(openedFoldersIds)));
+    }
+
     const folders = localStorage.getItem('folders');
     if (folders) {
       const parsedFolders: FolderInterface[] = JSON.parse(folders);
@@ -132,53 +130,31 @@ const Home = ({
         }),
       );
     }
-    dispatch(ConversationsActions.initConversations());
-    dispatch(ModelsActions.getModels());
-    dispatch(AddonsActions.getAddons());
-  }, [dispatch]);
-
-  useEffect(() => {
-    defaultModelId &&
-      dispatch(ModelsActions.setDefaultModelId({ defaultModelId }));
-    footerHtmlMessage &&
-      dispatch(SettingsActions.setFooterHtmlMessage(footerHtmlMessage));
-
-    enabledFeatures &&
-      dispatch(SettingsActions.setEnabledFeatures(enabledFeatures));
-
-    codeWarning && dispatch(SettingsActions.setCodeWarning(codeWarning));
-
-    isIframe && dispatch(SettingsActions.setIsIframe(isIframe));
 
     dispatch(
       ModelsActions.initRecentModels({
-        defaultRecentModelsIds,
+        defaultRecentModelsIds: initialState.settings.defaultRecentModelsIds,
         localStorageRecentModelsIds: JSON.parse(
           localStorage.getItem('recentModelsIds') || '[]',
         ),
-        defaultModelId,
+        defaultModelId: initialState.settings.defaultModelId,
       }),
     );
 
-    defaultRecentAddonsIds &&
+    initialState.settings.defaultRecentAddonsIds &&
       dispatch(
         AddonsActions.initRecentAddons({
-          defaultRecentAddonsIds,
+          defaultRecentAddonsIds: initialState.settings.defaultRecentAddonsIds,
           localStorageRecentAddonsIds: JSON.parse(
             localStorage.getItem('recentAddonsIds') || '[]',
           ),
         }),
       );
-  }, [
-    dispatch,
-    defaultModelId,
-    footerHtmlMessage,
-    enabledFeatures,
-    isIframe,
-    defaultRecentModelsIds,
-    defaultRecentAddonsIds,
-    codeWarning,
-  ]);
+
+    dispatch(ConversationsActions.initConversations());
+    dispatch(ModelsActions.getModels());
+    dispatch(AddonsActions.getAddons());
+  }, [dispatch, initialState]);
 
   const handleIframeAuth = async () => {
     const timeout = 30 * 1000;
@@ -212,10 +188,15 @@ const Home = ({
     ]);
   };
 
+  const shouldIframeLogin =
+    isIframe &&
+    !authDisabled &&
+    (session.status !== 'authenticated' || !isClientSessionValid(session));
+
   return (
     <>
       <Head>
-        <title>{appName}</title>
+        <title>{initialState.settings.appName}</title>
         <meta name="description" content="ChatGPT but better." />
         <meta
           name="viewport"
@@ -223,11 +204,12 @@ const Home = ({
         />
       </Head>
 
-      {isIframe && !authDisabled && session.status !== 'authenticated' ? (
+      {shouldIframeLogin ? (
         <div className="grid h-full min-h-[100px] w-full place-items-center bg-gray-900 text-sm text-gray-200 ">
           <button
             onClick={handleIframeAuth}
             className="appearance-none rounded-lg border-gray-600 p-3 hover:bg-gray-600"
+            disabled={session.status === 'loading'}
           >
             {t('Login')}
           </button>
@@ -238,15 +220,15 @@ const Home = ({
           id="theme-main"
         >
           <div className={`flex h-full w-full flex-col sm:pt-0`}>
-            {enabledFeaturesSet.has('header') && <Header />}
+            {enabledFeatures.includes('header') && <Header />}
             <div className="flex w-full grow overflow-auto">
-              {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
+              {enabledFeatures.includes('conversations-section') && <Chatbar />}
 
-              <div className="flex flex-1">
-                <Chat appName={appName} />
+              <div className="flex min-w-0 flex-1">
+                <Chat />
               </div>
 
-              {enabledFeaturesSet.has('prompts-section') && <Promptbar />}
+              {enabledFeatures.includes('prompts-section') && <Promptbar />}
               {isProfileOpen && <UserMobile />}
             </div>
           </div>
@@ -262,7 +244,6 @@ export const getServerSideProps: GetServerSideProps = async ({
   req,
   res,
 }) => {
-  const isIframe = process.env.IS_IFRAME === 'true' || false;
   res.setHeader(
     'Content-Security-Policy',
     process.env.ALLOWED_IFRAME_ORIGINS
@@ -280,27 +261,35 @@ export const getServerSideProps: GetServerSideProps = async ({
     };
   }
 
-  const updatedFooterHTMLMessage = (
-    process.env.FOOTER_HTML_MESSAGE ?? ''
-  ).replace('%%VERSION%%', packageJSON.version);
+  const settings: SettingsState = {
+    appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI Dial',
+    codeWarning: process.env.CODE_GENERATION_WARNING ?? '',
+    defaultModelId: process.env.DEFAULT_MODEL || fallbackModelID,
+    defaultRecentModelsIds:
+      (process.env.RECENT_MODELS_IDS &&
+        process.env.RECENT_MODELS_IDS.split(',')) ||
+      [],
+    defaultRecentAddonsIds:
+      (process.env.RECENT_ADDONS_IDS &&
+        process.env.RECENT_ADDONS_IDS.split(',')) ||
+      [],
+    enabledFeatures: (process.env.ENABLED_FEATURES || '').split(
+      ',',
+    ) as Feature[],
+    isIframe: process.env.IS_IFRAME === 'true' || false,
+    footerHtmlMessage: (process.env.FOOTER_HTML_MESSAGE ?? '').replace(
+      '%%VERSION%%',
+      packageJSON.version,
+    ),
+    isAuthDisabled: process.env.AUTH_DISABLED === 'true',
+  };
 
   return {
     props: {
-      appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'Chatbot UI',
-      footerHtmlMessage: updatedFooterHTMLMessage,
-      enabledFeatures: (process.env.ENABLED_FEATURES || '').split(','),
-      isIframe,
-      defaultModelId: process.env.DEFAULT_MODEL || fallbackModelID,
-      authDisabled: process.env.AUTH_DISABLED === 'true',
-      defaultRecentModelsIds:
-        (process.env.RECENT_MODELS_IDS &&
-          process.env.RECENT_MODELS_IDS.split(',')) ||
-        [],
-      defaultRecentAddonsIds:
-        (process.env.RECENT_ADDONS_IDS &&
-          process.env.RECENT_ADDONS_IDS.split(',')) ||
-        [],
-      codeWarning: process.env.CODE_GENERATION_WARNING ?? '',
+      appName: settings.appName,
+      initialState: {
+        settings,
+      },
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',

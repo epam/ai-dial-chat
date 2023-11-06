@@ -5,18 +5,12 @@ import {
 } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import {
-  Chronology,
-  ExpectedConstants,
-  Import,
-  MenuOptions,
-} from '@/e2e/src/testData';
+import { Chronology, ExpectedConstants } from '@/e2e/src/testData';
 import { Attributes } from '@/e2e/src/ui/domData';
 import { keys } from '@/e2e/src/ui/keyboard';
 import { DropdownMenu } from '@/e2e/src/ui/webElements/dropdownMenu';
 import { Input } from '@/e2e/src/ui/webElements/input';
 import { Page } from '@playwright/test';
-import path from 'path';
 
 interface ConversationsChronologyType {
   chronology: string;
@@ -156,12 +150,13 @@ export class Conversations extends BaseElement {
 
   public async getConversationIconAttributes(name: string, index?: number) {
     const icon = this.getConversationIcon(name, index);
-    const iconEntity = await icon.getAttribute(Attributes.alt);
-    const iconUrl = await icon.getAttribute(Attributes.src);
-    return {
-      iconEntity: iconEntity!.replaceAll(' icon', ''),
-      iconUrl: iconUrl!,
-    };
+    if (await icon.isVisible()) {
+      return this.getElementIconAttributes(icon);
+    } else {
+      return this.getElementDefaultIconAttributes(
+        this.getConversationByName(name, index),
+      );
+    }
   }
 
   public async isConversationHasDefaultIcon(name: string, index?: number) {
@@ -169,14 +164,5 @@ export class Conversations extends BaseElement {
       .getByRole('img')
       .getAttribute(Attributes.style);
     return styleAttribute?.includes(ExpectedConstants.defaultIconUrl);
-  }
-
-  public async exportConversation() {
-    const downloadPromise = this.page.waitForEvent('download');
-    await this.getDropdownMenu().selectMenuOption(MenuOptions.export);
-    const download = await downloadPromise;
-    const filePath = path.join(Import.exportPath, download.suggestedFilename());
-    await download.saveAs(filePath);
-    return filePath;
   }
 }

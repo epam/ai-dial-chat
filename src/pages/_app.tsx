@@ -7,7 +7,7 @@ import { appWithTranslation } from 'next-i18next';
 import type { AppProps } from 'next/app';
 import { Inter } from 'next/font/google';
 
-import { store } from '@/src/store';
+import { createStore } from '@/src/store';
 import '@/src/styles/globals.css';
 
 const inter = Inter({
@@ -16,9 +16,13 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
-function App({ Component, pageProps }: AppProps<SessionProviderProps>) {
+function App({ Component, ...rest }: AppProps<SessionProviderProps>) {
+  const store = createStore({
+    settings: (rest.pageProps as any).initialState?.settings,
+  });
+
   return (
-    <SessionProvider session={pageProps.session} basePath={'api/auth'}>
+    <SessionProvider session={rest.pageProps.session} basePath={'api/auth'}>
       <Provider store={store}>
         <div className={`${inter.variable} font`}>
           <Toaster toastOptions={{ duration: 9000 }}>
@@ -38,7 +42,7 @@ function App({ Component, pageProps }: AppProps<SessionProviderProps>) {
               </ToastBar>
             )}
           </Toaster>
-          <Component {...pageProps} />
+          <Component {...rest.pageProps} />
         </div>
       </Provider>
     </SessionProvider>

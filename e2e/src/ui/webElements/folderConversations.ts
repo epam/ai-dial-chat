@@ -80,6 +80,7 @@ export class FolderConversations extends Folders {
       folderName,
       conversationName,
     );
+    await folderConversation.waitFor();
     await folderConversation.hover();
     await this.page.mouse.down();
     const foldersBounding = await this.getElementBoundingBox();

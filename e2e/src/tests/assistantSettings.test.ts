@@ -1,23 +1,35 @@
-import { OpenAIEntityAddonID, OpenAIEntityAddons } from '@/src/types/openai';
+import { ModelsUtil } from '@/e2e/src/utils/modelsUtil';
+
+import { OpenAIEntityModel } from '@/src/types/openai';
+
+import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 
 import test from '../core/fixtures';
-import { ExpectedConstants, ExpectedMessages, Groups } from '../testData';
+import { AddonIds, AssistantIds, ExpectedMessages, Groups } from '../testData';
 import { Colors } from '../ui/domData';
 
 import { GeneratorUtil } from '@/e2e/src/utils';
-import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 import { expect } from '@playwright/test';
 
 const sysPrompt = 'test prompt';
 const temp = 0.8;
 
-let expectedSelectedAddons: string[];
-let expectedModels: string[];
-test.beforeAll(async ({ apiHelper }) => {
-  expectedSelectedAddons = await apiHelper.getEntitySelectedAddons(
-    ExpectedConstants.presalesAssistant,
+let expectedSelectedAddons: OpenAIEntityModel[];
+let expectedModels: OpenAIEntityModel[];
+let wolframAddon: OpenAIEntityModel;
+let presalesSearchAddon: OpenAIEntityModel;
+let presalesAssistant: OpenAIEntityModel;
+
+test.beforeAll(async () => {
+  expectedSelectedAddons = ModelsUtil.getOpenAIEntitySelectedAddons(
+    AssistantIds.ASSISTANT10K,
   );
-  expectedModels = await apiHelper.getModelNames();
+  expectedModels = ModelsUtil.getModels();
+  wolframAddon = ModelsUtil.getAddon(AddonIds.ADDON_WOLFRAM)!;
+  presalesSearchAddon = ModelsUtil.getAddon(
+    AddonIds.ADDON_EPAM10K_SEMANTIC_SEARCH,
+  )!;
+  presalesAssistant = ModelsUtil.getAssistant(AssistantIds.ASSISTANT10K)!;
 });
 
 test(
@@ -36,11 +48,11 @@ test(
   }) => {
     setTestIds('EPMRTC-409', 'EPMRTC-410', 'EPMRTC-411');
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded(true);
-    await talkToSelector.selectAssistant(ExpectedConstants.presalesAssistant);
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await talkToSelector.selectAssistant(presalesAssistant.name);
 
     const assistantBorderColors = await recentEntities
-      .getRecentEntity(ExpectedConstants.presalesAssistant)
+      .getRecentEntity(presalesAssistant.name)
       .getAllBorderColors();
     Object.values(assistantBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
@@ -69,22 +81,25 @@ test(
       .toBe(DEFAULT_ASSISTANT_SUBMODEL.name);
 
     const selectedAddons = await addons.getSelectedAddons();
+    const expectedSelectedAddonNames = expectedSelectedAddons.map(
+      (a) => a.name,
+    );
     expect
       .soft(selectedAddons, ExpectedMessages.selectedAddonsValid)
-      .toEqual(expectedSelectedAddons);
+      .toEqual(expectedSelectedAddonNames);
 
     for (const addon of selectedAddons) {
       await addons.removeSelectedAddon(addon);
     }
     expect
       .soft(selectedAddons, ExpectedMessages.cannotDeleteSelectedAddon)
-      .toEqual(expectedSelectedAddons);
+      .toEqual(expectedSelectedAddonNames);
 
     await modelSelector.click();
     const listEntities = await modelSelector.getListOptions();
     expect
       .soft(listEntities, ExpectedMessages.assistantModelsValid)
-      .toEqual(expectedModels);
+      .toEqual(expectedModels.map((m) => m.name));
   },
 );
 
@@ -99,21 +114,19 @@ test('Default settings for Assistant are saved in local storage', async ({
 }) => {
   setTestIds('EPMRTC-412');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
-  await talkToSelector.selectAssistant(ExpectedConstants.presalesAssistant);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+  await talkToSelector.selectAssistant(presalesAssistant.name);
   await modelSelector.click();
   const modelsList = await modelSelector.getListOptions();
   const randomModel = GeneratorUtil.randomArrayElement(modelsList);
   await modelSelector.selectModel(randomModel, true);
-  await addons.selectAddon(
-    OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-  );
+  await addons.selectAddon(wolframAddon.name);
   await temperatureSlider.setTemperature(0);
   await dialHomePage.reloadPage();
   await dialHomePage.waitForPageLoaded();
 
   const assistantBorderColors = await recentEntities
-    .getRecentEntity(ExpectedConstants.presalesAssistant)
+    .getRecentEntity(presalesAssistant.name)
     .getAllBorderColors();
   Object.values(assistantBorderColors).forEach((borders) => {
     borders.forEach((borderColor) => {
@@ -132,19 +145,14 @@ test('Default settings for Assistant are saved in local storage', async ({
     .toBe(randomModel);
 
   const selectedAddons = await addons.getSelectedAddons();
-  const expectedAddons = expectedSelectedAddons;
   if (
-    !expectedAddons.includes(
-      OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-    )
+    !expectedSelectedAddons.map((a) => a.id).includes(AddonIds.ADDON_WOLFRAM)
   ) {
-    expectedAddons.push(
-      OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-    );
+    expectedSelectedAddons.push(wolframAddon);
   }
   expect
     .soft(selectedAddons, ExpectedMessages.selectedAddonsValid)
-    .toEqual(expectedAddons);
+    .toEqual(expectedSelectedAddons.map((a) => a.name));
 });
 
 test('Selected settings are saved if to switch from Model to Assistant', async ({
@@ -159,16 +167,14 @@ test('Selected settings are saved if to switch from Model to Assistant', async (
 }) => {
   setTestIds('EPMRTC-414');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
   await entitySettings.setSystemPrompt(sysPrompt);
   await temperatureSlider.setTemperature(temp);
-  await addons.selectAddon(
-    OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-  );
-  await talkToSelector.selectAssistant(ExpectedConstants.presalesAssistant);
+  await addons.selectAddon(wolframAddon.name);
+  await talkToSelector.selectAssistant(presalesAssistant.name);
 
   const assistantBorderColors = await recentEntities
-    .getRecentEntity(ExpectedConstants.presalesAssistant)
+    .getRecentEntity(presalesAssistant.name)
     .getAllBorderColors();
   Object.values(assistantBorderColors).forEach((borders) => {
     borders.forEach((borderColor) => {
@@ -194,19 +200,14 @@ test('Selected settings are saved if to switch from Model to Assistant', async (
     .toBe(DEFAULT_ASSISTANT_SUBMODEL.name);
 
   const selectedAddons = await addons.getSelectedAddons();
-  const expectedAddons = expectedSelectedAddons;
   if (
-    !expectedAddons.includes(
-      OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-    )
+    !expectedSelectedAddons.map((a) => a.id).includes(AddonIds.ADDON_WOLFRAM)
   ) {
-    expectedAddons.push(
-      OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-    );
+    expectedSelectedAddons.push(wolframAddon);
   }
   expect
     .soft(selectedAddons, ExpectedMessages.selectedAddonsValid)
-    .toEqual(expectedAddons);
+    .toEqual(expectedSelectedAddons.map((a) => a.name));
 });
 
 test('Selected settings are saved if to switch from Model to Assistant to Model. Addon is not set in model2 if it was added as preselected in Assistant.', async ({
@@ -217,40 +218,32 @@ test('Selected settings are saved if to switch from Model to Assistant to Model.
   talkToSelector,
   modelSelector,
   setTestIds,
-  apiHelper,
 }) => {
   setTestIds('EPMRTC-415');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
   const assistantTemp = 0.5;
   await entitySettings.setSystemPrompt(sysPrompt);
   await temperatureSlider.setTemperature(temp);
-  await addons.selectAddon(
-    OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-  );
-  await talkToSelector.selectAssistant(ExpectedConstants.presalesAssistant);
+  await addons.selectAddon(wolframAddon.name);
+  await talkToSelector.selectAssistant(presalesAssistant.name);
 
   const randomAssistantModel = GeneratorUtil.randomArrayElement(expectedModels);
-  await modelSelector.selectModel(randomAssistantModel);
+  await modelSelector.selectModel(randomAssistantModel.name);
   await temperatureSlider.setTemperature(assistantTemp);
 
   let selectedAddons = await addons.getSelectedAddons();
-  let expectedAddons = expectedSelectedAddons;
   if (
-    !expectedAddons.includes(
-      OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-    )
+    !expectedSelectedAddons.map((a) => a.id).includes(AddonIds.ADDON_WOLFRAM)
   ) {
-    expectedAddons.push(
-      OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-    );
+    expectedSelectedAddons.push(wolframAddon);
   }
   expect
     .soft(selectedAddons, ExpectedMessages.selectedAddonsValid)
-    .toEqual(expectedAddons);
+    .toEqual(expectedSelectedAddons.map((a) => a.name));
 
   const randomTalkToModel = GeneratorUtil.randomArrayElement(expectedModels);
-  await talkToSelector.selectModel(randomTalkToModel);
+  await talkToSelector.selectModel(randomTalkToModel.name);
 
   const systemPrompt = await entitySettings.getSystemPrompt();
   expect
@@ -263,19 +256,17 @@ test('Selected settings are saved if to switch from Model to Assistant to Model.
     .toBe(assistantTemp.toString());
 
   selectedAddons = await addons.getSelectedAddons();
-  expectedAddons = await apiHelper.getEntitySelectedAddons(randomTalkToModel);
+  expectedSelectedAddons = ModelsUtil.getOpenAIEntitySelectedAddons(
+    randomTalkToModel.id,
+  );
   if (
-    !expectedAddons.includes(
-      OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-    )
+    !expectedSelectedAddons.map((a) => a.id).includes(AddonIds.ADDON_WOLFRAM)
   ) {
-    expectedAddons.push(
-      OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-    );
+    expectedSelectedAddons.push(wolframAddon);
   }
   expect
     .soft(selectedAddons, ExpectedMessages.selectedAddonsValid)
-    .toEqual(expectedAddons);
+    .toEqual(expectedSelectedAddons.map((a) => a.name));
 });
 
 test('Selected settings are saved if to switch from Model to Assistant to Model. Addon stays selected in model2 if it was added by user.', async ({
@@ -285,47 +276,40 @@ test('Selected settings are saved if to switch from Model to Assistant to Model.
   addons,
   talkToSelector,
   setTestIds,
-  apiHelper,
 }) => {
   setTestIds('EPMRTC-1047');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
   await entitySettings.setSystemPrompt(sysPrompt);
   await temperatureSlider.setTemperature(temp);
-  await addons.selectAddon(ExpectedConstants.epamPresalesSearchAddon);
-  await addons.selectAddon(
-    OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-  );
-  await talkToSelector.selectAssistant(ExpectedConstants.presalesAssistant);
-  const expectedAssistantAddons = await apiHelper.getEntitySelectedAddons(
-    ExpectedConstants.presalesAssistant,
+  await addons.selectAddon(presalesSearchAddon.name);
+  await addons.selectAddon(wolframAddon.name);
+  await talkToSelector.selectAssistant(presalesAssistant.name);
+  const expectedAssistantAddons = ModelsUtil.getOpenAIEntitySelectedAddons(
+    AssistantIds.ASSISTANT10K,
   );
   if (
-    !expectedAssistantAddons.includes(
-      OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-    )
+    !expectedAssistantAddons.map((a) => a.id).includes(AddonIds.ADDON_WOLFRAM)
   ) {
-    expectedAssistantAddons.push(
-      OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-    );
+    expectedAssistantAddons.push(wolframAddon);
   }
   if (
-    !expectedAssistantAddons.includes(ExpectedConstants.epamPresalesSearchAddon)
+    !expectedAssistantAddons
+      .map((a) => a.id)
+      .includes(AddonIds.ADDON_EPAM10K_SEMANTIC_SEARCH)
   ) {
-    expectedAssistantAddons.push(ExpectedConstants.epamPresalesSearchAddon);
+    expectedAssistantAddons.push(presalesSearchAddon);
   }
 
   let selectedAddons = await addons.getSelectedAddons();
   expect
     .soft(selectedAddons, ExpectedMessages.selectedAddonsValid)
-    .toEqual(expectedAssistantAddons);
+    .toEqual(expectedAssistantAddons.map((a) => a.name));
 
-  await addons.removeSelectedAddon(
-    OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-  );
+  await addons.removeSelectedAddon(wolframAddon.name);
 
   const randomModel = GeneratorUtil.randomArrayElement(expectedModels);
-  await talkToSelector.selectModel(randomModel);
+  await talkToSelector.selectModel(randomModel.name);
 
   const systemPrompt = await entitySettings.getSystemPrompt();
   expect
@@ -337,14 +321,20 @@ test('Selected settings are saved if to switch from Model to Assistant to Model.
     .soft(temperature, ExpectedMessages.temperatureIsValid)
     .toBe(temp.toString());
 
-  const expectedAddons = await apiHelper.getEntitySelectedAddons(randomModel);
-  if (!expectedAddons.includes(ExpectedConstants.epamPresalesSearchAddon)) {
-    expectedAddons.push(ExpectedConstants.epamPresalesSearchAddon);
+  const expectedAddons = ModelsUtil.getOpenAIEntitySelectedAddons(
+    randomModel.id,
+  );
+  if (
+    !expectedAddons
+      .map((a) => a.id)
+      .includes(AddonIds.ADDON_EPAM10K_SEMANTIC_SEARCH)
+  ) {
+    expectedAddons.push(presalesSearchAddon);
   }
   selectedAddons = await addons.getSelectedAddons();
   expect
     .soft(selectedAddons, ExpectedMessages.selectedAddonsValid)
-    .toEqual(expectedAddons);
+    .toEqual(expectedAddons.map((a) => a.name));
 });
 
 test('Selected settings are saved if to switch from Assistant to Application to Assistant', async ({
@@ -356,25 +346,22 @@ test('Selected settings are saved if to switch from Assistant to Application to 
   modelSelector,
   setIssueIds,
   setTestIds,
-  apiHelper,
 }) => {
   setTestIds('EPMRTC-418');
   setIssueIds('105');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
-  await talkToSelector.selectAssistant(ExpectedConstants.presalesAssistant);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+  await talkToSelector.selectAssistant(presalesAssistant.name);
   const randomModel = GeneratorUtil.randomArrayElement(expectedModels);
-  await modelSelector.selectModel(randomModel);
+  await modelSelector.selectModel(randomModel.name);
   await temperatureSlider.setTemperature(temp);
-  await addons.selectAddon(
-    OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-  );
+  await addons.selectAddon(wolframAddon.name);
 
   const randomApp = GeneratorUtil.randomArrayElement(
-    await apiHelper.getApplicationNames(),
+    ModelsUtil.getApplications(),
   );
-  await talkToSelector.selectApplication(randomApp);
-  await talkToSelector.selectAssistant(ExpectedConstants.presalesAssistant);
+  await talkToSelector.selectApplication(randomApp.name);
+  await talkToSelector.selectAssistant(presalesAssistant.name);
 
   const assistantModel = await modelSelector.getSelectedModel();
   expect
@@ -392,17 +379,13 @@ test('Selected settings are saved if to switch from Assistant to Application to 
     .toBe(temp.toString());
 
   const selectedAddons = await addons.getSelectedAddons();
-  const expectedSelectedAddons = await apiHelper.getEntitySelectedAddons(
-    randomModel,
+  const expectedSelectedAddons = ModelsUtil.getOpenAIEntitySelectedAddons(
+    randomModel.id,
   );
   if (
-    !expectedSelectedAddons.includes(
-      OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-    )
+    !expectedSelectedAddons.map((a) => a.id).includes(AddonIds.ADDON_WOLFRAM)
   ) {
-    expectedSelectedAddons.push(
-      OpenAIEntityAddons[OpenAIEntityAddonID.ADDON_WOLFRAM].name,
-    );
+    expectedSelectedAddons.push(wolframAddon);
   }
   expect
     .soft(selectedAddons, ExpectedMessages.selectedAddonsValid)
@@ -418,37 +401,33 @@ test(
     talkToSelector,
     modelsDialog,
     setTestIds,
-    apiHelper,
   }) => {
     setTestIds('EPMRTC-1122', 'EPMRTC-1123');
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded(true);
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     await talkToSelector.seeFullList();
 
-    const expectedAssistant = await apiHelper.getAssistant(
-      ExpectedConstants.presalesAssistant,
-    );
-    const assistantDialogDescription = await modelsDialog
-      .entityOptionDescription(
+    const expectedAssistant = presalesAssistant;
+    const assistantDialogDescription =
+      await modelsDialog.getEntityOptionDescription(
         Groups.assistants,
-        ExpectedConstants.presalesAssistant,
-      )
-      .innerText();
+        presalesAssistant.name,
+      );
     expect
       .soft(
-        expectedAssistant!.description!.includes(assistantDialogDescription),
+        expectedAssistant!.description!.includes(assistantDialogDescription!),
         ExpectedMessages.entityHasDescription,
       )
       .toBeTruthy();
 
     await modelsDialog.expandEntityDescription(
       Groups.assistants,
-      ExpectedConstants.presalesAssistant,
+      presalesAssistant.name,
     );
     const isAssistantDescrFullWidth =
       await modelsDialog.isEntityDescriptionFullWidth(
         Groups.assistants,
-        ExpectedConstants.presalesAssistant,
+        presalesAssistant.name,
       );
     expect
       .soft(
@@ -458,13 +437,11 @@ test(
       .toBeTruthy();
 
     await modelsDialog.selectGroupEntity(
-      ExpectedConstants.presalesAssistant,
+      presalesAssistant.name,
       Groups.assistants,
     );
     const assistantDescription =
-      await recentEntities.getRecentEntityDescription(
-        ExpectedConstants.presalesAssistant,
-      );
+      await recentEntities.getRecentEntityDescription(presalesAssistant.name);
     expect
       .soft(
         expectedAssistant!.description!.includes(assistantDescription),

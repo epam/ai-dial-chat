@@ -41,7 +41,7 @@ const allProviders: (Provider | boolean)[] = [
       name: process.env.AUTH_GITLAB_NAME ?? DEFAULT_NAME,
       gitlabHost: process.env.AUTH_GITLAB_HOST,
       authorization: {
-        params: { scope: 'read_user offline_access' },
+        params: { scope: 'read_user' },
       },
       token: tokenConfig,
     }),

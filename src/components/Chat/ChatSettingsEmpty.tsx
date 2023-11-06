@@ -42,8 +42,8 @@ export const ChatSettingsEmpty = ({
 
   return (
     <>
-      <div className="flex h-full w-full flex-col items-center px-3 pt-5">
-        <div className="flex h-full w-[80%] flex-col items-center gap-[1px] rounded">
+      <div className="flex h-full w-full flex-col items-center p-0 md:px-5 md:pt-5">
+        <div className="flex h-full w-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
           <div className="flex w-full items-center justify-center rounded-t bg-gray-200 p-4 dark:bg-gray-800">
             {models.length === 0 ? (
               <div>

@@ -11,6 +11,8 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { RequestAPIKeyBody } from '@/src/types/request-api-key';
@@ -23,8 +25,6 @@ import { errorsMessages } from '@/src/constants/errors';
 import CheckIcon from '../../../public/images/icons/check.svg';
 import XMark from '../../../public/images/icons/xmark.svg';
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
-
-import classNames from 'classnames';
 
 const checkValidity = (
   inputsRefs: MutableRefObject<HTMLInputElement | HTMLTextAreaElement>[],
@@ -294,324 +294,342 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/70">
-      <div className="fixed inset-0 z-10 overflow-hidden">
-        <div className="flex max-h-screen min-h-screen items-center justify-center px-4 pb-20 pt-4 text-center sm:block sm:p-0">
-          <div
-            className="hidden sm:inline-block sm:h-screen sm:align-middle"
-            aria-hidden="true"
-          />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/30 p-3 dark:bg-gray-900/70 md:p-5">
+      <form
+        ref={modalRef}
+        noValidate
+        className="relative inline-block h-full overflow-y-auto rounded bg-gray-100 px-3 py-4 text-left align-bottom transition-all dark:bg-gray-700 md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
+        role="dialog"
+        onSubmit={handleSubmit}
+      >
+        <button
+          className="absolute right-2 top-2 rounded text-gray-500 hover:text-blue-700"
+          onClick={handleClose}
+        >
+          <XMark height={24} width={24} />
+        </button>
 
-          <form
-            ref={modalRef}
-            noValidate
-            className="relative inline-block max-h-[800px] overflow-y-auto rounded bg-gray-100 px-4 pb-4 pt-5 text-left align-bottom transition-all dark:bg-gray-700 sm:my-8 sm:max-h-[700px] sm:w-full sm:max-w-[50%] sm:p-6 sm:align-middle"
-            role="dialog"
-            onSubmit={handleSubmit}
-          >
-            <button
-              className="absolute right-2 top-2 rounded text-gray-500 hover:text-blue-700"
-              onClick={handleClose}
-            >
-              <XMark height={24} width={24} />
-            </button>
-
-            <div className="flex justify-between pb-4 text-base font-bold">
-              {t('Request API Key')}
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="mb-1 flex text-xs text-gray-500"
-                htmlFor="projectNameInput"
-              >
-                {t('1. Project name (use one from Delivery Central)')}
-                <span className="ml-1 inline text-blue-500">*</span>
-              </label>
-              <input
-                ref={projectNameInputRef}
-                name="projectNameInput"
-                value={projectName}
-                required
-                title=""
-                type="text"
-                onBlur={onBlur}
-                onChange={projectNameOnChangeHandler}
-                className={inputClassName}
-              ></input>
-              <EmptyRequiredInputMessage />
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="flex text-xs text-gray-500"
-                htmlFor="streamNameInput"
-              >
-                {t('2. Stream Name (use one from Delivery Central)')}
-                <span className="ml-1 inline text-blue-500">*</span>
-              </label>
-              <input
-                ref={streamNameInputRef}
-                name="streamNameInput"
-                value={streamName}
-                required
-                title=""
-                type="text"
-                onBlur={onBlur}
-                onChange={streamNameOnChangeHandler}
-                className={inputClassName}
-              ></input>
-              <EmptyRequiredInputMessage />
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="mb-1 flex text-xs text-gray-500"
-                htmlFor="techLeadNameInput"
-              >
-                {t(
-                  '3. Project Tech Lead responsible for API token usage. Please provide name',
-                )}
-                <span className="ml-1 inline text-blue-500">*</span>
-              </label>
-              <input
-                ref={techLeadNameInputRef}
-                name="techLeadNameInput"
-                value={techLeadName}
-                required
-                title=""
-                type="text"
-                onBlur={onBlur}
-                onChange={techLeadNameOnChangeHandler}
-                className={inputClassName}
-              ></input>
-              <EmptyRequiredInputMessage />
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="mb-1 flex text-xs text-gray-500"
-                htmlFor="businessJustificationInput"
-              >
-                {t('4. Business justification')}
-                <span className="ml-1 inline text-blue-500">*</span>
-              </label>
-              <textarea
-                ref={businessJustificationInputRef}
-                name="businessJustificationInput"
-                value={businessJustification}
-                required
-                title=""
-                onBlur={onBlur}
-                onChange={businessJustificationOnChangeHandler}
-                className={inputClassName}
-              ></textarea>
-              <EmptyRequiredInputMessage />
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="mb-1 flex text-xs text-gray-500"
-                htmlFor="projectEndDateInput"
-              >
-                {t('5. End date of the project')}
-                <span className="ml-1 inline text-blue-500">*</span>
-              </label>
-              <input
-                ref={projectEndDateInputRef}
-                name="projectEndDateInput"
-                value={projectEndDate}
-                required
-                title=""
-                type="date"
-                min={minDate}
-                onBlur={onBlur}
-                onChange={projectEndDateOnChangeHandler}
-                className={inputClassName}
-              ></input>
-              <EmptyRequiredInputMessage />
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="mb-1 text-xs text-gray-500"
-                htmlFor="scenarioInput"
-              >
-                {t(
-                  '6. By default, access to the model is available from EPAM VPN only. If you want to deploy your solution anywhere beyond your personal laptop, please describe your scenario.',
-                )}
-                <span className="ml-1 inline text-blue-500">*</span>
-              </label>
-              <textarea
-                ref={scenarioInputRef}
-                name="scenarioInput"
-                value={scenario}
-                required
-                title=""
-                onBlur={onBlur}
-                onChange={scenarioOnChangeHandler}
-                className={inputClassName}
-              ></textarea>
-              <EmptyRequiredInputMessage />
-            </div>
-
-            <div className="mb-5">
-              <label
-                className="mb-1 inline-block text-xs text-gray-500"
-                htmlFor="costInput"
-              >
-                {t(
-                  '7. We need to understand, how much cost your solution will generate monthly, and your workload pattern in terms of requests quantity and tokens usage during standard and peak workloads. Please describe this. More information is available at ',
-                )}
-                <a
-                  href="https://platform.openai.com/tokenizer"
-                  className="underline"
-                >
-                  https://platform.openai.com/tokenizer
-                </a>{' '}
-                ,{' '}
-                <a href="https://openai.com/pricing" className="underline">
-                  https://openai.com/pricing
-                </a>
-                <span className="ml-1 inline text-blue-500">*</span>
-              </label>
-              <textarea
-                ref={costInputRef}
-                name="costInput"
-                value={cost}
-                required
-                title=""
-                onBlur={onBlur}
-                onChange={costOnChangeHandler}
-                className={inputClassName}
-              ></textarea>
-              <EmptyRequiredInputMessage />
-            </div>
-
-            <div className="mb-4 mt-10 font-bold">
-              {t(
-                'Also please acknowledge that your API usage should comply with:',
-              )}
-            </div>
-
-            <div className="peer mb-4  flex text-sm">
-              <input
-                ref={azureAgreementInputRef}
-                name="azureAgreementInput"
-                checked={azureAgreement}
-                onChange={azureAgreementOnChangeHandler}
-                onBlur={onBlur}
-                required
-                title=""
-                type="checkbox"
-                className={checkboxClassName}
-              ></input>
-              <label
-                className="inline-block text-xs"
-                htmlFor="azureAgreementInput"
-              >
-                {t('1. Azure cognitive service terms and conditions ')}
-                <a
-                  href="https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct"
-                  className="underline"
-                >
-                  (https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct)
-                </a>
-                <span className="ml-1 inline text-blue-500">*</span>
-              </label>
-              <CheckIcon
-                width={16}
-                height={16}
-                size={16}
-                className="pointer-events-none invisible absolute text-blue-500 peer-checked:visible"
-              />
-            </div>
-
-            <div className="mb-4 flex text-xs">
-              <input
-                ref={EPAMAgreementInputRef}
-                name="EPAMAgreementInput"
-                checked={EPAMAgreement}
-                onChange={EPAMAgreementOnChangeHandler}
-                onBlur={onBlur}
-                required
-                type="checkbox"
-                className={checkboxClassName}
-              ></input>
-              <label
-                className="inline-block text-xs "
-                htmlFor="EPAMAgreementInput"
-              >
-                {t('2. Usage is complaint to EPAM company policies ')}
-                <span className="ml-1 inline text-blue-500">*</span>
-              </label>
-              <CheckIcon
-                width={16}
-                height={16}
-                size={16}
-                className="pointer-events-none invisible absolute text-blue-500 peer-checked:visible"
-              />
-            </div>
-
-            <div className="mb-4 flex text-xs">
-              <input
-                ref={notClientProjectUsageAgreementInputRef}
-                name="notClientProjectUsageAgreementInput"
-                checked={notClientProjectUsageAgreement}
-                onChange={notClientProjectUsageAgreementOnChangeHandler}
-                onBlur={onBlur}
-                required
-                type="checkbox"
-                className={checkboxClassName}
-              ></input>
-              <label className="inline-block" htmlFor="EPAMAgreementInput">
-                {t(
-                  '3. Confirm that this key will not be used for client project production load.',
-                )}
-                <span className="ml-1 inline text-blue-500">*</span>
-              </label>
-              <CheckIcon
-                width={16}
-                height={16}
-                size={16}
-                className="pointer-events-none invisible absolute text-blue-500 peer-checked:visible"
-              />
-            </div>
-
-            <div className="mb-5 flex text-xs">
-              <input
-                ref={localAgreementInputRef}
-                name="localAgreementInput"
-                checked={localAgreement}
-                onChange={localAgreementOnChangeHandler}
-                onBlur={onBlur}
-                required
-                type="checkbox"
-                className={checkboxClassName}
-              ></input>
-              <label className="inline-block" htmlFor="localAgreementInput">
-                {t('4. Local law regulations (if some) ')}
-                <span className="ml-1 inline text-blue-500">*</span>
-              </label>
-              <CheckIcon
-                width={16}
-                height={16}
-                size={16}
-                className="pointer-events-none invisible absolute text-blue-500 peer-checked:visible"
-              />
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                className="rounded bg-blue-500 p-3 text-gray-100 hover:bg-blue-700 focus:border focus:border-gray-800 focus-visible:outline-none dark:focus:border-gray-200"
-              >
-                {t('Send request')}
-              </button>
-            </div>
-          </form>
+        <div className="flex justify-between pb-4 text-base font-bold">
+          {t('Request API Key')}
         </div>
-      </div>
+
+        <div>
+          <label
+            className="mb-1 flex text-xs text-gray-500"
+            htmlFor="projectNameInput"
+          >
+            <span>1.</span>
+            <span className="ml-1">
+              {t('Project name (use one from Delivery Central)')}
+            </span>
+            <span className="ml-1 inline text-blue-500">*</span>
+          </label>
+          <input
+            ref={projectNameInputRef}
+            name="projectNameInput"
+            value={projectName}
+            required
+            title=""
+            type="text"
+            onBlur={onBlur}
+            onChange={projectNameOnChangeHandler}
+            className={inputClassName}
+          ></input>
+          <EmptyRequiredInputMessage />
+        </div>
+
+        <div>
+          <label
+            className="flex text-xs text-gray-500"
+            htmlFor="streamNameInput"
+          >
+            <span>2.</span>
+            <span className="ml-1">
+              {t('Stream Name (use one from Delivery Central)')}
+            </span>
+            <span className="ml-1 inline text-blue-500">*</span>
+          </label>
+          <input
+            ref={streamNameInputRef}
+            name="streamNameInput"
+            value={streamName}
+            required
+            title=""
+            type="text"
+            onBlur={onBlur}
+            onChange={streamNameOnChangeHandler}
+            className={inputClassName}
+          ></input>
+          <EmptyRequiredInputMessage />
+        </div>
+
+        <div>
+          <label
+            className="mb-1 flex flex-col text-xs text-gray-500 md:flex-row"
+            htmlFor="techLeadNameInput"
+          >
+            <span>
+              <span>3.</span>
+              <span className="ml-1">
+                {t('Project Tech Lead responsible for API token usage.')}
+              </span>
+            </span>
+            <span className="ml-1">
+              {t('Please provide name')}
+              <span className="ml-1 inline text-blue-500">*</span>
+            </span>
+          </label>
+          <input
+            ref={techLeadNameInputRef}
+            name="techLeadNameInput"
+            value={techLeadName}
+            required
+            title=""
+            type="text"
+            onBlur={onBlur}
+            onChange={techLeadNameOnChangeHandler}
+            className={inputClassName}
+          ></input>
+          <EmptyRequiredInputMessage />
+        </div>
+
+        <div>
+          <label
+            className="mb-1 flex text-xs text-gray-500"
+            htmlFor="businessJustificationInput"
+          >
+            <span>4.</span>
+            <span className="ml-1">{t('Business justification')}</span>
+            <span className="ml-1 inline text-blue-500">*</span>
+          </label>
+          <textarea
+            ref={businessJustificationInputRef}
+            name="businessJustificationInput"
+            value={businessJustification}
+            required
+            title=""
+            onBlur={onBlur}
+            onChange={businessJustificationOnChangeHandler}
+            className={inputClassName}
+          ></textarea>
+          <EmptyRequiredInputMessage />
+        </div>
+
+        <div>
+          <label
+            className="mb-1 flex text-xs text-gray-500"
+            htmlFor="projectEndDateInput"
+          >
+            <span>5.</span>
+            <span className="ml-1">{t('End date of the project')}</span>
+            <span className="ml-1 inline text-blue-500">*</span>
+          </label>
+          <input
+            ref={projectEndDateInputRef}
+            name="projectEndDateInput"
+            value={projectEndDate}
+            required
+            title=""
+            type="date"
+            min={minDate}
+            onBlur={onBlur}
+            onChange={projectEndDateOnChangeHandler}
+            className={inputClassName}
+          ></input>
+          <EmptyRequiredInputMessage />
+        </div>
+
+        <div>
+          <label className="mb-1 text-xs text-gray-500" htmlFor="scenarioInput">
+            <span>6.</span>
+            <span className="ml-1">
+              {t(
+                'By default, access to the model is available from EPAM VPN only. If you want to deploy your solution anywhere beyond your personal laptop, please describe your scenario.',
+              )}
+            </span>
+            <span className="ml-1 inline text-blue-500">*</span>
+          </label>
+          <textarea
+            ref={scenarioInputRef}
+            name="scenarioInput"
+            value={scenario}
+            required
+            title=""
+            onBlur={onBlur}
+            onChange={scenarioOnChangeHandler}
+            className={inputClassName}
+          ></textarea>
+          <EmptyRequiredInputMessage />
+        </div>
+
+        <div>
+          <label
+            className="mb-1 flex flex-wrap text-xs text-gray-500 xl:inline-block"
+            htmlFor="costInput"
+          >
+            <span>
+              <span>7.</span>
+              <span className="ml-1">
+                {t(
+                  'We need to understand, how much cost your solution will generate monthly, and your workload pattern in terms of requests quantity and tokens usage during standard and peak workloads. Please describe this. More information is available at ',
+                )}
+              </span>
+            </span>
+            <a
+              href="https://platform.openai.com/tokenizer"
+              className="underline"
+              rel="noopener noreferrer"
+            >
+              https://platform.openai.com/tokenizer
+            </a>
+            <span className="mr-1">,</span>
+            <a
+              href="https://openai.com/pricing"
+              className="underline"
+              rel="noopener noreferrer"
+            >
+              https://openai.com/pricing
+            </a>
+            <span className="ml-1 inline text-blue-500">*</span>
+          </label>
+          <textarea
+            ref={costInputRef}
+            name="costInput"
+            value={cost}
+            required
+            title=""
+            onBlur={onBlur}
+            onChange={costOnChangeHandler}
+            className={inputClassName}
+          ></textarea>
+          <EmptyRequiredInputMessage />
+        </div>
+
+        <div className="mb-4 mt-1 font-bold">
+          {t('Also please acknowledge that your API usage should comply with:')}
+        </div>
+
+        <div className="peer mb-4  flex text-sm">
+          <input
+            ref={azureAgreementInputRef}
+            name="azureAgreementInput"
+            checked={azureAgreement}
+            onChange={azureAgreementOnChangeHandler}
+            onBlur={onBlur}
+            required
+            title=""
+            type="checkbox"
+            className={checkboxClassName}
+          ></input>
+          <label className="inline-block text-xs" htmlFor="azureAgreementInput">
+            <span>1.</span>
+            <span className="ml-1">
+              {t('Azure cognitive service terms and conditions')}
+            </span>
+            <a
+              href="https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct"
+              className="underline"
+              rel="noopener noreferrer"
+            >
+              (https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct)
+            </a>
+            <span className="ml-1 inline text-blue-500">*</span>
+          </label>
+          <CheckIcon
+            width={16}
+            height={16}
+            size={16}
+            className="pointer-events-none invisible absolute text-blue-500 peer-checked:visible"
+          />
+        </div>
+
+        <div className="mb-4 flex text-xs">
+          <input
+            ref={EPAMAgreementInputRef}
+            name="EPAMAgreementInput"
+            checked={EPAMAgreement}
+            onChange={EPAMAgreementOnChangeHandler}
+            onBlur={onBlur}
+            required
+            type="checkbox"
+            className={checkboxClassName}
+          ></input>
+          <label className="inline-block text-xs " htmlFor="EPAMAgreementInput">
+            <span>2.</span>
+            <span className="ml-1">
+              {t('Usage is complaint to EPAM company policies')}
+            </span>
+            <span className="ml-1 inline text-blue-500">*</span>
+          </label>
+          <CheckIcon
+            width={16}
+            height={16}
+            size={16}
+            className="pointer-events-none invisible absolute text-blue-500 peer-checked:visible"
+          />
+        </div>
+
+        <div className="mb-4 flex text-xs">
+          <input
+            ref={notClientProjectUsageAgreementInputRef}
+            name="notClientProjectUsageAgreementInput"
+            checked={notClientProjectUsageAgreement}
+            onChange={notClientProjectUsageAgreementOnChangeHandler}
+            onBlur={onBlur}
+            required
+            type="checkbox"
+            className={checkboxClassName}
+          ></input>
+          <label className="inline-block" htmlFor="EPAMAgreementInput">
+            <span>3.</span>
+            <span className="ml-1">
+              {t(
+                'Confirm that this key will not be used for client project production load.',
+              )}
+            </span>
+            <span className="ml-1 inline text-blue-500">*</span>
+          </label>
+          <CheckIcon
+            width={16}
+            height={16}
+            size={16}
+            className="pointer-events-none invisible absolute text-blue-500 peer-checked:visible"
+          />
+        </div>
+
+        <div className="mb-5 flex text-xs">
+          <input
+            ref={localAgreementInputRef}
+            name="localAgreementInput"
+            checked={localAgreement}
+            onChange={localAgreementOnChangeHandler}
+            onBlur={onBlur}
+            required
+            type="checkbox"
+            className={checkboxClassName}
+          ></input>
+          <label className="inline-block" htmlFor="localAgreementInput">
+            <span>4.</span>
+            <span className="ml-1">{t('Local law regulations (if some)')}</span>
+            <span className="ml-1 inline text-blue-500">*</span>
+          </label>
+          <CheckIcon
+            width={16}
+            height={16}
+            size={16}
+            className="pointer-events-none invisible absolute text-blue-500 peer-checked:visible"
+          />
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            className="w-full rounded bg-blue-500 p-3 text-gray-100 hover:bg-blue-700 focus:border focus:border-gray-800 focus-visible:outline-none dark:focus:border-gray-200 md:w-fit"
+          >
+            {t('Send request')}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

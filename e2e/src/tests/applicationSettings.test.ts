@@ -1,15 +1,18 @@
-import { OpenAIEntityModelID, OpenAIEntityModels } from '@/src/types/openai';
+import { ModelsUtil } from '@/e2e/src/utils/modelsUtil';
+
+import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '../core/fixtures';
-import { ExpectedMessages, Groups } from '../testData';
+import { ExpectedMessages, Groups, ModelIds } from '../testData';
 import { Colors } from '../ui/domData';
 
 import { GeneratorUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
-let expectedAppNames: string[];
-test.beforeAll(async ({ apiHelper }) => {
-  expectedAppNames = await apiHelper.getApplicationNames();
+let expectedApplications: OpenAIEntityModel[];
+
+test.beforeAll(async () => {
+  expectedApplications = ModelsUtil.getApplications();
 });
 
 test('Check default settings screen for Application', async ({
@@ -22,16 +25,15 @@ test('Check default settings screen for Application', async ({
   moreInfo,
   setTestIds,
   talkToSelector,
-  apiHelper,
 }) => {
   setTestIds('EPMRTC-413');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
-  const randomApp = GeneratorUtil.randomArrayElement(expectedAppNames);
-  await talkToSelector.selectApplication(randomApp);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+  const randomApp = GeneratorUtil.randomArrayElement(expectedApplications);
+  await talkToSelector.selectApplication(randomApp.name);
 
   const appBorderColors = await recentEntities
-    .getRecentEntity(randomApp)
+    .getRecentEntity(randomApp.name)
     .getAllBorderColors();
   Object.values(appBorderColors).forEach((borders) => {
     borders.forEach((borderColor) => {
@@ -62,11 +64,10 @@ test('Check default settings screen for Application', async ({
   const isAddonsVisible = await addons.isVisible();
   expect.soft(isAddonsVisible, ExpectedMessages.addonsNotVisible).toBeFalsy();
 
-  const expectedAppDescription = await apiHelper.getApplicationDescription(
-    randomApp,
-  );
+  const expectedAppDescription =
+    ModelsUtil.getApplicationDescription(randomApp);
   const appName = await moreInfo.infoApplication.getElementInnerContent();
-  expect.soft(appName, ExpectedMessages.infoAppIsValid).toBe(randomApp);
+  expect.soft(appName, ExpectedMessages.infoAppIsValid).toBe(randomApp.name);
 
   const appDescr = await moreInfo.getApplicationDescription();
   expect
@@ -86,24 +87,22 @@ test(
     talkToSelector,
     modelsDialog,
     setTestIds,
-    apiHelper,
   }) => {
     setTestIds('EPMRTC-1062', 'EPMRTC-1063');
-    const randomApp = GeneratorUtil.randomArrayElement(expectedAppNames);
+    const randomApp = GeneratorUtil.randomArrayElement(expectedApplications);
 
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded(true);
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     await talkToSelector.seeFullList();
 
-    const expectedAppDescr = await apiHelper.getApplicationDescription(
-      randomApp,
+    const expectedAppDescr = ModelsUtil.getApplicationDescription(randomApp);
+    const appDialogDescription = await modelsDialog.getEntityOptionDescription(
+      Groups.applications,
+      randomApp.name,
     );
-    const appDialogDescription = await modelsDialog
-      .entityOptionDescription(Groups.applications, randomApp)
-      .innerText();
     expect
       .soft(
-        expectedAppDescr.includes(appDialogDescription),
+        expectedAppDescr.includes(appDialogDescription!),
         ExpectedMessages.entityHasDescription,
       )
       .toBeTruthy();
@@ -111,17 +110,17 @@ test(
     if (
       expectedAppDescr &&
       (await modelsDialog
-        .expandIcon(Groups.applications, randomApp)
+        .expandIcon(Groups.applications, randomApp.name)
         .isVisible())
     ) {
       await modelsDialog.expandEntityDescription(
         Groups.applications,
-        randomApp,
+        randomApp.name,
       );
       const isAppDescrFullWidth =
         await modelsDialog.isEntityDescriptionFullWidth(
           Groups.applications,
-          randomApp,
+          randomApp.name,
         );
       expect
         .soft(
@@ -131,9 +130,9 @@ test(
         .toBeTruthy();
     }
 
-    await modelsDialog.selectGroupEntity(randomApp, Groups.applications);
+    await modelsDialog.selectGroupEntity(randomApp.name, Groups.applications);
     const appDescription = await recentEntities.getRecentEntityDescription(
-      randomApp,
+      randomApp.name,
     );
     expect
       .soft(
@@ -149,29 +148,26 @@ test('Link from the detailed description opens page in new tab', async ({
   talkToSelector,
   modelsDialog,
   setTestIds,
-  apiHelper,
 }) => {
   setTestIds('EPMRTC-1064');
+  const application = ModelsUtil.getApplication(ModelIds.GPT_WORLD);
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
   await talkToSelector.seeFullList();
 
   await modelsDialog.expandEntityDescription(
     Groups.applications,
-    OpenAIEntityModels[OpenAIEntityModelID.GPT_WORLD].name,
+    application!.name,
   );
 
-  const application = await apiHelper.getApplication(
-    OpenAIEntityModels[OpenAIEntityModelID.GPT_WORLD].name,
-  );
   const expectedAppDescriptionLinkAnchors =
-    await apiHelper.getApplicationDescriptionLinkAnchors(application!);
+    ModelsUtil.getApplicationDescriptionLinkAnchors(application!);
   const randomLinkText = GeneratorUtil.randomArrayElement(
     expectedAppDescriptionLinkAnchors!,
   );
   const linkColor = await modelsDialog.getEntityDescriptionLinkColor(
     Groups.applications,
-    OpenAIEntityModels[OpenAIEntityModelID.GPT_WORLD].name,
+    application!.name,
     randomLinkText,
   );
   expect
@@ -181,11 +177,11 @@ test('Link from the detailed description opens page in new tab', async ({
   const demoPage = await dialHomePage.getNewPage(() =>
     modelsDialog.openEntityDescriptionLink(
       Groups.applications,
-      OpenAIEntityModels[OpenAIEntityModelID.GPT_WORLD].name,
+      application!.name,
       randomLinkText,
     ),
   );
-  const expectedLink = await apiHelper.getApplicationDescriptionLink(
+  const expectedLink = ModelsUtil.getApplicationDescriptionLink(
     application!,
     randomLinkText,
   );

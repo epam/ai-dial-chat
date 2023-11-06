@@ -5,7 +5,9 @@
   "scripts": {
     "postinstall": "node tools/patch-nextjs.js",
     "dev": "next dev",
-    "build": "next build",
+    "dev:overlay": "esbuild overlay-examples/main.ts --bundle --outdir=overlay-examples --servedir=overlay-examples",
+    "build": "npm run build:overlay && next build",
+    "build:overlay": "esbuild overlay/index.ts --bundle --format=esm --outfile=public/overlay/script.js",
     "start": "next start",
     "lint": "eslint src && prettier --check src",
     "lint:fix": "eslint src --fix && prettier --write src",
@@ -78,6 +80,7 @@
     "autoprefixer": "^10.4.14",
     "dotenv": "^16.3.1",
     "endent": "^2.1.0",
+    "esbuild": "^0.19.3",
     "eslint": "^8.49.0",
     "eslint-config-next": "13.4.19",
     "eslint-config-prettier": "^9.0.0",
@@ -97,6 +100,6 @@
   },
   "overrides": {
     "@opentelemetry/exporter-jaeger": "file:dev/null",
-    "@babel/traverse":"7.23.2"
+    "@babel/traverse": "7.23.2"
   }
 }

@@ -2,6 +2,9 @@ import { FC } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { useAppSelector } from '@/src/store/hooks';
+
 import Play from '../../../public/images/icons/play.svg';
 import RefreshCW from '../../../public/images/icons/refresh-cw.svg';
 
@@ -16,6 +19,9 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
   showReplayStart,
 }) => {
   const { t } = useTranslation('chat');
+  const isError = useAppSelector(
+    ConversationsSelectors.selectIsErrorReplayConversations,
+  );
   return (
     <div
       className={`absolute bottom-3 flex w-full 
@@ -42,11 +48,15 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
             className="shrink-0 text-gray-500"
           />
 
-          <span>
-            {t(
-              'Looks like something went wrong. Do you want to restart replay?',
-            )}
-          </span>
+          {isError ? (
+            <span>
+              {t(
+                'Looks like something went wrong. Do you want to continue replay?',
+              )}
+            </span>
+          ) : (
+            <span>{t('Continue replay')}</span>
+          )}
         </button>
       )}
     </div>

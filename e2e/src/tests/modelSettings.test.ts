@@ -3,17 +3,18 @@ import { OpenAIEntityModel } from '@/src/types/openai';
 import test from '@/e2e/src/core/fixtures';
 import { ExpectedMessages } from '@/e2e/src/testData';
 import { Colors } from '@/e2e/src/ui/domData';
-import { GeneratorUtil } from '@/e2e/src/utils';
+import { GeneratorUtil, ModelsUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
 const sysPrompt = 'test prompt';
 const temp = 0.8;
 
 let models: OpenAIEntityModel[];
-let defaultModel: string;
-test.beforeAll(async ({ apiHelper }) => {
-  models = await apiHelper.getModels();
-  defaultModel = models.find((m) => m.isDefault === true)!.name;
+let defaultModel: OpenAIEntityModel;
+
+test.beforeAll(async () => {
+  models = ModelsUtil.getModels();
+  defaultModel = ModelsUtil.getDefaultModel()!;
 });
 
 test('Selected settings are saved if to switch from Model1 to Model2', async ({
@@ -27,10 +28,10 @@ test('Selected settings are saved if to switch from Model1 to Model2', async ({
 }) => {
   setTestIds('EPMRTC-1046');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
-  let modelNames = models.filter((m) => m.type === 'model').map((m) => m.name);
-  modelNames = modelNames.filter((m) => m !== defaultModel);
-  const randomModel = GeneratorUtil.randomArrayElement(modelNames);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+  const randomModel = GeneratorUtil.randomArrayElement(
+    models.filter((m) => m.id !== defaultModel.id),
+  );
 
   await entitySettings.setSystemPrompt(sysPrompt);
   await temperatureSlider.setTemperature(temp);
@@ -40,9 +41,9 @@ test('Selected settings are saved if to switch from Model1 to Model2', async ({
   );
   await addons.selectAddon(randomAddon);
 
-  await talkToSelector.selectModel(randomModel);
+  await talkToSelector.selectModel(randomModel.name);
   const modelBorderColors = await recentEntities
-    .getRecentEntity(randomModel)
+    .getRecentEntity(randomModel.name)
     .getAllBorderColors();
   Object.values(modelBorderColors).forEach((borders) => {
     borders.forEach((borderColor) => {
@@ -79,7 +80,7 @@ test('Selected settings are saved if to switch from Model to Application to Mode
 }) => {
   setTestIds('EPMRTC-417');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
   await entitySettings.setSystemPrompt(sysPrompt);
   await temperatureSlider.setTemperature(temp);
 
@@ -87,19 +88,18 @@ test('Selected settings are saved if to switch from Model to Application to Mode
     await addons.getRecentAddons(),
   );
   await addons.selectAddon(randomAddon);
-  let modelNames = models.filter((m) => m.type === 'model').map((m) => m.name);
-  modelNames = modelNames.filter((m) => m !== defaultModel);
-  const randomModel = GeneratorUtil.randomArrayElement(modelNames);
-  const appNames = models
-    .filter((m) => m.type === 'application')
-    .map((m) => m.name);
-  const randomApp = GeneratorUtil.randomArrayElement(appNames);
+  const randomModel = GeneratorUtil.randomArrayElement(
+    models.filter((m) => m.id !== defaultModel.id),
+  );
+  const randomApp = GeneratorUtil.randomArrayElement(
+    ModelsUtil.getApplications(),
+  );
 
-  await talkToSelector.selectApplication(randomApp);
-  await talkToSelector.selectModel(randomModel);
+  await talkToSelector.selectApplication(randomApp.name);
+  await talkToSelector.selectModel(randomModel.name);
 
   const modelBorderColors = await recentEntities
-    .getRecentEntity(randomModel)
+    .getRecentEntity(randomModel.name)
     .getAllBorderColors();
   Object.values(modelBorderColors).forEach((borders) => {
     borders.forEach((borderColor) => {
@@ -139,7 +139,7 @@ test('System prompt contains combinations with :', async ({
     'test test. test:',
   ];
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
   for (const prompt of prompts) {
     await entitySettings.setSystemPrompt(prompt);
     const systemPrompt = await entitySettings.getSystemPrompt();

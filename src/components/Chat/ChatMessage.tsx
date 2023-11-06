@@ -18,8 +18,11 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { Conversation, Message } from '@/src/types/chat';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -34,15 +37,13 @@ import { MessageAttachments } from './MessageAttachments';
 import { MessageError } from './MessageError';
 import { MessageStages } from './MessageStages';
 
-import classNames from 'classnames';
-
 export interface Props {
   message: Message;
   messageIndex: number;
   conversation: Conversation;
   isLikesEnabled: boolean;
   editDisabled: boolean;
-  onEdit: (editedMessage: Message) => void;
+  onEdit: (editedMessage: Message, index: number) => void;
   onLike: (likeStatus: number) => void;
   onDelete: () => void;
 }
@@ -85,6 +86,10 @@ export const ChatMessage: FC<Props> = memo(
     const theme = useAppSelector(UISelectors.selectThemeState);
 
     const codeWarning = useAppSelector(SettingsSelectors.selectCodeWarning);
+
+    const isPlayback = useAppSelector(
+      ConversationsSelectors.selectIsPlaybackSelectedConversations,
+    );
 
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [isTyping, setIsTyping] = useState<boolean>(false);
@@ -133,11 +138,11 @@ export const ChatMessage: FC<Props> = memo(
     const handleEditMessage = useCallback(() => {
       if (message.content != messageContent) {
         if (conversation && onEdit) {
-          onEdit({ ...message, content: messageContent });
+          onEdit({ ...message, content: messageContent }, messageIndex);
         }
       }
       setIsEditing(false);
-    }, [conversation, message, messageContent, onEdit]);
+    }, [conversation, message, messageContent, onEdit, messageIndex]);
 
     const handleDeleteMessage = useCallback(() => {
       onDelete();
@@ -256,7 +261,7 @@ export const ChatMessage: FC<Props> = memo(
                   )
                 )}
 
-                {!isEditing && (
+                {!isPlayback && !isEditing && (
                   <div className="flex w-[60px] flex-col items-center justify-end gap-4 md:flex-row md:items-start md:justify-start md:gap-1">
                     <button
                       className="invisible text-gray-500 hover:text-blue-500 focus:visible disabled:cursor-not-allowed group-hover:visible"

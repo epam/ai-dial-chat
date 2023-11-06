@@ -25,7 +25,11 @@ export class PromptModalDialog extends BaseElement {
     await this.name.click();
     await this.page.keyboard.press(keys.ctrlPlusA);
     await this.name.typeInInput(name);
+    await this.description.click();
+    await this.page.keyboard.press(keys.ctrlPlusA);
     await this.description.typeInInput(description);
+    await this.prompt.click();
+    await this.page.keyboard.press(keys.ctrlPlusA);
     await this.prompt.typeInInput(value);
   }
 

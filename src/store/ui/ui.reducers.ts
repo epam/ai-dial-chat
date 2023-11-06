@@ -11,6 +11,7 @@ export interface UIState {
   isUserSettingsOpen: boolean;
   isProfileOpen: boolean;
   isCompareMode: boolean;
+  openedFoldersIds: string[];
 }
 
 const initialState: UIState = {
@@ -20,6 +21,7 @@ const initialState: UIState = {
   isUserSettingsOpen: false,
   isProfileOpen: false,
   isCompareMode: false,
+  openedFoldersIds: [],
 };
 
 export const uiSlice = createSlice({
@@ -67,10 +69,41 @@ export const uiSlice = createSlice({
         response?: Response;
       }>,
     ) => state,
+    setOpenedFoldersIds: (
+      state,
+      { payload }: PayloadAction<UIState['openedFoldersIds']>,
+    ) => {
+      const uniqueIds = Array.from(new Set(payload));
+      state.openedFoldersIds = uniqueIds;
+    },
+    toggleFolder: (state, { payload }: PayloadAction<{ id: string }>) => {
+      const isOpened = state.openedFoldersIds.includes(payload.id);
+      if (isOpened) {
+        state.openedFoldersIds = state.openedFoldersIds.filter(
+          (id) => id !== payload.id,
+        );
+      } else {
+        state.openedFoldersIds.push(payload.id);
+      }
+    },
+    openFolder: (state, { payload }: PayloadAction<{ id: string }>) => {
+      const isOpened = state.openedFoldersIds.includes(payload.id);
+      if (!isOpened) {
+        state.openedFoldersIds.push(payload.id);
+      }
+    },
+    closeFolder: (state, { payload }: PayloadAction<{ id: string }>) => {
+      const isOpened = state.openedFoldersIds.includes(payload.id);
+      if (isOpened) {
+        state.openedFoldersIds = state.openedFoldersIds.filter(
+          (id) => id !== payload.id,
+        );
+      }
+    },
   },
 });
 
-const rootSelector = (state: RootState) => state.ui;
+const rootSelector = (state: RootState): UIState => state.ui;
 
 const selectThemeState = createSelector([rootSelector], (state) => {
   return state.theme;
@@ -96,6 +129,16 @@ const selectIsCompareMode = createSelector([rootSelector], (state) => {
   return state.isCompareMode;
 });
 
+const selectOpenedFoldersIds = createSelector([rootSelector], (state) => {
+  return state.openedFoldersIds;
+});
+const selectIsFolderOpened = createSelector(
+  [selectOpenedFoldersIds, (_state, id: string) => id],
+  (ids, id): boolean => {
+    return ids.includes(id);
+  },
+);
+
 export const UIActions = uiSlice.actions;
 
 export const UISelectors = {
@@ -105,4 +148,6 @@ export const UISelectors = {
   selectIsUserSettingsOpen,
   selectIsProfileOpen,
   selectIsCompareMode,
+  selectOpenedFoldersIds,
+  selectIsFolderOpened,
 };

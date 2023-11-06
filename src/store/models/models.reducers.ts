@@ -98,7 +98,7 @@ export const modelsSlice = createSlice({
   },
 });
 
-const rootSelector = (state: RootState) => state.models;
+const rootSelector = (state: RootState): ModelsState => state.models;
 
 const selectModelsIsLoading = createSelector([rootSelector], (state) => {
   return state.isLoading;

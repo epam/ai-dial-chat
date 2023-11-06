@@ -1,9 +1,5 @@
 import { Conversation, Message, Replay } from '@/src/types/chat';
-import {
-  OpenAIEntityModel,
-  OpenAIEntityModelID,
-  OpenAIEntityModels,
-} from '@/src/types/openai';
+import { OpenAIEntityModel } from '@/src/types/openai';
 
 import {
   DEFAULT_CONVERSATION_NAME,
@@ -11,6 +7,8 @@ import {
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-settings';
 import { defaultReplay } from '@/src/constants/replay';
+
+import { ModelsUtil } from '@/e2e/src/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 export class ConversationBuilder {
@@ -21,13 +19,11 @@ export class ConversationBuilder {
       id: uuidv4(),
       name: DEFAULT_CONVERSATION_NAME,
       messages: [],
-      model: OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
+      model: ModelsUtil.getDefaultModel()!,
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: DEFAULT_TEMPERATURE,
-      folderId: null,
       replay: defaultReplay,
-      selectedAddons:
-        OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ].selectedAddons ?? [],
+      selectedAddons: ModelsUtil.getDefaultModel()!.selectedAddons ?? [],
       lastActivityDate: Date.now(),
       isMessageStreaming: false,
     };
@@ -72,7 +68,7 @@ export class ConversationBuilder {
     return this;
   }
 
-  withFolderId(folderId: null | string): ConversationBuilder {
+  withFolderId(folderId: undefined | string): ConversationBuilder {
     this.conversation.folderId = folderId;
     return this;
   }

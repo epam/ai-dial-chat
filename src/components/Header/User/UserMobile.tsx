@@ -105,7 +105,7 @@ export const UserMobile = () => {
 
   return (
     <div
-      className="fixed right-0 top-12 z-40 flex w-[260px] flex-col border-gray-300 bg-gray-100 dark:border-gray-900 dark:bg-gray-700"
+      className="fixed right-0 top-12 z-40 flex w-[260px] flex-col overflow-y-auto border-gray-300 bg-gray-100 dark:border-gray-900 dark:bg-gray-700"
       style={{ height: 'calc(100% - 48px)' }}
     >
       <UserInfo />
@@ -113,9 +113,9 @@ export const UserMobile = () => {
       <div className="grow"></div>
       <div className="border-t border-gray-300 p-4 dark:border-gray-900">
         <FooterMessage
-          isShowFooter={enabledFeatures.has('footer')}
-          isShowRequestApiKey={enabledFeatures.has('request-api-key')}
-          isShowReportAnIssue={enabledFeatures.has('report-an-issue')}
+          isShowFooter={enabledFeatures.includes('footer')}
+          isShowRequestApiKey={enabledFeatures.includes('request-api-key')}
+          isShowReportAnIssue={enabledFeatures.includes('report-an-issue')}
           footerHtmlMessage={footerHtmlMessage}
         />
       </div>

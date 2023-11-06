@@ -46,7 +46,7 @@ const Header = () => {
   };
 
   return (
-    <div className="flex h-[48px] w-full border-b border-gray-300 bg-gray-100 dark:border-gray-900 dark:bg-gray-700">
+    <div className="z-40 flex h-[48px] w-full border-b border-gray-300 bg-gray-100 dark:border-gray-900 dark:bg-gray-700">
       <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <div

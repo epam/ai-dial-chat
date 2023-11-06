@@ -13,6 +13,7 @@ import {
   OPENAI_API_HOST,
   OPENAI_API_VERSION,
 } from '../../constants/default-settings';
+import { errorsMessages } from '@/src/constants/errors';
 
 import { getApiHeaders } from './get-headers';
 
@@ -145,9 +146,7 @@ export const OpenAIStream = async ({
       );
     } else {
       throw new Error(
-        `OpenAI API returned an error: ${
-          decoder.decode(result?.value) || result.statusText
-        }`,
+        `OpenAI API returned an error: ${JSON.stringify(result, null, 2)}`,
       );
     }
   }
@@ -169,17 +168,30 @@ export const OpenAIStream = async ({
             }
             const data = event.data;
             const json = JSON.parse(data);
+            if (json.error) {
+              throw new OpenAIError(
+                json.error.message,
+                json.error.type,
+                json.error.param,
+                json.error.code,
+              );
+            }
             if (!idSend) {
               appendChunk(controller, { responseId: json.id });
               idSend = true;
             }
 
-            appendChunk(controller, json.choices[0].delta);
+            if (json.choices?.[0].delta) {
+              if (json.choices[0].finish_reason === 'content_filter') {
+                throw new OpenAIError(
+                  errorsMessages.contentFiltering,
+                  '',
+                  '',
+                  'content_filter',
+                );
+              }
 
-            if (json.choices[0].finish_reason != null) {
-              controller.close();
-              isFinished = true;
-              return;
+              appendChunk(controller, json.choices[0].delta);
             }
           } catch (e) {
             controller.error(e);

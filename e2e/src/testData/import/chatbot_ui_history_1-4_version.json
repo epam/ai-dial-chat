@@ -73,9 +73,9 @@
   "prompts": [
     {
       "id": "39bde32b-c131-4bfd-aaa9-f463b2220075",
-      "name": "Verstion 1.4 A*B",
+      "name": "Version 1.4 A*B",
       "description": "Prompt created in version 1.4",
-      "content": "{{A}} * {{B}} =",
+      "content": "{{A}} =",
       "model": {
         "id": "gpt-35-turbo",
         "name": "GPT-3.5",

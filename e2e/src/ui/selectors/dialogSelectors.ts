@@ -4,6 +4,11 @@ export const Dialog = {
   confirm: '[data-qa="confirm"]',
 };
 
+export const Popup = {
+  errorPopup: '[style*="animation"]',
+  cancelIcon: '.tabler-icon-x',
+};
+
 export const PromptModal = {
   promptModalDialog: '[data-qa="prompt-modal"]',
   promptName: '[data-qa="prompt-name"]',
@@ -26,6 +31,14 @@ export const ModelDialog = {
   groupEntityName: '[data-qa="group-entity-name"]',
   groupEntityDescr: '[data-qa="group-entity-descr"]',
   expandGroupEntity: '[data-qa="expand-group-entity"]',
+  closeDialog: '[data-qa="close-models-dialog"]',
+};
+
+export const AddonDialog = {
+  addonsDialog: '[data-qa="addons-dialog"]',
+  addonSearchResults: '[data-qa="addon-search-results"]',
+  addonName: '[data-qa="addon-name"]',
+  closeDialog: '[data-qa="close-addons-dialog"]',
 };
 
 export const InfoTooltip = {

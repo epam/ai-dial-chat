@@ -1,11 +1,8 @@
-import {
-  OpenAIEntityModel,
-  OpenAIEntityModelID,
-  OpenAIEntityModels,
-} from '@/src/types/openai';
+import { OpenAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 
 import { ExpectedConstants } from '@/e2e/src/testData';
+import { ModelsUtil } from '@/e2e/src/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 export class PromptBuilder {
@@ -17,8 +14,7 @@ export class PromptBuilder {
       name: ExpectedConstants.newPromptTitle(1),
       description: '',
       content: '',
-      model: OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
-      folderId: null,
+      model: ModelsUtil.getDefaultModel()!,
     };
   }
 
@@ -51,7 +47,7 @@ export class PromptBuilder {
     return this;
   }
 
-  withFolderId(folderId: null | string): PromptBuilder {
+  withFolderId(folderId: undefined | string): PromptBuilder {
     this.prompt.folderId = folderId;
     return this;
   }

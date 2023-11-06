@@ -64,7 +64,7 @@ export const ChatHeader = ({
   return (
     <>
       <div
-        className="sticky top-0 z-10 flex w-full min-w-0 flex-col items-center justify-center gap-2 bg-gray-200 py-2 text-sm dark:bg-gray-800 lg:flex-row"
+        className="sticky top-0 z-10 flex w-full min-w-0 flex-wrap items-center justify-center gap-2 bg-gray-200 py-2 text-sm dark:bg-gray-800 lg:flex-row"
         data-qa="chat-header"
       >
         {isShowChatInfo && (

@@ -1,25 +1,30 @@
 import { Conversation } from '@/src/types/chat';
-import {
-  OpenAIEntityAddon,
-  OpenAIEntityModel,
-  OpenAIEntityModelID,
-  OpenAIEntityModels,
-} from '@/src/types/openai';
+import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
-import { ExpectedConstants, ExpectedMessages } from '@/e2e/src/testData';
-import { GeneratorUtil } from '@/e2e/src/utils';
+import {
+  AssistantIds,
+  ExpectedConstants,
+  ExpectedMessages,
+  ModelIds,
+} from '@/e2e/src/testData';
+import { GeneratorUtil, ModelsUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
-let allAddons: OpenAIEntityAddon[];
+let allAddons: OpenAIEntityModel[];
 let addonIds: string[];
 let allModels: OpenAIEntityModel[];
-test.beforeAll(async ({ apiHelper }) => {
-  allAddons = await apiHelper.getAddons();
+let assistant: OpenAIEntityModel;
+let defaultModel: OpenAIEntityModel;
+let mirrorApp: OpenAIEntityModel;
+
+test.beforeAll(async () => {
+  allAddons = ModelsUtil.getAddons();
   addonIds = allAddons.map((a) => a.id);
-  allModels = await apiHelper
-    .getModels()
-    .then((models) => models.filter((m) => m.iconUrl != undefined));
+  allModels = ModelsUtil.getModels().filter((m) => m.iconUrl != undefined);
+  assistant = ModelsUtil.getAssistant(AssistantIds.ASSISTANT10K)!;
+  defaultModel = ModelsUtil.getDefaultModel()!;
+  mirrorApp = ModelsUtil.getApplication(ModelIds.MIRROR)!;
 });
 
 test(
@@ -31,24 +36,21 @@ test(
     setTestIds,
     conversationData,
     localStorageManager,
-    apiHelper,
     chatHeader,
     chatInfoTooltip,
+    errorPopup,
   }) => {
     setTestIds('EPMRTC-1115', 'EPMRTC-473');
     let conversation: Conversation;
     const temp = 0;
     const request = 'This is a test request';
-    const model = await apiHelper.getModel(
-      OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ].name,
-    );
 
     await test.step('Prepare model conversation with all available addons and temperature', async () => {
       conversation = conversationData.prepareModelConversation(
         temp,
         '',
         addonIds,
-        OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
+        defaultModel,
       );
       await localStorageManager.setConversationHistory(conversation);
       await localStorageManager.setSelectedConversation(conversation);
@@ -89,7 +91,7 @@ test(
         .toBe(conversation.model.id);
       expect
         .soft(headerIcons[0].iconUrl, ExpectedMessages.headerIconSourceIsValid)
-        .toBe(model!.iconUrl);
+        .toBe(defaultModel.iconUrl);
 
       for (let i = 0; i < addonIds.length; i++) {
         const addon = allAddons.find((a) => a.id === addonIds[i]);
@@ -109,6 +111,7 @@ test(
     });
 
     await test.step('Hover over chat header and verify chat settings are correct on tooltip', async () => {
+      await errorPopup.cancelPopup();
       await chatHeader.chatModel.hoverOver();
       const modelInfo = await chatInfoTooltip.getModelInfo();
       expect
@@ -118,7 +121,7 @@ test(
       const modelInfoIcon = await chatInfoTooltip.getModelIcon();
       expect
         .soft(modelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-        .toBe(model!.iconUrl);
+        .toBe(defaultModel.iconUrl);
 
       const promptInfo = await chatInfoTooltip.getPromptInfo();
       expect.soft(promptInfo, ExpectedMessages.chatInfoPromptIsValid).toBe('');
@@ -153,16 +156,15 @@ test('Check chat header for Assistant with added non default addon', async ({
   setTestIds,
   conversationData,
   localStorageManager,
-  apiHelper,
   chatHeader,
   chatInfoTooltip,
+  errorPopup,
 }) => {
   setTestIds('EPMRTC-1110');
   let conversation: Conversation;
-  const assistant = await apiHelper.getEntity(
-    OpenAIEntityModels[OpenAIEntityModelID.ASSISTANT10K],
-  );
-  const assistantSelectedAddons = assistant?.selectedAddons;
+  const assistantSelectedAddons = ModelsUtil.getAssistant(
+    AssistantIds.ASSISTANT10K,
+  )!.selectedAddons;
   const randomModel = GeneratorUtil.randomArrayElement(allModels);
   let isSelectedAddon = true;
   let randomAddon = '';
@@ -185,7 +187,10 @@ test('Check chat header for Assistant with added non default addon', async ({
   });
 
   await test.step('Send new request in chat and verify request is sent with valid data', async () => {
-    await dialHomePage.openHomePage();
+    const addonIconUrls = allAddons
+      .filter((addon) => assistantSelectedAddons?.includes(addon.id))
+      .map((addon) => addon.iconUrl);
+    await dialHomePage.openHomePage({ iconsToBeLoaded: addonIconUrls });
     await dialHomePage.waitForPageLoaded();
     const requestsData = await chat.sendRequestWithButton(
       'where the main epam office located?',
@@ -242,6 +247,7 @@ test('Check chat header for Assistant with added non default addon', async ({
   });
 
   await test.step('Hover over chat header and verify chat settings are correct on tooltip', async () => {
+    await errorPopup.cancelPopup();
     await chatHeader.chatModel.hoverOver();
     const assistantInfo = await chatInfoTooltip.getAssistantInfo();
     expect
@@ -296,19 +302,18 @@ test('Check chat header for Assistant if to update settings in chat', async ({
   setTestIds,
   conversationData,
   localStorageManager,
-  apiHelper,
   chatHeader,
   chatInfoTooltip,
   modelSelector,
   temperatureSlider,
   addons,
+  errorPopup,
 }) => {
   setTestIds('EPMRTC-427');
   let conversation: Conversation;
-  const assistant = await apiHelper.getEntity(
-    OpenAIEntityModels[OpenAIEntityModelID.ASSISTANT10K],
-  );
-  const assistantSelectedAddons = assistant?.selectedAddons;
+  const assistantSelectedAddons = ModelsUtil.getAssistant(
+    AssistantIds.ASSISTANT10K,
+  )!.selectedAddons;
   const randomModel = GeneratorUtil.randomArrayElement(allModels);
   let isSelectedAddon = true;
   let randomAddon = '';
@@ -323,7 +328,7 @@ test('Check chat header for Assistant if to update settings in chat', async ({
   const updatedAddons = assistantSelectedAddons!.filter(
     (a) => a !== randomAddon,
   );
-  const randomAddonEntity = await apiHelper.getAddonById(randomAddon);
+  const randomAddonEntity = ModelsUtil.getAddon(randomAddon);
 
   await test.step('Prepare assistant conversation with all available addons and temperature', async () => {
     conversation = conversationData.prepareAssistantConversation(
@@ -400,6 +405,7 @@ test('Check chat header for Assistant if to update settings in chat', async ({
   });
 
   await test.step('Hover over chat header and verify chat settings are correct on tooltip', async () => {
+    await errorPopup.cancelPopup();
     await chatHeader.chatModel.hoverOver();
     const assistantInfo = await chatInfoTooltip.getAssistantInfo();
     expect
@@ -454,26 +460,18 @@ test('Check chat header if to change Application to Application', async ({
   chat,
   localStorageManager,
   setTestIds,
-  apiHelper,
   chatHeader,
   talkToSelector,
   chatInfoTooltip,
+  errorPopup,
 }) => {
   setTestIds('EPMRTC-1112');
-  let allApps = await apiHelper
-    .getModelEntities()
-    .then((e) => e.filter((e) => e.type === 'application'));
-  allApps = allApps.filter(
-    (a) =>
-      a !== OpenAIEntityModels[OpenAIEntityModelID.MIRROR] &&
-      a.iconUrl !== undefined,
-  );
+  let allApps = ModelsUtil.getApplications();
+  allApps = allApps.filter((a) => a !== mirrorApp && a.iconUrl !== undefined);
   const randomApp = GeneratorUtil.randomArrayElement(allApps);
 
   await test.step('Prepare conversation with application', async () => {
-    const conversation = conversationData.prepareDefaultConversation(
-      OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
-    );
+    const conversation = conversationData.prepareDefaultConversation(mirrorApp);
     await localStorageManager.setConversationHistory(conversation);
     await localStorageManager.setSelectedConversation(conversation);
   });
@@ -510,6 +508,7 @@ test('Check chat header if to change Application to Application', async ({
   });
 
   await test.step('Hover over chat header model and verify chat settings on tooltip', async () => {
+    await errorPopup.cancelPopup();
     await chatHeader.chatModel.hoverOver();
     const appInfo = await chatInfoTooltip.getApplicationInfo();
     expect
@@ -540,7 +539,7 @@ test(
     await test.step('Prepare conversation with history', async () => {
       conversation =
         await conversationData.prepareModelConversationBasedOnRequests(
-          OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
+          mirrorApp,
           ['first request', 'second request', 'third request'],
         );
       await localStorageManager.setConversationHistory(conversation);

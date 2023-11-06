@@ -87,7 +87,7 @@ export const addonsSlice = createSlice({
   },
 });
 
-const rootSelector = (state: RootState) => state.addons;
+const rootSelector = (state: RootState): AddonsState => state.addons;
 
 const selectAddonsIsLoading = createSelector([rootSelector], (state) => {
   return state.isLoading;

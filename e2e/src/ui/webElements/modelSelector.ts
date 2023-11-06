@@ -1,6 +1,6 @@
 import { Attributes, Tags } from '@/e2e/src/ui/domData';
 import { ChatSelectors } from '@/e2e/src/ui/selectors';
-import { BaseElement } from '@/e2e/src/ui/webElements/baseElement';
+import { BaseElement, Icons } from '@/e2e/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
 
 export class ModelSelector extends BaseElement {
@@ -36,5 +36,25 @@ export class ModelSelector extends BaseElement {
 
   public async getSelectorPlaceholder() {
     return this.modelInput.getAttribute(Attributes.placeholder);
+  }
+
+  public async getOptionsIconAttributes() {
+    const allIcons: Icons[] = [];
+    const optionsCount = await this.listOptions.getElementsCount();
+    for (let i = 1; i <= optionsCount; i++) {
+      const option = await this.listOptions.getNthElement(i);
+      const customIconOption = await option.locator(ChatSelectors.chatIcon);
+      if (await customIconOption.isVisible()) {
+        const iconAttributes = await this.getElementIconAttributes(
+          customIconOption,
+        );
+        allIcons.push(iconAttributes);
+      } else {
+        const defaultIconAttributes =
+          await this.getElementDefaultIconAttributes(option);
+        allIcons.push(defaultIconAttributes);
+      }
+    }
+    return allIcons;
   }
 }

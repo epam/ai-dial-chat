@@ -3,6 +3,7 @@ import {
   IconFolderPlus,
   IconFolderShare,
   IconPencilMinus,
+  IconPlayerPlay,
   IconRefreshDot,
   IconScale,
   IconTrashX,
@@ -11,13 +12,13 @@ import { MouseEventHandler } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { FeatureType, HighlightColor } from '@/src/types/components';
 import { FolderInterface } from '@/src/types/folder';
 
 import DotsIcon from '../../../public/images/icons/dots-vertical.svg';
 import { Menu, MenuItem } from './DropdownMenu';
-
-import classNames from 'classnames';
 
 interface ContextMenuProps {
   folders: FolderInterface[];
@@ -32,6 +33,7 @@ interface ContextMenuProps {
   onExport: MouseEventHandler<unknown>;
   onReplay?: MouseEventHandler<HTMLButtonElement>;
   onCompare?: MouseEventHandler<unknown>;
+  onPlayback?: MouseEventHandler<HTMLButtonElement>;
 }
 
 export const ContextMenu = ({
@@ -45,6 +47,7 @@ export const ContextMenu = ({
   onExport,
   onReplay,
   onCompare,
+  onPlayback,
   onMoveToFolder,
   onOpenMoveToModal,
 }: ContextMenuProps) => {
@@ -55,7 +58,7 @@ export const ContextMenu = ({
         type="contextMenu"
         trigger={
           <DotsIcon
-            className={classNames('text-gray-500', className)}
+            className={classNames('rotate-90 text-gray-500', className)}
             width={18}
             height={18}
             size={18}
@@ -63,11 +66,11 @@ export const ContextMenu = ({
         }
       >
         <MenuItem
-          className={`${
+          className={classNames(
             highlightColor === 'green'
               ? 'hover:bg-green/15'
-              : 'hover:bg-violet/15'
-          }`}
+              : 'hover:bg-violet/15',
+          )}
           item={
             <div className="flex items-center gap-3">
               <IconPencilMinus className="shrink-0 text-gray-500" size={18} />
@@ -78,11 +81,11 @@ export const ContextMenu = ({
         />
         {onCompare && (
           <MenuItem
-            className={`${
+            className={classNames(
               highlightColor === 'green'
                 ? 'hover:bg-green/15'
-                : 'hover:bg-violet/15'
-            }`}
+                : 'hover:bg-violet/15',
+            )}
             item={
               <div className="flex items-center gap-3">
                 <IconScale className="shrink-0 text-gray-500" size={18} />
@@ -94,11 +97,11 @@ export const ContextMenu = ({
         )}
         {!isEmptyConversation && onReplay && (
           <MenuItem
-            className={`${
+            className={classNames(
               highlightColor === 'green'
                 ? 'hover:bg-green/15'
-                : 'hover:bg-violet/15'
-            }`}
+                : 'hover:bg-violet/15',
+            )}
             item={
               <div className="flex items-center gap-3">
                 <IconRefreshDot className="shrink-0 text-gray-500" size={18} />
@@ -108,12 +111,24 @@ export const ContextMenu = ({
             onClick={onReplay}
           />
         )}
+        {!isEmptyConversation && onPlayback && (
+          <MenuItem
+            className="hover:bg-green/15"
+            item={
+              <div className="flex items-center gap-3">
+                <IconPlayerPlay className="shrink-0 text-gray-500" size={18} />
+                <span>{t('Playback')}</span>
+              </div>
+            }
+            onClick={onPlayback}
+          />
+        )}
         <MenuItem
-          className={`${
+          className={classNames(
             highlightColor === 'green'
               ? 'hover:bg-green/15'
-              : 'hover:bg-violet/15'
-          }`}
+              : 'hover:bg-violet/15',
+          )}
           item={
             <div className="flex items-center gap-3">
               <IconFileArrowRight
@@ -128,11 +143,10 @@ export const ContextMenu = ({
         <MenuItem
           className={classNames(
             'md:hidden',
-            `${
-              highlightColor === 'green'
-                ? 'hover:bg-green/15'
-                : 'hover:bg-violet/15'
-            }`,
+
+            highlightColor === 'green'
+              ? 'hover:bg-green/15'
+              : 'hover:bg-violet/15',
           )}
           onClick={onOpenMoveToModal}
           item={
@@ -146,11 +160,10 @@ export const ContextMenu = ({
           type="contextMenu"
           className={classNames(
             'max-md:hidden',
-            `${
-              highlightColor === 'green'
-                ? 'hover:bg-green/15'
-                : 'hover:bg-violet/15'
-            }`,
+
+            highlightColor === 'green'
+              ? 'hover:bg-green/15'
+              : 'hover:bg-violet/15',
           )}
           trigger={
             <div className="flex items-center gap-3">
@@ -161,17 +174,15 @@ export const ContextMenu = ({
         >
           <MenuItem
             className={classNames(
-              `${
-                folders?.length > 0
-                  ? 'border-b border-gray-400 dark:border-gray-600'
-                  : ''
-              }`,
-              'max-md:hidden',
-              `${
-                highlightColor === 'green'
-                  ? 'hover:bg-green/15'
-                  : 'hover:bg-violet/15'
-              }`,
+              {
+                'border-b border-gray-400 dark:border-gray-600':
+                  folders?.length > 0,
+              },
+              'invisible md:visible',
+
+              highlightColor === 'green'
+                ? 'hover:bg-green/15'
+                : 'hover:bg-violet/15',
             )}
             onClick={() => {
               onMoveToFolder({ isNewFolder: true });
@@ -183,15 +194,15 @@ export const ContextMenu = ({
               </div>
             }
           />
+
           {folders.map((folder) => (
             <MenuItem
               className={classNames(
-                'max-md:hidden',
-                `${
-                  highlightColor === 'green'
-                    ? 'hover:bg-green/15'
-                    : 'hover:bg-violet/15'
-                }`,
+                'invisible md:visible',
+
+                highlightColor === 'green'
+                  ? 'hover:bg-green/15'
+                  : 'hover:bg-violet/15',
               )}
               key={folder.id}
               label={folder.name}
@@ -201,12 +212,13 @@ export const ContextMenu = ({
             />
           ))}
         </Menu>
+
         <MenuItem
-          className={`${
+          className={classNames(
             highlightColor === 'green'
               ? 'hover:bg-green/15'
-              : 'hover:bg-violet/15'
-          }`}
+              : 'hover:bg-violet/15',
+          )}
           item={
             <div className="flex items-center gap-3">
               <IconTrashX className="shrink-0 text-gray-500" size={18} />

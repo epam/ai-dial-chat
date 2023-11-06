@@ -8,7 +8,7 @@ import { AppEpic } from '@/src/types/store';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import { UIActions } from './ui.reducers';
+import { UIActions, UISelectors } from './ui.reducers';
 
 const saveThemeEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -80,11 +80,33 @@ const showToastErrorEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const saveOpenedFoldersIdsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        UIActions.setOpenedFoldersIds.match(action) ||
+        UIActions.toggleFolder.match(action) ||
+        UIActions.openFolder.match(action) ||
+        UIActions.closeFolder.match(action),
+    ),
+    tap(() => {
+      const updatedOpenedFolders = UISelectors.selectOpenedFoldersIds(
+        state$.value,
+      );
+      localStorage.setItem(
+        'openedFoldersIds',
+        JSON.stringify(updatedOpenedFolders),
+      );
+    }),
+    ignoreElements(),
+  );
+
 const UIEpics = combineEpics(
   saveThemeEpic,
   saveShowChatbarEpic,
   saveShowPromptbarEpic,
   showToastErrorEpic,
+  saveOpenedFoldersIdsEpic,
 );
 
 export default UIEpics;

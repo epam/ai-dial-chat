@@ -149,12 +149,12 @@ const triggerDownloadPrompt = (data: PromptsHistory) => {
 
 export const exportConversation = (
   conversation: Conversation,
-  folder: FolderInterface | undefined,
+  folders: FolderInterface[],
 ) => {
   const data: ExportConversationsFormatV4 = {
     version: 4,
     history: [conversation] || [],
-    folders: folder ? [folder] : [],
+    folders: folders,
   };
 
   triggerDownloadConversation(data);
@@ -184,28 +184,19 @@ export const exportPrompts = (
   triggerDownloadPromptsHistory(data);
 };
 
-export const exportPrompt = (promptId: string) => {
+export const exportPrompt = (promptId: string, folders: FolderInterface[]) => {
   const prompts = localStorage.getItem('prompts');
-  const folders = localStorage.getItem('folders');
 
   if (prompts) {
     const parsedPrompts: Prompt[] = JSON.parse(prompts);
     const promptToExport = parsedPrompts.find(({ id }) => id === promptId);
-    let promptFoldersToExport: any[] = [];
 
     if (promptToExport) {
       const promptsToExport: Prompt[] = [promptToExport];
 
-      if (promptToExport.folderId && folders) {
-        const parsedPromptFolders: FolderInterface[] = JSON.parse(folders);
-        promptFoldersToExport = parsedPromptFolders.filter(
-          ({ id }) => id === promptToExport.folderId,
-        );
-      }
-
       const data: PromptsHistory = {
         prompts: promptsToExport,
-        folders: promptFoldersToExport,
+        folders,
       };
       triggerDownloadPrompt(data);
     }

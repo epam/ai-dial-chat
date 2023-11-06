@@ -1,14 +1,33 @@
 import { Conversation } from '@/src/types/chat';
-import { OpenAIEntityModelID, OpenAIEntityModels } from '@/src/types/openai';
+import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
-import { ExpectedConstants, ExpectedMessages } from '@/e2e/src/testData';
+import {
+  AssistantIds,
+  ExpectedConstants,
+  ExpectedMessages,
+  ModelIds,
+} from '@/e2e/src/testData';
+import { ModelsUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
 const userRequests = ['first request', 'second request', 'third request'];
 const requestTerm = 'qwer';
 const expectedResponse = 'The sky is blue.';
 const sysPrompt = `Type: "${expectedResponse}" if user types ${requestTerm}`;
+let allAddons: OpenAIEntityModel[];
+let gpt35Model: OpenAIEntityModel;
+let assistant: OpenAIEntityModel;
+let mirrorApp: OpenAIEntityModel;
+let gpt4Model: OpenAIEntityModel;
+
+test.beforeAll(async () => {
+  allAddons = ModelsUtil.getAddons();
+  gpt35Model = ModelsUtil.getModel(ModelIds.GPT_3_5_AZ)!;
+  assistant = ModelsUtil.getAssistant(AssistantIds.ASSISTANT10K)!;
+  mirrorApp = ModelsUtil.getApplication(ModelIds.MIRROR)!;
+  gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
+});
 
 test('Regenerate response when answer was received', async ({
   dialHomePage,
@@ -27,7 +46,7 @@ test('Regenerate response when answer was received', async ({
   ];
   await test.step('Prepare model conversation', async () => {
     conversation = conversationData.prepareModelConversationBasedOnRequests(
-      OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
+      gpt35Model,
       userRequests,
     );
     await localStorageManager.setConversationHistory(conversation);
@@ -63,7 +82,7 @@ test('Regenerate response when answer was not received', async ({
   setTestIds('EPMRTC-477');
   await test.step('Send a request in chat and emulate error until response received', async () => {
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded(true);
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     await context.setOffline(true);
     await chat.sendRequestWithButton('Type a fairytale', false);
   });
@@ -98,8 +117,8 @@ test.skip(
     await test.step('Send request for assistant and stop generating when first stage received', async () => {
       test.slow();
       await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded(true);
-      await talkToSelector.selectAssistant(ExpectedConstants.presalesAssistant);
+      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      await talkToSelector.selectAssistant(assistant.name);
       await chat.sendRequestWithButton(
         'What is Epam? What is epam revenue in 2018?',
         false,
@@ -157,7 +176,7 @@ test(
     let conversation: Conversation;
     await test.step('Prepare conversation with 3 requests', async () => {
       conversation = conversationData.prepareModelConversationBasedOnRequests(
-        OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
+        mirrorApp,
         userRequests,
       );
       await localStorageManager.setConversationHistory(conversation);
@@ -234,7 +253,7 @@ test(
     await test.step('Prepare conversation with 3 requests', async () => {
       const conversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
+          mirrorApp,
           userRequests,
         );
       await localStorageManager.setConversationHistory(conversation);
@@ -283,10 +302,8 @@ test.skip('System prompt is applied in Model', async ({
   setTestIds('EPMRTC-1085');
   await test.step('Set system prompt for model and send request', async () => {
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded(true);
-    await talkToSelector.selectModel(
-      OpenAIEntityModels[OpenAIEntityModelID.GPT_4].name,
-    );
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await talkToSelector.selectModel(gpt4Model.name);
     await entitySettings.setSystemPrompt(sysPrompt);
     await chat.sendRequestWithButton(requestTerm);
   });
@@ -308,16 +325,12 @@ test.skip('System prompt is applied in Model with addon', async ({
   talkToSelector,
   entitySettings,
   addons,
-  apiHelper,
 }) => {
   setTestIds('EPMRTC-1086');
   await test.step('Set system prompt for model + addons and send request', async () => {
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded(true);
-    await talkToSelector.selectModel(
-      OpenAIEntityModels[OpenAIEntityModelID.GPT_4].name,
-    );
-    const allAddons = await apiHelper.getAddons();
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await talkToSelector.selectModel(gpt4Model.name);
     for (const addonName of allAddons.map((a) => a.name)) {
       await addons.selectAddon(addonName);
     }
@@ -340,16 +353,12 @@ test.skip('Stop generating for models like GPT (1 symbol = 1 token)', async ({
   chat,
   setTestIds,
   chatMessages,
-  apiHelper,
 }) => {
   setTestIds('EPMRTC-478');
   const request = 'write down 30 adjectives';
-  const model = await apiHelper.getModel(
-    OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ].name,
-  );
   await test.step('Send request and stop generation immediately', async () => {
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded(true);
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     await chat.sendRequestWithButton(request, false);
     await chat.stopGenerating.click();
   });
@@ -359,16 +368,16 @@ test.skip('Stop generating for models like GPT (1 symbol = 1 token)', async ({
     expect
       .soft(receivedContent, ExpectedMessages.messageContentIsValid)
       .toBe('');
-    const conversationIcon = await chatMessages.getLastMessageIconAttributes();
+    const conversationIcon = await chatMessages.getIconAttributesForMessage();
     expect
       .soft(
         conversationIcon.iconEntity,
         ExpectedMessages.chatBarIconEntityIsValid,
       )
-      .toBe(model!.id);
+      .toBe(gpt35Model.id);
     expect
       .soft(conversationIcon.iconUrl, ExpectedMessages.chatBarIconSourceIsValid)
-      .toBe(model!.iconUrl);
+      .toBe(gpt35Model.iconUrl);
 
     const isRegenerateButtonVisible = await chat.regenerate.isVisible();
     expect
@@ -387,16 +396,16 @@ test.skip('Stop generating for models like GPT (1 symbol = 1 token)', async ({
     expect
       .soft(generatedContent, ExpectedMessages.messageContentIsValid)
       .not.toBe('');
-    const conversationIcon = await chatMessages.getLastMessageIconAttributes();
+    const conversationIcon = await chatMessages.getIconAttributesForMessage();
     expect
       .soft(
         conversationIcon.iconEntity,
         ExpectedMessages.chatBarIconEntityIsValid,
       )
-      .toBe(model!.id);
+      .toBe(gpt35Model.id);
     expect
       .soft(conversationIcon.iconUrl, ExpectedMessages.chatBarIconSourceIsValid)
-      .toBe(model!.iconUrl);
+      .toBe(gpt35Model.iconUrl);
 
     const isRegenerateButtonVisible = await chat.regenerate.isVisible();
     expect

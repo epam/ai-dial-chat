@@ -1,4 +1,4 @@
-import { Settings } from '@/src/types/settings';
+import { Settings, availableThemes } from '@/src/types/settings';
 
 const STORAGE_KEY = 'settings';
 
@@ -20,4 +20,8 @@ export const getSettings = (): Settings => {
 
 export const saveSettings = (settings: Settings) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+};
+
+export const validateTheme = (theme: string) => {
+  return theme in availableThemes;
 };

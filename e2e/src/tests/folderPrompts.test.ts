@@ -14,7 +14,7 @@ test('Create new prompt folder', async ({
 }) => {
   setTestIds('EPMRTC-944');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
   await promptBar.createNewFolder();
   expect
     .soft(
@@ -36,7 +36,7 @@ test('Prompt folder can expand and collapse', async ({
   setTestIds('EPMRTC-946');
   const promptInFolder = promptData.prepareDefaultPromptInFolder();
   await localStorageManager.setFolders(promptInFolder.folders);
-  await localStorageManager.setPrompts(promptInFolder.prompts);
+  await localStorageManager.setPrompts(promptInFolder.prompts[0]);
   const folderName = promptInFolder.folders.name;
 
   await dialHomePage.openHomePage();
@@ -44,14 +44,14 @@ test('Prompt folder can expand and collapse', async ({
   await folderPrompts.expandCollapseFolder(folderName);
   let isPromptVisible = await folderPrompts.isFolderPromptVisible(
     folderName,
-    promptInFolder.prompts.name,
+    promptInFolder.prompts[0].name,
   );
   expect.soft(isPromptVisible, ExpectedMessages.folderExpanded).toBeTruthy();
 
   await folderPrompts.expandCollapseFolder(folderName);
   isPromptVisible = await folderPrompts.isFolderPromptVisible(
     folderName,
-    promptInFolder.prompts.name,
+    promptInFolder.prompts[0].name,
   );
   expect.soft(isPromptVisible, ExpectedMessages.folderCollapsed).toBeFalsy();
 });
@@ -120,7 +120,7 @@ test('Rename prompt folder when prompts are inside using check button', async ({
   setTestIds('EPMRTC-950');
   const promptInFolder = promptData.prepareDefaultPromptInFolder();
   await localStorageManager.setFolders(promptInFolder.folders);
-  await localStorageManager.setPrompts(promptInFolder.prompts);
+  await localStorageManager.setPrompts(promptInFolder.prompts[0]);
 
   const newName = 'updated folder name';
   await dialHomePage.openHomePage();
@@ -150,27 +150,27 @@ test('Prompt is moved out of the folder via drag&drop', async ({
   setTestIds('EPMRTC-961');
   const promptInFolder = promptData.prepareDefaultPromptInFolder();
   await localStorageManager.setFolders(promptInFolder.folders);
-  await localStorageManager.setPrompts(promptInFolder.prompts);
+  await localStorageManager.setPrompts(promptInFolder.prompts[0]);
 
   await dialHomePage.openHomePage();
   await dialHomePage.waitForPageLoaded();
   await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
   await folderPrompts.dropPromptFromFolder(
     promptInFolder.folders.name,
-    promptInFolder.prompts.name,
+    promptInFolder.prompts[0].name,
   );
   expect
     .soft(
       await folderPrompts.isFolderPromptVisible(
         promptInFolder.folders.name,
-        promptInFolder.prompts.name,
+        promptInFolder.prompts[0].name,
       ),
       ExpectedMessages.promptMovedToFolder,
     )
     .toBeFalsy();
 
   const isPromptVisible = await prompts
-    .getPromptByName(promptInFolder.prompts.name)
+    .getPromptByName(promptInFolder.prompts[0].name)
     .isVisible();
   expect.soft(isPromptVisible, ExpectedMessages.promptIsVisible).toBeTruthy();
 });
@@ -243,20 +243,19 @@ test('Delete folder when there are some prompts inside', async ({
   localStorageManager,
   promptDropdownMenu,
   prompts,
+  confirmationDialog,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-966');
   const promptInFolder = promptData.prepareDefaultPromptInFolder();
   await localStorageManager.setFolders(promptInFolder.folders);
-  await localStorageManager.setPrompts(promptInFolder.prompts);
+  await localStorageManager.setPrompts(promptInFolder.prompts[0]);
 
   await dialHomePage.openHomePage();
   await dialHomePage.waitForPageLoaded();
   await folderPrompts.openFolderDropdownMenu(promptInFolder.folders.name);
   await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
-  await folderPrompts
-    .getFolderInput(promptInFolder.folders.name)
-    .clickTickButton();
+  await confirmationDialog.confirm();
   expect
     .soft(
       await folderPrompts
@@ -266,10 +265,10 @@ test('Delete folder when there are some prompts inside', async ({
     )
     .toBeFalsy();
 
-  const isPromptVisible = await prompts.getPromptByName(
-    promptInFolder.prompts.name,
-  );
-  expect.soft(isPromptVisible, ExpectedMessages.promptIsVisible).toBeTruthy();
+  const isPromptVisible = await prompts
+    .getPromptByName(promptInFolder.prompts[0].name)
+    .isVisible();
+  expect.soft(isPromptVisible, ExpectedMessages.promptIsVisible).toBeFalsy();
 });
 
 test('Delete folder. Cancel', async ({
@@ -278,6 +277,7 @@ test('Delete folder. Cancel', async ({
   folderPrompts,
   localStorageManager,
   promptDropdownMenu,
+  confirmationDialog,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-967');
@@ -288,7 +288,7 @@ test('Delete folder. Cancel', async ({
   await dialHomePage.waitForPageLoaded();
   await folderPrompts.openFolderDropdownMenu(folder.name);
   await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
-  await folderPrompts.getFolderInput(folder.name).clickCancelButton();
+  await confirmationDialog.cancelDialog();
   expect
     .soft(
       await folderPrompts.getFolderByName(folder.name).isVisible(),
@@ -308,25 +308,25 @@ test('Delete prompt in the folder', async ({
   setTestIds('EPMRTC-968');
   const promptInFolder = promptData.prepareDefaultPromptInFolder();
   await localStorageManager.setFolders(promptInFolder.folders);
-  await localStorageManager.setPrompts(promptInFolder.prompts);
+  await localStorageManager.setPrompts(promptInFolder.prompts[0]);
 
   await dialHomePage.openHomePage();
   await dialHomePage.waitForPageLoaded();
   await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
   await folderPrompts.openFolderPromptDropdownMenu(
     promptInFolder.folders.name,
-    promptInFolder.prompts.name,
+    promptInFolder.prompts[0].name,
   );
   await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
   await folderPrompts
-    .getFolderInput(promptInFolder.prompts.name)
+    .getFolderInput(promptInFolder.prompts[0].name)
     .clickTickButton();
   expect
     .soft(
       await folderPrompts
         .getFolderPrompt(
           promptInFolder.folders.name,
-          promptInFolder.prompts.name,
+          promptInFolder.prompts[0].name,
         )
         .isVisible(),
       ExpectedMessages.promptDeleted,
