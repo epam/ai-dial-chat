@@ -743,7 +743,7 @@ export const Chat = memo(() => {
                     )}
                     <div
                       className="shrink-0 "
-                      style={{ height: `${inputHeight + 52}px` }}
+                      style={{ height: inputHeight + 56 }}
                       ref={messagesEndRef}
                     />
                   </div>
@@ -795,7 +795,7 @@ export const Chat = memo(() => {
                   />
                   <div
                     className="shrink-0 "
-                    style={{ height: `${inputHeight + 52}px` }}
+                    style={{ height: inputHeight + 56 }}
                   />
                 </div>
               )}
