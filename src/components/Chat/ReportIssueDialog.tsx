@@ -11,6 +11,8 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { ReportIssueBody } from '@/src/types/report-issue';
@@ -22,8 +24,6 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import XMark from '../../../public/images/icons/xmark.svg';
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
-
-import classNames from 'classnames';
 
 const checkValidity = (
   inputsRefs: MutableRefObject<HTMLInputElement | HTMLTextAreaElement>[],
@@ -182,85 +182,77 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
 
   // Render the dialog.
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/70">
-      <div className="fixed inset-0 z-10 overflow-hidden">
-        <div className="flex max-h-screen min-h-screen items-center justify-center px-4 pb-20 pt-4 text-center sm:block sm:p-0">
-          <div
-            className="hidden sm:inline-block sm:h-screen sm:align-middle"
-            aria-hidden="true"
-          />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/30 p-3 dark:bg-gray-900/70 md:p-5">
+      <form
+        ref={modalRef}
+        noValidate
+        className="relative inline-block max-h-full w-full overflow-y-auto rounded bg-gray-100 px-3 py-4 text-left align-bottom transition-all dark:bg-gray-700 md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
+        role="dialog"
+        onSubmit={handleSubmit}
+      >
+        <button
+          className="absolute right-2 top-2 rounded text-gray-500 hover:text-blue-700"
+          onClick={handleClose}
+        >
+          <XMark height={24} width={24} />
+        </button>
 
-          <form
-            ref={modalRef}
-            noValidate
-            className="relative inline-block max-h-[800px] overflow-y-auto rounded bg-gray-100 px-4 pb-4 pt-5 text-left align-bottom shadow-xl transition-all dark:bg-gray-700 sm:my-8 sm:max-h-[700px] sm:w-full sm:max-w-[550px] sm:p-6 sm:align-middle"
-            role="dialog"
-            onSubmit={handleSubmit}
-          >
-            <button
-              className="absolute right-2 top-2 rounded text-gray-500 hover:text-blue-700"
-              onClick={handleClose}
-            >
-              <XMark height={24} width={24} />
-            </button>
-
-            <div className="flex justify-between pb-4 text-base font-bold">
-              {t('Report an issue')}
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="mb-1 flex text-xs text-gray-500"
-                htmlFor="projectNameInput"
-              >
-                {t('Title')}
-                <span className="ml-1 inline text-blue-500">*</span>
-              </label>
-              <input
-                ref={titleInputRef}
-                name="titleInput"
-                value={title}
-                required
-                title=""
-                type="text"
-                onBlur={onBlur}
-                onChange={onChangeTitle}
-                className={inputClassName}
-              ></input>
-              <EmptyRequiredInputMessage />
-            </div>
-
-            <div className="mb-5">
-              <label
-                className="mb-1 flex text-xs text-gray-500"
-                htmlFor="businessJustificationInput"
-              >
-                {t('Description')}
-                <span className="ml-1 inline text-blue-500">*</span>
-              </label>
-              <textarea
-                ref={descriptionInputRef}
-                name="descriptionInput"
-                value={description}
-                required
-                title=""
-                onBlur={onBlur}
-                onChange={onChangeDescription}
-                className={inputClassName}
-              ></textarea>
-              <EmptyRequiredInputMessage />
-            </div>
-            <div className="flex  justify-end">
-              <button
-                type="submit"
-                className="rounded bg-blue-500 p-3 text-gray-100 hover:bg-blue-700 focus:border focus:border-gray-800 focus-visible:outline-none dark:focus:border-gray-200"
-              >
-                {t('Report an issue')}
-              </button>
-            </div>
-          </form>
+        <div className="flex justify-between pb-4 text-base font-bold">
+          {t('Report an issue')}
         </div>
-      </div>
+
+        <div className="mb-4">
+          <label
+            className="mb-1 flex text-xs text-gray-500"
+            htmlFor="projectNameInput"
+          >
+            {t('Title')}
+            <span className="ml-1 inline text-blue-500">*</span>
+          </label>
+          <input
+            ref={titleInputRef}
+            name="titleInput"
+            value={title}
+            required
+            title=""
+            type="text"
+            onBlur={onBlur}
+            onChange={onChangeTitle}
+            className={inputClassName}
+          ></input>
+          <EmptyRequiredInputMessage />
+        </div>
+
+        <div className="mb-5">
+          <label
+            className="mb-1 flex text-xs text-gray-500"
+            htmlFor="businessJustificationInput"
+          >
+            {t('Description')}
+            <span className="ml-1 inline text-blue-500">*</span>
+          </label>
+          <textarea
+            ref={descriptionInputRef}
+            name="descriptionInput"
+            value={description}
+            required
+            title=""
+            rows={10}
+            onBlur={onBlur}
+            onChange={onChangeDescription}
+            className={inputClassName}
+          ></textarea>
+          <EmptyRequiredInputMessage />
+        </div>
+        <div className="flex  justify-end">
+          <button
+            type="submit"
+            className="w-full rounded bg-blue-500 p-3 text-gray-100 hover:bg-blue-700 focus:border focus:border-gray-800 focus-visible:outline-none dark:focus:border-gray-200 md:w-fit"
+          >
+            {t('Report an issue')}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

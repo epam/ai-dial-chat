@@ -1,13 +1,24 @@
-import { OpenAIEntityModelID, OpenAIEntityModels } from '@/src/types/openai';
+import { ModelsUtil } from '@/e2e/src/utils/modelsUtil';
+
+import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
 import {
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
+  ModelIds,
 } from '@/e2e/src/testData';
 import { GeneratorUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
+
+let mirrorApp: OpenAIEntityModel;
+let gpt35Model: OpenAIEntityModel;
+
+test.beforeAll(async () => {
+  mirrorApp = ModelsUtil.getApplication(ModelIds.MIRROR)!;
+  gpt35Model = ModelsUtil.getDefaultModel()!;
+});
 
 test(
   'Chat name equals to the first message\n' +
@@ -15,7 +26,7 @@ test(
   async ({ dialHomePage, conversations, chat, setTestIds }) => {
     setTestIds('EPMRTC-583', 'EPMRTC-776');
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded(true);
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     const messageToSend = 'Hi';
     await chat.sendRequestWithButton(messageToSend);
     expect
@@ -44,7 +55,7 @@ test('Rename chat. Cancel', async ({
   setTestIds('EPMRTC-588');
   const newName = 'new name to cancel';
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
   await conversations.openConversationDropdownMenu(
     ExpectedConstants.newConversationTitle,
   );
@@ -72,7 +83,7 @@ test('Rename chat before starting the conversation', async ({
   setTestIds('EPMRTC-584');
   const newName = 'new conversation name';
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
   await conversations.openConversationDropdownMenu(
     ExpectedConstants.newConversationTitle,
   );
@@ -110,6 +121,7 @@ test(
     chatHeader,
     chatTitleTooltip,
     setTestIds,
+    errorPopup,
   }) => {
     setTestIds('EPMRTC-585', 'EPMRTC-821', 'EPMRTC-822');
     const newName = GeneratorUtil.randomString(60);
@@ -140,6 +152,7 @@ test(
         ExpectedMessages.chatHeaderTitleTruncated,
       )
       .toBeTruthy();
+    await errorPopup.cancelPopup();
     await chatHeader.chatTitle.hoverOver();
     const tooltipChatHeaderTitle = await chatTitleTooltip.getChatTitle();
     expect
@@ -159,7 +172,7 @@ test('Menu for New conversation', async ({
 }) => {
   setTestIds('EPMRTC-594');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
   await conversations.openConversationDropdownMenu(
     ExpectedConstants.newConversationTitle,
   );
@@ -198,6 +211,7 @@ test('Menu for conversation with history', async ({
       MenuOptions.rename,
       MenuOptions.compare,
       MenuOptions.replay,
+      MenuOptions.playback,
       MenuOptions.export,
       MenuOptions.moveTo,
       MenuOptions.delete,
@@ -296,17 +310,17 @@ test(
       'EPMRTC-780',
     );
     const yesterdayConversation = conversationData.prepareYesterdayConversation(
-      OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
+      mirrorApp,
       'yesterday',
     );
     conversationData.resetData();
     const lastWeekConversation = conversationData.prepareLastWeekConversation(
-      OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
+      mirrorApp,
       'last week',
     );
     conversationData.resetData();
     const lastMonthConversation = conversationData.prepareLastMonthConversation(
-      OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
+      mirrorApp,
       'last month',
     );
     await localStorageManager.setConversationHistory(
@@ -393,8 +407,9 @@ test('Chat is moved from the folder via drag&drop', async ({
   await localStorageManager.setConversationHistory(
     conversationInFolder.conversations[0],
   );
-
-  await dialHomePage.openHomePage();
+  await dialHomePage.openHomePage({
+    iconsToBeLoaded: [gpt35Model.iconUrl],
+  });
   await dialHomePage.waitForPageLoaded();
   await folderConversations.expandCollapseFolder(
     conversationInFolder.folders.name,
@@ -573,9 +588,9 @@ test('Delete all conversations. Clear', async ({
     conversationData.prepareDefaultConversationInFolder();
 
   const emptyPromptFolder = promptData.prepareFolder();
-  promptData = promptData.resetData();
+  promptData.resetData();
   const promptInFolder = promptData.prepareDefaultPromptInFolder();
-  promptData = await promptData.resetData();
+  promptData.resetData();
   const singlePrompt = promptData.prepareDefaultPrompt();
 
   await dialHomePage.openHomePage();
@@ -584,7 +599,10 @@ test('Delete all conversations. Clear', async ({
     singleConversation,
     conversationInFolder.conversations[0],
   );
-  await localStorageManager.updatePrompts(singlePrompt, promptInFolder.prompts);
+  await localStorageManager.updatePrompts(
+    singlePrompt,
+    promptInFolder.prompts[0],
+  );
   await localStorageManager.updateFolders(
     emptyFolder,
     conversationInFolder.folders,
@@ -630,10 +648,12 @@ test('Delete all conversations. Clear', async ({
       .soft(isNewConversationVisible, ExpectedMessages.newConversationCreated)
       .toBeTruthy();
 
-    await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
+    if (i > 1) {
+      await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
+    }
     const isFolderPromptVisible = await folderPrompts.isFolderPromptVisible(
       promptInFolder.folders.name,
-      promptInFolder.prompts.name,
+      promptInFolder.prompts[0].name,
     );
     expect
       .soft(isFolderPromptVisible, ExpectedMessages.promptNotDeleted)

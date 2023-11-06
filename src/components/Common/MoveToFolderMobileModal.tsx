@@ -20,8 +20,8 @@ export const MoveToFolderMobileModal = ({
 }: MoveToFolderMobileModalProps) => {
   const { t } = useTranslation('sidebar');
   return (
-    <FloatingOverlay className="z-50 flex items-center justify-center bg-gray-900/70 p-3">
-      <div className="flex h-full w-full flex-col divide-y divide-gray-300 bg-gray-100 dark:divide-gray-900 dark:bg-gray-700">
+    <FloatingOverlay className="z-50 flex items-center justify-center bg-gray-900/70 p-3 md:p-5">
+      <div className="flex h-full w-full flex-col divide-y divide-gray-300 overflow-y-auto bg-gray-100 dark:divide-gray-900 dark:bg-gray-700">
         <div className="flex items-end justify-between px-3 pb-2 pt-4">
           <span className="h-min">{t('Move to')}</span>
           <span onClick={onClose}>
@@ -37,7 +37,7 @@ export const MoveToFolderMobileModal = ({
           <IconFolderPlus className="text-gray-500" size={18} />
           <span>{t('New folder')}</span>
         </div>
-        <div className="py-2">
+        <div className="overflow-auto py-2">
           {folders.map((folder) => (
             <div
               key={folder.id}

@@ -30,8 +30,6 @@ export const ChatSelectors = {
   deleteIcon: '.tabler-icon-trash',
   saveAndSubmit: '[data-qa="save-and-submit"]',
   cancelEdit: '[data-qa="cancel"]',
-  addonsDialog: '[data-qa="addons-dialog"]',
-  addonSearchResults: '[data-qa="addon-search-results"]',
   modelSelector: '[data-qa="model-selector"]',
   listOptions: '[role="listbox"] > [role="option"]',
   combobox: '[role="combobox"]',
@@ -53,4 +51,7 @@ export const ChatSelectors = {
   removeFromCompareIcon: '[data-qa="remove-from-compare"]',
   conversationSettingsIcon: '[data-qa="conversation-setting"]',
   clearConversationIcon: '[data-qa="clear-conversation"]',
+  replayAsIs: '[data-qa="replay-as-is"]',
+  replayAsIsLabel: '[data-qa="info-as-is"]',
+  iconAnimation: '.animate-bounce',
 };

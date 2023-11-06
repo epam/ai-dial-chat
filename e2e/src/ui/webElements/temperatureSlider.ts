@@ -14,6 +14,7 @@ export class TemperatureSlider extends BaseElement {
   }
 
   async setTemperature(temperature: number) {
+    await this.slider.scrollIntoElementView();
     const bounding = await this.slider.getElementBoundingBox();
     await this.page.mouse.move(
       bounding!.x + bounding!.width! * temperature,

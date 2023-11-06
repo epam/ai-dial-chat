@@ -30,3 +30,4 @@ export * from './chatHeader';
 export * from './chatInfoTooltip';
 export * from './compare';
 export * from './conversationToCompare';
+export * from './replayAsIs';

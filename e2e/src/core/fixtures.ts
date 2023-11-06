@@ -17,7 +17,6 @@ import { PromptBar } from '../ui/webElements';
 import { LocalStorageManager } from './localStorageManager';
 
 import { ConversationData } from '@/e2e/src/testData';
-import { ApiHelper } from '@/e2e/src/testData/api/apiHelper';
 import { PromptData } from '@/e2e/src/testData/prompts/promptData';
 import { Addons } from '@/e2e/src/ui/webElements/addons';
 import { AddonsDialog } from '@/e2e/src/ui/webElements/addonsDialog';
@@ -27,11 +26,13 @@ import { Compare } from '@/e2e/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/e2e/src/ui/webElements/confirmationDialog';
 import { DropdownMenu } from '@/e2e/src/ui/webElements/dropdownMenu';
 import { EntitySettings } from '@/e2e/src/ui/webElements/entitySettings';
+import { ErrorPopup } from '@/e2e/src/ui/webElements/errorPopup';
 import { FolderConversations } from '@/e2e/src/ui/webElements/folderConversations';
 import { FolderPrompts } from '@/e2e/src/ui/webElements/folderPrompts';
 import { ModelSelector } from '@/e2e/src/ui/webElements/modelSelector';
 import { PromptModalDialog } from '@/e2e/src/ui/webElements/promptModalDialog';
 import { Prompts } from '@/e2e/src/ui/webElements/prompts';
+import { ReplayAsIs } from '@/e2e/src/ui/webElements/replayAsIs';
 import { TemperatureSlider } from '@/e2e/src/ui/webElements/temperatureSlider';
 import { VariableModalDialog } from '@/e2e/src/ui/webElements/variableModalDialog';
 import { test as base } from '@playwright/test';
@@ -75,7 +76,6 @@ const test = base.extend<
     modelsDialog: ModelsDialog;
     chatHeader: ChatHeader;
     moreInfo: MoreInfo;
-    apiHelper: ApiHelper;
     chatInfoTooltip: ChatInfoTooltip;
     compare: Compare;
     compareConversationSelector: ModelSelector;
@@ -84,6 +84,8 @@ const test = base.extend<
     rightChatHeader: ChatHeader;
     leftChatHeader: ChatHeader;
     chatTitleTooltip: ChatTitleTooltip;
+    errorPopup: ErrorPopup;
+    replayAsIs: ReplayAsIs;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -231,10 +233,6 @@ const test = base.extend<
     const localStorageManager = new LocalStorageManager(page);
     await use(localStorageManager);
   },
-  apiHelper: async ({ request }, use) => {
-    const apiHelper = new ApiHelper(request);
-    await use(apiHelper);
-  },
   chatInfoTooltip: async ({ page }, use) => {
     const chatInfoTooltip = new ChatInfoTooltip(page);
     await use(chatInfoTooltip);
@@ -268,6 +266,14 @@ const test = base.extend<
   chatTitleTooltip: async ({ page }, use) => {
     const chatTitleTooltip = new ChatTitleTooltip(page);
     await use(chatTitleTooltip);
+  },
+  errorPopup: async ({ page }, use) => {
+    const errorPopup = new ErrorPopup(page);
+    await use(errorPopup);
+  },
+  replayAsIs: async ({ page }, use) => {
+    const replayAsIs = new ReplayAsIs(page);
+    await use(replayAsIs);
   },
 });
 

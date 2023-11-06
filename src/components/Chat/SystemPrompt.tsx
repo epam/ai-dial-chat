@@ -14,8 +14,8 @@ import { Prompt } from '@/src/types/prompt';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-settings';
 
+import { PromptDialog } from './PromptDialog';
 import { PromptList } from './PromptList';
-import { VariableModal } from './VariableModal';
 
 interface Props {
   model: OpenAIEntityModel;
@@ -250,7 +250,7 @@ export const SystemPrompt: FC<Props> = ({
       )}
 
       {isModalVisible && (
-        <VariableModal
+        <PromptDialog
           prompt={prompts[activePromptIndex]}
           variables={variables}
           onSubmit={handleSubmit}

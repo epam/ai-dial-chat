@@ -8,4 +8,5 @@ export enum Attributes {
   src = 'src',
   disabled = 'disabled',
   style = 'style',
+  ariaLabel = 'aria-label',
 }

@@ -1,15 +1,33 @@
-import { OpenAIEntityModelID, OpenAIEntityModels } from '@/src/types/openai';
+import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '../core/fixtures';
-import { ExpectedConstants, ExpectedMessages } from '../testData';
+import { ExpectedConstants, ExpectedMessages, ModelIds } from '../testData';
 import { Colors } from '../ui/domData';
 
-import { GeneratorUtil } from '@/e2e/src/utils';
+import { GeneratorUtil, ModelsUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
+let defaultModel: OpenAIEntityModel;
+let mirrorApp: OpenAIEntityModel;
+let bison: OpenAIEntityModel;
+let recentAddonIds: string[];
+let recentModelIds: string[];
+let allEntities: OpenAIEntityModel[];
+
+test.beforeAll(async () => {
+  defaultModel = ModelsUtil.getDefaultModel()!;
+  bison = ModelsUtil.getModel(ModelIds.BISON_001)!;
+  mirrorApp = ModelsUtil.getApplication(ModelIds.MIRROR)!;
+  recentAddonIds = ModelsUtil.getRecentAddonIds();
+  recentModelIds = ModelsUtil.getRecentModelIds();
+  allEntities = ModelsUtil.getOpenAIEntities();
+});
+
 test(
-  'Create new conversation\n' +
-    'Default settings in new chat with cleared site data\n',
+  'Create new conversation.\n' +
+    'Default settings in new chat with cleared site data.\n' +
+    '"Talk to" icon is set in recent list on default screen for new chat.\n' +
+    'Addon icon is set in recent and selected list on default screen for new chat',
   async ({
     dialHomePage,
     chatBar,
@@ -19,79 +37,137 @@ test(
     temperatureSlider,
     addons,
     setTestIds,
-    apiHelper,
   }) => {
-    setTestIds('EPMRTC-933', 'EPMRTC-398');
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded(true);
-    await chatBar.createNewConversation();
+    setTestIds('EPMRTC-933', 'EPMRTC-398', 'EPMRTC-376', 'EPMRTC-1030');
+    const expectedAddons = ModelsUtil.getAddons();
+    await test.step('Create new conversation and verify it is moved under Today section in chat bar', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      await chatBar.createNewConversation();
 
-    const todayConversations = await conversations.getTodayConversations();
-    expect
-      .soft(todayConversations.length, ExpectedMessages.newConversationCreated)
-      .toBe(2);
-    for (const todayConversation of todayConversations) {
+      const todayConversations = await conversations.getTodayConversations();
       expect
-        .soft(todayConversation, ExpectedMessages.conversationOfToday)
-        .toBe(ExpectedConstants.newConversationTitle);
-    }
-
-    const expectedModelEntities = await apiHelper.getModelEntities();
-    const expectedDefaultModel = expectedModelEntities.find(
-      (e) => e.isDefault === true,
-    )!.name;
-    const modelBorderColors = await recentEntities
-      .getRecentEntity(expectedDefaultModel)
-      .getAllBorderColors();
-    Object.values(modelBorderColors).forEach((borders) => {
-      borders.forEach((borderColor) => {
+        .soft(
+          todayConversations.length,
+          ExpectedMessages.newConversationCreated,
+        )
+        .toBe(2);
+      for (const todayConversation of todayConversations) {
         expect
-          .soft(borderColor, ExpectedMessages.defaultTalkToIsValid)
-          .toBe(Colors.highlightedEntity);
+          .soft(todayConversation, ExpectedMessages.conversationOfToday)
+          .toBe(ExpectedConstants.newConversationTitle);
+      }
+    });
+
+    await test.step('Verify default model is selected by default', async () => {
+      const modelBorderColors = await recentEntities
+        .getRecentEntity(defaultModel.name)
+        .getAllBorderColors();
+      Object.values(modelBorderColors).forEach((borders) => {
+        borders.forEach((borderColor) => {
+          expect
+            .soft(borderColor, ExpectedMessages.defaultTalkToIsValid)
+            .toBe(Colors.highlightedEntity);
+        });
       });
     });
 
-    const expectedDefaultRecentEntities = [];
-    for (const entity of ExpectedConstants.recentModelIds.split(',')) {
-      expectedDefaultRecentEntities.push(
-        expectedModelEntities.find((e) => e.id === entity)!.name,
-      );
-    }
+    await test.step('Verify the list of recent entities and default settings for default model', async () => {
+      const expectedDefaultRecentEntities = [];
+      for (const entity of recentModelIds) {
+        expectedDefaultRecentEntities.push(
+          allEntities.find((e) => e.id === entity)!.name,
+        );
+      }
 
-    const recentTalkTo = await recentEntities.getRecentEntityNames();
-    expect
-      .soft(recentTalkTo, ExpectedMessages.recentEntitiesVisible)
-      .toEqual(expectedDefaultRecentEntities);
+      const recentTalkTo = await recentEntities.getRecentEntityNames();
+      expect
+        .soft(recentTalkTo, ExpectedMessages.recentEntitiesVisible)
+        .toEqual(expectedDefaultRecentEntities);
 
-    const defaultSystemPrompt = await entitySettings.getSystemPrompt();
-    expect
-      .soft(defaultSystemPrompt, ExpectedMessages.defaultSystemPromptIsEmpty)
-      .toBe(ExpectedConstants.emptyString);
+      const defaultSystemPrompt = await entitySettings.getSystemPrompt();
+      expect
+        .soft(defaultSystemPrompt, ExpectedMessages.defaultSystemPromptIsEmpty)
+        .toBe(ExpectedConstants.emptyString);
 
-    const defaultTemperature = await temperatureSlider.getTemperature();
-    expect
-      .soft(defaultTemperature, ExpectedMessages.defaultTemperatureIsOne)
-      .toBe(ExpectedConstants.defaultTemperature);
+      const defaultTemperature = await temperatureSlider.getTemperature();
+      expect
+        .soft(defaultTemperature, ExpectedMessages.defaultTemperatureIsOne)
+        .toBe(ExpectedConstants.defaultTemperature);
 
-    const expectedDefaultModelAddons = await apiHelper.getEntitySelectedAddons(
-      expectedDefaultModel,
-    );
-    const selectedAddons = await addons.getSelectedAddons();
-    expect
-      .soft(selectedAddons, ExpectedMessages.noAddonsSelected)
-      .toEqual(expectedDefaultModelAddons);
+      const selectedAddons = await addons.getSelectedAddons();
+      expect
+        .soft(selectedAddons, ExpectedMessages.noAddonsSelected)
+        .toEqual(defaultModel.selectedAddons ?? []);
 
-    const expectedAddons = await apiHelper.getAddons();
-    const expectedDefaultRecentAddons = [];
-    for (const addon of ExpectedConstants.recentAddonIds.split(',')) {
-      expectedDefaultRecentAddons.push(
-        expectedAddons.find((a) => a.id === addon)!.name,
-      );
-    }
-    const recentAddons = await addons.getRecentAddons();
-    expect
-      .soft(recentAddons, ExpectedMessages.recentAddonsVisible)
-      .toEqual(expectedDefaultRecentAddons);
+      const expectedDefaultRecentAddons = [];
+      for (const addon of recentAddonIds) {
+        expectedDefaultRecentAddons.push(
+          expectedAddons.find((a) => a.id === addon)!.name,
+        );
+      }
+      const recentAddons = await addons.getRecentAddons();
+      expect
+        .soft(recentAddons, ExpectedMessages.recentAddonsVisible)
+        .toEqual(expectedDefaultRecentAddons);
+    });
+
+    await test.step('Verify recent entities icons are displayed and valid', async () => {
+      const recentEntitiesIcons =
+        await recentEntities.getRecentEntitiesIconAttributes();
+      expect
+        .soft(
+          recentEntitiesIcons.length,
+          ExpectedMessages.entitiesIconsCountIsValid,
+        )
+        .toBe(recentModelIds.length);
+
+      for (let i = 0; i < recentModelIds.length; i++) {
+        const expectedModel = allEntities.find(
+          (e) => e.id === recentModelIds[i],
+        )!;
+        expect
+          .soft(
+            recentEntitiesIcons[i].iconEntity,
+            ExpectedMessages.entityIconIsValid,
+          )
+          .toBe(expectedModel.id);
+        expect
+          .soft(
+            recentEntitiesIcons[i].iconUrl,
+            ExpectedMessages.entityIconSourceIsValid,
+          )
+          .toBe(expectedModel.iconUrl);
+      }
+    });
+
+    await test.step('Verify recent addon icons are displayed and valid', async () => {
+      const recentAddonsIcons = await addons.getRecentAddonsIconAttributes();
+      expect
+        .soft(
+          recentAddonsIcons.length,
+          ExpectedMessages.addonsIconsCountIsValid,
+        )
+        .toBe(recentAddonIds.length);
+
+      for (let i = 0; i < recentAddonIds.length; i++) {
+        const expectedAddon = expectedAddons.find(
+          (a) => a.id === recentAddonIds[i],
+        )!;
+        expect
+          .soft(
+            recentAddonsIcons[i].iconEntity,
+            ExpectedMessages.addonIconIsValid,
+          )
+          .toBe(expectedAddon.id);
+        expect
+          .soft(
+            recentAddonsIcons[i].iconUrl,
+            ExpectedMessages.addonIconSourceIsValid,
+          )
+          .toBe(expectedAddon.iconUrl);
+      }
+    });
   },
 );
 
@@ -112,10 +188,8 @@ test(
     setTestIds('EPMRTC-400', 'EPMRTC-474', 'EPMRTC-817');
     const request = 'test';
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded(true);
-    await talkToSelector.selectModel(
-      OpenAIEntityModels[OpenAIEntityModelID.BISON_001].name,
-    );
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await talkToSelector.selectModel(bison.name);
     await dialHomePage.acceptBrowserDialog(ExpectedConstants.enterMessageAlert);
     await sendMessage.send('');
 
@@ -127,7 +201,7 @@ test(
 
     await chatBar.createNewConversation();
     const addonBorderColors = await recentEntities
-      .getRecentEntity(OpenAIEntityModels[OpenAIEntityModelID.MIRROR].name)
+      .getRecentEntity(mirrorApp.name)
       .getAllBorderColors();
     Object.values(addonBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
@@ -140,7 +214,7 @@ test(
     const recentTalkTo = await recentEntities.getRecentEntityNames();
     expect
       .soft(recentTalkTo[0], ExpectedMessages.recentEntitiesIsOnTop)
-      .toBe(OpenAIEntityModels[OpenAIEntityModelID.BISON_001].name);
+      .toBe(bison.name);
   },
 );
 
@@ -150,21 +224,16 @@ test('Settings on default screen are saved in local storage when temperature = 0
   entitySettings,
   temperatureSlider,
   setTestIds,
-  apiHelper,
   talkToSelector,
   addons,
 }) => {
   setTestIds('EPMRTC-406');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
-  const randomModel = GeneratorUtil.randomArrayElement(
-    await apiHelper.getModelNames(),
-  );
-  const randomAddonId = GeneratorUtil.randomArrayElement(
-    ExpectedConstants.recentAddonIds.split(','),
-  );
-  const randomAddon = await apiHelper.getAddonById(randomAddonId);
-  await talkToSelector.selectModel(randomModel);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+  const randomModel = GeneratorUtil.randomArrayElement(ModelsUtil.getModels());
+  const randomAddonId = GeneratorUtil.randomArrayElement(recentAddonIds);
+  const randomAddon = ModelsUtil.getAddon(randomAddonId);
+  await talkToSelector.selectModel(randomModel.name);
   const sysPrompt = 'test prompt';
   const temp = 0;
   await entitySettings.setSystemPrompt(sysPrompt);
@@ -174,7 +243,7 @@ test('Settings on default screen are saved in local storage when temperature = 0
   await dialHomePage.waitForPageLoaded();
 
   const modelBorderColors = await recentEntities
-    .getRecentEntity(randomModel)
+    .getRecentEntity(randomModel.name)
     .getAllBorderColors();
   Object.values(modelBorderColors).forEach((borders) => {
     borders.forEach((borderColor) => {
@@ -198,6 +267,17 @@ test('Settings on default screen are saved in local storage when temperature = 0
   expect
     .soft(selectedAddons, ExpectedMessages.noAddonsSelected)
     .toEqual([randomAddon!.name]);
+
+  const selectedAddonIcons = await addons.getSelectedAddonsIconAttributes();
+  expect
+    .soft(selectedAddonIcons[0].iconEntity, ExpectedMessages.addonIconIsValid)
+    .toBe(randomAddon!.id);
+  expect
+    .soft(
+      selectedAddonIcons[0].iconUrl,
+      ExpectedMessages.addonIconSourceIsValid,
+    )
+    .toBe(randomAddon!.iconUrl);
 });
 
 test('Recent "Talk to" list is updated', async ({
@@ -209,15 +289,13 @@ test('Recent "Talk to" list is updated', async ({
   setTestIds,
 }) => {
   setTestIds('EPMRTC-1044');
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
-  await talkToSelector.selectApplication(
-    OpenAIEntityModels[OpenAIEntityModelID.MIRROR].name,
-  );
+  await dialHomePage.openHomePage({ iconsToBeLoaded: [defaultModel.iconUrl] });
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+  await talkToSelector.selectApplication(mirrorApp.name);
   await chat.sendRequestWithButton('test message');
   await chatBar.createNewConversation();
   const appBorderColors = await recentEntities
-    .getRecentEntity(OpenAIEntityModels[OpenAIEntityModelID.MIRROR].name)
+    .getRecentEntity(mirrorApp.name)
     .getAllBorderColors();
   Object.values(appBorderColors).forEach((borders) => {
     borders.forEach((borderColor) => {
@@ -230,5 +308,5 @@ test('Recent "Talk to" list is updated', async ({
   const recentTalkTo = await recentEntities.getRecentEntityNames();
   expect
     .soft(recentTalkTo[0], ExpectedMessages.talkToEntityIsSelected)
-    .toBe(OpenAIEntityModels[OpenAIEntityModelID.MIRROR].name);
+    .toBe(mirrorApp.name);
 });

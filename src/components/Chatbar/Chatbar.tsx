@@ -28,9 +28,9 @@ const ChatActionsBlock = () => {
   );
 
   return (
-    <div className="flex p-2">
+    <div className="flex px-2 py-1">
       <button
-        className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded p-3 transition-colors duration-200 hover:bg-green/15 disabled:cursor-not-allowed"
+        className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-green/15 disabled:cursor-not-allowed"
         onClick={() => {
           dispatch(
             ConversationsActions.createNewConversations({
@@ -74,7 +74,7 @@ export const Chatbar = () => {
         dispatch(
           ConversationsActions.updateConversation({
             id: conversation.id,
-            values: { folderId: null },
+            values: { folderId: undefined },
           }),
         );
         dispatch(ConversationsActions.setSearchTerm({ searchTerm: '' }));
@@ -90,7 +90,7 @@ export const Chatbar = () => {
       actionButtons={<ChatActionsBlock />}
       isOpen={showChatbar}
       itemComponent={<Conversations conversations={filteredConversations} />}
-      folderComponent={<ChatFolders searchTerm={searchTerm} />}
+      folderComponent={<ChatFolders />}
       folders={chatFolders}
       items={conversations}
       filteredItems={filteredConversations}

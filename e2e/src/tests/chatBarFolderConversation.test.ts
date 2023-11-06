@@ -14,7 +14,7 @@ test('Create new chat folder', async ({
 }) => {
   setTestIds('EPMRTC-569');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
   await chatBar.createNewFolder();
   expect
     .soft(
@@ -161,6 +161,7 @@ test('Delete folder. Cancel', async ({
   folderConversations,
   localStorageManager,
   conversationDropdownMenu,
+  confirmationDialog,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-606');
@@ -171,7 +172,7 @@ test('Delete folder. Cancel', async ({
   await dialHomePage.waitForPageLoaded();
   await folderConversations.openFolderDropdownMenu(folder.name);
   await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-  await folderConversations.getFolderInput(folder.name).clickCancelButton();
+  await confirmationDialog.cancelDialog();
   expect
     .soft(
       await folderConversations.getFolderByName(folder.name).isVisible(),
@@ -187,6 +188,7 @@ test('Delete folder when there are some chats inside', async ({
   localStorageManager,
   conversationDropdownMenu,
   conversations,
+  confirmationDialog,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-605');
@@ -203,9 +205,7 @@ test('Delete folder when there are some chats inside', async ({
     conversationInFolder.folders.name,
   );
   await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-  await folderConversations
-    .getFolderInput(conversationInFolder.folders.name)
-    .clickTickButton();
+  await confirmationDialog.confirm();
   expect
     .soft(
       await folderConversations
@@ -221,5 +221,5 @@ test('Delete folder when there are some chats inside', async ({
       todayConversations.includes(conversationInFolder.conversations[0].name),
       ExpectedMessages.conversationOfToday,
     )
-    .toBeTruthy();
+    .toBeFalsy();
 });

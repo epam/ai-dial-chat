@@ -2,6 +2,8 @@ import { Fragment, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { OpenAIEntityAddon } from '@/src/types/openai';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
@@ -14,8 +16,6 @@ import XMark from '../../../public/images/icons/xmark.svg';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 import { AddonsDialog } from './AddonsDialog';
-
-import classNames from 'classnames';
 
 interface AddonProps {
   addonId: string;

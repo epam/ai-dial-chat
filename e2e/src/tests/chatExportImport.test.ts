@@ -1,8 +1,9 @@
 import { FileUtil } from '@/e2e/src/utils/fileUtil';
+import { ModelsUtil } from '@/e2e/src/utils/modelsUtil';
 
 import { Conversation } from '@/src/types/chat';
 import { FolderInterface } from '@/src/types/folder';
-import { OpenAIEntityModelID, OpenAIEntityModels } from '@/src/types/openai';
+import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
 import {
@@ -11,14 +12,23 @@ import {
   FolderConversation,
   Import,
   MenuOptions,
+  ModelIds,
 } from '@/e2e/src/testData';
 import { ImportConversation } from '@/e2e/src/testData/conversationHistory/importConversation';
+import { UploadDownloadData } from '@/e2e/src/ui/pages';
 import { expect } from '@playwright/test';
 
-let folderConversationFilename: string;
-let rootConversationFilename: string;
-let newFolderConversationFilename: string;
-let threeConversationsFilename: string;
+let folderConversationData: UploadDownloadData;
+let rootConversationData: UploadDownloadData;
+let newFolderConversationData: UploadDownloadData;
+let threeConversationsData: UploadDownloadData;
+let gpt35Model: OpenAIEntityModel;
+let gpt4Model: OpenAIEntityModel;
+
+test.beforeAll(async () => {
+  gpt35Model = ModelsUtil.getDefaultModel()!;
+  gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
+});
 
 test(
   'Export and import one chat in a folder.\n' +
@@ -29,14 +39,15 @@ test(
     setTestIds,
     conversationData,
     localStorageManager,
-    conversations,
     chatBar,
     folderDropdownMenu,
     conversationDropdownMenu,
+    confirmationDialog,
+    conversations,
   }) => {
     setTestIds('EPMRTC-908', 'EPMRTC-909');
     let conversationInFolder: FolderConversation;
-    let filePath: string;
+    let exportedData: UploadDownloadData;
     await test.step('Prepare exported conversation inside folder and another conversation outside folders', async () => {
       conversationInFolder =
         conversationData.prepareDefaultConversationInFolder();
@@ -55,7 +66,9 @@ test(
     });
 
     await test.step('Export conversation inside folder using chat bar conversation menu', async () => {
-      await dialHomePage.openHomePage();
+      await dialHomePage.openHomePage({
+        iconsToBeLoaded: [gpt35Model!.iconUrl],
+      });
       await dialHomePage.waitForPageLoaded();
       await folderConversations.expandCollapseFolder(
         conversationInFolder.folders.name,
@@ -64,7 +77,9 @@ test(
         conversationInFolder.folders.name,
         conversationInFolder.conversations[0].name,
       );
-      filePath = await conversations.exportConversation();
+      exportedData = await dialHomePage.downloadData(() =>
+        conversationDropdownMenu.selectMenuOption(MenuOptions.export),
+      );
     });
 
     await test.step('Delete conversation inside folder, re-import it again and verify it displayed inside folder', async () => {
@@ -76,50 +91,35 @@ test(
       await conversations
         .getConversationInput(conversationInFolder.conversations[0].name)
         .clickTickButton();
-      await chatBar.importConversation(filePath);
+      await dialHomePage.uploadData(exportedData, () =>
+        chatBar.importButton.click(),
+      );
 
-      expect
-        .soft(
-          await folderConversations.isFolderConversationVisible(
-            conversationInFolder.folders.name,
-            conversationInFolder.conversations[0].name,
-          ),
-          ExpectedMessages.conversationIsVisible,
+      await folderConversations
+        .getFolderConversation(
+          conversationInFolder.folders.name,
+          conversationInFolder.conversations[0].name,
         )
-        .toBeTruthy();
+        .waitFor();
     });
 
     await test.step('Delete folder with the conversation inside, re-import it again and verify it displayed inside folder', async () => {
-      await folderConversations.openFolderConversationDropdownMenu(
-        conversationInFolder.folders.name,
-        conversationInFolder.conversations[0].name,
-      );
-      await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-      await conversations
-        .getConversationInput(conversationInFolder.conversations[0].name)
-        .clickTickButton();
       await folderConversations.openFolderDropdownMenu(
         conversationInFolder.folders.name,
       );
       await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
-      await folderConversations
-        .getFolderInput(conversationInFolder.folders.name)
-        .clickTickButton();
+      await confirmationDialog.confirm();
 
-      await chatBar.importConversation(filePath);
-
-      await folderConversations.expandCollapseFolder(
-        conversationInFolder.folders.name,
+      await dialHomePage.uploadData(exportedData, () =>
+        chatBar.importButton.click(),
       );
-      expect
-        .soft(
-          await folderConversations.isFolderConversationVisible(
-            conversationInFolder.folders.name,
-            conversationInFolder.conversations[0].name,
-          ),
-          ExpectedMessages.conversationIsVisible,
+
+      await folderConversations
+        .getFolderConversation(
+          conversationInFolder.folders.name,
+          conversationInFolder.conversations[0].name,
         )
-        .toBeTruthy();
+        .waitFor();
     });
   },
 );
@@ -138,7 +138,7 @@ test('Export and import chat structure with all conversations', async ({
   let conversationsInFolder: FolderConversation;
   let emptyFolder: FolderInterface;
   let conversationOutsideFolder: Conversation;
-  let filePath: string;
+  let exportedData: UploadDownloadData;
   await test.step('Prepare empty folder, exported conversations inside folder and another conversation outside folder', async () => {
     emptyFolder = conversationData.prepareFolder();
     conversationData.resetData();
@@ -164,13 +164,17 @@ test('Export and import chat structure with all conversations', async ({
   await test.step('Export all conversations using chat bar Export button', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    filePath = await chatBar.exportConversation();
+    exportedData = await dialHomePage.downloadData(() =>
+      chatBar.exportButton.click(),
+    );
   });
 
   await test.step('Delete all conversations and folders, re-import again and verify they are displayed', async () => {
     await chatBar.deleteAllConversations();
     await confirmationDialog.confirm();
-    await chatBar.importConversation(filePath);
+    await dialHomePage.uploadData(exportedData, () =>
+      chatBar.importButton.click(),
+    );
 
     await folderConversations.expandCollapseFolder(
       conversationsInFolder.folders.name,
@@ -237,30 +241,32 @@ test('Existed chats stay after import', async ({
 
   await test.step('Prepare conversation inside existing folder to import, conversation inside new folder to import and conversation inside root', async () => {
     importedFolderConversation = conversationData.prepareDefaultConversation();
-    folderConversationFilename = ImportConversation.prepareConversationFile(
+    folderConversationData = ImportConversation.prepareConversationFile(
       importedFolderConversation,
       conversationsInFolder,
     );
     conversationData.resetData();
 
     importedRootConversation = conversationData.prepareDefaultConversation();
-    rootConversationFilename = ImportConversation.prepareConversationFile(
+    rootConversationData = ImportConversation.prepareConversationFile(
       importedRootConversation,
     );
     conversationData.resetData();
 
     importedNewFolderConversation =
       conversationData.prepareDefaultConversationInFolder();
-    newFolderConversationFilename = ImportConversation.prepareConversationFile(
+    newFolderConversationData = ImportConversation.prepareConversationFile(
       importedNewFolderConversation.conversations[0],
       importedNewFolderConversation,
     );
   });
 
-  await test.step('Import conversation inside existing folder and verify it is exported and existing conversations remain inside folder', async () => {
+  await test.step('Import conversation inside existing folder and verify it is imported and existing conversations remain inside folder', async () => {
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded(true);
-    await chatBar.importConversation(folderConversationFilename, false);
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.uploadData(folderConversationData, () =>
+      chatBar.importButton.click(),
+    );
     await folderConversations.expandCollapseFolder(
       conversationsInFolder.folders.name,
     );
@@ -290,8 +296,10 @@ test('Existed chats stay after import', async ({
       .toBeTruthy();
   });
 
-  await test.step('Import root conversation and verify it is exported and existing root conversations remain', async () => {
-    await chatBar.importConversation(rootConversationFilename, false);
+  await test.step('Import root conversation and verify it is imported and existing root conversations remain', async () => {
+    await dialHomePage.uploadData(rootConversationData, () =>
+      chatBar.importButton.click(),
+    );
     await conversations
       .getConversationByName(importedRootConversation.name)
       .waitFor();
@@ -305,8 +313,10 @@ test('Existed chats stay after import', async ({
       .toBeTruthy();
   });
 
-  await test.step('Import conversation inside new folder and verify it is exported', async () => {
-    await chatBar.importConversation(newFolderConversationFilename, false);
+  await test.step('Import conversation inside new folder and verify it is imported', async () => {
+    await dialHomePage.uploadData(newFolderConversationData, () =>
+      chatBar.importButton.click(),
+    );
     await folderConversations
       .getFolderByName(importedNewFolderConversation.folders.name)
       .waitFor();
@@ -336,20 +346,23 @@ test(
     const requests = ['first request', 'second request', 'third request'];
 
     await test.step('Prepare conversation with several messages to import', async () => {
+      const mirrorApp = ModelsUtil.getApplication(ModelIds.MIRROR);
       importedRootConversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          OpenAIEntityModels[OpenAIEntityModelID.MIRROR],
+          mirrorApp!,
           requests,
         );
-      threeConversationsFilename = ImportConversation.prepareConversationFile(
+      threeConversationsData = ImportConversation.prepareConversationFile(
         importedRootConversation,
       );
     });
 
     await test.step('Import conversation, regenerate the response and verify last response is regenerated', async () => {
       await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded(true);
-      await chatBar.importConversation(threeConversationsFilename, false);
+      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      await dialHomePage.uploadData(threeConversationsData, () =>
+        chatBar.importButton.click(),
+      );
       await chat.regenerateResponse();
       const lastResponseContent = await chatMessages.getLastMessageContent();
       expect
@@ -390,14 +403,15 @@ test('Import file from 1.4 DIAL milestone to conversations and continue working 
   prompts,
   chatMessages,
   conversations,
-  apiHelper,
   chat,
 }) => {
   setTestIds('EPMRTC-906');
   await test.step('Import conversation from 1.4 app version and verify folder with Gpt-3.5 chat and its history is visible', async () => {
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded(true);
-    await chatBar.importConversation(Import.v14AppImportedFilename, false);
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.uploadData({ path: Import.v14AppImportedFilename }, () =>
+      chatBar.importButton.click(),
+    );
 
     await folderConversations.expandCollapseFolder(Import.v14AppFolderName);
     expect
@@ -425,10 +439,6 @@ test('Import file from 1.4 DIAL milestone to conversations and continue working 
     await conversations
       .getConversationByName(ExpectedConstants.newConversationTitle, 2)
       .waitFor();
-
-    const gpt4Model = await apiHelper.getModel(
-      OpenAIEntityModels[OpenAIEntityModelID.GPT_4].name,
-    );
     const newGpt4ConversationIcon =
       await conversations.getConversationIconAttributes(
         ExpectedConstants.newConversationTitle,
@@ -482,11 +492,15 @@ test('Import file from 1.4 DIAL milestone to conversations and continue working 
 
 test.afterAll(async () => {
   FileUtil.removeExportFolder();
-  const importFilesToDelete: string[] = [
-    folderConversationFilename,
-    rootConversationFilename,
-    newFolderConversationFilename,
-    threeConversationsFilename,
+  const importFilesToDelete: UploadDownloadData[] = [
+    folderConversationData,
+    rootConversationData,
+    newFolderConversationData,
+    threeConversationsData,
   ];
-  importFilesToDelete.forEach((f) => FileUtil.deleteImportFile(f));
+  importFilesToDelete.forEach((d) => {
+    if (d) {
+      FileUtil.deleteImportFile(d.path);
+    }
+  });
 });

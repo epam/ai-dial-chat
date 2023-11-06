@@ -17,6 +17,8 @@ export class LoginPage extends BasePage {
       process.env.PREVIEW_TEST_TOKEN ??
       process.env.AUTH_TEST_TOKEN!.split(',')[0];
     await this.tokenInput.typeInInput(token);
-    await this.signInButton.click();
+    return this.waitFoApiResponsesReceived(() => this.signInButton.click(), {
+      setEntitiesEnvVars: true,
+    });
   }
 }

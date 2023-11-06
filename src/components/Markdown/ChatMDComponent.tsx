@@ -100,8 +100,9 @@ const ChatMDComponent = ({
   return (
     <>
       <MemoizedReactMarkdown
-        className={`prose flex-1 dark:prose-invert`}
+        className={`prose flex-1 dark:prose-invert prose-a:text-blue-500 prose-a:no-underline hover:prose-a:underline`}
         remarkPlugins={[remarkGfm]}
+        linkTarget="_blank"
         components={getMDComponents(isShowResponseLoader, isInner)}
       >
         {`${content}${

@@ -8,6 +8,8 @@ import { FC, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { OpenAIEntity } from '@/src/types/openai';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
@@ -19,8 +21,6 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 import XMark from '../../../public/images/icons/xmark.svg';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
-
-import classNames from 'classnames';
 
 interface AddonProps {
   addon: OpenAIEntity;
@@ -66,7 +66,9 @@ const Addon = ({
           size={24}
           inverted={!addon.iconUrl && theme === 'dark'}
         />
-        <span className="text-left">{addon.name}</span>
+        <span className="text-left" data-qa="addon-name">
+          {addon.name}
+        </span>
       </div>
       {addon.description && (
         <span className="text-gray-500">
@@ -203,28 +205,29 @@ export const AddonsDialog: FC<Props> = ({
 
   // Render the dialog.
   return (
-    <FloatingPortal id="theme-main">
-      <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-gray-900/70">
+    <FloatingPortal id="chat">
+      <div className="fixed inset-0 top-[48px] z-30 flex items-center justify-center bg-gray-900/30 p-3 dark:bg-gray-900/70 md:p-5">
         <div
-          className="m-auto flex max-h-full min-h-[90%] w-[calc(100%-12px)] grow flex-col gap-4 overflow-y-auto rounded bg-gray-100 px-5 py-4 text-left dark:bg-gray-700 md:w-[790px] md:grow-0"
+          className="m-auto flex h-full w-full grow flex-col gap-4 overflow-y-auto rounded bg-gray-100 py-4 text-left dark:bg-gray-700 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
           role="dialog"
           ref={refs.setFloating}
           {...getFloatingProps()}
           data-qa="addons-dialog"
         >
-          <div className="flex justify-between">
+          <div className="flex justify-between px-3 md:px-5">
             {t('Addons (max 10)')}
             <button
               onClick={() => {
                 onClose();
               }}
               className="text-gray-500 hover:text-blue-500"
+              data-qa="close-addons-dialog"
             >
               <XMark height={24} width={24} />
             </button>
           </div>
 
-          <div>
+          <div className="px-3 md:px-5">
             <input
               name="titleInput"
               placeholder={t('Search for addons') || ''}
@@ -232,11 +235,11 @@ export const AddonsDialog: FC<Props> = ({
               onChange={(e) => {
                 handleSearch(e.target.value);
               }}
-              className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
+              className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
             ></input>
           </div>
           <div
-            className="flex flex-col gap-4 text-xs"
+            className="flex flex-col gap-4 px-3 text-xs md:px-5"
             data-qa="addon-search-results"
           >
             {(selectedAddons?.length > 0 ||
@@ -251,7 +254,7 @@ export const AddonsDialog: FC<Props> = ({
                       !addon ||
                       selectedAddons.map((addon) => addon.id).includes(addonID)
                     ) {
-                      return <></>;
+                      return null;
                     }
 
                     return (
@@ -301,9 +304,9 @@ export const AddonsDialog: FC<Props> = ({
             <div className="h-[40px] shrink-0"></div>
           </div>
           <div className="relative h-0 grow">
-            <div className="absolute bottom-0 flex h-[80px] w-full items-end justify-center bg-gradient-to-b from-transparent via-gray-100 to-gray-100 dark:via-gray-700 dark:to-gray-700">
+            <div className="absolute bottom-0 flex h-[80px] w-full items-end justify-center bg-gradient-to-b from-transparent via-gray-100 to-gray-100 px-3 dark:via-gray-700 dark:to-gray-700 md:px-5">
               <button
-                className="rounded bg-blue-500 px-3 py-2.5 text-gray-100 hover:bg-blue-700"
+                className="w-full rounded bg-blue-500 px-3 py-2.5 text-gray-100 hover:bg-blue-700 md:w-fit"
                 onClick={() => {
                   onClose();
                   onAddonsSelected(selectedAddons.map(({ id }) => id));

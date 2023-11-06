@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { Conversation } from '@/src/types/chat';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
@@ -37,6 +39,8 @@ export const ChatSettings = ({
   onChangeSettings,
   onApplySettings,
 }: Props) => {
+  const { t } = useTranslation('chat');
+
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const [currentModel, setCurrentModel] = useState(
@@ -75,47 +79,56 @@ export const ChatSettings = ({
   }, [handleChangeSettings]);
 
   return (
-    <div className="absolute top-0 z-50 flex h-full w-full grow items-start justify-center overflow-auto bg-gray-900/30 p-5 dark:bg-gray-900/70">
-      <ConversationSettings
-        conversationId={conversation.id}
-        replay={conversation.replay}
-        isCloseEnabled={true}
-        isApplyEnabled={true}
-        model={currentModel}
-        prompts={prompts}
-        assistantModelId={currentAssistentModelId}
-        prompt={currentPrompt}
-        selectedAddons={currentSelectedAddonsIds}
-        temperature={currentTemperature}
-        onSelectModel={(modelId: string) => {
-          const newModel = modelsMap[modelId];
-          if (newModel) {
-            setCurrentModel(newModel);
-          }
-        }}
-        onChangePrompt={(prompt) => setCurrentPrompt(prompt)}
-        onChangeTemperature={(temperature) =>
-          setCurrentTemperature(temperature)
-        }
-        onSelectAssistantSubModel={(modelId: string) =>
-          setCurrentAssistentModelId(modelId)
-        }
-        onChangeAddon={(addonId: string) => {
-          setCurrentSelectedAddonsIds((addons) => {
-            if (addons.includes(addonId)) {
-              return addons.filter((id) => id !== addonId);
+    <div className="absolute z-30 flex h-full w-full grow items-start justify-center bg-gray-900/30 dark:bg-gray-900/70 md:top-0 md:p-5">
+      <div className="h-full overflow-auto xl:max-w-[720px] 2xl:max-w-[1000px]">
+        <ConversationSettings
+          conversationId={conversation.id}
+          replay={conversation.replay}
+          isCloseEnabled={true}
+          model={currentModel}
+          prompts={prompts}
+          assistantModelId={currentAssistentModelId}
+          prompt={currentPrompt}
+          selectedAddons={currentSelectedAddonsIds}
+          temperature={currentTemperature}
+          onSelectModel={(modelId: string) => {
+            const newModel = modelsMap[modelId];
+            if (newModel) {
+              setCurrentModel(newModel);
             }
+          }}
+          onChangePrompt={(prompt) => setCurrentPrompt(prompt)}
+          onChangeTemperature={(temperature) =>
+            setCurrentTemperature(temperature)
+          }
+          onSelectAssistantSubModel={(modelId: string) =>
+            setCurrentAssistentModelId(modelId)
+          }
+          onChangeAddon={(addonId: string) => {
+            setCurrentSelectedAddonsIds((addons) => {
+              if (addons.includes(addonId)) {
+                return addons.filter((id) => id !== addonId);
+              }
 
-            return [...addons, addonId];
-          });
-        }}
-        onApplyAddons={(addons) => setCurrentSelectedAddonsIds(addons)}
-        onApplySettings={() => {
-          onClose();
-          onApplySettings();
-        }}
-        onClose={() => onClose()}
-      />
+              return [...addons, addonId];
+            });
+          }}
+          onApplyAddons={(addons) => setCurrentSelectedAddonsIds(addons)}
+          onClose={() => onClose()}
+        />
+        <div className="flex w-full items-center justify-center overflow-hidden bg-gray-200 px-3 py-4 dark:bg-gray-800 md:px-5">
+          <button
+            className="w-full rounded bg-blue-500 px-3 py-2.5 text-gray-100 hover:bg-blue-700 md:w-fit"
+            data-qa="apply-changes"
+            onClick={() => {
+              onClose();
+              onApplySettings();
+            }}
+          >
+            {t('Apply changes')}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

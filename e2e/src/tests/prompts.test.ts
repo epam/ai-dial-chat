@@ -19,7 +19,7 @@ test('Create new prompt', async ({
 }) => {
   setTestIds('EPMRTC-945');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
   await conversationSettings.waitForState();
   await promptBar.createNewPrompt();
   expect
@@ -74,11 +74,11 @@ test('Edit prompt. Cancel', async ({
   await localStorageManager.setPrompts(prompt);
 
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
   await prompts.openPromptDropdownMenu(prompt.name);
   await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
   await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
-  await promptBar.click();
+  await promptBar.click({ force: true });
 
   const isPromptModalVisible = await promptModalDialog.isVisible();
   await expect
@@ -252,9 +252,9 @@ test('Clear prompts. Cancel', async ({
 }) => {
   setTestIds('EPMRTC-971');
   const emptyPromptFolder = promptData.prepareFolder();
-  promptData = promptData.resetData();
+  promptData.resetData();
   const singlePrompt = promptData.prepareDefaultPrompt();
-  promptData = promptData.resetData();
+  promptData.resetData();
   const promptInFolder = promptData.prepareDefaultPromptInFolder();
 
   const singleConversation = conversationData.prepareDefaultConversation();
@@ -262,7 +262,7 @@ test('Clear prompts. Cancel', async ({
   const conversationInFolder =
     conversationData.prepareDefaultConversationInFolder();
 
-  await localStorageManager.setPrompts(singlePrompt, promptInFolder.prompts);
+  await localStorageManager.setPrompts(singlePrompt, promptInFolder.prompts[0]);
   await localStorageManager.setConversationHistory(
     singleConversation,
     conversationInFolder.conversations[0],
@@ -307,7 +307,7 @@ test('Clear prompts. Cancel', async ({
 
   const isFolderPromptVisible = await folderPrompts.isFolderPromptVisible(
     promptInFolder.folders.name,
-    promptInFolder.prompts.name,
+    promptInFolder.prompts[0].name,
   );
   expect
     .soft(isFolderPromptVisible, ExpectedMessages.promptNotDeleted)
@@ -335,10 +335,11 @@ test('Clear prompts. Clear', async ({
   setTestIds,
 }) => {
   setTestIds('EPMRTC-972');
+  let i = 2;
   const emptyPromptFolder = promptData.prepareFolder();
-  promptData = promptData.resetData();
+  promptData.resetData();
   const singlePrompt = promptData.prepareDefaultPrompt();
-  promptData = promptData.resetData();
+  promptData.resetData();
   const promptInFolder = promptData.prepareDefaultPromptInFolder();
 
   const emptyConversationFolder = conversationData.prepareFolder();
@@ -350,7 +351,10 @@ test('Clear prompts. Clear', async ({
 
   await dialHomePage.openHomePage();
   await dialHomePage.waitForPageLoaded();
-  await localStorageManager.updatePrompts(singlePrompt, promptInFolder.prompts);
+  await localStorageManager.updatePrompts(
+    singlePrompt,
+    promptInFolder.prompts[0],
+  );
   await localStorageManager.updateConversationHistory(
     singleConversation,
     conversationInFolder.conversations[0],
@@ -365,16 +369,17 @@ test('Clear prompts. Clear', async ({
 
   await dialHomePage.reloadPage();
   await dialHomePage.waitForPageLoaded();
-  await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
-  await folderConversations.expandCollapseFolder(
-    conversationInFolder.folders.name,
-  );
+  if (i > 1) {
+    await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
+    await folderConversations.expandCollapseFolder(
+      conversationInFolder.folders.name,
+    );
+  }
   await conversations.getConversationByName(singleConversation.name).waitFor();
 
   await promptBar.deleteAllPrompts();
   await confirmationDialog.confirm();
 
-  let i = 2;
   while (i > 0) {
     await folderConversations
       .getFolderByName(emptyConversationFolder.name)
@@ -398,7 +403,7 @@ test('Clear prompts. Clear', async ({
 
     const isFolderPromptVisible = await folderPrompts.isFolderPromptVisible(
       promptInFolder.folders.name,
-      promptInFolder.prompts.name,
+      promptInFolder.prompts[0].name,
     );
     expect
       .soft(isFolderPromptVisible, ExpectedMessages.promptDeleted)
@@ -414,9 +419,6 @@ test('Clear prompts. Clear', async ({
     if (i > 1) {
       await dialHomePage.reloadPage();
       await dialHomePage.waitForPageLoaded();
-      await folderConversations.expandCollapseFolder(
-        conversationInFolder.folders.name,
-      );
     }
     i--;
   }
@@ -429,7 +431,7 @@ test(`[UI] Delete all prompts button doesn't exist if not prompts are created`, 
 }) => {
   setTestIds('EPMRTC-973');
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded(true);
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
 
   const isDeleteAllPromptVisible =
     await promptBar.deleteAllPromptsButton.isVisible();

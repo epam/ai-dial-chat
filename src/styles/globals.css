@@ -8,11 +8,13 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply rounded-[10px] bg-gray-400;
-    border-radius: 10px;
+    @apply cursor-pointer rounded bg-gray-400;
   }
   .dark ::-webkit-scrollbar-thumb {
     @apply bg-gray-600;
+  }
+  :not(:hover)::-webkit-scrollbar-thumb {
+    @apply bg-transparent;
   }
 
   ::-webkit-scrollbar-track:hover {
@@ -23,8 +25,21 @@
   }
 
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    @apply h-[4px] w-[4px];
+  }
+
+  /* Firefox-compatible styles */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  :hover {
+    scrollbar-color: theme('colors.gray.400') theme('colors.transparent');
+  }
+
+  .dark :hover {
+    scrollbar-color: theme('colors.gray.600') theme('colors.transparent');
   }
 
   .dark ::-webkit-calendar-picker-indicator {
@@ -34,12 +49,6 @@
 
 html {
   @apply bg-gray-900 text-gray-200;
-}
-
-@media (max-width: 720px) {
-  pre {
-    width: calc(100vw - 110px);
-  }
 }
 
 pre:has(div.codeblock) {
@@ -53,16 +62,13 @@ pre:has(div.codeblock) {
   }
 
   .temperature-slider .rc-slider-rail {
-    @apply rounded-full;
+    @apply rounded-full bg-gray-300 dark:bg-gray-900;
   }
 
   .temperature-slider .rc-slider-track {
     @apply rounded-full bg-blue-500;
   }
 
-  .entity-settings-container {
-    @apply flex max-h-full shrink flex-col gap-[1px] overflow-auto;
-  }
   .input-form {
     @apply m-0.5 w-full rounded border border-gray-400 bg-transparent p-3 placeholder:text-gray-500 hover:border-blue-500 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:hover:border-blue-500 dark:focus:border-blue-500;
   }

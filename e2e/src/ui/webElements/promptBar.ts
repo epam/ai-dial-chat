@@ -1,4 +1,8 @@
-import { PromptBarSelectors, SideBarSelectors } from '../selectors';
+import {
+  ChatBarSelectors,
+  PromptBarSelectors,
+  SideBarSelectors,
+} from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { FolderPrompts } from '@/e2e/src/ui/webElements/folderPrompts';
@@ -12,6 +16,11 @@ export class PromptBar extends BaseElement {
 
   private prompts!: Prompts;
   private folderPrompts!: FolderPrompts;
+  public exportButton = new BaseElement(
+    this.page,
+    ChatBarSelectors.exportPrompts,
+  );
+  public importButton = this.getChildElementBySelector(SideBarSelectors.import);
 
   getFolderPrompts(): FolderPrompts {
     if (!this.folderPrompts) {

@@ -10,9 +10,7 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
-import useOutsideAlerter from '@/src/hooks/useOutsideAlerter';
-
-import { exportPrompt } from '@/src/utils/app/import-export';
+import classNames from 'classnames';
 
 import { Prompt } from '@/src/types/prompt';
 
@@ -22,6 +20,8 @@ import {
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
 
+import { stopBubbling } from '@/src/constants/chat';
+
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
@@ -30,23 +30,25 @@ import CheckIcon from '../../../../public/images/icons/check.svg';
 import XmarkIcon from '../../../../public/images/icons/xmark.svg';
 import { PromptModal } from './PromptModal';
 
-import classNames from 'classnames';
 import { v4 as uuidv4 } from 'uuid';
 
 interface Props {
-  prompt: Prompt;
+  item: Prompt;
+  level?: number;
 }
 
-export const PromptComponent = ({ prompt }: Props) => {
+export const PromptComponent = ({ item: prompt, level }: Props) => {
   const { t } = useTranslation('chat');
   const dispatch = useAppDispatch();
 
   const folders = useAppSelector(PromptsSelectors.selectFolders);
+  const selectedPromptId = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
+  );
+  const showModal = useAppSelector(PromptsSelectors.selectIsEditModalOpen);
 
-  const [showModal, setShowModal] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
-  const [isSelected, setIsSelected] = useState(false);
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
 
   const wrapperRef = useRef(null);
@@ -68,12 +70,12 @@ export const PromptComponent = ({ prompt }: Props) => {
       e.preventDefault();
 
       if (isDeleting) {
-        dispatch(PromptsActions.deletePrompt({ promptId: prompt.id }));
+        dispatch(PromptsActions.deletePrompts({ promptIds: [prompt.id] }));
         dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
       }
 
       setIsDeleting(false);
-      setIsSelected(false);
+      dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
     },
     [dispatch, isDeleting, prompt.id],
   );
@@ -101,29 +103,29 @@ export const PromptComponent = ({ prompt }: Props) => {
     [],
   );
 
-  const handleOpenRenameModal: MouseEventHandler = useCallback((e) => {
-    e.stopPropagation();
-    e.preventDefault();
-
-    setShowModal(true);
-    setIsRenaming(true);
-  }, []);
-
-  const handleOnClickPrompt: MouseEventHandler = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    setIsSelected(true);
-  }, []);
+  const handleOpenEditModal: MouseEventHandler = useCallback(
+    (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
+      dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
+      setIsRenaming(true);
+    },
+    [dispatch, prompt.id],
+  );
 
   const handleExportPrompt: MouseEventHandler = useCallback(
     (e) => {
       e.preventDefault();
       e.stopPropagation();
 
-      exportPrompt(prompt.id);
+      dispatch(
+        PromptsActions.exportPrompt({
+          promptId: prompt.id,
+        }),
+      );
     },
-    [prompt.id],
+    [dispatch, prompt.id],
   );
 
   const handleMoveToFolder = useCallback(
@@ -154,6 +156,11 @@ export const PromptComponent = ({ prompt }: Props) => {
     [dispatch, prompt.id, t],
   );
 
+  const handleClose = useCallback(() => {
+    dispatch(PromptsActions.setIsEditModalOpen({ isOpen: false }));
+    setIsRenaming(false);
+  }, [dispatch]);
+
   useEffect(() => {
     if (isRenaming) {
       setIsDeleting(false);
@@ -162,20 +169,23 @@ export const PromptComponent = ({ prompt }: Props) => {
     }
   }, [isRenaming, isDeleting]);
 
-  useOutsideAlerter(wrapperRef, setIsSelected);
-
   return (
     <div
       className={classNames(
-        'group relative flex h-[42px] cursor-pointer items-center rounded transition-colors duration-200 hover:bg-violet/15',
-        isSelected ? 'border-l-2 border-l-violet bg-violet/15' : '',
+        'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-violet/15',
+        selectedPromptId === prompt.id
+          ? 'border-l-violet bg-violet/15'
+          : 'border-l-transparent',
       )}
+      style={{
+        paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
+      }}
       ref={wrapperRef}
-      onClick={handleOnClickPrompt}
+      onClick={handleOpenEditModal}
       data-qa="prompt"
     >
       <button
-        className="flex h-full w-full items-center gap-3 px-3 "
+        className="flex h-full w-full items-center gap-2"
         draggable="true"
         onDragStart={(e) => handleDragStart(e, prompt)}
       >
@@ -211,17 +221,18 @@ export const PromptComponent = ({ prompt }: Props) => {
       {!isDeleting && !isRenaming && (
         <div
           className={classNames(
-            'invisible absolute right-0 z-50 flex justify-end md:group-hover:visible',
-            isSelected ? 'max-md:visible' : '',
+            'absolute right-3 z-50 flex justify-end xl:invisible xl:group-hover:visible',
+            selectedPromptId === prompt.id ? 'visible' : 'invisible',
           )}
           ref={wrapperRef}
+          onClick={stopBubbling}
         >
           <ContextMenu
             featureType="prompt"
             folders={folders}
             onMoveToFolder={handleMoveToFolder}
             onDelete={handleOpenDeleteModal}
-            onRename={handleOpenRenameModal}
+            onRename={handleOpenEditModal}
             onExport={handleExportPrompt}
             onOpenMoveToModal={() => {
               setIsShowMoveToModal(true);
@@ -230,7 +241,7 @@ export const PromptComponent = ({ prompt }: Props) => {
           />
         </div>
       )}
-      <div className="md:hidden">
+      <div className="md:hidden" onClick={stopBubbling}>
         {isShowMoveToModal && (
           <MoveToFolderMobileModal
             folders={folders}
@@ -241,13 +252,12 @@ export const PromptComponent = ({ prompt }: Props) => {
           />
         )}
       </div>
-      {showModal && (
+
+      {selectedPromptId === prompt.id && showModal && (
         <PromptModal
           prompt={prompt}
-          onClose={() => {
-            setShowModal(false);
-            setIsRenaming(false);
-          }}
+          isOpen={selectedPromptId === prompt.id && showModal}
+          onClose={handleClose}
           onUpdatePrompt={handleUpdate}
         />
       )}

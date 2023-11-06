@@ -15,6 +15,7 @@ module.exports = {
     '^rxjs', // rxjs imports
     '^@reduxjs/.*$', // rxjs imports
     '^redux-observable$', // rxjs imports
+    '^classnames$',
     '^.*/hooks/.*$', // Hooks
     '^.*/services/.*$', // Services
     '^.*/utils/.*$', // Utils

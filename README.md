@@ -6,6 +6,12 @@ Originally forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui) 
 
 ![ai-dial-chat](./docs/ai-dial-chat.png)
 
+## Docs
+
+`ChatOverlay` documentation is placed [here](./docs/OVERLAY.md).
+
+`Theme` documentation is placed [here](./docs/THEME-CUSTOMIZATION.md).
+
 ## Overview
 
 This project is a web application built using [Next.js](https://nextjs.org/), a React framework with server-rendering capabilities. It can be easily customized and adapted to your needs by following the steps mentioned below.
@@ -130,6 +136,7 @@ This project leverages environment variables for configuration:
 | REPORT_ISSUE_CODE                 | Report Issue Code                                                                                                                    |                                                                                                                                                                                                                                  |                                  |
 | REQUEST_API_KEY_CODE              | Request API Key Code                                                                                                                 |                                                                                                                                                                                                                                  |                                  |
 | CODE_GENERATION_WARNING           | Warning text regarding code generation                                                                                               | Full responsibility for code correctness, security and licensing lies solely with the user, not with DIAL platform or LLM vendor.                                                                                                |                                  |
+| SHOW_TOKEN_SUB                    | Show token sub in refresh login error logs                                                                                           | false                                                                                                                                                                                                                            |                                  |
 
 The .env file contains environment variables that can be used to configure your app's settings and behavior. These values can be changed as needed to suit your specific requirements.
 

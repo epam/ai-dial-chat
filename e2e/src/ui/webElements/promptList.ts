@@ -15,6 +15,12 @@ export class PromptList extends BaseElement {
   }
 
   public async selectPrompt(name: string) {
-    await this.getPromptByName(name).click();
+    const promptOption = this.getPromptByName(name);
+    const listBounding = await promptOption.boundingBox();
+    await this.page.mouse.move(
+      listBounding!.x + listBounding!.width / 2,
+      listBounding!.y + listBounding!.height / 2,
+    );
+    await promptOption.click();
   }
 }

@@ -1,5 +1,10 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
+import {
+  getChildAndCurrentFoldersIdsById,
+  getParentAndCurrentFoldersById,
+} from '@/src/utils/app/folders';
+
 import { Conversation, Message } from '@/src/types/chat';
 import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface } from '@/src/types/folder';
@@ -22,6 +27,7 @@ export interface ConversationsState {
   searchTerm: string;
   conversationSignal: AbortController;
   isReplayPaused: boolean;
+  isPlaybackPaused: boolean;
 }
 
 const initialState: ConversationsState = {
@@ -31,6 +37,7 @@ const initialState: ConversationsState = {
   searchTerm: '',
   conversationSignal: new AbortController(),
   isReplayPaused: true,
+  isPlaybackPaused: true,
 };
 
 export const conversationsSlice = createSlice({
@@ -87,7 +94,6 @@ export const conversationsSlice = createSlice({
             },
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: payload.temperature ?? DEFAULT_TEMPERATURE,
-            folderId: null,
             replay: defaultReplay,
             selectedAddons: [],
             lastActivityDate: Date.now(),
@@ -117,15 +123,15 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{ conversationId: string }>,
     ) => state,
-    deleteConversation: (
+    deleteConversations: (
       state,
-      { payload }: PayloadAction<{ conversationId: string }>,
+      { payload }: PayloadAction<{ conversationIds: string[] }>,
     ) => {
       state.conversations = state.conversations.filter(
-        (conv) => conv.id !== payload.conversationId,
+        (conv) => !payload.conversationIds.includes(conv.id),
       );
       state.selectedConversationsIds = state.selectedConversationsIds.filter(
-        (id) => id !== payload.conversationId,
+        (id) => !payload.conversationIds.includes(id),
       );
     },
     createNewReplayConversation: (
@@ -142,12 +148,48 @@ export const conversationsSlice = createSlice({
         id: uuidv4(),
         name: newConversationName,
         messages: [],
+        lastActivityDate: Date.now(),
 
         replay: {
           isReplay: true,
           replayUserMessagesStack: userMessages,
           activeReplayIndex: 0,
           replayAsIs: true,
+        },
+
+        playback: {
+          isPlayback: false,
+          activePlaybackIndex: 0,
+          messagesStack: [],
+        },
+      };
+      state.conversations = state.conversations.concat([newConversation]);
+      state.selectedConversationsIds = [newConversation.id];
+    },
+    createNewPlaybackConversation: (
+      state,
+      { payload }: PayloadAction<{ conversation: Conversation }>,
+    ) => {
+      const newConversationName = `[Playback] ${payload.conversation.name}`;
+
+      const newConversation: Conversation = {
+        ...payload.conversation,
+        id: uuidv4(),
+        name: newConversationName,
+        messages: [],
+        lastActivityDate: Date.now(),
+
+        playback: {
+          messagesStack: payload.conversation.messages,
+          activePlaybackIndex: 0,
+          isPlayback: true,
+        },
+
+        replay: {
+          isReplay: false,
+          replayUserMessagesStack: [],
+          activeReplayIndex: 0,
+          replayAsIs: false,
         },
       };
       state.conversations = state.conversations.concat([newConversation]);
@@ -212,6 +254,33 @@ export const conversationsSlice = createSlice({
 
         return folder;
       });
+    },
+    moveFolder: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        folderId: string;
+        newParentFolderId: string | undefined;
+        newIndex: number;
+      }>,
+    ) => {
+      const folderIndex = state.folders.findIndex(
+        (folder) => folder.id === payload.folderId,
+      );
+      const updatedFolderContent = {
+        ...state.folders[folderIndex],
+        folderId: payload.newParentFolderId,
+      };
+      state.folders = state.folders
+        .toSpliced(folderIndex, 1)
+        .toSpliced(
+          folderIndex < payload.newIndex
+            ? payload.newIndex - 1
+            : payload.newIndex,
+          0,
+          updatedFolderContent,
+        );
     },
     setFolders: (
       state,
@@ -325,14 +394,34 @@ export const conversationsSlice = createSlice({
     ) => {
       state.isReplayPaused = true;
     },
+    playbackNextMessageStart: (state) => {
+      state.isPlaybackPaused = false;
+    },
+    playbackNextMessageEnd: (
+      state,
+      _action: PayloadAction<{ conversationId: string }>,
+    ) => state,
+    playbackPrevMessage: (state) => state,
+    playbackStop: (state) => {
+      state.isPlaybackPaused = true;
+    },
+    playbackCancel: (state) => {
+      state.isPlaybackPaused = true;
+    },
   },
 });
 
-const rootSelector = (state: RootState) => state.conversations;
+const rootSelector = (state: RootState): ConversationsState =>
+  state.conversations;
 
 const selectConversations = createSelector([rootSelector], (state) => {
   return state.conversations;
 });
+
+const selectFolders = createSelector([rootSelector], (state) => {
+  return state.folders;
+});
+
 const selectLastConversation = createSelector(
   [selectConversations],
   (state): Conversation | undefined => {
@@ -362,15 +451,50 @@ const selectSelectedConversations = createSelector(
       .filter(Boolean) as Conversation[];
   },
 );
+const selectParentFolders = createSelector(
+  [selectFolders, (_state, folderId: string | undefined) => folderId],
+  (folders, folderId) => {
+    return getParentAndCurrentFoldersById(folders, folderId);
+  },
+);
+const selectParentFoldersIds = createSelector(
+  [selectParentFolders],
+  (folders) => {
+    return folders.map((folder) => folder.id);
+  },
+);
+const selectSelectedConversationsFoldersIds = createSelector(
+  [(state) => state, selectSelectedConversations],
+  (state, conversations) => {
+    let selectedFolders: string[] = [];
+
+    conversations.forEach((conv) => {
+      selectedFolders = selectedFolders.concat(
+        selectParentFoldersIds(state, conv.folderId),
+      );
+    });
+
+    return selectedFolders;
+  },
+);
+const selectChildAndCurrentFoldersIdsById = createSelector(
+  [selectFolders, (_state, folderId: string | undefined) => folderId],
+  (folders, folderId) => {
+    return getChildAndCurrentFoldersIdsById(folderId, folders);
+  },
+);
+const selectFirstSelectedConversation = createSelector(
+  [selectSelectedConversations],
+  (conversations): Conversation | undefined => {
+    return conversations[0];
+  },
+);
 const selectIsConversationsStreaming = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some((conv) => !!conv.isMessageStreaming);
   },
 );
-const selectFolders = createSelector([rootSelector], (state) => {
-  return [...state.folders].sort((a, b) => a.name.localeCompare(b.name));
-});
 const selectSearchTerm = createSelector([rootSelector], (state) => {
   return state.searchTerm;
 });
@@ -402,6 +526,51 @@ const selectIsReplaySelectedConversations = createSelector(
     return conversations.some((conv) => conv.replay.isReplay);
   },
 );
+
+const selectIsPlaybackSelectedConversations = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some(
+      (conv) => conv.playback && conv.playback.isPlayback,
+    );
+  },
+);
+
+const selectPlaybackActiveIndex = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return (
+      conversations[0].playback && conversations[0].playback.activePlaybackIndex
+    );
+  },
+);
+
+const selectIsErrorReplayConversations = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some((conv) => conv.replay.isError);
+  },
+);
+
+const selectIsPlaybackPaused = createSelector([rootSelector], (state) => {
+  return state.isPlaybackPaused;
+});
+
+const selectPlaybackActiveMessage = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    const activeIndex =
+      conversations[0].playback &&
+      conversations[0].playback.activePlaybackIndex;
+    const activeMessage =
+      conversations[0].playback?.messagesStack[activeIndex ?? -1];
+    if (!activeMessage || activeMessage.role === 'assistant') {
+      return;
+    }
+    return activeMessage;
+  },
+);
+
 const selectIsMessagesError = createSelector(
   [selectSelectedConversations],
   (conversations) => {
@@ -426,8 +595,18 @@ export const ConversationsSelectors = {
   selectIsReplayPaused,
   selectIsSendMessageAborted,
   selectIsReplaySelectedConversations,
+  selectIsPlaybackSelectedConversations,
+  selectIsErrorReplayConversations,
   selectIsMessagesError,
   selectConversation,
+  selectFirstSelectedConversation,
+  selectSelectedConversationsFoldersIds,
+  selectParentFolders,
+  selectParentFoldersIds,
+  selectChildAndCurrentFoldersIdsById,
+  selectPlaybackActiveIndex,
+  selectIsPlaybackPaused,
+  selectPlaybackActiveMessage,
 };
 
 export const ConversationsActions = conversationsSlice.actions;

@@ -39,6 +39,9 @@ next-env.d.ts
 .idea
 pnpm-lock.yaml
 
+# overlay
+/public/overlay
+
 # editors
 .vscode
 

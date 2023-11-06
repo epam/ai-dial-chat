@@ -49,6 +49,7 @@ export class EntitySelector extends BaseElement {
 
   public async selectEntity(entity: string, group: Groups) {
     const recentEntities = await this.getRecentEntities();
+    await recentEntities.waitForState({ state: 'attached' });
     const isEntityVisible = await recentEntities
       .getRecentEntity(entity)
       .isVisible();

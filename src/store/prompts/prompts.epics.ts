@@ -1,11 +1,24 @@
 import { i18n } from 'next-i18next';
 
-import { EMPTY, filter, ignoreElements, map, of, switchMap, tap } from 'rxjs';
+import {
+  EMPTY,
+  concat,
+  filter,
+  ignoreElements,
+  map,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
 import { saveFolders } from '@/src/utils/app/folders';
-import { exportPrompts, importPrompts } from '@/src/utils/app/import-export';
+import {
+  exportPrompt,
+  exportPrompts,
+  importPrompts,
+} from '@/src/utils/app/import-export';
 import { savePrompts } from '@/src/utils/app/prompts';
 
 import { AppEpic } from '@/src/types/store';
@@ -44,7 +57,7 @@ const savePromptsEpic: AppEpic = (action$, state$) =>
     filter(
       (action) =>
         PromptsActions.createNewPromptSuccess.match(action) ||
-        PromptsActions.deletePrompt.match(action) ||
+        PromptsActions.deletePrompts.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
         PromptsActions.updatePrompt.match(action) ||
         PromptsActions.importPromptsSuccess.match(action),
@@ -63,6 +76,7 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         PromptsActions.createFolder.match(action) ||
         PromptsActions.deleteFolder.match(action) ||
         PromptsActions.renameFolder.match(action) ||
+        PromptsActions.moveFolder.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action),
     ),
@@ -76,27 +90,37 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
-const deleteFoldersEpic: AppEpic = (action$, state$) =>
+const deleteFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.deleteFolder.match),
     map(({ payload }) => ({
       prompts: PromptsSelectors.selectPrompts(state$.value),
-      folderId: payload.folderId,
+      childFolders: PromptsSelectors.selectChildAndCurrentFoldersIdsById(
+        state$.value,
+        payload.folderId,
+      ),
+      folders: PromptsSelectors.selectFolders(state$.value),
     })),
-    switchMap(({ folderId, prompts }) => {
-      return of(
-        PromptsActions.updatePrompts({
-          prompts: prompts.map((c) => {
-            if (c.folderId === folderId) {
-              return {
-                ...c,
-                folderId: null,
-              };
-            }
+    switchMap(({ prompts, childFolders, folders }) => {
+      const removedPromptsIds = prompts
+        .filter(
+          (prompt) => prompt.folderId && childFolders.includes(prompt.folderId),
+        )
+        .map(({ id }) => id);
 
-            return c;
+      return concat(
+        of(
+          PromptsActions.deletePrompts({
+            promptIds: removedPromptsIds,
           }),
-        }),
+        ),
+        of(
+          PromptsActions.setFolders({
+            folders: folders.filter(
+              (folder) => !childFolders.includes(folder.id),
+            ),
+          }),
+        ),
       );
     }),
   );
@@ -110,6 +134,22 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
     })),
     tap(({ prompts, folders }) => {
       exportPrompts(prompts, folders);
+    }),
+    ignoreElements(),
+  );
+
+const exportPromptEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.exportPrompt.match),
+    map(({ payload }) =>
+      PromptsSelectors.selectPrompt(state$.value, payload.promptId),
+    ),
+    filter(Boolean),
+    tap((prompt) => {
+      exportPrompt(
+        prompt.id,
+        PromptsSelectors.selectParentFolders(state$.value, prompt.folderId),
+      );
     }),
     ignoreElements(),
   );
@@ -138,7 +178,8 @@ export const PromptsEpics = combineEpics(
   createNewPromptEpic,
   savePromptsEpic,
   saveFoldersEpic,
-  deleteFoldersEpic,
+  deleteFolderEpic,
   exportPromptsEpic,
+  exportPromptEpic,
   importPromptsEpic,
 );

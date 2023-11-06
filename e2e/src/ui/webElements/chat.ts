@@ -92,6 +92,20 @@ export class Chat extends BaseElement {
     return request.postDataJSON();
   }
 
+  public async startReplayForDifferentModels(userRequests: string[]) {
+    await this.replay.waitForState();
+    const requests = [];
+    for (const req of userRequests) {
+      const resp = this.waitForRequestSent(req);
+      requests.push(resp);
+    }
+    await this.replay.click();
+    for (const req of requests) {
+      await req;
+    }
+    await this.waitForResponse(true);
+  }
+
   public async sendRequestInCompareMode(
     message: string,
     comparedEntities: { rightEntity: string; leftEntity: string },

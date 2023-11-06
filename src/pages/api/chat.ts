@@ -40,6 +40,45 @@ const wasm = readFileSync(
 
 let encoding: Tiktoken;
 
+const errorHandler = ({
+  error,
+  res,
+  msg,
+  isStreamingError,
+}: {
+  error: any;
+  res: NextApiResponse;
+  msg?: string;
+  isStreamingError?: boolean;
+}) => {
+  const postfix = isStreamingError ? '\0' : '';
+  const fieldName = isStreamingError ? 'errorMessage' : 'message';
+
+  logger.error(error, msg);
+  if (error instanceof OpenAIError) {
+    // Rate limit errors and gateway errors https://platform.openai.com/docs/guides/error-codes/api-errors
+    if (['429', '504'].includes(error.code)) {
+      return res
+        .status(500)
+        .send(JSON.stringify({ [fieldName]: errorsMessages[429] }) + postfix);
+    }
+    if (error.code === 'content_filter') {
+      return res
+        .status(500)
+        .send(
+          JSON.stringify({ [fieldName]: errorsMessages.contentFiltering }) +
+            postfix,
+        );
+    }
+  }
+
+  return res
+    .status(500)
+    .send(
+      JSON.stringify({ [fieldName]: errorsMessages.generalServer }) + postfix,
+    );
+};
+
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
@@ -155,9 +194,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           }
           res.write(value);
         }
+        res.end();
       } catch (error) {
-        logger.error(error, 'Error reading stream:');
-        res.status(500);
+        return errorHandler({
+          error,
+          res,
+          msg: 'Error reading stream:',
+          isStreamingError: true,
+        });
       } finally {
         res.end();
       }
@@ -165,17 +209,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     await processStream();
   } catch (error) {
-    logger.error(error);
-    if (error instanceof OpenAIError) {
-      // Rate limit errors and gateway errors https://platform.openai.com/docs/guides/error-codes/api-errors
-      if (['429', '504'].includes(error.code)) {
-        return res.status(500).send(errorsMessages[429]);
-      }
-      // return new Response('Error', { status: 500, statusText: error.message });
-      return res.status(500).send(errorsMessages.generalServer);
-    } else {
-      return res.status(500).send('Error');
-    }
+    return errorHandler({
+      error,
+      res,
+      msg: 'Error while sending chat request',
+    });
   }
 };
 

@@ -1,6 +1,6 @@
 import { Tags } from '../domData';
 import { ChatSelectors } from '../selectors';
-import { BaseElement } from './baseElement';
+import { BaseElement, Icons } from './baseElement';
 
 import { Locator, Page } from '@playwright/test';
 
@@ -13,10 +13,12 @@ export class RecentEntities extends BaseElement {
     ChatSelectors.recentEntityNames,
   );
 
+  public recentEntities = this.getChildElementBySelector(Tags.button);
+
   public getRecentEntity = (entity: string) =>
     this.createElementFromLocator(
-      this.getChildElementBySelector(Tags.button).getElementLocatorByText(
-        entity,
+      this.recentEntities.getElementLocatorByText(
+        new RegExp(`^${entity}$`, 'g'),
       ),
     );
 
@@ -38,5 +40,17 @@ export class RecentEntities extends BaseElement {
 
   public async getRecentEntityNames() {
     return this.recentEntityNames.getElementsInnerContent();
+  }
+
+  public async getRecentEntitiesIconAttributes() {
+    const allIcons: Icons[] = [];
+    const entitiesCount = await this.recentEntities.getElementsCount();
+    for (let i = 1; i <= entitiesCount; i++) {
+      const icon = await this.recentEntities
+        .getChildElementBySelector(ChatSelectors.chatIcon)
+        .getNthElement(i);
+      allIcons.push(await this.getElementIconAttributes(icon));
+    }
+    return allIcons;
   }
 }

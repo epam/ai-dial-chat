@@ -3,9 +3,13 @@ import { GeneratorUtil } from '@/e2e/src/utils/generatorUtil';
 
 import { Conversation, Message, Stage } from '@/src/types/chat';
 import { FolderInterface } from '@/src/types/folder';
-import { OpenAIEntityModel, OpenAIEntityModelID } from '@/src/types/openai';
+import { OpenAIEntityModel } from '@/src/types/openai';
 
-import { ConversationBuilder, ExpectedConstants } from '@/e2e/src/testData';
+import {
+  ConversationBuilder,
+  ExpectedConstants,
+  ModelIds,
+} from '@/e2e/src/testData';
 import { FolderBuilder } from '@/e2e/src/testData/conversationHistory/folderBuilder';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -86,6 +90,24 @@ export class ConversationData {
     return this.conversationBuilder.build();
   }
 
+  public prepareConversationWithDifferentModels(models: OpenAIEntityModel[]) {
+    const requests: string[] = new Array(models.length);
+    for (let i = 0; i < requests.length; i++) {
+      requests[i] = `${i} + ${i + 1} =`;
+    }
+    const basicConversation = this.prepareModelConversationBasedOnRequests(
+      models[models.length - 1],
+      requests,
+    );
+    const messages = basicConversation.messages;
+    for (let i = 0; i < models.length; i++) {
+      messages[i * 2].model = models[i];
+      messages[i * 2 + 1].model = models[i];
+    }
+    this.conversationBuilder.setConversation(basicConversation);
+    return this.conversationBuilder.build();
+  }
+
   public prepareEmptyConversation(model?: OpenAIEntityModel, name?: string) {
     const conversation = this.prepareDefaultConversation(model, name);
     conversation.messages = [];
@@ -93,12 +115,12 @@ export class ConversationData {
   }
 
   public prepareDefaultReplayConversation(conversation: Conversation) {
-    const userMessages = conversation.messages.find((m) => m.role === 'user');
+    const userMessages = conversation.messages.filter((m) => m.role === 'user');
     return this.fillReplayData(conversation, userMessages!);
   }
 
   public preparePartiallyReplayedConversation(conversation: Conversation) {
-    const userMessages = conversation.messages.find((m) => m.role === 'user');
+    const userMessages = conversation.messages.filter((m) => m.role === 'user');
     const assistantMessage = conversation.messages.filter(
       (m) => m.role === 'assistant',
     )[0];
@@ -110,7 +132,10 @@ export class ConversationData {
       custom_content: { stages: partialStage },
     };
     const replayConversation = this.fillReplayData(conversation, userMessages!);
-    replayConversation.messages.push(userMessages!, partialAssistantResponse);
+    replayConversation.messages.push(
+      ...userMessages!,
+      partialAssistantResponse,
+    );
     return replayConversation;
   }
 
@@ -174,7 +199,7 @@ export class ConversationData {
     const conversation = this.prepareAddonsConversation(assistant, addons);
     conversation.assistantModelId = assistantModel
       ? assistantModel.id
-      : OpenAIEntityModelID.GPT_4;
+      : ModelIds.GPT_4;
     return conversation;
   }
 
@@ -236,7 +261,7 @@ export class ConversationData {
 
   private fillReplayData(
     conversation: Conversation,
-    userMessages: Message,
+    userMessages: Message[],
   ): Conversation {
     const replayConversation = JSON.parse(JSON.stringify(conversation));
     replayConversation.id = uuidv4();
@@ -244,7 +269,8 @@ export class ConversationData {
     replayConversation.messages = [];
     replayConversation.replay.isReplay = true;
     replayConversation.replay.activeReplayIndex = 0;
-    replayConversation.replay.replayUserMessagesStack.push(userMessages);
+    replayConversation.replay.replayUserMessagesStack.push(...userMessages);
+    replayConversation.replay.replayAsIs = true;
     return replayConversation;
   }
 }

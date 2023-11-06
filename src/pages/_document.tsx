@@ -21,7 +21,7 @@ export default function Document(props: Props) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
           name="apple-mobile-web-app-title"
-          content={process.env.NEXT_PUBLIC_APP_NAME || 'Chatbot UI'}
+          content={process.env.NEXT_PUBLIC_APP_NAME || 'AI Dial'}
         ></meta>
         {!!process.env.THEMES_CONFIG_HOST && (
           <link rel="stylesheet" href={`api/themes-config`} />

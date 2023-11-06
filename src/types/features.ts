@@ -11,3 +11,18 @@ export type Feature =
   | 'request-api-key'
   | 'report-an-issue'
   | 'likes';
+
+export const availableFeatures: Record<Feature, boolean> = {
+  'conversations-section': true,
+  'prompts-section': true,
+  'top-settings': true,
+  'top-clear-conversation': true,
+  'top-chat-info': true,
+  'top-chat-model-settings': true,
+  'empty-chat-settings': true,
+  header: true,
+  footer: true,
+  'request-api-key': true,
+  'report-an-issue': true,
+  likes: true,
+};

@@ -1,4 +1,4 @@
-import { Chat, ChatBar, PromptBar } from '../webElements';
+import { Chat, ChatBar, ConversationSettings, PromptBar } from '../webElements';
 import { BasePage } from './basePage';
 
 import { ExpectedConstants } from '@/e2e/src/testData';
@@ -7,6 +7,7 @@ export class DialHomePage extends BasePage {
   private chat!: Chat;
   private chatBar!: ChatBar;
   private promptBar!: PromptBar;
+  private conversationSettings!: ConversationSettings;
 
   getChat(): Chat {
     if (!this.chat) {
@@ -29,7 +30,16 @@ export class DialHomePage extends BasePage {
     return this.promptBar;
   }
 
-  public async waitForPageLoaded(isEmptyHistory = false) {
+  getConversationSettings(): ConversationSettings {
+    if (!this.conversationSettings) {
+      this.conversationSettings = new ConversationSettings(this.page);
+    }
+    return this.conversationSettings;
+  }
+
+  public async waitForPageLoaded(options?: {
+    isNewConversationVisible?: boolean;
+  }) {
     const chatBar = this.getChatBar();
     await chatBar.waitForState({ state: 'attached' });
     await this.getPromptBar().waitForState({ state: 'attached' });
@@ -37,11 +47,19 @@ export class DialHomePage extends BasePage {
     await chat.waitForState({ state: 'attached' });
     await chat.waitForChatLoaded();
     await chat.getSendMessage().waitForMessageInputLoaded();
-    if (isEmptyHistory) {
-      await chatBar
+    if (options?.isNewConversationVisible) {
+      const newConversation = await chatBar
         .getConversations()
-        .getConversationByName(ExpectedConstants.newConversationTitle)
-        .waitFor();
+        .getConversationByName(ExpectedConstants.newConversationTitle);
+      await newConversation.waitFor();
+      await newConversation.waitFor({ state: 'attached' });
+      const conversationSettings = this.getConversationSettings();
+      await conversationSettings
+        .getTalkToSelector()
+        .waitForState({ state: 'attached' });
+      await conversationSettings
+        .getEntitySettings()
+        .waitForState({ state: 'attached' });
     }
   }
 }

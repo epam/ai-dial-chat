@@ -51,6 +51,10 @@ export const mergeMessages = (
 ) => {
   const newSource = structuredClone(source);
   newMessages.forEach((newData) => {
+    if (newData.errorMessage) {
+      newSource.errorMessage = newData.errorMessage;
+    }
+
     if (newData.role) {
       newSource.role = newData.role;
     }

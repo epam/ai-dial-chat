@@ -1,4 +1,5 @@
 import { Account, CallbacksOptions, Profile } from 'next-auth';
+import { JWT } from 'next-auth/jwt';
 import { TokenEndpointHandler } from 'next-auth/providers';
 
 import { logger } from '../server/logger';
@@ -37,14 +38,16 @@ export const tokenConfig: TokenEndpointHandler = {
  * `accessToken` and `accessTokenExpires`. If an error occurs,
  * returns the old token and an error property
  */
-async function refreshAccessToken(token: any) {
+async function refreshAccessToken(token: JWT & any) {
+  const displayedTokenSub =
+    process.env.SHOW_TOKEN_SUB === 'true' ? token.sub : '******';
   try {
     if (!token.providerId) {
-      throw new Error('No provider avaliable');
+      throw new Error(`No provider information exists in token`);
     }
     const client = NextClient.getClient(token.providerId);
     if (!client) {
-      throw new Error('No client for appropriate provider set');
+      throw new Error(`No client for appropriate provider set`);
     }
 
     let msWaiting = 0;
@@ -71,7 +74,7 @@ async function refreshAccessToken(token: any) {
       msWaiting += 50;
 
       if (msWaiting >= 20000) {
-        throw new Error('Waiting more than 20 seconds for refreshing token');
+        throw new Error(`Waiting more than 20 seconds for refreshing token`);
       }
     }
 
@@ -81,15 +84,17 @@ async function refreshAccessToken(token: any) {
       !refreshedTokens ||
       (!refreshedTokens.expires_in && !refreshedTokens.expires_at)
     ) {
-      throw new Error('Error from auth provider while refreshing token');
+      throw new Error(`Error from auth provider while refreshing token`);
     }
 
     if (!refreshedTokens.refresh_token) {
-      logger.warn(`Auth provider didn't provide new refresh token`);
+      logger.warn(
+        `Auth provider didn't provide new refresh token. Sub: ${displayedTokenSub}`,
+      );
     }
 
     if (!refreshedTokens.refresh_token && !token.refreshToken) {
-      throw new Error('No refresh tokens exists');
+      throw new Error(`No refresh tokens exists`);
     }
 
     const returnToken = {
@@ -107,7 +112,10 @@ async function refreshAccessToken(token: any) {
     });
     return returnToken;
   } catch (error: any) {
-    logger.error(error, `Error when refreshing token: ${error.message}`);
+    logger.error(
+      error,
+      `Error when refreshing token: ${error.message}. Sub: ${displayedTokenSub}`,
+    );
 
     return {
       ...token,

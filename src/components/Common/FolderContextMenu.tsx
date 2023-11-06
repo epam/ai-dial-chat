@@ -26,7 +26,7 @@ export const FolderContextMenu = ({
       className="justify-self-end"
       trigger={
         <DotsIcon
-          className="text-gray-500"
+          className="rotate-90 text-gray-500"
           width={18}
           height={18}
           size={18}
