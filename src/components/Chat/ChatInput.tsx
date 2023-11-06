@@ -306,9 +306,7 @@ export const ChatInput = ({
       ref={inputRef}
       className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 pt-6 dark:via-gray-900 dark:to-gray-900 md:pt-2"
     >
-      <div
-        className="relative"
-      >
+      <div className="relative">
         {messageIsStreaming && (
           <button
             className="absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600"

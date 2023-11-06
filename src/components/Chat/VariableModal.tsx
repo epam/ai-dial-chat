@@ -11,14 +11,14 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
 
 import XMark from '../../../public/images/icons/xmark.svg';
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
-
-import classNames from 'classnames';
 
 interface Props {
   prompt: Prompt;

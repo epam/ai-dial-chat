@@ -4,8 +4,8 @@ import { useTranslation } from 'next-i18next';
 
 import { throttle } from '@/src/utils/data/throttle';
 
-import { Conversation, Message, Replay } from '@/src/types/chat';
 import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
+import { Conversation, Message, Replay } from '@/src/types/chat';
 
 import {
   AddonsActions,
