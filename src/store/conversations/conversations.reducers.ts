@@ -582,6 +582,31 @@ const selectIsMessagesError = createSelector(
   },
 );
 
+const selectIsLastAssistantMessageEmpty = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some((conv) => {
+      if (conv.messages.length === 0) {
+        return false;
+      }
+
+      const lastMessageIndex = conv.messages.length - 1;
+      const lastMessage = conv.messages[lastMessageIndex];
+
+      return (
+        lastMessage.role === 'assistant' && lastMessage.content.length === 0
+      );
+    });
+  },
+);
+
+const selectNotModelConversations = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some((conv) => conv.model.type !== 'model');
+  },
+);
+
 export const ConversationsSelectors = {
   selectConversations,
   selectSelectedConversationsIds,
@@ -607,6 +632,8 @@ export const ConversationsSelectors = {
   selectPlaybackActiveIndex,
   selectIsPlaybackPaused,
   selectPlaybackActiveMessage,
+  selectIsLastAssistantMessageEmpty,
+  selectNotModelConversations,
 };
 
 export const ConversationsActions = conversationsSlice.actions;
