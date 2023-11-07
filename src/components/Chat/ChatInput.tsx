@@ -1,4 +1,4 @@
-import { IconPlayerStop, IconSend } from '@tabler/icons-react';
+import { IconPlayerStop } from '@tabler/icons-react';
 import {
   KeyboardEvent,
   MutableRefObject,
@@ -17,7 +17,6 @@ import { Prompt } from '@/src/types/prompt';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -26,6 +25,7 @@ import { FooterMessage } from './FooterMessage';
 import { PromptDialog } from './PromptDialog';
 import { PromptList } from './PromptList';
 import { ScrollDownButton } from './ScrollDownButton';
+import { SendMessageButton } from './SendMessageButton';
 
 interface Props {
   onSend: (message: Message) => void;
@@ -60,7 +60,6 @@ export const ChatInput = ({
   const [variables, setVariables] = useState<string[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showPluginSelect, setShowPluginSelect] = useState(false);
-  const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
@@ -364,22 +363,10 @@ export const ChatInput = ({
             onKeyDown={handleKeyDown}
           />
 
-          <button
-            className="absolute right-4 top-2.5 rounded"
-            onClick={handleSend}
-            disabled={messageIsStreaming || isModelsLoading}
-          >
-            {messageIsStreaming || isModelsLoading ? (
-              <div
-                className="h-5 w-5 animate-spin rounded-full border-t-2 border-gray-500"
-                data-qa="message-input-spinner"
-              ></div>
-            ) : (
-              <span className="hover:text-blue-500">
-                <IconSend size={24} stroke="1.5" />
-              </span>
-            )}
-          </button>
+          <SendMessageButton
+            messageIsStreaming={messageIsStreaming}
+            handleSend={handleSend}
+          />
 
           {showScrollDownButton && (
             <ScrollDownButton
