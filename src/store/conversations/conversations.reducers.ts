@@ -586,8 +586,13 @@ const selectIsLastAssistantMessageEmpty = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some((conv) => {
+      if (conv.messages.length === 0) {
+        return false;
+      }
+
       const lastMessageIndex = conv.messages.length - 1;
       const lastMessage = conv.messages[lastMessageIndex];
+
       return (
         lastMessage.role === 'assistant' && lastMessage.content.length === 0
       );
