@@ -584,9 +584,10 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             content: message.content,
             role: message.role,
             like: void 0,
-            ...(message.custom_content?.state && {
-              custom_content: { state: message.custom_content?.state },
-            }),
+            ...(payload.conversation.model.type !== 'model' &&
+              message.custom_content?.state && {
+                custom_content: { state: message.custom_content?.state },
+              }),
           })),
         id: payload.conversation.id.toLowerCase(),
         ...modelAdditionalSettings,
