@@ -7,14 +7,10 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 interface Props {
-  messageIsStreaming: boolean;
   handleSend: () => void;
 }
 
-export const SendMessageButton = ({
-  handleSend,
-  messageIsStreaming,
-}: Props) => {
+export const SendMessageButton = ({ handleSend }: Props) => {
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const isMessageError = useAppSelector(
     ConversationsSelectors.selectIsMessagesError,
@@ -22,13 +18,15 @@ export const SendMessageButton = ({
   const isLastAssistantMessageEmpty = useAppSelector(
     ConversationsSelectors.selectIsLastAssistantMessageEmpty,
   );
-  const isNotModelTypeModelInSelectedConversations = useAppSelector(
-    ConversationsSelectors.selectIsNotModelTypeModelInSelectedConversations,
+  const notModelConversations = useAppSelector(
+    ConversationsSelectors.selectNotModelConversations,
+  );
+  const messageIsStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
   );
 
   const isSendDisabled =
-    isMessageError &&
-    (isLastAssistantMessageEmpty || isNotModelTypeModelInSelectedConversations);
+    isMessageError && (isLastAssistantMessageEmpty || notModelConversations);
 
   return (
     <button

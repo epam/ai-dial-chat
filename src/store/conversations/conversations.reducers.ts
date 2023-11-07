@@ -600,7 +600,7 @@ const selectIsLastAssistantMessageEmpty = createSelector(
   },
 );
 
-const selectIsNotModelTypeModelInSelectedConversations = createSelector(
+const selectNotModelConversations = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some((conv) => conv.model.type !== 'model');
@@ -633,7 +633,7 @@ export const ConversationsSelectors = {
   selectIsPlaybackPaused,
   selectPlaybackActiveMessage,
   selectIsLastAssistantMessageEmpty,
-  selectIsNotModelTypeModelInSelectedConversations,
+  selectNotModelConversations,
 };
 
 export const ConversationsActions = conversationsSlice.actions;

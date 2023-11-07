@@ -363,10 +363,7 @@ export const ChatInput = ({
             onKeyDown={handleKeyDown}
           />
 
-          <SendMessageButton
-            messageIsStreaming={messageIsStreaming}
-            handleSend={handleSend}
-          />
+          <SendMessageButton handleSend={handleSend} />
 
           {showScrollDownButton && (
             <ScrollDownButton
