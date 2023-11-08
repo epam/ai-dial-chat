@@ -25,7 +25,7 @@ interface Props<T> {
   featureType: FeatureType;
   handleSearchTerm: (searchTerm: string) => void;
   toggleOpen?: () => void;
-  handleDrop: (e: any) => void;
+  handleDrop: (e:   any) => void;
 }
 
 const Sidebar = <T,>({
@@ -102,6 +102,7 @@ const Sidebar = <T,>({
             onDragOver={allowDrop}
             onDragEnter={highlightDrop}
             onDragLeave={removeHighlight}
+            data-qa="draggable-area"
           >
             {itemComponent}
           </div>

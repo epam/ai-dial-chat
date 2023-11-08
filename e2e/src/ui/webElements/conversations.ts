@@ -21,6 +21,12 @@ export class Conversations extends BaseElement {
   constructor(page: Page) {
     super(page, ChatBarSelectors.conversations);
   }
+
+  public chronologyByTitle = (chronology: string) =>
+    this.getChildElementBySelector(
+      SideBarSelectors.chronology,
+    ).getElementLocatorByText(chronology);
+
   public conversationDotsMenu = (name: string, index?: number) => {
     return this.getConversationByName(name, index).locator(
       SideBarSelectors.dotsMenu,
@@ -93,23 +99,21 @@ export class Conversations extends BaseElement {
   }
 
   public async getTodayConversations() {
-    const conversationsChronology = await this.getConversationsByChronology();
-    return conversationsChronology.find(
-      (chron) => chron.chronology === Chronology.today,
-    )!.conversations;
+    return this.getChronologyConversations(Chronology.today);
   }
 
   public async getYesterdayConversations() {
-    const conversationsChronology = await this.getConversationsByChronology();
-    return conversationsChronology.find(
-      (chron) => chron.chronology === Chronology.yesterday,
-    )!.conversations;
+    return this.getChronologyConversations(Chronology.yesterday);
   }
 
   public async getLastWeekConversations() {
+    return this.getChronologyConversations(Chronology.lastSevenDays);
+  }
+
+  public async getChronologyConversations(chronology: string) {
     const conversationsChronology = await this.getConversationsByChronology();
     return conversationsChronology.find(
-      (chron) => chron.chronology === Chronology.lastSevenDays,
+      (chron) => chron.chronology === chronology,
     )!.conversations;
   }
 

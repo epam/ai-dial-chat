@@ -24,6 +24,8 @@ export const ExpectedConstants = {
   enterMessageAlert: 'Please enter a message',
   clearAllConversationsAlert: 'Are you sure you want to clear all messages?',
   defaultIconUrl: 'url(images/icons/message-square-lines-alt.svg))',
+  deleteFolderMessage:
+    'Are you sure that you want to remove a folder with all nested elements?',
 };
 
 export enum Groups {
@@ -50,7 +52,6 @@ export const Chronology = {
   lastSevenDays: 'Last 7 days',
   lastThirtyDays: 'Last 30 days',
   older: 'Older',
-  other: 'Other',
 };
 
 export const API = {

@@ -1,6 +1,7 @@
 import { SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import { Styles } from '@/e2e/src/ui/domData';
 import { keys } from '@/e2e/src/ui/keyboard';
 import { DropdownMenu } from '@/e2e/src/ui/webElements/dropdownMenu';
 import { Input } from '@/e2e/src/ui/webElements/input';
@@ -67,5 +68,12 @@ export class Folders extends BaseElement {
 
   public async expandCollapseFolder(name: string, index?: number) {
     await this.getFolderByName(name, index).click();
+  }
+
+  public async getFolderNameColor(name: string, index?: number) {
+    const folder = this.createElementFromLocator(
+      this.getFolderByName(name, index).getByText(name),
+    );
+    return folder.getComputedStyleProperty(Styles.color);
   }
 }

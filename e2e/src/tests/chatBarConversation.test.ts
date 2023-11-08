@@ -4,11 +4,13 @@ import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
 import {
+  Chronology,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
   ModelIds,
 } from '@/e2e/src/testData';
+import { Colors } from '@/e2e/src/ui/domData';
 import { GeneratorUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
@@ -188,35 +190,43 @@ test('Menu for New conversation', async ({
     ]);
 });
 
-test('Menu for conversation with history', async ({
-  dialHomePage,
-  conversations,
-  conversationDropdownMenu,
-  conversationData,
-  localStorageManager,
-  setTestIds,
-}) => {
-  setTestIds('EPMRTC-595');
-  const conversation = conversationData.prepareDefaultConversation();
-  await localStorageManager.setConversationHistory(conversation);
-  await localStorageManager.setSelectedConversation(conversation);
+test(
+  'Menu for conversation with history.\n' +
+    'Special characters are allowed in chat name',
+  async ({
+    dialHomePage,
+    conversations,
+    conversationDropdownMenu,
+    conversationData,
+    localStorageManager,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-595', 'EPMRTC-1276');
+    const conversation = conversationData.prepareDefaultConversation(
+      mirrorApp,
+      '!@#$%^&()_{}[]:;"\',./<>?/-`~',
+    );
+    await localStorageManager.setConversationHistory(conversation);
+    await localStorageManager.setSelectedConversation(conversation);
 
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
-  await conversations.openConversationDropdownMenu(conversation.name);
-  const menuOptions = await conversationDropdownMenu.getAllMenuOptions();
-  expect
-    .soft(menuOptions, ExpectedMessages.conversationContextOptionsValid)
-    .toEqual([
-      MenuOptions.rename,
-      MenuOptions.compare,
-      MenuOptions.replay,
-      MenuOptions.playback,
-      MenuOptions.export,
-      MenuOptions.moveTo,
-      MenuOptions.delete,
-    ]);
-});
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded();
+    await conversations.getConversationByName(conversation.name).waitFor();
+    await conversations.openConversationDropdownMenu(conversation.name);
+    const menuOptions = await conversationDropdownMenu.getAllMenuOptions();
+    expect
+      .soft(menuOptions, ExpectedMessages.conversationContextOptionsValid)
+      .toEqual([
+        MenuOptions.rename,
+        MenuOptions.compare,
+        MenuOptions.replay,
+        MenuOptions.playback,
+        MenuOptions.export,
+        MenuOptions.moveTo,
+        MenuOptions.delete,
+      ]);
+  },
+);
 
 test('Delete chat in the folder', async ({
   dialHomePage,
@@ -398,6 +408,8 @@ test('Chat is moved from the folder via drag&drop', async ({
   folderConversations,
   localStorageManager,
   conversations,
+  chatBar,
+  page,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-861');
@@ -407,17 +419,24 @@ test('Chat is moved from the folder via drag&drop', async ({
   await localStorageManager.setConversationHistory(
     conversationInFolder.conversations[0],
   );
+  await localStorageManager.setOpenedFolders(conversationInFolder.folders);
+  await localStorageManager.setSelectedConversation(
+    conversationInFolder.conversations[0],
+  );
   await dialHomePage.openHomePage({
     iconsToBeLoaded: [gpt35Model.iconUrl],
   });
   await dialHomePage.waitForPageLoaded();
-  await folderConversations.expandCollapseFolder(
-    conversationInFolder.folders.name,
-  );
-  await folderConversations.dropConversationFromFolder(
+  await folderConversations.drugConversationFromFolder(
     conversationInFolder.folders.name,
     conversationInFolder.conversations[0].name,
   );
+  const draggableAreaColor = await chatBar.getDraggableAreaColor();
+  expect
+    .soft(draggableAreaColor[0], ExpectedMessages.draggableAreaColorIsValid)
+    .toBe(Colors.highlightedDraggableArea);
+  await page.mouse.up();
+
   expect
     .soft(
       await folderConversations.isFolderConversationVisible(
@@ -435,6 +454,13 @@ test('Chat is moved from the folder via drag&drop', async ({
       ExpectedMessages.conversationOfToday,
     )
     .toBeTruthy();
+
+  const folderNameColor = await folderConversations.getFolderNameColor(
+    conversationInFolder.folders.name,
+  );
+  expect
+    .soft(folderNameColor[0], ExpectedMessages.folderNameColorIsValid)
+    .toBe(Colors.notHighlightedFolderName);
 });
 
 test('Chat is moved to folder created from Move to', async ({
@@ -471,6 +497,13 @@ test('Chat is moved to folder created from Move to', async ({
       ExpectedMessages.conversationMovedToFolder,
     )
     .toBeTruthy();
+
+  const folderNameColor = await folderConversations.getFolderNameColor(
+    ExpectedConstants.newFolderTitle,
+  );
+  expect
+    .soft(folderNameColor[0], ExpectedMessages.folderNameColorIsValid)
+    .toBe(Colors.highlightedFolderName);
 });
 
 test('Chat is moved to folder from Move to list', async ({
@@ -586,6 +619,8 @@ test('Delete all conversations. Clear', async ({
   conversationData.resetData();
   const conversationInFolder =
     conversationData.prepareDefaultConversationInFolder();
+  conversationData.resetData();
+  const nestedFolders = conversationData.prepareNestedFolder(3);
 
   const emptyPromptFolder = promptData.prepareFolder();
   promptData.resetData();
@@ -608,13 +643,16 @@ test('Delete all conversations. Clear', async ({
     conversationInFolder.folders,
     emptyPromptFolder,
     promptInFolder.folders,
+    ...nestedFolders,
+  );
+  await localStorageManager.updateOpenedFolders(
+    conversationInFolder.folders,
+    promptInFolder.folders,
+    ...nestedFolders,
   );
 
   await dialHomePage.reloadPage();
   await dialHomePage.waitForPageLoaded();
-  await folderConversations.expandCollapseFolder(
-    conversationInFolder.folders.name,
-  );
   await chatBar.deleteAllConversations();
   await confirmationDialog.confirm();
 
@@ -634,6 +672,15 @@ test('Delete all conversations. Clear', async ({
       .isVisible();
     expect.soft(isFolderVisible, ExpectedMessages.folderDeleted).toBeFalsy();
 
+    for (const nestedFolder of nestedFolders) {
+      const isNestedFolderVisible = await folderConversations
+        .getFolderByName(nestedFolder.name)
+        .isVisible();
+      expect
+        .soft(isNestedFolderVisible, ExpectedMessages.folderDeleted)
+        .toBeFalsy();
+    }
+
     const isSingleConversationVisible = await conversations
       .getConversationByName(singleConversation.name)
       .isVisible();
@@ -648,9 +695,6 @@ test('Delete all conversations. Clear', async ({
       .soft(isNewConversationVisible, ExpectedMessages.newConversationCreated)
       .toBeTruthy();
 
-    if (i > 1) {
-      await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
-    }
     const isFolderPromptVisible = await folderPrompts.isFolderPromptVisible(
       promptInFolder.folders.name,
       promptInFolder.prompts[0].name,
@@ -679,4 +723,63 @@ test('Delete all conversations. Clear', async ({
     }
     i--;
   }
+});
+
+test('Chat sorting. Sections can be collapsed and expanded', async ({
+  dialHomePage,
+  conversations,
+  conversationData,
+  localStorageManager,
+  setTestIds,
+}) => {
+  setTestIds('EPMRTC-1313');
+  await test.step('Prepare conversations for all available chronologies', async () => {
+    const yesterdayConversation =
+      conversationData.prepareYesterdayConversation(mirrorApp);
+    conversationData.resetData();
+    const lastWeekConversation =
+      conversationData.prepareLastWeekConversation(mirrorApp);
+    conversationData.resetData();
+    const lastMonthConversation =
+      conversationData.prepareLastMonthConversation(mirrorApp);
+    conversationData.resetData();
+    const otherConversation =
+      conversationData.prepareOlderConversation(mirrorApp);
+    await localStorageManager.setConversationHistory(
+      yesterdayConversation,
+      lastWeekConversation,
+      lastMonthConversation,
+      otherConversation,
+    );
+  });
+
+  await test.step('Verify it is possible to expand/collapse random chronology', async () => {
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+
+    const randomChronology = GeneratorUtil.randomArrayElement(
+      Object.values(Chronology),
+    );
+    await conversations.chronologyByTitle(randomChronology).click();
+
+    let chronologyConversations =
+      await conversations.getChronologyConversations(randomChronology);
+    expect
+      .soft(
+        chronologyConversations.length,
+        ExpectedMessages.chronologyMessageCountIsCorrect,
+      )
+      .toBe(0);
+
+    await conversations.chronologyByTitle(randomChronology).click();
+    chronologyConversations = await conversations.getChronologyConversations(
+      randomChronology,
+    );
+    expect
+      .soft(
+        chronologyConversations.length,
+        ExpectedMessages.chronologyMessageCountIsCorrect,
+      )
+      .toBe(1);
+  });
 });

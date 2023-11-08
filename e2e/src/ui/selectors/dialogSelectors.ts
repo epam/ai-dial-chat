@@ -2,6 +2,7 @@ export const Dialog = {
   confirmationDialog: '[data-qa="confirmation-dialog"]',
   cancelDialog: '[data-qa="cancel-dialog"]',
   confirm: '[data-qa="confirm"]',
+  confirmationMessage: '[data-qa="confirm-message"]',
 };
 
 export const Popup = {

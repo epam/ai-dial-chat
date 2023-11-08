@@ -72,7 +72,7 @@ export class FolderConversations extends Folders {
     await this.getDropdownMenu().waitForState();
   }
 
-  public async dropConversationFromFolder(
+  public async drugConversationFromFolder(
     folderName: string,
     conversationName: string,
   ) {
@@ -88,6 +88,5 @@ export class FolderConversations extends Folders {
       foldersBounding!.x,
       foldersBounding!.y + 1.5 * foldersBounding!.height,
     );
-    await this.page.mouse.up();
   }
 }
