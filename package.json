@@ -77,7 +77,7 @@
     "@typescript-eslint/eslint-plugin": "^6.7.0",
     "@typescript-eslint/parser": "^6.7.0",
     "@vitest/coverage-c8": "^0.29.7",
-    "autoprefixer": "^10.4.14",
+    "autoprefixer": "^10.4.16",
     "dotenv": "^16.3.1",
     "endent": "^2.1.0",
     "esbuild": "^0.19.3",
