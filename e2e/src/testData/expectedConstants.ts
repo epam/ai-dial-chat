@@ -52,6 +52,7 @@ export const Chronology = {
   lastSevenDays: 'Last 7 days',
   lastThirtyDays: 'Last 30 days',
   older: 'Older',
+  other: 'Other',
 };
 
 export const API = {

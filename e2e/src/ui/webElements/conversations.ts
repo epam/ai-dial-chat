@@ -110,17 +110,14 @@ export class Conversations extends BaseElement {
     return this.getChronologyConversations(Chronology.lastSevenDays);
   }
 
+  public async getLastMonthConversations() {
+    return this.getChronologyConversations(Chronology.lastThirtyDays);
+  }
+
   public async getChronologyConversations(chronology: string) {
     const conversationsChronology = await this.getConversationsByChronology();
     return conversationsChronology.find(
       (chron) => chron.chronology === chronology,
-    )!.conversations;
-  }
-
-  public async getLastMonthConversations() {
-    const conversationsChronology = await this.getConversationsByChronology();
-    return conversationsChronology.find(
-      (chron) => chron.chronology === Chronology.lastThirtyDays,
     )!.conversations;
   }
 

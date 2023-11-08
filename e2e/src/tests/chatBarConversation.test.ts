@@ -757,9 +757,13 @@ test('Chat sorting. Sections can be collapsed and expanded', async ({
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
 
-    const randomChronology = GeneratorUtil.randomArrayElement(
-      Object.values(Chronology),
-    );
+    const randomChronology = GeneratorUtil.randomArrayElement([
+      Chronology.today,
+      Chronology.yesterday,
+      Chronology.lastSevenDays,
+      Chronology.lastThirtyDays,
+      Chronology.older,
+    ]);
     await conversations.chronologyByTitle(randomChronology).click();
 
     let chronologyConversations =
