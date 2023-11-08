@@ -25,7 +25,7 @@ interface Props<T> {
   featureType: FeatureType;
   handleSearchTerm: (searchTerm: string) => void;
   toggleOpen?: () => void;
-  handleDrop: (e:   any) => void;
+  handleDrop: (e: any) => void;
 }
 
 const Sidebar = <T,>({
