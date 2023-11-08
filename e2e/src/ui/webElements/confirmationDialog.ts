@@ -9,6 +9,10 @@ export class ConfirmationDialog extends BaseElement {
 
   public cancelButton = new BaseElement(this.page, Dialog.cancelDialog);
   public confirmButton = new BaseElement(this.page, Dialog.confirm);
+  public confirmMessage = new BaseElement(
+    this.page,
+    Dialog.confirmationMessage,
+  );
 
   public async cancelDialog() {
     await this.cancelButton.click();
@@ -16,5 +20,9 @@ export class ConfirmationDialog extends BaseElement {
 
   public async confirm() {
     await this.confirmButton.click();
+  }
+
+  public async getConfirmationMessage() {
+    return this.confirmMessage.getElementContent();
   }
 }

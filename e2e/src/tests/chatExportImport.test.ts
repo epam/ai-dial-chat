@@ -395,100 +395,120 @@ test(
   },
 );
 
-test('Import file from 1.4 DIAL milestone to conversations and continue working with it', async ({
-  dialHomePage,
-  chatBar,
-  setTestIds,
-  folderConversations,
-  prompts,
-  chatMessages,
-  conversations,
-  chat,
-}) => {
-  setTestIds('EPMRTC-906');
-  await test.step('Import conversation from 1.4 app version and verify folder with Gpt-3.5 chat and its history is visible', async () => {
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await dialHomePage.uploadData({ path: Import.v14AppImportedFilename }, () =>
-      chatBar.importButton.click(),
-    );
+test(
+  'Import file from 1.4 DIAL milestone to conversations and continue working with it.\n' +
+    'Chat sorting. Other chat is moved to Today section after sending a message',
+  async ({
+    dialHomePage,
+    chatBar,
+    setTestIds,
+    folderConversations,
+    prompts,
+    chatMessages,
+    conversations,
+    chat,
+  }) => {
+    setTestIds('EPMRTC-906', 'EPMRTC-779');
+    await test.step('Import conversation from 1.4 app version and verify folder with Gpt-3.5 chat and its history is visible', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      await dialHomePage.uploadData(
+        { path: Import.v14AppImportedFilename },
+        () => chatBar.importButton.click(),
+      );
 
-    await folderConversations.expandCollapseFolder(Import.v14AppFolderName);
-    expect
-      .soft(
-        await folderConversations.isFolderConversationVisible(
-          Import.v14AppFolderName,
-          Import.v14AppFolderChatName,
-        ),
-        ExpectedMessages.conversationIsVisible,
-      )
-      .toBeTruthy();
+      await folderConversations.expandCollapseFolder(Import.v14AppFolderName);
+      expect
+        .soft(
+          await folderConversations.isFolderConversationVisible(
+            Import.v14AppFolderName,
+            Import.v14AppFolderChatName,
+          ),
+          ExpectedMessages.conversationIsVisible,
+        )
+        .toBeTruthy();
 
-    await folderConversations.selectFolderConversation(
-      Import.v14AppFolderName,
-      Import.v14AppFolderChatName,
-    );
-    const folderChatMessagesCount =
-      await chatMessages.chatMessages.getElementsCount();
-    expect
-      .soft(folderChatMessagesCount, ExpectedMessages.messageCountIsCorrect)
-      .toBe(2);
-  });
+      await folderConversations.selectFolderConversation(
+        Import.v14AppFolderName,
+        Import.v14AppFolderChatName,
+      );
+      const folderChatMessagesCount =
+        await chatMessages.chatMessages.getElementsCount();
+      expect
+        .soft(folderChatMessagesCount, ExpectedMessages.messageCountIsCorrect)
+        .toBe(2);
+    });
 
-  await test.step('Verify New conversation with Gpt-4 icon is imported', async () => {
-    await conversations
-      .getConversationByName(ExpectedConstants.newConversationTitle, 2)
-      .waitFor();
-    const newGpt4ConversationIcon =
-      await conversations.getConversationIconAttributes(
+    await test.step('Verify New conversation with Gpt-4 icon is imported', async () => {
+      await conversations
+        .getConversationByName(ExpectedConstants.newConversationTitle, 2)
+        .waitFor();
+      const newGpt4ConversationIcon =
+        await conversations.getConversationIconAttributes(
+          ExpectedConstants.newConversationTitle,
+          2,
+        );
+      expect
+        .soft(
+          newGpt4ConversationIcon.iconEntity,
+          ExpectedMessages.chatBarIconEntityIsValid,
+        )
+        .toBe(gpt4Model!.id);
+      expect
+        .soft(
+          newGpt4ConversationIcon.iconUrl,
+          ExpectedMessages.chatBarIconSourceIsValid,
+        )
+        .toBe(gpt4Model!.iconUrl);
+    });
+
+    await test.step('Verify Bison conversation with default icon is imported', async () => {
+      await conversations
+        .getConversationByName(Import.v14AppBisonChatName)
+        .waitFor();
+
+      const isBisonConversationHasDefaultIcon =
+        await conversations.isConversationHasDefaultIcon(
+          Import.v14AppBisonChatName,
+        );
+      expect
+        .soft(
+          isBisonConversationHasDefaultIcon,
+          ExpectedMessages.chatBarConversationIconIsDefault,
+        )
+        .toBeTruthy();
+    });
+
+    await test.step('Verify no prompts are imported', async () => {
+      const promptsCount = await prompts.getPromptsCount();
+      expect.soft(promptsCount, ExpectedMessages.noPromptsImported).toBe(0);
+    });
+
+    await test.step('Send new request in Gpr-3.5 and verify response is received', async () => {
+      const newRequest = '1+2=';
+      await chat.sendRequestWithButton(newRequest);
+      const lastResponseContent = await chatMessages.getLastMessageContent();
+      expect
+        .soft(
+          lastResponseContent !== '',
+          ExpectedMessages.messageContentIsValid,
+        )
+        .toBeTruthy();
+    });
+
+    await test.step('Send new request in imported "New Conversation" and verify it was moved into Today section', async () => {
+      await conversations.selectConversation(
         ExpectedConstants.newConversationTitle,
         2,
       );
-    expect
-      .soft(
-        newGpt4ConversationIcon.iconEntity,
-        ExpectedMessages.chatBarIconEntityIsValid,
-      )
-      .toBe(gpt4Model!.id);
-    expect
-      .soft(
-        newGpt4ConversationIcon.iconUrl,
-        ExpectedMessages.chatBarIconSourceIsValid,
-      )
-      .toBe(gpt4Model!.iconUrl);
-  });
-
-  await test.step('Verify Bison conversation with default icon is imported', async () => {
-    await conversations
-      .getConversationByName(Import.v14AppBisonChatName)
-      .waitFor();
-
-    const isBisonConversationHasDefaultIcon =
-      await conversations.isConversationHasDefaultIcon(
-        Import.v14AppBisonChatName,
-      );
-    expect
-      .soft(
-        isBisonConversationHasDefaultIcon,
-        ExpectedMessages.chatBarConversationIconIsDefault,
-      )
-      .toBeTruthy();
-  });
-
-  await test.step('Verify no prompts are imported', async () => {
-    const promptsCount = await prompts.getPromptsCount();
-    expect.soft(promptsCount, ExpectedMessages.noPromptsImported).toBe(0);
-  });
-
-  await test.step('Send new request in Gpr-3.5 and verify response is received', async () => {
-    const newRequest = '1+2=';
-    await chat.sendRequestWithButton(newRequest);
-    const lastResponseContent = await chatMessages.getLastMessageContent();
-    expect
-      .soft(lastResponseContent !== '', ExpectedMessages.messageContentIsValid)
-      .toBeTruthy();
-  });
-});
+      await chat.sendRequestWithButton('1+1=', false);
+      const todayConversations = await conversations.getTodayConversations();
+      expect
+        .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
+        .toBe(2);
+    });
+  },
+);
 
 test.afterAll(async () => {
   FileUtil.removeExportFolder();
