@@ -27,6 +27,10 @@ export class LocalStorageManager {
     window.localStorage.setItem('selectedConversationIds', selected);
   };
 
+  setOpenedFoldersIdsKey = () => (folders: string) => {
+    window.localStorage.setItem('openedFoldersIds', folders);
+  };
+
   async setConversationHistory(...conversation: Conversation[]) {
     await this.page.addInitScript(
       this.setConversationHistoryKey(),
@@ -83,6 +87,20 @@ export class LocalStorageManager {
   async getRecentModels() {
     return this.page.evaluate(
       () => window.localStorage.getItem('recentModelsIds') ?? undefined,
+    );
+  }
+
+  async setOpenedFolders(...folders: FolderInterface[]) {
+    await this.page.addInitScript(
+      this.setOpenedFoldersIdsKey(),
+      JSON.stringify(folders.map((f) => f.id)),
+    );
+  }
+
+  async updateOpenedFolders(...folders: FolderInterface[]) {
+    await this.page.evaluate(
+      this.setOpenedFoldersIdsKey(),
+      JSON.stringify(folders.map((f) => f.id)),
     );
   }
 }

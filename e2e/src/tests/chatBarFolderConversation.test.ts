@@ -1,9 +1,13 @@
+import { Conversation } from '@/src/types/chat';
+import { FolderInterface } from '@/src/types/folder';
+
 import test from '@/e2e/src/core/fixtures';
 import {
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
 } from '@/e2e/src/testData';
+import { GeneratorUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
 test('Create new chat folder', async ({
@@ -26,31 +30,40 @@ test('Create new chat folder', async ({
     .toBeTruthy();
 });
 
-test(`Rename chat folder when it's empty using Enter`, async ({
-  dialHomePage,
-  conversationData,
-  folderConversations,
-  localStorageManager,
-  folderDropdownMenu,
-  setTestIds,
-}) => {
-  setTestIds('EPMRTC-571');
-  const folder = conversationData.prepareDefaultFolder();
-  await localStorageManager.setFolders(folder);
+test(
+  `Rename chat folder when it's empty using Enter.\n` +
+    'Rename folders on nested levels',
+  async ({
+    dialHomePage,
+    conversationData,
+    folderConversations,
+    localStorageManager,
+    folderDropdownMenu,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-571', 'EPMRTC-1371');
+    const nestedFolders = conversationData.prepareNestedFolder(3);
+    await localStorageManager.setFolders(...nestedFolders);
+    await localStorageManager.setOpenedFolders(...nestedFolders);
 
-  const newName = 'updated folder name';
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
-  await folderConversations.openFolderDropdownMenu(folder.name);
-  await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-  await folderConversations.editFolderNameWithEnter(folder.name, newName);
-  expect
-    .soft(
-      await folderConversations.getFolderByName(newName).isVisible(),
-      ExpectedMessages.folderNameUpdated,
-    )
-    .toBeTruthy();
-});
+    const newName = 'updated folder name';
+    const randomFolder = GeneratorUtil.randomArrayElement(nestedFolders);
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded();
+    await folderConversations.openFolderDropdownMenu(randomFolder.name);
+    await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+    await folderConversations.editFolderNameWithEnter(
+      randomFolder.name,
+      newName,
+    );
+    expect
+      .soft(
+        await folderConversations.getFolderByName(newName).isVisible(),
+        ExpectedMessages.folderNameUpdated,
+      )
+      .toBeTruthy();
+  },
+);
 
 test(`Cancel folder renaming on "x"`, async ({
   dialHomePage,
@@ -155,31 +168,58 @@ test('Folders can expand and collapse', async ({
     .toBeFalsy();
 });
 
-test('Delete folder. Cancel', async ({
-  dialHomePage,
-  conversationData,
-  folderConversations,
-  localStorageManager,
-  conversationDropdownMenu,
-  confirmationDialog,
-  setTestIds,
-}) => {
-  setTestIds('EPMRTC-606');
-  const folder = conversationData.prepareDefaultFolder();
-  await localStorageManager.setFolders(folder);
+test(
+  'Delete folder. Cancel.\n' + 'Delete root folder with nested folders',
+  async ({
+    dialHomePage,
+    conversationData,
+    folderConversations,
+    localStorageManager,
+    conversationDropdownMenu,
+    confirmationDialog,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-606', 'EPMRTC-1373');
+    const nestedFolders = conversationData.prepareNestedFolder(3);
+    await localStorageManager.setFolders(...nestedFolders);
+    await localStorageManager.setOpenedFolders(...nestedFolders);
 
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
-  await folderConversations.openFolderDropdownMenu(folder.name);
-  await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-  await confirmationDialog.cancelDialog();
-  expect
-    .soft(
-      await folderConversations.getFolderByName(folder.name).isVisible(),
-      ExpectedMessages.folderNotDeleted,
-    )
-    .toBeTruthy();
-});
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded();
+    await folderConversations.openFolderDropdownMenu(nestedFolders[0].name);
+    await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+    expect
+      .soft(
+        await confirmationDialog.getConfirmationMessage(),
+        ExpectedMessages.confirmationMessageIsValid,
+      )
+      .toBe(ExpectedConstants.deleteFolderMessage);
+
+    await confirmationDialog.cancelDialog();
+    expect
+      .soft(
+        await folderConversations
+          .getFolderByName(nestedFolders[0].name)
+          .isVisible(),
+        ExpectedMessages.folderNotDeleted,
+      )
+      .toBeTruthy();
+
+    await folderConversations.openFolderDropdownMenu(nestedFolders[0].name);
+    await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+    await confirmationDialog.confirm();
+    for (const nestedFolder of nestedFolders) {
+      expect
+        .soft(
+          await folderConversations
+            .getFolderByName(nestedFolder.name)
+            .isVisible(),
+          ExpectedMessages.folderDeleted,
+        )
+        .toBeFalsy();
+    }
+  },
+);
 
 test('Delete folder when there are some chats inside', async ({
   dialHomePage,
@@ -222,4 +262,85 @@ test('Delete folder when there are some chats inside', async ({
       ExpectedMessages.conversationOfToday,
     )
     .toBeFalsy();
+});
+
+test('Delete nested folder with chat', async ({
+  dialHomePage,
+  conversationData,
+  folderConversations,
+  localStorageManager,
+  conversationDropdownMenu,
+  conversations,
+  confirmationDialog,
+  setTestIds,
+}) => {
+  setTestIds('EPMRTC-1372');
+  const levelsCount = 3;
+  const levelToDelete = 2;
+  let nestedFolders: FolderInterface[];
+  const nestedConversations: Conversation[] = [];
+
+  await test.step('Prepare nested folders with conversations inside each one', async () => {
+    nestedFolders = conversationData.prepareNestedFolder(levelsCount);
+    for (let i = 0; i <= levelsCount; i++) {
+      const nestedConversation = conversationData.prepareDefaultConversation();
+      nestedConversations.push(nestedConversation);
+      nestedConversation.folderId = nestedFolders[i].id;
+      conversationData.resetData();
+    }
+    await localStorageManager.setFolders(...nestedFolders);
+    await localStorageManager.setOpenedFolders(...nestedFolders);
+    await localStorageManager.setConversationHistory(...nestedConversations);
+  });
+
+  await test.step('Delete 2nd level folder and verify all nested content is deleted as well', async () => {
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded();
+    await folderConversations.openFolderDropdownMenu(
+      nestedFolders[levelToDelete].name,
+    );
+    await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+    await confirmationDialog.confirm();
+
+    for (let i = levelToDelete; i <= levelsCount; i++) {
+      expect
+        .soft(
+          await folderConversations
+            .getFolderByName(nestedFolders[i].name)
+            .isVisible(),
+          ExpectedMessages.folderDeleted,
+        )
+        .toBeFalsy();
+      expect
+        .soft(
+          await conversations
+            .getConversationByName(nestedConversations[i].name)
+            .isVisible(),
+          ExpectedMessages.conversationDeleted,
+        )
+        .toBeFalsy();
+    }
+
+    for (let i = 0; i <= levelsCount - levelToDelete; i++) {
+      expect
+        .soft(
+          await folderConversations
+            .getFolderByName(nestedFolders[i].name)
+            .isVisible(),
+          ExpectedMessages.folderNotDeleted,
+        )
+        .toBeTruthy();
+      expect
+        .soft(
+          await folderConversations
+            .getFolderConversation(
+              nestedFolders[i].name,
+              nestedConversations[i].name,
+            )
+            .isVisible(),
+          ExpectedMessages.conversationNotDeleted,
+        )
+        .toBeTruthy();
+    }
+  });
 });
