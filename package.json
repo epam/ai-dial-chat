@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@dqbd/tiktoken": "^1.0.7",
-    "@floating-ui/react": "^0.25.0",
+    "@floating-ui/react": "^0.25.4",
     "@opentelemetry/exporter-prometheus": "^0.43.0",
     "@opentelemetry/exporter-trace-otlp-proto": "^0.43.0",
     "@opentelemetry/instrumentation": "^0.43.0",
@@ -58,7 +58,7 @@
     "rehype-sanitize": "^5.0.1",
     "remark-gfm": "^3.0.1",
     "rxjs": "^7.8.1",
-    "svgo": "^3.0.2",
+    "svgo": "^3.0.3",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
