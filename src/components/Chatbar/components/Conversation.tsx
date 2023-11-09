@@ -299,7 +299,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           <div
             className={classNames(
               'relative max-h-5 flex-1 truncate break-all text-left',
-              isDeleting || isRenaming ? 'pr-10' : 'group-hover:pr-7',
+              isDeleting ? 'mr-12' : 'group-hover:pr-7',
             )}
           >
             {conversation.name}
