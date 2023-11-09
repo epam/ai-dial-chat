@@ -42,8 +42,9 @@ import {
 
 import classNames from 'classnames';
 
-const menuItemClassNames =
-  'flex focus-visible:border-none focus-visible:outline-none gap-3 cursor-pointer px-3 items-center max-w-[300px]';
+const menuItemClassNames = classNames(
+  'flex max-w-[300px] cursor-pointer items-center gap-3 px-3 focus-visible:border-none focus-visible:outline-none',
+);
 
 const MenuContext = createContext<{
   getItemProps: (userProps?: HTMLProps<HTMLElement>) => Record<string, unknown>;
