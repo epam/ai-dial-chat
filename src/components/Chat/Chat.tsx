@@ -170,28 +170,22 @@ export const Chat = memo(() => {
     [dispatch],
   );
 
+  const scrollDown = useCallback(
+    (force = false) => {
+      if (autoScrollEnabled || force) {
+        messagesEndRef.current?.scrollIntoView({
+          behavior: 'smooth',
+        });
+      }
+    },
+    [autoScrollEnabled],
+  );
+
   useEffect(() => {
-    if (!autoScrollEnabled || !chatContainerRef.current) {
-      return;
-    }
-
-    chatContainerRef.current.scrollTo({
-      top: chatContainerRef.current.scrollHeight,
-      behavior: 'smooth',
-    });
+    scrollDown();
     textareaRef.current?.focus();
-  }, [autoScrollEnabled]);
+  }, [scrollDown]);
 
-  const scrollDown = () => {
-    if (!autoScrollEnabled || !chatContainerRef.current) {
-      return;
-    }
-
-    chatContainerRef.current.scrollTo({
-      top: chatContainerRef.current.scrollHeight,
-      behavior: 'smooth',
-    });
-  };
   const throttledScrollDown = throttle(scrollDown, 250);
 
   useEffect(() => {
@@ -199,15 +193,8 @@ export const Chat = memo(() => {
   }, [conversations, throttledScrollDown]);
 
   const handleScrollDown = useCallback(() => {
-    if (!chatContainerRef.current) {
-      return;
-    }
-
-    chatContainerRef.current.scrollTo({
-      top: chatContainerRef.current.scrollHeight,
-      behavior: 'smooth',
-    });
-  }, []);
+    scrollDown(true);
+  }, [scrollDown]);
 
   const handleScroll = useCallback(() => {
     if (chatContainerRef.current) {
