@@ -191,8 +191,12 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       >
         <IconBulb size={18} className="text-gray-500" />
 
-        <div className={classNames(isDeleting ? 'mr-12': 'pr-4',
-          "relative max-h-5 flex-1 truncate break-all text-left")}>
+        <div
+          className={classNames(
+            isDeleting ? 'mr-12' : 'pr-4',
+            'relative max-h-5 flex-1 truncate break-all text-left',
+          )}
+        >
           {prompt.name}
         </div>
       </button>
