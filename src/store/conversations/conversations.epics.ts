@@ -572,6 +572,12 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           selectedAddons,
         };
       }
+
+      const isAddCustomContentState =
+        (payload.conversation.selectedAddons &&
+          payload.conversation.selectedAddons.length > 0) ||
+        payload.conversation.model.type !== 'model';
+
       const chatBody: ChatBody = {
         modelId: payload.conversation.model.id,
         messages: payload.conversation.messages
@@ -584,7 +590,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             content: message.content,
             role: message.role,
             like: void 0,
-            ...(payload.conversation.model.type !== 'model' &&
+            ...(isAddCustomContentState &&
               message.custom_content?.state && {
                 custom_content: { state: message.custom_content?.state },
               }),
