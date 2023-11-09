@@ -10,14 +10,11 @@ export const parseStreamMessages = (message: string): Partial<Message>[] => {
 };
 
 const mergeStages = (sourceStages: Stage[], newStages: Stage[]) => {
-  const sourceStagesReducer = sourceStages.reduce(
-    (acc, curr) => {
-      acc[curr.index] = curr;
+  const sourceStagesReducer = sourceStages.reduce((acc, curr) => {
+    acc[curr.index] = curr;
 
-      return acc;
-    },
-    {} as Record<number, Stage>,
-  );
+    return acc;
+  }, {} as Record<number, Stage>);
 
   newStages.forEach((stage) => {
     if (sourceStagesReducer[stage.index]) {
