@@ -367,7 +367,7 @@ export const ChatInput = ({
 
           {showScrollDownButton && (
             <ScrollDownButton
-              containerClassNames="2xl:right-[-60px] xl:right-2 2xl:bottom-0  2xl:top-auto -top-14 right-0"
+              className="-top-14 right-0 xl:right-2 2xl:bottom-0 2xl:right-[-60px] 2xl:top-auto"
               onScrollDownClick={onScrollDownClick}
             />
           )}
