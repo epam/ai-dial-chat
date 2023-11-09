@@ -102,6 +102,7 @@ const Sidebar = <T,>({
             onDragOver={allowDrop}
             onDragEnter={highlightDrop}
             onDragLeave={removeHighlight}
+            data-qa="draggable-area"
           >
             {itemComponent}
           </div>

@@ -213,6 +213,22 @@ export class ConversationData {
       .build();
   }
 
+  public prepareNestedFolder(nestedLevel: number) {
+    const rootFolder = this.prepareFolder();
+    this.resetData();
+    const foldersHierarchy = [rootFolder];
+    for (let i = 1; i <= nestedLevel; i++) {
+      const nestedFolder = this.folderBuilder
+        .withName(GeneratorUtil.randomString(7))
+        .withType('chat')
+        .withFolderId(foldersHierarchy[foldersHierarchy.length - 1].id)
+        .build();
+      foldersHierarchy.push(nestedFolder);
+      this.resetData();
+    }
+    return foldersHierarchy;
+  }
+
   public prepareFolderWithConversations(conversationsCount: number) {
     const folder = this.prepareFolder();
     const conversations: Conversation[] = [];
@@ -256,6 +272,12 @@ export class ConversationData {
   ) {
     const conversation = this.prepareDefaultConversation(model, name);
     conversation.lastActivityDate = DateUtil.getLastMonthDate();
+    return conversation;
+  }
+
+  public prepareOlderConversation(model?: OpenAIEntityModel, name?: string) {
+    const conversation = this.prepareDefaultConversation(model, name);
+    conversation.lastActivityDate = DateUtil.getOlderDate();
     return conversation;
   }
 

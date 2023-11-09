@@ -4,4 +4,6 @@ export enum Styles {
   borderLeftColor = 'border-left-color',
   borderRightColor = 'border-right-color',
   textColor = 'text-decoration-color',
+  backgroundColor = 'background-color',
+  color = 'color',
 }
