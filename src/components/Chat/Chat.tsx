@@ -5,7 +5,13 @@ import { useTranslation } from 'next-i18next';
 import { throttle } from '@/src/utils/data/throttle';
 
 import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
-import { Conversation, Message, Replay } from '@/src/types/chat';
+import {
+  Conversation,
+  ConversationsTemporarySettings,
+  MergedMessages,
+  Message,
+  Replay,
+} from '@/src/types/chat';
 
 import {
   AddonsActions,
@@ -92,11 +98,11 @@ export const Chat = memo(() => {
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
     useState<boolean>(false);
-  const [mergedMessages, setMergedMessages] = useState<any>([]);
+  const [mergedMessages, setMergedMessages] = useState<MergedMessages[]>([]);
   const [isShowChatSettings, setIsShowChatSettings] = useState(false);
-  const selectedConversationsTemporarySettings = useRef<Record<string, any>>(
-    {},
-  );
+  const selectedConversationsTemporarySettings = useRef<
+    Record<string, ConversationsTemporarySettings>
+  >({});
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
@@ -113,7 +119,7 @@ export const Chat = memo(() => {
     setIsShowChatSettings(false);
 
     if (selectedConversations.length > 0) {
-      const mergedMessages = [];
+      const mergedMessages: MergedMessages[] = [];
       for (let i = 0; i < selectedConversations[0].messages.length; i++) {
         if (selectedConversations[0].messages[i].role === 'system') continue;
 
@@ -431,15 +437,7 @@ export const Chat = memo(() => {
 
   const handleApplyChatSettings = useCallback(() => {
     selectedConversations.forEach((conversation) => {
-      const temporarySettings:
-        | {
-            modelId: string | undefined;
-            prompt: string;
-            temperature: number;
-            currentAssistentModelId: string | undefined;
-            addonsIds: string[];
-          }
-        | undefined =
+      const temporarySettings: ConversationsTemporarySettings | undefined =
         selectedConversationsTemporarySettings.current[conversation.id];
       if (temporarySettings) {
         dispatch(
@@ -475,16 +473,7 @@ export const Chat = memo(() => {
   ]);
 
   const handleTemporarySettingsSave = useCallback(
-    (
-      conversation: Conversation,
-      args: {
-        modelId: string | undefined;
-        prompt: string;
-        temperature: number;
-        currentAssistentModelId: string | undefined;
-        addonsIds: string[];
-      },
-    ) => {
+    (conversation: Conversation, args: ConversationsTemporarySettings) => {
       selectedConversationsTemporarySettings.current[conversation.id] = args;
     },
     [],
