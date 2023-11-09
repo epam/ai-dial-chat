@@ -182,6 +182,8 @@ export const Chat = memo(() => {
         messagesEndRef.current?.scrollIntoView({
           behavior: 'smooth',
         });
+        setAutoScrollEnabled(true);
+        setShowScrollDownButton(false);
       }
     },
     [autoScrollEnabled],
