@@ -205,7 +205,7 @@ export const PlaybackControls = ({
 
       {showScrollDownButton && (
         <ScrollDownButton
-          containerClassNames="bottom-16 right-2 md:right-5 md:bottom-20 xl:right-2 xl:bottom-6"
+          className="bottom-16 right-2 md:bottom-20 md:right-5 xl:bottom-6 xl:right-2"
           onScrollDownClick={onScrollDownClick}
         />
       )}
