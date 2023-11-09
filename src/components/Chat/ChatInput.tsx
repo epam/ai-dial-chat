@@ -275,8 +275,8 @@ export const ChatInput = ({
 
   useEffect(() => {
     if (textareaRef && textareaRef.current) {
-      const scrollHeight = textareaRef.current.scrollHeight;
-      textareaRef.current.style.height = 'inherit';
+      textareaRef.current.style.height = 'inherit'; // reset height
+      const scrollHeight = textareaRef.current.scrollHeight; // then check scroll height
       textareaRef.current.style.height = `${scrollHeight}px`;
       textareaRef.current.style.overflow = `${
         scrollHeight > 400 ? 'auto' : 'hidden'
