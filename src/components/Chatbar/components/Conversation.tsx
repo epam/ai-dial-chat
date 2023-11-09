@@ -217,7 +217,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   return (
     <div
       className={classNames(
-        'group relative flex h-[30px] items-center rounded border-l-2 pr-0.5 hover:bg-green/15',
+        'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-green/15',
         selectedConversationIds.includes(conversation.id)
           ? 'border-l-green bg-green/15'
           : 'border-l-transparent',
@@ -299,7 +299,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           <div
             className={classNames(
               'relative max-h-5 flex-1 truncate break-all text-left',
-              isDeleting ? 'mr-12' : 'group-hover:pr-7',
+              isDeleting ? 'mr-12' : 'group-hover:mr-4',
             )}
           >
             {conversation.name}
