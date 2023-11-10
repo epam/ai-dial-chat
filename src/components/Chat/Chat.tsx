@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import { throttle } from '@/src/utils/data/throttle';
 
 import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
@@ -38,16 +39,6 @@ import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './PlaybackControls';
 import { PlaybackEmptyInfo } from './PlaybackEmptyInfo';
-
-const clearStateForMessages = (messages: Message[]): Message[] => {
-  return messages.map((message) => ({
-    ...message,
-    custom_content: {
-      ...message.custom_content,
-      state: undefined,
-    },
-  }));
-};
 
 export const Chat = memo(() => {
   const { t } = useTranslation('chat');
