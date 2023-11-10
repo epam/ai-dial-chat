@@ -9,6 +9,23 @@ If you need **several iframes** with API and you want that it should be placed w
 
 *In future ChatOverlay, ChatOverlayManager logic would be moved into the npm package*
 
+## Prerequisites
+
+Need to disable authentication and allow iframe origin
+e.g.
+
+```
+AUTH_DISABLED=true
+ALLOWED_IFRAME_ORIGINS=*
+```
+
+or
+
+```
+AUTH_DISABLED=true
+ALLOWED_IFRAME_ORIGINS=http://127.0.0.1:8000
+```
+
 ## For development
 1. Run the DIAL
 ```bash
