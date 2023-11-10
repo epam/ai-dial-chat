@@ -1,8 +1,19 @@
 import { toast } from 'react-hot-toast';
 
-import { filter, forkJoin, ignoreElements, of, switchMap, tap } from 'rxjs';
+import {
+  concat,
+  filter,
+  forkJoin,
+  ignoreElements,
+  map,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
+
+import { DataService } from '@/src/utils/app/data/data-service';
 
 import { AppEpic } from '@/src/types/store';
 
@@ -10,33 +21,51 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { UIActions, UISelectors } from './ui.reducers';
 
+const initEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.init.match),
+    switchMap(() =>
+      forkJoin({
+        theme: DataService.getTheme(),
+        showChatbar: DataService.getShowChatbar(),
+        showPromptbar: DataService.getShowPromptbar(),
+        openedFoldersIds: DataService.getOpenedFolderIds(),
+      }),
+    ),
+    switchMap(({ theme, openedFoldersIds, showChatbar, showPromptbar }) => {
+      const actions = [];
+
+      actions.push(UIActions.setTheme(theme));
+      actions.push(UIActions.setShowChatbar(showChatbar));
+      actions.push(UIActions.setShowPromptbar(showPromptbar));
+      actions.push(UIActions.setOpenedFoldersIds(openedFoldersIds));
+
+      return concat(actions);
+    }),
+  );
+
 const saveThemeEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.setTheme.match),
     tap(({ payload }) => {
-      localStorage.setItem('settings', JSON.stringify({ theme: payload }));
-
       // Needed for fast work with theme initial load
       document.documentElement.className = payload || '';
     }),
+    switchMap(({ payload }) => DataService.setTheme(payload)),
     ignoreElements(),
   );
 
 const saveShowChatbarEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.setShowChatbar.match),
-    tap(({ payload }) => {
-      localStorage.setItem('showChatbar', JSON.stringify(payload));
-    }),
+    switchMap(({ payload }) => DataService.setShowChatbar(payload)),
     ignoreElements(),
   );
 
 const saveShowPromptbarEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.setShowPromptbar.match),
-    tap(({ payload }) => {
-      localStorage.setItem('showPromptbar', JSON.stringify(payload));
-    }),
+    switchMap(({ payload }) => DataService.setShowPromptbar(payload)),
     ignoreElements(),
   );
 
@@ -89,19 +118,18 @@ const saveOpenedFoldersIdsEpic: AppEpic = (action$, state$) =>
         UIActions.openFolder.match(action) ||
         UIActions.closeFolder.match(action),
     ),
-    tap(() => {
-      const updatedOpenedFolders = UISelectors.selectOpenedFoldersIds(
-        state$.value,
-      );
-      localStorage.setItem(
-        'openedFoldersIds',
-        JSON.stringify(updatedOpenedFolders),
-      );
+    map(() => {
+      return UISelectors.selectOpenedFoldersIds(state$.value);
     }),
+    switchMap((openedFolderIds) =>
+      DataService.setOpenedFolderIds(openedFolderIds),
+    ),
+
     ignoreElements(),
   );
 
 const UIEpics = combineEpics(
+  initEpic,
   saveThemeEpic,
   saveShowChatbarEpic,
   saveShowPromptbarEpic,

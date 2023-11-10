@@ -20,6 +20,17 @@
       { "argsIgnorePattern": "^_" }
     ],
     "no-restricted-imports": ["error", { "paths": ["react-i18next"] }],
-    "tailwindcss/no-custom-classname": "error"
+    "tailwindcss/no-custom-classname": "error",
+    "no-restricted-globals": [
+      "error",
+      {
+          "name": "localStorage",
+          "message": "Use DataService instead."
+      },
+      {
+          "name": "sessionStorage",
+          "message": "Use DataService instead."
+      }
+  ]
   }
 }
