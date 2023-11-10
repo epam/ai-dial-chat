@@ -43,10 +43,6 @@ export const PlaybackControls = ({
     ConversationsSelectors.selectPlaybackActiveIndex,
   );
 
-  const activeMessage = useAppSelector(
-    ConversationsSelectors.selectPlaybackActiveMessage,
-  );
-
   const controlsContainerRef = useRef<HTMLDivElement | null>(null);
 
   const isActiveIndex = typeof activeIndex === 'number';
@@ -148,16 +144,6 @@ export const PlaybackControls = ({
     };
   }, [controlsContainerRef, onResize]);
 
-  useEffect(() => {
-    if (nextMessageBoxRef && nextMessageBoxRef.current) {
-      nextMessageBoxRef.current.style.height = 'inherit';
-      nextMessageBoxRef.current.style.height = `${nextMessageBoxRef.current?.scrollHeight}px`;
-      nextMessageBoxRef.current.style.overflow = `${
-        nextMessageBoxRef?.current?.scrollHeight > 400 ? 'auto' : 'hidden'
-      }`;
-    }
-  }, [activeMessage, nextMessageBoxRef]);
-
   return (
     <div
       ref={controlsContainerRef}
@@ -182,7 +168,7 @@ export const PlaybackControls = ({
         <>
           <div
             ref={nextMessageBoxRef}
-            className="max-h-[150px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-gray-100 px-3 py-2 text-left focus-visible:border-blue-500 focus-visible:outline-none dark:bg-gray-700"
+            className="max-h-[150px] min-h-[40px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-gray-100 px-3 py-2 text-left focus-visible:border-blue-500 focus-visible:outline-none dark:bg-gray-700"
           >
             {isMessageStreaming ? (
               <div
@@ -190,7 +176,7 @@ export const PlaybackControls = ({
                 data-qa="message-input-spinner"
               ></div>
             ) : (
-              <span>{activeMessageContent}</span>
+              <span className="break-words">{activeMessageContent}</span>
             )}
           </div>
           <button
@@ -205,7 +191,7 @@ export const PlaybackControls = ({
 
       {showScrollDownButton && (
         <ScrollDownButton
-          containerClassNames="bottom-16 right-2 md:right-5 md:bottom-20 xl:right-2 xl:bottom-6"
+          className="bottom-16 right-2 md:bottom-20 md:right-5 xl:bottom-6 xl:right-2"
           onScrollDownClick={onScrollDownClick}
         />
       )}

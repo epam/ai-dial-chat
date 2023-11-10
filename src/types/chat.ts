@@ -102,3 +102,13 @@ export interface Playback {
   messagesStack: Message[];
   activePlaybackIndex: number;
 }
+
+export type MergedMessages = [Conversation, Message, number][];
+
+export interface ConversationsTemporarySettings {
+  modelId: string | undefined;
+  prompt: string;
+  temperature: number;
+  currentAssistentModelId: string | undefined;
+  addonsIds: string[];
+}

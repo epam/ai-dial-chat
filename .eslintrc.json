@@ -10,6 +10,12 @@
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint", "tailwindcss"],
   "root": true,
+  "settings": {
+    "tailwindcss": {
+      "config": "./tailwind.config.js",
+      "callees": ["classnames", "classNames"]
+    }
+  },
   "rules": {
     "no-empty": "warn",
     "@typescript-eslint/no-explicit-any": "warn",
