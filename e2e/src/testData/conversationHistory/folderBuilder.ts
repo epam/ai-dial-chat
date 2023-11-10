@@ -14,6 +14,10 @@ export class FolderBuilder {
     };
   }
 
+  getFolder() {
+    return this.folder;
+  }
+
   withId(id: string): FolderBuilder {
     this.folder.id = id;
     return this;
