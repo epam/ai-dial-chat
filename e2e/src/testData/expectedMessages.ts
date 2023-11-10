@@ -136,4 +136,6 @@ export enum ExpectedMessages {
   folderNameColorIsValid = 'Folder name color is valid',
   confirmationMessageIsValid = 'Confirmation dialog message is valid',
   chronologyMessageCountIsCorrect = 'Chat bar chronology messages count is correct',
+  newPromptButtonIsHighlighted = 'New prompt button is highlighted',
+  newPromptButtonCursorIsPointer = 'New prompt button cursor is a pointer',
 }

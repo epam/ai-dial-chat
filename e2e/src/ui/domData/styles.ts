@@ -6,4 +6,9 @@ export enum Styles {
   textColor = 'text-decoration-color',
   backgroundColor = 'background-color',
   color = 'color',
+  cursor = 'cursor',
+}
+
+export enum Cursors {
+  pointer = 'pointer',
 }

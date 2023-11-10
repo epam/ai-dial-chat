@@ -4,6 +4,7 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/e2e/src/testData';
+import { Colors, Cursors } from '@/e2e/src/ui/domData';
 import { expect } from '@playwright/test';
 
 const newName = 'test prompt';
@@ -21,6 +22,17 @@ test('Create new prompt', async ({
   await dialHomePage.openHomePage();
   await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
   await conversationSettings.waitForState();
+  await promptBar.hoverOverNewPrompt();
+  const newPromptCursor = await promptBar.getNewPromptCursor();
+  expect
+    .soft(newPromptCursor[0], ExpectedMessages.newPromptButtonCursorIsPointer)
+    .toBe(Cursors.pointer);
+
+  const newPromptColor = await promptBar.getNewPromptBackgroundColor();
+  expect
+    .soft(newPromptColor, ExpectedMessages.newPromptButtonIsHighlighted)
+    .toBe(Colors.highlightedNewPrompt);
+
   await promptBar.createNewPrompt();
   expect
     .soft(
@@ -137,55 +149,66 @@ test('Edit prompt. Save', async ({
     .toBe(newValue);
 });
 
-test('Edit prompt on Enter', async ({
-  dialHomePage,
-  promptData,
-  prompts,
-  localStorageManager,
-  promptDropdownMenu,
-  promptModalDialog,
-  setTestIds,
-}) => {
-  setTestIds('EPMRTC-955');
-  const prompt = promptData.prepareDefaultPrompt();
-  await localStorageManager.setPrompts(prompt);
+test(
+  'Edit prompt on Enter.\n' + 'Special characters are allowed in prompt name',
+  async ({
+    dialHomePage,
+    promptData,
+    prompts,
+    localStorageManager,
+    promptDropdownMenu,
+    promptModalDialog,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-955', 'EPMRTC-1278');
+    const nameWithSpecialSymbols = '!@#$%^&*()_+{}[]:;"\',./<>?/*-+`~';
+    const prompt = promptData.prepareDefaultPrompt();
+    await localStorageManager.setPrompts(prompt);
 
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
-  await prompts.openPromptDropdownMenu(prompt.name);
-  await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-  await promptModalDialog.updatePromptDetailsWithEnter(
-    newName,
-    newDescr,
-    newValue,
-  );
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded();
+    await prompts.openPromptDropdownMenu(prompt.name);
+    await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+    await promptModalDialog.updatePromptDetailsWithEnter(
+      nameWithSpecialSymbols,
+      newDescr,
+      newValue,
+    );
 
-  const isPromptModalVisible = await promptModalDialog.isVisible();
-  await expect
-    .soft(isPromptModalVisible, ExpectedMessages.promptModalClosed)
-    .toBeFalsy();
+    const isPromptModalVisible = await promptModalDialog.isVisible();
+    await expect
+      .soft(isPromptModalVisible, ExpectedMessages.promptModalClosed)
+      .toBeFalsy();
 
-  const isPromptVisible = await prompts.getPromptByName(newName).isVisible();
-  expect.soft(isPromptVisible, ExpectedMessages.promptNotUpdated).toBeTruthy();
+    const isPromptVisible = await prompts
+      .getPromptByName(nameWithSpecialSymbols)
+      .isVisible();
+    expect
+      .soft(isPromptVisible, ExpectedMessages.promptNotUpdated)
+      .toBeTruthy();
 
-  await prompts.openPromptDropdownMenu(newName);
-  await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-  expect
-    .soft(await promptModalDialog.getName(), ExpectedMessages.promptNameUpdated)
-    .toBe(newName);
-  expect
-    .soft(
-      await promptModalDialog.getDescription(),
-      ExpectedMessages.promptDescriptionUpdated,
-    )
-    .toBe(newDescr);
-  expect
-    .soft(
-      await promptModalDialog.getPrompt(),
-      ExpectedMessages.promptValueUpdated,
-    )
-    .toBe(newValue);
-});
+    await prompts.openPromptDropdownMenu(nameWithSpecialSymbols);
+    await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+    expect
+      .soft(
+        await promptModalDialog.getName(),
+        ExpectedMessages.promptNameUpdated,
+      )
+      .toBe(nameWithSpecialSymbols);
+    expect
+      .soft(
+        await promptModalDialog.getDescription(),
+        ExpectedMessages.promptDescriptionUpdated,
+      )
+      .toBe(newDescr);
+    expect
+      .soft(
+        await promptModalDialog.getPrompt(),
+        ExpectedMessages.promptValueUpdated,
+      )
+      .toBe(newValue);
+  },
+);
 
 test('Delete prompt located in the root', async ({
   dialHomePage,
@@ -341,6 +364,8 @@ test('Clear prompts. Clear', async ({
   const singlePrompt = promptData.prepareDefaultPrompt();
   promptData.resetData();
   const promptInFolder = promptData.prepareDefaultPromptInFolder();
+  promptData.resetData();
+  const nestedFolders = promptData.prepareNestedFolder(3);
 
   const emptyConversationFolder = conversationData.prepareFolder();
   conversationData.resetData();
@@ -364,17 +389,17 @@ test('Clear prompts. Clear', async ({
     emptyConversationFolder,
     promptInFolder.folders,
     conversationInFolder.folders,
+    ...nestedFolders,
+  );
+  await localStorageManager.updateOpenedFolders(
+    promptInFolder.folders,
+    conversationInFolder.folders,
+    ...nestedFolders,
   );
   await localStorageManager.updateSelectedConversation(singleConversation);
 
   await dialHomePage.reloadPage();
   await dialHomePage.waitForPageLoaded();
-  if (i > 1) {
-    await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
-    await folderConversations.expandCollapseFolder(
-      conversationInFolder.folders.name,
-    );
-  }
   await conversations.getConversationByName(singleConversation.name).waitFor();
 
   await promptBar.deleteAllPrompts();
@@ -415,6 +440,15 @@ test('Clear prompts. Clear', async ({
     expect
       .soft(isSinglePromptVisible, ExpectedMessages.promptDeleted)
       .toBeFalsy();
+
+    for (const nestedFolder of nestedFolders) {
+      const isNestedPromptFolderVisible = await folderPrompts
+        .getFolderByName(nestedFolder.name)
+        .isVisible();
+      expect
+        .soft(isNestedPromptFolderVisible, ExpectedMessages.folderDeleted)
+        .toBeFalsy();
+    }
 
     if (i > 1) {
       await dialHomePage.reloadPage();
