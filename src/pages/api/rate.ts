@@ -26,11 +26,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     const { responseId, modelId, value, id } = req.body as RateBody;
 
-    if (!id || !validate(id) || !responseId) {
+    if (!id || !validate(id) || !responseId || !modelId) {
       return res.status(400).send(errorsMessages[400]);
     }
 
-    const url = `${OPENAI_API_HOST}/v1/rate`;
+    const url = `${OPENAI_API_HOST}/v1/${modelId}/rate`;
     const token = await getToken({ req });
 
     await fetch(url, {
