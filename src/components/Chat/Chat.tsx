@@ -45,6 +45,8 @@ import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './PlaybackControls';
 import { PlaybackEmptyInfo } from './PlaybackEmptyInfo';
 
+const scrollThrottlingTimeout = 250;
+
 const clearStateForMessages = (messages: Message[]): Message[] => {
   return messages.map((message) => ({
     ...message,
@@ -110,6 +112,7 @@ export const Chat = memo(() => {
   const nextMessageBoxRef = useRef<HTMLDivElement | null>(null);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const [isNotAllowedModel, setIsNotAllowedModel] = useState(false);
+  const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const showReplayControls = useMemo(() => {
     return isReplay && !messageIsStreaming && isReplayPaused;
@@ -176,14 +179,19 @@ export const Chat = memo(() => {
     [dispatch],
   );
 
+  const setAutoScroll = () => {
+    clearTimeout(disableAutoScrollTimeoutRef.current);
+    setAutoScrollEnabled(true);
+    setShowScrollDownButton(false);
+  };
+
   const scrollDown = useCallback(
     (force = false) => {
       if (autoScrollEnabled || force) {
+        setAutoScroll();
         messagesEndRef.current?.scrollIntoView({
           behavior: 'smooth',
         });
-        setAutoScrollEnabled(true);
-        setShowScrollDownButton(false);
       }
     },
     [autoScrollEnabled],
@@ -194,7 +202,7 @@ export const Chat = memo(() => {
     textareaRef.current?.focus();
   }, [scrollDown]);
 
-  const throttledScrollDown = throttle(scrollDown, 250);
+  const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
 
   useEffect(() => {
     throttledScrollDown();
@@ -211,11 +219,13 @@ export const Chat = memo(() => {
       const bottomTolerance = 30;
 
       if (scrollTop + clientHeight < scrollHeight - bottomTolerance) {
-        setAutoScrollEnabled(false);
-        setShowScrollDownButton(true);
+        clearTimeout(disableAutoScrollTimeoutRef.current);
+        disableAutoScrollTimeoutRef.current = setTimeout(() => {
+          setAutoScrollEnabled(false);
+          setShowScrollDownButton(true);
+        }, scrollThrottlingTimeout);
       } else {
-        setAutoScrollEnabled(true);
-        setShowScrollDownButton(false);
+        setAutoScroll();
       }
     }
   }, []);
