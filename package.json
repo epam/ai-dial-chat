@@ -16,7 +16,7 @@
     "coverage": "vitest run --coverage",
     "test:e2e": "playwright test --config=./e2e/config/local.playwright.config.ts",
     "test:e2e:html": "playwright show-report ./e2e/html-report",
-    "test:e2e-ci": "node_modules/@playwright/test/cli.js test --config=./e2e/config/playwright.config.ts",
+    "test:e2e-ci": "playwright test --config=./e2e/config/playwright.config.ts",
     "allure:serve": "allure serve ./e2e/allure-results"
   },
   "dependencies": {
@@ -87,8 +87,8 @@
     "gpt-3-encoder": "^1.1.4",
     "jsdom": "^21.1.1",
     "postcss": "^8.4.21",
-    "prettier": "^2.8.7",
-    "prettier-plugin-tailwindcss": "^0.2.5",
+    "prettier": "^3.0.3",
+    "prettier-plugin-tailwindcss": "^0.5.7",
     "tailwindcss": "^3.3.5",
     "typescript": "^5.2.2",
     "vitest": "^0.29.7"
