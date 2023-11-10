@@ -189,7 +189,8 @@ export const Chat = memo(() => {
     (force = false) => {
       if (autoScrollEnabled || force) {
         setAutoScroll();
-        messagesEndRef.current?.scrollIntoView({
+        chatContainerRef.current?.scrollTo({
+          top: chatContainerRef.current.scrollHeight,
           behavior: 'smooth',
         });
       }
