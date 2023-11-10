@@ -11,12 +11,15 @@ export function throttle<T extends (...args: any[]) => any>(
       lastRan = Date.now();
     } else {
       clearTimeout(lastFunc);
-      lastFunc = setTimeout(() => {
-        if (Date.now() - lastRan >= limit) {
-          func(...args);
-          lastRan = Date.now();
-        }
-      }, limit - (Date.now() - lastRan));
+      lastFunc = setTimeout(
+        () => {
+          if (Date.now() - lastRan >= limit) {
+            func(...args);
+            lastRan = Date.now();
+          }
+        },
+        limit - (Date.now() - lastRan),
+      );
     }
   }) as T;
 }

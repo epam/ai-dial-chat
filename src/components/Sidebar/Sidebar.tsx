@@ -74,7 +74,7 @@ const Sidebar = <T,>({
     <div
       className={classNames(
         `group/sidebar fixed top-12 z-40 flex h-[calc(100%-48px)] w-[260px] flex-none shrink-0 flex-col divide-y divide-gray-300 border-r border-gray-300 bg-gray-100 transition-all dark:divide-gray-900 dark:border-gray-900 dark:bg-gray-700  xl:relative xl:top-0 xl:h-full`,
-        `${side}-0`,
+        side === 'left' ? `left-0` : 'right-0',
       )}
       data-qa="sidebar"
     >
@@ -102,6 +102,7 @@ const Sidebar = <T,>({
             onDragOver={allowDrop}
             onDragEnter={highlightDrop}
             onDragLeave={removeHighlight}
+            data-qa="draggable-area"
           >
             {itemComponent}
           </div>

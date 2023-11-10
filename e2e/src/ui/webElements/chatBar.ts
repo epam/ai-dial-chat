@@ -3,6 +3,7 @@ import { BaseElement } from './baseElement';
 import { Conversations } from './conversations';
 
 import { API } from '@/e2e/src/testData';
+import { Styles } from '@/e2e/src/ui/domData';
 import { FolderConversations } from '@/e2e/src/ui/webElements/folderConversations';
 import { Page } from '@playwright/test';
 
@@ -33,6 +34,9 @@ export class ChatBar extends BaseElement {
   public exportButton = new BaseElement(
     this.page,
     ChatBarSelectors.exportConversations,
+  );
+  public draggableArea = this.getChildElementBySelector(
+    SideBarSelectors.draggableArea,
   );
 
   getConversations(): Conversations {
@@ -71,5 +75,9 @@ export class ChatBar extends BaseElement {
     await this.compareButton.click();
     await modelsResponsePromise;
     await addonsResponsePromise;
+  }
+
+  public async getDraggableAreaColor() {
+    return this.draggableArea.getComputedStyleProperty(Styles.backgroundColor);
   }
 }

@@ -6,7 +6,13 @@ import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import { throttle } from '@/src/utils/data/throttle';
 
 import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
-import { Conversation, Message, Replay } from '@/src/types/chat';
+import {
+  Conversation,
+  ConversationsTemporarySettings,
+  MergedMessages,
+  Message,
+  Replay,
+} from '@/src/types/chat';
 
 import {
   AddonsActions,
@@ -39,6 +45,8 @@ import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './PlaybackControls';
 import { PlaybackEmptyInfo } from './PlaybackEmptyInfo';
+
+const scrollThrottlingTimeout = 250;
 
 export const Chat = memo(() => {
   const { t } = useTranslation('chat');
@@ -83,11 +91,11 @@ export const Chat = memo(() => {
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
     useState<boolean>(false);
-  const [mergedMessages, setMergedMessages] = useState<any>([]);
+  const [mergedMessages, setMergedMessages] = useState<MergedMessages[]>([]);
   const [isShowChatSettings, setIsShowChatSettings] = useState(false);
-  const selectedConversationsTemporarySettings = useRef<Record<string, any>>(
-    {},
-  );
+  const selectedConversationsTemporarySettings = useRef<
+    Record<string, ConversationsTemporarySettings>
+  >({});
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
@@ -95,6 +103,7 @@ export const Chat = memo(() => {
   const nextMessageBoxRef = useRef<HTMLDivElement | null>(null);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const [isNotAllowedModel, setIsNotAllowedModel] = useState(false);
+  const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const showReplayControls = useMemo(() => {
     return isReplay && !messageIsStreaming && isReplayPaused;
@@ -104,7 +113,7 @@ export const Chat = memo(() => {
     setIsShowChatSettings(false);
 
     if (selectedConversations.length > 0) {
-      const mergedMessages = [];
+      const mergedMessages: MergedMessages[] = [];
       for (let i = 0; i < selectedConversations[0].messages.length; i++) {
         if (selectedConversations[0].messages[i].role === 'system') continue;
 
@@ -161,44 +170,39 @@ export const Chat = memo(() => {
     [dispatch],
   );
 
-  useEffect(() => {
-    if (!autoScrollEnabled || !chatContainerRef.current) {
-      return;
-    }
-
-    chatContainerRef.current.scrollTo({
-      top: chatContainerRef.current.scrollHeight,
-      behavior: 'smooth',
-    });
-    textareaRef.current?.focus();
-  }, [autoScrollEnabled]);
-
-  const scrollDown = () => {
-    if (!autoScrollEnabled || !chatContainerRef.current) {
-      return;
-    }
-
-    chatContainerRef.current.scrollTo({
-      top: chatContainerRef.current.scrollHeight,
-      behavior: 'smooth',
-    });
+  const setAutoScroll = () => {
+    clearTimeout(disableAutoScrollTimeoutRef.current);
+    setAutoScrollEnabled(true);
+    setShowScrollDownButton(false);
   };
-  const throttledScrollDown = throttle(scrollDown, 250);
+
+  const scrollDown = useCallback(
+    (force = false) => {
+      if (autoScrollEnabled || force) {
+        setAutoScroll();
+        chatContainerRef.current?.scrollTo({
+          top: chatContainerRef.current.scrollHeight,
+          behavior: 'smooth',
+        });
+      }
+    },
+    [autoScrollEnabled],
+  );
+
+  useEffect(() => {
+    scrollDown();
+    textareaRef.current?.focus();
+  }, [scrollDown]);
+
+  const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
 
   useEffect(() => {
     throttledScrollDown();
   }, [conversations, throttledScrollDown]);
 
   const handleScrollDown = useCallback(() => {
-    if (!chatContainerRef.current) {
-      return;
-    }
-
-    chatContainerRef.current.scrollTo({
-      top: chatContainerRef.current.scrollHeight,
-      behavior: 'smooth',
-    });
-  }, []);
+    scrollDown(true);
+  }, [scrollDown]);
 
   const handleScroll = useCallback(() => {
     if (chatContainerRef.current) {
@@ -207,11 +211,13 @@ export const Chat = memo(() => {
       const bottomTolerance = 30;
 
       if (scrollTop + clientHeight < scrollHeight - bottomTolerance) {
-        setAutoScrollEnabled(false);
-        setShowScrollDownButton(true);
+        clearTimeout(disableAutoScrollTimeoutRef.current);
+        disableAutoScrollTimeoutRef.current = setTimeout(() => {
+          setAutoScrollEnabled(false);
+          setShowScrollDownButton(true);
+        }, scrollThrottlingTimeout);
       } else {
-        setAutoScrollEnabled(true);
-        setShowScrollDownButton(false);
+        setAutoScroll();
       }
     }
   }, []);
@@ -435,15 +441,7 @@ export const Chat = memo(() => {
 
   const handleApplyChatSettings = useCallback(() => {
     selectedConversations.forEach((conversation) => {
-      const temporarySettings:
-        | {
-            modelId: string | undefined;
-            prompt: string;
-            temperature: number;
-            currentAssistentModelId: string | undefined;
-            addonsIds: string[];
-          }
-        | undefined =
+      const temporarySettings: ConversationsTemporarySettings | undefined =
         selectedConversationsTemporarySettings.current[conversation.id];
       if (temporarySettings) {
         dispatch(
@@ -479,16 +477,7 @@ export const Chat = memo(() => {
   ]);
 
   const handleTemporarySettingsSave = useCallback(
-    (
-      conversation: Conversation,
-      args: {
-        modelId: string | undefined;
-        prompt: string;
-        temperature: number;
-        currentAssistentModelId: string | undefined;
-        addonsIds: string[];
-      },
-    ) => {
+    (conversation: Conversation, args: ConversationsTemporarySettings) => {
       selectedConversationsTemporarySettings.current[conversation.id] = args;
     },
     [],

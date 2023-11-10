@@ -9,6 +9,8 @@ export const SideBarSelectors = {
     `${Tags.input}[${Attributes.value}="${value}"]`,
   dropdownMenu: '[data-qa="dropdown-menu"]',
   import: '[data-qa="import"]',
+  draggableArea: '[data-qa="draggable-area"]',
+  chronology: '[data-qa="chronology"]',
 };
 
 export const ChatBarSelectors = {

@@ -63,7 +63,11 @@ export const ConfirmDialog = ({
                 <h2 id={headingId} className="text-base font-semibold">
                   {heading}
                 </h2>
-                {description && <p id={descriptionId}>{description}</p>}
+                {description && (
+                  <p id={descriptionId} data-qa="confirm-message">
+                    {description}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-3">
                 <button

@@ -5,6 +5,7 @@ module.exports = {
     '@trivago/prettier-plugin-sort-imports',
     'prettier-plugin-tailwindcss',
   ],
+  tailwindFunctions: ['classnames', 'classNames'],
   importOrder: [
     'react', // React
     '^react-.*$', // React-related imports
@@ -29,5 +30,4 @@ module.exports = {
   ],
   importOrderSeparation: true,
   importOrderSortSpecifiers: true,
-  pluginSearchDirs: false,
 };

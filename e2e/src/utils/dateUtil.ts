@@ -12,4 +12,8 @@ export class DateUtil {
   public static getLastMonthDate() {
     return DateUtil.today - DateUtil.oneDayInMs * 10;
   }
+
+  public static getOlderDate() {
+    return DateUtil.today - DateUtil.oneDayInMs * 40;
+  }
 }

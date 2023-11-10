@@ -29,6 +29,11 @@ export class FolderBuilder {
     return this;
   }
 
+  withFolderId(folderId: string): FolderBuilder {
+    this.folder.folderId = folderId;
+    return this;
+  }
+
   build(): FolderInterface {
     return this.folder;
   }
