@@ -1,7 +1,8 @@
+import react from '@vitejs/plugin-react';
+
 import path from 'path';
 import { defineConfig } from 'vite';
 import { configDefaults } from 'vitest/config';
-import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
@@ -16,7 +17,7 @@ export default defineConfig({
     exclude: [...configDefaults.exclude, 'e2e/**'],
     coverage: {
       reporter: ['text', 'json', 'html'],
-      all: true
-   },
+      all: true,
+    },
   },
 });
