@@ -1,6 +1,6 @@
 import toast from 'react-hot-toast';
 
-import { Conversation } from '@/src/types/chat';
+import { Conversation, MessageSettings } from '@/src/types/chat';
 import {
   OpenAIEntityAddon,
   OpenAIEntityApplicationType,
@@ -71,4 +71,35 @@ export const getSelectedAddons = (
     return mergedSelectedAddons;
   }
   return null;
+};
+
+export const isSettingsChanged = (
+  conversation: Conversation,
+  newSettings: MessageSettings,
+) => {
+  const isChanged = Object.keys(newSettings).some((key) => {
+    const convSetting = conversation[key as keyof Conversation];
+    const newSetting = newSettings[key as keyof MessageSettings];
+
+    if (Array.isArray(convSetting) && Array.isArray(newSetting)) {
+      if (convSetting.length !== newSetting.length) {
+        return true;
+      }
+
+      const sortedConvSetting = [...convSetting].sort();
+      const sortedNewSetting = [...newSetting].sort();
+
+      const isArraysEqual: boolean = sortedConvSetting.every(
+        (value, index) => value === sortedNewSetting[index],
+      );
+      return !isArraysEqual;
+    }
+
+    return (
+      conversation[key as keyof Conversation] !==
+      newSettings[key as keyof MessageSettings]
+    );
+  });
+
+  return isChanged;
 };

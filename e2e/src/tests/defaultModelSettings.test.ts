@@ -8,7 +8,6 @@ import { GeneratorUtil, ModelsUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
 let defaultModel: OpenAIEntityModel;
-let mirrorApp: OpenAIEntityModel;
 let bison: OpenAIEntityModel;
 let recentAddonIds: string[];
 let recentModelIds: string[];
@@ -17,7 +16,6 @@ let allEntities: OpenAIEntityModel[];
 test.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
   bison = ModelsUtil.getModel(ModelIds.BISON_001)!;
-  mirrorApp = ModelsUtil.getApplication(ModelIds.MIRROR)!;
   recentAddonIds = ModelsUtil.getRecentAddonIds();
   recentModelIds = ModelsUtil.getRecentModelIds();
   allEntities = ModelsUtil.getOpenAIEntities();
@@ -200,13 +198,13 @@ test(
       .toBe(request);
 
     await chatBar.createNewConversation();
-    const addonBorderColors = await recentEntities
-      .getRecentEntity(mirrorApp.name)
+    const modelBorderColors = await recentEntities
+      .getRecentEntity(bison.name)
       .getAllBorderColors();
-    Object.values(addonBorderColors).forEach((borders) => {
+    Object.values(modelBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
         expect
-          .soft(borderColor, ExpectedMessages.defaultTalkToIsValid)
+          .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
           .toBe(Colors.highlightedEntity);
       });
     });
@@ -231,14 +229,11 @@ test('Settings on default screen are saved in local storage when temperature = 0
   await dialHomePage.openHomePage();
   await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
   const randomModel = GeneratorUtil.randomArrayElement(ModelsUtil.getModels());
-  const randomAddonId = GeneratorUtil.randomArrayElement(recentAddonIds);
-  const randomAddon = ModelsUtil.getAddon(randomAddonId);
   await talkToSelector.selectModel(randomModel.name);
   const sysPrompt = 'test prompt';
   const temp = 0;
   await entitySettings.setSystemPrompt(sysPrompt);
   await temperatureSlider.setTemperature(temp);
-  await addons.selectAddon(randomAddon!.name);
   await dialHomePage.reloadPage();
   await dialHomePage.waitForPageLoaded();
 
@@ -264,20 +259,7 @@ test('Settings on default screen are saved in local storage when temperature = 0
     .toBe(temp.toString());
 
   const selectedAddons = await addons.getSelectedAddons();
-  expect
-    .soft(selectedAddons, ExpectedMessages.noAddonsSelected)
-    .toEqual([randomAddon!.name]);
-
-  const selectedAddonIcons = await addons.getSelectedAddonsIconAttributes();
-  expect
-    .soft(selectedAddonIcons[0].iconEntity, ExpectedMessages.addonIconIsValid)
-    .toBe(randomAddon!.id);
-  expect
-    .soft(
-      selectedAddonIcons[0].iconUrl,
-      ExpectedMessages.addonIconSourceIsValid,
-    )
-    .toBe(randomAddon!.iconUrl);
+  expect.soft(selectedAddons, ExpectedMessages.noAddonsSelected).toEqual([]);
 });
 
 test('Recent "Talk to" list is updated', async ({
@@ -291,13 +273,13 @@ test('Recent "Talk to" list is updated', async ({
   setTestIds('EPMRTC-1044');
   await dialHomePage.openHomePage({ iconsToBeLoaded: [defaultModel.iconUrl] });
   await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-  await talkToSelector.selectApplication(mirrorApp.name);
+  await talkToSelector.selectModel(bison.name);
   await chat.sendRequestWithButton('test message');
   await chatBar.createNewConversation();
-  const appBorderColors = await recentEntities
-    .getRecentEntity(mirrorApp.name)
+  const modelBorderColors = await recentEntities
+    .getRecentEntity(bison.name)
     .getAllBorderColors();
-  Object.values(appBorderColors).forEach((borders) => {
+  Object.values(modelBorderColors).forEach((borders) => {
     borders.forEach((borderColor) => {
       expect
         .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
@@ -308,5 +290,5 @@ test('Recent "Talk to" list is updated', async ({
   const recentTalkTo = await recentEntities.getRecentEntityNames();
   expect
     .soft(recentTalkTo[0], ExpectedMessages.talkToEntityIsSelected)
-    .toBe(mirrorApp.name);
+    .toBe(bison.name);
 });

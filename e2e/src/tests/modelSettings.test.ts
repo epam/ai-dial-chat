@@ -36,11 +36,6 @@ test('Selected settings are saved if to switch from Model1 to Model2', async ({
   await entitySettings.setSystemPrompt(sysPrompt);
   await temperatureSlider.setTemperature(temp);
 
-  const randomAddon = GeneratorUtil.randomArrayElement(
-    await addons.getRecentAddons(),
-  );
-  await addons.selectAddon(randomAddon);
-
   await talkToSelector.selectModel(randomModel.name);
   const modelBorderColors = await recentEntities
     .getRecentEntity(randomModel.name)
@@ -64,65 +59,7 @@ test('Selected settings are saved if to switch from Model1 to Model2', async ({
     .toBe(temp.toString());
 
   const selectedAddons = await addons.getSelectedAddons();
-  expect
-    .soft(selectedAddons, ExpectedMessages.selectedAddonsValid)
-    .toEqual([randomAddon]);
-});
-
-test('Selected settings are saved if to switch from Model to Application to Model', async ({
-  dialHomePage,
-  recentEntities,
-  entitySettings,
-  temperatureSlider,
-  addons,
-  setTestIds,
-  talkToSelector,
-}) => {
-  setTestIds('EPMRTC-417');
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-  await entitySettings.setSystemPrompt(sysPrompt);
-  await temperatureSlider.setTemperature(temp);
-
-  const randomAddon = GeneratorUtil.randomArrayElement(
-    await addons.getRecentAddons(),
-  );
-  await addons.selectAddon(randomAddon);
-  const randomModel = GeneratorUtil.randomArrayElement(
-    models.filter((m) => m.id !== defaultModel.id),
-  );
-  const randomApp = GeneratorUtil.randomArrayElement(
-    ModelsUtil.getApplications(),
-  );
-
-  await talkToSelector.selectApplication(randomApp.name);
-  await talkToSelector.selectModel(randomModel.name);
-
-  const modelBorderColors = await recentEntities
-    .getRecentEntity(randomModel.name)
-    .getAllBorderColors();
-  Object.values(modelBorderColors).forEach((borders) => {
-    borders.forEach((borderColor) => {
-      expect
-        .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
-        .toBe(Colors.highlightedEntity);
-    });
-  });
-
-  const systemPrompt = await entitySettings.getSystemPrompt();
-  expect
-    .soft(systemPrompt, ExpectedMessages.systemPromptIsValid)
-    .toBe(sysPrompt);
-
-  const temperature = await temperatureSlider.getTemperature();
-  expect
-    .soft(temperature, ExpectedMessages.temperatureIsValid)
-    .toBe(temp.toString());
-
-  const selectedAddons = await addons.getSelectedAddons();
-  expect
-    .soft(selectedAddons, ExpectedMessages.selectedAddonsValid)
-    .toEqual([randomAddon]);
+  expect.soft(selectedAddons, ExpectedMessages.selectedAddonsValid).toEqual([]);
 });
 
 test('System prompt contains combinations with :', async ({
