@@ -18,6 +18,12 @@ export default defineConfig({
     coverage: {
       reporter: ['text', 'json', 'html'],
       all: true,
+      // TODO: in future enable this validation with 80% coverage
+      // statements: 80,
+      // lines: 80,
+      // branches: 80,
+      // functions: 80,
     },
+    reporters: 'verbose',
   },
 });

@@ -1,5 +1,5 @@
 import { ErrorMessageDiv } from '@/src/components/Chat/ErrorMessageDiv';
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, findByText, render } from '@testing-library/react';
 import { describe, expect, it, afterEach } from 'vitest';
 
 describe('ErrorMessageDiv', () => {
@@ -16,14 +16,25 @@ describe('ErrorMessageDiv', () => {
     it('should render the correct error message', () => {
         // Arrange
         const { getByText } = render(<ErrorMessageDiv error={error} />);
+        // Act
+        const errorTitle = getByText(error.title);
         // Assert
-        expect(getByText(error.title)).toBeInTheDocument();
+        expect(errorTitle).toBeInTheDocument();
 
         error.messageLines.forEach((line) => {
             expect(getByText(line)).toBeInTheDocument();
         });
 
         expect(getByText(`Code: ${error.code}`)).toBeInTheDocument();
+    });
+
+    it('shouldn\'t render error code if it\'s empty', async () => {
+        // Arrange
+        const { queryByText } = render(<ErrorMessageDiv error={{ ...error, code: null }} />);
+        // Act
+        const codeBlock = queryByText(/^Code/ig)
+        // Assert
+        expect(codeBlock).toBeNull();
     });
 
     it('should render the IconCircleX component', () => {
