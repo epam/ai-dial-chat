@@ -60,6 +60,27 @@ const getPosition = (): Record<OverlayPosition | string, Position> => {
   };
 };
 
+/**
+ * Returns default icon for button which shows overlay
+ * @param height height of svg
+ * @param width width of svg
+ * @returns {string}
+ */
+const getDefaultSVG = (height: number, width: number): string => {
+  return `<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-message-circle-2-filled" width="${width}" height="${height}" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5.821 4.91c3.898 -2.765 9.469 -2.539 13.073 .536c3.667 3.127 4.168 8.238 1.152 11.897c-2.842 3.447 -7.965 4.583 -12.231 2.805l-.232 -.101l-4.375 .931l-.075 .013l-.11 .009l-.113 -.004l-.044 -.005l-.11 -.02l-.105 -.034l-.1 -.044l-.076 -.042l-.108 -.077l-.081 -.074l-.073 -.083l-.053 -.075l-.065 -.115l-.042 -.106l-.031 -.113l-.013 -.075l-.009 -.11l.004 -.113l.005 -.044l.02 -.11l.022 -.072l1.15 -3.451l-.022 -.036c-2.21 -3.747 -1.209 -8.392 2.411 -11.118l.23 -.168z" stroke-width="0" fill="currentColor" />
+  </svg>`;
+};
+
+const overlayToggleIconOptions = {
+  iconBgColor: '#444654',
+  iconColor: 'white',
+  iconHeight: 60,
+  iconWidth: 60,
+  iconSvg: getDefaultSVG(60, 60),
+};
+
 type ChatOverlayFullOptions = ChatOverlayOptions & {
   id: string;
 
@@ -70,6 +91,12 @@ type ChatOverlayFullOptions = ChatOverlayOptions & {
   width?: string;
   height?: string;
   zIndex?: string;
+
+  iconSvg?: string;
+  iconHeight?: number;
+  iconWidth?: number;
+  iconBgColor?: string;
+  iconColor?: string;
 };
 
 const defaultOverlayPlacementOptions: Pick<
@@ -88,6 +115,8 @@ interface Overlay {
 
   options: ChatOverlayFullOptions;
   isHidden: boolean;
+
+  position: Position;
 }
 /**
  * Class provides overlay factory, different styles and animation for overlay (for example: opening animation, auto placement, fullscreen button, etc.)
@@ -95,11 +124,33 @@ interface Overlay {
 export class ChatOverlayManager {
   protected overlays: Overlay[];
 
+  private listenerAbortController = new AbortController();
+
   /**
    * Creates a ChatOverlayManager
    */
   constructor() {
     this.overlays = [];
+
+    window.addEventListener(
+      'orientationchange',
+      () => {
+        for (const overlay of this.overlays) {
+          this.updateOverlay(overlay.options.id);
+        }
+      },
+      { signal: this.listenerAbortController.signal },
+    );
+
+    window.addEventListener(
+      'resize',
+      () => {
+        for (const overlay of this.overlays) {
+          this.updateOverlay(overlay.options.id);
+        }
+      },
+      { signal: this.listenerAbortController.signal },
+    );
   }
 
   /**
@@ -109,16 +160,144 @@ export class ChatOverlayManager {
    */
   public createOverlay(options: ChatOverlayFullOptions) {
     const container = document.createElement('div');
+
     const overlay = new ChatOverlay(container, options);
 
     if (options.allowFullscreen) {
       overlay.allowFullscreen();
     }
 
-    this.overlays.push({ container, overlay, options, isHidden: false });
+    const position = getPosition()[options?.position || 'right-bottom'];
+
+    const newOverlay = {
+      container,
+      overlay,
+      options,
+      isHidden: false,
+      position,
+    };
+
+    this.overlays.push(newOverlay);
+
+    this.updateOverlay(options.id);
+    this.hideOverlay(options.id);
+
+    const toggleButton = this.createOverlayToggle(newOverlay);
+
+    const closeButton = this.createCloseButton();
+    const fullscreenButton = this.createFullscreenButton();
+    const controlsContainer = document.createElement('div');
+
+    setStyles(controlsContainer, {
+      display: 'flex',
+      backgroundColor: '#444654',
+    });
+
+    toggleButton.onclick = () => this.showOverlay(options.id);
+    document.body.appendChild(toggleButton);
+
+    closeButton.onclick = () => this.hideOverlay(options.id);
+    fullscreenButton.onclick = () => this.openFullscreen(options.id);
+
+    controlsContainer.appendChild(closeButton);
+    controlsContainer.appendChild(fullscreenButton);
+
+    container.prepend(controlsContainer);
 
     document.body.appendChild(container);
-    this.updateOverlay(options.id);
+  }
+
+  public createOverlayToggle(overlay: Overlay) {
+    const button = document.createElement('button');
+
+    const { options, position } = overlay;
+
+    setStyles(button, {
+      backgroundColor:
+        options?.iconBgColor || overlayToggleIconOptions.iconBgColor,
+      borderRadius: '100%',
+      border: 'none',
+      height: `${options?.iconHeight || overlayToggleIconOptions.iconHeight}px`,
+      width: `${options?.iconWidth || overlayToggleIconOptions.iconWidth}px`,
+      color: options.iconColor || overlayToggleIconOptions.iconColor,
+      cursor: 'pointer',
+      position: 'fixed',
+      top: position.top,
+      bottom: position.bottom,
+      left: position.left,
+      right: position.right,
+    });
+
+    button.innerHTML = options?.iconSvg || overlayToggleIconOptions.iconSvg;
+
+    return button;
+  }
+
+  public createFullscreenButton() {
+    const button = document.createElement('button');
+
+    setStyles(button, {
+      appearance: 'none',
+      border: 'none',
+      backgroundColor: 'transparent',
+      cursor: 'pointer',
+      boxSizing: 'border-box',
+      height: '100%',
+      width: '20px',
+      paddingTop: '15px',
+      paddingBottom: '8px',
+      paddingRight: '5px',
+      paddingLeft: '5px',
+      display: 'flex',
+      alignItems: 'end',
+    });
+
+    const buttonInnerElement = document.createElement('span');
+
+    setStyles(buttonInnerElement, {
+      boxSizing: 'border-box',
+      border: '1px solid white',
+      borderRadius: '2px',
+      display: 'block',
+      height: '10px',
+      width: '10px',
+    });
+
+    return button;
+  }
+
+  public createCloseButton() {
+    const closeButton = document.createElement('button');
+
+    setStyles(closeButton, {
+      boxSizing: 'border-box',
+      appearance: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      backgroundColor: 'transparent',
+      height: '100%',
+      width: '20px',
+      display: 'flex',
+      paddingTop: '15px',
+      paddingBottom: '8px',
+      paddingRight: '5px',
+      paddingLeft: '5px',
+      alignItems: 'end',
+    });
+
+    const closeButtonInnerElement = document.createElement('span');
+
+    setStyles(closeButtonInnerElement, {
+      boxSizing: 'border-box',
+      border: '1px solid white',
+      borderRadius: '2px',
+      width: '100%',
+      display: 'block',
+    });
+
+    closeButton.appendChild(closeButtonInnerElement);
+
+    return closeButton;
   }
 
   /**
@@ -135,6 +314,12 @@ export class ChatOverlayManager {
     document.body.removeChild(container);
   }
 
+  public openFullscreen(id: string) {
+    const { overlay } = this.getOverlay(id);
+
+    overlay.openFullscreen();
+  }
+
   /**
    * Shows overlay with specified id
    * @param id {string} id of overlay that should be shown
@@ -143,7 +328,7 @@ export class ChatOverlayManager {
     const overlay = this.getOverlay(id);
 
     overlay.isHidden = false;
-    overlay.container.style.display = 'block';
+    overlay.container.style.transform = 'scale(1) translate(0, 0)';
   }
   /**
    * Hides overlay with specified id
@@ -153,7 +338,7 @@ export class ChatOverlayManager {
     const overlay = this.getOverlay(id);
 
     overlay.isHidden = true;
-    overlay.container.style.display = 'none';
+    overlay.container.style.transform = `scale(1) ${overlay.position.transform}`;
   }
 
   /**
@@ -253,5 +438,17 @@ export class ChatOverlayManager {
       (window.matchMedia('(orientation:portrait)').matches &&
         window.matchMedia('(max-width: 550px)').matches)
     );
+  }
+
+  /**
+   * Destroys all overlays and stop event listeners
+   */
+  public destroy(): void {
+    this.listenerAbortController.abort();
+
+    for (const { overlay, container } of this.overlays) {
+      overlay.destroy();
+      document.body.removeChild(container);
+    }
   }
 }

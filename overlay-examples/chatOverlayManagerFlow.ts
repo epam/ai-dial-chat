@@ -16,8 +16,6 @@ export const chatOverlayManagerFlow = () => {
 
   manager.createOverlay(currentOptions);
 
-  manager.showOverlay('test');
-
   manager.subscribe('test', '@DIAL_OVERLAY/GPT_END_GENERATING', () =>
     // eslint-disable-next-line no-console
     console.log('END GENERATING'),

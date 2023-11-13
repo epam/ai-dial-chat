@@ -2,7 +2,7 @@ import { chatOverlayFlow } from './chatOverlayFlow';
 import { chatOverlayManagerFlow } from './chatOverlayManagerFlow';
 
 // set the flag to display needed flow as example
-const isThroughManager = false;
+const isThroughManager = true;
 
 window.onload = () => {
   // checking that overlay doesn't scroll the page
