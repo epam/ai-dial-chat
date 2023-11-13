@@ -952,13 +952,12 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
           assistantModelId,
         };
 
-        const model = ModelsSelectors.selectModel(
-          state$.value,
-          activeMessage.model.id,
-        );
+        const model =
+          ModelsSelectors.selectModel(state$.value, activeMessage.model.id) ??
+          conv.model;
 
         const messages =
-          conv.model.id !== activeMessage.model.id ||
+          conv.model.id !== model.id ||
           isSettingsChanged(conv, newConversationSettings)
             ? clearStateForMessages(conv.messages)
             : conv.messages;

@@ -112,16 +112,16 @@ const selectModels = createSelector([rootSelector], (state) => {
   return state.models;
 });
 
-const selectModel = createSelector(
-  [selectModels, (_state, modelId: string) => modelId],
-  (models, modelId) => {
-    return models.find(({ id }) => id === modelId) as OpenAIEntityModel;
-  },
-);
-
 const selectModelsMap = createSelector([rootSelector], (state) => {
   return state.modelsMap;
 });
+
+const selectModel = createSelector(
+  [selectModelsMap, (_state, modelId: string) => modelId],
+  (modelsMap, modelId) => {
+    return modelsMap[modelId];
+  },
+);
 
 const selectDefaultModelId = createSelector([rootSelector], (state) => {
   return state.defaultModelId;
