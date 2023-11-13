@@ -937,7 +937,11 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
       const activeMessage = messagesStack[conv.replay.activeReplayIndex];
       let updatedConversation: Conversation = conv;
 
-      if (conv.replay.replayAsIs && activeMessage.model) {
+      if (
+        conv.replay.replayAsIs &&
+        activeMessage.model &&
+        activeMessage.model.id
+      ) {
         const { prompt, temperature, selectedAddons, assistantModelId } =
           activeMessage.settings ? activeMessage.settings : conv;
 
@@ -948,6 +952,11 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
           assistantModelId,
         };
 
+        const model = ModelsSelectors.selectModel(
+          state$.value,
+          activeMessage.model.id,
+        );
+
         const messages =
           conv.model.id !== activeMessage.model.id ||
           isSettingsChanged(conv, newConversationSettings)
@@ -956,7 +965,7 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
 
         updatedConversation = {
           ...conv,
-          model: { ...conv.model, ...activeMessage.model },
+          model: model,
           messages,
           replay: {
             ...conv.replay,
