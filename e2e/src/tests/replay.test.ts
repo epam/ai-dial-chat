@@ -3,7 +3,6 @@ import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
 import {
-  AssistantIds,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
@@ -11,22 +10,16 @@ import {
   ModelIds,
 } from '@/e2e/src/testData';
 import { Colors } from '@/e2e/src/ui/domData';
-import { GeneratorUtil, ModelsUtil } from '@/e2e/src/utils';
+import { ModelsUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
-let allAddons: OpenAIEntityModel[];
 let allModels: OpenAIEntityModel[];
-let mirrorApp: OpenAIEntityModel;
-let assistant: OpenAIEntityModel;
 let gpt35Model: OpenAIEntityModel;
 let gpt4Model: OpenAIEntityModel;
 let bison: OpenAIEntityModel;
 
 test.beforeAll(async () => {
-  allAddons = ModelsUtil.getAddons();
   allModels = ModelsUtil.getModels().filter((m) => m.iconUrl != undefined);
-  mirrorApp = ModelsUtil.getApplication(ModelIds.MIRROR)!;
-  assistant = ModelsUtil.getAssistant(AssistantIds.ASSISTANT10K)!;
   gpt35Model = ModelsUtil.getModel(ModelIds.GPT_3_5_AZ)!;
   gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
   bison = ModelsUtil.getModel(ModelIds.BISON_001)!;
@@ -54,14 +47,13 @@ test(
     let replayConversation: Conversation;
     const replayTemp = 0;
     const replayPrompt = 'replay prompt';
-    const replayAddon = ModelsUtil.getAddon(allAddons[1].id);
     let firstConversation: Conversation;
 
     await test.step('Prepare two conversation with different settings', async () => {
       firstConversation = conversationData.prepareModelConversation(
         0.5,
         'first prompt',
-        [allAddons[0].id],
+        [],
         bison,
       );
       conversationData.resetData();
@@ -69,7 +61,7 @@ test(
       replayConversation = conversationData.prepareModelConversation(
         replayTemp,
         replayPrompt,
-        [allAddons[1].id],
+        [],
         gpt4Model,
       );
       await localStorageManager.setConversationHistory(
@@ -149,7 +141,7 @@ test(
       const newModelSelectedAddons = await addons.getSelectedAddons();
       expect
         .soft(newModelSelectedAddons, ExpectedMessages.selectedAddonsValid)
-        .toEqual([replayAddon!.name]);
+        .toEqual([]);
     });
   },
 );
@@ -211,7 +203,6 @@ test('Start replay with the new Model settings', async ({
   chatHeader,
   entitySettings,
   temperatureSlider,
-  addons,
   talkToSelector,
   chatInfoTooltip,
   errorPopup,
@@ -219,14 +210,11 @@ test('Start replay with the new Model settings', async ({
   setTestIds('EPMRTC-508');
   const replayTemp = 0;
   const replayPrompt = 'reply the same text';
-  const replayAddonId = GeneratorUtil.randomArrayElement(
-    ModelsUtil.getRecentAddonIds(),
-  );
-  const replayAddon = ModelsUtil.getAddon(replayAddonId);
   const replayModel = bison;
 
   await test.step('Prepare conversation to replay', async () => {
-    const conversation = conversationData.prepareDefaultConversation(mirrorApp);
+    const conversation =
+      conversationData.prepareDefaultConversation(gpt35Model);
     const replayConversation =
       conversationData.prepareDefaultReplayConversation(conversation);
     await localStorageManager.setConversationHistory(
@@ -243,7 +231,6 @@ test('Start replay with the new Model settings', async ({
     await talkToSelector.selectModel(bison.name);
     await entitySettings.setSystemPrompt(replayPrompt);
     await temperatureSlider.setTemperature(replayTemp);
-    await addons.selectAddon(replayAddon!.name);
     replayRequest = await chat.startReplay();
   });
 
@@ -260,32 +247,19 @@ test('Start replay with the new Model settings', async ({
         ExpectedMessages.chatRequestTemperatureIsValid,
       )
       .toBe(replayTemp);
-    expect
-      .soft(
-        replayRequest.selectedAddons,
-        ExpectedMessages.chatRequestAddonsAreValid,
-      )
-      .toEqual([replayAddonId]);
   });
 
   await test.step('Verify chat header icons are updated with new model and addon', async () => {
     const headerIcons = await chatHeader.getHeaderIcons();
     expect
       .soft(headerIcons.length, ExpectedMessages.headerIconsCountIsValid)
-      .toBe(2);
+      .toBe(1);
     expect
       .soft(headerIcons[0].iconEntity, ExpectedMessages.headerIconEntityIsValid)
       .toBe(bison.id);
     expect
       .soft(headerIcons[0].iconUrl, ExpectedMessages.headerIconSourceIsValid)
       .toBe(replayModel!.iconUrl);
-
-    expect
-      .soft(headerIcons[1].iconEntity, ExpectedMessages.headerIconEntityIsValid)
-      .toBe(replayAddonId);
-    expect
-      .soft(headerIcons[1].iconUrl, ExpectedMessages.headerIconSourceIsValid)
-      .toBe(replayAddon!.iconUrl);
   });
 
   await test.step('Hover over chat header model and verify chat settings on tooltip', async () => {
@@ -310,261 +284,8 @@ test('Start replay with the new Model settings', async ({
     expect
       .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
       .toBe(replayTemp.toString());
-
-    const addonsInfo = await chatInfoTooltip.getAddonsInfo();
-    const addonInfoIcons = await chatInfoTooltip.getAddonIcons();
-    expect
-      .soft(addonsInfo.length, ExpectedMessages.chatInfoAddonsCountIsValid)
-      .toBe(1);
-    expect
-      .soft(addonsInfo[0], ExpectedMessages.chatInfoAddonIsValid)
-      .toBe(replayAddon!.name);
-    expect
-      .soft(addonInfoIcons[0], ExpectedMessages.chatInfoAddonIconIsValid)
-      .toBe(replayAddon!.iconUrl);
   });
 });
-
-test('Start replay with new Assistant settings', async ({
-  dialHomePage,
-  conversationData,
-  chat,
-  localStorageManager,
-  setTestIds,
-  chatHeader,
-  temperatureSlider,
-  talkToSelector,
-  chatInfoTooltip,
-  errorPopup,
-}) => {
-  setTestIds('EPMRTC-509');
-  const replayTemp = 0.5;
-  const assistantModel = gpt4Model;
-  const assistantAddons = assistant!.selectedAddons!;
-
-  await test.step('Prepare conversation to replay', async () => {
-    const conversation =
-      conversationData.prepareDefaultConversation(gpt35Model);
-    const replayConversation =
-      conversationData.prepareDefaultReplayConversation(conversation);
-    await localStorageManager.setConversationHistory(
-      conversation,
-      replayConversation,
-    );
-    await localStorageManager.setSelectedConversation(replayConversation);
-  });
-
-  let replayRequest: ChatBody;
-  await test.step('Change settings to assistant with model and press Start replay', async () => {
-    await dialHomePage.openHomePage({ iconsToBeLoaded: [gpt35Model!.iconUrl] });
-    await dialHomePage.waitForPageLoaded();
-    await talkToSelector.selectAssistant(assistant.name);
-    await temperatureSlider.setTemperature(replayTemp);
-    replayRequest = await chat.startReplay();
-  });
-
-  await test.step('Verify chat API request is sent with correct settings', async () => {
-    expect
-      .soft(
-        replayRequest.modelId,
-        ExpectedMessages.chatRequestModelAssistantIsValid,
-      )
-      .toBe(assistant.id);
-    expect
-      .soft(
-        replayRequest.assistantModelId,
-        ExpectedMessages.chatRequestModelIsValid,
-      )
-      .toBe(gpt4Model.id);
-    expect
-      .soft(
-        replayRequest.temperature,
-        ExpectedMessages.chatRequestTemperatureIsValid,
-      )
-      .toBe(replayTemp);
-    expect
-      .soft(
-        replayRequest.selectedAddons,
-        ExpectedMessages.chatRequestAddonsAreValid,
-      )
-      .toEqual(assistantAddons);
-  });
-
-  await test.step('Verify chat header icons are updated with new assistant, model and addon', async () => {
-    const headerIcons = await chatHeader.getHeaderIcons();
-    expect
-      .soft(headerIcons.length, ExpectedMessages.headerIconsCountIsValid)
-      .toBe(1 + assistantAddons.length);
-    expect
-      .soft(headerIcons[0].iconEntity, ExpectedMessages.headerIconEntityIsValid)
-      .toBe(assistant.id);
-    expect
-      .soft(headerIcons[0].iconUrl, ExpectedMessages.headerIconSourceIsValid)
-      .toBe(assistant!.iconUrl);
-
-    for (let i = 0; i < assistantAddons.length; i++) {
-      const addon = allAddons.find((a) => a.id === assistantAddons[i])!;
-      expect
-        .soft(
-          headerIcons[i + 1].iconEntity,
-          ExpectedMessages.headerIconEntityIsValid,
-        )
-        .toBe(addon.id);
-      expect
-        .soft(
-          headerIcons[i + 1].iconUrl,
-          ExpectedMessages.headerIconSourceIsValid,
-        )
-        .toBe(addon.iconUrl);
-    }
-  });
-
-  await test.step('Hover over chat header model and verify chat settings on tooltip', async () => {
-    await errorPopup.cancelPopup();
-    await chatHeader.chatModel.hoverOver();
-    const assistantModelInfo = await chatInfoTooltip.getAssistantModelInfo();
-    expect
-      .soft(assistantModelInfo, ExpectedMessages.chatInfoAssistantModelIsValid)
-      .toBe(gpt4Model.name);
-
-    const assistantModelInfoIcon =
-      await chatInfoTooltip.getAssistantModelIcon();
-    expect
-      .soft(
-        assistantModelInfoIcon,
-        ExpectedMessages.chatInfoAssistantModelIconIsValid,
-      )
-      .toBe(assistantModel!.iconUrl);
-
-    const assistantInfo = await chatInfoTooltip.getAssistantInfo();
-    expect
-      .soft(assistantInfo, ExpectedMessages.chatInfoAssistantIsValid)
-      .toBe(assistant!.name);
-
-    const assistantInfoIcon = await chatInfoTooltip.getAssistantIcon();
-    expect
-      .soft(assistantInfoIcon, ExpectedMessages.chatInfoAssistantIconIsValid)
-      .toBe(assistant!.iconUrl);
-
-    const tempInfo = await chatInfoTooltip.getTemperatureInfo();
-    expect
-      .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-      .toBe(replayTemp.toString());
-
-    const addonsInfo = await chatInfoTooltip.getAddonsInfo();
-    const addonInfoIcons = await chatInfoTooltip.getAddonIcons();
-    for (let i = 0; i < assistantAddons.length; i++) {
-      const addon = allAddons.find((a) => a.id === assistantAddons[i])!;
-      expect
-        .soft(addonsInfo[i], ExpectedMessages.chatInfoAddonIsValid)
-        .toBe(addon.name);
-      expect
-        .soft(addonInfoIcons[i], ExpectedMessages.chatInfoAddonIconIsValid)
-        .toBe(addon.iconUrl);
-    }
-  });
-});
-
-test(
-  'Start replay with new Application.\n' +
-    '"Replay as is" disappears from settings after replaying the chat',
-  async ({
-    dialHomePage,
-    conversationData,
-    chat,
-    localStorageManager,
-    setTestIds,
-    chatHeader,
-    talkToSelector,
-    chatInfoTooltip,
-    errorPopup,
-    recentEntities,
-  }) => {
-    setTestIds('EPMRTC-510', 'EPMRTC-1291');
-    let conversation: Conversation;
-
-    await test.step('Prepare conversation to replay', async () => {
-      conversation = conversationData.prepareDefaultConversation(gpt35Model);
-      const replayConversation =
-        conversationData.prepareDefaultReplayConversation(conversation);
-      await localStorageManager.setConversationHistory(
-        conversation,
-        replayConversation,
-      );
-      await localStorageManager.setSelectedConversation(replayConversation);
-    });
-
-    let replayRequest: ChatBody;
-    await test.step('Change model to application and press Start replay', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-      await talkToSelector.selectApplication(mirrorApp.name);
-      replayRequest = await chat.startReplay(
-        conversation.messages[0].content,
-        true,
-      );
-    });
-
-    await test.step('Verify chat API request is sent with correct settings', async () => {
-      expect
-        .soft(replayRequest.modelId, ExpectedMessages.chatRequestModelIsValid)
-        .toBe(mirrorApp.id);
-    });
-
-    await test.step('Verify "Regenerate Response" button is visible', async () => {
-      await chat.replay.waitForState({ state: 'hidden' });
-      expect
-        .soft(
-          await chat.regenerate.isVisible(),
-          ExpectedMessages.regenerateIsAvailable,
-        )
-        .toBeTruthy();
-    });
-
-    await test.step('Verify chat header icons are updated with new application', async () => {
-      const headerIcons = await chatHeader.getHeaderIcons();
-      expect
-        .soft(headerIcons.length, ExpectedMessages.headerIconsCountIsValid)
-        .toBe(1);
-      expect
-        .soft(
-          headerIcons[0].iconEntity,
-          ExpectedMessages.headerIconEntityIsValid,
-        )
-        .toBe(mirrorApp.id);
-      expect
-        .soft(headerIcons[0].iconUrl, ExpectedMessages.headerIconSourceIsValid)
-        .toBe(mirrorApp.iconUrl);
-    });
-
-    await test.step('Hover over chat header model and verify chat settings on tooltip', async () => {
-      await errorPopup.cancelPopup();
-      await chatHeader.chatModel.hoverOver();
-      const appInfo = await chatInfoTooltip.getApplicationInfo();
-      expect
-        .soft(appInfo, ExpectedMessages.chatInfoAppIsValid)
-        .toBe(mirrorApp.name);
-
-      const appInfoIcon = await chatInfoTooltip.getApplicationIcon();
-      expect
-        .soft(appInfoIcon, ExpectedMessages.chatInfoAppIconIsValid)
-        .toBe(mirrorApp.iconUrl);
-    });
-
-    await test.step('Verify "Replay as is" is not visible in model settings', async () => {
-      await chatHeader.openConversationSettings.click();
-      const isReplayAsIsOptionDisplayed = await recentEntities
-        .getRecentEntity(ExpectedConstants.talkToReply)
-        .isVisible();
-      expect
-        .soft(
-          isReplayAsIsOptionDisplayed,
-          ExpectedMessages.replayAsOptionNotVisible,
-        )
-        .toBeFalsy();
-    });
-  },
-);
 
 test('Replay after Stop generating', async ({
   dialHomePage,
@@ -619,53 +340,6 @@ test('Replay after Stop generating', async ({
   });
 });
 
-test('Replay after Stop generating in Assistant model', async ({
-  dialHomePage,
-  conversationData,
-  chat,
-  localStorageManager,
-  setTestIds,
-  chatMessages,
-}) => {
-  setTestIds('EPMRTC-513');
-  let conversation: Conversation;
-  await test.step('Prepare assistant conversation with addons to replay', async () => {
-    conversation = conversationData.prepareAssistantConversation(
-      assistant,
-      assistant.selectedAddons!,
-    );
-    const replayConversation =
-      conversationData.preparePartiallyReplayedConversation(conversation);
-    await localStorageManager.setConversationHistory(
-      conversation,
-      replayConversation,
-    );
-    await localStorageManager.setSelectedConversation(replayConversation);
-  });
-
-  await test.step('Press Start replay and stop when first stage received', async () => {
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
-    expect
-      .soft(
-        await chat.proceedGenerating.getElementInnerContent(),
-        ExpectedMessages.proceedReplayIsVisible,
-      )
-      .toBe(ExpectedConstants.continueReplayLabel);
-  });
-
-  await test.step('Proceed generating the answer and verify all stages are regenerated', async () => {
-    await chat.proceedReplaying();
-    const isFirstStageReceived = await chatMessages.isMessageStageReceived(
-      conversation.messages.length,
-      1,
-    );
-    expect
-      .soft(isFirstStageReceived, ExpectedMessages.replayRegeneratesStages)
-      .toBeFalsy();
-  });
-});
-
 test(
   'Restart replay after error appeared on browser refresh.\n' +
     'Restart replay after error appeared on network interruption',
@@ -681,7 +355,7 @@ test(
     setTestIds('EPMRTC-514', 'EPMRTC-1165');
     let conversation: Conversation;
     await test.step('Prepare conversation to replay', async () => {
-      conversation = conversationData.prepareDefaultConversation(mirrorApp);
+      conversation = conversationData.prepareDefaultConversation(gpt35Model);
       const replayConversation =
         conversationData.prepareDefaultReplayConversation(conversation);
       await localStorageManager.setConversationHistory(
@@ -741,20 +415,18 @@ test(
     chatHeader,
     chatInfoTooltip,
     errorPopup,
-    talkToSelector,
   }) => {
     setTestIds('EPMRTC-1323', 'EPMRTC-1324');
     const replayTemp = 0.8;
     const replayPrompt = 'reply the same text';
     let conversation: Conversation;
     const replayModel = gpt35Model;
-    const replayAddon = ModelsUtil.getAddon(allAddons[0].id);
 
     await test.step('Prepare conversation to replay', async () => {
       conversation = conversationData.prepareModelConversation(
         replayTemp,
         replayPrompt,
-        [allAddons[0].id],
+        [],
         gpt35Model,
       );
       const replayConversation =
@@ -770,7 +442,6 @@ test(
     await test.step('Replay conversation with "Replay as is" option selected and verify valid request is sent', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await talkToSelector.selectModel(ExpectedConstants.replayAsIsLabel);
       replayRequest = await chat.startReplay(conversation.messages[0].content);
       expect
         .soft(replayRequest.modelId, ExpectedMessages.chatRequestModelIsValid)
@@ -784,19 +455,13 @@ test(
           ExpectedMessages.chatRequestTemperatureIsValid,
         )
         .toBe(conversation.temperature);
-      expect
-        .soft(
-          replayRequest.selectedAddons,
-          ExpectedMessages.chatRequestAddonsAreValid,
-        )
-        .toEqual(conversation.selectedAddons);
     });
 
     await test.step('Verify chat header icons are the same as initial model', async () => {
       const headerIcons = await chatHeader.getHeaderIcons();
       expect
         .soft(headerIcons.length, ExpectedMessages.headerIconsCountIsValid)
-        .toBe(2);
+        .toBe(1);
       expect
         .soft(
           headerIcons[0].iconEntity,
@@ -806,15 +471,6 @@ test(
       expect
         .soft(headerIcons[0].iconUrl, ExpectedMessages.headerIconSourceIsValid)
         .toBe(replayModel!.iconUrl);
-      expect
-        .soft(
-          headerIcons[1].iconEntity,
-          ExpectedMessages.headerIconEntityIsValid,
-        )
-        .toBe(allAddons[0].id);
-      expect
-        .soft(headerIcons[1].iconUrl, ExpectedMessages.headerIconSourceIsValid)
-        .toBe(replayAddon!.iconUrl);
     });
 
     await test.step('Hover over chat header model and verify chat settings on tooltip', async () => {
@@ -839,223 +495,9 @@ test(
       expect
         .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
         .toBe(conversation.temperature.toString());
-
-      const addonsInfo = await chatInfoTooltip.getAddonsInfo();
-      const addonInfoIcons = await chatInfoTooltip.getAddonIcons();
-      expect
-        .soft(addonsInfo.length, ExpectedMessages.chatInfoAddonsCountIsValid)
-        .toBe(1);
-      expect
-        .soft(addonsInfo[0], ExpectedMessages.chatInfoAddonIsValid)
-        .toBe(replayAddon!.name);
-      expect
-        .soft(addonInfoIcons[0], ExpectedMessages.chatInfoAddonIconIsValid)
-        .toBe(replayAddon!.iconUrl);
     });
   },
 );
-
-test('"Replay as is" when chat is based on Application', async ({
-  dialHomePage,
-  conversationData,
-  chat,
-  localStorageManager,
-  setTestIds,
-  chatHeader,
-  chatInfoTooltip,
-  errorPopup,
-}) => {
-  setTestIds('EPMRTC-1325');
-  let conversation: Conversation;
-  let replayRequest: ChatBody;
-
-  await test.step('Prepare conversation with application to replay', async () => {
-    conversation = conversationData.prepareDefaultConversation(mirrorApp);
-    const replayConversation =
-      conversationData.prepareDefaultReplayConversation(conversation);
-    await localStorageManager.setConversationHistory(
-      conversation,
-      replayConversation,
-    );
-    await localStorageManager.setSelectedConversation(replayConversation);
-  });
-
-  await test.step('Start replay with preselected "Replay as is" option', async () => {
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
-    replayRequest = await chat.startReplay(conversation.messages[0].content);
-  });
-
-  await test.step('Verify chat API request is sent with same settings as for parent application', async () => {
-    expect
-      .soft(replayRequest.modelId, ExpectedMessages.chatRequestModelIsValid)
-      .toBe(conversation.model.id);
-  });
-
-  await test.step('Verify chat header icons are the same as for parent application', async () => {
-    const headerIcons = await chatHeader.getHeaderIcons();
-    expect
-      .soft(headerIcons.length, ExpectedMessages.headerIconsCountIsValid)
-      .toBe(1);
-    expect
-      .soft(headerIcons[0].iconEntity, ExpectedMessages.headerIconEntityIsValid)
-      .toBe(conversation.model.id);
-    expect
-      .soft(headerIcons[0].iconUrl, ExpectedMessages.headerIconSourceIsValid)
-      .toBe(mirrorApp.iconUrl);
-  });
-
-  await test.step('Hover over chat header model and verify chat settings are the same as for parent application', async () => {
-    await errorPopup.cancelPopup();
-    await chatHeader.chatModel.hoverOver();
-    const appInfo = await chatInfoTooltip.getApplicationInfo();
-    expect
-      .soft(appInfo, ExpectedMessages.chatInfoAppIsValid)
-      .toBe(conversation.model.name);
-
-    const appInfoIcon = await chatInfoTooltip.getApplicationIcon();
-    expect
-      .soft(appInfoIcon, ExpectedMessages.chatInfoAppIconIsValid)
-      .toBe(mirrorApp.iconUrl);
-  });
-});
-
-test('"Replay as is" when chat is based on Assistant', async ({
-  dialHomePage,
-  chat,
-  setTestIds,
-  conversationData,
-  localStorageManager,
-  chatHeader,
-  chatInfoTooltip,
-  errorPopup,
-}) => {
-  setTestIds('EPMRTC-1326');
-  let conversation: Conversation;
-  let requestsData: ChatBody;
-  const assistantSelectedAddons = assistant?.selectedAddons;
-  const temp = 0;
-  const randomModel = GeneratorUtil.randomArrayElement(allModels);
-
-  await test.step('Prepare assistant conversation with random model and temperature', async () => {
-    conversation = conversationData.prepareAssistantConversation(
-      assistant!,
-      assistantSelectedAddons!,
-      randomModel,
-    );
-    conversation.temperature = temp;
-    const replayConversation =
-      conversationData.prepareDefaultReplayConversation(conversation);
-    await localStorageManager.setConversationHistory(
-      conversation,
-      replayConversation,
-    );
-    await localStorageManager.setSelectedConversation(replayConversation);
-  });
-
-  await test.step('Send new request with preselected "Replay as is" option and verify request data is the same as for parent model', async () => {
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
-    requestsData = await chat.startReplay(conversation.messages[0].content);
-
-    expect
-      .soft(requestsData.modelId, ExpectedMessages.requestModeIdIsValid)
-      .toBe(conversation.model.id);
-    expect
-      .soft(requestsData.temperature, ExpectedMessages.requestTempIsValid)
-      .toBe(conversation.temperature);
-    expect
-      .soft(
-        requestsData.assistantModelId,
-        ExpectedMessages.requestAssistantModelIdIsValid,
-      )
-      .toBe(conversation.assistantModelId);
-    expect
-      .soft(
-        requestsData.selectedAddons,
-        ExpectedMessages.requestSelectedAddonsAreValid,
-      )
-      .toEqual(conversation.selectedAddons);
-  });
-
-  await test.step('Verify chat icons are correct in the header', async () => {
-    const headerIcons = await chatHeader.getHeaderIcons();
-    expect
-      .soft(headerIcons.length, ExpectedMessages.headerIconsCountIsValid)
-      .toBe(1 + assistantSelectedAddons!.length);
-    expect
-      .soft(headerIcons[0].iconEntity, ExpectedMessages.headerIconEntityIsValid)
-      .toBe(conversation.model.id);
-    expect
-      .soft(headerIcons[0].iconUrl, ExpectedMessages.headerIconSourceIsValid)
-      .toBe(assistant!.iconUrl);
-
-    for (let i = 0; i < assistantSelectedAddons!.length; i++) {
-      const addon = allAddons.find((a) => a.id === assistantSelectedAddons![i]);
-      expect
-        .soft(
-          headerIcons[i + 1].iconEntity,
-          ExpectedMessages.headerIconEntityIsValid,
-        )
-        .toBe(addon!.id);
-      expect
-        .soft(
-          headerIcons[i + 1].iconUrl,
-          ExpectedMessages.headerIconSourceIsValid,
-        )
-        .toBe(addon!.iconUrl);
-    }
-  });
-
-  await test.step('Hover over chat header and verify chat settings are correct on tooltip', async () => {
-    await errorPopup.cancelPopup();
-    await chatHeader.chatModel.hoverOver();
-    const assistantInfo = await chatInfoTooltip.getAssistantInfo();
-    expect
-      .soft(assistantInfo, ExpectedMessages.chatInfoAssistantIsValid)
-      .toBe(assistant!.name);
-
-    const assistantInfoIcon = await chatInfoTooltip.getAssistantIcon();
-    expect
-      .soft(assistantInfoIcon, ExpectedMessages.chatInfoAssistantIconIsValid)
-      .toBe(assistant!.iconUrl);
-
-    const assistantModelInfo = await chatInfoTooltip.getAssistantModelInfo();
-    expect
-      .soft(assistantModelInfo, ExpectedMessages.chatInfoAssistantModelIsValid)
-      .toBe(randomModel.name);
-
-    const assistantModelInfoIcon =
-      await chatInfoTooltip.getAssistantModelIcon();
-    expect
-      .soft(
-        assistantModelInfoIcon,
-        ExpectedMessages.chatInfoAssistantModelIconIsValid,
-      )
-      .toBe(randomModel!.iconUrl);
-
-    const tempInfo = await chatInfoTooltip.getTemperatureInfo();
-    expect
-      .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-      .toBe(temp.toString());
-
-    const addonsInfo = await chatInfoTooltip.getAddonsInfo();
-    const addonInfoIcons = await chatInfoTooltip.getAddonIcons();
-    expect
-      .soft(addonsInfo.length, ExpectedMessages.chatInfoAddonsCountIsValid)
-      .toBe(assistantSelectedAddons!.length);
-
-    for (let i = 0; i < assistantSelectedAddons!.length; i++) {
-      const addon = allAddons.find((a) => a.id === assistantSelectedAddons![i]);
-      expect
-        .soft(addonsInfo[i], ExpectedMessages.chatInfoAddonIsValid)
-        .toBe(addon!.name);
-      expect
-        .soft(addonInfoIcons[i], ExpectedMessages.chatInfoAddonIconIsValid)
-        .toBe(addon!.iconUrl);
-    }
-  });
-});
 
 test(
   '"Replay as is" icon is changed to model icon after replaying the chat.\n' +

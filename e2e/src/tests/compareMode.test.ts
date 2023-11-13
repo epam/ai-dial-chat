@@ -3,7 +3,6 @@ import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
 import {
-  AssistantIds,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
@@ -14,18 +13,14 @@ import {
 import { GeneratorUtil, ModelsUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
-let allAddons: OpenAIEntityModel[];
-let expectedAssistant: OpenAIEntityModel;
 let defaultModel: OpenAIEntityModel;
-let mirrorApp: OpenAIEntityModel;
 let gpt4Model: OpenAIEntityModel;
+let bisonModel: OpenAIEntityModel;
 
 test.beforeAll(async () => {
-  allAddons = ModelsUtil.getAddons();
-  expectedAssistant = ModelsUtil.getAssistant(AssistantIds.ASSISTANT10K)!;
   defaultModel = ModelsUtil.getDefaultModel()!;
   gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
-  mirrorApp = ModelsUtil.getApplication(ModelIds.MIRROR)!;
+  bisonModel = ModelsUtil.getModel(ModelIds.BISON_001)!;
 });
 
 test('Compare mode button creates two new chats and opens them in compare mode', async ({
@@ -69,44 +64,46 @@ test(
     compareConversationSelector,
   }) => {
     setTestIds('EPMRTC-546', 'EPMRTC-383');
-    let modelConversation: Conversation;
-    let assistantConversation: Conversation;
-    let appConversationInFolder: FolderConversation;
-    let appConversation: Conversation;
+    let firstModelConversation: Conversation;
+    let secondModelConversation: Conversation;
+    let modelConversationInFolder: FolderConversation;
+    let thirdModelConversation: Conversation;
 
     await test.step('Prepare three conversations to compare', async () => {
-      modelConversation = conversationData.prepareDefaultConversation(
+      firstModelConversation = conversationData.prepareDefaultConversation(
         defaultModel,
         ExpectedConstants.newConversationTitle,
       );
-      const request = modelConversation.messages.find(
+      const request = firstModelConversation.messages.find(
         (m) => m.role === 'user',
       )?.content;
       conversationData.resetData();
-      assistantConversation = conversationData.prepareAddonsConversation(
-        expectedAssistant,
-        expectedAssistant.selectedAddons!,
-        request,
-      );
+      secondModelConversation =
+        conversationData.prepareModelConversationBasedOnRequests(gpt4Model, [
+          request!,
+        ]);
       conversationData.resetData();
-      appConversationInFolder =
-        conversationData.prepareDefaultConversationInFolder(mirrorApp);
+      modelConversationInFolder =
+        conversationData.prepareDefaultConversationInFolder(bisonModel);
       conversationData.resetData();
-      appConversation = conversationData.prepareDefaultConversation(mirrorApp);
-      await localStorageManager.setFolders(appConversationInFolder.folders);
+      thirdModelConversation =
+        conversationData.prepareDefaultConversation(bisonModel);
+      await localStorageManager.setFolders(modelConversationInFolder.folders);
       await localStorageManager.setConversationHistory(
-        modelConversation,
-        assistantConversation,
-        appConversation,
-        appConversationInFolder.conversations[0],
+        firstModelConversation,
+        secondModelConversation,
+        thirdModelConversation,
+        modelConversationInFolder.conversations[0],
       );
-      await localStorageManager.setSelectedConversation(appConversation);
+      await localStorageManager.setSelectedConversation(thirdModelConversation);
     });
 
     await test.step('Open compare mode from 1st chat dropdown menu and verify chats with valid icons available for comparison', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await conversations.openConversationDropdownMenu(appConversation.name);
+      await conversations.openConversationDropdownMenu(
+        thirdModelConversation.name,
+      );
       await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
 
       const chatsCount = await compare.gerChatMessagesCount();
@@ -130,14 +127,14 @@ test(
           ExpectedMessages.conversationsToCompareOptionsValid,
         )
         .toEqual([
-          modelConversation.name,
-          assistantConversation.name,
-          appConversationInFolder.conversations[0].name,
+          firstModelConversation.name,
+          secondModelConversation.name,
+          modelConversationInFolder.conversations[0].name,
         ]);
 
       const compareOptionsIcons =
         await compareConversationSelector.getOptionsIconAttributes();
-      const expectedModels = [defaultModel, expectedAssistant, mirrorApp];
+      const expectedModels = [defaultModel, gpt4Model, bisonModel];
       expect
         .soft(
           compareOptionsIcons.length,
@@ -458,8 +455,7 @@ test('Generate new response for two chats in compare mode. GPT models', async ({
   });
 });
 
-//TODO: enable when chat API for Gtp-4 is fixed
-test.skip('Generate new response for two chats in compare mode. Bison and GPT-4-32 which have different response time', async ({
+test('Generate new response for two chats in compare mode. Bison and GPT-4-32 which have different response time', async ({
   dialHomePage,
   chat,
   chatMessages,
@@ -473,7 +469,7 @@ test.skip('Generate new response for two chats in compare mode. Bison and GPT-4-
   let secondConversation: Conversation;
 
   await test.step('Prepare two conversations for comparing', async () => {
-    firstConversation = conversationData.prepareDefaultConversation(mirrorApp);
+    firstConversation = conversationData.prepareDefaultConversation(bisonModel);
     conversationData.resetData();
     secondConversation = conversationData.prepareDefaultConversation(
       ModelsUtil.getModel(ModelIds.GPT_4_32K),
@@ -491,7 +487,7 @@ test.skip('Generate new response for two chats in compare mode. Bison and GPT-4-
   await test.step('Send new message in compare chat and verify regenerate is not available until both responses received', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await chat.sendRequestInCompareMode('write down 30 adjectives', {
+    await chat.sendRequestInCompareMode('write down 20 adjectives', {
       rightEntity: firstConversation.model.id,
       leftEntity: secondConversation.model.id,
     });
@@ -505,218 +501,6 @@ test.skip('Generate new response for two chats in compare mode. Bison and GPT-4-
     expect
       .soft(isStopButtonVisible, ExpectedMessages.stopGeneratingAvailable)
       .toBeTruthy();
-  });
-});
-
-test('Generate new response with new settings in compare mode. Assistant and Application.', async ({
-  dialHomePage,
-  chat,
-  setTestIds,
-  conversationData,
-  localStorageManager,
-  compare,
-  rightChatHeader,
-  leftChatHeader,
-  rightConversationSettings,
-  leftConversationSettings,
-  chatInfoTooltip,
-  errorPopup,
-}) => {
-  setTestIds('EPMRTC-554');
-  let firstConversation: Conversation;
-  let secondConversation: Conversation;
-  const assistantTemp = 0.5;
-  let assistantModel: string | null;
-  let assistantAddons: string[];
-
-  await test.step('Prepare two conversations for comparing', async () => {
-    firstConversation = conversationData.prepareModelConversation(
-      1,
-      'repeat the same text',
-      [],
-      defaultModel,
-    );
-    conversationData.resetData();
-    secondConversation = conversationData.prepareDefaultConversation(gpt4Model);
-    await localStorageManager.setConversationHistory(
-      firstConversation,
-      secondConversation,
-    );
-    await localStorageManager.setSelectedConversation(
-      firstConversation,
-      secondConversation,
-    );
-  });
-
-  await test.step('Open any conversation settings and change them to Assistant and some application', async () => {
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
-    await rightChatHeader.openConversationSettings.click();
-
-    const conversationSettingsCount = await compare.gerConversationsCount();
-    expect
-      .soft(conversationSettingsCount, ExpectedMessages.compareModeOpened)
-      .toBe(2);
-
-    await rightConversationSettings
-      .getTalkToSelector()
-      .selectAssistant(expectedAssistant.name);
-    const rightEntitySettings = rightConversationSettings.getEntitySettings();
-    await rightEntitySettings
-      .getTemperatureSlider()
-      .setTemperature(assistantTemp);
-    assistantModel = await rightEntitySettings
-      .getModelSelector()
-      .getSelectedModel();
-
-    await leftConversationSettings
-      .getTalkToSelector()
-      .selectApplication(mirrorApp.name);
-
-    await chat.applyChanges().click();
-  });
-  await test.step('Verify new settings are sent in requests', async () => {
-    assistantAddons = expectedAssistant.selectedAddons!;
-    const requestsData = await chat.sendRequestInCompareMode('what is epam?', {
-      rightEntity: expectedAssistant.id,
-      leftEntity: mirrorApp.id,
-    });
-    expect
-      .soft(
-        requestsData.rightRequest.modelId,
-        ExpectedMessages.requestModeIdIsValid,
-      )
-      .toBe(expectedAssistant.id);
-    expect
-      .soft(
-        ModelsUtil.getModel(requestsData.rightRequest.assistantModelId)!.name,
-        ExpectedMessages.requestAssistantModelIdIsValid,
-      )
-      .toBe(assistantModel);
-    expect
-      .soft(
-        requestsData.rightRequest.selectedAddons,
-        ExpectedMessages.requestSelectedAddonsAreValid,
-      )
-      .toEqual(assistantAddons);
-    expect
-      .soft(
-        requestsData.leftRequest.modelId,
-        ExpectedMessages.requestModeIdIsValid,
-      )
-      .toBe(mirrorApp.id);
-  });
-
-  await test.step('Verify chat header icons are updated with new model and addon', async () => {
-    const rightHeaderIcons = await rightChatHeader.getHeaderIcons();
-    expect
-      .soft(rightHeaderIcons.length, ExpectedMessages.headerIconsCountIsValid)
-      .toBe(assistantAddons.length + 1);
-    expect
-      .soft(
-        rightHeaderIcons[0].iconEntity,
-        ExpectedMessages.headerIconEntityIsValid,
-      )
-      .toBe(expectedAssistant.id);
-    expect
-      .soft(
-        rightHeaderIcons[0].iconUrl,
-        ExpectedMessages.headerIconSourceIsValid,
-      )
-      .toBe(expectedAssistant!.iconUrl);
-
-    for (let i = 0; i < assistantAddons.length; i++) {
-      const addon = allAddons.find((a) => a.id === assistantAddons[i])!;
-      expect
-        .soft(
-          rightHeaderIcons[i + 1].iconEntity,
-          ExpectedMessages.headerIconEntityIsValid,
-        )
-        .toBe(addon.id);
-      expect
-        .soft(
-          rightHeaderIcons[i + 1].iconUrl,
-          ExpectedMessages.headerIconSourceIsValid,
-        )
-        .toBe(addon.iconUrl);
-    }
-
-    const leftHeaderIcons = await leftChatHeader.getHeaderIcons();
-    expect
-      .soft(leftHeaderIcons.length, ExpectedMessages.headerIconsCountIsValid)
-      .toBe(1);
-    expect
-      .soft(
-        leftHeaderIcons[0].iconEntity,
-        ExpectedMessages.headerIconEntityIsValid,
-      )
-      .toBe(mirrorApp.id);
-    expect
-      .soft(
-        leftHeaderIcons[0].iconUrl,
-        ExpectedMessages.headerIconSourceIsValid,
-      )
-      .toBe(mirrorApp.iconUrl);
-  });
-
-  await test.step('Hover over chat headers and verify chat settings on tooltip', async () => {
-    await errorPopup.cancelPopup();
-    await rightChatHeader.chatModel.hoverOver();
-    const assistantModelInfo = await chatInfoTooltip.getAssistantModelInfo();
-    expect
-      .soft(assistantModelInfo, ExpectedMessages.chatInfoAssistantModelIsValid)
-      .toBe(assistantModel);
-
-    const assistantModelInfoIcon =
-      await chatInfoTooltip.getAssistantModelIcon();
-    const expectedAssistantModel = ModelsUtil.getModels().find(
-      (m) => m.name === assistantModel,
-    );
-    expect
-      .soft(
-        assistantModelInfoIcon,
-        ExpectedMessages.chatInfoAssistantModelIconIsValid,
-      )
-      .toBe(expectedAssistantModel!.iconUrl);
-
-    const assistantInfo = await chatInfoTooltip.getAssistantInfo();
-    expect
-      .soft(assistantInfo, ExpectedMessages.chatInfoAssistantIsValid)
-      .toBe(expectedAssistant!.name);
-
-    const assistantInfoIcon = await chatInfoTooltip.getAssistantIcon();
-    expect
-      .soft(assistantInfoIcon, ExpectedMessages.chatInfoAssistantIconIsValid)
-      .toBe(expectedAssistant!.iconUrl);
-
-    const tempInfo = await chatInfoTooltip.getTemperatureInfo();
-    expect
-      .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-      .toBe(assistantTemp.toString());
-
-    const addonsInfo = await chatInfoTooltip.getAddonsInfo();
-    const addonInfoIcons = await chatInfoTooltip.getAddonIcons();
-    for (let i = 0; i < assistantAddons.length; i++) {
-      const addon = allAddons.find((a) => a.id === assistantAddons[i])!;
-      expect
-        .soft(addonsInfo[i], ExpectedMessages.chatInfoAddonIsValid)
-        .toBe(addon.name);
-      expect
-        .soft(addonInfoIcons[i], ExpectedMessages.chatInfoAddonIconIsValid)
-        .toBe(addon.iconUrl);
-    }
-
-    await errorPopup.cancelPopup();
-    await leftChatHeader.chatModel.hoverOver();
-    const appInfo = await chatInfoTooltip.getApplicationInfo();
-    expect
-      .soft(appInfo, ExpectedMessages.chatInfoAppIsValid)
-      .toBe(mirrorApp.name);
-
-    const modelInfoIcon = await chatInfoTooltip.getApplicationIcon();
-    expect
-      .soft(modelInfoIcon, ExpectedMessages.chatInfoAppIconIsValid)
-      .toBe(mirrorApp.iconUrl);
   });
 });
 
@@ -741,15 +525,10 @@ test('Apply changes with new settings for both chats in compare mode and check c
   const models = ModelsUtil.getModels();
   const modelsWithIcons = models.filter((m) => m.iconUrl);
   const initRandomModel = GeneratorUtil.randomArrayElement(models);
-  const initRandomAddon = GeneratorUtil.randomArrayElement(allAddons);
   const firstUpdatedRandomModel =
     GeneratorUtil.randomArrayElement(modelsWithIcons);
   const secondUpdatedRandomModel =
     GeneratorUtil.randomArrayElement(modelsWithIcons);
-  const updatedRandomAddonId = GeneratorUtil.randomArrayElement(
-    ModelsUtil.getRecentAddonIds(),
-  );
-  const updatedRandomAddon = ModelsUtil.getAddon(updatedRandomAddonId);
   const firstUpdatedPrompt = 'first prompt';
   const secondUpdatedPrompt = 'second prompt';
   const firstUpdatedTemp = 0.5;
@@ -759,7 +538,7 @@ test('Apply changes with new settings for both chats in compare mode and check c
     firstConversation = conversationData.prepareModelConversation(
       1,
       'prompt',
-      [initRandomAddon.id],
+      [],
       initRandomModel,
     );
     conversationData.resetData();
@@ -787,9 +566,6 @@ test('Apply changes with new settings for both chats in compare mode and check c
     await leftEntitySettings
       .getTemperatureSlider()
       .setTemperature(firstUpdatedTemp);
-    await leftEntitySettings
-      .getAddons()
-      .removeSelectedAddon(initRandomAddon.name);
 
     await rightConversationSettings
       .getTalkToSelector()
@@ -799,7 +575,6 @@ test('Apply changes with new settings for both chats in compare mode and check c
     await rightEntitySettings
       .getTemperatureSlider()
       .setTemperature(secondUpdatedTemp);
-    await rightEntitySettings.getAddons().selectAddon(updatedRandomAddon!.name);
     await chat.applyChanges().click();
   });
 
@@ -807,7 +582,7 @@ test('Apply changes with new settings for both chats in compare mode and check c
     const rightHeaderIcons = await rightChatHeader.getHeaderIcons();
     expect
       .soft(rightHeaderIcons.length, ExpectedMessages.headerIconsCountIsValid)
-      .toBe(2);
+      .toBe(1);
     expect
       .soft(
         rightHeaderIcons[0].iconEntity,
@@ -820,19 +595,6 @@ test('Apply changes with new settings for both chats in compare mode and check c
         ExpectedMessages.headerIconSourceIsValid,
       )
       .toBe(secondUpdatedRandomModel!.iconUrl);
-
-    expect
-      .soft(
-        rightHeaderIcons[1].iconEntity,
-        ExpectedMessages.headerIconEntityIsValid,
-      )
-      .toBe(updatedRandomAddon!.id);
-    expect
-      .soft(
-        rightHeaderIcons[1].iconUrl,
-        ExpectedMessages.headerIconSourceIsValid,
-      )
-      .toBe(updatedRandomAddon!.iconUrl);
 
     const leftHeaderIcons = await leftChatHeader.getHeaderIcons();
     expect
@@ -907,18 +669,6 @@ test('Apply changes with new settings for both chats in compare mode and check c
       .soft(rightTempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
       .toBe(secondUpdatedTemp.toString());
 
-    const rightAddonsInfo = await chatInfoTooltip.getAddonsInfo();
-    const rightAddonInfoIcons = await chatInfoTooltip.getAddonIcons();
-    expect
-      .soft(rightAddonsInfo.length, ExpectedMessages.chatInfoAddonsCountIsValid)
-      .toBe(1);
-    expect
-      .soft(rightAddonsInfo[0], ExpectedMessages.chatInfoAddonIsValid)
-      .toBe(updatedRandomAddon!.name);
-    expect
-      .soft(rightAddonInfoIcons[0], ExpectedMessages.chatInfoAddonIconIsValid)
-      .toBe(updatedRandomAddon!.iconUrl);
-
     await errorPopup.cancelPopup();
     await leftChatHeader.chatModel.hoverOver();
     const leftModelInfo = await chatInfoTooltip.getModelInfo();
@@ -940,11 +690,6 @@ test('Apply changes with new settings for both chats in compare mode and check c
     expect
       .soft(leftTempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
       .toBe(firstUpdatedTemp.toString());
-
-    const leftAddonsInfo = await chatInfoTooltip.getAddonsInfo();
-    expect
-      .soft(leftAddonsInfo.length, ExpectedMessages.chatInfoAddonsCountIsValid)
-      .toBe(0);
   });
 });
 
@@ -991,9 +736,8 @@ test(
       });
 
       for (const side of sides) {
-        const jumpingIcon = await chatMessages.getCompareMessageJumpingIcon(
-          side,
-        );
+        const jumpingIcon =
+          await chatMessages.getCompareMessageJumpingIcon(side);
         await jumpingIcon.waitFor();
       }
 

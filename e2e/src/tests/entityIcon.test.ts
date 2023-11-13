@@ -3,6 +3,7 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   Groups,
+  ModelIds,
 } from '@/e2e/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
@@ -90,15 +91,10 @@ test(
     });
 
     await test.step('Select any entity and verify corresponding icon is displayed on chat bar panel', async () => {
-      const randomGroup = GeneratorUtil.randomArrayElement(
-        Object.values(Groups),
-      );
       const randomEntity = GeneratorUtil.randomArrayElement(
-        ModelsUtil.getOpenAIEntities().filter((e) =>
-          randomGroup.toLowerCase().includes(e.type),
-        ),
+        ModelsUtil.getModels(),
       );
-      await talkToSelector.selectEntity(randomEntity.name, randomGroup);
+      await talkToSelector.selectEntity(randomEntity.name, Groups.models);
 
       const conversationIcon =
         await conversations.getConversationIconAttributes(
@@ -114,8 +110,7 @@ test(
   },
 );
 
-//TODO: need to re-implement to catch jumping icon
-test.skip('"Talk to" item icon is jumping while generating an answer', async ({
+test('"Talk to" item icon is jumping while generating an answer', async ({
   dialHomePage,
   talkToSelector,
   chat,
@@ -123,13 +118,13 @@ test.skip('"Talk to" item icon is jumping while generating an answer', async ({
   chatMessages,
 }) => {
   setTestIds('EPMRTC-386');
-  const defaultModel = ModelsUtil.getDefaultModel()!;
+  const model = ModelsUtil.getModel(ModelIds.GPT_4_32K)!;
 
   await test.step('Create a new conversation based on default model and send a request', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await talkToSelector.selectModel(defaultModel.name);
-    await chat.sendRequestWithButton('write down 10 adjectives', false);
+    await talkToSelector.selectModel(model.name);
+    await chat.sendRequestWithButton('write down 15 adjectives', false);
   });
 
   await test.step('Verify app icon is jumping in chat while responding', async () => {
