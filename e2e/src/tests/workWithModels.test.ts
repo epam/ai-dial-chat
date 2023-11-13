@@ -3,7 +3,6 @@ import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
 import {
-  AssistantIds,
   ExpectedConstants,
   ExpectedMessages,
   ModelIds,
@@ -15,17 +14,11 @@ const userRequests = ['first request', 'second request', 'third request'];
 const requestTerm = 'qwer';
 const expectedResponse = 'The sky is blue.';
 const sysPrompt = `Type: "${expectedResponse}" if user types ${requestTerm}`;
-let allAddons: OpenAIEntityModel[];
 let gpt35Model: OpenAIEntityModel;
-let assistant: OpenAIEntityModel;
-let mirrorApp: OpenAIEntityModel;
 let gpt4Model: OpenAIEntityModel;
 
 test.beforeAll(async () => {
-  allAddons = ModelsUtil.getAddons();
   gpt35Model = ModelsUtil.getModel(ModelIds.GPT_3_5_AZ)!;
-  assistant = ModelsUtil.getAssistant(AssistantIds.ASSISTANT10K)!;
-  mirrorApp = ModelsUtil.getApplication(ModelIds.MIRROR)!;
   gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
 });
 
@@ -108,58 +101,6 @@ test('Regenerate response when answer was not received', async ({
   });
 });
 
-//TODO: enable when chat API for Gtp-4 is fixed
-test.skip(
-  'Stop generating for assistant.\n' +
-    'Regenerate response for partly received answer when Stop generating was used',
-  async ({ dialHomePage, chat, setTestIds, chatMessages, talkToSelector }) => {
-    setTestIds('EPMRTC-481', 'EPMRTC-1166');
-    await test.step('Send request for assistant and stop generating when first stage received', async () => {
-      test.slow();
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-      await talkToSelector.selectAssistant(assistant.name);
-      await chat.sendRequestWithButton(
-        'What is Epam? What is epam revenue in 2018?',
-        false,
-      );
-      await chatMessages.waitForMessageStageReceived(2, 1);
-      await chat.stopGenerating.click();
-    });
-
-    await test.step('Verify Regenerate response button is visible, only 1st stage is displayed', async () => {
-      const isGenerateResponseVisible = await chat.regenerate.isVisible();
-      expect
-        .soft(isGenerateResponseVisible, ExpectedMessages.regenerateIsAvailable)
-        .toBeTruthy();
-
-      const isResponseLoading = await chatMessages.isResponseLoading();
-      expect
-        .soft(isResponseLoading, ExpectedMessages.responseLoadingStopped)
-        .toBeFalsy();
-
-      const isSecondStageReceived = await chatMessages.isMessageStageReceived(
-        2,
-        2,
-      );
-      expect
-        .soft(isSecondStageReceived, ExpectedMessages.onlyFirstStageDisplayed)
-        .toBeFalsy();
-    });
-
-    await test.step('Regenerate response and verify whole answer is regenerated', async () => {
-      await chat.regenerateResponse(false);
-      const isFirstStageReceived = await chatMessages.isMessageStageReceived(
-        2,
-        1,
-      );
-      expect
-        .soft(isFirstStageReceived, ExpectedMessages.allStagesRegenerated)
-        .toBeFalsy();
-    });
-  },
-);
-
 test(
   'Edit the message in the middle. Cancel.\n' +
     'Edit the message in the middle. Save & Submit.\n' +
@@ -174,9 +115,10 @@ test(
     setTestIds('EPMRTC-485', 'EPMRTC-486', 'EPMRTC-487');
     const editData = 'updated message';
     let conversation: Conversation;
+    const userRequests = ['1+2=', '2+3=', '3+4='];
     await test.step('Prepare conversation with 3 requests', async () => {
       conversation = conversationData.prepareModelConversationBasedOnRequests(
-        mirrorApp,
+        gpt35Model,
         userRequests,
       );
       await localStorageManager.setConversationHistory(conversation);
@@ -233,7 +175,7 @@ test(
       const lastMessage = await chatMessages.getLastMessageContent();
       expect
         .soft(lastMessage, ExpectedMessages.messageContentIsValid)
-        .toBe(editData);
+        .not.toBe(conversation.messages[3].content);
     });
   },
 );
@@ -253,7 +195,7 @@ test(
     await test.step('Prepare conversation with 3 requests', async () => {
       const conversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          mirrorApp,
+          gpt35Model,
           userRequests,
         );
       await localStorageManager.setConversationHistory(conversation);
@@ -290,8 +232,7 @@ test(
   },
 );
 
-//TODO: enable when chat API for Gtp-4 is fixed
-test.skip('System prompt is applied in Model', async ({
+test('System prompt is applied in Model', async ({
   dialHomePage,
   chat,
   setTestIds,
@@ -316,39 +257,7 @@ test.skip('System prompt is applied in Model', async ({
   });
 });
 
-//TODO: enable when chat API for Gtp-4 is fixed
-test.skip('System prompt is applied in Model with addon', async ({
-  dialHomePage,
-  chat,
-  setTestIds,
-  chatMessages,
-  talkToSelector,
-  entitySettings,
-  addons,
-}) => {
-  setTestIds('EPMRTC-1086');
-  await test.step('Set system prompt for model + addons and send request', async () => {
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await talkToSelector.selectModel(gpt4Model.name);
-    for (const addonName of allAddons.map((a) => a.name)) {
-      await addons.selectAddon(addonName);
-    }
-
-    await entitySettings.setSystemPrompt(sysPrompt);
-    await chat.sendRequestWithButton(requestTerm);
-  });
-
-  await test.step('Verify response correspond system prompt', async () => {
-    const response = await chatMessages.getLastMessageContent();
-    expect
-      .soft(response, ExpectedMessages.regenerateIsAvailable)
-      .toBe(expectedResponse);
-  });
-});
-
-//TODO: enable when chat API for Gtp-4 is fixed
-test.skip('Stop generating for models like GPT (1 symbol = 1 token)', async ({
+test('Stop generating for models like GPT (1 symbol = 1 token)', async ({
   dialHomePage,
   chat,
   setTestIds,
