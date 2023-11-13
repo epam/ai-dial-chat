@@ -40,7 +40,7 @@
     "i18next": "^22.4.13",
     "isomorphic-dompurify": "^1.8.0",
     "next": "13.5.4",
-    "next-auth": "^4.22.1",
+    "next-auth": "^4.24.5",
     "next-i18next": "^13.2.2",
     "node-fetch": "^3.3.2",
     "pino": "^8.15.1",
