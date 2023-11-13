@@ -106,5 +106,9 @@
   "overrides": {
     "@opentelemetry/exporter-jaeger": "file:dev/null",
     "@babel/traverse": "7.23.2"
+  },
+  "engines": {
+    "node": ">=18.18.2",
+    "npm": ">=9.8.1"
   }
 }
