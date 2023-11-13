@@ -330,7 +330,7 @@ test('Existed chats stay after import', async ({
 });
 
 test(
-  'Continue working with imported file. Regenerate reposponse.\n' +
+  'Continue working with imported file. Regenerate response.\n' +
     'Continue working with imported file. Send a message.\n' +
     'Continue working with imported file. Edit a message',
   async ({
@@ -343,13 +343,12 @@ test(
   }) => {
     setTestIds('EPMRTC-923', 'EPMRTC-924', 'EPMRTC-925');
     let importedRootConversation: Conversation;
-    const requests = ['first request', 'second request', 'third request'];
+    const requests = ['1+2=', '2+3=', '3+4='];
 
     await test.step('Prepare conversation with several messages to import', async () => {
-      const mirrorApp = ModelsUtil.getApplication(ModelIds.MIRROR);
       importedRootConversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          mirrorApp!,
+          gpt35Model,
           requests,
         );
       threeConversationsData = ImportConversation.prepareConversationFile(
@@ -364,33 +363,29 @@ test(
         chatBar.importButton.click(),
       );
       await chat.regenerateResponse();
-      const lastResponseContent = await chatMessages.getLastMessageContent();
+      const messagesCount = await chatMessages.chatMessages.getElementsCount();
       expect
-        .soft(lastResponseContent, ExpectedMessages.messageContentIsValid)
-        .toBe(requests[2]);
+        .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
+        .toBe(requests.length * 2);
     });
 
     await test.step('Send new request in chat and verify response is received', async () => {
-      const newRequest = 'new request';
+      const newRequest = '4+5=';
       await chat.sendRequestWithButton(newRequest);
-      const lastResponseContent = await chatMessages.getLastMessageContent();
+      const messagesCount = await chatMessages.chatMessages.getElementsCount();
       expect
-        .soft(lastResponseContent, ExpectedMessages.messageContentIsValid)
-        .toBe(newRequest);
+        .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
+        .toBe(requests.length * 2 + 2);
     });
 
     await test.step('Edit 1st request in chat and verify 1st response is regenerated', async () => {
-      const updatedMessage = 'edited message';
+      const updatedMessage = '6+7=';
       await chatMessages.openEditMessageMode(requests[0]);
       await chatMessages.editMessage(updatedMessage);
       const messagesCount = await chatMessages.chatMessages.getElementsCount();
       expect
         .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
         .toBe(2);
-      const lastResponseContent = await chatMessages.getLastMessageContent();
-      expect
-        .soft(lastResponseContent, ExpectedMessages.messageContentIsValid)
-        .toBe(updatedMessage);
     });
   },
 );
