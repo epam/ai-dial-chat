@@ -190,6 +190,8 @@ export class ChatOverlayManager {
 
     setStyles(controlsContainer, {
       display: 'flex',
+      justifyContent: 'end',
+      alignItems: 'end',
       backgroundColor: '#444654',
     });
 
@@ -262,6 +264,8 @@ export class ChatOverlayManager {
       height: '10px',
       width: '10px',
     });
+
+    button.appendChild(buttonInnerElement);
 
     return button;
   }
