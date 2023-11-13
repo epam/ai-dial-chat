@@ -33,7 +33,9 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 import { cleanConversationHistory } from '@/src/utils/app/clean';
+import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
+  isSettingsChanged,
   saveConversations,
   saveSelectedConversationIds,
 } from '@/src/utils/app/conversation';
@@ -54,6 +56,7 @@ import {
   ChatBody,
   Conversation,
   Message,
+  MessageSettings,
   Playback,
   RateBody,
 } from '@/src/types/chat';
@@ -572,6 +575,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           selectedAddons,
         };
       }
+
       const chatBody: ChatBody = {
         modelId: payload.conversation.model.id,
         messages: payload.conversation.messages
@@ -931,28 +935,49 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
         );
       }
       const activeMessage = messagesStack[conv.replay.activeReplayIndex];
-      const { prompt, temperature, selectedAddons, assistantModelId } =
-        activeMessage.settings ? activeMessage.settings : conv;
-      const convWithNewSettings: Conversation =
-        !conv.replay.replayAsIs || !activeMessage.model
-          ? conv
-          : {
-              ...conv,
-              replay: {
-                ...conv.replay,
-                isError: false,
-              },
-              model: { ...conv.model, ...activeMessage.model },
-              prompt: prompt,
-              temperature: temperature,
-              selectedAddons: selectedAddons,
-              assistantModelId: assistantModelId,
-            };
+      let updatedConversation: Conversation = conv;
+
+      if (
+        conv.replay.replayAsIs &&
+        activeMessage.model &&
+        activeMessage.model.id
+      ) {
+        const { prompt, temperature, selectedAddons, assistantModelId } =
+          activeMessage.settings ? activeMessage.settings : conv;
+
+        const newConversationSettings: MessageSettings = {
+          prompt,
+          temperature,
+          selectedAddons,
+          assistantModelId,
+        };
+
+        const model =
+          ModelsSelectors.selectModel(state$.value, activeMessage.model.id) ??
+          conv.model;
+
+        const messages =
+          conv.model.id !== model.id ||
+          isSettingsChanged(conv, newConversationSettings)
+            ? clearStateForMessages(conv.messages)
+            : conv.messages;
+
+        updatedConversation = {
+          ...conv,
+          model: model,
+          messages,
+          replay: {
+            ...conv.replay,
+            isError: false,
+          },
+          ...newConversationSettings,
+        };
+      }
 
       return concat(
         of(
           ConversationsActions.sendMessage({
-            conversation: convWithNewSettings,
+            conversation: updatedConversation,
             deleteCount: payload.isRestart
               ? (conversation?.messages.length &&
                   (conversation.messages[conversation.messages.length - 1]
@@ -961,7 +986,7 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
                     : 1)) ||
                 0
               : 0,
-            activeReplayIndex: convWithNewSettings.replay.activeReplayIndex,
+            activeReplayIndex: updatedConversation.replay.activeReplayIndex,
             message: activeMessage,
           }),
         ),

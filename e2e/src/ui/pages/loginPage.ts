@@ -13,9 +13,9 @@ export class LoginPage extends BasePage {
   ).getElementLocatorByText(ExpectedConstants.signInButtonTitle);
 
   async loginToChatBot() {
-    const token =
-      process.env.PREVIEW_TEST_TOKEN ??
-      process.env.AUTH_TEST_TOKEN!.split(',')[0];
+    const token = process.env.PREVIEW_TEST_TOKEN
+      ? process.env.PREVIEW_TEST_TOKEN!.split(',')[0]
+      : process.env.AUTH_TEST_TOKEN!.split(',')[0];
     await this.tokenInput.typeInInput(token);
     return this.waitFoApiResponsesReceived(() => this.signInButton.click(), {
       setEntitiesEnvVars: true,

@@ -8,17 +8,14 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
-  ModelIds,
 } from '@/e2e/src/testData';
 import { Colors } from '@/e2e/src/ui/domData';
 import { GeneratorUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
-let mirrorApp: OpenAIEntityModel;
 let gpt35Model: OpenAIEntityModel;
 
 test.beforeAll(async () => {
-  mirrorApp = ModelsUtil.getApplication(ModelIds.MIRROR)!;
   gpt35Model = ModelsUtil.getDefaultModel()!;
 });
 
@@ -203,7 +200,7 @@ test(
   }) => {
     setTestIds('EPMRTC-595', 'EPMRTC-1276');
     const conversation = conversationData.prepareDefaultConversation(
-      mirrorApp,
+      gpt35Model,
       '!@#$%^&()_{}[]:;"\',./<>?/-`~',
     );
     await localStorageManager.setConversationHistory(conversation);
@@ -320,17 +317,17 @@ test(
       'EPMRTC-780',
     );
     const yesterdayConversation = conversationData.prepareYesterdayConversation(
-      mirrorApp,
+      gpt35Model,
       'yesterday',
     );
     conversationData.resetData();
     const lastWeekConversation = conversationData.prepareLastWeekConversation(
-      mirrorApp,
+      gpt35Model,
       'last week',
     );
     conversationData.resetData();
     const lastMonthConversation = conversationData.prepareLastMonthConversation(
-      mirrorApp,
+      gpt35Model,
       'last month',
     );
     await localStorageManager.setConversationHistory(
@@ -735,16 +732,16 @@ test('Chat sorting. Sections can be collapsed and expanded', async ({
   setTestIds('EPMRTC-1313');
   await test.step('Prepare conversations for all available chronologies', async () => {
     const yesterdayConversation =
-      conversationData.prepareYesterdayConversation(mirrorApp);
+      conversationData.prepareYesterdayConversation(gpt35Model);
     conversationData.resetData();
     const lastWeekConversation =
-      conversationData.prepareLastWeekConversation(mirrorApp);
+      conversationData.prepareLastWeekConversation(gpt35Model);
     conversationData.resetData();
     const lastMonthConversation =
-      conversationData.prepareLastMonthConversation(mirrorApp);
+      conversationData.prepareLastMonthConversation(gpt35Model);
     conversationData.resetData();
     const otherConversation =
-      conversationData.prepareOlderConversation(mirrorApp);
+      conversationData.prepareOlderConversation(gpt35Model);
     await localStorageManager.setConversationHistory(
       yesterdayConversation,
       lastWeekConversation,
@@ -776,9 +773,8 @@ test('Chat sorting. Sections can be collapsed and expanded', async ({
       .toBe(0);
 
     await conversations.chronologyByTitle(randomChronology).click();
-    chronologyConversations = await conversations.getChronologyConversations(
-      randomChronology,
-    );
+    chronologyConversations =
+      await conversations.getChronologyConversations(randomChronology);
     expect
       .soft(
         chronologyConversations.length,

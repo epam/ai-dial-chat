@@ -45,6 +45,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const selectedPromptId = useAppSelector(
     PromptsSelectors.selectSelectedPromptId,
   );
+  const isSelected = selectedPromptId === prompt.id;
   const showModal = useAppSelector(PromptsSelectors.selectIsEditModalOpen);
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -173,9 +174,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     <div
       className={classNames(
         'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-violet/15',
-        selectedPromptId === prompt.id
-          ? 'border-l-violet bg-violet/15'
-          : 'border-l-transparent',
+        isSelected ? 'border-l-violet bg-violet/15' : 'border-l-transparent',
       )}
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
@@ -191,7 +190,15 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       >
         <IconBulb size={18} className="text-gray-500" />
 
-        <div className="relative max-h-5 flex-1 truncate break-all pr-4 text-left">
+        <div
+          className={classNames(
+            {
+              'mr-4 xl:mr-0': !isDeleting && !isRenaming && isSelected,
+            },
+            isDeleting ? 'mr-12' : 'group-hover:mr-4',
+            'relative max-h-5 flex-1 truncate break-all text-left',
+          )}
+        >
           {prompt.name}
         </div>
       </button>
@@ -222,7 +229,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         <div
           className={classNames(
             'absolute right-3 z-50 flex justify-end xl:invisible xl:group-hover:visible',
-            selectedPromptId === prompt.id ? 'visible' : 'invisible',
+            isSelected ? 'visible' : 'invisible',
           )}
           ref={wrapperRef}
           onClick={stopBubbling}
@@ -253,10 +260,10 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         )}
       </div>
 
-      {selectedPromptId === prompt.id && showModal && (
+      {isSelected && showModal && (
         <PromptModal
           prompt={prompt}
-          isOpen={selectedPromptId === prompt.id && showModal}
+          isOpen
           onClose={handleClose}
           onUpdatePrompt={handleUpdate}
         />

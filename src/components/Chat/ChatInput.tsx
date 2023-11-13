@@ -275,10 +275,11 @@ export const ChatInput = ({
 
   useEffect(() => {
     if (textareaRef && textareaRef.current) {
-      textareaRef.current.style.height = 'inherit';
-      textareaRef.current.style.height = `${textareaRef.current?.scrollHeight}px`;
+      textareaRef.current.style.height = 'inherit'; // reset height
+      const scrollHeight = textareaRef.current.scrollHeight; // then check scroll height
+      textareaRef.current.style.height = `${scrollHeight}px`;
       textareaRef.current.style.overflow = `${
-        textareaRef?.current?.scrollHeight > 400 ? 'auto' : 'hidden'
+        scrollHeight > 400 ? 'auto' : 'hidden'
       }`;
     }
   }, [content, textareaRef]);
@@ -339,11 +340,9 @@ export const ChatInput = ({
         <div className="relative flex w-full grow flex-col" data-qa="message">
           <textarea
             ref={textareaRef}
-            className="m-0 min-h-[40px] w-full resize-none rounded border border-transparent bg-gray-100 py-3 pl-4 pr-10 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:bg-gray-700"
+            className="m-0 max-h-[400px] min-h-[40px] w-full resize-none rounded border border-transparent bg-gray-100 py-3 pl-4 pr-10 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:bg-gray-700"
             style={{
-              resize: 'none',
               bottom: `${textareaRef?.current?.scrollHeight}px`,
-              maxHeight: '400px',
               overflow: `${
                 textareaRef.current && textareaRef.current.scrollHeight > 400
                   ? 'auto'
@@ -367,7 +366,7 @@ export const ChatInput = ({
 
           {showScrollDownButton && (
             <ScrollDownButton
-              containerClassNames="2xl:right-[-60px] xl:right-2 2xl:bottom-0  2xl:top-auto -top-14 right-0"
+              className="-top-14 right-0 xl:right-2 2xl:bottom-0 2xl:right-[-60px] 2xl:top-auto"
               onScrollDownClick={onScrollDownClick}
             />
           )}
