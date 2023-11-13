@@ -14,7 +14,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "types": ["vitest/globals"],
+    "types": ["vitest/globals", "jsdom"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]

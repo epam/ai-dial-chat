@@ -51,3 +51,6 @@ pnpm-lock.yaml
 /e2e/auth/
 /e2e/html-report/
 /e2e/src/testData/export/
+
+# coverage
+*/coverage
