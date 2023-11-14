@@ -1,4 +1,4 @@
-import { IconEraser, IconSettings, IconX } from '@tabler/icons-react';
+import { IconDoorExit, IconEraser, IconSettings, IconX } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -29,6 +29,8 @@ interface Props {
   onClearConversation: () => void;
   onUnselectConversation: (conversationId: string) => void;
   setShowSettings: (isShow: boolean) => void;
+  isPlayback: boolean;
+  onCancelPlaybackMode: () => void;
 }
 
 export const ChatHeader = ({
@@ -42,6 +44,8 @@ export const ChatHeader = ({
   onClearConversation,
   onUnselectConversation,
   setShowSettings,
+  isPlayback,
+  onCancelPlaybackMode,
 }: Props) => {
   const { t } = useTranslation('chat');
 
@@ -200,6 +204,20 @@ export const ChatHeader = ({
                   </TooltipContent>
                 </Tooltip>
               )}
+              {isPlayback && <Tooltip isTriggerClickable={true}>
+                  <TooltipTrigger>
+                    <button
+                      className="cursor-pointer text-gray-500 hover:text-blue-500"
+                      onClick={onCancelPlaybackMode}
+                      data-qa="cancel-playback-mode"
+                    >
+                      <IconDoorExit size={18} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t('To edit the chat, leave Playback mode')}
+                  </TooltipContent>
+                </Tooltip>}
             </div>
           </div>
         )}

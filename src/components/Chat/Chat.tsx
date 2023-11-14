@@ -624,6 +624,7 @@ export const Chat = memo(() => {
                             <ChatHeader
                               conversation={conv}
                               isCompareMode={isCompareMode}
+                              isPlayback={isPlayback}
                               isShowChatInfo={enabledFeatures.includes(
                                 'top-chat-info',
                               )}
@@ -655,6 +656,9 @@ export const Chat = memo(() => {
                                     conversationIds: [id],
                                   }),
                                 );
+                              }}
+                              onCancelPlaybackMode={()=>{
+                                dispatch(ConversationsActions.playbackCancel());
                               }}
                             />
                           </div>

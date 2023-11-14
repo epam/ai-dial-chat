@@ -1,4 +1,4 @@
-import { IconPlayerPlay, IconPlayerStop } from '@tabler/icons-react';
+import { IconPlayerPlay } from '@tabler/icons-react';
 import {
   MutableRefObject,
   useCallback,
@@ -13,6 +13,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
+import { FooterMessage } from './FooterMessage';
 import { ScrollDownButton } from './ScrollDownButton';
 
 interface Props {
@@ -82,10 +83,6 @@ export const PlaybackControls = ({
     dispatch(ConversationsActions.playbackPrevMessage());
   }, [dispatch]);
 
-  const handleCancelPlaybackMode = useCallback(() => {
-    dispatch(ConversationsActions.playbackCancel());
-  }, [dispatch]);
-
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (!isPlayback) {
@@ -147,54 +144,44 @@ export const PlaybackControls = ({
   return (
     <div
       ref={controlsContainerRef}
-      className="absolute bottom-0 left-0 flex w-full items-end gap-1 border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 p-3 dark:via-gray-900 dark:to-gray-900 md:p-6 md:pt-2 xl:px-14"
+      className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 pt-6 dark:via-gray-900 dark:to-gray-900 md:pt-2"
     >
-      <button
-        onClick={handleCancelPlaybackMode}
-        className="flex shrink-0 items-center rounded border border-gray-400 bg-gray-200 p-2 hover:bg-gray-400 disabled:cursor-not-allowed disabled:bg-gray-500 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600 disabled:dark:bg-gray-500"
-      >
-        <IconPlayerStop size={20} className="shrink-0" />
-      </button>
-
-      {isActiveIndex && activeIndex > 0 && (
+      <div className='relative mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl'>
         <button
           onClick={handlePrevMessage}
-          className="flex shrink-0 items-center rounded border border-gray-400 bg-gray-200 p-2 hover:bg-gray-400 disabled:cursor-not-allowed disabled:bg-gray-500 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600 disabled:dark:bg-gray-500"
+          disabled={activeIndex === 0}
+          className="absolute bottom-3 left-4 rounded outline-none hover:text-blue-500 disabled:cursor-not-allowed disabled:text-gray-400 disabled:dark:text-gray-600"
         >
           <IconPlayerPlay size={20} className="rotate-180" />
         </button>
-      )}
-      {isNextMessageInStack && (
-        <>
           <div
             ref={nextMessageBoxRef}
-            className="max-h-[150px] min-h-[40px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-gray-100 px-3 py-2 text-left focus-visible:border-blue-500 focus-visible:outline-none dark:bg-gray-700"
+            className="m-0 max-h-[150px] min-h-[44px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-gray-100 px-12 py-3 text-left outline-none focus-visible:border-blue-500 dark:bg-gray-700"
           >
             {isMessageStreaming ? (
               <div
-                className="h-5 w-5 animate-spin rounded-full border-t-2 border-gray-500"
+                className="absolute bottom-3 right-4 h-5 w-5 animate-spin rounded-full border-t-2 border-gray-500"
                 data-qa="message-input-spinner"
               ></div>
-            ) : (
-              <span className="break-words">{activeMessageContent}</span>
+            ) : (<>
+                  <span className="break-words">{activeMessageContent}</span>
+                  <button
+                    onClick={handlePlaynextMessage}
+                    className="absolute bottom-3 right-4 rounded outline-none hover:text-blue-500 disabled:cursor-not-allowed disabled:text-gray-400 disabled:dark:text-gray-600"
+                    disabled={isMessageStreaming || !isNextMessageInStack}
+                  >
+                    <IconPlayerPlay size={20} className="shrink-0" />
+                  </button>
+                </>
             )}
           </div>
-          <button
-            onClick={handlePlaynextMessage}
-            className="flex shrink-0 items-center rounded border border-gray-400 bg-gray-200 p-2 hover:bg-gray-400 disabled:cursor-not-allowed disabled:bg-gray-500 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600 disabled:dark:bg-gray-500"
-            disabled={isMessageStreaming}
-          >
-            <IconPlayerPlay size={20} className="shrink-0" />
-          </button>
-        </>
-      )}
-
-      {showScrollDownButton && (
-        <ScrollDownButton
-          className="bottom-16 right-2 md:bottom-20 md:right-5 xl:bottom-6 xl:right-2"
-          onScrollDownClick={onScrollDownClick}
-        />
-      )}
+          {showScrollDownButton && (
+            <ScrollDownButton
+              className="-top-14 right-0 xl:right-2 2xl:bottom-0 2xl:right-[-60px] 2xl:top-auto"
+              onScrollDownClick={onScrollDownClick}
+            />
+          )}
+      </div>
     </div>
   );
 };
