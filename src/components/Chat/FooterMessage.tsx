@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/router';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+
 import { ReportIssueDialog } from './ReportIssueDialog';
 import { RequestAPIKeyDialog } from './RequestApiKeyDialog';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { useAppSelector } from '@/src/store/hooks';
 
 export const FooterMessage = () => {
   const footerHtmlMessage = useAppSelector(

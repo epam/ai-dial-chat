@@ -1,4 +1,9 @@
-import { IconDoorExit, IconEraser, IconSettings, IconX } from '@tabler/icons-react';
+import {
+  IconDoorExit,
+  IconEraser,
+  IconSettings,
+  IconX,
+} from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -204,7 +209,8 @@ export const ChatHeader = ({
                   </TooltipContent>
                 </Tooltip>
               )}
-              {isPlayback && <Tooltip isTriggerClickable={true}>
+              {isPlayback && (
+                <Tooltip isTriggerClickable={true}>
                   <TooltipTrigger>
                     <button
                       className="cursor-pointer text-gray-500 hover:text-blue-500"
@@ -217,7 +223,8 @@ export const ChatHeader = ({
                   <TooltipContent>
                     {t('To edit the chat, leave Playback mode')}
                   </TooltipContent>
-                </Tooltip>}
+                </Tooltip>
+              )}
             </div>
           </div>
         )}

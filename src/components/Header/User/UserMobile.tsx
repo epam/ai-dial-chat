@@ -103,7 +103,7 @@ export const UserMobile = () => {
       <UserMenu />
       <div className="grow"></div>
       <div className="border-t border-gray-300 p-4 dark:border-gray-900">
-        <FooterMessage/>
+        <FooterMessage />
       </div>
     </div>
   );

@@ -657,7 +657,7 @@ export const Chat = memo(() => {
                                   }),
                                 );
                               }}
-                              onCancelPlaybackMode={()=>{
+                              onCancelPlaybackMode={() => {
                                 dispatch(ConversationsActions.playbackCancel());
                               }}
                             />

@@ -392,7 +392,7 @@ export const ChatInput = ({
       </div>
 
       <div className="p-5 max-md:hidden">
-        <FooterMessage/>
+        <FooterMessage />
       </div>
     </div>
   );
