@@ -1,9 +1,13 @@
+import { FolderInterface } from '@/src/types/folder';
+import { Prompt } from '@/src/types/prompt';
+
 import test from '@/e2e/src/core/fixtures';
 import {
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
 } from '@/e2e/src/testData';
+import { GeneratorUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
 test('Create new prompt folder', async ({
@@ -56,31 +60,36 @@ test('Prompt folder can expand and collapse', async ({
   expect.soft(isPromptVisible, ExpectedMessages.folderCollapsed).toBeFalsy();
 });
 
-test('Rename prompt folder on Enter', async ({
-  dialHomePage,
-  promptData,
-  folderPrompts,
-  localStorageManager,
-  folderDropdownMenu,
-  setTestIds,
-}) => {
-  setTestIds('EPMRTC-948');
-  const newName = 'updated folder name';
-  const folder = promptData.prepareFolder();
-  await localStorageManager.setFolders(folder);
+test(
+  'Rename prompt folder on Enter.\n' + 'Rename prompt folders on nested levels',
+  async ({
+    dialHomePage,
+    promptData,
+    folderPrompts,
+    localStorageManager,
+    folderDropdownMenu,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-948', 'EPMRTC-1382');
+    const newName = 'updated folder name';
+    const nestedFolders = promptData.prepareNestedFolder(3);
+    const randomFolder = GeneratorUtil.randomArrayElement(nestedFolders);
+    await localStorageManager.setFolders(...nestedFolders);
+    await localStorageManager.setOpenedFolders(...nestedFolders);
 
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
-  await folderPrompts.openFolderDropdownMenu(folder.name);
-  await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-  await folderPrompts.editFolderNameWithEnter(folder.name, newName);
-  expect
-    .soft(
-      await folderPrompts.getFolderByName(newName).isVisible(),
-      ExpectedMessages.folderNameUpdated,
-    )
-    .toBeTruthy();
-});
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded();
+    await folderPrompts.openFolderDropdownMenu(randomFolder.name);
+    await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+    await folderPrompts.editFolderNameWithEnter(randomFolder.name, newName);
+    expect
+      .soft(
+        await folderPrompts.getFolderByName(newName).isVisible(),
+        ExpectedMessages.folderNameUpdated,
+      )
+      .toBeTruthy();
+  },
+);
 
 test('Cancel folder renaming on "x"', async ({
   dialHomePage,
@@ -271,31 +280,53 @@ test('Delete folder when there are some prompts inside', async ({
   expect.soft(isPromptVisible, ExpectedMessages.promptIsVisible).toBeFalsy();
 });
 
-test('Delete folder. Cancel', async ({
-  dialHomePage,
-  promptData,
-  folderPrompts,
-  localStorageManager,
-  promptDropdownMenu,
-  confirmationDialog,
-  setTestIds,
-}) => {
-  setTestIds('EPMRTC-967');
-  const folder = promptData.prepareFolder();
-  await localStorageManager.setFolders(folder);
+test(
+  'Delete folder. Cancel.\n' + 'Delete root prompt folder with nested folders',
+  async ({
+    dialHomePage,
+    promptData,
+    folderPrompts,
+    localStorageManager,
+    promptDropdownMenu,
+    confirmationDialog,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-967', 'EPMRTC-1383');
+    const nestedFolders = promptData.prepareNestedFolder(3);
+    await localStorageManager.setFolders(...nestedFolders);
+    await localStorageManager.setOpenedFolders(...nestedFolders);
 
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
-  await folderPrompts.openFolderDropdownMenu(folder.name);
-  await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
-  await confirmationDialog.cancelDialog();
-  expect
-    .soft(
-      await folderPrompts.getFolderByName(folder.name).isVisible(),
-      ExpectedMessages.folderNotDeleted,
-    )
-    .toBeTruthy();
-});
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded();
+    await folderPrompts.openFolderDropdownMenu(nestedFolders[0].name);
+    await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
+    expect
+      .soft(
+        await confirmationDialog.getConfirmationMessage(),
+        ExpectedMessages.confirmationMessageIsValid,
+      )
+      .toBe(ExpectedConstants.deleteFolderMessage);
+    await confirmationDialog.cancelDialog();
+    expect
+      .soft(
+        await folderPrompts.getFolderByName(nestedFolders[0].name).isVisible(),
+        ExpectedMessages.folderNotDeleted,
+      )
+      .toBeTruthy();
+
+    await folderPrompts.openFolderDropdownMenu(nestedFolders[0].name);
+    await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
+    await confirmationDialog.confirm();
+    for (const nestedFolder of nestedFolders) {
+      expect
+        .soft(
+          await folderPrompts.getFolderByName(nestedFolder.name).isVisible(),
+          ExpectedMessages.folderDeleted,
+        )
+        .toBeFalsy();
+    }
+  },
+);
 
 test('Delete prompt in the folder', async ({
   dialHomePage,
@@ -332,4 +363,80 @@ test('Delete prompt in the folder', async ({
       ExpectedMessages.promptDeleted,
     )
     .toBeFalsy();
+});
+
+test('Delete nested prompt folder with prompt', async ({
+  dialHomePage,
+  folderPrompts,
+  localStorageManager,
+  conversationDropdownMenu,
+  prompts,
+  confirmationDialog,
+  promptData,
+  setTestIds,
+}) => {
+  setTestIds('EPMRTC-1384');
+  const levelsCount = 3;
+  const levelToDelete = 2;
+  let nestedFolders: FolderInterface[];
+  const nestedPrompts: Prompt[] = [];
+
+  await test.step('Prepare nested folders with prompts inside each one', async () => {
+    nestedFolders = promptData.prepareNestedFolder(levelsCount);
+    for (let i = 0; i <= levelsCount; i++) {
+      const nestedPrompt = promptData.prepareDefaultPrompt();
+      nestedPrompts.push(nestedPrompt);
+      nestedPrompt.folderId = nestedFolders[i].id;
+      promptData.resetData();
+    }
+    await localStorageManager.setFolders(...nestedFolders);
+    await localStorageManager.setOpenedFolders(...nestedFolders);
+    await localStorageManager.setPrompts(...nestedPrompts);
+  });
+
+  await test.step('Delete 2nd level folder and verify all nested content is deleted as well', async () => {
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded();
+    await folderPrompts.openFolderDropdownMenu(
+      nestedFolders[levelToDelete].name,
+    );
+    await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+    await confirmationDialog.confirm();
+
+    for (let i = levelToDelete; i <= levelsCount; i++) {
+      expect
+        .soft(
+          await folderPrompts
+            .getFolderByName(nestedFolders[i].name)
+            .isVisible(),
+          ExpectedMessages.folderDeleted,
+        )
+        .toBeFalsy();
+      expect
+        .soft(
+          await prompts.getPromptByName(nestedPrompts[i].name).isVisible(),
+          ExpectedMessages.promptDeleted,
+        )
+        .toBeFalsy();
+    }
+
+    for (let i = 0; i <= levelsCount - levelToDelete; i++) {
+      expect
+        .soft(
+          await folderPrompts
+            .getFolderByName(nestedFolders[i].name)
+            .isVisible(),
+          ExpectedMessages.folderNotDeleted,
+        )
+        .toBeTruthy();
+      expect
+        .soft(
+          await folderPrompts
+            .getFolderPrompt(nestedFolders[i].name, nestedPrompts[i].name)
+            .isVisible(),
+          ExpectedMessages.promptNotDeleted,
+        )
+        .toBeTruthy();
+    }
+  });
 });
