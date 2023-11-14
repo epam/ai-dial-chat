@@ -362,7 +362,10 @@ export const ChatInput = ({
             onKeyDown={handleKeyDown}
           />
 
-          <SendMessageButton handleSend={handleSend} />
+          <SendMessageButton
+            handleSend={handleSend}
+            isInputEmpty={!content || content.trim().length === 0}
+          />
 
           {showScrollDownButton && (
             <ScrollDownButton
