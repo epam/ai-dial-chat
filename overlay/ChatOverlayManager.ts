@@ -162,11 +162,8 @@ export class ChatOverlayManager {
   public createOverlay(options: ChatOverlayFullOptions) {
     const container = document.createElement('div');
 
-    const overlay = new ChatOverlay(container, options);
-
-    if (options.allowFullscreen) {
-      overlay.allowFullscreen();
-    }
+    const overlayContainer = document.createElement('div');
+    const controlsContainer = document.createElement('div');
 
     const position = getPosition()[options?.position || 'right-bottom'];
 
@@ -174,13 +171,17 @@ export class ChatOverlayManager {
     const closeButton = this.createCloseButton();
     const fullscreenButton = this.createFullscreenButton();
 
-    const controlsContainer = document.createElement('div');
-
     setStyles(controlsContainer, {
       display: 'flex',
-      justifyContent: 'end',
       alignItems: 'end',
+      justifyContent: 'end',
+      height: '30px',
+      paddingRight: '10px',
       backgroundColor: '#444654',
+    });
+
+    setStyles(overlayContainer, {
+      height: 'calc(100% - 30px)',
     });
 
     toggleButton.onclick = () => this.showOverlay(options.id);
@@ -190,10 +191,13 @@ export class ChatOverlayManager {
     fullscreenButton.onclick = () => this.openFullscreen(options.id);
 
     controlsContainer.appendChild(closeButton);
-    controlsContainer.appendChild(fullscreenButton);
-    container.prepend(controlsContainer);
 
-    document.body.appendChild(container);
+    const overlay = new ChatOverlay(overlayContainer, options);
+
+    if (options.allowFullscreen) {
+      overlay.allowFullscreen();
+      controlsContainer.appendChild(fullscreenButton);
+    }
 
     this.overlays.push({
       container,
@@ -204,8 +208,13 @@ export class ChatOverlayManager {
       toggleButton,
     });
 
+    container.appendChild(controlsContainer);
+    container.appendChild(overlayContainer);
+
     this.updateOverlay(options.id);
     this.hideOverlay(options.id);
+
+    document.body.appendChild(container);
   }
 
   /**
