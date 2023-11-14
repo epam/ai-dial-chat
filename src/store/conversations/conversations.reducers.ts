@@ -603,7 +603,9 @@ const selectIsLastAssistantMessageEmpty = createSelector(
 const selectNotModelConversations = createSelector(
   [selectSelectedConversations],
   (conversations) => {
-    return conversations.some((conv) => conv.model.type !== 'model');
+    return conversations.some(
+      (conv) => conv.model.type !== 'model' || conv.selectedAddons.length > 0,
+    );
   },
 );
 

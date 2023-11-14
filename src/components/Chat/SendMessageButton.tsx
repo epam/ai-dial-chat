@@ -1,4 +1,7 @@
 import { IconSend } from '@tabler/icons-react';
+import { ReactNode } from 'react';
+
+import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
@@ -6,9 +9,54 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
+import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
+
 interface Props {
   handleSend: () => void;
 }
+
+interface SendIconComponentProps {
+  isSendDisabled?: boolean;
+}
+
+interface SendIconTooltipProps {
+  isSendDisabled?: boolean;
+  children: ReactNode;
+}
+
+const SendIconComponent = ({ isSendDisabled }: SendIconComponentProps) => (
+  <span
+    className={classNames(
+      isSendDisabled
+        ? 'text-gray-400 dark:text-gray-600'
+        : 'hover:text-blue-500',
+    )}
+  >
+    <IconSend size={24} stroke="1.5" />
+  </span>
+);
+
+const SendIconTooltip = ({
+  isSendDisabled,
+  children,
+}: SendIconTooltipProps) => {
+  const { t } = useTranslation('chat');
+
+  return (
+    <>
+      {!isSendDisabled ? (
+        children
+      ) : (
+        <Tooltip>
+          <TooltipTrigger>{children}</TooltipTrigger>
+          <TooltipContent>
+            {t('Please regenerate response to continue working with chat')}
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </>
+  );
+};
 
 export const SendMessageButton = ({ handleSend }: Props) => {
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
@@ -26,7 +74,7 @@ export const SendMessageButton = ({ handleSend }: Props) => {
   );
 
   const isSendDisabled =
-    isMessageError && (isLastAssistantMessageEmpty || notModelConversations);
+    isLastAssistantMessageEmpty || (isMessageError && notModelConversations);
 
   return (
     <button
@@ -40,13 +88,9 @@ export const SendMessageButton = ({ handleSend }: Props) => {
           data-qa="message-input-spinner"
         ></div>
       ) : (
-        <span
-          className={classNames(
-            isSendDisabled ? 'text-gray-600' : 'hover:text-blue-500',
-          )}
-        >
-          <IconSend size={24} stroke="1.5" />
-        </span>
+        <SendIconTooltip isSendDisabled={isSendDisabled}>
+          <SendIconComponent isSendDisabled={isSendDisabled} />
+        </SendIconTooltip>
       )}
     </button>
   );
