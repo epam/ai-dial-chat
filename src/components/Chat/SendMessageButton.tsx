@@ -3,8 +3,6 @@ import { ReactNode } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -13,52 +11,40 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 
 interface Props {
   handleSend: () => void;
-}
-
-interface SendIconComponentProps {
-  isSendDisabled?: boolean;
+  isInputEmpty: boolean;
 }
 
 interface SendIconTooltipProps {
-  isSendDisabled?: boolean;
+  isShowTooltip?: boolean;
+  isError?: boolean;
   children: ReactNode;
 }
 
-const SendIconComponent = ({ isSendDisabled }: SendIconComponentProps) => (
-  <span
-    className={classNames(
-      isSendDisabled
-        ? 'text-gray-400 dark:text-gray-600'
-        : 'hover:text-blue-500',
-    )}
-  >
-    <IconSend size={24} stroke="1.5" />
-  </span>
-);
-
 const SendIconTooltip = ({
-  isSendDisabled,
+  isShowTooltip,
+  isError,
   children,
 }: SendIconTooltipProps) => {
   const { t } = useTranslation('chat');
 
+  const tooltipContent = isError
+    ? 'Please regenerate response to continue working with chat'
+    : 'Please type a message';
   return (
     <>
-      {!isSendDisabled ? (
+      {!isShowTooltip ? (
         children
       ) : (
         <Tooltip>
           <TooltipTrigger>{children}</TooltipTrigger>
-          <TooltipContent>
-            {t('Please regenerate response to continue working with chat')}
-          </TooltipContent>
+          <TooltipContent>{t(tooltipContent)}</TooltipContent>
         </Tooltip>
       )}
     </>
   );
 };
 
-export const SendMessageButton = ({ handleSend }: Props) => {
+export const SendMessageButton = ({ handleSend, isInputEmpty }: Props) => {
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const isMessageError = useAppSelector(
     ConversationsSelectors.selectIsMessagesError,
@@ -73,14 +59,16 @@ export const SendMessageButton = ({ handleSend }: Props) => {
     ConversationsSelectors.selectIsConversationsStreaming,
   );
 
-  const isSendDisabled =
+  const isError =
     isLastAssistantMessageEmpty || (isMessageError && notModelConversations);
 
   return (
     <button
-      className="absolute right-4 top-2.5 rounded disabled:cursor-not-allowed"
+      className="absolute right-4 top-2.5 rounded hover:text-blue-500 disabled:cursor-not-allowed disabled:text-gray-400 disabled:dark:text-gray-600"
       onClick={handleSend}
-      disabled={messageIsStreaming || isModelsLoading || isSendDisabled}
+      disabled={
+        messageIsStreaming || isModelsLoading || isError || isInputEmpty
+      }
     >
       {messageIsStreaming || isModelsLoading ? (
         <div
@@ -88,8 +76,11 @@ export const SendMessageButton = ({ handleSend }: Props) => {
           data-qa="message-input-spinner"
         ></div>
       ) : (
-        <SendIconTooltip isSendDisabled={isSendDisabled}>
-          <SendIconComponent isSendDisabled={isSendDisabled} />
+        <SendIconTooltip
+          isShowTooltip={isError || isInputEmpty}
+          isError={isError}
+        >
+          <IconSend size={24} stroke="1.5" />
         </SendIconTooltip>
       )}
     </button>
