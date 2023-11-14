@@ -182,6 +182,9 @@ export const PlaybackControls = ({
             />
           )}
       </div>
+      <div className="p-5 max-md:hidden">
+        <FooterMessage/>
+      </div>
     </div>
   );
 };

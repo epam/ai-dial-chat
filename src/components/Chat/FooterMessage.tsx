@@ -4,20 +4,17 @@ import { useRouter } from 'next/router';
 
 import { ReportIssueDialog } from './ReportIssueDialog';
 import { RequestAPIKeyDialog } from './RequestApiKeyDialog';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { useAppSelector } from '@/src/store/hooks';
 
-interface Props {
-  isShowFooter: boolean;
-  isShowRequestApiKey: boolean;
-  isShowReportAnIssue: boolean;
-  footerHtmlMessage: string;
-}
+export const FooterMessage = () => {
+  const footerHtmlMessage = useAppSelector(
+    SettingsSelectors.selectFooterHtmlMessage,
+  );
 
-export const FooterMessage = ({
-  isShowFooter,
-  isShowReportAnIssue,
-  isShowRequestApiKey,
-  footerHtmlMessage,
-}: Props) => {
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
   const [isRequestAPIDialogOpen, setIsRequestAPIDialogOpen] = useState(false);
   const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
   const router = useRouter();
@@ -44,7 +41,7 @@ export const FooterMessage = ({
     };
   }, []);
 
-  return isShowFooter ? (
+  return enabledFeatures.includes('footer') ? (
     <>
       <div className="text-[12px] text-gray-500 md:text-center">
         <span
@@ -52,7 +49,7 @@ export const FooterMessage = ({
         ></span>
       </div>
 
-      {isShowRequestApiKey && (
+      {enabledFeatures.includes('request-api-key') && (
         <RequestAPIKeyDialog
           isOpen={isRequestAPIDialogOpen}
           onClose={() => {
@@ -62,7 +59,7 @@ export const FooterMessage = ({
         ></RequestAPIKeyDialog>
       )}
 
-      {isShowReportAnIssue && (
+      {enabledFeatures.includes('report-an-issue') && (
         <ReportIssueDialog
           isOpen={isReportIssueDialogOpen}
           onClose={() => {
@@ -72,7 +69,5 @@ export const FooterMessage = ({
         ></ReportIssueDialog>
       )}
     </>
-  ) : (
-    <></>
-  );
+  ) : null;
 };

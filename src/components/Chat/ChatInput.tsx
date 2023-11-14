@@ -65,12 +65,6 @@ export const ChatInput = ({
     ConversationsSelectors.selectIsConversationsStreaming,
   );
   const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
-  const footerHtmlMessage = useAppSelector(
-    SettingsSelectors.selectFooterHtmlMessage,
-  );
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
-  );
 
   const promptListRef = useRef<HTMLUListElement | null>(null);
   const inputRef = useRef<HTMLDivElement | null>(null);
@@ -398,12 +392,7 @@ export const ChatInput = ({
       </div>
 
       <div className="p-5 max-md:hidden">
-        <FooterMessage
-          isShowFooter={enabledFeatures.includes('footer')}
-          isShowRequestApiKey={enabledFeatures.includes('request-api-key')}
-          isShowReportAnIssue={enabledFeatures.includes('report-an-issue')}
-          footerHtmlMessage={footerHtmlMessage}
-        />
+        <FooterMessage/>
       </div>
     </div>
   );
