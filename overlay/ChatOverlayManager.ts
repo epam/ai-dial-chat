@@ -110,6 +110,7 @@ const defaultOverlayPlacementOptions: Pick<
 
 interface Overlay {
   container: HTMLElement;
+  toggleButton: HTMLElement;
 
   overlay: ChatOverlay;
 
@@ -169,23 +170,10 @@ export class ChatOverlayManager {
 
     const position = getPosition()[options?.position || 'right-bottom'];
 
-    const newOverlay = {
-      container,
-      overlay,
-      options,
-      isHidden: false,
-      position,
-    };
-
-    this.overlays.push(newOverlay);
-
-    this.updateOverlay(options.id);
-    this.hideOverlay(options.id);
-
-    const toggleButton = this.createOverlayToggle(newOverlay);
-
+    const toggleButton = this.createOverlayToggle(position, options);
     const closeButton = this.createCloseButton();
     const fullscreenButton = this.createFullscreenButton();
+
     const controlsContainer = document.createElement('div');
 
     setStyles(controlsContainer, {
@@ -203,16 +191,34 @@ export class ChatOverlayManager {
 
     controlsContainer.appendChild(closeButton);
     controlsContainer.appendChild(fullscreenButton);
-
     container.prepend(controlsContainer);
 
     document.body.appendChild(container);
+
+    this.overlays.push({
+      container,
+      overlay,
+      options,
+      isHidden: false,
+      position,
+      toggleButton,
+    });
+
+    this.updateOverlay(options.id);
+    this.hideOverlay(options.id);
   }
 
-  public createOverlayToggle(overlay: Overlay) {
+  /**
+   * Creates toggle button to show overlay
+   * @param position overlay placement, needed to show button in the same place where would be the overlay
+   * @param options overlay options, needed to show cu
+   * @returns {HTMLButtonElement} Reference to created toggle button
+   */
+  public createOverlayToggle(
+    position: Position,
+    options: ChatOverlayFullOptions,
+  ): HTMLButtonElement {
     const button = document.createElement('button');
-
-    const { options, position } = overlay;
 
     setStyles(button, {
       backgroundColor:
@@ -235,7 +241,11 @@ export class ChatOverlayManager {
     return button;
   }
 
-  public createFullscreenButton() {
+  /**
+   * Creates button to open overlay in fullscreen mode
+   * @returns {HTMLButtonElement} Reference to created fullscreen button
+   */
+  public createFullscreenButton(): HTMLButtonElement {
     const button = document.createElement('button');
 
     setStyles(button, {
@@ -270,7 +280,11 @@ export class ChatOverlayManager {
     return button;
   }
 
-  public createCloseButton() {
+  /**
+   * Creates button which hides overlay
+   * @returns {HTMLButtonElement} Reference to created close button
+   */
+  public createCloseButton(): HTMLButtonElement {
     const closeButton = document.createElement('button');
 
     setStyles(closeButton, {
@@ -309,13 +323,14 @@ export class ChatOverlayManager {
    * @param id {string} id of overlay that should be deleted
    */
   public removeOverlay(id: string) {
-    const { overlay, container } = this.getOverlay(id);
+    const { overlay, container, toggleButton } = this.getOverlay(id);
 
     overlay.destroy();
 
     this.overlays = this.overlays.filter(({ options }) => options.id !== id);
 
     document.body.removeChild(container);
+    document.body.removeChild(toggleButton);
   }
 
   public openFullscreen(id: string) {
