@@ -43,6 +43,7 @@ const getMiddleware = (epicMiddleware: any) => {
   };
 };
 let store: Store;
+export type AppStore = ReturnType<typeof createStore>;
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 

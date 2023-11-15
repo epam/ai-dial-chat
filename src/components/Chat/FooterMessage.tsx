@@ -8,6 +8,9 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ReportIssueDialog } from './ReportIssueDialog';
 import { RequestAPIKeyDialog } from './RequestApiKeyDialog';
 
+export const requestApiKeyHash = '#requestApiKey';
+export const reportAnIssueHash = '#reportAnIssue';
+
 export const FooterMessage = () => {
   const footerHtmlMessage = useAppSelector(
     SettingsSelectors.selectFooterHtmlMessage,
@@ -19,8 +22,7 @@ export const FooterMessage = () => {
   const [isRequestAPIDialogOpen, setIsRequestAPIDialogOpen] = useState(false);
   const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
   const router = useRouter();
-  const requestApiKeyHash = '#requestApiKey';
-  const reportAnIssueHash = '#reportAnIssue';
+
 
   useEffect(() => {
     const handleHash = () => {

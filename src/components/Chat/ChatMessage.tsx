@@ -179,7 +179,7 @@ export const ChatMessage: FC<Props> = memo(
 
     return (
       <div
-        className={`group h-full md:px-4 ${
+        className={`group h-full min-h-[90px] md:px-4 ${
           isAssistant
             ? 'border-b border-gray-400 bg-gray-200 dark:border-gray-700 dark:bg-gray-800'
             : 'border-b border-gray-400  dark:border-gray-700'

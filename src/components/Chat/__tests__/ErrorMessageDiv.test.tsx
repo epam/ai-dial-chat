@@ -1,6 +1,6 @@
 import { ErrorMessageDiv } from '@/src/components/Chat/ErrorMessageDiv';
-import { cleanup, findByText, render } from '@testing-library/react';
-import { describe, expect, it, afterEach } from 'vitest';
+import { cleanup, render } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
 
 describe('ErrorMessageDiv', () => {
     // preparation
