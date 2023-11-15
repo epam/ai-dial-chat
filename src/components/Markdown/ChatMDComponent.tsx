@@ -1,5 +1,7 @@
 import { Components } from 'react-markdown';
 
+import classnames from 'classnames';
+
 import {
   modelCursorSign,
   modelCursorSignWithBackquote,
@@ -10,7 +12,6 @@ import { CodeBlock } from './CodeBlock';
 import { MemoizedReactMarkdown } from './MemoizedReactMarkdown';
 
 import remarkGfm from 'remark-gfm';
-import classnames from 'classnames';
 
 export const replaceCursor = (cursorSign: string) =>
   cursorSign.replace(modelCursorSignWithBackquote, modelCursorSign);
@@ -87,7 +88,9 @@ export const getMDComponents = (
         children[0] = replaceCursor(children[0] as string);
       }
       return (
-        <p className={classnames(className, { 'text-sm' : isInner })}>{children}</p>
+        <p className={classnames(className, { 'text-sm': isInner })}>
+          {children}
+        </p>
       );
     },
   };

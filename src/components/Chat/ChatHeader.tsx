@@ -4,7 +4,7 @@ import {
   IconSettings,
   IconX,
 } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -14,7 +14,11 @@ import { Conversation } from '@/src/types/chat';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
-import { useAppSelector } from '@/src/store/hooks';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
@@ -34,8 +38,6 @@ interface Props {
   onClearConversation: () => void;
   onUnselectConversation: (conversationId: string) => void;
   setShowSettings: (isShow: boolean) => void;
-  isPlayback: boolean;
-  onCancelPlaybackMode: () => void;
 }
 
 export const ChatHeader = ({
@@ -49,14 +51,19 @@ export const ChatHeader = ({
   onClearConversation,
   onUnselectConversation,
   setShowSettings,
-  isPlayback,
-  onCancelPlaybackMode,
 }: Props) => {
   const { t } = useTranslation('chat');
+
+  const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const theme = useAppSelector(UISelectors.selectThemeState);
+
+  const isPlayback = useAppSelector(
+    ConversationsSelectors.selectIsPlaybackSelectedConversations,
+  );
+
   const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });
@@ -69,6 +76,10 @@ export const ChatHeader = ({
   useEffect(() => {
     setModel(modelsMap[conversation.model.id]);
   }, [modelsMap, conversation.model.id]);
+
+  const onCancelPlaybackMode = useCallback(() => {
+    dispatch(ConversationsActions.playbackCancel());
+  }, [dispatch]);
 
   return (
     <>

@@ -23,7 +23,6 @@ export const FooterMessage = () => {
   const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
   const router = useRouter();
 
-
   useEffect(() => {
     const handleHash = () => {
       const hash = window.location.hash;
