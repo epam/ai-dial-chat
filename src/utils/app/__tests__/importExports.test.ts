@@ -323,7 +323,7 @@ describe('Export helpers functions', () => {
       ),
     ).toEqual(OpenAIEntityModelID.GPT_3_5_AZ);
   });
-  it('should return udefined', () => {
+  it('should return undefined', () => {
     expect(
       getAssitantModelId(
         'model',

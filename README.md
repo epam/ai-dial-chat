@@ -18,7 +18,7 @@ This project is a web application built using [Next.js](https://nextjs.org/), a 
 
 ## Developer Environment
 
-Before diving into the development environment, you should have Node.js (version >=14.6.0) and npm (version >=6.14.6) installed on your system. If you don't already have them, follow the instructions [here](https://nodejs.org/en/download/).
+Before diving into the development environment, you should have Node.js (version >=18.18.2) and npm (version >=9.8.1) installed on your system. If you don't already have them, follow the instructions [here](https://nodejs.org/en/download/).
 
 Once you've installed Node.js and npm, follow these steps to set up your developer environment:
 

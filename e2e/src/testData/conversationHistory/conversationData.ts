@@ -10,7 +10,7 @@ import {
   ExpectedConstants,
   ModelIds,
 } from '@/e2e/src/testData';
-import { FolderBuilder } from '@/e2e/src/testData/conversationHistory/folderBuilder';
+import { FolderData } from '@/e2e/src/testData/folders/folderData';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface FolderConversation {
@@ -18,18 +18,17 @@ export interface FolderConversation {
   folders: FolderInterface;
 }
 
-export class ConversationData {
+export class ConversationData extends FolderData {
   private conversationBuilder: ConversationBuilder;
-  private folderBuilder: FolderBuilder;
 
   constructor() {
+    super('chat');
     this.conversationBuilder = new ConversationBuilder();
-    this.folderBuilder = new FolderBuilder();
   }
 
   public resetData() {
     this.conversationBuilder = new ConversationBuilder();
-    this.folderBuilder = new FolderBuilder();
+    this.resetFolderData();
   }
 
   public prepareDefaultConversation(model?: OpenAIEntityModel, name?: string) {
@@ -203,30 +202,8 @@ export class ConversationData {
     return conversation;
   }
 
-  public prepareDefaultFolder() {
-    return this.folderBuilder.build();
-  }
-
-  public prepareFolder(name?: string) {
-    return this.folderBuilder
-      .withName(name ?? GeneratorUtil.randomString(7))
-      .build();
-  }
-
   public prepareNestedFolder(nestedLevel: number) {
-    const rootFolder = this.prepareFolder();
-    this.resetData();
-    const foldersHierarchy = [rootFolder];
-    for (let i = 1; i <= nestedLevel; i++) {
-      const nestedFolder = this.folderBuilder
-        .withName(GeneratorUtil.randomString(7))
-        .withType('chat')
-        .withFolderId(foldersHierarchy[foldersHierarchy.length - 1].id)
-        .build();
-      foldersHierarchy.push(nestedFolder);
-      this.resetData();
-    }
-    return foldersHierarchy;
+    return super.prepareNestedFolder(nestedLevel, 'chat');
   }
 
   public prepareFolderWithConversations(conversationsCount: number) {

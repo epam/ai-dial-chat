@@ -26,6 +26,7 @@ export const ExpectedConstants = {
   defaultIconUrl: 'url(images/icons/message-square-lines-alt.svg))',
   deleteFolderMessage:
     'Are you sure that you want to remove a folder with all nested elements?',
+  backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
 };
 
 export enum Groups {
@@ -79,19 +80,7 @@ export enum Side {
 
 export enum ModelIds {
   GPT_3_5_AZ = 'gpt-35-turbo',
-  MIRROR = 'mirror',
   GPT_4 = 'gpt-4',
-  GPT_WORLD = 'gpt-world',
   GPT_4_32K = 'gpt-4-32k',
   BISON_001 = 'chat-bison@001',
-}
-
-export enum AssistantIds {
-  ASSISTANT10K = 'assistant-10k',
-}
-
-export enum AddonIds {
-  ADDON_EPAM10K_GOLDEN_QNA = 'addon-epam10k-golden-qna',
-  ADDON_EPAM10K_SEMANTIC_SEARCH = 'addon-epam10k-semantic-search',
-  ADDON_WOLFRAM = 'addon-wolfram',
 }
