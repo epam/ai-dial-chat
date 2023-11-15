@@ -5,8 +5,8 @@ import { useRouter } from 'next/router';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import { ReportIssueDialog } from './ReportIssueDialog';
-import { RequestAPIKeyDialog } from './RequestApiKeyDialog';
+import { ReportIssueDialog } from '@/src/components/Chat/ReportIssueDialog';
+import { RequestAPIKeyDialog } from '@/src/components/Chat/RequestApiKeyDialog';
 
 export const requestApiKeyHash = '#requestApiKey';
 export const reportAnIssueHash = '#reportAnIssue';

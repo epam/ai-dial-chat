@@ -39,11 +39,11 @@ function makeMockDialog (dataTestId: string) {
 const reportIssueDialogTestId = "reportIssueDialog";
 const requestAPIKeyDialogTestId = "requestAPIKeyDialog";
 
-vi.mock('../ReportIssueDialog', ()=>({
+vi.mock('@/src/components/Chat/ReportIssueDialog', ()=>({
    ReportIssueDialog: makeMockDialog("reportIssueDialog")
 }));
 
-vi.mock('../RequestAPIKeyDialog', ()=>({
+vi.mock('@/src/components/Chat/RequestAPIKeyDialog', ()=>({
    RequestAPIKeyDialog: makeMockDialog("requestAPIKeyDialog")
 }))
 
