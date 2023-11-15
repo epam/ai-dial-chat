@@ -13,8 +13,8 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
-import { FooterMessage } from '@/src/components/Chat/FooterMessage';
-import { ScrollDownButton } from '@/src/components/Chat/ScrollDownButton';
+import { FooterMessage } from '@/src/components/Common/FooterMessage';
+import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
 interface Props {
   showScrollDownButton: boolean;

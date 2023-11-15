@@ -6,7 +6,7 @@ export const getApiHeaders = ({
   jwt?: string;
   chatId?: string;
   jobTitle?: string;
-}): HeadersInit => {
+}): Record<string, string> => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Api-Key': process.env.OPENAI_API_KEY,

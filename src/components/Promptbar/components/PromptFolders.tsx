@@ -10,6 +10,7 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Folder from '@/src/components/Folder';
 
@@ -31,6 +32,7 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
   );
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const conversationFolders = useAppSelector(PromptsSelectors.selectFolders);
+  const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
 
   const handleDrop = useCallback(
     (e: any, folder: FolderInterface) => {
@@ -85,6 +87,13 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
     [dispatch],
   );
 
+  const handleFolderClick = useCallback(
+    (folderId: string) => {
+      dispatch(UIActions.toggleFolder({ id: folderId }));
+    },
+    [dispatch],
+  );
+
   return (
     <>
       <BetweenFoldersLine
@@ -102,6 +111,7 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
         allFolders={conversationFolders}
         highlightColor="violet"
         highlightedFolders={highlightedFolders}
+        openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
         onRenameFolder={(newName, folderId) => {
           dispatch(
@@ -115,6 +125,7 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
           dispatch(PromptsActions.deleteFolder({ folderId }))
         }
         onDropBetweenFolders={onDropBetweenFolders}
+        onClickFolder={handleFolderClick}
       />
       {isLast && (
         <BetweenFoldersLine

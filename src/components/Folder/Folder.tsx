@@ -23,11 +23,12 @@ import { getFoldersDepth } from '@/src/utils/app/folders';
 
 import { Conversation } from '@/src/types/chat';
 import { HighlightColor } from '@/src/types/components';
+import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { useAppDispatch } from '@/src/store/hooks';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { emptyImage } from '@/src/constants/drag-and-drop';
 
@@ -38,6 +39,7 @@ import XmarkIcon from '../../../public/images/icons/xmark.svg';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { FolderContextMenu } from '../Common/FolderContextMenu';
 import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
+import Spinner from '../Spinner';
 
 interface CaretIconComponentProps {
   isOpen: boolean;
@@ -47,7 +49,7 @@ const CaretIconComponent = ({ isOpen }: CaretIconComponentProps) => {
   return (
     <IconCaretRightFilled
       className={classNames(
-        'invisible text-gray-500 transition-all group-hover/sidebar:[visibility:inherit]',
+        'invisible text-gray-500 transition-all group-hover/modal:[visibility:inherit] group-hover/sidebar:[visibility:inherit]',
         isOpen && 'rotate-90',
       )}
       size={10}
@@ -55,26 +57,38 @@ const CaretIconComponent = ({ isOpen }: CaretIconComponentProps) => {
   );
 };
 
-interface Props<T> {
+interface Props<T, P = unknown> {
   currentFolder: FolderInterface;
-  itemComponent: FC<{ item: T; level: number }>;
-  allItems: T[];
+  itemComponent?: FC<{
+    item: T;
+    level: number;
+    onEvent?: (eventId: string, data: P) => void;
+  }>;
+  allItems?: T[];
   allFolders: FolderInterface[];
   level?: number;
   highlightColor: HighlightColor;
   highlightedFolders?: string[];
   searchTerm: string;
-  handleDrop: (e: any, folder: FolderInterface) => void;
-  onDropBetweenFolders: (
+  openedFoldersIds: string[];
+  isInitialRename?: boolean;
+  loadingFolderId?: string;
+  displayCaretAlways?: boolean;
+  handleDrop?: (e: any, folder: FolderInterface) => void;
+  onDropBetweenFolders?: (
     folder: FolderInterface,
     parentFolderId: string | undefined,
     index: number,
   ) => void;
-  onRenameFolder: (newName: string, folderId: string) => void;
-  onDeleteFolder: (folderId: string) => void;
+  onRenameFolder?: (newName: string, folderId: string) => void;
+  onDeleteFolder?: (folderId: string) => void;
+  onAddFolder?: (parentFolderId: string) => void;
+  onClickFolder: (folderId: string) => void;
+
+  onItemEvent?: (eventId: string, data: unknown) => void;
 }
 
-const Folder = <T extends Conversation | Prompt>({
+const Folder = <T extends Conversation | Prompt | DialFile>({
   currentFolder,
   searchTerm,
   itemComponent,
@@ -82,30 +96,40 @@ const Folder = <T extends Conversation | Prompt>({
   allFolders,
   highlightColor,
   highlightedFolders,
+  openedFoldersIds,
   level = 0,
+  isInitialRename = false,
+  loadingFolderId = '',
+  displayCaretAlways = false,
   handleDrop,
   onDropBetweenFolders,
   onRenameFolder,
   onDeleteFolder,
+  onClickFolder,
+  onAddFolder,
+  onItemEvent,
 }: Props<T>) => {
   const { t } = useTranslation('chat');
   const dispatch = useAppDispatch();
-  const isFolderOpened = useAppSelector((state) =>
-    UISelectors.selectIsFolderOpened(state, currentFolder.id),
-  );
+
   const [isDeletingConfirmDialog, setIsDeletingConfirmDialog] = useState(false);
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [renameValue, setRenameValue] = useState('');
+  const [isRenaming, setIsRenaming] = useState(isInitialRename);
+  const [renameValue, setRenameValue] = useState(
+    isInitialRename ? currentFolder.name : '',
+  );
   const [isSelected, setIsSelected] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isDropAllowed, setIsDropAllowed] = useState(true);
   const dragDropElement = useRef<HTMLDivElement>(null);
 
+  const isFolderOpened = useMemo(() => {
+    return openedFoldersIds.includes(currentFolder.id);
+  }, [currentFolder.id, openedFoldersIds]);
   const filteredChildFolders = useMemo(() => {
     return allFolders.filter((folder) => folder.folderId === currentFolder.id);
   }, [currentFolder, allFolders]);
   const filteredChildItems = useMemo(() => {
-    return allItems.filter((item) => item.folderId === currentFolder.id);
+    return allItems?.filter((item) => item.folderId === currentFolder.id) || [];
   }, [currentFolder, allItems]);
   const hasChildElements = useMemo(() => {
     return filteredChildFolders.length > 0 || filteredChildItems.length > 0;
@@ -118,6 +142,9 @@ const Folder = <T extends Conversation | Prompt>({
   }, []);
 
   const handleRename = useCallback(() => {
+    if (!onRenameFolder) {
+      return;
+    }
     onRenameFolder(renameValue, currentFolder.id);
     setRenameValue('');
     setIsRenaming(false);
@@ -135,7 +162,7 @@ const Folder = <T extends Conversation | Prompt>({
 
   const dropHandler = useCallback(
     (e: any) => {
-      if (!isDropAllowed) {
+      if (!isDropAllowed || !handleDrop) {
         return;
       }
 
@@ -167,7 +194,7 @@ const Folder = <T extends Conversation | Prompt>({
         handleDrop(e, currentFolder);
       }
     },
-    [isDropAllowed, level, allFolders, currentFolder, dispatch, handleDrop],
+    [isDropAllowed, handleDrop, dispatch, currentFolder, allFolders, level, t],
   );
 
   const allowDrop = useCallback(
@@ -234,17 +261,39 @@ const Folder = <T extends Conversation | Prompt>({
 
   const onRename: MouseEventHandler = useCallback(
     (e) => {
+      if (!onRenameFolder) {
+        return;
+      }
+
       e.stopPropagation();
       setIsRenaming(true);
       setRenameValue(currentFolder.name);
     },
-    [currentFolder.name],
+    [currentFolder.name, onRenameFolder],
   );
 
-  const onDelete: MouseEventHandler = useCallback((e) => {
-    e.stopPropagation();
-    setIsDeletingConfirmDialog(true);
-  }, []);
+  const onDelete: MouseEventHandler = useCallback(
+    (e) => {
+      if (!onDeleteFolder) {
+        return;
+      }
+
+      e.stopPropagation();
+      setIsDeletingConfirmDialog(true);
+    },
+    [onDeleteFolder],
+  );
+  const onAdd: MouseEventHandler = useCallback(
+    (e) => {
+      if (!onAddFolder) {
+        return;
+      }
+
+      e.stopPropagation();
+      onAddFolder(currentFolder.id);
+    },
+    [currentFolder.id, onAddFolder],
+  );
 
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLButtonElement>, folder: FolderInterface) => {
@@ -273,23 +322,38 @@ const Folder = <T extends Conversation | Prompt>({
     if (searchTerm) {
       dispatch(UIActions.openFolder({ id: currentFolder.id }));
     }
-  }, [searchTerm]);
+  }, [currentFolder.id, dispatch, searchTerm]);
 
   useOutsideAlerter(dragDropElement, setIsSelected);
 
-  const draggingColor =
-    highlightColor === 'green' ? 'bg-green/15' : 'bg-violet/15';
-  const hoverIconColor =
-    highlightColor === 'green' ? 'hover:text-green' : 'hover:text-violet';
-  const textColor = highlightColor === 'green' ? 'text-green' : 'text-violet';
-  const bgColor = highlightColor === 'green' ? 'bg-green/15' : 'bg-violet/15';
+  const hoverIconColor = classNames(
+    highlightColor === 'green'
+      ? 'hover:text-green'
+      : highlightColor === 'violet'
+      ? 'hover:text-violet'
+      : 'hover:text-blue-500',
+  );
+  const textColor = classNames(
+    highlightColor === 'green'
+      ? 'text-green'
+      : highlightColor === 'violet'
+      ? 'text-violet'
+      : 'text-blue-500',
+  );
+  const bgColor = classNames(
+    highlightColor === 'green'
+      ? 'bg-green/15'
+      : highlightColor === 'violet'
+      ? 'bg-violet/15'
+      : 'bg-blue-500/20',
+  );
 
   return (
     <div
       id="folder"
       className={classNames(
         'transition-colors duration-200',
-        isDraggingOver && isDropAllowed && draggingColor,
+        isDraggingOver && isDropAllowed && bgColor,
       )}
       onDrop={dropHandler}
       onDragOver={allowDrop}
@@ -300,7 +364,11 @@ const Folder = <T extends Conversation | Prompt>({
       <div
         className={classNames(
           'relative flex h-[30px] items-center',
-          isRenaming ? bgColor : '',
+          isRenaming ||
+            (allItems === undefined &&
+              highlightedFolders?.includes(currentFolder.id))
+            ? bgColor
+            : '',
         )}
         data-qa="folder"
       >
@@ -312,12 +380,20 @@ const Folder = <T extends Conversation | Prompt>({
             }}
           >
             <span
-              className={classNames(hasChildElements ? 'visible' : 'invisible')}
+              className={classNames(
+                hasChildElements || displayCaretAlways
+                  ? 'visible'
+                  : 'invisible',
+              )}
             >
               <CaretIconComponent isOpen={isFolderOpened} />
             </span>
 
-            <IconFolder size={18} className="mr-1 text-gray-500" />
+            {loadingFolderId === currentFolder.id ? (
+              <Spinner />
+            ) : (
+              <IconFolder size={18} className="mr-1 text-gray-500" />
+            )}
 
             <input
               className="mr-12 flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
@@ -337,23 +413,31 @@ const Folder = <T extends Conversation | Prompt>({
               paddingLeft: `${level * 24}px`,
             }}
             onClick={() => {
-              dispatch(UIActions.toggleFolder({ id: currentFolder.id }));
+              onClickFolder(currentFolder.id);
 
               setIsSelected(true);
             }}
-            draggable="true"
+            draggable={!!handleDrop}
             onDragStart={(e) => handleDragStart(e, currentFolder)}
             onDragOver={(e) => {
               e.preventDefault();
             }}
           >
             <span
-              className={classNames(hasChildElements ? 'visible' : 'invisible')}
+              className={classNames(
+                hasChildElements || displayCaretAlways
+                  ? 'visible'
+                  : 'invisible',
+              )}
             >
               <CaretIconComponent isOpen={isFolderOpened} />
             </span>
 
-            <IconFolder size={18} className="mr-1 text-gray-500" />
+            {loadingFolderId === currentFolder.id ? (
+              <Spinner className="mr-1" />
+            ) : (
+              <IconFolder size={18} className="mr-1 text-gray-500" />
+            )}
 
             <div
               className={classNames(
@@ -367,20 +451,27 @@ const Folder = <T extends Conversation | Prompt>({
               {currentFolder.name}
             </div>
 
-            {!isRenaming && (
-              <div
-                className={classNames(
-                  'invisible absolute right-3 z-50 flex justify-end md:group-hover/button:visible',
-                  isSelected ? 'max-md:visible' : '',
-                )}
-              >
-                <FolderContextMenu
-                  onRename={onRename}
-                  onDelete={onDelete}
-                  highlightColor={highlightColor}
-                />
-              </div>
-            )}
+            {(onDeleteFolder || onRenameFolder || onAddFolder) &&
+              !isRenaming && (
+                <div
+                  className={classNames(
+                    'invisible absolute right-3 z-50 flex justify-end md:group-hover/button:visible',
+                    isSelected ? 'max-md:visible' : '',
+                  )}
+                >
+                  <FolderContextMenu
+                    onRename={
+                      (onRenameFolder &&
+                        !currentFolder.serverSynced &&
+                        onRename) ||
+                      undefined
+                    }
+                    onDelete={onDeleteFolder && onDelete}
+                    onAddFolder={onAddFolder && onAdd}
+                    highlightColor={highlightColor}
+                  />
+                </div>
+              )}
           </button>
         )}
         {isRenaming && (
@@ -427,14 +518,16 @@ const Folder = <T extends Conversation | Prompt>({
               if (item.folderId === currentFolder.id) {
                 return (
                   <Fragment key={index}>
-                    <BetweenFoldersLine
-                      level={level + 1}
-                      onDrop={onDropBetweenFolders}
-                      onDraggingOver={onDraggingBetweenFolders}
-                      index={index}
-                      parentFolderId={item.folderId}
-                      highlightColor={highlightColor}
-                    />
+                    {onDropBetweenFolders && (
+                      <BetweenFoldersLine
+                        level={level + 1}
+                        onDrop={onDropBetweenFolders}
+                        onDraggingOver={onDraggingBetweenFolders}
+                        index={index}
+                        parentFolderId={item.folderId}
+                        highlightColor={highlightColor}
+                      />
+                    )}
                     <Folder
                       level={level + 1}
                       searchTerm={searchTerm}
@@ -444,12 +537,18 @@ const Folder = <T extends Conversation | Prompt>({
                       allFolders={allFolders}
                       highlightColor={highlightColor}
                       highlightedFolders={highlightedFolders}
+                      openedFoldersIds={openedFoldersIds}
+                      loadingFolderId={loadingFolderId}
+                      displayCaretAlways={displayCaretAlways}
                       handleDrop={handleDrop}
                       onDropBetweenFolders={onDropBetweenFolders}
                       onRenameFolder={onRenameFolder}
                       onDeleteFolder={onDeleteFolder}
+                      onAddFolder={onAddFolder}
+                      onClickFolder={onClickFolder}
+                      onItemEvent={onItemEvent}
                     />
-                    {index === arr.length - 1 && (
+                    {onDropBetweenFolders && index === arr.length - 1 && (
                       <BetweenFoldersLine
                         level={level + 1}
                         onDrop={onDropBetweenFolders}
@@ -466,34 +565,38 @@ const Folder = <T extends Conversation | Prompt>({
               return null;
             })}
           </div>
-          {filteredChildItems.map((item, index) => (
-            <div key={index}>
-              {createElement(itemComponent, {
-                item,
-                level: level + 1,
-              })}
-            </div>
-          ))}
+          {itemComponent &&
+            filteredChildItems.map((item, index) => (
+              <div key={index}>
+                {createElement(itemComponent, {
+                  item,
+                  level: level + 1,
+                  ...(!!onItemEvent && { onEvent: onItemEvent }),
+                })}
+              </div>
+            ))}
         </div>
       ) : null}
 
-      <ConfirmDialog
-        isOpen={isDeletingConfirmDialog}
-        heading={t('Confirm deleting folder')}
-        description={
-          t(
-            'Are you sure that you want to remove a folder with all nested elements?',
-          ) || ''
-        }
-        confirmLabel={t('Remove')}
-        cancelLabel={t('Cancel')}
-        onClose={(result) => {
-          setIsDeletingConfirmDialog(false);
-          if (result) {
-            onDeleteFolder(currentFolder.id);
+      {onDeleteFolder && (
+        <ConfirmDialog
+          isOpen={isDeletingConfirmDialog}
+          heading={t('Confirm deleting folder')}
+          description={
+            t(
+              'Are you sure that you want to remove a folder with all nested elements?',
+            ) || ''
           }
-        }}
-      />
+          confirmLabel={t('Remove')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsDeletingConfirmDialog(false);
+            if (result) {
+              onDeleteFolder(currentFolder.id);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

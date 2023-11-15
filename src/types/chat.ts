@@ -1,20 +1,13 @@
+import { MIMEType } from './files';
 import { OpenAIEntityModel } from './openai';
 
-export type AttachmentImageMIMEType = 'image/jpeg' | 'image/png';
-
-export type AttachmentMIMEType =
-  | 'text/markdown'
-  | 'text/plain'
-  | 'text/html'
-  | AttachmentImageMIMEType;
-
 export interface Attachment {
-  index: number;
-  type: AttachmentMIMEType;
+  index?: number;
+  type: MIMEType;
   title: string;
   data?: string;
   url?: string;
-  reference_type?: AttachmentMIMEType;
+  reference_type?: MIMEType;
   reference_url?: string;
 }
 

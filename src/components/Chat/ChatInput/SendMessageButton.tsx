@@ -7,7 +7,13 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/src/components/Common/Tooltip';
+
+import Spinner from '../../Spinner';
 
 interface Props {
   handleSend: () => void;
@@ -64,17 +70,14 @@ export const SendMessageButton = ({ handleSend, isInputEmpty }: Props) => {
 
   return (
     <button
-      className="absolute right-4 top-2.5 rounded hover:text-blue-500 disabled:cursor-not-allowed disabled:text-gray-400 disabled:dark:text-gray-600"
+      className="absolute right-4 top-[calc(50%_-_12px)] rounded hover:text-blue-500 disabled:cursor-not-allowed disabled:text-gray-400 disabled:dark:text-gray-600"
       onClick={handleSend}
       disabled={
         messageIsStreaming || isModelsLoading || isError || isInputEmpty
       }
     >
       {messageIsStreaming || isModelsLoading ? (
-        <div
-          className="h-5 w-5 animate-spin rounded-full border-t-2 border-gray-500"
-          data-qa="message-input-spinner"
-        ></div>
+        <Spinner size={20} />
       ) : (
         <SendIconTooltip
           isShowTooltip={isError || isInputEmpty}

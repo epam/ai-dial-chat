@@ -255,8 +255,15 @@ export const ChatMessage: FC<Props> = memo(
                   </div>
                 ) : (
                   message.content && (
-                    <div className="prose flex-1 whitespace-pre-wrap dark:prose-invert">
-                      {message.content}
+                    <div className="mr-2 flex w-full flex-col gap-5">
+                      <div className="prose flex-1 whitespace-pre-wrap dark:prose-invert">
+                        {message.content}
+                      </div>
+                      {!!message.custom_content?.attachments?.length && (
+                        <MessageAttachments
+                          attachments={message.custom_content.attachments}
+                        />
+                      )}
                     </div>
                   )
                 )}

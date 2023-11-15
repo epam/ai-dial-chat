@@ -84,6 +84,33 @@ pre:has(div.codeblock) {
   }
 }
 
+@layer components {
+  .button {
+    @apply rounded border border-transparent px-3 py-2.5 outline-none;
+  }
+
+  .button:disabled {
+    @apply bg-gray-500;
+  }
+
+  .button:focus-visible,
+  .button.button-secondary:focus-visible {
+    @apply border-gray-800 dark:border-gray-200;
+  }
+
+  .button.button-primary:not(:disabled) {
+    @apply bg-blue-500 hover:bg-blue-700;
+  }
+
+  .button.button-secondary {
+    @apply border-gray-400 dark:border-gray-600;
+  }
+
+  .button.button-secondary:not(:disabled) {
+    @apply bg-transparent hover:bg-gray-400 hover:dark:bg-gray-600;
+  }
+}
+
 .h-screen {
   height: 100vh; /* Fallback for browsers that do not support Custom Properties */
   height: calc(var(--vh, 1vh) * 100);

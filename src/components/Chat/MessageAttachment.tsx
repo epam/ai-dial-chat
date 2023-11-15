@@ -1,10 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
-import { IconPaperclip } from '@tabler/icons-react';
+import { IconDownload, IconPaperclip } from '@tabler/icons-react';
 import { useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { Attachment, AttachmentMIMEType } from '@/src/types/chat';
+import { Attachment } from '@/src/types/chat';
+import { ImageMIMEType } from '@/src/types/files';
+
+import { stopBubbling } from '@/src/constants/chat';
 
 import Link from '../../../public/images/icons/arrow-up-right-from-square.svg';
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
@@ -20,12 +23,14 @@ interface Props {
 export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const { t } = useTranslation('chat');
   const [isOpened, setIsOpened] = useState(false);
-  const imageTypes: AttachmentMIMEType[] = ['image/jpeg', 'image/png'];
+  const [isExpanded, setIsExpanded] = useState(false);
+  const imageTypes: ImageMIMEType[] = ['image/jpeg', 'image/png'];
+  const isOpenable = !attachment.url;
 
   return (
     <div
-      className={`rounded   px-1 py-2   ${
-        isOpened ? 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3' : ''
+      className={`rounded px-1 py-2 ${
+        isExpanded ? 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3' : ''
       } ${
         isInner
           ? 'bg-gray-100 dark:bg-gray-700'
@@ -48,45 +53,53 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               />
             </a>
           ) : (
-            <IconPaperclip
-              size={18}
-              className="shrink-0 text-gray-500 hover:text-blue-500"
-            />
+            <IconPaperclip size={18} className="shrink-0 text-gray-500" />
           )}
         </div>
         <button
           onClick={() => {
-            setIsOpened((isOpened) => !isOpened);
+            setIsExpanded((isExpanded) => !isExpanded);
+            if (!attachment.url) {
+              setIsOpened((isOpened) => !isOpened);
+            }
           }}
           className="flex grow items-center justify-between overflow-hidden"
         >
           <span
             className={`shrink text-left text-sm ${
-              isOpened ? 'max-w-full' : 'max-w-[calc(100%-30px)] truncate'
+              isExpanded ? 'max-w-full' : 'max-w-[calc(100%-30px)] truncate'
             }`}
             title={attachment.title}
           >
             {attachment.title || t('Attachment')}
           </span>
-          <ChevronDown
-            height={18}
-            width={18}
-            className={`shrink-0 text-gray-500 transition ${
-              isOpened ? 'rotate-180' : ''
-            }`}
-          />
+          {isOpenable ? (
+            <ChevronDown
+              height={18}
+              width={18}
+              className={`shrink-0 text-gray-500 transition ${
+                isOpened ? 'rotate-180' : ''
+              }`}
+            />
+          ) : (
+            <a
+              download={attachment.title}
+              href={`api/files?path=${attachment.url}`}
+              onClick={stopBubbling}
+              className="text-gray-500 hover:text-blue-500"
+            >
+              <IconDownload size={18} />
+            </a>
+          )}
         </button>
       </div>
-      {(attachment.data || attachment.url) && isOpened && (
+      {isOpenable && attachment.data && isOpened && (
         <div
           className={`relative mt-2 h-auto w-full overflow-hidden p-3 pt-4 text-sm duration-200`}
         >
           {imageTypes.includes(attachment.type) ? (
             <img
-              src={
-                attachment.url ||
-                `data:${attachment.type};base64,${attachment.data}`
-              }
+              src={`data:${attachment.type};base64,${attachment.data}`}
               className="m-0 aspect-auto w-full"
               alt="Attachment image"
             />

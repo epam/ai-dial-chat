@@ -200,7 +200,7 @@ export const MenuComponent = forwardRef<
         data-nested={isNested ? '' : undefined}
         data-focus-inside={hasFocusInside ? '' : undefined}
         className={classNames(
-          menuItemClassNames,
+          isNested ? menuItemClassNames : '',
           isNested ? 'h-[42px] w-full' : 'h-full pr-0',
           className,
         )}

@@ -10,21 +10,26 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { isMobile } from '@/src/utils/app/mobile';
 
 import { Message } from '@/src/types/chat';
 import { Prompt } from '@/src/types/prompt';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
-import { useAppSelector } from '@/src/store/hooks';
+import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import RefreshCWAlt from '../../../public/images/icons/refresh-cw-alt.svg';
-import { FooterMessage } from './FooterMessage';
+import RefreshCWAlt from '../../../../public/images/icons/refresh-cw-alt.svg';
+import { FooterMessage } from '../../Common/FooterMessage';
+import { ScrollDownButton } from '../../Common/ScrollDownButton';
+import { AttachButton } from './AttachButton';
+import { ChatInputAttachments } from './ChatInputAttachments';
 import { PromptDialog } from './PromptDialog';
 import { PromptList } from './PromptList';
-import { ScrollDownButton } from './ScrollDownButton';
 import { SendMessageButton } from './SendMessageButton';
 
 interface Props {
@@ -51,6 +56,7 @@ export const ChatInput = ({
   isMessagesPresented,
 }: Props) => {
   const { t } = useTranslation('chat');
+  const dispatch = useAppDispatch();
 
   const [content, setContent] = useState<string>();
   const [isTyping, setIsTyping] = useState<boolean>(false);
@@ -65,6 +71,7 @@ export const ChatInput = ({
     ConversationsSelectors.selectIsConversationsStreaming,
   );
   const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
+  const files = useAppSelector(FilesSelectors.selectSelectedFiles);
 
   const promptListRef = useRef<HTMLUListElement | null>(null);
   const inputRef = useRef<HTMLDivElement | null>(null);
@@ -140,13 +147,30 @@ export const ChatInput = ({
       return;
     }
 
-    onSend({ role: 'user', content });
+    onSend({
+      role: 'user',
+      content,
+      ...(files.length > 0 && {
+        custom_content: {
+          attachments: files
+            .filter(
+              (file) => file.status !== 'FAILED' && file.status !== 'UPLOADING',
+            )
+            .map((file) => ({
+              type: file.contentType,
+              title: file.name,
+              url: encodeURI(file.absolutePath + '/' + file.name),
+            })),
+        },
+      }),
+    });
     setContent('');
+    dispatch(FilesActions.resetSelectedFiles());
 
     if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
       textareaRef.current.blur();
     }
-  }, [content, messageIsStreaming, onSend, t, textareaRef]);
+  }, [messageIsStreaming, content, onSend, files, dispatch, textareaRef, t]);
 
   const parseVariables = useCallback((content: string) => {
     const regex = /{{(.*?)}}/g;
@@ -331,10 +355,16 @@ export const ChatInput = ({
       </div>
 
       <div className="mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0  md:last:mb-6 lg:mx-auto lg:max-w-3xl">
-        <div className="relative flex w-full grow flex-col" data-qa="message">
+        <div
+          className="relative m-0 flex max-h-[400px] min-h-[40px] w-full grow flex-col rounded bg-gray-100 focus-within:border-blue-500 dark:bg-gray-700"
+          data-qa="message"
+        >
           <textarea
             ref={textareaRef}
-            className="m-0 max-h-[400px] min-h-[40px] w-full resize-none rounded border border-transparent bg-gray-100 py-3 pl-4 pr-10 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:bg-gray-700"
+            className={classNames(
+              'm-0 max-h-[320px] min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none placeholder:text-gray-500',
+              'pl-12',
+            )}
             style={{
               bottom: `${textareaRef?.current?.scrollHeight}px`,
               overflow: `${
@@ -360,6 +390,9 @@ export const ChatInput = ({
             handleSend={handleSend}
             isInputEmpty={!content || content.trim().length === 0}
           />
+
+          <AttachButton />
+          <ChatInputAttachments />
 
           {showScrollDownButton && (
             <ScrollDownButton

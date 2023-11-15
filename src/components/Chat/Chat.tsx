@@ -36,7 +36,7 @@ import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
 import { ChatHeader } from './ChatHeader';
-import { ChatInput } from './ChatInput';
+import { ChatInput } from './ChatInput/ChatInput';
 import ChatReplayControls from './ChatReplayControls';
 import { ChatSettings } from './ChatSettings';
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
