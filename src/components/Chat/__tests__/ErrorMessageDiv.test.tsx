@@ -1,6 +1,6 @@
 import { ErrorMessageDiv } from '@/src/components/Chat/ErrorMessageDiv';
-import { cleanup, render } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { render } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 
 describe('ErrorMessageDiv', () => {
     // preparation
@@ -9,9 +9,6 @@ describe('ErrorMessageDiv', () => {
         messageLines: ['Error message line 1', 'Error message line 2'],
         code: '123',
     };
-
-    // cleanup
-    afterEach(cleanup);
 
     it('should render the correct error message', () => {
         // Arrange

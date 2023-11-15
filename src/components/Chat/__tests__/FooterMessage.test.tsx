@@ -1,7 +1,8 @@
 import { FooterMessage, reportAnIssueHash, requestApiKeyHash } from '@/src/components/Chat/FooterMessage';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { Feature } from '@/src/types/features';
-import { cleanup, fireEvent, getByText, render, waitFor } from '@testing-library/react';
+import { getByText, render, waitFor } from '@testing-library/react';
+import { userEvent } from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const footerHtmlMessage = `<p data-qa="test">Some footer text.</p><a data-qa="reportAnIssue" href="${reportAnIssueHash}">reportAnIssue</a> and <a data-qa="requestApiKey" href="${requestApiKeyHash}">requestApiKey</a>`;
@@ -49,7 +50,6 @@ vi.mock('@/src/components/Chat/RequestApiKeyDialog', ()=>({
 
 describe('FooterMessage', () => {
   beforeEach(() => {
-    cleanup();
     vi.clearAllMocks();
     vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(footerEnabledFeatures);
   });
@@ -79,7 +79,7 @@ describe('FooterMessage', () => {
     const { getByTestId } = await render(<FooterMessage />);
     const requestApiKeyLink = getByTestId('requestApiKey');
 
-    fireEvent.click(requestApiKeyLink);
+    await userEvent.click(requestApiKeyLink);
 
     await expect(async () => {
         await waitFor(
@@ -92,7 +92,7 @@ describe('FooterMessage', () => {
     const { getByTestId } = await render(<FooterMessage />);
     const requestApiKeyLink = getByTestId('requestApiKey');
 
-    fireEvent.click(requestApiKeyLink);
+    await userEvent.click(requestApiKeyLink);
 
     await waitFor(() => expect(getByTestId(requestAPIKeyDialogTestId)).toBeInTheDocument());
 
@@ -100,7 +100,7 @@ describe('FooterMessage', () => {
 
     const button = getByText(dialog, 'Close');
 
-    fireEvent.click(button);
+    await userEvent.click(button);
 
     await expect(async () => {
         await waitFor(
@@ -116,7 +116,7 @@ describe('FooterMessage', () => {
     const { getByTestId, queryByTestId } = await render(<FooterMessage />);
     const reportAnIssueLink = getByTestId('reportAnIssue');
 
-    fireEvent.click(reportAnIssueLink);
+    await userEvent.click(reportAnIssueLink);
 
     await expect(async () => {
         await waitFor(
@@ -129,7 +129,7 @@ describe('FooterMessage', () => {
     const { getByTestId } = await render(<FooterMessage />);
     const reportAnIssueLink = getByTestId('reportAnIssue');
 
-    fireEvent.click(reportAnIssueLink);
+    await userEvent.click(reportAnIssueLink);
 
     await waitFor(() => expect(getByTestId(reportIssueDialogTestId)).toBeInTheDocument());
 
@@ -137,7 +137,7 @@ describe('FooterMessage', () => {
 
     const button = getByText(dialog, 'Close');
 
-    fireEvent.click(button);
+    await userEvent.click(button);
 
     await expect(async () => {
         await waitFor(
