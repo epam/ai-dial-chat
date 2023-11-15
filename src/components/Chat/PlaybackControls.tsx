@@ -13,8 +13,8 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
-import { FooterMessage } from './FooterMessage';
-import { ScrollDownButton } from './ScrollDownButton';
+import { FooterMessage } from '@/src/components/Chat/FooterMessage';
+import { ScrollDownButton } from '@/src/components/Chat/ScrollDownButton';
 
 interface Props {
   showScrollDownButton: boolean;
@@ -50,6 +50,7 @@ export const PlaybackControls = ({
 
   const isNextMessageInStack = useMemo(() => {
     return (
+      selectedConversations.length &&
       !!selectedConversations[0].playback &&
       isActiveIndex &&
       activeIndex >= 0 &&
@@ -61,6 +62,7 @@ export const PlaybackControls = ({
     if (
       isActiveIndex &&
       isNextMessageInStack &&
+      selectedConversations.length &&
       selectedConversations[0].playback &&
       selectedConversations[0].playback.messagesStack[activeIndex].content
     ) {
@@ -148,6 +150,7 @@ export const PlaybackControls = ({
     >
       <div className="relative mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl">
         <button
+          data-qa="playback-prev"
           onClick={handlePrevMessage}
           disabled={activeIndex === 0}
           className="absolute bottom-3 left-4 rounded outline-none hover:text-blue-500 disabled:cursor-not-allowed disabled:text-gray-400 disabled:dark:text-gray-600"
@@ -165,8 +168,9 @@ export const PlaybackControls = ({
             ></div>
           ) : (
             <>
-              <span className="break-words">{activeMessageContent}</span>
+              <span className="break-words" data-qa="playback-message-content">{activeMessageContent}</span>
               <button
+                data-qa="playback-next"
                 onClick={handlePlaynextMessage}
                 className="absolute bottom-3 right-4 rounded outline-none hover:text-blue-500 disabled:cursor-not-allowed disabled:text-gray-400 disabled:dark:text-gray-600"
                 disabled={isMessageStreaming || !isNextMessageInStack}

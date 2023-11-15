@@ -44,7 +44,7 @@ export const FooterMessage = () => {
   }, []);
 
   return enabledFeatures.includes('footer') ? (
-    <>
+    <div data-qa="footer-message">
       <div className="text-[12px] text-gray-500 md:text-center">
         <span
           dangerouslySetInnerHTML={{ __html: footerHtmlMessage || '' }}
@@ -70,6 +70,6 @@ export const FooterMessage = () => {
           }}
         ></ReportIssueDialog>
       )}
-    </>
+    </div>
   ) : null;
 };
