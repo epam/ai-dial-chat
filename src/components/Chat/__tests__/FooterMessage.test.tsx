@@ -43,7 +43,7 @@ vi.mock('@/src/components/Chat/ReportIssueDialog', ()=>({
    ReportIssueDialog: makeMockDialog("reportIssueDialog")
 }));
 
-vi.mock('@/src/components/Chat/RequestAPIKeyDialog', ()=>({
+vi.mock('@/src/components/Chat/RequestApiKeyDialog', ()=>({
    RequestAPIKeyDialog: makeMockDialog("requestAPIKeyDialog")
 }))
 
