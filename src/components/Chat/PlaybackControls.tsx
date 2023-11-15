@@ -168,7 +168,9 @@ export const PlaybackControls = ({
             ></div>
           ) : (
             <>
-              <span className="break-words" data-qa="playback-message-content">{activeMessageContent}</span>
+              <span className="break-words" data-qa="playback-message-content">
+                {activeMessageContent}
+              </span>
               <button
                 data-qa="playback-next"
                 onClick={handlePlaynextMessage}
