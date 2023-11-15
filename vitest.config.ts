@@ -25,5 +25,6 @@ export default defineConfig({
       // functions: 80,
     },
     reporters: 'verbose',
+    css: true,
   },
 });

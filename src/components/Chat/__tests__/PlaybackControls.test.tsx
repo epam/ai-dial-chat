@@ -1,14 +1,11 @@
 import { PlaybackControls } from '@/src/components/Chat/PlaybackControls';
-import { cleanup, render } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { userEvent } from '@testing-library/user-event';
 import {
   ConversationsActions,
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
-import { FooterMessage } from '@/src/components/Chat/FooterMessage';
-import { ScrollDownButton } from '@/src/components/Chat/ScrollDownButton';
-import { Conversation } from '@/src/types/chat';
+import { render } from '@testing-library/react';
+import { userEvent } from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 vi.mock('@/src/components/Chat/FooterMessage', ()=>({
     FooterMessage: () => <div data-qa="footer-message">footer</div>
 }));
@@ -94,7 +91,7 @@ describe('PlaybackControls', () => {
 
     expect(buttons.length).toBe(3);
     expect(messageBox).toBeInTheDocument();
-    expect(footer).toBeInTheDocument();
+    expect(footer).toBeVisible();
     expect(scrollDownButton).toBeInTheDocument();
     expect(spinner).toBeNull();
    });
