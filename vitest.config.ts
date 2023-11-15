@@ -18,7 +18,6 @@ export default defineConfig({
     exclude: [...configDefaults.exclude, 'e2e/**'],
     coverage: {
       reporter: ['text', 'json', 'html'],
-      all: true,
       // TODO: in future enable this validation with 80% coverage
       // statements: 80,
       // lines: 80,
