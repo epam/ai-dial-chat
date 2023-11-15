@@ -1,10 +1,11 @@
 import { FooterMessage, reportAnIssueHash, requestApiKeyHash } from '@/src/components/Chat/FooterMessage';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { Feature } from '@/src/types/features';
 import { cleanup, fireEvent, getByText, render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const footerHtmlMessage = `<p data-qa="test">Some footer text.</p><a data-qa="reportAnIssue" href="${reportAnIssueHash}">reportAnIssue</a> and <a data-qa="requestApiKey" href="${requestApiKeyHash}">requestApiKey</a>`;
-const footerEnabledFeatures = ['footer', 'request-api-key', 'report-an-issue'];
+const footerEnabledFeatures = ['footer', 'request-api-key', 'report-an-issue'] as Feature[];
 const mockBasePath = '/base/';
 const mockReplace = vi.fn();
 
@@ -50,6 +51,7 @@ describe('FooterMessage', () => {
   beforeEach(() => {
     cleanup();
     vi.clearAllMocks();
+    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(footerEnabledFeatures);
   });
 
   it('renders footerHtmlMessage properly', async () => {
@@ -63,6 +65,27 @@ describe('FooterMessage', () => {
     expect(textElement?.textContent).toEqual("Some footer text.");
     expect(reportAnIssueLink).toBeInTheDocument();
     expect(requestApiKeyLink).toBeInTheDocument();
+  });
+
+  it('renders nothing when footer feature is disabled', async () => {
+    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(['report-an-issue', 'request-api-key']);
+    const { container } = await render(<FooterMessage />);
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('does not open the request api key dialog if this option is disabled', async () => {
+    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(['footer', 'report-an-issue']);
+    const { getByTestId } = await render(<FooterMessage />);
+    const requestApiKeyLink = getByTestId('requestApiKey');
+
+    fireEvent.click(requestApiKeyLink);
+
+    await expect(async () => {
+        await waitFor(
+            () => expect(getByTestId(requestAPIKeyDialogTestId)).toBeInTheDocument()
+        );
+    }).rejects.toEqual(expect.anything());
   });
 
   it('opens the request api key dialog and closes it by executing onClose', async () => {
@@ -88,16 +111,16 @@ describe('FooterMessage', () => {
     expect(mockReplace).toHaveBeenCalledWith(mockBasePath);
   });
 
-  it('does not open the request api key dialog if this option is disabled', async () => {
-    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(['footer', 'report-an-issue']);
-    const { getByTestId } = await render(<FooterMessage />);
-    const requestApiKeyLink = getByTestId('requestApiKey');
+  it('does not open the request an issue dialog if this option is disabled', async () => {
+    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(['footer', 'request-api-key']);
+    const { getByTestId, queryByTestId } = await render(<FooterMessage />);
+    const reportAnIssueLink = getByTestId('reportAnIssue');
 
-    fireEvent.click(requestApiKeyLink);
+    fireEvent.click(reportAnIssueLink);
 
     await expect(async () => {
         await waitFor(
-            () => expect(getByTestId(requestAPIKeyDialogTestId)).toBeInTheDocument()
+            () => expect(queryByTestId(reportIssueDialogTestId)).toBeInTheDocument()
         );
     }).rejects.toEqual(expect.anything());
   });
@@ -123,26 +146,5 @@ describe('FooterMessage', () => {
     }).rejects.toEqual(expect.anything());
 
     expect(mockReplace).toHaveBeenCalledWith(mockBasePath);
-  });
-
-  it('does not open the request an issue dialog if this option is disabled', async () => {
-    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(['footer', 'request-api-key']);
-    const { getByTestId, queryByTestId } = await render(<FooterMessage />);
-    const reportAnIssueLink = getByTestId('reportAnIssue');
-
-    fireEvent.click(reportAnIssueLink);
-
-    await expect(async () => {
-        await waitFor(
-            () => expect(queryByTestId(reportIssueDialogTestId)).toBeInTheDocument()
-        );
-    }).rejects.toEqual(expect.anything());
-  });
-
-  it('renders nothing when footer feature is disabled', async () => {
-    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(['report-an-issue', 'request-api-key']);
-    const { container } = await render(<FooterMessage />);
-
-    expect(container).toBeEmptyDOMElement();
   });
 });
