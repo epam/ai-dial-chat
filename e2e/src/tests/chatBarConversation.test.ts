@@ -118,7 +118,7 @@ test(
     conversationData,
     localStorageManager,
     chatHeader,
-    chatTitleTooltip,
+    tooltip,
     setTestIds,
     errorPopup,
   }) => {
@@ -153,7 +153,7 @@ test(
       .toBeTruthy();
     await errorPopup.cancelPopup();
     await chatHeader.chatTitle.hoverOver();
-    const tooltipChatHeaderTitle = await chatTitleTooltip.getChatTitle();
+    const tooltipChatHeaderTitle = await tooltip.getContent();
     expect
       .soft(
         tooltipChatHeaderTitle,
