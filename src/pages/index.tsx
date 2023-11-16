@@ -7,7 +7,6 @@ import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import Head from 'next/head';
 
-import { getSettings } from '@/src/utils/app/settings';
 import { AuthWindowLocationLike } from '@/src/utils/auth/auth-window-location-like';
 import { delay } from '@/src/utils/auth/delay';
 import {
@@ -17,19 +16,15 @@ import {
 import { timeoutAsync } from '@/src/utils/auth/timeout-async';
 
 import { Feature } from '@/src/types/features';
-import { FolderInterface } from '@/src/types/folder';
 import { fallbackModelID } from '@/src/types/openai';
 
-import { AddonsActions } from '@/src/store/addons/addons.reducers';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsActions } from '@/src/store/models/models.reducers';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 import {
+  SettingsActions,
   SettingsSelectors,
   SettingsState,
 } from '@/src/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { Chat } from '@/src/components/Chat/Chat';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
@@ -72,11 +67,6 @@ const Home = ({ initialState }: Props) => {
   // ON LOAD --------------------------------------------
 
   useEffect(() => {
-    const settings = getSettings();
-    if (settings.theme) {
-      dispatch(UIActions.setTheme(settings.theme));
-    }
-
     // Hack for ios 100vh issue
     const handleSetProperVHPoints = () => {
       document.documentElement.style.setProperty(
@@ -87,73 +77,7 @@ const Home = ({ initialState }: Props) => {
     handleSetProperVHPoints();
     window.addEventListener('resize', handleSetProperVHPoints);
 
-    if (window.innerWidth < 640) {
-      dispatch(UIActions.setShowChatbar(false));
-      dispatch(UIActions.setShowPromptbar(false));
-    }
-
-    const showChatbar = localStorage.getItem('showChatbar');
-    if (showChatbar) {
-      dispatch(UIActions.setShowChatbar(showChatbar === 'true'));
-    }
-
-    const showPromptbar = localStorage.getItem('showPromptbar');
-    if (showPromptbar) {
-      dispatch(UIActions.setShowPromptbar(showPromptbar === 'true'));
-    }
-
-    const openedFoldersIds = localStorage.getItem('openedFoldersIds');
-    if (openedFoldersIds) {
-      dispatch(UIActions.setOpenedFoldersIds(JSON.parse(openedFoldersIds)));
-    }
-
-    const folders = localStorage.getItem('folders');
-    if (folders) {
-      const parsedFolders: FolderInterface[] = JSON.parse(folders);
-      dispatch(
-        ConversationsActions.setFolders({
-          folders: parsedFolders.filter(({ type }) => type === 'chat'),
-        }),
-      );
-      dispatch(
-        PromptsActions.setFolders({
-          folders: parsedFolders.filter(({ type }) => type === 'prompt'),
-        }),
-      );
-    }
-
-    const prompts = localStorage.getItem('prompts');
-    if (prompts) {
-      dispatch(
-        PromptsActions.updatePrompts({
-          prompts: JSON.parse(localStorage.getItem('prompts') || '[]'),
-        }),
-      );
-    }
-
-    dispatch(
-      ModelsActions.initRecentModels({
-        defaultRecentModelsIds: initialState.settings.defaultRecentModelsIds,
-        localStorageRecentModelsIds: JSON.parse(
-          localStorage.getItem('recentModelsIds') || '[]',
-        ),
-        defaultModelId: initialState.settings.defaultModelId,
-      }),
-    );
-
-    initialState.settings.defaultRecentAddonsIds &&
-      dispatch(
-        AddonsActions.initRecentAddons({
-          defaultRecentAddonsIds: initialState.settings.defaultRecentAddonsIds,
-          localStorageRecentAddonsIds: JSON.parse(
-            localStorage.getItem('recentAddonsIds') || '[]',
-          ),
-        }),
-      );
-
-    dispatch(ConversationsActions.initConversations());
-    dispatch(ModelsActions.getModels());
-    dispatch(AddonsActions.getAddons());
+    dispatch(SettingsActions.initApp());
   }, [dispatch, initialState]);
 
   const handleIframeAuth = async () => {
@@ -282,6 +206,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       packageJSON.version,
     ),
     isAuthDisabled: process.env.AUTH_DISABLED === 'true',
+    storageType: process.env.STORAGE_TYPE || 'browserStorage',
   };
 
   return {
