@@ -1,3 +1,4 @@
+import { IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
@@ -22,7 +23,6 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import XMark from '../../../public/images/icons/xmark.svg';
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
 
 const checkValidity = (
@@ -194,7 +194,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
           className="absolute right-2 top-2 rounded text-gray-500 hover:text-blue-700"
           onClick={handleClose}
         >
-          <XMark height={24} width={24} />
+          <IconX height={24} width={24} />
         </button>
 
         <div className="flex justify-between pb-4 text-base font-bold">
