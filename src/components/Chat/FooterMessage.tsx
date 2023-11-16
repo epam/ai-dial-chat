@@ -2,27 +2,26 @@ import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/router';
 
-import { ReportIssueDialog } from './ReportIssueDialog';
-import { RequestAPIKeyDialog } from './RequestApiKeyDialog';
+import { useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-interface Props {
-  isShowFooter: boolean;
-  isShowRequestApiKey: boolean;
-  isShowReportAnIssue: boolean;
-  footerHtmlMessage: string;
-}
+import { ReportIssueDialog } from '@/src/components/Chat/ReportIssueDialog';
+import { RequestAPIKeyDialog } from '@/src/components/Chat/RequestApiKeyDialog';
 
-export const FooterMessage = ({
-  isShowFooter,
-  isShowReportAnIssue,
-  isShowRequestApiKey,
-  footerHtmlMessage,
-}: Props) => {
+export const requestApiKeyHash = '#requestApiKey';
+export const reportAnIssueHash = '#reportAnIssue';
+
+export const FooterMessage = () => {
+  const footerHtmlMessage = useAppSelector(
+    SettingsSelectors.selectFooterHtmlMessage,
+  );
+
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
   const [isRequestAPIDialogOpen, setIsRequestAPIDialogOpen] = useState(false);
   const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
   const router = useRouter();
-  const requestApiKeyHash = '#requestApiKey';
-  const reportAnIssueHash = '#reportAnIssue';
 
   useEffect(() => {
     const handleHash = () => {
@@ -44,15 +43,15 @@ export const FooterMessage = ({
     };
   }, []);
 
-  return isShowFooter ? (
-    <>
+  return enabledFeatures.includes('footer') ? (
+    <div data-qa="footer-message">
       <div className="text-[12px] text-gray-500 md:text-center">
         <span
           dangerouslySetInnerHTML={{ __html: footerHtmlMessage || '' }}
         ></span>
       </div>
 
-      {isShowRequestApiKey && (
+      {enabledFeatures.includes('request-api-key') && (
         <RequestAPIKeyDialog
           isOpen={isRequestAPIDialogOpen}
           onClose={() => {
@@ -62,7 +61,7 @@ export const FooterMessage = ({
         ></RequestAPIKeyDialog>
       )}
 
-      {isShowReportAnIssue && (
+      {enabledFeatures.includes('report-an-issue') && (
         <ReportIssueDialog
           isOpen={isReportIssueDialogOpen}
           onClose={() => {
@@ -71,8 +70,6 @@ export const FooterMessage = ({
           }}
         ></ReportIssueDialog>
       )}
-    </>
-  ) : (
-    <></>
-  );
+    </div>
+  ) : null;
 };

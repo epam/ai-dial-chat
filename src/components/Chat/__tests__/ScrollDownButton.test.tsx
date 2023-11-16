@@ -1,6 +1,7 @@
 import { ScrollDownButton } from '@/src/components/Chat/ScrollDownButton';
-import { cleanup, fireEvent, render } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { render, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { userEvent } from '@testing-library/user-event';
 
 describe('ScrollDownButton', () => {
     // preparation
@@ -8,8 +9,6 @@ describe('ScrollDownButton', () => {
         onScrollDownClick: vi.fn(),
         className: 'test class'
     }
-    // cleanup
-    afterEach(cleanup);
 
     it('should render the component', () => {
         // Arrange
@@ -25,14 +24,14 @@ describe('ScrollDownButton', () => {
         expect(icon.getAttribute('height')).toBe('24');
     });
 
-    it('should call the onScrollDownClick function when the button is clicked', () => {
+    it('should call the onScrollDownClick function when the button is clicked', async () => {
         // Arrange
         const { getByRole } = render(<ScrollDownButton {...props} />);
         // Act
         const button = getByRole('button');
-        fireEvent.click(button);
+        await userEvent.click(button);
         // Assert
-        expect(props.onScrollDownClick).toHaveBeenCalledTimes(1);
+        expect(props.onScrollDownClick).toHaveBeenCalledTimes(1)
     });
 
     it('should accept a custom className prop', () => {

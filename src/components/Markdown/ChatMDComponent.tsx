@@ -1,5 +1,7 @@
 import { Components } from 'react-markdown';
 
+import classnames from 'classnames';
+
 import {
   modelCursorSign,
   modelCursorSignWithBackquote,
@@ -86,7 +88,9 @@ export const getMDComponents = (
         children[0] = replaceCursor(children[0] as string);
       }
       return (
-        <p className={`${className} ${isInner ? 'text-sm' : ''}`}>{children}</p>
+        <p className={classnames(className, { 'text-sm': isInner })}>
+          {children}
+        </p>
       );
     },
   };
