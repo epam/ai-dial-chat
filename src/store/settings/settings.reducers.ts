@@ -2,6 +2,7 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { Feature } from '@/src/types/features';
+import { StorageType } from '@/src/types/storage';
 
 import { RootState } from '..';
 
@@ -15,6 +16,7 @@ export interface SettingsState {
   defaultModelId: string | undefined;
   defaultRecentModelsIds: string[];
   defaultRecentAddonsIds: string[];
+  storageType: StorageType | string;
 }
 
 const initialState: SettingsState = {
@@ -27,12 +29,14 @@ const initialState: SettingsState = {
   defaultModelId: undefined,
   defaultRecentModelsIds: [],
   defaultRecentAddonsIds: [],
+  storageType: 'browserStorage',
 };
 
 export const settingsSlice = createSlice({
   name: 'settings',
   initialState,
   reducers: {
+    initApp: (state) => state,
     setAppName: (
       state,
       { payload }: PayloadAction<SettingsState['appName']>,
@@ -87,6 +91,12 @@ export const settingsSlice = createSlice({
     ) => {
       state.defaultRecentAddonsIds = payload.defaultRecentAddonsIds;
     },
+    setStorageType: (
+      state,
+      { payload }: PayloadAction<{ storageType: StorageType }>,
+    ) => {
+      state.storageType = payload.storageType;
+    },
   },
 });
 
@@ -124,6 +134,9 @@ const selectDefaultRecentAddonsIds = createSelector([rootSelector], (state) => {
 const selectIsAuthDisabled = createSelector([rootSelector], (state) => {
   return state.isAuthDisabled;
 });
+const selectStorageType = createSelector([rootSelector], (state) => {
+  return state.storageType;
+});
 
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
@@ -136,4 +149,5 @@ export const SettingsSelectors = {
   selectDefaultRecentModelsIds,
   selectDefaultRecentAddonsIds,
   selectIsAuthDisabled,
+  selectStorageType,
 };

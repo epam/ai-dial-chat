@@ -1,5 +1,6 @@
 import {
   catchError,
+  concat,
   filter,
   from,
   ignoreElements,
@@ -14,10 +15,31 @@ import { fromFetch } from 'rxjs/fetch';
 
 import { combineEpics } from 'redux-observable';
 
+import { DataService } from '@/src/utils/app/data/data-service';
+
 import { OpenAIEntityAddon } from '@/src/types/openai';
 import { AppEpic } from '@/src/types/store';
 
+import { SettingsSelectors } from '../settings/settings.reducers';
 import { AddonsActions, AddonsSelectors } from './addons.reducers';
+
+const initEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(AddonsActions.init.match),
+    switchMap(() => DataService.getRecentAddonsIds()),
+    switchMap((recentAddonsIds) =>
+      concat(
+        of(
+          AddonsActions.initRecentAddons({
+            defaultRecentAddonsIds:
+              SettingsSelectors.selectDefaultRecentAddonsIds(state$.value),
+            localStorageRecentAddonsIds: recentAddonsIds,
+          }),
+        ),
+        of(AddonsActions.getAddons()),
+      ),
+    ),
+  );
 
 const getAddonsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -54,8 +76,8 @@ const updateRecentAddonsEpic: AppEpic = (action$, state$) =>
     ),
     withLatestFrom(state$),
     map(([_action, state]) => AddonsSelectors.selectRecentAddonsIds(state)),
-    tap((recentModelIds) => {
-      localStorage.setItem('recentAddonsIds', JSON.stringify(recentModelIds));
+    switchMap((recentAddonsIds) => {
+      return DataService.setRecentAddonsIds(recentAddonsIds);
     }),
     ignoreElements(),
   );
@@ -72,6 +94,7 @@ const getAddonsFailEpic: AppEpic = (action$) =>
   );
 
 export const AddonsEpics = combineEpics(
+  initEpic,
   getAddonsEpic,
   updateRecentAddonsEpic,
   getAddonsFailEpic,
