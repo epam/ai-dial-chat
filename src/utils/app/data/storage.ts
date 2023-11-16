@@ -9,8 +9,8 @@ export const isLocalStorageEnabled = () => {
     localStorage.setItem(testData, testData);
     localStorage.removeItem(testData);
     return true;
-  } catch (e: any) {
-    if (e.name === 'QuotaExceededError') {
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'QuotaExceededError') {
       toast.error(errorsMessages.localStorageQuotaExceeded);
       return true;
     } else {
