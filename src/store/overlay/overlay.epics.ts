@@ -233,7 +233,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           actions.push(of(ModelsActions.updateRecentModels({ modelId })));
 
           actions.push(
-            of(ModelsActions.setDefaultModelId({ defaultModelId: modelId })),
+            of(SettingsActions.setDefaultModelId({ defaultModelId: modelId })),
           );
 
           // if there is active conversation -> should update model for this conversation

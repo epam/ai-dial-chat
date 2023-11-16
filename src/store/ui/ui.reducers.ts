@@ -16,8 +16,8 @@ export interface UIState {
 
 const initialState: UIState = {
   theme: 'dark',
-  showChatbar: true,
-  showPromptbar: true,
+  showChatbar: false,
+  showPromptbar: false,
   isUserSettingsOpen: false,
   isProfileOpen: false,
   isCompareMode: false,
@@ -28,6 +28,7 @@ export const uiSlice = createSlice({
   name: 'ui',
   initialState,
   reducers: {
+    init: (state) => state,
     setTheme: (state, { payload }: PayloadAction<Theme>) => {
       state.theme = payload;
     },

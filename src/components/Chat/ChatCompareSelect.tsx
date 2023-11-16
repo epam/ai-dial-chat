@@ -8,6 +8,7 @@ import { Conversation } from '@/src/types/chat';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
@@ -20,7 +21,7 @@ interface OptionProps {
 
 const Option = ({ item }: OptionProps) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const defaultModelId = useAppSelector(ModelsSelectors.selectDefaultModelId);
+  const defaultModelId = useAppSelector(SettingsSelectors.selectDefaultModelId);
   const theme = useAppSelector(UISelectors.selectThemeState);
 
   const model = useMemo(
