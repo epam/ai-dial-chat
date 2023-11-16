@@ -32,7 +32,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     const entities: OpenAIEntity[] = [];
 
-    const addons: ProxyOpenAIEntity[] = await getEntities(
+    const addons = await getEntities<ProxyOpenAIEntity[]>(
       'addon',
       token?.access_token as string,
       token?.jobTitle as string,
