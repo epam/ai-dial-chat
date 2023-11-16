@@ -26,6 +26,8 @@ import {
 } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
+
 import { Chat } from '@/src/components/Chat/Chat';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import Header from '@/src/components/Header/Header';
@@ -33,7 +35,6 @@ import { UserMobile } from '@/src/components/Header/User/UserMobile';
 import Promptbar from '@/src/components/Promptbar';
 
 import packageJSON from '@/package.json';
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 interface Props {
   initialState: {
