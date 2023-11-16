@@ -89,6 +89,7 @@
     "eslint-config-next": "13.4.19",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-tailwindcss": "^3.13.0",
+    "eslint-plugin-testing-library": "^6.1.2",
     "gpt-3-encoder": "^1.1.4",
     "jsdom": "^21.1.1",
     "postcss": "^8.4.21",

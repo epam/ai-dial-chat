@@ -5,10 +5,11 @@
     "plugin:@typescript-eslint/stylistic",
     "prettier",
     "plugin:tailwindcss/recommended",
-    "next/core-web-vitals"
+    "next/core-web-vitals",
+    "plugin:testing-library/react"
   ],
   "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint", "tailwindcss"],
+  "plugins": ["@typescript-eslint", "tailwindcss", "testing-library"],
   "root": true,
   "settings": {
     "tailwindcss": {
@@ -26,6 +27,11 @@
       { "argsIgnorePattern": "^_" }
     ],
     "no-restricted-imports": ["error", { "paths": ["react-i18next"] }],
-    "tailwindcss/no-custom-classname": "error"
+    "tailwindcss/no-custom-classname": "error",
+    // testing-library
+    "testing-library/await-async-queries": "error",
+    "testing-library/no-await-sync-queries": "error",
+    "testing-library/no-debugging-utils": "warn",
+    "testing-library/no-dom-import": "off"
   }
 }

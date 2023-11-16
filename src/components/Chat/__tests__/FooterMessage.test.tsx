@@ -1,7 +1,7 @@
 import { FooterMessage, reportAnIssueHash, requestApiKeyHash } from '@/src/components/Chat/FooterMessage';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { Feature } from '@/src/types/features';
-import { getByText, render, waitFor } from '@testing-library/react';
+import { getByText, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -55,11 +55,11 @@ describe('FooterMessage', () => {
   });
 
   it('renders footerHtmlMessage properly', async () => {
-    const { queryByTestId } = await render(<FooterMessage />);
+    render(<FooterMessage />);
 
-    const textElement = queryByTestId('test');
-    const reportAnIssueLink = queryByTestId('reportAnIssue');
-    const requestApiKeyLink = queryByTestId('requestApiKey');
+    const textElement = screen.getByTestId('test');
+    const reportAnIssueLink = screen.getByTestId('reportAnIssue');
+    const requestApiKeyLink = screen.getByTestId('requestApiKey');
 
     expect(textElement).toBeInTheDocument();
     expect(textElement?.textContent).toEqual("Some footer text.");
@@ -82,9 +82,7 @@ describe('FooterMessage', () => {
     await userEvent.click(requestApiKeyLink);
 
     await expect(async () => {
-        await waitFor(
-            () => expect(getByTestId(requestAPIKeyDialogTestId)).toBeInTheDocument()
-        );
+        await screen.findByTestId(requestAPIKeyDialogTestId)
     }).rejects.toEqual(expect.anything());
   });
 
@@ -103,9 +101,7 @@ describe('FooterMessage', () => {
     await userEvent.click(button);
 
     await expect(async () => {
-        await waitFor(
-            () => expect(getByTestId(requestAPIKeyDialogTestId)).toBeInTheDocument()
-        );
+        await screen.findByTestId(requestAPIKeyDialogTestId);
     }).rejects.toEqual(expect.anything());
 
     expect(mockReplace).toHaveBeenCalledWith(mockBasePath);
@@ -113,36 +109,32 @@ describe('FooterMessage', () => {
 
   it('does not open the request an issue dialog if this option is disabled', async () => {
     vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(['footer', 'request-api-key']);
-    const { getByTestId, queryByTestId } = await render(<FooterMessage />);
-    const reportAnIssueLink = getByTestId('reportAnIssue');
+    render(<FooterMessage />);
+    const reportAnIssueLink = screen.getByTestId('reportAnIssue');
 
     await userEvent.click(reportAnIssueLink);
 
     await expect(async () => {
-        await waitFor(
-            () => expect(queryByTestId(reportIssueDialogTestId)).toBeInTheDocument()
-        );
+        await screen.findByTestId(reportIssueDialogTestId);
     }).rejects.toEqual(expect.anything());
   });
 
   it('opens the request an issue dialog and closes it by executing onClose', async () => {
-    const { getByTestId } = await render(<FooterMessage />);
-    const reportAnIssueLink = getByTestId('reportAnIssue');
+    render(<FooterMessage />);
+    const reportAnIssueLink = screen.getByTestId('reportAnIssue');
 
     await userEvent.click(reportAnIssueLink);
 
-    await waitFor(() => expect(getByTestId(reportIssueDialogTestId)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId(reportIssueDialogTestId)).toBeInTheDocument());
 
-    const dialog = getByTestId(reportIssueDialogTestId)
+    const dialog = screen.getByTestId(reportIssueDialogTestId)
 
-    const button = getByText(dialog, 'Close');
+    const button = await getByText(dialog, 'Close');
 
     await userEvent.click(button);
 
     await expect(async () => {
-        await waitFor(
-            () => expect(getByTestId(reportIssueDialogTestId)).toBeInTheDocument()
-        );
+        await screen.findByTestId(reportIssueDialogTestId)
     }).rejects.toEqual(expect.anything());
 
     expect(mockReplace).toHaveBeenCalledWith(mockBasePath);
