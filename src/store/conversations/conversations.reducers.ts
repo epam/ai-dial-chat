@@ -48,7 +48,7 @@ export const conversationsSlice = createSlice({
   name: 'conversations',
   initialState,
   reducers: {
-    // Do local storage things
+    init: (state) => state,
     initConversations: (state) => state,
     selectConversations: (
       state,
@@ -405,6 +405,8 @@ export const conversationsSlice = createSlice({
     playbackCancel: (state) => {
       state.isPlaybackPaused = true;
     },
+
+    initFolders: (state) => state,
   },
 });
 

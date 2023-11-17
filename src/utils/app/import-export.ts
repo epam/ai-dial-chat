@@ -188,70 +188,52 @@ export const exportPrompts = (
   triggerDownloadPromptsHistory(data);
 };
 
-export const exportPrompt = (promptId: string, folders: FolderInterface[]) => {
-  const prompts = localStorage.getItem('prompts');
+export const exportPrompt = (prompt: Prompt, folders: FolderInterface[]) => {
+  const promptsToExport: Prompt[] = [prompt];
 
-  if (prompts) {
-    const parsedPrompts: Prompt[] = JSON.parse(prompts);
-    const promptToExport = parsedPrompts.find(({ id }) => id === promptId);
-
-    if (promptToExport) {
-      const promptsToExport: Prompt[] = [promptToExport];
-
-      const data: PromptsHistory = {
-        prompts: promptsToExport,
-        folders,
-      };
-      triggerDownloadPrompt(data);
-    }
-  }
+  const data: PromptsHistory = {
+    prompts: promptsToExport,
+    folders,
+  };
+  triggerDownloadPrompt(data);
 };
 
-export const importData = (
-  data: SupportedExportFormats,
+export interface ImportConversationsResponse {
+  history: Conversation[];
+  folders: FolderInterface[];
+  isError: boolean;
+}
+export const importConversations = (
+  importedData: SupportedExportFormats,
+  {
+    currentConversations,
+    currentFolders,
+  }: {
+    currentConversations: Conversation[];
+    currentFolders: FolderInterface[];
+  },
   modelsMap: ModelsMap,
-): CleanDataResponse => {
-  const { history, folders, prompts, isError } = cleanData(data, modelsMap);
-  const oldConversations = localStorage.getItem('conversationHistory');
-  let cleanedConversationHistory: Conversation[] = [];
-  if (oldConversations) {
-    const parsedConversationHistory: Conversation[] =
-      JSON.parse(oldConversations);
-    cleanedConversationHistory = cleanConversationHistory(
-      parsedConversationHistory,
-      modelsMap,
-    );
-  }
+): ImportConversationsResponse => {
+  const { history, folders, isError } = cleanData(importedData, modelsMap);
 
   const newHistory: Conversation[] = [
-    ...cleanedConversationHistory,
+    ...currentConversations,
     ...history,
   ].filter(
     (conversation, index, self) =>
       index === self.findIndex((c) => c.id === conversation.id),
   );
 
-  const oldFolders = localStorage.getItem('folders');
-  const oldFoldersParsed = oldFolders ? JSON.parse(oldFolders) : [];
-  const newFolders: FolderInterface[] = [...oldFoldersParsed, ...folders]
+  const newFolders: FolderInterface[] = [...currentFolders, ...folders]
     .filter(
       (folder, index, self) =>
         index === self.findIndex((f) => f.id === folder.id),
     )
     .filter((folder) => folder.type === 'chat');
 
-  const oldPrompts = localStorage.getItem('prompts');
-  const oldPromptsParsed = oldPrompts ? JSON.parse(oldPrompts) : [];
-  const newPrompts: Prompt[] = [...oldPromptsParsed, ...prompts].filter(
-    (prompt, index, self) =>
-      index === self.findIndex((p) => p.id === prompt.id),
-  );
-
   return {
-    version: 4,
     history: newHistory,
     folders: newFolders,
-    prompts: newPrompts,
     isError,
   };
 };
@@ -262,38 +244,37 @@ export interface ImportPromtsResponse {
   isError: boolean;
 }
 export const importPrompts = (
-  promptsHistory: PromptsHistory,
+  importedData: PromptsHistory,
+  {
+    currentPrompts,
+    currentFolders,
+  }: {
+    currentPrompts: Prompt[];
+    currentFolders: FolderInterface[];
+  },
 ): ImportPromtsResponse => {
-  const oldPrompts = localStorage.getItem('prompts');
-  const oldPromptsParsed: Prompt[] = oldPrompts ? JSON.parse(oldPrompts) : [];
-
-  const oldPromptsFolders = localStorage.getItem('folders');
-  const oldFoldersParsed: FolderInterface[] = oldPromptsFolders
-    ? JSON.parse(oldPromptsFolders)
-    : [];
-
-  if (isPromtsFormat(promptsHistory)) {
-    const newPrompts: Prompt[] = oldPromptsParsed
-      .concat(promptsHistory.prompts)
-      .filter(
-        (prompt, index, self) =>
-          index === self.findIndex((p) => p.id === prompt.id),
-      );
-
-    const newFolders: FolderInterface[] = oldFoldersParsed
-      .concat(promptsHistory.folders)
-      .filter(
-        (folder, index, self) =>
-          index === self.findIndex((p) => p.id === folder.id),
-      )
-      .filter((folder) => folder.type === 'prompt');
-
-    return { prompts: newPrompts, folders: newFolders, isError: false };
+  if (!isPromtsFormat(importedData)) {
+    return {
+      prompts: currentPrompts,
+      folders: currentFolders,
+      isError: true,
+    };
   }
 
-  return {
-    prompts: oldPromptsParsed,
-    folders: oldFoldersParsed,
-    isError: true,
-  };
+  const newPrompts: Prompt[] = currentPrompts
+    .concat(importedData.prompts)
+    .filter(
+      (prompt, index, self) =>
+        index === self.findIndex((p) => p.id === prompt.id),
+    );
+
+  const newFolders: FolderInterface[] = currentFolders
+    .concat(importedData.folders)
+    .filter(
+      (folder, index, self) =>
+        index === self.findIndex((p) => p.id === folder.id),
+    )
+    .filter((folder) => folder.type === 'prompt');
+
+  return { prompts: newPrompts, folders: newFolders, isError: false };
 };
