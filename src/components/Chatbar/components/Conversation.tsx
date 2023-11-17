@@ -31,11 +31,11 @@ import CheckIcon from '../../../../public/images/icons/check.svg';
 import XmarkIcon from '../../../../public/images/icons/xmark.svg';
 import { PlaybackIcon } from '../../Chat/PlaybackIcon';
 import { ReplayAsIsIcon } from '../../Chat/ReplayAsIsIcon';
+import ShareModal, { SharingType } from '../../Chat/ShareModal';
 import { ContextMenu } from '../../Common/ContextMenu';
 import { ModelIcon } from './ModelIcon';
 
 import { v4 as uuidv4 } from 'uuid';
-import ShareModal, { SharingType } from '../../Chat/ShareModal';
 
 interface Props {
   item: Conversation;
@@ -188,7 +188,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     }
   }, [isRenaming, isDeleting]);
 
-  const handleShare: MouseEventHandler<HTMLButtonElement> = () => setIsSharing(true);
+  const handleShare: MouseEventHandler<HTMLButtonElement> = () => {
+    setIsSharing(true);
+  };
 
   const handleMoveToFolder = useCallback(
     ({

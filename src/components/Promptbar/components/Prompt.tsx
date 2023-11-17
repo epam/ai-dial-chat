@@ -28,10 +28,10 @@ import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMob
 
 import CheckIcon from '../../../../public/images/icons/check.svg';
 import XmarkIcon from '../../../../public/images/icons/xmark.svg';
+import ShareModal, { SharingType } from '../../Chat/ShareModal';
 import { PromptModal } from './PromptModal';
 
 import { v4 as uuidv4 } from 'uuid';
-import ShareModal, { SharingType } from '../../Chat/ShareModal';
 
 interface Props {
   item: Prompt;
@@ -56,7 +56,9 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const wrapperRef = useRef(null);
 
-  const handleShare: MouseEventHandler<HTMLButtonElement> = () => setIsSharing(true);
+  const handleShare: MouseEventHandler<HTMLButtonElement> = () => {
+    setIsSharing(true);
+  };
 
   const handleUpdate = useCallback(
     (prompt: Prompt) => {
@@ -176,107 +178,107 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   return (
     <>
-    <div
-      className={classNames(
-        'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-violet/15',
-        isSelected ? 'border-l-violet bg-violet/15' : 'border-l-transparent',
-      )}
-      style={{
-        paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
-      }}
-      ref={wrapperRef}
-      onClick={handleOpenEditModal}
-      data-qa="prompt"
-    >
-      <button
-        className="flex h-full w-full items-center gap-2"
-        draggable="true"
-        onDragStart={(e) => handleDragStart(e, prompt)}
+      <div
+        className={classNames(
+          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-violet/15',
+          isSelected ? 'border-l-violet bg-violet/15' : 'border-l-transparent',
+        )}
+        style={{
+          paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
+        }}
+        ref={wrapperRef}
+        onClick={handleOpenEditModal}
+        data-qa="prompt"
       >
-        <IconBulb size={18} className="text-gray-500" />
-
-        <div
-          className={classNames(
-            {
-              'mr-4 xl:mr-0': !isDeleting && !isRenaming && isSelected,
-            },
-            isDeleting ? 'mr-12' : 'group-hover:mr-4',
-            'relative max-h-5 flex-1 truncate break-all text-left',
-          )}
+        <button
+          className="flex h-full w-full items-center gap-2"
+          draggable="true"
+          onDragStart={(e) => handleDragStart(e, prompt)}
         >
-          {prompt.name}
-        </div>
-      </button>
+          <IconBulb size={18} className="text-gray-500" />
 
-      {isDeleting && (
-        <div className="absolute right-1 z-10 flex">
-          <SidebarActionButton handleClick={handleDelete}>
-            <CheckIcon
-              width={18}
-              height={18}
-              size={18}
-              className="hover:text-violet"
-            />
-          </SidebarActionButton>
+          <div
+            className={classNames(
+              {
+                'mr-4 xl:mr-0': !isDeleting && !isRenaming && isSelected,
+              },
+              isDeleting ? 'mr-12' : 'group-hover:mr-4',
+              'relative max-h-5 flex-1 truncate break-all text-left',
+            )}
+          >
+            {prompt.name}
+          </div>
+        </button>
 
-          <SidebarActionButton handleClick={handleCancelDelete}>
-            <XmarkIcon
-              width={18}
-              height={18}
-              size={18}
-              strokeWidth="2"
-              className="hover:text-violet"
+        {isDeleting && (
+          <div className="absolute right-1 z-10 flex">
+            <SidebarActionButton handleClick={handleDelete}>
+              <CheckIcon
+                width={18}
+                height={18}
+                size={18}
+                className="hover:text-violet"
+              />
+            </SidebarActionButton>
+
+            <SidebarActionButton handleClick={handleCancelDelete}>
+              <XmarkIcon
+                width={18}
+                height={18}
+                size={18}
+                strokeWidth="2"
+                className="hover:text-violet"
+              />
+            </SidebarActionButton>
+          </div>
+        )}
+        {!isDeleting && !isRenaming && (
+          <div
+            className={classNames(
+              'absolute right-3 z-50 flex justify-end xl:invisible xl:group-hover:visible',
+              isSelected ? 'visible' : 'invisible',
+            )}
+            ref={wrapperRef}
+            onClick={stopBubbling}
+          >
+            <ContextMenu
+              featureType="prompt"
+              folders={folders}
+              onMoveToFolder={handleMoveToFolder}
+              onDelete={handleOpenDeleteModal}
+              onRename={handleOpenEditModal}
+              onExport={handleExportPrompt}
+              onOpenMoveToModal={() => {
+                setIsShowMoveToModal(true);
+              }}
+              highlightColor="violet"
+              onOpenShareModal={handleShare}
             />
-          </SidebarActionButton>
-        </div>
-      )}
-      {!isDeleting && !isRenaming && (
-        <div
-          className={classNames(
-            'absolute right-3 z-50 flex justify-end xl:invisible xl:group-hover:visible',
-            isSelected ? 'visible' : 'invisible',
+          </div>
+        )}
+        <div className="md:hidden" onClick={stopBubbling}>
+          {isShowMoveToModal && (
+            <MoveToFolderMobileModal
+              folders={folders}
+              onMoveToFolder={handleMoveToFolder}
+              onClose={() => {
+                setIsShowMoveToModal(false);
+              }}
+            />
           )}
-          ref={wrapperRef}
-          onClick={stopBubbling}
-        >
-          <ContextMenu
-            featureType="prompt"
-            folders={folders}
-            onMoveToFolder={handleMoveToFolder}
-            onDelete={handleOpenDeleteModal}
-            onRename={handleOpenEditModal}
-            onExport={handleExportPrompt}
-            onOpenMoveToModal={() => {
-              setIsShowMoveToModal(true);
-            }}
-            highlightColor="violet"
-            onOpenShareModal={handleShare}
-          />
         </div>
-      )}
-      <div className="md:hidden" onClick={stopBubbling}>
-        {isShowMoveToModal && (
-          <MoveToFolderMobileModal
-            folders={folders}
-            onMoveToFolder={handleMoveToFolder}
-            onClose={() => {
-              setIsShowMoveToModal(false);
-            }}
+
+        {isSelected && showModal && (
+          <PromptModal
+            prompt={prompt}
+            isOpen
+            onClose={handleClose}
+            onUpdatePrompt={handleUpdate}
           />
         )}
       </div>
-
-      {isSelected && showModal && (
-        <PromptModal
-          prompt={prompt}
-          isOpen
-          onClose={handleClose}
-          onUpdatePrompt={handleUpdate}
-        />
-      )}
-    </div>
-    {isSharing && (
-      <ShareModal
+      {isSharing && (
+        <ShareModal
           entity={prompt}
           type={SharingType.Prompt}
           isOpen
