@@ -198,7 +198,11 @@ test(
         )
         .toBeTruthy();
 
-      await playbackControl.playbackMessage.waitForState({ state: 'hidden' });
+      const playbackMessage =
+        await playbackControl.playbackMessage.getElementContent();
+      expect
+        .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
+        .toBe('');
 
       const headerTitle = await chatHeader.chatTitle.getElementInnerContent();
       expect
@@ -449,9 +453,11 @@ test(
             )
             .toBeFalsy();
 
-          await playbackControl.playbackMessage.waitForState({
-            state: 'hidden',
-          });
+          const playbackMessage =
+            await playbackControl.playbackMessage.getElementContent();
+          expect
+            .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
+            .toBe('');
         }
       }
     });
@@ -482,7 +488,11 @@ test(
         )
         .toBeFalsy();
 
-      await playbackControl.playbackMessage.waitForState({ state: 'hidden' });
+      const playbackMessage =
+        await playbackControl.playbackMessage.getElementContent();
+      expect
+        .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
+        .toBe('');
     });
 
     await test.step('Play Previous message using hot keys and verify chat messages replayed back, bottom playback controls are updated', async () => {
