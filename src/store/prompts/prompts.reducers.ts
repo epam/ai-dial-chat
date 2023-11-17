@@ -36,6 +36,7 @@ export const promptsSlice = createSlice({
   name: 'prompts',
   initialState,
   reducers: {
+    init: (state) => state,
     createNewPrompt: (state) => state,
     createNewPromptSuccess: (
       state,

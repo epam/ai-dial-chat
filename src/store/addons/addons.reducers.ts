@@ -29,6 +29,7 @@ export const addonsSlice = createSlice({
   name: 'addons',
   initialState,
   reducers: {
+    init: (state) => state,
     getAddons: (state) => {
       state.isLoading = true;
     },
