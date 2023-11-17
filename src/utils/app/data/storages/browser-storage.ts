@@ -86,7 +86,7 @@ export class BrowserStorage implements DialStorage {
   setPromptsFolders(promptsFolders: FolderInterface[]): Observable<void> {
     return BrowserStorage.getData('folders', []).pipe(
       map((items: FolderInterface[]) =>
-        items.filter((item) => item.type !== 'chat'),
+        items.filter((item) => item.type !== 'prompt'),
       ),
       map((convFolders: FolderInterface[]) => {
         return convFolders.concat(promptsFolders);
