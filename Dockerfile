@@ -7,7 +7,7 @@ FROM base AS deps
 WORKDIR /app
 COPY /tools ./tools
 COPY package*.json ./
-RUN npm ci --omit=optional
+RUN npm ci
 RUN find node_modules -type f -exec md5sum {} \; | md5sum
 
 FROM base AS builder
