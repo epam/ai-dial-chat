@@ -171,7 +171,7 @@ test(
 
 test(
   'Default model in new chat is set as in previous chat.\n' +
-    'Error message is shown if to send an empty message.\n' +
+    'Send button is disabled if the message box is empty.\n' +
     'Chat name is shown in chat header',
   async ({
     dialHomePage,
@@ -181,6 +181,7 @@ test(
     chat,
     sendMessage,
     chatHeader,
+    tooltip,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-400', 'EPMRTC-474', 'EPMRTC-817');
@@ -188,8 +189,18 @@ test(
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     await talkToSelector.selectModel(bison.name);
-    await dialHomePage.acceptBrowserDialog(ExpectedConstants.enterMessageAlert);
-    await sendMessage.send('');
+
+    const isSendMessageBtnEnabled =
+      await sendMessage.sendMessageButton.isElementEnabled();
+    expect
+      .soft(isSendMessageBtnEnabled, ExpectedMessages.sendMessageButtonDisabled)
+      .toBeFalsy();
+
+    await sendMessage.sendMessageButton.hoverOver();
+    const tooltipContent = await tooltip.getContent();
+    expect
+      .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
+      .toBe(ExpectedConstants.sendMessageTooltip);
 
     await chat.sendRequestWithButton(request);
     const chatTitle = await chatHeader.chatTitle.getElementInnerContent();
