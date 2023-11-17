@@ -12,6 +12,8 @@ import { MouseEvent, useCallback, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
+
 export enum SharingType {
   Conversation = 'conversation',
   ConversationFolder = 'conversations_folder',
@@ -112,7 +114,12 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
                 </div>
                 <div className="absolute right-3 top-3">
                   {urlCopied ? (
-                    <IconCheck size={20} className="text-gray-500" />
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <IconCheck size={20} className="text-gray-500" />
+                      </TooltipTrigger>
+                      <TooltipContent>{t('Copied!')}</TooltipContent>
+                    </Tooltip>
                   ) : (
                     <button
                       className="outline-none"
@@ -120,11 +127,16 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
                       ref={copyButtonRef}
                       autoFocus
                     >
-                      <IconCopy
-                        height={20}
-                        width={20}
-                        className="cursor-pointer text-gray-500 hover:text-blue-500"
-                      />
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <IconCopy
+                            height={20}
+                            width={20}
+                            className="cursor-pointer text-gray-500 hover:text-blue-500"
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>{t('Copy URL')}</TooltipContent>
+                      </Tooltip>
                     </button>
                   )}
                 </div>
