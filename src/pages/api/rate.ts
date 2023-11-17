@@ -41,7 +41,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }),
       method: 'POST',
       body: JSON.stringify({
-        model: modelId,
         rate: value,
         responseId,
       }),
