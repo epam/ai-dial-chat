@@ -42,7 +42,7 @@ interface Props {
   };
 }
 
-const Home = ({ initialState }: Props) => {
+export default ({ initialState }: Props) => {
   const session = useSession();
 
   const { t } = useTranslation('chat');
@@ -162,7 +162,6 @@ const Home = ({ initialState }: Props) => {
     </>
   );
 };
-export default Home;
 
 export const getServerSideProps: GetServerSideProps = async ({
   locale,
