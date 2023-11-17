@@ -21,7 +21,6 @@ import { PromptData } from '@/e2e/src/testData/prompts/promptData';
 import { Addons } from '@/e2e/src/ui/webElements/addons';
 import { AddonsDialog } from '@/e2e/src/ui/webElements/addonsDialog';
 import { ChatInfoTooltip } from '@/e2e/src/ui/webElements/chatInfoTooltip';
-import { ChatTitleTooltip } from '@/e2e/src/ui/webElements/chatTitleTooltip';
 import { Compare } from '@/e2e/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/e2e/src/ui/webElements/confirmationDialog';
 import { DropdownMenu } from '@/e2e/src/ui/webElements/dropdownMenu';
@@ -30,10 +29,13 @@ import { ErrorPopup } from '@/e2e/src/ui/webElements/errorPopup';
 import { FolderConversations } from '@/e2e/src/ui/webElements/folderConversations';
 import { FolderPrompts } from '@/e2e/src/ui/webElements/folderPrompts';
 import { ModelSelector } from '@/e2e/src/ui/webElements/modelSelector';
+import { Playback } from '@/e2e/src/ui/webElements/playback';
+import { PlaybackControl } from '@/e2e/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/e2e/src/ui/webElements/promptModalDialog';
 import { Prompts } from '@/e2e/src/ui/webElements/prompts';
 import { ReplayAsIs } from '@/e2e/src/ui/webElements/replayAsIs';
 import { TemperatureSlider } from '@/e2e/src/ui/webElements/temperatureSlider';
+import { Tooltip } from '@/e2e/src/ui/webElements/tooltip';
 import { VariableModalDialog } from '@/e2e/src/ui/webElements/variableModalDialog';
 import { test as base } from '@playwright/test';
 import { allure } from 'allure-playwright';
@@ -83,9 +85,11 @@ const test = base.extend<
     leftConversationSettings: ConversationSettings;
     rightChatHeader: ChatHeader;
     leftChatHeader: ChatHeader;
-    chatTitleTooltip: ChatTitleTooltip;
+    tooltip: Tooltip;
     errorPopup: ErrorPopup;
     replayAsIs: ReplayAsIs;
+    playback: Playback;
+    playbackControl: PlaybackControl;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -263,9 +267,9 @@ const test = base.extend<
     const leftChatHeader = compare.getLeftChatHeader();
     await use(leftChatHeader);
   },
-  chatTitleTooltip: async ({ page }, use) => {
-    const chatTitleTooltip = new ChatTitleTooltip(page);
-    await use(chatTitleTooltip);
+  tooltip: async ({ page }, use) => {
+    const tooltip = new Tooltip(page);
+    await use(tooltip);
   },
   errorPopup: async ({ page }, use) => {
     const errorPopup = new ErrorPopup(page);
@@ -274,6 +278,14 @@ const test = base.extend<
   replayAsIs: async ({ page }, use) => {
     const replayAsIs = new ReplayAsIs(page);
     await use(replayAsIs);
+  },
+  playback: async ({ chat }, use) => {
+    const playback = chat.getPlayBack();
+    await use(playback);
+  },
+  playbackControl: async ({ chat }, use) => {
+    const playbackControl = chat.getPlaybackControl();
+    await use(playbackControl);
   },
 });
 

@@ -50,7 +50,7 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       promptsFolders: PromptsSelectors.selectFolders(state$.value),
     })),
     switchMap(({ promptsFolders }) => {
-      return DataService.setConversationFolders(promptsFolders);
+      return DataService.setPromptFolders(promptsFolders);
     }),
     ignoreElements(),
   );
@@ -146,6 +146,21 @@ const importPromptsEpic: AppEpic = (action$, state$) =>
       return of(PromptsActions.importPromptsSuccess({ prompts, folders }));
     }),
   );
+
+const initFoldersEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter((action) => PromptsActions.initFolders.match(action)),
+    switchMap(() =>
+      DataService.getPromptsFolders().pipe(
+        map((folders) => {
+          return PromptsActions.setFolders({
+            folders,
+          });
+        }),
+      ),
+    ),
+  );
+
 const initPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.init.match),
@@ -160,8 +175,21 @@ const initPromptsEpic: AppEpic = (action$) =>
     ),
   );
 
+const initEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter((action) => PromptsActions.init.match(action)),
+    switchMap(() =>
+      concat(
+        of(PromptsActions.initFolders()),
+        of(PromptsActions.initPrompts()),
+      ),
+    ),
+  );
+
 export const PromptsEpics = combineEpics(
+  initEpic,
   initPromptsEpic,
+  initFoldersEpic,
   savePromptsEpic,
   saveFoldersEpic,
   deleteFolderEpic,

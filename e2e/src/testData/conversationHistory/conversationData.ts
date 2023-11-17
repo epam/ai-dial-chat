@@ -8,6 +8,7 @@ import { OpenAIEntityModel } from '@/src/types/openai';
 import {
   ConversationBuilder,
   ExpectedConstants,
+  MenuOptions,
   ModelIds,
 } from '@/e2e/src/testData';
 import { FolderData } from '@/e2e/src/testData/folders/folderData';
@@ -255,6 +256,28 @@ export class ConversationData extends FolderData {
     const conversation = this.prepareDefaultConversation(model, name);
     conversation.lastActivityDate = DateUtil.getOlderDate();
     return conversation;
+  }
+
+  public prepareDefaultPlaybackConversation(
+    conversation: Conversation,
+    playbackIndex?: number,
+  ) {
+    const messages = conversation.messages;
+    const playbackConversation = JSON.parse(JSON.stringify(conversation));
+    playbackConversation.id = uuidv4();
+    playbackConversation.name = `[${MenuOptions.playback}] ${conversation.name}`;
+    playbackConversation.messages = [];
+    if (playbackIndex) {
+      for (let i = 0; i < playbackIndex; i++) {
+        playbackConversation.messages.push(messages[i]);
+      }
+    }
+    playbackConversation.playback = {
+      isPlayback: true,
+      activePlaybackIndex: playbackIndex ?? 0,
+      messagesStack: messages,
+    };
+    return playbackConversation;
   }
 
   private fillReplayData(
