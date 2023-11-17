@@ -1,15 +1,6 @@
 import { i18n } from 'next-i18next';
 
-import {
-  EMPTY,
-  concat,
-  filter,
-  ignoreElements,
-  map,
-  of,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { concat, filter, ignoreElements, map, of, switchMap, tap } from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
@@ -24,38 +15,14 @@ import { AppEpic } from '@/src/types/store';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import { ModelsSelectors } from '../models/models.reducers';
-import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
-
-const createNewPromptEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(PromptsActions.createNewPrompt.match),
-    map(() => ({
-      models: ModelsSelectors.selectModels(state$.value),
-      modelsMap: ModelsSelectors.selectModelsMap(state$.value),
-      defaultModelId: SettingsSelectors.selectDefaultModelId(state$.value),
-    })),
-    switchMap(({ modelsMap, defaultModelId, models }) => {
-      const model = (defaultModelId && modelsMap[defaultModelId]) || models[0];
-      if (!model) {
-        return EMPTY;
-      }
-
-      return of(
-        PromptsActions.createNewPromptSuccess({
-          model,
-        }),
-      );
-    }),
-  );
 
 const savePromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>
-        PromptsActions.createNewPromptSuccess.match(action) ||
+        PromptsActions.createNewPrompt.match(action) ||
         PromptsActions.deletePrompts.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
         PromptsActions.updatePrompt.match(action) ||
@@ -195,7 +162,6 @@ const initPromptsEpic: AppEpic = (action$) =>
 
 export const PromptsEpics = combineEpics(
   initPromptsEpic,
-  createNewPromptEpic,
   savePromptsEpic,
   saveFoldersEpic,
   deleteFolderEpic,
