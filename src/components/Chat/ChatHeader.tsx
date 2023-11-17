@@ -1,5 +1,10 @@
-import { IconEraser, IconSettings, IconX } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import {
+  IconDoorExit,
+  IconEraser,
+  IconSettings,
+  IconX,
+} from '@tabler/icons-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -9,7 +14,11 @@ import { Conversation } from '@/src/types/chat';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
-import { useAppSelector } from '@/src/store/hooks';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
@@ -45,9 +54,16 @@ export const ChatHeader = ({
 }: Props) => {
   const { t } = useTranslation('chat');
 
+  const dispatch = useAppDispatch();
+
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const theme = useAppSelector(UISelectors.selectThemeState);
+
+  const isPlayback = useAppSelector(
+    ConversationsSelectors.selectIsPlaybackSelectedConversations,
+  );
+
   const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });
@@ -60,6 +76,10 @@ export const ChatHeader = ({
   useEffect(() => {
     setModel(modelsMap[conversation.model.id]);
   }, [modelsMap, conversation.model.id]);
+
+  const onCancelPlaybackMode = useCallback(() => {
+    dispatch(ConversationsActions.playbackCancel());
+  }, [dispatch]);
 
   return (
     <>
@@ -197,6 +217,22 @@ export const ChatHeader = ({
                   </TooltipTrigger>
                   <TooltipContent>
                     {t('Remove conversation from compare mode')}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {isPlayback && (
+                <Tooltip isTriggerClickable={true}>
+                  <TooltipTrigger>
+                    <button
+                      className="cursor-pointer text-gray-500 hover:text-blue-500"
+                      onClick={onCancelPlaybackMode}
+                      data-qa="cancel-playback-mode"
+                    >
+                      <IconDoorExit size={18} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t('To edit the chat, leave Playback mode')}
                   </TooltipContent>
                 </Tooltip>
               )}

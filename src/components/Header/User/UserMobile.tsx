@@ -4,8 +4,7 @@ import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { useAppDispatch } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { FooterMessage } from '@/src/components/Chat/FooterMessage';
@@ -95,29 +94,16 @@ const UserMenu = () => {
 };
 
 export const UserMobile = () => {
-  const footerHtmlMessage = useAppSelector(
-    SettingsSelectors.selectFooterHtmlMessage,
-  );
-
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
-  );
-
   return (
     <div
-      className="fixed right-0 top-12 z-40 flex w-[260px] flex-col overflow-y-auto border-gray-300 bg-gray-100 dark:border-gray-900 dark:bg-gray-700"
+      className="fixed right-0 top-12 z-40 flex w-[260px] flex-col overflow-y-auto border-gray-300 bg-gray-100 dark:border-gray-900 dark:bg-gray-700 md:hidden"
       style={{ height: 'calc(100% - 48px)' }}
     >
       <UserInfo />
       <UserMenu />
       <div className="grow"></div>
       <div className="border-t border-gray-300 p-4 dark:border-gray-900">
-        <FooterMessage
-          isShowFooter={enabledFeatures.includes('footer')}
-          isShowRequestApiKey={enabledFeatures.includes('request-api-key')}
-          isShowReportAnIssue={enabledFeatures.includes('report-an-issue')}
-          footerHtmlMessage={footerHtmlMessage}
-        />
+        <FooterMessage />
       </div>
     </div>
   );
