@@ -8,6 +8,7 @@ WORKDIR /app
 COPY /tools ./tools
 COPY package*.json ./
 RUN npm ci --omit=optional
+RUN find node_modules -type f -exec md5sum {} \; | md5sum
 
 FROM base AS builder
 WORKDIR /app
@@ -30,6 +31,8 @@ RUN chown nextjs:nodejs .next
 
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# fix dynamic wasm dependency
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/@dqbd/tiktoken/lite/tiktoken_bg.wasm ./node_modules/@dqbd/tiktoken/lite/tiktoken_bg.wasm
 
 USER nextjs
 
