@@ -6,6 +6,7 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
+import { IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
@@ -25,7 +26,6 @@ import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
 
-import XMark from '../../../../public/images/icons/xmark.svg';
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 
 interface Props {
@@ -159,7 +159,7 @@ export const PromptModal: FC<Props> = ({
               className="absolute right-2 top-2 rounded text-gray-500 hover:text-blue-700"
               onClick={handleClose}
             >
-              <XMark height={24} width={24} />
+              <IconX size={24} />
             </button>
             <div className="flex justify-between pb-4 text-base font-bold">
               {t('Edit prompt')}

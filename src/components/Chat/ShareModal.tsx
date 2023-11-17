@@ -28,33 +28,34 @@ interface Props {
   entity: Entity;
   type: SharingType;
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (urlWasCopied: boolean) => void;
 }
 
 export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
   const { t } = useTranslation('sidebar');
+  const copyButtonRef = useRef<HTMLButtonElement>(null);
+  const [urlCopied, setUrlCopied] = useState(false);
+  const [urlWasCopied, setUrlWasCopied] = useState(false);
+
   const url = `http://localhost:3000/share/${entity.id}`; //TODO: generate some sharing id
 
   const { refs, context } = useFloating({
     open: isOpen,
     onOpenChange: () => {
-      onClose();
+      onClose(urlWasCopied);
     },
   });
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
-
-  const copyButtonRef = useRef<HTMLButtonElement>(null);
-  const [urlCopied, setUrlCopied] = useState(false);
 
   const handleClose = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
 
-      onClose();
+      onClose(urlWasCopied);
     },
-    [onClose],
+    [onClose, urlWasCopied],
   );
 
   const handleCopy = useCallback(
@@ -65,6 +66,7 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
 
       navigator.clipboard.writeText(url).then(() => {
         setUrlCopied(true);
+        setUrlWasCopied(true);
         setTimeout(() => {
           setUrlCopied(false);
         }, 2000);

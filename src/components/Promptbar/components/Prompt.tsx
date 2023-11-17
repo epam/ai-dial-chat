@@ -1,4 +1,4 @@
-import { IconBulb } from '@tabler/icons-react';
+import { IconBulb, IconCheck, IconUserShare, IconX } from '@tabler/icons-react';
 import {
   DragEvent,
   MouseEventHandler,
@@ -26,8 +26,6 @@ import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
-import CheckIcon from '../../../../public/images/icons/check.svg';
-import XmarkIcon from '../../../../public/images/icons/xmark.svg';
 import ShareModal, { SharingType } from '../../Chat/ShareModal';
 import { PromptModal } from './PromptModal';
 
@@ -53,8 +51,14 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const [isRenaming, setIsRenaming] = useState(false);
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [isShared, setIsShared] = useState(false);
 
   const wrapperRef = useRef(null);
+
+  const handleCloseShareModal = (urlWasCopied: boolean) => {
+    setIsSharing(false);
+    setIsShared(urlWasCopied);
+  };
 
   const handleShare: MouseEventHandler<HTMLButtonElement> = () => {
     setIsSharing(true);
@@ -191,7 +195,13 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         data-qa="prompt"
       >
         <button
-          className="flex h-full w-full items-center gap-2"
+          className={classNames(
+            'flex h-full w-full items-center gap-2',
+            isDeleting ? 'pr-12' : 'group-hover:pr-6',
+            {
+              'pr-6 xl:pr-0': !isDeleting && !isRenaming && isSelected,
+            },
+          )}
           draggable="true"
           onDragStart={(e) => handleDragStart(e, prompt)}
         >
@@ -199,36 +209,26 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
           <div
             className={classNames(
-              {
-                'mr-4 xl:mr-0': !isDeleting && !isRenaming && isSelected,
-              },
-              isDeleting ? 'mr-12' : 'group-hover:mr-4',
               'relative max-h-5 flex-1 truncate break-all text-left',
             )}
           >
             {prompt.name}
           </div>
+          {isShared && (
+            <span className="flex shrink-0">
+              <IconUserShare size={14} />
+            </span>
+          )}
         </button>
 
         {isDeleting && (
           <div className="absolute right-1 z-10 flex">
             <SidebarActionButton handleClick={handleDelete}>
-              <CheckIcon
-                width={18}
-                height={18}
-                size={18}
-                className="hover:text-violet"
-              />
+              <IconCheck size={18} className="hover:text-violet" />
             </SidebarActionButton>
 
             <SidebarActionButton handleClick={handleCancelDelete}>
-              <XmarkIcon
-                width={18}
-                height={18}
-                size={18}
-                strokeWidth="2"
-                className="hover:text-violet"
-              />
+              <IconX size={18} strokeWidth="2" className="hover:text-violet" />
             </SidebarActionButton>
           </div>
         )}
@@ -282,7 +282,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           entity={prompt}
           type={SharingType.Prompt}
           isOpen
-          onClose={() => setIsSharing(false)}
+          onClose={handleCloseShareModal}
         />
       )}
     </>
