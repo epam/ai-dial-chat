@@ -12,6 +12,7 @@ import { OverlayEpics } from './overlay/overlay.epics';
 import { overlaySlice } from './overlay/overlay.reducers';
 import { PromptsEpics } from './prompts/prompts.epics';
 import { promptsSlice } from './prompts/prompts.reducers';
+import { SettingsEpics } from './settings/settings.epic';
 import { SettingsState, settingsSlice } from './settings/settings.reducers';
 import UIEpics from './ui/ui.epics';
 import { uiSlice } from './ui/ui.reducers';
@@ -23,6 +24,7 @@ export const rootEpic = combineEpics(
   PromptsEpics,
   ConversationsEpics,
   OverlayEpics,
+  SettingsEpics,
 );
 
 const reducer = {
