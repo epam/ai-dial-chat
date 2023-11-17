@@ -8,6 +8,7 @@ export enum ExpectedMessages {
   conversationMovedToFolder = 'Conversation is moved to a folder',
   conversationContextOptionsValid = 'Conversation context menu options are valid',
   conversationIsVisible = 'Conversation is visible in chat bar',
+  conversationIsNotVisible = 'Conversation is not visible in chat bar',
   folderIsVisible = 'Folder is visible in chat bar',
   newFolderCreated = 'New folder is created',
   folderCollapsed = 'Folder is collapsed',
