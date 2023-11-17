@@ -42,7 +42,7 @@ interface Props {
   };
 }
 
-export default ({ initialState }: Props) => {
+export default function Home({ initialState }: Props) {
   const session = useSession();
 
   const { t } = useTranslation('chat');
