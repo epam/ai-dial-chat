@@ -24,6 +24,9 @@ export class ChatHeader extends BaseElement {
   public clearConversation = this.getChildElementBySelector(
     ChatSelectors.clearConversationIcon,
   );
+  public leavePlaybackMode = this.getChildElementBySelector(
+    ChatSelectors.leavePlayback,
+  );
 
   async getHeaderIcons() {
     const allIcons: Icons[] = [];

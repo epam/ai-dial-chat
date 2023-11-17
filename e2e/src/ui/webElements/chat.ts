@@ -7,6 +7,8 @@ import { SendMessage } from './sendMessage';
 import { API } from '@/e2e/src/testData';
 import { ChatHeader } from '@/e2e/src/ui/webElements/chatHeader';
 import { Compare } from '@/e2e/src/ui/webElements/compare';
+import { Playback } from '@/e2e/src/ui/webElements/playback';
+import { PlaybackControl } from '@/e2e/src/ui/webElements/playbackControl';
 import { Page } from '@playwright/test';
 
 export class Chat extends BaseElement {
@@ -19,6 +21,8 @@ export class Chat extends BaseElement {
   private sendMessage!: SendMessage;
   private chatMessages!: ChatMessages;
   private compare!: Compare;
+  private playBack!: Playback;
+  private playbackControl!: PlaybackControl;
   public regenerate = new BaseElement(this.page, ChatSelectors.regenerate);
   public replay = new BaseElement(this.page, ChatSelectors.startReplay);
   public applyChanges = (index?: number) =>
@@ -68,6 +72,20 @@ export class Chat extends BaseElement {
       this.compare = new Compare(this.page);
     }
     return this.compare;
+  }
+
+  getPlayBack(): Playback {
+    if (!this.playBack) {
+      this.playBack = new Playback(this.page);
+    }
+    return this.playBack;
+  }
+
+  getPlaybackControl(): PlaybackControl {
+    if (!this.playbackControl) {
+      this.playbackControl = new PlaybackControl(this.page);
+    }
+    return this.playbackControl;
   }
 
   public async sendRequestWithKeyboard(message: string, waitForAnswer = true) {
@@ -170,5 +188,29 @@ export class Chat extends BaseElement {
       () => this.getSendMessage().send(message),
       waitForAnswer,
     );
+  }
+
+  public async playNextChatMessage(waitForResponse = true) {
+    await this.getPlaybackControl().playbackNextDisabledButton.waitForState({
+      state: 'hidden',
+    });
+    await this.getPlaybackControl().playbackNextButton.click();
+    if (waitForResponse) {
+      await this.getSendMessage().waitForMessageInputLoaded();
+      await this.getChatMessages().waitForResponseReceived();
+    }
+  }
+
+  public async playChatMessageWithKey(key: string) {
+    await this.page.keyboard.press(key);
+    await this.getSendMessage().waitForMessageInputLoaded();
+    await this.getChatMessages().waitForResponseReceived();
+  }
+
+  public async playPreviousChatMessage() {
+    await this.getPlaybackControl().playbackPreviousDisabledButton.waitForState(
+      { state: 'hidden' },
+    );
+    await this.getPlaybackControl().playbackPreviousButton.click();
   }
 }
