@@ -161,7 +161,7 @@ export default function Home({ initialState }: Props) {
       )}
     </>
   );
-};
+}
 
 export const getServerSideProps: GetServerSideProps = async ({
   locale,
