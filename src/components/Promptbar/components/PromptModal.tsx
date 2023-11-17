@@ -96,8 +96,8 @@ export const PromptModal: FC<Props> = ({
       }
       const updatedPrompt = {
         ...prompt,
-        name,
-        description,
+        name: name.trim(),
+        description: description?.trim(),
         content: (content || '').trim(),
       };
 

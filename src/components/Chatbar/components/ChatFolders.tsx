@@ -108,10 +108,13 @@ const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
         highlightedFolders={highlightedFolders}
         handleDrop={handleDrop}
         onRenameFolder={(newName, folderId) => {
+          if (newName.trim() === '') {
+            return;
+          }
           dispatch(
             ConversationsActions.renameFolder({
               folderId,
-              name: newName,
+              name: newName.trim(),
             }),
           );
         }}
