@@ -35,6 +35,7 @@ import { ContextMenu } from '../../Common/ContextMenu';
 import { ModelIcon } from './ModelIcon';
 
 import { v4 as uuidv4 } from 'uuid';
+import ShareModal, { SharingType } from '../../Chat/ShareModal';
 
 interface Props {
   item: Conversation;
@@ -71,6 +72,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const wrapperRef = useRef(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dragImageRef = useRef<HTMLImageElement | null>();
+  const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
     dragImageRef.current = document.createElement('img');
@@ -185,6 +187,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       setIsRenaming(false);
     }
   }, [isRenaming, isDeleting]);
+
+  const handleShare: MouseEventHandler<HTMLButtonElement> = () => setIsSharing(true);
 
   const handleMoveToFolder = useCallback(
     ({
@@ -350,6 +354,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             }
             onReplay={!isPlayback ? handleStartReplay : undefined}
             onPlayback={handleCreatePlayback}
+            onOpenShareModal={handleShare}
           />
         </div>
       )}
@@ -385,6 +390,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             />
           </SidebarActionButton>
         </div>
+      )}
+      {isSharing && (
+        <ShareModal
+          entity={conversation}
+          type={SharingType.Conversation}
+          isOpen
+          onClose={() => setIsSharing(false)}
+        />
       )}
     </div>
   );

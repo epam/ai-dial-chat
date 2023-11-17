@@ -7,6 +7,7 @@ import {
   IconRefreshDot,
   IconScale,
   IconTrashX,
+  IconUserShare,
 } from '@tabler/icons-react';
 import { MouseEventHandler } from 'react';
 
@@ -34,6 +35,7 @@ interface ContextMenuProps {
   onReplay?: MouseEventHandler<HTMLButtonElement>;
   onCompare?: MouseEventHandler<unknown>;
   onPlayback?: MouseEventHandler<HTMLButtonElement>;
+  onOpenShareModal?: MouseEventHandler<HTMLButtonElement>;
 }
 
 export const ContextMenu = ({
@@ -50,6 +52,7 @@ export const ContextMenu = ({
   onPlayback,
   onMoveToFolder,
   onOpenMoveToModal,
+  onOpenShareModal,
 }: ContextMenuProps) => {
   const { t } = useTranslation('sidebar');
   return (
@@ -212,6 +215,21 @@ export const ContextMenu = ({
             />
           ))}
         </Menu>
+
+        {onOpenShareModal && <MenuItem
+          className={classNames(
+            highlightColor === 'green'
+              ? 'hover:bg-green/15'
+              : 'hover:bg-violet/15',
+          )}
+          onClick={onOpenShareModal}
+          item={
+            <div className="flex items-center gap-3">
+              <IconUserShare className="shrink-0 text-gray-500" size={18} />
+              <span>{t('Share')}</span>
+            </div>
+          }
+        />}
 
         <MenuItem
           className={classNames(

@@ -31,6 +31,7 @@ import XmarkIcon from '../../../../public/images/icons/xmark.svg';
 import { PromptModal } from './PromptModal';
 
 import { v4 as uuidv4 } from 'uuid';
+import ShareModal, { SharingType } from '../../Chat/ShareModal';
 
 interface Props {
   item: Prompt;
@@ -51,8 +52,11 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   const wrapperRef = useRef(null);
+
+  const handleShare: MouseEventHandler<HTMLButtonElement> = () => setIsSharing(true);
 
   const handleUpdate = useCallback(
     (prompt: Prompt) => {
@@ -171,6 +175,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   }, [isRenaming, isDeleting]);
 
   return (
+    <>
     <div
       className={classNames(
         'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-violet/15',
@@ -245,6 +250,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               setIsShowMoveToModal(true);
             }}
             highlightColor="violet"
+            onOpenShareModal={handleShare}
           />
         </div>
       )}
@@ -269,5 +275,14 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         />
       )}
     </div>
+    {isSharing && (
+      <ShareModal
+          entity={prompt}
+          type={SharingType.Prompt}
+          isOpen
+          onClose={() => setIsSharing(false)}
+        />
+      )}
+    </>
   );
 };
