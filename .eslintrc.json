@@ -5,8 +5,7 @@
     "plugin:@typescript-eslint/stylistic",
     "prettier",
     "plugin:tailwindcss/recommended",
-    "next/core-web-vitals",
-    "plugin:testing-library/react"
+    "next/core-web-vitals"
   ],
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint", "tailwindcss", "testing-library"],
@@ -38,11 +37,21 @@
           "name": "sessionStorage",
           "message": "Use DataService instead."
       }
-    ],
-    // testing-library
-    "testing-library/await-async-queries": "error",
-    "testing-library/no-await-sync-queries": "error",
-    "testing-library/no-debugging-utils": "warn",
-    "testing-library/no-dom-import": "off"
-  }
+    ]
+  },
+  "overrides": [
+    {
+      "plugins": [],
+      // 3) Now we enable eslint-plugin-testing-library rules or preset only for matching testing files!
+      "files": ["**/__tests__/**/*.[jt]s?(x)", "**/?(*.)+(spec|test).[jt]s?(x)"],
+      "extends": ["plugin:testing-library/react"],
+      "rules": {
+        // testing-library
+        "testing-library/await-async-queries": "error",
+        "testing-library/no-await-sync-queries": "error",
+        "testing-library/no-debugging-utils": "warn",
+        "testing-library/no-dom-import": "off"
+      }
+    }
+  ]
 }
