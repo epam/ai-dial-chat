@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import { throttle } from '@/src/utils/data/throttle';
 
-import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
+import { OpenAIEntityModelID } from '../../types/openai';
 import {
   Conversation,
   ConversationsTemporarySettings,
@@ -285,9 +285,10 @@ export const Chat = memo(() => {
 
   const handleSelectModel = useCallback(
     (conversation: Conversation, modelId: string) => {
-      const newAiEntity = models.find(
-        ({ id }) => id === modelId,
-      ) as OpenAIEntityModel;
+      const newAiEntity = modelsMap[modelId];
+      if (!newAiEntity) {
+        return;
+      }
 
       const updatedReplay: Replay = !conversation.replay.isReplay
         ? conversation.replay
@@ -299,7 +300,7 @@ export const Chat = memo(() => {
         ConversationsActions.updateConversation({
           id: conversation.id,
           values: {
-            model: newAiEntity,
+            model: { id: modelId },
             assistantModelId:
               newAiEntity.type === 'assistant'
                 ? DEFAULT_ASSISTANT_SUBMODEL.id
@@ -309,7 +310,7 @@ export const Chat = memo(() => {
         }),
       );
     },
-    [dispatch, models],
+    [dispatch, modelsMap],
   );
 
   const handleSelectAssistantSubModel = useCallback(
@@ -551,8 +552,7 @@ export const Chat = memo(() => {
                           >
                             <ChatSettingsEmpty
                               conversation={conv}
-                              models={models}
-                              addons={addons}
+                              isModels={models.length !== 0}
                               prompts={prompts}
                               defaultModelId={
                                 defaultModelId || OpenAIEntityModelID.GPT_3_5
@@ -576,6 +576,7 @@ export const Chat = memo(() => {
                                 handleChangeTemperature(conv, temperature)
                               }
                               appName={appName}
+                              onApplyAddons={handleOnApplyAddons}
                             />
                           </div>
 
@@ -744,7 +745,7 @@ export const Chat = memo(() => {
                         defaultModelId={
                           defaultModelId || OpenAIEntityModelID.GPT_3_5
                         }
-                        model={modelsMap[conv.model.id]}
+                        modelId={conv.model.id}
                         prompts={prompts}
                         addons={addons}
                         onChangeSettings={(args) => {
@@ -799,11 +800,6 @@ export const Chat = memo(() => {
                         textareaRef={textareaRef}
                         isMessagesPresented={selectedConversations.some(
                           (val) => val.messages.length > 0,
-                        )}
-                        maxLength={Math.min(
-                          ...selectedConversations.map(
-                            (conv) => conv.model.maxLength,
-                          ),
                         )}
                         showScrollDownButton={showScrollDownButton}
                         onSend={onSendMessage}

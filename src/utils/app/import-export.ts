@@ -10,6 +10,7 @@ import {
   SupportedExportFormats,
 } from '@/src/types/export';
 import { FolderInterface } from '@/src/types/folder';
+import { ModelsMap } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 
 import { cleanConversationHistory } from './clean';
@@ -43,11 +44,14 @@ export const isLatestExportFormat = isExportFormatV4;
 export interface CleanDataResponse extends LatestExportFormat {
   isError: boolean;
 }
-export function cleanData(data: SupportedExportFormats): CleanDataResponse {
+export function cleanData(
+  data: SupportedExportFormats,
+  modelsMap: ModelsMap,
+): CleanDataResponse {
   if (isExportFormatV1(data)) {
     const cleanHistoryData: LatestExportFormat = {
       version: 4,
-      history: cleanConversationHistory(data),
+      history: cleanConversationHistory(data, modelsMap),
       folders: [],
       prompts: [],
     };
@@ -60,7 +64,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV2(data)) {
     return {
       version: 4,
-      history: cleanConversationHistory(data.history || []),
+      history: cleanConversationHistory(data.history || [], modelsMap),
       folders: (data.folders || []).map((chatFolder) => ({
         id: chatFolder.id.toString(),
         name: chatFolder.name,
@@ -73,7 +77,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
 
   if (isExportFormatV3(data)) {
     return {
-      history: cleanConversationHistory(data.history),
+      history: cleanConversationHistory(data.history, modelsMap),
       folders: [...data.folders],
       version: 4,
       prompts: [],
@@ -84,7 +88,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV4(data)) {
     return {
       ...data,
-      history: cleanConversationHistory(data.history),
+      history: cleanConversationHistory(data.history, modelsMap),
       prompts: data.prompts || [],
       isError: false,
     };
@@ -203,8 +207,11 @@ export const exportPrompt = (promptId: string, folders: FolderInterface[]) => {
   }
 };
 
-export const importData = (data: SupportedExportFormats): CleanDataResponse => {
-  const { history, folders, prompts, isError } = cleanData(data);
+export const importData = (
+  data: SupportedExportFormats,
+  modelsMap: ModelsMap,
+): CleanDataResponse => {
+  const { history, folders, prompts, isError } = cleanData(data, modelsMap);
   const oldConversations = localStorage.getItem('conversationHistory');
   let cleanedConversationHistory: Conversation[] = [];
   if (oldConversations) {
@@ -212,6 +219,7 @@ export const importData = (data: SupportedExportFormats): CleanDataResponse => {
       JSON.parse(oldConversations);
     cleanedConversationHistory = cleanConversationHistory(
       parsedConversationHistory,
+      modelsMap,
     );
   }
 

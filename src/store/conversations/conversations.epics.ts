@@ -189,12 +189,17 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
-const importConversationsEpic: AppEpic = (action$) =>
+const importConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.importConversations.match),
-    switchMap(({ payload }) => {
+    map(({ payload }) => ({
+      payload,
+      modelsMap: ModelsSelectors.selectModelsMap(state$.value),
+    })),
+    switchMap(({ payload, modelsMap }) => {
       const { history, folders, isError }: CleanDataResponse = importData(
         payload.data,
+        modelsMap,
       );
 
       if (isError) {
@@ -250,15 +255,16 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const initConversationsEpic: AppEpic = (action$) =>
+const initConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.initConversations.match),
     map(() => {
       const conversationHistory = localStorage.getItem('conversationHistory');
       if (conversationHistory) {
+        const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
         const parsedConversationHistory: Conversation[] =
           JSON.parse(conversationHistory);
-        return cleanConversationHistory(parsedConversationHistory);
+        return cleanConversationHistory(parsedConversationHistory, modelsMap);
       }
 
       return [];
@@ -449,7 +455,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
     map(({ payload, modelsMap }) => {
       const messageModel: Message['model'] = {
         id: payload.conversation.model.id,
-        name: modelsMap[payload.conversation.model.id]?.name,
       };
       const messageSettings: Message['settings'] = {
         prompt: payload.conversation.prompt,
@@ -558,7 +563,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
         ]),
       );
       const assistantModelId = payload.conversation.assistantModelId;
-      const conversationModelType = payload.conversation.model.type;
+      const conversationModelType = lastModel?.type ?? 'model';
       let modelAdditionalSettings = {};
 
       if (conversationModelType === 'model') {

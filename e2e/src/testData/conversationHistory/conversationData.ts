@@ -41,7 +41,7 @@ export class ConversationData extends FolderData {
     const assistantMessage: Message = {
       role: 'assistant',
       content: 'test response',
-      model: { id: modelToUse.id, name: modelToUse.name },
+      model: { id: modelToUse.id },
     };
     return this.conversationBuilder
       .withMessage(userMessage)
@@ -80,7 +80,6 @@ export class ConversationData extends FolderData {
           content: `response on ${r}`,
           model: {
             id: basicConversation.model.id,
-            name: basicConversation.model.name,
           },
         },
       );
@@ -165,7 +164,7 @@ export class ConversationData extends FolderData {
       role: 'assistant',
       content:
         'EPAM is a global provider of software engineering and IT consulting services',
-      model: { id: conversation.model.id, name: conversation.model.name },
+      model: { id: conversation.model.id },
       custom_content: {
         stages: [
           {

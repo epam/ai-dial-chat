@@ -1,9 +1,6 @@
-import { Conversation } from '@/src/types/chat';
-import {
-  OpenAIEntityModel,
-  OpenAIEntityModelID,
-  OpenAIEntityModels,
-} from '@/src/types/openai';
+import { Conversation, ConversationEntityModel } from '@/src/types/chat';
+import { ModelsMap } from '@/src/types/models';
+import { OpenAIEntityModelID } from '@/src/types/openai';
 
 import {
   DEFAULT_ASSISTANT_SUBMODEL,
@@ -17,7 +14,10 @@ import { getAssitantModelId } from './conversation';
 
 import { v4 } from 'uuid';
 
-export const cleanConversationHistory = (history: any[]): Conversation[] => {
+export const cleanConversationHistory = (
+  history: Conversation[] | unknown,
+  modelsMap: ModelsMap,
+): Conversation[] => {
   // added model for each conversation (3/20/23)
   // added system prompt for each conversation (3/21/23)
   // added folders (3/23/23)
@@ -34,20 +34,21 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
   return history.reduce(
     (acc: Conversation[], conversation: Partial<Conversation>) => {
       try {
-        const model: OpenAIEntityModel = conversation.model
+        const model: ConversationEntityModel = conversation.model
           ? {
-              ...conversation.model,
-              ...(OpenAIEntityModels[conversation.model.id]
-                ? OpenAIEntityModels[conversation.model.id]
-                : { type: 'model' }),
+              id: conversation.model.id,
             }
-          : OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ];
+          : { id: OpenAIEntityModelID.GPT_3_5_AZ };
 
-        const assistantModelId: string | undefined = getAssitantModelId(
-          model.type,
-          DEFAULT_ASSISTANT_SUBMODEL.id,
-          conversation.assistantModelId,
-        );
+        const modelType = modelsMap[model.id]?.type;
+
+        const assistantModelId: string | undefined =
+          modelType &&
+          getAssitantModelId(
+            modelType,
+            DEFAULT_ASSISTANT_SUBMODEL.id,
+            conversation.assistantModelId,
+          );
 
         const cleanConversation: Conversation = {
           id: conversation.id || v4(),
@@ -60,9 +61,7 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
           replay: conversation.replay || defaultReplay,
           selectedAddons:
             conversation.selectedAddons ||
-            (OpenAIEntityModels[model.id as OpenAIEntityModelID]
-              ?.selectedAddons ??
-              []),
+            (modelsMap[model.id]?.selectedAddons ?? []),
           assistantModelId,
           lastActivityDate: conversation.lastActivityDate,
           isMessageStreaming: false,
