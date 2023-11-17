@@ -166,4 +166,11 @@ export class Conversations extends BaseElement {
       .getAttribute(Attributes.style);
     return styleAttribute?.includes(ExpectedConstants.defaultIconUrl);
   }
+
+  public async isConversationHasPlaybackIcon(name: string, index?: number) {
+    const playBackIcon = await this.getConversationByName(name, index).locator(
+      ChatSelectors.playbackIcon,
+    );
+    return playBackIcon.isVisible();
+  }
 }

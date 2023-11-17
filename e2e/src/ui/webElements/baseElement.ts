@@ -112,6 +112,10 @@ export class BaseElement {
     return this.rootLocator.boundingBox();
   }
 
+  async isElementEnabled() {
+    return this.rootLocator.isEnabled();
+  }
+
   async scrollIntoElementView() {
     await this.rootLocator.scrollIntoViewIfNeeded();
   }
@@ -161,6 +165,12 @@ export class BaseElement {
     const clientWidth = await this.rootLocator.evaluate((t) => t.clientWidth);
     const scrollWidth = await this.rootLocator.evaluate((t) => t.scrollWidth);
     return scrollWidth > clientWidth;
+  }
+
+  public async isElementScrollableVertically() {
+    const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
+    const clientHeight = await this.rootLocator.evaluate((p) => p.clientHeight);
+    return scrollHeight > clientHeight;
   }
 
   public async getElementIconAttributes(
