@@ -1,40 +1,41 @@
 # ---- Base Node ----
 FROM node:20-alpine AS base
 RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
+
+# ---- Dependencies ----
+FROM base AS deps
 WORKDIR /app
 COPY /tools ./tools
 COPY package*.json ./
+RUN npm ci
+RUN find node_modules -type f -exec md5sum {} \; | md5sum
 
-# ---- Dependencies ----
-FROM base AS dependencies
-RUN npm ci --omit=optional
-
-# ---- Build ----
-FROM dependencies AS build
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+ENV NEXT_TELEMETRY_DISABLED 1
 RUN npm run build
 
-# ---- Production ----
-FROM node:20-alpine AS production
-RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
+FROM base AS runner
 WORKDIR /app
-COPY --from=dependencies /app/node_modules ./node_modules
-COPY --from=build /app/.next ./.next
-COPY --from=build /app/public ./public
-COPY --from=build /app/package*.json ./
-COPY --from=build /app/next.config.js ./next.config.js
-COPY --from=build /app/next-i18next.config.js ./next-i18next.config.js
 
 ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# fix dynamic wasm dependency
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/@dqbd/tiktoken/lite/tiktoken_bg.wasm ./node_modules/@dqbd/tiktoken/lite/tiktoken_bg.wasm
+
 USER nextjs
 
-# Expose the port the app will run on
 EXPOSE 3000 9464
 
-# Start the application
-CMD ["npm", "start"]
+CMD ["node", "server.js"]

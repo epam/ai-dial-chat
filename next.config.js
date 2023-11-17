@@ -44,6 +44,7 @@ class BasePathResolver {
 const nextConfig = {
   i18n,
   reactStrictMode: true,
+  output: 'standalone',
   experimental: {
     instrumentationHook: true,
   },
