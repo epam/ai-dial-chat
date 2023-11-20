@@ -63,33 +63,34 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const wrapperRef = useRef(null);
 
-  const handleCloseShareModal = useCallback(
-    () => {
-      setIsSharing(false);
-    },
-    [],
-  );
+  const handleCloseShareModal = useCallback(() => {
+    setIsSharing(false);
+  }, []);
 
   const handleShared = useCallback(
     (newShareId: string) => {
-        dispatch(
-          PromptsActions.updatePrompt({
-            promptId,
-            values: {
-              shares: [...shares, {
+      dispatch(
+        PromptsActions.updatePrompt({
+          promptId,
+          values: {
+            shares: [
+              ...shares,
+              {
                 id: newShareId,
-                createdDate: new Date()
-              }]
-            },
-          }),
-        );
+                createdDate: new Date(),
+              },
+            ],
+          },
+        }),
+      );
     },
     [dispatch, promptId, shares],
   );
 
-  const handleOpenSharing: MouseEventHandler<HTMLButtonElement> = useCallback(() => {
-    setIsSharing(true);
-  },[]);
+  const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsSharing(true);
+    }, []);
 
   const handleUpdate = useCallback(
     (prompt: Prompt) => {
@@ -279,7 +280,9 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
                 setIsShowMoveToModal(true);
               }}
               highlightColor="violet"
-              onOpenShareModal={isSharingEnabled ? handleOpenSharing : undefined}
+              onOpenShareModal={
+                isSharingEnabled ? handleOpenSharing : undefined
+              }
             />
           </div>
         )}

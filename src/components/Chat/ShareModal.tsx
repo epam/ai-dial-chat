@@ -9,11 +9,12 @@ import {
 import { IconCopy, IconX } from '@tabler/icons-react';
 import { IconCheck } from '@tabler/icons-react';
 import { MouseEvent, useCallback, useRef, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { useTranslation } from 'next-i18next';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
+
+import { v4 as uuidv4 } from 'uuid';
 
 export enum SharingType {
   Conversation = 'conversation',
@@ -35,7 +36,13 @@ interface Props {
   onShare: (shareId: string) => void;
 }
 
-export default function ShareModal({ entity, isOpen, onClose, onShare, type }: Props) {
+export default function ShareModal({
+  entity,
+  isOpen,
+  onClose,
+  onShare,
+  type,
+}: Props) {
   const { t } = useTranslation('sidebar');
   const copyButtonRef = useRef<HTMLButtonElement>(null);
   const [urlCopied, setUrlCopied] = useState(false);
@@ -73,7 +80,7 @@ export default function ShareModal({ entity, isOpen, onClose, onShare, type }: P
         setTimeout(() => {
           setUrlCopied(false);
         }, 2000);
-        if(!urlWasCopied) {
+        if (!urlWasCopied) {
           setUrlWasCopied(true);
           onShare(shareId);
         }

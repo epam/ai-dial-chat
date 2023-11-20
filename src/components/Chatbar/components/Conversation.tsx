@@ -196,30 +196,31 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     }
   }, [isRenaming, isDeleting]);
 
-  const handleOpenSharing: MouseEventHandler<HTMLButtonElement> = useCallback(() => {
-    setIsSharing(true);
-  },[]);
+  const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsSharing(true);
+    }, []);
 
-  const handleCloseShareModal = useCallback(
-    () => {
-      setIsSharing(false);
-    },
-    [],
-  );
+  const handleCloseShareModal = useCallback(() => {
+    setIsSharing(false);
+  }, []);
 
   const handleShared = useCallback(
     (newShareId: string) => {
-        dispatch(
-          ConversationsActions.updateConversation({
-            id: conversationId,
-            values: {
-              shares: [...shares, {
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: conversationId,
+          values: {
+            shares: [
+              ...shares,
+              {
                 id: newShareId,
-                createdDate: new Date()
-              }]
-            },
-          }),
-        );
+                createdDate: new Date(),
+              },
+            ],
+          },
+        }),
+      );
     },
     [conversationId, dispatch, shares],
   );
