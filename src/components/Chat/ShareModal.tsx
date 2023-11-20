@@ -8,7 +8,13 @@ import {
 } from '@floating-ui/react';
 import { IconCopy, IconX } from '@tabler/icons-react';
 import { IconCheck } from '@tabler/icons-react';
-import { MouseEvent, useCallback, useRef, useState } from 'react';
+import {
+  ClipboardEvent,
+  MouseEvent,
+  useCallback,
+  useRef,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -47,8 +53,8 @@ export default function ShareModal({
   const copyButtonRef = useRef<HTMLButtonElement>(null);
   const [urlCopied, setUrlCopied] = useState(false);
   const [urlWasCopied, setUrlWasCopied] = useState(false);
-  const shareId = uuidv4();
-  const url = `${window?.location.origin}/share/${shareId}`;
+  const shareId = useRef(uuidv4());
+  const url = `${window?.location.origin}/share/${shareId.current}`;
 
   const { refs, context } = useFloating({
     open: isOpen,
@@ -70,7 +76,7 @@ export default function ShareModal({
   );
 
   const handleCopy = useCallback(
-    (e: MouseEvent<HTMLButtonElement>) => {
+    (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
       if (!navigator.clipboard) return;
@@ -82,7 +88,7 @@ export default function ShareModal({
         }, 2000);
         if (!urlWasCopied) {
           setUrlWasCopied(true);
-          onShare(shareId);
+          onShare(shareId.current);
         }
       });
     },
@@ -125,7 +131,10 @@ export default function ShareModal({
                 {t(`share.modal.link.${type}`)}
               </p>
               <div className="relative mt-2">
-                <div className="w-full gap-2 truncate rounded border border-gray-400 p-3 pr-10 dark:border-gray-600">
+                <div
+                  className="w-full gap-2 truncate rounded border border-gray-400 p-3 pr-10 dark:border-gray-600"
+                  onCopy={handleCopy}
+                >
                   {url}
                 </div>
                 <div className="absolute right-3 top-3">
@@ -158,7 +167,6 @@ export default function ShareModal({
                 </div>
               </div>
             </div>
-
             <div className="flex justify-end"></div>
           </form>
         </FloatingFocusManager>
