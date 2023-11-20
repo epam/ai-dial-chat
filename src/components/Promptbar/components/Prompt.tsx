@@ -19,6 +19,7 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
 
@@ -47,11 +48,17 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const isSelected = selectedPromptId === prompt.id;
   const showModal = useAppSelector(PromptsSelectors.selectIsEditModalOpen);
 
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const { isShared, id: promptId } = prompt;
+  const isSharingEnabled = enabledFeatures.includes('prompts-sharing');
+  const showSharedIcon = isSharingEnabled && isShared && !isDeleting;
 
   const wrapperRef = useRef(null);
 
@@ -226,7 +233,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           >
             {prompt.name}
           </div>
-          {isShared && !isDeleting && (
+          {showSharedIcon && (
             <span className="flex shrink-0">
               <IconUserShare size={14} />
             </span>
@@ -264,7 +271,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
                 setIsShowMoveToModal(true);
               }}
               highlightColor="violet"
-              onOpenShareModal={handleShare}
+              onOpenShareModal={isSharingEnabled ? handleShare : undefined}
             />
           </div>
         )}

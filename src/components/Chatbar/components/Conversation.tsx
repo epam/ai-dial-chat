@@ -21,6 +21,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { emptyImage } from '@/src/constants/drag-and-drop';
@@ -64,6 +65,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
 
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -73,6 +78,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const dragImageRef = useRef<HTMLImageElement | null>();
   const [isSharing, setIsSharing] = useState(false);
   const { isShared, id: conversatrionId } = conversation;
+  const isSharingEnabled = enabledFeatures.includes('conversations-sharing');
+  const showSharedIcon = isSharingEnabled && isShared && !isDeleting;
 
   useEffect(() => {
     dragImageRef.current = document.createElement('img');
@@ -328,7 +335,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           >
             {conversation.name}
           </div>
-          {isShared && !isDeleting && (
+          {showSharedIcon && (
             <span className="flex shrink-0">
               <IconUserShare size={14} />
             </span>
@@ -379,7 +386,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             }
             onReplay={!isPlayback ? handleStartReplay : undefined}
             onPlayback={handleCreatePlayback}
-            onOpenShareModal={handleShare}
+            onOpenShareModal={isSharingEnabled ? handleShare : undefined}
           />
         </div>
       )}
