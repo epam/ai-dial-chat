@@ -77,7 +77,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dragImageRef = useRef<HTMLImageElement | null>();
   const [isSharing, setIsSharing] = useState(false);
-  const { isShared, id: conversatrionId } = conversation;
+  const { id: conversationId, shares = [] } = conversation;
+  const isShared = shares.length > 0;
   const isSharingEnabled = enabledFeatures.includes('conversations-sharing');
   const showSharedIcon = isSharingEnabled && isShared && !isDeleting;
 
@@ -195,26 +196,32 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     }
   }, [isRenaming, isDeleting]);
 
-  const handleShare: MouseEventHandler<HTMLButtonElement> = () => {
+  const handleOpenSharing: MouseEventHandler<HTMLButtonElement> = useCallback(() => {
     setIsSharing(true);
-  };
+  },[]);
 
   const handleCloseShareModal = useCallback(
-    (urlWasCopied: boolean) => {
+    () => {
       setIsSharing(false);
+    },
+    [],
+  );
 
-      if (!isShared && urlWasCopied) {
+  const handleShared = useCallback(
+    (newShareId: string) => {
         dispatch(
           ConversationsActions.updateConversation({
-            id: conversatrionId,
+            id: conversationId,
             values: {
-              isShared: true,
+              shares: [...shares, {
+                id: newShareId,
+                createdDate: new Date()
+              }]
             },
           }),
         );
-      }
     },
-    [conversatrionId, dispatch, isShared],
+    [conversationId, dispatch, shares],
   );
 
   const handleMoveToFolder = useCallback(
@@ -386,7 +393,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             }
             onReplay={!isPlayback ? handleStartReplay : undefined}
             onPlayback={handleCreatePlayback}
-            onOpenShareModal={isSharingEnabled ? handleShare : undefined}
+            onOpenShareModal={isSharingEnabled ? handleOpenSharing : undefined}
           />
         </div>
       )}
@@ -418,6 +425,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           type={SharingType.Conversation}
           isOpen
           onClose={handleCloseShareModal}
+          onShare={handleShared}
         />
       )}
     </div>

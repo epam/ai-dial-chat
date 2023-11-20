@@ -56,32 +56,40 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const [isRenaming, setIsRenaming] = useState(false);
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
-  const { isShared, id: promptId } = prompt;
+  const { id: promptId, shares = [] } = prompt;
+  const isShared = shares.length > 0;
   const isSharingEnabled = enabledFeatures.includes('prompts-sharing');
   const showSharedIcon = isSharingEnabled && isShared && !isDeleting;
 
   const wrapperRef = useRef(null);
 
   const handleCloseShareModal = useCallback(
-    (urlWasCopied: boolean) => {
+    () => {
       setIsSharing(false);
-      if (!isShared && urlWasCopied) {
+    },
+    [],
+  );
+
+  const handleShared = useCallback(
+    (newShareId: string) => {
         dispatch(
           PromptsActions.updatePrompt({
             promptId,
             values: {
-              isShared: true,
+              shares: [...shares, {
+                id: newShareId,
+                createdDate: new Date()
+              }]
             },
           }),
         );
-      }
     },
-    [dispatch, isShared, promptId],
+    [dispatch, promptId, shares],
   );
 
-  const handleShare: MouseEventHandler<HTMLButtonElement> = () => {
+  const handleOpenSharing: MouseEventHandler<HTMLButtonElement> = useCallback(() => {
     setIsSharing(true);
-  };
+  },[]);
 
   const handleUpdate = useCallback(
     (prompt: Prompt) => {
@@ -271,7 +279,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
                 setIsShowMoveToModal(true);
               }}
               highlightColor="violet"
-              onOpenShareModal={isSharingEnabled ? handleShare : undefined}
+              onOpenShareModal={isSharingEnabled ? handleOpenSharing : undefined}
             />
           </div>
         )}
@@ -302,6 +310,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           type={SharingType.Prompt}
           isOpen
           onClose={handleCloseShareModal}
+          onShare={handleShared}
         />
       )}
     </>

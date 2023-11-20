@@ -9,6 +9,7 @@ import {
 import { IconCopy, IconX } from '@tabler/icons-react';
 import { IconCheck } from '@tabler/icons-react';
 import { MouseEvent, useCallback, useRef, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { useTranslation } from 'next-i18next';
 
@@ -30,21 +31,22 @@ interface Props {
   entity: Entity;
   type: SharingType;
   isOpen: boolean;
-  onClose: (urlWasCopied: boolean) => void;
+  onClose: () => void;
+  onShare: (shareId: string) => void;
 }
 
-export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
+export default function ShareModal({ entity, isOpen, onClose, onShare, type }: Props) {
   const { t } = useTranslation('sidebar');
   const copyButtonRef = useRef<HTMLButtonElement>(null);
   const [urlCopied, setUrlCopied] = useState(false);
   const [urlWasCopied, setUrlWasCopied] = useState(false);
-
-  const url = `http://localhost:3000/share/${entity.id}`; //TODO: generate some sharing id
+  const shareId = uuidv4();
+  const url = `${window?.location.origin}/share/${shareId}`;
 
   const { refs, context } = useFloating({
     open: isOpen,
     onOpenChange: () => {
-      onClose(urlWasCopied);
+      onClose();
     },
   });
   const dismiss = useDismiss(context);
@@ -55,9 +57,9 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
       e.preventDefault();
       e.stopPropagation();
 
-      onClose(urlWasCopied);
+      onClose();
     },
-    [onClose, urlWasCopied],
+    [onClose],
   );
 
   const handleCopy = useCallback(
@@ -68,13 +70,16 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
 
       navigator.clipboard.writeText(url).then(() => {
         setUrlCopied(true);
-        setUrlWasCopied(true);
         setTimeout(() => {
           setUrlCopied(false);
         }, 2000);
+        if(!urlWasCopied) {
+          setUrlWasCopied(true);
+          onShare(shareId);
+        }
       });
     },
-    [url],
+    [onShare, shareId, url, urlWasCopied],
   );
 
   return (

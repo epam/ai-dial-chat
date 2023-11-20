@@ -1,3 +1,4 @@
+import { Share } from './chat';
 import { OpenAIEntityModel } from './openai';
 
 export interface Prompt {
@@ -7,5 +8,5 @@ export interface Prompt {
   content?: string;
   model: OpenAIEntityModel;
   folderId?: string;
-  isShared?: boolean;
+  shares?: Share[];
 }
