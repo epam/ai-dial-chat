@@ -44,6 +44,7 @@ export enum MenuOptions {
   playback = 'Playback',
   export = 'Export',
   moveTo = 'Move to',
+  share = 'Share',
   delete = 'Delete',
   newFolder = 'New folder',
 }
