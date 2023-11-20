@@ -101,27 +101,18 @@ const expectedConversation: Conversation = {
   temperature: DEFAULT_TEMPERATURE,
   replay: defaultReplay,
   selectedAddons: [],
-  assistantModelId: undefined,
+  assistantModelId: "gpt-4",
   isMessageStreaming: false,
   folderId: undefined,
   lastActivityDate: undefined,
 }
 
-const testModelsMap: Record<string, OpenAIEntityModel> = {
-  [OpenAIEntityModelID.GPT_3_5_AZ]: {
-    id: OpenAIEntityModelID.GPT_3_5_AZ,
-    name: 'GPT-3.5',
-    maxLength: 12000,
-    requestLimit: 3000,
-    type: 'model',
-  },
-}
 
   describe('cleaning v1 data', () => {
     it('should return the latest format', () => {
       const dataV1 = [{...conversationV2, id: 1}] as ExportFormatV1;
       
-      const obj = cleanData(dataV1, testModelsMap);
+      const obj = cleanData(dataV1);
       expect(isLatestExportFormat(obj)).toBe(true);
       expect(obj).toEqual({
         version: 4,
@@ -148,7 +139,7 @@ const testModelsMap: Record<string, OpenAIEntityModel> = {
           },
         ],
       } as ExportFormatV2;
-      const obj = cleanData(dataV2, testModelsMap);
+      const obj = cleanData(dataV2);
       expect(isLatestExportFormat(obj)).toBe(true);
       expect(obj).toEqual({
         version: 4,
@@ -198,7 +189,7 @@ const testModelsMap: Record<string, OpenAIEntityModel> = {
         ],
       } as ExportFormatV4;
 
-      const obj = cleanData(dataV4, testModelsMap);
+      const obj = cleanData(dataV4);
       expect(isLatestExportFormat(obj)).toBe(true);
       expect(obj).toEqual({
         version: 4,

@@ -191,20 +191,16 @@ const importConversationsEpic: AppEpic = (action$, state$) =>
       payload,
       modelsMap: ModelsSelectors.selectModelsMap(state$.value),
     })),
-    switchMap(({ payload, modelsMap }) => {
+    switchMap(({ payload }) => {
       const currentConversations = ConversationsSelectors.selectConversations(
         state$.value,
       );
       const currentFolders = ConversationsSelectors.selectFolders(state$.value);
       const { history, folders, isError }: ImportConversationsResponse =
-        importConversations(
-          payload.data,
-          {
-            currentConversations,
-            currentFolders,
-          },
-          modelsMap,
-        );
+        importConversations(payload.data, {
+          currentConversations,
+          currentFolders,
+        });
 
       if (isError) {
         toast.error(errorsMessages.unsupportedDataFormat);

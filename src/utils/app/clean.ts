@@ -1,5 +1,4 @@
 import { Conversation, ConversationEntityModel } from '@/src/types/chat';
-import { ModelsMap } from '@/src/types/models';
 import { OpenAIEntityModelID } from '@/src/types/openai';
 
 import {
@@ -10,13 +9,10 @@ import {
 } from '../../constants/default-settings';
 import { defaultReplay } from '@/src/constants/replay';
 
-import { getAssitantModelId } from './conversation';
-
 import { v4 } from 'uuid';
 
 export const cleanConversationHistory = (
   history: Conversation[] | unknown,
-  modelsMap: ModelsMap,
 ): Conversation[] => {
   // added model for each conversation (3/20/23)
   // added system prompt for each conversation (3/21/23)
@@ -40,15 +36,8 @@ export const cleanConversationHistory = (
             }
           : { id: OpenAIEntityModelID.GPT_3_5_AZ };
 
-        const modelType = modelsMap[model.id]?.type;
-
-        const assistantModelId: string | undefined =
-          modelType &&
-          getAssitantModelId(
-            modelType,
-            DEFAULT_ASSISTANT_SUBMODEL.id,
-            conversation.assistantModelId,
-          );
+        const assistantModelId =
+          conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id;
 
         const cleanConversation: Conversation = {
           id: conversation.id || v4(),
@@ -59,9 +48,7 @@ export const cleanConversationHistory = (
           folderId: conversation.folderId || undefined,
           messages: conversation.messages || [],
           replay: conversation.replay || defaultReplay,
-          selectedAddons:
-            conversation.selectedAddons ||
-            (modelsMap[model.id]?.selectedAddons ?? []),
+          selectedAddons: conversation.selectedAddons ?? [],
           assistantModelId,
           lastActivityDate: conversation.lastActivityDate,
           isMessageStreaming: false,

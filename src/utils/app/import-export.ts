@@ -10,7 +10,6 @@ import {
   SupportedExportFormats,
 } from '@/src/types/export';
 import { FolderInterface } from '@/src/types/folder';
-import { ModelsMap } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 
 import { cleanConversationHistory } from './clean';
@@ -44,14 +43,11 @@ export const isLatestExportFormat = isExportFormatV4;
 export interface CleanDataResponse extends LatestExportFormat {
   isError: boolean;
 }
-export function cleanData(
-  data: SupportedExportFormats,
-  modelsMap: ModelsMap,
-): CleanDataResponse {
+export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV1(data)) {
     const cleanHistoryData: LatestExportFormat = {
       version: 4,
-      history: cleanConversationHistory(data, modelsMap),
+      history: cleanConversationHistory(data),
       folders: [],
       prompts: [],
     };
@@ -64,7 +60,7 @@ export function cleanData(
   if (isExportFormatV2(data)) {
     return {
       version: 4,
-      history: cleanConversationHistory(data.history || [], modelsMap),
+      history: cleanConversationHistory(data.history || []),
       folders: (data.folders || []).map((chatFolder) => ({
         id: chatFolder.id.toString(),
         name: chatFolder.name,
@@ -77,7 +73,7 @@ export function cleanData(
 
   if (isExportFormatV3(data)) {
     return {
-      history: cleanConversationHistory(data.history, modelsMap),
+      history: cleanConversationHistory(data.history),
       folders: [...data.folders],
       version: 4,
       prompts: [],
@@ -88,7 +84,7 @@ export function cleanData(
   if (isExportFormatV4(data)) {
     return {
       ...data,
-      history: cleanConversationHistory(data.history, modelsMap),
+      history: cleanConversationHistory(data.history),
       prompts: data.prompts || [],
       isError: false,
     };
@@ -212,9 +208,8 @@ export const importConversations = (
     currentConversations: Conversation[];
     currentFolders: FolderInterface[];
   },
-  modelsMap: ModelsMap,
 ): ImportConversationsResponse => {
-  const { history, folders, isError } = cleanData(importedData, modelsMap);
+  const { history, folders, isError } = cleanData(importedData);
 
   const newHistory: Conversation[] = [
     ...currentConversations,
