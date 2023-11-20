@@ -126,7 +126,7 @@ export const promptsSlice = createSlice({
         if (folder.id === payload.folderId) {
           return {
             ...folder,
-            name: payload.name,
+            name: payload.name.trim(),
           };
         }
 

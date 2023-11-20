@@ -108,7 +108,7 @@ export default function ShareModal({
             role="dialog"
             ref={refs.setFloating}
             {...getFloatingProps()}
-            data-qa="prompt-modal"
+            data-qa="share-modal"
           >
             <button
               type="button"

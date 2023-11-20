@@ -114,7 +114,7 @@ const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
           dispatch(
             ConversationsActions.renameFolder({
               folderId,
-              name: newName.trim(),
+              name: newName,
             }),
           );
         }}

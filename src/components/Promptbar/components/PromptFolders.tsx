@@ -110,7 +110,7 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
           dispatch(
             PromptsActions.renameFolder({
               folderId,
-              name: newName.trim(),
+              name: newName,
             }),
           );
         }}
