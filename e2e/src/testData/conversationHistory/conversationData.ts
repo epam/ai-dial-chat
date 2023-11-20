@@ -211,10 +211,10 @@ export class ConversationData extends FolderData {
     nestedFolders: FolderInterface[],
   ) {
     const nestedConversations: Conversation[] = [];
-    for (let i = 0; i <= nestedFolders.length; i++) {
+    for (const item of nestedFolders) {
       const nestedConversation = this.prepareDefaultConversation();
       nestedConversations.push(nestedConversation);
-      nestedConversation.folderId = nestedFolders[i].id;
+      nestedConversation.folderId = item.id;
       this.resetData();
     }
     return nestedConversations;

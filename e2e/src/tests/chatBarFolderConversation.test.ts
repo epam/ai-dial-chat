@@ -48,6 +48,8 @@ test(
 
     const newName = 'updated folder name';
     const randomFolder = GeneratorUtil.randomArrayElement(nestedFolders);
+    const randomFolderIndex = nestedFolders.indexOf(randomFolder);
+
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
     await folderConversations.openFolderDropdownMenu(randomFolder.name);
@@ -62,6 +64,19 @@ test(
         ExpectedMessages.folderNameUpdated,
       )
       .toBeTruthy();
+
+    for (let i = 0; i < nestedFolders.length; i++) {
+      if (i !== randomFolderIndex) {
+        expect
+          .soft(
+            await folderConversations
+              .getFolderByName(nestedFolders[i].name)
+              .isVisible(),
+            ExpectedMessages.folderNameNotUpdated,
+          )
+          .toBeTruthy();
+      }
+    }
   },
 );
 
