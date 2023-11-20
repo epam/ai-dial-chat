@@ -1,3 +1,3 @@
-import { OpenAIEntityModel } from "./openai";
+import { OpenAIEntityModel } from './openai';
 
-export type ModelsMap = Partial<Record<string, OpenAIEntityModel>>
+export type ModelsMap = Partial<Record<string, OpenAIEntityModel>>;
