@@ -72,7 +72,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dragImageRef = useRef<HTMLImageElement | null>();
   const [isSharing, setIsSharing] = useState(false);
-  const [isShared, setIsShared] = useState(false);
+  const { isShared, id: conversatrionId } = conversation;
 
   useEffect(() => {
     dragImageRef.current = document.createElement('img');
@@ -192,10 +192,23 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     setIsSharing(true);
   };
 
-  const handleCloseShareModal = (urlWasCopied: boolean) => {
-    setIsSharing(false);
-    setIsShared(urlWasCopied);
-  };
+  const handleCloseShareModal = useCallback(
+    (urlWasCopied: boolean) => {
+      setIsSharing(false);
+
+      if (!isShared && urlWasCopied) {
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: conversatrionId,
+            values: {
+              isShared: true,
+            },
+          }),
+        );
+      }
+    },
+    [conversatrionId, dispatch, isShared],
+  );
 
   const handleMoveToFolder = useCallback(
     ({
@@ -261,11 +274,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onKeyDown={handleEnterDown}
             autoFocus
           />
-          {isShared && (
-            <span className="flex shrink-0">
-              <IconUserShare size={14} />
-            </span>
-          )}
         </div>
       ) : (
         <button
@@ -320,7 +328,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           >
             {conversation.name}
           </div>
-          {isShared && (
+          {isShared && !isDeleting && (
             <span className="flex shrink-0">
               <IconUserShare size={14} />
             </span>

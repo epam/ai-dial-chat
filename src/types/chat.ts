@@ -88,6 +88,7 @@ export interface Conversation {
   lastActivityDate?: number;
 
   isMessageStreaming: boolean;
+  isShared?: boolean;
 }
 export interface Replay {
   replayAsIs?: boolean;

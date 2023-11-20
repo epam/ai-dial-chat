@@ -7,4 +7,5 @@ export interface Prompt {
   content?: string;
   model: OpenAIEntityModel;
   folderId?: string;
+  isShared?: boolean;
 }

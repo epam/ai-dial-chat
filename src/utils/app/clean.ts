@@ -50,6 +50,7 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
         );
 
         const cleanConversation: Conversation = {
+          ...conversation,
           id: conversation.id || v4(),
           name: conversation.name || DEFAULT_CONVERSATION_NAME,
           model: model,

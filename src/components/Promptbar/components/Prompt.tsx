@@ -51,14 +51,26 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const [isRenaming, setIsRenaming] = useState(false);
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
-  const [isShared, setIsShared] = useState(false);
+  const { isShared, id: promptId } = prompt;
 
   const wrapperRef = useRef(null);
 
-  const handleCloseShareModal = (urlWasCopied: boolean) => {
-    setIsSharing(false);
-    setIsShared(urlWasCopied);
-  };
+  const handleCloseShareModal = useCallback(
+    (urlWasCopied: boolean) => {
+      setIsSharing(false);
+      if (!isShared && urlWasCopied) {
+        dispatch(
+          PromptsActions.updatePrompt({
+            promptId,
+            values: {
+              isShared: true,
+            },
+          }),
+        );
+      }
+    },
+    [dispatch, isShared, promptId],
+  );
 
   const handleShare: MouseEventHandler<HTMLButtonElement> = () => {
     setIsSharing(true);
@@ -214,7 +226,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           >
             {prompt.name}
           </div>
-          {isShared && (
+          {isShared && !isDeleting && (
             <span className="flex shrink-0">
               <IconUserShare size={14} />
             </span>
