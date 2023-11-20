@@ -128,7 +128,7 @@ export default function ShareModal({
                 {t('share.modal.link.description')}
               </p>
               <p className="text-sm text-gray-500">
-                {t(`share.modal.link.${type}`)}
+                {t('share.modal.link', { context: type })}
               </p>
               <div className="relative mt-2">
                 <div
