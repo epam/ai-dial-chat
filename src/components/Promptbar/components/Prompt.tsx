@@ -243,7 +243,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             {prompt.name}
           </div>
           {showSharedIcon && (
-            <span className="flex shrink-0">
+            <span className="flex shrink-0 text-gray-500">
               <IconUserShare size={14} />
             </span>
           )}

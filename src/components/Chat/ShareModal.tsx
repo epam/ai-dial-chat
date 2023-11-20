@@ -118,8 +118,12 @@ export default function ShareModal({
                   'Share',
                 )}: ${entity.name.trim()}`}</span>
               </h4>
-              <p className="text-sm">{t('share.modal.link.description')}</p>
-              <p className="text-sm">{t(`share.modal.link.${type}`)}</p>
+              <p className="text-sm text-gray-500">
+                {t('share.modal.link.description')}
+              </p>
+              <p className="text-sm text-gray-500">
+                {t(`share.modal.link.${type}`)}
+              </p>
               <div className="relative mt-2">
                 <div className="w-full gap-2 truncate rounded border border-gray-400 p-3 pr-10 dark:border-gray-600">
                   {url}
