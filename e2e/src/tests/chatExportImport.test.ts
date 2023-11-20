@@ -16,12 +16,17 @@ import {
 } from '@/e2e/src/testData';
 import { ImportConversation } from '@/e2e/src/testData/conversationHistory/importConversation';
 import { UploadDownloadData } from '@/e2e/src/ui/pages';
+import { GeneratorUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
+import { v4 as uuidv4 } from 'uuid';
 
+const levelsCount = 3;
 let folderConversationData: UploadDownloadData;
 let rootConversationData: UploadDownloadData;
 let newFolderConversationData: UploadDownloadData;
 let threeConversationsData: UploadDownloadData;
+const exportedConversations: UploadDownloadData[] = [];
+const updatedExportedConversations: UploadDownloadData[] = [];
 let gpt35Model: OpenAIEntityModel;
 let gpt4Model: OpenAIEntityModel;
 
@@ -135,11 +140,10 @@ test('Export and import chat structure with all conversations', async ({
   confirmationDialog,
 }) => {
   setTestIds('EPMRTC-907');
-  const levelsCount = 3;
   let emptyFolder: FolderInterface;
   let nestedFolders: FolderInterface[];
   let conversationOutsideFolder: Conversation;
-  const nestedConversations: Conversation[] = [];
+  let nestedConversations: Conversation[] = [];
   let exportedData: UploadDownloadData;
   await test.step('Prepare empty folder, 3 level nested folders with conversations and conversation outside folder', async () => {
     emptyFolder = conversationData.prepareFolder();
@@ -149,12 +153,8 @@ test('Export and import chat structure with all conversations', async ({
     conversationData.resetData();
 
     nestedFolders = conversationData.prepareNestedFolder(levelsCount);
-    for (let i = 0; i <= levelsCount; i++) {
-      const nestedConversation = conversationData.prepareDefaultConversation();
-      nestedConversations.push(nestedConversation);
-      nestedConversation.folderId = nestedFolders[i].id;
-      conversationData.resetData();
-    }
+    nestedConversations =
+      conversationData.prepareConversationsForNestedFolders(nestedFolders);
 
     await localStorageManager.setFolders(emptyFolder, ...nestedFolders);
     await localStorageManager.setConversationHistory(
@@ -508,29 +508,146 @@ test(
   },
 );
 
-test(`Export and import single chat in nested folders when folders structure doesn't exist`, async ({
+test(
+  `Export and import single chat in nested folders when folders structure doesn't exist.\n` +
+    `Export and import single chat in nested folders when it's folder doesn't exist.\n` +
+    `Export and import single chat in nested folders when parent folder doesn't exist`,
+  async ({
+    dialHomePage,
+    folderConversations,
+    setTestIds,
+    conversationData,
+    localStorageManager,
+    chatBar,
+    confirmationDialog,
+    conversationDropdownMenu,
+    folderDropdownMenu,
+  }) => {
+    setTestIds('EPMRTC-1359', 'EPMRTC-1368', 'EPMRTC-1369');
+    let nestedFolders: FolderInterface[];
+    let nestedConversations: Conversation[] = [];
+    let exportedData: UploadDownloadData;
+    await test.step('Prepare 3 level nested folders with conversations in each folder', async () => {
+      nestedFolders = conversationData.prepareNestedFolder(levelsCount);
+      nestedConversations =
+        conversationData.prepareConversationsForNestedFolders(nestedFolders);
+
+      await localStorageManager.setFolders(...nestedFolders);
+      await localStorageManager.setConversationHistory(...nestedConversations);
+      await localStorageManager.setSelectedConversation(
+        nestedConversations[levelsCount],
+      );
+      await localStorageManager.setOpenedFolders(...nestedFolders);
+    });
+
+    await test.step('Export single conversations inside last nested folder', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+
+      await folderConversations.openFolderConversationDropdownMenu(
+        nestedFolders[levelsCount].name,
+        nestedConversations[levelsCount].name,
+      );
+      exportedData = await dialHomePage.downloadData(() =>
+        conversationDropdownMenu.selectMenuOption(MenuOptions.export),
+      );
+    });
+
+    await test.step('Delete all conversations and folders, re-import exported file and verify only last nested conversation with folders structure imported', async () => {
+      await chatBar.deleteAllConversations();
+      await confirmationDialog.confirm();
+      await dialHomePage.uploadData(exportedData, () =>
+        chatBar.importButton.click(),
+      );
+
+      await folderConversations
+        .getFolderConversation(
+          nestedFolders[levelsCount].name,
+          nestedConversations[levelsCount].name,
+        )
+        .waitFor();
+
+      for (let i = 0; i <= levelsCount; i++) {
+        await folderConversations
+          .getFolderByName(nestedFolders[i].name)
+          .waitFor();
+      }
+
+      for (let i = 0; i < levelsCount; i++) {
+        expect
+          .soft(
+            await folderConversations.isFolderConversationVisible(
+              nestedFolders[i].name,
+              nestedConversations[i].name,
+            ),
+            ExpectedMessages.conversationIsNotVisible,
+          )
+          .toBeFalsy();
+      }
+    });
+
+    await test.step('Delete last folder with its conversation, re-import exported file and verify last nested folder with its conversation imported', async () => {
+      await folderConversations.openFolderDropdownMenu(
+        nestedFolders[levelsCount].name,
+      );
+      await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
+      await confirmationDialog.confirm();
+
+      await dialHomePage.uploadData(exportedData, () =>
+        chatBar.importButton.click(),
+      );
+
+      await folderConversations
+        .getFolderConversation(
+          nestedFolders[levelsCount].name,
+          nestedConversations[levelsCount].name,
+        )
+        .waitFor();
+    });
+
+    await test.step('Delete 2nd level folder with its nested content, re-import exported file and verify 2nd level folder with its nested content imported', async () => {
+      await folderConversations.openFolderDropdownMenu(
+        nestedFolders[levelsCount - 1].name,
+      );
+      await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
+      await confirmationDialog.confirm();
+
+      await dialHomePage.uploadData(exportedData, () =>
+        chatBar.importButton.click(),
+      );
+
+      await folderConversations
+        .getFolderConversation(
+          nestedFolders[levelsCount].name,
+          nestedConversations[levelsCount].name,
+        )
+        .waitFor();
+
+      await folderConversations
+        .getFolderByName(nestedFolders[levelsCount - 1].name)
+        .waitFor();
+    });
+  },
+);
+
+test('Import a chat in nested folder', async ({
   dialHomePage,
   folderConversations,
   setTestIds,
   conversationData,
   localStorageManager,
   chatBar,
-  confirmationDialog,
   conversationDropdownMenu,
 }) => {
-  setTestIds('EPMRTC-1359');
-  const levelsCount = 3;
+  setTestIds('EPMRTC-1374');
   let nestedFolders: FolderInterface[];
-  const nestedConversations: Conversation[] = [];
-  let exportedData: UploadDownloadData;
+  let nestedConversations: Conversation[] = [];
+  const updatedConversationNames: string[] = [];
+
   await test.step('Prepare 3 level nested folders with conversations in each folder', async () => {
     nestedFolders = conversationData.prepareNestedFolder(levelsCount);
-    for (let i = 0; i <= levelsCount; i++) {
-      const nestedConversation = conversationData.prepareDefaultConversation();
-      nestedConversations.push(nestedConversation);
-      nestedConversation.folderId = nestedFolders[i].id;
-      conversationData.resetData();
-    }
+    nestedConversations =
+      conversationData.prepareConversationsForNestedFolders(nestedFolders);
 
     await localStorageManager.setFolders(...nestedFolders);
     await localStorageManager.setConversationHistory(...nestedConversations);
@@ -540,33 +657,42 @@ test(`Export and import single chat in nested folders when folders structure doe
     await localStorageManager.setOpenedFolders(...nestedFolders);
   });
 
-  await test.step('Export single conversations inside last nested folder', async () => {
+  await test.step('Export single conversations from root folder and single conversation from 2nd level folder', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
 
-    await folderConversations.openFolderConversationDropdownMenu(
-      nestedFolders[levelsCount].name,
-      nestedConversations[levelsCount].name,
-    );
-    exportedData = await dialHomePage.downloadData(() =>
-      conversationDropdownMenu.selectMenuOption(MenuOptions.export),
-    );
+    for (let i = 0; i <= 2; i = i + 2) {
+      await folderConversations.openFolderConversationDropdownMenu(
+        nestedFolders[i].name,
+        nestedConversations[i].name,
+      );
+      const exportedData = await dialHomePage.downloadData(
+        () => conversationDropdownMenu.selectMenuOption(MenuOptions.export),
+        `${i}.json`,
+      );
+      exportedConversations.push(exportedData);
+    }
   });
 
-  await test.step('Delete all conversations and folders, re-import exported file and verify only last nested conversation with folders structure imported', async () => {
-    await chatBar.deleteAllConversations();
-    await confirmationDialog.confirm();
-    await dialHomePage.uploadData(exportedData, () =>
-      chatBar.importButton.click(),
-    );
+  await test.step('Update id and name of exported conversations and import them again', async () => {
+    for (const exportedData of exportedConversations) {
+      const exportedContent = FileUtil.readFileData(exportedData.path);
+      const conversation = exportedContent.history[0];
+      conversation.id = uuidv4();
+      conversation.name = GeneratorUtil.randomString(10);
+      const updatedExportedConversation = {
+        path: FileUtil.writeDataToFile(exportedContent),
+        isDownloadedData: false,
+      };
+      updatedExportedConversations.push(updatedExportedConversation);
+      await dialHomePage.uploadData(updatedExportedConversation, () =>
+        chatBar.importButton.click(),
+      );
+      updatedConversationNames.push(conversation.name);
+    }
+  });
 
-    await folderConversations
-      .getFolderConversation(
-        nestedFolders[levelsCount].name,
-        nestedConversations[levelsCount].name,
-      )
-      .waitFor();
-
+  await test.step('Verify new conversations are added to root and 2nd level folders, folders structure remains the same', async () => {
     for (let i = 0; i <= levelsCount; i++) {
       await folderConversations
         .getFolderByName(nestedFolders[i].name)
@@ -580,10 +706,106 @@ test(`Export and import single chat in nested folders when folders structure doe
             nestedFolders[i].name,
             nestedConversations[i].name,
           ),
-          ExpectedMessages.conversationIsNotVisible,
+          ExpectedMessages.conversationIsVisible,
         )
-        .toBeFalsy();
+        .toBeTruthy();
+      if (i === 0) {
+        expect
+          .soft(
+            await folderConversations.isFolderConversationVisible(
+              nestedFolders[i].name,
+              updatedConversationNames[0],
+            ),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeTruthy();
+      } else if (i === 2) {
+        expect
+          .soft(
+            await folderConversations.isFolderConversationVisible(
+              nestedFolders[i].name,
+              updatedConversationNames[1],
+            ),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeTruthy();
+      }
     }
+  });
+});
+
+test('Import a chat from nested folder which was moved to another place', async ({
+  dialHomePage,
+  folderConversations,
+  setTestIds,
+  conversationData,
+  localStorageManager,
+  chatBar,
+  conversationDropdownMenu,
+}) => {
+  setTestIds('EPMRTC-1387');
+  let nestedFolders: FolderInterface[];
+  let thirdLevelFolderConversation: Conversation;
+  let exportedData: UploadDownloadData;
+
+  await test.step('Prepare 3 level nested folders and conversation inside the 3rd level folder', async () => {
+    nestedFolders = conversationData.prepareNestedFolder(levelsCount);
+    thirdLevelFolderConversation =
+      conversationData.prepareDefaultConversation();
+    thirdLevelFolderConversation.folderId = nestedFolders[levelsCount].id;
+
+    await localStorageManager.setFolders(...nestedFolders);
+    await localStorageManager.setConversationHistory(
+      thirdLevelFolderConversation,
+    );
+    await localStorageManager.setSelectedConversation(
+      thirdLevelFolderConversation,
+    );
+    await localStorageManager.setOpenedFolders(...nestedFolders);
+  });
+
+  await test.step('Export 3rd level folder conversation', async () => {
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded();
+
+    await folderConversations.openFolderConversationDropdownMenu(
+      nestedFolders[levelsCount].name,
+      thirdLevelFolderConversation.name,
+    );
+    exportedData = await dialHomePage.downloadData(() =>
+      conversationDropdownMenu.selectMenuOption(MenuOptions.export),
+    );
+  });
+
+  await test.step('Move 3rd level folder on the root folder level and import exported conversation', async () => {
+    nestedFolders[levelsCount].folderId = undefined;
+    await localStorageManager.setFolders(...nestedFolders);
+    await dialHomePage.reloadPage();
+    await dialHomePage.waitForPageLoaded();
+    await dialHomePage.uploadData(exportedData, () =>
+      chatBar.importButton.click(),
+    );
+  });
+
+  await test.step('Verify imported conversations is in 3rd level folder on the root level', async () => {
+    await folderConversations
+      .getFolderConversation(
+        nestedFolders[levelsCount].name,
+        thirdLevelFolderConversation.name,
+      )
+      .waitFor();
+
+    const foldersCount = await folderConversations.getFoldersCount();
+    expect
+      .soft(foldersCount, ExpectedMessages.foldersCountIsValid)
+      .toBe(levelsCount + 1);
+
+    const conversationsCount = await folderConversations
+      .getFolderConversations(nestedFolders[0].name)
+      .count();
+    expect
+      .soft(conversationsCount, ExpectedMessages.conversationsCountIsValid)
+      .toBe(0);
   });
 });
 
@@ -594,6 +816,7 @@ test.afterAll(async () => {
     rootConversationData,
     newFolderConversationData,
     threeConversationsData,
+    ...updatedExportedConversations,
   ];
   importFilesToDelete.forEach((d) => {
     if (d) {

@@ -278,16 +278,12 @@ test('Delete nested folder with chat', async ({
   const levelsCount = 3;
   const levelToDelete = 2;
   let nestedFolders: FolderInterface[];
-  const nestedConversations: Conversation[] = [];
+  let nestedConversations: Conversation[] = [];
 
   await test.step('Prepare nested folders with conversations inside each one', async () => {
     nestedFolders = conversationData.prepareNestedFolder(levelsCount);
-    for (let i = 0; i <= levelsCount; i++) {
-      const nestedConversation = conversationData.prepareDefaultConversation();
-      nestedConversations.push(nestedConversation);
-      nestedConversation.folderId = nestedFolders[i].id;
-      conversationData.resetData();
-    }
+    nestedConversations =
+      conversationData.prepareConversationsForNestedFolders(nestedFolders);
     await localStorageManager.setFolders(...nestedFolders);
     await localStorageManager.setOpenedFolders(...nestedFolders);
     await localStorageManager.setConversationHistory(...nestedConversations);

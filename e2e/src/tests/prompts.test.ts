@@ -62,7 +62,7 @@ test('Prompt menu', async ({
 
   const menuOptions = await promptDropdownMenu.getAllMenuOptions();
   expect
-    .soft(menuOptions, ExpectedMessages.conversationContextOptionsValid)
+    .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
     .toEqual([
       MenuOptions.edit,
       MenuOptions.export,
