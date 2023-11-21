@@ -81,5 +81,3 @@ export const getAvailableNameOnSameFolderLevel = (
 
   return itemName;
 };
-
-

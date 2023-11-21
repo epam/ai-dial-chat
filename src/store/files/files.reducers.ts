@@ -261,7 +261,7 @@ export const filesSlice = createSlice({
 const rootSelector = (state: RootState): FilesState => state.files;
 
 const selectFiles = createSelector([rootSelector], (state) => {
-  return state.files.toSorted((a, b) =>
+  return [...state.files].sort((a, b) =>
     a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
   );
 });
@@ -278,7 +278,7 @@ const selectSelectedFiles = createSelector(
 );
 
 const selectFolders = createSelector([rootSelector], (state) => {
-  return state.folders.toSorted((a, b) =>
+  return [...state.folders].sort((a, b) =>
     a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
   );
 });
