@@ -34,7 +34,7 @@ class BasePathResolver {
   endsWith(str) {
     return this.valueOf().endsWith(str)
   }
- 
+
   toJSON() {
     return this.toString();
   }
@@ -48,6 +48,16 @@ const nextConfig = {
     instrumentationHook: true,
   },
   basePath: new BasePathResolver(),
+
+  async redirects() {
+    return [
+      {
+        source: '/share/:slug([A-Za-z0-9-]+)',
+        destination: '/?share=:slug',
+        permanent: false,
+      },
+    ];
+  },
 
   webpack(config, options) {
     config.experiments = {

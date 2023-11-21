@@ -9,7 +9,6 @@ import {
 
 import { PromptsHistory } from '@/src/types/export';
 import { FolderInterface } from '@/src/types/folder';
-import { OpenAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 
 import { RootState } from '../index';
@@ -39,17 +38,12 @@ export const promptsSlice = createSlice({
     init: (state) => state,
     initFolders: (state) => state,
     initPrompts: (state) => state,
-    createNewPrompt: (state) => state,
-    createNewPromptSuccess: (
-      state,
-      { payload }: PayloadAction<{ model: OpenAIEntityModel }>,
-    ) => {
+    createNewPrompt: (state) => {
       const newPrompt: Prompt = {
         id: uuidv4(),
         name: (i18n as any).t(`Prompt ${state.prompts.length + 1}`),
         description: '',
         content: '',
-        model: payload.model,
       };
       state.prompts = state.prompts.concat(newPrompt);
       state.selectedPromptId = newPrompt.id;
@@ -122,11 +116,15 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folderId: string; name: string }>,
     ) => {
+      const name = payload.name.trim();
+      if (name === '') {
+        return;
+      }
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.folderId) {
           return {
             ...folder,
-            name: payload.name,
+            name,
           };
         }
 

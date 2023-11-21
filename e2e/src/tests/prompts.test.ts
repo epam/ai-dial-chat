@@ -67,6 +67,7 @@ test('Prompt menu', async ({
       MenuOptions.edit,
       MenuOptions.export,
       MenuOptions.moveTo,
+      MenuOptions.share,
       MenuOptions.delete,
     ]);
 });
