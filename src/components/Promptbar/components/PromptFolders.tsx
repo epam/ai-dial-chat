@@ -103,11 +103,11 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
         highlightColor="violet"
         highlightedFolders={highlightedFolders}
         handleDrop={handleDrop}
-        onRenameFolder={(newName, folderId) => {
+        onRenameFolder={(name, folderId) => {
           dispatch(
             PromptsActions.renameFolder({
               folderId,
-              name: newName,
+              name,
             }),
           );
         }}

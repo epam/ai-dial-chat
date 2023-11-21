@@ -28,7 +28,7 @@ export const getSortedEntities = async (token: JWT | null) => {
   let entities: OpenAIEntityModel[] = [];
   const accessToken = token?.access_token as string;
   const jobTitle = token?.jobTitle as string;
-  const models: ProxyOpenAIEntity<OpenAIEntityModelType>[] = await getEntities(
+  const models = await getEntities<ProxyOpenAIEntity<OpenAIEntityModelType>[]>(
     'model',
     accessToken,
     jobTitle,
@@ -36,16 +36,18 @@ export const getSortedEntities = async (token: JWT | null) => {
     logger.error(error.message);
     return [];
   });
-  const applications: ProxyOpenAIEntity<OpenAIEntityApplicationType>[] =
-    await getEntities('application', accessToken, jobTitle).catch((error) => {
-      logger.error(error.message);
-      return [];
-    });
-  const assistants: ProxyOpenAIEntity<OpenAIEntityAssistantType>[] =
-    await getEntities('assistant', accessToken, jobTitle).catch((error) => {
-      logger.error(error.message);
-      return [];
-    });
+  const applications = await getEntities<
+    ProxyOpenAIEntity<OpenAIEntityApplicationType>[]
+  >('application', accessToken, jobTitle).catch((error) => {
+    logger.error(error.message);
+    return [];
+  });
+  const assistants = await getEntities<
+    ProxyOpenAIEntity<OpenAIEntityAssistantType>[]
+  >('assistant', accessToken, jobTitle).catch((error) => {
+    logger.error(error.message);
+    return [];
+  });
 
   for (const entity of [...models, ...applications, ...assistants]) {
     if (

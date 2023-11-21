@@ -1,3 +1,4 @@
+import { IconCheck, IconCopy } from '@tabler/icons-react';
 import { FC, memo, useCallback, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import {
@@ -12,8 +13,6 @@ import { programmingLanguages } from '@/src/utils/app/codeblock';
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import Check from '../../../public/images/icons/check.svg';
-import Clone from '../../../public/images/icons/clone.svg';
 import Download from '../../../public/images/icons/download.svg';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 
@@ -94,14 +93,14 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
             {isCopied ? (
               <Tooltip>
                 <TooltipTrigger>
-                  <Check width={18} height={18} />
+                  <IconCheck size={18} />
                 </TooltipTrigger>
                 <TooltipContent>{t('Copied!')}</TooltipContent>
               </Tooltip>
             ) : (
               <Tooltip isTriggerClickable={true}>
                 <TooltipTrigger>
-                  <Clone width={18} height={18} />
+                  <IconCopy size={18} />
                 </TooltipTrigger>
                 <TooltipContent>{t('Copy code')}</TooltipContent>
               </Tooltip>
