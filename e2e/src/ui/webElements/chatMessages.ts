@@ -208,6 +208,7 @@ export class ChatMessages extends BaseElement {
 
   public async fillEditData(newMessage: string) {
     const textArea = this.getChatMessageTextarea();
+    await textArea.waitForState({ state: 'attached' });
     await textArea.click();
     await this.page.keyboard.press(keys.ctrlPlusA);
     await textArea.fillInInput(newMessage);

@@ -48,6 +48,8 @@ test(
 
     const newName = 'updated folder name';
     const randomFolder = GeneratorUtil.randomArrayElement(nestedFolders);
+    const randomFolderIndex = nestedFolders.indexOf(randomFolder);
+
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
     await folderConversations.openFolderDropdownMenu(randomFolder.name);
@@ -62,6 +64,19 @@ test(
         ExpectedMessages.folderNameUpdated,
       )
       .toBeTruthy();
+
+    for (let i = 0; i < nestedFolders.length; i++) {
+      if (i !== randomFolderIndex) {
+        expect
+          .soft(
+            await folderConversations
+              .getFolderByName(nestedFolders[i].name)
+              .isVisible(),
+            ExpectedMessages.folderNameNotUpdated,
+          )
+          .toBeTruthy();
+      }
+    }
   },
 );
 
@@ -278,16 +293,12 @@ test('Delete nested folder with chat', async ({
   const levelsCount = 3;
   const levelToDelete = 2;
   let nestedFolders: FolderInterface[];
-  const nestedConversations: Conversation[] = [];
+  let nestedConversations: Conversation[] = [];
 
   await test.step('Prepare nested folders with conversations inside each one', async () => {
     nestedFolders = conversationData.prepareNestedFolder(levelsCount);
-    for (let i = 0; i <= levelsCount; i++) {
-      const nestedConversation = conversationData.prepareDefaultConversation();
-      nestedConversations.push(nestedConversation);
-      nestedConversation.folderId = nestedFolders[i].id;
-      conversationData.resetData();
-    }
+    nestedConversations =
+      conversationData.prepareConversationsForNestedFolders(nestedFolders);
     await localStorageManager.setFolders(...nestedFolders);
     await localStorageManager.setOpenedFolders(...nestedFolders);
     await localStorageManager.setConversationHistory(...nestedConversations);

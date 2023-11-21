@@ -206,6 +206,19 @@ export class ConversationData extends FolderData {
     return super.prepareNestedFolder(nestedLevel, 'chat');
   }
 
+  public prepareConversationsForNestedFolders(
+    nestedFolders: FolderInterface[],
+  ) {
+    const nestedConversations: Conversation[] = [];
+    for (const item of nestedFolders) {
+      const nestedConversation = this.prepareDefaultConversation();
+      nestedConversations.push(nestedConversation);
+      nestedConversation.folderId = item.id;
+      this.resetData();
+    }
+    return nestedConversations;
+  }
+
   public prepareFolderWithConversations(conversationsCount: number) {
     const folder = this.prepareFolder();
     const conversations: Conversation[] = [];

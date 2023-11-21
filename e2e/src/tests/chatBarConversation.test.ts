@@ -177,7 +177,7 @@ test('Menu for New conversation', async ({
   );
   const menuOptions = await conversationDropdownMenu.getAllMenuOptions();
   expect
-    .soft(menuOptions, ExpectedMessages.conversationContextOptionsValid)
+    .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
     .toEqual([
       MenuOptions.rename,
       MenuOptions.compare,
@@ -213,7 +213,7 @@ test(
     await conversations.openConversationDropdownMenu(conversation.name);
     const menuOptions = await conversationDropdownMenu.getAllMenuOptions();
     expect
-      .soft(menuOptions, ExpectedMessages.conversationContextOptionsValid)
+      .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
       .toEqual([
         MenuOptions.rename,
         MenuOptions.compare,

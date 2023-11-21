@@ -16,6 +16,11 @@ export class FileUtil {
     return filename;
   }
 
+  public static readFileData(path: string) {
+    const content = fs.readFileSync(path, 'utf-8');
+    return JSON.parse(content);
+  }
+
   public static removeExportFolder() {
     fs.rmSync(Import.exportPath, {
       recursive: true,
