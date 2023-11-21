@@ -26,6 +26,7 @@ import { HighlightColor } from '@/src/types/components';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
@@ -105,8 +106,20 @@ const Folder = <T extends Conversation | Prompt>({
     return allFolders.filter((folder) => folder.folderId === currentFolder.id);
   }, [currentFolder, allFolders]);
   const filteredChildItems = useMemo(() => {
-    return allItems.filter((item) => item.folderId === currentFolder.id);
-  }, [currentFolder, allItems]);
+    return allItems.filter(
+      (item) =>
+        item.folderId === currentFolder.id &&
+        ('messages' in item
+          ? ConversationsSelectors.doesConversationsContainsSearchTerm(
+              item,
+              searchTerm,
+            )
+          : [item.name, item.description, item.content]
+              .join(' ')
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())),
+    );
+  }, [allItems, currentFolder.id, searchTerm]);
   const hasChildElements = useMemo(() => {
     return filteredChildFolders.length > 0 || filteredChildItems.length > 0;
   }, [filteredChildFolders.length, filteredChildItems.length]);
@@ -167,7 +180,7 @@ const Folder = <T extends Conversation | Prompt>({
         handleDrop(e, currentFolder);
       }
     },
-    [isDropAllowed, level, allFolders, currentFolder, dispatch, handleDrop],
+    [isDropAllowed, dispatch, currentFolder, handleDrop, allFolders, level, t],
   );
 
   const allowDrop = useCallback(
@@ -273,7 +286,7 @@ const Folder = <T extends Conversation | Prompt>({
     if (searchTerm) {
       dispatch(UIActions.openFolder({ id: currentFolder.id }));
     }
-  }, [searchTerm]);
+  }, [currentFolder.id, dispatch, searchTerm]);
 
   useOutsideAlerter(dragDropElement, setIsSelected);
 

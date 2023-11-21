@@ -504,17 +504,24 @@ const selectIsConversationsStreaming = createSelector(
 const selectSearchTerm = createSelector([rootSelector], (state) => {
   return state.searchTerm;
 });
+
+const doesConversationsContainsSearchTerm = (
+  conversation: Conversation,
+  searchTerm: string,
+) => {
+  const searchable =
+    conversation.name.toLocaleLowerCase() +
+    ' ' +
+    conversation.messages.map((message) => message.content).join(' ');
+  return searchable.toLowerCase().includes(searchTerm.toLowerCase());
+};
+
 const selectSearchedConversations = createSelector(
   [selectConversations, selectSearchTerm],
-  (conversations, searchTerm) => {
-    return conversations.filter((conversation) => {
-      const searchable =
-        conversation.name.toLocaleLowerCase() +
-        ' ' +
-        conversation.messages.map((message) => message.content).join(' ');
-      return searchable.toLowerCase().includes(searchTerm.toLowerCase());
-    });
-  },
+  (conversations, searchTerm) =>
+    conversations.filter((conversation) =>
+      doesConversationsContainsSearchTerm(conversation, searchTerm),
+    ),
 );
 
 const selectIsReplayPaused = createSelector([rootSelector], (state) => {
@@ -623,6 +630,7 @@ export const ConversationsSelectors = {
   selectSelectedConversations,
   selectFolders,
   selectSearchTerm,
+  doesConversationsContainsSearchTerm,
   selectSearchedConversations,
   selectConversationSignal,
   selectIsReplayPaused,
