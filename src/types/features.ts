@@ -1,7 +1,7 @@
 export enum Feature {
   ConversationsSection = 'conversations-section',
   PromptsSection = 'prompts-section',
-  TopSection = 'top-settings',
+  TopSettings = 'top-settings',
   TopClearСonversation = 'top-clear-conversation',
   TopChatInfo = 'top-chat-info',
   TopChatModelSettings = 'top-chat-model-settings',
