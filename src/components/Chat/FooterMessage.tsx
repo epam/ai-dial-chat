@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/router';
 
+import { Feature } from '@/src/types/features';
+
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -43,7 +45,7 @@ export const FooterMessage = () => {
     };
   }, []);
 
-  return enabledFeatures.has('footer') ? (
+  return enabledFeatures.has(Feature.Footer) ? (
     <div data-qa="footer-message">
       <div className="text-[12px] text-gray-500 md:text-center">
         <span
@@ -51,7 +53,7 @@ export const FooterMessage = () => {
         ></span>
       </div>
 
-      {enabledFeatures.has('request-api-key') && (
+      {enabledFeatures.has(Feature.RequestApiKey) && (
         <RequestAPIKeyDialog
           isOpen={isRequestAPIDialogOpen}
           onClose={() => {
@@ -61,7 +63,7 @@ export const FooterMessage = () => {
         ></RequestAPIKeyDialog>
       )}
 
-      {enabledFeatures.has('report-an-issue') && (
+      {enabledFeatures.has(Feature.ReportAnIssue) && (
         <ReportIssueDialog
           isOpen={isReportIssueDialogOpen}
           onClose={() => {

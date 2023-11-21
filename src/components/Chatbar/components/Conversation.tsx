@@ -14,6 +14,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
+import { Feature } from '@/src/types/features';
 
 import {
   ConversationsActions,
@@ -66,7 +67,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   );
 
   const isSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, 'conversations-sharing'),
+    SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSharing),
   );
 
   const [isDeleting, setIsDeleting] = useState(false);

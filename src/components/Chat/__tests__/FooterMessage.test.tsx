@@ -6,7 +6,7 @@ import { userEvent } from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const footerHtmlMessage = `<p data-qa="test">Some footer text.</p><a data-qa="reportAnIssue" href="${reportAnIssueHash}">reportAnIssue</a> and <a data-qa="requestApiKey" href="${requestApiKeyHash}">requestApiKey</a>`;
-const footerEnabledFeatures = new Set<Feature>(['footer', 'request-api-key', 'report-an-issue'] as Feature[]);
+const footerEnabledFeatures = new Set([Feature.Footer, Feature.RequestApiKey, Feature.ReportAnIssue]);
 const mockBasePath = '/base/';
 const mockReplace = vi.fn();
 
@@ -68,14 +68,14 @@ describe('FooterMessage', () => {
   });
 
   it('renders nothing when footer feature is disabled', async () => {
-    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(new Set<Feature>(['report-an-issue', 'request-api-key']));
+    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(new Set([Feature.RequestApiKey, Feature.ReportAnIssue]));
     const { container } = await render(<FooterMessage />);
 
     expect(container).toBeEmptyDOMElement();
   });
 
   it('does not open the request api key dialog if this option is disabled', async () => {
-    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(new Set<Feature>(['footer', 'report-an-issue']));
+    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(new Set([Feature.Footer, Feature.ReportAnIssue]));
     const { getByTestId } = await render(<FooterMessage />);
     const requestApiKeyLink = getByTestId('requestApiKey');
 
@@ -108,7 +108,7 @@ describe('FooterMessage', () => {
   });
 
   it('does not open the request an issue dialog if this option is disabled', async () => {
-    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(new Set<Feature>(['footer', 'request-api-key']));
+    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(new Set([Feature.Footer, Feature.RequestApiKey]));
     render(<FooterMessage />);
     const reportAnIssueLink = screen.getByTestId('reportAnIssue');
 
