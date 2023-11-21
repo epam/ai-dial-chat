@@ -1,6 +1,9 @@
 import { ChatSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import { ExpectedConstants } from '@/e2e/src/testData';
+import { Attributes } from '@/e2e/src/ui/domData';
+import { keys } from '@/e2e/src/ui/keyboard';
 import { Locator, Page } from '@playwright/test';
 
 export class PromptList extends BaseElement {
@@ -8,19 +11,30 @@ export class PromptList extends BaseElement {
     super(page, ChatSelectors.promptList, parentLocator);
   }
 
+  public getPromptOptions() {
+    return this.getChildElementBySelector(ChatSelectors.promptOption);
+  }
+
   public getPromptByName(name: string) {
-    return this.getChildElementBySelector(
-      ChatSelectors.promptOption,
-    ).getElementLocatorByText(name);
+    return this.getPromptOptions().getElementLocatorByText(name);
   }
 
   public async selectPrompt(name: string) {
-    const promptOption = this.getPromptByName(name);
-    const listBounding = await promptOption.boundingBox();
-    await this.page.mouse.move(
-      listBounding!.x + listBounding!.width / 2,
-      listBounding!.y + listBounding!.height / 2,
-    );
-    await promptOption.click();
+    const optionsCount = await this.getPromptOptions().getElementsCount();
+    let optionIndex = 1;
+    let promptOption;
+    while (optionIndex < optionsCount) {
+      await this.page.keyboard.press(keys.arrowDown);
+      promptOption = this.getPromptByName(name);
+      const classValue = await promptOption.getAttribute(Attributes.class);
+      if (
+        classValue!.includes(ExpectedConstants.selectedPromptOptionAttribute)
+      ) {
+        await this.page.keyboard.press(keys.enter);
+        break;
+      }
+      optionIndex++;
+    }
+    await this.getPromptByName(name).click();
   }
 }

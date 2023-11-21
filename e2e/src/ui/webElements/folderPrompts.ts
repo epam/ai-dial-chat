@@ -21,6 +21,12 @@ export class FolderPrompts extends Folders {
     );
   }
 
+  public getFolderPromptsCount() {
+    return this.getChildElementBySelector(
+      PromptBarSelectors.prompt,
+    ).getElementsCount();
+  }
+
   public getFolderPrompt(folderName: string, promptName: string) {
     return this.getFolderPrompts(folderName).filter({
       hasText: promptName,
