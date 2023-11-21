@@ -244,11 +244,15 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folderId: string; name: string }>,
     ) => {
+      const name = payload.name.trim();
+      if (name === '') {
+        return;
+      }
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.folderId) {
           return {
             ...folder,
-            name: payload.name.trim(),
+            name,
           };
         }
 
