@@ -183,6 +183,7 @@ test('Menu for New conversation', async ({
       MenuOptions.compare,
       MenuOptions.export,
       MenuOptions.moveTo,
+      MenuOptions.share,
       MenuOptions.delete,
     ]);
 });
@@ -220,6 +221,7 @@ test(
         MenuOptions.playback,
         MenuOptions.export,
         MenuOptions.moveTo,
+        MenuOptions.share,
         MenuOptions.delete,
       ]);
   },

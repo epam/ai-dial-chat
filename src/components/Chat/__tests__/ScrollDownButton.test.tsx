@@ -1,5 +1,5 @@
 import { ScrollDownButton } from '@/src/components/Chat/ScrollDownButton';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { userEvent } from '@testing-library/user-event';
 
@@ -12,9 +12,9 @@ describe('ScrollDownButton', () => {
 
     it('should render the component', () => {
         // Arrange
-        const { container } = render(<ScrollDownButton {...props} />);
+        render(<ScrollDownButton {...props} />);
         // Act
-        const button = container.querySelector('button') as HTMLButtonElement;
+        const button = screen.getByRole('button');
         const icon = button.querySelector('svg') as SVGSVGElement;
         // Assert
         expect(button).toBeInTheDocument();
@@ -26,9 +26,9 @@ describe('ScrollDownButton', () => {
 
     it('should call the onScrollDownClick function when the button is clicked', async () => {
         // Arrange
-        const { getByRole } = render(<ScrollDownButton {...props} />);
+        render(<ScrollDownButton {...props} />);
         // Act
-        const button = getByRole('button');
+        const button = screen.getByRole('button');
         await userEvent.click(button);
         // Assert
         expect(props.onScrollDownClick).toHaveBeenCalledTimes(1)

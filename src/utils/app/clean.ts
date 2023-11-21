@@ -69,6 +69,7 @@ export const cleanConversationHistory = (history: any[]): Conversation[] => {
           ...(conversation.playback && {
             playback: conversation.playback,
           }),
+          isShared: conversation.isShared,
         };
 
         acc.push(cleanConversation);

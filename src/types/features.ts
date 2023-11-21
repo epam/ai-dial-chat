@@ -10,7 +10,9 @@ export type Feature =
   | 'footer'
   | 'request-api-key'
   | 'report-an-issue'
-  | 'likes';
+  | 'likes'
+  | 'conversations-sharing'
+  | 'prompts-sharing';
 
 export const availableFeatures: Record<Feature, boolean> = {
   'conversations-section': true,
@@ -25,4 +27,6 @@ export const availableFeatures: Record<Feature, boolean> = {
   'request-api-key': true,
   'report-an-issue': true,
   likes: true,
+  'conversations-sharing': true,
+  'prompts-sharing': true,
 };
