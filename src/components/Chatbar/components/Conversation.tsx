@@ -75,6 +75,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const wrapperRef = useRef(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const dragImageRef = useRef<HTMLImageElement | null>();
   const [isSharing, setIsSharing] = useState(false);
   const { id: conversationId, shares = [] } = conversation;
@@ -191,6 +192,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   useEffect(() => {
     if (isRenaming) {
       setIsDeleting(false);
+      setTimeout(()=>inputRef.current?.focus()); // set auto-focus
     } else if (isDeleting) {
       setIsRenaming(false);
     }
@@ -288,6 +290,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onChange={(e) => setRenameValue(e.target.value)}
             onKeyDown={handleEnterDown}
             autoFocus
+            ref={inputRef}
           />
         </div>
       ) : (
