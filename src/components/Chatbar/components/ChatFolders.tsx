@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -15,6 +15,8 @@ import Folder from '@/src/components/Folder';
 
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
+import { IconCaretRightFilled } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 
 interface ChatFolderProps {
   folder: FolderInterface;
@@ -134,11 +136,46 @@ const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
 };
 
 export const ChatFolders = () => {
+  const { t } = useTranslation('chat');
+  const [isSectionOpened, setIsSectionOpened] = useState(true);
+  const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
   const folders = useAppSelector(ConversationsSelectors.selectFolders);
+  const selectedFoldersIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsFoldersIds,
+  );
+
+  const handleSectionOpen = () => {
+    setIsSectionOpened((isOpen) => !isOpen);
+  };
+
+  useEffect(() => {
+    setIsSectionHighlighted(
+      folders.some((folder) => selectedFoldersIds.includes(folder.id)),
+    );
+  }, [folders, selectedFoldersIds]);
 
   return (
     <div className={classNames('flex w-full flex-col')} data-qa="chat-folders">
-      {folders.map((folder, index, arr) => {
+      <button
+        className={classNames(
+          'flex items-center gap-1 py-1 text-xs',
+          isSectionHighlighted
+            ? 'text-green'
+            : '[&:not(:hover)]:text-gray-500',
+        )}
+        data-qa="chronology"
+        onClick={handleSectionOpen}
+      >
+        <IconCaretRightFilled
+          className={classNames(
+            'invisible text-gray-500 transition-all group-hover/sidebar:visible',
+            isSectionOpened && 'rotate-90',
+          )}
+          size={10}
+        />
+        {t('My Chats')}
+      </button>
+      {isSectionOpened && folders.map((folder, index, arr) => {
         if (!folder.folderId) {
           return (
             <ChatFolderTemplate
