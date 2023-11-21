@@ -145,15 +145,15 @@ export default function Home({ initialState }: Props) {
           id="theme-main"
         >
           <div className={`flex h-full w-full flex-col sm:pt-0`}>
-            {enabledFeatures.includes('header') && <Header />}
+            {enabledFeatures.has('header') && <Header />}
             <div className="flex w-full grow overflow-auto">
-              {enabledFeatures.includes('conversations-section') && <Chatbar />}
+              {enabledFeatures.has('conversations-section') && <Chatbar />}
 
               <div className="flex min-w-0 flex-1">
                 <Chat />
               </div>
 
-              {enabledFeatures.includes('prompts-section') && <Promptbar />}
+              {enabledFeatures.has('prompts-section') && <Promptbar />}
               {isProfileOpen && <UserMobile />}
             </div>
           </div>

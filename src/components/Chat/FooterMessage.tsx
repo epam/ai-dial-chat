@@ -43,7 +43,7 @@ export const FooterMessage = () => {
     };
   }, []);
 
-  return enabledFeatures.includes('footer') ? (
+  return enabledFeatures.has('footer') ? (
     <div data-qa="footer-message">
       <div className="text-[12px] text-gray-500 md:text-center">
         <span
@@ -51,7 +51,7 @@ export const FooterMessage = () => {
         ></span>
       </div>
 
-      {enabledFeatures.includes('request-api-key') && (
+      {enabledFeatures.has('request-api-key') && (
         <RequestAPIKeyDialog
           isOpen={isRequestAPIDialogOpen}
           onClose={() => {
@@ -61,7 +61,7 @@ export const FooterMessage = () => {
         ></RequestAPIKeyDialog>
       )}
 
-      {enabledFeatures.includes('report-an-issue') && (
+      {enabledFeatures.has('report-an-issue') && (
         <ReportIssueDialog
           isOpen={isReportIssueDialogOpen}
           onClose={() => {

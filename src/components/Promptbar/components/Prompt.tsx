@@ -48,8 +48,8 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const isSelected = selectedPromptId === prompt.id;
   const showModal = useAppSelector(PromptsSelectors.selectIsEditModalOpen);
 
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
+  const isSharingEnabled = useAppSelector(
+    state => SettingsSelectors.isFeatureEnabled(state, 'prompts-sharing'),
   );
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -57,7 +57,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const { id: promptId, isShared } = prompt;
-  const isSharingEnabled = enabledFeatures.includes('prompts-sharing');
   const showSharedIcon = isSharingEnabled && isShared && !isDeleting;
 
   const wrapperRef = useRef(null);

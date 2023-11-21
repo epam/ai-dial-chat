@@ -557,7 +557,7 @@ export const Chat = memo(() => {
                               defaultModelId={
                                 defaultModelId || OpenAIEntityModelID.GPT_3_5
                               }
-                              isShowSettings={enabledFeatures.includes(
+                              isShowSettings={enabledFeatures.has(
                                 'empty-chat-settings',
                               )}
                               onSelectModel={(modelId: string) =>
@@ -620,21 +620,21 @@ export const Chat = memo(() => {
                       }`}
                     >
                       {conv.messages.length !== 0 &&
-                        enabledFeatures.includes('top-settings') && (
+                        enabledFeatures.has('top-settings') && (
                           <div className={`z-10 flex flex-col `}>
                             <ChatHeader
                               conversation={conv}
                               isCompareMode={isCompareMode}
-                              isShowChatInfo={enabledFeatures.includes(
+                              isShowChatInfo={enabledFeatures.has(
                                 'top-chat-info',
                               )}
                               isShowClearConversation={
-                                enabledFeatures.includes(
+                                enabledFeatures.has(
                                   'top-clear-conversation',
                                 ) && !isPlayback
                               }
                               isShowModelSelect={
-                                enabledFeatures.includes(
+                                enabledFeatures.has(
                                   'top-chat-model-settings',
                                 ) && !isPlayback
                               }
@@ -705,7 +705,7 @@ export const Chat = memo(() => {
                                     message={message}
                                     messageIndex={index}
                                     conversation={conv}
-                                    isLikesEnabled={enabledFeatures.includes(
+                                    isLikesEnabled={enabledFeatures.has(
                                       'likes',
                                     )}
                                     editDisabled={isNotAllowedModel}

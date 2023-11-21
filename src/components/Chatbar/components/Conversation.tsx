@@ -65,8 +65,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
 
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
+  const isSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, 'conversations-sharing'),
   );
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -79,7 +79,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const dragImageRef = useRef<HTMLImageElement | null>();
   const [isSharing, setIsSharing] = useState(false);
   const { id: conversationId, isShared } = conversation;
-  const isSharingEnabled = enabledFeatures.includes('conversations-sharing');
   const showSharedIcon = isSharingEnabled && isShared && !isDeleting;
 
   useEffect(() => {
