@@ -12,6 +12,7 @@ import {
   ClipboardEvent,
   MouseEvent,
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -55,6 +56,7 @@ export default function ShareModal({
   const [urlWasCopied, setUrlWasCopied] = useState(false);
   const shareId = useRef(uuidv4());
   const url = `${window?.location.origin}/share/${shareId.current}`;
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const { refs, context } = useFloating({
     open: isOpen,
@@ -83,7 +85,8 @@ export default function ShareModal({
 
       navigator.clipboard.writeText(url).then(() => {
         setUrlCopied(true);
-        setTimeout(() => {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => {
           setUrlCopied(false);
         }, 2000);
         if (!urlWasCopied) {
@@ -94,6 +97,8 @@ export default function ShareModal({
     },
     [onShare, shareId, url, urlWasCopied],
   );
+
+  useEffect(() => () => clearTimeout(timeoutRef.current), []);
 
   return (
     <FloatingPortal id="theme-main">
