@@ -120,9 +120,9 @@ export default function ShareModal({
             </button>
             <div className="flex flex-col justify-between gap-2">
               <h4 className=" max-h-[50px] text-base font-semibold">
-                <span className="line-clamp-2 break-words">{`${t(
-                  'Share',
-                )}: ${entity.name.trim()}`}</span>
+                <span className="line-clamp-2 break-words">
+                  {`${t('Share')}: ${entity.name.trim()}`}
+                </span>
               </h4>
               <p className="text-sm text-gray-500">
                 {t('share.modal.link.description')}
