@@ -187,10 +187,6 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
 const importConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.importConversations.match),
-    map(({ payload }) => ({
-      payload,
-      modelsMap: ModelsSelectors.selectModelsMap(state$.value),
-    })),
     switchMap(({ payload }) => {
       const currentConversations = ConversationsSelectors.selectConversations(
         state$.value,

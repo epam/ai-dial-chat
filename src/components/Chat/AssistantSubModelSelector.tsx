@@ -8,7 +8,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { Combobox } from '../Common/Combobox';
-import { ModelSelectRow, SettingContainer } from './ConversationSettings';
+import { ModelSelectRow } from './ConversationSettings';
 
 interface Props {
   assistantModelId: string;
@@ -20,17 +20,18 @@ export const AssistantSubModelSelector = ({
   onSelectAssistantSubModel,
 }: Props) => {
   const { t } = useTranslation('chat');
-  const modelsModels = useAppSelector(ModelsSelectors.selectModelsOnly);
+  const onlyModels = useAppSelector(ModelsSelectors.selectModelsOnly);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const assistantSubModel = useMemo(
     () => modelsMap[assistantModelId],
     [assistantModelId, modelsMap],
   );
+
   return (
-    <SettingContainer>
+    <>
       <label className="mb-4 inline-block text-left">{t('Model')}</label>
       <Combobox
-        items={modelsModels}
+        items={onlyModels}
         initialSelectedItem={assistantSubModel}
         getItemLabel={(model: OpenAIEntityModel) => model.name || model.id}
         getItemValue={(model: OpenAIEntityModel) => model.id}
@@ -39,6 +40,6 @@ export const AssistantSubModelSelector = ({
           onSelectAssistantSubModel(itemID);
         }}
       />
-    </SettingContainer>
+    </>
   );
 };

@@ -158,12 +158,14 @@ export const ConversationSettings = ({
                 </SettingContainer>
               )}
               {model.type === 'assistant' && (
-                <AssistantSubModelSelector
-                  assistantModelId={
-                    assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id
-                  }
-                  onSelectAssistantSubModel={onSelectAssistantSubModel}
-                />
+                <SettingContainer>
+                  <AssistantSubModelSelector
+                    assistantModelId={
+                      assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id
+                    }
+                    onSelectAssistantSubModel={onSelectAssistantSubModel}
+                  />
+                </SettingContainer>
               )}
               {model.type === 'model' && (
                 <SettingContainer>
