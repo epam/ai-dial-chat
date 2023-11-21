@@ -56,8 +56,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const [isRenaming, setIsRenaming] = useState(false);
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
-  const { id: promptId, shares = [] } = prompt;
-  const isShared = shares.length > 0;
+  const { id: promptId, isShared } = prompt;
   const isSharingEnabled = enabledFeatures.includes('prompts-sharing');
   const showSharedIcon = isSharingEnabled && isShared && !isDeleting;
 
@@ -68,23 +67,18 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   }, []);
 
   const handleShared = useCallback(
-    (newShareId: string) => {
+    (_newShareId: string) => {
+      //TODO: send newShareId to API to store {id, createdDate}
       dispatch(
         PromptsActions.updatePrompt({
           promptId,
           values: {
-            shares: [
-              ...shares,
-              {
-                id: newShareId,
-                createdDate: new Date(),
-              },
-            ],
+            isShared: true,
           },
         }),
       );
     },
-    [dispatch, promptId, shares],
+    [dispatch, promptId],
   );
 
   const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
