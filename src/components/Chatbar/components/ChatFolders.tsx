@@ -1,4 +1,7 @@
+import { IconCaretRightFilled } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
+
+import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
@@ -15,8 +18,6 @@ import Folder from '@/src/components/Folder';
 
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
-import { IconCaretRightFilled } from '@tabler/icons-react';
-import { useTranslation } from 'react-i18next';
 
 interface ChatFolderProps {
   folder: FolderInterface;
@@ -159,9 +160,7 @@ export const ChatFolders = () => {
       <button
         className={classNames(
           'flex items-center gap-1 py-1 text-xs',
-          isSectionHighlighted
-            ? 'text-green'
-            : '[&:not(:hover)]:text-gray-500',
+          isSectionHighlighted ? 'text-green' : '[&:not(:hover)]:text-gray-500',
         )}
         data-qa="chronology"
         onClick={handleSectionOpen}
@@ -175,20 +174,21 @@ export const ChatFolders = () => {
         />
         {t('My Chats')}
       </button>
-      {isSectionOpened && folders.map((folder, index, arr) => {
-        if (!folder.folderId) {
-          return (
-            <ChatFolderTemplate
-              key={index}
-              folder={folder}
-              index={index}
-              isLast={index === arr.length - 1}
-            />
-          );
-        }
+      {isSectionOpened &&
+        folders.map((folder, index, arr) => {
+          if (!folder.folderId) {
+            return (
+              <ChatFolderTemplate
+                key={index}
+                folder={folder}
+                index={index}
+                isLast={index === arr.length - 1}
+              />
+            );
+          }
 
-        return null;
-      })}
+          return null;
+        })}
     </div>
   );
 };
