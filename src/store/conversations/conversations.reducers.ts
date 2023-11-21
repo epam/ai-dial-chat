@@ -5,10 +5,13 @@ import {
   getParentAndCurrentFoldersById,
 } from '@/src/utils/app/folders';
 
-import { Conversation, Message } from '@/src/types/chat';
+import {
+  Conversation,
+  ConversationEntityModel,
+  Message,
+} from '@/src/types/chat';
 import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface } from '@/src/types/folder';
-import { OpenAIEntityModel, defaultModelLimits } from '@/src/types/openai';
 
 import {
   DEFAULT_SYSTEM_PROMPT,
@@ -17,6 +20,7 @@ import {
 import { defaultReplay } from '@/src/constants/replay';
 
 import { RootState } from '../index';
+import { ModelsSelectors } from '../models/models.reducers';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -73,7 +77,7 @@ export const conversationsSlice = createSlice({
       }: PayloadAction<{
         names: string[];
         temperature: number | undefined;
-        model: OpenAIEntityModel;
+        model: ConversationEntityModel;
       }>,
     ) => {
       const newConversations: Conversation[] = payload.names.map(
@@ -84,13 +88,6 @@ export const conversationsSlice = createSlice({
             messages: [],
             model: {
               id: payload.model.id,
-              name: payload.model.name,
-              maxLength:
-                payload.model.maxLength ?? defaultModelLimits.maxLength,
-              requestLimit:
-                payload.model.requestLimit ?? defaultModelLimits.requestLimit,
-              type: payload.model.type,
-              selectedAddons: payload.model.selectedAddons ?? [],
             },
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: payload.temperature ?? DEFAULT_TEMPERATURE,
@@ -436,8 +433,8 @@ const selectLastConversation = createSelector(
 );
 const selectConversation = createSelector(
   [selectConversations, (_state, id: string) => id],
-  (conversation, id): Conversation | undefined => {
-    return conversation.find((conv) => conv.id === id);
+  (conversations, id): Conversation | undefined => {
+    return conversations.find((conv) => conv.id === id);
   },
 );
 const selectSelectedConversationsIds = createSelector(
@@ -607,10 +604,12 @@ const selectIsLastAssistantMessageEmpty = createSelector(
 );
 
 const selectNotModelConversations = createSelector(
-  [selectSelectedConversations],
-  (conversations) => {
+  [selectSelectedConversations, ModelsSelectors.selectModelsMap],
+  (conversations, modelsMap) => {
     return conversations.some(
-      (conv) => conv.model.type !== 'model' || conv.selectedAddons.length > 0,
+      (conv) =>
+        modelsMap[conv.model.id]?.type !== 'model' ||
+        conv.selectedAddons.length > 0,
     );
   },
 );

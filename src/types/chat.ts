@@ -1,5 +1,3 @@
-import { OpenAIEntityModel } from './openai';
-
 export type AttachmentImageMIMEType = 'image/jpeg' | 'image/png';
 
 export type AttachmentMIMEType =
@@ -47,7 +45,7 @@ export interface Message {
   };
   like?: number;
   errorMessage?: string;
-  model?: Partial<OpenAIEntityModel>;
+  model?: ConversationEntityModel;
   settings?: MessageSettings;
   responseId?: string;
 }
@@ -75,7 +73,7 @@ export interface Conversation {
   id: string;
   name: string;
   messages: Message[];
-  model: OpenAIEntityModel;
+  model: ConversationEntityModel;
   prompt: string;
   temperature: number;
   folderId?: string;
@@ -112,4 +110,8 @@ export interface ConversationsTemporarySettings {
   temperature: number;
   currentAssistentModelId: string | undefined;
   addonsIds: string[];
+}
+
+export interface ConversationEntityModel {
+  id: string;
 }

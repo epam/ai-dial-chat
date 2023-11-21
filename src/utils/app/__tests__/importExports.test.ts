@@ -17,9 +17,10 @@ import {
   ExportFormatV4,
   PromptsHistory
 } from '@/src/types/export';
-import { OpenAIEntityModelID, OpenAIEntityModels } from '@/src/types/openai';
+import { OpenAIEntityModel, OpenAIEntityModelID, OpenAIEntityModels } from '@/src/types/openai';
 
 import { describe, expect, it } from 'vitest';
+import { Conversation, Message } from '@/src/types/chat';
 
 describe('Export Format Functions', () => {
   describe('isExportFormatV1', () => {
@@ -72,51 +73,50 @@ describe('Export Format Functions', () => {
 });
 
 describe('cleanData Functions', () => {
+  const expectedModel = {id: OpenAIEntityModelID.GPT_3_5_AZ};
+
+  const messages:Message[] = [
+    {
+      role: 'user',
+      content: "what's up ?",
+    },
+    {
+      role: 'assistant',
+      content: 'Hi',
+    },
+  ]
+
+const conversationV2 = {
+  id: '1',
+  name: 'conversation 1',
+  messages,
+}
+
+const expectedConversation: Conversation = {
+  id: '1',
+  name: conversationV2.name,
+  messages,
+  model: expectedModel,
+  prompt: DEFAULT_SYSTEM_PROMPT,
+  temperature: DEFAULT_TEMPERATURE,
+  replay: defaultReplay,
+  selectedAddons: [],
+  assistantModelId: "gpt-4",
+  isMessageStreaming: false,
+  folderId: undefined,
+  lastActivityDate: undefined,
+}
+
+
   describe('cleaning v1 data', () => {
     it('should return the latest format', () => {
-      const data = [
-        {
-          id: 1,
-          name: 'conversation 1',
-          messages: [
-            {
-              role: 'user',
-              content: "what's up ?",
-            },
-            {
-              role: 'assistant',
-              content: 'Hi',
-            },
-          ],
-        },
-      ] as ExportFormatV1;
-      const obj = cleanData(data);
+      const dataV1 = [{...conversationV2, id: 1}] as ExportFormatV1;
+      
+      const obj = cleanData(dataV1);
       expect(isLatestExportFormat(obj)).toBe(true);
       expect(obj).toEqual({
         version: 4,
-        history: [
-          {
-            id: 1,
-            name: 'conversation 1',
-            messages: [
-              {
-                role: 'user',
-                content: "what's up ?",
-              },
-              {
-                role: 'assistant',
-                content: 'Hi',
-              },
-            ],
-            model: OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
-            prompt: DEFAULT_SYSTEM_PROMPT,
-            temperature: DEFAULT_TEMPERATURE,
-            replay: defaultReplay,
-            selectedAddons: [],
-            assistantModelId: undefined,
-            isMessageStreaming: false,
-          },
-        ],
+        history: [{...expectedConversation, id:1}],
         folders: [],
         prompts: [],
         isError: false,
@@ -126,21 +126,10 @@ describe('cleanData Functions', () => {
 
   describe('cleaning v2 data', () => {
     it('should return the latest format', () => {
-      const data = {
+      const dataV2 = {
         history: [
           {
-            id: '1',
-            name: 'conversation 1',
-            messages: [
-              {
-                role: 'user',
-                content: "what's up ?",
-              },
-              {
-                role: 'assistant',
-                content: 'Hi',
-              },
-            ],
+            ...conversationV2,
           },
         ],
         folders: [
@@ -150,32 +139,12 @@ describe('cleanData Functions', () => {
           },
         ],
       } as ExportFormatV2;
-      const obj = cleanData(data);
+      const obj = cleanData(dataV2);
       expect(isLatestExportFormat(obj)).toBe(true);
       expect(obj).toEqual({
         version: 4,
         history: [
-          {
-            id: '1',
-            name: 'conversation 1',
-            messages: [
-              {
-                role: 'user',
-                content: "what's up ?",
-              },
-              {
-                role: 'assistant',
-                content: 'Hi',
-              },
-            ],
-            model: OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
-            prompt: DEFAULT_SYSTEM_PROMPT,
-            temperature: DEFAULT_TEMPERATURE,
-            replay: defaultReplay,
-            selectedAddons: [],
-            assistantModelId: undefined,
-            isMessageStreaming: false,
-          },
+          expectedConversation
         ],
         folders: [
           {
@@ -192,23 +161,13 @@ describe('cleanData Functions', () => {
 
   describe('cleaning v4 data', () => {
     it('old v4 data should return the latest format', () => {
-      const data = {
+      const dataV4 = {
         version: 4,
         history: [
           {
-            id: '1',
-            name: 'conversation 1',
-            messages: [
-              {
-                role: 'user',
-                content: "what's up ?",
-              },
-              {
-                role: 'assistant',
-                content: 'Hi',
-              },
-            ],
-            model: OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
+            ...conversationV2,
+            
+            model: expectedModel,
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: DEFAULT_TEMPERATURE,
           },
@@ -226,37 +185,16 @@ describe('cleanData Functions', () => {
             name: 'prompt 1',
             description: '',
             content: '',
-            model: OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
           },
         ],
       } as ExportFormatV4;
 
-      const obj = cleanData(data);
+      const obj = cleanData(dataV4);
       expect(isLatestExportFormat(obj)).toBe(true);
       expect(obj).toEqual({
         version: 4,
         history: [
-          {
-            id: '1',
-            name: 'conversation 1',
-            messages: [
-              {
-                role: 'user',
-                content: "what's up ?",
-              },
-              {
-                role: 'assistant',
-                content: 'Hi',
-              },
-            ],
-            model: OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
-            prompt: DEFAULT_SYSTEM_PROMPT,
-            temperature: DEFAULT_TEMPERATURE,
-            replay: defaultReplay,
-            selectedAddons: [],
-            assistantModelId: undefined,
-            isMessageStreaming: false,
-          },
+          expectedConversation
         ],
         folders: [
           {
@@ -271,7 +209,6 @@ describe('cleanData Functions', () => {
             name: 'prompt 1',
             description: '',
             content: '',
-            model: OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
           },
         ],
         isError: false,
@@ -294,7 +231,6 @@ describe('Export helpers functions', () => {
           name: 'prompt 1',
           description: '',
           content: '',
-          model: OpenAIEntityModels[OpenAIEntityModelID.GPT_3_5_AZ],
         },
       ],
       folders: [
