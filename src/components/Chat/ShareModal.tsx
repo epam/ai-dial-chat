@@ -131,7 +131,9 @@ export default function ShareModal({
                 {t('share.modal.link', { context: type })}
               </p>
               <div className="relative mt-2">
-                <input type='text' readOnly
+                <input
+                  type="text"
+                  readOnly
                   className="w-full gap-2 truncate rounded border border-gray-400 bg-gray-100 p-3 pr-10 outline-none dark:border-gray-600 dark:bg-gray-700"
                   onCopy={handleCopy}
                   value={url}
