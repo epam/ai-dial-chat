@@ -117,11 +117,11 @@ const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
-        onRenameFolder={(newName, folderId) => {
+        onRenameFolder={(name, folderId) => {
           dispatch(
             ConversationsActions.renameFolder({
               folderId,
-              name: newName,
+              name,
             }),
           );
         }}

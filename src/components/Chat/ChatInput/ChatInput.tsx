@@ -4,6 +4,7 @@ import {
   MutableRefObject,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -15,11 +16,13 @@ import classNames from 'classnames';
 import { isMobile } from '@/src/utils/app/mobile';
 
 import { Message } from '@/src/types/chat';
+import { OpenAIEntityModels, defaultModelLimits } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -38,7 +41,6 @@ interface Props {
   onScrollDownClick: () => void;
   onStopConversation: () => void;
   onResize: (height: number) => void;
-  maxLength: number;
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
   showScrollDownButton: boolean;
   isMessagesPresented: boolean;
@@ -50,7 +52,6 @@ export const ChatInput = ({
   onScrollDownClick,
   onStopConversation,
   onResize,
-  maxLength,
   textareaRef,
   showScrollDownButton,
   isMessagesPresented,
@@ -66,12 +67,31 @@ export const ChatInput = ({
   const [variables, setVariables] = useState<string[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showPluginSelect, setShowPluginSelect] = useState(false);
+
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
+
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+
   const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
   const files = useAppSelector(FilesSelectors.selectSelectedFiles);
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
+
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+
+  const maxLength = useMemo(() => {
+    const maxLengthArray = selectedConversations.map(
+      ({ model }) =>
+        modelsMap[model.id]?.maxLength ??
+        OpenAIEntityModels[model.id]?.maxLength ??
+        defaultModelLimits.maxLength,
+    );
+
+    return Math.min(...maxLengthArray);
+  }, [modelsMap, selectedConversations]);
 
   const promptListRef = useRef<HTMLUListElement | null>(null);
   const inputRef = useRef<HTMLDivElement | null>(null);

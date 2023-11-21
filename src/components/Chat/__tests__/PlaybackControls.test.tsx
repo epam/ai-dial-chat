@@ -3,7 +3,7 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 vi.mock('@/src/components/Chat/FooterMessage', ()=>({
@@ -75,7 +75,7 @@ describe('PlaybackControls', () => {
   });
 
    it('renders properly', () => {
-    const { getByTestId, getAllByRole, queryByTestId } = render(
+    render(
       <PlaybackControls
         onScrollDownClick={onScrollDownClick}
         onResize={onResize}
@@ -83,11 +83,11 @@ describe('PlaybackControls', () => {
         showScrollDownButton
       />,
     );
-    const footer = getByTestId('footer-message');
-    const scrollDownButton = getByTestId('scroll-down-button');
-    const buttons = getAllByRole('button');
-    const messageBox = getByTestId('playback-message-content');
-    const spinner = queryByTestId('message-input-spinner');
+    const footer = screen.getByTestId('footer-message');
+    const scrollDownButton = screen.getByTestId('scroll-down-button');
+    const buttons = screen.getAllByRole('button');
+    const messageBox = screen.getByTestId('playback-message-content');
+    const spinner = screen.queryByTestId('message-input-spinner');
 
     expect(buttons.length).toBe(3);
     expect(messageBox).toBeInTheDocument();
@@ -98,7 +98,7 @@ describe('PlaybackControls', () => {
 
    it('displays spinner if streaming', () => {
     vi.mocked(ConversationsSelectors.selectIsConversationsStreaming).mockReturnValue(true);
-    const { queryByTestId } = render(
+    render(
       <PlaybackControls
         onScrollDownClick={onScrollDownClick}
         onResize={onResize}
@@ -106,8 +106,8 @@ describe('PlaybackControls', () => {
         showScrollDownButton
       />,
     );
-    const spinner = queryByTestId('message-input-spinner');
-    const messageBox = queryByTestId('playback-message-content');
+    const spinner = screen.getByTestId('message-input-spinner');
+    const messageBox = screen.queryByTestId('playback-message-content');
 
     expect(messageBox).toBeNull();
     expect(spinner).toBeInTheDocument();
@@ -115,7 +115,7 @@ describe('PlaybackControls', () => {
 
    it('hides scroll down button', () => {
     vi.mocked(ConversationsSelectors.selectIsConversationsStreaming).mockReturnValue(true);
-    const { queryByTestId } = render(
+    render(
       <PlaybackControls
         onScrollDownClick={onScrollDownClick}
         onResize={onResize}
@@ -123,14 +123,14 @@ describe('PlaybackControls', () => {
         showScrollDownButton={false}
       />,
     );
-    const scrollDownButton = queryByTestId('scroll-down-button');
+    const scrollDownButton = screen.queryByTestId('scroll-down-button');
 
     expect(scrollDownButton).toBeNull();
    });
 
    it('handles clicking on the scroll down button', async () => {
     const onScrollDownClick = vi.fn();
-    const { getByTestId } = render(
+    render(
       <PlaybackControls
         onScrollDownClick={onScrollDownClick}
         onResize={onResize}
@@ -138,7 +138,7 @@ describe('PlaybackControls', () => {
         showScrollDownButton
       />,
     );
-    const scrollDownButton = getByTestId('scroll-down-button');
+    const scrollDownButton = screen.getByTestId('scroll-down-button');
 
     await userEvent.click(scrollDownButton);
     expect(onScrollDownClick).toHaveBeenCalledOnce();
@@ -147,7 +147,7 @@ describe('PlaybackControls', () => {
   it('handles clicking on the previous message button', async () => {
     const playbackPrevMessage = vi.fn();
     vi.mocked(ConversationsActions.playbackPrevMessage).mockImplementation(playbackPrevMessage);
-    const { getByTestId } = render(
+    render(
       <PlaybackControls
         onScrollDownClick={onScrollDownClick}
         onResize={onResize}
@@ -155,7 +155,7 @@ describe('PlaybackControls', () => {
         showScrollDownButton={true}
       />,
     );
-    const prevBtn = getByTestId('playback-prev');
+    const prevBtn = screen.getByTestId('playback-prev');
 
     await userEvent.click(prevBtn);
 
@@ -166,7 +166,7 @@ describe('PlaybackControls', () => {
     const playbackPrevMessage = vi.fn();
     vi.mocked(ConversationsActions.playbackPrevMessage).mockImplementation(playbackPrevMessage);
     vi.mocked(ConversationsSelectors.selectPlaybackActiveIndex).mockReturnValue(0);
-    const { getByTestId } = render(
+    render(
       <PlaybackControls
         onScrollDownClick={onScrollDownClick}
         onResize={onResize}
@@ -174,7 +174,7 @@ describe('PlaybackControls', () => {
         showScrollDownButton={true}
       />,
     );
-    const prevBtn = getByTestId('playback-prev');
+    const prevBtn = screen.getByTestId('playback-prev');
 
     await userEvent.click(prevBtn);
 
@@ -184,7 +184,7 @@ describe('PlaybackControls', () => {
   it('handles clicking on the next message button', async () => {
     const playbackNextMessageStart = vi.fn();
     vi.mocked(ConversationsActions.playbackNextMessageStart).mockImplementation(playbackNextMessageStart);
-    const { getByTestId } = render(
+    render(
       <PlaybackControls
         onScrollDownClick={onScrollDownClick}
         onResize={onResize}
@@ -192,7 +192,7 @@ describe('PlaybackControls', () => {
         showScrollDownButton={true}
       />,
     );
-    const nextBtn = getByTestId('playback-next');
+    const nextBtn = screen.getByTestId('playback-next');
 
     await userEvent.click(nextBtn);
 
@@ -203,7 +203,7 @@ describe('PlaybackControls', () => {
     const playbackNextMessageStart = vi.fn();
     vi.mocked(ConversationsActions.playbackNextMessageStart).mockImplementation(playbackNextMessageStart);
     vi.mocked(ConversationsSelectors.selectPlaybackActiveIndex).mockReturnValue(3);
-    const { getByTestId } = render(
+    render(
       <PlaybackControls
         onScrollDownClick={onScrollDownClick}
         onResize={onResize}
@@ -211,7 +211,7 @@ describe('PlaybackControls', () => {
         showScrollDownButton={true}
       />,
     );
-    const nextBtn = getByTestId('playback-next');
+    const nextBtn = screen.getByTestId('playback-next');
 
     await userEvent.click(nextBtn);
 

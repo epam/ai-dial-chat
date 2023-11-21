@@ -8,6 +8,7 @@ import { OpenAIEntityModel } from '@/src/types/openai';
 import {
   ConversationBuilder,
   ExpectedConstants,
+  MenuOptions,
   ModelIds,
 } from '@/e2e/src/testData';
 import { FolderData } from '@/e2e/src/testData/folders/folderData';
@@ -41,7 +42,7 @@ export class ConversationData extends FolderData {
     const assistantMessage: Message = {
       role: 'assistant',
       content: 'test response',
-      model: { id: modelToUse.id, name: modelToUse.name },
+      model: { id: modelToUse.id },
     };
     return this.conversationBuilder
       .withMessage(userMessage)
@@ -80,7 +81,6 @@ export class ConversationData extends FolderData {
           content: `response on ${r}`,
           model: {
             id: basicConversation.model.id,
-            name: basicConversation.model.name,
           },
         },
       );
@@ -165,7 +165,7 @@ export class ConversationData extends FolderData {
       role: 'assistant',
       content:
         'EPAM is a global provider of software engineering and IT consulting services',
-      model: { id: conversation.model.id, name: conversation.model.name },
+      model: { id: conversation.model.id },
       custom_content: {
         stages: [
           {
@@ -204,6 +204,19 @@ export class ConversationData extends FolderData {
 
   public prepareNestedFolder(nestedLevel: number) {
     return super.prepareNestedFolder(nestedLevel, 'chat');
+  }
+
+  public prepareConversationsForNestedFolders(
+    nestedFolders: FolderInterface[],
+  ) {
+    const nestedConversations: Conversation[] = [];
+    for (const item of nestedFolders) {
+      const nestedConversation = this.prepareDefaultConversation();
+      nestedConversations.push(nestedConversation);
+      nestedConversation.folderId = item.id;
+      this.resetData();
+    }
+    return nestedConversations;
   }
 
   public prepareFolderWithConversations(conversationsCount: number) {
@@ -256,6 +269,28 @@ export class ConversationData extends FolderData {
     const conversation = this.prepareDefaultConversation(model, name);
     conversation.lastActivityDate = DateUtil.getOlderDate();
     return conversation;
+  }
+
+  public prepareDefaultPlaybackConversation(
+    conversation: Conversation,
+    playbackIndex?: number,
+  ) {
+    const messages = conversation.messages;
+    const playbackConversation = JSON.parse(JSON.stringify(conversation));
+    playbackConversation.id = uuidv4();
+    playbackConversation.name = `[${MenuOptions.playback}] ${conversation.name}`;
+    playbackConversation.messages = [];
+    if (playbackIndex) {
+      for (let i = 0; i < playbackIndex; i++) {
+        playbackConversation.messages.push(messages[i]);
+      }
+    }
+    playbackConversation.playback = {
+      isPlayback: true,
+      activePlaybackIndex: playbackIndex ?? 0,
+      messagesStack: messages,
+    };
+    return playbackConversation;
   }
 
   private fillReplayData(

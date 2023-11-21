@@ -1,17 +1,13 @@
-import { Conversation } from '@/src/types/chat';
-import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
-import { Prompt } from '@/src/types/prompt';
+import { useCallback } from 'react';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { Conversation } from '@/src/types/chat';
+import { Prompt } from '@/src/types/prompt';
 
 import Spinner from '../Spinner';
 import { ConversationSettings } from './ConversationSettings';
 
 interface Props {
-  models: OpenAIEntityModel[];
-  addons: OpenAIEntityAddon[];
+  isModels: boolean;
   conversation: Conversation;
   prompts: Prompt[];
   defaultModelId: string;
@@ -22,10 +18,11 @@ interface Props {
   onSelectAssistantSubModel: (modelId: string) => void;
   onChangeAddon: (addonId: string) => void;
   appName: string;
+  onApplyAddons: (conversation: Conversation, addonIds: string[]) => void;
 }
 
 export const ChatSettingsEmpty = ({
-  models,
+  isModels,
   conversation,
   prompts,
   defaultModelId,
@@ -36,16 +33,21 @@ export const ChatSettingsEmpty = ({
   onSelectModel,
   onSelectAssistantSubModel,
   onChangeAddon,
+  onApplyAddons,
 }: Props) => {
-  const dispatch = useAppDispatch();
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const handleOnApplyAddons = useCallback(
+    (addons: string[]) => {
+      onApplyAddons(conversation, addons);
+    },
+    [conversation, onApplyAddons],
+  );
 
   return (
     <>
       <div className="flex h-full w-full flex-col items-center p-0 md:px-5 md:pt-5">
         <div className="flex h-full w-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
           <div className="flex w-full items-center justify-center rounded-t bg-gray-200 p-4 dark:bg-gray-800">
-            {models.length === 0 ? (
+            {!isModels ? (
               <div>
                 <Spinner size={16} className="mx-auto" />
               </div>
@@ -56,14 +58,12 @@ export const ChatSettingsEmpty = ({
             )}
           </div>
 
-          {isShowSettings && models.length !== 0 && (
+          {isShowSettings && isModels && (
             <>
               <ConversationSettings
                 conversationId={conversation.id}
                 replay={conversation.replay}
-                model={
-                  modelsMap[conversation.model.id] || modelsMap[defaultModelId]
-                }
+                modelId={conversation.model.id || defaultModelId}
                 assistantModelId={conversation.assistantModelId}
                 prompt={conversation.prompt}
                 selectedAddons={conversation.selectedAddons}
@@ -74,14 +74,7 @@ export const ChatSettingsEmpty = ({
                 onSelectAssistantSubModel={onSelectAssistantSubModel}
                 onSelectModel={onSelectModel}
                 onChangeAddon={onChangeAddon}
-                onApplyAddons={(addons) => {
-                  dispatch(
-                    ConversationsActions.updateConversation({
-                      id: conversation.id,
-                      values: { selectedAddons: addons },
-                    }),
-                  );
-                }}
+                onApplyAddons={handleOnApplyAddons}
               />
             </>
           )}

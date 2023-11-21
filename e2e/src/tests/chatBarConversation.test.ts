@@ -118,7 +118,7 @@ test(
     conversationData,
     localStorageManager,
     chatHeader,
-    chatTitleTooltip,
+    tooltip,
     setTestIds,
     errorPopup,
   }) => {
@@ -153,7 +153,7 @@ test(
       .toBeTruthy();
     await errorPopup.cancelPopup();
     await chatHeader.chatTitle.hoverOver();
-    const tooltipChatHeaderTitle = await chatTitleTooltip.getChatTitle();
+    const tooltipChatHeaderTitle = await tooltip.getContent();
     expect
       .soft(
         tooltipChatHeaderTitle,
@@ -177,12 +177,13 @@ test('Menu for New conversation', async ({
   );
   const menuOptions = await conversationDropdownMenu.getAllMenuOptions();
   expect
-    .soft(menuOptions, ExpectedMessages.conversationContextOptionsValid)
+    .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
     .toEqual([
       MenuOptions.rename,
       MenuOptions.compare,
       MenuOptions.export,
       MenuOptions.moveTo,
+      MenuOptions.share,
       MenuOptions.delete,
     ]);
 });
@@ -212,7 +213,7 @@ test(
     await conversations.openConversationDropdownMenu(conversation.name);
     const menuOptions = await conversationDropdownMenu.getAllMenuOptions();
     expect
-      .soft(menuOptions, ExpectedMessages.conversationContextOptionsValid)
+      .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
       .toEqual([
         MenuOptions.rename,
         MenuOptions.compare,
@@ -220,6 +221,7 @@ test(
         MenuOptions.playback,
         MenuOptions.export,
         MenuOptions.moveTo,
+        MenuOptions.share,
         MenuOptions.delete,
       ]);
   },

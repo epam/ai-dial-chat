@@ -1,5 +1,6 @@
 import {
   IconCheck,
+  IconCopy,
   IconEdit,
   IconThumbDown,
   IconThumbUp,
@@ -30,7 +31,6 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
-import Clone from '../../../public/images/icons/clone.svg';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachments } from './MessageAttachments';
@@ -339,7 +339,7 @@ export const ChatMessage: FC<Props> = memo(
                       <IconCheck size={20} className="text-gray-500" />
                     ) : (
                       <Button onClick={copyOnClick}>
-                        <Clone height={20} width={20} />
+                        <IconCopy size={20} />
                       </Button>
                     )}
                   </div>

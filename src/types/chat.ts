@@ -1,5 +1,4 @@
 import { MIMEType } from './files';
-import { OpenAIEntityModel } from './openai';
 
 export interface Attachment {
   index?: number;
@@ -40,7 +39,7 @@ export interface Message {
   };
   like?: number;
   errorMessage?: string;
-  model?: Partial<OpenAIEntityModel>;
+  model?: ConversationEntityModel;
   settings?: MessageSettings;
   responseId?: string;
 }
@@ -68,7 +67,7 @@ export interface Conversation {
   id: string;
   name: string;
   messages: Message[];
-  model: OpenAIEntityModel;
+  model: ConversationEntityModel;
   prompt: string;
   temperature: number;
   folderId?: string;
@@ -81,6 +80,7 @@ export interface Conversation {
   lastActivityDate?: number;
 
   isMessageStreaming: boolean;
+  isShared?: boolean;
 }
 export interface Replay {
   replayAsIs?: boolean;
@@ -104,4 +104,8 @@ export interface ConversationsTemporarySettings {
   temperature: number;
   currentAssistentModelId: string | undefined;
   addonsIds: string[];
+}
+
+export interface ConversationEntityModel {
+  id: string;
 }

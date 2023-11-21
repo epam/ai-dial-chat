@@ -74,6 +74,7 @@ test(
     const newName = 'updated folder name';
     const nestedFolders = promptData.prepareNestedFolder(3);
     const randomFolder = GeneratorUtil.randomArrayElement(nestedFolders);
+    const randomFolderIndex = nestedFolders.indexOf(randomFolder);
     await localStorageManager.setFolders(...nestedFolders);
     await localStorageManager.setOpenedFolders(...nestedFolders);
 
@@ -88,6 +89,19 @@ test(
         ExpectedMessages.folderNameUpdated,
       )
       .toBeTruthy();
+
+    for (let i = 0; i < nestedFolders.length; i++) {
+      if (i !== randomFolderIndex) {
+        expect
+          .soft(
+            await folderPrompts
+              .getFolderByName(nestedFolders[i].name)
+              .isVisible(),
+            ExpectedMessages.folderNameNotUpdated,
+          )
+          .toBeTruthy();
+      }
+    }
   },
 );
 
