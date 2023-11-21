@@ -71,11 +71,6 @@ export interface RateBody {
   value: boolean;
 }
 
-export interface Share {
-  id: string;
-  createdDate: Date;
-}
-
 export interface Conversation {
   id: string;
   name: string;
@@ -93,7 +88,7 @@ export interface Conversation {
   lastActivityDate?: number;
 
   isMessageStreaming: boolean;
-  shares?: Share[];
+  isShared?: boolean;
 }
 export interface Replay {
   replayAsIs?: boolean;

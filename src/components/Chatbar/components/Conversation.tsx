@@ -78,8 +78,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const dragImageRef = useRef<HTMLImageElement | null>();
   const [isSharing, setIsSharing] = useState(false);
-  const { id: conversationId, shares = [] } = conversation;
-  const isShared = shares.length > 0;
+  const { id: conversationId, isShared } = conversation;
   const isSharingEnabled = enabledFeatures.includes('conversations-sharing');
   const showSharedIcon = isSharingEnabled && isShared && !isDeleting;
 
@@ -208,23 +207,20 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   }, []);
 
   const handleShared = useCallback(
-    (newShareId: string) => {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversationId,
-          values: {
-            shares: [
-              ...shares,
-              {
-                id: newShareId,
-                createdDate: new Date(),
-              },
-            ],
-          },
-        }),
-      );
+    (_newShareId: string) => {
+      //TODO: send newShareId to API to store {id, createdDate}
+      if (!isShared) {
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: conversationId,
+            values: {
+              isShared: true,
+            },
+          }),
+        );
+      }
     },
-    [conversationId, dispatch, shares],
+    [conversationId, dispatch, isShared],
   );
 
   const handleMoveToFolder = useCallback(

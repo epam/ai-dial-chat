@@ -104,7 +104,7 @@ export default function ShareModal({
         <FloatingFocusManager context={context} initialFocus={copyButtonRef}>
           <form
             noValidate
-            className="relative inline-block max-h-full w-full max-w-[424px] gap-4 rounded bg-gray-100 p-6 text-left dark:bg-gray-700"
+            className="relative inline-block max-h-full w-full max-w-[424px] rounded bg-gray-100 p-6 text-left dark:bg-gray-700"
             role="dialog"
             ref={refs.setFloating}
             {...getFloatingProps()}
@@ -147,28 +147,26 @@ export default function ShareModal({
                       <TooltipContent>{t('Copied!')}</TooltipContent>
                     </Tooltip>
                   ) : (
-                    <button
-                      className="outline-none"
-                      onClick={handleCopy}
-                      ref={copyButtonRef}
-                      autoFocus
-                    >
-                      <Tooltip>
-                        <TooltipTrigger>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <button
+                          className="outline-none"
+                          onClick={handleCopy}
+                          ref={copyButtonRef}
+                        >
                           <IconCopy
                             height={20}
                             width={20}
-                            className="cursor-pointer text-gray-500 hover:text-blue-500"
+                            className="text-gray-500 hover:text-blue-500"
                           />
-                        </TooltipTrigger>
-                        <TooltipContent>{t('Copy URL')}</TooltipContent>
-                      </Tooltip>
-                    </button>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t('Copy URL')}</TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
               </div>
             </div>
-            <div className="flex justify-end"></div>
           </form>
         </FloatingFocusManager>
       </FloatingOverlay>
