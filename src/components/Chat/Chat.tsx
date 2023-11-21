@@ -629,9 +629,8 @@ export const Chat = memo(() => {
                                 'top-chat-info',
                               )}
                               isShowClearConversation={
-                                enabledFeatures.has(
-                                  'top-clear-conversation',
-                                ) && !isPlayback
+                                enabledFeatures.has('top-clear-conversation') &&
+                                !isPlayback
                               }
                               isShowModelSelect={
                                 enabledFeatures.has(
