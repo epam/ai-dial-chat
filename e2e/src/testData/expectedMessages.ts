@@ -61,6 +61,7 @@ export enum ExpectedMessages {
   noPromptsImported = 'No prompts are imported',
   deleteAllPromptsButtonNotVisible = 'Delete All Prompts button is not visible',
   promptApplied = 'Prompt is applied to the field',
+  promptsCountIsValid = 'Prompts count is valid',
   infoAppIsValid = 'More info application is valid',
   infoAppDescriptionIsValid = 'More info application description is valid',
   entityHasDescription = 'Entity has description',
