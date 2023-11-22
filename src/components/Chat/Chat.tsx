@@ -13,6 +13,7 @@ import {
   Message,
   Replay,
 } from '@/src/types/chat';
+import { Feature } from '@/src/types/features';
 
 import {
   AddonsActions,
@@ -555,8 +556,8 @@ export const Chat = memo(() => {
                               defaultModelId={
                                 defaultModelId || OpenAIEntityModelID.GPT_3_5
                               }
-                              isShowSettings={enabledFeatures.includes(
-                                'empty-chat-settings',
+                              isShowSettings={enabledFeatures.has(
+                                Feature.EmptyChatSettings,
                               )}
                               onSelectModel={(modelId: string) =>
                                 handleSelectModel(conv, modelId)
@@ -618,22 +619,22 @@ export const Chat = memo(() => {
                       }`}
                     >
                       {conv.messages.length !== 0 &&
-                        enabledFeatures.includes('top-settings') && (
+                        enabledFeatures.has(Feature.TopSettings) && (
                           <div className={`z-10 flex flex-col `}>
                             <ChatHeader
                               conversation={conv}
                               isCompareMode={isCompareMode}
-                              isShowChatInfo={enabledFeatures.includes(
-                                'top-chat-info',
+                              isShowChatInfo={enabledFeatures.has(
+                                Feature.TopChatInfo,
                               )}
                               isShowClearConversation={
-                                enabledFeatures.includes(
-                                  'top-clear-conversation',
+                                enabledFeatures.has(
+                                  Feature.TopClearСonversation,
                                 ) && !isPlayback
                               }
                               isShowModelSelect={
-                                enabledFeatures.includes(
-                                  'top-chat-model-settings',
+                                enabledFeatures.has(
+                                  Feature.TopChatModelSettings,
                                 ) && !isPlayback
                               }
                               isShowSettings={isShowChatSettings}
@@ -703,8 +704,8 @@ export const Chat = memo(() => {
                                     message={message}
                                     messageIndex={index}
                                     conversation={conv}
-                                    isLikesEnabled={enabledFeatures.includes(
-                                      'likes',
+                                    isLikesEnabled={enabledFeatures.has(
+                                      Feature.Likes,
                                     )}
                                     editDisabled={isNotAllowedModel}
                                     onEdit={onEditMessage}

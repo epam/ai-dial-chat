@@ -1,18 +1,19 @@
-export type Feature =
-  | 'conversations-section'
-  | 'prompts-section'
-  | 'top-settings'
-  | 'top-clear-conversation'
-  | 'top-chat-info'
-  | 'top-chat-model-settings'
-  | 'empty-chat-settings'
-  | 'header'
-  | 'footer'
-  | 'request-api-key'
-  | 'report-an-issue'
-  | 'likes'
-  | 'conversations-sharing'
-  | 'prompts-sharing';
+export enum Feature {
+  ConversationsSection = 'conversations-section',
+  PromptsSection = 'prompts-section',
+  TopSettings = 'top-settings',
+  TopClearСonversation = 'top-clear-conversation',
+  TopChatInfo = 'top-chat-info',
+  TopChatModelSettings = 'top-chat-model-settings',
+  EmptyChatSettings = 'empty-chat-settings',
+  Header = 'header',
+  Footer = 'footer',
+  RequestApiKey = 'request-api-key',
+  ReportAnIssue = 'report-an-issue',
+  Likes = 'likes',
+  ConversationsSharing = 'conversations-sharing',
+  PromptsSharing = 'prompts-sharing',
+}
 
 export const availableFeatures: Record<Feature, boolean> = {
   'conversations-section': true,

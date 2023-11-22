@@ -10,15 +10,19 @@ import {
 } from '@/e2e/src/testData';
 import { ImportPrompt } from '@/e2e/src/testData/conversationHistory/importPrompt';
 import { UploadDownloadData } from '@/e2e/src/ui/pages';
-import { FileUtil } from '@/e2e/src/utils';
+import { FileUtil, GeneratorUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
+import { v4 as uuidv4 } from 'uuid';
 
 let folderPromptData: UploadDownloadData;
 let rootPromptData: UploadDownloadData;
 let newFolderPromptData: UploadDownloadData;
+const exportedPrompts: UploadDownloadData[] = [];
+const updatedExportedPrompts: UploadDownloadData[] = [];
 const newName = 'test prompt';
 const newDescr = 'test description';
 const newValue = 'what is {{A}}';
+const levelsCount = 3;
 
 test(
   'Export and import prompt structure with all prompts.\n' +
@@ -38,10 +42,12 @@ test(
     let promptsInsideFolder: FolderPrompt;
     let emptyFolder: FolderInterface;
     let promptOutsideFolder: Prompt;
+    let nestedFolders: FolderInterface[];
+    let nestedPrompts: Prompt[];
     let exportedData: UploadDownloadData;
     const promptContent = 'test';
 
-    await test.step('Prepare empty folder, folder with 2 prompts and another prompt in the root', async () => {
+    await test.step('Prepare empty folder, folder with 2 prompts, another prompt in the root and nested folders with prompts inside', async () => {
       emptyFolder = promptData.prepareFolder();
       promptData.resetData();
 
@@ -49,14 +55,24 @@ test(
       promptData.resetData();
 
       promptOutsideFolder = promptData.preparePrompt(promptContent);
+      promptData.resetData();
+
+      nestedFolders = promptData.prepareNestedFolder(levelsCount);
+      nestedPrompts = promptData.preparePromptsForNestedFolders(nestedFolders);
 
       await localStorageManager.setFolders(
         emptyFolder,
         promptsInsideFolder.folders,
+        ...nestedFolders,
       );
       await localStorageManager.setPrompts(
         ...promptsInsideFolder.prompts,
         promptOutsideFolder,
+        ...nestedPrompts,
+      );
+      await localStorageManager.setOpenedFolders(
+        promptsInsideFolder.folders,
+        ...nestedFolders,
       );
     });
 
@@ -79,11 +95,18 @@ test(
         .getFolderByName(promptsInsideFolder.folders.name)
         .waitFor();
       await folderPrompts.getFolderByName(emptyFolder.name).waitFor();
+
+      for (let i = 0; i < nestedFolders.length; i++) {
+        const nestedFolder = nestedFolders[i];
+        await folderPrompts.getFolderByName(nestedFolder.name).waitFor();
+        await folderPrompts.getFolderPrompt(
+          nestedFolder.name,
+          nestedPrompts[i].name,
+        );
+      }
+
       await prompts.getPromptByName(promptOutsideFolder.name).waitFor();
 
-      await folderPrompts.expandCollapseFolder(
-        promptsInsideFolder.folders.name,
-      );
       for (const prompt of promptsInsideFolder.prompts) {
         expect
           .soft(
@@ -430,12 +453,303 @@ test('Import file from 1.4 version to prompts and continue working with it', asy
   });
 });
 
+test(
+  `Export and import single prompt in nested folders when folders structure doesn't exist.\n` +
+    `Export and import single prompt in nested folders when it's folder doesn't exist.\n` +
+    `Export and import single prompt in nested folders when parent folder doesn't exist`,
+  async ({
+    dialHomePage,
+    setTestIds,
+    localStorageManager,
+    folderPrompts,
+    promptBar,
+    confirmationDialog,
+    promptData,
+    promptDropdownMenu,
+    folderDropdownMenu,
+  }) => {
+    setTestIds('EPMRTC-1375', 'EPMRTC-1376', 'EPMRTC-1377');
+    let nestedFolders: FolderInterface[];
+    let nestedPrompts: Prompt[];
+    let exportedData: UploadDownloadData;
+
+    await test.step('Prepare nested folders with prompts inside', async () => {
+      nestedFolders = promptData.prepareNestedFolder(levelsCount);
+      nestedPrompts = promptData.preparePromptsForNestedFolders(nestedFolders);
+
+      await localStorageManager.setFolders(...nestedFolders);
+      await localStorageManager.setPrompts(...nestedPrompts);
+      await localStorageManager.setOpenedFolders(...nestedFolders);
+    });
+
+    await test.step('Export prompt from 3rd level folder', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      await folderPrompts.openFolderPromptDropdownMenu(
+        nestedFolders[levelsCount].name,
+        nestedPrompts[levelsCount].name,
+      );
+      exportedData = await dialHomePage.downloadData(() =>
+        promptDropdownMenu.selectMenuOption(MenuOptions.export),
+      );
+    });
+
+    await test.step('Delete all prompts and folders, import exported prompt and verify folder structure with 3rd level prompt are displayed', async () => {
+      await promptBar.deleteAllPrompts();
+      await confirmationDialog.confirm();
+      await dialHomePage.uploadData(exportedData, () =>
+        promptBar.importButton.click(),
+      );
+
+      for (const nestedFolder of nestedFolders) {
+        await folderPrompts.getFolderByName(nestedFolder.name).waitFor();
+      }
+
+      await folderPrompts
+        .getFolderPrompt(
+          nestedFolders[levelsCount].name,
+          nestedPrompts[levelsCount].name,
+        )
+        .waitFor();
+
+      expect
+        .soft(
+          await folderPrompts.getFolderPromptsCount(),
+          ExpectedMessages.promptsCountIsValid,
+        )
+        .toBe(1);
+    });
+
+    await test.step('Delete last folder with its prompt, re-import exported file again and verify last nested folder with its prompt imported', async () => {
+      await folderPrompts.openFolderDropdownMenu(
+        nestedFolders[levelsCount].name,
+      );
+      await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
+      await confirmationDialog.confirm();
+
+      await dialHomePage.uploadData(exportedData, () =>
+        promptBar.importButton.click(),
+      );
+
+      await folderPrompts
+        .getFolderPrompt(
+          nestedFolders[levelsCount].name,
+          nestedPrompts[levelsCount].name,
+        )
+        .waitFor();
+    });
+
+    await test.step('Delete 2nd level folder with its nested content, re-import exported file and verify 2nd/3rd level folders with 3rd level prompt are imported', async () => {
+      await folderPrompts.openFolderDropdownMenu(
+        nestedFolders[levelsCount - 1].name,
+      );
+      await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
+      await confirmationDialog.confirm();
+
+      await dialHomePage.uploadData(exportedData, () =>
+        promptBar.importButton.click(),
+      );
+
+      await folderPrompts
+        .getFolderPrompt(
+          nestedFolders[levelsCount].name,
+          nestedPrompts[levelsCount].name,
+        )
+        .waitFor();
+
+      await folderPrompts
+        .getFolderByName(nestedFolders[levelsCount - 1].name)
+        .waitFor();
+
+      expect
+        .soft(
+          await folderPrompts.getFolderPromptsCount(),
+          ExpectedMessages.promptsCountIsValid,
+        )
+        .toBe(1);
+    });
+  },
+);
+
+test('Import a prompt in nested folder', async ({
+  dialHomePage,
+  setTestIds,
+  localStorageManager,
+  folderPrompts,
+  promptBar,
+  promptData,
+  promptDropdownMenu,
+}) => {
+  setTestIds('EPMRTC-1378');
+  let nestedFolders: FolderInterface[];
+  let nestedPrompts: Prompt[];
+  const updatedPromptNames: string[] = [];
+
+  await test.step('Prepare 3 levels nested folders with prompts inside', async () => {
+    nestedFolders = promptData.prepareNestedFolder(levelsCount);
+    nestedPrompts = promptData.preparePromptsForNestedFolders(nestedFolders);
+
+    await localStorageManager.setFolders(...nestedFolders);
+    await localStorageManager.setPrompts(...nestedPrompts);
+    await localStorageManager.setOpenedFolders(...nestedFolders);
+  });
+
+  await test.step('Export 2nd and 3rd level folder prompts', async () => {
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+
+    for (let i = 1; i <= 3; i = i + 2) {
+      await folderPrompts.openFolderPromptDropdownMenu(
+        nestedFolders[i].name,
+        nestedPrompts[i].name,
+      );
+      const exportedData = await dialHomePage.downloadData(
+        () => promptDropdownMenu.selectMenuOption(MenuOptions.export),
+        `${i}.json`,
+      );
+      exportedPrompts.push(exportedData);
+    }
+  });
+
+  await test.step('Update id and name of exported зкщьзеы and import them again', async () => {
+    for (const exportedData of exportedPrompts) {
+      const exportedContent = FileUtil.readFileData(exportedData.path);
+      const prompt = exportedContent.prompts[0];
+      prompt.id = uuidv4();
+      prompt.name = GeneratorUtil.randomString(10);
+      const updatedExportedPrompt = {
+        path: FileUtil.writeDataToFile(exportedContent),
+        isDownloadedData: false,
+      };
+      updatedExportedPrompts.push(updatedExportedPrompt);
+      await dialHomePage.uploadData(updatedExportedPrompt, () =>
+        promptBar.importButton.click(),
+      );
+      updatedPromptNames.push(prompt.name);
+    }
+  });
+
+  await test.step('Verify new prompts are added to 2nd and 3rd level folders, folders structure remains the same', async () => {
+    expect
+      .soft(
+        await folderPrompts.getFoldersCount(),
+        ExpectedMessages.foldersCountIsValid,
+      )
+      .toBe(levelsCount + 1);
+
+    for (let i = 0; i < levelsCount; i++) {
+      expect
+        .soft(
+          await folderPrompts.isFolderPromptVisible(
+            nestedFolders[i].name,
+            nestedPrompts[i].name,
+          ),
+          ExpectedMessages.promptIsVisible,
+        )
+        .toBeTruthy();
+      if (i === 1) {
+        expect
+          .soft(
+            await folderPrompts.isFolderPromptVisible(
+              nestedFolders[i].name,
+              updatedPromptNames[0],
+            ),
+            ExpectedMessages.promptIsVisible,
+          )
+          .toBeTruthy();
+      } else if (i === 3) {
+        expect
+          .soft(
+            await folderPrompts.isFolderPromptVisible(
+              nestedFolders[i].name,
+              updatedPromptNames[1],
+            ),
+            ExpectedMessages.promptIsVisible,
+          )
+          .toBeTruthy();
+      }
+    }
+  });
+});
+
+test('Import a prompt from nested folder which was moved to another place', async ({
+  dialHomePage,
+  setTestIds,
+  localStorageManager,
+  folderPrompts,
+  promptBar,
+  promptData,
+  promptDropdownMenu,
+}) => {
+  setTestIds('EPMRTC-1388');
+  let nestedFolders: FolderInterface[];
+  let thirdLevelFolderPrompt: Prompt;
+  let exportedData: UploadDownloadData;
+
+  await test.step('Prepare 3 levels nested folders and prompt inside the 3rd level folder', async () => {
+    nestedFolders = promptData.prepareNestedFolder(levelsCount);
+    thirdLevelFolderPrompt = promptData.prepareDefaultPrompt();
+    thirdLevelFolderPrompt.folderId = nestedFolders[levelsCount].id;
+
+    await localStorageManager.setFolders(...nestedFolders);
+    await localStorageManager.setPrompts(thirdLevelFolderPrompt);
+    await localStorageManager.setOpenedFolders(...nestedFolders);
+  });
+
+  await test.step('Export 3rd level folder prompt', async () => {
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await folderPrompts.openFolderPromptDropdownMenu(
+      nestedFolders[levelsCount].name,
+      thirdLevelFolderPrompt.name,
+    );
+    exportedData = await dialHomePage.downloadData(() =>
+      promptDropdownMenu.selectMenuOption(MenuOptions.export),
+    );
+  });
+
+  await test.step('Move 3rd level folder on the 1st level folder and import exported prompt', async () => {
+    nestedFolders[levelsCount].folderId = nestedFolders[1].folderId;
+    await localStorageManager.setFolders(...nestedFolders);
+    await dialHomePage.reloadPage();
+    await dialHomePage.waitForPageLoaded();
+    await dialHomePage.uploadData(exportedData, () =>
+      promptBar.importButton.click(),
+    );
+  });
+
+  await test.step('Verify imported prompt is in 3rd level folder on the 1st level', async () => {
+    await folderPrompts
+      .getFolderPrompt(
+        nestedFolders[levelsCount].name,
+        thirdLevelFolderPrompt.name,
+      )
+      .waitFor();
+
+    const thirdLevelFolderPromptsCount = await folderPrompts
+      .getFolderPrompt(nestedFolders[2].name, thirdLevelFolderPrompt.name)
+      .count();
+    expect
+      .soft(thirdLevelFolderPromptsCount, ExpectedMessages.promptsCountIsValid)
+      .toBe(0);
+
+    const foldersCount = await folderPrompts.getFoldersCount();
+    expect
+      .soft(foldersCount, ExpectedMessages.foldersCountIsValid)
+      .toBe(levelsCount + 1);
+
+    const promptsCount = await folderPrompts.getFolderPromptsCount();
+    expect.soft(promptsCount, ExpectedMessages.promptsCountIsValid).toBe(1);
+  });
+});
+
 test.afterAll(async () => {
   FileUtil.removeExportFolder();
   const importFilesToDelete: UploadDownloadData[] = [
     folderPromptData,
     rootPromptData,
     newFolderPromptData,
+    ...updatedExportedPrompts,
   ];
   importFilesToDelete.forEach((d) => {
     if (d) {
