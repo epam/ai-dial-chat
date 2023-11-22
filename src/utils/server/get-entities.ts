@@ -1,17 +1,13 @@
 import { EntityType } from '@/src/types/common';
 
-
-
-import { OPENAI_API_HOST, OPENAI_API_VERSION } from '../../constants/default-settings';
-
-
+import {
+  OPENAI_API_HOST,
+  OPENAI_API_VERSION,
+} from '../../constants/default-settings';
 
 import { getApiHeaders } from './get-headers';
 
-
-
 import fetch from 'node-fetch';
-
 
 export async function getEntities<T>(
   type: EntityType,

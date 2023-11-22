@@ -3,6 +3,7 @@ import { signIn, signOut, useSession } from 'next-auth/react';
 import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import Image from 'next/image';
 
 import { useAppDispatch } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -36,7 +37,7 @@ export const UserDesktop = () => {
           <div className="flex min-w-[120px] items-center justify-between gap-2 pr-3">
             <div className="flex items-center gap-3">
               {session?.user?.image ? (
-                <img
+                <Image
                   className="rounded"
                   src={session?.user?.image}
                   width={18}

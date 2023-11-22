@@ -150,7 +150,7 @@ export const ChatInputMessage = ({
     if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
       textareaRef.current.blur();
     }
-  }, [content, messageIsStreaming, onSend, t, textareaRef]);
+  }, [content, dispatch, files, messageIsStreaming, onSend, t, textareaRef]);
 
   const parseVariables = useCallback((content: string) => {
     const regex = /{{(.*?)}}/g;
@@ -245,6 +245,7 @@ export const ChatInputMessage = ({
     [
       handleInitModal,
       handleSend,
+      isReplay,
       isTyping,
       prompts.length,
       showPluginSelect,

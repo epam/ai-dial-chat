@@ -82,7 +82,7 @@ export const FileFolderSelect = ({
         }),
       );
     }
-  }, [dispatch, isOpen]);
+  }, [dispatch, isOpen, openedFoldersIds]);
 
   const handleSearch = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value),
