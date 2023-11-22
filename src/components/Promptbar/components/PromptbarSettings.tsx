@@ -21,6 +21,7 @@ import {
 import { Import } from '@/src/components/Settings/Import';
 
 import FolderPlus from '../../../../public/images/icons/folder-plus.svg';
+import { HighlightColor } from '@/src/types/common';
 
 interface PromptbarSettingsProps {
   allPrompts: Prompt[];
@@ -54,7 +55,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
       <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <Import
-            highlightColor="violet"
+            highlightColor={HighlightColor.Violet}
             onImport={(promptsJSON) => {
               dispatch(
                 PromptsActions.importPrompts({ promptsHistory: promptsJSON }),

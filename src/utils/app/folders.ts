@@ -95,6 +95,6 @@ export function getByHighlightColor(
     case HighlightColor.Violet:
       return violetColor;
     default:
-      return defaultColor;
+      return defaultColor || '';
   }
 }

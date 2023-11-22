@@ -28,6 +28,7 @@ import { Spinner } from '../Common/Spinner';
 import Folder from '../Folder';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
+import { HighlightColor } from '@/src/types/common';
 
 interface Props {
   isOpen: boolean;
@@ -293,7 +294,7 @@ export const FileSelect = ({
                                       searchTerm={searchQuery}
                                       currentFolder={folder}
                                       allFolders={folders}
-                                      highlightColor="blue"
+                                      highlightColor={HighlightColor.Blue}
                                       highlightedFolders={[]}
                                       isInitialRename={
                                         newAddedFolderId === folder.id

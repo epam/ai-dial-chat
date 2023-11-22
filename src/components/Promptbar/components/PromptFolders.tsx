@@ -16,6 +16,7 @@ import Folder from '@/src/components/Folder';
 
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { PromptComponent } from './Prompt';
+import { HighlightColor } from '@/src/types/common';
 
 interface promptFolderProps {
   folder: FolderInterface;
@@ -101,7 +102,7 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
         onDrop={onDropBetweenFolders}
         index={index}
         parentFolderId={folder.folderId}
-        highlightColor="violet"
+        highlightColor={HighlightColor.Violet}
       />
       <Folder
         searchTerm={searchTerm}
@@ -109,7 +110,7 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
         itemComponent={PromptComponent}
         allItems={prompts}
         allFolders={conversationFolders}
-        highlightColor="violet"
+        highlightColor={HighlightColor.Violet}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
@@ -133,7 +134,7 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
           onDrop={onDropBetweenFolders}
           index={index + 1}
           parentFolderId={folder.folderId}
-          highlightColor="violet"
+          highlightColor={HighlightColor.Violet}
         />
       )}
     </>

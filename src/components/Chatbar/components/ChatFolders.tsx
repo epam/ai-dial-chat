@@ -16,6 +16,7 @@ import Folder from '@/src/components/Folder';
 
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
+import { HighlightColor } from '@/src/types/common';
 
 interface ChatFolderProps {
   folder: FolderInterface;
@@ -105,7 +106,7 @@ const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
         onDrop={onDropBetweenFolders}
         index={index}
         parentFolderId={folder.folderId}
-        highlightColor="green"
+        highlightColor={HighlightColor.Green}
       />
       <Folder
         searchTerm={searchTerm}
@@ -113,7 +114,7 @@ const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
         itemComponent={ConversationComponent}
         allItems={conversations}
         allFolders={conversationFolders}
-        highlightColor="green"
+        highlightColor={HighlightColor.Green}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
@@ -137,7 +138,7 @@ const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
           onDrop={onDropBetweenFolders}
           index={index + 1}
           parentFolderId={folder.folderId}
-          highlightColor="green"
+          highlightColor={HighlightColor.Green}
         />
       )}
     </>

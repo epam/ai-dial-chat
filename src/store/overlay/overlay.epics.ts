@@ -1,45 +1,34 @@
-import {
-  EMPTY,
-  distinctUntilChanged,
-  filter,
-  first,
-  fromEvent,
-  ignoreElements,
-  map,
-  merge,
-  of,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { EMPTY, distinctUntilChanged, filter, first, fromEvent, ignoreElements, map, merge, of, switchMap, tap } from 'rxjs';
+
+
 
 import { combineEpics } from 'redux-observable';
 
+
+
 import { validateFeature } from '@/src/utils/app/features';
-import {
-  isPostMessageOverlayRequest,
-  sendPMEvent,
-  sendPMResponse,
-} from '@/src/utils/app/overlay';
+import { isPostMessageOverlayRequest, sendPMEvent, sendPMResponse } from '@/src/utils/app/overlay';
 import { validateTheme } from '@/src/utils/app/settings';
 
+
+
 import { Message, Role } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { Theme } from '@/src/types/settings';
 import { AppEpic } from '@/src/types/store';
 
+
+
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 import { overlayAppName } from '@/src/constants/overlay';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '../conversations/conversations.reducers';
+
+
+import { ConversationsActions, ConversationsSelectors } from '../conversations/conversations.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
-import {
-  SettingsActions,
-  SettingsSelectors,
-} from '../settings/settings.reducers';
+import { SettingsActions, SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import {
   OverlayActions,
@@ -252,7 +241,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
                     values: {
                       model: newAiEntity,
                       assistantModelId:
-                        newAiEntity.type === Role.Assistant
+                        newAiEntity.type === EntityType.Assistant
                           ? DEFAULT_ASSISTANT_SUBMODEL.id
                           : undefined,
                     },

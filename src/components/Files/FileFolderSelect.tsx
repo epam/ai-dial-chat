@@ -24,6 +24,7 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { Spinner } from '../Common/Spinner';
 import Folder from '../Folder';
+import { HighlightColor } from '@/src/types/common';
 
 interface Props {
   isOpen: boolean;
@@ -229,7 +230,7 @@ export const FileFolderSelect = ({
                                       searchTerm={searchQuery}
                                       currentFolder={folder}
                                       allFolders={folders}
-                                      highlightColor="blue"
+                                      highlightColor={HighlightColor.Blue}
                                       highlightedFolders={highlightedFolders}
                                       isInitialRename={
                                         newAddedFolderId === folder.id

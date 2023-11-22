@@ -67,9 +67,9 @@ export const BetweenFoldersLine = ({
 
   const highlightColorBg = getByHighlightColor(
     highlightColor,
-    classNames('bg-green/60'),
-    classNames('bg-violet/60'),
-    classNames('bg-blue-500/60'),
+    'bg-green/60',
+    'bg-violet/60',
+    'bg-blue-500/60'
   );
 
   return (

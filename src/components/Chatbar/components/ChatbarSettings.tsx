@@ -25,6 +25,7 @@ import {
 
 import FolderPlus from '../../../../public/images/icons/folder-plus.svg';
 import { Import } from '../../Settings/Import';
+import { HighlightColor } from '@/src/types/common';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation('sidebar');
@@ -69,7 +70,7 @@ export const ChatbarSettings = () => {
       <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <Import
-            highlightColor="green"
+            highlightColor={HighlightColor.Green}
             onImport={(importJSON) => {
               dispatch(
                 ConversationsActions.importConversations({ data: importJSON }),
