@@ -98,16 +98,22 @@ pre:has(div.codeblock) {
     @apply border-gray-800 dark:border-gray-200;
   }
 
+  .button.button-primary {
+    @apply text-gray-200;
+  }
   .button.button-primary:not(:disabled) {
     @apply bg-blue-500 hover:bg-blue-700;
   }
 
   .button.button-secondary {
-    @apply border-gray-400 dark:border-gray-600;
+    @apply border-gray-400 text-gray-800 dark:border-gray-600 dark:text-gray-200;
   }
 
   .button.button-secondary:not(:disabled) {
     @apply bg-transparent hover:bg-gray-400 hover:dark:bg-gray-600;
+  }
+  .button.button-secondary:disabled {
+    @apply text-gray-200;
   }
 }
 

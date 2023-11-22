@@ -200,7 +200,7 @@ export const FileFolderSelect = ({
                     <div className="flex min-h-[350px] flex-col overflow-auto">
                       <button
                         className={classNames(
-                          'flex items-center gap-0.5 rounded py-1 text-xs text-gray-500',
+                          'flex items-center gap-1 rounded py-1 text-xs text-gray-500',
                           !selectedFolderId && 'bg-blue-500/20',
                         )}
                         onClick={() => handleToggleFolder(undefined)}
