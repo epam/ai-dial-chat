@@ -31,7 +31,7 @@ export class PromptList extends BaseElement {
         classValue!.includes(ExpectedConstants.selectedPromptOptionAttribute)
       ) {
         await this.page.keyboard.press(keys.enter);
-        break;
+        return;
       }
       optionIndex++;
     }
