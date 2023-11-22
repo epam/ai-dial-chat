@@ -26,7 +26,10 @@
       { "argsIgnorePattern": "^_" }
     ],
     "no-restricted-imports": ["error", { "paths": ["react-i18next"] }],
-    "tailwindcss/no-custom-classname": ["error", { "callees": ["classnames", "clsx", "ctl", "cva", "tv", "getByHighlightColor"] }],
+    "tailwindcss/no-custom-classname": ["error", { "callees": [
+      "classnames", "clsx", "ctl", "cva", "tv", // default
+      "getByHighlightColor" // our helper
+    ]}],
     "no-restricted-globals": [
       "error",
       {
