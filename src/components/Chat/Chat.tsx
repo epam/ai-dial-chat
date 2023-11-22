@@ -59,6 +59,7 @@ export const Chat = memo(() => {
   const modelsIsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const defaultModelId = useAppSelector(SettingsSelectors.selectDefaultModelId);
   const addons = useAppSelector(AddonsSelectors.selectAddons);
+  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
