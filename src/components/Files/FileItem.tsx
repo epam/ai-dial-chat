@@ -88,9 +88,7 @@ export const FileItem = ({ item, level, onEvent }: Props) => {
               onChange={handleToggleFile}
             />
             <IconCheck
-              width={16}
-              height={16}
-              size={16}
+              size={18}
               className="pointer-events-none invisible absolute text-blue-500 peer-checked:visible"
             />
           </div>

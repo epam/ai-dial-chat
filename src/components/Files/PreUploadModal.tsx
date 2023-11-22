@@ -144,18 +144,20 @@ export const PreUploadDialog = ({
 
       setSelectedFiles((oldFiles) =>
         oldFiles.concat(
-          filteredFiles.map((file) => ({
-            fileContent: file,
-            id: file.name,
-            name: file.name,
-          })),
+          filteredFiles.map((file) => {
+            return {
+              fileContent: file,
+              id: getPathNameId(file.name, folderPath),
+              name: file.name,
+            };
+          }),
         ),
       );
       if (uploadInputRef.current) {
         uploadInputRef.current.value = '';
       }
     },
-    [allowedTypes, t],
+    [allowedTypes, folderPath, t],
   );
 
   const handleUpload = useCallback(() => {
@@ -232,7 +234,9 @@ export const PreUploadDialog = ({
         setSelectedFiles(
           selectedFiles.map((file, index) => {
             if (index === changedFileIndex) {
-              const formatFile = file.name.slice(file.name.lastIndexOf('.'));
+              const indexDot = file.name.lastIndexOf('.');
+              const formatFile =
+                indexDot !== -1 ? file.name.slice(indexDot) : '';
               return {
                 ...file,
                 name: e.target.value + formatFile,
@@ -272,6 +276,18 @@ export const PreUploadDialog = ({
       setTimeout(() => uploadInputRef.current?.click());
     }
   }, [initialFilesSelect, isOpen]);
+
+  useEffect(() => {
+    setSelectedFiles((oldFiles) =>
+      oldFiles.map((file) => {
+        return {
+          ...file,
+          id: getPathNameId(file.name, folderPath),
+          folderPath,
+        };
+      }),
+    );
+  }, [folderPath]);
 
   return (
     <>
