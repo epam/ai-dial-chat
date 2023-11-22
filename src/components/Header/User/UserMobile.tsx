@@ -7,8 +7,8 @@ import { useTranslation } from 'next-i18next';
 import { useAppDispatch } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { FooterMessage } from '@/src/components/Chat/FooterMessage';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { FooterMessage } from '@/src/components/Common/FooterMessage';
 
 import LogOutIcon from '../../../../public/images/icons/log-out.svg';
 import UserIcon from '../../../../public/images/icons/user.svg';

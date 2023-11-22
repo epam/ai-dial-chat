@@ -13,6 +13,7 @@ import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 
 import { cleanConversationHistory } from './clean';
+import { triggerDownload } from './file';
 
 export function isExportFormatV1(obj: any): obj is ExportFormatV1 {
   return Array.isArray(obj);
@@ -112,7 +113,7 @@ type ExportType =
   | 'prompt'
   | 'prompts_history';
 
-function triggerDownload(
+function downloadChatPromptData(
   data: ExportConversationsFormatV4 | Prompt[] | PromptsHistory,
   exportType: ExportType,
 ) {
@@ -120,31 +121,25 @@ function triggerDownload(
     type: 'application/json',
   });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.download = `chatbot_ui_${exportType}_${currentDate()}.json`;
-  link.href = url;
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+
+  triggerDownload(url, `chatbot_ui_${exportType}_${currentDate()}.json`);
 }
 
 const triggerDownloadConversation = (data: ExportConversationsFormatV4) => {
-  triggerDownload(data, 'conversation');
+  downloadChatPromptData(data, 'conversation');
 };
 const triggerDownloadConversationsHistory = (
   data: ExportConversationsFormatV4,
 ) => {
-  triggerDownload(data, 'conversations_history');
+  downloadChatPromptData(data, 'conversations_history');
 };
 
 const triggerDownloadPromptsHistory = (data: PromptsHistory) => {
-  triggerDownload(data, 'prompts_history');
+  downloadChatPromptData(data, 'prompts_history');
 };
 
 const triggerDownloadPrompt = (data: PromptsHistory) => {
-  triggerDownload(data, 'prompt');
+  downloadChatPromptData(data, 'prompt');
 };
 
 export const exportConversation = (

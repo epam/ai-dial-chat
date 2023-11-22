@@ -1,7 +1,7 @@
-import { ScrollDownButton } from '@/src/components/Chat/ScrollDownButton';
+import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
 import { userEvent } from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 
 describe('ScrollDownButton', () => {
     // preparation

@@ -8,7 +8,7 @@ import { Message } from '@/src/types/chat';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
-import RefreshCWAlt from '../../../public/images/icons/refresh-cw-alt.svg';
+import RefreshCWAlt from '../../../../public/images/icons/refresh-cw-alt.svg';
 import { ChatInputFooter } from './ChatInputFooter';
 import { ChatInputMessage } from './ChatInputMessage';
 

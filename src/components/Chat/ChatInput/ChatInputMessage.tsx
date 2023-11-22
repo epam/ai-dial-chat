@@ -9,21 +9,28 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
+import { getUserCustomContent } from '@/src/utils/app/file';
 import { isMobile } from '@/src/utils/app/mobile';
 
 import { Message } from '@/src/types/chat';
+import { Feature } from '@/src/types/features';
 import { OpenAIEntityModels, defaultModelLimits } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
-import { useAppSelector } from '@/src/store/hooks';
+import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import { ScrollDownButton } from '../../Common/ScrollDownButton';
+import { AttachButton } from './AttachButton';
+import { ChatInputAttachments } from './ChatInputAttachments';
 import { PromptDialog } from './PromptDialog';
 import { PromptList } from './PromptList';
-import { ScrollDownButton } from './ScrollDownButton';
 import { SendMessageButton } from './SendMessageButton';
 
 interface Props {
@@ -40,6 +47,7 @@ export const ChatInputMessage = ({
   onSend,
 }: Props) => {
   const { t } = useTranslation('chat');
+  const dispatch = useAppDispatch();
 
   const [content, setContent] = useState<string>();
   const [isTyping, setIsTyping] = useState<boolean>(false);
@@ -62,6 +70,15 @@ export const ChatInputMessage = ({
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+  const files = useAppSelector(FilesSelectors.selectSelectedFiles);
+  const maximumAttachmentsAmount = useAppSelector(
+    ConversationsSelectors.selectMaximumAttachmentsAmount,
+  );
+  const displayAttachFunctionality =
+    enabledFeatures.has(Feature.InputFiles) && maximumAttachmentsAmount > 0;
 
   const [filteredPrompts, setFilteredPrompts] = useState(() =>
     prompts.filter((prompt) =>
@@ -122,7 +139,12 @@ export const ChatInputMessage = ({
       return;
     }
 
-    onSend({ role: 'user', content });
+    onSend({
+      role: 'user',
+      content,
+      ...getUserCustomContent(files),
+    });
+    dispatch(FilesActions.resetSelectedFiles());
     setContent('');
 
     if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
@@ -267,10 +289,16 @@ export const ChatInputMessage = ({
 
   return (
     <div className="mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0  md:last:mb-6 lg:mx-auto lg:max-w-3xl">
-      <div className="relative flex w-full grow flex-col" data-qa="message">
+      <div
+        className="relative m-0 flex max-h-[400px] min-h-[40px] w-full grow flex-col rounded bg-gray-100 focus-within:border-blue-500 dark:bg-gray-700"
+        data-qa="message"
+      >
         <textarea
           ref={textareaRef}
-          className="m-0 max-h-[400px] min-h-[40px] w-full resize-none rounded border border-transparent bg-gray-100 py-3 pl-4 pr-10 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:bg-gray-700"
+          className={classNames(
+            'm-0 max-h-[320px] min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none placeholder:text-gray-500',
+            displayAttachFunctionality ? 'pl-12' : 'pl-4',
+          )}
           style={{
             bottom: `${textareaRef?.current?.scrollHeight}px`,
             overflow: `${
@@ -296,6 +324,13 @@ export const ChatInputMessage = ({
           handleSend={handleSend}
           isInputEmpty={!content || content.trim().length === 0}
         />
+
+        {displayAttachFunctionality && (
+          <>
+            <AttachButton />
+            <ChatInputAttachments />
+          </>
+        )}
 
         {showScrollDownButton && (
           <ScrollDownButton

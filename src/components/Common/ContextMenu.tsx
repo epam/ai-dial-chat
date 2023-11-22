@@ -1,4 +1,5 @@
 import {
+  IconDots,
   IconFileArrowRight,
   IconFolderPlus,
   IconFolderShare,
@@ -18,7 +19,6 @@ import classNames from 'classnames';
 import { FeatureType, HighlightColor } from '@/src/types/components';
 import { FolderInterface } from '@/src/types/folder';
 
-import DotsIcon from '../../../public/images/icons/dots-vertical.svg';
 import { Menu, MenuItem } from './DropdownMenu';
 
 interface ContextMenuProps {
@@ -60,11 +60,9 @@ export const ContextMenu = ({
       <Menu
         type="contextMenu"
         trigger={
-          <DotsIcon
-            className={classNames('rotate-90 text-gray-500', className)}
-            width={18}
-            height={18}
-            size={18}
+          <IconDots
+            className={classNames('text-gray-500', className)}
+            size={16}
           />
         }
       >

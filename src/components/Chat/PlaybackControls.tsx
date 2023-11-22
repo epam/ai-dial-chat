@@ -13,9 +13,9 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
-import { ScrollDownButton } from '@/src/components/Chat/ScrollDownButton';
+import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
-import { ChatInputFooter } from './ChatInputFooter';
+import { ChatInputFooter } from './ChatInput/ChatInputFooter';
 
 interface Props {
   showScrollDownButton: boolean;

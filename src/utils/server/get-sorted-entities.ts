@@ -74,6 +74,8 @@ export const getSortedEntities = async (token: JWT | null) => {
             requestLimit: existingModelMapping.requestLimit,
           }
         : defaultModelLimits),
+      inputAttachmentTypes: entity.input_attachment_types,
+      maxInputAttachments: entity.max_input_attachments,
     });
   }
 

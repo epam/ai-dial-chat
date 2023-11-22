@@ -14,6 +14,8 @@ export interface ProxyOpenAIEntity<T = OpenAIEntityModelType> {
     chat_completion: boolean;
   };
   addons?: string[];
+  input_attachment_types?: string[];
+  max_input_attachments?: number;
 }
 
 export interface OpenAIEntity {
@@ -27,6 +29,8 @@ export interface OpenAIEntity {
     | OpenAIEntityAssistantType
     | OpenAIEntityAddonType;
   selectedAddons?: string[];
+  inputAttachmentTypes?: string[];
+  maxInputAttachments?: number;
 }
 
 export interface OpenAIEntityModel extends Omit<OpenAIEntity, 'type'> {
