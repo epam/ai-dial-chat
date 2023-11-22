@@ -69,7 +69,6 @@ export const ChatInput = ({
   const [showPluginSelect, setShowPluginSelect] = useState(false);
 
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
-
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -78,6 +77,9 @@ export const ChatInput = ({
   const files = useAppSelector(FilesSelectors.selectSelectedFiles);
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
+  );
+  const maximumAttachmentsAmount = useAppSelector(
+    ConversationsSelectors.selectMaximumAttachmentsAmount,
   );
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -101,6 +103,8 @@ export const ChatInput = ({
       prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
     ),
   );
+
+  const displayAttachFunctionality = maximumAttachmentsAmount > 0;
 
   useEffect(() => {
     setFilteredPrompts(
@@ -383,7 +387,7 @@ export const ChatInput = ({
             ref={textareaRef}
             className={classNames(
               'm-0 max-h-[320px] min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none placeholder:text-gray-500',
-              'pl-12',
+              displayAttachFunctionality ? 'pl-12' : 'pl-4',
             )}
             style={{
               bottom: `${textareaRef?.current?.scrollHeight}px`,
@@ -411,8 +415,12 @@ export const ChatInput = ({
             isInputEmpty={!content || content.trim().length === 0}
           />
 
-          <AttachButton />
-          <ChatInputAttachments />
+          {displayAttachFunctionality && (
+            <>
+              <AttachButton />
+              <ChatInputAttachments />
+            </>
+          )}
 
           {showScrollDownButton && (
             <ScrollDownButton

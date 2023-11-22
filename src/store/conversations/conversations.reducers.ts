@@ -613,6 +613,55 @@ const selectNotModelConversations = createSelector(
     );
   },
 );
+const selectSelectedConversationsModels = createSelector(
+  [selectSelectedConversations, ModelsSelectors.selectModelsMap],
+  (conversations, modelsMap) => {
+    return conversations
+      .map((conv) => modelsMap[conv.model.id])
+      .filter(Boolean);
+  },
+);
+
+const selectAvailableAttachmentsTypes = createSelector(
+  [selectSelectedConversationsModels],
+  (models) => {
+    if (models.length === 0) {
+      return [];
+    }
+
+    const modelsAttachmentsTypes = models
+      .map((model) => model?.inputAttachmentTypes || [])
+      .filter(Boolean) as string[][];
+
+    if (modelsAttachmentsTypes.length === 1) {
+      return modelsAttachmentsTypes[0];
+    }
+
+    // Assume that we have only 2 selected models available
+    const availableModelsAttachmentTypes = (
+      modelsAttachmentsTypes[0] || []
+    ).filter((value) => (modelsAttachmentsTypes[1] || []).includes(value));
+
+    return availableModelsAttachmentTypes.length === 0
+      ? undefined
+      : availableModelsAttachmentTypes;
+  },
+);
+
+const selectMaximumAttachmentsAmount = createSelector(
+  [selectSelectedConversationsModels],
+  (models) => {
+    if (models.length === 0) {
+      return 0;
+    }
+
+    return Math.min(
+      ...models.map((model) =>
+        !!model?.inputAttachmentTypes ? Number.MAX_SAFE_INTEGER : 0,
+      ),
+    );
+  },
+);
 
 export const ConversationsSelectors = {
   selectConversations,
@@ -641,6 +690,9 @@ export const ConversationsSelectors = {
   selectPlaybackActiveMessage,
   selectIsLastAssistantMessageEmpty,
   selectNotModelConversations,
+  selectSelectedConversationsModels,
+  selectAvailableAttachmentsTypes,
+  selectMaximumAttachmentsAmount,
 };
 
 export const ConversationsActions = conversationsSlice.actions;

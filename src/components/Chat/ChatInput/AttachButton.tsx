@@ -25,7 +25,12 @@ export const AttachButton = () => {
     ConversationsSelectors.selectIsConversationsStreaming,
   );
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
-
+  const availableAttachmentsTypes = useAppSelector(
+    ConversationsSelectors.selectAvailableAttachmentsTypes,
+  );
+  const maximumAttachmentsAmount = useAppSelector(
+    ConversationsSelectors.selectMaximumAttachmentsAmount,
+  );
   const [isPreUploadDialogOpened, setIsPreUploadDialogOpened] = useState(false);
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
@@ -73,8 +78,8 @@ export const AttachButton = () => {
       {isSelectFilesDialogOpened && (
         <FileSelect
           isOpen
-          // TODO: take this from model settings
-          allowedTypes={['.dmg', '.png', '.pdf']}
+          allowedTypes={availableAttachmentsTypes}
+          maximumAttachmentsAmount={maximumAttachmentsAmount}
           onClose={(result) => {
             if (typeof result === 'object') {
               const selectedFilesIds = result as string[];
@@ -92,8 +97,8 @@ export const AttachButton = () => {
       {isPreUploadDialogOpened && (
         <PreUploadDialog
           isOpen
-          // TODO: take this from model settings
-          allowedTypes={['.dmg', '.png', '.pdf']}
+          allowedTypes={availableAttachmentsTypes}
+          maximumAttachmentsAmount={maximumAttachmentsAmount}
           onUploadFiles={(
             selectedFiles: Required<
               Pick<DialFile, 'fileContent' | 'id' | 'name'>

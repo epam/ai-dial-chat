@@ -6,7 +6,7 @@ import {
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-vi.mock('@/src/components/Chat/FooterMessage', ()=>({
+vi.mock('@/src/components/Common/FooterMessage', ()=>({
     FooterMessage: () => <div data-qa="footer-message">footer</div>
 }));
 
@@ -88,7 +88,7 @@ describe('PlaybackControls', () => {
     const buttons = screen.getAllByRole('button');
     const messageBox = screen.getByTestId('playback-message-content');
     const spinner = screen.queryByTestId('message-input-spinner');
-
+ 
     expect(buttons.length).toBe(3);
     expect(messageBox).toBeInTheDocument();
     expect(footer).toBeVisible();

@@ -32,6 +32,7 @@ import { FileFolderSelect } from './FileFolderSelect';
 interface Props {
   isOpen: boolean;
   initialFilesSelect?: boolean;
+  maximumAttachmentsAmount?: number;
   allowedTypes?: string[];
   onClose: (result: boolean) => void;
   onUploadFiles: (
@@ -45,6 +46,7 @@ const bytesInMb = 1_048_576;
 export const PreUploadDialog = ({
   isOpen,
   initialFilesSelect,
+  maximumAttachmentsAmount = 0,
   allowedTypes = [],
   onClose,
   onUploadFiles,
@@ -98,7 +100,7 @@ export const PreUploadDialog = ({
       let incorrectTypeFiles: string[] = [];
       const filteredFiles = files.reduce<File[]>((acc, file) => {
         const fileType = file.name.slice(file.name.lastIndexOf('.'));
-        if (file.size > 1024 * bytesInMb) {
+        if (file.size > 512 * bytesInMb) {
           incorrectSizeFiles = incorrectSizeFiles.concat(file.name);
           return acc;
         }
@@ -114,7 +116,9 @@ export const PreUploadDialog = ({
           (oldMessage) =>
             oldMessage +
             '\n' +
-            t(`Max file size up to 1 GB. Next files haven't been uploaded: `) +
+            t(
+              `Max file size up to 512 Mb. Next files haven't been uploaded: `,
+            ) +
             incorrectSizeFiles.join(', '),
         );
       }
@@ -149,7 +153,16 @@ export const PreUploadDialog = ({
 
   const handleUpload = useCallback(() => {
     if (attachments.length + selectedFiles.length > 10) {
-      setErrorMessage(t('Up to 10 files can be uploaded at a time.') as string);
+      setErrorMessage(
+        t(
+          `Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploadings amount will be {{selectedAttachmentsAmount}}`,
+          {
+            maxAttachmentsAmount: maximumAttachmentsAmount,
+            selectedAttachmentsAmount:
+              selectedFiles.length + attachments.length,
+          },
+        ) as string,
+      );
       return;
     }
 
@@ -368,7 +381,7 @@ export const PreUploadDialog = ({
                   </label>
 
                   <button
-                    className="rounded bg-blue-500 px-3 py-2 disabled:bg-gray-500"
+                    className="button button-primary"
                     onClick={handleUpload}
                     disabled={selectedFiles.length === 0}
                   >

@@ -32,10 +32,16 @@ import { PreUploadDialog } from './PreUploadModal';
 interface Props {
   isOpen: boolean;
   allowedTypes?: string[];
+  maximumAttachmentsAmount?: number;
   onClose: (result: boolean | string[]) => void;
 }
 
-export const FileSelect = ({ isOpen, allowedTypes = [], onClose }: Props) => {
+export const FileSelect = ({
+  isOpen,
+  allowedTypes = [],
+  maximumAttachmentsAmount = 0,
+  onClose,
+}: Props) => {
   const dispatch = useAppDispatch();
   const attachedFilesIds = useAppSelector(
     FilesSelectors.selectSelectedFilesIds,
@@ -60,6 +66,7 @@ export const FileSelect = ({ isOpen, allowedTypes = [], onClose }: Props) => {
   const newAddedFolderId = useAppSelector(
     FilesSelectors.selectNewAddedFolderId,
   );
+  const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
   const [isUploadFromDeviceOpened, setIsUploadFromDeviceOpened] =
@@ -151,36 +158,56 @@ export const FileSelect = ({ isOpen, allowedTypes = [], onClose }: Props) => {
       }
       dispatch(FilesActions.renameFolder({ folderId, newName }));
     },
+    [dispatch, folders, t],
+  );
+
+  const handleItemCallback = useCallback(
+    (eventId: string, data: unknown) => {
+      if (typeof data !== 'string') {
+        return;
+      }
+
+      switch (eventId) {
+        case 'retry':
+          dispatch(FilesActions.reuploadFile({ fileId: data }));
+          break;
+        case 'toggle':
+          setSelectedFilesIds((oldValues) => {
+            if (oldValues.includes(data)) {
+              return oldValues.filter((oldValue) => oldValue !== data);
+            }
+
+            return oldValues.concat(data);
+          });
+          break;
+        case 'cancel':
+          throw 'Not implemented';
+        case 'remove':
+          dispatch(FilesActions.removeFile({ fileId: data }));
+          break;
+        default:
+          break;
+      }
+    },
     [dispatch],
   );
 
-  const handleItemCallback = useCallback((eventId: string, data: unknown) => {
-    if (typeof data !== 'string') {
+  const handleAttachFiles = useCallback(() => {
+    if (selectedFilesIds.length > maximumAttachmentsAmount) {
+      setErrorMessage(
+        t(
+          `Maximum allowed attachments number is {{maxAttachmentsAmount}}. You've selected {{selectedAttachmentsAmount}}`,
+          {
+            maxAttachmentsAmount: maximumAttachmentsAmount,
+            selectedAttachmentsAmount: selectedFilesIds.length,
+          },
+        ) as string,
+      );
       return;
     }
 
-    switch (eventId) {
-      case 'retry':
-        dispatch(FilesActions.reuploadFile({ fileId: data }));
-        break;
-      case 'toggle':
-        setSelectedFilesIds((oldValues) => {
-          if (oldValues.includes(data)) {
-            return oldValues.filter((oldValue) => oldValue !== data);
-          }
-
-          return oldValues.concat(data);
-        });
-        break;
-      case 'cancel':
-        throw 'Not implemented';
-      case 'remove':
-        dispatch(FilesActions.removeFile({ fileId: data }));
-        break;
-      default:
-        break;
-    }
-  }, []);
+    onClose(selectedFilesIds);
+  }, [maximumAttachmentsAmount, onClose, selectedFilesIds, t]);
 
   return (
     <FloatingPortal id="theme-main">
@@ -209,12 +236,22 @@ export const FileSelect = ({ isOpen, allowedTypes = [], onClose }: Props) => {
                 </div>
                 <p id={descriptionId}>
                   {t(
-                    'Max file size up to 1 GB. Supported types: {{allowedTypes}}.',
+                    'Max file size up to 512 Mb. Supported types: {{allowedTypes}}.',
                     {
                       allowedTypes: allowedTypes.join(', '),
                     },
                   )}
+                  &nbsp;
+                  {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
+                    t('Max selected files is {{maxAttachmentsAmount}}.', {
+                      maxAttachmentsAmount: maximumAttachmentsAmount,
+                    })}
                 </p>
+                {errorMessage && errorMessage?.length > 0 && (
+                  <p className="rounded bg-red-200 p-3 text-red-800 dark:bg-red-900 dark:text-red-400">
+                    {errorMessage}
+                  </p>
+                )}
                 {folders.length === 0 &&
                 ['LOADING', undefined].includes(foldersStatus) ? (
                   <div className="flex min-h-[300px] items-center justify-center">
@@ -319,7 +356,7 @@ export const FileSelect = ({ isOpen, allowedTypes = [], onClose }: Props) => {
                           {t('Upload from device')}
                         </button>
                         <button
-                          onClick={() => onClose(selectedFilesIds)}
+                          onClick={handleAttachFiles}
                           className="button button-primary"
                           disabled={selectedFilesIds.length === 0}
                         >
