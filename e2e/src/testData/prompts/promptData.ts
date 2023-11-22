@@ -68,4 +68,15 @@ export class PromptData extends FolderData {
       .withContent(content)
       .build();
   }
+
+  public preparePromptsForNestedFolders(nestedFolders: FolderInterface[]) {
+    const nestedPrompts: Prompt[] = [];
+    for (const item of nestedFolders) {
+      const nestedPrompt = this.prepareDefaultPrompt();
+      nestedPrompts.push(nestedPrompt);
+      nestedPrompt.folderId = item.id;
+      this.resetData();
+    }
+    return nestedPrompts;
+  }
 }
