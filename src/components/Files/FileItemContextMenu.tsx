@@ -25,7 +25,7 @@ export const FileItemContextMenu = ({
   return (
     <Menu
       type="contextMenu"
-      trigger={<IconDots className="text-gray-500" size={18} />}
+      trigger={<IconDots className="text-gray-500" size={16} />}
       className={className}
     >
       {file.status !== 'UPLOADING' && file.status !== 'FAILED' && (

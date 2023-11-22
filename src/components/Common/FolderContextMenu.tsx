@@ -43,7 +43,7 @@ export const FolderContextMenu = ({
       trigger={
         <IconDots
           className="text-gray-500"
-          size={18}
+          size={16}
           onClick={(e) => {
             e.stopPropagation();
           }}

@@ -122,9 +122,9 @@ export const PreUploadDialog = ({
             oldMessage +
             '\n' +
             t(
-              `Max file size up to 512 Mb. Next files haven't been uploaded: `,
-            ) +
-            incorrectSizeFiles.join(', '),
+              `Max file size up to 512 Mb. Next files haven't been uploaded: {{incorrectSizeFileNames}}`,
+              { incorrectSizeFileNames: incorrectSizeFiles.join(', ') },
+            ),
         );
       }
       if (incorrectTypeFiles.length > 0) {
@@ -133,10 +133,12 @@ export const PreUploadDialog = ({
             oldMessage +
             '\n' +
             t(
-              `Supported types: {{allowedTypes}}. Next files haven't been uploaded: `,
-              { allowedTypes: allowedTypes.join(', ') },
-            ) +
-            incorrectTypeFiles.join(', '),
+              `Supported types: {{allowedTypes}}. Next files haven't been uploaded: {incorrectTypeFileNames}`,
+              {
+                allowedTypes: allowedTypes.join(', '),
+                incorrectTypeFileNames: incorrectTypeFiles.join(', '),
+              },
+            ),
         );
       }
 
@@ -180,8 +182,9 @@ export const PreUploadDialog = ({
     if (localIncorrectSameNameFiles.length > 0) {
       setErrorMessage(
         t(
-          'Files which you trying to upload already presented in selected folder. Please rename or remove them from uploading files list: ',
-        ) + localIncorrectSameNameFiles.join(', '),
+          'Files which you trying to upload already presented in selected folder. Please rename or remove them from uploading files list: {{fileNames}}',
+          { fileNames: localIncorrectSameNameFiles.join(', ') },
+        ) as string,
       );
       return;
     }
