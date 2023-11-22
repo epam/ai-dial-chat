@@ -144,11 +144,14 @@ export const PreUploadDialog = ({
 
       setSelectedFiles((oldFiles) =>
         oldFiles.concat(
-          filteredFiles.map((file) => ({
-            fileContent: file,
-            id: getPathNameId(file.name, folderPath),
-            name: file.name,
-          })),
+          filteredFiles.map((file) => {
+            debugger;
+            return {
+              fileContent: file,
+              id: getPathNameId(file.name, folderPath),
+              name: file.name,
+            };
+          }),
         ),
       );
       if (uploadInputRef.current) {
@@ -274,6 +277,18 @@ export const PreUploadDialog = ({
       setTimeout(() => uploadInputRef.current?.click());
     }
   }, [initialFilesSelect, isOpen]);
+
+  useEffect(() => {
+    setSelectedFiles((oldFiles) =>
+      oldFiles.map((file) => {
+        return {
+          ...file,
+          id: getPathNameId(file.name, folderPath),
+          folderPath,
+        };
+      }),
+    );
+  }, [folderPath]);
 
   return (
     <>
