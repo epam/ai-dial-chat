@@ -19,7 +19,7 @@ import classNames from 'classnames';
 
 import useOutsideAlerter from '@/src/hooks/useOutsideAlerter';
 
-import { getFoldersDepth } from '@/src/utils/app/folders';
+import { getFoldersDepth, getHighlightColor } from '@/src/utils/app/folders';
 
 import { Conversation } from '@/src/types/chat';
 import { HighlightColor } from '@/src/types/components';
@@ -326,26 +326,23 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   useOutsideAlerter(dragDropElement, setIsSelected);
 
-  const hoverIconColor = classNames(
-    highlightColor === 'green'
-      ? 'hover:text-green'
-      : highlightColor === 'violet'
-      ? 'hover:text-violet'
-      : 'hover:text-blue-500',
+  const hoverIconColor = getHighlightColor(
+    highlightColor,
+    classNames('hover:text-green'),
+    classNames('hover:text-violet'),
+    classNames('hover:text-blue-500'),
   );
-  const textColor = classNames(
-    highlightColor === 'green'
-      ? 'text-green'
-      : highlightColor === 'violet'
-      ? 'text-violet'
-      : 'text-blue-500',
+  const textColor = getHighlightColor(
+    highlightColor,
+    classNames('text-green'),
+    classNames('text-violet'),
+    classNames('text-blue-500'),
   );
-  const bgColor = classNames(
-    highlightColor === 'green'
-      ? 'bg-green/15'
-      : highlightColor === 'violet'
-      ? 'bg-violet/15'
-      : 'bg-blue-500/20',
+  const bgColor = getHighlightColor(
+    highlightColor,
+    classNames('bg-green/15'),
+    classNames('bg-violet/15'),
+    classNames('bg-blue-500/20'),
   );
 
   return (

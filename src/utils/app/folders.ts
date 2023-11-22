@@ -81,3 +81,19 @@ export const getAvailableNameOnSameFolderLevel = (
 
   return itemName;
 };
+
+export const getHighlightColor = (
+  highlightColor: string,
+  greenColor: string,
+  violetColor: string,
+  defaultColor?: string,
+) => {
+  switch (highlightColor) {
+    case 'green':
+      return greenColor;
+    case 'violet':
+      return violetColor;
+    default:
+      return defaultColor;
+  }
+};
