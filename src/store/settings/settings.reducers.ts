@@ -115,8 +115,15 @@ const selectFooterHtmlMessage = createSelector([rootSelector], (state) => {
 });
 
 const selectEnabledFeatures = createSelector([rootSelector], (state) => {
-  return state.enabledFeatures;
+  return new Set(state.enabledFeatures);
 });
+
+const isFeatureEnabled = createSelector(
+  [selectEnabledFeatures, (_, featureName: Feature) => featureName],
+  (enabledFeatures, featureName) => {
+    return enabledFeatures.has(featureName);
+  },
+);
 
 const selectCodeWarning = createSelector([rootSelector], (state) => {
   return state.codeWarning;
@@ -144,6 +151,7 @@ export const SettingsSelectors = {
   selectIsIframe,
   selectFooterHtmlMessage,
   selectEnabledFeatures,
+  isFeatureEnabled,
   selectCodeWarning,
   selectDefaultModelId,
   selectDefaultRecentModelsIds,
