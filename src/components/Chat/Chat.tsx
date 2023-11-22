@@ -359,11 +359,13 @@ export const Chat = memo(() => {
       dispatch(
         ConversationsActions.updateConversation({
           id: conversation.id,
-          values: { selectedAddons: addonIds },
+          values: {
+            selectedAddons: addonIds.filter((addonId) => addonsMap[addonId]),
+          },
         }),
       );
     },
-    [dispatch],
+    [addonsMap, dispatch],
   );
 
   const handleChangePrompt = useCallback(
