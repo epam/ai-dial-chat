@@ -23,13 +23,10 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
     ConversationsSelectors.selectIsErrorReplayConversations,
   );
   return (
-    <div
-      className={`absolute bottom-3 flex w-full 
-      justify-center border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 dark:via-gray-900 dark:to-gray-900 md:bottom-5`}
-    >
+    <>
       {showReplayStart ? (
         <button
-          className={`mx-3 flex w-fit shrink-0 items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600`}
+          className="absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600"
           onClick={onClickReplayStart}
           data-qa="start-replay"
         >
@@ -38,7 +35,7 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
         </button>
       ) : (
         <button
-          className={`mx-3 flex w-fit shrink-0 items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600`}
+          className="absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600"
           onClick={onClickReplayReStart}
           data-qa="proceed-reply"
         >
@@ -59,7 +56,7 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
           )}
         </button>
       )}
-    </div>
+    </>
   );
 };
 

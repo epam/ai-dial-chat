@@ -13,8 +13,9 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
-import { FooterMessage } from '@/src/components/Chat/FooterMessage';
 import { ScrollDownButton } from '@/src/components/Chat/ScrollDownButton';
+
+import { ChatInputFooter } from './ChatInputFooter';
 
 interface Props {
   showScrollDownButton: boolean;
@@ -193,9 +194,7 @@ export const PlaybackControls = ({
           />
         )}
       </div>
-      <div className="p-5 max-md:hidden">
-        <FooterMessage />
-      </div>
+      <ChatInputFooter />
     </div>
   );
 };

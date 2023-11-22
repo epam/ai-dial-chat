@@ -109,6 +109,10 @@ export const Chat = memo(() => {
     return isReplay && !messageIsStreaming && isReplayPaused;
   }, [isReplay, isReplayPaused, messageIsStreaming]);
 
+  const showReplayStart = selectedConversations.some(
+    (conv) => conv.messages.length === 0,
+  );
+
   useEffect(() => {
     setIsShowChatSettings(false);
 
@@ -498,12 +502,6 @@ export const Chat = memo(() => {
     setInputHeight(inputHeight);
   }, []);
 
-  useEffect(() => {
-    if (showReplayControls) {
-      setInputHeight(80);
-    }
-  }, [showReplayControls]);
-
   return (
     <div className="relative min-w-0 flex-1" data-qa="chat" id="chat">
       {modelError ? (
@@ -785,42 +783,39 @@ export const Chat = memo(() => {
               <NotAllowedModel />
             ) : (
               <>
-                {showReplayControls ? (
-                  <ChatReplayControls
-                    onClickReplayStart={handleReplayStart}
-                    onClickReplayReStart={handleReplayReStart}
-                    showReplayStart={selectedConversations.some(
-                      (conv) => conv.messages.length === 0,
+                {!isPlayback && (
+                  <ChatInput
+                    textareaRef={textareaRef}
+                    isMessagesPresented={selectedConversations.some(
+                      (val) => val.messages.length > 0,
                     )}
-                  />
-                ) : (
-                  <>
-                    {!isPlayback && (
-                      <ChatInput
-                        textareaRef={textareaRef}
-                        isMessagesPresented={selectedConversations.some(
-                          (val) => val.messages.length > 0,
-                        )}
-                        showScrollDownButton={showScrollDownButton}
-                        onSend={onSendMessage}
-                        onScrollDownClick={handleScrollDown}
-                        onRegenerate={onRegenerateMessage}
-                        onStopConversation={() => {
-                          dispatch(ConversationsActions.stopStreamMessage());
-                        }}
-                        onResize={onChatInputResize}
+                    showScrollDownButton={showScrollDownButton}
+                    onSend={onSendMessage}
+                    onScrollDownClick={handleScrollDown}
+                    onRegenerate={onRegenerateMessage}
+                    onStopConversation={() => {
+                      dispatch(ConversationsActions.stopStreamMessage());
+                    }}
+                    onResize={onChatInputResize}
+                    isShowInput={!isReplay || !showReplayStart}
+                  >
+                    {showReplayControls && (
+                      <ChatReplayControls
+                        onClickReplayStart={handleReplayStart}
+                        onClickReplayReStart={handleReplayReStart}
+                        showReplayStart={showReplayStart}
                       />
                     )}
+                  </ChatInput>
+                )}
 
-                    {isPlayback && (
-                      <PlaybackControls
-                        nextMessageBoxRef={nextMessageBoxRef}
-                        showScrollDownButton={showScrollDownButton}
-                        onScrollDownClick={handleScrollDown}
-                        onResize={onChatInputResize}
-                      />
-                    )}
-                  </>
+                {isPlayback && (
+                  <PlaybackControls
+                    nextMessageBoxRef={nextMessageBoxRef}
+                    showScrollDownButton={showScrollDownButton}
+                    onScrollDownClick={handleScrollDown}
+                    onResize={onChatInputResize}
+                  />
                 )}
               </>
             )}
