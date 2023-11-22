@@ -19,12 +19,15 @@ interface Props {
   attachment: Attachment;
   isInner?: boolean;
 }
+const imageTypes: Set<ImageMIMEType> = new Set<ImageMIMEType>([
+  'image/jpeg',
+  'image/png',
+]);
 
 export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const { t } = useTranslation('chat');
   const [isOpened, setIsOpened] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const imageTypes: ImageMIMEType[] = ['image/jpeg', 'image/png'];
   const isOpenable = !attachment.url;
 
   return (
@@ -97,7 +100,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
         <div
           className={`relative mt-2 h-auto w-full overflow-hidden p-3 pt-4 text-sm duration-200`}
         >
-          {imageTypes.includes(attachment.type) ? (
+          {imageTypes.has(attachment.type) ? (
             <img
               src={`data:${attachment.type};base64,${attachment.data}`}
               className="m-0 aspect-auto w-full"

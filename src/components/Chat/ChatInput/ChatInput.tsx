@@ -13,6 +13,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getUserCustomContent } from '@/src/utils/app/file';
 import { isMobile } from '@/src/utils/app/mobile';
 
 import { Message } from '@/src/types/chat';
@@ -179,19 +180,7 @@ export const ChatInput = ({
     onSend({
       role: 'user',
       content,
-      ...(files.length > 0 && {
-        custom_content: {
-          attachments: files
-            .filter(
-              (file) => file.status !== 'FAILED' && file.status !== 'UPLOADING',
-            )
-            .map((file) => ({
-              type: file.contentType,
-              title: file.name,
-              url: encodeURI(file.absolutePath + '/' + file.name),
-            })),
-        },
-      }),
+      ...getUserCustomContent(files),
     });
     setContent('');
     dispatch(FilesActions.resetSelectedFiles());

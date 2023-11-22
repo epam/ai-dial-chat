@@ -1,4 +1,5 @@
 import {
+  IconDots,
   IconFolderPlus,
   IconPencilMinus,
   IconTrashX,
@@ -11,12 +12,11 @@ import classNames from 'classnames';
 
 import { HighlightColor } from '@/src/types/components';
 
-import DotsIcon from '../../../public/images/icons/dots-vertical.svg';
 import { Menu, MenuItem } from './DropdownMenu';
 
 interface FolderContextMenuProps {
-  onDelete?: MouseEventHandler<unknown> | undefined;
-  onRename?: MouseEventHandler<unknown> | undefined;
+  onDelete?: MouseEventHandler<unknown>;
+  onRename?: MouseEventHandler<unknown>;
   onAddFolder?: MouseEventHandler;
   highlightColor: HighlightColor;
 }
@@ -41,12 +41,10 @@ export const FolderContextMenu = ({
       type="contextMenu"
       className="justify-self-end"
       trigger={
-        <DotsIcon
-          className="rotate-90 text-gray-500"
-          width={18}
-          height={18}
+        <IconDots
+          className="text-gray-500"
           size={18}
-          onClick={(e: MouseEvent) => {
+          onClick={(e) => {
             e.stopPropagation();
           }}
         />

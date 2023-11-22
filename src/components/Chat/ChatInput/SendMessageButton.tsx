@@ -13,7 +13,7 @@ import {
   TooltipTrigger,
 } from '@/src/components/Common/Tooltip';
 
-import Spinner from '../../Spinner';
+import { Spinner } from '../../Common/Spinner';
 
 interface Props {
   handleSend: () => void;

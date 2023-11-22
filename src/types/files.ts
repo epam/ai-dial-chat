@@ -35,6 +35,7 @@ export type DialFile = Omit<BackendFile, 'path' | 'type'> & {
   status?: 'UPLOADING' | 'FAILED';
   percent?: number;
   fileContent?: File;
+  serverSynced?: boolean;
 };
 
 // For file folders folderId is relative path and id is relative path + '/' + name

@@ -5,7 +5,7 @@ interface Props {
   className?: string;
 }
 
-const Spinner = ({ size = 16, className = '' }: Props) => {
+export const Spinner = ({ size = 16, className = '' }: Props) => {
   return (
     <div
       className={classNames(
@@ -17,5 +17,3 @@ const Spinner = ({ size = 16, className = '' }: Props) => {
     ></div>
   );
 };
-
-export default Spinner;

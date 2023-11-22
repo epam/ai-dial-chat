@@ -24,9 +24,9 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
+import { Spinner } from '../Common/Spinner';
 import Folder from '../Folder';
-import Spinner from '../Spinner';
-import { FileItem } from './FileItem';
+import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
 
 interface Props {
@@ -35,6 +35,8 @@ interface Props {
   maximumAttachmentsAmount?: number;
   onClose: (result: boolean | string[]) => void;
 }
+
+const loadingStatuses = new Set(['LOADING', undefined]);
 
 export const FileSelect = ({
   isOpen,
@@ -168,10 +170,10 @@ export const FileSelect = ({
       }
 
       switch (eventId) {
-        case 'retry':
+        case FileItemEventIds.Retry:
           dispatch(FilesActions.reuploadFile({ fileId: data }));
           break;
-        case 'toggle':
+        case FileItemEventIds.Toggle:
           setSelectedFilesIds((oldValues) => {
             if (oldValues.includes(data)) {
               return oldValues.filter((oldValue) => oldValue !== data);
@@ -180,9 +182,8 @@ export const FileSelect = ({
             return oldValues.concat(data);
           });
           break;
-        case 'cancel':
-          throw 'Not implemented';
-        case 'remove':
+        case FileItemEventIds.Cancel:
+        case FileItemEventIds.Remove:
           dispatch(FilesActions.removeFile({ fileId: data }));
           break;
         default:
@@ -252,8 +253,7 @@ export const FileSelect = ({
                     {errorMessage}
                   </p>
                 )}
-                {folders.length === 0 &&
-                ['LOADING', undefined].includes(foldersStatus) ? (
+                {folders.length === 0 && loadingStatuses.has(foldersStatus) ? (
                   <div className="flex min-h-[300px] items-center justify-center">
                     <Spinner />
                   </div>

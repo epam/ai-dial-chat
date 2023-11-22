@@ -115,11 +115,34 @@ const getFilesWithFoldersEpic: AppEpic = (action$) =>
       );
     }),
   );
+const getFoldersListEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(FilesActions.getFoldersList.match),
+    switchMap(({ payload }) => {
+      return concat(
+        ...(payload.paths
+          ? payload.paths.map((path) => of(FilesActions.getFolders({ path })))
+          : [of(FilesActions.getFolders({}))]),
+      );
+    }),
+  );
 
-const removeFileEpic: AppEpic = (action$) =>
+const removeFileEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(FilesActions.removeFile.match),
     switchMap(({ payload }) => {
+      const file = FilesSelectors.selectFiles(state$.value).find(
+        (file) => file.id === payload.fileId,
+      );
+
+      if (!file?.serverSynced) {
+        return of(
+          FilesActions.removeFileSuccess({
+            fileId: payload.fileId,
+          }),
+        );
+      }
+
       return DataService.removeFile(payload.fileId).pipe(
         map(() => {
           return FilesActions.removeFileSuccess({
@@ -141,4 +164,5 @@ export const FilesEpics = combineEpics(
   reuploadFileEpic,
   getFilesWithFoldersEpic,
   removeFileEpic,
+  getFoldersListEpic,
 );

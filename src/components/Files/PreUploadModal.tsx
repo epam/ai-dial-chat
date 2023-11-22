@@ -104,7 +104,11 @@ export const PreUploadDialog = ({
           incorrectSizeFiles = incorrectSizeFiles.concat(file.name);
           return acc;
         }
-        if (allowedTypes.length && !allowedTypes.includes(fileType)) {
+        if (
+          !allowedTypes.includes('*/*') &&
+          allowedTypes.length &&
+          !allowedTypes.includes(fileType)
+        ) {
           incorrectTypeFiles = incorrectTypeFiles.concat(file.name);
           return acc;
         }
@@ -211,6 +215,7 @@ export const PreUploadDialog = ({
     attachments.length,
     files,
     folderPath,
+    maximumAttachmentsAmount,
     onClose,
     onUploadFiles,
     selectedFiles,

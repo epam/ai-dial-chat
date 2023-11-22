@@ -223,6 +223,7 @@ export class DataService {
             folderId: relativePath,
             contentLength: file.contentLength,
             contentType: file.contentType,
+            serverSynced: true,
           };
         });
       }),

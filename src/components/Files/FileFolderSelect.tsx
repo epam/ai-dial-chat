@@ -22,14 +22,16 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
+import { Spinner } from '../Common/Spinner';
 import Folder from '../Folder';
-import Spinner from '../Spinner';
 
 interface Props {
   isOpen: boolean;
   selectedFolderName: string | undefined;
   onClose: (path: string | undefined | boolean) => void;
 }
+
+const loadingStatuses = new Set(['LOADING', undefined]);
 
 export const FileFolderSelect = ({
   isOpen,
@@ -66,13 +68,17 @@ export const FileFolderSelect = ({
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
     selectedFolderName,
   );
+  const highlightedFolders = useMemo(() => {
+    return [selectedFolderId].filter(Boolean) as string[];
+  }, [selectedFolderId]);
 
   useEffect(() => {
     if (isOpen) {
-      dispatch(FilesActions.getFolders({}));
-      openedFoldersIds.forEach((folderId) => {
-        dispatch(FilesActions.getFolders({ path: folderId }));
-      });
+      dispatch(
+        FilesActions.getFoldersList({
+          paths: [undefined, ...openedFoldersIds],
+        }),
+      );
     }
   }, [dispatch, isOpen]);
 
@@ -148,7 +154,7 @@ export const FileFolderSelect = ({
       }
       dispatch(FilesActions.renameFolder({ folderId, newName }));
     },
-    [dispatch],
+    [dispatch, folders, t],
   );
 
   return (
@@ -176,8 +182,7 @@ export const FileFolderSelect = ({
                     {t('Select folder')}
                   </h2>
                 </div>
-                {folders.length === 0 &&
-                ['LOADING', undefined].includes(foldersStatus) ? (
+                {folders.length === 0 && loadingStatuses.has(foldersStatus) ? (
                   <div className="flex min-h-[300px] items-center justify-center">
                     <Spinner />
                   </div>
@@ -225,11 +230,7 @@ export const FileFolderSelect = ({
                                       currentFolder={folder}
                                       allFolders={folders}
                                       highlightColor="blue"
-                                      highlightedFolders={
-                                        selectedFolderId
-                                          ? [selectedFolderId]
-                                          : []
-                                      }
+                                      highlightedFolders={highlightedFolders}
                                       isInitialRename={
                                         newAddedFolderId === folder.id
                                       }

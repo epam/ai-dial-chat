@@ -160,6 +160,12 @@ export const filesSlice = createSlice({
       state.foldersStatus = 'LOADING';
       state.loadingFolder = payload.path;
     },
+    getFoldersList: (
+      state,
+      _action: PayloadAction<{
+        paths?: (string | undefined)[];
+      }>,
+    ) => state,
     getFoldersSuccess: (
       state,
       {
@@ -253,6 +259,7 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       state.files = state.files.filter((file) => file.id !== payload.fileId);
+      state.selectedFilesIds.filter((id) => id !== payload.fileId);
     },
     removeFileFail: (state) => state,
   },

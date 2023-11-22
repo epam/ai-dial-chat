@@ -16,7 +16,12 @@ import { useAppSelector } from '@/src/store/hooks';
 
 import { FileItemContextMenu } from './FileItemContextMenu';
 
-export type FileItemEventIds = 'cancel' | 'retry' | 'toggle' | 'remove';
+export enum FileItemEventIds {
+  Cancel = 'cancel',
+  Retry = 'retry',
+  Toggle = 'toggle',
+  Remove = 'remove',
+}
 
 interface Props {
   item: DialFile;
@@ -24,6 +29,8 @@ interface Props {
 
   onEvent?: (eventId: FileItemEventIds, data: string) => void;
 }
+
+const cancelAllowedStatuses = new Set(['UPLOADING', 'FAILED']);
 
 export const FileItem = ({ item, level, onEvent }: Props) => {
   const selectedFilesIds = useAppSelector(
@@ -33,20 +40,20 @@ export const FileItem = ({ item, level, onEvent }: Props) => {
     selectedFilesIds.includes(item.id),
   );
   const handleCancelFile = useCallback(() => {
-    onEvent?.('cancel', item.id);
+    onEvent?.(FileItemEventIds.Cancel, item.id);
   }, [item.id, onEvent]);
 
   const handleToggleFile = useCallback(() => {
     setIsSelected((value) => !value);
-    onEvent?.('toggle', item.id);
+    onEvent?.(FileItemEventIds.Toggle, item.id);
   }, [item.id, onEvent]);
 
   const handleRetry = useCallback(() => {
-    onEvent?.('retry', item.id);
+    onEvent?.(FileItemEventIds.Retry, item.id);
   }, [item.id, onEvent]);
 
   const handleRemove = useCallback(() => {
-    onEvent?.('remove', item.id);
+    onEvent?.(FileItemEventIds.Remove, item.id);
   }, [item.id, onEvent]);
 
   return (
@@ -112,7 +119,7 @@ export const FileItem = ({ item, level, onEvent }: Props) => {
             <IconReload className="shrink-0 text-gray-500" size={18} />
           </button>
         )}
-        {item.status && ['UPLOADING', 'FAILED'].includes(item.status) ? (
+        {item.status && cancelAllowedStatuses.has(item.status) ? (
           <button onClick={handleCancelFile}>
             <IconX className="shrink-0 text-gray-500" size={18} />
           </button>

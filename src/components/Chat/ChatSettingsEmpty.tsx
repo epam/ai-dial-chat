@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { Conversation } from '@/src/types/chat';
 import { Prompt } from '@/src/types/prompt';
 
-import Spinner from '../Spinner';
+import { Spinner } from '../Common/Spinner';
 import { ConversationSettings } from './ConversationSettings';
 
 interface Props {
