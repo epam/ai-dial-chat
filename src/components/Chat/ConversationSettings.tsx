@@ -24,6 +24,7 @@ import { ModelDescription } from './ModelDescription';
 import { ReplayAsIsDescription } from './ReplayAsIsDescription';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
+import { EntityType } from '@/src/types/common';
 
 interface ModelSelectRowProps {
   item: OpenAIEntityModel;
