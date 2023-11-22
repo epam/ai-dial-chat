@@ -12,6 +12,7 @@ import { logger } from '@/src/utils/server/logger';
 
 import { OpenAIEntityAddonID, OpenAIEntityModelID } from '../../types/openai';
 import { ChatBody, Message } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 
 import {
   DEFAULT_SYSTEM_PROMPT,

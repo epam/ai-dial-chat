@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { Replay } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 
@@ -24,7 +25,6 @@ import { ModelDescription } from './ModelDescription';
 import { ReplayAsIsDescription } from './ReplayAsIsDescription';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
-import { EntityType } from '@/src/types/common';
 
 interface ModelSelectRowProps {
   item: OpenAIEntityModel;

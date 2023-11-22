@@ -1,9 +1,13 @@
 import { Observable, of } from 'rxjs';
 
+
+
 import { Conversation } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
+
 
 export class ApiMockStorage implements DialStorage {
   setConversationsFolders(_folders: FolderInterface[]): Observable<void> {
