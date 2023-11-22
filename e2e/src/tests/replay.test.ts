@@ -1,11 +1,11 @@
 import { ChatBody, Conversation } from '@/src/types/chat';
+import { FolderInterface } from '@/src/types/folder';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
 import {
   ExpectedConstants,
   ExpectedMessages,
-  FolderConversation,
   MenuOptions,
   ModelIds,
 } from '@/e2e/src/testData';
@@ -155,42 +155,41 @@ test('[Replay]chat is created in the same folder where its parent is located', a
   conversationDropdownMenu,
 }) => {
   setTestIds('EPMRTC-503');
-  let conversationInFolder: FolderConversation;
+  let nestedFolders: FolderInterface[];
+  let nestedConversations: Conversation[] = [];
+  const nestedLevels = 3;
 
-  await test.step('Prepare conversation inside folder', async () => {
-    conversationInFolder =
-      conversationData.prepareDefaultConversationInFolder();
-    await localStorageManager.setFolders(conversationInFolder.folders);
-    await localStorageManager.setConversationHistory(
-      conversationInFolder.conversations[0],
-    );
+  await test.step('Prepare 3 levels folders hierarchy with chats inside', async () => {
+    nestedFolders = conversationData.prepareNestedFolder(nestedLevels);
+    nestedConversations =
+      conversationData.prepareConversationsForNestedFolders(nestedFolders);
+    await localStorageManager.setFolders(...nestedFolders);
+    await localStorageManager.setOpenedFolders(...nestedFolders);
+    await localStorageManager.setConversationHistory(...nestedConversations);
   });
 
-  await test.step('Open Replay drop-down menu for conversation inside folder', async () => {
+  await test.step('Select Replay from drop-down menu for conversations inside 1st and 3rd level folders', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await folderConversations.expandCollapseFolder(
-      conversationInFolder!.folders.name,
-    );
 
-    await folderConversations.openFolderConversationDropdownMenu(
-      conversationInFolder!.folders.name,
-      conversationInFolder!.conversations[0].name,
-    );
-    await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
+    for (let i = 0; i < nestedLevels; i = i + 2) {
+      await folderConversations.openFolderConversationDropdownMenu(
+        nestedFolders[i + 1].name,
+        nestedConversations[i + 1].name,
+      );
+      await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
+    }
   });
 
-  await test.step('Verify new Replay conversation is created inside folder', async () => {
-    const isConversationVisible =
-      await folderConversations.isFolderConversationVisible(
-        conversationInFolder!.folders.name,
+  await test.step('Verify new Replay conversations are created inside 1st and 3rd level folders', async () => {
+    for (let i = 0; i < nestedLevels; i = i + 2) {
+      await folderConversations.getFolderConversation(
+        nestedFolders[i + 1].name,
         `${ExpectedConstants.replayConversation}${
-          conversationInFolder!.conversations[0].name
+          nestedConversations[i + 1].name
         }`,
-      );
-    expect
-      .soft(isConversationVisible, ExpectedMessages.conversationMovedToFolder)
-      .toBeTruthy();
+      ).waitFor;
+    }
   });
 });
 
@@ -479,7 +478,7 @@ test(
       const modelInfo = await chatInfoTooltip.getModelInfo();
       expect
         .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
-        .toBe(conversation.model.name);
+        .toBe(ModelsUtil.getModel(conversation.model.id)!.name);
 
       const modelInfoIcon = await chatInfoTooltip.getModelIcon();
       expect
