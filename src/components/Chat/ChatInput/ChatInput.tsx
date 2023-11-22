@@ -16,6 +16,7 @@ import classNames from 'classnames';
 import { isMobile } from '@/src/utils/app/mobile';
 
 import { Message } from '@/src/types/chat';
+import { Feature } from '@/src/types/features';
 import { OpenAIEntityModels, defaultModelLimits } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 
@@ -68,6 +69,9 @@ export const ChatInput = ({
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showPluginSelect, setShowPluginSelect] = useState(false);
 
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
@@ -104,7 +108,8 @@ export const ChatInput = ({
     ),
   );
 
-  const displayAttachFunctionality = maximumAttachmentsAmount > 0;
+  const displayAttachFunctionality =
+    enabledFeatures.has(Feature.InputFiles) && maximumAttachmentsAmount > 0;
 
   useEffect(() => {
     setFilteredPrompts(
