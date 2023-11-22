@@ -43,7 +43,7 @@ import {
 import classNames from 'classnames';
 
 const menuItemClassNames = classNames(
-  'flex max-w-[300px] cursor-pointer items-center gap-3 px-3 focus-visible:border-none focus-visible:outline-none',
+  'flex max-w-[300px] cursor-pointer items-center gap-3 focus-visible:border-none focus-visible:outline-none',
 );
 
 const MenuContext = createContext<{
@@ -201,7 +201,7 @@ export const MenuComponent = forwardRef<
         data-focus-inside={hasFocusInside ? '' : undefined}
         className={classNames(
           isNested ? menuItemClassNames : '',
-          isNested ? 'h-[42px] w-full' : 'h-full pr-0',
+          isNested ? 'h-[42px] w-full px-3' : 'h-full px-0',
           className,
         )}
         {...getReferenceProps(
@@ -287,7 +287,11 @@ export const MenuItem = forwardRef<
         ref={useMergeRefs([item.ref, forwardedRef])}
         type="button"
         role="menuitem"
-        className={classNames(menuItemClassNames, 'h-[42px] w-full', className)}
+        className={classNames(
+          menuItemClassNames,
+          'h-[42px] w-full px-3',
+          className,
+        )}
         tabIndex={isActive ? 0 : -1}
         disabled={disabled}
         {...menu.getItemProps({

@@ -159,6 +159,7 @@ export const conversationsSlice = createSlice({
           activePlaybackIndex: 0,
           messagesStack: [],
         },
+        isShared: false,
       };
       state.conversations = state.conversations.concat([newConversation]);
       state.selectedConversationsIds = [newConversation.id];
@@ -188,6 +189,7 @@ export const conversationsSlice = createSlice({
           activeReplayIndex: 0,
           replayAsIs: false,
         },
+        isShared: false,
       };
       state.conversations = state.conversations.concat([newConversation]);
       state.selectedConversationsIds = [newConversation.id];
