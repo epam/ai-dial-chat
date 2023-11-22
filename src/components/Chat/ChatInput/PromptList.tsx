@@ -1,4 +1,5 @@
-import { FC, MutableRefObject } from 'react';
+import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
+import { FC, useEffect } from 'react';
 
 import { Prompt } from '@/src/types/prompt';
 
@@ -6,20 +7,39 @@ interface Props {
   prompts: Prompt[];
   activePromptIndex: number;
   onSelect: () => void;
-  onMouseOver: (index: number) => void;
-  promptListRef: MutableRefObject<HTMLUListElement | null>;
+  onMouseEnter: (index: number) => void;
+  onClose: () => void;
+  isOpen: boolean;
 }
 
 export const PromptList: FC<Props> = ({
   prompts,
   activePromptIndex,
   onSelect,
-  onMouseOver,
-  promptListRef,
+  onMouseEnter,
+  onClose,
+  isOpen,
 }) => {
+  const { refs, context } = useFloating({
+    open: isOpen,
+    onOpenChange: () => {
+      onClose();
+    },
+  });
+
+  const dismiss = useDismiss(context);
+  const { getFloatingProps } = useInteractions([dismiss]);
+
+  useEffect(() => {
+    if (refs.floating.current) {
+      refs.floating.current.scrollTop = activePromptIndex * 30;
+    }
+  }, [activePromptIndex]);
+
   return (
     <ul
-      ref={promptListRef}
+      ref={refs.setFloating}
+      {...getFloatingProps()}
       className="z-10 max-h-52 w-full overflow-auto rounded bg-gray-100 dark:bg-gray-700"
       data-qa="prompt-list"
     >
@@ -35,7 +55,7 @@ export const PromptList: FC<Props> = ({
             onSelect();
           }}
           data-qa="prompt-option"
-          onMouseEnter={() => onMouseOver(index)}
+          onMouseEnter={() => onMouseEnter(index)}
         >
           {prompt.name}
         </li>

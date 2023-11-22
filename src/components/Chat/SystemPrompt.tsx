@@ -241,8 +241,9 @@ export const SystemPrompt: FC<Props> = ({
             activePromptIndex={activePromptIndex}
             prompts={filteredPrompts}
             onSelect={handleInitModal}
-            onMouseOver={setActivePromptIndex}
-            promptListRef={promptListRef}
+            onMouseEnter={setActivePromptIndex}
+            isOpen={showPromptList && filteredPrompts.length > 0}
+            onClose={() => setShowPromptList(false)}
           />
         </div>
       )}
