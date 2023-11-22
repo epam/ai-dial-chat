@@ -202,6 +202,7 @@ export const MenuComponent = forwardRef<
         className={classNames(
           menuItemClassNames,
           isNested ? 'h-[42px] w-full' : 'h-full px-0',
+          { 'px-3': isNested },
           className,
         )}
         {...getReferenceProps(
