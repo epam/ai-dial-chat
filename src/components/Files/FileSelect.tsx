@@ -75,11 +75,6 @@ export const FileSelect = ({
     useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilesIds, setSelectedFilesIds] = useState(attachedFilesIds);
-  const filteredFolders = useMemo(() => {
-    return folders.filter(({ name }) =>
-      name.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-  }, [folders, searchQuery]);
   const filteredFiles = useMemo(() => {
     return files.filter(({ name }) =>
       name.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -284,10 +279,10 @@ export const FileSelect = ({
                       </button>
                       {isAllFilesOpened && (
                         <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">
-                          {(filteredFolders.length !== 0 ||
+                          {(folders.length !== 0 ||
                             filteredFiles.length !== 0) && (
                             <div className="overflow-auto">
-                              {filteredFolders.map((folder) => {
+                              {folders.map((folder) => {
                                 if (folder.folderId) {
                                   return null;
                                 }
@@ -306,7 +301,7 @@ export const FileSelect = ({
                                       displayCaretAlways={true}
                                       loadingFolderId={loadingFolderId}
                                       openedFoldersIds={openedFoldersIds}
-                                      allItems={files}
+                                      allItems={filteredFiles}
                                       itemComponent={FileItem}
                                       onClickFolder={handleFolderSelect}
                                       onAddFolder={handleAddFolder}
