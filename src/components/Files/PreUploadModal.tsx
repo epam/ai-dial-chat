@@ -146,7 +146,7 @@ export const PreUploadDialog = ({
         oldFiles.concat(
           filteredFiles.map((file) => ({
             fileContent: file,
-            id: file.name,
+            id: getPathNameId(file.name, folderPath),
             name: file.name,
           })),
         ),
@@ -155,7 +155,7 @@ export const PreUploadDialog = ({
         uploadInputRef.current.value = '';
       }
     },
-    [allowedTypes, t],
+    [allowedTypes, folderPath, t],
   );
 
   const handleUpload = useCallback(() => {
@@ -232,7 +232,9 @@ export const PreUploadDialog = ({
         setSelectedFiles(
           selectedFiles.map((file, index) => {
             if (index === changedFileIndex) {
-              const formatFile = file.name.slice(file.name.lastIndexOf('.'));
+              const indexDot = file.name.lastIndexOf('.');
+              const formatFile =
+                indexDot !== -1 ? file.name.slice(indexDot) : '';
               return {
                 ...file,
                 name: e.target.value + formatFile,
