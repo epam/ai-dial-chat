@@ -70,7 +70,22 @@ describe('PlaybackControls', () => {
               content: 'test3',
               role: Role.User
             }],
-          }
+            activePlaybackIndex: 1
+          },
+          model: {
+            id: "gpt-4-0613"
+          },
+          messages: [],
+          prompt: '',
+          temperature: 1,
+          replay: {
+            isReplay: false,
+            replayUserMessagesStack: [],
+            activeReplayIndex: 0,
+            replayAsIs: false
+          },
+          selectedAddons: [],
+          isMessageStreaming: false
         },
       ]);
   });
@@ -89,7 +104,7 @@ describe('PlaybackControls', () => {
     const buttons = screen.getAllByRole('button');
     const messageBox = screen.getByTestId('playback-message-content');
     const spinner = screen.queryByTestId('message-input-spinner');
- 
+
     expect(buttons.length).toBe(3);
     expect(messageBox).toBeInTheDocument();
     expect(footer).toBeVisible();

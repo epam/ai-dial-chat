@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import classNames from 'classnames';
 
+import { HighlightColor } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 
@@ -16,7 +17,6 @@ import Folder from '@/src/components/Folder';
 
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { PromptComponent } from './Prompt';
-import { HighlightColor } from '@/src/types/common';
 
 interface promptFolderProps {
   folder: FolderInterface;

@@ -69,7 +69,7 @@ export const BetweenFoldersLine = ({
     highlightColor,
     'bg-green/60',
     'bg-violet/60',
-    'bg-blue-500/60'
+    'bg-blue-500/60',
   );
 
   return (

@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
+import { HighlightColor } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 
 import {
@@ -16,7 +17,6 @@ import Folder from '@/src/components/Folder';
 
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
-import { HighlightColor } from '@/src/types/common';
 
 interface ChatFolderProps {
   folder: FolderInterface;

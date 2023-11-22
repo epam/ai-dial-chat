@@ -17,6 +17,8 @@ import classNames from 'classnames';
 
 import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
+import { HighlightColor } from '@/src/types/common';
+
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -24,7 +26,6 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { Spinner } from '../Common/Spinner';
 import Folder from '../Folder';
-import { HighlightColor } from '@/src/types/common';
 
 interface Props {
   isOpen: boolean;

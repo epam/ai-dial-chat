@@ -8,6 +8,8 @@ import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { HighlightColor } from '@/src/types/common';
+
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -25,7 +27,6 @@ import {
 
 import FolderPlus from '../../../../public/images/icons/folder-plus.svg';
 import { Import } from '../../Settings/Import';
-import { HighlightColor } from '@/src/types/common';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation('sidebar');

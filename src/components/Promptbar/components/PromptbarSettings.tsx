@@ -7,6 +7,7 @@ import { FC, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { HighlightColor } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppDispatch } from '@/src/store/hooks';
@@ -21,7 +22,6 @@ import {
 import { Import } from '@/src/components/Settings/Import';
 
 import FolderPlus from '../../../../public/images/icons/folder-plus.svg';
-import { HighlightColor } from '@/src/types/common';
 
 interface PromptbarSettingsProps {
   allPrompts: Prompt[];
