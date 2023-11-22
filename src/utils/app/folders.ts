@@ -63,3 +63,37 @@ export const getChildAndCurrentFoldersIdsById = (
 
   return [folderId].concat(childFoldersIds);
 };
+
+export const getAvailableNameOnSameFolderLevel = (
+  items: { name: string; folderId?: string }[],
+  itemPrefix: string,
+  parentFolderId?: string,
+) => {
+  const names = items
+    .filter((item) => !item.folderId || item.folderId === parentFolderId)
+    .map((item) => item.name);
+  let itemNumber = 0;
+  let itemName;
+  do {
+    itemNumber++;
+    itemName = [itemPrefix, itemNumber].join(' ');
+  } while (names.includes(itemName));
+
+  return itemName;
+};
+
+export const getHighlightColor = (
+  highlightColor: string,
+  greenColor: string,
+  violetColor: string,
+  defaultColor?: string,
+) => {
+  switch (highlightColor) {
+    case 'green':
+      return greenColor;
+    case 'violet':
+      return violetColor;
+    default:
+      return defaultColor;
+  }
+};

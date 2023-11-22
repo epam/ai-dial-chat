@@ -582,8 +582,12 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             content: message.content,
             role: message.role,
             like: void 0,
-            ...(message.custom_content?.state && {
-              custom_content: { state: message.custom_content?.state },
+            ...((message.custom_content?.state ||
+              message.custom_content?.attachments) && {
+              custom_content: {
+                state: message.custom_content?.state,
+                attachments: message.custom_content?.attachments,
+              },
             }),
           })),
         id: payload.conversation.id.toLowerCase(),

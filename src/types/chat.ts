@@ -1,18 +1,12 @@
-export type AttachmentImageMIMEType = 'image/jpeg' | 'image/png';
-
-export type AttachmentMIMEType =
-  | 'text/markdown'
-  | 'text/plain'
-  | 'text/html'
-  | AttachmentImageMIMEType;
+import { MIMEType } from './files';
 
 export interface Attachment {
-  index: number;
-  type: AttachmentMIMEType;
+  index?: number;
+  type: MIMEType;
   title: string;
   data?: string;
   url?: string;
-  reference_type?: AttachmentMIMEType;
+  reference_type?: MIMEType;
   reference_url?: string;
 }
 

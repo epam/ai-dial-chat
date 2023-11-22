@@ -7,7 +7,13 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/src/components/Common/Tooltip';
+
+import { Spinner } from '../../Common/Spinner';
 
 interface Props {
   handleSend: () => void;
@@ -16,20 +22,15 @@ interface Props {
 
 interface SendIconTooltipProps {
   isShowTooltip?: boolean;
-  isError?: boolean;
+  tooltipContent?: string;
   children: ReactNode;
 }
 
 const SendIconTooltip = ({
   isShowTooltip,
-  isError,
+  tooltipContent,
   children,
 }: SendIconTooltipProps) => {
-  const { t } = useTranslation('chat');
-
-  const tooltipContent = isError
-    ? 'Please regenerate response to continue working with chat'
-    : 'Please type a message';
   return (
     <>
       {!isShowTooltip ? (
@@ -37,7 +38,7 @@ const SendIconTooltip = ({
       ) : (
         <Tooltip>
           <TooltipTrigger>{children}</TooltipTrigger>
-          <TooltipContent>{t(tooltipContent)}</TooltipContent>
+          {tooltipContent && <TooltipContent>{tooltipContent}</TooltipContent>}
         </Tooltip>
       )}
     </>
@@ -45,6 +46,7 @@ const SendIconTooltip = ({
 };
 
 export const SendMessageButton = ({ handleSend, isInputEmpty }: Props) => {
+  const { t } = useTranslation('chat');
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const isMessageError = useAppSelector(
     ConversationsSelectors.selectIsMessagesError,
@@ -58,27 +60,37 @@ export const SendMessageButton = ({ handleSend, isInputEmpty }: Props) => {
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+  const isReplay = useAppSelector(
+    ConversationsSelectors.selectIsReplaySelectedConversations,
+  );
 
   const isError =
     isLastAssistantMessageEmpty || (isMessageError && notModelConversations);
 
+  const tooltipContent = (): string => {
+    if (isReplay) {
+      return t('Please continue replay to continue working with chat');
+    }
+    if (isError) {
+      return t('Please regenerate response to continue working with chat');
+    }
+    return t('Please type a message');
+  };
+
+  const isShowDisabled = isError || isInputEmpty || isReplay;
+
   return (
     <button
-      className="absolute right-4 top-2.5 rounded hover:text-blue-500 disabled:cursor-not-allowed disabled:text-gray-400 disabled:dark:text-gray-600"
+      className="absolute right-4 top-[calc(50%_-_12px)] rounded hover:text-blue-500 disabled:cursor-not-allowed disabled:text-gray-400 disabled:dark:text-gray-600"
       onClick={handleSend}
-      disabled={
-        messageIsStreaming || isModelsLoading || isError || isInputEmpty
-      }
+      disabled={messageIsStreaming || isModelsLoading || isShowDisabled}
     >
       {messageIsStreaming || isModelsLoading ? (
-        <div
-          className="h-5 w-5 animate-spin rounded-full border-t-2 border-gray-500"
-          data-qa="message-input-spinner"
-        ></div>
+        <Spinner size={20} />
       ) : (
         <SendIconTooltip
-          isShowTooltip={isError || isInputEmpty}
-          isError={isError}
+          isShowTooltip={isShowDisabled}
+          tooltipContent={tooltipContent()}
         >
           <IconSend size={24} stroke="1.5" />
         </SendIconTooltip>

@@ -13,6 +13,7 @@ import {
   Message,
   Replay,
 } from '@/src/types/chat';
+import { Feature } from '@/src/types/features';
 
 import {
   AddonsActions,
@@ -36,7 +37,7 @@ import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
 import { ChatHeader } from './ChatHeader';
-import { ChatInput } from './ChatInput';
+import { ChatInput } from './ChatInput/ChatInput';
 import ChatReplayControls from './ChatReplayControls';
 import { ChatSettings } from './ChatSettings';
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
@@ -109,6 +110,10 @@ export const Chat = memo(() => {
   const showReplayControls = useMemo(() => {
     return isReplay && !messageIsStreaming && isReplayPaused;
   }, [isReplay, isReplayPaused, messageIsStreaming]);
+
+  const isNotEmptyConversations = selectedConversations.some(
+    (conv) => conv.messages.length > 0,
+  );
 
   useEffect(() => {
     setIsShowChatSettings(false);
@@ -501,12 +506,6 @@ export const Chat = memo(() => {
     setInputHeight(inputHeight);
   }, []);
 
-  useEffect(() => {
-    if (showReplayControls) {
-      setInputHeight(80);
-    }
-  }, [showReplayControls]);
-
   return (
     <div className="relative min-w-0 flex-1" data-qa="chat" id="chat">
       {modelError ? (
@@ -560,8 +559,8 @@ export const Chat = memo(() => {
                               defaultModelId={
                                 defaultModelId || OpenAIEntityModelID.GPT_3_5
                               }
-                              isShowSettings={enabledFeatures.includes(
-                                'empty-chat-settings',
+                              isShowSettings={enabledFeatures.has(
+                                Feature.EmptyChatSettings,
                               )}
                               onSelectModel={(modelId: string) =>
                                 handleSelectModel(conv, modelId)
@@ -623,22 +622,22 @@ export const Chat = memo(() => {
                       }`}
                     >
                       {conv.messages.length !== 0 &&
-                        enabledFeatures.includes('top-settings') && (
+                        enabledFeatures.has(Feature.TopSettings) && (
                           <div className={`z-10 flex flex-col `}>
                             <ChatHeader
                               conversation={conv}
                               isCompareMode={isCompareMode}
-                              isShowChatInfo={enabledFeatures.includes(
-                                'top-chat-info',
+                              isShowChatInfo={enabledFeatures.has(
+                                Feature.TopChatInfo,
                               )}
                               isShowClearConversation={
-                                enabledFeatures.includes(
-                                  'top-clear-conversation',
+                                enabledFeatures.has(
+                                  Feature.TopClearСonversation,
                                 ) && !isPlayback
                               }
                               isShowModelSelect={
-                                enabledFeatures.includes(
-                                  'top-chat-model-settings',
+                                enabledFeatures.has(
+                                  Feature.TopChatModelSettings,
                                 ) && !isPlayback
                               }
                               isShowSettings={isShowChatSettings}
@@ -708,8 +707,8 @@ export const Chat = memo(() => {
                                     message={message}
                                     messageIndex={index}
                                     conversation={conv}
-                                    isLikesEnabled={enabledFeatures.includes(
-                                      'likes',
+                                    isLikesEnabled={enabledFeatures.has(
+                                      Feature.Likes,
                                     )}
                                     editDisabled={isNotAllowedModel}
                                     onEdit={onEditMessage}
@@ -788,42 +787,37 @@ export const Chat = memo(() => {
               <NotAllowedModel />
             ) : (
               <>
-                {showReplayControls ? (
-                  <ChatReplayControls
-                    onClickReplayStart={handleReplayStart}
-                    onClickReplayReStart={handleReplayReStart}
-                    showReplayStart={selectedConversations.some(
-                      (conv) => conv.messages.length === 0,
-                    )}
-                  />
-                ) : (
-                  <>
-                    {!isPlayback && (
-                      <ChatInput
-                        textareaRef={textareaRef}
-                        isMessagesPresented={selectedConversations.some(
-                          (val) => val.messages.length > 0,
-                        )}
-                        showScrollDownButton={showScrollDownButton}
-                        onSend={onSendMessage}
-                        onScrollDownClick={handleScrollDown}
-                        onRegenerate={onRegenerateMessage}
-                        onStopConversation={() => {
-                          dispatch(ConversationsActions.stopStreamMessage());
-                        }}
-                        onResize={onChatInputResize}
+                {!isPlayback && (
+                  <ChatInput
+                    textareaRef={textareaRef}
+                    isMessagesPresented={isNotEmptyConversations}
+                    showScrollDownButton={showScrollDownButton}
+                    onSend={onSendMessage}
+                    onScrollDownClick={handleScrollDown}
+                    onRegenerate={onRegenerateMessage}
+                    onStopConversation={() => {
+                      dispatch(ConversationsActions.stopStreamMessage());
+                    }}
+                    onResize={onChatInputResize}
+                    isShowInput={!isReplay || isNotEmptyConversations}
+                  >
+                    {showReplayControls && (
+                      <ChatReplayControls
+                        onClickReplayStart={handleReplayStart}
+                        onClickReplayReStart={handleReplayReStart}
+                        showReplayStart={!isNotEmptyConversations}
                       />
                     )}
+                  </ChatInput>
+                )}
 
-                    {isPlayback && (
-                      <PlaybackControls
-                        nextMessageBoxRef={nextMessageBoxRef}
-                        showScrollDownButton={showScrollDownButton}
-                        onScrollDownClick={handleScrollDown}
-                        onResize={onChatInputResize}
-                      />
-                    )}
-                  </>
+                {isPlayback && (
+                  <PlaybackControls
+                    nextMessageBoxRef={nextMessageBoxRef}
+                    showScrollDownButton={showScrollDownButton}
+                    onScrollDownClick={handleScrollDown}
+                    onResize={onChatInputResize}
+                  />
                 )}
               </>
             )}

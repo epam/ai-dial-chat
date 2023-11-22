@@ -13,8 +13,8 @@ import { Prompt } from '@/src/types/prompt';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-settings';
 
-import { PromptDialog } from './PromptDialog';
-import { PromptList } from './PromptList';
+import { PromptDialog } from './ChatInput/PromptDialog';
+import { PromptList } from './ChatInput/PromptList';
 
 interface Props {
   maxLength: number;
@@ -241,8 +241,9 @@ export const SystemPrompt: FC<Props> = ({
             activePromptIndex={activePromptIndex}
             prompts={filteredPrompts}
             onSelect={handleInitModal}
-            onMouseOver={setActivePromptIndex}
-            promptListRef={promptListRef}
+            onMouseEnter={setActivePromptIndex}
+            isOpen={showPromptList && filteredPrompts.length > 0}
+            onClose={() => setShowPromptList(false)}
           />
         </div>
       )}

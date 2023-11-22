@@ -1,32 +1,35 @@
-export type Feature =
-  | 'conversations-section'
-  | 'prompts-section'
-  | 'top-settings'
-  | 'top-clear-conversation'
-  | 'top-chat-info'
-  | 'top-chat-model-settings'
-  | 'empty-chat-settings'
-  | 'header'
-  | 'footer'
-  | 'request-api-key'
-  | 'report-an-issue'
-  | 'likes'
-  | 'conversations-sharing'
-  | 'prompts-sharing';
+export enum Feature {
+  ConversationsSection = 'conversations-section',
+  PromptsSection = 'prompts-section',
+  TopSettings = 'top-settings',
+  TopClearСonversation = 'top-clear-conversation',
+  TopChatInfo = 'top-chat-info',
+  TopChatModelSettings = 'top-chat-model-settings',
+  EmptyChatSettings = 'empty-chat-settings',
+  Header = 'header',
+  Footer = 'footer',
+  RequestApiKey = 'request-api-key',
+  ReportAnIssue = 'report-an-issue',
+  Likes = 'likes',
+  ConversationsSharing = 'conversations-sharing',
+  PromptsSharing = 'prompts-sharing',
+  InputFiles = 'input-files',
+}
 
 export const availableFeatures: Record<Feature, boolean> = {
-  'conversations-section': true,
-  'prompts-section': true,
-  'top-settings': true,
-  'top-clear-conversation': true,
-  'top-chat-info': true,
-  'top-chat-model-settings': true,
-  'empty-chat-settings': true,
-  header: true,
-  footer: true,
-  'request-api-key': true,
-  'report-an-issue': true,
-  likes: true,
-  'conversations-sharing': true,
-  'prompts-sharing': true,
+  [Feature.ConversationsSection]: true,
+  [Feature.PromptsSection]: true,
+  [Feature.TopSettings]: true,
+  [Feature.TopClearСonversation]: true,
+  [Feature.TopChatInfo]: true,
+  [Feature.TopChatModelSettings]: true,
+  [Feature.EmptyChatSettings]: true,
+  [Feature.Header]: true,
+  [Feature.Footer]: true,
+  [Feature.RequestApiKey]: true,
+  [Feature.ReportAnIssue]: true,
+  [Feature.Likes]: true,
+  [Feature.ConversationsSharing]: true,
+  [Feature.PromptsSharing]: true,
+  [Feature.InputFiles]: true,
 };
