@@ -14,6 +14,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
+import { Feature } from '@/src/types/features';
 
 import {
   ConversationsActions,
@@ -65,8 +66,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
 
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
+  const isSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSharing),
   );
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -79,7 +80,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const dragImageRef = useRef<HTMLImageElement | null>();
   const [isSharing, setIsSharing] = useState(false);
   const { id: conversationId, isShared } = conversation;
-  const isSharingEnabled = enabledFeatures.includes('conversations-sharing');
   const showSharedIcon = isSharingEnabled && isShared && !isDeleting;
 
   useEffect(() => {
