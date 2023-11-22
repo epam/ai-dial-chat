@@ -142,7 +142,7 @@ export const Chat = memo(() => {
 
   useEffect(() => {
     const modelIds = models.map((model) => model.id);
-    const isNotAllowed = modelsIsLoading
+    const isNotAllowedModel = modelsIsLoading
       ? false
       : models.length === 0 ||
         selectedConversations.some((conv) => {
@@ -161,7 +161,7 @@ export const Chat = memo(() => {
           }
           return !modelIds.includes(conv.model.id);
         });
-    if (isNotAllowed) {
+    if (isNotAllowedModel) {
       setNotAllowedType(EntityType.Model);
     } else if (
       selectedConversations.some((conversation) =>
