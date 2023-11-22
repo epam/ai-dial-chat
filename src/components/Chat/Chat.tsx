@@ -13,6 +13,7 @@ import {
   Message,
   Replay,
 } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
 
 import {
@@ -60,6 +61,7 @@ export const Chat = memo(() => {
   const modelsIsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const defaultModelId = useAppSelector(SettingsSelectors.selectDefaultModelId);
   const addons = useAppSelector(AddonsSelectors.selectAddons);
+  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
@@ -103,7 +105,7 @@ export const Chat = memo(() => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const nextMessageBoxRef = useRef<HTMLDivElement | null>(null);
   const [inputHeight, setInputHeight] = useState<number>(142);
-  const [isNotAllowedModel, setIsNotAllowedModel] = useState(false);
+  const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const showReplayControls = useMemo(() => {
@@ -140,7 +142,7 @@ export const Chat = memo(() => {
 
   useEffect(() => {
     const modelIds = models.map((model) => model.id);
-    const isNotAllowed = modelsIsLoading
+    const isNotAllowedModel = modelsIsLoading
       ? false
       : models.length === 0 ||
         selectedConversations.some((conv) => {
@@ -159,8 +161,18 @@ export const Chat = memo(() => {
           }
           return !modelIds.includes(conv.model.id);
         });
-    setIsNotAllowedModel(isNotAllowed);
-  }, [selectedConversations, models, modelsIsLoading]);
+    if (isNotAllowedModel) {
+      setNotAllowedType(EntityType.Model);
+    } else if (
+      selectedConversations.some((conversation) =>
+        conversation.selectedAddons.some((addonId) => !addonsMap[addonId]),
+      )
+    ) {
+      setNotAllowedType(EntityType.Addon);
+    } else {
+      setNotAllowedType(null);
+    }
+  }, [selectedConversations, models, modelsIsLoading, addonsMap]);
 
   const onLikeHandler = useCallback(
     (index: number, conversation: Conversation) => (rate: number) => {
@@ -364,11 +376,13 @@ export const Chat = memo(() => {
       dispatch(
         ConversationsActions.updateConversation({
           id: conversation.id,
-          values: { selectedAddons: addonIds },
+          values: {
+            selectedAddons: addonIds.filter((addonId) => addonsMap[addonId]),
+          },
         }),
       );
     },
-    [dispatch],
+    [addonsMap, dispatch],
   );
 
   const handleChangePrompt = useCallback(
@@ -707,7 +721,7 @@ export const Chat = memo(() => {
                                     isLikesEnabled={enabledFeatures.has(
                                       Feature.Likes,
                                     )}
-                                    editDisabled={isNotAllowedModel}
+                                    editDisabled={!!notAllowedType}
                                     onEdit={onEditMessage}
                                     onLike={onLikeHandler(index, conv)}
                                     onDelete={() => {
@@ -780,8 +794,8 @@ export const Chat = memo(() => {
                 </div>
               )}
             </div>
-            {!isPlayback && isNotAllowedModel ? (
-              <NotAllowedModel />
+            {!isPlayback && notAllowedType ? (
+              <NotAllowedModel type={notAllowedType} />
             ) : (
               <>
                 {!isPlayback && (
