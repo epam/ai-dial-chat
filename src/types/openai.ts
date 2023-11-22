@@ -1,7 +1,9 @@
-export type OpenAIEntityModelType = 'model';
-export type OpenAIEntityApplicationType = 'application';
-export type OpenAIEntityAssistantType = 'assistant';
-export type OpenAIEntityAddonType = 'addon';
+import { EntityType } from './common';
+
+export type OpenAIEntityModelType = EntityType.Model;
+export type OpenAIEntityApplicationType = EntityType.Application;
+export type OpenAIEntityAssistantType = EntityType.Assistant;
+export type OpenAIEntityAddonType = EntityType.Addon;
 
 export interface ProxyOpenAIEntity<T = OpenAIEntityModelType> {
   id: string;
@@ -44,7 +46,7 @@ export interface OpenAIEntityModel extends Omit<OpenAIEntity, 'type'> {
 }
 
 export interface OpenAIEntityAddon extends Omit<OpenAIEntity, 'type'> {
-  type: 'addon';
+  type: EntityType.Addon;
 }
 
 export enum OpenAIEntityModelID {
@@ -80,17 +82,17 @@ export const OpenAIEntityAddons: Record<
   [OpenAIEntityAddonID.ADDON_EPAM10K_SEMANTIC_SEARCH]: {
     id: OpenAIEntityAddonID.ADDON_EPAM10K_SEMANTIC_SEARCH,
     name: 'EPAM10K Semantic Search',
-    type: 'addon',
+    type: EntityType.Addon,
   },
   [OpenAIEntityAddonID.ADDON_EPAM10K_GOLDEN_QNA]: {
     id: OpenAIEntityAddonID.ADDON_EPAM10K_GOLDEN_QNA,
     name: 'EPAM10K Golden QNA',
-    type: 'addon',
+    type: EntityType.Addon,
   },
   [OpenAIEntityAddonID.ADDON_WOLFRAM]: {
     id: OpenAIEntityAddonID.ADDON_WOLFRAM,
     name: 'Wolfram',
-    type: 'addon',
+    type: EntityType.Addon,
   },
 };
 
@@ -108,119 +110,119 @@ export const OpenAIEntityModels: Record<string, OpenAIEntityModel> = {
     name: 'GPT-3.5',
     maxLength: 12000,
     requestLimit: 3000,
-    type: 'model',
+    type: EntityType.Model,
   },
   [OpenAIEntityModelID.GPT_3_5_AZ]: {
     id: OpenAIEntityModelID.GPT_3_5_AZ,
     name: 'GPT-3.5',
     maxLength: 12000,
     requestLimit: 3000,
-    type: 'model',
+    type: EntityType.Model,
   },
   [OpenAIEntityModelID.GPT_4]: {
     id: OpenAIEntityModelID.GPT_4,
     name: 'GPT-4',
     maxLength: 24000,
     requestLimit: 6000,
-    type: 'model',
+    type: EntityType.Model,
   },
   [OpenAIEntityModelID.GPT_4_32K]: {
     id: OpenAIEntityModelID.GPT_4_32K,
     name: 'GPT-4-32K',
     maxLength: 96000,
     requestLimit: 24000,
-    type: 'model',
+    type: EntityType.Model,
   },
   [OpenAIEntityModelID.BISON_001]: {
     id: OpenAIEntityModelID.BISON_001,
     name: 'PaLM2 (bison)',
     maxLength: 24000,
     requestLimit: 6000,
-    type: 'model',
+    type: EntityType.Model,
   },
   [OpenAIEntityModelID.AMAZON_TITAN_TG1_LARGE]: {
     id: OpenAIEntityModelID.AMAZON_TITAN_TG1_LARGE,
     name: 'AWS (Titan)',
     maxLength: 24000,
     requestLimit: 6000,
-    type: 'model',
+    type: EntityType.Model,
   },
   [OpenAIEntityModelID.AI21_J2_GRANDE_INSTRUCT]: {
     id: OpenAIEntityModelID.AI21_J2_GRANDE_INSTRUCT,
     name: 'AI21 (Jurassic-2 Grande)',
     maxLength: 24000,
     requestLimit: 6000,
-    type: 'model',
+    type: EntityType.Model,
   },
   [OpenAIEntityModelID.AI21_J2_JUMBO_INSTRUCT]: {
     id: OpenAIEntityModelID.AI21_J2_JUMBO_INSTRUCT,
     name: 'AI21 (Jurassic-2 Jumbo)',
     maxLength: 24000,
     requestLimit: 6000,
-    type: 'model',
+    type: EntityType.Model,
   },
   [OpenAIEntityModelID.ANTHROPIC_CLAUDE_INSTANT_V1]: {
     id: OpenAIEntityModelID.ANTHROPIC_CLAUDE_INSTANT_V1,
     name: 'Anthropic (Claude Instant)',
     maxLength: 24000,
     requestLimit: 6000,
-    type: 'model',
+    type: EntityType.Model,
   },
   [OpenAIEntityModelID.ANTHROPIC_CLAUDE_V1]: {
     id: OpenAIEntityModelID.ANTHROPIC_CLAUDE_V1,
     name: 'Anthropic (Claude)',
     maxLength: 24000,
     requestLimit: 6000,
-    type: 'model',
+    type: EntityType.Model,
   },
   [OpenAIEntityModelID.STABILITY_STABLE_DIFFUSION_XL]: {
     id: OpenAIEntityModelID.STABILITY_STABLE_DIFFUSION_XL,
     name: 'Stable Diffusion XL',
     maxLength: 24000,
     requestLimit: 6000,
-    type: 'model',
+    type: EntityType.Model,
   },
   [OpenAIEntityModelID.EPAM10K_GOLDEN_QNA]: {
     id: OpenAIEntityModelID.EPAM10K_GOLDEN_QNA,
     name: 'EPAM10K Golden QNA',
     maxLength: 24000,
     requestLimit: 6000,
-    type: 'model',
+    type: EntityType.Model,
   },
   [OpenAIEntityModelID.EPAM10K_SEMANTIC_SEARCH]: {
     id: OpenAIEntityModelID.EPAM10K_SEMANTIC_SEARCH,
     name: 'EPAM10K Semantic Search',
     maxLength: 24000,
     requestLimit: 6000,
-    type: 'model',
+    type: EntityType.Model,
   },
   [OpenAIEntityModelID.GPT_WORLD]: {
     id: OpenAIEntityModelID.GPT_WORLD,
     name: 'GPT World',
     maxLength: 24000,
     requestLimit: 6000,
-    type: 'application',
+    type: EntityType.Application,
   },
   [OpenAIEntityModelID.MIRROR]: {
     id: OpenAIEntityModelID.MIRROR,
     name: 'Echo',
     maxLength: 24000,
     requestLimit: 6000,
-    type: 'application',
+    type: EntityType.Application,
   },
   [OpenAIEntityModelID.EPAM10K]: {
     id: OpenAIEntityModelID.EPAM10K,
     name: 'EPAM10K',
     maxLength: 24000,
     requestLimit: 6000,
-    type: 'application',
+    type: EntityType.Application,
   },
   [OpenAIEntityModelID.ASSISTANT10K]: {
     id: OpenAIEntityModelID.ASSISTANT10K,
     name: 'ASSISTANT10K',
     maxLength: 24000,
     requestLimit: 6000,
-    type: 'assistant',
+    type: EntityType.Assistant,
     selectedAddons: [OpenAIEntityAddonID.ADDON_EPAM10K_SEMANTIC_SEARCH],
   },
 };

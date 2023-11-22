@@ -2,9 +2,9 @@ import { useCallback, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { getHighlightColor } from '@/src/utils/app/folders';
+import { getByHighlightColor } from '@/src/utils/app/folders';
 
-import { HighlightColor } from '@/src/types/components';
+import { HighlightColor } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 
 interface BetweenFoldersLineProps {
@@ -65,7 +65,7 @@ export const BetweenFoldersLine = ({
     onDraggingOver?.(false);
   }, [onDraggingOver]);
 
-  const highlightColorBg = getHighlightColor(
+  const highlightColorBg = getByHighlightColor(
     highlightColor,
     classNames('bg-green/60'),
     classNames('bg-violet/60'),

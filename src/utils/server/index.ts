@@ -1,4 +1,5 @@
-import { Message } from '@/src/types/chat';
+import { Message, Role } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 import {
   OpenAIEntityAddonID,
   OpenAIEntityApplicationType,
@@ -46,7 +47,7 @@ function getUrl(
     | OpenAIEntityAssistantType,
   isAddonsAdded: boolean,
 ): string {
-  if (modelType === 'model' && isAddonsAdded) {
+  if (modelType === EntityType.Model && isAddonsAdded) {
     return `${OPENAI_API_HOST}/openai/deployments/assistant/chat/completions?api-version=${OPENAI_API_VERSION}`;
   }
 
@@ -103,7 +104,7 @@ export const OpenAIStream = async ({
         ? messages
         : [
             {
-              role: 'system',
+              role: Role.System,
               content: systemPrompt,
             },
             ...messages,
@@ -111,7 +112,7 @@ export const OpenAIStream = async ({
     temperature,
     stream: true,
     model:
-      model.type !== 'assistant'
+      model.type !== EntityType.Assistant
         ? model.id
         : assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id,
     ...(selectedAddons?.length && {

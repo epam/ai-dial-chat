@@ -152,12 +152,12 @@ export const ConversationSettings = ({
               className="flex max-h-full shrink flex-col divide-y divide-gray-300 overflow-auto bg-gray-200 dark:divide-gray-900 dark:bg-gray-800"
               data-qa="entity-settings"
             >
-              {model.type === 'application' && (
+              {model.type === EntityType.Application && (
                 <SettingContainer>
                   <ModelDescription model={model} />
                 </SettingContainer>
               )}
-              {model.type === 'assistant' && (
+              {model.type === EntityType.Assistant && (
                 <SettingContainer>
                   <AssistantSubModelSelector
                     assistantModelId={
@@ -167,7 +167,7 @@ export const ConversationSettings = ({
                   />
                 </SettingContainer>
               )}
-              {model.type === 'model' && (
+              {model.type === EntityType.Model && (
                 <SettingContainer>
                   <SystemPrompt
                     maxLength={model.maxLength}
@@ -178,7 +178,7 @@ export const ConversationSettings = ({
                 </SettingContainer>
               )}
 
-              {model.type !== 'application' && (
+              {model.type !== EntityType.Application && (
                 <SettingContainer>
                   <TemperatureSlider
                     label={t('Temperature')}
@@ -188,7 +188,7 @@ export const ConversationSettings = ({
                 </SettingContainer>
               )}
 
-              {model.type !== 'application' && (
+              {model.type !== EntityType.Application && (
                 <SettingContainer>
                   <Addons
                     preselectedAddonsIds={model.selectedAddons || []}

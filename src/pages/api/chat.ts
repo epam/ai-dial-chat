@@ -119,12 +119,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     let promptToSend = prompt;
-    if (!promptToSend && model.type === 'model') {
+    if (!promptToSend && model.type === EntityType.Model) {
       promptToSend = DEFAULT_SYSTEM_PROMPT;
     }
 
     let temperatureToUse = temperature;
-    if (temperatureToUse && model.type !== 'application') {
+    if (temperatureToUse && model.type !== EntityType.Application) {
       temperatureToUse = DEFAULT_TEMPERATURE;
     }
 

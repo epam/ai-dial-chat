@@ -1,3 +1,5 @@
+import { EntityType } from '@/src/types/common';
+
 import {
   OPENAI_API_HOST,
   OPENAI_API_VERSION,
@@ -8,7 +10,11 @@ import { getApiHeaders } from './get-headers';
 import fetch from 'node-fetch';
 
 export async function getEntities<T>(
-  type: 'model' | 'assistant' | 'application' | 'addon',
+  type:
+    | EntityType.Model
+    | EntityType.Assistant
+    | EntityType.Application
+    | EntityType.Addon,
   jwt: string,
   jobTitle: string | undefined,
 ): Promise<T> {

@@ -8,9 +8,9 @@ import { MouseEventHandler } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
+import { getByHighlightColor } from '@/src/utils/app/folders';
 
-import { HighlightColor } from '@/src/types/components';
+import { HighlightColor } from '@/src/types/common';
 
 import { Menu, MenuItem } from './DropdownMenu';
 
@@ -28,8 +28,10 @@ export const FolderContextMenu = ({
 }: FolderContextMenuProps) => {
   const { t } = useTranslation('sidebar');
 
-  const highlightBg = classNames(
-    highlightColor === 'green' ? 'hover:bg-green/15' : 'hover:bg-violet/15',
+  const highlightBg = getByHighlightColor(
+    highlightColor,
+    'hover:bg-green/15',
+    'hover:bg-violet/15',
   );
 
   if (!onDelete && !onRename && !onAddFolder) {

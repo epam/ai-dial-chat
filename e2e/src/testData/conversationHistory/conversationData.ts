@@ -1,7 +1,9 @@
 import { DateUtil } from '@/e2e/src/utils/dateUtil';
 import { GeneratorUtil } from '@/e2e/src/utils/generatorUtil';
 
-import { Conversation, Message, Stage } from '@/src/types/chat';
+
+
+import { Conversation, Message, Role, Stage } from '@/src/types/chat';
 import { FolderInterface } from '@/src/types/folder';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
@@ -36,11 +38,11 @@ export class ConversationData extends FolderData {
     const modelToUse =
       model ?? this.conversationBuilder.getConversation().model;
     const userMessage: Message = {
-      role: 'user',
+      role: Role.User,
       content: 'test request',
     };
     const assistantMessage: Message = {
-      role: 'assistant',
+      role: Role.Assistant,
       content: 'test response',
       model: { id: modelToUse.id },
     };
@@ -75,9 +77,9 @@ export class ConversationData extends FolderData {
     const basicConversation = this.prepareEmptyConversation(model, name);
     requests.forEach((r) => {
       basicConversation.messages.push(
-        { role: 'user', content: r },
+        { role: Role.User, content: r },
         {
-          role: 'assistant',
+          role: Role.Assistant,
           content: `response on ${r}`,
           model: {
             id: basicConversation.model.id,
@@ -158,11 +160,11 @@ export class ConversationData extends FolderData {
     conversation.model = model;
     conversation.selectedAddons = addons;
     const userMessage: Message = {
-      role: 'user',
+      role: Role.User,
       content: request ?? 'what is epam? what is epam revenue in 2020?',
     };
     const assistantMessage: Message = {
-      role: 'assistant',
+      role: Role.Assistant,
       content:
         'EPAM is a global provider of software engineering and IT consulting services',
       model: { id: conversation.model.id },

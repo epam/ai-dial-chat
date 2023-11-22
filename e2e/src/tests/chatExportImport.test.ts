@@ -1,19 +1,20 @@
 import { FileUtil } from '@/e2e/src/utils/fileUtil';
 import { ModelsUtil } from '@/e2e/src/utils/modelsUtil';
 
+
+
 import { Conversation } from '@/src/types/chat';
 import { FolderInterface } from '@/src/types/folder';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
+
+
+import { FolderConversation } from '../testData/conversationHistory/conversationData';
+
+
+
 import test from '@/e2e/src/core/fixtures';
-import {
-  ExpectedConstants,
-  ExpectedMessages,
-  FolderConversation,
-  Import,
-  MenuOptions,
-  ModelIds,
-} from '@/e2e/src/testData';
+import { ExpectedConstants, ExpectedMessages, Import, MenuOptions, ModelIds } from '@/e2e/src/testData';
 import { ImportConversation } from '@/e2e/src/testData/conversationHistory/importConversation';
 import { UploadDownloadData } from '@/e2e/src/ui/pages';
 import { GeneratorUtil } from '@/e2e/src/utils';

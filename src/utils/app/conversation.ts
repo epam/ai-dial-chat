@@ -1,4 +1,5 @@
 import { Conversation, MessageSettings } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 import {
   OpenAIEntityAddon,
   OpenAIEntityApplicationType,
@@ -15,7 +16,7 @@ export const getAssitantModelId = (
   defaultAssistantModelId: string,
   conversationAssistantModelId?: string,
 ): string | undefined => {
-  return modelType === 'assistant'
+  return modelType === EntityType.Assistant
     ? conversationAssistantModelId ?? defaultAssistantModelId
     : undefined;
 };
@@ -25,7 +26,7 @@ export const getSelectedAddons = (
   addonsMap: Partial<Record<string, OpenAIEntityAddon>>,
   model?: OpenAIEntityModel,
 ) => {
-  if (model && model.type !== 'application') {
+  if (model && model.type !== EntityType.Application) {
     const preselectedAddons = model.selectedAddons ?? [];
     const addonsSet = new Set([...preselectedAddons, ...selectedAddons]);
     const mergedSelectedAddons = Array.from(addonsSet)

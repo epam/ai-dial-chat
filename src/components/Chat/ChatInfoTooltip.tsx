@@ -54,9 +54,9 @@ export const ChatInfoTooltip = ({
   const { t } = useTranslation('chat');
   const getModelLabel = useCallback(() => {
     switch (model.type) {
-      case 'application':
+      case EntityType.Application:
         return t('Application');
-      case 'assistant':
+      case EntityType.Assistant:
         return t('Assistant');
       default:
         return t('Model');

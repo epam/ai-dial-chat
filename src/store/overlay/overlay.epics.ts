@@ -22,7 +22,7 @@ import {
 } from '@/src/utils/app/overlay';
 import { validateTheme } from '@/src/utils/app/settings';
 
-import { Message } from '@/src/types/chat';
+import { Message, Role } from '@/src/types/chat';
 import { Feature } from '@/src/types/features';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { Theme } from '@/src/types/settings';
@@ -157,7 +157,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           conversation: currentConversation,
           deleteCount: 0,
           message: {
-            role: 'user',
+            role: Role.User,
             content,
           },
           activeReplayIndex: 0,
@@ -252,7 +252,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
                     values: {
                       model: newAiEntity,
                       assistantModelId:
-                        newAiEntity.type === 'assistant'
+                        newAiEntity.type === Role.Assistant
                           ? DEFAULT_ASSISTANT_SUBMODEL.id
                           : undefined,
                     },
@@ -310,14 +310,14 @@ const setSystemPromptEpic: AppEpic = (action$, state$) =>
         const { messages } = currentConversation;
 
         const systemMessage: Message = {
-          role: 'system',
+          role: Role.System,
           content: systemPrompt,
         };
 
         // add system prompt
         const newMessages = [
           systemMessage,
-          ...messages.filter(({ role }) => role !== 'system'),
+          ...messages.filter(({ role }) => role !== Role.System),
         ];
 
         return of(

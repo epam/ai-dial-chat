@@ -127,7 +127,7 @@ const selectRecentModels = createSelector(
 );
 
 const selectModelsOnly = createSelector([selectModels], (models) => {
-  return models.filter((model) => model.type === 'model');
+  return models.filter((model) => model.type === EntityType.Model);
 });
 
 export const ModelsSelectors = {

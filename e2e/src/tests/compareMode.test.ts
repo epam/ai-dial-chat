@@ -1,11 +1,14 @@
 import { Conversation } from '@/src/types/chat';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
+
+
+import { FolderConversation } from '../testData/conversationHistory/conversationData';
+
 import test from '@/e2e/src/core/fixtures';
 import {
   ExpectedConstants,
   ExpectedMessages,
-  FolderConversation,
   MenuOptions,
   ModelIds,
   Side,
