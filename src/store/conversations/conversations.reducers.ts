@@ -659,7 +659,7 @@ const selectMaximumAttachmentsAmount = createSelector(
 
     return Math.min(
       ...models.map((model) =>
-        !!model?.inputAttachmentTypes ? Number.MAX_SAFE_INTEGER : 0,
+        model?.inputAttachmentTypes ? Number.MAX_SAFE_INTEGER : 0,
       ),
     );
   },

@@ -42,6 +42,46 @@ export const AttachButton = () => {
     setIsPreUploadDialogOpened(true);
   }, []);
 
+  const handleFileSelectClose = useCallback(
+    (result: unknown) => {
+      if (typeof result === 'object') {
+        const selectedFilesIds = result as string[];
+        dispatch(FilesActions.resetSelectedFiles());
+        dispatch(
+          FilesActions.selectFiles({
+            ids: selectedFilesIds,
+          }),
+        );
+      }
+      setIsSelectFilesDialogOpened(false);
+    },
+    [dispatch],
+  );
+
+  const handlePreUploadModalClose = useCallback(
+    (
+      selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
+      folderPath: string | undefined,
+    ) => {
+      selectedFiles.forEach((file) => {
+        dispatch(
+          FilesActions.uploadFile({
+            fileContent: file.fileContent,
+            id: file.id,
+            relativePath: folderPath,
+            name: file.name,
+          }),
+        );
+      });
+      dispatch(
+        FilesActions.selectFiles({
+          ids: selectedFiles.map(({ id }) => id),
+        }),
+      );
+    },
+    [dispatch],
+  );
+
   return (
     <>
       <div className="absolute left-4 top-[calc(50%_-_12px)] rounded disabled:cursor-not-allowed">
@@ -80,18 +120,7 @@ export const AttachButton = () => {
           isOpen
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
-          onClose={(result) => {
-            if (typeof result === 'object') {
-              const selectedFilesIds = result as string[];
-              dispatch(FilesActions.resetSelectedFiles());
-              dispatch(
-                FilesActions.selectFiles({
-                  ids: selectedFilesIds,
-                }),
-              );
-            }
-            setIsSelectFilesDialogOpened(false);
-          }}
+          onClose={handleFileSelectClose}
         />
       )}
       {isPreUploadDialogOpened && (
@@ -99,28 +128,7 @@ export const AttachButton = () => {
           isOpen
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
-          onUploadFiles={(
-            selectedFiles: Required<
-              Pick<DialFile, 'fileContent' | 'id' | 'name'>
-            >[],
-            folderPath: string | undefined,
-          ) => {
-            selectedFiles.forEach((file) => {
-              dispatch(
-                FilesActions.uploadFile({
-                  fileContent: file.fileContent,
-                  id: file.id,
-                  relativePath: folderPath,
-                  name: file.name,
-                }),
-              );
-            });
-            dispatch(
-              FilesActions.selectFiles({
-                ids: selectedFiles.map(({ id }) => id),
-              }),
-            );
-          }}
+          onUploadFiles={handlePreUploadModalClose}
           onClose={() => {
             setIsPreUploadDialogOpened(false);
           }}
