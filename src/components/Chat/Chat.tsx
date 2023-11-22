@@ -110,8 +110,8 @@ export const Chat = memo(() => {
     return isReplay && !messageIsStreaming && isReplayPaused;
   }, [isReplay, isReplayPaused, messageIsStreaming]);
 
-  const showReplayStart = selectedConversations.some(
-    (conv) => conv.messages.length === 0,
+  const isNotEmptyConversations = selectedConversations.some(
+    (conv) => conv.messages.length > 0,
   );
 
   useEffect(() => {
@@ -787,9 +787,7 @@ export const Chat = memo(() => {
                 {!isPlayback && (
                   <ChatInput
                     textareaRef={textareaRef}
-                    isMessagesPresented={selectedConversations.some(
-                      (val) => val.messages.length > 0,
-                    )}
+                    isMessagesPresented={isNotEmptyConversations}
                     showScrollDownButton={showScrollDownButton}
                     onSend={onSendMessage}
                     onScrollDownClick={handleScrollDown}
@@ -798,13 +796,13 @@ export const Chat = memo(() => {
                       dispatch(ConversationsActions.stopStreamMessage());
                     }}
                     onResize={onChatInputResize}
-                    isShowInput={!isReplay || !showReplayStart}
+                    isShowInput={!isReplay || isNotEmptyConversations}
                   >
                     {showReplayControls && (
                       <ChatReplayControls
                         onClickReplayStart={handleReplayStart}
                         onClickReplayReStart={handleReplayReStart}
-                        showReplayStart={showReplayStart}
+                        showReplayStart={!isNotEmptyConversations}
                       />
                     )}
                   </ChatInput>
