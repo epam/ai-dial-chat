@@ -150,7 +150,11 @@ export class DataService {
               name: result.name,
               absolutePath: result.path,
               relativePath: relativePath,
-            } as DialFile,
+              folderId: relativePath,
+              contentLength: result.contentLength,
+              contentType: result.contentType,
+              serverSynced: true,
+            },
           };
         },
       ),

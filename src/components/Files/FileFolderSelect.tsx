@@ -140,7 +140,7 @@ export const FileFolderSelect = ({
   const handleRenameFolder = useCallback(
     (newName: string, folderId: string) => {
       const folderWithSameName = folders.find(
-        (folder) => folder.name === newName,
+        (folder) => folder.name === newName && folderId !== folder.id,
       );
 
       if (folderWithSameName) {

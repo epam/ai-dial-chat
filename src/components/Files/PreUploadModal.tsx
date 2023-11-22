@@ -20,6 +20,7 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import { getPathNameId } from '@/src/utils/app/file';
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
 
 import { DialFile } from '@/src/types/files';
@@ -232,9 +233,7 @@ export const PreUploadDialog = ({
               return {
                 ...file,
                 name: e.target.value + formatFile,
-                id: [folderPath, e.target.value + formatFile]
-                  .filter(Boolean)
-                  .join('/'),
+                id: getPathNameId(e.target.value + formatFile, folderPath),
               };
             }
 
@@ -267,7 +266,7 @@ export const PreUploadDialog = ({
       dispatch(FilesActions.getFiles({ path: folderPath }));
     }
     if (initialFilesSelect && isOpen) {
-      uploadInputRef.current?.click();
+      setTimeout(() => uploadInputRef.current?.click());
     }
   }, [initialFilesSelect, isOpen]);
 

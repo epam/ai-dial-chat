@@ -127,6 +127,7 @@ export const AttachButton = () => {
         <PreUploadDialog
           isOpen
           allowedTypes={availableAttachmentsTypes}
+          initialFilesSelect={true}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           onUploadFiles={handlePreUploadModalClose}
           onClose={() => {

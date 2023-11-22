@@ -146,7 +146,7 @@ export const FileSelect = ({
   const handleRenameFolder = useCallback(
     (newName: string, folderId: string) => {
       const folderWithSameName = folders.find(
-        (folder) => folder.name === newName,
+        (folder) => folder.name === newName && folderId !== folder.id,
       );
 
       if (folderWithSameName) {
@@ -270,7 +270,7 @@ export const FileSelect = ({
                     ></input>
                     <div className="flex min-h-[350px] flex-col overflow-auto">
                       <button
-                        className='flex items-center gap-0.5 rounded py-1 text-xs text-gray-500'
+                        className="flex items-center gap-0.5 rounded py-1 text-xs text-gray-500"
                         onClick={() => handleToggleFolder(undefined)}
                       >
                         <IconCaretRightFilled
