@@ -1,11 +1,10 @@
-import { IconPencilMinus, IconTrashX } from '@tabler/icons-react';
+import { IconDots, IconPencilMinus, IconTrashX } from '@tabler/icons-react';
 import { MouseEventHandler } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { HighlightColor } from '@/src/types/components';
 
-import DotsIcon from '../../../public/images/icons/dots-vertical.svg';
 import { Menu, MenuItem } from './DropdownMenu';
 
 interface FolderContextMenuProps {
@@ -25,12 +24,10 @@ export const FolderContextMenu = ({
       type="contextMenu"
       className="justify-self-end"
       trigger={
-        <DotsIcon
-          className="rotate-90 text-gray-500"
-          width={18}
-          height={18}
-          size={18}
-          onClick={(e: MouseEvent) => {
+        <IconDots
+          className="text-gray-500"
+          size={16}
+          onClick={(e) => {
             e.stopPropagation();
           }}
         />
