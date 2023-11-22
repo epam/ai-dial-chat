@@ -169,7 +169,9 @@ export const Chat = memo(() => {
       )
     ) {
       setNotAllowedType(EntityType.Addon);
-    } else setNotAllowedType(null);
+    } else {
+      setNotAllowedType(null);
+    }
   }, [selectedConversations, models, modelsIsLoading, addonsMap]);
 
   const onLikeHandler = useCallback(
