@@ -275,7 +275,7 @@ export const PreUploadDialog = ({
     if (initialFilesSelect && isOpen) {
       setTimeout(() => uploadInputRef.current?.click());
     }
-  }, [initialFilesSelect, isOpen]);
+  }, [dispatch, folderPath, initialFilesSelect, isOpen]);
 
   useEffect(() => {
     setSelectedFiles((oldFiles) =>

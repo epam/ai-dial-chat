@@ -9,7 +9,9 @@ import {
   Conversation,
   ConversationEntityModel,
   Message,
+  Role,
 } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface } from '@/src/types/folder';
 
@@ -138,7 +140,7 @@ export const conversationsSlice = createSlice({
       const newConversationName = `[Replay] ${payload.conversation.name}`;
 
       const userMessages = payload.conversation.messages.filter(
-        ({ role }) => role === 'user',
+        ({ role }) => role === Role.User,
       );
       const newConversation: Conversation = {
         ...payload.conversation,
@@ -569,7 +571,7 @@ const selectPlaybackActiveMessage = createSelector(
       conversations[0].playback.activePlaybackIndex;
     const activeMessage =
       conversations[0].playback?.messagesStack[activeIndex ?? -1];
-    if (!activeMessage || activeMessage.role === 'assistant') {
+    if (!activeMessage || activeMessage.role === Role.Assistant) {
       return;
     }
     return activeMessage;
@@ -599,7 +601,7 @@ const selectIsLastAssistantMessageEmpty = createSelector(
       const lastMessage = conv.messages[lastMessageIndex];
 
       return (
-        lastMessage.role === 'assistant' && lastMessage.content.length === 0
+        lastMessage.role === Role.Assistant && lastMessage.content.length === 0
       );
     });
   },
@@ -610,7 +612,7 @@ const selectNotModelConversations = createSelector(
   (conversations, modelsMap) => {
     return conversations.some(
       (conv) =>
-        modelsMap[conv.model.id]?.type !== 'model' ||
+        modelsMap[conv.model.id]?.type !== EntityType.Model ||
         conv.selectedAddons.length > 0,
     );
   },

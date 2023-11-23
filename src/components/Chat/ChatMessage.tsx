@@ -21,7 +21,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { Conversation, Message } from '@/src/types/chat';
+import { Conversation, Message, Role } from '@/src/types/chat';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -103,8 +103,8 @@ export const ChatMessage: FC<Props> = memo(
 
     const isShowResponseLoader: boolean =
       conversation.isMessageStreaming && isLastMessage;
-    const isUser = message.role === 'user';
-    const isAssistant = message.role === 'assistant';
+    const isUser = message.role === Role.User;
+    const isAssistant = message.role === Role.Assistant;
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 

@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { FeatureType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -70,8 +71,8 @@ const Promptbar = () => {
 
   return (
     <Sidebar<Prompt>
-      featureType="prompt"
-      side={'right'}
+      featureType={FeatureType.Prompt}
+      side="right"
       isOpen={showPromptbar}
       itemComponent={
         <Prompts

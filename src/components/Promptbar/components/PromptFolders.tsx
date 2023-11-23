@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import classNames from 'classnames';
 
+import { HighlightColor } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 
@@ -101,7 +102,7 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
         onDrop={onDropBetweenFolders}
         index={index}
         parentFolderId={folder.folderId}
-        highlightColor="violet"
+        highlightColor={HighlightColor.Violet}
       />
       <Folder
         searchTerm={searchTerm}
@@ -109,7 +110,7 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
         itemComponent={PromptComponent}
         allItems={prompts}
         allFolders={conversationFolders}
-        highlightColor="violet"
+        highlightColor={HighlightColor.Violet}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
@@ -133,7 +134,7 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
           onDrop={onDropBetweenFolders}
           index={index + 1}
           parentFolderId={folder.folderId}
-          highlightColor="violet"
+          highlightColor={HighlightColor.Violet}
         />
       )}
     </>
