@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { EntityType } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 import { Theme } from '@/src/types/settings';
 
