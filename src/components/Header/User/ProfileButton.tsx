@@ -2,7 +2,6 @@ import { useSession } from 'next-auth/react';
 import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
-import Image from 'next/image';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
