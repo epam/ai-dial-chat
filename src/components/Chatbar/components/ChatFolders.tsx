@@ -13,6 +13,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Folder from '@/src/components/Folder';
 
@@ -38,6 +39,7 @@ const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
   const highlightedFolders = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
   );
+  const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
 
   const handleDrop = useCallback(
     (e: any, folder: FolderInterface) => {
@@ -92,6 +94,13 @@ const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
     [dispatch],
   );
 
+  const handleFolderClick = useCallback(
+    (folderId: string) => {
+      dispatch(UIActions.toggleFolder({ id: folderId }));
+    },
+    [dispatch],
+  );
+
   return (
     <>
       <BetweenFoldersLine
@@ -109,6 +118,7 @@ const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
         allFolders={conversationFolders}
         highlightColor="green"
         highlightedFolders={highlightedFolders}
+        openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
         onRenameFolder={(name, folderId) => {
           dispatch(
@@ -122,6 +132,7 @@ const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
           dispatch(ConversationsActions.deleteFolder({ folderId }))
         }
         onDropBetweenFolders={onDropBetweenFolders}
+        onClickFolder={handleFolderClick}
       />
       {isLast && (
         <BetweenFoldersLine

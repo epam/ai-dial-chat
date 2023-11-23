@@ -3,6 +3,8 @@ export interface FolderInterface {
   name: string;
   type: FolderType;
   folderId?: string;
+
+  serverSynced?: boolean;
 }
 
-export type FolderType = 'chat' | 'prompt';
+export type FolderType = 'chat' | 'prompt' | 'file';

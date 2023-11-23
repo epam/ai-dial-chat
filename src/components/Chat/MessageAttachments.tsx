@@ -8,17 +8,21 @@ import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import { MessageAttachment } from './MessageAttachment';
 
 interface Props {
-  attachments: Attachment[];
+  attachments: Attachment[] | undefined;
   isInner?: boolean;
 }
 
 export const MessageAttachments = ({ attachments, isInner }: Props) => {
   const { t } = useTranslation('chat');
   const isUnderSection = useMemo(() => {
-    return attachments.length > 3;
+    return !!attachments && attachments.length > 3;
   }, [attachments]);
 
   const [isSectionOpened, setIsSectionOpened] = useState(false);
+
+  if (!attachments?.length) {
+    return null;
+  }
 
   return isUnderSection && !isInner ? (
     <div className="rounded border border-gray-400 bg-gray-300  dark:border-gray-700 dark:bg-gray-900">

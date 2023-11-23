@@ -9,16 +9,15 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
-import { OpenAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-settings';
 
-import { PromptDialog } from './PromptDialog';
-import { PromptList } from './PromptList';
+import { PromptDialog } from './ChatInput/PromptDialog';
+import { PromptList } from './ChatInput/PromptList';
 
 interface Props {
-  model: OpenAIEntityModel;
+  maxLength: number;
   prompt: string | undefined;
   prompts: Prompt[];
   onChangePrompt: (prompt: string) => void;
@@ -26,7 +25,7 @@ interface Props {
 
 export const SystemPrompt: FC<Props> = ({
   prompts,
-  model,
+  maxLength,
   prompt,
   onChangePrompt,
 }) => {
@@ -61,7 +60,6 @@ export const SystemPrompt: FC<Props> = ({
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const value = e.target.value;
-      const maxLength = model.maxLength;
 
       if (value.length > maxLength) {
         alert(
@@ -78,7 +76,7 @@ export const SystemPrompt: FC<Props> = ({
 
       onChangePrompt(value);
     },
-    [model.maxLength, onChangePrompt, t, updatePromptListVisibility],
+    [maxLength, onChangePrompt, t, updatePromptListVisibility],
   );
 
   const parseVariables = useCallback((content: string) => {
@@ -243,8 +241,9 @@ export const SystemPrompt: FC<Props> = ({
             activePromptIndex={activePromptIndex}
             prompts={filteredPrompts}
             onSelect={handleInitModal}
-            onMouseOver={setActivePromptIndex}
-            promptListRef={promptListRef}
+            onMouseEnter={setActivePromptIndex}
+            isOpen={showPromptList && filteredPrompts.length > 0}
+            onClose={() => setShowPromptList(false)}
           />
         </div>
       )}

@@ -444,7 +444,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
     map(({ payload, modelsMap }) => {
       const messageModel: Message['model'] = {
         id: payload.conversation.model.id,
-        name: modelsMap[payload.conversation.model.id]?.name,
       };
       const messageSettings: Message['settings'] = {
         prompt: payload.conversation.prompt,
@@ -553,7 +552,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
         ]),
       );
       const assistantModelId = payload.conversation.assistantModelId;
-      const conversationModelType = payload.conversation.model.type;
+      const conversationModelType = lastModel?.type ?? 'model';
       let modelAdditionalSettings = {};
 
       if (conversationModelType === 'model') {
@@ -583,8 +582,12 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             content: message.content,
             role: message.role,
             like: void 0,
-            ...(message.custom_content?.state && {
-              custom_content: { state: message.custom_content?.state },
+            ...((message.custom_content?.state ||
+              message.custom_content?.attachments) && {
+              custom_content: {
+                state: message.custom_content?.state,
+                attachments: message.custom_content?.attachments,
+              },
             }),
           })),
         id: payload.conversation.id.toLowerCase(),

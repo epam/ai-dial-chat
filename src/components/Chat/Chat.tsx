@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import { throttle } from '@/src/utils/data/throttle';
 
-import { OpenAIEntityModel, OpenAIEntityModelID } from '../../types/openai';
+import { OpenAIEntityModelID } from '../../types/openai';
 import {
   Conversation,
   ConversationsTemporarySettings,
@@ -13,6 +13,8 @@ import {
   Message,
   Replay,
 } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
+import { Feature } from '@/src/types/features';
 
 import {
   AddonsActions,
@@ -36,7 +38,7 @@ import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
 import { ChatHeader } from './ChatHeader';
-import { ChatInput } from './ChatInput';
+import { ChatInput } from './ChatInput/ChatInput';
 import ChatReplayControls from './ChatReplayControls';
 import { ChatSettings } from './ChatSettings';
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
@@ -59,6 +61,7 @@ export const Chat = memo(() => {
   const modelsIsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const defaultModelId = useAppSelector(SettingsSelectors.selectDefaultModelId);
   const addons = useAppSelector(AddonsSelectors.selectAddons);
+  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
@@ -102,12 +105,16 @@ export const Chat = memo(() => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const nextMessageBoxRef = useRef<HTMLDivElement | null>(null);
   const [inputHeight, setInputHeight] = useState<number>(142);
-  const [isNotAllowedModel, setIsNotAllowedModel] = useState(false);
+  const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const showReplayControls = useMemo(() => {
     return isReplay && !messageIsStreaming && isReplayPaused;
   }, [isReplay, isReplayPaused, messageIsStreaming]);
+
+  const isNotEmptyConversations = selectedConversations.some(
+    (conv) => conv.messages.length > 0,
+  );
 
   useEffect(() => {
     setIsShowChatSettings(false);
@@ -135,7 +142,7 @@ export const Chat = memo(() => {
 
   useEffect(() => {
     const modelIds = models.map((model) => model.id);
-    const isNotAllowed = modelsIsLoading
+    const isNotAllowedModel = modelsIsLoading
       ? false
       : models.length === 0 ||
         selectedConversations.some((conv) => {
@@ -154,8 +161,18 @@ export const Chat = memo(() => {
           }
           return !modelIds.includes(conv.model.id);
         });
-    setIsNotAllowedModel(isNotAllowed);
-  }, [selectedConversations, models, modelsIsLoading]);
+    if (isNotAllowedModel) {
+      setNotAllowedType(EntityType.Model);
+    } else if (
+      selectedConversations.some((conversation) =>
+        conversation.selectedAddons.some((addonId) => !addonsMap[addonId]),
+      )
+    ) {
+      setNotAllowedType(EntityType.Addon);
+    } else {
+      setNotAllowedType(null);
+    }
+  }, [selectedConversations, models, modelsIsLoading, addonsMap]);
 
   const onLikeHandler = useCallback(
     (index: number, conversation: Conversation) => (rate: number) => {
@@ -285,9 +302,10 @@ export const Chat = memo(() => {
 
   const handleSelectModel = useCallback(
     (conversation: Conversation, modelId: string) => {
-      const newAiEntity = models.find(
-        ({ id }) => id === modelId,
-      ) as OpenAIEntityModel;
+      const newAiEntity = modelsMap[modelId];
+      if (!newAiEntity) {
+        return;
+      }
 
       const updatedReplay: Replay = !conversation.replay.isReplay
         ? conversation.replay
@@ -295,21 +313,29 @@ export const Chat = memo(() => {
             ...conversation.replay,
             replayAsIs: false,
           };
+      const updatedAddons =
+        conversation.replay.isReplay &&
+        conversation.replay.replayAsIs &&
+        !updatedReplay.replayAsIs
+          ? conversation.selectedAddons.filter((addonId) => addonsMap[addonId])
+          : conversation.selectedAddons;
+
       dispatch(
         ConversationsActions.updateConversation({
           id: conversation.id,
           values: {
-            model: newAiEntity,
+            model: { id: modelId },
             assistantModelId:
               newAiEntity.type === 'assistant'
                 ? DEFAULT_ASSISTANT_SUBMODEL.id
                 : undefined,
             replay: updatedReplay,
+            selectedAddons: updatedAddons,
           },
         }),
       );
     },
-    [dispatch, models],
+    [dispatch, modelsMap],
   );
 
   const handleSelectAssistantSubModel = useCallback(
@@ -358,11 +384,13 @@ export const Chat = memo(() => {
       dispatch(
         ConversationsActions.updateConversation({
           id: conversation.id,
-          values: { selectedAddons: addonIds },
+          values: {
+            selectedAddons: addonIds.filter((addonId) => addonsMap[addonId]),
+          },
         }),
       );
     },
-    [dispatch],
+    [addonsMap, dispatch],
   );
 
   const handleChangePrompt = useCallback(
@@ -497,12 +525,6 @@ export const Chat = memo(() => {
     setInputHeight(inputHeight);
   }, []);
 
-  useEffect(() => {
-    if (showReplayControls) {
-      setInputHeight(80);
-    }
-  }, [showReplayControls]);
-
   return (
     <div className="relative min-w-0 flex-1" data-qa="chat" id="chat">
       {modelError ? (
@@ -551,14 +573,13 @@ export const Chat = memo(() => {
                           >
                             <ChatSettingsEmpty
                               conversation={conv}
-                              models={models}
-                              addons={addons}
+                              isModels={models.length !== 0}
                               prompts={prompts}
                               defaultModelId={
                                 defaultModelId || OpenAIEntityModelID.GPT_3_5
                               }
-                              isShowSettings={enabledFeatures.includes(
-                                'empty-chat-settings',
+                              isShowSettings={enabledFeatures.has(
+                                Feature.EmptyChatSettings,
                               )}
                               onSelectModel={(modelId: string) =>
                                 handleSelectModel(conv, modelId)
@@ -576,6 +597,7 @@ export const Chat = memo(() => {
                                 handleChangeTemperature(conv, temperature)
                               }
                               appName={appName}
+                              onApplyAddons={handleOnApplyAddons}
                             />
                           </div>
 
@@ -619,22 +641,22 @@ export const Chat = memo(() => {
                       }`}
                     >
                       {conv.messages.length !== 0 &&
-                        enabledFeatures.includes('top-settings') && (
+                        enabledFeatures.has(Feature.TopSettings) && (
                           <div className={`z-10 flex flex-col `}>
                             <ChatHeader
                               conversation={conv}
                               isCompareMode={isCompareMode}
-                              isShowChatInfo={enabledFeatures.includes(
-                                'top-chat-info',
+                              isShowChatInfo={enabledFeatures.has(
+                                Feature.TopChatInfo,
                               )}
                               isShowClearConversation={
-                                enabledFeatures.includes(
-                                  'top-clear-conversation',
+                                enabledFeatures.has(
+                                  Feature.TopClearСonversation,
                                 ) && !isPlayback
                               }
                               isShowModelSelect={
-                                enabledFeatures.includes(
-                                  'top-chat-model-settings',
+                                enabledFeatures.has(
+                                  Feature.TopChatModelSettings,
                                 ) && !isPlayback
                               }
                               isShowSettings={isShowChatSettings}
@@ -704,10 +726,10 @@ export const Chat = memo(() => {
                                     message={message}
                                     messageIndex={index}
                                     conversation={conv}
-                                    isLikesEnabled={enabledFeatures.includes(
-                                      'likes',
+                                    isLikesEnabled={enabledFeatures.has(
+                                      Feature.Likes,
                                     )}
-                                    editDisabled={isNotAllowedModel}
+                                    editDisabled={!!notAllowedType}
                                     onEdit={onEditMessage}
                                     onLike={onLikeHandler(index, conv)}
                                     onDelete={() => {
@@ -744,7 +766,7 @@ export const Chat = memo(() => {
                         defaultModelId={
                           defaultModelId || OpenAIEntityModelID.GPT_3_5
                         }
-                        model={modelsMap[conv.model.id]}
+                        modelId={conv.model.id}
                         prompts={prompts}
                         addons={addons}
                         onChangeSettings={(args) => {
@@ -780,51 +802,41 @@ export const Chat = memo(() => {
                 </div>
               )}
             </div>
-            {!isPlayback && isNotAllowedModel ? (
-              <NotAllowedModel />
+            {!isPlayback && notAllowedType ? (
+              <NotAllowedModel type={notAllowedType} />
             ) : (
               <>
-                {showReplayControls ? (
-                  <ChatReplayControls
-                    onClickReplayStart={handleReplayStart}
-                    onClickReplayReStart={handleReplayReStart}
-                    showReplayStart={selectedConversations.some(
-                      (conv) => conv.messages.length === 0,
-                    )}
-                  />
-                ) : (
-                  <>
-                    {!isPlayback && (
-                      <ChatInput
-                        textareaRef={textareaRef}
-                        isMessagesPresented={selectedConversations.some(
-                          (val) => val.messages.length > 0,
-                        )}
-                        maxLength={Math.min(
-                          ...selectedConversations.map(
-                            (conv) => conv.model.maxLength,
-                          ),
-                        )}
-                        showScrollDownButton={showScrollDownButton}
-                        onSend={onSendMessage}
-                        onScrollDownClick={handleScrollDown}
-                        onRegenerate={onRegenerateMessage}
-                        onStopConversation={() => {
-                          dispatch(ConversationsActions.stopStreamMessage());
-                        }}
-                        onResize={onChatInputResize}
+                {!isPlayback && (
+                  <ChatInput
+                    textareaRef={textareaRef}
+                    isMessagesPresented={isNotEmptyConversations}
+                    showScrollDownButton={showScrollDownButton}
+                    onSend={onSendMessage}
+                    onScrollDownClick={handleScrollDown}
+                    onRegenerate={onRegenerateMessage}
+                    onStopConversation={() => {
+                      dispatch(ConversationsActions.stopStreamMessage());
+                    }}
+                    onResize={onChatInputResize}
+                    isShowInput={!isReplay || isNotEmptyConversations}
+                  >
+                    {showReplayControls && (
+                      <ChatReplayControls
+                        onClickReplayStart={handleReplayStart}
+                        onClickReplayReStart={handleReplayReStart}
+                        showReplayStart={!isNotEmptyConversations}
                       />
                     )}
+                  </ChatInput>
+                )}
 
-                    {isPlayback && (
-                      <PlaybackControls
-                        nextMessageBoxRef={nextMessageBoxRef}
-                        showScrollDownButton={showScrollDownButton}
-                        onScrollDownClick={handleScrollDown}
-                        onResize={onChatInputResize}
-                      />
-                    )}
-                  </>
+                {isPlayback && (
+                  <PlaybackControls
+                    nextMessageBoxRef={nextMessageBoxRef}
+                    showScrollDownButton={showScrollDownButton}
+                    onScrollDownClick={handleScrollDown}
+                    onResize={onChatInputResize}
+                  />
                 )}
               </>
             )}

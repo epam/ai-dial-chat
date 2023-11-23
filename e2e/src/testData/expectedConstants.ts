@@ -28,6 +28,7 @@ export const ExpectedConstants = {
     'Are you sure that you want to remove a folder with all nested elements?',
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
+  selectedPromptOptionAttribute: 'bg-blue-500/20',
 };
 
 export enum Groups {

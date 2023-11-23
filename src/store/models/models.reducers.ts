@@ -3,6 +3,7 @@ import { i18n } from 'next-i18next';
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { ErrorMessage } from '@/src/types/error';
+import { ModelsMap } from '@/src/types/models';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -13,7 +14,7 @@ export interface ModelsState {
   isLoading: boolean;
   error: ErrorMessage | undefined;
   models: OpenAIEntityModel[];
-  modelsMap: Partial<Record<string, OpenAIEntityModel>>;
+  modelsMap: ModelsMap;
   recentModelsIds: string[];
 }
 
@@ -125,6 +126,10 @@ const selectRecentModels = createSelector(
   },
 );
 
+const selectModelsOnly = createSelector([selectModels], (models) => {
+  return models.filter((model) => model.type === 'model');
+});
+
 export const ModelsSelectors = {
   selectModelsIsLoading,
   selectModelsError,
@@ -133,6 +138,7 @@ export const ModelsSelectors = {
   selectRecentModelsIds,
   selectRecentModels,
   selectModel,
+  selectModelsOnly,
 };
 
 export const ModelsActions = modelsSlice.actions;

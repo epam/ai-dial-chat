@@ -1,4 +1,4 @@
-import { FooterMessage, reportAnIssueHash, requestApiKeyHash } from '@/src/components/Chat/FooterMessage';
+import { FooterMessage, reportAnIssueHash, requestApiKeyHash } from '@/src/components/Common/FooterMessage';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { Feature } from '@/src/types/features';
 import { getByText, render, screen, waitFor } from '@testing-library/react';
@@ -6,7 +6,7 @@ import { userEvent } from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const footerHtmlMessage = `<p data-qa="test">Some footer text.</p><a data-qa="reportAnIssue" href="${reportAnIssueHash}">reportAnIssue</a> and <a data-qa="requestApiKey" href="${requestApiKeyHash}">requestApiKey</a>`;
-const footerEnabledFeatures = ['footer', 'request-api-key', 'report-an-issue'] as Feature[];
+const footerEnabledFeatures = new Set([Feature.Footer, Feature.RequestApiKey, Feature.ReportAnIssue]);
 const mockBasePath = '/base/';
 const mockReplace = vi.fn();
 
@@ -51,6 +51,8 @@ vi.mock('@/src/components/Chat/RequestApiKeyDialog', ()=>({
 describe('FooterMessage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    vi.mocked(SettingsSelectors.selectFooterHtmlMessage).mockReturnValue(footerHtmlMessage);
     vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(footerEnabledFeatures);
   });
 
@@ -68,14 +70,14 @@ describe('FooterMessage', () => {
   });
 
   it('renders nothing when footer feature is disabled', async () => {
-    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(['report-an-issue', 'request-api-key']);
+    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(new Set([Feature.RequestApiKey, Feature.ReportAnIssue]));
     const { container } = await render(<FooterMessage />);
 
     expect(container).toBeEmptyDOMElement();
   });
 
   it('does not open the request api key dialog if this option is disabled', async () => {
-    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(['footer', 'report-an-issue']);
+    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(new Set([Feature.Footer, Feature.ReportAnIssue]));
     const { getByTestId } = await render(<FooterMessage />);
     const requestApiKeyLink = getByTestId('requestApiKey');
 
@@ -108,7 +110,7 @@ describe('FooterMessage', () => {
   });
 
   it('does not open the request an issue dialog if this option is disabled', async () => {
-    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(['footer', 'request-api-key']);
+    vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(new Set([Feature.Footer, Feature.RequestApiKey]));
     render(<FooterMessage />);
     const reportAnIssueLink = screen.getByTestId('reportAnIssue');
 
