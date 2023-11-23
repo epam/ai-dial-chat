@@ -81,6 +81,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const [isSharing, setIsSharing] = useState(false);
   const { id: conversationId, isShared } = conversation;
   const showSharedIcon = isSharingEnabled && isShared && !isDeleting;
+  const isSelected = selectedConversationIds.includes(conversation.id);
 
   useEffect(() => {
     dragImageRef.current = document.createElement('img');
@@ -255,7 +256,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     <div
       className={classNames(
         'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-green/15',
-        selectedConversationIds.includes(conversation.id)
+        isSelected || isRenaming || isDeleting
           ? 'border-l-green bg-green/15'
           : 'border-l-transparent',
       )}
@@ -354,9 +355,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         <div
           className={classNames(
             'invisible absolute right-3 z-50 flex justify-end md:group-hover:visible',
-            selectedConversationIds.includes(conversation.id)
-              ? 'max-md:visible'
-              : '',
+            isSelected ? 'max-md:visible' : '',
           )}
           ref={wrapperRef}
           data-qa="dots-menu"
