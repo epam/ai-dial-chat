@@ -12,13 +12,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { EntityType } from '@/src/types/common';
-import {
-  OpenAIEntity,
-  OpenAIEntityApplicationType,
-  OpenAIEntityAssistantType,
-  OpenAIEntityModel,
-  OpenAIEntityModelType,
-} from '@/src/types/openai';
+import { OpenAIEntity, OpenAIEntityModel } from '@/src/types/openai';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -165,13 +159,11 @@ export const ModelsDialog: FC<Props> = ({
   const dispatch = useAppDispatch();
   const models = useAppSelector(ModelsSelectors.selectModels);
 
-  const [entityTypes, setEntityTypes] = useState<
-    (
-      | OpenAIEntityModelType
-      | OpenAIEntityApplicationType
-      | OpenAIEntityAssistantType
-    )[]
-  >([EntityType.Model, EntityType.Assistant, EntityType.Application]);
+  const [entityTypes, setEntityTypes] = useState<EntityType[]>([
+    EntityType.Model,
+    EntityType.Assistant,
+    EntityType.Application,
+  ]);
   const [filteredModelsEntities, setFilteredModelsEntities] = useState<
     OpenAIEntity[]
   >([]);
@@ -226,25 +218,17 @@ export const ModelsDialog: FC<Props> = ({
     ]);
   }, [isOpen]);
 
-  const handleFilterType = useCallback(
-    (
-      entityType:
-        | OpenAIEntityModelType
-        | OpenAIEntityApplicationType
-        | OpenAIEntityAssistantType,
-    ) => {
-      setEntityTypes((entityTypes) => {
-        if (entityTypes.includes(entityType)) {
-          return entityTypes.filter(
-            (currentEntityType) => currentEntityType !== entityType,
-          );
-        }
+  const handleFilterType = useCallback((entityType: EntityType) => {
+    setEntityTypes((entityTypes) => {
+      if (entityTypes.includes(entityType)) {
+        return entityTypes.filter(
+          (currentEntityType) => currentEntityType !== entityType,
+        );
+      }
 
-        return [...entityTypes, entityType];
-      });
-    },
-    [],
-  );
+      return [...entityTypes, entityType];
+    });
+  }, []);
 
   const handleSelectModel = useCallback(
     (entityId: string) => {

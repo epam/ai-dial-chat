@@ -1,11 +1,6 @@
 import { EntityType } from './common';
 
-export type OpenAIEntityModelType = EntityType.Model;
-export type OpenAIEntityApplicationType = EntityType.Application;
-export type OpenAIEntityAssistantType = EntityType.Assistant;
-export type OpenAIEntityAddonType = EntityType.Addon;
-
-export interface ProxyOpenAIEntity<T = OpenAIEntityModelType> {
+export interface ProxyOpenAIEntity<T = EntityType.Model> {
   id: string;
   object: T;
   display_name?: string;
@@ -25,11 +20,7 @@ export interface OpenAIEntity {
   name: string;
   description?: string | undefined;
   iconUrl?: string | undefined;
-  type:
-    | OpenAIEntityModelType
-    | OpenAIEntityApplicationType
-    | OpenAIEntityAssistantType
-    | OpenAIEntityAddonType;
+  type: EntityType;
   selectedAddons?: string[];
   inputAttachmentTypes?: string[];
   maxInputAttachments?: number;
@@ -39,10 +30,7 @@ export interface OpenAIEntityModel extends Omit<OpenAIEntity, 'type'> {
   maxLength: number; // maximum length of a message
   requestLimit: number;
   isDefault?: boolean;
-  type:
-    | OpenAIEntityModelType
-    | OpenAIEntityApplicationType
-    | OpenAIEntityAssistantType;
+  type: EntityType;
 }
 
 export interface OpenAIEntityAddon extends Omit<OpenAIEntity, 'type'> {

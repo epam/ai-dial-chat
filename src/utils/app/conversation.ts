@@ -1,18 +1,9 @@
 import { Conversation, MessageSettings } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import {
-  OpenAIEntityAddon,
-  OpenAIEntityApplicationType,
-  OpenAIEntityAssistantType,
-  OpenAIEntityModel,
-  OpenAIEntityModelType,
-} from '@/src/types/openai';
+import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 
 export const getAssitantModelId = (
-  modelType:
-    | OpenAIEntityModelType
-    | OpenAIEntityApplicationType
-    | OpenAIEntityAssistantType,
+  modelType: EntityType,
   defaultAssistantModelId: string,
   conversationAssistantModelId?: string,
 ): string | undefined => {

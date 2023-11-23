@@ -2,11 +2,8 @@ import { Message, Role } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import {
   OpenAIEntityAddonID,
-  OpenAIEntityApplicationType,
-  OpenAIEntityAssistantType,
   OpenAIEntityModel,
   OpenAIEntityModelID,
-  OpenAIEntityModelType,
 } from '@/src/types/openai';
 
 import {
@@ -41,10 +38,7 @@ export class OpenAIError extends Error {
 
 function getUrl(
   modelId: string,
-  modelType:
-    | OpenAIEntityModelType
-    | OpenAIEntityApplicationType
-    | OpenAIEntityAssistantType,
+  modelType: EntityType,
   isAddonsAdded: boolean,
 ): string {
   if (modelType === EntityType.Model && isAddonsAdded) {
