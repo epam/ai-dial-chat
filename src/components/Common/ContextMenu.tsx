@@ -16,7 +16,9 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { FeatureType, HighlightColor } from '@/src/types/components';
+import { getByHighlightColor } from '@/src/utils/app/folders';
+
+import { FeatureType, HighlightColor } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 
 import { Menu, MenuItem } from './DropdownMenu';
@@ -67,10 +69,10 @@ export const ContextMenu = ({
         }
       >
         <MenuItem
-          className={classNames(
-            highlightColor === 'green'
-              ? 'hover:bg-green/15'
-              : 'hover:bg-violet/15',
+          className={getByHighlightColor(
+            highlightColor,
+            'hover:bg-green/15',
+            'hover:bg-violet/15',
           )}
           item={
             <div className="flex items-center gap-3">
@@ -82,10 +84,10 @@ export const ContextMenu = ({
         />
         {onCompare && (
           <MenuItem
-            className={classNames(
-              highlightColor === 'green'
-                ? 'hover:bg-green/15'
-                : 'hover:bg-violet/15',
+            className={getByHighlightColor(
+              highlightColor,
+              'hover:bg-green/15',
+              'hover:bg-violet/15',
             )}
             item={
               <div className="flex items-center gap-3">
@@ -98,10 +100,10 @@ export const ContextMenu = ({
         )}
         {!isEmptyConversation && onReplay && (
           <MenuItem
-            className={classNames(
-              highlightColor === 'green'
-                ? 'hover:bg-green/15'
-                : 'hover:bg-violet/15',
+            className={getByHighlightColor(
+              highlightColor,
+              'hover:bg-green/15',
+              'hover:bg-violet/15',
             )}
             item={
               <div className="flex items-center gap-3">
@@ -125,10 +127,10 @@ export const ContextMenu = ({
           />
         )}
         <MenuItem
-          className={classNames(
-            highlightColor === 'green'
-              ? 'hover:bg-green/15'
-              : 'hover:bg-violet/15',
+          className={getByHighlightColor(
+            highlightColor,
+            'hover:bg-green/15',
+            'hover:bg-violet/15',
           )}
           item={
             <div className="flex items-center gap-3">
@@ -144,10 +146,11 @@ export const ContextMenu = ({
         <MenuItem
           className={classNames(
             'md:hidden',
-
-            highlightColor === 'green'
-              ? 'hover:bg-green/15'
-              : 'hover:bg-violet/15',
+            getByHighlightColor(
+              highlightColor,
+              'hover:bg-green/15',
+              'hover:bg-violet/15',
+            ),
           )}
           onClick={onOpenMoveToModal}
           item={
@@ -161,10 +164,11 @@ export const ContextMenu = ({
           type="contextMenu"
           className={classNames(
             'max-md:hidden',
-
-            highlightColor === 'green'
-              ? 'hover:bg-green/15'
-              : 'hover:bg-violet/15',
+            getByHighlightColor(
+              highlightColor,
+              'hover:bg-green/15',
+              'hover:bg-violet/15',
+            ),
           )}
           trigger={
             <div className="flex items-center gap-3">
@@ -180,10 +184,11 @@ export const ContextMenu = ({
                   folders?.length > 0,
               },
               'invisible md:visible',
-
-              highlightColor === 'green'
-                ? 'hover:bg-green/15'
-                : 'hover:bg-violet/15',
+              getByHighlightColor(
+                highlightColor,
+                'hover:bg-green/15',
+                'hover:bg-violet/15',
+              ),
             )}
             onClick={() => {
               onMoveToFolder({ isNewFolder: true });
@@ -200,10 +205,11 @@ export const ContextMenu = ({
             <MenuItem
               className={classNames(
                 'invisible md:visible',
-
-                highlightColor === 'green'
-                  ? 'hover:bg-green/15'
-                  : 'hover:bg-violet/15',
+                getByHighlightColor(
+                  highlightColor,
+                  'hover:bg-green/15',
+                  'hover:bg-violet/15',
+                ),
               )}
               key={folder.id}
               label={folder.name}
@@ -216,10 +222,10 @@ export const ContextMenu = ({
 
         {onOpenShareModal && (
           <MenuItem
-            className={classNames(
-              highlightColor === 'green'
-                ? 'hover:bg-green/15'
-                : 'hover:bg-violet/15',
+            className={getByHighlightColor(
+              highlightColor,
+              'hover:bg-green/15',
+              'hover:bg-violet/15',
             )}
             onClick={onOpenShareModal}
             item={
@@ -232,10 +238,10 @@ export const ContextMenu = ({
         )}
 
         <MenuItem
-          className={classNames(
-            highlightColor === 'green'
-              ? 'hover:bg-green/15'
-              : 'hover:bg-violet/15',
+          className={getByHighlightColor(
+            highlightColor,
+            'hover:bg-green/15',
+            'hover:bg-violet/15',
           )}
           item={
             <div className="flex items-center gap-3">

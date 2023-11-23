@@ -4,7 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { FeatureType } from '@/src/types/components';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 
 import { NoData } from '../Common/NoData';

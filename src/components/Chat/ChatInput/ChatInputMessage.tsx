@@ -14,7 +14,7 @@ import classNames from 'classnames';
 import { getUserCustomContent } from '@/src/utils/app/file';
 import { isMobile } from '@/src/utils/app/mobile';
 
-import { Message } from '@/src/types/chat';
+import { Message, Role } from '@/src/types/chat';
 import { Feature } from '@/src/types/features';
 import { OpenAIEntityModels, defaultModelLimits } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
@@ -140,7 +140,7 @@ export const ChatInputMessage = ({
     }
 
     onSend({
-      role: 'user',
+      role: Role.User,
       content,
       ...getUserCustomContent(files),
     });
@@ -150,7 +150,7 @@ export const ChatInputMessage = ({
     if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
       textareaRef.current.blur();
     }
-  }, [content, messageIsStreaming, onSend, t, textareaRef]);
+  }, [content, dispatch, files, messageIsStreaming, onSend, t, textareaRef]);
 
   const parseVariables = useCallback((content: string) => {
     const regex = /{{(.*?)}}/g;
@@ -245,6 +245,7 @@ export const ChatInputMessage = ({
     [
       handleInitModal,
       handleSend,
+      isReplay,
       isTyping,
       prompts.length,
       showPluginSelect,

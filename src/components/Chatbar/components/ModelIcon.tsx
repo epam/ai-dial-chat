@@ -2,6 +2,7 @@ import { memo } from 'react';
 
 import Image from 'next/image';
 
+import { EntityType } from '@/src/types/common';
 import { OpenAIEntity } from '@/src/types/openai';
 
 import {
@@ -38,7 +39,7 @@ const ModelIconTemplate = memo(
           >
             <Image
               className={`${
-                inverted && entity.type !== 'addon' ? 'invert' : ''
+                inverted && entity.type !== EntityType.Addon ? 'invert' : ''
               } `}
               src={entity.iconUrl as string}
               fill
@@ -53,7 +54,9 @@ const ModelIconTemplate = memo(
               width: size,
               height: size,
               backgroundImage:
-                entity?.type === 'model' ? defaultModelIcon : defaultAddonIcon,
+                entity?.type === EntityType.Model
+                  ? defaultModelIcon
+                  : defaultAddonIcon,
             }}
             className={`inline-block shrink-0 bg-contain bg-no-repeat ${
               inverted ? 'invert' : ''

@@ -17,6 +17,8 @@ import classNames from 'classnames';
 
 import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
+import { HighlightColor } from '@/src/types/common';
+
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -80,7 +82,7 @@ export const FileFolderSelect = ({
         }),
       );
     }
-  }, [dispatch, isOpen]);
+  }, [dispatch, isOpen, openedFoldersIds]);
 
   const handleSearch = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value),
@@ -139,8 +141,12 @@ export const FileFolderSelect = ({
   );
   const handleRenameFolder = useCallback(
     (newName: string, folderId: string) => {
+      const renamingFolder = folders.find((folder) => folder.id === folderId);
       const folderWithSameName = folders.find(
-        (folder) => folder.name === newName && folderId !== folder.id,
+        (folder) =>
+          folder.name === newName.trim() &&
+          folderId !== folder.id &&
+          folder.folderId === renamingFolder?.folderId,
       );
 
       if (folderWithSameName) {
@@ -190,9 +196,7 @@ export const FileFolderSelect = ({
                   <div className="group/modal flex flex-col gap-2 overflow-auto">
                     <input
                       name="titleInput"
-                      placeholder={
-                        t('Search model, assistant or application') || ''
-                      }
+                      placeholder={t('Search folders') || ''}
                       type="text"
                       onChange={handleSearch}
                       className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
@@ -229,7 +233,7 @@ export const FileFolderSelect = ({
                                       searchTerm={searchQuery}
                                       currentFolder={folder}
                                       allFolders={folders}
-                                      highlightColor="blue"
+                                      highlightColor={HighlightColor.Blue}
                                       highlightedFolders={highlightedFolders}
                                       isInitialRename={
                                         newAddedFolderId === folder.id
@@ -249,19 +253,17 @@ export const FileFolderSelect = ({
                       )}
                     </div>
                     <div className="flex items-center justify-between">
-                      <div>
-                        <button onClick={handleNewFolder}>
-                          <FolderPlus
-                            height={24}
-                            width={24}
-                            className="text-gray-500 hover:text-blue-500"
-                          />
-                        </button>
-                      </div>
+                      <button onClick={handleNewFolder}>
+                        <FolderPlus
+                          height={24}
+                          width={24}
+                          className="text-gray-500 hover:text-blue-500"
+                        />
+                      </button>
                       <div>
                         <button
                           onClick={() => onClose(selectedFolderId)}
-                          className="rounded bg-blue-500 px-3 py-2"
+                          className="button button-primary"
                         >
                           {t('Select folder')}
                         </button>
