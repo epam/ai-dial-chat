@@ -338,7 +338,7 @@ export const Chat = memo(() => {
         }),
       );
     },
-    [dispatch, modelsMap],
+    [addonsMap, dispatch, modelsMap],
   );
 
   const handleSelectAssistantSubModel = useCallback(
