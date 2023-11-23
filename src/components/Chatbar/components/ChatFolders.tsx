@@ -183,7 +183,7 @@ export const ChatFolders = () => {
           )}
           size={10}
         />
-        {t('My Chats')}
+        {t('Pinned Chats')}
       </button>
       {isSectionOpened &&
         folders.map((folder, index, arr) => {
