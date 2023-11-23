@@ -43,7 +43,8 @@
           "name": "sessionStorage",
           "message": "Use DataService instead."
       }
-    ]
+    ],
+    "no-multiple-empty-lines": ["warn", { "max": 2, "maxBOF": 0 }]
   },
   "overrides": [
     {
