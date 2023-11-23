@@ -313,6 +313,13 @@ export const Chat = memo(() => {
             ...conversation.replay,
             replayAsIs: false,
           };
+      const updatedAddons =
+        conversation.replay.isReplay &&
+        conversation.replay.replayAsIs &&
+        !updatedReplay.replayAsIs
+          ? conversation.selectedAddons.filter((addonId) => addonsMap[addonId])
+          : conversation.selectedAddons;
+
       dispatch(
         ConversationsActions.updateConversation({
           id: conversation.id,
@@ -323,6 +330,7 @@ export const Chat = memo(() => {
                 ? DEFAULT_ASSISTANT_SUBMODEL.id
                 : undefined,
             replay: updatedReplay,
+            selectedAddons: updatedAddons,
           },
         }),
       );
