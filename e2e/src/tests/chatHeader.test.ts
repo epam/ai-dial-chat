@@ -105,7 +105,7 @@ test(
       const modelInfo = await chatInfoTooltip.getModelInfo();
       expect
         .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
-        .toBe(conversation.model.name);
+        .toBe(ModelsUtil.getModel(conversation.model.id)!.name);
 
       const modelInfoIcon = await chatInfoTooltip.getModelIcon();
       expect

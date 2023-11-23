@@ -611,7 +611,7 @@ test('Import a prompt in nested folder', async ({
     }
   });
 
-  await test.step('Update id and name of exported зкщьзеы and import them again', async () => {
+  await test.step('Update id and name of exported prompts and import them again', async () => {
     for (const exportedData of exportedPrompts) {
       const exportedContent = FileUtil.readFileData(exportedData.path);
       const prompt = exportedContent.prompts[0];

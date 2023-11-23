@@ -33,8 +33,9 @@ export class ConversationData extends FolderData {
   }
 
   public prepareDefaultConversation(model?: OpenAIEntityModel, name?: string) {
-    const modelToUse =
-      model ?? this.conversationBuilder.getConversation().model;
+    const modelToUse = model
+      ? { id: model.id }
+      : this.conversationBuilder.getConversation().model;
     const userMessage: Message = {
       role: 'user',
       content: 'test request',
@@ -155,7 +156,7 @@ export class ConversationData extends FolderData {
     request?: string,
   ) {
     const conversation = this.conversationBuilder.getConversation();
-    conversation.model = model;
+    conversation.model = { id: model.id };
     conversation.selectedAddons = addons;
     const userMessage: Message = {
       role: 'user',

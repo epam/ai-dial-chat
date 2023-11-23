@@ -7,11 +7,12 @@ import {
   ExpectedMessages,
   ModelIds,
 } from '@/e2e/src/testData';
-import { ModelsUtil } from '@/e2e/src/utils';
+import { GeneratorUtil, ModelsUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
 const userRequests = ['first request', 'second request', 'third request'];
 const requestTerm = 'qwer';
+const request = 'write down 30 adjectives';
 const expectedResponse = 'The sky is blue.';
 const sysPrompt = `Type: "${expectedResponse}" if user types ${requestTerm}`;
 let gpt35Model: OpenAIEntityModel;
@@ -264,7 +265,6 @@ test('Stop generating for models like GPT (1 symbol = 1 token)', async ({
   chatMessages,
 }) => {
   setTestIds('EPMRTC-478');
-  const request = 'write down 30 adjectives';
   await test.step('Send request and stop generation immediately', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
@@ -319,6 +319,33 @@ test('Stop generating for models like GPT (1 symbol = 1 token)', async ({
     const isRegenerateButtonVisible = await chat.regenerate.isVisible();
     expect
       .soft(isRegenerateButtonVisible, ExpectedMessages.regenerateIsAvailable)
+      .toBeTruthy();
+  });
+});
+
+test('Send button in new message is available for Model if previous response is partly received when Stop generating was used', async ({
+  dialHomePage,
+  chat,
+  setTestIds,
+  chatMessages,
+  sendMessage,
+}) => {
+  setTestIds('EPMRTC-1533');
+  await test.step('Send request and stop generation immediately', async () => {
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await chat.sendRequestWithButton(request, false);
+    await chatMessages.waitForPartialMessageReceived(2);
+    await chat.stopGenerating.click();
+    await chat.stopGenerating.waitForState({ state: 'hidden' });
+  });
+
+  await test.step('Type a new message and verify Send button is enabled', async () => {
+    await sendMessage.messageInput.fillInInput(GeneratorUtil.randomString(10));
+    const isSendButtonEnabled =
+      await sendMessage.sendMessageButton.isElementEnabled();
+    expect
+      .soft(isSendButtonEnabled, ExpectedMessages.sendMessageButtonEnabled)
       .toBeTruthy();
   });
 });
