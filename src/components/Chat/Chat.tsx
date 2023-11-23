@@ -33,7 +33,10 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
+import {
+  DEFAULT_ASSISTANT_SUBMODEL,
+  DEFAULT_CONVERSATION_NAME,
+} from '@/src/constants/default-settings';
 
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
@@ -274,6 +277,7 @@ export const Chat = memo(() => {
           ConversationsActions.updateConversation({
             id: conversation.id,
             values: {
+              name: DEFAULT_CONVERSATION_NAME,
               messages: messages.filter((message) => message.role === 'system'),
             },
           }),
