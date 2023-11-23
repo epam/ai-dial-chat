@@ -1,9 +1,9 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import {
-  getChildAndCurrentFoldersIdsById,
-  getParentAndCurrentFoldersById,
-} from '@/src/utils/app/folders';
+
+
+import { getChildAndCurrentFoldersIdsById, getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
+import { doesConversationContainSearchTerm } from '@/src/utils/app/search';
 
 import {
   Conversation,
@@ -504,22 +504,11 @@ const selectSearchTerm = createSelector([rootSelector], (state) => {
   return state.searchTerm;
 });
 
-const doesConversationsContainsSearchTerm = (
-  conversation: Conversation,
-  searchTerm: string,
-) => {
-  const searchable =
-    conversation.name.toLocaleLowerCase() +
-    ' ' +
-    conversation.messages.map((message) => message.content).join(' ');
-  return searchable.toLowerCase().includes(searchTerm.toLowerCase());
-};
-
 const selectSearchedConversations = createSelector(
   [selectConversations, selectSearchTerm],
   (conversations, searchTerm) =>
     conversations.filter((conversation) =>
-      doesConversationsContainsSearchTerm(conversation, searchTerm),
+      doesConversationContainSearchTerm(conversation, searchTerm),
     ),
 );
 
@@ -680,7 +669,6 @@ export const ConversationsSelectors = {
   selectSelectedConversations,
   selectFolders,
   selectSearchTerm,
-  doesConversationsContainsSearchTerm,
   selectSearchedConversations,
   selectConversationSignal,
   selectIsReplayPaused,

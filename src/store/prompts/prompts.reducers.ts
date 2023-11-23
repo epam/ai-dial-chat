@@ -6,6 +6,7 @@ import {
   getChildAndCurrentFoldersIdsById,
   getParentAndCurrentFoldersById,
 } from '@/src/utils/app/folders';
+import { doesPromptContainSearchTerm } from '@/src/utils/app/search';
 
 import { PromptsHistory } from '@/src/types/export';
 import { FolderInterface } from '@/src/types/folder';
@@ -224,15 +225,9 @@ const selectSearchTerm = createSelector([rootSelector], (state) => {
 const selectSearchedPrompts = createSelector(
   [selectPrompts, selectSearchTerm],
   (prompts, searchTerm) => {
-    return prompts.filter((prompt) => {
-      const searchable =
-        prompt.name.toLowerCase() +
-        ' ' +
-        prompt.description?.toLowerCase() +
-        ' ' +
-        prompt.content?.toLowerCase();
-      return searchable.includes(searchTerm.toLowerCase());
-    });
+    return prompts.filter((prompt) =>
+      doesPromptContainSearchTerm(prompt, searchTerm),
+    );
   },
 );
 
