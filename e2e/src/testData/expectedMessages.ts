@@ -75,6 +75,7 @@ export enum ExpectedMessages {
   chatRequestTemperatureIsValid = 'Chat API request temperature is valid',
   chatRequestAddonsAreValid = 'Chat API request addons are valid',
   sendMessageButtonDisabled = 'Send message button is disabled',
+  sendMessageButtonEnabled = 'Send message button is enabled',
   tooltipContentIsValid = 'Tooltip content is valid',
   headerTitleCorrespondRequest = 'Chat header title correspond sent request',
   headerIconsCountIsValid = 'Chat header icons number is valid',
