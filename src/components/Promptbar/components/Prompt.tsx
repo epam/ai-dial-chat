@@ -3,7 +3,6 @@ import {
   DragEvent,
   MouseEventHandler,
   useCallback,
-  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -55,6 +54,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
+
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const { id: promptId, isShared } = prompt;
@@ -124,6 +124,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     e.stopPropagation();
     e.preventDefault();
 
+    setIsRenaming(false);
     setIsDeleting(true);
   }, []);
 
@@ -140,9 +141,10 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     (e) => {
       e.stopPropagation();
       e.preventDefault();
+      setIsDeleting(false);
+      setIsRenaming(true);
       dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
       dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
-      setIsRenaming(true);
     },
     [dispatch, prompt.id],
   );
@@ -191,23 +193,18 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const handleClose = useCallback(() => {
     dispatch(PromptsActions.setIsEditModalOpen({ isOpen: false }));
+    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
     setIsRenaming(false);
   }, [dispatch]);
-
-  useEffect(() => {
-    if (isRenaming) {
-      setIsDeleting(false);
-    } else if (isDeleting) {
-      setIsRenaming(false);
-    }
-  }, [isRenaming, isDeleting]);
 
   return (
     <>
       <div
         className={classNames(
           'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-violet/15',
-          isSelected ? 'border-l-violet bg-violet/15' : 'border-l-transparent',
+          isDeleting || isRenaming || (showModal && isSelected)
+            ? 'border-l-violet bg-violet/15'
+            : 'border-l-transparent',
         )}
         style={{
           paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
