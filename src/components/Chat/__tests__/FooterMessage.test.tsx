@@ -1,4 +1,4 @@
-import { FooterMessage, reportAnIssueHash, requestApiKeyHash } from '@/src/components/Chat/FooterMessage';
+import { FooterMessage, reportAnIssueHash, requestApiKeyHash } from '@/src/components/Common/FooterMessage';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { Feature } from '@/src/types/features';
 import { getByText, render, screen, waitFor } from '@testing-library/react';
@@ -51,6 +51,8 @@ vi.mock('@/src/components/Chat/RequestApiKeyDialog', ()=>({
 describe('FooterMessage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    vi.mocked(SettingsSelectors.selectFooterHtmlMessage).mockReturnValue(footerHtmlMessage);
     vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(footerEnabledFeatures);
   });
 

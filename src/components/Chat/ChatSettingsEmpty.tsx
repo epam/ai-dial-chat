@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { Conversation } from '@/src/types/chat';
 import { Prompt } from '@/src/types/prompt';
 
-import Spinner from '../Spinner';
+import { Spinner } from '../Common/Spinner';
 import { ConversationSettings } from './ConversationSettings';
 
 interface Props {
@@ -49,7 +49,7 @@ export const ChatSettingsEmpty = ({
           <div className="flex w-full items-center justify-center rounded-t bg-gray-200 p-4 dark:bg-gray-800">
             {!isModels ? (
               <div>
-                <Spinner size="16px" className="mx-auto" />
+                <Spinner size={16} className="mx-auto" />
               </div>
             ) : (
               <h4 className="w-full text-center text-xl font-semibold">

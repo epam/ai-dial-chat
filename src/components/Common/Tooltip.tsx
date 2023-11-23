@@ -1,3 +1,4 @@
+import type { Placement } from '@floating-ui/react';
 import {
   FloatingArrow,
   FloatingPortal,
@@ -14,7 +15,6 @@ import {
   useMergeRefs,
   useRole,
 } from '@floating-ui/react';
-import type { Placement } from '@floating-ui/react';
 import {
   HTMLProps,
   ReactNode,

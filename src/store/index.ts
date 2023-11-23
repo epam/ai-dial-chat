@@ -6,6 +6,8 @@ import { AddonsEpics } from './addons/addons.epics';
 import { addonsSlice } from './addons/addons.reducers';
 import { ConversationsEpics } from './conversations/conversations.epics';
 import { conversationsSlice } from './conversations/conversations.reducers';
+import { FilesEpics } from './files/files.epics';
+import { filesSlice } from './files/files.reducers';
 import { ModelsEpics } from './models/models.epics';
 import { modelsSlice } from './models/models.reducers';
 import { OverlayEpics } from './overlay/overlay.epics';
@@ -25,6 +27,7 @@ export const rootEpic = combineEpics(
   ConversationsEpics,
   OverlayEpics,
   SettingsEpics,
+  FilesEpics,
 );
 
 const reducer = {
@@ -35,6 +38,7 @@ const reducer = {
   prompts: promptsSlice.reducer,
   settings: settingsSlice.reducer,
   overlay: overlaySlice.reducer,
+  files: filesSlice.reducer,
 };
 const getMiddleware = (epicMiddleware: any) => {
   return (getDefaultMiddleware: any) => {

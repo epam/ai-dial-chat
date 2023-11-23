@@ -1,57 +1,53 @@
-import { IconPlayerStop } from '@tabler/icons-react';
 import {
   KeyboardEvent,
   MutableRefObject,
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
+import { getUserCustomContent } from '@/src/utils/app/file';
 import { isMobile } from '@/src/utils/app/mobile';
 
 import { Message } from '@/src/types/chat';
+import { Feature } from '@/src/types/features';
 import { OpenAIEntityModels, defaultModelLimits } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
-import { useAppSelector } from '@/src/store/hooks';
+import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import RefreshCWAlt from '../../../public/images/icons/refresh-cw-alt.svg';
-import { FooterMessage } from './FooterMessage';
+import { ScrollDownButton } from '../../Common/ScrollDownButton';
+import { AttachButton } from './AttachButton';
+import { ChatInputAttachments } from './ChatInputAttachments';
 import { PromptDialog } from './PromptDialog';
 import { PromptList } from './PromptList';
-import { ScrollDownButton } from './ScrollDownButton';
 import { SendMessageButton } from './SendMessageButton';
 
 interface Props {
-  onSend: (message: Message) => void;
-  onRegenerate: () => void;
-  onScrollDownClick: () => void;
-  onStopConversation: () => void;
-  onResize: (height: number) => void;
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
   showScrollDownButton: boolean;
-  isMessagesPresented: boolean;
+  onScrollDownClick: () => void;
+  onSend: (message: Message) => void;
 }
 
-export const ChatInput = ({
-  onSend,
-  onRegenerate,
-  onScrollDownClick,
-  onStopConversation,
-  onResize,
+export const ChatInputMessage = ({
   textareaRef,
   showScrollDownButton,
-  isMessagesPresented,
+  onScrollDownClick,
+  onSend,
 }: Props) => {
   const { t } = useTranslation('chat');
+  const dispatch = useAppDispatch();
 
   const [content, setContent] = useState<string>();
   const [isTyping, setIsTyping] = useState<boolean>(false);
@@ -63,17 +59,32 @@ export const ChatInput = ({
   const [showPluginSelect, setShowPluginSelect] = useState(false);
 
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
-
+  const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
-
-  const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
-
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const isReplay = useAppSelector(
+    ConversationsSelectors.selectIsReplaySelectedConversations,
+  );
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+  const files = useAppSelector(FilesSelectors.selectSelectedFiles);
+  const maximumAttachmentsAmount = useAppSelector(
+    ConversationsSelectors.selectMaximumAttachmentsAmount,
+  );
+  const displayAttachFunctionality =
+    enabledFeatures.has(Feature.InputFiles) && maximumAttachmentsAmount > 0;
+
+  const [filteredPrompts, setFilteredPrompts] = useState(() =>
+    prompts.filter((prompt) =>
+      prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
+    ),
+  );
 
   const maxLength = useMemo(() => {
     const maxLengthArray = selectedConversations.map(
@@ -85,38 +96,6 @@ export const ChatInput = ({
 
     return Math.min(...maxLengthArray);
   }, [modelsMap, selectedConversations]);
-
-  const promptListRef = useRef<HTMLUListElement | null>(null);
-  const inputRef = useRef<HTMLDivElement | null>(null);
-
-  const [filteredPrompts, setFilteredPrompts] = useState(() =>
-    prompts.filter((prompt) =>
-      prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
-    ),
-  );
-
-  useEffect(() => {
-    setFilteredPrompts(
-      prompts.filter((prompt) =>
-        prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
-      ),
-    );
-  }, [prompts, promptInputValue]);
-
-  useEffect(() => {
-    if (!inputRef) {
-      return;
-    }
-
-    const resizeObserver = new ResizeObserver(() => {
-      inputRef.current?.clientHeight && onResize(inputRef.current.clientHeight);
-    });
-    inputRef.current && resizeObserver.observe(inputRef.current);
-
-    () => {
-      resizeObserver.disconnect();
-    };
-  }, [inputRef, onResize]);
 
   const updatePromptListVisibility = useCallback((text: string) => {
     const match = text.match(/\/\w*$/);
@@ -160,7 +139,12 @@ export const ChatInput = ({
       return;
     }
 
-    onSend({ role: 'user', content });
+    onSend({
+      role: 'user',
+      content,
+      ...getUserCustomContent(files),
+    });
+    dispatch(FilesActions.resetSelectedFiles());
     setContent('');
 
     if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
@@ -249,6 +233,9 @@ export const ChatInput = ({
         }
       } else if (e.key === 'Enter' && !isTyping && !isMobile() && !e.shiftKey) {
         e.preventDefault();
+        if (isReplay) {
+          return;
+        }
         handleSend();
       } else if (e.key === '/' && e.metaKey) {
         e.preventDefault();
@@ -282,10 +269,12 @@ export const ChatInput = ({
   );
 
   useEffect(() => {
-    if (promptListRef.current) {
-      promptListRef.current.scrollTop = activePromptIndex * 30;
-    }
-  }, [activePromptIndex]);
+    setFilteredPrompts(
+      prompts.filter((prompt) =>
+        prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
+      ),
+    );
+  }, [prompts, promptInputValue]);
 
   useEffect(() => {
     if (textareaRef && textareaRef.current) {
@@ -298,121 +287,79 @@ export const ChatInput = ({
     }
   }, [content, textareaRef]);
 
-  useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (
-        promptListRef.current &&
-        !promptListRef.current.contains(e.target as Node)
-      ) {
-        setShowPromptList(false);
-      }
-    };
-
-    window.addEventListener('click', handleOutsideClick);
-
-    return () => {
-      window.removeEventListener('click', handleOutsideClick);
-    };
-  }, []);
-
   return (
-    <div
-      ref={inputRef}
-      className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 pt-6 dark:via-gray-900 dark:to-gray-900 md:pt-2"
-    >
-      <div className="relative">
-        {messageIsStreaming && (
-          <button
-            className="absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600"
-            onClick={onStopConversation}
-            data-qa="stop-generating"
-          >
-            <IconPlayerStop
-              size={18}
-              className="text-gray-500"
-              strokeWidth="1.5"
-            />{' '}
-            {t('Stop generating')}
-          </button>
+    <div className="mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0  md:last:mb-6 lg:mx-auto lg:max-w-3xl">
+      <div
+        className="relative m-0 flex max-h-[400px] min-h-[40px] w-full grow flex-col rounded bg-gray-100 focus-within:border-blue-500 dark:bg-gray-700"
+        data-qa="message"
+      >
+        <textarea
+          ref={textareaRef}
+          className={classNames(
+            'm-0 max-h-[320px] min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none placeholder:text-gray-500',
+            displayAttachFunctionality ? 'pl-12' : 'pl-4',
+          )}
+          style={{
+            bottom: `${textareaRef?.current?.scrollHeight}px`,
+            overflow: `${
+              textareaRef.current && textareaRef.current.scrollHeight > 400
+                ? 'auto'
+                : 'hidden'
+            }`,
+          }}
+          placeholder={
+            isIframe
+              ? t('Type a message') || ''
+              : t('Type a message or type "/" to select a prompt...') || ''
+          }
+          value={content}
+          rows={1}
+          onCompositionStart={() => setIsTyping(true)}
+          onCompositionEnd={() => setIsTyping(false)}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+        />
+
+        <SendMessageButton
+          handleSend={handleSend}
+          isInputEmpty={!content || content.trim().length === 0}
+        />
+
+        {displayAttachFunctionality && (
+          <>
+            <AttachButton />
+            <ChatInputAttachments />
+          </>
         )}
 
-        {!messageIsStreaming && isMessagesPresented && (
-          <button
-            className="absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600"
-            onClick={onRegenerate}
-            data-qa="regenerate"
-          >
-            <span className="text-gray-500">
-              <RefreshCWAlt width={18} height={18} />
-            </span>
-            {t('Regenerate response')}
-          </button>
+        {showScrollDownButton && (
+          <ScrollDownButton
+            className="-top-14 right-0 xl:right-2 2xl:bottom-0 2xl:right-[-60px] 2xl:top-auto"
+            onScrollDownClick={onScrollDownClick}
+          />
         )}
-      </div>
 
-      <div className="mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0  md:last:mb-6 lg:mx-auto lg:max-w-3xl">
-        <div className="relative flex w-full grow flex-col" data-qa="message">
-          <textarea
-            ref={textareaRef}
-            className="m-0 max-h-[400px] min-h-[40px] w-full resize-none rounded border border-transparent bg-gray-100 py-3 pl-4 pr-10 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:bg-gray-700"
-            style={{
-              bottom: `${textareaRef?.current?.scrollHeight}px`,
-              overflow: `${
-                textareaRef.current && textareaRef.current.scrollHeight > 400
-                  ? 'auto'
-                  : 'hidden'
-              }`,
-            }}
-            placeholder={
-              isIframe
-                ? t('Type a message') || ''
-                : t('Type a message or type "/" to select a prompt...') || ''
-            }
-            value={content}
-            rows={1}
-            onCompositionStart={() => setIsTyping(true)}
-            onCompositionEnd={() => setIsTyping(false)}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-          />
-
-          <SendMessageButton
-            handleSend={handleSend}
-            isInputEmpty={!content || content.trim().length === 0}
-          />
-
-          {showScrollDownButton && (
-            <ScrollDownButton
-              className="-top-14 right-0 xl:right-2 2xl:bottom-0 2xl:right-[-60px] 2xl:top-auto"
-              onScrollDownClick={onScrollDownClick}
+        {showPromptList && filteredPrompts.length > 0 && (
+          <div className="absolute bottom-12 w-full">
+            <PromptList
+              activePromptIndex={activePromptIndex}
+              prompts={filteredPrompts}
+              onSelect={handleInitModal}
+              onMouseEnter={setActivePromptIndex}
+              isOpen={showPromptList && filteredPrompts.length > 0}
+              onClose={() => setShowPromptList(false)}
             />
-          )}
+          </div>
+        )}
 
-          {showPromptList && filteredPrompts.length > 0 && (
-            <div className="absolute bottom-12 w-full">
-              <PromptList
-                activePromptIndex={activePromptIndex}
-                prompts={filteredPrompts}
-                onSelect={handleInitModal}
-                onMouseOver={setActivePromptIndex}
-                promptListRef={promptListRef}
-              />
-            </div>
-          )}
-
-          {isModalVisible && (
-            <PromptDialog
-              prompt={filteredPrompts[activePromptIndex]}
-              variables={variables}
-              onSubmit={handleSubmit}
-              onClose={() => setIsModalVisible(false)}
-            />
-          )}
-        </div>
-      </div>
-
-      <div className="p-5 max-md:hidden">
-        <FooterMessage />
+        {isModalVisible && (
+          <PromptDialog
+            prompt={filteredPrompts[activePromptIndex]}
+            variables={variables}
+            onSubmit={handleSubmit}
+            onClose={() => setIsModalVisible(false)}
+          />
+        )}
       </div>
     </div>
   );
