@@ -11,6 +11,7 @@ import { useTranslation } from 'next-i18next';
 import { getSelectedAddons } from '@/src/utils/app/conversation';
 
 import { Conversation } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
@@ -121,15 +122,17 @@ export const ChatHeader = ({
                         selectedAddons={selectedAddons}
                         subModel={
                           conversation.assistantModelId &&
-                          model.type === 'assistant'
+                          model.type === EntityType.Assistant
                             ? modelsMap[conversation.assistantModelId]
                             : null
                         }
                         prompt={
-                          model.type === 'model' ? conversation.prompt : null
+                          model.type === EntityType.Model
+                            ? conversation.prompt
+                            : null
                         }
                         temperature={
-                          model.type !== 'application'
+                          model.type !== EntityType.Application
                             ? conversation.temperature
                             : null
                         }
@@ -137,7 +140,7 @@ export const ChatHeader = ({
                     </TooltipContent>
                   </Tooltip>
                 </span>
-                {model.type !== 'application' &&
+                {model.type !== EntityType.Application &&
                   (conversation.selectedAddons.length > 0 ||
                     (model.selectedAddons &&
                       model.selectedAddons.length > 0)) && (

@@ -44,7 +44,11 @@ export interface Message {
   responseId?: string;
 }
 
-export type Role = 'assistant' | 'user' | 'system';
+export enum Role {
+  Assistant = 'assistant',
+  User = 'user',
+  System = 'system',
+}
 
 export interface ChatBody {
   modelId: string;

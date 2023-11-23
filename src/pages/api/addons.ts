@@ -6,6 +6,7 @@ import { validateServerSession } from '@/src/utils/auth/session';
 import { getEntities } from '@/src/utils/server/get-entities';
 import { logger } from '@/src/utils/server/logger';
 
+import { EntityType } from '@/src/types/common';
 import {
   OpenAIEntity,
   OpenAIEntityAddon,
@@ -33,7 +34,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const entities: OpenAIEntity[] = [];
 
     const addons = await getEntities<ProxyOpenAIEntity[]>(
-      'addon',
+      EntityType.Addon,
       token?.access_token as string,
       token?.jobTitle as string,
     ).catch((error) => {

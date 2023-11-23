@@ -4,7 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { isMobile } from '@/src/utils/app/mobile';
 
-import { Conversation } from '@/src/types/chat';
+import { Conversation, Role } from '@/src/types/chat';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -76,10 +76,10 @@ export const ChatCompareSelect = ({
             return false;
           }
           const convUserMessages = conv.messages.filter(
-            (message) => message.role === 'user',
+            (message) => message.role === Role.User,
           );
           const selectedConvUserMessages = selectedConversation.messages.filter(
-            (message) => message.role === 'user',
+            (message) => message.role === Role.User,
           );
 
           if (convUserMessages.length !== selectedConvUserMessages.length) {

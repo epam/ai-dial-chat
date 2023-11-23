@@ -17,6 +17,7 @@ import classNames from 'classnames';
 
 import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
+import { HighlightColor } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
@@ -293,7 +294,7 @@ export const FileSelect = ({
                                       searchTerm={searchQuery}
                                       currentFolder={folder}
                                       allFolders={folders}
-                                      highlightColor="blue"
+                                      highlightColor={HighlightColor.Blue}
                                       highlightedFolders={[]}
                                       isInitialRename={
                                         newAddedFolderId === folder.id

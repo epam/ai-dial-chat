@@ -1,6 +1,10 @@
 import { FC, ReactNode, useRef } from 'react';
 
-import { HighlightColor } from '@/src/types/components';
+import classNames from 'classnames';
+
+import { getByHighlightColor } from '@/src/utils/app/folders';
+
+import { HighlightColor } from '@/src/types/common';
 
 interface Props {
   onImport: (importJSON: any) => void;
@@ -32,11 +36,14 @@ export const Import: FC<Props> = ({ onImport, icon, highlightColor }) => {
         }}
       />
       <div
-        className={`flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded  md:h-[42px] md:w-[42px] ${
-          highlightColor === 'green'
-            ? 'hover:bg-green/15 hover:text-green'
-            : 'hover:bg-violet/15 hover:text-violet'
-        }`}
+        className={classNames(
+          'flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded  md:h-[42px] md:w-[42px]',
+          getByHighlightColor(
+            highlightColor,
+            'hover:bg-green/15 hover:text-green',
+            'hover:bg-violet/15 hover:text-violet',
+          ),
+        )}
         onClick={() => {
           const importFile = ref.current;
           if (importFile) {

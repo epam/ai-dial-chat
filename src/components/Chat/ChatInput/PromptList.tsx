@@ -34,7 +34,7 @@ export const PromptList: FC<Props> = ({
     if (refs.floating.current) {
       refs.floating.current.scrollTop = activePromptIndex * 30;
     }
-  }, [activePromptIndex]);
+  }, [activePromptIndex, refs.floating]);
 
   return (
     <ul

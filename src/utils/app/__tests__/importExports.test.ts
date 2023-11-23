@@ -20,7 +20,8 @@ import {
 import { OpenAIEntityModel, OpenAIEntityModelID, OpenAIEntityModels } from '@/src/types/openai';
 
 import { describe, expect, it } from 'vitest';
-import { Conversation, Message } from '@/src/types/chat';
+import { Conversation, Message, Role } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 
 describe('Export Format Functions', () => {
   describe('isExportFormatV1', () => {
@@ -77,11 +78,11 @@ describe('cleanData Functions', () => {
 
   const messages:Message[] = [
     {
-      role: 'user',
+      role: Role.User,
       content: "what's up ?",
     },
     {
-      role: 'assistant',
+      role: Role.Assistant,
       content: 'Hi',
     },
   ]
@@ -111,7 +112,7 @@ const expectedConversation: Conversation = {
   describe('cleaning v1 data', () => {
     it('should return the latest format', () => {
       const dataV1 = [{...conversationV2, id: 1}] as ExportFormatV1;
-      
+
       const obj = cleanData(dataV1);
       expect(isLatestExportFormat(obj)).toBe(true);
       expect(obj).toEqual({
@@ -166,7 +167,7 @@ const expectedConversation: Conversation = {
         history: [
           {
             ...conversationV2,
-            
+
             model: expectedModel,
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: DEFAULT_TEMPERATURE,
@@ -246,14 +247,14 @@ describe('Export helpers functions', () => {
   describe('getAssitantModelId', () => {
     it('should return default assistant model id', () => {
       expect(
-        getAssitantModelId('assistant', OpenAIEntityModelID.GPT_4),
+        getAssitantModelId(EntityType.Assistant, OpenAIEntityModelID.GPT_4),
       ).toEqual(OpenAIEntityModelID.GPT_4);
     });
   });
   it('should return assistant model id', () => {
     expect(
       getAssitantModelId(
-        'assistant',
+        EntityType.Assistant,
         OpenAIEntityModelID.GPT_4,
         OpenAIEntityModelID.GPT_3_5_AZ,
       ),
@@ -262,14 +263,14 @@ describe('Export helpers functions', () => {
   it('should return undefined', () => {
     expect(
       getAssitantModelId(
-        'model',
+        EntityType.Model,
         OpenAIEntityModelID.GPT_4,
         OpenAIEntityModelID.GPT_3_5_AZ,
       ),
     ).toBeUndefined();
     expect(
       getAssitantModelId(
-        'application',
+        EntityType.Application,
         OpenAIEntityModelID.GPT_4,
         OpenAIEntityModelID.GPT_3_5_AZ,
       ),
