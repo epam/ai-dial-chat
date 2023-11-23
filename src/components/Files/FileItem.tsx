@@ -64,9 +64,9 @@ export const FileItem = ({ item, level, onEvent }: Props) => {
       }}
     >
       <div className="flex items-center gap-2 overflow-hidden">
-        <div className="group/file-icon text-gray-500">
+        <div className="text-gray-500">
           {!isSelected && item.status !== 'FAILED' ? (
-            <IconFile className="group-hover/file-icon:hidden" size={18} />
+            <IconFile className="group-hover/file-item:hidden" size={18} />
           ) : (
             item.status === 'FAILED' && (
               <IconExclamationCircle
@@ -77,7 +77,7 @@ export const FileItem = ({ item, level, onEvent }: Props) => {
           )}
           <div
             className={classNames(
-              'relative h-[18px] w-[18px] group-hover/file-icon:flex',
+              'relative h-[18px] w-[18px] group-hover/file-item:flex',
               isSelected ? 'flex' : 'hidden',
             )}
           >
@@ -103,7 +103,7 @@ export const FileItem = ({ item, level, onEvent }: Props) => {
         </span>
       </div>
 
-      <div className="flex items-center">
+      <div className="flex items-center gap-2">
         {item.status === 'UPLOADING' && (
           <div className="h-[3px] w-[60px] overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
             <div
