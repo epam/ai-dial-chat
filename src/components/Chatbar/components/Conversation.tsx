@@ -97,6 +97,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             id: conversation.id,
             values: {
               name: renameValue.trim(),
+              isNameChanged: true,
             },
           }),
         );

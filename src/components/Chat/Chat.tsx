@@ -271,13 +271,16 @@ export const Chat = memo(() => {
         confirm(t<string>('Are you sure you want to clear all messages?')) &&
         conversation
       ) {
-        const { messages } = conversation;
+        const { messages, isNameChanged, name } = conversation;
+        const newConversationName = isNameChanged
+          ? name
+          : DEFAULT_CONVERSATION_NAME;
 
         dispatch(
           ConversationsActions.updateConversation({
             id: conversation.id,
             values: {
-              name: DEFAULT_CONVERSATION_NAME,
+              name: newConversationName,
               messages: messages.filter((message) => message.role === 'system'),
             },
           }),
