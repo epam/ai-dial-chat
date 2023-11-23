@@ -144,7 +144,7 @@ export const FileFolderSelect = ({
       const renamingFolder = folders.find((folder) => folder.id === folderId);
       const folderWithSameName = folders.find(
         (folder) =>
-          folder.name === newName &&
+          folder.name === newName.trim() &&
           folderId !== folder.id &&
           folder.folderId === renamingFolder?.folderId,
       );
