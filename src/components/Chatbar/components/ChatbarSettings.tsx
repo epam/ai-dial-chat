@@ -132,12 +132,7 @@ export const ChatbarSettings = () => {
         <TooltipContent>{t('Compare mode')}</TooltipContent>
       </Tooltip>
 
-      <Tooltip isTriggerClickable={true}>
-        <TooltipTrigger>
-          <ChatbarSettingsContextMenu />
-        </TooltipTrigger>
-        <TooltipContent>{t('Other options')}</TooltipContent>
-      </Tooltip>
+      <ChatbarSettingsContextMenu />
 
       <ConfirmDialog
         isOpen={isOpen}

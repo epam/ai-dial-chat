@@ -302,10 +302,10 @@ export const FileManagerModal = ({
               {...getFloatingProps()}
             >
               <button
-                className="absolute right-2 top-2"
+                className="absolute right-2 top-2 text-gray-500 hover:text-blue-500"
                 onClick={() => onClose(false)}
               >
-                <IconX className="text-gray-500" />
+                <IconX />
               </button>
               <div className="flex flex-col gap-2 overflow-auto p-6">
                 <div className="flex justify-between">
