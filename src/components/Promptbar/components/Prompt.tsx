@@ -208,6 +208,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const handleContextMenuOpen = (e: MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsContextMenu(true);
   };
 

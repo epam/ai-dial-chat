@@ -115,6 +115,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         );
         setRenameValue('');
         setIsRenaming(false);
+        setIsContextMenu(false);
       }
     },
     [dispatch, renameValue],
@@ -266,6 +267,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
   const handleContextMenuOpen = (e: MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsContextMenu(true);
   };
 
