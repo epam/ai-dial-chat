@@ -376,11 +376,8 @@ test(
     await chat.regenerateResponse();
     let todayConversations = await conversations.getTodayConversations();
     expect
-      .soft(
-        todayConversations.includes(yesterdayConversation.name),
-        ExpectedMessages.conversationOfToday,
-      )
-      .toBeTruthy();
+      .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
+      .toBe(1);
 
     const messageToEdit = lastWeekConversation.messages[0].content;
     await conversations.selectConversation(lastWeekConversation.name);
@@ -388,11 +385,8 @@ test(
     await chatMessages.editMessage('updated message');
     todayConversations = await conversations.getTodayConversations();
     expect
-      .soft(
-        todayConversations.includes(lastWeekConversation.name),
-        ExpectedMessages.conversationOfToday,
-      )
-      .toBeTruthy();
+      .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
+      .toBe(2);
 
     await conversations.selectConversation(lastMonthConversation.name);
     await chat.sendRequestWithButton('one more test message');
