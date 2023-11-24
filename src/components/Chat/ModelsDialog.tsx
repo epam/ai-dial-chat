@@ -14,10 +14,7 @@ import classNames from 'classnames';
 import { doesModelContainSearchTerm } from '@/src/utils/app/search';
 
 import { EntityType } from '@/src/types/common';
-import {
-  OpenAIEntity,
-  OpenAIEntityModel
-} from '@/src/types/openai';
+import { OpenAIEntity, OpenAIEntityModel } from '@/src/types/openai';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {

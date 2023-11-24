@@ -2,12 +2,11 @@ import { i18n } from 'next-i18next';
 
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-
-
-import { getChildAndCurrentFoldersIdsById, getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
+import {
+  getChildAndCurrentFoldersIdsById,
+  getParentAndCurrentFoldersById,
+} from '@/src/utils/app/folders';
 import { doesPromptContainSearchTerm } from '@/src/utils/app/search';
-
-
 
 import { PromptsHistory } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';

@@ -1,7 +1,5 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-
-
 import {
   getChildAndCurrentFoldersIdsById,
   getParentAndCurrentFoldersById,

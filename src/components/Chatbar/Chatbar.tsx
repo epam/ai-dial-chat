@@ -4,6 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
+import { FolderType } from '@/src/types/folder';
 
 import {
   ConversationsActions,
@@ -20,7 +21,6 @@ import { Conversations } from './components/Conversations';
 
 import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import Sidebar from '../Sidebar';
-import { FolderType } from '@/src/types/folder';
 
 const ChatActionsBlock = () => {
   const { t } = useTranslation('sidebar');

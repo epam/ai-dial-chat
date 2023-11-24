@@ -2,7 +2,12 @@
 import { Observable, map } from 'rxjs';
 
 import { Conversation } from '@/src/types/chat';
-import { BackendFile, BackendFileFolder, DialFile, FileFolderInterface } from '@/src/types/files';
+import {
+  BackendFile,
+  BackendFileFolder,
+  DialFile,
+  FileFolderInterface,
+} from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { Theme } from '@/src/types/settings';

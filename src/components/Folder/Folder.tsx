@@ -19,8 +19,8 @@ import classNames from 'classnames';
 
 import useOutsideAlerter from '@/src/hooks/useOutsideAlerter';
 
-import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { getByHighlightColor, getFoldersDepth } from '@/src/utils/app/folders';
+import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
 import { HighlightColor } from '@/src/types/common';

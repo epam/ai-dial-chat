@@ -154,14 +154,27 @@ interface ChatFoldersProps extends FolderItemFilters<Conversation> {
   displayFiles?: boolean;
 }
 
-export const ChatSection = ({ name, filterFolder, filterItem, hideIfEmpty }: ChatFoldersProps) => {
+export const ChatSection = ({
+  name,
+  filterFolder,
+  filterItem,
+  hideIfEmpty,
+}: ChatFoldersProps) => {
   const { t } = useTranslation('chat');
   const [isSectionOpened, setIsSectionOpened] = useState(true);
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
   const allFolders = useAppSelector(ConversationsSelectors.selectFolders);
-  const filters = useMemo(()=> ({filterItem, filterFolder}), [filterItem, filterFolder])
-  const folderItemsExists = useAppSelector(state => ConversationsSelectors.selectAreFolderItemsExists(state, filters));
-  const folders = useMemo(()=> allFolders.filter((folder) => filterFolder(folder)), [allFolders, filterFolder])
+  const filters = useMemo(
+    () => ({ filterItem, filterFolder }),
+    [filterItem, filterFolder],
+  );
+  const folderItemsExists = useAppSelector((state) =>
+    ConversationsSelectors.selectAreFolderItemsExists(state, filters),
+  );
+  const folders = useMemo(
+    () => allFolders.filter((folder) => filterFolder(folder)),
+    [allFolders, filterFolder],
+  );
   const selectedFoldersIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
   );
@@ -176,10 +189,13 @@ export const ChatSection = ({ name, filterFolder, filterItem, hideIfEmpty }: Cha
     );
   }, [folders, selectedFoldersIds]);
 
-  if(hideIfEmpty && !folderItemsExists) return null;
+  if (hideIfEmpty && !folderItemsExists) return null;
 
   return (
-    <div className='flex w-full flex-col py-1 pl-2 pr-0.5' data-qa="chat-folders">
+    <div
+      className="flex w-full flex-col py-1 pl-2 pr-0.5"
+      data-qa="chat-folders"
+    >
       <button
         className={classNames(
           'flex items-center gap-1 py-1 text-xs',
@@ -216,15 +232,26 @@ export const ChatSection = ({ name, filterFolder, filterItem, hideIfEmpty }: Cha
   );
 };
 const filterMyChatsFolder = (folder: FolderInterface) => !folder.isShared;
-const filterMyChatsItem = (conversation: Conversation) => !conversation.isShared;
+const filterMyChatsItem = (conversation: Conversation) =>
+  !conversation.isShared;
 const filterShareWithMeFolder = (folder: FolderInterface) => !!folder.isShared;
-const filterShareWithMeItem = (conversation: Conversation) => !!conversation.isShared;
+const filterShareWithMeItem = (conversation: Conversation) =>
+  !!conversation.isShared;
 
 export function ChatFolders() {
   return (
-    <div className='flex w-full flex-col gap-0.5 divide-y divide-gray-300 dark:divide-gray-900'>
-      <ChatSection name='Share With Me' filterFolder={filterShareWithMeFolder} filterItem={filterMyChatsItem}  hideIfEmpty/>
-      <ChatSection name='Pinned Chats' filterFolder={filterMyChatsFolder} filterItem={filterShareWithMeItem}/>
+    <div className="flex w-full flex-col gap-0.5 divide-y divide-gray-300 dark:divide-gray-900">
+      <ChatSection
+        name="Share With Me"
+        filterFolder={filterShareWithMeFolder}
+        filterItem={filterMyChatsItem}
+        hideIfEmpty
+      />
+      <ChatSection
+        name="Pinned Chats"
+        filterFolder={filterMyChatsFolder}
+        filterItem={filterShareWithMeItem}
+      />
     </div>
   );
 }
