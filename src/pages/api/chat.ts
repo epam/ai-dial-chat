@@ -11,7 +11,7 @@ import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 import { logger } from '@/src/utils/server/logger';
 
 import { OpenAIEntityAddonID, OpenAIEntityModelID } from '../../types/openai';
-import { ChatBody, Message } from '@/src/types/chat';
+import { ChatBody, Message, Role } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 
 import {
@@ -47,7 +47,10 @@ function getMessageCustomContent(
   return (
     (message.custom_content?.state || message.custom_content?.attachments) && {
       custom_content: {
-        attachments: message.custom_content?.attachments,
+        attachments:
+          message.role !== Role.Assistant
+            ? message.custom_content?.attachments
+            : undefined,
         state: message.custom_content?.state,
       },
     }
