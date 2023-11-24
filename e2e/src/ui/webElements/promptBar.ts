@@ -1,5 +1,6 @@
 import {
   ChatBarSelectors,
+  ChatSelectors,
   PromptBarSelectors,
   SideBarSelectors,
 } from '../selectors';
@@ -18,6 +19,10 @@ export class PromptBar extends BaseElement {
 
   private prompts!: Prompts;
   private folderPrompts!: FolderPrompts;
+  public searchPrompt = this.getElementByPlaceholder('Search prompt...');
+  public noResultFoundIcon = this.getChildElementBySelector(
+    ChatSelectors.noResultFound,
+  );
   public exportButton = new BaseElement(
     this.page,
     ChatBarSelectors.exportPrompts,

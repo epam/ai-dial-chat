@@ -33,6 +33,10 @@ export const ModelDialog = {
   groupEntityDescr: '[data-qa="group-entity-descr"]',
   expandGroupEntity: '[data-qa="expand-group-entity"]',
   closeDialog: '[data-qa="close-models-dialog"]',
+  searchInput: '[name="titleInput"]',
+  modelsTab: '[data-qa="models-tab"]',
+  assistantsTab: '[data-qa="assistants-tab"]',
+  applicationsTab: '[data-qa="applications-tab"]',
 };
 
 export const AddonDialog = {

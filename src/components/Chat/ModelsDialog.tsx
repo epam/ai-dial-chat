@@ -296,6 +296,7 @@ export const ModelsDialog: FC<Props> = ({
               onClick={() => {
                 handleFilterType('model');
               }}
+              data-qa="models-tab"
             >
               {t('Models')}
             </button>
@@ -309,6 +310,7 @@ export const ModelsDialog: FC<Props> = ({
               onClick={() => {
                 handleFilterType('assistant');
               }}
+              data-qa="assistants-tab"
             >
               {t('Assistants')}
             </button>
@@ -322,6 +324,7 @@ export const ModelsDialog: FC<Props> = ({
               onClick={() => {
                 handleFilterType('application');
               }}
+              data-qa="applications-tab"
             >
               {t('Applications')}
             </button>
