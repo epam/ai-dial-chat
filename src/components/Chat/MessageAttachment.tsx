@@ -52,9 +52,9 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     >
       <div className={`flex items-center gap-3 px-2`}>
         <div className="flex items-center">
-          {attachment.reference_url ? (
+          {mappedAttachmentReferenceUrl ? (
             <a
-              href={attachment.reference_url}
+              href={mappedAttachmentReferenceUrl}
               target="_blank"
               className="shrink-0"
               rel="noopener noreferrer"
@@ -142,7 +142,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             )
           )}
 
-          {attachment.reference_url && (
+          {mappedAttachmentReferenceUrl && (
             <a
               href={mappedAttachmentReferenceUrl}
               target="_blank"
