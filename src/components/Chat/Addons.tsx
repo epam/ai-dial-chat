@@ -138,7 +138,8 @@ export const Addons = ({
     <div className="flex flex-col gap-3" data-qa="addons">
       <span>{t('Addons (max 10)')}</span>
 
-      {(selectedAddonsIds?.length > 0 || preselectedAddonsIds?.length > 0) && (
+      {(selectedAddonsIds?.filter((id) => addonsMap[id]).length > 0 ||
+        preselectedAddonsIds?.length > 0) && (
         <>
           <span className="text-gray-500">{t('Selected')}</span>
           <div className="flex flex-wrap gap-1" data-qa="selected-addons">
