@@ -881,10 +881,19 @@ const deleteMessageEpic: AppEpic = (action$, state$) =>
               (message, index) => index !== payload.index,
             );
           }
+
+          const newConversationName =
+            newMessages.length === 0 && !conv.isNameChanged
+              ? DEFAULT_CONVERSATION_NAME
+              : conv.name;
+
           return of(
             ConversationsActions.updateConversation({
               id: conv.id,
-              values: { messages: newMessages },
+              values: {
+                name: newConversationName,
+                messages: newMessages,
+              },
             }),
           );
         }),
