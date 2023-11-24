@@ -18,7 +18,8 @@ export const getPathNameId = (name: string, relativePath?: string): string => {
 export const getRelativePath = (
   absolutePath: string | undefined,
 ): string | undefined => {
-  return absolutePath?.split('/').toSpliced(0, 3).join('/') || undefined;
+  // '/users/asd/files/folder-1/folder-2' -> folder-1/folder-2
+  return absolutePath?.split('/').toSpliced(0, 4).join('/') || undefined;
 };
 
 export const getUserCustomContent = (files: DialFile[]) => {
