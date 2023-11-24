@@ -34,10 +34,7 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import {
-  DEFAULT_ASSISTANT_SUBMODEL,
-  DEFAULT_CONVERSATION_NAME,
-} from '@/src/constants/default-settings';
+import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
@@ -272,16 +269,12 @@ export const Chat = memo(() => {
         confirm(t<string>('Are you sure you want to clear all messages?')) &&
         conversation
       ) {
-        const { messages, isNameChanged, name } = conversation;
-        const newConversationName = isNameChanged
-          ? name
-          : DEFAULT_CONVERSATION_NAME;
+        const { messages } = conversation;
 
         dispatch(
           ConversationsActions.updateConversation({
             id: conversation.id,
             values: {
-              name: newConversationName,
               messages: messages.filter(
                 (message) => message.role === Role.System,
               ),
