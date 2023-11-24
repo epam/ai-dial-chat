@@ -73,6 +73,8 @@ export const SelectFolderModal = ({
   const highlightedFolders = useMemo(() => {
     return [selectedFolderId].filter(Boolean) as string[];
   }, [selectedFolderId]);
+  const showSpinner =
+    folders.length === 0 && loadingStatuses.has(foldersStatus);
 
   useEffect(() => {
     if (isOpen) {
@@ -169,7 +171,7 @@ export const SelectFolderModal = ({
         >
           <FloatingFocusManager context={context}>
             <div
-              className="relative flex max-h-full min-w-full flex-col gap-4 rounded bg-gray-100 p-6 dark:bg-gray-700 md:min-w-[425px] md:max-w-full"
+              className="relative flex max-h-full min-w-full flex-col gap-4 rounded bg-gray-100 dark:bg-gray-700 md:min-w-[425px] md:max-w-full"
               ref={refs.setFloating}
               {...getFloatingProps()}
             >
@@ -180,17 +182,17 @@ export const SelectFolderModal = ({
                 <IconX className="text-gray-500" />
               </button>
               <div className="flex flex-col gap-2 overflow-auto">
-                <div className="flex justify-between">
+                <div className="flex justify-between px-6 pt-4">
                   <h2 id={headingId} className="text-base font-semibold">
                     {t('Select folder')}
                   </h2>
                 </div>
-                {folders.length === 0 && loadingStatuses.has(foldersStatus) ? (
-                  <div className="flex min-h-[300px] items-center justify-center">
+                {showSpinner ? (
+                  <div className="flex min-h-[300px] items-center justify-center px-6 pb-4">
                     <Spinner />
                   </div>
                 ) : (
-                  <div className="group/modal flex flex-col gap-2 overflow-auto">
+                  <div className="group/modal flex flex-col gap-2 overflow-auto px-6 pb-4">
                     <ErrorMessage error={errorMessage} />
 
                     <input
@@ -253,30 +255,30 @@ export const SelectFolderModal = ({
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center justify-center">
-                        <button
-                          onClick={handleNewFolder}
-                          className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
-                        >
-                          <FolderPlus
-                            height={24}
-                            width={24}
-                            className="text-gray-500 hover:text-blue-500"
-                          />
-                        </button>
-                      </div>
-                      <div>
-                        <button
-                          onClick={() => onClose(selectedFolderId)}
-                          className="button button-primary"
-                        >
-                          {t('Select folder')}
-                        </button>
-                      </div>
-                    </div>
                   </div>
                 )}
+                <div className="flex items-center justify-between border-t border-gray-300 px-6 py-4 dark:border-gray-900">
+                  <div className="flex items-center justify-center">
+                    <button
+                      onClick={handleNewFolder}
+                      className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
+                    >
+                      <FolderPlus
+                        height={24}
+                        width={24}
+                        className="text-gray-500 hover:text-blue-500"
+                      />
+                    </button>
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => onClose(selectedFolderId)}
+                      className="button button-primary"
+                    >
+                      {t('Select folder')}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </FloatingFocusManager>
