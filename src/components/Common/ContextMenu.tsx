@@ -29,6 +29,7 @@ interface ContextMenuProps {
   highlightColor: HighlightColor;
   isEmptyConversation?: boolean;
   className?: string;
+  isOpen?: boolean;
   onOpenMoveToModal: () => void;
   onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
   onDelete: MouseEventHandler<unknown>;
@@ -38,6 +39,7 @@ interface ContextMenuProps {
   onCompare?: MouseEventHandler<unknown>;
   onPlayback?: MouseEventHandler<HTMLButtonElement>;
   onOpenShareModal?: MouseEventHandler<HTMLButtonElement>;
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
 export const ContextMenu = ({
@@ -46,6 +48,7 @@ export const ContextMenu = ({
   className,
   highlightColor,
   folders,
+  isOpen,
   onDelete,
   onRename,
   onExport,
@@ -55,12 +58,15 @@ export const ContextMenu = ({
   onMoveToFolder,
   onOpenMoveToModal,
   onOpenShareModal,
+  onOpenChange,
 }: ContextMenuProps) => {
   const { t } = useTranslation('sidebar');
   return (
     <>
       <Menu
         type="contextMenu"
+        onOpenChange={onOpenChange}
+        isMenuOpen={isOpen}
         trigger={
           <IconDots
             className={classNames('text-gray-500', className)}

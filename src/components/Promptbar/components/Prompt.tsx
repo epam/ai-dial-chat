@@ -1,9 +1,10 @@
+import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { IconBulb, IconCheck, IconUserShare, IconX } from '@tabler/icons-react';
 import {
   DragEvent,
+  MouseEvent,
   MouseEventHandler,
   useCallback,
-  useRef,
   useState,
 } from 'react';
 
@@ -38,6 +39,11 @@ interface Props {
   level?: number;
 }
 
+export interface PromptMoveToFolderProps {
+  folderId?: string;
+  isNewFolder?: boolean;
+}
+
 export const PromptComponent = ({ item: prompt, level }: Props) => {
   const { t } = useTranslation('chat');
   const dispatch = useAppDispatch();
@@ -58,10 +64,17 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [isContextMenu, setIsContextMenu] = useState(false);
   const { id: promptId, isShared } = prompt;
   const showSharedIcon = isSharingEnabled && isShared && !isDeleting;
 
-  const wrapperRef = useRef(null);
+  const { refs, context } = useFloating({
+    open: isContextMenu,
+    onOpenChange: setIsContextMenu,
+  });
+
+  const dismiss = useDismiss(context);
+  const { getFloatingProps } = useInteractions([dismiss]);
 
   const handleCloseShareModal = useCallback(() => {
     setIsSharing(false);
@@ -130,7 +143,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   }, []);
 
   const handleDragStart = useCallback(
-    (e: DragEvent<HTMLButtonElement>, prompt: Prompt) => {
+    (e: DragEvent<HTMLDivElement>, prompt: Prompt) => {
       if (e.dataTransfer) {
         e.dataTransfer.setData('prompt', JSON.stringify(prompt));
       }
@@ -165,13 +178,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   );
 
   const handleMoveToFolder = useCallback(
-    ({
-      folderId,
-      isNewFolder,
-    }: {
-      folderId?: string;
-      isNewFolder?: boolean;
-    }) => {
+    ({ folderId, isNewFolder }: PromptMoveToFolderProps) => {
       let localFolderId = folderId;
       if (isNewFolder) {
         localFolderId = uuidv4();
@@ -188,6 +195,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           values: { folderId: localFolderId },
         }),
       );
+      setIsContextMenu(false);
     },
     [dispatch, prompt.id, t],
   );
@@ -198,23 +206,28 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     setIsRenaming(false);
   }, [dispatch]);
 
+  const handleContextMenuOpen = (e: MouseEvent) => {
+    e.preventDefault();
+    setIsContextMenu(true);
+  };
+
   return (
     <>
       <div
         className={classNames(
           'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-violet/15',
-          isDeleting || isRenaming || (showModal && isSelected)
+          isDeleting || isRenaming || (showModal && isSelected) || isContextMenu
             ? 'border-l-violet bg-violet/15'
             : 'border-l-transparent',
         )}
         style={{
           paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
         }}
-        ref={wrapperRef}
         onClick={handleOpenEditModal}
+        onContextMenu={handleContextMenuOpen}
         data-qa="prompt"
       >
-        <button
+        <div
           className={classNames(
             'flex h-full w-full items-center gap-2',
             isDeleting ? 'pr-12' : 'group-hover:pr-6',
@@ -239,7 +252,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               <IconUserShare size={14} />
             </span>
           )}
-        </button>
+        </div>
 
         {isDeleting && (
           <div className="absolute right-1 z-10 flex">
@@ -254,11 +267,12 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         )}
         {!isDeleting && !isRenaming && (
           <div
+            ref={refs.setFloating}
+            {...getFloatingProps()}
             className={classNames(
               'absolute right-3 z-50 flex justify-end xl:invisible xl:group-hover:visible',
-              isSelected ? 'visible' : 'invisible',
+              isContextMenu ? 'visible' : 'invisible',
             )}
-            ref={wrapperRef}
             onClick={stopBubbling}
           >
             <ContextMenu
@@ -275,6 +289,8 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               onOpenShareModal={
                 isSharingEnabled ? handleOpenSharing : undefined
               }
+              onOpenChange={setIsContextMenu}
+              isOpen={isContextMenu}
             />
           </div>
         )}
