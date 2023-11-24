@@ -17,6 +17,7 @@ import classNames from 'classnames';
 
 import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
+import { HighlightColor } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
@@ -24,6 +25,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
+import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
 import Folder from '../Folder';
 import { FileItem, FileItemEventIds } from './FileItem';
@@ -205,6 +207,25 @@ export const FileSelect = ({
     onClose(selectedFilesIds);
   }, [maximumAttachmentsAmount, onClose, selectedFilesIds, t]);
 
+  const handleUploadFiles = useCallback(
+    (
+      selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
+      folderPath: string | undefined,
+    ) => {
+      selectedFiles.forEach((file) => {
+        dispatch(
+          FilesActions.uploadFile({
+            fileContent: file.fileContent,
+            id: file.id,
+            relativePath: folderPath,
+            name: file.name,
+          }),
+        );
+      });
+    },
+    [dispatch],
+  );
+
   return (
     <FloatingPortal id="theme-main">
       {isOpen && (
@@ -243,11 +264,9 @@ export const FileSelect = ({
                       maxAttachmentsAmount: maximumAttachmentsAmount,
                     })}
                 </p>
-                {errorMessage && errorMessage?.length > 0 && (
-                  <p className="rounded bg-red-200 p-3 text-red-800 dark:bg-red-900 dark:text-red-400">
-                    {errorMessage}
-                  </p>
-                )}
+
+                <ErrorMessage error={errorMessage} />
+
                 {folders.length === 0 && loadingStatuses.has(foldersStatus) ? (
                   <div className="flex min-h-[300px] items-center justify-center">
                     <Spinner />
@@ -256,9 +275,7 @@ export const FileSelect = ({
                   <div className="group/modal flex flex-col gap-2 overflow-auto">
                     <input
                       name="titleInput"
-                      placeholder={
-                        t('Search model, assistant or application') || ''
-                      }
+                      placeholder={t('Search files') || ''}
                       type="text"
                       onChange={handleSearch}
                       className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
@@ -293,7 +310,7 @@ export const FileSelect = ({
                                       searchTerm={searchQuery}
                                       currentFolder={folder}
                                       allFolders={folders}
-                                      highlightColor="blue"
+                                      highlightColor={HighlightColor.Blue}
                                       highlightedFolders={[]}
                                       isInitialRename={
                                         newAddedFolderId === folder.id
@@ -332,15 +349,13 @@ export const FileSelect = ({
                       )}
                     </div>
                     <div className="flex items-center justify-between">
-                      <div>
-                        <button onClick={handleNewFolder}>
-                          <FolderPlus
-                            height={24}
-                            width={24}
-                            className="text-gray-500 hover:text-blue-500"
-                          />
-                        </button>
-                      </div>
+                      <button onClick={handleNewFolder}>
+                        <FolderPlus
+                          height={24}
+                          width={24}
+                          className="text-gray-500 hover:text-blue-500"
+                        />
+                      </button>
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => setIsUploadFromDeviceOpened(true)}
@@ -361,29 +376,15 @@ export const FileSelect = ({
                 )}
               </div>
 
-              <PreUploadDialog
-                isOpen={isUploadFromDeviceOpened}
-                allowedTypes={allowedTypes}
-                initialFilesSelect={true}
-                onUploadFiles={(
-                  selectedFiles: Required<
-                    Pick<DialFile, 'fileContent' | 'id' | 'name'>
-                  >[],
-                  folderPath: string | undefined,
-                ) => {
-                  selectedFiles.forEach((file) => {
-                    dispatch(
-                      FilesActions.uploadFile({
-                        fileContent: file.fileContent,
-                        id: file.id,
-                        relativePath: folderPath,
-                        name: file.name,
-                      }),
-                    );
-                  });
-                }}
-                onClose={() => setIsUploadFromDeviceOpened(false)}
-              />
+              {isUploadFromDeviceOpened && (
+                <PreUploadDialog
+                  isOpen
+                  allowedTypes={allowedTypes}
+                  initialFilesSelect={true}
+                  onUploadFiles={handleUploadFiles}
+                  onClose={() => setIsUploadFromDeviceOpened(false)}
+                />
+              )}
             </div>
           </FloatingFocusManager>
         </FloatingOverlay>

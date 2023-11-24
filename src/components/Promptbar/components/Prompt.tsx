@@ -12,6 +12,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { FeatureType, HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
 import { Prompt } from '@/src/types/prompt';
 
@@ -264,7 +265,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             onClick={stopBubbling}
           >
             <ContextMenu
-              featureType="prompt"
+              featureType={FeatureType.Prompt}
               folders={folders}
               onMoveToFolder={handleMoveToFolder}
               onDelete={handleOpenDeleteModal}
@@ -273,7 +274,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               onOpenMoveToModal={() => {
                 setIsShowMoveToModal(true);
               }}
-              highlightColor="violet"
+              highlightColor={HighlightColor.Violet}
               onOpenShareModal={
                 isSharingEnabled ? handleOpenSharing : undefined
               }

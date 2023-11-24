@@ -58,15 +58,15 @@ export const FileItem = ({ item, level, onEvent }: Props) => {
 
   return (
     <div
-      className="group/file-item flex justify-between gap-3 px-3 py-1.5"
+      className="group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-blue-500/20"
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
       }}
     >
       <div className="flex items-center gap-2 overflow-hidden">
-        <div className="group/file-icon text-gray-500">
+        <div className="text-gray-500">
           {!isSelected && item.status !== 'FAILED' ? (
-            <IconFile className="group-hover/file-icon:hidden" size={18} />
+            <IconFile className="group-hover/file-item:hidden" size={18} />
           ) : (
             item.status === 'FAILED' && (
               <IconExclamationCircle
@@ -77,12 +77,12 @@ export const FileItem = ({ item, level, onEvent }: Props) => {
           )}
           <div
             className={classNames(
-              'relative h-[18px] w-[18px] group-hover/file-icon:flex',
+              'relative h-[18px] w-[18px] group-hover/file-item:flex',
               isSelected ? 'flex' : 'hidden',
             )}
           >
             <input
-              className="checkbox-form peer h-[18px] w-[18px]"
+              className="checkbox peer h-[18px] w-[18px] bg-gray-100 dark:bg-gray-700"
               type="checkbox"
               checked={isSelected}
               onChange={handleToggleFile}
@@ -103,7 +103,7 @@ export const FileItem = ({ item, level, onEvent }: Props) => {
         </span>
       </div>
 
-      <div className="flex items-center">
+      <div className="flex items-center gap-2">
         {item.status === 'UPLOADING' && (
           <div className="h-[3px] w-[60px] overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
             <div

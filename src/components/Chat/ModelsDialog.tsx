@@ -11,13 +11,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import {
-  OpenAIEntity,
-  OpenAIEntityApplicationType,
-  OpenAIEntityAssistantType,
-  OpenAIEntityModel,
-  OpenAIEntityModelType,
-} from '@/src/types/openai';
+import { EntityType } from '@/src/types/common';
+import { OpenAIEntity, OpenAIEntityModel } from '@/src/types/openai';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -164,13 +159,11 @@ export const ModelsDialog: FC<Props> = ({
   const dispatch = useAppDispatch();
   const models = useAppSelector(ModelsSelectors.selectModels);
 
-  const [entityTypes, setEntityTypes] = useState<
-    (
-      | OpenAIEntityModelType
-      | OpenAIEntityApplicationType
-      | OpenAIEntityAssistantType
-    )[]
-  >(['model', 'assistant', 'application']);
+  const [entityTypes, setEntityTypes] = useState<EntityType[]>([
+    EntityType.Model,
+    EntityType.Assistant,
+    EntityType.Application,
+  ]);
   const [filteredModelsEntities, setFilteredModelsEntities] = useState<
     OpenAIEntity[]
   >([]);
@@ -198,13 +191,17 @@ export const ModelsDialog: FC<Props> = ({
     );
 
     setFilteredModelsEntities(
-      newFilteredEntities.filter((entity) => entity.type === 'model'),
+      newFilteredEntities.filter((entity) => entity.type === EntityType.Model),
     );
     setFilteredAssistantsEntities(
-      newFilteredEntities.filter((entity) => entity.type === 'assistant'),
+      newFilteredEntities.filter(
+        (entity) => entity.type === EntityType.Assistant,
+      ),
     );
     setFilteredApplicationsEntities(
-      newFilteredEntities.filter((entity) => entity.type === 'application'),
+      newFilteredEntities.filter(
+        (entity) => entity.type === EntityType.Application,
+      ),
     );
   }, [models, entityTypes, searchTerm]);
 
@@ -214,28 +211,24 @@ export const ModelsDialog: FC<Props> = ({
 
   useEffect(() => {
     setSearchTerm('');
-    setEntityTypes(['model', 'assistant', 'application']);
+    setEntityTypes([
+      EntityType.Model,
+      EntityType.Assistant,
+      EntityType.Application,
+    ]);
   }, [isOpen]);
 
-  const handleFilterType = useCallback(
-    (
-      entityType:
-        | OpenAIEntityModelType
-        | OpenAIEntityApplicationType
-        | OpenAIEntityAssistantType,
-    ) => {
-      setEntityTypes((entityTypes) => {
-        if (entityTypes.includes(entityType)) {
-          return entityTypes.filter(
-            (currentEntityType) => currentEntityType !== entityType,
-          );
-        }
+  const handleFilterType = useCallback((entityType: EntityType) => {
+    setEntityTypes((entityTypes) => {
+      if (entityTypes.includes(entityType)) {
+        return entityTypes.filter(
+          (currentEntityType) => currentEntityType !== entityType,
+        );
+      }
 
-        return [...entityTypes, entityType];
-      });
-    },
-    [],
-  );
+      return [...entityTypes, entityType];
+    });
+  }, []);
 
   const handleSelectModel = useCallback(
     (entityId: string) => {
@@ -289,12 +282,12 @@ export const ModelsDialog: FC<Props> = ({
             <button
               className={classNames(
                 'rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:hover:bg-blue-500/20',
-                entityTypes.includes('model')
+                entityTypes.includes(EntityType.Model)
                   ? 'border-blue-500 bg-blue-500/20 dark:bg-blue-500/20'
                   : 'border-gray-400 bg-gray-400 hover:border-transparent dark:border-gray-600 dark:bg-gray-600 dark:hover:border-transparent',
               )}
               onClick={() => {
-                handleFilterType('model');
+                handleFilterType(EntityType.Model);
               }}
               data-qa="models-tab"
             >
@@ -303,12 +296,12 @@ export const ModelsDialog: FC<Props> = ({
             <button
               className={classNames(
                 'rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:hover:bg-blue-500/20',
-                entityTypes.includes('assistant')
+                entityTypes.includes(EntityType.Assistant)
                   ? 'border-blue-500 bg-blue-500/20 dark:bg-blue-500/20'
                   : 'border-gray-400 bg-gray-400 hover:border-transparent dark:border-gray-600 dark:bg-gray-600 dark:hover:border-transparent',
               )}
               onClick={() => {
-                handleFilterType('assistant');
+                handleFilterType(EntityType.Assistant);
               }}
               data-qa="assistants-tab"
             >
@@ -317,12 +310,12 @@ export const ModelsDialog: FC<Props> = ({
             <button
               className={classNames(
                 'rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:hover:bg-blue-500/20',
-                entityTypes.includes('application')
+                entityTypes.includes(EntityType.Application)
                   ? 'border-blue-500 bg-blue-500/20 dark:bg-blue-500/20'
                   : 'border-gray-400 bg-gray-400 hover:border-transparent dark:border-gray-600 dark:bg-gray-600 dark:hover:border-transparent',
               )}
               onClick={() => {
-                handleFilterType('application');
+                handleFilterType(EntityType.Application);
               }}
               data-qa="applications-tab"
             >

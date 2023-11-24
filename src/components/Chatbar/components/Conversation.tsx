@@ -14,6 +14,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
+import { FeatureType, HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
 
 import {
@@ -97,6 +98,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             id: conversation.id,
             values: {
               name: renameValue.trim(),
+              isNameChanged: true,
             },
           }),
         );
@@ -364,8 +366,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           <ContextMenu
             isEmptyConversation={isEmptyConversation}
             folders={folders}
-            featureType="chat"
-            highlightColor="green"
+            featureType={FeatureType.Chat}
+            highlightColor={HighlightColor.Green}
             onOpenMoveToModal={() => {
               setIsShowMoveToModal(true);
             }}

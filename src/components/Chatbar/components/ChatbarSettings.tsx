@@ -8,6 +8,8 @@ import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { HighlightColor } from '@/src/types/common';
+
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -69,7 +71,7 @@ export const ChatbarSettings = () => {
       <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <Import
-            highlightColor="green"
+            highlightColor={HighlightColor.Green}
             onImport={(importJSON) => {
               dispatch(
                 ConversationsActions.importConversations({ data: importJSON }),

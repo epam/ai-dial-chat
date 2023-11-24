@@ -3,6 +3,7 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
+import { Role } from '@/src/types/chat';
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -61,15 +62,30 @@ describe('PlaybackControls', () => {
             isPlayback: true,
             messagesStack: [{
               content: 'test1',
-              role: 'user'
+              role: Role.User
             },{
               content: 'test2',
-              role: 'assistant'
+              role: Role.Assistant
             },{
               content: 'test3',
-              role: 'user'
+              role: Role.User
             }],
-          }
+            activePlaybackIndex: 1
+          },
+          model: {
+            id: "gpt-4-0613"
+          },
+          messages: [],
+          prompt: '',
+          temperature: 1,
+          replay: {
+            isReplay: false,
+            replayUserMessagesStack: [],
+            activeReplayIndex: 0,
+            replayAsIs: false
+          },
+          selectedAddons: [],
+          isMessageStreaming: false
         },
       ]);
   });
@@ -88,7 +104,7 @@ describe('PlaybackControls', () => {
     const buttons = screen.getAllByRole('button');
     const messageBox = screen.getByTestId('playback-message-content');
     const spinner = screen.queryByTestId('message-input-spinner');
- 
+
     expect(buttons.length).toBe(3);
     expect(messageBox).toBeInTheDocument();
     expect(footer).toBeVisible();

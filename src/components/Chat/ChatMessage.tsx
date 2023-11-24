@@ -21,7 +21,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { Conversation, Message } from '@/src/types/chat';
+import { Conversation, Message, Role } from '@/src/types/chat';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -32,9 +32,9 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import { ConfirmDialog } from '../Common/ConfirmDialog';
+import { ErrorMessage } from '../Common/ErrorMessage';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachments } from './MessageAttachments';
-import { MessageError } from './MessageError';
 import { MessageStages } from './MessageStages';
 
 export interface Props {
@@ -103,8 +103,8 @@ export const ChatMessage: FC<Props> = memo(
 
     const isShowResponseLoader: boolean =
       conversation.isMessageStreaming && isLastMessage;
-    const isUser = message.role === 'user';
-    const isAssistant = message.role === 'assistant';
+    const isUser = message.role === Role.User;
+    const isAssistant = message.role === Role.Assistant;
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -327,9 +327,7 @@ export const ChatMessage: FC<Props> = memo(
                       attachments={message.custom_content.attachments}
                     />
                   )}
-                  {!!message.errorMessage && (
-                    <MessageError error={message.errorMessage}></MessageError>
-                  )}
+                  <ErrorMessage error={message.errorMessage}></ErrorMessage>
                 </div>
 
                 <div className="flex w-[60px] shrink-0 flex-col justify-between">

@@ -7,6 +7,7 @@ import { FC, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { HighlightColor } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppDispatch } from '@/src/store/hooks';
@@ -54,7 +55,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
       <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <Import
-            highlightColor="violet"
+            highlightColor={HighlightColor.Violet}
             onImport={(promptsJSON) => {
               dispatch(
                 PromptsActions.importPrompts({ promptsHistory: promptsJSON }),
