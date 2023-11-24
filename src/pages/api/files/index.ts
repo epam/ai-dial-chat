@@ -85,8 +85,8 @@ async function handleGetRequest(
 ) {
   const { path } = req.query as { path: string };
   const url = `${process.env.OPENAI_API_HOST}/v1/files${
-    path && `/${encodeURI(path)}`
-  }?path=absolute&purpose=content`;
+    path && encodeURI(path)
+  }?purpose=content`;
   const proxyRes = await fetch(url, {
     headers: getApiHeaders({ jwt: token?.access_token as string }),
   });
@@ -97,6 +97,10 @@ async function handleGetRequest(
 
   res.status(proxyRes.status);
   res.setHeader('transfer-encoding', 'chunked');
+  res.setHeader(
+    'Content-Type',
+    proxyRes.headers.get('Content-Type') || 'text/plain',
+  );
 
   proxyRes.body?.pipe(res);
 }

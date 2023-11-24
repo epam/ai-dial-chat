@@ -8,13 +8,19 @@ import {
   useInteractions,
   useRole,
 } from '@floating-ui/react';
-import { IconCaretRightFilled, IconX } from '@tabler/icons-react';
+import {
+  IconCaretRightFilled,
+  IconDownload,
+  IconTrash,
+  IconX,
+} from '@tabler/icons-react';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getDialFilesWithInvalidFileType } from '@/src/utils/app/file';
 import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
 import { HighlightColor } from '@/src/types/common';
@@ -25,23 +31,28 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
+import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
 import Folder from '../Folder';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
 
+import { extension } from 'mime-types';
+
 interface Props {
   isOpen: boolean;
   allowedTypes?: string[];
   maximumAttachmentsAmount?: number;
+  isInConversation?: boolean;
   onClose: (result: boolean | string[]) => void;
 }
 
 const loadingStatuses = new Set(['LOADING', undefined]);
 
-export const FileSelect = ({
+export const FileManagerModal = ({
   isOpen,
   allowedTypes = [],
+  isInConversation = false,
   maximumAttachmentsAmount = 0,
   onClose,
 }: Props) => {
@@ -81,6 +92,14 @@ export const FileSelect = ({
       name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [files, searchQuery]);
+  const allowedExtensions = useMemo(() => {
+    if (allowedTypes.includes('*/*')) {
+      return [t('all')];
+    }
+    return allowedTypes.map((mimeType) => `.${extension(mimeType)}`);
+  }, [allowedTypes, t]);
+  const showSpinner =
+    folders.length === 0 && loadingStatuses.has(foldersStatus);
 
   useEffect(() => {
     if (isOpen) {
@@ -203,8 +222,73 @@ export const FileSelect = ({
       return;
     }
 
+    const selectedFiles = files.filter((file) =>
+      selectedFilesIds.includes(file.id),
+    );
+    const filesWithIncorrectTypes = getDialFilesWithInvalidFileType(
+      selectedFiles,
+      allowedTypes,
+    ).map((file) => file.name);
+    if (filesWithIncorrectTypes.length > 0) {
+      setErrorMessage(
+        t(
+          `Supported types: {{allowedExtensions}}. You've trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
+          {
+            allowedExtensions: allowedExtensions.join(', '),
+            incorrectTypeFileNames: filesWithIncorrectTypes.join(', '),
+          },
+        ) as string,
+      );
+      return;
+    }
+
     onClose(selectedFilesIds);
-  }, [maximumAttachmentsAmount, onClose, selectedFilesIds, t]);
+  }, [
+    allowedExtensions,
+    allowedTypes,
+    files,
+    maximumAttachmentsAmount,
+    onClose,
+    selectedFilesIds,
+    t,
+  ]);
+
+  const handleUploadFiles = useCallback(
+    (
+      selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
+      folderPath: string | undefined,
+    ) => {
+      selectedFiles.forEach((file) => {
+        dispatch(
+          FilesActions.uploadFile({
+            fileContent: file.fileContent,
+            id: file.id,
+            relativePath: folderPath,
+            name: file.name,
+          }),
+        );
+      });
+    },
+    [dispatch],
+  );
+
+  const handleRemoveMultipleFiles = useCallback(() => {
+    if (!selectedFilesIds.length) {
+      return;
+    }
+
+    dispatch(FilesActions.removeFilesList({ fileIds: selectedFilesIds }));
+    setSelectedFilesIds([]);
+  }, [dispatch, selectedFilesIds]);
+
+  const handleDownloadMultipleFiles = useCallback(() => {
+    if (!selectedFilesIds.length) {
+      return;
+    }
+
+    dispatch(FilesActions.downloadFilesList({ fileIds: selectedFilesIds }));
+    setSelectedFilesIds([]);
+  }, [dispatch, selectedFilesIds]);
 
   return (
     <FloatingPortal id="theme-main">
@@ -215,27 +299,29 @@ export const FileSelect = ({
         >
           <FloatingFocusManager context={context}>
             <div
-              className="relative flex max-h-full flex-col gap-4 rounded bg-gray-100 p-6 dark:bg-gray-700 md:w-[525px]"
+              className="relative flex max-h-full flex-col gap-4 rounded bg-gray-100 dark:bg-gray-700 md:w-[525px]"
               ref={refs.setFloating}
               {...getFloatingProps()}
             >
               <button
-                className="absolute right-2 top-2"
+                className="absolute right-2 top-2 text-gray-500 hover:text-blue-500"
                 onClick={() => onClose(false)}
               >
-                <IconX className="text-gray-500" />
+                <IconX />
               </button>
-              <div className="flex flex-col gap-2 overflow-auto">
+              <div className="flex flex-col gap-2 overflow-auto p-6">
                 <div className="flex justify-between">
                   <h2 id={headingId} className="text-base font-semibold">
-                    {t('Attach files')}
+                    {isInConversation
+                      ? t('Attach files')
+                      : t('Manage attachments')}
                   </h2>
                 </div>
                 <p id={descriptionId}>
                   {t(
-                    'Max file size up to 512 Mb. Supported types: {{allowedTypes}}.',
+                    'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
                     {
-                      allowedTypes: allowedTypes.join(', '),
+                      allowedExtensions: allowedExtensions.join(', '),
                     },
                   )}
                   &nbsp;
@@ -244,12 +330,10 @@ export const FileSelect = ({
                       maxAttachmentsAmount: maximumAttachmentsAmount,
                     })}
                 </p>
-                {errorMessage && errorMessage?.length > 0 && (
-                  <p className="rounded bg-red-200 p-3 text-red-800 dark:bg-red-900 dark:text-red-400">
-                    {errorMessage}
-                  </p>
-                )}
-                {folders.length === 0 && loadingStatuses.has(foldersStatus) ? (
+
+                <ErrorMessage error={errorMessage} />
+
+                {showSpinner ? (
                   <div className="flex min-h-[300px] items-center justify-center">
                     <Spinner />
                   </div>
@@ -330,57 +414,66 @@ export const FileSelect = ({
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center justify-between">
-                      <button onClick={handleNewFolder}>
-                        <FolderPlus
-                          height={24}
-                          width={24}
-                          className="text-gray-500 hover:text-blue-500"
-                        />
-                      </button>
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => setIsUploadFromDeviceOpened(true)}
-                          className="button button-secondary"
-                        >
-                          {t('Upload from device')}
-                        </button>
-                        <button
-                          onClick={handleAttachFiles}
-                          className="button button-primary"
-                          disabled={selectedFilesIds.length === 0}
-                        >
-                          {t('Attach files')}
-                        </button>
-                      </div>
-                    </div>
                   </div>
                 )}
               </div>
+              <div className="flex items-center justify-between border-t border-gray-300 px-6 py-4 dark:border-gray-900">
+                <div className="flex items-center justify-center gap-2">
+                  {selectedFilesIds.length > 0 ? (
+                    <>
+                      <button
+                        onClick={handleRemoveMultipleFiles}
+                        className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
+                      >
+                        <IconTrash size={24} />
+                      </button>
+                      <button
+                        onClick={handleDownloadMultipleFiles}
+                        className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
+                      >
+                        <IconDownload size={24} />
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={handleNewFolder}
+                      className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
+                    >
+                      <FolderPlus height={24} width={24} />
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setIsUploadFromDeviceOpened(true)}
+                    className={classNames(
+                      'button',
+                      isInConversation ? 'button-secondary' : 'button-primary',
+                    )}
+                  >
+                    {t('Upload from device')}
+                  </button>
+                  {isInConversation && (
+                    <button
+                      onClick={handleAttachFiles}
+                      className="button button-primary"
+                      disabled={selectedFilesIds.length === 0}
+                    >
+                      {t('Attach files')}
+                    </button>
+                  )}
+                </div>
+              </div>
 
-              <PreUploadDialog
-                isOpen={isUploadFromDeviceOpened}
-                allowedTypes={allowedTypes}
-                initialFilesSelect={true}
-                onUploadFiles={(
-                  selectedFiles: Required<
-                    Pick<DialFile, 'fileContent' | 'id' | 'name'>
-                  >[],
-                  folderPath: string | undefined,
-                ) => {
-                  selectedFiles.forEach((file) => {
-                    dispatch(
-                      FilesActions.uploadFile({
-                        fileContent: file.fileContent,
-                        id: file.id,
-                        relativePath: folderPath,
-                        name: file.name,
-                      }),
-                    );
-                  });
-                }}
-                onClose={() => setIsUploadFromDeviceOpened(false)}
-              />
+              {isUploadFromDeviceOpened && (
+                <PreUploadDialog
+                  isOpen
+                  allowedTypes={allowedTypes}
+                  initialFilesSelect={true}
+                  onUploadFiles={handleUploadFiles}
+                  onClose={() => setIsUploadFromDeviceOpened(false)}
+                />
+              )}
             </div>
           </FloatingFocusManager>
         </FloatingOverlay>

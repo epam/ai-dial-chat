@@ -37,7 +37,7 @@ export const Import: FC<Props> = ({ onImport, icon, highlightColor }) => {
       />
       <div
         className={classNames(
-          'flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded  md:h-[42px] md:w-[42px]',
+          'flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded',
           getByHighlightColor(
             highlightColor,
             'hover:bg-green/15 hover:text-green',
