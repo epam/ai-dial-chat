@@ -21,9 +21,9 @@ import { HighlightColor } from '@/src/types/common';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
+import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
 import Folder from '../Folder';
 
@@ -66,7 +66,7 @@ export const FileFolderSelect = ({
   );
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
-
+  const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
     selectedFolderName,
   );
@@ -150,11 +150,8 @@ export const FileFolderSelect = ({
       );
 
       if (folderWithSameName) {
-        dispatch(
-          UIActions.showToast({
-            message: t(`Not allowed to have folders with same names`),
-            type: 'error',
-          }),
+        setErrorMessage(
+          t(`Not allowed to have folders with same names`) as string,
         );
         return;
       }
@@ -194,6 +191,8 @@ export const FileFolderSelect = ({
                   </div>
                 ) : (
                   <div className="group/modal flex flex-col gap-2 overflow-auto">
+                    <ErrorMessage error={errorMessage} />
+
                     <input
                       name="titleInput"
                       placeholder={t('Search folders') || ''}
@@ -204,8 +203,10 @@ export const FileFolderSelect = ({
                     <div className="flex min-h-[350px] flex-col overflow-auto">
                       <button
                         className={classNames(
-                          'flex items-center gap-1 rounded py-1 text-xs text-gray-500',
-                          !selectedFolderId && 'bg-blue-500/20',
+                          'flex items-center gap-1 rounded border-l-2 py-1 text-xs text-gray-500',
+                          !selectedFolderId
+                            ? 'border-blue-500 bg-blue-500/20'
+                            : 'border-transparent',
                         )}
                         onClick={() => handleToggleFolder(undefined)}
                       >

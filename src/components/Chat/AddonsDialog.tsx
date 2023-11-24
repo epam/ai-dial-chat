@@ -242,7 +242,8 @@ export const AddonsDialog: FC<Props> = ({
             className="flex flex-col gap-4 px-3 text-xs md:px-5"
             data-qa="addon-search-results"
           >
-            {(selectedAddons?.length > 0 ||
+            {(selectedAddons?.filter((addon) => addonsMap[addon.id]).length >
+              0 ||
               preselectedAddonsIds?.length > 0) && (
               <div className="flex flex-col gap-3">
                 <span className="text-gray-500">{t('Selected')}</span>
