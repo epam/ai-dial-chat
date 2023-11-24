@@ -20,7 +20,11 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
-import { getPathNameId } from '@/src/utils/app/file';
+import {
+  getFilesWithInvalidFileSize,
+  getFilesWithInvalidFileType,
+  getPathNameId,
+} from '@/src/utils/app/file';
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
 
 import { DialFile } from '@/src/types/files';
@@ -30,6 +34,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { FileFolderSelect } from './FileFolderSelect';
+
+import { extension } from 'mime-types';
 
 interface Props {
   isOpen: boolean;
@@ -89,6 +95,12 @@ export const PreUploadDialog = ({
         .join('/') || undefined
     );
   }, [folders, selectedFolderId]);
+  const allowedExtensions = useMemo(() => {
+    if (allowedTypes.includes('*/*')) {
+      return [t('all')];
+    }
+    return allowedTypes.map((mimeType) => extension(mimeType));
+  }, [allowedTypes, t]);
 
   const handleSelectFiles = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -98,25 +110,20 @@ export const PreUploadDialog = ({
         (e.target as HTMLInputElement).files as FileList,
       );
 
-      let incorrectSizeFiles: string[] = [];
-      let incorrectTypeFiles: string[] = [];
-      const filteredFiles = files.reduce<File[]>((acc, file) => {
-        const fileType = file.name.slice(file.name.lastIndexOf('.'));
-        if (file.size > 512 * bytesInMb) {
-          incorrectSizeFiles = incorrectSizeFiles.concat(file.name);
-          return acc;
-        }
-        if (
-          !allowedTypes.includes('*/*') &&
-          allowedTypes.length &&
-          !allowedTypes.includes(fileType)
-        ) {
-          incorrectTypeFiles = incorrectTypeFiles.concat(file.name);
-          return acc;
-        }
+      const incorrectSizeFiles: string[] = getFilesWithInvalidFileSize(
+        files,
+        512 * bytesInMb,
+      ).map((file) => file.name);
+      const incorrectTypeFiles: string[] = getFilesWithInvalidFileType(
+        files,
+        allowedTypes,
+      ).map((file) => file.name);
+      const filteredFiles = files.filter(
+        (file) =>
+          !incorrectSizeFiles.includes(file.name) &&
+          !incorrectTypeFiles.includes(file.name),
+      );
 
-        return acc.concat(file);
-      }, []);
       if (incorrectSizeFiles.length > 0) {
         setErrorMessage(
           (oldMessage) =>
@@ -134,9 +141,9 @@ export const PreUploadDialog = ({
             oldMessage +
             '\n' +
             t(
-              `Supported types: {{allowedTypes}}. Next files haven't been uploaded: {incorrectTypeFileNames}`,
+              `Supported types: {{allowedExtensions}}. Next files haven't been uploaded: {{incorrectTypeFileNames}}`,
               {
-                allowedTypes: allowedTypes.join(', '),
+                allowedExtensions: allowedExtensions.join(', '),
                 incorrectTypeFileNames: incorrectTypeFiles.join(', '),
               },
             ),
@@ -158,7 +165,7 @@ export const PreUploadDialog = ({
         uploadInputRef.current.value = '';
       }
     },
-    [allowedTypes, folderPath, t],
+    [allowedExtensions, allowedTypes, folderPath, t],
   );
 
   const handleUpload = useCallback(() => {
@@ -318,9 +325,9 @@ export const PreUploadDialog = ({
                   </div>
                   <p id={descriptionId}>
                     {t(
-                      'Max file size up to 512 Mb. Supported types: {{allowedTypes}}.',
+                      'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
                       {
-                        allowedTypes: allowedTypes.join(', '),
+                        allowedExtensions: allowedExtensions.join(', '),
                       },
                     )}
                   </p>

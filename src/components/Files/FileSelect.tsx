@@ -15,6 +15,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getDialFilesWithInvalidFileType } from '@/src/utils/app/file';
 import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
 import { HighlightColor } from '@/src/types/common';
@@ -30,6 +31,8 @@ import { Spinner } from '../Common/Spinner';
 import Folder from '../Folder';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
+
+import { extension } from 'mime-types';
 
 interface Props {
   isOpen: boolean;
@@ -82,6 +85,12 @@ export const FileSelect = ({
       name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [files, searchQuery]);
+  const allowedExtensions = useMemo(() => {
+    if (allowedTypes.includes('*/*')) {
+      return [t('all')];
+    }
+    return allowedTypes.map((mimeType) => `.${extension(mimeType)}`);
+  }, [allowedTypes, t]);
 
   useEffect(() => {
     if (isOpen) {
@@ -204,8 +213,36 @@ export const FileSelect = ({
       return;
     }
 
+    const selectedFiles = files.filter((file) =>
+      selectedFilesIds.includes(file.id),
+    );
+    const filesWithIncorrectTypes = getDialFilesWithInvalidFileType(
+      selectedFiles,
+      allowedTypes,
+    ).map((file) => file.name);
+    if (filesWithIncorrectTypes.length > 0) {
+      setErrorMessage(
+        t(
+          `Supported types: {{allowedExtensions}}. You've trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
+          {
+            allowedExtensions: allowedExtensions.join(', '),
+            incorrectTypeFileNames: filesWithIncorrectTypes.join(', '),
+          },
+        ) as string,
+      );
+      return;
+    }
+
     onClose(selectedFilesIds);
-  }, [maximumAttachmentsAmount, onClose, selectedFilesIds, t]);
+  }, [
+    allowedExtensions,
+    allowedTypes,
+    files,
+    maximumAttachmentsAmount,
+    onClose,
+    selectedFilesIds,
+    t,
+  ]);
 
   const handleUploadFiles = useCallback(
     (
@@ -253,9 +290,9 @@ export const FileSelect = ({
                 </div>
                 <p id={descriptionId}>
                   {t(
-                    'Max file size up to 512 Mb. Supported types: {{allowedTypes}}.',
+                    'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
                     {
-                      allowedTypes: allowedTypes.join(', '),
+                      allowedExtensions: allowedExtensions.join(', '),
                     },
                   )}
                   &nbsp;

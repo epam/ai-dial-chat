@@ -40,3 +40,35 @@ export const getUserCustomContent = (files: DialFile[]) => {
     },
   };
 };
+
+export const getDialFilesWithInvalidFileType = (
+  files: DialFile[],
+  allowedFileTypes: string[],
+): DialFile[] => {
+  return allowedFileTypes.includes('*/*')
+    ? []
+    : files.filter((file) => !allowedFileTypes.includes(file.contentType));
+};
+
+export const getDialFilesWithInvalidFileSize = (
+  files: DialFile[],
+  sizeLimit: number,
+): DialFile[] => {
+  return files.filter((file) => file.contentLength > sizeLimit);
+};
+
+export const getFilesWithInvalidFileType = (
+  files: File[],
+  allowedFileTypes: string[],
+): File[] => {
+  return allowedFileTypes.includes('*/*')
+    ? []
+    : files.filter((file) => !allowedFileTypes.includes(file.type));
+};
+
+export const getFilesWithInvalidFileSize = (
+  files: File[],
+  sizeLimit: number,
+): File[] => {
+  return files.filter((file) => file.size > sizeLimit);
+};

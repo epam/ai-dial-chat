@@ -107,7 +107,7 @@ export const AttachButton = () => {
               <div className="flex items-center gap-3">
                 <IconFileDescription
                   className="shrink-0 text-gray-500"
-                  size={24}
+                  size={18}
                 />
                 <span>{t('Attach uploaded files')}</span>
               </div>
@@ -118,7 +118,7 @@ export const AttachButton = () => {
             className="hover:bg-blue-500/20"
             item={
               <div className="flex items-center gap-3">
-                <IconUpload className="shrink-0 text-gray-500" size={24} />
+                <IconUpload className="shrink-0 text-gray-500" size={18} />
                 <span>{t('Upload from device')}</span>
               </div>
             }

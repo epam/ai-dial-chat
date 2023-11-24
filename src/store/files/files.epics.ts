@@ -28,18 +28,21 @@ const uploadFileEpic: AppEpic = (action$) =>
       formData.append('attachment', payload.fileContent, payload.name);
 
       return DataService.sendFile(formData, payload.relativePath).pipe(
+        filter(
+          ({ percent, result }) =>
+            typeof percent !== 'undefined' || typeof result !== 'undefined',
+        ),
         map(({ percent, result }) => {
-          if (percent !== undefined) {
-            return FilesActions.uploadFileTick({ id: payload.id, percent });
-          }
-
           if (result) {
             return FilesActions.uploadFileSuccess({
               apiResult: result,
             });
           }
 
-          return FilesActions.uploadFileFail({ id: payload.id });
+          return FilesActions.uploadFileTick({
+            id: payload.id,
+            percent: percent!,
+          });
         }),
         catchError(() => {
           return of(FilesActions.uploadFileFail({ id: payload.id }));
