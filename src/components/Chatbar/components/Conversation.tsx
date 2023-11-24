@@ -42,9 +42,10 @@ import { v4 as uuidv4 } from 'uuid';
 interface Props {
   item: Conversation;
   level?: number;
+  readonly?: boolean;
 }
 
-export const ConversationComponent = ({ item: conversation, level }: Props) => {
+export const ConversationComponent = ({ item: conversation, level, readonly }: Props) => {
   const { t } = useTranslation('chat');
   const dispatch = useAppDispatch();
 
@@ -215,7 +216,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           ConversationsActions.updateConversation({
             id: conversationId,
             values: {
-              isShared: true,
+              //isShared: true,
+              sharedWithMe: true //TODO: for development purpose - emulate immediate sharing with yourself
             },
           }),
         );
@@ -295,7 +297,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           className={classNames(
             'group flex h-full w-full cursor-pointer items-center gap-2 transition-colors duration-200',
             messageIsStreaming && 'disabled:cursor-not-allowed',
-            isDeleting ? 'pr-12' : 'group-hover:pr-6',
+            isDeleting && 'pr-12',
+            !messageIsStreaming && !readonly && !isDeleting && 'group-hover:pr-6',
           )}
           onClick={() => {
             setIsDeleting(false);
@@ -351,7 +354,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         </button>
       )}
 
-      {!isDeleting && !isRenaming && !messageIsStreaming && (
+      {!isDeleting && !isRenaming && !messageIsStreaming && !readonly && (
         <div
           className={classNames(
             'invisible absolute right-3 z-50 flex justify-end md:group-hover:visible',

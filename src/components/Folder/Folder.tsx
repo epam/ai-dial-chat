@@ -63,6 +63,7 @@ interface Props<T, P = unknown> {
   itemComponent?: FC<{
     item: T;
     level: number;
+    readonly?: boolean;
     onEvent?: (eventId: string, data: P) => void;
   }>;
   allItems?: T[];
@@ -87,6 +88,7 @@ interface Props<T, P = unknown> {
   onClickFolder: (folderId: string) => void;
 
   onItemEvent?: (eventId: string, data: unknown) => void;
+  readonly?: boolean;
 }
 
 const Folder = <T extends Conversation | Prompt | DialFile>({
@@ -109,6 +111,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   onClickFolder,
   onAddFolder,
   onItemEvent,
+
+  readonly = false,
 }: Props<T>) => {
   const { t } = useTranslation('chat');
   const dispatch = useAppDispatch();
@@ -456,7 +460,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             </div>
 
             {(onDeleteFolder || onRenameFolder || onAddFolder) &&
-              !isRenaming && (
+              !readonly && !isRenaming && (
                 <div
                   className={classNames(
                     'invisible absolute right-3 z-50 flex justify-end md:group-hover/button:visible',
@@ -533,6 +537,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       />
                     )}
                     <Folder
+                      readonly={readonly}
                       level={level + 1}
                       searchTerm={searchTerm}
                       currentFolder={item}
@@ -575,6 +580,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 {createElement(itemComponent, {
                   item,
                   level: level + 1,
+                  readonly,
                   ...(!!onItemEvent && { onEvent: onItemEvent }),
                 })}
               </div>

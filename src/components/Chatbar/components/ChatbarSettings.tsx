@@ -3,6 +3,7 @@ import {
   IconFileArrowRight,
   IconScale,
   IconTrashX,
+  IconUserShare
 } from '@tabler/icons-react';
 import { useCallback, useState } from 'react';
 
@@ -51,6 +52,23 @@ export const ChatbarSettings = () => {
 
   return (
     <div className="flex items-start gap-1 p-2 text-gray-500">
+      {conversations.filter(c=>c.isShared).length > 0 ? (
+        <Tooltip isTriggerClickable={true}>
+          <TooltipTrigger>
+            <button
+              className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
+              onClick={() => {
+                setIsOpen(true);
+              }}
+              data-qa="share-by-me"
+            >
+              <IconUserShare size={24} strokeWidth="1.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{t('Share by me')}</TooltipContent>
+        </Tooltip>
+      ) : null}
+
       {conversations.length > 0 ? (
         <Tooltip isTriggerClickable={true}>
           <TooltipTrigger>

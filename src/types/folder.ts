@@ -1,9 +1,11 @@
+import { EntityFilter } from './common';
+
 export interface FolderInterface {
   id: string;
   name: string;
   type: FolderType;
   folderId?: string;
-  isShared?: boolean;
+  sharedWithMe?: boolean;
 
   serverSynced?: boolean;
 }
@@ -15,6 +17,6 @@ export enum FolderType {
 }
 
 export interface FolderItemFilters<T> {
-  filterFolder: (folder: FolderInterface) => boolean;
-  filterItem: (item: T) => boolean;
+  filterFolder: EntityFilter<FolderInterface>;
+  filterItem: EntityFilter<T>;
 }

@@ -5,4 +5,5 @@ export interface Prompt {
   content?: string;
   folderId?: string;
   isShared?: boolean;
+  sharedWithMe?: boolean;
 }

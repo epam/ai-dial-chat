@@ -1,5 +1,6 @@
 import { MIMEType } from './files';
 
+
 export interface Attachment {
   index?: number;
   type: MIMEType;
@@ -90,6 +91,7 @@ export interface Conversation {
 
   isMessageStreaming: boolean;
   isShared?: boolean;
+  sharedWithMe?: boolean;
 }
 export interface Replay {
   replayAsIs?: boolean;
