@@ -46,7 +46,9 @@ export const ChatbarSettings = () => {
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-  const displayAttachmentFunctionality = enabledFeatures.has(Feature.AttachmentsManager);
+  const displayAttachmentFunctionality = enabledFeatures.has(
+    Feature.AttachmentsManager,
+  );
   const isMoreButtonDisplayed = displayAttachmentFunctionality;
 
   const handleToggleCompare = useCallback(() => {
