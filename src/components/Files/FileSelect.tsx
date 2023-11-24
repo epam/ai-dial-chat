@@ -25,6 +25,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
+import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
 import Folder from '../Folder';
 import { FileItem, FileItemEventIds } from './FileItem';
@@ -206,6 +207,25 @@ export const FileSelect = ({
     onClose(selectedFilesIds);
   }, [maximumAttachmentsAmount, onClose, selectedFilesIds, t]);
 
+  const handleUploadFiles = useCallback(
+    (
+      selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
+      folderPath: string | undefined,
+    ) => {
+      selectedFiles.forEach((file) => {
+        dispatch(
+          FilesActions.uploadFile({
+            fileContent: file.fileContent,
+            id: file.id,
+            relativePath: folderPath,
+            name: file.name,
+          }),
+        );
+      });
+    },
+    [dispatch],
+  );
+
   return (
     <FloatingPortal id="theme-main">
       {isOpen && (
@@ -244,11 +264,9 @@ export const FileSelect = ({
                       maxAttachmentsAmount: maximumAttachmentsAmount,
                     })}
                 </p>
-                {errorMessage && errorMessage?.length > 0 && (
-                  <p className="rounded bg-red-200 p-3 text-red-800 dark:bg-red-900 dark:text-red-400">
-                    {errorMessage}
-                  </p>
-                )}
+                
+                <ErrorMessage error={errorMessage} />
+
                 {folders.length === 0 && loadingStatuses.has(foldersStatus) ? (
                   <div className="flex min-h-[300px] items-center justify-center">
                     <Spinner />
@@ -358,29 +376,15 @@ export const FileSelect = ({
                 )}
               </div>
 
-              <PreUploadDialog
-                isOpen={isUploadFromDeviceOpened}
-                allowedTypes={allowedTypes}
-                initialFilesSelect={true}
-                onUploadFiles={(
-                  selectedFiles: Required<
-                    Pick<DialFile, 'fileContent' | 'id' | 'name'>
-                  >[],
-                  folderPath: string | undefined,
-                ) => {
-                  selectedFiles.forEach((file) => {
-                    dispatch(
-                      FilesActions.uploadFile({
-                        fileContent: file.fileContent,
-                        id: file.id,
-                        relativePath: folderPath,
-                        name: file.name,
-                      }),
-                    );
-                  });
-                }}
-                onClose={() => setIsUploadFromDeviceOpened(false)}
-              />
+              {isUploadFromDeviceOpened && (
+                <PreUploadDialog
+                  isOpen
+                  allowedTypes={allowedTypes}
+                  initialFilesSelect={true}
+                  onUploadFiles={handleUploadFiles}
+                  onClose={() => setIsUploadFromDeviceOpened(false)}
+                />
+              )}
             </div>
           </FloatingFocusManager>
         </FloatingOverlay>

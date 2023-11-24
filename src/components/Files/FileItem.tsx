@@ -58,7 +58,7 @@ export const FileItem = ({ item, level, onEvent }: Props) => {
 
   return (
     <div
-      className="group/file-item flex justify-between gap-3 px-3 py-1.5"
+      className="group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-blue-500/20"
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
       }}
@@ -82,7 +82,7 @@ export const FileItem = ({ item, level, onEvent }: Props) => {
             )}
           >
             <input
-              className="checkbox-form peer h-[18px] w-[18px]"
+              className="checkbox peer h-[18px] w-[18px] bg-gray-100 dark:bg-gray-700"
               type="checkbox"
               checked={isSelected}
               onChange={handleToggleFile}

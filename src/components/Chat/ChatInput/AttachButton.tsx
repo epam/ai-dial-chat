@@ -91,7 +91,7 @@ export const AttachButton = () => {
           trigger={<IconPaperclip className="text-gray-500" size={24} />}
         >
           <MenuItem
-            className="hover:bg-violet/15"
+            className="hover:bg-blue-500/20"
             item={
               <div className="flex items-center gap-3">
                 <IconFileDescription
@@ -104,7 +104,7 @@ export const AttachButton = () => {
             onClick={handleOpenAttachmentsModal}
           />
           <MenuItem
-            className="hover:bg-violet/15"
+            className="hover:bg-blue-500/20"
             item={
               <div className="flex items-center gap-3">
                 <IconUpload className="shrink-0 text-gray-500" size={24} />

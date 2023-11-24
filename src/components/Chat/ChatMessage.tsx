@@ -32,9 +32,9 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import { ConfirmDialog } from '../Common/ConfirmDialog';
+import { ErrorMessage } from '../Common/ErrorMessage';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachments } from './MessageAttachments';
-import { MessageError } from './MessageError';
 import { MessageStages } from './MessageStages';
 
 export interface Props {
@@ -327,9 +327,7 @@ export const ChatMessage: FC<Props> = memo(
                       attachments={message.custom_content.attachments}
                     />
                   )}
-                  {!!message.errorMessage && (
-                    <MessageError error={message.errorMessage}></MessageError>
-                  )}
+                  <ErrorMessage error={message.errorMessage}></ErrorMessage>
                 </div>
 
                 <div className="flex w-[60px] shrink-0 flex-col justify-between">
