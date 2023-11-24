@@ -28,6 +28,7 @@ import { DialFile } from '@/src/types/files';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
+import { ErrorMessage } from '../Common/ErrorMessage';
 import { FileFolderSelect } from './FileFolderSelect';
 
 interface Props {
@@ -267,15 +268,15 @@ export const PreUploadDialog = ({
 
   useEffect(() => {
     if (isOpen) {
-      setSelectedFiles([]);
-      setErrorMessage('');
-
       dispatch(FilesActions.getFiles({ path: folderPath }));
     }
+  }, [dispatch, folderPath, isOpen]);
+
+  useEffect(() => {
     if (initialFilesSelect && isOpen) {
       setTimeout(() => uploadInputRef.current?.click());
     }
-  }, [dispatch, folderPath, initialFilesSelect, isOpen]);
+  }, [initialFilesSelect, isOpen]);
 
   useEffect(() => {
     setSelectedFiles((oldFiles) =>
@@ -317,17 +318,14 @@ export const PreUploadDialog = ({
                   </div>
                   <p id={descriptionId}>
                     {t(
-                      'Max file size up to 1 GB. Supported types: {{allowedTypes}}.',
+                      'Max file size up to 512 Mb. Supported types: {{allowedTypes}}.',
                       {
                         allowedTypes: allowedTypes.join(', '),
                       },
                     )}
                   </p>
-                  {errorMessage && errorMessage?.length > 0 && (
-                    <p className="rounded bg-red-200 p-3 text-red-800 dark:bg-red-900 dark:text-red-400">
-                      {errorMessage}
-                    </p>
-                  )}
+
+                  <ErrorMessage error={errorMessage} />
 
                   <div className="flex flex-col gap-1">
                     <div>

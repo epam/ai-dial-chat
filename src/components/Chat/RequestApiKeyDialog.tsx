@@ -288,7 +288,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
     submitted: submitted,
   });
 
-  const checkboxClassName = classNames('checkbox-form', 'peer', {
+  const checkboxClassName = classNames('checkbox', 'peer', {
     'input-invalid': submitted,
   });
 

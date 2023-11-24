@@ -360,12 +360,12 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     >
       <div
         className={classNames(
-          'relative flex h-[30px] items-center',
+          'relative flex h-[30px] items-center rounded border-l-2',
           isRenaming ||
             (allItems === undefined &&
               highlightedFolders?.includes(currentFolder.id))
-            ? bgColor
-            : '',
+            ? classNames(bgColor, 'border-blue-500')
+            : 'border-transparent',
         )}
         data-qa="folder"
       >

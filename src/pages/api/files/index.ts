@@ -97,6 +97,10 @@ async function handleGetRequest(
 
   res.status(proxyRes.status);
   res.setHeader('transfer-encoding', 'chunked');
+  res.setHeader(
+    'Content-Type',
+    proxyRes.headers.get('Content-Type') || 'text/plain',
+  );
 
   proxyRes.body?.pipe(res);
 }
