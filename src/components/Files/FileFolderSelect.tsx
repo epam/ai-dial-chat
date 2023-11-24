@@ -192,7 +192,7 @@ export const FileFolderSelect = ({
                 ) : (
                   <div className="group/modal flex flex-col gap-2 overflow-auto">
                     <ErrorMessage error={errorMessage} />
-                    
+
                     <input
                       name="titleInput"
                       placeholder={t('Search folders') || ''}

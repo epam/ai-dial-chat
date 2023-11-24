@@ -264,7 +264,7 @@ export const FileSelect = ({
                       maxAttachmentsAmount: maximumAttachmentsAmount,
                     })}
                 </p>
-                
+
                 <ErrorMessage error={errorMessage} />
 
                 {folders.length === 0 && loadingStatuses.has(foldersStatus) ? (
