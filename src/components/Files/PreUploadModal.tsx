@@ -33,7 +33,7 @@ import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { ErrorMessage } from '../Common/ErrorMessage';
-import { FileFolderSelect } from './FileFolderSelect';
+import { SelectFolderModal } from './SelectFolderModal';
 
 import { extension } from 'mime-types';
 
@@ -417,7 +417,7 @@ export const PreUploadDialog = ({
                   </button>
                 </div>
 
-                <FileFolderSelect
+                <SelectFolderModal
                   isOpen={isChangeFolderModalOpened}
                   selectedFolderName={selectedFolderId}
                   onClose={(folderId) => {

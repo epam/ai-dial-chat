@@ -27,6 +27,7 @@ import {
 
 import FolderPlus from '../../../../public/images/icons/folder-plus.svg';
 import { Import } from '../../Settings/Import';
+import { ChatbarSettingsContextMenu } from './ChatbarSettingsContextMenu';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation('sidebar');
@@ -50,12 +51,12 @@ export const ChatbarSettings = () => {
   }, [dispatch]);
 
   return (
-    <div className="flex items-start gap-1 p-2 text-gray-500">
+    <div className="flex items-start gap-2 p-2 text-gray-500">
       {conversations.length > 0 ? (
         <Tooltip isTriggerClickable={true}>
           <TooltipTrigger>
             <button
-              className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
+              className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green"
               onClick={() => {
                 setIsOpen(true);
               }}
@@ -86,7 +87,7 @@ export const ChatbarSettings = () => {
       <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <button
-            className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
+            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green"
             onClick={() => {
               dispatch(ConversationsActions.exportConversations());
             }}
@@ -101,7 +102,7 @@ export const ChatbarSettings = () => {
       <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <button
-            className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
+            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green"
             onClick={() =>
               dispatch(
                 ConversationsActions.createFolder({ name: t('New folder') }),
@@ -118,7 +119,7 @@ export const ChatbarSettings = () => {
       <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <button
-            className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green disabled:cursor-not-allowed md:h-[42px] md:w-[42px]"
+            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green disabled:cursor-not-allowed"
             onClick={() => {
               handleToggleCompare();
             }}
@@ -129,6 +130,13 @@ export const ChatbarSettings = () => {
           </button>
         </TooltipTrigger>
         <TooltipContent>{t('Compare mode')}</TooltipContent>
+      </Tooltip>
+
+      <Tooltip isTriggerClickable={true}>
+        <TooltipTrigger>
+          <ChatbarSettingsContextMenu />
+        </TooltipTrigger>
+        <TooltipContent>{t('Other options')}</TooltipContent>
       </Tooltip>
 
       <ConfirmDialog

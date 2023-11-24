@@ -16,7 +16,7 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { Menu, MenuItem } from '../../Common/DropdownMenu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../Common/Tooltip';
-import { FileSelect } from '../../Files/FileSelect';
+import { FileManagerModal } from '../../Files/FileManagerModal';
 import { PreUploadDialog } from '../../Files/PreUploadModal';
 
 export const AttachButton = () => {
@@ -127,10 +127,11 @@ export const AttachButton = () => {
         </Menu>
       </div>
       {isSelectFilesDialogOpened && (
-        <FileSelect
+        <FileManagerModal
           isOpen
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
+          isInConversation={true}
           onClose={handleFileSelectClose}
         />
       )}

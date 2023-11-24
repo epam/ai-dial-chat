@@ -38,14 +38,16 @@ interface Props {
   isOpen: boolean;
   allowedTypes?: string[];
   maximumAttachmentsAmount?: number;
+  isInConversation?: boolean;
   onClose: (result: boolean | string[]) => void;
 }
 
 const loadingStatuses = new Set(['LOADING', undefined]);
 
-export const FileSelect = ({
+export const FileManagerModal = ({
   isOpen,
   allowedTypes = [],
+  isInConversation = false,
   maximumAttachmentsAmount = 0,
   onClose,
 }: Props) => {
@@ -285,7 +287,7 @@ export const FileSelect = ({
               <div className="flex flex-col gap-2 overflow-auto">
                 <div className="flex justify-between">
                   <h2 id={headingId} className="text-base font-semibold">
-                    {t('Attach files')}
+                    {isInConversation ? t('Attach files') : t('Files manager')}
                   </h2>
                 </div>
                 <p id={descriptionId}>
@@ -400,13 +402,15 @@ export const FileSelect = ({
                         >
                           {t('Upload from device')}
                         </button>
-                        <button
-                          onClick={handleAttachFiles}
-                          className="button button-primary"
-                          disabled={selectedFilesIds.length === 0}
-                        >
-                          {t('Attach files')}
-                        </button>
+                        {isInConversation && (
+                          <button
+                            onClick={handleAttachFiles}
+                            className="button button-primary"
+                            disabled={selectedFilesIds.length === 0}
+                          >
+                            {t('Attach files')}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

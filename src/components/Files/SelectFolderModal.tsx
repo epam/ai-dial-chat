@@ -35,7 +35,7 @@ interface Props {
 
 const loadingStatuses = new Set(['LOADING', undefined]);
 
-export const FileFolderSelect = ({
+export const SelectFolderModal = ({
   isOpen,
   selectedFolderName,
   onClose,
