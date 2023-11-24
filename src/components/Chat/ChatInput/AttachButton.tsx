@@ -15,6 +15,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { Menu, MenuItem } from '../../Common/DropdownMenu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../Common/Tooltip';
 import { FileSelect } from '../../Files/FileSelect';
 import { PreUploadDialog } from '../../Files/PreUploadModal';
 
@@ -88,7 +89,17 @@ export const AttachButton = () => {
         <Menu
           type="contextMenu"
           disabled={messageIsStreaming || isModelsLoading}
-          trigger={<IconPaperclip className="text-gray-500" size={24} />}
+          trigger={
+            <Tooltip isTriggerClickable={true}>
+              <TooltipTrigger>
+                <IconPaperclip
+                  className="text-gray-500 hover:text-blue-500"
+                  size={24}
+                />
+              </TooltipTrigger>
+              <TooltipContent>{t('Attach files')}</TooltipContent>
+            </Tooltip>
+          }
         >
           <MenuItem
             className="hover:bg-blue-500/20"
