@@ -277,8 +277,8 @@ export const FileManagerModal = ({
       return;
     }
 
-    setSelectedFilesIds([]);
     dispatch(FilesActions.removeFilesList({ fileIds: selectedFilesIds }));
+    setSelectedFilesIds([]);
   }, [dispatch, selectedFilesIds]);
 
   const handleDownloadMultipleFiles = useCallback(() => {
@@ -286,8 +286,8 @@ export const FileManagerModal = ({
       return;
     }
 
-    setSelectedFilesIds([]);
     dispatch(FilesActions.downloadFilesList({ fileIds: selectedFilesIds }));
+    setSelectedFilesIds([]);
   }, [dispatch, selectedFilesIds]);
 
   return (
