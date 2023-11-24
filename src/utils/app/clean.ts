@@ -1,15 +1,15 @@
 import { Conversation, ConversationEntityModel } from '@/src/types/chat';
 import { OpenAIEntityModelID } from '@/src/types/openai';
 
-
-
-import { DEFAULT_ASSISTANT_SUBMODEL, DEFAULT_CONVERSATION_NAME, DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '../../constants/default-settings';
+import {
+  DEFAULT_ASSISTANT_SUBMODEL,
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+} from '../../constants/default-settings';
 import { defaultReplay } from '@/src/constants/replay';
 
-
-
 import { v4 } from 'uuid';
-
 
 export const cleanConversationHistory = (
   history: Conversation[] | unknown,

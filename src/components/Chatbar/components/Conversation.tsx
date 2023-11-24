@@ -45,7 +45,11 @@ interface Props {
   readonly?: boolean;
 }
 
-export const ConversationComponent = ({ item: conversation, level, readonly }: Props) => {
+export const ConversationComponent = ({
+  item: conversation,
+  level,
+  readonly,
+}: Props) => {
   const { t } = useTranslation('chat');
   const dispatch = useAppDispatch();
 
@@ -218,7 +222,7 @@ export const ConversationComponent = ({ item: conversation, level, readonly }: P
             id: conversationId,
             values: {
               //isShared: true,
-              sharedWithMe: true //TODO: for development purpose - emulate immediate sharing with yourself
+              sharedWithMe: true, //TODO: for development purpose - emulate immediate sharing with yourself
             },
           }),
         );
@@ -299,7 +303,10 @@ export const ConversationComponent = ({ item: conversation, level, readonly }: P
             'group flex h-full w-full cursor-pointer items-center gap-2 transition-colors duration-200',
             messageIsStreaming && 'disabled:cursor-not-allowed',
             isDeleting && 'pr-12',
-            !messageIsStreaming && !readonly && !isDeleting && 'group-hover:pr-6',
+            !messageIsStreaming &&
+              !readonly &&
+              !isDeleting &&
+              'group-hover:pr-6',
           )}
           onClick={() => {
             setIsDeleting(false);

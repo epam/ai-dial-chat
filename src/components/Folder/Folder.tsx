@@ -460,7 +460,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             </div>
 
             {(onDeleteFolder || onRenameFolder || onAddFolder) &&
-              !readonly && !isRenaming && (
+              !readonly &&
+              !isRenaming && (
                 <div
                   className={classNames(
                     'invisible absolute right-3 z-50 flex justify-end md:group-hover/button:visible',

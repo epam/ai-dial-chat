@@ -75,7 +75,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           promptId,
           values: {
             isShared: true,
-            sharedWithMe: true
+            sharedWithMe: true,
           },
         }),
       );

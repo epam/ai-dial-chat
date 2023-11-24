@@ -28,7 +28,12 @@ interface ChatFolderProps {
   readonly?: boolean;
 }
 
-const ChatFolderTemplate = ({ folder, index, isLast, readonly }: ChatFolderProps) => {
+const ChatFolderTemplate = ({
+  folder,
+  index,
+  isLast,
+  readonly,
+}: ChatFolderProps) => {
   const dispatch = useAppDispatch();
 
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
@@ -163,13 +168,17 @@ export const ChatSection = ({
   filterItem,
   hideIfEmpty,
   displayRootFiles,
-  readonly
+  readonly,
 }: ChatFoldersProps) => {
   const { t } = useTranslation('chat');
   const [isSectionOpened, setIsSectionOpened] = useState(true);
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
-  const rootFolders = useAppSelector(state => ConversationsSelectors.selectRootFolders(state, filterFolder));
-  const rootConversations= useAppSelector(state => ConversationsSelectors.selectRootConversations(state, filterItem));
+  const rootFolders = useAppSelector((state) =>
+    ConversationsSelectors.selectRootFolders(state, filterFolder),
+  );
+  const rootConversations = useAppSelector((state) =>
+    ConversationsSelectors.selectRootConversations(state, filterItem),
+  );
   const folders = useMemo(
     () => rootFolders.filter((folder) => filterFolder(folder)),
     [rootFolders, filterFolder],
@@ -221,36 +230,41 @@ export const ChatSection = ({
         />
         {t(name)}
       </button>
-      {isSectionOpened &&
+      {isSectionOpened && (
         <>
-        <div>
-          {folders.map((folder, index, arr) => {
-            return (
-              <ChatFolderTemplate
-                readonly={readonly}
-                key={index}
-                folder={folder}
-                index={index}
-                isLast={index === arr.length - 1}
-              />
-            );
-          })}
-        </div>
-        <div>
-          {displayRootFiles &&
-            rootConversations.map((item, index) => (
-              <ConversationComponent key={index} item={item} readonly={readonly}/>
-            ))}
-        </div>
+          <div>
+            {folders.map((folder, index, arr) => {
+              return (
+                <ChatFolderTemplate
+                  readonly={readonly}
+                  key={index}
+                  folder={folder}
+                  index={index}
+                  isLast={index === arr.length - 1}
+                />
+              );
+            })}
+          </div>
+          <div>
+            {displayRootFiles &&
+              rootConversations.map((item, index) => (
+                <ConversationComponent
+                  key={index}
+                  item={item}
+                  readonly={readonly}
+                />
+              ))}
+          </div>
         </>
-        }
+      )}
     </div>
   );
 };
 const filterMyChatsFolder = (folder: FolderInterface) => !folder.sharedWithMe;
 const filterMyChatsItem = (conversation: Conversation) =>
   !conversation.sharedWithMe;
-const filterSharedWithMeFolder = (folder: FolderInterface) => !!folder.sharedWithMe;
+const filterSharedWithMeFolder = (folder: FolderInterface) =>
+  !!folder.sharedWithMe;
 const filterSharedWithMeItem = (conversation: Conversation) =>
   !!conversation.sharedWithMe;
 
