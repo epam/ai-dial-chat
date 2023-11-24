@@ -9,12 +9,14 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { HighlightColor } from '@/src/types/common';
+import { Feature } from '@/src/types/features';
 
 import {
   ConversationsActions,
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 
@@ -41,6 +43,11 @@ export const ChatbarSettings = () => {
   const isStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+  const displayAttachmentFunctionality = enabledFeatures.has(Feature.AttachmentsManager);
+  const isMoreButtonDisplayed = displayAttachmentFunctionality;
 
   const handleToggleCompare = useCallback(() => {
     dispatch(
@@ -132,7 +139,7 @@ export const ChatbarSettings = () => {
         <TooltipContent>{t('Compare mode')}</TooltipContent>
       </Tooltip>
 
-      <ChatbarSettingsContextMenu />
+      {isMoreButtonDisplayed && <ChatbarSettingsContextMenu />}
 
       <ConfirmDialog
         isOpen={isOpen}
