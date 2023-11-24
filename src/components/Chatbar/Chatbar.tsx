@@ -20,6 +20,7 @@ import { Conversations } from './components/Conversations';
 
 import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import Sidebar from '../Sidebar';
+import { FolderType } from '@/src/types/folder';
 
 const ChatActionsBlock = () => {
   const { t } = useTranslation('sidebar');
@@ -64,7 +65,7 @@ export const Chatbar = () => {
   );
 
   const chatFolders = useMemo(
-    () => folders.filter(({ type }) => type === 'chat'),
+    () => folders.filter(({ type }) => type === FolderType.Chat),
     [folders],
   );
 

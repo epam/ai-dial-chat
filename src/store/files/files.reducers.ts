@@ -4,6 +4,7 @@ import { getPathNameId } from '@/src/utils/app/file';
 import { getAvailableNameOnSameFolderLevel } from '@/src/utils/app/folders';
 
 import { DialFile, FileFolderInterface } from '@/src/types/files';
+import { FolderType } from '@/src/types/folder';
 
 import { RootState } from '../index';
 
@@ -213,7 +214,7 @@ export const filesSlice = createSlice({
       state.folders.push({
         id: folderId,
         name: folderName,
-        type: 'file',
+        type: FolderType.File,
         folderId: payload.relativePath,
       });
       state.newAddedFolderId = folderId;

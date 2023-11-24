@@ -3,8 +3,18 @@ export interface FolderInterface {
   name: string;
   type: FolderType;
   folderId?: string;
+  isShared?: boolean;
 
   serverSynced?: boolean;
 }
 
-export type FolderType = 'chat' | 'prompt' | 'file';
+export enum FolderType {
+  Chat = 'chat',
+  Prompt = 'prompt',
+  File = 'file',
+}
+
+export interface FolderItemFilters<T> {
+  filterFolder: (folder: FolderInterface) => boolean;
+  filterItem: (item: T) => boolean;
+}

@@ -2,7 +2,7 @@ import { DateUtil } from '@/e2e/src/utils/dateUtil';
 import { GeneratorUtil } from '@/e2e/src/utils/generatorUtil';
 
 import { Conversation, Message, Role, Stage } from '@/src/types/chat';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
 import {
@@ -23,7 +23,7 @@ export class ConversationData extends FolderData {
   private conversationBuilder: ConversationBuilder;
 
   constructor() {
-    super('chat');
+    super(FolderType.Chat);
     this.conversationBuilder = new ConversationBuilder();
   }
 
@@ -204,7 +204,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareNestedFolder(nestedLevel: number) {
-    return super.prepareNestedFolder(nestedLevel, 'chat');
+    return super.prepareNestedFolder(nestedLevel, FolderType.Chat);
   }
 
   public prepareConversationsForNestedFolders(

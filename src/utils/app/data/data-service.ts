@@ -2,13 +2,8 @@
 import { Observable, map } from 'rxjs';
 
 import { Conversation } from '@/src/types/chat';
-import {
-  BackendFile,
-  BackendFileFolder,
-  DialFile,
-  FileFolderInterface,
-} from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
+import { BackendFile, BackendFileFolder, DialFile, FileFolderInterface } from '@/src/types/files';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { Theme } from '@/src/types/settings';
 import { DialStorage } from '@/src/types/storage';
@@ -180,7 +175,7 @@ export class DataService {
           return {
             id: getPathNameId(folder.name, relativePath),
             name: folder.name,
-            type: 'file',
+            type: FolderType.File,
             absolutePath: folder.path,
             relativePath: relativePath,
             folderId: relativePath,

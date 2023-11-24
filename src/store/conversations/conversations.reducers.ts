@@ -2,7 +2,10 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 
 
-import { getChildAndCurrentFoldersIdsById, getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
+import {
+  getChildAndCurrentFoldersIdsById,
+  getParentAndCurrentFoldersById,
+} from '@/src/utils/app/folders';
 import { doesConversationContainSearchTerm } from '@/src/utils/app/search';
 
 import {
@@ -13,7 +16,11 @@ import {
 } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { SupportedExportFormats } from '@/src/types/export';
-import { FolderInterface } from '@/src/types/folder';
+import {
+  FolderInterface,
+  FolderItemFilters,
+  FolderType,
+} from '@/src/types/folder';
 
 import {
   DEFAULT_SYSTEM_PROMPT,
@@ -233,7 +240,7 @@ export const conversationsSlice = createSlice({
       const newFolder: FolderInterface = {
         id: payload.folderId || uuidv4(),
         name: payload.name,
-        type: 'chat',
+        type: FolderType.Chat,
       };
 
       state.folders = state.folders.concat(newFolder);
@@ -428,6 +435,21 @@ const selectConversations = createSelector([rootSelector], (state) => {
 const selectFolders = createSelector([rootSelector], (state) => {
   return state.folders;
 });
+
+const selectAreFolderItemsExists = createSelector(
+  [
+    selectFolders,
+    selectConversations,
+    (_, filters: FolderItemFilters<Conversation>) => filters,
+  ],
+  (folders, conversations, filters) => {
+    return (
+      folders.filter((folder) => filters.filterFolder(folder)).length ||
+      conversations.filter((conversation) => filters.filterItem(conversation))
+        .length
+    );
+  },
+);
 
 const selectLastConversation = createSelector(
   [selectConversations],
@@ -670,6 +692,7 @@ export const ConversationsSelectors = {
   selectIsConversationsStreaming,
   selectSelectedConversations,
   selectFolders,
+  selectAreFolderItemsExists,
   selectSearchTerm,
   selectSearchedConversations,
   selectConversationSignal,

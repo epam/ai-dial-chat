@@ -3,6 +3,7 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 import { ExpectedConstants } from '@/e2e/src/testData';
 import { v4 as uuidv4 } from 'uuid';
 
+
 export class FolderBuilder {
   private folder: FolderInterface;
 
@@ -10,7 +11,7 @@ export class FolderBuilder {
     this.folder = {
       id: uuidv4(),
       name: ExpectedConstants.newFolderTitle,
-      type: 'chat',
+      type: FolderType.Chat,
     };
   }
 

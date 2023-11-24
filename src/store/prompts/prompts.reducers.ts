@@ -2,14 +2,15 @@ import { i18n } from 'next-i18next';
 
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import {
-  getChildAndCurrentFoldersIdsById,
-  getParentAndCurrentFoldersById,
-} from '@/src/utils/app/folders';
+
+
+import { getChildAndCurrentFoldersIdsById, getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
 import { doesPromptContainSearchTerm } from '@/src/utils/app/search';
 
+
+
 import { PromptsHistory } from '@/src/types/export';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 
 import { RootState } from '../index';
@@ -105,7 +106,7 @@ export const promptsSlice = createSlice({
       const newFolder: FolderInterface = {
         id: payload.folderId || uuidv4(),
         name: payload.name,
-        type: 'prompt',
+        type: FolderType.Prompt,
       };
 
       state.folders = state.folders.concat(newFolder);

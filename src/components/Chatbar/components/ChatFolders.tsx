@@ -1,5 +1,5 @@
 import { IconCaretRightFilled } from '@tabler/icons-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -7,7 +7,7 @@ import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
 import { HighlightColor } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FolderItemFilters } from '@/src/types/folder';
 
 import {
   ConversationsActions,
@@ -148,11 +148,20 @@ const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
   );
 };
 
-export const ChatFolders = () => {
+interface ChatFoldersProps extends FolderItemFilters<Conversation> {
+  name: string;
+  hideIfEmpty?: boolean;
+  displayFiles?: boolean;
+}
+
+export const ChatSection = ({ name, filterFolder, filterItem, hideIfEmpty }: ChatFoldersProps) => {
   const { t } = useTranslation('chat');
   const [isSectionOpened, setIsSectionOpened] = useState(true);
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
-  const folders = useAppSelector(ConversationsSelectors.selectFolders);
+  const allFolders = useAppSelector(ConversationsSelectors.selectFolders);
+  const filters = useMemo(()=> ({filterItem, filterFolder}), [filterItem, filterFolder])
+  const folderItemsExists = useAppSelector(state => ConversationsSelectors.selectAreFolderItemsExists(state, filters));
+  const folders = useMemo(()=> allFolders.filter((folder) => filterFolder(folder)), [allFolders, filterFolder])
   const selectedFoldersIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
   );
@@ -167,8 +176,10 @@ export const ChatFolders = () => {
     );
   }, [folders, selectedFoldersIds]);
 
+  if(hideIfEmpty && !folderItemsExists) return null;
+
   return (
-    <div className={classNames('flex w-full flex-col')} data-qa="chat-folders">
+    <div className='flex w-full flex-col py-1 pl-2 pr-0.5' data-qa="chat-folders">
       <button
         className={classNames(
           'flex items-center gap-1 py-1 text-xs',
@@ -184,7 +195,7 @@ export const ChatFolders = () => {
           )}
           size={10}
         />
-        {t('Pinned Chats')}
+        {t(name)}
       </button>
       {isSectionOpened &&
         folders.map((folder, index, arr) => {
@@ -204,3 +215,16 @@ export const ChatFolders = () => {
     </div>
   );
 };
+const filterMyChatsFolder = (folder: FolderInterface) => !folder.isShared;
+const filterMyChatsItem = (conversation: Conversation) => !conversation.isShared;
+const filterShareWithMeFolder = (folder: FolderInterface) => !!folder.isShared;
+const filterShareWithMeItem = (conversation: Conversation) => !!conversation.isShared;
+
+export function ChatFolders() {
+  return (
+    <div className='flex w-full flex-col gap-0.5 divide-y divide-gray-300 dark:divide-gray-900'>
+      <ChatSection name='Share With Me' filterFolder={filterShareWithMeFolder} filterItem={filterMyChatsItem}  hideIfEmpty/>
+      <ChatSection name='Pinned Chats' filterFolder={filterMyChatsFolder} filterItem={filterShareWithMeItem}/>
+    </div>
+  );
+}
