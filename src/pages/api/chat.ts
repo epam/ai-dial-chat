@@ -11,7 +11,7 @@ import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 import { logger } from '@/src/utils/server/logger';
 
 import { OpenAIEntityAddonID, OpenAIEntityModelID } from '../../types/openai';
-import { ChatBody, Message } from '@/src/types/chat';
+import { ChatBody, Message, Role } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 
 import {
@@ -160,12 +160,15 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         ...((messages[i].custom_content?.state ||
           messages[i].custom_content?.attachments) && {
           custom_content: {
-            attachments: messages[i].custom_content?.attachments?.map(
-              (attachment) => ({
-                ...attachment,
-                url: `${process.env.OPENAI_API_HOST}/v1/files/${attachment.url}?path=absolute`,
-              }),
-            ),
+            attachments:
+              messages[i].role === Role.User
+                ? messages[i].custom_content?.attachments?.map(
+                    (attachment) => ({
+                      ...attachment,
+                      url: `${process.env.OPENAI_API_HOST}/v1/files/${attachment.url}?path=absolute`,
+                    }),
+                  )
+                : undefined,
             state: messages[i].custom_content?.state,
           },
         }),

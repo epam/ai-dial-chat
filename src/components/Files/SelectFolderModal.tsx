@@ -254,13 +254,18 @@ export const SelectFolderModal = ({
                       )}
                     </div>
                     <div className="flex items-center justify-between">
-                      <button onClick={handleNewFolder}>
-                        <FolderPlus
-                          height={24}
-                          width={24}
-                          className="text-gray-500 hover:text-blue-500"
-                        />
-                      </button>
+                      <div className="flex items-center justify-center">
+                        <button
+                          onClick={handleNewFolder}
+                          className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
+                        >
+                          <FolderPlus
+                            height={24}
+                            width={24}
+                            className="text-gray-500 hover:text-blue-500"
+                          />
+                        </button>
+                      </div>
                       <div>
                         <button
                           onClick={() => onClose(selectedFolderId)}

@@ -8,7 +8,12 @@ import {
   useInteractions,
   useRole,
 } from '@floating-ui/react';
-import { IconCaretRightFilled, IconX } from '@tabler/icons-react';
+import {
+  IconCaretRightFilled,
+  IconDownload,
+  IconTrash,
+  IconX,
+} from '@tabler/icons-react';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -93,6 +98,8 @@ export const FileManagerModal = ({
     }
     return allowedTypes.map((mimeType) => `.${extension(mimeType)}`);
   }, [allowedTypes, t]);
+  const showSpinner =
+    folders.length === 0 && loadingStatuses.has(foldersStatus);
 
   useEffect(() => {
     if (isOpen) {
@@ -265,6 +272,22 @@ export const FileManagerModal = ({
     [dispatch],
   );
 
+  const handleRemoveMultipleFiles = useCallback(() => {
+    if (!selectedFilesIds.length) {
+      return;
+    }
+
+    dispatch(FilesActions.removeFilesList({ fileIds: selectedFilesIds }));
+  }, [dispatch, selectedFilesIds]);
+
+  const handleDownloadMultipleFiles = useCallback(() => {
+    if (!selectedFilesIds.length) {
+      return;
+    }
+
+    dispatch(FilesActions.downloadFilesList({ fileIds: selectedFilesIds }));
+  }, [dispatch, selectedFilesIds]);
+
   return (
     <FloatingPortal id="theme-main">
       {isOpen && (
@@ -274,7 +297,7 @@ export const FileManagerModal = ({
         >
           <FloatingFocusManager context={context}>
             <div
-              className="relative flex max-h-full flex-col gap-4 rounded bg-gray-100 p-6 dark:bg-gray-700 md:w-[525px]"
+              className="relative flex max-h-full flex-col gap-4 rounded bg-gray-100 dark:bg-gray-700 md:w-[525px]"
               ref={refs.setFloating}
               {...getFloatingProps()}
             >
@@ -284,10 +307,12 @@ export const FileManagerModal = ({
               >
                 <IconX className="text-gray-500" />
               </button>
-              <div className="flex flex-col gap-2 overflow-auto">
+              <div className="flex flex-col gap-2 overflow-auto p-6">
                 <div className="flex justify-between">
                   <h2 id={headingId} className="text-base font-semibold">
-                    {isInConversation ? t('Attach files') : t('Files manager')}
+                    {isInConversation
+                      ? t('Attach files')
+                      : t('Manage attachments')}
                   </h2>
                 </div>
                 <p id={descriptionId}>
@@ -306,7 +331,7 @@ export const FileManagerModal = ({
 
                 <ErrorMessage error={errorMessage} />
 
-                {folders.length === 0 && loadingStatuses.has(foldersStatus) ? (
+                {showSpinner ? (
                   <div className="flex min-h-[300px] items-center justify-center">
                     <Spinner />
                   </div>
@@ -387,34 +412,55 @@ export const FileManagerModal = ({
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center justify-between">
-                      <button onClick={handleNewFolder}>
-                        <FolderPlus
-                          height={24}
-                          width={24}
-                          className="text-gray-500 hover:text-blue-500"
-                        />
-                      </button>
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => setIsUploadFromDeviceOpened(true)}
-                          className="button button-secondary"
-                        >
-                          {t('Upload from device')}
-                        </button>
-                        {isInConversation && (
-                          <button
-                            onClick={handleAttachFiles}
-                            className="button button-primary"
-                            disabled={selectedFilesIds.length === 0}
-                          >
-                            {t('Attach files')}
-                          </button>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 )}
+              </div>
+              <div className="flex items-center justify-between border-t border-gray-300 px-6 py-4 dark:border-gray-900">
+                <div className="flex items-center justify-center gap-2">
+                  {selectedFilesIds.length > 0 ? (
+                    <>
+                      <button
+                        onClick={handleRemoveMultipleFiles}
+                        className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
+                      >
+                        <IconTrash size={24} />
+                      </button>
+                      <button
+                        onClick={handleDownloadMultipleFiles}
+                        className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
+                      >
+                        <IconDownload size={24} />
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={handleNewFolder}
+                      className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
+                    >
+                      <FolderPlus height={24} width={24} />
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setIsUploadFromDeviceOpened(true)}
+                    className={classNames(
+                      'button',
+                      isInConversation ? 'button-secondary' : 'button-primary',
+                    )}
+                  >
+                    {t('Upload from device')}
+                  </button>
+                  {isInConversation && (
+                    <button
+                      onClick={handleAttachFiles}
+                      className="button button-primary"
+                      disabled={selectedFilesIds.length === 0}
+                    >
+                      {t('Attach files')}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {isUploadFromDeviceOpened && (
