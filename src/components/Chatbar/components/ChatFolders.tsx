@@ -6,6 +6,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
+import { HighlightColor } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 
 import {
@@ -108,7 +109,7 @@ const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
         onDrop={onDropBetweenFolders}
         index={index}
         parentFolderId={folder.folderId}
-        highlightColor="green"
+        highlightColor={HighlightColor.Green}
       />
       <Folder
         searchTerm={searchTerm}
@@ -116,7 +117,7 @@ const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
         itemComponent={ConversationComponent}
         allItems={conversations}
         allFolders={conversationFolders}
-        highlightColor="green"
+        highlightColor={HighlightColor.Green}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
@@ -140,7 +141,7 @@ const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
           onDrop={onDropBetweenFolders}
           index={index + 1}
           parentFolderId={folder.folderId}
-          highlightColor="green"
+          highlightColor={HighlightColor.Green}
         />
       )}
     </>

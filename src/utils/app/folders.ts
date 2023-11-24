@@ -1,3 +1,4 @@
+import { HighlightColor } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 
 export const getFoldersDepth = (
@@ -82,18 +83,18 @@ export const getAvailableNameOnSameFolderLevel = (
   return itemName;
 };
 
-export const getHighlightColor = (
-  highlightColor: string,
+export function getByHighlightColor(
+  highlightColor: HighlightColor,
   greenColor: string,
   violetColor: string,
   defaultColor?: string,
-) => {
+) {
   switch (highlightColor) {
-    case 'green':
+    case HighlightColor.Green:
       return greenColor;
-    case 'violet':
+    case HighlightColor.Violet:
       return violetColor;
     default:
-      return defaultColor;
+      return defaultColor || '';
   }
-};
+}

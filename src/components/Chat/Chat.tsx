@@ -12,6 +12,7 @@ import {
   MergedMessages,
   Message,
   Replay,
+  Role,
 } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
@@ -122,12 +123,12 @@ export const Chat = memo(() => {
     if (selectedConversations.length > 0) {
       const mergedMessages: MergedMessages[] = [];
       for (let i = 0; i < selectedConversations[0].messages.length; i++) {
-        if (selectedConversations[0].messages[i].role === 'system') continue;
+        if (selectedConversations[0].messages[i].role === Role.System) continue;
 
         mergedMessages.push(
           selectedConversations.map((conv) => [
             conv,
-            conv.messages[i] || { role: 'assistant', content: '' },
+            conv.messages[i] || { role: Role.Assistant, content: '' },
             i,
           ]),
         );
@@ -154,7 +155,7 @@ export const Chat = memo(() => {
           ) {
             return conv.replay.replayUserMessagesStack.some(
               (message) =>
-                message.role === 'user' &&
+                message.role === Role.User &&
                 message.model?.id &&
                 !modelIds.includes(message.model.id),
             );
@@ -274,7 +275,9 @@ export const Chat = memo(() => {
           ConversationsActions.updateConversation({
             id: conversation.id,
             values: {
-              messages: messages.filter((message) => message.role === 'system'),
+              messages: messages.filter(
+                (message) => message.role === Role.System,
+              ),
             },
           }),
         );
@@ -326,7 +329,7 @@ export const Chat = memo(() => {
           values: {
             model: { id: modelId },
             assistantModelId:
-              newAiEntity.type === 'assistant'
+              newAiEntity.type === EntityType.Assistant
                 ? DEFAULT_ASSISTANT_SUBMODEL.id
                 : undefined,
             replay: updatedReplay,
@@ -441,7 +444,7 @@ export const Chat = memo(() => {
   const onRegenerateMessage = useCallback(() => {
     const lastUserMessageIndex = selectedConversations[0].messages
       .map((msg) => msg.role)
-      .lastIndexOf('user');
+      .lastIndexOf(Role.User);
     dispatch(
       ConversationsActions.sendMessages({
         conversations: selectedConversations,

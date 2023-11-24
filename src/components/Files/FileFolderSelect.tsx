@@ -17,6 +17,8 @@ import classNames from 'classnames';
 
 import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
+import { HighlightColor } from '@/src/types/common';
+
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -80,7 +82,7 @@ export const FileFolderSelect = ({
         }),
       );
     }
-  }, [dispatch, isOpen]);
+  }, [dispatch, isOpen, openedFoldersIds]);
 
   const handleSearch = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value),
@@ -229,7 +231,7 @@ export const FileFolderSelect = ({
                                       searchTerm={searchQuery}
                                       currentFolder={folder}
                                       allFolders={folders}
-                                      highlightColor="blue"
+                                      highlightColor={HighlightColor.Blue}
                                       highlightedFolders={highlightedFolders}
                                       isInitialRename={
                                         newAddedFolderId === folder.id

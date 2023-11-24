@@ -55,7 +55,9 @@ import {
   MessageSettings,
   Playback,
   RateBody,
+  Role,
 } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
@@ -442,7 +444,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
       modelsMap: ModelsSelectors.selectModelsMap(state$.value),
     })),
     map(({ payload, modelsMap }) => {
-      const messageModel: Message['model'] = {
+      const messageModel: Message[EntityType.Model] = {
         id: payload.conversation.model.id,
       };
       const messageSettings: Message['settings'] = {
@@ -456,7 +458,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         content: '',
         model: messageModel,
         settings: messageSettings,
-        role: 'assistant',
+        role: Role.Assistant,
       };
 
       const userMessage: Message = {
@@ -511,7 +513,8 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           iif(
             () =>
               payload.conversation.selectedAddons.length > 0 &&
-              modelsMap[payload.conversation.model.id]?.type !== 'application',
+              modelsMap[payload.conversation.model.id]?.type !==
+                EntityType.Application,
             of(
               AddonsActions.updateRecentAddons({
                 addonIds: payload.conversation.selectedAddons,
@@ -552,17 +555,17 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
         ]),
       );
       const assistantModelId = payload.conversation.assistantModelId;
-      const conversationModelType = lastModel?.type ?? 'model';
+      const conversationModelType = lastModel?.type ?? EntityType.Model;
       let modelAdditionalSettings = {};
 
-      if (conversationModelType === 'model') {
+      if (conversationModelType === EntityType.Model) {
         modelAdditionalSettings = {
           prompt: payload.conversation.prompt,
           temperature: payload.conversation.temperature,
           selectedAddons,
         };
       }
-      if (conversationModelType === 'assistant' && assistantModelId) {
+      if (conversationModelType === EntityType.Assistant && assistantModelId) {
         modelAdditionalSettings = {
           assistantModelId,
           temperature: payload.conversation.temperature,
@@ -575,7 +578,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
         messages: payload.conversation.messages
           .filter(
             (message, index) =>
-              message.role !== 'assistant' ||
+              message.role !== Role.Assistant ||
               index !== payload.conversation.messages.length - 1,
           )
           .map((message) => ({
@@ -867,7 +870,7 @@ const deleteMessageEpic: AppEpic = (action$, state$) =>
 
           if (
             payload.index < messages.length - 1 &&
-            messages[payload.index + 1].role === 'assistant'
+            messages[payload.index + 1].role === Role.Assistant
           ) {
             newMessages = messages.filter(
               (message, index) =>
@@ -979,7 +982,7 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
             deleteCount: payload.isRestart
               ? (conversation?.messages.length &&
                   (conversation.messages[conversation.messages.length - 1]
-                    .role === 'assistant'
+                    .role === Role.Assistant
                     ? 2
                     : 1)) ||
                 0
@@ -1157,7 +1160,7 @@ const playbackNextMessageStartEpic: AppEpic = (action$, state$) =>
           const assistantMessage: Message = {
             ...originalAssistantMessage,
             content: '',
-            role: 'assistant',
+            role: Role.Assistant,
           };
           const updatedMessages = conv.messages.concat(
             userMessage,

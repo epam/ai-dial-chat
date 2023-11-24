@@ -1,6 +1,7 @@
 import { Observable, of } from 'rxjs';
 
 import { Conversation } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
@@ -28,7 +29,7 @@ export class ApiMockStorage implements DialStorage {
           id: 'modelId',
           maxLength: 1000,
           requestLimit: 1000,
-          type: 'model',
+          type: EntityType.Model,
           name: 'Some name',
         },
         isMessageStreaming: false,
@@ -53,7 +54,7 @@ export class ApiMockStorage implements DialStorage {
           id: 'modelId',
           maxLength: 1000,
           requestLimit: 1000,
-          type: 'model',
+          type: EntityType.Model,
           name: 'Some name',
         },
       },

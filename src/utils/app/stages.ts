@@ -1,9 +1,9 @@
-import { Message } from '@/src/types/chat';
+import { Message, Role } from '@/src/types/chat';
 
 export const filterUnfinishedStages = (messages: Message[]): Message[] => {
   let assistentMessageIndex = -1;
   messages.forEach((message, index) => {
-    if (message.role === 'assistant') {
+    if (message.role === Role.Assistant) {
       assistentMessageIndex = index;
     }
   });

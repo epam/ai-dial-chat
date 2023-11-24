@@ -17,9 +17,9 @@ export interface Position {
 
 /**
  * Returns the styles for overlay placement
- * @returns {Record<OverlayPosition | string, Position>} styles for overlay placement
+ * @returns {Record<OverlayPosition, Position>} styles for overlay placement
  */
-const getPosition = (): Record<OverlayPosition | string, Position> => {
+const getPosition = (): Record<OverlayPosition, Position> => {
   return {
     'left-bottom': {
       top: 'initial',

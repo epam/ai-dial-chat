@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { EntityType } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 import { Theme } from '@/src/types/settings';
 
@@ -54,9 +55,9 @@ export const ChatInfoTooltip = ({
   const { t } = useTranslation('chat');
   const getModelLabel = useCallback(() => {
     switch (model.type) {
-      case 'application':
+      case EntityType.Application:
         return t('Application');
-      case 'assistant':
+      case EntityType.Assistant:
         return t('Assistant');
       default:
         return t('Model');

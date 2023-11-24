@@ -2,6 +2,7 @@ import { i18n } from 'next-i18next';
 
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
+import { EntityType } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import { ModelsMap } from '@/src/types/models';
 import { OpenAIEntityModel } from '@/src/types/openai';
@@ -127,7 +128,7 @@ const selectRecentModels = createSelector(
 );
 
 const selectModelsOnly = createSelector([selectModels], (models) => {
-  return models.filter((model) => model.type === 'model');
+  return models.filter((model) => model.type === EntityType.Model);
 });
 
 export const ModelsSelectors = {
