@@ -1,3 +1,5 @@
+import { i18n } from 'next-i18next';
+
 import {
   catchError,
   concat,
@@ -7,14 +9,17 @@ import {
   mergeMap,
   of,
   switchMap,
+  tap,
 } from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
+import { triggerDownload } from '@/src/utils/app/file';
 
 import { AppEpic } from '@/src/types/store';
 
+import { UIActions } from '../ui/ui.reducers';
 import { FilesActions, FilesSelectors } from './files.reducers';
 
 const initEpic: AppEpic = (action$) =>
@@ -28,18 +33,21 @@ const uploadFileEpic: AppEpic = (action$) =>
       formData.append('attachment', payload.fileContent, payload.name);
 
       return DataService.sendFile(formData, payload.relativePath).pipe(
+        filter(
+          ({ percent, result }) =>
+            typeof percent !== 'undefined' || typeof result !== 'undefined',
+        ),
         map(({ percent, result }) => {
-          if (percent !== undefined) {
-            return FilesActions.uploadFileTick({ id: payload.id, percent });
-          }
-
           if (result) {
             return FilesActions.uploadFileSuccess({
               apiResult: result,
             });
           }
 
-          return FilesActions.uploadFileFail({ id: payload.id });
+          return FilesActions.uploadFileTick({
+            id: payload.id,
+            percent: percent!,
+          });
         }),
         catchError(() => {
           return of(FilesActions.uploadFileFail({ id: payload.id }));
@@ -115,6 +123,7 @@ const getFilesWithFoldersEpic: AppEpic = (action$) =>
       );
     }),
   );
+
 const getFoldersListEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(FilesActions.getFoldersList.match),
@@ -130,7 +139,7 @@ const getFoldersListEpic: AppEpic = (action$) =>
 const removeFileEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(FilesActions.removeFile.match),
-    switchMap(({ payload }) => {
+    mergeMap(({ payload }) => {
       const file = FilesSelectors.selectFiles(state$.value).find(
         (file) => file.id === payload.fileId,
       );
@@ -150,10 +159,58 @@ const removeFileEpic: AppEpic = (action$, state$) =>
           });
         }),
         catchError(() => {
-          return of(FilesActions.removeFileFail());
+          return of(FilesActions.removeFileFail({ fileName: file.name }));
         }),
       );
     }),
+  );
+
+const removeFileFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(FilesActions.removeFileFail.match),
+    map(({ payload }) => {
+      return UIActions.showToast({
+        message: i18n!.t(
+          'Removing file {{fileName}} failed. Please try again later',
+          {
+            ns: 'file',
+            fileName: payload.fileName,
+          },
+        ),
+      });
+    }),
+    ignoreElements(),
+  );
+
+const removeMultipleFilesEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(FilesActions.removeFilesList.match),
+    switchMap(({ payload }) => {
+      return concat(
+        ...payload.fileIds.map((fileId) =>
+          of(FilesActions.removeFile({ fileId })),
+        ),
+      );
+    }),
+  );
+
+const downloadFilesListEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(FilesActions.downloadFilesList.match),
+    map(({ payload }) => ({
+      files: FilesSelectors.selectFilesByIds(state$.value, payload.fileIds),
+    })),
+    tap(({ files }) => {
+      files.forEach((file) =>
+        triggerDownload(
+          `api/files?path=${encodeURIComponent(
+            `${file.absolutePath}/${file.name}`,
+          )}`,
+          file.name,
+        ),
+      );
+    }),
+    ignoreElements(),
   );
 
 export const FilesEpics = combineEpics(
@@ -165,4 +222,7 @@ export const FilesEpics = combineEpics(
   getFilesWithFoldersEpic,
   removeFileEpic,
   getFoldersListEpic,
+  removeMultipleFilesEpic,
+  downloadFilesListEpic,
+  removeFileFailEpic,
 );

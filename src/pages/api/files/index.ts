@@ -85,8 +85,8 @@ async function handleGetRequest(
 ) {
   const { path } = req.query as { path: string };
   const url = `${process.env.OPENAI_API_HOST}/v1/files${
-    path && `/${encodeURI(path)}`
-  }?path=absolute&purpose=content`;
+    path && encodeURI(path)
+  }?purpose=content`;
   const proxyRes = await fetch(url, {
     headers: getApiHeaders({ jwt: token?.access_token as string }),
   });

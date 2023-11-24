@@ -322,11 +322,9 @@ export const ChatMessage: FC<Props> = memo(
                         {t(codeWarning)}
                       </div>
                     )}
-                  {!!message.custom_content?.attachments?.length && (
-                    <MessageAttachments
-                      attachments={message.custom_content.attachments}
-                    />
-                  )}
+                  <MessageAttachments
+                    attachments={message.custom_content?.attachments}
+                  />
                   <ErrorMessage error={message.errorMessage}></ErrorMessage>
                 </div>
 
