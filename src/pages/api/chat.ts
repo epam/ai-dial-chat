@@ -163,7 +163,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             attachments: messages[i].custom_content?.attachments?.map(
               (attachment) => ({
                 ...attachment,
-                url: `${process.env.OPENAI_API_HOST}/v1/files/${attachment.url}`,
+                url: `${process.env.OPENAI_API_HOST}/v1/files/${attachment.url}?path=absolute`,
               }),
             ),
             state: messages[i].custom_content?.state,

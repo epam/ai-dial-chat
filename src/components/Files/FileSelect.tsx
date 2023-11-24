@@ -257,9 +257,7 @@ export const FileSelect = ({
                   <div className="group/modal flex flex-col gap-2 overflow-auto">
                     <input
                       name="titleInput"
-                      placeholder={
-                        t('Search model, assistant or application') || ''
-                      }
+                      placeholder={t('Search files') || ''}
                       type="text"
                       onChange={handleSearch}
                       className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
@@ -333,15 +331,13 @@ export const FileSelect = ({
                       )}
                     </div>
                     <div className="flex items-center justify-between">
-                      <div>
-                        <button onClick={handleNewFolder}>
-                          <FolderPlus
-                            height={24}
-                            width={24}
-                            className="text-gray-500 hover:text-blue-500"
-                          />
-                        </button>
-                      </div>
+                      <button onClick={handleNewFolder}>
+                        <FolderPlus
+                          height={24}
+                          width={24}
+                          className="text-gray-500 hover:text-blue-500"
+                        />
+                      </button>
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => setIsUploadFromDeviceOpened(true)}

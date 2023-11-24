@@ -239,7 +239,7 @@ export const filesSlice = createSlice({
         );
         return {
           ...folder,
-          name: payload.newName,
+          name: payload.newName.trim(),
           id: getPathNameId(payload.newName, oldFolderIdPath),
         };
       });
