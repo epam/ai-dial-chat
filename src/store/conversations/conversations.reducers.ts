@@ -1,26 +1,35 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-
-import { getChildAndCurrentFoldersIdsById, getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
+import {
+  getChildAndCurrentFoldersIdsById,
+  getParentAndCurrentFoldersById,
+} from '@/src/utils/app/folders';
 import { doesConversationContainSearchTerm } from '@/src/utils/app/search';
 
-
-import { Conversation, ConversationEntityModel, Message, Role } from '@/src/types/chat';
+import {
+  Conversation,
+  ConversationEntityModel,
+  Message,
+  Role,
+} from '@/src/types/chat';
 import { EntityFilter, EntityType } from '@/src/types/common';
 import { SupportedExportFormats } from '@/src/types/export';
-import { FolderInterface, FolderItemFilters, FolderType } from '@/src/types/folder';
+import {
+  FolderInterface,
+  FolderItemFilters,
+  FolderType,
+} from '@/src/types/folder';
 
-
-import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/src/constants/default-settings';
+import {
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+} from '@/src/constants/default-settings';
 import { defaultReplay } from '@/src/constants/replay';
-
 
 import { RootState } from '../index';
 import { ModelsSelectors } from '../models/models.reducers';
 
-
 import { v4 as uuidv4 } from 'uuid';
-
 
 export interface ConversationsState {
   conversations: Conversation[];
@@ -158,7 +167,7 @@ export const conversationsSlice = createSlice({
           messagesStack: [],
         },
         isShared: false,
-        sharedWithMe: false
+        sharedWithMe: false,
       };
       state.conversations = state.conversations.concat([newConversation]);
       state.selectedConversationsIds = [newConversation.id];
