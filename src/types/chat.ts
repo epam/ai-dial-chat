@@ -92,6 +92,7 @@ export interface Conversation {
   isMessageStreaming: boolean;
   isShared?: boolean;
   sharedWithMe?: boolean;
+  isNameChanged?: boolean;
 }
 export interface Replay {
   replayAsIs?: boolean;

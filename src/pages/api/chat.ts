@@ -41,6 +41,19 @@ const wasm = readFileSync(
 
 let encoding: Tiktoken;
 
+function getMessageCustomContent(
+  message: Message,
+): Partial<Message> | undefined {
+  return (
+    (message.custom_content?.state || message.custom_content?.attachments) && {
+      custom_content: {
+        attachments: message.custom_content?.attachments,
+        state: message.custom_content?.state,
+      },
+    }
+  );
+}
+
 const errorHandler = ({
   error,
   res,
@@ -155,20 +168,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         break;
       }
       const message: Message = {
+        ...getMessageCustomContent(messages[i]),
         role: messages[i].role,
         content: messages[i].content,
-        ...((messages[i].custom_content?.state ||
-          messages[i].custom_content?.attachments) && {
-          custom_content: {
-            attachments: messages[i].custom_content?.attachments?.map(
-              (attachment) => ({
-                ...attachment,
-                url: `${process.env.OPENAI_API_HOST}/v1/files/${attachment.url}?path=absolute`,
-              }),
-            ),
-            state: messages[i].custom_content?.state,
-          },
-        }),
       };
       const tokens = encoding.encode(message.content);
 

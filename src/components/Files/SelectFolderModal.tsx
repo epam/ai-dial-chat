@@ -21,9 +21,9 @@ import { HighlightColor } from '@/src/types/common';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
+import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
 import Folder from '../Folder';
 
@@ -35,7 +35,7 @@ interface Props {
 
 const loadingStatuses = new Set(['LOADING', undefined]);
 
-export const FileFolderSelect = ({
+export const SelectFolderModal = ({
   isOpen,
   selectedFolderName,
   onClose,
@@ -66,13 +66,15 @@ export const FileFolderSelect = ({
   );
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
-
+  const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
     selectedFolderName,
   );
   const highlightedFolders = useMemo(() => {
     return [selectedFolderId].filter(Boolean) as string[];
   }, [selectedFolderId]);
+  const showSpinner =
+    folders.length === 0 && loadingStatuses.has(foldersStatus);
 
   useEffect(() => {
     if (isOpen) {
@@ -150,11 +152,8 @@ export const FileFolderSelect = ({
       );
 
       if (folderWithSameName) {
-        dispatch(
-          UIActions.showToast({
-            message: t(`Not allowed to have folders with same names`),
-            type: 'error',
-          }),
+        setErrorMessage(
+          t(`Not allowed to have folders with same names`) as string,
         );
         return;
       }
@@ -172,7 +171,7 @@ export const FileFolderSelect = ({
         >
           <FloatingFocusManager context={context}>
             <div
-              className="relative flex max-h-full min-w-full flex-col gap-4 rounded bg-gray-100 p-6 dark:bg-gray-700 md:min-w-[425px] md:max-w-full"
+              className="relative flex max-h-full min-w-full flex-col gap-4 rounded bg-gray-100 dark:bg-gray-700 md:min-w-[425px] md:max-w-full"
               ref={refs.setFloating}
               {...getFloatingProps()}
             >
@@ -183,17 +182,19 @@ export const FileFolderSelect = ({
                 <IconX className="text-gray-500" />
               </button>
               <div className="flex flex-col gap-2 overflow-auto">
-                <div className="flex justify-between">
+                <div className="flex justify-between px-6 pt-4">
                   <h2 id={headingId} className="text-base font-semibold">
                     {t('Select folder')}
                   </h2>
                 </div>
-                {folders.length === 0 && loadingStatuses.has(foldersStatus) ? (
-                  <div className="flex min-h-[300px] items-center justify-center">
+                {showSpinner ? (
+                  <div className="flex min-h-[300px] items-center justify-center px-6 pb-4">
                     <Spinner />
                   </div>
                 ) : (
-                  <div className="group/modal flex flex-col gap-2 overflow-auto">
+                  <div className="group/modal flex flex-col gap-2 overflow-auto px-6 pb-4">
+                    <ErrorMessage error={errorMessage} />
+
                     <input
                       name="titleInput"
                       placeholder={t('Search folders') || ''}
@@ -204,8 +205,10 @@ export const FileFolderSelect = ({
                     <div className="flex min-h-[350px] flex-col overflow-auto">
                       <button
                         className={classNames(
-                          'flex items-center gap-1 rounded py-1 text-xs text-gray-500',
-                          !selectedFolderId && 'bg-blue-500/20',
+                          'flex items-center gap-1 rounded border-l-2 py-1 text-xs text-gray-500',
+                          !selectedFolderId
+                            ? 'border-blue-500 bg-blue-500/20'
+                            : 'border-transparent',
                         )}
                         onClick={() => handleToggleFolder(undefined)}
                       >
@@ -252,25 +255,30 @@ export const FileFolderSelect = ({
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center justify-between">
-                      <button onClick={handleNewFolder}>
-                        <FolderPlus
-                          height={24}
-                          width={24}
-                          className="text-gray-500 hover:text-blue-500"
-                        />
-                      </button>
-                      <div>
-                        <button
-                          onClick={() => onClose(selectedFolderId)}
-                          className="button button-primary"
-                        >
-                          {t('Select folder')}
-                        </button>
-                      </div>
-                    </div>
                   </div>
                 )}
+                <div className="flex items-center justify-between border-t border-gray-300 px-6 py-4 dark:border-gray-900">
+                  <div className="flex items-center justify-center">
+                    <button
+                      onClick={handleNewFolder}
+                      className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
+                    >
+                      <FolderPlus
+                        height={24}
+                        width={24}
+                        className="text-gray-500 hover:text-blue-500"
+                      />
+                    </button>
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => onClose(selectedFolderId)}
+                      className="button button-primary"
+                    >
+                      {t('Select folder')}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </FloatingFocusManager>

@@ -476,6 +476,15 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           : payload.conversation.messages
       ).concat(userMessage, assistantMessage);
 
+      const newConversationName =
+        !payload.conversation.replay.isReplay &&
+        updatedMessages.length === 2 &&
+        !payload.conversation.isNameChanged
+          ? payload.message.content.length > 160
+            ? payload.message.content.substring(0, 160) + '...'
+            : payload.message.content
+          : payload.conversation.name;
+
       const updatedConversation: Conversation = {
         ...payload.conversation,
         lastActivityDate: Date.now(),
@@ -484,14 +493,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           activeReplayIndex: payload.activeReplayIndex,
         },
         messages: updatedMessages,
-        name:
-          !payload.conversation.replay.isReplay &&
-          updatedMessages.length === 2 &&
-          payload.conversation.name === DEFAULT_CONVERSATION_NAME
-            ? payload.message.content.length > 160
-              ? payload.message.content.substring(0, 160) + '...'
-              : payload.message.content
-            : payload.conversation.name,
+        name: newConversationName,
         isMessageStreaming: true,
       };
 
@@ -881,10 +883,13 @@ const deleteMessageEpic: AppEpic = (action$, state$) =>
               (message, index) => index !== payload.index,
             );
           }
+
           return of(
             ConversationsActions.updateConversation({
               id: conv.id,
-              values: { messages: newMessages },
+              values: {
+                messages: newMessages,
+              },
             }),
           );
         }),

@@ -15,7 +15,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { Menu, MenuItem } from '../../Common/DropdownMenu';
-import { FileSelect } from '../../Files/FileSelect';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../Common/Tooltip';
+import { FileManagerModal } from '../../Files/FileManagerModal';
 import { PreUploadDialog } from '../../Files/PreUploadModal';
 
 export const AttachButton = () => {
@@ -88,15 +89,25 @@ export const AttachButton = () => {
         <Menu
           type="contextMenu"
           disabled={messageIsStreaming || isModelsLoading}
-          trigger={<IconPaperclip className="text-gray-500" size={24} />}
+          trigger={
+            <Tooltip isTriggerClickable={true}>
+              <TooltipTrigger>
+                <IconPaperclip
+                  className="text-gray-500 hover:text-blue-500"
+                  size={24}
+                />
+              </TooltipTrigger>
+              <TooltipContent>{t('Attach files')}</TooltipContent>
+            </Tooltip>
+          }
         >
           <MenuItem
-            className="hover:bg-violet/15"
+            className="hover:bg-blue-500/20"
             item={
               <div className="flex items-center gap-3">
                 <IconFileDescription
                   className="shrink-0 text-gray-500"
-                  size={24}
+                  size={18}
                 />
                 <span>{t('Attach uploaded files')}</span>
               </div>
@@ -104,10 +115,10 @@ export const AttachButton = () => {
             onClick={handleOpenAttachmentsModal}
           />
           <MenuItem
-            className="hover:bg-violet/15"
+            className="hover:bg-blue-500/20"
             item={
               <div className="flex items-center gap-3">
-                <IconUpload className="shrink-0 text-gray-500" size={24} />
+                <IconUpload className="shrink-0 text-gray-500" size={18} />
                 <span>{t('Upload from device')}</span>
               </div>
             }
@@ -116,10 +127,11 @@ export const AttachButton = () => {
         </Menu>
       </div>
       {isSelectFilesDialogOpened && (
-        <FileSelect
+        <FileManagerModal
           isOpen
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
+          isInConversation={true}
           onClose={handleFileSelectClose}
         />
       )}

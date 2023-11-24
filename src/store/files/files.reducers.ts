@@ -245,6 +245,12 @@ export const filesSlice = createSlice({
         };
       });
     },
+    removeFilesList: (
+      state,
+      _action: PayloadAction<{
+        fileIds: string[];
+      }>,
+    ) => state,
     removeFile: (
       state,
       _action: PayloadAction<{
@@ -262,7 +268,18 @@ export const filesSlice = createSlice({
       state.files = state.files.filter((file) => file.id !== payload.fileId);
       state.selectedFilesIds.filter((id) => id !== payload.fileId);
     },
-    removeFileFail: (state) => state,
+    removeFileFail: (
+      state,
+      _action: PayloadAction<{
+        fileName: string;
+      }>,
+    ) => state,
+    downloadFilesList: (
+      state,
+      _action: PayloadAction<{
+        fileIds: string[];
+      }>,
+    ) => state,
   },
 });
 
@@ -273,6 +290,13 @@ const selectFiles = createSelector([rootSelector], (state) => {
     a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
   );
 });
+
+const selectFilesByIds = createSelector(
+  [selectFiles, (_state, fileIds: string[]) => fileIds],
+  (files, fileIds) => {
+    return files.filter((file) => fileIds.includes(file.id));
+  },
+);
 const selectSelectedFilesIds = createSelector([rootSelector], (state) => {
   return state.selectedFilesIds;
 });
@@ -308,6 +332,7 @@ export const FilesSelectors = {
   selectFoldersStatus,
   selectLoadingFolderId,
   selectNewAddedFolderId,
+  selectFilesByIds,
 };
 
 export const FilesActions = filesSlice.actions;

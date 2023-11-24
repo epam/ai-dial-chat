@@ -99,6 +99,7 @@ export const ConversationComponent = ({ item: conversation, level, readonly }: P
             id: conversation.id,
             values: {
               name: renameValue.trim(),
+              isNameChanged: true,
             },
           }),
         );
