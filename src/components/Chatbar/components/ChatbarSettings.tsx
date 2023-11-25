@@ -12,7 +12,7 @@ import { useTranslation } from 'next-i18next';
 
 import { HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
-import { DisplayMenuItemProps } from '@/src/types/sidebar';
+import { DisplayMenuItemProps } from '@/src/types/menu';
 
 import {
   ConversationsActions,
@@ -149,7 +149,11 @@ export const ChatbarSettings = () => {
 
   return (
     <>
-      <SidebarMenu menuItems={menuItems} highlightColor={HighlightColor.Green} />
+      <SidebarMenu
+        menuItems={menuItems}
+        highlightColor={HighlightColor.Green}
+        translation="sidebar"
+      />
 
       {isSelectFilesDialogOpened && (
         <FileManagerModal

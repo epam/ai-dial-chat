@@ -10,8 +10,8 @@ import { useTranslation } from 'next-i18next';
 
 import { HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
+import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Prompt } from '@/src/types/prompt';
-import { DisplayMenuItemProps } from '@/src/types/sidebar';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
@@ -97,6 +97,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
       <SidebarMenu
         menuItems={menuItems}
         highlightColor={HighlightColor.Violet}
+        translation="promptbar"
       />
 
       <ConfirmDialog

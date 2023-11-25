@@ -1,6 +1,6 @@
 import { FC, useRef } from 'react';
 
-import { CustomTriggerRendererProps } from '@/src/types/sidebar';
+import { CustomTriggerRendererProps } from '@/src/types/menu';
 
 export const Import: FC<CustomTriggerRendererProps> = ({
   Renderer,
@@ -23,7 +23,7 @@ export const Import: FC<CustomTriggerRendererProps> = ({
           const reader = new FileReader();
           reader.onload = (readerEvent) => {
             const json = JSON.parse(readerEvent.target?.result as string);
-            onImport(json);
+            onImport?.(json);
             (ref.current as unknown as HTMLInputElement).value = '';
           };
           reader.readAsText(file);

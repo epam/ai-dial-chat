@@ -1,4 +1,5 @@
 import { IconDotsVertical } from '@tabler/icons-react';
+import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -7,27 +8,29 @@ import classNames from 'classnames';
 import { getByHighlightColor } from '@/src/utils/app/folders';
 
 import {
-  SidebarMenuItemRendererProps,
-  SidebarSettingsContextMenuProps,
-} from '@/src/types/sidebar';
+  BaseContextMenuProps,
+  BaseMenuItemRendererProps,
+} from '@/src/types/menu';
 
 import { Menu, MenuItem } from './DropdownMenu';
 
-function SidebarContextMenuItemRenderer({
+function BaseContextMenuItemRenderer({
   name,
   Icon,
   dataQa,
   onClick,
   disabled,
   highlightColor,
-}: SidebarMenuItemRendererProps) {
-  const { t } = useTranslation('chatbar');
+  translation,
+}: BaseMenuItemRendererProps) {
+  const { t } = useTranslation(translation);
   return (
     <MenuItem
       className={getByHighlightColor(
         highlightColor,
         'hover:bg-green/15',
         'hover:bg-violet/15',
+        'hover:bg-blue-500/20',
       )}
       item={
         <div className="flex items-center gap-3">
@@ -47,13 +50,21 @@ function SidebarContextMenuItemRenderer({
   );
 }
 
-export default function SidebarContextMenu({
+export default function BaseContextMenu({
   menuItems,
   highlightColor,
   ContextMenuIcon = IconDotsVertical,
   contextMenuIconSize = 24,
-}: SidebarSettingsContextMenuProps) {
-  if (!menuItems.length) return null;
+  translation,
+  className,
+  contextMenuIconHighlight,
+}: BaseContextMenuProps) {
+  const displayedMenuItems = useMemo(
+    () => menuItems.filter((item) => item.display),
+    [menuItems],
+  );
+
+  if (!displayedMenuItems.length) return null;
 
   return (
     <Menu
@@ -61,12 +72,14 @@ export default function SidebarContextMenu({
       trigger={
         <div
           className={classNames(
-            'flex items-center justify-center rounded p-[5px] text-gray-500',
-            getByHighlightColor(
-              highlightColor,
-              'hover:text-green',
-              'hover:text-violet',
-            ),
+            'flex items-center justify-center rounded text-gray-500',
+            contextMenuIconHighlight &&
+              getByHighlightColor(
+                highlightColor,
+                'hover:text-green',
+                'hover:text-violet',
+              ),
+            className || 'p-[5px]',
           )}
         >
           <ContextMenuIcon
@@ -74,20 +87,25 @@ export default function SidebarContextMenu({
             width={contextMenuIconSize}
             height={contextMenuIconSize}
             strokeWidth={1.5}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
           />
         </div>
       }
     >
-      {menuItems.map(({ CustomTriggerRenderer, ...props }) => {
+      {displayedMenuItems.map(({ CustomTriggerRenderer, ...props }) => {
         const Renderer = CustomTriggerRenderer ? (
           <CustomTriggerRenderer
             {...props}
             highlightColor={highlightColor}
-            Renderer={SidebarContextMenuItemRenderer}
+            translation={translation}
+            Renderer={BaseContextMenuItemRenderer}
           />
         ) : (
-          <SidebarContextMenuItemRenderer
+          <BaseContextMenuItemRenderer
             {...props}
+            translation={translation}
             highlightColor={highlightColor}
           />
         );

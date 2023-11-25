@@ -1,4 +1,4 @@
-import { MouseEvent, useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -6,10 +6,7 @@ import classNames from 'classnames';
 
 import { getByHighlightColor } from '@/src/utils/app/folders';
 
-import {
-  SidebarMenuItemRendererProps,
-  SidebarSettingsMenuProps,
-} from '@/src/types/sidebar';
+import { BaseMenuItemRendererProps, BaseMenuProps } from '@/src/types/menu';
 
 import {
   Tooltip,
@@ -17,7 +14,7 @@ import {
   TooltipTrigger,
 } from '@/src/components/Common/Tooltip';
 
-import SidebarSettingsContextMenu from './SidebarContextMenu';
+import BaseContextMenu from './BaseContextMenu';
 
 export function SidebarMenuItemRenderer({
   Icon,
@@ -25,15 +22,7 @@ export function SidebarMenuItemRenderer({
   onClick,
   disabled,
   highlightColor,
-}: SidebarMenuItemRendererProps) {
-  const handleClick = useCallback(
-    (event: MouseEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-      event.stopPropagation();
-      onClick();
-    },
-    [onClick],
-  );
+}: BaseMenuItemRendererProps) {
   return (
     <button
       className={classNames(
@@ -44,7 +33,7 @@ export function SidebarMenuItemRenderer({
           'hover:bg-violet/15 hover:text-violet',
         ),
       )}
-      onClick={handleClick}
+      onClick={onClick}
       data-qa={dataQa}
       disabled={disabled}
     >
@@ -57,8 +46,9 @@ export default function SidebarMenu({
   menuItems,
   highlightColor,
   displayMenuItemCount = 5, // calculate in future based on width of container
-}: SidebarSettingsMenuProps) {
-  const { t } = useTranslation('chatbar');
+  translation = 'chatbar',
+}: BaseMenuProps) {
+  const { t } = useTranslation(translation);
   const [displayedItems, hiddenItems] = useMemo(() => {
     const allItems = menuItems.filter((menu) => menu.display);
     const displayedItems = allItems.slice(0, displayMenuItemCount);
@@ -74,9 +64,14 @@ export default function SidebarMenu({
             {...props}
             highlightColor={highlightColor}
             Renderer={SidebarMenuItemRenderer}
+            translation={translation}
           />
         ) : (
-          <SidebarMenuItemRenderer {...props} highlightColor={highlightColor} />
+          <SidebarMenuItemRenderer
+            {...props}
+            highlightColor={highlightColor}
+            translation={translation}
+          />
         );
 
         return (
@@ -87,9 +82,10 @@ export default function SidebarMenu({
         );
       })}
 
-      <SidebarSettingsContextMenu
+      <BaseContextMenu
         menuItems={hiddenItems}
         highlightColor={highlightColor}
+        translation={translation}
       />
     </div>
   );
