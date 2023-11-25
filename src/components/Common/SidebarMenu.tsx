@@ -49,16 +49,18 @@ export default function SidebarMenu({
   translation = 'chatbar',
 }: BaseMenuProps) {
   const { t } = useTranslation(translation);
-  const [displayedItems, hiddenItems] = useMemo(() => {
-    const allItems = menuItems.filter((menu) => menu.display);
-    const displayedItems = allItems.slice(0, displayMenuItemCount);
-    const hiddenItems = allItems.slice(displayMenuItemCount);
-    return [displayedItems, hiddenItems];
+  const [visibleItems, hiddenItems] = useMemo(() => {
+    const displayedItems = menuItems.filter(
+      (menu) => menu.display === undefined || menu.display,
+    );
+    const visibleItems = displayedItems.slice(0, displayMenuItemCount);
+    const hiddenItems = displayedItems.slice(displayMenuItemCount);
+    return [visibleItems, hiddenItems];
   }, [displayMenuItemCount, menuItems]);
 
   return (
     <div className="flex items-start gap-2 p-2 text-gray-500">
-      {displayedItems.map(({ CustomTriggerRenderer, ...props }) => {
+      {visibleItems.map(({ CustomTriggerRenderer, ...props }) => {
         const Trigger = CustomTriggerRenderer ? (
           <CustomTriggerRenderer
             {...props}

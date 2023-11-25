@@ -86,7 +86,6 @@ export const ChatbarSettings = () => {
       },
       {
         name: 'Import conversations',
-        display: true,
         onClick: (importJSON) => {
           dispatch(
             ConversationsActions.importConversations({ data: importJSON }),
@@ -98,7 +97,6 @@ export const ChatbarSettings = () => {
       },
       {
         name: 'Export conversations',
-        display: true,
         dataQa: 'export-conversations',
         Icon: IconFileArrowRight,
         onClick: () => {
@@ -107,7 +105,6 @@ export const ChatbarSettings = () => {
       },
       {
         name: 'Create new folder',
-        display: true,
         dataQa: 'create-folder',
         Icon: FolderPlus,
         onClick: () => {
@@ -118,7 +115,6 @@ export const ChatbarSettings = () => {
       },
       {
         name: 'Compare mode',
-        display: true,
         dataQa: 'compare',
         Icon: IconScale,
         disabled: isStreaming,

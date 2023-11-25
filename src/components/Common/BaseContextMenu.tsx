@@ -22,15 +22,19 @@ function BaseContextMenuItemRenderer({
   disabled,
   highlightColor,
   translation,
+  className,
 }: BaseMenuItemRendererProps) {
   const { t } = useTranslation(translation);
   return (
     <MenuItem
-      className={getByHighlightColor(
-        highlightColor,
-        'hover:bg-green/15',
-        'hover:bg-violet/15',
-        'hover:bg-blue-500/20',
+      className={classNames(
+        getByHighlightColor(
+          highlightColor,
+          'hover:bg-green/15',
+          'hover:bg-violet/15',
+          'hover:bg-blue-500/20',
+        ),
+        className,
       )}
       item={
         <div className="flex items-center gap-3">
@@ -60,7 +64,8 @@ export default function BaseContextMenu({
   contextMenuIconHighlight,
 }: BaseContextMenuProps) {
   const displayedMenuItems = useMemo(
-    () => menuItems.filter((item) => item.display),
+    () =>
+      menuItems.filter((item) => item.display === undefined || item.display),
     [menuItems],
   );
 

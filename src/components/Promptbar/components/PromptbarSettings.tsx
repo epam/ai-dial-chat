@@ -60,7 +60,6 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
       },
       {
         name: 'Import prompts',
-        display: true,
         onClick: (promptsJSON) => {
           dispatch(
             PromptsActions.importPrompts({ promptsHistory: promptsJSON }),
@@ -72,7 +71,6 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
       },
       {
         name: 'Export prompts',
-        display: true,
         dataQa: 'export-prompts',
         Icon: IconFileArrowRight,
         onClick: () => {
@@ -81,7 +79,6 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
       },
       {
         name: 'Create new folder',
-        display: true,
         dataQa: 'create-prompt-folder',
         Icon: FolderPlus,
         onClick: () => {

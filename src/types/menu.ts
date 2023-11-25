@@ -7,20 +7,16 @@ export interface CustomTriggerRendererProps extends BaseMenuItemRendererProps {
   Renderer: (props: BaseMenuItemRendererProps) => JSX.Element;
 }
 
-interface BasicMenuItemProps {
+export interface DisplayMenuItemProps {
+  display?: boolean;
+  name: string;
   disabled?: boolean;
   Icon: (props: TablerIconsProps) => JSX.Element;
   dataQa: string;
   onClick?: (props?: any) => void | MouseEventHandler<unknown>;
   CustomTriggerRenderer?: FC<CustomTriggerRendererProps>;
+  className?: string;
 }
-
-interface DisplayMenuItemInfo {
-  display: boolean;
-  name: string;
-}
-
-export type DisplayMenuItemProps = BasicMenuItemProps & DisplayMenuItemInfo;
 
 export type BaseMenuItemRendererProps = DisplayMenuItemProps & {
   highlightColor: HighlightColor;

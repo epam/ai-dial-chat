@@ -31,7 +31,6 @@ export function FileItemContextMenu({
       },
       {
         name: 'Delete',
-        display: true,
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,
