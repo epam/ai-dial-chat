@@ -36,7 +36,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
     SettingsSelectors.selectEnabledFeatures,
   );
 
-  const allItems: DisplayMenuItemProps[] = useMemo(
+  const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
         name: 'Share by me',
@@ -95,7 +95,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
   return (
     <>
       <SidebarMenu
-        menuItems={allItems}
+        menuItems={menuItems}
         highlightColor={HighlightColor.Violet}
       />
 

@@ -62,7 +62,7 @@ export const ChatbarSettings = () => {
     );
   }, [dispatch]);
 
-  const allItems: DisplayMenuItemProps[] = useMemo(
+  const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
         name: 'Share by me',
@@ -149,7 +149,7 @@ export const ChatbarSettings = () => {
 
   return (
     <>
-      <SidebarMenu menuItems={allItems} highlightColor={HighlightColor.Green} />
+      <SidebarMenu menuItems={menuItems} highlightColor={HighlightColor.Green} />
 
       {isSelectFilesDialogOpened && (
         <FileManagerModal
