@@ -1,18 +1,12 @@
-import { FC, ReactNode, useRef } from 'react';
+import { FC, useRef } from 'react';
 
-import classNames from 'classnames';
+import { CustomTriggerRendererProps } from '@/src/types/sidebar';
 
-import { getByHighlightColor } from '@/src/utils/app/folders';
-
-import { HighlightColor } from '@/src/types/common';
-
-interface Props {
-  onImport: (importJSON: any) => void;
-  icon: ReactNode;
-  highlightColor: HighlightColor;
-}
-
-export const Import: FC<Props> = ({ onImport, icon, highlightColor }) => {
+export const Import: FC<CustomTriggerRendererProps> = ({
+  Renderer,
+  onClick: onImport,
+  ...rendererProps
+}) => {
   const ref = useRef<HTMLInputElement>(null);
   return (
     <>
@@ -35,25 +29,15 @@ export const Import: FC<Props> = ({ onImport, icon, highlightColor }) => {
           reader.readAsText(file);
         }}
       />
-      <div
-        className={classNames(
-          'flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded',
-          getByHighlightColor(
-            highlightColor,
-            'hover:bg-green/15 hover:text-green',
-            'hover:bg-violet/15 hover:text-violet',
-          ),
-        )}
+      <Renderer
+        {...rendererProps}
         onClick={() => {
           const importFile = ref.current;
           if (importFile) {
             importFile.click();
           }
         }}
-        data-qa="import"
-      >
-        {icon}
-      </div>
+      />
     </>
   );
 };
