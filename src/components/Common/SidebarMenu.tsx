@@ -16,14 +16,18 @@ import {
 
 import BaseContextMenu from './BaseContextMenu';
 
-export function SidebarMenuItemRenderer({
+export function SidebarMenuItemRenderer(props: BaseMenuItemRendererProps) {
+  const {
   Icon,
   dataQa,
   onClick,
   disabled,
   highlightColor,
-}: BaseMenuItemRendererProps) {
-  return (
+  translation,
+  className,
+  menuItems,
+} = props;
+  const item = (
     <button
       className={classNames(
         'flex cursor-pointer items-center justify-center rounded p-[5px] disabled:cursor-not-allowed',
@@ -32,13 +36,29 @@ export function SidebarMenuItemRenderer({
           'hover:bg-green/15 hover:text-green',
           'hover:bg-violet/15 hover:text-violet',
         ),
+        className
       )}
-      onClick={onClick}
+      onClick={!menuItems ? onClick : undefined}
       data-qa={dataQa}
       disabled={disabled}
     >
-      <Icon size={24} height={24} width={24} strokeWidth="1.5" />
+      {Icon && <Icon size={24} height={24} width={24} strokeWidth="1.5" />}
     </button>
+  )
+
+  if (menuItems) {
+    return (
+      <BaseContextMenu
+        menuItems={menuItems}
+        highlightColor={highlightColor}
+        translation={translation}
+        CustomMenuRenderer={item}
+        className='p-0'
+      />
+    );
+  }
+  return (
+    item
   );
 }
 

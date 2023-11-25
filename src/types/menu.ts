@@ -11,11 +11,12 @@ export interface DisplayMenuItemProps {
   display?: boolean;
   name: string;
   disabled?: boolean;
-  Icon: (props: TablerIconsProps) => JSX.Element;
+  Icon?: (props: TablerIconsProps) => JSX.Element;
   dataQa: string;
   onClick?: (props?: any) => void | MouseEventHandler<unknown>;
   CustomTriggerRenderer?: FC<CustomTriggerRendererProps>;
   className?: string;
+  menuItems?: DisplayMenuItemProps[];
 }
 
 export type BaseMenuItemRendererProps = DisplayMenuItemProps & {
@@ -35,4 +36,6 @@ export interface BaseContextMenuProps extends BaseMenuProps {
   ContextMenuIcon?: (props: TablerIconsProps) => JSX.Element;
   contextMenuIconSize?: number;
   contextMenuIconHighlight?: boolean;
+  contextMenuIconClassName?: string;
+  CustomMenuRenderer?: JSX.Element;
 }

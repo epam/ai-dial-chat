@@ -1,5 +1,5 @@
 import { IconDotsVertical } from '@tabler/icons-react';
-import { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -23,8 +23,48 @@ function BaseContextMenuItemRenderer({
   highlightColor,
   translation,
   className,
+  menuItems,
 }: BaseMenuItemRendererProps) {
   const { t } = useTranslation(translation);
+  const item = (
+    <div
+      className={classNames(
+        'flex w-full items-center gap-3 truncate break-words',
+        !!menuItems && 'text-gray-200',
+        className
+      )}
+    >
+      {Icon && (
+        <Icon
+          className="shrink-0 text-gray-500"
+          size={18}
+          height={18}
+          width={18}
+        />
+      )}
+      <span className="truncate break-words">{t(name)}</span>
+    </div>
+  );
+  if (menuItems) {
+    return (
+      <BaseContextMenu
+        menuItems={menuItems}
+        highlightColor={highlightColor}
+        translation={translation}
+        contextMenuIconClassName={classNames(
+          className,
+          'text-gray-200',
+          getByHighlightColor(
+            highlightColor,
+            'hover:bg-green/15',
+            'hover:bg-violet/15',
+            'hover:bg-blue-500/20',
+          ),
+        )}
+        CustomMenuRenderer={item}
+      />
+    );
+  }
   return (
     <MenuItem
       className={classNames(
@@ -36,17 +76,7 @@ function BaseContextMenuItemRenderer({
         ),
         className,
       )}
-      item={
-        <div className="flex items-center gap-3">
-          <Icon
-            className="shrink-0 text-gray-500"
-            size={18}
-            height={18}
-            width={18}
-          />
-          <span>{t(name)}</span>
-        </div>
-      }
+      item={item}
       onClick={onClick}
       data-qa={dataQa}
       disabled={disabled}
@@ -62,6 +92,8 @@ export default function BaseContextMenu({
   translation,
   className,
   contextMenuIconHighlight,
+  CustomMenuRenderer,
+  contextMenuIconClassName,
 }: BaseContextMenuProps) {
   const displayedMenuItems = useMemo(
     () =>
@@ -73,11 +105,12 @@ export default function BaseContextMenu({
 
   return (
     <Menu
+      className={contextMenuIconClassName}
       type="contextMenu"
       trigger={
         <div
           className={classNames(
-            'flex items-center justify-center rounded text-gray-500',
+            'flex w-full items-center justify-center rounded text-gray-500',
             contextMenuIconHighlight &&
               getByHighlightColor(
                 highlightColor,
@@ -87,15 +120,17 @@ export default function BaseContextMenu({
             className || 'p-[5px]',
           )}
         >
-          <ContextMenuIcon
-            size={contextMenuIconSize}
-            width={contextMenuIconSize}
-            height={contextMenuIconSize}
-            strokeWidth={1.5}
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
-          />
+          {CustomMenuRenderer || (
+            <ContextMenuIcon
+              size={contextMenuIconSize}
+              width={contextMenuIconSize}
+              height={contextMenuIconSize}
+              strokeWidth={1.5}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            />
+          )}
         </div>
       }
     >
@@ -114,7 +149,7 @@ export default function BaseContextMenu({
             highlightColor={highlightColor}
           />
         );
-        return Renderer;
+        return <Fragment key={props.name}>{Renderer}</Fragment>;
       })}
     </Menu>
   );
