@@ -13,6 +13,7 @@ import {
 } from '@/src/types/menu';
 
 import { Menu, MenuItem } from './DropdownMenu';
+import { Tooltip, TooltipContent, TooltipTrigger } from './Tooltip';
 
 function BaseContextMenuItemRenderer({
   name,
@@ -31,7 +32,7 @@ function BaseContextMenuItemRenderer({
       className={classNames(
         'flex w-full items-center gap-3 truncate break-words',
         !!menuItems && 'text-gray-200',
-        className,
+        !!menuItems && className,
       )}
     >
       {Icon && (
@@ -94,7 +95,10 @@ export default function BaseContextMenu({
   contextMenuIconHighlight,
   CustomMenuRenderer,
   contextMenuIconClassName,
+  contextMenuTooltip,
+  disabled,
 }: BaseContextMenuProps) {
+  const { t } = useTranslation(translation);
   const displayedMenuItems = useMemo(
     () =>
       menuItems.filter((item) => item.display === undefined || item.display),
@@ -103,9 +107,22 @@ export default function BaseContextMenu({
 
   if (!displayedMenuItems.length) return null;
 
+  const menuContent = CustomMenuRenderer || (
+    <ContextMenuIcon
+      size={contextMenuIconSize}
+      width={contextMenuIconSize}
+      height={contextMenuIconSize}
+      strokeWidth={1.5}
+      onClick={(e) => {
+        e.stopPropagation();
+      }}
+    />
+  );
+
   return (
     <Menu
       className={contextMenuIconClassName}
+      disabled={disabled}
       type="contextMenu"
       trigger={
         <div
@@ -116,20 +133,18 @@ export default function BaseContextMenu({
                 highlightColor,
                 'hover:text-green',
                 'hover:text-violet',
+                'hover:text-blue-500',
               ),
             className || 'p-[5px]',
           )}
         >
-          {CustomMenuRenderer || (
-            <ContextMenuIcon
-              size={contextMenuIconSize}
-              width={contextMenuIconSize}
-              height={contextMenuIconSize}
-              strokeWidth={1.5}
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-            />
+          {contextMenuTooltip ? (
+            <Tooltip isTriggerClickable>
+              <TooltipTrigger>{menuContent}</TooltipTrigger>
+              <TooltipContent>{t(contextMenuTooltip)}</TooltipContent>
+            </Tooltip>
+          ) : (
+            menuContent
           )}
         </div>
       }
