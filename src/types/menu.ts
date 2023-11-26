@@ -30,6 +30,7 @@ export interface BaseMenuProps {
   displayMenuItemCount?: number;
   translation: string;
   className?: string;
+  disabled?: boolean;
 }
 
 export interface BaseContextMenuProps extends BaseMenuProps {

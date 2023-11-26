@@ -31,7 +31,7 @@ function BaseContextMenuItemRenderer({
       className={classNames(
         'flex w-full items-center gap-3 truncate break-words',
         !!menuItems && 'text-gray-200',
-        className,
+        !!menuItems && className,
       )}
     >
       {Icon && (
@@ -94,6 +94,7 @@ export default function BaseContextMenu({
   contextMenuIconHighlight,
   CustomMenuRenderer,
   contextMenuIconClassName,
+  disabled,
 }: BaseContextMenuProps) {
   const displayedMenuItems = useMemo(
     () =>
@@ -106,6 +107,7 @@ export default function BaseContextMenu({
   return (
     <Menu
       className={contextMenuIconClassName}
+      disabled={disabled}
       type="contextMenu"
       trigger={
         <div
@@ -116,6 +118,7 @@ export default function BaseContextMenu({
                 highlightColor,
                 'hover:text-green',
                 'hover:text-violet',
+                'hover:text-blue-500'
               ),
             className || 'p-[5px]',
           )}
