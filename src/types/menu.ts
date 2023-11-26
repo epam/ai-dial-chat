@@ -36,6 +36,7 @@ export interface BaseMenuProps {
 export interface BaseContextMenuProps extends BaseMenuProps {
   ContextMenuIcon?: (props: TablerIconsProps) => JSX.Element;
   contextMenuIconSize?: number;
+  contextMenuTooltip?: string;
   contextMenuIconHighlight?: boolean;
   contextMenuIconClassName?: string;
   CustomMenuRenderer?: JSX.Element;
