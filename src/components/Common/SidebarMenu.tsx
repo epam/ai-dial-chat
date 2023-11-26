@@ -35,7 +35,7 @@ export function SidebarMenuItemRenderer(props: BaseMenuItemRendererProps) {
           highlightColor,
           'hover:bg-green/15 hover:text-green',
           'hover:bg-violet/15 hover:text-violet',
-          'hover:bg-blue-500/20 hover:text-blue-500'
+          'hover:bg-blue-500/20 hover:text-blue-500',
         ),
         className,
       )}

@@ -4,13 +4,16 @@ import {
   IconUpload,
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
+
+import { HighlightColor } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { DisplayMenuItemProps } from '@/src/types/menu';
+
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { HighlightColor } from '@/src/types/common';
-import { DisplayMenuItemProps } from '@/src/types/menu';
+
 import BaseContextMenu from '../../Common/BaseContextMenu';
 import { FileManagerModal } from '../../Files/FileManagerModal';
 import { PreUploadDialog } from '../../Files/PreUploadModal';
@@ -92,7 +95,9 @@ export const AttachButton = () => {
         Icon: IconUpload,
         onClick: handleAttachFromComputer,
       },
-    ],[handleAttachFromComputer, handleOpenAttachmentsModal]);
+    ],
+    [handleAttachFromComputer, handleOpenAttachmentsModal],
+  );
 
   return (
     <>
@@ -101,11 +106,12 @@ export const AttachButton = () => {
           menuItems={menuItems}
           ContextMenuIcon={IconPaperclip}
           contextMenuIconSize={24}
+          contextMenuTooltip="Attach files"
           translation="chat"
           highlightColor={HighlightColor.Blue}
           disabled={messageIsStreaming || isModelsLoading}
           contextMenuIconHighlight
-          className='p-0'
+          className="p-0"
         />
       </div>
       {isSelectFilesDialogOpened && (
