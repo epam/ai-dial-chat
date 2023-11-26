@@ -4,15 +4,12 @@ import {
   IconPencilMinus,
   IconTrashX,
 } from '@tabler/icons-react';
-import { MouseEventHandler } from 'react';
-
-import { useTranslation } from 'next-i18next';
-
-import { getByHighlightColor } from '@/src/utils/app/folders';
+import { MouseEventHandler, useMemo } from 'react';
 
 import { HighlightColor } from '@/src/types/common';
+import { DisplayMenuItemProps } from '@/src/types/menu';
 
-import { Menu, MenuItem } from './DropdownMenu';
+import BaseContextMenu from './BaseContextMenu';
 
 interface FolderContextMenuProps {
   onDelete?: MouseEventHandler<unknown>;
@@ -26,12 +23,31 @@ export const FolderContextMenu = ({
   onAddFolder,
   highlightColor,
 }: FolderContextMenuProps) => {
-  const { t } = useTranslation('sidebar');
-
-  const highlightBg = getByHighlightColor(
-    highlightColor,
-    'hover:bg-green/15',
-    'hover:bg-violet/15',
+  const menuItems: DisplayMenuItemProps[] = useMemo(
+    () => [
+      {
+        name: 'Rename',
+        display: !!onRename,
+        dataQa: 'rename',
+        Icon: IconPencilMinus,
+        onClick: onRename,
+      },
+      {
+        name: 'Delete',
+        display: !!onDelete,
+        dataQa: 'rename',
+        Icon: IconTrashX,
+        onClick: onDelete,
+      },
+      {
+        name: 'Add new folder',
+        display: !!onAddFolder,
+        dataQa: 'rename',
+        Icon: IconFolderPlus,
+        onClick: onAddFolder,
+      },
+    ],
+    [onRename, onDelete, onAddFolder],
   );
 
   if (!onDelete && !onRename && !onAddFolder) {
@@ -39,55 +55,13 @@ export const FolderContextMenu = ({
   }
 
   return (
-    <Menu
-      type="contextMenu"
-      className="justify-self-end"
-      trigger={
-        <IconDots
-          className="text-gray-500"
-          size={16}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-        />
-      }
-    >
-      {onRename && (
-        <MenuItem
-          className={highlightBg}
-          item={
-            <div className="flex items-center gap-3">
-              <IconPencilMinus className="shrink-0 text-gray-500" size={18} />
-              <span>{t('Rename')}</span>
-            </div>
-          }
-          onClick={onRename}
-        />
-      )}
-      {onDelete && (
-        <MenuItem
-          className={highlightBg}
-          item={
-            <div className="flex items-center gap-3">
-              <IconTrashX className="shrink-0 text-gray-500" size={18} />
-              <span>{t('Delete')}</span>
-            </div>
-          }
-          onClick={onDelete}
-        />
-      )}
-      {onAddFolder && (
-        <MenuItem
-          className={highlightBg}
-          item={
-            <div className="flex items-center gap-3">
-              <IconFolderPlus className="shrink-0 text-gray-500" size={18} />
-              <span>{t('Add new folder')}</span>
-            </div>
-          }
-          onClick={onAddFolder}
-        />
-      )}
-    </Menu>
+    <BaseContextMenu
+      menuItems={menuItems}
+      ContextMenuIcon={IconDots}
+      contextMenuIconSize={16}
+      translation="sidebar"
+      highlightColor={highlightColor}
+      className="m-0 justify-self-end p-0"
+    />
   );
 };

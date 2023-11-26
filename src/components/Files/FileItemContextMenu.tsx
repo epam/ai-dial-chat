@@ -1,13 +1,13 @@
 import { IconDots, IconDownload, IconTrashX } from '@tabler/icons-react';
-import { MouseEventHandler } from 'react';
+import { MouseEventHandler, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
+import { HighlightColor } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { DisplayMenuItemProps } from '@/src/types/menu';
 
 import { stopBubbling } from '@/src/constants/chat';
 
-import { Menu, MenuItem } from '../Common/DropdownMenu';
+import BaseContextMenu from '../Common/BaseContextMenu';
 
 interface ContextMenuProps {
   file: DialFile;
@@ -15,48 +15,38 @@ interface ContextMenuProps {
   onDelete: MouseEventHandler<unknown>;
 }
 
-export const FileItemContextMenu = ({
+export function FileItemContextMenu({
   file,
   className,
   onDelete,
-}: ContextMenuProps) => {
-  const { t } = useTranslation('sidebar');
+}: ContextMenuProps) {
+  const menuItems: DisplayMenuItemProps[] = useMemo(
+    () => [
+      {
+        name: 'Download',
+        display: file.status !== 'UPLOADING' && file.status !== 'FAILED',
+        dataQa: 'download',
+        Icon: IconDownload,
+        onClick: stopBubbling,
+      },
+      {
+        name: 'Delete',
+        dataQa: 'delete',
+        Icon: IconTrashX,
+        onClick: onDelete,
+      },
+    ],
+    [file.status, onDelete],
+  );
 
   return (
-    <Menu
-      type="contextMenu"
-      trigger={<IconDots className="text-gray-500" size={16} />}
+    <BaseContextMenu
+      menuItems={menuItems}
+      ContextMenuIcon={IconDots}
+      contextMenuIconSize={16}
+      translation="sidebar"
+      highlightColor={HighlightColor.Blue}
       className={className}
-    >
-      {file.status !== 'UPLOADING' && file.status !== 'FAILED' && (
-        <MenuItem
-          className="hover:bg-blue-500/20"
-          item={
-            <a
-              download={file.name}
-              href={`api/files?path=${[file.absolutePath, file.name].join(
-                '/',
-              )}`}
-              onClick={stopBubbling}
-              className="flex gap-3"
-            >
-              <IconDownload size={18} className="text-gray-500" />
-              <span>{t('Download')}</span>
-            </a>
-          }
-        />
-      )}
-
-      <MenuItem
-        className="hover:bg-blue-500/20"
-        item={
-          <div className="flex items-center gap-3">
-            <IconTrashX className="shrink-0 text-gray-500" size={18} />
-            <span>{t('Delete')}</span>
-          </div>
-        }
-        onClick={onDelete}
-      />
-    </Menu>
+    />
   );
-};
+}
