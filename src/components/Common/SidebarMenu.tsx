@@ -18,15 +18,15 @@ import BaseContextMenu from './BaseContextMenu';
 
 export function SidebarMenuItemRenderer(props: BaseMenuItemRendererProps) {
   const {
-  Icon,
-  dataQa,
-  onClick,
-  disabled,
-  highlightColor,
-  translation,
-  className,
-  menuItems,
-} = props;
+    Icon,
+    dataQa,
+    onClick,
+    disabled,
+    highlightColor,
+    translation,
+    className,
+    menuItems,
+  } = props;
   const item = (
     <button
       className={classNames(
@@ -36,7 +36,7 @@ export function SidebarMenuItemRenderer(props: BaseMenuItemRendererProps) {
           'hover:bg-green/15 hover:text-green',
           'hover:bg-violet/15 hover:text-violet',
         ),
-        className
+        className,
       )}
       onClick={!menuItems ? onClick : undefined}
       data-qa={dataQa}
@@ -44,7 +44,7 @@ export function SidebarMenuItemRenderer(props: BaseMenuItemRendererProps) {
     >
       {Icon && <Icon size={24} height={24} width={24} strokeWidth="1.5" />}
     </button>
-  )
+  );
 
   if (menuItems) {
     return (
@@ -53,13 +53,11 @@ export function SidebarMenuItemRenderer(props: BaseMenuItemRendererProps) {
         highlightColor={highlightColor}
         translation={translation}
         CustomMenuRenderer={item}
-        className='p-0'
+        className="p-0"
       />
     );
   }
-  return (
-    item
-  );
+  return item;
 }
 
 export default function SidebarMenu({
