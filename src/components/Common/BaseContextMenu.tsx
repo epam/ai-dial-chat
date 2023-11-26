@@ -31,7 +31,7 @@ function BaseContextMenuItemRenderer({
       className={classNames(
         'flex w-full items-center gap-3 truncate break-words',
         !!menuItems && 'text-gray-200',
-        className
+        className,
       )}
     >
       {Icon && (
