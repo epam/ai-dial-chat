@@ -39,11 +39,11 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: 'Share by me',
+        name: 'Shared by me',
         display:
           enabledFeatures.has(Feature.PromptsSharing) &&
           allPrompts.filter((c) => c.isShared).length > 0,
-        dataQa: 'share-by-me',
+        dataQa: 'shared-by-me',
         Icon: IconUserShare,
         onClick: () => {
           setIsOpen(false);
