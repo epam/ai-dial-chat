@@ -64,9 +64,7 @@ export default function SidebarMenu({
   onOpenChange,
 }: MenuProps) {
   const [visibleItems, hiddenItems] = useMemo(() => {
-    const displayedItems = menuItems.filter(
-      (menu) => menu.display === undefined || menu.display,
-    );
+    const displayedItems = menuItems.filter(({ display = true }) => display);
     const visibleItems = displayedItems.slice(0, displayMenuItemCount);
     const hiddenItems = displayedItems.slice(displayMenuItemCount);
     return [visibleItems, hiddenItems];
