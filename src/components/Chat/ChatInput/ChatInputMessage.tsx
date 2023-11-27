@@ -59,7 +59,6 @@ export const ChatInputMessage = ({
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showPluginSelect, setShowPluginSelect] = useState(false);
 
-  const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
   const messageIsStreaming = useAppSelector(
