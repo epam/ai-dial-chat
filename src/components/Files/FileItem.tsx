@@ -66,7 +66,12 @@ export const FileItem = ({ item, level, onEvent }: Props) => {
       <div className="flex items-center gap-2 overflow-hidden">
         <div className="text-gray-500">
           {!isSelected && item.status !== 'FAILED' ? (
-            <IconFile className="group-hover/file-item:hidden" size={18} />
+            <IconFile
+              className={classNames(
+                item.status !== 'UPLOADING' && 'group-hover/file-item:hidden',
+              )}
+              size={18}
+            />
           ) : (
             item.status === 'FAILED' && (
               <IconExclamationCircle
@@ -75,23 +80,25 @@ export const FileItem = ({ item, level, onEvent }: Props) => {
               />
             )
           )}
-          <div
-            className={classNames(
-              'relative h-[18px] w-[18px] group-hover/file-item:flex',
-              isSelected ? 'flex' : 'hidden',
-            )}
-          >
-            <input
-              className="checkbox peer h-[18px] w-[18px] bg-gray-100 dark:bg-gray-700"
-              type="checkbox"
-              checked={isSelected}
-              onChange={handleToggleFile}
-            />
-            <IconCheck
-              size={18}
-              className="pointer-events-none invisible absolute text-blue-500 peer-checked:visible"
-            />
-          </div>
+          {item.status !== 'UPLOADING' && (
+            <div
+              className={classNames(
+                'relative h-[18px] w-[18px] group-hover/file-item:flex',
+                isSelected ? 'flex' : 'hidden',
+              )}
+            >
+              <input
+                className="checkbox peer h-[18px] w-[18px] bg-gray-100 dark:bg-gray-700"
+                type="checkbox"
+                checked={isSelected}
+                onChange={handleToggleFile}
+              />
+              <IconCheck
+                size={18}
+                className="pointer-events-none invisible absolute text-blue-500 peer-checked:visible"
+              />
+            </div>
+          )}
         </div>
         <span
           className={classNames(

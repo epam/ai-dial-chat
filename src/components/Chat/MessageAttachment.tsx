@@ -1,8 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 import { IconDownload, IconPaperclip } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+
+import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
 
 import { Attachment } from '@/src/types/chat';
 import { ImageMIMEType } from '@/src/types/files';
@@ -29,6 +31,14 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const [isOpened, setIsOpened] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const isOpenable = !attachment.url;
+  const mappedAttachmentUrl = useMemo(
+    () => getMappedAttachmentUrl(attachment.url),
+    [attachment.url],
+  );
+  const mappedAttachmentReferenceUrl = useMemo(
+    () => getMappedAttachmentUrl(attachment.reference_url),
+    [attachment.reference_url],
+  );
 
   return (
     <div
@@ -42,9 +52,9 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     >
       <div className={`flex items-center gap-3 px-2`}>
         <div className="flex items-center">
-          {attachment.reference_url ? (
+          {mappedAttachmentReferenceUrl ? (
             <a
-              href={attachment.reference_url}
+              href={mappedAttachmentReferenceUrl}
               target="_blank"
               className="shrink-0"
               rel="noopener noreferrer"
@@ -87,7 +97,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           ) : (
             <a
               download={attachment.title}
-              href={`api/files?path=${attachment.url}`}
+              href={mappedAttachmentUrl}
               onClick={stopBubbling}
               className="text-gray-500 hover:text-blue-500"
             >
@@ -132,9 +142,9 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             )
           )}
 
-          {attachment.reference_url && (
+          {mappedAttachmentReferenceUrl && (
             <a
-              href={attachment.reference_url}
+              href={mappedAttachmentReferenceUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-3 block text-blue-500"
