@@ -331,7 +331,10 @@ export const ChatInputMessage = ({
 
         <SendMessageButton
           handleSend={handleSend}
-          isInputEmpty={!content || content.trim().length === 0}
+          isInputEmpty={
+            (!content || content.trim().length === 0) &&
+            selectedFiles.length === 0
+          }
         />
 
         {displayAttachFunctionality && (
