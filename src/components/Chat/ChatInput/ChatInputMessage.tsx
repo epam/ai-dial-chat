@@ -73,6 +73,7 @@ export const ChatInputMessage = ({
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
+  const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
   const maximumAttachmentsAmount = useAppSelector(
     ConversationsSelectors.selectMaximumAttachmentsAmount,
   );
@@ -330,10 +331,7 @@ export const ChatInputMessage = ({
 
         <SendMessageButton
           handleSend={handleSend}
-          isInputEmpty={
-            (!content || content.trim().length === 0) &&
-            selectedFiles.length === 0
-          }
+          isInputEmpty={!content || content.trim().length === 0}
         />
 
         {displayAttachFunctionality && (
