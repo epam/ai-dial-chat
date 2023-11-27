@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/src/types/chat';
+import { Translation } from '@/src/types/translation';
 
 import { ConversationsRenderer } from './ConversationsRenderer';
 
@@ -55,7 +56,7 @@ export const Conversations = ({ conversations }: Props) => {
   const [sortedConversations, setSortedConversations] =
     useState<SortedConversations>();
 
-  const { t } = useTranslation('sidebar');
+  const { t } = useTranslation(Translation.SideBar);
 
   const conversationsToDisplay = useMemo(
     () => conversations.filter((conversation) => !conversation.folderId),

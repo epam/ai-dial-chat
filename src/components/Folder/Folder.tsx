@@ -28,6 +28,7 @@ import { HighlightColor } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -114,7 +115,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   onAddFolder,
   onItemEvent,
 }: Props<T>) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
   const [isDeletingConfirmDialog, setIsDeletingConfirmDialog] = useState(false);

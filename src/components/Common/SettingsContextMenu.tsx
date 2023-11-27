@@ -11,11 +11,14 @@ import {
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
 
 import { FeatureType, HighlightColor } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { DisplayMenuItemProps } from '@/src/types/menu';
+import { Translation } from '@/src/types/translation';
 
 import ContextMenu from './ContextMenu';
 
@@ -56,56 +59,57 @@ export default function SettingsContextMenu({
   onOpenShareModal,
   onOpenChange,
 }: SettingsContextMenuProps) {
+  const { t } = useTranslation(Translation.SideBar);
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: featureType === FeatureType.Chat ? 'Rename' : 'Edit',
+        name: t(featureType === FeatureType.Chat ? 'Rename' : 'Edit'),
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
       },
       {
-        name: 'Compare',
+        name: t('Compare'),
         display: !!onCompare,
         dataQa: 'compare',
         Icon: IconScale,
         onClick: onCompare,
       },
       {
-        name: 'Replay',
+        name: t('Replay'),
         display: !isEmptyConversation && !!onReplay,
         dataQa: 'replay',
         Icon: IconRefreshDot,
         onClick: onReplay,
       },
       {
-        name: 'Playback',
+        name: t('Playback'),
         display: !isEmptyConversation && !!onPlayback,
         dataQa: 'playback',
         Icon: IconPlayerPlay,
         onClick: onPlayback,
       },
       {
-        name: 'Export',
+        name: t('Export'),
         dataQa: 'export',
         Icon: IconFileArrowRight,
         onClick: onExport,
       },
       {
-        name: 'Move to',
+        name: t('Move to'),
         dataQa: 'move-to',
         Icon: IconFolderShare,
         onClick: onOpenMoveToModal,
         className: 'md:hidden',
       },
       {
-        name: 'Move to',
+        name: t('Move to'),
         dataQa: 'move-to',
         Icon: IconFolderShare,
         className: 'max-md:hidden',
         menuItems: [
           {
-            name: 'New folder',
+            name: t('New folder'),
             dataQa: 'new-folder',
             Icon: IconFolderPlus,
             onClick: () => {
@@ -126,14 +130,14 @@ export default function SettingsContextMenu({
         ],
       },
       {
-        name: 'Share',
+        name: t('Share'),
         dataQa: 'share',
         display: !!onOpenShareModal,
         Icon: IconUserShare,
         onClick: onOpenShareModal,
       },
       {
-        name: 'Delete',
+        name: t('Delete'),
         dataQa: 'delete',
         Icon: IconUserShare,
         onClick: onDelete,
@@ -152,6 +156,7 @@ export default function SettingsContextMenu({
       onPlayback,
       onRename,
       onReplay,
+      t,
     ],
   );
 
@@ -160,7 +165,6 @@ export default function SettingsContextMenu({
       menuItems={menuItems}
       ContextMenuIcon={IconDots}
       contextMenuIconSize={18}
-      translation="sidebar"
       highlightColor={highlightColor}
       className={className}
       isOpen={isOpen}

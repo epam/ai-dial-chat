@@ -4,6 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { FeatureType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -20,7 +21,7 @@ import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import Sidebar from '../Sidebar';
 
 const PromptActionsBlock = () => {
-  const { t } = useTranslation('promptbar');
+  const { t } = useTranslation(Translation.PromptBar);
   const dispatch = useAppDispatch();
 
   return (

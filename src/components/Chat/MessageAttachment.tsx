@@ -8,6 +8,7 @@ import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
 
 import { Attachment } from '@/src/types/chat';
 import { ImageMIMEType } from '@/src/types/files';
+import { Translation } from '@/src/types/translation';
 
 import { stopBubbling } from '@/src/constants/chat';
 
@@ -27,7 +28,7 @@ const imageTypes: Set<ImageMIMEType> = new Set<ImageMIMEType>([
 ]);
 
 export const MessageAttachment = ({ attachment, isInner }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const [isOpened, setIsOpened] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const isOpenable = !attachment.url;

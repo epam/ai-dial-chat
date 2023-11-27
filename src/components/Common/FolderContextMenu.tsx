@@ -6,8 +6,11 @@ import {
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { HighlightColor } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
+import { Translation } from '@/src/types/translation';
 
 import ContextMenu from './ContextMenu';
 
@@ -27,31 +30,32 @@ export const FolderContextMenu = ({
   highlightColor,
   isOpen,
 }: FolderContextMenuProps) => {
+  const { t } = useTranslation(Translation.SideBar);
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: 'Rename',
+        name: t('Rename'),
         display: !!onRename,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
       },
       {
-        name: 'Delete',
+        name: t('Delete'),
         display: !!onDelete,
         dataQa: 'rename',
         Icon: IconTrashX,
         onClick: onDelete,
       },
       {
-        name: 'Add new folder',
+        name: t('Add new folder'),
         display: !!onAddFolder,
         dataQa: 'rename',
         Icon: IconFolderPlus,
         onClick: onAddFolder,
       },
     ],
-    [onRename, onDelete, onAddFolder],
+    [t, onRename, onDelete, onAddFolder],
   );
 
   if (!onDelete && !onRename && !onAddFolder) {
@@ -63,7 +67,6 @@ export const FolderContextMenu = ({
       menuItems={menuItems}
       ContextMenuIcon={IconDots}
       contextMenuIconSize={18}
-      translation="sidebar"
       highlightColor={highlightColor}
       className="m-0 justify-self-end"
       isOpen={isOpen}

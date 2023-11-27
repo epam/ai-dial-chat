@@ -1,7 +1,5 @@
 import { useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { getByHighlightColor } from '@/src/utils/app/folders';
@@ -23,7 +21,6 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
     onClick,
     disabled,
     highlightColor,
-    translation,
     className,
     menuItems,
   } = props;
@@ -52,7 +49,6 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
       <ContextMenu
         menuItems={menuItems}
         highlightColor={highlightColor}
-        translation={translation}
         CustomMenuRenderer={item}
       />
     );
@@ -64,11 +60,9 @@ export default function SidebarMenu({
   menuItems,
   highlightColor,
   displayMenuItemCount = 5, // calculate in future based on width of container
-  translation = 'chatbar',
   isOpen,
   onOpenChange,
 }: MenuProps) {
-  const { t } = useTranslation(translation);
   const [visibleItems, hiddenItems] = useMemo(() => {
     const displayedItems = menuItems.filter(
       (menu) => menu.display === undefined || menu.display,
@@ -86,20 +80,15 @@ export default function SidebarMenu({
             {...props}
             highlightColor={highlightColor}
             Renderer={SidebarMenuItemRenderer}
-            translation={translation}
           />
         ) : (
-          <SidebarMenuItemRenderer
-            {...props}
-            highlightColor={highlightColor}
-            translation={translation}
-          />
+          <SidebarMenuItemRenderer {...props} highlightColor={highlightColor} />
         );
 
         return (
           <Tooltip key={props.name} isTriggerClickable>
             <TooltipTrigger>{Trigger}</TooltipTrigger>
-            <TooltipContent>{t(props.name)}</TooltipContent>
+            <TooltipContent>{props.name}</TooltipContent>
           </Tooltip>
         );
       })}
@@ -107,7 +96,6 @@ export default function SidebarMenu({
       <ContextMenu
         menuItems={hiddenItems}
         highlightColor={highlightColor}
-        translation={translation}
         className="p-[5px]"
         isOpen={isOpen}
         onOpenChange={onOpenChange}

@@ -18,6 +18,7 @@ import classNames from 'classnames';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
+import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
@@ -47,7 +48,7 @@ interface Props {
 }
 
 export const ConversationComponent = ({ item: conversation, level }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);

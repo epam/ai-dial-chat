@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 import { Theme } from '@/src/types/settings';
+import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
@@ -52,7 +53,7 @@ export const ChatInfoTooltip = ({
 }: Props) => {
   const theme = useAppSelector(UISelectors.selectThemeState);
 
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const getModelLabel = useCallback(() => {
     switch (model.type) {
       case EntityType.Application:

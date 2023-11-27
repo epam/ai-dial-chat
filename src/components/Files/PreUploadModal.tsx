@@ -28,6 +28,7 @@ import {
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
 
 import { DialFile } from '@/src/types/files';
+import { Translation } from '@/src/types/translation';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -60,7 +61,7 @@ export const PreUploadDialog = ({
   onUploadFiles,
 }: Props) => {
   const dispatch = useAppDispatch();
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const files = useAppSelector(FilesSelectors.selectFiles);
   const attachments = useAppSelector(FilesSelectors.selectSelectedFiles);
   const folders = useAppSelector(FilesSelectors.selectFolders);

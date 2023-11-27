@@ -29,6 +29,7 @@ import {
 
 import { Conversation, Message, Role } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
+import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
@@ -89,7 +90,7 @@ export const ChatMessage: FC<Props> = memo(
     onLike,
     onDelete,
   }) => {
-    const { t } = useTranslation('chat');
+    const { t } = useTranslation(Translation.Chat);
     const dispatch = useAppDispatch();
 
     const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);

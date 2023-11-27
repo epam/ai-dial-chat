@@ -10,6 +10,7 @@ import { useTranslation } from 'next-i18next';
 import { HighlightColor } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
+import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -33,7 +34,7 @@ export const AttachButton = ({
   onSelectAlreadyUploaded,
   onUploadFromDevice,
 }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -58,19 +59,19 @@ export const AttachButton = ({
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: 'Attach uploaded files',
+        name: t('Attach uploaded files'),
         dataQa: 'attach_uploaded',
         Icon: IconFileDescription,
         onClick: handleOpenAttachmentsModal,
       },
       {
-        name: 'Upload from device',
+        name: t('Upload from device'),
         dataQa: 'upload_from_device',
         Icon: IconUpload,
         onClick: handleAttachFromComputer,
       },
     ],
-    [handleAttachFromComputer, handleOpenAttachmentsModal],
+    [handleAttachFromComputer, handleOpenAttachmentsModal, t],
   );
 
   return (
@@ -80,7 +81,6 @@ export const AttachButton = ({
         ContextMenuIcon={IconPaperclip}
         contextMenuIconSize={24}
         contextMenuTooltip={t('Attach files') || ''}
-        translation="chat"
         highlightColor={HighlightColor.Blue}
         disabled={messageIsStreaming || isModelsLoading}
         contextMenuIconHighlight

@@ -15,6 +15,7 @@ import classNames from 'classnames';
 import { FeatureType, HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -45,7 +46,7 @@ export interface PromptMoveToFolderProps {
 }
 
 export const PromptComponent = ({ item: prompt, level }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
   const folders = useAppSelector(PromptsSelectors.selectFolders);

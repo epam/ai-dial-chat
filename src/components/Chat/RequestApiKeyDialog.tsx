@@ -17,6 +17,7 @@ import classNames from 'classnames';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { RequestAPIKeyBody } from '@/src/types/request-api-key';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -82,7 +83,7 @@ interface Props {
 }
 
 export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(Translation.Settings);
 
   const dispatch = useAppDispatch();
 

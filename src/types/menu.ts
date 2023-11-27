@@ -21,14 +21,12 @@ export interface DisplayMenuItemProps {
 
 export type MenuItemRendererProps = DisplayMenuItemProps & {
   highlightColor: HighlightColor;
-  translation: string;
 };
 
 export interface MenuProps {
   menuItems: DisplayMenuItemProps[];
   highlightColor: HighlightColor;
   displayMenuItemCount?: number;
-  translation: string;
   className?: string;
   disabled?: boolean;
   isOpen?: boolean;

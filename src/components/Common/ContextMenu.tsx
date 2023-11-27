@@ -1,8 +1,6 @@
 import { IconDotsVertical } from '@tabler/icons-react';
 import { Fragment, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { getByHighlightColor } from '@/src/utils/app/folders';
@@ -19,11 +17,9 @@ function ContextMenuItemRenderer({
   onClick,
   disabled,
   highlightColor,
-  translation,
   className,
   menuItems,
 }: MenuItemRendererProps) {
-  const { t } = useTranslation(translation);
   const item = (
     <div
       className={classNames(
@@ -40,7 +36,7 @@ function ContextMenuItemRenderer({
           width={18}
         />
       )}
-      <span className="truncate break-words">{t(name)}</span>
+      <span className="truncate break-words">{name}</span>
     </div>
   );
   if (menuItems) {
@@ -48,7 +44,6 @@ function ContextMenuItemRenderer({
       <ContextMenu
         menuItems={menuItems}
         highlightColor={highlightColor}
-        translation={translation}
         contextMenuIconClassName={classNames(
           className,
           'text-gray-200',
@@ -87,7 +82,6 @@ export default function ContextMenu({
   highlightColor,
   ContextMenuIcon = IconDotsVertical,
   contextMenuIconSize = 24,
-  translation,
   className,
   contextMenuIconHighlight,
   CustomMenuRenderer,
@@ -97,7 +91,6 @@ export default function ContextMenu({
   isOpen,
   onOpenChange,
 }: ContextMenuProps) {
-  const { t } = useTranslation(translation);
   const displayedMenuItems = useMemo(
     () =>
       menuItems.filter((item) => item.display === undefined || item.display),
@@ -142,7 +135,7 @@ export default function ContextMenu({
           {contextMenuTooltip ? (
             <Tooltip isTriggerClickable>
               <TooltipTrigger>{menuContent}</TooltipTrigger>
-              <TooltipContent>{t(contextMenuTooltip)}</TooltipContent>
+              <TooltipContent>{contextMenuTooltip}</TooltipContent>
             </Tooltip>
           ) : (
             menuContent
@@ -155,15 +148,10 @@ export default function ContextMenu({
           <CustomTriggerRenderer
             {...props}
             highlightColor={highlightColor}
-            translation={translation}
             Renderer={ContextMenuItemRenderer}
           />
         ) : (
-          <ContextMenuItemRenderer
-            {...props}
-            translation={translation}
-            highlightColor={highlightColor}
-          />
+          <ContextMenuItemRenderer {...props} highlightColor={highlightColor} />
         );
         return <Fragment key={props.name}>{Renderer}</Fragment>;
       })}

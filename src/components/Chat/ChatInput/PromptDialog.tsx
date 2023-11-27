@@ -17,6 +17,7 @@ import classNames from 'classnames';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 
@@ -47,7 +48,7 @@ export const PromptDialog: FC<Props> = ({
 
   const modalRef = useRef<HTMLFormElement>(null);
   const inputsRefs = useRef<HTMLTextAreaElement[] | null[]>([]);
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(Translation.Settings);
 
   const handleChange = useCallback(
     (index: number, e: ChangeEvent<HTMLTextAreaElement>) => {
