@@ -224,7 +224,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         style={{
           paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
         }}
-        onClick={handleOpenEditModal}
         onContextMenu={handleContextMenuOpen}
         data-qa="prompt"
       >
