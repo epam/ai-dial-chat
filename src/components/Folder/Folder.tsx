@@ -62,6 +62,7 @@ interface Props<T, P = unknown> {
   itemComponent?: FC<{
     item: T;
     level: number;
+    additionalItemData?: Record<string, unknown>;
     onEvent?: (eventId: string, data: P) => void;
   }>;
   allItems?: T[];
@@ -74,6 +75,7 @@ interface Props<T, P = unknown> {
   isInitialRename?: boolean;
   loadingFolderId?: string;
   displayCaretAlways?: boolean;
+  additionalItemData?: Record<string, unknown>;
   handleDrop?: (e: any, folder: FolderInterface) => void;
   onDropBetweenFolders?: (
     folder: FolderInterface,
@@ -101,6 +103,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   isInitialRename = false,
   loadingFolderId = '',
   displayCaretAlways = false,
+  additionalItemData,
   handleDrop,
   onDropBetweenFolders,
   onRenameFolder,
@@ -537,6 +540,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       openedFoldersIds={openedFoldersIds}
                       loadingFolderId={loadingFolderId}
                       displayCaretAlways={displayCaretAlways}
+                      additionalItemData={additionalItemData}
                       handleDrop={handleDrop}
                       onDropBetweenFolders={onDropBetweenFolders}
                       onRenameFolder={onRenameFolder}
@@ -568,6 +572,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 {createElement(itemComponent, {
                   item,
                   level: level + 1,
+                  additionalItemData,
                   ...(!!onItemEvent && { onEvent: onItemEvent }),
                 })}
               </div>
