@@ -18,13 +18,17 @@ interface FolderContextMenuProps {
   onDelete?: MouseEventHandler<unknown>;
   onRename?: MouseEventHandler<unknown>;
   onAddFolder?: MouseEventHandler;
+  onOpenChange?: (isOpen: boolean) => void;
   highlightColor: HighlightColor;
+  isOpen?: boolean;
 }
 export const FolderContextMenu = ({
   onDelete,
   onRename,
   onAddFolder,
+  onOpenChange,
   highlightColor,
+  isOpen,
 }: FolderContextMenuProps) => {
   const { t } = useTranslation('sidebar');
 
@@ -42,6 +46,8 @@ export const FolderContextMenu = ({
     <Menu
       type="contextMenu"
       className="justify-self-end"
+      onOpenChange={onOpenChange}
+      isMenuOpen={isOpen}
       trigger={
         <IconDots
           className="text-gray-500"

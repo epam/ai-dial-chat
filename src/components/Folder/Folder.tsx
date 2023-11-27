@@ -1,9 +1,11 @@
+import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { IconCaretRightFilled, IconFolder } from '@tabler/icons-react';
 import {
   DragEvent,
   FC,
   Fragment,
   KeyboardEvent,
+  MouseEvent,
   MouseEventHandler,
   createElement,
   useCallback,
@@ -120,6 +122,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const [isSelected, setIsSelected] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isDropAllowed, setIsDropAllowed] = useState(true);
+  const [isContextMenu, setIsContextMenu] = useState(false);
   const dragDropElement = useRef<HTMLDivElement>(null);
 
   const isFolderOpened = useMemo(() => {
@@ -136,6 +139,14 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   }, [filteredChildFolders.length, filteredChildItems.length]);
   const dragImageRef = useRef<HTMLImageElement | null>();
 
+  const { refs, context } = useFloating({
+    open: isContextMenu,
+    onOpenChange: setIsContextMenu,
+  });
+
+  const dismiss = useDismiss(context);
+  const { getFloatingProps } = useInteractions([dismiss]);
+
   useEffect(() => {
     dragImageRef.current = document.createElement('img');
     dragImageRef.current.src = emptyImage;
@@ -148,6 +159,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     onRenameFolder(renameValue, currentFolder.id);
     setRenameValue('');
     setIsRenaming(false);
+    setIsContextMenu(false);
   }, [onRenameFolder, renameValue, currentFolder]);
 
   const handleEnterDown = useCallback(
@@ -310,6 +322,12 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     setIsDropAllowed(!isDraggingOver);
   }, []);
 
+  const handleContextMenuOpen = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsContextMenu(true);
+  };
+
   useEffect(() => {
     if (isRenaming) {
       setIsDeletingConfirmDialog(false);
@@ -356,12 +374,14 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       onDragOver={allowDrop}
       onDragEnter={highlightDrop}
       onDragLeave={removeHighlight}
+      onContextMenu={handleContextMenuOpen}
       ref={dragDropElement}
     >
       <div
         className={classNames(
           'relative flex h-[30px] items-center rounded border-l-2',
           isRenaming ||
+            isContextMenu ||
             (allItems === undefined &&
               highlightedFolders?.includes(currentFolder.id))
             ? classNames(bgColor, 'border-blue-500')
@@ -451,9 +471,11 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             {(onDeleteFolder || onRenameFolder || onAddFolder) &&
               !isRenaming && (
                 <div
+                  ref={refs.setFloating}
+                  {...getFloatingProps()}
                   className={classNames(
                     'invisible absolute right-3 z-50 flex justify-end md:group-hover/button:visible',
-                    isSelected ? 'max-md:visible' : '',
+                    isSelected || isContextMenu ? 'max-md:visible' : '',
                   )}
                 >
                   <FolderContextMenu
@@ -466,6 +488,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                     onDelete={onDeleteFolder && onDelete}
                     onAddFolder={onAddFolder && onAdd}
                     highlightColor={highlightColor}
+                    onOpenChange={setIsContextMenu}
+                    isOpen={isContextMenu}
                   />
                 </div>
               )}
