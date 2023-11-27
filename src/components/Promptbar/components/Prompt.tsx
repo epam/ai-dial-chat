@@ -270,8 +270,8 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             ref={refs.setFloating}
             {...getFloatingProps()}
             className={classNames(
-              'invisible absolute right-3 z-50 flex justify-end group-hover:visible',
-              isContextMenu ? 'visible' : 'invisible',
+              'absolute right-3 z-50 flex justify-end group-hover:visible',
+              isSelected || isContextMenu ? 'visible' : 'invisible',
             )}
             onClick={stopBubbling}
           >
