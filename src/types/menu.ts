@@ -31,6 +31,7 @@ export interface BaseMenuProps {
   translation: string;
   className?: string;
   disabled?: boolean;
+  isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
 }
 
