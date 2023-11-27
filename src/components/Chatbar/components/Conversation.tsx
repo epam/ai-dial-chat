@@ -379,7 +379,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           className={classNames(
             'absolute right-3 z-50 flex justify-end group-hover:visible',
             isContextMenu ? 'visible' : 'invisible',
-            isSelected && 'hiver:visible',
           )}
           data-qa="dots-menu"
         >
