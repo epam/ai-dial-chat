@@ -16,6 +16,7 @@ import { isMobile } from '@/src/utils/app/mobile';
 
 import { Message, Role } from '@/src/types/chat';
 import { Feature } from '@/src/types/features';
+import { DialFile } from '@/src/types/files';
 import { OpenAIEntityModels, defaultModelLimits } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 
@@ -27,7 +28,7 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
-import { AttachButton } from './AttachButton';
+import { AttachButton } from '../../Files/AttachButton';
 import { ChatInputAttachments } from './ChatInputAttachments';
 import { PromptDialog } from './PromptDialog';
 import { PromptList } from './PromptList';
@@ -79,6 +80,9 @@ export const ChatInputMessage = ({
   );
   const displayAttachFunctionality =
     enabledFeatures.has(Feature.InputFiles) && maximumAttachmentsAmount > 0;
+  const attachedFilesIds = useAppSelector(
+    FilesSelectors.selectSelectedFilesIds,
+  );
 
   const [filteredPrompts, setFilteredPrompts] = useState(() =>
     prompts.filter((prompt) =>
@@ -296,6 +300,59 @@ export const ChatInputMessage = ({
     }
   }, [content, textareaRef]);
 
+  const handleUnselectFile = useCallback(
+    (fileId: string) => {
+      return () => dispatch(FilesActions.unselectFiles({ ids: [fileId] }));
+    },
+    [dispatch],
+  );
+
+  const handleRetry = useCallback(
+    (fileId: string) => {
+      return () => dispatch(FilesActions.reuploadFile({ fileId }));
+    },
+    [dispatch],
+  );
+
+  const handleSelectAlreadyUploaded = useCallback(
+    (result: unknown) => {
+      if (typeof result === 'object') {
+        const selectedFilesIds = result as string[];
+        dispatch(FilesActions.resetSelectedFiles());
+        dispatch(
+          FilesActions.selectFiles({
+            ids: selectedFilesIds,
+          }),
+        );
+      }
+    },
+    [dispatch],
+  );
+
+  const handleUploadFromDevice = useCallback(
+    (
+      selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
+      folderPath: string | undefined,
+    ) => {
+      selectedFiles.forEach((file) => {
+        dispatch(
+          FilesActions.uploadFile({
+            fileContent: file.fileContent,
+            id: file.id,
+            relativePath: folderPath,
+            name: file.name,
+          }),
+        );
+      });
+      dispatch(
+        FilesActions.selectFiles({
+          ids: selectedFiles.map(({ id }) => id),
+        }),
+      );
+    },
+    [dispatch],
+  );
+
   return (
     <div className="mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0  md:last:mb-6 lg:mx-auto lg:max-w-3xl">
       <div
@@ -339,8 +396,22 @@ export const ChatInputMessage = ({
 
         {displayAttachFunctionality && (
           <>
-            <AttachButton />
-            <ChatInputAttachments />
+            <div className="absolute left-4 top-[calc(50%_-_12px)] rounded disabled:cursor-not-allowed">
+              <AttachButton
+                selectedFilesIds={attachedFilesIds}
+                onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
+                onUploadFromDevice={handleUploadFromDevice}
+              />
+            </div>
+            {selectedFiles.length > 0 && (
+              <div className="mb-2.5 grid max-h-[100px] grid-cols-3 gap-1 overflow-auto px-12">
+                <ChatInputAttachments
+                  files={selectedFiles}
+                  onUnselectFile={handleUnselectFile}
+                  onRetryFile={handleRetry}
+                />
+              </div>
+            )}
           </>
         )}
 
