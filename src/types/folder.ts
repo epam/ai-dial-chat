@@ -5,8 +5,8 @@ export interface FolderInterface {
   name: string;
   type: FolderType;
   folderId?: string;
+  isShared?: boolean;
   sharedWithMe?: boolean;
-
   serverSynced?: boolean;
 }
 
@@ -19,4 +19,12 @@ export enum FolderType {
 export interface FolderItemFilters<T> {
   filterFolder: EntityFilter<FolderInterface>;
   filterItem: EntityFilter<T>;
+}
+
+export interface ChatFoldersProps<T> {
+  name: string;
+  hideIfEmpty?: boolean;
+  displayRootFiles?: boolean;
+  readonly?: boolean;
+  filters: FolderItemFilters<T>;
 }

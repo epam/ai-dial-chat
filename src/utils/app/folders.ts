@@ -1,5 +1,7 @@
+import { Conversation } from '@/src/types/chat';
 import { HighlightColor } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FolderItemFilters } from '@/src/types/folder';
+import { Prompt } from '@/src/types/prompt';
 
 export const getFoldersDepth = (
   childFolder: FolderInterface,
@@ -98,3 +100,18 @@ export function getByHighlightColor(
       return defaultColor || '';
   }
 }
+
+export const MyChatsFilters: FolderItemFilters<Conversation | Prompt> = {
+  filterFolder: (folder) => !folder.sharedWithMe,
+  filterItem: (item) => !item.sharedWithMe,
+};
+
+export const SharedWithMeFilters: FolderItemFilters<Conversation | Prompt> = {
+  filterFolder: (folder) => !!folder.sharedWithMe,
+  filterItem: (item) => !!item.sharedWithMe,
+};
+
+export const SharedByMeFilters: FolderItemFilters<Conversation | Prompt> = {
+  filterFolder: (folder) => !!folder.isShared,
+  filterItem: (item) => !!item.isShared,
+};

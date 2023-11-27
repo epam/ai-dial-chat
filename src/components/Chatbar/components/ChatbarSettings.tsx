@@ -28,11 +28,15 @@ import SidebarMenu from '@/src/components/Common/SidebarMenu';
 import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
 import { Import } from '@/src/components/Settings/Import';
 
+import { SharingType } from '../../Chat/ShareModal';
+import SharedByMeModal from '../../Chat/SharedByMe';
+
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation('sidebar');
-  const [isOpen, setIsOpen] = useState(false);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const [isSharedModalOpen, setIsSharedModalOpen] = useState(false);
 
   const dispatch = useAppDispatch();
 
@@ -72,8 +76,8 @@ export const ChatbarSettings = () => {
         dataQa: 'shared-by-me',
         Icon: IconUserShare,
         onClick: () => {
-          setIsOpen(false);
-        }, //TODO
+          setIsSharedModalOpen(true);
+        },
       },
       {
         name: 'Delete all conversations',
@@ -81,7 +85,7 @@ export const ChatbarSettings = () => {
         dataQa: 'delete-conversations',
         Icon: IconTrashX,
         onClick: () => {
-          setIsOpen(true);
+          setIsClearModalOpen(true);
         },
       },
       {
@@ -163,7 +167,7 @@ export const ChatbarSettings = () => {
       )}
 
       <ConfirmDialog
-        isOpen={isOpen}
+        isOpen={isClearModalOpen}
         heading={t('Confirm clearing all conversations')}
         description={
           t('Are you sure that you want to delete all conversations?') || ''
@@ -171,11 +175,17 @@ export const ChatbarSettings = () => {
         confirmLabel={t('Clear')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
-          setIsOpen(false);
+          setIsClearModalOpen(false);
           if (result) {
             dispatch(ConversationsActions.clearConversations());
           }
         }}
+      />
+
+      <SharedByMeModal
+        isOpen={isSharedModalOpen}
+        onClose={() => setIsSharedModalOpen(false)}
+        type={SharingType.Conversation}
       />
     </>
   );

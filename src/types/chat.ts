@@ -1,6 +1,5 @@
 import { MIMEType } from './files';
 
-
 export interface Attachment {
   index?: number;
   type: MIMEType;

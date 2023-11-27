@@ -39,6 +39,62 @@ import { ModelIcon } from './ModelIcon';
 
 import { v4 as uuidv4 } from 'uuid';
 
+interface ViewProps {
+  conversation: Conversation;
+  // level?: number;
+  isSelected: boolean;
+}
+
+export function ConversationView ({ conversation/*, level = 0, isSelected*/ }:ViewProps) {
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const theme = useAppSelector(UISelectors.selectThemeState);
+  return (
+    // <button
+    //   className={classNames(
+    //     'group flex h-full w-full cursor-pointer items-center gap-2 transition-colors duration-200',
+    //     isSelected
+    //       ? 'border-l-green bg-green/15'
+    //       : 'border-l-transparent',
+    //   )}
+    //   style={{
+    //     paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
+    //   }}
+    //   data-qa="conversation"
+    // >
+    <>
+      {conversation.replay.replayAsIs && (
+        <span className="flex shrink-0">
+          <ReplayAsIsIcon size={18} />
+        </span>
+      )}
+
+      {conversation.playback && conversation.playback.isPlayback && (
+        <span className="flex shrink-0">
+          <PlaybackIcon size={18} />
+        </span>
+      )}
+
+      {!conversation.replay.replayAsIs &&
+        !conversation.playback?.isPlayback && (
+          <ModelIcon
+            size={18}
+            entityId={conversation.model.id}
+            entity={modelsMap[conversation.model.id]}
+            inverted={theme === 'dark'}
+          />
+        )}
+
+      <div
+        className={classNames(
+          'relative max-h-5 flex-1 truncate break-all text-left',
+        )}
+      >
+        {conversation.name}
+      </div>
+    </>
+  );
+}
+
 interface Props {
   item: Conversation;
   level?: number;
@@ -325,7 +381,8 @@ export const ConversationComponent = ({
           }}
           ref={buttonRef}
         >
-          {conversation.replay.replayAsIs && (
+          <ConversationView isSelected={selectedConversationIds.includes(conversation.id)} conversation={conversation}/>
+          {/* {conversation.replay.replayAsIs && (
             <span className="flex shrink-0">
               <ReplayAsIsIcon size={18} />
             </span>
@@ -353,7 +410,7 @@ export const ConversationComponent = ({
             )}
           >
             {conversation.name}
-          </div>
+          </div> */}
           {showSharedIcon && (
             <span className="flex shrink-0 text-gray-500">
               <IconUserShare size={14} />
