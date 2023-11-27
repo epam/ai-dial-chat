@@ -5,6 +5,8 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { HighlightColor } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
@@ -12,10 +14,10 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+
 import BaseContextMenu from '../Common/BaseContextMenu';
 import { FileManagerModal } from './FileManagerModal';
 import { PreUploadDialog } from './PreUploadModal';
-import { useTranslation } from 'react-i18next';
 
 interface Props {
   selectedFilesIds?: string[];
@@ -77,7 +79,7 @@ export const AttachButton = ({
         menuItems={menuItems}
         ContextMenuIcon={IconPaperclip}
         contextMenuIconSize={24}
-        contextMenuTooltip={t("Attach files") || ''}
+        contextMenuTooltip={t('Attach files') || ''}
         translation="chat"
         highlightColor={HighlightColor.Blue}
         disabled={messageIsStreaming || isModelsLoading}

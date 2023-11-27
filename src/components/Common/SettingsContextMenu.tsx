@@ -19,7 +19,7 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 
 import BaseContextMenu from './BaseContextMenu';
 
-interface ContextMenuProps {
+interface SettingsContextMenuProps {
   folders: FolderInterface[];
   featureType: FeatureType;
   highlightColor: HighlightColor;
@@ -38,7 +38,7 @@ interface ContextMenuProps {
   onOpenChange?: (isOpen: boolean) => void;
 }
 
-export const ContextMenu = ({
+export default function SettingsContextMenu({
   featureType,
   isEmptyConversation,
   className,
@@ -55,7 +55,7 @@ export const ContextMenu = ({
   onOpenMoveToModal,
   onOpenShareModal,
   onOpenChange,
-}: ContextMenuProps) => {
+}: SettingsContextMenuProps) {
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -167,4 +167,4 @@ export const ContextMenu = ({
       onOpenChange={onOpenChange}
     />
   );
-};
+}

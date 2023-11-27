@@ -36,7 +36,7 @@ import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMob
 import { PlaybackIcon } from '../../Chat/PlaybackIcon';
 import { ReplayAsIsIcon } from '../../Chat/ReplayAsIsIcon';
 import ShareModal, { SharingType } from '../../Chat/ShareModal';
-import { ContextMenu } from '../../Common/ContextMenu';
+import SettingsContextMenu from '../../Common/SettingsContextMenu';
 import { ModelIcon } from './ModelIcon';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -382,7 +382,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           )}
           data-qa="dots-menu"
         >
-          <ContextMenu
+          <SettingsContextMenu
             isEmptyConversation={isEmptyConversation}
             folders={folders}
             featureType={FeatureType.Chat}

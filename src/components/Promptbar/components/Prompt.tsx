@@ -26,8 +26,8 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { stopBubbling } from '@/src/constants/chat';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
-import { ContextMenu } from '@/src/components/Common/ContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
+import SettingsContextMenu from '@/src/components/Common/SettingsContextMenu';
 
 import ShareModal, { SharingType } from '../../Chat/ShareModal';
 import { PromptModal } from './PromptModal';
@@ -275,7 +275,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             )}
             onClick={stopBubbling}
           >
-            <ContextMenu
+            <SettingsContextMenu
               featureType={FeatureType.Prompt}
               folders={folders}
               onMoveToFolder={handleMoveToFolder}
