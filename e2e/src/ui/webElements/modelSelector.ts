@@ -38,6 +38,10 @@ export class ModelSelector extends BaseElement {
     return this.modelInput.getAttribute(Attributes.placeholder);
   }
 
+  public async fillInput(text: string) {
+    await this.modelInput.fillInInput(text);
+  }
+
   public async getOptionsIconAttributes() {
     const allIcons: Icons[] = [];
     const optionsCount = await this.listOptions.getElementsCount();
@@ -45,9 +49,8 @@ export class ModelSelector extends BaseElement {
       const option = await this.listOptions.getNthElement(i);
       const customIconOption = await option.locator(ChatSelectors.chatIcon);
       if (await customIconOption.isVisible()) {
-        const iconAttributes = await this.getElementIconAttributes(
-          customIconOption,
-        );
+        const iconAttributes =
+          await this.getElementIconAttributes(customIconOption);
         allIcons.push(iconAttributes);
       } else {
         const defaultIconAttributes =

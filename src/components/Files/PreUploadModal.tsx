@@ -200,11 +200,8 @@ export const PreUploadDialog = ({
     }
     let isFilesNamesSame = false;
     for (let i = 0; i < selectedFiles.length - 1; i++) {
-      for (let j = i + 1; j < files.length; j++) {
-        if (
-          selectedFiles[i].fileContent.name ===
-          selectedFiles[j].fileContent.name
-        ) {
+      for (let j = i + 1; j < selectedFiles.length; j++) {
+        if (selectedFiles[i].name === selectedFiles[j].name) {
           isFilesNamesSame = true;
           break;
         }

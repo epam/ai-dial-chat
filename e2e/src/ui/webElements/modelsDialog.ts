@@ -11,6 +11,8 @@ export class ModelsDialog extends BaseElement {
     super(page, ModelDialog.modelDialog);
   }
 
+  public searchInput = this.getChildElementBySelector(ModelDialog.searchInput);
+
   public group = (group: Groups) =>
     this.getChildElementBySelector(
       ModelDialog.talkToGroup,
@@ -18,6 +20,16 @@ export class ModelsDialog extends BaseElement {
 
   public groupEntity = this.getChildElementBySelector(ModelDialog.groupEntity);
   public closeButton = this.getChildElementBySelector(ModelDialog.closeDialog);
+  public noResultFoundIcon = this.getChildElementBySelector(
+    ChatSelectors.noResultFound,
+  );
+  public modelsTab = this.getChildElementBySelector(ModelDialog.modelsTab);
+  public assistantsTab = this.getChildElementBySelector(
+    ModelDialog.assistantsTab,
+  );
+  public applicationsTab = this.getChildElementBySelector(
+    ModelDialog.applicationsTab,
+  );
 
   public entityOptionByGroup = (group: Groups, option: string) =>
     this.group(group).locator(
@@ -101,9 +113,8 @@ export class ModelsDialog extends BaseElement {
       const entity = await this.groupEntity.getNthElement(i);
       const customIconEntity = await entity.locator(ChatSelectors.chatIcon);
       if (await customIconEntity.isVisible()) {
-        const iconAttributes = await this.getElementIconAttributes(
-          customIconEntity,
-        );
+        const iconAttributes =
+          await this.getElementIconAttributes(customIconEntity);
         allIcons.push(iconAttributes);
       } else {
         const defaultIconEntity = await entity.locator(

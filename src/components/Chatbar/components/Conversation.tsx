@@ -1,7 +1,9 @@
+import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { IconCheck, IconUserShare, IconX } from '@tabler/icons-react';
 import {
   DragEvent,
   KeyboardEvent,
+  MouseEvent,
   MouseEventHandler,
   useCallback,
   useEffect,
@@ -75,13 +77,22 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
-  const wrapperRef = useRef(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dragImageRef = useRef<HTMLImageElement | null>();
   const [isSharing, setIsSharing] = useState(false);
+  const [isContextMenu, setIsContextMenu] = useState(false);
   const { id: conversationId, isShared } = conversation;
   const showSharedIcon = isSharingEnabled && isShared && !isDeleting;
+  const isSelected = selectedConversationIds.includes(conversation.id);
+
+  const { refs, context } = useFloating({
+    open: isContextMenu,
+    onOpenChange: setIsContextMenu,
+  });
+
+  const dismiss = useDismiss(context);
+  const { getFloatingProps } = useInteractions([dismiss]);
 
   useEffect(() => {
     dragImageRef.current = document.createElement('img');
@@ -104,6 +115,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         );
         setRenameValue('');
         setIsRenaming(false);
+        setIsContextMenu(false);
       }
     },
     [dispatch, renameValue],
@@ -253,17 +265,24 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     [conversation.id, dispatch, t],
   );
 
+  const handleContextMenuOpen = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsContextMenu(true);
+  };
+
   return (
     <div
       className={classNames(
         'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-green/15',
-        selectedConversationIds.includes(conversation.id)
+        isSelected || isRenaming || isDeleting
           ? 'border-l-green bg-green/15'
           : 'border-l-transparent',
       )}
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
       }}
+      onContextMenu={handleContextMenuOpen}
       data-qa="conversation"
     >
       {isRenaming ? (
@@ -354,13 +373,12 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
       {!isDeleting && !isRenaming && !messageIsStreaming && (
         <div
+          ref={refs.setFloating}
+          {...getFloatingProps()}
           className={classNames(
-            'invisible absolute right-3 z-50 flex justify-end md:group-hover:visible',
-            selectedConversationIds.includes(conversation.id)
-              ? 'max-md:visible'
-              : '',
+            'absolute right-3 z-50 flex justify-end xl:group-hover:visible',
+            isSelected || isContextMenu ? 'visible' : 'invisible',
           )}
-          ref={wrapperRef}
           data-qa="dots-menu"
         >
           <ContextMenu
@@ -396,6 +414,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onReplay={!isPlayback ? handleStartReplay : undefined}
             onPlayback={handleCreatePlayback}
             onOpenShareModal={isSharingEnabled ? handleOpenSharing : undefined}
+            onOpenChange={setIsContextMenu}
+            isOpen={isContextMenu}
           />
         </div>
       )}

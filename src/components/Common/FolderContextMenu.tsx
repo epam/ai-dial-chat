@@ -15,13 +15,17 @@ interface FolderContextMenuProps {
   onDelete?: MouseEventHandler<unknown>;
   onRename?: MouseEventHandler<unknown>;
   onAddFolder?: MouseEventHandler;
+  onOpenChange?: (isOpen: boolean) => void;
   highlightColor: HighlightColor;
+  isOpen?: boolean;
 }
 export const FolderContextMenu = ({
   onDelete,
   onRename,
   onAddFolder,
+  onOpenChange,
   highlightColor,
+  isOpen,
 }: FolderContextMenuProps) => {
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -62,6 +66,8 @@ export const FolderContextMenu = ({
       translation="sidebar"
       highlightColor={highlightColor}
       className="m-0 justify-self-end"
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
     />
   );
 };

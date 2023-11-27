@@ -25,6 +25,7 @@ interface ContextMenuProps {
   highlightColor: HighlightColor;
   isEmptyConversation?: boolean;
   className?: string;
+  isOpen?: boolean;
   onOpenMoveToModal: () => void;
   onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
   onDelete: MouseEventHandler<unknown>;
@@ -34,6 +35,7 @@ interface ContextMenuProps {
   onCompare?: MouseEventHandler<unknown>;
   onPlayback?: MouseEventHandler<HTMLButtonElement>;
   onOpenShareModal?: MouseEventHandler<HTMLButtonElement>;
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
 export const ContextMenu = ({
@@ -42,6 +44,7 @@ export const ContextMenu = ({
   className,
   highlightColor,
   folders,
+  isOpen,
   onDelete,
   onRename,
   onExport,
@@ -51,6 +54,7 @@ export const ContextMenu = ({
   onMoveToFolder,
   onOpenMoveToModal,
   onOpenShareModal,
+  onOpenChange,
 }: ContextMenuProps) => {
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -159,6 +163,8 @@ export const ContextMenu = ({
       translation="sidebar"
       highlightColor={highlightColor}
       className={className}
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
     />
   );
 };

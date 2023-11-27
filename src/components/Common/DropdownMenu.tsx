@@ -51,7 +51,7 @@ const MenuContext = createContext<{
   activeIndex: number | null;
   setActiveIndex: Dispatch<SetStateAction<number | null>>;
   setHasFocusInside: Dispatch<SetStateAction<boolean>>;
-  isOpen: boolean;
+  isOpen: boolean | undefined;
 }>({
   getItemProps: () => ({}),
   activeIndex: null,
@@ -65,6 +65,7 @@ interface MenuProps {
   nested?: boolean;
   children?: ReactNode;
   type?: 'dropdown' | 'contextMenu';
+  isMenuOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
 }
 
@@ -79,12 +80,13 @@ export const MenuComponent = forwardRef<
     label,
     trigger,
     type = 'dropdown',
+    isMenuOpen,
     onOpenChange,
     ...props
   },
   forwardedRef,
 ) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(isMenuOpen);
   const [hasFocusInside, setHasFocusInside] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [floatingWidth, setFloatingWidth] = useState(0);
@@ -99,6 +101,10 @@ export const MenuComponent = forwardRef<
   const item = useListItem();
 
   const isNested = parentId != null;
+
+  useEffect(() => {
+    setIsOpen(isMenuOpen);
+  }, [isMenuOpen]);
 
   const { floatingStyles, refs, context } = useFloating<HTMLButtonElement>({
     nodeId,
