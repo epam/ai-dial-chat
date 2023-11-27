@@ -1,4 +1,8 @@
-import { ChatBarSelectors, SideBarSelectors } from '../selectors';
+import {
+  ChatBarSelectors,
+  ChatSelectors,
+  SideBarSelectors,
+} from '../selectors';
 import { BaseElement } from './baseElement';
 import { Conversations } from './conversations';
 
@@ -18,6 +22,10 @@ export class ChatBar extends BaseElement {
   public newConversationButton = new BaseElement(
     this.page,
     ChatBarSelectors.newConversationButton,
+  );
+  public searchChat = this.getElementByPlaceholder('Search chat...');
+  public noResultFoundIcon = this.getChildElementBySelector(
+    ChatSelectors.noResultFound,
   );
   public newFolderButton = new BaseElement(
     this.page,

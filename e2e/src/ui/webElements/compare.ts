@@ -67,7 +67,7 @@ export class Compare extends BaseElement {
     );
   }
 
-  public async gerChatMessagesCount() {
+  public async getChatMessagesCount() {
     return this.getChatMessages().getElementsCount();
   }
 

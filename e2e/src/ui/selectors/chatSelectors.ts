@@ -69,4 +69,5 @@ export const ChatSelectors = {
   replayAsIs: '[data-qa="replay-as-is"]',
   replayAsIsLabel: '[data-qa="info-as-is"]',
   iconAnimation: '.animate-bounce',
+  noResultFound: '[data-qa="no-data"]',
 };
