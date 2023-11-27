@@ -538,7 +538,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             {allFolders.map((item, index, arr) => {
               if (item.folderId === currentFolder.id) {
                 return (
-                  <Fragment key={index}>
+                  <Fragment key={item.id}>
                     {onDropBetweenFolders && (
                       <BetweenFoldersLine
                         level={level + 1}
@@ -587,8 +587,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             })}
           </div>
           {itemComponent &&
-            filteredChildItems.map((item, index) => (
-              <div key={index}>
+            filteredChildItems.map((item) => (
+              <div key={item.id}>
                 {createElement(itemComponent, {
                   item,
                   level: level + 1,

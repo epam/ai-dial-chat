@@ -154,7 +154,7 @@ export const ChatFolders = () => {
         if (!folder.folderId) {
           return (
             <ChatFolderTemplate
-              key={index}
+              key={folder.id}
               folder={folder}
               index={index}
               isLast={index === arr.length - 1}

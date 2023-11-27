@@ -139,7 +139,7 @@ export const VariableModal: FC<Props> = ({
         </button>
 
         {updatedVariables.map((variable, index) => (
-          <div className="mb-4" key={index}>
+          <div className="mb-4" key={variable.key}>
             <div className="mb-1 flex text-xs text-gray-500">
               {variable.key}
               <span className="ml-1 inline text-blue-500">*</span>
