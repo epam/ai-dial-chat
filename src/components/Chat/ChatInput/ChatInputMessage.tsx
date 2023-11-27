@@ -40,6 +40,8 @@ interface Props {
   onSend: (message: Message) => void;
 }
 
+const MAX_HEIGHT = 320;
+
 export const ChatInputMessage = ({
   textareaRef,
   showScrollDownButton,
@@ -283,7 +285,7 @@ export const ChatInputMessage = ({
       const scrollHeight = textareaRef.current.scrollHeight; // then check scroll height
       textareaRef.current.style.height = `${scrollHeight}px`;
       textareaRef.current.style.overflow = `${
-        scrollHeight > 400 ? 'auto' : 'hidden'
+        scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden'
       }`;
     }
   }, [content, textareaRef]);
@@ -297,17 +299,10 @@ export const ChatInputMessage = ({
         <textarea
           ref={textareaRef}
           className={classNames(
-            'm-0 max-h-[320px] min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none placeholder:text-gray-500',
+            'm-0 min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none placeholder:text-gray-500',
             displayAttachFunctionality ? 'pl-12' : 'pl-4',
           )}
-          style={{
-            bottom: `${textareaRef?.current?.scrollHeight}px`,
-            overflow: `${
-              textareaRef.current && textareaRef.current.scrollHeight > 400
-                ? 'auto'
-                : 'hidden'
-            }`,
-          }}
+          style={{ maxHeight: `${MAX_HEIGHT}px` }}
           placeholder={
             isIframe
               ? t('Type a message') || ''

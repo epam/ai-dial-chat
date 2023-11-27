@@ -23,6 +23,8 @@ interface Props {
   onChangePrompt: (prompt: string) => void;
 }
 
+const MAX_HEIGHT = 300;
+
 export const SystemPrompt: FC<Props> = ({
   prompts,
   maxLength,
@@ -218,9 +220,9 @@ export const SystemPrompt: FC<Props> = ({
         style={{
           resize: 'none',
           bottom: `${textareaRef?.current?.scrollHeight}px`,
-          maxHeight: '300px',
+          maxHeight: `${MAX_HEIGHT}px`,
           overflow: `${
-            textareaRef.current && textareaRef.current.scrollHeight > 400
+            textareaRef.current && textareaRef.current.scrollHeight > MAX_HEIGHT
               ? 'auto'
               : 'hidden'
           }`,
