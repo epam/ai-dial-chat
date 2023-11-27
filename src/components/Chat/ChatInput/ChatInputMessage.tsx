@@ -73,7 +73,7 @@ export const ChatInputMessage = ({
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-  const files = useAppSelector(FilesSelectors.selectSelectedFiles);
+  const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
   const maximumAttachmentsAmount = useAppSelector(
     ConversationsSelectors.selectMaximumAttachmentsAmount,
   );
@@ -142,7 +142,7 @@ export const ChatInputMessage = ({
     onSend({
       role: Role.User,
       content,
-      ...getUserCustomContent(files),
+      ...getUserCustomContent(selectedFiles),
     });
     dispatch(FilesActions.resetSelectedFiles());
     setContent('');
@@ -150,7 +150,15 @@ export const ChatInputMessage = ({
     if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
       textareaRef.current.blur();
     }
-  }, [content, dispatch, files, messageIsStreaming, onSend, t, textareaRef]);
+  }, [
+    content,
+    dispatch,
+    selectedFiles,
+    messageIsStreaming,
+    onSend,
+    t,
+    textareaRef,
+  ]);
 
   const parseVariables = useCallback((content: string) => {
     const regex = /{{(.*?)}}/g;
@@ -323,7 +331,10 @@ export const ChatInputMessage = ({
 
         <SendMessageButton
           handleSend={handleSend}
-          isInputEmpty={!content || content.trim().length === 0}
+          isInputEmpty={
+            (!content || content.trim().length === 0) &&
+            selectedFiles.length === 0
+          }
         />
 
         {displayAttachFunctionality && (
