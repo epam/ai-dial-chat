@@ -9,7 +9,7 @@ import { MouseEventHandler, useMemo } from 'react';
 import { HighlightColor } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 
-import BaseContextMenu from './BaseContextMenu';
+import ContextMenu from './ContextMenu';
 
 interface FolderContextMenuProps {
   onDelete?: MouseEventHandler<unknown>;
@@ -59,7 +59,7 @@ export const FolderContextMenu = ({
   }
 
   return (
-    <BaseContextMenu
+    <ContextMenu
       menuItems={menuItems}
       ContextMenuIcon={IconDots}
       contextMenuIconSize={18}

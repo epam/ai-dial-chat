@@ -7,7 +7,7 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 
 import { stopBubbling } from '@/src/constants/chat';
 
-import BaseContextMenu from '../Common/BaseContextMenu';
+import ContextMenu from '../Common/ContextMenu';
 
 interface ContextMenuProps {
   file: DialFile;
@@ -40,7 +40,7 @@ export function FileItemContextMenu({
   );
 
   return (
-    <BaseContextMenu
+    <ContextMenu
       menuItems={menuItems}
       ContextMenuIcon={IconDots}
       contextMenuIconSize={18}

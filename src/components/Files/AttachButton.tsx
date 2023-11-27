@@ -15,7 +15,7 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import BaseContextMenu from '../Common/BaseContextMenu';
+import ContextMenu from '../Common/ContextMenu';
 import { FileManagerModal } from './FileManagerModal';
 import { PreUploadDialog } from './PreUploadModal';
 
@@ -75,7 +75,7 @@ export const AttachButton = ({
 
   return (
     <>
-      <BaseContextMenu
+      <ContextMenu
         menuItems={menuItems}
         ContextMenuIcon={IconPaperclip}
         contextMenuIconSize={24}

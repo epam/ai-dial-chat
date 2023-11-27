@@ -7,15 +7,12 @@ import classNames from 'classnames';
 
 import { getByHighlightColor } from '@/src/utils/app/folders';
 
-import {
-  BaseContextMenuProps,
-  BaseMenuItemRendererProps,
-} from '@/src/types/menu';
+import { ContextMenuProps, MenuItemRendererProps } from '@/src/types/menu';
 
 import { Menu, MenuItem } from './DropdownMenu';
 import { Tooltip, TooltipContent, TooltipTrigger } from './Tooltip';
 
-function BaseContextMenuItemRenderer({
+function ContextMenuItemRenderer({
   name,
   Icon,
   dataQa,
@@ -25,7 +22,7 @@ function BaseContextMenuItemRenderer({
   translation,
   className,
   menuItems,
-}: BaseMenuItemRendererProps) {
+}: MenuItemRendererProps) {
   const { t } = useTranslation(translation);
   const item = (
     <div
@@ -48,7 +45,7 @@ function BaseContextMenuItemRenderer({
   );
   if (menuItems) {
     return (
-      <BaseContextMenu
+      <ContextMenu
         menuItems={menuItems}
         highlightColor={highlightColor}
         translation={translation}
@@ -85,7 +82,7 @@ function BaseContextMenuItemRenderer({
   );
 }
 
-export default function BaseContextMenu({
+export default function ContextMenu({
   menuItems,
   highlightColor,
   ContextMenuIcon = IconDotsVertical,
@@ -99,7 +96,7 @@ export default function BaseContextMenu({
   disabled,
   isOpen,
   onOpenChange,
-}: BaseContextMenuProps) {
+}: ContextMenuProps) {
   const { t } = useTranslation(translation);
   const displayedMenuItems = useMemo(
     () =>
@@ -159,10 +156,10 @@ export default function BaseContextMenu({
             {...props}
             highlightColor={highlightColor}
             translation={translation}
-            Renderer={BaseContextMenuItemRenderer}
+            Renderer={ContextMenuItemRenderer}
           />
         ) : (
-          <BaseContextMenuItemRenderer
+          <ContextMenuItemRenderer
             {...props}
             translation={translation}
             highlightColor={highlightColor}

@@ -6,7 +6,7 @@ import classNames from 'classnames';
 
 import { getByHighlightColor } from '@/src/utils/app/folders';
 
-import { BaseMenuItemRendererProps, BaseMenuProps } from '@/src/types/menu';
+import { MenuItemRendererProps, MenuProps } from '@/src/types/menu';
 
 import {
   Tooltip,
@@ -14,9 +14,9 @@ import {
   TooltipTrigger,
 } from '@/src/components/Common/Tooltip';
 
-import BaseContextMenu from './BaseContextMenu';
+import ContextMenu from './ContextMenu';
 
-export function SidebarMenuItemRenderer(props: BaseMenuItemRendererProps) {
+export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
   const {
     Icon,
     dataQa,
@@ -49,7 +49,7 @@ export function SidebarMenuItemRenderer(props: BaseMenuItemRendererProps) {
 
   if (menuItems) {
     return (
-      <BaseContextMenu
+      <ContextMenu
         menuItems={menuItems}
         highlightColor={highlightColor}
         translation={translation}
@@ -67,7 +67,7 @@ export default function SidebarMenu({
   translation = 'chatbar',
   isOpen,
   onOpenChange,
-}: BaseMenuProps) {
+}: MenuProps) {
   const { t } = useTranslation(translation);
   const [visibleItems, hiddenItems] = useMemo(() => {
     const displayedItems = menuItems.filter(
@@ -104,7 +104,7 @@ export default function SidebarMenu({
         );
       })}
 
-      <BaseContextMenu
+      <ContextMenu
         menuItems={hiddenItems}
         highlightColor={highlightColor}
         translation={translation}

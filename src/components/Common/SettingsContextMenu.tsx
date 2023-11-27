@@ -17,7 +17,7 @@ import { FeatureType, HighlightColor } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 
-import BaseContextMenu from './BaseContextMenu';
+import ContextMenu from './ContextMenu';
 
 interface SettingsContextMenuProps {
   folders: FolderInterface[];
@@ -156,7 +156,7 @@ export default function SettingsContextMenu({
   );
 
   return (
-    <BaseContextMenu
+    <ContextMenu
       menuItems={menuItems}
       ContextMenuIcon={IconDots}
       contextMenuIconSize={18}
