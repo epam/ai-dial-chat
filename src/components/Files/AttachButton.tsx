@@ -3,20 +3,19 @@ import {
   IconPaperclip,
   IconUpload,
 } from '@tabler/icons-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
+import { HighlightColor } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { DisplayMenuItemProps } from '@/src/types/menu';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-
-import { Menu, MenuItem } from '../Common/DropdownMenu';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
+import BaseContextMenu from '../Common/BaseContextMenu';
 import { FileManagerModal } from './FileManagerModal';
 import { PreUploadDialog } from './PreUploadModal';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   selectedFilesIds?: string[];
@@ -54,47 +53,36 @@ export const AttachButton = ({
     setIsPreUploadDialogOpened(true);
   }, []);
 
+  const menuItems: DisplayMenuItemProps[] = useMemo(
+    () => [
+      {
+        name: 'Attach uploaded files',
+        dataQa: 'attach_uploaded',
+        Icon: IconFileDescription,
+        onClick: handleOpenAttachmentsModal,
+      },
+      {
+        name: 'Upload from device',
+        dataQa: 'upload_from_device',
+        Icon: IconUpload,
+        onClick: handleAttachFromComputer,
+      },
+    ],
+    [handleAttachFromComputer, handleOpenAttachmentsModal],
+  );
+
   return (
     <>
-      <Menu
-        type="contextMenu"
+      <BaseContextMenu
+        menuItems={menuItems}
+        ContextMenuIcon={IconPaperclip}
+        contextMenuIconSize={24}
+        contextMenuTooltip={t("Attach files") || ''}
+        translation="chat"
+        highlightColor={HighlightColor.Blue}
         disabled={messageIsStreaming || isModelsLoading}
-        trigger={
-          <Tooltip isTriggerClickable={true}>
-            <TooltipTrigger>
-              <IconPaperclip
-                className="text-gray-500 hover:text-blue-500"
-                size={24}
-              />
-            </TooltipTrigger>
-            <TooltipContent>{t('Attach files')}</TooltipContent>
-          </Tooltip>
-        }
-      >
-        <MenuItem
-          className="hover:bg-blue-500/20"
-          item={
-            <div className="flex items-center gap-3">
-              <IconFileDescription
-                className="shrink-0 text-gray-500"
-                size={18}
-              />
-              <span>{t('Attach uploaded files')}</span>
-            </div>
-          }
-          onClick={handleOpenAttachmentsModal}
-        />
-        <MenuItem
-          className="hover:bg-blue-500/20"
-          item={
-            <div className="flex items-center gap-3">
-              <IconUpload className="shrink-0 text-gray-500" size={18} />
-              <span>{t('Upload from device')}</span>
-            </div>
-          }
-          onClick={handleAttachFromComputer}
-        />
-      </Menu>
+        contextMenuIconHighlight
+      />
       {isSelectFilesDialogOpened && (
         <FileManagerModal
           isOpen
