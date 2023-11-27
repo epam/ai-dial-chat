@@ -41,7 +41,7 @@ export const ChatbarSettingsContextMenu = () => {
       >
         {displayAttachmentFunctionality && (
           <MenuItem
-            className="hover:bg-blue-500/20"
+            className="hover:bg-green/15"
             item={
               <div className="flex items-center gap-3">
                 <IconPaperclip className="shrink-0 text-gray-500" size={18} />

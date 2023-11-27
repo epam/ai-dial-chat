@@ -32,7 +32,7 @@ interface Props {
 
 const cancelAllowedStatuses = new Set(['UPLOADING', 'FAILED']);
 
-export const FileItem = ({ item, level, onEvent }: Props) => {
+export const FileItem = ({ item, level = 0, onEvent }: Props) => {
   const selectedFilesIds = useAppSelector(
     FilesSelectors.selectSelectedFilesIds,
   );
@@ -60,7 +60,7 @@ export const FileItem = ({ item, level, onEvent }: Props) => {
     <div
       className="group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-blue-500/20"
       style={{
-        paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
+        paddingLeft: `${1.005 + level * 1.5}rem`,
       }}
     >
       <div className="flex items-center gap-2 overflow-hidden">
