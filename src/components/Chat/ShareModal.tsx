@@ -140,7 +140,7 @@ export default function ShareModal({
                   type="text"
                   readOnly
                   className="w-full gap-2 truncate rounded border border-gray-400 bg-gray-100 p-3 pr-10 outline-none dark:border-gray-600 dark:bg-gray-700"
-                  onCopy={handleCopy}
+                  onCopyCapture={handleCopy}
                   value={url}
                 />
                 <div className="absolute right-3 top-3">
