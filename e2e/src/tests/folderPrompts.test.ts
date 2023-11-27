@@ -5,6 +5,7 @@ import test from '@/e2e/src/core/fixtures';
 import {
   ExpectedConstants,
   ExpectedMessages,
+  FolderPrompt,
   MenuOptions,
 } from '@/e2e/src/testData';
 import { GeneratorUtil } from '@/e2e/src/utils';
@@ -452,5 +453,56 @@ test('Delete nested prompt folder with prompt', async ({
         )
         .toBeTruthy();
     }
+  });
+});
+
+test('Search prompt located in folders', async ({
+  dialHomePage,
+  localStorageManager,
+  promptData,
+  promptBar,
+  folderPrompts,
+  setTestIds,
+  setIssueIds,
+}) => {
+  setTestIds('EPMRTC-1174');
+  setIssueIds('175');
+  let firstFolderPrompt: FolderPrompt;
+  let secondFolderPrompts: FolderPrompt;
+
+  const promptContent = 'Prompt search test';
+  const searchTerm = 'test';
+
+  await test.step('Prepare prompts in folders with different content', async () => {
+    firstFolderPrompt = promptData.prepareDefaultPromptInFolder();
+    firstFolderPrompt.prompts[0].name = promptContent;
+    promptData.resetData();
+
+    secondFolderPrompts = promptData.preparePromptsInFolder(3);
+    secondFolderPrompts.prompts[0].description = promptContent;
+    secondFolderPrompts.prompts[1].content = promptContent;
+
+    await localStorageManager.setFolders(
+      firstFolderPrompt.folders,
+      secondFolderPrompts.folders,
+    );
+    await localStorageManager.setPrompts(
+      ...firstFolderPrompt.prompts,
+      ...secondFolderPrompts.prompts,
+    );
+  });
+
+  await test.step('Type search term in the field and verify all prompts displayed', async () => {
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await promptBar.searchPrompt.fill(searchTerm);
+    const resultCount = await folderPrompts.getFolderPromptsCount();
+    expect.soft(resultCount, ExpectedMessages.searchResultCountIsValid).toBe(3);
+  });
+
+  await test.step('Clear search field and verify all prompts displayed', async () => {
+    await promptBar.searchPrompt.fill('');
+    const resultCount = await folderPrompts.getFolderPromptsCount();
+    expect.soft(resultCount, ExpectedMessages.searchResultCountIsValid).toBe(4);
   });
 });

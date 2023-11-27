@@ -12,7 +12,7 @@ export class ChatHeader extends BaseElement {
     super(page, '', elementLocator);
   }
 
-  public chatTitle = new BaseElement(this.page, ChatSelectors.chatTitle);
+  public chatTitle = this.getChildElementBySelector(ChatSelectors.chatTitle);
   public icons = this.getChildElementBySelector(ChatSelectors.chatIcon);
   public chatModel = this.getChildElementBySelector(ChatSelectors.chatModel);
   public removeConversationFromComparison = this.getChildElementBySelector(

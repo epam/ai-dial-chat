@@ -49,13 +49,6 @@ export class ChatMessages extends BaseElement {
     }
   }
 
-  public async waitForOneCompareConversationResponseReceived() {
-    const loadingCursorCount = await this.loadingCursor.getElementsCount();
-    if (loadingCursorCount === 2) {
-      await this.waitForOneCompareConversationResponseReceived();
-    }
-  }
-
   public async isResponseLoading() {
     const loadingCursorCount = await this.loadingCursor.getElementsCount();
     return loadingCursorCount > 0;
@@ -93,6 +86,17 @@ export class ChatMessages extends BaseElement {
       width: Number(iconBounding!.width.toFixed(2)),
       height: Number(iconBounding!.height.toFixed(2)),
     };
+  }
+
+  public async waitForCompareMessageJumpingIconDisappears(
+    comparedMessageSide: Side,
+  ) {
+    const compareRowMessage =
+      await this.getCompareRowMessage(comparedMessageSide);
+    await compareRowMessage
+      .locator(ChatSelectors.iconAnimation)
+      .locator(ChatSelectors.chatIcon)
+      .waitFor({ state: 'detached' });
   }
 
   public async getMessageJumpingIcon(index?: number) {

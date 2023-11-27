@@ -8,15 +8,20 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
+  ModelIds,
 } from '@/e2e/src/testData';
 import { Colors } from '@/e2e/src/ui/domData';
 import { GeneratorUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
 let gpt35Model: OpenAIEntityModel;
+let gpt4Model: OpenAIEntityModel;
+let bisonModel: OpenAIEntityModel;
 
 test.beforeAll(async () => {
   gpt35Model = ModelsUtil.getDefaultModel()!;
+  gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
+  bisonModel = ModelsUtil.getModel(ModelIds.BISON_001)!;
 });
 
 test(
@@ -371,11 +376,8 @@ test(
     await chat.regenerateResponse();
     let todayConversations = await conversations.getTodayConversations();
     expect
-      .soft(
-        todayConversations.includes(yesterdayConversation.name),
-        ExpectedMessages.conversationOfToday,
-      )
-      .toBeTruthy();
+      .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
+      .toBe(1);
 
     const messageToEdit = lastWeekConversation.messages[0].content;
     await conversations.selectConversation(lastWeekConversation.name);
@@ -383,11 +385,8 @@ test(
     await chatMessages.editMessage('updated message');
     todayConversations = await conversations.getTodayConversations();
     expect
-      .soft(
-        todayConversations.includes(lastWeekConversation.name),
-        ExpectedMessages.conversationOfToday,
-      )
-      .toBeTruthy();
+      .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
+      .toBe(2);
 
     await conversations.selectConversation(lastMonthConversation.name);
     await chat.sendRequestWithButton('one more test message');
@@ -782,6 +781,87 @@ test('Chat sorting. Sections can be collapsed and expanded', async ({
         chronologyConversations.length,
         ExpectedMessages.chronologyMessageCountIsCorrect,
       )
+      .toBe(1);
+  });
+});
+
+test('Search conversation when no folders', async ({
+  dialHomePage,
+  conversations,
+  conversationData,
+  localStorageManager,
+  chatBar,
+  setTestIds,
+}) => {
+  setTestIds('EPMRTC-1188');
+  const request = 'What is epam official name?';
+  const notMatchingSearchTerm = 'abc';
+  const firstSearchTerm = 'EPAM';
+  const secondSearchTerm = 'epam official';
+  const specialSymbolsSearchTerm = '@';
+
+  await test.step('Prepare conversations with different content', async () => {
+    const firstConversation =
+      conversationData.prepareModelConversationBasedOnRequests(gpt35Model, [
+        request,
+      ]);
+    conversationData.resetData();
+
+    const secondConversation =
+      conversationData.prepareModelConversationBasedOnRequests(
+        gpt4Model,
+        ['What is AI?'],
+        'epam official name',
+      );
+    conversationData.resetData();
+
+    const thirdConversation =
+      conversationData.prepareModelConversationBasedOnRequests(
+        bisonModel,
+        [request],
+        'Chat_!@#$%^&*()+=\':",.<>',
+      );
+
+    await localStorageManager.setConversationHistory(
+      firstConversation,
+      secondConversation,
+      thirdConversation,
+    );
+  });
+
+  await test.step('Type not matching search term is "Search chat..." field and verify no results found', async () => {
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await chatBar.searchChat.fill(notMatchingSearchTerm);
+    const noResult = await chatBar.noResultFoundIcon.getElementInnerContent();
+    expect
+      .soft(noResult, ExpectedMessages.noResultsFound)
+      .toBe(ExpectedConstants.noResults);
+  });
+
+  await test.step('Clear search field and verify all conversations are displayed', async () => {
+    await chatBar.searchChat.fill('');
+    const results = await conversations.getTodayConversations();
+    expect
+      .soft(results.length, ExpectedMessages.searchResultCountIsValid)
+      .toBe(4);
+  });
+
+  await test.step('Search by first term and verify search results are correct', async () => {
+    for (const term of [firstSearchTerm, secondSearchTerm]) {
+      await chatBar.searchChat.fill(term);
+      const results = await conversations.getTodayConversations();
+      expect
+        .soft(results.length, ExpectedMessages.searchResultCountIsValid)
+        .toBe(3);
+    }
+  });
+
+  await test.step('Search by special symbol and verify search results are correct', async () => {
+    await chatBar.searchChat.fill(specialSymbolsSearchTerm);
+    const results = await conversations.getTodayConversations();
+    expect
+      .soft(results.length, ExpectedMessages.searchResultCountIsValid)
       .toBe(1);
   });
 });

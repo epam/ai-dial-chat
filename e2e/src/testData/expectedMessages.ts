@@ -156,4 +156,6 @@ export enum ExpectedMessages {
   playbackMessageIsInViewport = 'Playback message is in viewport',
   playbackNextMessageIsScrollable = 'Playback next message is scrollable',
   playbackNextMessageIsHidden = 'Playback next message is hidden',
+  searchResultCountIsValid = 'Search results count is valid',
+  noResultsFound = 'No results found is displayed',
 }
