@@ -54,7 +54,6 @@ export function SidebarMenuItemRenderer(props: BaseMenuItemRendererProps) {
         highlightColor={highlightColor}
         translation={translation}
         CustomMenuRenderer={item}
-        className="p-0"
       />
     );
   }
@@ -107,6 +106,7 @@ export default function SidebarMenu({
         menuItems={hiddenItems}
         highlightColor={highlightColor}
         translation={translation}
+        className='p-[5px]'
       />
     </div>
   );

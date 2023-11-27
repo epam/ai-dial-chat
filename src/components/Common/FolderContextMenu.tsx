@@ -58,10 +58,10 @@ export const FolderContextMenu = ({
     <BaseContextMenu
       menuItems={menuItems}
       ContextMenuIcon={IconDots}
-      contextMenuIconSize={16}
+      contextMenuIconSize={18}
       translation="sidebar"
       highlightColor={highlightColor}
-      className="m-0 justify-self-end p-0"
+      className="m-0 justify-self-end"
     />
   );
 };

@@ -43,7 +43,7 @@ export function FileItemContextMenu({
     <BaseContextMenu
       menuItems={menuItems}
       ContextMenuIcon={IconDots}
-      contextMenuIconSize={16}
+      contextMenuIconSize={18}
       translation="sidebar"
       highlightColor={HighlightColor.Blue}
       className={className}

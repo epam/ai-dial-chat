@@ -135,7 +135,7 @@ export default function BaseContextMenu({
                 'hover:text-violet',
                 'hover:text-blue-500',
               ),
-            className || 'p-[5px]',
+            className,
           )}
         >
           {contextMenuTooltip ? (

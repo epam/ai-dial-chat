@@ -111,7 +111,6 @@ export const AttachButton = () => {
           highlightColor={HighlightColor.Blue}
           disabled={messageIsStreaming || isModelsLoading}
           contextMenuIconHighlight
-          className="p-0"
         />
       </div>
       {isSelectFilesDialogOpened && (

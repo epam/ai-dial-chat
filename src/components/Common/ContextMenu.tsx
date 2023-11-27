@@ -158,7 +158,7 @@ export const ContextMenu = ({
       contextMenuIconSize={18}
       translation="sidebar"
       highlightColor={highlightColor}
-      className={classNames(className, 'p-0')}
+      className={className}
     />
   );
 };
