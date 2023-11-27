@@ -1,20 +1,33 @@
-import { FilesSelectors } from '@/src/store/files/files.reducers';
-import { useAppSelector } from '@/src/store/hooks';
+import { DialFile } from '@/src/types/files';
 
 import { ChatInputAttachment } from './ChatInputAttachment';
 
-export const ChatInputAttachments = () => {
-  const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
+interface Props {
+  files: Pick<DialFile, 'name' | 'id' | 'status' | 'percent'>[];
 
-  if (!selectedFiles.length) {
+  onUnselectFile: (fileId: string) => void;
+  onRetryFile: (fileId: string) => void;
+}
+
+export const ChatInputAttachments = ({
+  files,
+  onUnselectFile,
+  onRetryFile,
+}: Props) => {
+  if (!files.length) {
     return null;
   }
 
   return (
-    <div className="mb-2.5 grid max-h-[100px] grid-cols-3 gap-1 overflow-auto px-12">
-      {selectedFiles.map((file) => (
-        <ChatInputAttachment key={file.id} file={file} />
+    <>
+      {files.map((file) => (
+        <ChatInputAttachment
+          key={file.id}
+          file={file}
+          onUnselectFile={onUnselectFile}
+          onRetryFile={onRetryFile}
+        />
       ))}
-    </div>
+    </>
   );
 };

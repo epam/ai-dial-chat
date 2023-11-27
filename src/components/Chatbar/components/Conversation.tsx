@@ -316,7 +316,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             'group flex h-full w-full cursor-pointer items-center gap-2 transition-colors duration-200',
             messageIsStreaming && 'disabled:cursor-not-allowed',
             isDeleting ? 'pr-12' : 'group-hover:pr-6',
-            isSelected && 'pr-0'
+            isSelected && 'pr-0',
           )}
           onClick={() => {
             setIsDeleting(false);
@@ -379,7 +379,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           className={classNames(
             'absolute right-3 z-50 flex justify-end group-hover:visible',
             isContextMenu ? 'visible' : 'invisible',
-            isSelected && 'hiver:visible'
           )}
           data-qa="dots-menu"
         >

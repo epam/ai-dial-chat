@@ -13,6 +13,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -21,10 +22,17 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import {
+  getDialFilesFromAttachments,
+  getUserCustomContent,
+} from '@/src/utils/app/file';
+
 import { Conversation, Message, Role } from '@/src/types/chat';
+import { DialFile } from '@/src/types/files';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
-import { useAppSelector } from '@/src/store/hooks';
+import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
@@ -33,7 +41,9 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { ErrorMessage } from '../Common/ErrorMessage';
+import { AttachButton } from '../Files/AttachButton';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
+import { ChatInputAttachments } from './ChatInput/ChatInputAttachments';
 import { MessageAttachments } from './MessageAttachments';
 import { MessageStages } from './MessageStages';
 
@@ -80,13 +90,11 @@ export const ChatMessage: FC<Props> = memo(
     onDelete,
   }) => {
     const { t } = useTranslation('chat');
+    const dispatch = useAppDispatch();
 
     const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-
     const theme = useAppSelector(UISelectors.selectThemeState);
-
     const codeWarning = useAppSelector(SettingsSelectors.selectCodeWarning);
-
     const isPlayback = useAppSelector(
       ConversationsSelectors.selectIsPlaybackSelectedConversations,
     );
@@ -111,6 +119,39 @@ export const ChatMessage: FC<Props> = memo(
     const codeRegEx =
       /(?:(?:^|\n)[ \t]*`{3}[\s\S]*?(?:^|\n)[ \t]*`{3}|(?:^|\n)(?: {4}|\t)[^\n]*)/g;
     const codeDetection = (content: string) => content.match(codeRegEx);
+
+    const mappedUserEditableAttachments = useMemo(() => {
+      return getDialFilesFromAttachments(message.custom_content?.attachments);
+    }, [message.custom_content?.attachments]);
+    const mappedUserEditableAttachmentsIds = useMemo(() => {
+      return mappedUserEditableAttachments.map(({ id }) => id);
+    }, [mappedUserEditableAttachments]);
+
+    const files = useAppSelector(FilesSelectors.selectFiles);
+
+    const [newEditableAttachmentsIds, setNewEditableAttachmentsIds] = useState<
+      string[]
+    >(mappedUserEditableAttachmentsIds);
+    const newEditableAttachments = useMemo(() => {
+      const newIds = newEditableAttachmentsIds.filter(
+        (id) => !mappedUserEditableAttachmentsIds.includes(id),
+      );
+      const newFiles = newIds
+        .map((id) => files.find((file) => file.id === id))
+        .filter(Boolean) as DialFile[];
+      return mappedUserEditableAttachments
+        .filter(({ id }) => newEditableAttachmentsIds.includes(id))
+        .concat(newFiles);
+    }, [
+      files,
+      mappedUserEditableAttachments,
+      mappedUserEditableAttachmentsIds,
+      newEditableAttachmentsIds,
+    ]);
+
+    useEffect(() => {
+      setNewEditableAttachmentsIds(mappedUserEditableAttachmentsIds);
+    }, [mappedUserEditableAttachmentsIds]);
 
     const toggleEditing = useCallback(() => {
       setIsEditing((val) => !val);
@@ -137,13 +178,36 @@ export const ChatMessage: FC<Props> = memo(
     );
 
     const handleEditMessage = useCallback(() => {
-      if (message.content != messageContent) {
+      const isFinalAttachmentIdsSame =
+        newEditableAttachmentsIds.length ===
+          mappedUserEditableAttachmentsIds.length &&
+        newEditableAttachmentsIds.every((id) =>
+          mappedUserEditableAttachmentsIds.includes(id),
+        );
+
+      if (message.content != messageContent || !isFinalAttachmentIdsSame) {
         if (conversation && onEdit) {
-          onEdit({ ...message, content: messageContent }, messageIndex);
+          onEdit(
+            {
+              ...message,
+              content: messageContent,
+              ...getUserCustomContent(newEditableAttachments),
+            },
+            messageIndex,
+          );
         }
       }
       setIsEditing(false);
-    }, [conversation, message, messageContent, onEdit, messageIndex]);
+    }, [
+      newEditableAttachmentsIds,
+      mappedUserEditableAttachmentsIds,
+      message,
+      messageContent,
+      conversation,
+      onEdit,
+      newEditableAttachments,
+      messageIndex,
+    ]);
 
     const handleDeleteMessage = useCallback(() => {
       onDelete();
@@ -166,6 +230,47 @@ export const ChatMessage: FC<Props> = memo(
         }, 2000);
       });
     };
+
+    const handleUnselectFile = useCallback((fileId: string) => {
+      setNewEditableAttachmentsIds((ids) => ids.filter((id) => id !== fileId));
+    }, []);
+    const handleRetry = useCallback(
+      (fileId: string) => {
+        return () => dispatch(FilesActions.reuploadFile({ fileId }));
+      },
+      [dispatch],
+    );
+    const handleSelectAlreadyUploaded = useCallback((result: unknown) => {
+      if (typeof result === 'object') {
+        const selectedFilesIds = result as string[];
+        const uniqueFilesIds = Array.from(new Set(selectedFilesIds));
+        setNewEditableAttachmentsIds(uniqueFilesIds);
+      }
+    }, []);
+    const handleUploadFromDevice = useCallback(
+      (
+        selectedFiles: Required<
+          Pick<DialFile, 'fileContent' | 'id' | 'name'>
+        >[],
+        folderPath: string | undefined,
+      ) => {
+        selectedFiles.forEach((file) => {
+          dispatch(
+            FilesActions.uploadFile({
+              fileContent: file.fileContent,
+              id: file.id,
+              relativePath: folderPath,
+              name: file.name,
+            }),
+          );
+        });
+
+        setNewEditableAttachmentsIds((ids) =>
+          Array.from(new Set(ids.concat(selectedFiles.map(({ id }) => id)))),
+        );
+      },
+      [dispatch],
+    );
 
     useEffect(() => {
       setMessageContent(message.content);
@@ -216,42 +321,66 @@ export const ChatMessage: FC<Props> = memo(
               <div className="flex">
                 {isEditing ? (
                   <div className="flex w-full flex-col gap-3 pr-[60px]">
-                    <textarea
-                      ref={textareaRef}
-                      className="min-h-[100px] w-full resize-none whitespace-pre-wrap rounded border border-gray-400 px-3 py-2 focus-visible:border-blue-500 focus-visible:outline-none dark:border-gray-600 dark:bg-transparent"
-                      value={messageContent}
-                      onChange={handleInputChange}
-                      onKeyDown={handlePressEnter}
-                      onCompositionStart={() => setIsTyping(true)}
-                      onCompositionEnd={() => setIsTyping(false)}
-                      style={{
-                        fontFamily: 'inherit',
-                        fontSize: 'inherit',
-                        lineHeight: 'inherit',
-                        margin: '0',
-                        overflow: 'hidden',
-                      }}
-                    />
-
-                    <div className="flex justify-end gap-3">
-                      <button
-                        className="h-[38px] rounded border border-gray-400 px-3 py-2.5 leading-none hover:bg-gray-400 dark:border-gray-600 hover:dark:bg-gray-600"
-                        onClick={() => {
-                          setMessageContent(message.content);
-                          setIsEditing(false);
+                    <div className="relative min-h-[100px] rounded border border-gray-400 bg-gray-100 px-3 py-2 focus-within:border-blue-500 dark:border-gray-600 dark:bg-gray-700">
+                      <textarea
+                        ref={textareaRef}
+                        className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
+                        value={messageContent}
+                        onChange={handleInputChange}
+                        onKeyDown={handlePressEnter}
+                        onCompositionStart={() => setIsTyping(true)}
+                        onCompositionEnd={() => setIsTyping(false)}
+                        style={{
+                          fontFamily: 'inherit',
+                          fontSize: 'inherit',
+                          lineHeight: 'inherit',
+                          margin: '0',
+                          overflow: 'hidden',
                         }}
-                        data-qa="cancel"
-                      >
-                        {t('Cancel')}
-                      </button>
-                      <button
-                        className="h-[38px] rounded bg-blue-500 px-3 py-2.5 leading-none text-gray-100 hover:bg-blue-700 disabled:bg-gray-500"
-                        onClick={handleEditMessage}
-                        disabled={messageContent.trim().length <= 0}
-                        data-qa="save-and-submit"
-                      >
-                        {t('Save & Submit')}
-                      </button>
+                      />
+
+                      {newEditableAttachments.length > 0 && (
+                        <div className="mb-2.5 grid max-h-[100px] grid-cols-3 gap-1 overflow-auto">
+                          <ChatInputAttachments
+                            files={newEditableAttachments}
+                            onUnselectFile={handleUnselectFile}
+                            onRetryFile={handleRetry}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex h-[34px] w-[34px] items-center justify-center rounded hover:bg-blue-500/20">
+                        <AttachButton
+                          selectedFilesIds={newEditableAttachmentsIds}
+                          onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
+                          onUploadFromDevice={handleUploadFromDevice}
+                        />
+                      </div>
+                      <div className="flex gap-3">
+                        <button
+                          className="button button-secondary"
+                          onClick={() => {
+                            setMessageContent(message.content);
+                            setNewEditableAttachmentsIds(
+                              mappedUserEditableAttachmentsIds,
+                            );
+                            setIsEditing(false);
+                          }}
+                          data-qa="cancel"
+                        >
+                          {t('Cancel')}
+                        </button>
+                        <button
+                          className="button button-primary"
+                          onClick={handleEditMessage}
+                          disabled={messageContent.trim().length <= 0}
+                          data-qa="save-and-submit"
+                        >
+                          {t('Save & Submit')}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (

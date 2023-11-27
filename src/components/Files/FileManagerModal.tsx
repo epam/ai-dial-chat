@@ -41,6 +41,7 @@ import { extension } from 'mime-types';
 
 interface Props {
   isOpen: boolean;
+  initialSelectedFilesIds?: string[];
   allowedTypes?: string[];
   maximumAttachmentsAmount?: number;
   isInConversation?: boolean;
@@ -52,14 +53,12 @@ const loadingStatuses = new Set(['LOADING', undefined]);
 export const FileManagerModal = ({
   isOpen,
   allowedTypes = [],
+  initialSelectedFilesIds = [],
   isInConversation = false,
   maximumAttachmentsAmount = 0,
   onClose,
 }: Props) => {
   const dispatch = useAppDispatch();
-  const attachedFilesIds = useAppSelector(
-    FilesSelectors.selectSelectedFilesIds,
-  );
 
   const { t } = useTranslation('chat');
 
@@ -86,7 +85,9 @@ export const FileManagerModal = ({
   const [isUploadFromDeviceOpened, setIsUploadFromDeviceOpened] =
     useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilesIds, setSelectedFilesIds] = useState(attachedFilesIds);
+  const [selectedFilesIds, setSelectedFilesIds] = useState(
+    initialSelectedFilesIds,
+  );
   const filteredFiles = useMemo(() => {
     return files.filter(({ name }) =>
       name.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -385,6 +386,7 @@ export const FileManagerModal = ({
                                       loadingFolderId={loadingFolderId}
                                       openedFoldersIds={openedFoldersIds}
                                       allItems={filteredFiles}
+                                      additionalItemData={{ selectedFilesIds }}
                                       itemComponent={FileItem}
                                       onClickFolder={handleFolderSelect}
                                       onAddFolder={handleAddFolder}
@@ -404,6 +406,7 @@ export const FileManagerModal = ({
                                     <FileItem
                                       item={file}
                                       level={0}
+                                      additionalItemData={{ selectedFilesIds }}
                                       onEvent={handleItemCallback}
                                     />
                                   </div>
