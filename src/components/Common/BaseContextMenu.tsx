@@ -97,6 +97,8 @@ export default function BaseContextMenu({
   contextMenuIconClassName,
   contextMenuTooltip,
   disabled,
+  isOpen,
+  onOpenChange,
 }: BaseContextMenuProps) {
   const { t } = useTranslation(translation);
   const displayedMenuItems = useMemo(
@@ -124,6 +126,8 @@ export default function BaseContextMenu({
       className={contextMenuIconClassName}
       disabled={disabled}
       type="contextMenu"
+      onOpenChange={onOpenChange}
+      isMenuOpen={isOpen}
       trigger={
         <div
           className={classNames(

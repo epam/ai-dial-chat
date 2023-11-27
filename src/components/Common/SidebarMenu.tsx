@@ -65,6 +65,8 @@ export default function SidebarMenu({
   highlightColor,
   displayMenuItemCount = 5, // calculate in future based on width of container
   translation = 'chatbar',
+  isOpen,
+  onOpenChange,
 }: BaseMenuProps) {
   const { t } = useTranslation(translation);
   const [visibleItems, hiddenItems] = useMemo(() => {
@@ -107,6 +109,8 @@ export default function SidebarMenu({
         highlightColor={highlightColor}
         translation={translation}
         className="p-[5px]"
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
       />
     </div>
   );

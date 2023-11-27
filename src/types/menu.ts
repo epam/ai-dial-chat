@@ -31,6 +31,7 @@ export interface BaseMenuProps {
   translation: string;
   className?: string;
   disabled?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
 export interface BaseContextMenuProps extends BaseMenuProps {
