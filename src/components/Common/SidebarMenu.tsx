@@ -106,7 +106,7 @@ export default function SidebarMenu({
         menuItems={hiddenItems}
         highlightColor={highlightColor}
         translation={translation}
-        className='p-[5px]'
+        className="p-[5px]"
       />
     </div>
   );
