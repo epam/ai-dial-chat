@@ -84,6 +84,19 @@ export const ChatInputMessage = ({
     FilesSelectors.selectSelectedFilesIds,
   );
 
+  const isMessageError = useAppSelector(
+    ConversationsSelectors.selectIsMessagesError,
+  );
+  const isLastAssistantMessageEmpty = useAppSelector(
+    ConversationsSelectors.selectIsLastAssistantMessageEmpty,
+  );
+  const notModelConversations = useAppSelector(
+    ConversationsSelectors.selectNotModelConversations,
+  );
+  const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const isError =
+    isLastAssistantMessageEmpty || (isMessageError && notModelConversations);
+
   const [filteredPrompts, setFilteredPrompts] = useState(() =>
     prompts.filter((prompt) =>
       prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
@@ -94,6 +107,12 @@ export const ChatInputMessage = ({
       (!content || content.trim().length === 0) && selectedFiles.length === 0
     );
   }, [content, selectedFiles.length]);
+  const isSendDisabled =
+    messageIsStreaming ||
+    isReplay ||
+    isError ||
+    isInputEmpty ||
+    isModelsLoading;
   const maxLength = useMemo(() => {
     const maxLengthArray = selectedConversations.map(
       ({ model }) =>
@@ -138,12 +157,7 @@ export const ChatInputMessage = ({
   );
 
   const handleSend = useCallback(() => {
-    if (messageIsStreaming) {
-      return;
-    }
-
-    if (isInputEmpty) {
-      alert(t('Please enter a message'));
+    if (isSendDisabled) {
       return;
     }
 
@@ -158,16 +172,7 @@ export const ChatInputMessage = ({
     if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
       textareaRef.current.blur();
     }
-  }, [
-    messageIsStreaming,
-    isInputEmpty,
-    onSend,
-    content,
-    selectedFiles,
-    dispatch,
-    textareaRef,
-    t,
-  ]);
+  }, [isSendDisabled, onSend, content, selectedFiles, dispatch, textareaRef]);
 
   const parseVariables = useCallback((content: string) => {
     const regex = /{{(.*?)}}/g;
@@ -358,6 +363,26 @@ export const ChatInputMessage = ({
     [dispatch],
   );
 
+  const tooltipContent = (): string => {
+    if (messageIsStreaming) {
+      return t(
+        'Please wait for full assistant answer to continue working with chat',
+      );
+    }
+    if (isModelsLoading) {
+      return t(
+        'Please wait for models will be loaded to continue working with chat',
+      );
+    }
+    if (isReplay) {
+      return t('Please continue replay to continue working with chat');
+    }
+    if (isError) {
+      return t('Please regenerate response to continue working with chat');
+    }
+    return t('Please type a message');
+  };
+
   return (
     <div className="mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0  md:last:mb-6 lg:mx-auto lg:max-w-3xl">
       <div
@@ -393,7 +418,8 @@ export const ChatInputMessage = ({
 
         <SendMessageButton
           handleSend={handleSend}
-          isInputEmpty={isInputEmpty}
+          isDisabled={isSendDisabled}
+          disabledTooltip={tooltipContent()}
         />
 
         {displayAttachFunctionality && (
