@@ -18,15 +18,19 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { SharedByMeFilters } from '@/src/utils/app/folders';
 
-import { ConversationsActions, ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { ConversationView } from '../Chatbar/components/Conversation';
 
 import { SharingType } from './ShareModal';
-import classNames from 'classnames';
 
 interface Props {
   type: SharingType;
@@ -124,22 +128,28 @@ export default function SharedByMeModal({ isOpen, onClose }: Props) {
               </div>
               <div className="min-h-0 flex-auto flex-col overflow-y-auto">
                 {conversations.map((item) => (
-                  <button className={classNames(
-                    "group flex h-[30px] w-full cursor-pointer items-center gap-2 rounded transition-colors duration-200 hover:bg-green/15",
-                    selectedConversationsIds.includes(item.id)
-                      ? 'border-l-green bg-green/15'
-                      : 'border-l-transparent'
-                    )} key={item.id}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    dispatch(
-                      ConversationsActions.selectConversations({
-                        conversationIds: [item.id],
-                      }),
-                    );
-                  }}>
-                    <ConversationView conversation={item} isSelected={selectedConversationsIds.includes(item.id)} />
+                  <button
+                    className={classNames(
+                      'group flex h-[30px] w-full cursor-pointer items-center gap-2 rounded transition-colors duration-200 hover:bg-green/15',
+                      selectedConversationsIds.includes(item.id)
+                        ? 'border-l-green bg-green/15'
+                        : 'border-l-transparent',
+                    )}
+                    key={item.id}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      dispatch(
+                        ConversationsActions.selectConversations({
+                          conversationIds: [item.id],
+                        }),
+                      );
+                    }}
+                  >
+                    <ConversationView
+                      conversation={item}
+                      isSelected={selectedConversationsIds.includes(item.id)}
+                    />
                   </button>
                 ))}
                 {!conversations.length && <div>No items</div>}
