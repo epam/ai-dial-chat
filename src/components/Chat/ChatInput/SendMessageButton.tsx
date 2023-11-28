@@ -41,13 +41,13 @@ const SendIconTooltip = ({
 interface Props {
   handleSend: () => void;
   isDisabled: boolean;
-  disabledTooltip?: string;
+  tooltip?: string;
 }
 
 export const SendMessageButton = ({
   handleSend,
   isDisabled,
-  disabledTooltip,
+  tooltip,
 }: Props) => {
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
 
@@ -61,10 +61,7 @@ export const SendMessageButton = ({
       onClick={handleSend}
       disabled={isDisabled}
     >
-      <SendIconTooltip
-        isShowTooltip={isDisabled}
-        tooltipContent={disabledTooltip}
-      >
+      <SendIconTooltip isShowTooltip={isDisabled} tooltipContent={tooltip}>
         {messageIsStreaming || isModelsLoading ? (
           <Spinner size={20} />
         ) : (

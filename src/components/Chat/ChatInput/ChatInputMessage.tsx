@@ -419,7 +419,7 @@ export const ChatInputMessage = ({
         <SendMessageButton
           handleSend={handleSend}
           isDisabled={isSendDisabled}
-          disabledTooltip={tooltipContent()}
+          tooltip={tooltipContent()}
         />
 
         {displayAttachFunctionality && (
