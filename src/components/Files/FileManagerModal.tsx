@@ -74,11 +74,9 @@ export const FileManagerModal = ({
 
   const folders = useAppSelector(FilesSelectors.selectFolders);
   const files = useAppSelector(FilesSelectors.selectFiles);
+  const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
   const foldersStatus = useAppSelector(FilesSelectors.selectFoldersStatus);
   const loadingFolderId = useAppSelector(FilesSelectors.selectLoadingFolderId);
-  const newAddedFolderId = useAppSelector(
-    FilesSelectors.selectNewAddedFolderId,
-  );
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
@@ -379,9 +377,8 @@ export const FileManagerModal = ({
                                       allFolders={folders}
                                       highlightColor={HighlightColor.Blue}
                                       highlightedFolders={[]}
-                                      isInitialRename={
-                                        newAddedFolderId === folder.id
-                                      }
+                                      isInitialRenameEnabled
+                                      newAddedFolderId={newFolderId}
                                       displayCaretAlways={true}
                                       loadingFolderId={loadingFolderId}
                                       openedFoldersIds={openedFoldersIds}
