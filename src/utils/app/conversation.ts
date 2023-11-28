@@ -1,58 +1,13 @@
-import toast from 'react-hot-toast';
-
 import { Conversation, MessageSettings } from '@/src/types/chat';
-import {
-  OpenAIEntityAddon,
-  OpenAIEntityApplicationType,
-  OpenAIEntityAssistantType,
-  OpenAIEntityModel,
-  OpenAIEntityModelType,
-} from '@/src/types/openai';
-
-import { errorsMessages } from '@/src/constants/errors';
-
-export const updateConversation = (
-  updatedConversation: Conversation,
-  allConversations: Conversation[],
-) => {
-  const updatedConversations = allConversations.map((c) => {
-    if (c.id === updatedConversation.id) {
-      return updatedConversation;
-    }
-
-    return c;
-  });
-
-  saveConversations(updatedConversations);
-
-  return updatedConversations;
-};
-
-export const saveSelectedConversationIds = (ids: string[]) => {
-  localStorage.setItem('selectedConversationIds', JSON.stringify(ids));
-};
-
-export const saveConversations = (conversations: Conversation[]) => {
-  try {
-    localStorage.setItem('conversationHistory', JSON.stringify(conversations));
-  } catch (error: any) {
-    if (error.name === 'QuotaExceededError') {
-      toast.error(errorsMessages.localStorageQuotaExceeded);
-    } else {
-      throw error;
-    }
-  }
-};
+import { EntityType } from '@/src/types/common';
+import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 
 export const getAssitantModelId = (
-  modelType:
-    | OpenAIEntityModelType
-    | OpenAIEntityApplicationType
-    | OpenAIEntityAssistantType,
+  modelType: EntityType,
   defaultAssistantModelId: string,
   conversationAssistantModelId?: string,
 ): string | undefined => {
-  return modelType === 'assistant'
+  return modelType === EntityType.Assistant
     ? conversationAssistantModelId ?? defaultAssistantModelId
     : undefined;
 };
@@ -62,7 +17,7 @@ export const getSelectedAddons = (
   addonsMap: Partial<Record<string, OpenAIEntityAddon>>,
   model?: OpenAIEntityModel,
 ) => {
-  if (model && model.type !== 'application') {
+  if (model && model.type !== EntityType.Application) {
     const preselectedAddons = model.selectedAddons ?? [];
     const addonsSet = new Set([...preselectedAddons, ...selectedAddons]);
     const mergedSelectedAddons = Array.from(addonsSet)

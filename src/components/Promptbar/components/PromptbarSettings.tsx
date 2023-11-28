@@ -7,6 +7,7 @@ import { FC, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { HighlightColor } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppDispatch } from '@/src/store/hooks';
@@ -33,12 +34,12 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="flex items-start gap-1 p-2 text-gray-500">
+    <div className="flex items-start gap-2 p-2 text-gray-500">
       {allPrompts.length > 0 ? (
         <Tooltip isTriggerClickable={true}>
           <TooltipTrigger>
             <div
-              className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet md:h-[42px] md:w-[42px]"
+              className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet"
               onClick={() => {
                 setIsOpen(true);
               }}
@@ -54,7 +55,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
       <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <Import
-            highlightColor="violet"
+            highlightColor={HighlightColor.Violet}
             onImport={(promptsJSON) => {
               dispatch(
                 PromptsActions.importPrompts({ promptsHistory: promptsJSON }),
@@ -75,7 +76,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
       <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <div
-            className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet md:h-[42px] md:w-[42px]"
+            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet"
             onClick={() => {
               dispatch(PromptsActions.exportPrompts());
             }}
@@ -90,7 +91,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
       <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <div
-            className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet md:h-[42px] md:w-[42px]"
+            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet"
             onClick={() => {
               dispatch(PromptsActions.createFolder({ name: t('New folder') }));
             }}

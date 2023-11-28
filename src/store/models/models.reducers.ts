@@ -2,7 +2,9 @@ import { i18n } from 'next-i18next';
 
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
+import { EntityType } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
+import { ModelsMap } from '@/src/types/models';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -13,8 +15,7 @@ export interface ModelsState {
   isLoading: boolean;
   error: ErrorMessage | undefined;
   models: OpenAIEntityModel[];
-  modelsMap: Partial<Record<string, OpenAIEntityModel>>;
-  defaultModelId: string | undefined;
+  modelsMap: ModelsMap;
   recentModelsIds: string[];
 }
 
@@ -23,7 +24,6 @@ const initialState: ModelsState = {
   error: undefined,
   models: [],
   modelsMap: {},
-  defaultModelId: undefined,
   recentModelsIds: [],
 };
 
@@ -31,12 +31,7 @@ export const modelsSlice = createSlice({
   name: 'models',
   initialState,
   reducers: {
-    setDefaultModelId: (
-      state,
-      { payload }: PayloadAction<{ defaultModelId: string }>,
-    ) => {
-      state.defaultModelId = payload.defaultModelId;
-    },
+    init: (state) => state,
     getModels: (state) => {
       state.isLoading = true;
     },
@@ -115,21 +110,15 @@ const selectModels = createSelector([rootSelector], (state) => {
 const selectModelsMap = createSelector([rootSelector], (state) => {
   return state.modelsMap;
 });
-
+const selectRecentModelsIds = createSelector([rootSelector], (state) => {
+  return state.recentModelsIds;
+});
 const selectModel = createSelector(
   [selectModelsMap, (_state, modelId: string) => modelId],
   (modelsMap, modelId) => {
     return modelsMap[modelId];
   },
 );
-
-const selectDefaultModelId = createSelector([rootSelector], (state) => {
-  return state.defaultModelId;
-});
-
-const selectRecentModelsIds = createSelector([rootSelector], (state) => {
-  return state.recentModelsIds;
-});
 
 const selectRecentModels = createSelector(
   [selectRecentModelsIds, selectModelsMap],
@@ -138,15 +127,19 @@ const selectRecentModels = createSelector(
   },
 );
 
+const selectModelsOnly = createSelector([selectModels], (models) => {
+  return models.filter((model) => model.type === EntityType.Model);
+});
+
 export const ModelsSelectors = {
   selectModelsIsLoading,
   selectModelsError,
   selectModels,
   selectModelsMap,
-  selectDefaultModelId,
   selectRecentModelsIds,
   selectRecentModels,
   selectModel,
+  selectModelsOnly,
 };
 
 export const ModelsActions = modelsSlice.actions;

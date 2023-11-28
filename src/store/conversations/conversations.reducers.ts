@@ -5,10 +5,15 @@ import {
   getParentAndCurrentFoldersById,
 } from '@/src/utils/app/folders';
 
-import { Conversation, Message } from '@/src/types/chat';
+import {
+  Conversation,
+  ConversationEntityModel,
+  Message,
+  Role,
+} from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface } from '@/src/types/folder';
-import { OpenAIEntityModel, defaultModelLimits } from '@/src/types/openai';
 
 import {
   DEFAULT_SYSTEM_PROMPT,
@@ -17,6 +22,7 @@ import {
 import { defaultReplay } from '@/src/constants/replay';
 
 import { RootState } from '../index';
+import { ModelsSelectors } from '../models/models.reducers';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -44,7 +50,7 @@ export const conversationsSlice = createSlice({
   name: 'conversations',
   initialState,
   reducers: {
-    // Do local storage things
+    init: (state) => state,
     initConversations: (state) => state,
     selectConversations: (
       state,
@@ -73,7 +79,7 @@ export const conversationsSlice = createSlice({
       }: PayloadAction<{
         names: string[];
         temperature: number | undefined;
-        model: OpenAIEntityModel;
+        model: ConversationEntityModel;
       }>,
     ) => {
       const newConversations: Conversation[] = payload.names.map(
@@ -84,13 +90,6 @@ export const conversationsSlice = createSlice({
             messages: [],
             model: {
               id: payload.model.id,
-              name: payload.model.name,
-              maxLength:
-                payload.model.maxLength ?? defaultModelLimits.maxLength,
-              requestLimit:
-                payload.model.requestLimit ?? defaultModelLimits.requestLimit,
-              type: payload.model.type,
-              selectedAddons: payload.model.selectedAddons ?? [],
             },
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: payload.temperature ?? DEFAULT_TEMPERATURE,
@@ -141,7 +140,7 @@ export const conversationsSlice = createSlice({
       const newConversationName = `[Replay] ${payload.conversation.name}`;
 
       const userMessages = payload.conversation.messages.filter(
-        ({ role }) => role === 'user',
+        ({ role }) => role === Role.User,
       );
       const newConversation: Conversation = {
         ...payload.conversation,
@@ -162,6 +161,7 @@ export const conversationsSlice = createSlice({
           activePlaybackIndex: 0,
           messagesStack: [],
         },
+        isShared: false,
       };
       state.conversations = state.conversations.concat([newConversation]);
       state.selectedConversationsIds = [newConversation.id];
@@ -191,6 +191,7 @@ export const conversationsSlice = createSlice({
           activeReplayIndex: 0,
           replayAsIs: false,
         },
+        isShared: false,
       };
       state.conversations = state.conversations.concat([newConversation]);
       state.selectedConversationsIds = [newConversation.id];
@@ -244,11 +245,15 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folderId: string; name: string }>,
     ) => {
+      const name = payload.name.trim();
+      if (name === '') {
+        return;
+      }
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.folderId) {
           return {
             ...folder,
-            name: payload.name,
+            name,
           };
         }
 
@@ -408,6 +413,8 @@ export const conversationsSlice = createSlice({
     playbackCancel: (state) => {
       state.isPlaybackPaused = true;
     },
+
+    initFolders: (state) => state,
   },
 });
 
@@ -430,8 +437,8 @@ const selectLastConversation = createSelector(
 );
 const selectConversation = createSelector(
   [selectConversations, (_state, id: string) => id],
-  (conversation, id): Conversation | undefined => {
-    return conversation.find((conv) => conv.id === id);
+  (conversations, id): Conversation | undefined => {
+    return conversations.find((conv) => conv.id === id);
   },
 );
 const selectSelectedConversationsIds = createSelector(
@@ -564,7 +571,7 @@ const selectPlaybackActiveMessage = createSelector(
       conversations[0].playback.activePlaybackIndex;
     const activeMessage =
       conversations[0].playback?.messagesStack[activeIndex ?? -1];
-    if (!activeMessage || activeMessage.role === 'assistant') {
+    if (!activeMessage || activeMessage.role === Role.Assistant) {
       return;
     }
     return activeMessage;
@@ -594,16 +601,69 @@ const selectIsLastAssistantMessageEmpty = createSelector(
       const lastMessage = conv.messages[lastMessageIndex];
 
       return (
-        lastMessage.role === 'assistant' && lastMessage.content.length === 0
+        lastMessage.role === Role.Assistant && lastMessage.content.length === 0
       );
     });
   },
 );
 
 const selectNotModelConversations = createSelector(
-  [selectSelectedConversations],
-  (conversations) => {
-    return conversations.some((conv) => conv.model.type !== 'model');
+  [selectSelectedConversations, ModelsSelectors.selectModelsMap],
+  (conversations, modelsMap) => {
+    return conversations.some(
+      (conv) =>
+        modelsMap[conv.model.id]?.type !== EntityType.Model ||
+        conv.selectedAddons.length > 0,
+    );
+  },
+);
+const selectSelectedConversationsModels = createSelector(
+  [selectSelectedConversations, ModelsSelectors.selectModelsMap],
+  (conversations, modelsMap) => {
+    return conversations
+      .map((conv) => modelsMap[conv.model.id])
+      .filter(Boolean);
+  },
+);
+
+const selectAvailableAttachmentsTypes = createSelector(
+  [selectSelectedConversationsModels],
+  (models) => {
+    if (models.length === 0) {
+      return [];
+    }
+
+    const modelsAttachmentsTypes = models
+      .map((model) => model?.inputAttachmentTypes || [])
+      .filter(Boolean) as string[][];
+
+    if (modelsAttachmentsTypes.length === 1) {
+      return modelsAttachmentsTypes[0];
+    }
+
+    // Assume that we have only 2 selected models available
+    const availableModelsAttachmentTypes = (
+      modelsAttachmentsTypes[0] || []
+    ).filter((value) => (modelsAttachmentsTypes[1] || []).includes(value));
+
+    return availableModelsAttachmentTypes.length === 0
+      ? undefined
+      : availableModelsAttachmentTypes;
+  },
+);
+
+const selectMaximumAttachmentsAmount = createSelector(
+  [selectSelectedConversationsModels],
+  (models) => {
+    if (models.length === 0) {
+      return 0;
+    }
+
+    return Math.min(
+      ...models.map((model) =>
+        model?.inputAttachmentTypes ? Number.MAX_SAFE_INTEGER : 0,
+      ),
+    );
   },
 );
 
@@ -634,6 +694,9 @@ export const ConversationsSelectors = {
   selectPlaybackActiveMessage,
   selectIsLastAssistantMessageEmpty,
   selectNotModelConversations,
+  selectSelectedConversationsModels,
+  selectAvailableAttachmentsTypes,
+  selectMaximumAttachmentsAmount,
 };
 
 export const ConversationsActions = conversationsSlice.actions;

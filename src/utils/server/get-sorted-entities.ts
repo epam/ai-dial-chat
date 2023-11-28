@@ -1,10 +1,8 @@
 import { JWT } from 'next-auth/jwt';
 
+import { EntityType } from '@/src/types/common';
 import {
-  OpenAIEntityApplicationType,
-  OpenAIEntityAssistantType,
   OpenAIEntityModel,
-  OpenAIEntityModelType,
   OpenAIEntityModels,
   ProxyOpenAIEntity,
   defaultModelLimits,
@@ -28,29 +26,31 @@ export const getSortedEntities = async (token: JWT | null) => {
   let entities: OpenAIEntityModel[] = [];
   const accessToken = token?.access_token as string;
   const jobTitle = token?.jobTitle as string;
-  const models: ProxyOpenAIEntity<OpenAIEntityModelType>[] = await getEntities(
-    'model',
+  const models = await getEntities<ProxyOpenAIEntity<EntityType.Model>[]>(
+    EntityType.Model,
     accessToken,
     jobTitle,
   ).catch((error) => {
     logger.error(error.message);
     return [];
   });
-  const applications: ProxyOpenAIEntity<OpenAIEntityApplicationType>[] =
-    await getEntities('application', accessToken, jobTitle).catch((error) => {
-      logger.error(error.message);
-      return [];
-    });
-  const assistants: ProxyOpenAIEntity<OpenAIEntityAssistantType>[] =
-    await getEntities('assistant', accessToken, jobTitle).catch((error) => {
-      logger.error(error.message);
-      return [];
-    });
+  const applications = await getEntities<
+    ProxyOpenAIEntity<EntityType.Application>[]
+  >(EntityType.Application, accessToken, jobTitle).catch((error) => {
+    logger.error(error.message);
+    return [];
+  });
+  const assistants = await getEntities<
+    ProxyOpenAIEntity<EntityType.Assistant>[]
+  >(EntityType.Assistant, accessToken, jobTitle).catch((error) => {
+    logger.error(error.message);
+    return [];
+  });
 
   for (const entity of [...models, ...applications, ...assistants]) {
     if (
       entity.capabilities?.embeddings ||
-      (entity.object === 'model' &&
+      (entity.object === EntityType.Model &&
         entity.capabilities?.chat_completion !== true)
     ) {
       continue;
@@ -72,6 +72,8 @@ export const getSortedEntities = async (token: JWT | null) => {
             requestLimit: existingModelMapping.requestLimit,
           }
         : defaultModelLimits),
+      inputAttachmentTypes: entity.input_attachment_types,
+      maxInputAttachments: entity.max_input_attachments,
     });
   }
 

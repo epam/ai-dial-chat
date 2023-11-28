@@ -1,3 +1,5 @@
+import { Attributes } from '@/e2e/src/ui/domData';
+
 export const ChatSelectors = {
   chat: '[data-qa="chat"]',
   spinner: '[data-qa="spinner"]',
@@ -28,6 +30,7 @@ export const ChatSelectors = {
   regenerate: '[data-qa="regenerate"]',
   editIcon: '.tabler-icon-edit',
   deleteIcon: '.tabler-icon-trash',
+  playbackIcon: '.tabler-icon-player-play',
   saveAndSubmit: '[data-qa="save-and-submit"]',
   cancelEdit: '[data-qa="cancel"]',
   modelSelector: '[data-qa="model-selector"]',
@@ -48,10 +51,23 @@ export const ChatSelectors = {
   chatModel: '[data-qa="chat-model"]',
   conversationToCompare: '[data-qa="conversation-to-compare"]',
   compareMode: '[data-qa="compare-mode"]',
+  playbackContainer: '[data-qa="playback"]',
+  playbackAppTitle: '[data-qa="app-name"]',
+  playbackChatTitle: '[data-qa="conversation-name"]',
+  playbackControl: '[data-qa="playback-control"]',
+  leavePlayback: '[data-qa="cancel-playback-mode"]',
+  playbackMessage: '[data-qa="playback-message"]',
+  playbackNext: '[data-qa="playback-next"]',
+  playbackNextDisabled: () =>
+    `${ChatSelectors.playbackNext}[${Attributes.disabled}]`,
+  playbackPrevious: '[data-qa="playback-prev"]',
+  playbackPreviousDisabled: () =>
+    `${ChatSelectors.playbackPrevious}[${Attributes.disabled}]`,
   removeFromCompareIcon: '[data-qa="remove-from-compare"]',
   conversationSettingsIcon: '[data-qa="conversation-setting"]',
   clearConversationIcon: '[data-qa="clear-conversation"]',
   replayAsIs: '[data-qa="replay-as-is"]',
   replayAsIsLabel: '[data-qa="info-as-is"]',
   iconAnimation: '.animate-bounce',
+  noResultFound: '[data-qa="no-data"]',
 };

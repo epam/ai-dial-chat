@@ -1,16 +1,17 @@
 import { DateUtil } from '@/e2e/src/utils/dateUtil';
 import { GeneratorUtil } from '@/e2e/src/utils/generatorUtil';
 
-import { Conversation, Message, Stage } from '@/src/types/chat';
+import { Conversation, Message, Role, Stage } from '@/src/types/chat';
 import { FolderInterface } from '@/src/types/folder';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
 import {
   ConversationBuilder,
   ExpectedConstants,
+  MenuOptions,
   ModelIds,
 } from '@/e2e/src/testData';
-import { FolderBuilder } from '@/e2e/src/testData/conversationHistory/folderBuilder';
+import { FolderData } from '@/e2e/src/testData/folders/folderData';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface FolderConversation {
@@ -18,31 +19,31 @@ export interface FolderConversation {
   folders: FolderInterface;
 }
 
-export class ConversationData {
+export class ConversationData extends FolderData {
   private conversationBuilder: ConversationBuilder;
-  private folderBuilder: FolderBuilder;
 
   constructor() {
+    super('chat');
     this.conversationBuilder = new ConversationBuilder();
-    this.folderBuilder = new FolderBuilder();
   }
 
   public resetData() {
     this.conversationBuilder = new ConversationBuilder();
-    this.folderBuilder = new FolderBuilder();
+    this.resetFolderData();
   }
 
   public prepareDefaultConversation(model?: OpenAIEntityModel, name?: string) {
-    const modelToUse =
-      model ?? this.conversationBuilder.getConversation().model;
+    const modelToUse = model
+      ? { id: model.id }
+      : this.conversationBuilder.getConversation().model;
     const userMessage: Message = {
-      role: 'user',
+      role: Role.User,
       content: 'test request',
     };
     const assistantMessage: Message = {
-      role: 'assistant',
+      role: Role.Assistant,
       content: 'test response',
-      model: { id: modelToUse.id, name: modelToUse.name },
+      model: { id: modelToUse.id },
     };
     return this.conversationBuilder
       .withMessage(userMessage)
@@ -75,13 +76,12 @@ export class ConversationData {
     const basicConversation = this.prepareEmptyConversation(model, name);
     requests.forEach((r) => {
       basicConversation.messages.push(
-        { role: 'user', content: r },
+        { role: Role.User, content: r },
         {
-          role: 'assistant',
+          role: Role.Assistant,
           content: `response on ${r}`,
           model: {
             id: basicConversation.model.id,
-            name: basicConversation.model.name,
           },
         },
       );
@@ -156,17 +156,17 @@ export class ConversationData {
     request?: string,
   ) {
     const conversation = this.conversationBuilder.getConversation();
-    conversation.model = model;
+    conversation.model = { id: model.id };
     conversation.selectedAddons = addons;
     const userMessage: Message = {
-      role: 'user',
+      role: Role.User,
       content: request ?? 'what is epam? what is epam revenue in 2020?',
     };
     const assistantMessage: Message = {
-      role: 'assistant',
+      role: Role.Assistant,
       content:
         'EPAM is a global provider of software engineering and IT consulting services',
-      model: { id: conversation.model.id, name: conversation.model.name },
+      model: { id: conversation.model.id },
       custom_content: {
         stages: [
           {
@@ -203,30 +203,21 @@ export class ConversationData {
     return conversation;
   }
 
-  public prepareDefaultFolder() {
-    return this.folderBuilder.build();
-  }
-
-  public prepareFolder(name?: string) {
-    return this.folderBuilder
-      .withName(name ?? GeneratorUtil.randomString(7))
-      .build();
-  }
-
   public prepareNestedFolder(nestedLevel: number) {
-    const rootFolder = this.prepareFolder();
-    this.resetData();
-    const foldersHierarchy = [rootFolder];
-    for (let i = 1; i <= nestedLevel; i++) {
-      const nestedFolder = this.folderBuilder
-        .withName(GeneratorUtil.randomString(7))
-        .withType('chat')
-        .withFolderId(foldersHierarchy[foldersHierarchy.length - 1].id)
-        .build();
-      foldersHierarchy.push(nestedFolder);
+    return super.prepareNestedFolder(nestedLevel, 'chat');
+  }
+
+  public prepareConversationsForNestedFolders(
+    nestedFolders: FolderInterface[],
+  ) {
+    const nestedConversations: Conversation[] = [];
+    for (const item of nestedFolders) {
+      const nestedConversation = this.prepareDefaultConversation();
+      nestedConversations.push(nestedConversation);
+      nestedConversation.folderId = item.id;
       this.resetData();
     }
-    return foldersHierarchy;
+    return nestedConversations;
   }
 
   public prepareFolderWithConversations(conversationsCount: number) {
@@ -279,6 +270,28 @@ export class ConversationData {
     const conversation = this.prepareDefaultConversation(model, name);
     conversation.lastActivityDate = DateUtil.getOlderDate();
     return conversation;
+  }
+
+  public prepareDefaultPlaybackConversation(
+    conversation: Conversation,
+    playbackIndex?: number,
+  ) {
+    const messages = conversation.messages;
+    const playbackConversation = JSON.parse(JSON.stringify(conversation));
+    playbackConversation.id = uuidv4();
+    playbackConversation.name = `[${MenuOptions.playback}] ${conversation.name}`;
+    playbackConversation.messages = [];
+    if (playbackIndex) {
+      for (let i = 0; i < playbackIndex; i++) {
+        playbackConversation.messages.push(messages[i]);
+      }
+    }
+    playbackConversation.playback = {
+      isPlayback: true,
+      activePlaybackIndex: playbackIndex ?? 0,
+      messagesStack: messages,
+    };
+    return playbackConversation;
   }
 
   private fillReplayData(

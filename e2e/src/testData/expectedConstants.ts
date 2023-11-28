@@ -26,6 +26,10 @@ export const ExpectedConstants = {
   defaultIconUrl: 'url(images/icons/message-square-lines-alt.svg))',
   deleteFolderMessage:
     'Are you sure that you want to remove a folder with all nested elements?',
+  backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
+  sendMessageTooltip: 'Please type a message',
+  selectedPromptOptionAttribute: 'bg-blue-500/20',
+  noResults: 'No results found',
 };
 
 export enum Groups {
@@ -42,6 +46,7 @@ export enum MenuOptions {
   playback = 'Playback',
   export = 'Export',
   moveTo = 'Move to',
+  share = 'Share',
   delete = 'Delete',
   newFolder = 'New folder',
 }

@@ -9,16 +9,15 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
-import { OpenAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-settings';
 
-import { PromptDialog } from './PromptDialog';
-import { PromptList } from './PromptList';
+import { PromptDialog } from './ChatInput/PromptDialog';
+import { PromptList } from './ChatInput/PromptList';
 
 interface Props {
-  model: OpenAIEntityModel;
+  maxLength: number;
   prompt: string | undefined;
   prompts: Prompt[];
   onChangePrompt: (prompt: string) => void;
@@ -26,7 +25,7 @@ interface Props {
 
 export const SystemPrompt: FC<Props> = ({
   prompts,
-  model,
+  maxLength,
   prompt,
   onChangePrompt,
 }) => {
@@ -61,7 +60,6 @@ export const SystemPrompt: FC<Props> = ({
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const value = e.target.value;
-      const maxLength = model.maxLength;
 
       if (value.length > maxLength) {
         alert(
@@ -78,7 +76,7 @@ export const SystemPrompt: FC<Props> = ({
 
       onChangePrompt(value);
     },
-    [model.maxLength, onChangePrompt, t, updatePromptListVisibility],
+    [maxLength, onChangePrompt, t, updatePromptListVisibility],
   );
 
   const parseVariables = useCallback((content: string) => {
@@ -211,22 +209,23 @@ export const SystemPrompt: FC<Props> = ({
     };
   }, []);
 
+  useEffect(() => {
+    if (textareaRef && textareaRef.current) {
+      textareaRef.current.style.height = 'inherit'; // reset height
+      const scrollHeight = textareaRef.current.scrollHeight; // then check scroll height
+      textareaRef.current.style.height = `${scrollHeight}px`;
+      textareaRef.current.style.overflow = `${
+        scrollHeight > 300 ? 'auto' : 'hidden'
+      }`;
+    }
+  }, [value, textareaRef]);
+
   return (
     <div className="flex flex-col">
       <label className="mb-4 text-left">{t('System prompt')}</label>
       <textarea
         ref={textareaRef}
-        className="w-full rounded border border-gray-400 bg-transparent px-4 py-3 outline-none placeholder:text-gray-500 focus-within:border-blue-500 dark:border-gray-600 dark:focus-within:border-blue-500"
-        style={{
-          resize: 'none',
-          bottom: `${textareaRef?.current?.scrollHeight}px`,
-          maxHeight: '300px',
-          overflow: `${
-            textareaRef.current && textareaRef.current.scrollHeight > 400
-              ? 'auto'
-              : 'hidden'
-          }`,
-        }}
+        className="max-h-[300px] w-full resize-none overflow-y-auto rounded border border-gray-400 bg-transparent px-4 py-3 outline-none placeholder:text-gray-500 focus-within:border-blue-500 dark:border-gray-600 dark:focus-within:border-blue-500"
         placeholder={
           t(`Enter a prompt or type "/" to select a prompt...`) || ''
         }
@@ -243,8 +242,9 @@ export const SystemPrompt: FC<Props> = ({
             activePromptIndex={activePromptIndex}
             prompts={filteredPrompts}
             onSelect={handleInitModal}
-            onMouseOver={setActivePromptIndex}
-            promptListRef={promptListRef}
+            onMouseEnter={setActivePromptIndex}
+            isOpen={showPromptList && filteredPrompts.length > 0}
+            onClose={() => setShowPromptList(false)}
           />
         </div>
       )}

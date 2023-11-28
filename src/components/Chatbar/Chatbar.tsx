@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/src/types/chat';
+import { FeatureType } from '@/src/types/common';
 
 import {
   ConversationsActions,
@@ -85,8 +86,8 @@ export const Chatbar = () => {
 
   return (
     <Sidebar<Conversation>
-      featureType="chat"
-      side={'left'}
+      featureType={FeatureType.Chat}
+      side="left"
       actionButtons={<ChatActionsBlock />}
       isOpen={showChatbar}
       itemComponent={<Conversations conversations={filteredConversations} />}

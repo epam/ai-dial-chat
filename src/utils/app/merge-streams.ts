@@ -24,7 +24,7 @@ const mergeStages = (sourceStages: Stage[], newStages: Stage[]) => {
       if (stage.attachments) {
         sourceStagesReducer[stage.index].attachments = (
           sourceStagesReducer[stage.index].attachments || []
-        )?.concat(stage.attachments);
+        ).concat(stage.attachments);
       }
 
       if (stage.content) {

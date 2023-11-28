@@ -1,6 +1,9 @@
+import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
+import { IconCheck, IconUserShare, IconX } from '@tabler/icons-react';
 import {
   DragEvent,
   KeyboardEvent,
+  MouseEvent,
   MouseEventHandler,
   useCallback,
   useEffect,
@@ -13,6 +16,8 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
+import { FeatureType, HighlightColor } from '@/src/types/common';
+import { Feature } from '@/src/types/features';
 
 import {
   ConversationsActions,
@@ -20,6 +25,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { emptyImage } from '@/src/constants/drag-and-drop';
@@ -27,10 +33,9 @@ import { emptyImage } from '@/src/constants/drag-and-drop';
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
-import CheckIcon from '../../../../public/images/icons/check.svg';
-import XmarkIcon from '../../../../public/images/icons/xmark.svg';
 import { PlaybackIcon } from '../../Chat/PlaybackIcon';
 import { ReplayAsIsIcon } from '../../Chat/ReplayAsIsIcon';
+import ShareModal, { SharingType } from '../../Chat/ShareModal';
 import { ContextMenu } from '../../Common/ContextMenu';
 import { ModelIcon } from './ModelIcon';
 
@@ -64,13 +69,30 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
 
+  const isSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSharing),
+  );
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
-  const wrapperRef = useRef(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const dragImageRef = useRef<HTMLImageElement | null>();
+  const [isSharing, setIsSharing] = useState(false);
+  const [isContextMenu, setIsContextMenu] = useState(false);
+  const { id: conversationId, isShared } = conversation;
+  const showSharedIcon = isSharingEnabled && isShared && !isDeleting;
+  const isSelected = selectedConversationIds.includes(conversation.id);
+
+  const { refs, context } = useFloating({
+    open: isContextMenu,
+    onOpenChange: setIsContextMenu,
+  });
+
+  const dismiss = useDismiss(context);
+  const { getFloatingProps } = useInteractions([dismiss]);
 
   useEffect(() => {
     dragImageRef.current = document.createElement('img');
@@ -86,12 +108,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           ConversationsActions.updateConversation({
             id: conversation.id,
             values: {
-              name: renameValue,
+              name: renameValue.trim(),
+              isNameChanged: true,
             },
           }),
         );
         setRenameValue('');
         setIsRenaming(false);
+        setIsContextMenu(false);
       }
     },
     [dispatch, renameValue],
@@ -181,10 +205,37 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   useEffect(() => {
     if (isRenaming) {
       setIsDeleting(false);
+      setTimeout(() => inputRef.current?.focus()); // set auto-focus
     } else if (isDeleting) {
       setIsRenaming(false);
     }
   }, [isRenaming, isDeleting]);
+
+  const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsSharing(true);
+    }, []);
+
+  const handleCloseShareModal = useCallback(() => {
+    setIsSharing(false);
+  }, []);
+
+  const handleShared = useCallback(
+    (_newShareId: string) => {
+      //TODO: send newShareId to API to store {id, createdDate}
+      if (!isShared) {
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: conversationId,
+            values: {
+              isShared: true,
+            },
+          }),
+        );
+      }
+    },
+    [conversationId, dispatch, isShared],
+  );
 
   const handleMoveToFolder = useCallback(
     ({
@@ -214,21 +265,28 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     [conversation.id, dispatch, t],
   );
 
+  const handleContextMenuOpen = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsContextMenu(true);
+  };
+
   return (
     <div
       className={classNames(
         'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-green/15',
-        selectedConversationIds.includes(conversation.id)
+        isSelected || isRenaming || isDeleting
           ? 'border-l-green bg-green/15'
           : 'border-l-transparent',
       )}
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
       }}
+      onContextMenu={handleContextMenuOpen}
       data-qa="conversation"
     >
       {isRenaming ? (
-        <div className="flex w-full items-center gap-2">
+        <div className="flex w-full items-center gap-2 pr-12">
           {conversation.replay.replayAsIs ? (
             <span className="relative inline-block shrink-0 leading-none">
               <ReplayAsIsIcon size={18} />
@@ -243,12 +301,13 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           )}
 
           <input
-            className="mr-12 flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
+            className="flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
             type="text"
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
             onKeyDown={handleEnterDown}
             autoFocus
+            ref={inputRef}
           />
         </div>
       ) : (
@@ -256,6 +315,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           className={classNames(
             'group flex h-full w-full cursor-pointer items-center gap-2 transition-colors duration-200',
             messageIsStreaming && 'disabled:cursor-not-allowed',
+            isDeleting ? 'pr-12' : 'group-hover:pr-6',
+            isSelected && 'pr-0',
           )}
           onClick={() => {
             setIsDeleting(false);
@@ -299,30 +360,33 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           <div
             className={classNames(
               'relative max-h-5 flex-1 truncate break-all text-left',
-              isDeleting ? 'mr-12' : 'group-hover:mr-4',
             )}
           >
             {conversation.name}
           </div>
+          {showSharedIcon && (
+            <span className="flex shrink-0 text-gray-500">
+              <IconUserShare size={14} />
+            </span>
+          )}
         </button>
       )}
 
       {!isDeleting && !isRenaming && !messageIsStreaming && (
         <div
+          ref={refs.setFloating}
+          {...getFloatingProps()}
           className={classNames(
-            'invisible absolute right-3 z-50 flex justify-end md:group-hover:visible',
-            selectedConversationIds.includes(conversation.id)
-              ? 'max-md:visible'
-              : '',
+            'absolute right-3 z-50 flex justify-end group-hover:visible',
+            isContextMenu ? 'visible' : 'invisible',
           )}
-          ref={wrapperRef}
           data-qa="dots-menu"
         >
           <ContextMenu
             isEmptyConversation={isEmptyConversation}
             folders={folders}
-            featureType="chat"
-            highlightColor="green"
+            featureType={FeatureType.Chat}
+            highlightColor={HighlightColor.Green}
             onOpenMoveToModal={() => {
               setIsShowMoveToModal(true);
             }}
@@ -350,6 +414,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             }
             onReplay={!isPlayback ? handleStartReplay : undefined}
             onPlayback={handleCreatePlayback}
+            onOpenShareModal={isSharingEnabled ? handleOpenSharing : undefined}
+            onOpenChange={setIsContextMenu}
+            isOpen={isContextMenu}
           />
         </div>
       )}
@@ -368,23 +435,21 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       {(isDeleting || isRenaming) && (
         <div className="absolute right-1 z-10 flex">
           <SidebarActionButton handleClick={handleConfirm}>
-            <CheckIcon
-              width={18}
-              height={18}
-              size={18}
-              className="hover:text-green"
-            />
+            <IconCheck size={18} className="hover:text-green" />
           </SidebarActionButton>
           <SidebarActionButton handleClick={handleCancel}>
-            <XmarkIcon
-              width={18}
-              height={18}
-              size={18}
-              strokeWidth="2"
-              className="hover:text-green"
-            />
+            <IconX size={18} strokeWidth="2" className="hover:text-green" />
           </SidebarActionButton>
         </div>
+      )}
+      {isSharing && (
+        <ShareModal
+          entity={conversation}
+          type={SharingType.Conversation}
+          isOpen
+          onClose={handleCloseShareModal}
+          onShare={handleShared}
+        />
       )}
     </div>
   );

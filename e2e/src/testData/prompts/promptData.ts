@@ -3,7 +3,7 @@ import { GeneratorUtil } from '@/e2e/src/utils/generatorUtil';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 
-import { FolderBuilder } from '@/e2e/src/testData/conversationHistory/folderBuilder';
+import { FolderData } from '@/e2e/src/testData/folders/folderData';
 import { PromptBuilder } from '@/e2e/src/testData/prompts/promptBuilder';
 
 export interface FolderPrompt {
@@ -11,28 +11,27 @@ export interface FolderPrompt {
   folders: FolderInterface;
 }
 
-export class PromptData {
+export class PromptData extends FolderData {
   private promptBuilder: PromptBuilder;
-  private folderBuilder: FolderBuilder;
 
   constructor() {
+    super('prompt');
     this.promptBuilder = new PromptBuilder();
-    this.folderBuilder = new FolderBuilder().withType('prompt');
   }
 
   public resetData() {
     this.promptBuilder = new PromptBuilder();
-    this.folderBuilder = new FolderBuilder().withType('prompt');
+    this.resetFolderData();
   }
 
-  public prepareDefaultPrompt() {
-    return this.promptBuilder.withName(GeneratorUtil.randomString(10)).build();
-  }
-
-  public prepareFolder(name?: string) {
-    return this.folderBuilder
-      .withName(name ?? GeneratorUtil.randomString(7))
+  public prepareDefaultPrompt(name?: string) {
+    return this.promptBuilder
+      .withName(name ?? GeneratorUtil.randomString(10))
       .build();
+  }
+
+  public prepareNestedFolder(nestedLevel: number) {
+    return super.prepareNestedFolder(nestedLevel, 'prompt');
   }
 
   public prepareDefaultPromptInFolder(name?: string): FolderPrompt {
@@ -70,5 +69,16 @@ export class PromptData {
       .withDescription(description ?? '')
       .withContent(content)
       .build();
+  }
+
+  public preparePromptsForNestedFolders(nestedFolders: FolderInterface[]) {
+    const nestedPrompts: Prompt[] = [];
+    for (const item of nestedFolders) {
+      const nestedPrompt = this.prepareDefaultPrompt();
+      nestedPrompts.push(nestedPrompt);
+      nestedPrompt.folderId = item.id;
+      this.resetData();
+    }
+    return nestedPrompts;
   }
 }

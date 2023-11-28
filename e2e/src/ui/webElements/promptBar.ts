@@ -1,10 +1,13 @@
 import {
   ChatBarSelectors,
+  ChatSelectors,
   PromptBarSelectors,
   SideBarSelectors,
 } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import { ExpectedConstants } from '@/e2e/src/testData';
+import { Styles } from '@/e2e/src/ui/domData';
 import { FolderPrompts } from '@/e2e/src/ui/webElements/folderPrompts';
 import { Prompts } from '@/e2e/src/ui/webElements/prompts';
 import { Page } from '@playwright/test';
@@ -16,6 +19,10 @@ export class PromptBar extends BaseElement {
 
   private prompts!: Prompts;
   private folderPrompts!: FolderPrompts;
+  public searchPrompt = this.getElementByPlaceholder('Search prompt...');
+  public noResultFoundIcon = this.getChildElementBySelector(
+    ChatSelectors.noResultFound,
+  );
   public exportButton = new BaseElement(
     this.page,
     ChatBarSelectors.exportPrompts,
@@ -55,9 +62,29 @@ export class PromptBar extends BaseElement {
     await this.newFolderButton.click();
   }
 
+  public async hoverOverNewPrompt() {
+    await this.newPromptButton.waitForState();
+    await this.newPromptButton.hoverOver();
+  }
+
   public async createNewPrompt() {
     await this.newPromptButton.waitForState();
     await this.newPromptButton.click();
+  }
+
+  public async getNewPromptBackgroundColor() {
+    const backgroundColor = await this.newPromptButton.getComputedStyleProperty(
+      Styles.backgroundColor,
+    );
+    backgroundColor[0] = backgroundColor[0].replace(
+      ExpectedConstants.backgroundColorPattern,
+      '$1)',
+    );
+    return backgroundColor[0];
+  }
+
+  public async getNewPromptCursor() {
+    return this.newPromptButton.getComputedStyleProperty(Styles.cursor);
   }
 
   public async deleteAllPrompts() {

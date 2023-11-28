@@ -4,7 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { FeatureType } from '@/src/types/components';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 
 import { NoData } from '../Common/NoData';
@@ -86,7 +86,7 @@ const Sidebar = <T,>({
       {actionButtons}
       <div className="flex grow flex-col gap-[1px] divide-y divide-gray-300 overflow-y-auto dark:divide-gray-900">
         {folders?.length > 0 && (
-          <div className="flex py-1 pl-2 pr-0.5">{folderComponent}</div>
+          <div className="flex py-1 pl-1.5 pr-0.5">{folderComponent}</div>
         )}
 
         {filteredItems?.length > 0 ? (

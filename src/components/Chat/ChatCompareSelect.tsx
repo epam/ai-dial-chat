@@ -4,10 +4,11 @@ import { useTranslation } from 'next-i18next';
 
 import { isMobile } from '@/src/utils/app/mobile';
 
-import { Conversation } from '@/src/types/chat';
+import { Conversation, Role } from '@/src/types/chat';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
@@ -20,7 +21,7 @@ interface OptionProps {
 
 const Option = ({ item }: OptionProps) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const defaultModelId = useAppSelector(ModelsSelectors.selectDefaultModelId);
+  const defaultModelId = useAppSelector(SettingsSelectors.selectDefaultModelId);
   const theme = useAppSelector(UISelectors.selectThemeState);
 
   const model = useMemo(
@@ -75,10 +76,10 @@ export const ChatCompareSelect = ({
             return false;
           }
           const convUserMessages = conv.messages.filter(
-            (message) => message.role === 'user',
+            (message) => message.role === Role.User,
           );
           const selectedConvUserMessages = selectedConversation.messages.filter(
-            (message) => message.role === 'user',
+            (message) => message.role === Role.User,
           );
 
           if (convUserMessages.length !== selectedConvUserMessages.length) {

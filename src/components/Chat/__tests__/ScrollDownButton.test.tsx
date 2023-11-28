@@ -1,6 +1,7 @@
-import { ScrollDownButton } from '@/src/components/Chat/ScrollDownButton';
-import { cleanup, fireEvent, render } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
+import { render, screen } from '@testing-library/react';
+import { userEvent } from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 
 describe('ScrollDownButton', () => {
     // preparation
@@ -8,14 +9,12 @@ describe('ScrollDownButton', () => {
         onScrollDownClick: vi.fn(),
         className: 'test class'
     }
-    // cleanup
-    afterEach(cleanup);
 
     it('should render the component', () => {
         // Arrange
-        const { container } = render(<ScrollDownButton {...props} />);
+        render(<ScrollDownButton {...props} />);
         // Act
-        const button = container.querySelector('button') as HTMLButtonElement;
+        const button = screen.getByRole('button');
         const icon = button.querySelector('svg') as SVGSVGElement;
         // Assert
         expect(button).toBeInTheDocument();
@@ -25,14 +24,14 @@ describe('ScrollDownButton', () => {
         expect(icon.getAttribute('height')).toBe('24');
     });
 
-    it('should call the onScrollDownClick function when the button is clicked', () => {
+    it('should call the onScrollDownClick function when the button is clicked', async () => {
         // Arrange
-        const { getByRole } = render(<ScrollDownButton {...props} />);
+        render(<ScrollDownButton {...props} />);
         // Act
-        const button = getByRole('button');
-        fireEvent.click(button);
+        const button = screen.getByRole('button');
+        await userEvent.click(button);
         // Assert
-        expect(props.onScrollDownClick).toHaveBeenCalledTimes(1);
+        expect(props.onScrollDownClick).toHaveBeenCalledTimes(1)
     });
 
     it('should accept a custom className prop', () => {

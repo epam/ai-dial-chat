@@ -3,11 +3,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/src/types/chat';
-import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
+import { OpenAIEntityAddon } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
-
-import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 
@@ -15,7 +12,7 @@ import { ConversationSettings } from './ConversationSettings';
 
 interface Props {
   conversation: Conversation;
-  model: OpenAIEntityModel | undefined;
+  modelId: string | undefined;
   prompts: Prompt[];
   defaultModelId: string;
   addons: OpenAIEntityAddon[];
@@ -31,7 +28,7 @@ interface Props {
 }
 
 export const ChatSettings = ({
-  model,
+  modelId,
   defaultModelId,
   conversation,
   prompts,
@@ -41,10 +38,8 @@ export const ChatSettings = ({
 }: Props) => {
   const { t } = useTranslation('chat');
 
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-
-  const [currentModel, setCurrentModel] = useState(
-    modelsMap[model?.id || defaultModelId],
+  const [currentModelId, setCurrentModelId] = useState<string>(
+    modelId ?? defaultModelId,
   );
   const [currentPrompt, setCurrentPrompt] = useState(conversation.prompt);
   const [currentTemperature, setCurrentTemperature] = useState(
@@ -57,9 +52,46 @@ export const ChatSettings = ({
     conversation.selectedAddons || [],
   );
 
+  const handleOnSelectModel = (modelId: string) => {
+    if (modelId) {
+      setCurrentModelId(modelId);
+    }
+  };
+
+  const handleOnChangePrompt = (prompt: string) => {
+    setCurrentPrompt(prompt);
+  };
+
+  const handleOnChangeTemperature = (temperature: number) => {
+    setCurrentTemperature(temperature);
+  };
+
+  const handleOnSelectAssistantSubModel = (modelId: string) => {
+    setCurrentAssistentModelId(modelId);
+  };
+
+  const handleOnApplyAddons = (addons: string[]) => {
+    setCurrentSelectedAddonsIds(addons);
+  };
+
+  const handleOnChangeAddon = (addonId: string) => {
+    setCurrentSelectedAddonsIds((addons) => {
+      if (addons.includes(addonId)) {
+        return addons.filter((id) => id !== addonId);
+      }
+
+      return [...addons, addonId];
+    });
+  };
+
+  const handleOnApplySettings = () => {
+    onClose();
+    onApplySettings();
+  };
+
   const handleChangeSettings = useCallback(() => {
     onChangeSettings({
-      modelId: currentModel?.id,
+      modelId: currentModelId,
       currentAssistentModelId,
       prompt: currentPrompt,
       temperature: currentTemperature,
@@ -67,7 +99,7 @@ export const ChatSettings = ({
     });
   }, [
     currentAssistentModelId,
-    currentModel?.id,
+    currentModelId,
     currentPrompt,
     currentSelectedAddonsIds,
     currentTemperature,
@@ -85,45 +117,25 @@ export const ChatSettings = ({
           conversationId={conversation.id}
           replay={conversation.replay}
           isCloseEnabled={true}
-          model={currentModel}
+          modelId={currentModelId}
           prompts={prompts}
           assistantModelId={currentAssistentModelId}
           prompt={currentPrompt}
           selectedAddons={currentSelectedAddonsIds}
           temperature={currentTemperature}
-          onSelectModel={(modelId: string) => {
-            const newModel = modelsMap[modelId];
-            if (newModel) {
-              setCurrentModel(newModel);
-            }
-          }}
-          onChangePrompt={(prompt) => setCurrentPrompt(prompt)}
-          onChangeTemperature={(temperature) =>
-            setCurrentTemperature(temperature)
-          }
-          onSelectAssistantSubModel={(modelId: string) =>
-            setCurrentAssistentModelId(modelId)
-          }
-          onChangeAddon={(addonId: string) => {
-            setCurrentSelectedAddonsIds((addons) => {
-              if (addons.includes(addonId)) {
-                return addons.filter((id) => id !== addonId);
-              }
-
-              return [...addons, addonId];
-            });
-          }}
-          onApplyAddons={(addons) => setCurrentSelectedAddonsIds(addons)}
-          onClose={() => onClose()}
+          onSelectModel={handleOnSelectModel}
+          onChangePrompt={handleOnChangePrompt}
+          onChangeTemperature={handleOnChangeTemperature}
+          onSelectAssistantSubModel={handleOnSelectAssistantSubModel}
+          onChangeAddon={handleOnChangeAddon}
+          onApplyAddons={handleOnApplyAddons}
+          onClose={onClose}
         />
         <div className="flex w-full items-center justify-center overflow-hidden bg-gray-200 px-3 py-4 dark:bg-gray-800 md:px-5">
           <button
             className="w-full rounded bg-blue-500 px-3 py-2.5 text-gray-100 hover:bg-blue-700 md:w-fit"
             data-qa="apply-changes"
-            onClick={() => {
-              onClose();
-              onApplySettings();
-            }}
+            onClick={handleOnApplySettings}
           >
             {t('Apply changes')}
           </button>

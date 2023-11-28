@@ -11,7 +11,8 @@ import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 import { logger } from '@/src/utils/server/logger';
 
 import { OpenAIEntityAddonID, OpenAIEntityModelID } from '../../types/openai';
-import { ChatBody, Message } from '@/src/types/chat';
+import { ChatBody, Message, Role } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 
 import {
   DEFAULT_SYSTEM_PROMPT,
@@ -39,6 +40,22 @@ const wasm = readFileSync(
 );
 
 let encoding: Tiktoken;
+
+function getMessageCustomContent(
+  message: Message,
+): Partial<Message> | undefined {
+  return (
+    (message.custom_content?.state || message.custom_content?.attachments) && {
+      custom_content: {
+        attachments:
+          message.role !== Role.Assistant
+            ? message.custom_content?.attachments
+            : undefined,
+        state: message.custom_content?.state,
+      },
+    }
+  );
+}
 
 const errorHandler = ({
   error,
@@ -119,12 +136,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     let promptToSend = prompt;
-    if (!promptToSend && model.type === 'model') {
+    if (!promptToSend && model.type === EntityType.Model) {
       promptToSend = DEFAULT_SYSTEM_PROMPT;
     }
 
     let temperatureToUse = temperature;
-    if (temperatureToUse && model.type !== 'application') {
+    if (temperatureToUse && model.type !== EntityType.Application) {
       temperatureToUse = DEFAULT_TEMPERATURE;
     }
 
@@ -153,12 +170,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       if (!messages[i]) {
         break;
       }
-      const message = {
+      const message: Message = {
+        ...getMessageCustomContent(messages[i]),
         role: messages[i].role,
         content: messages[i].content,
-        ...(messages[i].custom_content?.state && {
-          custom_content: { state: messages[i].custom_content?.state },
-        }),
       };
       const tokens = encoding.encode(message.content);
 

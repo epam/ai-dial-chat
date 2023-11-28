@@ -1,5 +1,9 @@
-import { Conversation, Message, Replay } from '@/src/types/chat';
-import { OpenAIEntityModel } from '@/src/types/openai';
+import {
+  Conversation,
+  ConversationEntityModel,
+  Message,
+  Replay,
+} from '@/src/types/chat';
 
 import {
   DEFAULT_CONVERSATION_NAME,
@@ -19,7 +23,7 @@ export class ConversationBuilder {
       id: uuidv4(),
       name: DEFAULT_CONVERSATION_NAME,
       messages: [],
-      model: ModelsUtil.getDefaultModel()!,
+      model: { id: ModelsUtil.getDefaultModel()!.id },
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: DEFAULT_TEMPERATURE,
       replay: defaultReplay,
@@ -53,7 +57,7 @@ export class ConversationBuilder {
     return this;
   }
 
-  withModel(model: OpenAIEntityModel): ConversationBuilder {
+  withModel(model: ConversationEntityModel): ConversationBuilder {
     this.conversation.model = model;
     return this;
   }

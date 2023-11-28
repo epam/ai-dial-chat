@@ -1,6 +1,6 @@
 import { ErrorMessageDiv } from '@/src/components/Chat/ErrorMessageDiv';
-import { cleanup, findByText, render } from '@testing-library/react';
-import { describe, expect, it, afterEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 
 describe('ErrorMessageDiv', () => {
     // preparation
@@ -10,29 +10,26 @@ describe('ErrorMessageDiv', () => {
         code: '123',
     };
 
-    // cleanup
-    afterEach(cleanup);
-
     it('should render the correct error message', () => {
         // Arrange
-        const { getByText } = render(<ErrorMessageDiv error={error} />);
+        render(<ErrorMessageDiv error={error} />);
         // Act
-        const errorTitle = getByText(error.title);
+        const errorTitle = screen.getByText(error.title);
         // Assert
         expect(errorTitle).toBeInTheDocument();
 
         error.messageLines.forEach((line) => {
-            expect(getByText(line)).toBeInTheDocument();
+            expect(screen.getByText(line)).toBeInTheDocument();
         });
 
-        expect(getByText(`Code: ${error.code}`)).toBeInTheDocument();
+        expect(screen.getByText(`Code: ${error.code}`)).toBeInTheDocument();
     });
 
     it('shouldn\'t render error code if it\'s empty', async () => {
         // Arrange
-        const { queryByText } = render(<ErrorMessageDiv error={{ ...error, code: null }} />);
+        render(<ErrorMessageDiv error={{ ...error, code: null }} />);
         // Act
-        const codeBlock = queryByText(/^Code/ig)
+        const codeBlock = screen.queryByText(/^Code/ig)
         // Assert
         expect(codeBlock).toBeNull();
     });

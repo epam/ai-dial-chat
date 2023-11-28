@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import classNames from 'classnames';
 
+import { HighlightColor } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 
@@ -10,6 +11,7 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Folder from '@/src/components/Folder';
 
@@ -31,6 +33,7 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
   );
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const conversationFolders = useAppSelector(PromptsSelectors.selectFolders);
+  const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
 
   const handleDrop = useCallback(
     (e: any, folder: FolderInterface) => {
@@ -85,6 +88,13 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
     [dispatch],
   );
 
+  const handleFolderClick = useCallback(
+    (folderId: string) => {
+      dispatch(UIActions.toggleFolder({ id: folderId }));
+    },
+    [dispatch],
+  );
+
   return (
     <>
       <BetweenFoldersLine
@@ -92,7 +102,7 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
         onDrop={onDropBetweenFolders}
         index={index}
         parentFolderId={folder.folderId}
-        highlightColor="violet"
+        highlightColor={HighlightColor.Violet}
       />
       <Folder
         searchTerm={searchTerm}
@@ -100,14 +110,15 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
         itemComponent={PromptComponent}
         allItems={prompts}
         allFolders={conversationFolders}
-        highlightColor="violet"
+        highlightColor={HighlightColor.Violet}
         highlightedFolders={highlightedFolders}
+        openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
-        onRenameFolder={(newName, folderId) => {
+        onRenameFolder={(name, folderId) => {
           dispatch(
             PromptsActions.renameFolder({
               folderId,
-              name: newName,
+              name,
             }),
           );
         }}
@@ -115,6 +126,7 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
           dispatch(PromptsActions.deleteFolder({ folderId }))
         }
         onDropBetweenFolders={onDropBetweenFolders}
+        onClickFolder={handleFolderClick}
       />
       {isLast && (
         <BetweenFoldersLine
@@ -122,7 +134,7 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
           onDrop={onDropBetweenFolders}
           index={index + 1}
           parentFolderId={folder.folderId}
-          highlightColor="violet"
+          highlightColor={HighlightColor.Violet}
         />
       )}
     </>

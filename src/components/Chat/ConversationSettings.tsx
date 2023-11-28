@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
 import { Replay } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 
@@ -17,8 +18,8 @@ import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import XMark from '../../../public/images/icons/xmark.svg';
-import { Combobox } from '../Common/Combobox';
 import { Addons } from './Addons';
+import { AssistantSubModelSelector } from './AssistantSubModelSelector';
 import { ConversationSettingsModel } from './ConversationSettingsModels';
 import { ModelDescription } from './ModelDescription';
 import { ReplayAsIsDescription } from './ReplayAsIsDescription';
@@ -29,24 +30,12 @@ interface ModelSelectRowProps {
   item: OpenAIEntityModel;
 }
 
-const ModelSelectRow = ({ item }: ModelSelectRowProps) => {
-  const theme = useAppSelector(UISelectors.selectThemeState);
-
-  return (
-    <div className="flex items-center gap-2">
-      <ModelIcon
-        entity={item}
-        entityId={item.id}
-        size={18}
-        inverted={theme === 'dark'}
-      />
-      <span>{item.name || item.id}</span>
-    </div>
-  );
-};
+interface SettingContainerProps {
+  children: ReactNode;
+}
 
 interface Props {
-  model: OpenAIEntityModel | undefined;
+  modelId: string | undefined;
   assistantModelId: string | undefined;
   prompt: string | undefined;
   temperature: number | undefined;
@@ -64,8 +53,28 @@ interface Props {
   onClose?: () => void;
 }
 
+export const ModelSelectRow = ({ item }: ModelSelectRowProps) => {
+  const theme = useAppSelector(UISelectors.selectThemeState);
+
+  return (
+    <div className="flex items-center gap-2">
+      <ModelIcon
+        entity={item}
+        entityId={item.id}
+        size={18}
+        inverted={theme === 'dark'}
+      />
+      <span>{item.name || item.id}</span>
+    </div>
+  );
+};
+
+export const SettingContainer = ({ children }: SettingContainerProps) => (
+  <div className="grow px-3 py-4 md:px-5">{children}</div>
+);
+
 export const ConversationSettings = ({
-  model,
+  modelId,
   assistantModelId,
   prompts,
   prompt,
@@ -83,11 +92,13 @@ export const ConversationSettings = ({
   onApplyAddons,
 }: Props) => {
   const { t } = useTranslation('chat');
-  const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const [assistantSubModel, setAssistantSubModel] = useState(() => {
-    return modelsMap[assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id];
-  });
+
+  const model = useMemo(
+    () => (modelId ? modelsMap[modelId] : undefined),
+    [modelId, modelsMap],
+  );
+
   const [width, setWidth] = useState(0);
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -98,11 +109,6 @@ export const ConversationSettings = ({
       replay.replayUserMessagesStack.some((message) => !message.model)
     );
   }, [replay]);
-  useEffect(() => {
-    setAssistantSubModel(
-      modelsMap[assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id],
-    );
-  }, [assistantModelId, modelsMap]);
 
   useEffect(() => {
     if (!ref) {
@@ -147,60 +153,51 @@ export const ConversationSettings = ({
               className="flex max-h-full shrink flex-col divide-y divide-gray-300 overflow-auto bg-gray-200 dark:divide-gray-900 dark:bg-gray-800"
               data-qa="entity-settings"
             >
-              {model.type === 'application' && (
-                <div className="grow px-3 py-4 md:px-5">
+              {model.type === EntityType.Application && (
+                <SettingContainer>
                   <ModelDescription model={model} />
-                </div>
+                </SettingContainer>
               )}
-              {model.type === 'assistant' && assistantSubModel && (
-                <div className="grow px-3 py-4 md:px-5">
-                  <label className="mb-4 inline-block text-left">
-                    {t('Model')}
-                  </label>
-                  <Combobox
-                    items={models.filter((model) => model.type === 'model')}
-                    initialSelectedItem={assistantSubModel}
-                    getItemLabel={(model: OpenAIEntityModel) =>
-                      model.name || model.id
+              {model.type === EntityType.Assistant && (
+                <SettingContainer>
+                  <AssistantSubModelSelector
+                    assistantModelId={
+                      assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id
                     }
-                    getItemValue={(model: OpenAIEntityModel) => model.id}
-                    itemRow={ModelSelectRow}
-                    onSelectItem={(itemID: string) => {
-                      onSelectAssistantSubModel(itemID);
-                    }}
+                    onSelectAssistantSubModel={onSelectAssistantSubModel}
                   />
-                </div>
+                </SettingContainer>
               )}
-              {model.type === 'model' && (
-                <div className="grow px-3 py-4 md:px-5">
+              {model.type === EntityType.Model && (
+                <SettingContainer>
                   <SystemPrompt
-                    model={model}
+                    maxLength={model.maxLength}
                     prompt={prompt}
                     prompts={prompts}
                     onChangePrompt={onChangePrompt}
                   />
-                </div>
+                </SettingContainer>
               )}
 
-              {model.type !== 'application' && (
-                <div className="grow px-3 py-4 md:px-5">
+              {model.type !== EntityType.Application && (
+                <SettingContainer>
                   <TemperatureSlider
                     label={t('Temperature')}
                     onChangeTemperature={onChangeTemperature}
                     temperature={temperature}
                   />
-                </div>
+                </SettingContainer>
               )}
 
-              {model.type !== 'application' && (
-                <div className="grow px-3 py-4 md:px-5">
+              {model.type !== EntityType.Application && (
+                <SettingContainer>
                   <Addons
                     preselectedAddonsIds={model.selectedAddons || []}
                     selectedAddonsIds={selectedAddons}
                     onChangeAddon={onChangeAddon}
                     onApplyAddons={onApplyAddons}
                   />
-                </div>
+                </SettingContainer>
               )}
             </div>
           ) : (
@@ -209,11 +206,7 @@ export const ConversationSettings = ({
             </div>
           )
         ) : (
-          <div className="flex max-h-full shrink flex-col overflow-auto">
-            <ReplayAsIsDescription
-              isModelInMessages={isNoModelInUserMessages}
-            />
-          </div>
+          <ReplayAsIsDescription isModelInMessages={isNoModelInUserMessages} />
         )}
         {isCloseEnabled && (
           <button

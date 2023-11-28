@@ -171,7 +171,7 @@ test(
 
 test(
   'Default model in new chat is set as in previous chat.\n' +
-    'Error message is shown if to send an empty message.\n' +
+    'Send button is disabled if the message box is empty.\n' +
     'Chat name is shown in chat header',
   async ({
     dialHomePage,
@@ -181,6 +181,7 @@ test(
     chat,
     sendMessage,
     chatHeader,
+    tooltip,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-400', 'EPMRTC-474', 'EPMRTC-817');
@@ -188,8 +189,18 @@ test(
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     await talkToSelector.selectModel(bison.name);
-    await dialHomePage.acceptBrowserDialog(ExpectedConstants.enterMessageAlert);
-    await sendMessage.send('');
+
+    const isSendMessageBtnEnabled =
+      await sendMessage.sendMessageButton.isElementEnabled();
+    expect
+      .soft(isSendMessageBtnEnabled, ExpectedMessages.sendMessageButtonDisabled)
+      .toBeFalsy();
+
+    await sendMessage.sendMessageButton.hoverOver();
+    const tooltipContent = await tooltip.getContent();
+    expect
+      .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
+      .toBe(ExpectedConstants.sendMessageTooltip);
 
     await chat.sendRequestWithButton(request);
     const chatTitle = await chatHeader.chatTitle.getElementInnerContent();
@@ -291,4 +302,82 @@ test('Recent "Talk to" list is updated', async ({
   expect
     .soft(recentTalkTo[0], ExpectedMessages.talkToEntityIsSelected)
     .toBe(bison.name);
+});
+
+test('Search "Talk to" item in "See full list..."', async ({
+  dialHomePage,
+  chatBar,
+  talkToSelector,
+  modelsDialog,
+  setTestIds,
+}) => {
+  setTestIds('EPMRTC-408');
+  const randomEntity = GeneratorUtil.randomArrayElement(
+    ModelsUtil.getOpenAIEntities().filter((m) => m.name.length >= 3),
+  );
+  const searchTerm = randomEntity.name.substring(0, 3);
+  const matchedModels = ModelsUtil.getModels().filter((m) =>
+    m.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+  const matchedApplications = ModelsUtil.getApplications().filter((a) =>
+    a.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+  const matchedAssistants = ModelsUtil.getAssistants().filter((a) =>
+    a.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  await test.step('Create new conversation and click "See full list.." link', async () => {
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await chatBar.createNewConversation();
+    await talkToSelector.seeFullList();
+  });
+
+  await test.step('Type first search term and verify search result is correct', async () => {
+    await modelsDialog.searchInput.fillInInput(searchTerm);
+    const resultsCount = await modelsDialog.groupEntity.getElementsCount();
+    expect
+      .soft(resultsCount, ExpectedMessages.searchResultCountIsValid)
+      .toBe(
+        matchedModels.length +
+          matchedApplications.length +
+          matchedAssistants.length,
+      );
+  });
+
+  await test.step('Click on entity tabs one by one and verify search results are correct', async () => {
+    await modelsDialog.modelsTab.click();
+    const assistantsPlusAppResultsCount =
+      await modelsDialog.groupEntity.getElementsCount();
+    expect
+      .soft(
+        assistantsPlusAppResultsCount,
+        ExpectedMessages.searchResultCountIsValid,
+      )
+      .toBe(matchedApplications.length + matchedAssistants.length);
+
+    await modelsDialog.assistantsTab.click();
+    const appResultsCount = await modelsDialog.groupEntity.getElementsCount();
+    expect
+      .soft(appResultsCount, ExpectedMessages.searchResultCountIsValid)
+      .toBe(matchedApplications.length);
+
+    await modelsDialog.applicationsTab.click();
+    const noResult =
+      await modelsDialog.noResultFoundIcon.getElementInnerContent();
+    expect
+      .soft(noResult, ExpectedMessages.noResultsFound)
+      .toBe(ExpectedConstants.noResults);
+  });
+
+  await test.step('Clear search input and verify all entities are displayed', async () => {
+    await modelsDialog.searchInput.fillInInput('');
+    await modelsDialog.modelsTab.click();
+    await modelsDialog.assistantsTab.click();
+    await modelsDialog.applicationsTab.click();
+    const resultsCount = await modelsDialog.groupEntity.getElementsCount();
+    expect
+      .soft(resultsCount, ExpectedMessages.searchResultCountIsValid)
+      .toBe(ModelsUtil.getOpenAIEntities().length);
+  });
 });

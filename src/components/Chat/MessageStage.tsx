@@ -1,10 +1,10 @@
+import { IconExclamationCircle } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 
 import { Stage } from '@/src/types/chat';
 
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import CircleCheck from '../../../public/images/icons/circle-check.svg';
-import CircleExclamation from '../../../public/images/icons/circle-exclamation.svg';
 import Loader from '../../../public/images/icons/loader.svg';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachments } from './MessageAttachments';
@@ -33,9 +33,8 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
           data-qa="stage-completed"
         />
       ) : (
-        <CircleExclamation
-          height={20}
-          width={20}
+        <IconExclamationCircle
+          size={20}
           className="shrink-0 grow-0 basis-auto text-gray-500"
         />
       )}
@@ -102,12 +101,7 @@ export const MessageStage = ({ stage }: Props) => {
               />
             </span>
           )}
-          {stage.attachments?.length && (
-            <MessageAttachments
-              attachments={stage.attachments}
-              isInner={true}
-            />
-          )}
+          <MessageAttachments attachments={stage.attachments} isInner={true} />
         </div>
       )}
     </div>

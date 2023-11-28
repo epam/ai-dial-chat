@@ -102,11 +102,17 @@ export class BasePage {
     await this.page.once('dialog', (dialog) => dialog.dismiss());
   }
 
-  async downloadData<T>(method: () => Promise<T>): Promise<UploadDownloadData> {
+  async downloadData<T>(
+    method: () => Promise<T>,
+    filename?: string,
+  ): Promise<UploadDownloadData> {
     const downloadPromise = this.page.waitForEvent('download');
     await method();
     const download = await downloadPromise;
-    const filePath = path.join(Import.exportPath, download.suggestedFilename());
+    const filePath = path.join(
+      Import.exportPath,
+      filename ?? download.suggestedFilename(),
+    );
     await download.saveAs(filePath);
     return { path: filePath, isDownloadedData: true };
   }

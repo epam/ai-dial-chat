@@ -1,6 +1,7 @@
 import { Conversation } from '@/src/types/chat';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
+import { Settings, Theme } from '@/src/types/settings';
 
 import { Page } from '@playwright/test';
 
@@ -29,6 +30,10 @@ export class LocalStorageManager {
 
   setOpenedFoldersIdsKey = () => (folders: string) => {
     window.localStorage.setItem('openedFoldersIds', folders);
+  };
+
+  setSettingsKey = () => (settings: string) => {
+    window.localStorage.setItem('settings', settings);
   };
 
   async setConversationHistory(...conversation: Conversation[]) {
@@ -101,6 +106,14 @@ export class LocalStorageManager {
     await this.page.evaluate(
       this.setOpenedFoldersIdsKey(),
       JSON.stringify(folders.map((f) => f.id)),
+    );
+  }
+
+  async setSettings(theme: string) {
+    const settings: Settings = { theme: theme as Theme };
+    await this.page.addInitScript(
+      this.setSettingsKey(),
+      JSON.stringify(settings),
     );
   }
 }

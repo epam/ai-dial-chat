@@ -43,7 +43,7 @@ import {
 import classNames from 'classnames';
 
 const menuItemClassNames = classNames(
-  'flex max-w-[300px] cursor-pointer items-center gap-3 px-3 focus-visible:border-none focus-visible:outline-none',
+  'flex max-w-[300px] cursor-pointer items-center gap-3 focus-visible:border-none focus-visible:outline-none',
 );
 
 const MenuContext = createContext<{
@@ -51,7 +51,7 @@ const MenuContext = createContext<{
   activeIndex: number | null;
   setActiveIndex: Dispatch<SetStateAction<number | null>>;
   setHasFocusInside: Dispatch<SetStateAction<boolean>>;
-  isOpen: boolean;
+  isOpen: boolean | undefined;
 }>({
   getItemProps: () => ({}),
   activeIndex: null,
@@ -65,6 +65,7 @@ interface MenuProps {
   nested?: boolean;
   children?: ReactNode;
   type?: 'dropdown' | 'contextMenu';
+  isMenuOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
 }
 
@@ -79,12 +80,13 @@ export const MenuComponent = forwardRef<
     label,
     trigger,
     type = 'dropdown',
+    isMenuOpen,
     onOpenChange,
     ...props
   },
   forwardedRef,
 ) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(isMenuOpen);
   const [hasFocusInside, setHasFocusInside] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [floatingWidth, setFloatingWidth] = useState(0);
@@ -99,6 +101,10 @@ export const MenuComponent = forwardRef<
   const item = useListItem();
 
   const isNested = parentId != null;
+
+  useEffect(() => {
+    setIsOpen(isMenuOpen);
+  }, [isMenuOpen]);
 
   const { floatingStyles, refs, context } = useFloating<HTMLButtonElement>({
     nodeId,
@@ -200,8 +206,8 @@ export const MenuComponent = forwardRef<
         data-nested={isNested ? '' : undefined}
         data-focus-inside={hasFocusInside ? '' : undefined}
         className={classNames(
-          menuItemClassNames,
-          isNested ? 'h-[42px] w-full' : 'h-full pr-0',
+          isNested ? menuItemClassNames : '',
+          isNested ? 'h-[42px] w-full px-3' : 'h-full px-0',
           className,
         )}
         {...getReferenceProps(
@@ -287,7 +293,11 @@ export const MenuItem = forwardRef<
         ref={useMergeRefs([item.ref, forwardedRef])}
         type="button"
         role="menuitem"
-        className={classNames(menuItemClassNames, 'h-[42px] w-full', className)}
+        className={classNames(
+          menuItemClassNames,
+          'h-[42px] w-full px-3',
+          className,
+        )}
         tabIndex={isActive ? 0 : -1}
         disabled={disabled}
         {...menu.getItemProps({

@@ -7,7 +7,7 @@ COPY package*.json ./
 
 # ---- Dependencies ----
 FROM base AS dependencies
-RUN npm ci --omit=optional
+RUN npm ci
 
 # ---- Build ----
 FROM dependencies AS build

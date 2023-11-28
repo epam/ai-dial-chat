@@ -43,6 +43,12 @@ export class Folders extends BaseElement {
     ).getElementLocatorByText(name, index);
   }
 
+  public async getFoldersCount() {
+    return this.getChildElementBySelector(
+      SideBarSelectors.folder,
+    ).getElementsCount();
+  }
+
   public async openFolderDropdownMenu(name: string, index?: number) {
     const folderToEdit = this.getFolderByName(name, index);
     await folderToEdit.hover();

@@ -1,3 +1,4 @@
+import type { Placement } from '@floating-ui/react';
 import {
   FloatingArrow,
   FloatingPortal,
@@ -14,7 +15,6 @@ import {
   useMergeRefs,
   useRole,
 } from '@floating-ui/react';
-import type { Placement } from '@floating-ui/react';
 import {
   HTMLProps,
   ReactNode,
@@ -182,7 +182,7 @@ export const TooltipContent = forwardRef<
           ...style,
         }}
         {...context.getFloatingProps(props)}
-        className={`z-50 rounded bg-gray-100 px-2 py-1 text-left shadow dark:bg-black ${
+        className={`z-50 rounded bg-gray-100 px-2 py-1 text-left shadow dark:border dark:border-gray-600 dark:bg-black ${
           context.getFloatingProps(props).className
         }`}
         data-qa="tooltip"
@@ -192,7 +192,8 @@ export const TooltipContent = forwardRef<
           ref={context.arrowRef}
           context={context.context}
           fill="currentColor"
-          className="text-gray-100 dark:text-black"
+          strokeWidth={1}
+          className="stroke-gray-400 text-gray-100 dark:stroke-gray-600 dark:text-black"
         />
       </div>
     </FloatingPortal>

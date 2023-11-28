@@ -8,11 +8,15 @@ import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { HighlightColor } from '@/src/types/common';
+import { Feature } from '@/src/types/features';
+
 import {
   ConversationsActions,
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 
@@ -25,6 +29,7 @@ import {
 
 import FolderPlus from '../../../../public/images/icons/folder-plus.svg';
 import { Import } from '../../Settings/Import';
+import { ChatbarSettingsContextMenu } from './ChatbarSettingsContextMenu';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation('sidebar');
@@ -38,6 +43,13 @@ export const ChatbarSettings = () => {
   const isStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+  const displayAttachmentFunctionality = enabledFeatures.has(
+    Feature.AttachmentsManager,
+  );
+  const isMoreButtonDisplayed = displayAttachmentFunctionality;
 
   const handleToggleCompare = useCallback(() => {
     dispatch(
@@ -48,12 +60,12 @@ export const ChatbarSettings = () => {
   }, [dispatch]);
 
   return (
-    <div className="flex items-start gap-1 p-2 text-gray-500">
+    <div className="flex items-start gap-2 p-2 text-gray-500">
       {conversations.length > 0 ? (
         <Tooltip isTriggerClickable={true}>
           <TooltipTrigger>
             <button
-              className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
+              className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green"
               onClick={() => {
                 setIsOpen(true);
               }}
@@ -69,7 +81,7 @@ export const ChatbarSettings = () => {
       <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <Import
-            highlightColor="green"
+            highlightColor={HighlightColor.Green}
             onImport={(importJSON) => {
               dispatch(
                 ConversationsActions.importConversations({ data: importJSON }),
@@ -84,7 +96,7 @@ export const ChatbarSettings = () => {
       <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <button
-            className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
+            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green"
             onClick={() => {
               dispatch(ConversationsActions.exportConversations());
             }}
@@ -99,7 +111,7 @@ export const ChatbarSettings = () => {
       <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <button
-            className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green md:h-[42px] md:w-[42px]"
+            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green"
             onClick={() =>
               dispatch(
                 ConversationsActions.createFolder({ name: t('New folder') }),
@@ -116,7 +128,7 @@ export const ChatbarSettings = () => {
       <Tooltip isTriggerClickable={true}>
         <TooltipTrigger>
           <button
-            className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green disabled:cursor-not-allowed md:h-[42px] md:w-[42px]"
+            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green disabled:cursor-not-allowed"
             onClick={() => {
               handleToggleCompare();
             }}
@@ -128,6 +140,8 @@ export const ChatbarSettings = () => {
         </TooltipTrigger>
         <TooltipContent>{t('Compare mode')}</TooltipContent>
       </Tooltip>
+
+      {isMoreButtonDisplayed && <ChatbarSettingsContextMenu />}
 
       <ConfirmDialog
         isOpen={isOpen}

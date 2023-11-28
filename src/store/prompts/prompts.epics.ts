@@ -1,70 +1,36 @@
 import { i18n } from 'next-i18next';
 
-import {
-  EMPTY,
-  concat,
-  filter,
-  ignoreElements,
-  map,
-  of,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { concat, filter, ignoreElements, map, of, switchMap, tap } from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
-import { saveFolders } from '@/src/utils/app/folders';
+import { DataService } from '@/src/utils/app/data/data-service';
 import {
   exportPrompt,
   exportPrompts,
   importPrompts,
 } from '@/src/utils/app/import-export';
-import { savePrompts } from '@/src/utils/app/prompts';
 
 import { AppEpic } from '@/src/types/store';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import { ConversationsSelectors } from '../conversations/conversations.reducers';
-import { ModelsSelectors } from '../models/models.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
-
-const createNewPromptEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(PromptsActions.createNewPrompt.match),
-    map(() => ({
-      models: ModelsSelectors.selectModels(state$.value),
-      modelsMap: ModelsSelectors.selectModelsMap(state$.value),
-      defaultModelId: ModelsSelectors.selectDefaultModelId(state$.value),
-    })),
-    switchMap(({ modelsMap, defaultModelId, models }) => {
-      const model = (defaultModelId && modelsMap[defaultModelId]) || models[0];
-      if (!model) {
-        return EMPTY;
-      }
-
-      return of(
-        PromptsActions.createNewPromptSuccess({
-          model,
-        }),
-      );
-    }),
-  );
 
 const savePromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>
-        PromptsActions.createNewPromptSuccess.match(action) ||
+        PromptsActions.createNewPrompt.match(action) ||
         PromptsActions.deletePrompts.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
         PromptsActions.updatePrompt.match(action) ||
         PromptsActions.importPromptsSuccess.match(action),
     ),
     map(() => PromptsSelectors.selectPrompts(state$.value)),
-    tap((prompts) => {
-      savePrompts(prompts);
+    switchMap((prompts) => {
+      return DataService.setPrompts(prompts);
     }),
     ignoreElements(),
   );
@@ -81,11 +47,10 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         PromptsActions.importPromptsSuccess.match(action),
     ),
     map(() => ({
-      conversationsFolders: ConversationsSelectors.selectFolders(state$.value),
       promptsFolders: PromptsSelectors.selectFolders(state$.value),
     })),
-    tap(({ conversationsFolders, promptsFolders }) => {
-      saveFolders(conversationsFolders.concat(promptsFolders));
+    switchMap(({ promptsFolders }) => {
+      return DataService.setPromptFolders(promptsFolders);
     }),
     ignoreElements(),
   );
@@ -147,17 +112,25 @@ const exportPromptEpic: AppEpic = (action$, state$) =>
     filter(Boolean),
     tap((prompt) => {
       exportPrompt(
-        prompt.id,
+        prompt,
         PromptsSelectors.selectParentFolders(state$.value, prompt.folderId),
       );
     }),
     ignoreElements(),
   );
 
-const importPromptsEpic: AppEpic = (action$) =>
+const importPromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.importPrompts.match),
-    map(({ payload }) => importPrompts(payload.promptsHistory)),
+    map(({ payload }) => {
+      const prompts = PromptsSelectors.selectPrompts(state$.value);
+      const folders = PromptsSelectors.selectFolders(state$.value);
+
+      return importPrompts(payload.promptsHistory, {
+        currentFolders: folders,
+        currentPrompts: prompts,
+      });
+    }),
     switchMap(({ prompts, folders, isError }) => {
       if (isError) {
         return of(
@@ -174,8 +147,49 @@ const importPromptsEpic: AppEpic = (action$) =>
     }),
   );
 
+const initFoldersEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter((action) => PromptsActions.initFolders.match(action)),
+    switchMap(() =>
+      DataService.getPromptsFolders().pipe(
+        map((folders) => {
+          return PromptsActions.setFolders({
+            folders,
+          });
+        }),
+      ),
+    ),
+  );
+
+const initPromptsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.init.match),
+    switchMap(() =>
+      DataService.getPrompts().pipe(
+        map((prompts) => {
+          return PromptsActions.updatePrompts({
+            prompts,
+          });
+        }),
+      ),
+    ),
+  );
+
+const initEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter((action) => PromptsActions.init.match(action)),
+    switchMap(() =>
+      concat(
+        of(PromptsActions.initFolders()),
+        of(PromptsActions.initPrompts()),
+      ),
+    ),
+  );
+
 export const PromptsEpics = combineEpics(
-  createNewPromptEpic,
+  initEpic,
+  initPromptsEpic,
+  initFoldersEpic,
   savePromptsEpic,
   saveFoldersEpic,
   deleteFolderEpic,
