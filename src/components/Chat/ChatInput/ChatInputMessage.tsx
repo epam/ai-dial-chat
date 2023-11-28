@@ -307,14 +307,14 @@ export const ChatInputMessage = ({
 
   const handleUnselectFile = useCallback(
     (fileId: string) => {
-      return () => dispatch(FilesActions.unselectFiles({ ids: [fileId] }));
+      dispatch(FilesActions.unselectFiles({ ids: [fileId] }));
     },
     [dispatch],
   );
 
   const handleRetry = useCallback(
     (fileId: string) => {
-      return () => dispatch(FilesActions.reuploadFile({ fileId }));
+      dispatch(FilesActions.reuploadFile({ fileId }));
     },
     [dispatch],
   );
