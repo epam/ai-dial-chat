@@ -28,7 +28,7 @@ import {
   useState,
 } from 'react';
 
-interface TooltipOptions {
+interface TooltipContainerOptions {
   initialOpen?: boolean;
   placement?: Placement;
   isTriggerClickable?: boolean;
@@ -42,7 +42,7 @@ export function useTooltip({
   isTriggerClickable = false,
   open: controlledOpen,
   onOpenChange: setControlledOpen,
-}: TooltipOptions = {}) {
+}: TooltipContainerOptions = {}) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(initialOpen);
   const arrowRef = useRef<SVGSVGElement>(null);
 
@@ -116,10 +116,10 @@ export const useTooltipContext = () => {
   return context;
 };
 
-export function Tooltip({
+export function TooltipContainer({
   children,
   ...options
-}: { children: ReactNode } & TooltipOptions) {
+}: { children: ReactNode } & TooltipContainerOptions) {
   // This can accept any props as options, e.g. `placement`,
   // or other positioning options.
   const tooltip = useTooltip(options);
@@ -154,10 +154,10 @@ export const TooltipTrigger = forwardRef<
   return (
     <span
       ref={ref}
-      className="flex h-full items-center justify-center"
       // The user can style the trigger based on the state
       data-state={context.open ? 'open' : 'closed'}
       {...context.getReferenceProps(props)}
+      className={props.className || 'flex h-full items-center justify-center'}
     >
       {children}
     </span>
@@ -199,3 +199,28 @@ export const TooltipContent = forwardRef<
     </FloatingPortal>
   );
 });
+
+interface TooltipOptions extends TooltipContainerOptions {
+  hideTooltip?: boolean;
+  tooltip: ReactNode;
+  children: ReactNode;
+  triggerClassName?: string;
+  contentClassName?: string;
+}
+
+export default function Tooltip({
+  hideTooltip,
+  tooltip,
+  children,
+  triggerClassName,
+  contentClassName,
+  ...tooltipProps
+}: TooltipOptions) {
+  if (hideTooltip || !tooltip) return <>{children}</>;
+  return (
+    <TooltipContainer {...tooltipProps}>
+      <TooltipTrigger className={triggerClassName}>{children}</TooltipTrigger>
+      <TooltipContent className={contentClassName}>{tooltip}</TooltipContent>
+    </TooltipContainer>
+  );
+}

@@ -10,7 +10,7 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../../public/images/icons/move-right.svg';
 import XmarkIcon from '../../../public/images/icons/xmark.svg';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
+import Tooltip from '../Common/Tooltip';
 import { SettingDialog } from '../Settings/SettingDialog';
 import { CreateNewChatMobile } from './CreateNewChatMobile';
 import { User } from './User/User';
@@ -47,36 +47,33 @@ const Header = () => {
 
   return (
     <div className="z-40 flex h-[48px] w-full border-b border-gray-300 bg-gray-100 dark:border-gray-900 dark:bg-gray-700">
-      <Tooltip isTriggerClickable={true}>
-        <TooltipTrigger>
-          <div
-            className="flex-none cursor-pointer border-r border-gray-300 p-3 dark:border-gray-900 md:px-5"
-            onClick={handleToggleChatbar}
-          >
-            {showChatbar ? (
-              <>
-                <XmarkIcon
-                  className="text-gray-500 md:hidden"
-                  width={24}
-                  height={24}
-                />
-
-                <MoveLeftIcon
-                  className="text-gray-500 hover:text-green max-md:hidden"
-                  width={24}
-                  height={24}
-                />
-              </>
-            ) : (
-              <MoveRightIcon
-                className="text-gray-500 hover:text-green"
+      <Tooltip isTriggerClickable tooltip={t('Conversation list')}>
+        <div
+          className="flex-none cursor-pointer border-r border-gray-300 p-3 dark:border-gray-900 md:px-5"
+          onClick={handleToggleChatbar}
+        >
+          {showChatbar ? (
+            <>
+              <XmarkIcon
+                className="text-gray-500 md:hidden"
                 width={24}
                 height={24}
               />
-            )}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>{t('Conversation list')}</TooltipContent>
+
+              <MoveLeftIcon
+                className="text-gray-500 hover:text-green max-md:hidden"
+                width={24}
+                height={24}
+              />
+            </>
+          ) : (
+            <MoveRightIcon
+              className="text-gray-500 hover:text-green"
+              width={24}
+              height={24}
+            />
+          )}
+        </div>
       </Tooltip>
       <CreateNewChatMobile />
       <div className="flex grow justify-between">
@@ -97,36 +94,33 @@ const Header = () => {
         </div>
       </div>
 
-      <Tooltip isTriggerClickable={true}>
-        <TooltipTrigger>
-          <div
-            className="flex-none cursor-pointer border-l border-gray-300 p-3 dark:border-gray-900 md:px-5"
-            onClick={handleTogglePromtbar}
-          >
-            {showPromptbar ? (
-              <>
-                <XmarkIcon
-                  className="text-gray-500 md:hidden"
-                  width={24}
-                  height={24}
-                />
-
-                <MoveRightIcon
-                  className="text-gray-500 hover:text-violet max-md:hidden"
-                  width={24}
-                  height={24}
-                />
-              </>
-            ) : (
-              <MoveLeftIcon
-                className="text-gray-500 hover:text-violet"
+      <Tooltip isTriggerClickable tooltip={t('Prompt list')}>
+        <div
+          className="flex-none cursor-pointer border-l border-gray-300 p-3 dark:border-gray-900 md:px-5"
+          onClick={handleTogglePromtbar}
+        >
+          {showPromptbar ? (
+            <>
+              <XmarkIcon
+                className="text-gray-500 md:hidden"
                 width={24}
                 height={24}
               />
-            )}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>{t('Prompt list')}</TooltipContent>
+
+              <MoveRightIcon
+                className="text-gray-500 hover:text-violet max-md:hidden"
+                width={24}
+                height={24}
+              />
+            </>
+          ) : (
+            <MoveLeftIcon
+              className="text-gray-500 hover:text-violet"
+              width={24}
+              height={24}
+            />
+          )}
+        </div>
       </Tooltip>
       <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
     </div>
