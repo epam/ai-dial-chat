@@ -16,6 +16,7 @@ import {
 } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
+import { Translation } from '@/src/types/translation';
 
 import {
   AddonsActions,
@@ -52,7 +53,7 @@ import { PlaybackEmptyInfo } from './PlaybackEmptyInfo';
 const scrollThrottlingTimeout = 250;
 
 export const Chat = memo(() => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
   const appName = useAppSelector(SettingsSelectors.selectAppName);

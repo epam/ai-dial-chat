@@ -29,6 +29,7 @@ export const ExpectedConstants = {
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
   selectedPromptOptionAttribute: 'bg-blue-500/20',
+  noResults: 'No results found',
 };
 
 export enum Groups {

@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
+import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
@@ -23,7 +24,7 @@ import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import Sidebar from '../Sidebar';
 
 const ChatActionsBlock = () => {
-  const { t } = useTranslation('sidebar');
+  const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,

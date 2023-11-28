@@ -8,6 +8,7 @@ import { Replay } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -91,7 +92,7 @@ export const ConversationSettings = ({
   onChangeAddon,
   onApplyAddons,
 }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const model = useMemo(

@@ -10,6 +10,7 @@ import {
 import { useTranslation } from 'next-i18next';
 
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-settings';
 
@@ -31,7 +32,7 @@ export const SystemPrompt: FC<Props> = ({
   prompt,
   onChangePrompt,
 }) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
 
   const [value, setValue] = useState<string>('');
   const [activePromptIndex, setActivePromptIndex] = useState(0);
@@ -211,25 +212,27 @@ export const SystemPrompt: FC<Props> = ({
     };
   }, []);
 
+  useEffect(() => {
+    if (textareaRef && textareaRef.current) {
+      textareaRef.current.style.height = 'inherit'; // reset height
+      const scrollHeight = textareaRef.current.scrollHeight; // then check scroll height
+      textareaRef.current.style.height = `${scrollHeight}px`;
+      textareaRef.current.style.overflow = `${
+        scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden'
+      }`;
+    }
+  }, [value, textareaRef]);
+
   return (
     <div className="flex flex-col">
       <label className="mb-4 text-left">{t('System prompt')}</label>
       <textarea
         ref={textareaRef}
-        className="w-full rounded border border-gray-400 bg-transparent px-4 py-3 outline-none placeholder:text-gray-500 focus-within:border-blue-500 dark:border-gray-600 dark:focus-within:border-blue-500"
-        style={{
-          resize: 'none',
-          bottom: `${textareaRef?.current?.scrollHeight}px`,
-          maxHeight: `${MAX_HEIGHT}px`,
-          overflow: `${
-            textareaRef.current && textareaRef.current.scrollHeight > MAX_HEIGHT
-              ? 'auto'
-              : 'hidden'
-          }`,
-        }}
+        className="w-full resize-none overflow-y-auto rounded border border-gray-400 bg-transparent px-4 py-3 outline-none placeholder:text-gray-500 focus-within:border-blue-500 dark:border-gray-600 dark:focus-within:border-blue-500"
         placeholder={
           t(`Enter a prompt or type "/" to select a prompt...`) || ''
         }
+        style={{ maxHeight: `${MAX_HEIGHT}px` }}
         value={value}
         rows={1}
         onChange={handleChange}

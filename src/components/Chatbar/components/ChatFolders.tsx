@@ -11,7 +11,10 @@ import { Conversation } from '@/src/types/chat';
 import { HighlightColor } from '@/src/types/common';
 import { ChatFoldersProps, FolderInterface } from '@/src/types/folder';
 
-import { ConversationsActions, ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
@@ -36,8 +39,12 @@ const ChatFolderTemplate = ({
   const dispatch = useAppDispatch();
 
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
-  const conversations = useAppSelector(ConversationsSelectors.selectConversations);
-  const conversationFolders = useAppSelector(ConversationsSelectors.selectFolders);
+  const conversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
+  );
+  const conversationFolders = useAppSelector(
+    ConversationsSelectors.selectFolders,
+  );
   const highlightedFolders = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
   );
@@ -164,7 +171,11 @@ export const ChatSection = ({
     ConversationsSelectors.selectRootFolders(state, filters.filterFolder),
   );
   const rootConversations = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredConversations(state, filters.filterItem, true),
+    ConversationsSelectors.selectFilteredConversations(
+      state,
+      filters.filterItem,
+      true,
+    ),
   );
 
   const folders = useMemo(
@@ -238,7 +249,7 @@ export const ChatSection = ({
               return (
                 <ChatFolderTemplate
                   readonly={readonly}
-                  key={index}
+                  key={folder.id}
                   folder={folder}
                   index={index}
                   isLast={index === arr.length - 1}
@@ -248,9 +259,9 @@ export const ChatSection = ({
           </div>
           <div>
             {displayRootFiles &&
-              rootConversations.map((item, index) => (
+              rootConversations.map((item) => (
                 <ConversationComponent
-                  key={index}
+                  key={item.id}
                   item={item}
                   readonly={readonly}
                 />

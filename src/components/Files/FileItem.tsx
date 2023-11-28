@@ -7,13 +7,14 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
 
 import { DialFile } from '@/src/types/files';
+import { Translation } from '@/src/types/translation';
 
-import { FilesSelectors } from '@/src/store/files/files.reducers';
-import { useAppSelector } from '@/src/store/hooks';
-
+import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 import { FileItemContextMenu } from './FileItemContextMenu';
 
 export enum FileItemEventIds {
@@ -26,16 +27,23 @@ export enum FileItemEventIds {
 interface Props {
   item: DialFile;
   level: number;
+  additionalItemData?: Record<string, unknown>;
 
   onEvent?: (eventId: FileItemEventIds, data: string) => void;
 }
 
 const cancelAllowedStatuses = new Set(['UPLOADING', 'FAILED']);
 
-export const FileItem = ({ item, level, onEvent }: Props) => {
-  const selectedFilesIds = useAppSelector(
-    FilesSelectors.selectSelectedFilesIds,
-  );
+export const FileItem = ({
+  item,
+  level,
+  additionalItemData,
+  onEvent,
+}: Props) => {
+  const { t } = useTranslation(Translation.Files);
+
+  const selectedFilesIds: string[] =
+    (additionalItemData?.selectedFilesIds as string[]) || [];
   const [isSelected, setIsSelected] = useState(
     selectedFilesIds.includes(item.id),
   );
@@ -60,7 +68,7 @@ export const FileItem = ({ item, level, onEvent }: Props) => {
     <div
       className="group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-blue-500/20"
       style={{
-        paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
+        paddingLeft: `${1.005 + level * 1.5}rem`,
       }}
     >
       <div className="flex items-center gap-2 overflow-hidden">
@@ -74,10 +82,17 @@ export const FileItem = ({ item, level, onEvent }: Props) => {
             />
           ) : (
             item.status === 'FAILED' && (
-              <IconExclamationCircle
-                className="shrink-0 text-red-800 dark:text-red-400"
-                size={18}
-              />
+              <Tooltip isTriggerClickable={true}>
+                <TooltipTrigger>
+                  <IconExclamationCircle
+                    className="shrink-0 text-red-800 dark:text-red-400"
+                    size={18}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t('Uploading failed. Please, try again')}
+                </TooltipContent>
+              </Tooltip>
             )
           )}
           {item.status !== 'UPLOADING' && (

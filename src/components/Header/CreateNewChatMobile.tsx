@@ -1,5 +1,7 @@
 import { useTranslation } from 'next-i18next';
 
+import { Translation } from '@/src/types/translation';
+
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch } from '@/src/store/hooks';
 
@@ -9,7 +11,7 @@ import CirclePlusIcon from '../../../public/images/icons/circle-plus.svg';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 
 export const CreateNewChatMobile = () => {
-  const { t } = useTranslation('sidebar');
+  const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
 
   return (

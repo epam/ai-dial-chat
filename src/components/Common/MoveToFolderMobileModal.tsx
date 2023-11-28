@@ -1,9 +1,13 @@
 import { FloatingOverlay } from '@floating-ui/react';
 import { IconFolderPlus } from '@tabler/icons-react';
+import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { FolderInterface } from '@/src/types/folder';
+import { Translation } from '@/src/types/translation';
+
+import { PromptMoveToFolderProps } from '../Promptbar/components/Prompt';
 
 import XmarkIcon from '../../../public/images/icons/xmark.svg';
 
@@ -18,7 +22,15 @@ export const MoveToFolderMobileModal = ({
   onMoveToFolder,
   onClose,
 }: MoveToFolderMobileModalProps) => {
-  const { t } = useTranslation('sidebar');
+  const { t } = useTranslation(Translation.SideBar);
+  const handleMoveToFolder = useCallback(
+    ({ isNewFolder, folderId }: PromptMoveToFolderProps) => {
+      onMoveToFolder({ isNewFolder, folderId });
+      onClose();
+    },
+    [onMoveToFolder, onClose],
+  );
+
   return (
     <FloatingOverlay className="z-50 flex items-center justify-center bg-gray-900/70 p-3 md:p-5">
       <div className="flex h-full w-full flex-col divide-y divide-gray-300 overflow-y-auto bg-gray-100 dark:divide-gray-900 dark:bg-gray-700">
@@ -31,7 +43,7 @@ export const MoveToFolderMobileModal = ({
         <div
           className="flex h-[42px] gap-3  rounded px-6 py-2 hover:bg-green/15"
           onClick={() => {
-            onMoveToFolder({ isNewFolder: true });
+            handleMoveToFolder({ isNewFolder: true });
           }}
         >
           <IconFolderPlus className="text-gray-500" size={18} />
@@ -43,7 +55,7 @@ export const MoveToFolderMobileModal = ({
               key={folder.id}
               className="flex h-[42px] items-center rounded px-6 hover:bg-green/15"
               onClick={() => {
-                onMoveToFolder({ folderId: folder.id });
+                handleMoveToFolder({ folderId: folder.id });
               }}
             >
               <span>{folder.name}</span>

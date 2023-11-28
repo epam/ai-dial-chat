@@ -106,7 +106,7 @@ test(
       );
       await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
 
-      const chatsCount = await compare.gerChatMessagesCount();
+      const chatsCount = await compare.getChatMessagesCount();
       expect.soft(chatsCount, ExpectedMessages.compareModeOpened).toBe(1);
 
       const isConversationToCompareVisible =
@@ -464,16 +464,22 @@ test('Generate new response for two chats in compare mode. Bison and GPT-4-32 wh
   localStorageManager,
 }) => {
   setTestIds('EPMRTC-553');
-
+  const request = ['beautiful'];
   let firstConversation: Conversation;
   let secondConversation: Conversation;
 
   await test.step('Prepare two conversations for comparing', async () => {
-    firstConversation = conversationData.prepareDefaultConversation(bisonModel);
+    firstConversation =
+      conversationData.prepareModelConversationBasedOnRequests(
+        bisonModel,
+        request,
+      );
     conversationData.resetData();
-    secondConversation = conversationData.prepareDefaultConversation(
-      ModelsUtil.getModel(ModelIds.GPT_4_32K),
-    );
+    secondConversation =
+      conversationData.prepareModelConversationBasedOnRequests(
+        ModelsUtil.getModel(ModelIds.GPT_4_32K)!,
+        request,
+      );
     await localStorageManager.setConversationHistory(
       firstConversation,
       secondConversation,
@@ -487,11 +493,15 @@ test('Generate new response for two chats in compare mode. Bison and GPT-4-32 wh
   await test.step('Send new message in compare chat and verify regenerate is not available until both responses received', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await chat.sendRequestInCompareMode('write down 20 adjectives', {
-      rightEntity: firstConversation.model.id,
-      leftEntity: secondConversation.model.id,
-    });
-    await chatMessages.waitForOneCompareConversationResponseReceived();
+
+    await chat.sendRequestInCompareMode(
+      'write down 20 adjectives about person',
+      {
+        rightEntity: firstConversation.model.id,
+        leftEntity: secondConversation.model.id,
+      },
+    );
+    await chatMessages.waitForCompareMessageJumpingIconDisappears(Side.left);
     const isRegenerateButtonVisible = await chat.regenerate.isVisible();
     expect
       .soft(isRegenerateButtonVisible, ExpectedMessages.regenerateNotAvailable)
@@ -761,6 +771,182 @@ test(
           .soft(messageIcon.iconUrl, ExpectedMessages.chatIconSourceIsValid)
           .toBe(defaultModel.iconUrl);
       }
+    });
+  },
+);
+
+test(
+  'Search chat in Select conversation drop down.\n' +
+    'Select chat from search results in Select conversation drop down',
+  async ({
+    dialHomePage,
+    setTestIds,
+    conversationDropdownMenu,
+    conversations,
+    conversationData,
+    localStorageManager,
+    compareConversationSelector,
+    rightChatHeader,
+  }) => {
+    setTestIds('EPMRTC-536', 'EPMRTC-1168');
+    const request = 'What is epam official name?';
+    const firstSearchTerm = 'epam';
+    const secondSearchTerm = 'systems';
+    const thirdSearchTerm = 'epam official';
+    const underscoreSearchTerm = '_';
+    const noResultSearchTerm = 'epaQ';
+
+    let firstConversation: Conversation;
+    let secondConversation: Conversation;
+    let thirdConversation: Conversation;
+    let fourthConversation: Conversation;
+    const matchedConversations: string[] = [];
+
+    await test.step('Prepare 4 conversations with the same request but different names', async () => {
+      firstConversation =
+        conversationData.prepareModelConversationBasedOnRequests(
+          defaultModel,
+          [request],
+          request,
+        );
+      conversationData.resetData();
+      secondConversation =
+        conversationData.prepareModelConversationBasedOnRequests(
+          defaultModel,
+          [request],
+          request,
+        );
+      conversationData.resetData();
+      thirdConversation =
+        conversationData.prepareModelConversationBasedOnRequests(
+          defaultModel,
+          [request],
+          'Renamed epam systems',
+        );
+      conversationData.resetData();
+      fourthConversation =
+        conversationData.prepareModelConversationBasedOnRequests(
+          defaultModel,
+          [request],
+          'epam_systems !@#$%^&*()+=\':",.<>',
+        );
+
+      await localStorageManager.setConversationHistory(
+        firstConversation,
+        secondConversation,
+        thirdConversation,
+        fourthConversation,
+      );
+      await localStorageManager.setSelectedConversation(firstConversation);
+      matchedConversations.push(
+        secondConversation.name,
+        thirdConversation.name,
+        fourthConversation.name,
+      );
+    });
+
+    await test.step('Open compare mode for the 1st chat and verify all chats are available for comparison in dropdown list', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+      await conversations.openConversationDropdownMenu(firstConversation.name);
+      await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
+      await compareConversationSelector.click();
+      const conversationsList =
+        await compareConversationSelector.getListOptions();
+      expect
+        .soft(
+          conversationsList,
+          ExpectedMessages.conversationsToCompareOptionsValid,
+        )
+        .toEqual(matchedConversations);
+    });
+
+    await test.step('Type first search term and verify all chats are available for comparison in dropdown list', async () => {
+      for (const term of [firstSearchTerm, firstSearchTerm.toUpperCase()]) {
+        await compareConversationSelector.fillInput(term);
+        const conversationsList =
+          await compareConversationSelector.getListOptions();
+        expect
+          .soft(
+            conversationsList,
+            ExpectedMessages.conversationsToCompareOptionsValid,
+          )
+          .toEqual(matchedConversations);
+      }
+    });
+
+    await test.step('Type second search term and verify chat 3 and 4 are available for comparison in dropdown list', async () => {
+      await compareConversationSelector.fillInput(secondSearchTerm);
+      const conversationsList =
+        await compareConversationSelector.getListOptions();
+      expect
+        .soft(
+          conversationsList,
+          ExpectedMessages.conversationsToCompareOptionsValid,
+        )
+        .toEqual([thirdConversation.name, fourthConversation.name]);
+    });
+
+    await test.step('Type third search term and verify chat 2 is available for comparison in dropdown list', async () => {
+      await compareConversationSelector.fillInput(thirdSearchTerm);
+      const conversationsList =
+        await compareConversationSelector.getListOptions();
+      expect
+        .soft(
+          conversationsList,
+          ExpectedMessages.conversationsToCompareOptionsValid,
+        )
+        .toEqual([secondConversation.name]);
+    });
+
+    await test.step('Type underscore and verify chat 4 is available for comparison in dropdown list', async () => {
+      await compareConversationSelector.fillInput(underscoreSearchTerm);
+      const conversationsList =
+        await compareConversationSelector.getListOptions();
+      expect
+        .soft(
+          conversationsList,
+          ExpectedMessages.conversationsToCompareOptionsValid,
+        )
+        .toEqual([fourthConversation.name]);
+    });
+
+    await test.step('Type not matching search term and verify no chats available for comparison in dropdown list', async () => {
+      await compareConversationSelector.fillInput(noResultSearchTerm);
+      const conversationsList =
+        await compareConversationSelector.getListOptions();
+      expect
+        .soft(
+          conversationsList,
+          ExpectedMessages.conversationsToCompareOptionsValid,
+        )
+        .toEqual([]);
+    });
+
+    await test.step('Delete search term and verify all chats are available for comparison in dropdown list', async () => {
+      await compareConversationSelector.fillInput('');
+      const conversationsList =
+        await compareConversationSelector.getListOptions();
+      expect
+        .soft(
+          conversationsList,
+          ExpectedMessages.conversationsToCompareOptionsValid,
+        )
+        .toEqual(matchedConversations);
+    });
+
+    await test.step('Select any chat and verify it shown in the input, dropdown list is closed', async () => {
+      const chatToSelect =
+        GeneratorUtil.randomArrayElement(matchedConversations);
+      await compareConversationSelector.selectModel(chatToSelect, true);
+      await compareConversationSelector.waitForState({
+        state: 'hidden',
+      });
+      const rightHeaderTitle =
+        await rightChatHeader.chatTitle.getElementContent();
+      expect
+        .soft(rightHeaderTitle, ExpectedMessages.headerTitleCorrespondRequest)
+        .toBe(chatToSelect);
     });
   },
 );

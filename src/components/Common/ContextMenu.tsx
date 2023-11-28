@@ -1,164 +1,159 @@
-import {
-  IconDots,
-  IconFileArrowRight,
-  IconFolderPlus,
-  IconFolderShare,
-  IconPencilMinus,
-  IconPlayerPlay,
-  IconRefreshDot,
-  IconScale,
-  IconUserShare,
-} from '@tabler/icons-react';
-import { MouseEventHandler, useMemo } from 'react';
+import { IconDotsVertical } from '@tabler/icons-react';
+import { Fragment, useMemo } from 'react';
 
 import classNames from 'classnames';
 
-import { FeatureType, HighlightColor } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
-import { DisplayMenuItemProps } from '@/src/types/menu';
+import { getByHighlightColor } from '@/src/utils/app/folders';
 
-import BaseContextMenu from './BaseContextMenu';
+import { ContextMenuProps, MenuItemRendererProps } from '@/src/types/menu';
 
-interface ContextMenuProps {
-  folders: FolderInterface[];
-  featureType: FeatureType;
-  highlightColor: HighlightColor;
-  isEmptyConversation?: boolean;
-  className?: string;
-  onOpenMoveToModal: () => void;
-  onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
-  onDelete: MouseEventHandler<unknown>;
-  onRename: MouseEventHandler<unknown>;
-  onExport: MouseEventHandler<unknown>;
-  onReplay?: MouseEventHandler<HTMLButtonElement>;
-  onCompare?: MouseEventHandler<unknown>;
-  onPlayback?: MouseEventHandler<HTMLButtonElement>;
-  onOpenShareModal?: MouseEventHandler<HTMLButtonElement>;
+import { Menu, MenuItem } from './DropdownMenu';
+import { Tooltip, TooltipContent, TooltipTrigger } from './Tooltip';
+
+function ContextMenuItemRenderer({
+  name,
+  Icon,
+  dataQa,
+  onClick,
+  disabled,
+  highlightColor,
+  className,
+  menuItems,
+}: MenuItemRendererProps) {
+  const item = (
+    <div
+      className={classNames(
+        'flex w-full items-center gap-3 truncate break-words',
+        !!menuItems && 'text-gray-200',
+        !!menuItems && className,
+      )}
+    >
+      {Icon && (
+        <Icon
+          className="shrink-0 text-gray-500"
+          size={18}
+          height={18}
+          width={18}
+        />
+      )}
+      <span className="truncate break-words">{name}</span>
+    </div>
+  );
+  if (menuItems) {
+    return (
+      <ContextMenu
+        menuItems={menuItems}
+        highlightColor={highlightColor}
+        contextMenuIconClassName={classNames(
+          className,
+          'text-gray-200',
+          getByHighlightColor(
+            highlightColor,
+            'hover:bg-green/15',
+            'hover:bg-violet/15',
+            'hover:bg-blue-500/20',
+          ),
+        )}
+        CustomMenuRenderer={item}
+      />
+    );
+  }
+  return (
+    <MenuItem
+      className={classNames(
+        getByHighlightColor(
+          highlightColor,
+          'hover:bg-green/15',
+          'hover:bg-violet/15',
+          'hover:bg-blue-500/20',
+        ),
+        className,
+      )}
+      item={item}
+      onClick={onClick}
+      data-qa={dataQa}
+      disabled={disabled}
+    />
+  );
 }
 
-export const ContextMenu = ({
-  featureType,
-  isEmptyConversation,
-  className,
+export default function ContextMenu({
+  menuItems,
   highlightColor,
-  folders,
-  onDelete,
-  onRename,
-  onExport,
-  onReplay,
-  onCompare,
-  onPlayback,
-  onMoveToFolder,
-  onOpenMoveToModal,
-  onOpenShareModal,
-}: ContextMenuProps) => {
-  const menuItems: DisplayMenuItemProps[] = useMemo(
-    () => [
-      {
-        name: featureType === FeatureType.Chat ? 'Rename' : 'Edit',
-        dataQa: 'rename',
-        Icon: IconPencilMinus,
-        onClick: onRename,
-      },
-      {
-        name: 'Compare',
-        display: !!onCompare,
-        dataQa: 'compare',
-        Icon: IconScale,
-        onClick: onCompare,
-      },
-      {
-        name: 'Replay',
-        display: !isEmptyConversation && !!onReplay,
-        dataQa: 'replay',
-        Icon: IconRefreshDot,
-        onClick: onReplay,
-      },
-      {
-        name: 'Playback',
-        display: !isEmptyConversation && !!onPlayback,
-        dataQa: 'playback',
-        Icon: IconPlayerPlay,
-        onClick: onPlayback,
-      },
-      {
-        name: 'Export',
-        dataQa: 'export',
-        Icon: IconFileArrowRight,
-        onClick: onExport,
-      },
-      {
-        name: 'Move to',
-        dataQa: 'move-to',
-        Icon: IconFolderShare,
-        onClick: onOpenMoveToModal,
-        className: 'md:hidden',
-      },
-      {
-        name: 'Move to',
-        dataQa: 'move-to',
-        Icon: IconFolderShare,
-        className: 'max-md:hidden',
-        menuItems: [
-          {
-            name: 'New folder',
-            dataQa: 'new-folder',
-            Icon: IconFolderPlus,
-            onClick: () => {
-              onMoveToFolder({ isNewFolder: true });
-            },
-            className: classNames('invisible md:visible', {
-              'border-b border-gray-400 dark:border-gray-600':
-                folders?.length > 0,
-            }),
-          },
-          ...folders.map((folder) => ({
-            name: folder.name,
-            dataQa: `folder-${folder.id}`,
-            onClick: () => {
-              onMoveToFolder({ folderId: folder.id });
-            },
-          })),
-        ],
-      },
-      {
-        name: 'Share',
-        dataQa: 'share',
-        display: !!onOpenShareModal,
-        Icon: IconUserShare,
-        onClick: onOpenShareModal,
-      },
-      {
-        name: 'Delete',
-        dataQa: 'delete',
-        Icon: IconUserShare,
-        onClick: onDelete,
-      },
-    ],
-    [
-      featureType,
-      folders,
-      isEmptyConversation,
-      onCompare,
-      onDelete,
-      onExport,
-      onMoveToFolder,
-      onOpenMoveToModal,
-      onOpenShareModal,
-      onPlayback,
-      onRename,
-      onReplay,
-    ],
+  ContextMenuIcon = IconDotsVertical,
+  contextMenuIconSize = 24,
+  className,
+  contextMenuIconHighlight,
+  CustomMenuRenderer,
+  contextMenuIconClassName,
+  contextMenuTooltip,
+  disabled,
+  isOpen,
+  onOpenChange,
+}: ContextMenuProps) {
+  const displayedMenuItems = useMemo(
+    () => menuItems.filter(({ display = true }) => display),
+    [menuItems],
+  );
+
+  if (!displayedMenuItems.length) return null;
+
+  const menuContent = CustomMenuRenderer || (
+    <ContextMenuIcon
+      size={contextMenuIconSize}
+      width={contextMenuIconSize}
+      height={contextMenuIconSize}
+      strokeWidth={1.5}
+      onClick={(e) => {
+        e.stopPropagation();
+      }}
+    />
   );
 
   return (
-    <BaseContextMenu
-      menuItems={menuItems}
-      ContextMenuIcon={IconDots}
-      contextMenuIconSize={18}
-      translation="sidebar"
-      highlightColor={highlightColor}
-      className={className}
-    />
+    <Menu
+      className={contextMenuIconClassName}
+      disabled={disabled}
+      type="contextMenu"
+      onOpenChange={onOpenChange}
+      isMenuOpen={isOpen}
+      trigger={
+        <div
+          className={classNames(
+            'flex w-full items-center justify-center rounded text-gray-500',
+            contextMenuIconHighlight &&
+              getByHighlightColor(
+                highlightColor,
+                'hover:text-green',
+                'hover:text-violet',
+                'hover:text-blue-500',
+              ),
+            className,
+          )}
+        >
+          {contextMenuTooltip ? (
+            <Tooltip isTriggerClickable>
+              <TooltipTrigger>{menuContent}</TooltipTrigger>
+              <TooltipContent>{contextMenuTooltip}</TooltipContent>
+            </Tooltip>
+          ) : (
+            menuContent
+          )}
+        </div>
+      }
+    >
+      {displayedMenuItems.map(({ CustomTriggerRenderer, ...props }) => {
+        const Renderer = CustomTriggerRenderer ? (
+          <CustomTriggerRenderer
+            {...props}
+            highlightColor={highlightColor}
+            Renderer={ContextMenuItemRenderer}
+          />
+        ) : (
+          <ContextMenuItemRenderer {...props} highlightColor={highlightColor} />
+        );
+        return <Fragment key={props.name}>{Renderer}</Fragment>;
+      })}
+    </Menu>
   );
-};
+}

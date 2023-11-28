@@ -1,7 +1,9 @@
+import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { IconCheck, IconUserShare, IconX } from '@tabler/icons-react';
 import {
   DragEvent,
   KeyboardEvent,
+  MouseEvent,
   MouseEventHandler,
   useCallback,
   useEffect,
@@ -16,6 +18,7 @@ import classNames from 'classnames';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
+import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
@@ -34,7 +37,7 @@ import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMob
 import { PlaybackIcon } from '../../Chat/PlaybackIcon';
 import { ReplayAsIsIcon } from '../../Chat/ReplayAsIsIcon';
 import ShareModal, { SharingType } from '../../Chat/ShareModal';
-import { ContextMenu } from '../../Common/ContextMenu';
+import SettingsContextMenu from '../../Common/SettingsContextMenu';
 import { ModelIcon } from './ModelIcon';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -45,7 +48,9 @@ interface ViewProps {
   isSelected: boolean;
 }
 
-export function ConversationView ({ conversation/*, level = 0, isSelected*/ }:ViewProps) {
+export function ConversationView({
+  conversation /*, level = 0, isSelected*/,
+}: ViewProps) {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const theme = useAppSelector(UISelectors.selectThemeState);
   return (
@@ -106,7 +111,7 @@ export const ConversationComponent = ({
   level,
   readonly,
 }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -136,13 +141,22 @@ export const ConversationComponent = ({
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
-  const wrapperRef = useRef(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dragImageRef = useRef<HTMLImageElement | null>();
   const [isSharing, setIsSharing] = useState(false);
+  const [isContextMenu, setIsContextMenu] = useState(false);
   const { id: conversationId, isShared } = conversation;
   const showSharedIcon = isSharingEnabled && isShared && !isDeleting;
+  const isSelected = selectedConversationIds.includes(conversation.id);
+
+  const { refs, context } = useFloating({
+    open: isContextMenu,
+    onOpenChange: setIsContextMenu,
+  });
+
+  const dismiss = useDismiss(context);
+  const { getFloatingProps } = useInteractions([dismiss]);
 
   useEffect(() => {
     dragImageRef.current = document.createElement('img');
@@ -165,6 +179,7 @@ export const ConversationComponent = ({
         );
         setRenameValue('');
         setIsRenaming(false);
+        setIsContextMenu(false);
       }
     },
     [dispatch, renameValue],
@@ -315,17 +330,24 @@ export const ConversationComponent = ({
     [conversation.id, dispatch, t],
   );
 
+  const handleContextMenuOpen = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsContextMenu(true);
+  };
+
   return (
     <div
       className={classNames(
         'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-green/15',
-        selectedConversationIds.includes(conversation.id)
+        isSelected || isRenaming || isDeleting
           ? 'border-l-green bg-green/15'
           : 'border-l-transparent',
       )}
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
       }}
+      onContextMenu={handleContextMenuOpen}
       data-qa="conversation"
     >
       {isRenaming ? (
@@ -363,6 +385,7 @@ export const ConversationComponent = ({
               !readonly &&
               !isDeleting &&
               'group-hover:pr-6',
+            isSelected && 'pr-0',
           )}
           onClick={() => {
             setIsDeleting(false);
@@ -381,7 +404,10 @@ export const ConversationComponent = ({
           }}
           ref={buttonRef}
         >
-          <ConversationView isSelected={selectedConversationIds.includes(conversation.id)} conversation={conversation}/>
+          <ConversationView
+            isSelected={selectedConversationIds.includes(conversation.id)}
+            conversation={conversation}
+          />
           {/* {conversation.replay.replayAsIs && (
             <span className="flex shrink-0">
               <ReplayAsIsIcon size={18} />
@@ -421,16 +447,15 @@ export const ConversationComponent = ({
 
       {!isDeleting && !isRenaming && !messageIsStreaming && !readonly && (
         <div
+          ref={refs.setFloating}
+          {...getFloatingProps()}
           className={classNames(
-            'invisible absolute right-3 z-50 flex justify-end md:group-hover:visible',
-            selectedConversationIds.includes(conversation.id)
-              ? 'max-md:visible'
-              : '',
+            'absolute right-3 z-50 flex justify-end group-hover:visible',
+            isContextMenu ? 'visible' : 'invisible',
           )}
-          ref={wrapperRef}
           data-qa="dots-menu"
         >
-          <ContextMenu
+          <SettingsContextMenu
             isEmptyConversation={isEmptyConversation}
             folders={folders}
             featureType={FeatureType.Chat}
@@ -463,6 +488,8 @@ export const ConversationComponent = ({
             onReplay={!isPlayback ? handleStartReplay : undefined}
             onPlayback={handleCreatePlayback}
             onOpenShareModal={isSharingEnabled ? handleOpenSharing : undefined}
+            onOpenChange={setIsContextMenu}
+            isOpen={isContextMenu}
           />
         </div>
       )}

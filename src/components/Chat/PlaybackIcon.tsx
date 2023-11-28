@@ -2,6 +2,8 @@ import { IconPlayerPlay } from '@tabler/icons-react';
 
 import { useTranslation } from 'next-i18next';
 
+import { Translation } from '@/src/types/translation';
+
 import { IconNonModelWithTooltip } from './IconNonModelWithTooltip';
 
 interface Props {
@@ -10,7 +12,7 @@ interface Props {
 }
 
 export const PlaybackIcon = ({ isCustomTooltip, size }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
 
   return (
     <IconNonModelWithTooltip

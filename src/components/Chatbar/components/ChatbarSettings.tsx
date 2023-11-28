@@ -13,6 +13,7 @@ import { useTranslation } from 'next-i18next';
 import { HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
 import { DisplayMenuItemProps } from '@/src/types/menu';
+import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
@@ -34,7 +35,7 @@ import SharedByMeModal from '../../Chat/SharedByMe';
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 
 export const ChatbarSettings = () => {
-  const { t } = useTranslation('sidebar');
+  const { t } = useTranslation(Translation.SideBar);
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [isSharedModalOpen, setIsSharedModalOpen] = useState(false);
 
@@ -69,7 +70,7 @@ export const ChatbarSettings = () => {
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: 'Shared by me',
+        name: t('Shared by me'),
         display:
           enabledFeatures.has(Feature.ConversationsSharing) &&
           conversations.filter((c) => c.isShared).length > 0,
@@ -80,7 +81,7 @@ export const ChatbarSettings = () => {
         },
       },
       {
-        name: 'Delete all conversations',
+        name: t('Delete all conversations'),
         display: conversations.length > 0,
         dataQa: 'delete-conversations',
         Icon: IconTrashX,
@@ -89,7 +90,7 @@ export const ChatbarSettings = () => {
         },
       },
       {
-        name: 'Import conversations',
+        name: t('Import conversations'),
         onClick: (importJSON) => {
           dispatch(
             ConversationsActions.importConversations({ data: importJSON }),
@@ -100,7 +101,7 @@ export const ChatbarSettings = () => {
         CustomTriggerRenderer: Import,
       },
       {
-        name: 'Export conversations',
+        name: t('Export conversations'),
         dataQa: 'export-conversations',
         Icon: IconFileArrowRight,
         onClick: () => {
@@ -108,7 +109,7 @@ export const ChatbarSettings = () => {
         },
       },
       {
-        name: 'Create new folder',
+        name: t('Create new folder'),
         dataQa: 'create-folder',
         Icon: FolderPlus,
         onClick: () => {
@@ -118,7 +119,7 @@ export const ChatbarSettings = () => {
         },
       },
       {
-        name: 'Compare mode',
+        name: t('Compare mode'),
         dataQa: 'compare',
         Icon: IconScale,
         disabled: isStreaming,
@@ -127,7 +128,7 @@ export const ChatbarSettings = () => {
         },
       },
       {
-        name: 'Attachments',
+        name: t('Attachments'),
         display: enabledFeatures.has(Feature.AttachmentsManager),
         dataQa: 'attachments',
         Icon: IconPaperclip,
@@ -152,7 +153,6 @@ export const ChatbarSettings = () => {
       <SidebarMenu
         menuItems={menuItems}
         highlightColor={HighlightColor.Green}
-        translation="sidebar"
       />
 
       {isSelectFilesDialogOpened && (

@@ -1,3 +1,5 @@
+import { Prompt } from '@/src/types/prompt';
+
 import test from '@/e2e/src/core/fixtures';
 import {
   ExpectedConstants,
@@ -585,4 +587,78 @@ test('Check that all parameters in prompt are required', async ({
   expect
     .soft(actualMessage, ExpectedMessages.promptApplied)
     .toBe(promptContent(firstVariableValue, secondVariableValue));
+});
+
+test('Search prompt when no folders', async ({
+  dialHomePage,
+  localStorageManager,
+  prompts,
+  promptData,
+  promptBar,
+  setTestIds,
+}) => {
+  setTestIds('EPMRTC-1173');
+  let firstPrompt: Prompt;
+  let secondPrompt: Prompt;
+  let thirdPrompt: Prompt;
+  let fourthPrompt: Prompt;
+  let fifthPrompt: Prompt;
+  const promptContent = 'Prompt search test';
+  const notMatchingSearchTerm = 'abc';
+  const searchTerm = 'test';
+  const specialSymbolSearchTerm = '@';
+
+  await test.step('Prepare prompts with different content', async () => {
+    firstPrompt = promptData.prepareDefaultPrompt(promptContent);
+    promptData.resetData();
+    secondPrompt = promptData.preparePrompt('', promptContent);
+    promptData.resetData();
+    thirdPrompt = promptData.preparePrompt(promptContent);
+    promptData.resetData();
+    fourthPrompt = promptData.prepareDefaultPrompt();
+    promptData.resetData();
+    fifthPrompt = promptData.prepareDefaultPrompt(
+      'Prompt_!@#$%^&*()+=\':",.<>',
+    );
+
+    await localStorageManager.setPrompts(
+      firstPrompt,
+      secondPrompt,
+      thirdPrompt,
+      fourthPrompt,
+      fifthPrompt,
+    );
+  });
+
+  await test.step('Type not matching search term and in "Search prompt.." field and verify no results found', async () => {
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await promptBar.searchPrompt.fill(notMatchingSearchTerm);
+    const noResult = await promptBar.noResultFoundIcon.getElementInnerContent();
+    expect
+      .soft(noResult, ExpectedMessages.noResultsFound)
+      .toBe(ExpectedConstants.noResults);
+  });
+
+  await test.step('Clear search field and verify all prompts displayed', async () => {
+    await promptBar.searchPrompt.fill('');
+    const resultCount = await prompts.getPromptsCount();
+    expect.soft(resultCount, ExpectedMessages.searchResultCountIsValid).toBe(5);
+  });
+
+  await test.step('Type search term in the field and verify all prompts displayed', async () => {
+    for (const term of [searchTerm, searchTerm.toUpperCase()]) {
+      await promptBar.searchPrompt.fill(term);
+      const resultCount = await prompts.getPromptsCount();
+      expect
+        .soft(resultCount, ExpectedMessages.searchResultCountIsValid)
+        .toBe(3);
+    }
+  });
+
+  await test.step('Type search term in the field and verify all prompts displayed', async () => {
+    await promptBar.searchPrompt.fill(specialSymbolSearchTerm);
+    const resultCount = await prompts.getPromptsCount();
+    expect.soft(resultCount, ExpectedMessages.searchResultCountIsValid).toBe(1);
+  });
 });

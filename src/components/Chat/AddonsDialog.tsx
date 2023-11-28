@@ -13,6 +13,7 @@ import classNames from 'classnames';
 import { doesAddonContainSearchTerm } from '@/src/utils/app/search';
 
 import { OpenAIEntity } from '@/src/types/openai';
+import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -140,7 +141,7 @@ export const AddonsDialog: FC<Props> = ({
   onAddonsSelected,
   onClose,
 }) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const addons = useAppSelector(AddonsSelectors.selectAddons);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
 

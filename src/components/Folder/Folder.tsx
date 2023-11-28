@@ -1,9 +1,11 @@
+import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { IconCaretRightFilled, IconFolder } from '@tabler/icons-react';
 import {
   DragEvent,
   FC,
   Fragment,
   KeyboardEvent,
+  MouseEvent,
   MouseEventHandler,
   createElement,
   useCallback,
@@ -27,6 +29,7 @@ import { HighlightColor } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -64,6 +67,7 @@ interface Props<T, P = unknown> {
     item: T;
     level: number;
     readonly?: boolean;
+    additionalItemData?: Record<string, unknown>;
     onEvent?: (eventId: string, data: P) => void;
   }>;
   allItems?: T[];
@@ -76,6 +80,7 @@ interface Props<T, P = unknown> {
   isInitialRename?: boolean;
   loadingFolderId?: string;
   displayCaretAlways?: boolean;
+  additionalItemData?: Record<string, unknown>;
   handleDrop?: (e: any, folder: FolderInterface) => void;
   onDropBetweenFolders?: (
     folder: FolderInterface,
@@ -104,6 +109,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   isInitialRename = false,
   loadingFolderId = '',
   displayCaretAlways = false,
+  additionalItemData,
   handleDrop,
   onDropBetweenFolders,
   onRenameFolder,
@@ -114,7 +120,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   readonly = false,
 }: Props<T>) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
   const [isDeletingConfirmDialog, setIsDeletingConfirmDialog] = useState(false);
@@ -125,6 +131,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const [isSelected, setIsSelected] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isDropAllowed, setIsDropAllowed] = useState(true);
+  const [isContextMenu, setIsContextMenu] = useState(false);
   const dragDropElement = useRef<HTMLDivElement>(null);
 
   const isFolderOpened = useMemo(() => {
@@ -147,6 +154,14 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   }, [filteredChildFolders.length, filteredChildItems.length]);
   const dragImageRef = useRef<HTMLImageElement | null>();
 
+  const { refs, context } = useFloating({
+    open: isContextMenu,
+    onOpenChange: setIsContextMenu,
+  });
+
+  const dismiss = useDismiss(context);
+  const { getFloatingProps } = useInteractions([dismiss]);
+
   useEffect(() => {
     dragImageRef.current = document.createElement('img');
     dragImageRef.current.src = emptyImage;
@@ -159,6 +174,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     onRenameFolder(renameValue, currentFolder.id);
     setRenameValue('');
     setIsRenaming(false);
+    setIsContextMenu(false);
   }, [onRenameFolder, renameValue, currentFolder]);
 
   const handleEnterDown = useCallback(
@@ -321,6 +337,12 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     setIsDropAllowed(!isDraggingOver);
   }, []);
 
+  const handleContextMenuOpen = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsContextMenu(true);
+  };
+
   useEffect(() => {
     if (isRenaming) {
       setIsDeletingConfirmDialog(false);
@@ -367,12 +389,14 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       onDragOver={allowDrop}
       onDragEnter={highlightDrop}
       onDragLeave={removeHighlight}
+      onContextMenu={handleContextMenuOpen}
       ref={dragDropElement}
     >
       <div
         className={classNames(
           'relative flex h-[30px] items-center rounded border-l-2',
           isRenaming ||
+            isContextMenu ||
             (allItems === undefined &&
               highlightedFolders?.includes(currentFolder.id))
             ? classNames(bgColor, 'border-blue-500')
@@ -463,9 +487,11 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
               !readonly &&
               !isRenaming && (
                 <div
+                  ref={refs.setFloating}
+                  {...getFloatingProps()}
                   className={classNames(
                     'invisible absolute right-3 z-50 flex justify-end md:group-hover/button:visible',
-                    isSelected ? 'max-md:visible' : '',
+                    isSelected || isContextMenu ? 'max-md:visible' : '',
                   )}
                 >
                   <FolderContextMenu
@@ -478,6 +504,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                     onDelete={onDeleteFolder && onDelete}
                     onAddFolder={onAddFolder && onAdd}
                     highlightColor={highlightColor}
+                    onOpenChange={setIsContextMenu}
+                    isOpen={isContextMenu}
                   />
                 </div>
               )}
@@ -526,7 +554,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             {allFolders.map((item, index, arr) => {
               if (item.folderId === currentFolder.id) {
                 return (
-                  <Fragment key={index}>
+                  <Fragment key={item.id}>
                     {onDropBetweenFolders && (
                       <BetweenFoldersLine
                         level={level + 1}
@@ -550,6 +578,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       openedFoldersIds={openedFoldersIds}
                       loadingFolderId={loadingFolderId}
                       displayCaretAlways={displayCaretAlways}
+                      additionalItemData={additionalItemData}
                       handleDrop={handleDrop}
                       onDropBetweenFolders={onDropBetweenFolders}
                       onRenameFolder={onRenameFolder}
@@ -576,12 +605,13 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             })}
           </div>
           {itemComponent &&
-            filteredChildItems.map((item, index) => (
-              <div key={index}>
+            filteredChildItems.map((item) => (
+              <div key={item.id}>
                 {createElement(itemComponent, {
                   item,
                   level: level + 1,
                   readonly,
+                  additionalItemData,
                   ...(!!onItemEvent && { onEvent: onItemEvent }),
                 })}
               </div>

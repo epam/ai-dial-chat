@@ -4,45 +4,27 @@ import {
   IconReload,
   IconX,
 } from '@tabler/icons-react';
-import { useCallback } from 'react';
 
 import classNames from 'classnames';
 
 import { DialFile } from '@/src/types/files';
 
-import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-
 interface Props {
-  file: DialFile;
+  file: Pick<DialFile, 'name' | 'id' | 'status' | 'percent'>;
+
+  onUnselectFile: (fileId: string) => void;
+  onRetryFile: (fileId: string) => void;
 }
 
-export const ChatInputAttachment = ({ file }: Props) => {
-  const dispatch = useAppDispatch();
-  const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
-
-  const handleUnselectFile = useCallback(
-    (fileId: string) => {
-      return () => dispatch(FilesActions.unselectFiles({ ids: [fileId] }));
-    },
-    [dispatch],
-  );
-
-  const handleRetry = useCallback(
-    (fileId: string) => {
-      return () => dispatch(FilesActions.reuploadFile({ fileId }));
-    },
-    [dispatch],
-  );
-
-  if (!selectedFiles.length) {
-    return null;
-  }
-
+export const ChatInputAttachment = ({
+  file,
+  onUnselectFile,
+  onRetryFile,
+}: Props) => {
   return (
     <div
       key={file.id}
-      className="flex gap-3 rounded bg-gray-300 p-3 dark:bg-gray-900"
+      className="flex gap-3 rounded border border-gray-400 bg-gray-300 p-3 dark:border-gray-600 dark:bg-gray-900"
     >
       {file.status !== 'FAILED' ? (
         <IconFile className="shrink-0 text-gray-500" size={18} />
@@ -74,11 +56,11 @@ export const ChatInputAttachment = ({ file }: Props) => {
         </div>
         <div className="flex gap-3">
           {file.status === 'FAILED' && (
-            <button onClick={handleRetry(file.id)}>
+            <button onClick={() => onRetryFile(file.id)}>
               <IconReload className="shrink-0 text-gray-500" size={18} />
             </button>
           )}
-          <button onClick={handleUnselectFile(file.id)}>
+          <button onClick={() => onUnselectFile(file.id)}>
             <IconX className="shrink-0 text-gray-500" size={18} />
           </button>
         </div>

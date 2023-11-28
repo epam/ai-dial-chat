@@ -28,6 +28,7 @@ import {
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
 
 import { DialFile } from '@/src/types/files';
+import { Translation } from '@/src/types/translation';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -60,7 +61,7 @@ export const PreUploadDialog = ({
   onUploadFiles,
 }: Props) => {
   const dispatch = useAppDispatch();
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const files = useAppSelector(FilesSelectors.selectFiles);
   const attachments = useAppSelector(FilesSelectors.selectSelectedFiles);
   const folders = useAppSelector(FilesSelectors.selectFolders);
@@ -200,11 +201,8 @@ export const PreUploadDialog = ({
     }
     let isFilesNamesSame = false;
     for (let i = 0; i < selectedFiles.length - 1; i++) {
-      for (let j = i + 1; j < files.length; j++) {
-        if (
-          selectedFiles[i].fileContent.name ===
-          selectedFiles[j].fileContent.name
-        ) {
+      for (let j = i + 1; j < selectedFiles.length; j++) {
+        if (selectedFiles[i].name === selectedFiles[j].name) {
           isFilesNamesSame = true;
           break;
         }
@@ -362,7 +360,10 @@ export const PreUploadDialog = ({
                       </div>
                       <div className="flex flex-col gap-3 overflow-auto text-sm">
                         {selectedFiles.map((file, index) => (
-                          <div key={index} className="flex items-center gap-3">
+                          <div
+                            key={file.id}
+                            className="flex items-center gap-3"
+                          >
                             <div className="relative flex grow items-center">
                               <IconFile
                                 className="absolute left-2 top-[calc(50%_-_9px)] shrink-0 text-gray-500"

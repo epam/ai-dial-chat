@@ -1,3 +1,4 @@
+import { Attachment } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 
 export function triggerDownload(url: string, name: string): void {
@@ -22,7 +23,9 @@ export const getRelativePath = (
   return absolutePath?.split('/').toSpliced(0, 4).join('/') || undefined;
 };
 
-export const getUserCustomContent = (files: DialFile[]) => {
+export const getUserCustomContent = (
+  files: Pick<DialFile, 'contentType' | 'absolutePath' | 'name' | 'status'>[],
+) => {
   if (files.length === 0) {
     return undefined;
   }
@@ -72,4 +75,39 @@ export const getFilesWithInvalidFileSize = (
   sizeLimit: number,
 ): File[] => {
   return files.filter((file) => file.size > sizeLimit);
+};
+
+const parseAttachmentUrl = (url: string) => {
+  const lastIndexSlash = url.lastIndexOf('/');
+  const decodedUrl = decodeURI(url);
+  return {
+    absolutePath: decodedUrl.slice(0, lastIndexSlash),
+    name: decodedUrl.slice(lastIndexSlash + 1),
+  };
+};
+
+export const getDialFilesFromAttachments = (
+  attachments: Attachment[] | undefined,
+): Omit<DialFile, 'contentLength'>[] => {
+  if (!attachments) {
+    return [];
+  }
+
+  return attachments
+    .map((attachment): Omit<DialFile, 'contentLength'> | null => {
+      if (!attachment.url?.startsWith('/')) {
+        return null;
+      }
+
+      const { absolutePath, name } = parseAttachmentUrl(attachment.url);
+      const relativePath = getRelativePath(absolutePath);
+
+      return {
+        id: getPathNameId(name, relativePath),
+        name,
+        contentType: attachment.type,
+        absolutePath: absolutePath,
+      };
+    })
+    .filter(Boolean) as Omit<DialFile, 'contentLength'>[];
 };

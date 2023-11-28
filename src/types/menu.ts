@@ -3,8 +3,8 @@ import { FC, MouseEventHandler } from 'react';
 
 import { HighlightColor } from './common';
 
-export interface CustomTriggerRendererProps extends BaseMenuItemRendererProps {
-  Renderer: (props: BaseMenuItemRendererProps) => JSX.Element;
+export interface CustomTriggerRendererProps extends MenuItemRendererProps {
+  Renderer: (props: MenuItemRendererProps) => JSX.Element;
 }
 
 export interface DisplayMenuItemProps {
@@ -19,21 +19,21 @@ export interface DisplayMenuItemProps {
   menuItems?: DisplayMenuItemProps[];
 }
 
-export type BaseMenuItemRendererProps = DisplayMenuItemProps & {
+export type MenuItemRendererProps = DisplayMenuItemProps & {
   highlightColor: HighlightColor;
-  translation: string;
 };
 
-export interface BaseMenuProps {
+export interface MenuProps {
   menuItems: DisplayMenuItemProps[];
   highlightColor: HighlightColor;
   displayMenuItemCount?: number;
-  translation: string;
   className?: string;
   disabled?: boolean;
+  isOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
-export interface BaseContextMenuProps extends BaseMenuProps {
+export interface ContextMenuProps extends MenuProps {
   ContextMenuIcon?: (props: TablerIconsProps) => JSX.Element;
   contextMenuIconSize?: number;
   contextMenuTooltip?: string;

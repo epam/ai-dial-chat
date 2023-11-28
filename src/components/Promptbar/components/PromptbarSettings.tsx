@@ -12,6 +12,7 @@ import { HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
@@ -29,7 +30,7 @@ interface PromptbarSettingsProps {
 export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
   allPrompts,
 }) => {
-  const { t } = useTranslation('promptbar');
+  const { t } = useTranslation(Translation.PromptBar);
   const dispatch = useAppDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const enabledFeatures = useAppSelector(
@@ -39,7 +40,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: 'Shared by me',
+        name: t('Shared by me'),
         display:
           enabledFeatures.has(Feature.PromptsSharing) &&
           allPrompts.filter((c) => c.isShared).length > 0,
@@ -47,10 +48,10 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
         Icon: IconUserShare,
         onClick: () => {
           setIsOpen(false);
-        }, //TODO
+        },
       },
       {
-        name: 'Delete all prompts',
+        name: t('Delete all prompts'),
         display: allPrompts.length > 0,
         dataQa: 'delete-prompts',
         Icon: IconTrashX,
@@ -59,7 +60,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
         },
       },
       {
-        name: 'Import prompts',
+        name: t('Import prompts'),
         onClick: (promptsJSON) => {
           dispatch(
             PromptsActions.importPrompts({ promptsHistory: promptsJSON }),
@@ -70,7 +71,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
         CustomTriggerRenderer: Import,
       },
       {
-        name: 'Export prompts',
+        name: t('Export prompts'),
         dataQa: 'export-prompts',
         Icon: IconFileArrowRight,
         onClick: () => {
@@ -78,7 +79,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
         },
       },
       {
-        name: 'Create new folder',
+        name: t('Create new folder'),
         dataQa: 'create-prompt-folder',
         Icon: FolderPlus,
         onClick: () => {
@@ -94,7 +95,6 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
       <SidebarMenu
         menuItems={menuItems}
         highlightColor={HighlightColor.Violet}
-        translation="promptbar"
       />
 
       <ConfirmDialog

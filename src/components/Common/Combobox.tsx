@@ -9,6 +9,8 @@ import { FC, createElement, useEffect, useLayoutEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { Translation } from '@/src/types/translation';
+
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 
 import { useCombobox } from 'downshift';
@@ -38,7 +40,7 @@ export const Combobox = ({
   getItemValue,
   onSelectItem,
 }: Props) => {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation(Translation.Common);
   const [displayedItems, setDisplayedItems] = useState(items);
   const [floatingWidth, setFloatingWidth] = useState(0);
 

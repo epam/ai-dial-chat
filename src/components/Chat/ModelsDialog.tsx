@@ -15,6 +15,7 @@ import { doesModelContainSearchTerm } from '@/src/utils/app/search';
 
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntity, OpenAIEntityModel } from '@/src/types/openai';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -157,7 +158,7 @@ export const ModelsDialog: FC<Props> = ({
   onModelSelect,
   onClose,
 }) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
   const models = useAppSelector(ModelsSelectors.selectModels);
 
@@ -291,6 +292,7 @@ export const ModelsDialog: FC<Props> = ({
               onClick={() => {
                 handleFilterType(EntityType.Model);
               }}
+              data-qa="models-tab"
             >
               {t('Models')}
             </button>
@@ -304,6 +306,7 @@ export const ModelsDialog: FC<Props> = ({
               onClick={() => {
                 handleFilterType(EntityType.Assistant);
               }}
+              data-qa="assistants-tab"
             >
               {t('Assistants')}
             </button>
@@ -317,6 +320,7 @@ export const ModelsDialog: FC<Props> = ({
               onClick={() => {
                 handleFilterType(EntityType.Application);
               }}
+              data-qa="applications-tab"
             >
               {t('Applications')}
             </button>

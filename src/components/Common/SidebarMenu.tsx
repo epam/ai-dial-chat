@@ -1,12 +1,10 @@
 import { useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { getByHighlightColor } from '@/src/utils/app/folders';
 
-import { BaseMenuItemRendererProps, BaseMenuProps } from '@/src/types/menu';
+import { MenuItemRendererProps, MenuProps } from '@/src/types/menu';
 
 import {
   Tooltip,
@@ -14,16 +12,15 @@ import {
   TooltipTrigger,
 } from '@/src/components/Common/Tooltip';
 
-import BaseContextMenu from './BaseContextMenu';
+import ContextMenu from './ContextMenu';
 
-export function SidebarMenuItemRenderer(props: BaseMenuItemRendererProps) {
+export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
   const {
     Icon,
     dataQa,
     onClick,
     disabled,
     highlightColor,
-    translation,
     className,
     menuItems,
   } = props;
@@ -49,12 +46,10 @@ export function SidebarMenuItemRenderer(props: BaseMenuItemRendererProps) {
 
   if (menuItems) {
     return (
-      <BaseContextMenu
+      <ContextMenu
         menuItems={menuItems}
         highlightColor={highlightColor}
-        translation={translation}
         CustomMenuRenderer={item}
-        className="p-0"
       />
     );
   }
@@ -65,13 +60,11 @@ export default function SidebarMenu({
   menuItems,
   highlightColor,
   displayMenuItemCount = 5, // calculate in future based on width of container
-  translation = 'chatbar',
-}: BaseMenuProps) {
-  const { t } = useTranslation(translation);
+  isOpen,
+  onOpenChange,
+}: MenuProps) {
   const [visibleItems, hiddenItems] = useMemo(() => {
-    const displayedItems = menuItems.filter(
-      (menu) => menu.display === undefined || menu.display,
-    );
+    const displayedItems = menuItems.filter(({ display = true }) => display);
     const visibleItems = displayedItems.slice(0, displayMenuItemCount);
     const hiddenItems = displayedItems.slice(displayMenuItemCount);
     return [visibleItems, hiddenItems];
@@ -85,28 +78,25 @@ export default function SidebarMenu({
             {...props}
             highlightColor={highlightColor}
             Renderer={SidebarMenuItemRenderer}
-            translation={translation}
           />
         ) : (
-          <SidebarMenuItemRenderer
-            {...props}
-            highlightColor={highlightColor}
-            translation={translation}
-          />
+          <SidebarMenuItemRenderer {...props} highlightColor={highlightColor} />
         );
 
         return (
           <Tooltip key={props.name} isTriggerClickable>
             <TooltipTrigger>{Trigger}</TooltipTrigger>
-            <TooltipContent>{t(props.name)}</TooltipContent>
+            <TooltipContent>{props.name}</TooltipContent>
           </Tooltip>
         );
       })}
 
-      <BaseContextMenu
+      <ContextMenu
         menuItems={hiddenItems}
         highlightColor={highlightColor}
-        translation={translation}
+        className="p-[5px]"
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
       />
     </div>
   );

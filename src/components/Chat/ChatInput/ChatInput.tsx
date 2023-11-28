@@ -4,6 +4,7 @@ import { MutableRefObject, ReactNode, useEffect, useRef } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { Message } from '@/src/types/chat';
+import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -37,7 +38,7 @@ export const ChatInput = ({
   isShowInput,
   children,
 }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
 
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,

@@ -5,21 +5,36 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { HighlightColor } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
+import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
-import { FilesActions } from '@/src/store/files/files.reducers';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import BaseContextMenu from '../../Common/BaseContextMenu';
-import { FileManagerModal } from '../../Files/FileManagerModal';
-import { PreUploadDialog } from '../../Files/PreUploadModal';
+import ContextMenu from '../Common/ContextMenu';
+import { FileManagerModal } from './FileManagerModal';
+import { PreUploadDialog } from './PreUploadModal';
 
-export const AttachButton = () => {
-  const dispatch = useAppDispatch();
+interface Props {
+  selectedFilesIds?: string[];
+  onSelectAlreadyUploaded: (result: unknown) => void;
+  onUploadFromDevice: (
+    selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
+    folderPath: string | undefined,
+  ) => void;
+}
+
+export const AttachButton = ({
+  selectedFilesIds,
+  onSelectAlreadyUploaded,
+  onUploadFromDevice,
+}: Props) => {
+  const { t } = useTranslation(Translation.Chat);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -41,86 +56,46 @@ export const AttachButton = () => {
     setIsPreUploadDialogOpened(true);
   }, []);
 
-  const handleFileSelectClose = useCallback(
-    (result: unknown) => {
-      if (typeof result === 'object') {
-        const selectedFilesIds = result as string[];
-        dispatch(FilesActions.resetSelectedFiles());
-        dispatch(
-          FilesActions.selectFiles({
-            ids: selectedFilesIds,
-          }),
-        );
-      }
-      setIsSelectFilesDialogOpened(false);
-    },
-    [dispatch],
-  );
-
-  const handlePreUploadModalClose = useCallback(
-    (
-      selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
-      folderPath: string | undefined,
-    ) => {
-      selectedFiles.forEach((file) => {
-        dispatch(
-          FilesActions.uploadFile({
-            fileContent: file.fileContent,
-            id: file.id,
-            relativePath: folderPath,
-            name: file.name,
-          }),
-        );
-      });
-      dispatch(
-        FilesActions.selectFiles({
-          ids: selectedFiles.map(({ id }) => id),
-        }),
-      );
-    },
-    [dispatch],
-  );
-
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: 'Attach uploaded files',
+        name: t('Attach uploaded files'),
         dataQa: 'attach_uploaded',
         Icon: IconFileDescription,
         onClick: handleOpenAttachmentsModal,
       },
       {
-        name: 'Upload from device',
+        name: t('Upload from device'),
         dataQa: 'upload_from_device',
         Icon: IconUpload,
         onClick: handleAttachFromComputer,
       },
     ],
-    [handleAttachFromComputer, handleOpenAttachmentsModal],
+    [handleAttachFromComputer, handleOpenAttachmentsModal, t],
   );
 
   return (
     <>
-      <div className="absolute left-4 top-[calc(50%_-_12px)] rounded disabled:cursor-not-allowed">
-        <BaseContextMenu
-          menuItems={menuItems}
-          ContextMenuIcon={IconPaperclip}
-          contextMenuIconSize={24}
-          contextMenuTooltip="Attach files"
-          translation="chat"
-          highlightColor={HighlightColor.Blue}
-          disabled={messageIsStreaming || isModelsLoading}
-          contextMenuIconHighlight
-          className="p-0"
-        />
-      </div>
+      <ContextMenu
+        menuItems={menuItems}
+        ContextMenuIcon={IconPaperclip}
+        contextMenuIconSize={24}
+        contextMenuTooltip={t('Attach files') || ''}
+        highlightColor={HighlightColor.Blue}
+        disabled={messageIsStreaming || isModelsLoading}
+        contextMenuIconHighlight
+      />
       {isSelectFilesDialogOpened && (
         <FileManagerModal
           isOpen
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           isInConversation={true}
-          onClose={handleFileSelectClose}
+          initialSelectedFilesIds={selectedFilesIds}
+          onClose={(result: unknown) => {
+            onSelectAlreadyUploaded(result);
+            setIsSelectFilesDialogOpened(false);
+          }}
         />
       )}
       {isPreUploadDialogOpened && (
@@ -129,7 +104,7 @@ export const AttachButton = () => {
           allowedTypes={availableAttachmentsTypes}
           initialFilesSelect={true}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
-          onUploadFiles={handlePreUploadModalClose}
+          onUploadFiles={onUploadFromDevice}
           onClose={() => {
             setIsPreUploadDialogOpened(false);
           }}

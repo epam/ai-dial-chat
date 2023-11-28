@@ -3,6 +3,8 @@ import { ReactNode } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { Translation } from '@/src/types/translation';
+
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -46,7 +48,7 @@ const SendIconTooltip = ({
 };
 
 export const SendMessageButton = ({ handleSend, isInputEmpty }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const isMessageError = useAppSelector(
     ConversationsSelectors.selectIsMessagesError,

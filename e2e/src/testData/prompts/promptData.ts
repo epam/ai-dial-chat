@@ -24,8 +24,10 @@ export class PromptData extends FolderData {
     this.resetFolderData();
   }
 
-  public prepareDefaultPrompt() {
-    return this.promptBuilder.withName(GeneratorUtil.randomString(10)).build();
+  public prepareDefaultPrompt(name?: string) {
+    return this.promptBuilder
+      .withName(name ?? GeneratorUtil.randomString(10))
+      .build();
   }
 
   public prepareNestedFolder(nestedLevel: number) {

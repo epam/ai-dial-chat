@@ -25,6 +25,7 @@ import classNames from 'classnames';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 
@@ -41,7 +42,7 @@ export const PromptModal: FC<Props> = ({
   onClose,
   onUpdatePrompt,
 }) => {
-  const { t } = useTranslation('promptbar');
+  const { t } = useTranslation(Translation.PromptBar);
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState(prompt.description);
   const [content, setContent] = useState(prompt.content);

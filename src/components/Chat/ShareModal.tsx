@@ -18,6 +18,8 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import { Translation } from '@/src/types/translation';
+
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -49,7 +51,7 @@ export default function ShareModal({
   onShare,
   type,
 }: Props) {
-  const { t } = useTranslation('sidebar');
+  const { t } = useTranslation(Translation.SideBar);
   const copyButtonRef = useRef<HTMLButtonElement>(null);
   const [urlCopied, setUrlCopied] = useState(false);
   const [urlWasCopied, setUrlWasCopied] = useState(false);
