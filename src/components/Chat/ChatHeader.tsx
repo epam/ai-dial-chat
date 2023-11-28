@@ -25,7 +25,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
-import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
+import Tooltip from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
 
 interface Props {
@@ -89,16 +89,13 @@ export const ChatHeader = ({
         data-qa="chat-header"
       >
         {isShowChatInfo && (
-          <Tooltip>
-            <TooltipTrigger>
-              <span
-                className="block max-w-[330px] truncate text-center lg:max-w-[425px]"
-                data-qa="chat-title"
-              >
-                {conversation.name}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>{conversation.name}</TooltipContent>
+          <Tooltip tooltip={conversation.name}>
+            <span
+              className="block max-w-[330px] truncate text-center lg:max-w-[425px]"
+              data-qa="chat-title"
+            >
+              {conversation.name}
+            </span>
           </Tooltip>
         )}
         {model && (
@@ -106,17 +103,8 @@ export const ChatHeader = ({
             {isShowChatInfo && (
               <>
                 <span className="flex items-center" data-qa="chat-model">
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <ModelIcon
-                        entityId={conversation.model.id}
-                        entity={model}
-                        size={18}
-                        inverted={theme === 'dark'}
-                        isCustomTooltip={true}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
+                  <Tooltip
+                    tooltip={
                       <ChatInfoTooltip
                         model={model}
                         selectedAddons={selectedAddons}
@@ -137,7 +125,15 @@ export const ChatHeader = ({
                             : null
                         }
                       />
-                    </TooltipContent>
+                    }
+                  >
+                    <ModelIcon
+                      entityId={conversation.model.id}
+                      entity={model}
+                      size={18}
+                      inverted={theme === 'dark'}
+                      isCustomTooltip={true}
+                    />
                   </Tooltip>
                 </span>
                 {model.type !== EntityType.Application &&
@@ -171,68 +167,62 @@ export const ChatHeader = ({
             )}
             <div className="flex items-center gap-2">
               {isShowModelSelect && (
-                <Tooltip isTriggerClickable={true}>
-                  <TooltipTrigger>
-                    <button
-                      className="cursor-pointer text-gray-500 hover:text-blue-500"
-                      onClick={() => {
-                        setShowSettings(!isShowSettings);
-                      }}
-                      data-qa="conversation-setting"
-                    >
-                      <IconSettings size={18} />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>{t('Conversation settings')}</TooltipContent>
+                <Tooltip
+                  isTriggerClickable
+                  tooltip={t('Conversation settings')}
+                >
+                  <button
+                    className="cursor-pointer text-gray-500 hover:text-blue-500"
+                    onClick={() => {
+                      setShowSettings(!isShowSettings);
+                    }}
+                    data-qa="conversation-setting"
+                  >
+                    <IconSettings size={18} />
+                  </button>
                 </Tooltip>
               )}
               {isShowClearConversation && !isCompareMode && (
-                <Tooltip isTriggerClickable={true}>
-                  <TooltipTrigger>
-                    <button
-                      className="cursor-pointer text-gray-500 hover:text-blue-500"
-                      onClick={onClearConversation}
-                      data-qa="clear-conversation"
-                    >
-                      <IconEraser size={18} />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {t('Clear conversation messages')}
-                  </TooltipContent>
+                <Tooltip
+                  isTriggerClickable
+                  tooltip={t('Clear conversation messages')}
+                >
+                  <button
+                    className="cursor-pointer text-gray-500 hover:text-blue-500"
+                    onClick={onClearConversation}
+                    data-qa="clear-conversation"
+                  >
+                    <IconEraser size={18} />
+                  </button>
                 </Tooltip>
               )}
               {isCompareMode && selectedConversationIds.length > 1 && (
-                <Tooltip isTriggerClickable={true}>
-                  <TooltipTrigger>
-                    <button
-                      className="cursor-pointer text-gray-500 hover:text-blue-500 disabled:cursor-not-allowed"
-                      onClick={() => onUnselectConversation(conversation.id)}
-                      disabled={conversation.isMessageStreaming}
-                      data-qa="remove-from-compare"
-                    >
-                      <IconX size={18} />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {t('Remove conversation from compare mode')}
-                  </TooltipContent>
+                <Tooltip
+                  isTriggerClickable
+                  tooltip={t('Remove conversation from compare mode')}
+                >
+                  <button
+                    className="cursor-pointer text-gray-500 hover:text-blue-500 disabled:cursor-not-allowed"
+                    onClick={() => onUnselectConversation(conversation.id)}
+                    disabled={conversation.isMessageStreaming}
+                    data-qa="remove-from-compare"
+                  >
+                    <IconX size={18} />
+                  </button>
                 </Tooltip>
               )}
               {isPlayback && (
-                <Tooltip isTriggerClickable={true}>
-                  <TooltipTrigger>
-                    <button
-                      className="cursor-pointer text-gray-500 hover:text-blue-500"
-                      onClick={onCancelPlaybackMode}
-                      data-qa="cancel-playback-mode"
-                    >
-                      <IconDoorExit size={18} />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {t('To edit the chat, leave Playback mode')}
-                  </TooltipContent>
+                <Tooltip
+                  isTriggerClickable
+                  tooltip={t('To edit the chat, leave Playback mode')}
+                >
+                  <button
+                    className="cursor-pointer text-gray-500 hover:text-blue-500"
+                    onClick={onCancelPlaybackMode}
+                    data-qa="cancel-playback-mode"
+                  >
+                    <IconDoorExit size={18} />
+                  </button>
                 </Tooltip>
               )}
             </div>

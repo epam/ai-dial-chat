@@ -5,11 +5,7 @@ import Image from 'next/image';
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntity } from '@/src/types/openai';
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/src/components/Common/Tooltip';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 interface Props {
   entityId: string;
@@ -93,17 +89,17 @@ export const ModelIcon = ({
           inverted={inverted}
         />
       ) : (
-        <Tooltip>
-          <TooltipTrigger className="flex shrink-0">
-            <ModelIconTemplate
-              entity={entity}
-              entityId={entityId}
-              size={size}
-              animate={animate}
-              inverted={inverted}
-            />
-          </TooltipTrigger>
-          <TooltipContent>{entity?.name || entityId}</TooltipContent>
+        <Tooltip
+          tooltip={entity?.name || entityId}
+          triggerClassName="flex shrink-0"
+        >
+          <ModelIconTemplate
+            entity={entity}
+            entityId={entityId}
+            size={size}
+            animate={animate}
+            inverted={inverted}
+          />
         </Tooltip>
       )}
     </>
