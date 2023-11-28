@@ -28,7 +28,6 @@ import { DialFile } from '@/src/types/files';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { ErrorMessage } from '../Common/ErrorMessage';
@@ -159,16 +158,17 @@ export const FileManagerModal = ({
   );
   const handleRenameFolder = useCallback(
     (newName: string, folderId: string) => {
+      const renamingFolder = folders.find((folder) => folder.id === folderId);
       const folderWithSameName = folders.find(
-        (folder) => folder.name === newName && folderId !== folder.id,
+        (folder) =>
+          folder.name === newName.trim() &&
+          folderId !== folder.id &&
+          folder.folderId === renamingFolder?.folderId,
       );
 
       if (folderWithSameName) {
-        dispatch(
-          UIActions.showToast({
-            message: t(`Not allowed to have folders with same names`),
-            type: 'error',
-          }),
+        setErrorMessage(
+          t(`Not allowed to have folders with same names`) as string,
         );
         return;
       }

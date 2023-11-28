@@ -71,7 +71,7 @@ export const getAvailableNameOnSameFolderLevel = (
   parentFolderId?: string,
 ) => {
   const names = items
-    .filter((item) => !item.folderId || item.folderId === parentFolderId)
+    .filter((item) => item.folderId === parentFolderId)
     .map((item) => item.name);
   let itemNumber = 0;
   let itemName;
