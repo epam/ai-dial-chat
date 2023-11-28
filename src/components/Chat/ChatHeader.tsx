@@ -132,7 +132,7 @@ export const ChatHeader = ({
                       entity={model}
                       size={18}
                       inverted={theme === 'dark'}
-                      isCustomTooltip={true}
+                      isCustomTooltip
                     />
                   </Tooltip>
                 </span>
