@@ -5,7 +5,7 @@ import {
   IconReload,
   IconX,
 } from '@tabler/icons-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -41,11 +41,7 @@ export const FileItem = ({
 }: Props) => {
   const { t } = useTranslation('files');
 
-  const selectedFilesIds: string[] =
-    (additionalItemData?.selectedFilesIds as string[]) || [];
-  const [isSelected, setIsSelected] = useState(
-    selectedFilesIds.includes(item.id),
-  );
+  const [isSelected, setIsSelected] = useState(false);
   const handleCancelFile = useCallback(() => {
     onEvent?.(FileItemEventIds.Cancel, item.id);
   }, [item.id, onEvent]);
@@ -62,6 +58,14 @@ export const FileItem = ({
   const handleRemove = useCallback(() => {
     onEvent?.(FileItemEventIds.Remove, item.id);
   }, [item.id, onEvent]);
+
+  useEffect(() => {
+    setIsSelected(
+      ((additionalItemData?.selectedFilesIds as string[]) || []).includes(
+        item.id,
+      ),
+    );
+  }, [additionalItemData?.selectedFilesIds, item.id]);
 
   return (
     <div
