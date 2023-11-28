@@ -89,7 +89,11 @@ export const ChatInputMessage = ({
       prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
     ),
   );
-
+  const isInputEmpty = useMemo(() => {
+    return (
+      (!content || content.trim().length === 0) && selectedFiles.length === 0
+    );
+  }, [content, selectedFiles.length]);
   const maxLength = useMemo(() => {
     const maxLengthArray = selectedConversations.map(
       ({ model }) =>
@@ -138,14 +142,14 @@ export const ChatInputMessage = ({
       return;
     }
 
-    if (!content) {
+    if (isInputEmpty) {
       alert(t('Please enter a message'));
       return;
     }
 
     onSend({
       role: Role.User,
-      content,
+      content: content!,
       ...getUserCustomContent(selectedFiles),
     });
     dispatch(FilesActions.resetSelectedFiles());
@@ -155,13 +159,14 @@ export const ChatInputMessage = ({
       textareaRef.current.blur();
     }
   }, [
-    content,
-    dispatch,
-    selectedFiles,
     messageIsStreaming,
+    isInputEmpty,
     onSend,
-    t,
+    content,
+    selectedFiles,
+    dispatch,
     textareaRef,
+    t,
   ]);
 
   const parseVariables = useCallback((content: string) => {
@@ -388,10 +393,7 @@ export const ChatInputMessage = ({
 
         <SendMessageButton
           handleSend={handleSend}
-          isInputEmpty={
-            (!content || content.trim().length === 0) &&
-            selectedFiles.length === 0
-          }
+          isInputEmpty={isInputEmpty}
         />
 
         {displayAttachFunctionality && (
