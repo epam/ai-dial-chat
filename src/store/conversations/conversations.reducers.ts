@@ -601,7 +601,12 @@ const selectIsLastAssistantMessageEmpty = createSelector(
       const lastMessage = conv.messages[lastMessageIndex];
 
       return (
-        lastMessage.role === Role.Assistant && lastMessage.content.length === 0
+        lastMessage.role === Role.Assistant &&
+        lastMessage.content.length === 0 &&
+        (!lastMessage.custom_content?.attachments ||
+          lastMessage.custom_content?.attachments.length === 0) &&
+        (!lastMessage.custom_content?.stages ||
+          lastMessage.custom_content?.stages.length === 0)
       );
     });
   },
