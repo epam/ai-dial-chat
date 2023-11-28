@@ -150,7 +150,7 @@ export const Addons = ({
               <Addon
                 key={addon}
                 addonId={addon}
-                isSelected={true}
+                isSelected
                 onChangeAddon={onChangeAddon}
                 preselectedAddonsIds={preselectedAddonsIds}
               />
@@ -163,7 +163,7 @@ export const Addons = ({
                 <Addon
                   key={addon}
                   addonId={addon}
-                  isSelected={true}
+                  isSelected
                   onChangeAddon={onChangeAddon}
                   preselectedAddonsIds={preselectedAddonsIds}
                 />

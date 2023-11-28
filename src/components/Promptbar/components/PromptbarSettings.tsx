@@ -46,21 +46,21 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
       ) : null}
 
       <Tooltip isTriggerClickable tooltip={t('Import prompts')}>
-          <Import
-            highlightColor={HighlightColor.Violet}
-            onImport={(promptsJSON) => {
-              dispatch(
-                PromptsActions.importPrompts({ promptsHistory: promptsJSON }),
-              );
-            }}
-            icon={
-              <IconFileArrowLeft
-                className="hover:text-violet"
-                size={24}
-                strokeWidth="1.5"
-              />
-            }
-          />
+        <Import
+          highlightColor={HighlightColor.Violet}
+          onImport={(promptsJSON) => {
+            dispatch(
+              PromptsActions.importPrompts({ promptsHistory: promptsJSON }),
+            );
+          }}
+          icon={
+            <IconFileArrowLeft
+              className="hover:text-violet"
+              size={24}
+              strokeWidth="1.5"
+            />
+          }
+        />
       </Tooltip>
 
       <Tooltip isTriggerClickable tooltip={t('Export prompts')}>
@@ -76,15 +76,15 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
       </Tooltip>
 
       <Tooltip isTriggerClickable tooltip={t('Create new folder')}>
-          <div
-            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet"
-            onClick={() => {
-              dispatch(PromptsActions.createFolder({ name: t('New folder') }));
-            }}
-            data-qa="create-prompt-folder"
-          >
-            <FolderPlus height={24} width={24} />
-          </div>
+        <div
+          className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet"
+          onClick={() => {
+            dispatch(PromptsActions.createFolder({ name: t('New folder') }));
+          }}
+          data-qa="create-prompt-folder"
+        >
+          <FolderPlus height={24} width={24} />
+        </div>
       </Tooltip>
 
       <ConfirmDialog

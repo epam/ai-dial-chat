@@ -15,8 +15,11 @@ import {
   useRef,
   useState,
 } from 'react';
+
 import { useTranslation } from 'next-i18next';
+
 import Tooltip from '../Common/Tooltip';
+
 import { v4 as uuidv4 } from 'uuid';
 
 export enum SharingType {
