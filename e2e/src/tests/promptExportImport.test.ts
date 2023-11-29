@@ -413,21 +413,24 @@ test('Import file from 1.4 version to prompts and continue working with it', asy
       promptBar.importButton.click(),
     );
 
-    await folderPrompts.expandCollapseFolder(Import.v14AppFolderName);
+    await folderPrompts.expandCollapseFolder(Import.oldVersionAppFolderName);
     await folderPrompts
-      .getFolderPrompt(Import.v14AppFolderName, Import.v14AppFolderPromptName)
+      .getFolderPrompt(
+        Import.oldVersionAppFolderName,
+        Import.v14AppFolderPromptName,
+      )
       .waitFor();
   });
 
   await test.step('Edit imported prompt', async () => {
     await folderPrompts.openFolderPromptDropdownMenu(
-      Import.v14AppFolderName,
+      Import.oldVersionAppFolderName,
       Import.v14AppFolderPromptName,
     );
     await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
     await promptModalDialog.updatePromptDetails(newName, newDescr, newValue);
     await folderPrompts
-      .getFolderPrompt(Import.v14AppFolderName, newName)
+      .getFolderPrompt(Import.oldVersionAppFolderName, newName)
       .waitFor();
   });
 

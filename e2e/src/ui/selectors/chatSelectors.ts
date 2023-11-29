@@ -40,7 +40,7 @@ export const ChatSelectors = {
   promptOption: '[data-qa="prompt-option"]',
   moreInfo: '[data-qa="more-info"]',
   infoApplication: '[data-qa="info-app"]',
-  appDescr: '[data-qa="app-descr"]',
+  description: '[data-qa="app-descr"]',
   startReplay: '[data-qa="start-replay"]',
   applyChanges: '[data-qa="apply-changes"]',
   stopGenerating: '[data-qa="stop-generating"]',
@@ -70,4 +70,7 @@ export const ChatSelectors = {
   replayAsIsLabel: '[data-qa="info-as-is"]',
   iconAnimation: '.animate-bounce',
   noResultFound: '[data-qa="no-data"]',
+  footer: '[data-qa="footer-message"]',
+  notAllowedModel: '[data-qa="not-allowed-model-error"]',
+  replayOldVersion: '[data-qa="replay-old-version"]',
 };
