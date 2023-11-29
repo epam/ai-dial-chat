@@ -651,8 +651,7 @@ test('Send button is disabled if the chat in replay mode', async ({
       .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
       .toBe(ExpectedConstants.proceedReplayTooltip);
 
-    const isFooterVisible = await chat.footer.isVisible();
-    expect.soft(isFooterVisible, ExpectedMessages.footerIsVisible).toBeTruthy();
+    await chat.footer.waitForState({ state: 'attached' });
   });
 
   await test.step('Continue replaying, refresh page and verify error appears for the least response, message is preserved, footer is visible and tooltip shown on hover', async () => {
@@ -675,8 +674,7 @@ test('Send button is disabled if the chat in replay mode', async ({
       .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
       .toBe(ExpectedConstants.proceedReplayTooltip);
 
-    const isFooterVisible = await chat.footer.isVisible();
-    expect.soft(isFooterVisible, ExpectedMessages.footerIsVisible).toBeTruthy();
+    await chat.footer.waitForState({ state: 'attached' });
   });
 });
 
