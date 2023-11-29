@@ -5,15 +5,15 @@ import {
   IconReload,
   IconX,
 } from '@tabler/icons-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
+import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
 import { DialFile } from '@/src/types/files';
 
-import { FilesSelectors } from '@/src/store/files/files.reducers';
-import { useAppSelector } from '@/src/store/hooks';
-
+import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
 import { FileItemContextMenu } from './FileItemContextMenu';
 
 export enum FileItemEventIds {
@@ -26,19 +26,22 @@ export enum FileItemEventIds {
 interface Props {
   item: DialFile;
   level: number;
+  additionalItemData?: Record<string, unknown>;
 
   onEvent?: (eventId: FileItemEventIds, data: string) => void;
 }
 
 const cancelAllowedStatuses = new Set(['UPLOADING', 'FAILED']);
 
-export const FileItem = ({ item, level = 0, onEvent }: Props) => {
-  const selectedFilesIds = useAppSelector(
-    FilesSelectors.selectSelectedFilesIds,
-  );
-  const [isSelected, setIsSelected] = useState(
-    selectedFilesIds.includes(item.id),
-  );
+export const FileItem = ({
+  item,
+  level,
+  additionalItemData,
+  onEvent,
+}: Props) => {
+  const { t } = useTranslation('files');
+
+  const [isSelected, setIsSelected] = useState(false);
   const handleCancelFile = useCallback(() => {
     onEvent?.(FileItemEventIds.Cancel, item.id);
   }, [item.id, onEvent]);
@@ -55,6 +58,14 @@ export const FileItem = ({ item, level = 0, onEvent }: Props) => {
   const handleRemove = useCallback(() => {
     onEvent?.(FileItemEventIds.Remove, item.id);
   }, [item.id, onEvent]);
+
+  useEffect(() => {
+    setIsSelected(
+      ((additionalItemData?.selectedFilesIds as string[]) || []).includes(
+        item.id,
+      ),
+    );
+  }, [additionalItemData?.selectedFilesIds, item.id]);
 
   return (
     <div
@@ -74,10 +85,17 @@ export const FileItem = ({ item, level = 0, onEvent }: Props) => {
             />
           ) : (
             item.status === 'FAILED' && (
-              <IconExclamationCircle
-                className="shrink-0 text-red-800 dark:text-red-400"
-                size={18}
-              />
+              <Tooltip isTriggerClickable={true}>
+                <TooltipTrigger>
+                  <IconExclamationCircle
+                    className="shrink-0 text-red-800 dark:text-red-400"
+                    size={18}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t('Uploading failed. Please, try again')}
+                </TooltipContent>
+              </Tooltip>
             )
           )}
           {item.status !== 'UPLOADING' && (

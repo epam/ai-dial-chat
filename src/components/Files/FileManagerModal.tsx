@@ -28,7 +28,6 @@ import { DialFile } from '@/src/types/files';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { ErrorMessage } from '../Common/ErrorMessage';
@@ -41,6 +40,7 @@ import { extension } from 'mime-types';
 
 interface Props {
   isOpen: boolean;
+  initialSelectedFilesIds?: string[];
   allowedTypes?: string[];
   maximumAttachmentsAmount?: number;
   isInConversation?: boolean;
@@ -52,14 +52,12 @@ const loadingStatuses = new Set(['LOADING', undefined]);
 export const FileManagerModal = ({
   isOpen,
   allowedTypes = [],
+  initialSelectedFilesIds = [],
   isInConversation = false,
   maximumAttachmentsAmount = 0,
   onClose,
 }: Props) => {
   const dispatch = useAppDispatch();
-  const attachedFilesIds = useAppSelector(
-    FilesSelectors.selectSelectedFilesIds,
-  );
 
   const { t } = useTranslation('chat');
 
@@ -75,18 +73,18 @@ export const FileManagerModal = ({
 
   const folders = useAppSelector(FilesSelectors.selectFolders);
   const files = useAppSelector(FilesSelectors.selectFiles);
+  const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
   const foldersStatus = useAppSelector(FilesSelectors.selectFoldersStatus);
   const loadingFolderId = useAppSelector(FilesSelectors.selectLoadingFolderId);
-  const newAddedFolderId = useAppSelector(
-    FilesSelectors.selectNewAddedFolderId,
-  );
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
   const [isUploadFromDeviceOpened, setIsUploadFromDeviceOpened] =
     useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilesIds, setSelectedFilesIds] = useState(attachedFilesIds);
+  const [selectedFilesIds, setSelectedFilesIds] = useState(
+    initialSelectedFilesIds,
+  );
   const filteredFiles = useMemo(() => {
     return files.filter(({ name }) =>
       name.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -160,16 +158,17 @@ export const FileManagerModal = ({
   );
   const handleRenameFolder = useCallback(
     (newName: string, folderId: string) => {
+      const renamingFolder = folders.find((folder) => folder.id === folderId);
       const folderWithSameName = folders.find(
-        (folder) => folder.name === newName && folderId !== folder.id,
+        (folder) =>
+          folder.name === newName.trim() &&
+          folderId !== folder.id &&
+          folder.folderId === renamingFolder?.folderId,
       );
 
       if (folderWithSameName) {
-        dispatch(
-          UIActions.showToast({
-            message: t(`Not allowed to have folders with same names`),
-            type: 'error',
-          }),
+        setErrorMessage(
+          t(`Not allowed to have folders with same names`) as string,
         );
         return;
       }
@@ -378,13 +377,13 @@ export const FileManagerModal = ({
                                       allFolders={folders}
                                       highlightColor={HighlightColor.Blue}
                                       highlightedFolders={[]}
-                                      isInitialRename={
-                                        newAddedFolderId === folder.id
-                                      }
+                                      isInitialRenameEnabled
+                                      newAddedFolderId={newFolderId}
                                       displayCaretAlways={true}
                                       loadingFolderId={loadingFolderId}
                                       openedFoldersIds={openedFoldersIds}
                                       allItems={filteredFiles}
+                                      additionalItemData={{ selectedFilesIds }}
                                       itemComponent={FileItem}
                                       onClickFolder={handleFolderSelect}
                                       onAddFolder={handleAddFolder}
@@ -404,6 +403,7 @@ export const FileManagerModal = ({
                                     <FileItem
                                       item={file}
                                       level={0}
+                                      additionalItemData={{ selectedFilesIds }}
                                       onEvent={handleItemCallback}
                                     />
                                   </div>

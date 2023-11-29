@@ -16,6 +16,7 @@ import { isMobile } from '@/src/utils/app/mobile';
 
 import { Message, Role } from '@/src/types/chat';
 import { Feature } from '@/src/types/features';
+import { DialFile } from '@/src/types/files';
 import { OpenAIEntityModels, defaultModelLimits } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 
@@ -27,7 +28,7 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
-import { AttachButton } from './AttachButton';
+import { AttachButton } from '../../Files/AttachButton';
 import { ChatInputAttachments } from './ChatInputAttachments';
 import { PromptDialog } from './PromptDialog';
 import { PromptList } from './PromptList';
@@ -73,19 +74,45 @@ export const ChatInputMessage = ({
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-  const files = useAppSelector(FilesSelectors.selectSelectedFiles);
+  const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
   const maximumAttachmentsAmount = useAppSelector(
     ConversationsSelectors.selectMaximumAttachmentsAmount,
   );
   const displayAttachFunctionality =
     enabledFeatures.has(Feature.InputFiles) && maximumAttachmentsAmount > 0;
+  const attachedFilesIds = useAppSelector(
+    FilesSelectors.selectSelectedFilesIds,
+  );
+
+  const isMessageError = useAppSelector(
+    ConversationsSelectors.selectIsMessagesError,
+  );
+  const isLastAssistantMessageEmpty = useAppSelector(
+    ConversationsSelectors.selectIsLastAssistantMessageEmpty,
+  );
+  const notModelConversations = useAppSelector(
+    ConversationsSelectors.selectNotModelConversations,
+  );
+  const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const isError =
+    isLastAssistantMessageEmpty || (isMessageError && notModelConversations);
 
   const [filteredPrompts, setFilteredPrompts] = useState(() =>
     prompts.filter((prompt) =>
       prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
     ),
   );
-
+  const isInputEmpty = useMemo(() => {
+    return (
+      (!content || content.trim().length === 0) && selectedFiles.length === 0
+    );
+  }, [content, selectedFiles.length]);
+  const isSendDisabled =
+    messageIsStreaming ||
+    isReplay ||
+    isError ||
+    isInputEmpty ||
+    isModelsLoading;
   const maxLength = useMemo(() => {
     const maxLengthArray = selectedConversations.map(
       ({ model }) =>
@@ -130,19 +157,14 @@ export const ChatInputMessage = ({
   );
 
   const handleSend = useCallback(() => {
-    if (messageIsStreaming) {
-      return;
-    }
-
-    if (!content) {
-      alert(t('Please enter a message'));
+    if (isSendDisabled) {
       return;
     }
 
     onSend({
       role: Role.User,
-      content,
-      ...getUserCustomContent(files),
+      content: content!,
+      ...getUserCustomContent(selectedFiles),
     });
     dispatch(FilesActions.resetSelectedFiles());
     setContent('');
@@ -150,7 +172,7 @@ export const ChatInputMessage = ({
     if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
       textareaRef.current.blur();
     }
-  }, [content, dispatch, files, messageIsStreaming, onSend, t, textareaRef]);
+  }, [isSendDisabled, onSend, content, selectedFiles, dispatch, textareaRef]);
 
   const parseVariables = useCallback((content: string) => {
     const regex = /{{(.*?)}}/g;
@@ -288,6 +310,79 @@ export const ChatInputMessage = ({
     }
   }, [content, textareaRef]);
 
+  const handleUnselectFile = useCallback(
+    (fileId: string) => {
+      dispatch(FilesActions.unselectFiles({ ids: [fileId] }));
+    },
+    [dispatch],
+  );
+
+  const handleRetry = useCallback(
+    (fileId: string) => {
+      dispatch(FilesActions.reuploadFile({ fileId }));
+    },
+    [dispatch],
+  );
+
+  const handleSelectAlreadyUploaded = useCallback(
+    (result: unknown) => {
+      if (typeof result === 'object') {
+        const selectedFilesIds = result as string[];
+        dispatch(FilesActions.resetSelectedFiles());
+        dispatch(
+          FilesActions.selectFiles({
+            ids: selectedFilesIds,
+          }),
+        );
+      }
+    },
+    [dispatch],
+  );
+
+  const handleUploadFromDevice = useCallback(
+    (
+      selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
+      folderPath: string | undefined,
+    ) => {
+      selectedFiles.forEach((file) => {
+        dispatch(
+          FilesActions.uploadFile({
+            fileContent: file.fileContent,
+            id: file.id,
+            relativePath: folderPath,
+            name: file.name,
+          }),
+        );
+      });
+      dispatch(
+        FilesActions.selectFiles({
+          ids: selectedFiles.map(({ id }) => id),
+        }),
+      );
+    },
+    [dispatch],
+  );
+
+  const tooltipContent = (): string => {
+    if (messageIsStreaming) {
+      return t(
+        'Please wait for full assistant answer to continue working with chat',
+      );
+    }
+    if (isModelsLoading) {
+      return t(
+        'Please wait for models will be loaded to continue working with chat',
+      );
+    }
+    if (isReplay) {
+      return t('Please continue replay to continue working with chat');
+    }
+    if (isError) {
+      return t('Please regenerate response to continue working with chat');
+    }
+    return t('Please type a message');
+  };
+
   return (
     <div className="mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0  md:last:mb-6 lg:mx-auto lg:max-w-3xl">
       <div
@@ -323,13 +418,28 @@ export const ChatInputMessage = ({
 
         <SendMessageButton
           handleSend={handleSend}
-          isInputEmpty={!content || content.trim().length === 0}
+          isDisabled={isSendDisabled}
+          tooltip={tooltipContent()}
         />
 
         {displayAttachFunctionality && (
           <>
-            <AttachButton />
-            <ChatInputAttachments />
+            <div className="absolute left-4 top-[calc(50%_-_12px)] rounded disabled:cursor-not-allowed">
+              <AttachButton
+                selectedFilesIds={attachedFilesIds}
+                onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
+                onUploadFromDevice={handleUploadFromDevice}
+              />
+            </div>
+            {selectedFiles.length > 0 && (
+              <div className="mb-2.5 grid max-h-[100px] grid-cols-3 gap-1 overflow-auto px-12">
+                <ChatInputAttachments
+                  files={selectedFiles}
+                  onUnselectFile={handleUnselectFile}
+                  onRetryFile={handleRetry}
+                />
+              </div>
+            )}
           </>
         )}
 
