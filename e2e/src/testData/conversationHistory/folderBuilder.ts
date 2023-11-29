@@ -3,7 +3,6 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 import { ExpectedConstants } from '@/e2e/src/testData';
 import { v4 as uuidv4 } from 'uuid';
 
-
 export class FolderBuilder {
   private folder: FolderInterface;
 
