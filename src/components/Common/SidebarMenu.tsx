@@ -6,11 +6,7 @@ import { getByHighlightColor } from '@/src/utils/app/folders';
 
 import { MenuItemRendererProps, MenuProps } from '@/src/types/menu';
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/src/components/Common/Tooltip';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 import ContextMenu from './ContextMenu';
 
@@ -84,9 +80,8 @@ export default function SidebarMenu({
         );
 
         return (
-          <Tooltip key={props.name} isTriggerClickable>
-            <TooltipTrigger>{Trigger}</TooltipTrigger>
-            <TooltipContent>{props.name}</TooltipContent>
+          <Tooltip key={props.name} isTriggerClickable tooltip={props.name}>
+            {Trigger}
           </Tooltip>
         );
       })}
