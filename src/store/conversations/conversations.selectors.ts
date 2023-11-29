@@ -21,47 +21,6 @@ export const selectConversations = createSelector([rootSelector], (state) => {
   return state.conversations;
 });
 
-// export const selectFilteredConversations2 = ({
-//   filter,
-//   onlyRoot,
-//   searchTerm,
-// }: {
-//   filter?: EntityFilter<Conversation>;
-//   onlyRoot?: boolean;
-//   searchTerm?: string;
-// }) =>
-//   createSelector([selectConversations], (conversations) => {
-//     return conversations.filter(
-//       (conversation) =>
-//         (!onlyRoot || !conversation.folderId) &&
-//         (!searchTerm ||
-//           doesConversationContainSearchTerm(conversation, searchTerm)) &&
-//         (!filter || filter(conversation)),
-//     );
-//   });
-
-// export const selectFilteredConversations3 = (
-//   state: RootState,
-//   {
-//     filter,
-//     onlyRoot,
-//     searchTerm,
-//   }: {
-//     filter?: EntityFilter<Conversation>;
-//     onlyRoot?: boolean;
-//     searchTerm?: string;
-//   },
-// ) =>
-//   createSelector([selectConversations], (conversations) => {
-//     return conversations.filter(
-//       (conversation) =>
-//         (!onlyRoot || !conversation.folderId) &&
-//         (!searchTerm ||
-//           doesConversationContainSearchTerm(conversation, searchTerm)) &&
-//         (!filter || filter(conversation)),
-//     );
-//   })(state);
-
 export const selectFilteredConversations = createSelector(
   [
     selectConversations,
@@ -282,7 +241,10 @@ export const selectIsLastAssistantMessageEmpty = createSelector(
       const lastMessage = conv.messages[lastMessageIndex];
 
       return (
-        lastMessage.role === Role.Assistant && lastMessage.content.length === 0
+        lastMessage.role === Role.Assistant &&
+        !lastMessage.content.length &&
+        !lastMessage.custom_content?.attachments?.length &&
+        !lastMessage.custom_content?.stages?.length
       );
     });
   },
