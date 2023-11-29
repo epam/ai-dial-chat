@@ -4,6 +4,8 @@ import { useTranslation } from 'next-i18next';
 
 import { isMediaQuery } from '@/src/utils/app/style-helpers';
 
+import { Translation } from '@/src/types/translation';
+
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
@@ -24,7 +26,7 @@ const Header = () => {
 
   const dispatch = useAppDispatch();
 
-  const { t } = useTranslation('sidebar');
+  const { t } = useTranslation(Translation.SideBar);
 
   const handleToggleChatbar = useCallback(() => {
     if (!showChatbar && isMediaQuery('(width <= 767px)')) {

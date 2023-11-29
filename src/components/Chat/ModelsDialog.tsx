@@ -13,6 +13,7 @@ import classNames from 'classnames';
 
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntity, OpenAIEntityModel } from '@/src/types/openai';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -155,7 +156,7 @@ export const ModelsDialog: FC<Props> = ({
   onModelSelect,
   onClose,
 }) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
   const models = useAppSelector(ModelsSelectors.selectModels);
 

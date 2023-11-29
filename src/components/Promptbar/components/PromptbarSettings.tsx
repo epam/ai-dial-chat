@@ -2,22 +2,27 @@ import {
   IconFileArrowLeft,
   IconFileArrowRight,
   IconTrashX,
+  IconUserShare,
 } from '@tabler/icons-react';
-import { FC, useState } from 'react';
+import { FC, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { HighlightColor } from '@/src/types/common';
+import { Feature } from '@/src/types/features';
+import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import Tooltip from '@/src/components/Common/Tooltip';
+import SidebarMenu from '@/src/components/Common/SidebarMenu';
 import { Import } from '@/src/components/Settings/Import';
 
-import FolderPlus from '../../../../public/images/icons/folder-plus.svg';
+import FolderPlus from '@/public/images/icons/folder-plus.svg';
 
 interface PromptbarSettingsProps {
   allPrompts: Prompt[];
@@ -25,67 +30,72 @@ interface PromptbarSettingsProps {
 export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
   allPrompts,
 }) => {
-  const { t } = useTranslation('promptbar');
+  const { t } = useTranslation(Translation.PromptBar);
   const dispatch = useAppDispatch();
   const [isOpen, setIsOpen] = useState(false);
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+
+  const menuItems: DisplayMenuItemProps[] = useMemo(
+    () => [
+      {
+        name: t('Shared by me'),
+        display:
+          enabledFeatures.has(Feature.PromptsSharing) &&
+          allPrompts.filter((c) => c.isShared).length > 0,
+        dataQa: 'shared-by-me',
+        Icon: IconUserShare,
+        onClick: () => {
+          setIsOpen(false);
+        },
+      },
+      {
+        name: t('Delete all prompts'),
+        display: allPrompts.length > 0,
+        dataQa: 'delete-prompts',
+        Icon: IconTrashX,
+        onClick: () => {
+          setIsOpen(true);
+        },
+      },
+      {
+        name: t('Import prompts'),
+        onClick: (promptsJSON) => {
+          dispatch(
+            PromptsActions.importPrompts({ promptsHistory: promptsJSON }),
+          );
+        },
+        Icon: IconFileArrowLeft,
+        dataQa: 'import',
+        CustomTriggerRenderer: Import,
+      },
+      {
+        name: t('Export prompts'),
+        dataQa: 'export-prompts',
+        Icon: IconFileArrowRight,
+        onClick: () => {
+          dispatch(PromptsActions.exportPrompts());
+        },
+      },
+      {
+        name: t('Create new folder'),
+        dataQa: 'create-prompt-folder',
+        Icon: FolderPlus,
+        onClick: () => {
+          dispatch(PromptsActions.createFolder({ name: t('New folder') }));
+        },
+      },
+    ],
+    [allPrompts, dispatch, enabledFeatures, t],
+  );
 
   return (
-    <div className="flex items-start gap-2 p-2 text-gray-500">
-      {allPrompts.length > 0 ? (
-        <Tooltip isTriggerClickable tooltip={t('Delete all prompts')}>
-          <div
-            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet"
-            onClick={() => {
-              setIsOpen(true);
-            }}
-            data-qa="delete-prompts"
-          >
-            <IconTrashX size={24} strokeWidth="1.5" />
-          </div>
-        </Tooltip>
-      ) : null}
-
-      <Tooltip isTriggerClickable tooltip={t('Import prompts')}>
-        <Import
-          highlightColor={HighlightColor.Violet}
-          onImport={(promptsJSON) => {
-            dispatch(
-              PromptsActions.importPrompts({ promptsHistory: promptsJSON }),
-            );
-          }}
-          icon={
-            <IconFileArrowLeft
-              className="hover:text-violet"
-              size={24}
-              strokeWidth="1.5"
-            />
-          }
-        />
-      </Tooltip>
-
-      <Tooltip isTriggerClickable tooltip={t('Export prompts')}>
-        <div
-          className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet"
-          onClick={() => {
-            dispatch(PromptsActions.exportPrompts());
-          }}
-          data-qa="export-prompts"
-        >
-          <IconFileArrowRight size={24} strokeWidth="1.5" />
-        </div>
-      </Tooltip>
-
-      <Tooltip isTriggerClickable tooltip={t('Create new folder')}>
-        <div
-          className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-violet/15 hover:text-violet"
-          onClick={() => {
-            dispatch(PromptsActions.createFolder({ name: t('New folder') }));
-          }}
-          data-qa="create-prompt-folder"
-        >
-          <FolderPlus height={24} width={24} />
-        </div>
-      </Tooltip>
+    <>
+      <SidebarMenu
+        menuItems={menuItems}
+        highlightColor={HighlightColor.Violet}
+      />
 
       <ConfirmDialog
         isOpen={isOpen}
@@ -102,6 +112,6 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
           }
         }}
       />
-    </div>
+    </>
   );
 };

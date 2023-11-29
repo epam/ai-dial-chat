@@ -2,6 +2,8 @@ import { FC } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { Translation } from '@/src/types/translation';
+
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
@@ -18,7 +20,7 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
   onClickReplayStart,
   showReplayStart,
 }) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const isError = useAppSelector(
     ConversationsSelectors.selectIsErrorReplayConversations,
   );

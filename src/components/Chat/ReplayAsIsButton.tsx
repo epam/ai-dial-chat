@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { Replay } from '@/src/types/chat';
+import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch } from '@/src/store/hooks';
@@ -17,7 +18,7 @@ interface Props {
 }
 
 export const ReplayAsIsButton = ({ replay, conversationId }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
   const handleOnSelectReplayAsIs = useCallback(() => {

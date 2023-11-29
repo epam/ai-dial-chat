@@ -3,18 +3,20 @@ import {
   IconPaperclip,
   IconUpload,
 } from '@tabler/icons-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { HighlightColor } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { DisplayMenuItemProps } from '@/src/types/menu';
+import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import { Menu, MenuItem } from '../Common/DropdownMenu';
-import Tooltip from '../Common/Tooltip';
+import ContextMenu from '../Common/ContextMenu';
 import { FileManagerModal } from './FileManagerModal';
 import { PreUploadDialog } from './PreUploadModal';
 
@@ -32,7 +34,7 @@ export const AttachButton = ({
   onSelectAlreadyUploaded,
   onUploadFromDevice,
 }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -54,44 +56,35 @@ export const AttachButton = ({
     setIsPreUploadDialogOpened(true);
   }, []);
 
+  const menuItems: DisplayMenuItemProps[] = useMemo(
+    () => [
+      {
+        name: t('Attach uploaded files'),
+        dataQa: 'attach_uploaded',
+        Icon: IconFileDescription,
+        onClick: handleOpenAttachmentsModal,
+      },
+      {
+        name: t('Upload from device'),
+        dataQa: 'upload_from_device',
+        Icon: IconUpload,
+        onClick: handleAttachFromComputer,
+      },
+    ],
+    [handleAttachFromComputer, handleOpenAttachmentsModal, t],
+  );
+
   return (
     <>
-      <Menu
-        type="contextMenu"
+      <ContextMenu
+        menuItems={menuItems}
+        TriggerIcon={IconPaperclip}
+        triggerIconSize={24}
+        triggerTooltip={t('Attach files') || ''}
+        highlightColor={HighlightColor.Blue}
         disabled={messageIsStreaming || isModelsLoading}
-        trigger={
-          <Tooltip isTriggerClickable tooltip={t('Attach files')}>
-            <IconPaperclip
-              className="text-gray-500 hover:text-blue-500"
-              size={24}
-            />
-          </Tooltip>
-        }
-      >
-        <MenuItem
-          className="hover:bg-blue-500/20"
-          item={
-            <div className="flex items-center gap-3">
-              <IconFileDescription
-                className="shrink-0 text-gray-500"
-                size={18}
-              />
-              <span>{t('Attach uploaded files')}</span>
-            </div>
-          }
-          onClick={handleOpenAttachmentsModal}
-        />
-        <MenuItem
-          className="hover:bg-blue-500/20"
-          item={
-            <div className="flex items-center gap-3">
-              <IconUpload className="shrink-0 text-gray-500" size={18} />
-              <span>{t('Upload from device')}</span>
-            </div>
-          }
-          onClick={handleAttachFromComputer}
-        />
-      </Menu>
+        triggerIconHighlight
+      />
       {isSelectFilesDialogOpened && (
         <FileManagerModal
           isOpen

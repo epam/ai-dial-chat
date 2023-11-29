@@ -6,6 +6,7 @@ import classNames from 'classnames';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
+import { Translation } from '@/src/types/translation';
 
 import { NoData } from '../Common/NoData';
 import { NoResultsFound } from '../Common/NoResultsFound';
@@ -43,7 +44,7 @@ const Sidebar = <T,>({
   handleSearchTerm,
   handleDrop,
 }: Props<T>) => {
-  const { t } = useTranslation('promptbar');
+  const { t } = useTranslation(Translation.PromptBar);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const dragDropElement = useRef<HTMLDivElement>(null);
   const draggingColor = side === 'left' ? 'bg-green/15' : 'bg-violet/15';

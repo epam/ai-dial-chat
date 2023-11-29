@@ -15,6 +15,7 @@ import {
 } from '@/src/utils/auth/session';
 import { timeoutAsync } from '@/src/utils/auth/timeout-async';
 
+import { Translation } from '../types/translation';
 import { Feature } from '@/src/types/features';
 import { fallbackModelID } from '@/src/types/openai';
 
@@ -45,7 +46,7 @@ interface Props {
 export default function Home({ initialState }: Props) {
   const session = useSession();
 
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
 
@@ -215,14 +216,10 @@ export const getServerSideProps: GetServerSideProps = async ({
       initialState: {
         settings,
       },
-      ...(await serverSideTranslations(locale ?? 'en', [
-        'common',
-        'chat',
-        'sidebar',
-        'markdown',
-        'promptbar',
-        'settings',
-      ])),
+      ...(await serverSideTranslations(
+        locale ?? 'en',
+        Object.values(Translation),
+      )),
     },
   };
 };

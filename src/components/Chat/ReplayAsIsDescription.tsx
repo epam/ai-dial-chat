@@ -2,12 +2,14 @@ import { IconRefreshDot } from '@tabler/icons-react';
 
 import { useTranslation } from 'next-i18next';
 
+import { Translation } from '@/src/types/translation';
+
 interface Props {
   isModelInMessages: boolean | undefined;
 }
 
 export const ReplayAsIsDescription = ({ isModelInMessages }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   return (
     <div className="flex max-h-full shrink flex-col overflow-auto">
       <div

@@ -2,6 +2,8 @@ import { FC, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { Translation } from '@/src/types/translation';
+
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-settings';
 
 import Slider from 'rc-slider';
@@ -35,7 +37,7 @@ export const TemperatureSlider: FC<Props> = ({
   const [currentTemperature, setCurrentTemperature] = useState<number>(() => {
     return temperature ?? DEFAULT_TEMPERATURE;
   });
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
 
   const handleChange = (value: number) => {
     setCurrentTemperature(value);

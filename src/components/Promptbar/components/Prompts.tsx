@@ -17,8 +17,8 @@ export const Prompts: FC<Props> = ({ prompts }) => {
       {prompts
         .slice()
         .reverse()
-        .map((prompt, index) => (
-          <PromptComponent key={index} item={prompt} />
+        .map((prompt) => (
+          <PromptComponent key={prompt.id} item={prompt} />
         ))}
     </div>
   );

@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { OpenAIEntityModel } from '@/src/types/openai';
+import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -19,7 +20,7 @@ export const AssistantSubModelSelector = ({
   assistantModelId,
   onSelectAssistantSubModel,
 }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const onlyModels = useAppSelector(ModelsSelectors.selectModelsOnly);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const assistantSubModel = useMemo(

@@ -10,6 +10,8 @@ import { useTranslation } from 'next-i18next';
 
 import { programmingLanguages } from '@/src/utils/app/codeblock';
 
+import { Translation } from '@/src/types/translation';
+
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
@@ -27,7 +29,7 @@ const codeBlockTheme = {
 };
 
 export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
-  const { t } = useTranslation('markdown');
+  const { t } = useTranslation(Translation.Markdown);
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
   const theme = useAppSelector(UISelectors.selectThemeState);

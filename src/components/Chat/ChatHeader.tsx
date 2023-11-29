@@ -13,6 +13,7 @@ import { getSelectedAddons } from '@/src/utils/app/conversation';
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityModel } from '@/src/types/openai';
+import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import {
@@ -53,7 +54,7 @@ export const ChatHeader = ({
   onUnselectConversation,
   setShowSettings,
 }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
 

@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { OpenAIEntityAddon } from '@/src/types/openai';
+import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -112,7 +113,7 @@ export const Addons = ({
   onChangeAddon,
   onApplyAddons,
 }: AddonsProps) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const recentAddonsIds = useAppSelector(AddonsSelectors.selectRecentAddonsIds);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
 

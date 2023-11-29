@@ -12,6 +12,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { DialFile } from '@/src/types/files';
+import { Translation } from '@/src/types/translation';
 
 import Tooltip from '../Common/Tooltip';
 import { FileItemContextMenu } from './FileItemContextMenu';
@@ -39,7 +40,7 @@ export const FileItem = ({
   additionalItemData,
   onEvent,
 }: Props) => {
-  const { t } = useTranslation('files');
+  const { t } = useTranslation(Translation.Files);
 
   const [isSelected, setIsSelected] = useState(false);
   const handleCancelFile = useCallback(() => {

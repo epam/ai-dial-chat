@@ -4,6 +4,8 @@ import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { Translation } from '@/src/types/translation';
+
 import { useAppDispatch } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
@@ -28,7 +30,7 @@ const UserInfo = () => {
 
 const UserSettings = () => {
   const dispatch = useAppDispatch();
-  const { t } = useTranslation('sidebar');
+  const { t } = useTranslation(Translation.SideBar);
 
   const onClick = useCallback(() => {
     dispatch(UIActions.setIsUserSettingsOpen(true));
@@ -44,7 +46,7 @@ const UserSettings = () => {
 
 const Logout = () => {
   const { data: session } = useSession();
-  const { t } = useTranslation('sidebar');
+  const { t } = useTranslation(Translation.SideBar);
   const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
     useState(false);
 
