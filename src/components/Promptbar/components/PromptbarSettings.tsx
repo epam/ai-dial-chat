@@ -23,6 +23,7 @@ import SidebarMenu from '@/src/components/Common/SidebarMenu';
 import { Import } from '@/src/components/Settings/Import';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
+import { SharedByMeFilters } from '@/src/utils/app/folders';
 
 interface PromptbarSettingsProps {
   allPrompts: Prompt[];
@@ -43,7 +44,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
         name: t('Shared by me'),
         display:
           enabledFeatures.has(Feature.PromptsSharing) &&
-          allPrompts.filter((c) => c.isShared).length > 0,
+          allPrompts.filter(SharedByMeFilters.filterItem).length > 0,
         dataQa: 'shared-by-me',
         Icon: IconUserShare,
         onClick: () => {

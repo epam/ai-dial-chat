@@ -33,6 +33,7 @@ import { SharingType } from '../../Chat/ShareModal';
 import SharedByMeModal from '../../Chat/SharedByMe';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
+import { SharedByMeFilters } from '@/src/utils/app/folders';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation(Translation.SideBar);
@@ -73,7 +74,7 @@ export const ChatbarSettings = () => {
         name: t('Shared by me'),
         display:
           enabledFeatures.has(Feature.ConversationsSharing) &&
-          conversations.filter((c) => c.isShared).length > 0,
+          conversations.filter(SharedByMeFilters.filterItem).length > 0,
         dataQa: 'shared-by-me',
         Icon: IconUserShare,
         onClick: () => {
