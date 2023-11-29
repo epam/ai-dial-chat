@@ -51,7 +51,7 @@ export const ChatInputMessage = ({
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
-  const [content, setContent] = useState<string>();
+  const [content, setContent] = useState<string>('');
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [showPromptList, setShowPromptList] = useState(false);
   const [activePromptIndex, setActivePromptIndex] = useState(0);
@@ -164,7 +164,7 @@ export const ChatInputMessage = ({
 
     onSend({
       role: Role.User,
-      content: content!,
+      content,
       ...getUserCustomContent(selectedFiles),
     });
     dispatch(FilesActions.resetSelectedFiles());
