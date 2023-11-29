@@ -14,7 +14,7 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import XMark from '../../../public/images/icons/xmark.svg';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
+import Tooltip from '../Common/Tooltip';
 import { AddonsDialog } from './AddonsDialog';
 
 interface AddonProps {
@@ -69,11 +69,14 @@ const Addon = ({
   return (
     <Fragment key={addonId}>
       {description ? (
-        <Tooltip>
-          <TooltipTrigger className="flex shrink-0">{template}</TooltipTrigger>
-          <TooltipContent className="max-w-[220px]">
+        <Tooltip
+          tooltip={
             <EntityMarkdownDescription>{description}</EntityMarkdownDescription>
-          </TooltipContent>
+          }
+          triggerClassName="flex shrink-0"
+          contentClassName="max-w-[220px]"
+        >
+          {template}
         </Tooltip>
       ) : (
         template
@@ -147,7 +150,7 @@ export const Addons = ({
               <Addon
                 key={addon}
                 addonId={addon}
-                isSelected={true}
+                isSelected
                 onChangeAddon={onChangeAddon}
                 preselectedAddonsIds={preselectedAddonsIds}
               />
@@ -160,7 +163,7 @@ export const Addons = ({
                 <Addon
                   key={addon}
                   addonId={addon}
-                  isSelected={true}
+                  isSelected
                   onChangeAddon={onChangeAddon}
                   preselectedAddonsIds={preselectedAddonsIds}
                 />

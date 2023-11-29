@@ -1,42 +1,12 @@
 import { IconSend } from '@tabler/icons-react';
-import { ReactNode } from 'react';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/src/components/Common/Tooltip';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 import { Spinner } from '../../Common/Spinner';
-
-interface SendIconTooltipProps {
-  isShowTooltip?: boolean;
-  tooltipContent?: string;
-  children: ReactNode;
-}
-
-const SendIconTooltip = ({
-  isShowTooltip,
-  tooltipContent,
-  children,
-}: SendIconTooltipProps) => {
-  return (
-    <>
-      {!isShowTooltip ? (
-        children
-      ) : (
-        <Tooltip>
-          <TooltipTrigger>{children}</TooltipTrigger>
-          {tooltipContent && <TooltipContent>{tooltipContent}</TooltipContent>}
-        </Tooltip>
-      )}
-    </>
-  );
-};
 
 interface Props {
   handleSend: () => void;
@@ -61,13 +31,13 @@ export const SendMessageButton = ({
       onClick={handleSend}
       disabled={isDisabled}
     >
-      <SendIconTooltip isShowTooltip={isDisabled} tooltipContent={tooltip}>
+      <Tooltip hideTooltip={!isDisabled} tooltip={tooltip}>
         {messageIsStreaming || isModelsLoading ? (
           <Spinner size={20} />
         ) : (
           <IconSend size={24} stroke="1.5" />
         )}
-      </SendIconTooltip>
+      </Tooltip>
     </button>
   );
 };

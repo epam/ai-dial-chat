@@ -21,11 +21,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/src/components/Common/Tooltip';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 import FolderPlus from '../../../../public/images/icons/folder-plus.svg';
 import { Import } from '../../Settings/Import';
@@ -62,83 +58,68 @@ export const ChatbarSettings = () => {
   return (
     <div className="flex items-start gap-2 p-2 text-gray-500">
       {conversations.length > 0 ? (
-        <Tooltip isTriggerClickable={true}>
-          <TooltipTrigger>
-            <button
-              className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green"
-              onClick={() => {
-                setIsOpen(true);
-              }}
-              data-qa="delete-conversations"
-            >
-              <IconTrashX size={24} strokeWidth="1.5" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>{t('Delete all conversations')}</TooltipContent>
+        <Tooltip isTriggerClickable tooltip={t('Delete all conversations')}>
+          <button
+            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green"
+            onClick={() => {
+              setIsOpen(true);
+            }}
+            data-qa="delete-conversations"
+          >
+            <IconTrashX size={24} strokeWidth="1.5" />
+          </button>
         </Tooltip>
       ) : null}
 
-      <Tooltip isTriggerClickable={true}>
-        <TooltipTrigger>
-          <Import
-            highlightColor={HighlightColor.Green}
-            onImport={(importJSON) => {
-              dispatch(
-                ConversationsActions.importConversations({ data: importJSON }),
-              );
-            }}
-            icon={<IconFileArrowLeft size={24} strokeWidth="1.5" />}
-          />
-        </TooltipTrigger>
-        <TooltipContent>{t('Import conversations')}</TooltipContent>
+      <Tooltip isTriggerClickable tooltip={t('Import conversations')}>
+        <Import
+          highlightColor={HighlightColor.Green}
+          onImport={(importJSON) => {
+            dispatch(
+              ConversationsActions.importConversations({ data: importJSON }),
+            );
+          }}
+          icon={<IconFileArrowLeft size={24} strokeWidth="1.5" />}
+        />
       </Tooltip>
 
-      <Tooltip isTriggerClickable={true}>
-        <TooltipTrigger>
-          <button
-            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green"
-            onClick={() => {
-              dispatch(ConversationsActions.exportConversations());
-            }}
-            data-qa="export-conversations"
-          >
-            <IconFileArrowRight size={24} strokeWidth="1.5" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>{t('Export conversations')}</TooltipContent>
+      <Tooltip isTriggerClickable tooltip={t('Export conversations')}>
+        <button
+          className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green"
+          onClick={() => {
+            dispatch(ConversationsActions.exportConversations());
+          }}
+          data-qa="export-conversations"
+        >
+          <IconFileArrowRight size={24} strokeWidth="1.5" />
+        </button>
       </Tooltip>
 
-      <Tooltip isTriggerClickable={true}>
-        <TooltipTrigger>
-          <button
-            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green"
-            onClick={() =>
-              dispatch(
-                ConversationsActions.createFolder({ name: t('New folder') }),
-              )
-            }
-            data-qa="create-folder"
-          >
-            <FolderPlus height={24} width={24} />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>{t('Create new folder')}</TooltipContent>
+      <Tooltip isTriggerClickable tooltip={t('Create new folder')}>
+        <button
+          className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green"
+          onClick={() =>
+            dispatch(
+              ConversationsActions.createFolder({ name: t('New folder') }),
+            )
+          }
+          data-qa="create-folder"
+        >
+          <FolderPlus height={24} width={24} />
+        </button>
       </Tooltip>
 
-      <Tooltip isTriggerClickable={true}>
-        <TooltipTrigger>
-          <button
-            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green disabled:cursor-not-allowed"
-            onClick={() => {
-              handleToggleCompare();
-            }}
-            disabled={isStreaming}
-            data-qa="compare"
-          >
-            <IconScale size={24} strokeWidth="1.5" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>{t('Compare mode')}</TooltipContent>
+      <Tooltip isTriggerClickable tooltip={t('Compare mode')}>
+        <button
+          className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green disabled:cursor-not-allowed"
+          onClick={() => {
+            handleToggleCompare();
+          }}
+          disabled={isStreaming}
+          data-qa="compare"
+        >
+          <IconScale size={24} strokeWidth="1.5" />
+        </button>
       </Tooltip>
 
       {isMoreButtonDisplayed && <ChatbarSettingsContextMenu />}

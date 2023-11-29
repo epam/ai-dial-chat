@@ -14,7 +14,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { Menu, MenuItem } from '../Common/DropdownMenu';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
+import Tooltip from '../Common/Tooltip';
 import { FileManagerModal } from './FileManagerModal';
 import { PreUploadDialog } from './PreUploadModal';
 
@@ -60,14 +60,11 @@ export const AttachButton = ({
         type="contextMenu"
         disabled={messageIsStreaming || isModelsLoading}
         trigger={
-          <Tooltip isTriggerClickable={true}>
-            <TooltipTrigger>
-              <IconPaperclip
-                className="text-gray-500 hover:text-blue-500"
-                size={24}
-              />
-            </TooltipTrigger>
-            <TooltipContent>{t('Attach files')}</TooltipContent>
+          <Tooltip isTriggerClickable tooltip={t('Attach files')}>
+            <IconPaperclip
+              className="text-gray-500 hover:text-blue-500"
+              size={24}
+            />
           </Tooltip>
         }
       >
@@ -100,7 +97,7 @@ export const AttachButton = ({
           isOpen
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
-          isInConversation={true}
+          isInConversation
           initialSelectedFilesIds={selectedFilesIds}
           onClose={(result: unknown) => {
             onSelectAlreadyUploaded(result);
@@ -112,7 +109,7 @@ export const AttachButton = ({
         <PreUploadDialog
           isOpen
           allowedTypes={availableAttachmentsTypes}
-          initialFilesSelect={true}
+          initialFilesSelect
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           onUploadFiles={onUploadFromDevice}
           onClose={() => {
