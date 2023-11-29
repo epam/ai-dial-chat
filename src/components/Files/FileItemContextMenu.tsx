@@ -11,6 +11,7 @@ import { Translation } from '@/src/types/translation';
 import { stopBubbling } from '@/src/constants/chat';
 
 import ContextMenu from '../Common/ContextMenu';
+import DownloadRenderer from './Download';
 
 interface ContextMenuProps {
   file: DialFile;
@@ -32,6 +33,9 @@ export function FileItemContextMenu({
         dataQa: 'download',
         Icon: IconDownload,
         onClick: stopBubbling,
+        className: 'flex gap-3',
+        customTriggerData: file,
+        CustomTriggerRenderer: DownloadRenderer,
       },
       {
         name: t('Delete'),
@@ -40,14 +44,14 @@ export function FileItemContextMenu({
         onClick: onDelete,
       },
     ],
-    [file.status, onDelete, t],
+    [file, onDelete, t],
   );
 
   return (
     <ContextMenu
       menuItems={menuItems}
-      ContextMenuIcon={IconDots}
-      contextMenuIconSize={18}
+      TriggerIcon={IconDots}
+      triggerIconSize={18}
       highlightColor={HighlightColor.Blue}
       className={className}
     />

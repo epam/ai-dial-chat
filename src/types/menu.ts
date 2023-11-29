@@ -3,7 +3,7 @@ import { FC, MouseEventHandler } from 'react';
 
 import { HighlightColor } from './common';
 
-export interface CustomTriggerRendererProps extends MenuItemRendererProps {
+export interface CustomTriggerMenuRendererProps extends MenuItemRendererProps {
   Renderer: (props: MenuItemRendererProps) => JSX.Element;
 }
 
@@ -14,7 +14,8 @@ export interface DisplayMenuItemProps {
   Icon?: (props: TablerIconsProps) => JSX.Element;
   dataQa: string;
   onClick?: (props?: any) => void | MouseEventHandler<unknown>;
-  CustomTriggerRenderer?: FC<CustomTriggerRendererProps>;
+  CustomTriggerRenderer?: FC<CustomTriggerMenuRendererProps>;
+  customTriggerData?: any;
   className?: string;
   menuItems?: DisplayMenuItemProps[];
 }
@@ -34,10 +35,10 @@ export interface MenuProps {
 }
 
 export interface ContextMenuProps extends MenuProps {
-  ContextMenuIcon?: (props: TablerIconsProps) => JSX.Element;
-  contextMenuIconSize?: number;
-  contextMenuTooltip?: string;
-  contextMenuIconHighlight?: boolean;
-  contextMenuIconClassName?: string;
-  CustomMenuRenderer?: JSX.Element;
+  TriggerIcon?: (props: TablerIconsProps) => JSX.Element;
+  triggerIconSize?: number;
+  triggerIconHighlight?: boolean;
+  triggerIconClassName?: string;
+  triggerTooltip?: string;
+  TriggerCustomRenderer?: JSX.Element;
 }

@@ -9,6 +9,7 @@ import {
   IconScale,
   IconUserShare,
 } from '@tabler/icons-react';
+import { IconTrashX } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -22,7 +23,7 @@ import { Translation } from '@/src/types/translation';
 
 import ContextMenu from './ContextMenu';
 
-interface SettingsContextMenuProps {
+interface ItemContextMenuProps {
   folders: FolderInterface[];
   featureType: FeatureType;
   highlightColor: HighlightColor;
@@ -41,7 +42,7 @@ interface SettingsContextMenuProps {
   onOpenChange?: (isOpen: boolean) => void;
 }
 
-export default function SettingsContextMenu({
+export default function ItemContextMenu({
   featureType,
   isEmptyConversation,
   className,
@@ -58,7 +59,7 @@ export default function SettingsContextMenu({
   onOpenMoveToModal,
   onOpenShareModal,
   onOpenChange,
-}: SettingsContextMenuProps) {
+}: ItemContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -139,7 +140,7 @@ export default function SettingsContextMenu({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        Icon: IconUserShare,
+        Icon: IconTrashX,
         onClick: onDelete,
       },
     ],
@@ -163,8 +164,8 @@ export default function SettingsContextMenu({
   return (
     <ContextMenu
       menuItems={menuItems}
-      ContextMenuIcon={IconDots}
-      contextMenuIconSize={18}
+      TriggerIcon={IconDots}
+      triggerIconSize={18}
       highlightColor={highlightColor}
       className={className}
       isOpen={isOpen}

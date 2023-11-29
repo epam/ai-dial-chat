@@ -78,12 +78,12 @@ export const AttachButton = ({
     <>
       <ContextMenu
         menuItems={menuItems}
-        ContextMenuIcon={IconPaperclip}
-        contextMenuIconSize={24}
-        contextMenuTooltip={t('Attach files') || ''}
+        TriggerIcon={IconPaperclip}
+        triggerIconSize={24}
+        triggerTooltip={t('Attach files') || ''}
         highlightColor={HighlightColor.Blue}
         disabled={messageIsStreaming || isModelsLoading}
-        contextMenuIconHighlight
+        triggerIconHighlight
       />
       {isSelectFilesDialogOpened && (
         <FileManagerModal

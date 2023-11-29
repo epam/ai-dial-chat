@@ -44,7 +44,7 @@ function ContextMenuItemRenderer({
       <ContextMenu
         menuItems={menuItems}
         highlightColor={highlightColor}
-        contextMenuIconClassName={classNames(
+        triggerIconClassName={classNames(
           className,
           'text-gray-200',
           getByHighlightColor(
@@ -54,7 +54,7 @@ function ContextMenuItemRenderer({
             'hover:bg-blue-500/20',
           ),
         )}
-        CustomMenuRenderer={item}
+        TriggerCustomRenderer={item}
       />
     );
   }
@@ -80,13 +80,13 @@ function ContextMenuItemRenderer({
 export default function ContextMenu({
   menuItems,
   highlightColor,
-  ContextMenuIcon = IconDotsVertical,
-  contextMenuIconSize = 24,
+  TriggerIcon = IconDotsVertical,
+  triggerIconSize = 24,
   className,
-  contextMenuIconHighlight,
-  CustomMenuRenderer,
-  contextMenuIconClassName,
-  contextMenuTooltip,
+  triggerIconHighlight,
+  TriggerCustomRenderer,
+  triggerIconClassName,
+  triggerTooltip,
   disabled,
   isOpen,
   onOpenChange,
@@ -98,11 +98,11 @@ export default function ContextMenu({
 
   if (!displayedMenuItems.length) return null;
 
-  const menuContent = CustomMenuRenderer || (
-    <ContextMenuIcon
-      size={contextMenuIconSize}
-      width={contextMenuIconSize}
-      height={contextMenuIconSize}
+  const menuContent = TriggerCustomRenderer || (
+    <TriggerIcon
+      size={triggerIconSize}
+      width={triggerIconSize}
+      height={triggerIconSize}
       strokeWidth={1.5}
       onClick={(e) => {
         e.stopPropagation();
@@ -112,7 +112,7 @@ export default function ContextMenu({
 
   return (
     <Menu
-      className={contextMenuIconClassName}
+      className={triggerIconClassName}
       disabled={disabled}
       type="contextMenu"
       onOpenChange={onOpenChange}
@@ -121,7 +121,7 @@ export default function ContextMenu({
         <div
           className={classNames(
             'flex w-full items-center justify-center rounded text-gray-500',
-            contextMenuIconHighlight &&
+            triggerIconHighlight &&
               getByHighlightColor(
                 highlightColor,
                 'hover:text-green',
@@ -131,10 +131,10 @@ export default function ContextMenu({
             className,
           )}
         >
-          {contextMenuTooltip ? (
+          {triggerTooltip ? (
             <Tooltip isTriggerClickable>
               <TooltipTrigger>{menuContent}</TooltipTrigger>
-              <TooltipContent>{contextMenuTooltip}</TooltipContent>
+              <TooltipContent>{triggerTooltip}</TooltipContent>
             </Tooltip>
           ) : (
             menuContent

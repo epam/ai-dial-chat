@@ -49,7 +49,7 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
       <ContextMenu
         menuItems={menuItems}
         highlightColor={highlightColor}
-        CustomMenuRenderer={item}
+        TriggerCustomRenderer={item}
       />
     );
   }
