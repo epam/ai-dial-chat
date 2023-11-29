@@ -108,7 +108,7 @@ export default function ItemContextMenu({
         dataQa: 'move-to',
         Icon: IconFolderShare,
         className: 'max-md:hidden',
-        menuItems: [
+        childMenuItems: [
           {
             name: t('New folder'),
             dataQa: 'new-folder',
