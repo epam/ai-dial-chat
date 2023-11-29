@@ -261,10 +261,7 @@ export const ChatSection = ({
             {displayRootFiles &&
               rootConversations.map((item) => (
                 <ConversationComponent
-                  key={item.id}
-                  item={item}
-                  readonly={readonly}
-                />
+                <ConversationComponent key={item.id} item={item} />
               ))}
           </div>
         </>
@@ -279,7 +276,6 @@ const folderItems: ChatFoldersProps<Conversation>[] = [
     filters: SharedWithMeFilters,
     hideIfEmpty: true,
     displayRootFiles: true,
-    readonly: true,
   },
   {
     name: 'Pinned Chats',

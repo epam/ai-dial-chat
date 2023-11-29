@@ -46,9 +46,7 @@ interface ViewProps {
   conversation: Conversation;
 }
 
-export function ConversationView({
-  conversation,
-}: ViewProps) {
+export function ConversationView({ conversation }: ViewProps) {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const theme = useAppSelector(UISelectors.selectThemeState);
   return (
@@ -89,14 +87,9 @@ export function ConversationView({
 interface Props {
   item: Conversation;
   level?: number;
-  readonly?: boolean;
 }
 
-export const ConversationComponent = ({
-  item: conversation,
-  level,
-  readonly,
-}: Props) => {
+export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
@@ -367,10 +360,7 @@ export const ConversationComponent = ({
             'group flex h-full w-full cursor-pointer items-center gap-2 transition-colors duration-200',
             messageIsStreaming && 'disabled:cursor-not-allowed',
             isDeleting && 'pr-12',
-            !messageIsStreaming &&
-              !readonly &&
-              !isDeleting &&
-              'group-hover:pr-6',
+            !messageIsStreaming && !isDeleting && 'group-hover:pr-6',
             isSelected && 'pr-0',
           )}
           onClick={() => {
@@ -390,9 +380,7 @@ export const ConversationComponent = ({
           }}
           ref={buttonRef}
         >
-          <ConversationView
-            conversation={conversation}
-          />
+          <ConversationView conversation={conversation} />
           {showSharedIcon && (
             <span className="flex shrink-0 text-gray-500">
               <IconUserShare size={14} />
@@ -401,7 +389,7 @@ export const ConversationComponent = ({
         </button>
       )}
 
-      {!isDeleting && !isRenaming && !messageIsStreaming && !readonly && (
+      {!isDeleting && !isRenaming && !messageIsStreaming && (
         <div
           ref={refs.setFloating}
           {...getFloatingProps()}

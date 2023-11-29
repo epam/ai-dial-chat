@@ -25,6 +25,5 @@ export interface ChatFoldersProps<T> {
   name: string;
   hideIfEmpty?: boolean;
   displayRootFiles?: boolean;
-  readonly?: boolean;
   filters: FolderItemFilters<T>;
 }
