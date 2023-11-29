@@ -17,7 +17,7 @@ export interface DisplayMenuItemProps {
   CustomTriggerRenderer?: FC<CustomTriggerMenuRendererProps>;
   customTriggerData?: any;
   className?: string;
-  menuItems?: DisplayMenuItemProps[];
+  childMenuItems?: DisplayMenuItemProps[];
 }
 
 export type MenuItemRendererProps = DisplayMenuItemProps & {

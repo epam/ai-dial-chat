@@ -22,7 +22,7 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
     disabled,
     highlightColor,
     className,
-    menuItems,
+    childMenuItems,
   } = props;
   const item = (
     <button
@@ -36,7 +36,7 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
         ),
         className,
       )}
-      onClick={!menuItems ? onClick : undefined}
+      onClick={!childMenuItems ? onClick : undefined}
       data-qa={dataQa}
       disabled={disabled}
     >
@@ -44,10 +44,10 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
     </button>
   );
 
-  if (menuItems) {
+  if (childMenuItems) {
     return (
       <ContextMenu
-        menuItems={menuItems}
+        menuItems={childMenuItems}
         highlightColor={highlightColor}
         TriggerCustomRenderer={item}
       />
