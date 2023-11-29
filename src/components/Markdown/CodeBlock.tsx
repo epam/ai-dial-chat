@@ -16,7 +16,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Download from '../../../public/images/icons/download.svg';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
+import Tooltip from '../Common/Tooltip';
 
 interface Props {
   language: string;
@@ -93,31 +93,22 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
             disabled={isCopied}
           >
             {isCopied ? (
-              <Tooltip>
-                <TooltipTrigger>
-                  <IconCheck size={18} />
-                </TooltipTrigger>
-                <TooltipContent>{t('Copied!')}</TooltipContent>
+              <Tooltip tooltip={t('Copied!')}>
+                <IconCheck size={18} />
               </Tooltip>
             ) : (
-              <Tooltip isTriggerClickable={true}>
-                <TooltipTrigger>
-                  <IconCopy size={18} />
-                </TooltipTrigger>
-                <TooltipContent>{t('Copy code')}</TooltipContent>
+              <Tooltip isTriggerClickable tooltip={t('Copy code')}>
+                <IconCopy size={18} />
               </Tooltip>
             )}
           </button>
-          <Tooltip isTriggerClickable={true}>
-            <TooltipTrigger>
-              <button
-                className="flex items-center rounded bg-none hover:text-blue-500"
-                onClick={downloadAsFile}
-              >
-                <Download width={18} height={18} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>{t('Download')}</TooltipContent>
+          <Tooltip isTriggerClickable tooltip={t('Download')}>
+            <button
+              className="flex items-center rounded bg-none hover:text-blue-500"
+              onClick={downloadAsFile}
+            >
+              <Download width={18} height={18} />
+            </button>
           </Tooltip>
         </div>
       </div>

@@ -20,7 +20,7 @@ import { useTranslation } from 'next-i18next';
 
 import { Translation } from '@/src/types/translation';
 
-import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
+import Tooltip from '../Common/Tooltip';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -146,28 +146,22 @@ export default function ShareModal({
                 />
                 <div className="absolute right-3 top-3">
                   {urlCopied ? (
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <IconCheck size={20} className="text-gray-500" />
-                      </TooltipTrigger>
-                      <TooltipContent>{t('Copied!')}</TooltipContent>
+                    <Tooltip tooltip={t('Copied!')}>
+                      <IconCheck size={20} className="text-gray-500" />
                     </Tooltip>
                   ) : (
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <button
-                          className="outline-none"
-                          onClick={handleCopy}
-                          ref={copyButtonRef}
-                        >
-                          <IconCopy
-                            height={20}
-                            width={20}
-                            className="text-gray-500 hover:text-blue-500"
-                          />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>{t('Copy URL')}</TooltipContent>
+                    <Tooltip tooltip={t('Copy URL')}>
+                      <button
+                        className="outline-none"
+                        onClick={handleCopy}
+                        ref={copyButtonRef}
+                      >
+                        <IconCopy
+                          height={20}
+                          width={20}
+                          className="text-gray-500 hover:text-blue-500"
+                        />
+                      </button>
                     </Tooltip>
                   )}
                 </div>

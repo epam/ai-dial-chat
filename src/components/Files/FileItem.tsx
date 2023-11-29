@@ -14,7 +14,7 @@ import classNames from 'classnames';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
-import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
+import Tooltip from '../Common/Tooltip';
 import { FileItemContextMenu } from './FileItemContextMenu';
 
 export enum FileItemEventIds {
@@ -86,16 +86,14 @@ export const FileItem = ({
             />
           ) : (
             item.status === 'FAILED' && (
-              <Tooltip isTriggerClickable={true}>
-                <TooltipTrigger>
-                  <IconExclamationCircle
-                    className="shrink-0 text-red-800 dark:text-red-400"
-                    size={18}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  {t('Uploading failed. Please, try again')}
-                </TooltipContent>
+              <Tooltip
+                isTriggerClickable
+                tooltip={t('Uploading failed. Please, try again')}
+              >
+                <IconExclamationCircle
+                  className="shrink-0 text-red-800 dark:text-red-400"
+                  size={18}
+                />
               </Tooltip>
             )
           )}
