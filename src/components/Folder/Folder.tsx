@@ -77,7 +77,8 @@ interface Props<T, P = unknown> {
   highlightedFolders?: string[];
   searchTerm: string;
   openedFoldersIds: string[];
-  isInitialRename?: boolean;
+  isInitialRenameEnabled?: boolean;
+  newAddedFolderId?: string;
   loadingFolderId?: string;
   displayCaretAlways?: boolean;
   additionalItemData?: Record<string, unknown>;
@@ -106,7 +107,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   highlightedFolders,
   openedFoldersIds,
   level = 0,
-  isInitialRename = false,
+  isInitialRenameEnabled = false,
+  newAddedFolderId,
   loadingFolderId = '',
   displayCaretAlways = false,
   additionalItemData,
@@ -124,10 +126,12 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const dispatch = useAppDispatch();
 
   const [isDeletingConfirmDialog, setIsDeletingConfirmDialog] = useState(false);
-  const [isRenaming, setIsRenaming] = useState(isInitialRename);
-  const [renameValue, setRenameValue] = useState(
-    isInitialRename ? currentFolder.name : '',
+  const [isRenaming, setIsRenaming] = useState(
+    isInitialRenameEnabled &&
+      newAddedFolderId === currentFolder.id &&
+      !currentFolder.serverSynced,
   );
+  const [renameValue, setRenameValue] = useState(currentFolder.name);
   const [isSelected, setIsSelected] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isDropAllowed, setIsDropAllowed] = useState(true);
@@ -547,7 +551,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
           </div>
         )}
       </div>
-
       {isFolderOpened ? (
         <div className={classNames('flex flex-col gap-0.5')}>
           <div className={classNames('flex flex-col')}>
@@ -579,6 +582,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       loadingFolderId={loadingFolderId}
                       displayCaretAlways={displayCaretAlways}
                       additionalItemData={additionalItemData}
+                      isInitialRenameEnabled={isInitialRenameEnabled}
+                      newAddedFolderId={newAddedFolderId}
                       handleDrop={handleDrop}
                       onDropBetweenFolders={onDropBetweenFolders}
                       onRenameFolder={onRenameFolder}
@@ -618,7 +623,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             ))}
         </div>
       ) : null}
-
       {onDeleteFolder && (
         <ConfirmDialog
           isOpen={isDeletingConfirmDialog}

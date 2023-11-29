@@ -54,6 +54,7 @@ export const SelectFolderModal = ({
   const headingId = useId();
 
   const folders = useAppSelector(FilesSelectors.selectFolders);
+  const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
   const [searchQuery, setSearchQuery] = useState('');
   const filteredFolders = useMemo(() => {
     return folders.filter(({ name }) =>
@@ -62,9 +63,6 @@ export const SelectFolderModal = ({
   }, [folders, searchQuery]);
   const foldersStatus = useAppSelector(FilesSelectors.selectFoldersStatus);
   const loadingFolderId = useAppSelector(FilesSelectors.selectLoadingFolderId);
-  const newAddedFolderId = useAppSelector(
-    FilesSelectors.selectNewAddedFolderId,
-  );
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
@@ -239,9 +237,8 @@ export const SelectFolderModal = ({
                                       allFolders={folders}
                                       highlightColor={HighlightColor.Blue}
                                       highlightedFolders={highlightedFolders}
-                                      isInitialRename={
-                                        newAddedFolderId === folder.id
-                                      }
+                                      isInitialRenameEnabled
+                                      newAddedFolderId={newFolderId}
                                       loadingFolderId={loadingFolderId}
                                       openedFoldersIds={openedFoldersIds}
                                       onClickFolder={handleFolderSelect}

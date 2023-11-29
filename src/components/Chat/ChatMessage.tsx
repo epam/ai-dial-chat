@@ -381,16 +381,16 @@ export const ChatMessage: FC<Props> = memo(
                     </div>
                   </div>
                 ) : (
-                  message.content && (
-                    <div className="mr-2 flex w-full flex-col gap-5">
+                  <div className="mr-2 flex w-full flex-col gap-5">
+                    {message.content && (
                       <div className="prose flex-1 whitespace-pre-wrap dark:prose-invert">
                         {message.content}
                       </div>
-                      <MessageAttachments
-                        attachments={message.custom_content?.attachments}
-                      />
-                    </div>
-                  )
+                    )}
+                    <MessageAttachments
+                      attachments={message.custom_content?.attachments}
+                    />
+                  </div>
                 )}
 
                 {!isPlayback && !isEditing && (

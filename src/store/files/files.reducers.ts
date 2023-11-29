@@ -157,7 +157,6 @@ export const filesSlice = createSlice({
         path?: string;
       }>,
     ) => {
-      state.newAddedFolderId = undefined;
       state.foldersStatus = 'LOADING';
       state.loadingFolder = payload.path;
     },
@@ -234,9 +233,10 @@ export const filesSlice = createSlice({
           return folder;
         }
 
+        const slashIndex = folder.id.lastIndexOf('/');
         const oldFolderIdPath = folder.id.slice(
           0,
-          folder.id.length - folder.name.length,
+          slashIndex === -1 ? 0 : slashIndex,
         );
         return {
           ...folder,
