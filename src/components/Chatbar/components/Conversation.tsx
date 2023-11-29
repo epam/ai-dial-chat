@@ -32,12 +32,12 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 import { emptyImage } from '@/src/constants/drag-and-drop';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
+import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
 import { PlaybackIcon } from '../../Chat/PlaybackIcon';
 import { ReplayAsIsIcon } from '../../Chat/ReplayAsIsIcon';
 import ShareModal, { SharingType } from '../../Chat/ShareModal';
-import SettingsContextMenu from '../../Common/SettingsContextMenu';
 import { ModelIcon } from './ModelIcon';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -399,7 +399,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           )}
           data-qa="dots-menu"
         >
-          <SettingsContextMenu
+          <ItemContextMenu
             isEmptyConversation={isEmptyConversation}
             folders={folders}
             featureType={FeatureType.Chat}

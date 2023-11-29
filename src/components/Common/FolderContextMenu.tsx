@@ -65,8 +65,8 @@ export const FolderContextMenu = ({
   return (
     <ContextMenu
       menuItems={menuItems}
-      ContextMenuIcon={IconDots}
-      contextMenuIconSize={18}
+      TriggerIcon={IconDots}
+      triggerIconSize={18}
       highlightColor={highlightColor}
       className="m-0 justify-self-end"
       isOpen={isOpen}

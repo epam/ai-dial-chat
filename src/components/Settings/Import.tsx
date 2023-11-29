@@ -1,8 +1,8 @@
 import { FC, useRef } from 'react';
 
-import { CustomTriggerRendererProps } from '@/src/types/menu';
+import { CustomTriggerMenuRendererProps } from '@/src/types/menu';
 
-export const Import: FC<CustomTriggerRendererProps> = ({
+export const Import: FC<CustomTriggerMenuRendererProps> = ({
   Renderer,
   onClick: onImport,
   ...rendererProps
