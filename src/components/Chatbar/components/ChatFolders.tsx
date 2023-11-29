@@ -162,7 +162,6 @@ export const ChatSection = ({
   filters,
   hideIfEmpty,
   displayRootFiles,
-  readonly,
 }: ChatFoldersProps<Conversation>) => {
   const { t } = useTranslation('chat');
   const [isSectionOpened, setIsSectionOpened] = useState(true);
@@ -248,7 +247,6 @@ export const ChatSection = ({
             {folders.map((folder, index, arr) => {
               return (
                 <ChatFolderTemplate
-                  readonly={readonly}
                   key={folder.id}
                   folder={folder}
                   index={index}
@@ -260,7 +258,6 @@ export const ChatSection = ({
           <div>
             {displayRootFiles &&
               rootConversations.map((item) => (
-                <ConversationComponent
                 <ConversationComponent key={item.id} item={item} />
               ))}
           </div>
