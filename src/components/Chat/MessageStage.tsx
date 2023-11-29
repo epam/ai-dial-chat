@@ -97,11 +97,11 @@ export const MessageStage = ({ stage }: Props) => {
               <ChatMDComponent
                 isShowResponseLoader={false}
                 content={stage.content}
-                isInner={true}
+                isInner
               />
             </span>
           )}
-          <MessageAttachments attachments={stage.attachments} isInner={true} />
+          <MessageAttachments attachments={stage.attachments} isInner />
         </div>
       )}
     </div>

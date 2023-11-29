@@ -90,7 +90,7 @@ export const AttachButton = ({
           isOpen
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
-          isInConversation={true}
+          isInConversation
           initialSelectedFilesIds={selectedFilesIds}
           onClose={(result: unknown) => {
             onSelectAlreadyUploaded(result);
@@ -102,7 +102,7 @@ export const AttachButton = ({
         <PreUploadDialog
           isOpen
           allowedTypes={availableAttachmentsTypes}
-          initialFilesSelect={true}
+          initialFilesSelect
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           onUploadFiles={onUploadFromDevice}
           onClose={() => {

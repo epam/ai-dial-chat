@@ -74,7 +74,7 @@ export const ConversationSettingsModel = ({
                 <span data-qa="entity-name">{entity.name}</span>
                 {entity.description && (
                   <span className="text-gray-500" data-qa="entity-descr">
-                    <EntityMarkdownDescription isShortDescription={true}>
+                    <EntityMarkdownDescription isShortDescription>
                       {entity.description}
                     </EntityMarkdownDescription>
                   </span>

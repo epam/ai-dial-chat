@@ -46,7 +46,7 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
             <MessageAttachment
               key={attachment.index}
               attachment={attachment}
-              isInner={true}
+              isInner
             />
           ))}
         </div>

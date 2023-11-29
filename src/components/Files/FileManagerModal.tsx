@@ -380,7 +380,7 @@ export const FileManagerModal = ({
                                       highlightedFolders={[]}
                                       isInitialRenameEnabled
                                       newAddedFolderId={newFolderId}
-                                      displayCaretAlways={true}
+                                      displayCaretAlways
                                       loadingFolderId={loadingFolderId}
                                       openedFoldersIds={openedFoldersIds}
                                       allItems={filteredFiles}
@@ -470,7 +470,7 @@ export const FileManagerModal = ({
                 <PreUploadDialog
                   isOpen
                   allowedTypes={allowedTypes}
-                  initialFilesSelect={true}
+                  initialFilesSelect
                   onUploadFiles={handleUploadFiles}
                   onClose={() => setIsUploadFromDeviceOpened(false)}
                 />

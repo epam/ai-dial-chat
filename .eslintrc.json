@@ -20,6 +20,7 @@
     }
   },
   "rules": {
+    "react/jsx-boolean-value": ["error", "never"],
     "no-empty": "warn",
     "@typescript-eslint/no-explicit-any": "warn",
     "no-console": ["error", { "allow": ["warn", "error"] }],

@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-import { Tooltip, TooltipContent, TooltipTrigger } from '../Common/Tooltip';
+import Tooltip from '../Common/Tooltip';
 
 interface Props {
   icon: ReactNode;
@@ -18,9 +18,8 @@ export const IconNonModelWithTooltip = ({
       {isCustomTooltip ? (
         { icon }
       ) : (
-        <Tooltip>
-          <TooltipTrigger className="flex shrink-0">{icon}</TooltipTrigger>
-          <TooltipContent>{tooltipContent}</TooltipContent>
+        <Tooltip tooltip={tooltipContent} triggerClassName="flex shrink-0">
+          {icon}
         </Tooltip>
       )}
     </>

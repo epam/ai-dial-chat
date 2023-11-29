@@ -117,7 +117,7 @@ export const ChatSettings = ({
         <ConversationSettings
           conversationId={conversation.id}
           replay={conversation.replay}
-          isCloseEnabled={true}
+          isCloseEnabled
           modelId={currentModelId}
           prompts={prompts}
           assistantModelId={currentAssistentModelId}
