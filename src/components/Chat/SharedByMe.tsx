@@ -41,9 +41,9 @@ interface Props {
 export default function SharedByMeModal({ isOpen, onClose }: Props) {
   const { t } = useTranslation('sidebar');
   const dispatch = useAppDispatch();
-  const selectedConversationsIds = useAppSelector(
+  const selectedConversationsIds = new Set(useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
-  );
+  ));
   const inputRef = useRef<HTMLInputElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const conversations = useAppSelector((state) =>
@@ -131,7 +131,7 @@ export default function SharedByMeModal({ isOpen, onClose }: Props) {
                   <button
                     className={classNames(
                       'group flex h-[30px] w-full cursor-pointer items-center gap-2 rounded transition-colors duration-200 hover:bg-green/15',
-                      selectedConversationsIds.includes(item.id)
+                      selectedConversationsIds.has(item.id)
                         ? 'border-l-green bg-green/15'
                         : 'border-l-transparent',
                     )}
@@ -148,7 +148,6 @@ export default function SharedByMeModal({ isOpen, onClose }: Props) {
                   >
                     <ConversationView
                       conversation={item}
-                      isSelected={selectedConversationsIds.includes(item.id)}
                     />
                   </button>
                 ))}
