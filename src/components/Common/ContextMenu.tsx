@@ -8,7 +8,7 @@ import { getByHighlightColor } from '@/src/utils/app/folders';
 import { ContextMenuProps, MenuItemRendererProps } from '@/src/types/menu';
 
 import { Menu, MenuItem } from './DropdownMenu';
-import { Tooltip, TooltipContent, TooltipTrigger } from './Tooltip';
+import Tooltip from './Tooltip';
 
 function ContextMenuItemRenderer({
   name,
@@ -132,9 +132,8 @@ export default function ContextMenu({
           )}
         >
           {triggerTooltip ? (
-            <Tooltip isTriggerClickable>
-              <TooltipTrigger>{menuContent}</TooltipTrigger>
-              <TooltipContent>{triggerTooltip}</TooltipContent>
+            <Tooltip isTriggerClickable tooltip={triggerTooltip}>
+              {menuContent}
             </Tooltip>
           ) : (
             menuContent
