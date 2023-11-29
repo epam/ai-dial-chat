@@ -18,14 +18,14 @@ function ContextMenuItemRenderer({
   disabled,
   highlightColor,
   className,
-  menuItems,
+  childMenuItems,
 }: MenuItemRendererProps) {
   const item = (
     <div
       className={classNames(
         'flex w-full items-center gap-3 truncate break-words',
-        !!menuItems && 'text-gray-200',
-        !!menuItems && className,
+        !!childMenuItems && 'text-gray-200',
+        !!childMenuItems && className,
       )}
     >
       {Icon && (
@@ -39,10 +39,10 @@ function ContextMenuItemRenderer({
       <span className="truncate break-words">{name}</span>
     </div>
   );
-  if (menuItems) {
+  if (childMenuItems) {
     return (
       <ContextMenu
-        menuItems={menuItems}
+        menuItems={childMenuItems}
         highlightColor={highlightColor}
         triggerIconClassName={classNames(
           className,
