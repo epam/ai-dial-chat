@@ -1,5 +1,5 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconCheck, IconUserShare, IconX } from '@tabler/icons-react';
+import { IconCheck, IconX } from '@tabler/icons-react';
 import {
   DragEvent,
   KeyboardEvent,
@@ -35,44 +35,49 @@ import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
-import { PlaybackIcon } from '../../Chat/PlaybackIcon';
-import { ReplayAsIsIcon } from '../../Chat/ReplayAsIsIcon';
-import ShareModal, { SharingType } from '../../Chat/ShareModal';
+import { PlaybackIcon } from '@/src/components/Chat/PlaybackIcon';
+import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
+import ShareModal, { SharingType } from '@/src/components/Chat/ShareModal';
 import { ModelIcon } from './ModelIcon';
 
 import { v4 as uuidv4 } from 'uuid';
+import ShareIcon from '@/src/components/Common/ShareIcon';
 
 interface ViewProps {
   conversation: Conversation;
+  isHighlited: boolean;
 }
 
-export function ConversationView({ conversation }: ViewProps) {
+export function ConversationView({ conversation, isHighlited }: ViewProps) {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const theme = useAppSelector(UISelectors.selectThemeState);
+
   return (
     <>
-      {conversation.replay.replayAsIs && (
-        <span className="flex shrink-0">
-          <ReplayAsIsIcon size={18} />
-        </span>
-      )}
-
-      {conversation.playback && conversation.playback.isPlayback && (
-        <span className="flex shrink-0">
-          <PlaybackIcon size={18} />
-        </span>
-      )}
-
-      {!conversation.replay.replayAsIs &&
-        !conversation.playback?.isPlayback && (
-          <ModelIcon
-            size={18}
-            entityId={conversation.model.id}
-            entity={modelsMap[conversation.model.id]}
-            inverted={theme === 'dark'}
-          />
+      <ShareIcon {...conversation} isHighlited={!!isHighlited} highlightColor={HighlightColor.Green}>
+        {conversation.replay.replayAsIs && (
+          <span className="flex shrink-0">
+            <ReplayAsIsIcon size={18} />
+          </span>
         )}
 
+        {conversation.playback && conversation.playback.isPlayback && (
+          <span className="flex shrink-0">
+            <PlaybackIcon size={18} />
+          </span>
+        )}
+
+        {!conversation.replay.replayAsIs &&
+          !conversation.playback?.isPlayback && (
+            <ModelIcon
+              size={18}
+              entityId={conversation.model.id}
+              entity={modelsMap[conversation.model.id]}
+              inverted={theme === 'dark'}
+            />
+          )}
+
+        </ShareIcon>
       <div
         className={classNames(
           'relative max-h-5 flex-1 truncate break-all text-left',
@@ -125,8 +130,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const dragImageRef = useRef<HTMLImageElement | null>();
   const [isSharing, setIsSharing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
-  const { id: conversationId, isShared } = conversation;
-  const showSharedIcon = isSharingEnabled && isShared && !isDeleting;
+  const { id: conversationId } = conversation;
   const isSelected = selectedConversationIds.includes(conversation.id);
 
   const { refs, context } = useFloating({
@@ -265,20 +269,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
   const handleShared = useCallback(
     (_newShareId: string) => {
-      //TODO: send newShareId to API to store {id, createdDate}
-      if (!isShared) {
-        dispatch(
-          ConversationsActions.updateConversation({
-            id: conversationId,
-            values: {
-              //isShared: true,
-              sharedWithMe: true, //TODO: for development purpose - emulate immediate sharing with yourself
-            },
-          }),
-        );
-      }
+      //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
+      dispatch(
+        ConversationsActions.shareConversation({
+          id: conversationId
+        }),
+      );
     },
-    [conversationId, dispatch, isShared],
+    [conversationId, dispatch],
   );
 
   const handleMoveToFolder = useCallback(
@@ -315,11 +313,13 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     setIsContextMenu(true);
   };
 
+  const isHighlited = isSelected || isRenaming || isDeleting;
+
   return (
     <div
       className={classNames(
         'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-green/15',
-        isSelected || isRenaming || isDeleting
+        isHighlited
           ? 'border-l-green bg-green/15'
           : 'border-l-transparent',
       )}
@@ -331,19 +331,29 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     >
       {isRenaming ? (
         <div className="flex w-full items-center gap-2 pr-12">
-          {conversation.replay.replayAsIs ? (
-            <span className="relative inline-block shrink-0 leading-none">
-              <ReplayAsIsIcon size={18} />
-            </span>
-          ) : (
-            <ModelIcon
-              size={18}
-              inverted={theme === 'dark'}
-              entityId={conversation.model.id}
-              entity={modelsMap[conversation.model.id]}
-            />
-          )}
+          <ShareIcon {...conversation} isHighlited={isHighlited} highlightColor={HighlightColor.Green}>
+            {conversation.replay.replayAsIs && (
+              <span className="flex shrink-0">
+                <ReplayAsIsIcon size={18} />
+              </span>
+            )}
 
+            {conversation.playback && conversation.playback.isPlayback && (
+              <span className="flex shrink-0">
+                <PlaybackIcon size={18} />
+              </span>
+            )}
+
+            {!conversation.replay.replayAsIs &&
+              !conversation.playback?.isPlayback && (
+                <ModelIcon
+                  size={18}
+                  inverted={theme === 'dark'}
+                  entityId={conversation.model.id}
+                  entity={modelsMap[conversation.model.id]}
+                />
+            )}
+          </ShareIcon>
           <input
             className="flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
             type="text"
@@ -380,12 +390,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           }}
           ref={buttonRef}
         >
-          <ConversationView conversation={conversation} />
-          {showSharedIcon && (
-            <span className="flex shrink-0 text-gray-500">
-              <IconUserShare size={14} />
-            </span>
-          )}
+          <ConversationView conversation={conversation} isHighlited={isHighlited} />
         </button>
       )}
 

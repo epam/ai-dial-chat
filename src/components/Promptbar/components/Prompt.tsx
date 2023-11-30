@@ -1,5 +1,5 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconBulb, IconCheck, IconUserShare, IconX } from '@tabler/icons-react';
+import { IconBulb, IconCheck, IconX } from '@tabler/icons-react';
 import {
   DragEvent,
   MouseEvent,
@@ -34,6 +34,7 @@ import ShareModal, { SharingType } from '../../Chat/ShareModal';
 import { PromptModal } from './PromptModal';
 
 import { v4 as uuidv4 } from 'uuid';
+import ShareIcon from '../../Common/ShareIcon';
 
 interface Props {
   item: Prompt;
@@ -66,8 +67,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
-  const { id: promptId, isShared } = prompt;
-  const showSharedIcon = isSharingEnabled && isShared && !isDeleting;
+  const { id: promptId } = prompt;
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -213,13 +213,13 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     e.stopPropagation();
     setIsContextMenu(true);
   };
-
+  const isHighlited = isDeleting || isRenaming || (showModal && isSelected) || isContextMenu;
   return (
     <>
       <div
         className={classNames(
           'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-violet/15',
-          isDeleting || isRenaming || (showModal && isSelected) || isContextMenu
+          isHighlited
             ? 'border-l-violet bg-violet/15'
             : 'border-l-transparent',
         )}
@@ -240,7 +240,9 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           draggable="true"
           onDragStart={(e) => handleDragStart(e, prompt)}
         >
-          <IconBulb size={18} className="text-gray-500" />
+          <ShareIcon {...prompt} isHighlited={isHighlited} highlightColor={HighlightColor.Violet}>
+            <IconBulb size={18} className="text-gray-500" />
+          </ShareIcon>
 
           <div
             className={classNames(
@@ -249,11 +251,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           >
             {prompt.name}
           </div>
-          {showSharedIcon && (
-            <span className="flex shrink-0 text-gray-500">
-              <IconUserShare size={14} />
-            </span>
-          )}
         </div>
 
         {isDeleting && (

@@ -130,7 +130,7 @@ export default function SharedByMeModal({ isOpen, onClose }: Props) {
                 {conversations.map((item) => (
                   <button
                     className={classNames(
-                      'group flex h-[34px] w-full cursor-pointer items-center gap-2 rounded transition-colors duration-200 hover:bg-green/15',
+                      'group flex h-[34px] w-full cursor-pointer items-center gap-2 rounded border-l-2 px-3 transition-colors duration-200 hover:bg-green/15',
                       selectedConversationsIds.has(item.id)
                         ? 'border-l-green bg-green/15'
                         : 'border-l-transparent',
@@ -146,7 +146,7 @@ export default function SharedByMeModal({ isOpen, onClose }: Props) {
                       );
                     }}
                   >
-                    <ConversationView conversation={item} />
+                    <ConversationView conversation={item} isHighlited={selectedConversationsIds.has(item.id)}/>
                   </button>
                 ))}
                 {!conversations.length && <div>No items</div>}
