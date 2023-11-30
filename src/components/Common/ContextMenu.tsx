@@ -24,7 +24,7 @@ function ContextMenuItemRenderer({
     <div
       className={classNames(
         'flex w-full items-center gap-3 truncate break-words',
-        childMenuItems && 'text-gray-800 dark:text-gray-200',
+        !!childMenuItems && 'text-gray-800 dark:text-gray-200',
         !!childMenuItems && className,
       )}
     >
