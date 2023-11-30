@@ -379,8 +379,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           ref={refs.setFloating}
           {...getFloatingProps()}
           className={classNames(
-            'absolute right-3 z-50 flex justify-end group-hover:visible',
-            isContextMenu ? 'visible' : 'invisible',
+            'invisible absolute right-3 z-50 flex justify-end group-hover:visible',
           )}
           data-qa="dots-menu"
         >
