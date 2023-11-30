@@ -272,7 +272,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             {...getFloatingProps()}
             className={classNames(
               'absolute right-3 z-50 flex justify-end group-hover:visible',
-              isSelected || isContextMenu ? 'visible' : 'invisible',
+              isSelected ? 'visible' : 'invisible',
             )}
             onClick={stopBubbling}
           >
