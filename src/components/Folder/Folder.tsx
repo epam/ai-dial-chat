@@ -327,7 +327,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   );
 
   const handleDragStart = useCallback(
-    (e: DragEvent<HTMLButtonElement>, folder: FolderInterface) => {
+    (e: DragEvent<HTMLDivElement>, folder: FolderInterface) => {
       if (e.dataTransfer) {
         e.dataTransfer.setDragImage(dragImageRef.current || new Image(), 0, 0);
         e.dataTransfer.setData('folder', JSON.stringify(folder));
@@ -441,7 +441,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             />
           </div>
         ) : (
-          <button
+          <div
             className={classNames(
               `group/button flex h-full w-full cursor-pointer items-center gap-1 py-2 pr-3`,
             )}
@@ -513,7 +513,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                   />
                 </div>
               )}
-          </button>
+          </div>
         )}
         {isRenaming && (
           <div className="absolute right-1 z-10 flex">
