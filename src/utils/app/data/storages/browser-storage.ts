@@ -23,7 +23,8 @@ type UIStorageKeys =
   | 'settings'
   | 'showChatbar'
   | 'showPromptbar'
-  | 'openedFoldersIds';
+  | 'openedFoldersIds'
+  | 'textOfClosedAnnouncement';
 
 export class BrowserStorage implements DialStorage {
   private static storage: globalThis.Storage | undefined;
