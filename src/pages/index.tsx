@@ -151,7 +151,7 @@ export default function Home({ initialState }: Props) {
             <div className="flex w-full grow overflow-auto">
               {enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
 
-              <div className="flex min-w-0 flex-1 flex-col">
+              <div className="flex min-w-0 grow flex-col">
                 <AnnouncementsBanner />
                 <Chat />
               </div>

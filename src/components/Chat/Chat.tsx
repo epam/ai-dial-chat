@@ -530,7 +530,11 @@ export const Chat = memo(() => {
   }, []);
 
   return (
-    <div className="relative min-w-0 flex-1" data-qa="chat" id="chat">
+    <div
+      className="relative min-w-0 shrink grow basis-0 overflow-y-auto"
+      data-qa="chat"
+      id="chat"
+    >
       {modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : (
