@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { isMobile } from '@/src/utils/app/mobile';
 
 import { Conversation, Role } from '@/src/types/chat';
+import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -59,7 +60,7 @@ export const ChatCompareSelect = ({
   selectedConversations,
   onConversationSelect,
 }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
 
   const [comparableConversations, setComparableConversations] = useState<
     Conversation[]

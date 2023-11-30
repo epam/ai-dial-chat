@@ -18,6 +18,7 @@ import classNames from 'classnames';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
+import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
@@ -31,12 +32,12 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 import { emptyImage } from '@/src/constants/drag-and-drop';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
+import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
 import { PlaybackIcon } from '../../Chat/PlaybackIcon';
 import { ReplayAsIsIcon } from '../../Chat/ReplayAsIsIcon';
 import ShareModal, { SharingType } from '../../Chat/ShareModal';
-import { ContextMenu } from '../../Common/ContextMenu';
 import { ModelIcon } from './ModelIcon';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -47,7 +48,7 @@ interface Props {
 }
 
 export const ConversationComponent = ({ item: conversation, level }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -382,7 +383,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           )}
           data-qa="dots-menu"
         >
-          <ContextMenu
+          <ItemContextMenu
             isEmptyConversation={isEmptyConversation}
             folders={folders}
             featureType={FeatureType.Chat}

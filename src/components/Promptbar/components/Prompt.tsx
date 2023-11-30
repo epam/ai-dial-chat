@@ -15,6 +15,7 @@ import classNames from 'classnames';
 import { FeatureType, HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -26,7 +27,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { stopBubbling } from '@/src/constants/chat';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
-import { ContextMenu } from '@/src/components/Common/ContextMenu';
+import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
 import ShareModal, { SharingType } from '../../Chat/ShareModal';
@@ -45,7 +46,7 @@ export interface PromptMoveToFolderProps {
 }
 
 export const PromptComponent = ({ item: prompt, level }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
   const folders = useAppSelector(PromptsSelectors.selectFolders);
@@ -275,7 +276,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             )}
             onClick={stopBubbling}
           >
-            <ContextMenu
+            <ItemContextMenu
               featureType={FeatureType.Prompt}
               folders={folders}
               onMoveToFolder={handleMoveToFolder}

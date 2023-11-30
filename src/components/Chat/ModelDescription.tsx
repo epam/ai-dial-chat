@@ -1,6 +1,7 @@
 import { useTranslation } from 'next-i18next';
 
 import { OpenAIEntityModel } from '@/src/types/openai';
+import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
@@ -16,7 +17,7 @@ interface Props {
 export const ModelDescription = ({ model }: Props) => {
   const theme = useAppSelector(UISelectors.selectThemeState);
 
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
 
   return (
     <div className="flex flex-col gap-3" data-qa="more-info">

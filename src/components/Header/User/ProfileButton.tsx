@@ -3,6 +3,8 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { Translation } from '@/src/types/translation';
+
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
@@ -13,7 +15,7 @@ export const ProfileButton = () => {
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
   const dispatch = useAppDispatch();
 
-  const { t } = useTranslation('sidebar');
+  const { t } = useTranslation(Translation.SideBar);
   const { data: session } = useSession();
 
   const onClick = useCallback(() => {

@@ -10,6 +10,7 @@ import {
 import { useTranslation } from 'next-i18next';
 
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-settings';
 
@@ -29,7 +30,7 @@ export const SystemPrompt: FC<Props> = ({
   prompt,
   onChangePrompt,
 }) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
 
   const [value, setValue] = useState<string>('');
   const [activePromptIndex, setActivePromptIndex] = useState(0);

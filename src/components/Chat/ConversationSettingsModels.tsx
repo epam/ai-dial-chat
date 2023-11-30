@@ -4,6 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { Replay } from '@/src/types/chat';
 import { OpenAIEntityModel } from '@/src/types/openai';
+import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -28,7 +29,7 @@ export const ConversationSettingsModel = ({
   conversationId,
   onModelSelect,
 }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
   const theme = useAppSelector(UISelectors.selectThemeState);
@@ -73,7 +74,7 @@ export const ConversationSettingsModel = ({
                 <span data-qa="entity-name">{entity.name}</span>
                 {entity.description && (
                   <span className="text-gray-500" data-qa="entity-descr">
-                    <EntityMarkdownDescription isShortDescription={true}>
+                    <EntityMarkdownDescription isShortDescription>
                       {entity.description}
                     </EntityMarkdownDescription>
                   </span>

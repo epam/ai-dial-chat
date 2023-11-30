@@ -2,6 +2,8 @@ import { FC, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { Translation } from '@/src/types/translation';
+
 import SearchIcon from '../../../public/images/icons/search.svg';
 
 interface Props {
@@ -10,7 +12,7 @@ interface Props {
   onSearch: (searchTerm: string) => void;
 }
 const Search: FC<Props> = ({ placeholder, searchTerm, onSearch }) => {
-  const { t } = useTranslation('sidebar');
+  const { t } = useTranslation(Translation.SideBar);
 
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {

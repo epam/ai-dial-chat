@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { Conversation } from '@/src/types/chat';
 import { OpenAIEntityAddon } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 
@@ -36,7 +37,7 @@ export const ChatSettings = ({
   onChangeSettings,
   onApplySettings,
 }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
 
   const [currentModelId, setCurrentModelId] = useState<string>(
     modelId ?? defaultModelId,
@@ -116,7 +117,7 @@ export const ChatSettings = ({
         <ConversationSettings
           conversationId={conversation.id}
           replay={conversation.replay}
-          isCloseEnabled={true}
+          isCloseEnabled
           modelId={currentModelId}
           prompts={prompts}
           assistantModelId={currentAssistentModelId}

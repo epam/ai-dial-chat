@@ -11,6 +11,7 @@ import {
 import { useTranslation } from 'next-i18next';
 
 import { Theme } from '@/src/types/settings';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
@@ -29,7 +30,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
 
   const dispatch = useAppDispatch();
 
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(Translation.Settings);
 
   const modalRef = useRef<HTMLDivElement>(null);
 

@@ -25,6 +25,7 @@ import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
 import { HighlightColor } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { Translation } from '@/src/types/translation';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -59,7 +60,7 @@ export const FileManagerModal = ({
 }: Props) => {
   const dispatch = useAppDispatch();
 
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
 
   const { refs, context } = useFloating({
     open: isOpen,
@@ -379,7 +380,7 @@ export const FileManagerModal = ({
                                       highlightedFolders={[]}
                                       isInitialRenameEnabled
                                       newAddedFolderId={newFolderId}
-                                      displayCaretAlways={true}
+                                      displayCaretAlways
                                       loadingFolderId={loadingFolderId}
                                       openedFoldersIds={openedFoldersIds}
                                       allItems={filteredFiles}
@@ -469,7 +470,7 @@ export const FileManagerModal = ({
                 <PreUploadDialog
                   isOpen
                   allowedTypes={allowedTypes}
-                  initialFilesSelect={true}
+                  initialFilesSelect
                   onUploadFiles={handleUploadFiles}
                   onClose={() => setIsUploadFromDeviceOpened(false)}
                 />

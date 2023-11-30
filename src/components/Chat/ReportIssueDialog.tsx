@@ -17,6 +17,7 @@ import classNames from 'classnames';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { ReportIssueBody } from '@/src/types/report-issue';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -73,7 +74,7 @@ interface Props {
 }
 
 export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(Translation.Settings);
   const modalRef = useRef<HTMLFormElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);

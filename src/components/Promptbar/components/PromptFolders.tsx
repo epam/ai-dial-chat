@@ -153,7 +153,7 @@ export const PromptFolders = () => {
         if (!folder.folderId) {
           return (
             <PromptFolderTemplate
-              key={index}
+              key={folder.id}
               folder={folder}
               index={index}
               isLast={index === arr.length - 1}

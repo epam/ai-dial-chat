@@ -1,15 +1,19 @@
 import {
   IconFileArrowLeft,
   IconFileArrowRight,
+  IconPaperclip,
   IconScale,
   IconTrashX,
+  IconUserShare,
 } from '@tabler/icons-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
+import { DisplayMenuItemProps } from '@/src/types/menu';
+import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
@@ -21,18 +25,14 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/src/components/Common/Tooltip';
+import SidebarMenu from '@/src/components/Common/SidebarMenu';
+import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
+import { Import } from '@/src/components/Settings/Import';
 
-import FolderPlus from '../../../../public/images/icons/folder-plus.svg';
-import { Import } from '../../Settings/Import';
-import { ChatbarSettingsContextMenu } from './ChatbarSettingsContextMenu';
+import FolderPlus from '@/public/images/icons/folder-plus.svg';
 
 export const ChatbarSettings = () => {
-  const { t } = useTranslation('sidebar');
+  const { t } = useTranslation(Translation.SideBar);
   const [isOpen, setIsOpen] = useState(false);
 
   const dispatch = useAppDispatch();
@@ -46,10 +46,14 @@ export const ChatbarSettings = () => {
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-  const displayAttachmentFunctionality = enabledFeatures.has(
-    Feature.AttachmentsManager,
+  const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
+    useState(false);
+  const availableAttachmentsTypes = useAppSelector(
+    ConversationsSelectors.selectAvailableAttachmentsTypes,
   );
-  const isMoreButtonDisplayed = displayAttachmentFunctionality;
+  const maximumAttachmentsAmount = useAppSelector(
+    ConversationsSelectors.selectMaximumAttachmentsAmount,
+  );
 
   const handleToggleCompare = useCallback(() => {
     dispatch(
@@ -59,89 +63,104 @@ export const ChatbarSettings = () => {
     );
   }, [dispatch]);
 
+  const menuItems: DisplayMenuItemProps[] = useMemo(
+    () => [
+      {
+        name: t('Shared by me'),
+        display:
+          enabledFeatures.has(Feature.ConversationsSharing) &&
+          conversations.filter((c) => c.isShared).length > 0,
+        dataQa: 'shared-by-me',
+        Icon: IconUserShare,
+        onClick: () => {
+          setIsOpen(false);
+        },
+      },
+      {
+        name: t('Delete all conversations'),
+        display: conversations.length > 0,
+        dataQa: 'delete-conversations',
+        Icon: IconTrashX,
+        onClick: () => {
+          setIsOpen(true);
+        },
+      },
+      {
+        name: t('Import conversations'),
+        onClick: (importJSON) => {
+          dispatch(
+            ConversationsActions.importConversations({ data: importJSON }),
+          );
+        },
+        Icon: IconFileArrowLeft,
+        dataQa: 'import',
+        CustomTriggerRenderer: Import,
+      },
+      {
+        name: t('Export conversations'),
+        dataQa: 'export-conversations',
+        Icon: IconFileArrowRight,
+        onClick: () => {
+          dispatch(ConversationsActions.exportConversations());
+        },
+      },
+      {
+        name: t('Create new folder'),
+        dataQa: 'create-folder',
+        Icon: FolderPlus,
+        onClick: () => {
+          dispatch(
+            ConversationsActions.createFolder({ name: t('New folder') }),
+          );
+        },
+      },
+      {
+        name: t('Compare mode'),
+        dataQa: 'compare',
+        Icon: IconScale,
+        disabled: isStreaming,
+        onClick: () => {
+          handleToggleCompare();
+        },
+      },
+      {
+        name: t('Attachments'),
+        display: enabledFeatures.has(Feature.AttachmentsManager),
+        dataQa: 'attachments',
+        Icon: IconPaperclip,
+        disabled: isStreaming,
+        onClick: () => {
+          setIsSelectFilesDialogOpened(true);
+        },
+      },
+    ],
+    [
+      conversations,
+      dispatch,
+      enabledFeatures,
+      handleToggleCompare,
+      isStreaming,
+      t,
+    ],
+  );
+
   return (
-    <div className="flex items-start gap-2 p-2 text-gray-500">
-      {conversations.length > 0 ? (
-        <Tooltip isTriggerClickable={true}>
-          <TooltipTrigger>
-            <button
-              className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green"
-              onClick={() => {
-                setIsOpen(true);
-              }}
-              data-qa="delete-conversations"
-            >
-              <IconTrashX size={24} strokeWidth="1.5" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>{t('Delete all conversations')}</TooltipContent>
-        </Tooltip>
-      ) : null}
+    <>
+      <SidebarMenu
+        menuItems={menuItems}
+        highlightColor={HighlightColor.Green}
+      />
 
-      <Tooltip isTriggerClickable={true}>
-        <TooltipTrigger>
-          <Import
-            highlightColor={HighlightColor.Green}
-            onImport={(importJSON) => {
-              dispatch(
-                ConversationsActions.importConversations({ data: importJSON }),
-              );
-            }}
-            icon={<IconFileArrowLeft size={24} strokeWidth="1.5" />}
-          />
-        </TooltipTrigger>
-        <TooltipContent>{t('Import conversations')}</TooltipContent>
-      </Tooltip>
-
-      <Tooltip isTriggerClickable={true}>
-        <TooltipTrigger>
-          <button
-            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green"
-            onClick={() => {
-              dispatch(ConversationsActions.exportConversations());
-            }}
-            data-qa="export-conversations"
-          >
-            <IconFileArrowRight size={24} strokeWidth="1.5" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>{t('Export conversations')}</TooltipContent>
-      </Tooltip>
-
-      <Tooltip isTriggerClickable={true}>
-        <TooltipTrigger>
-          <button
-            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green"
-            onClick={() =>
-              dispatch(
-                ConversationsActions.createFolder({ name: t('New folder') }),
-              )
-            }
-            data-qa="create-folder"
-          >
-            <FolderPlus height={24} width={24} />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>{t('Create new folder')}</TooltipContent>
-      </Tooltip>
-
-      <Tooltip isTriggerClickable={true}>
-        <TooltipTrigger>
-          <button
-            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded hover:bg-green/15 hover:text-green disabled:cursor-not-allowed"
-            onClick={() => {
-              handleToggleCompare();
-            }}
-            disabled={isStreaming}
-            data-qa="compare"
-          >
-            <IconScale size={24} strokeWidth="1.5" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>{t('Compare mode')}</TooltipContent>
-      </Tooltip>
-
-      {isMoreButtonDisplayed && <ChatbarSettingsContextMenu />}
+      {isSelectFilesDialogOpened && (
+        <FileManagerModal
+          isOpen
+          allowedTypes={availableAttachmentsTypes}
+          maximumAttachmentsAmount={maximumAttachmentsAmount}
+          onClose={() => {
+            setIsSelectFilesDialogOpened(false);
+          }}
+        />
+      )}
 
       <ConfirmDialog
         isOpen={isOpen}
@@ -158,6 +177,6 @@ export const ChatbarSettings = () => {
           }
         }}
       />
-    </div>
+    </>
   );
 };

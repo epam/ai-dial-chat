@@ -19,6 +19,7 @@ import { Feature } from '@/src/types/features';
 import { DialFile } from '@/src/types/files';
 import { OpenAIEntityModels, defaultModelLimits } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
@@ -47,10 +48,10 @@ export const ChatInputMessage = ({
   onScrollDownClick,
   onSend,
 }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
-  const [content, setContent] = useState<string>();
+  const [content, setContent] = useState<string>('');
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [showPromptList, setShowPromptList] = useState(false);
   const [activePromptIndex, setActivePromptIndex] = useState(0);
@@ -163,7 +164,7 @@ export const ChatInputMessage = ({
 
     onSend({
       role: Role.User,
-      content: content!,
+      content,
       ...getUserCustomContent(selectedFiles),
     });
     dispatch(FilesActions.resetSelectedFiles());

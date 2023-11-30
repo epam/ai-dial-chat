@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { Attachment } from '@/src/types/chat';
+import { Translation } from '@/src/types/translation';
 
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import { MessageAttachment } from './MessageAttachment';
@@ -13,7 +14,7 @@ interface Props {
 }
 
 export const MessageAttachments = ({ attachments, isInner }: Props) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.Chat);
   const isUnderSection = useMemo(() => {
     return !!attachments && attachments.length > 3;
   }, [attachments]);
@@ -45,7 +46,7 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
             <MessageAttachment
               key={attachment.index}
               attachment={attachment}
-              isInner={true}
+              isInner
             />
           ))}
         </div>
