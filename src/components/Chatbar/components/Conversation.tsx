@@ -279,6 +279,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         isSelected || isRenaming || isDeleting
           ? 'border-l-green bg-green/15'
           : 'border-l-transparent',
+        { 'bg-green/15': isContextMenu },
       )}
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
