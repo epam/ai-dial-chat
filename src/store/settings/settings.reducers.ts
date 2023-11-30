@@ -13,6 +13,7 @@ export interface SettingsState {
   footerHtmlMessage: string;
   enabledFeatures: Feature[];
   codeWarning: string;
+  announcement: string;
   defaultModelId: string | undefined;
   defaultRecentModelsIds: string[];
   defaultRecentAddonsIds: string[];
@@ -26,6 +27,7 @@ const initialState: SettingsState = {
   footerHtmlMessage: '',
   enabledFeatures: [],
   codeWarning: '',
+  announcement: '',
   defaultModelId: undefined,
   defaultRecentModelsIds: [],
   defaultRecentAddonsIds: [],
@@ -144,6 +146,10 @@ const selectIsAuthDisabled = createSelector([rootSelector], (state) => {
 const selectStorageType = createSelector([rootSelector], (state) => {
   return state.storageType;
 });
+const selectAnnouncement = createSelector([rootSelector], (state) => {
+  return state.announcement;
+});
+
 
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
@@ -158,4 +164,5 @@ export const SettingsSelectors = {
   selectDefaultRecentAddonsIds,
   selectIsAuthDisabled,
   selectStorageType,
+  selectAnnouncement,
 };

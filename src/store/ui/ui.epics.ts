@@ -30,18 +30,32 @@ const initEpic: AppEpic = (action$) =>
         showChatbar: DataService.getShowChatbar(),
         showPromptbar: DataService.getShowPromptbar(),
         openedFoldersIds: DataService.getOpenedFolderIds(),
+        textOfClosedAnnouncement: DataService.getClosedAnnouncement(),
       }),
     ),
-    switchMap(({ theme, openedFoldersIds, showChatbar, showPromptbar }) => {
-      const actions = [];
+    switchMap(
+      ({
+        theme,
+        openedFoldersIds,
+        showChatbar,
+        showPromptbar,
+        textOfClosedAnnouncement,
+      }) => {
+        const actions = [];
 
-      actions.push(UIActions.setTheme(theme));
-      actions.push(UIActions.setShowChatbar(showChatbar));
-      actions.push(UIActions.setShowPromptbar(showPromptbar));
-      actions.push(UIActions.setOpenedFoldersIds(openedFoldersIds));
+        actions.push(UIActions.setTheme(theme));
+        actions.push(UIActions.setShowChatbar(showChatbar));
+        actions.push(UIActions.setShowPromptbar(showPromptbar));
+        actions.push(UIActions.setOpenedFoldersIds(openedFoldersIds));
+        actions.push(
+          UIActions.closeAnnouncement({
+            announcement: textOfClosedAnnouncement,
+          }),
+        );
 
-      return concat(actions);
-    }),
+        return concat(actions);
+      },
+    ),
   );
 
 const saveThemeEpic: AppEpic = (action$) =>
@@ -109,6 +123,15 @@ const showToastErrorEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const closeAnnouncementEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.closeAnnouncement.match),
+    switchMap(({ payload }) =>
+      DataService.setClosedAnnouncement(payload.announcement),
+    ),
+    ignoreElements(),
+  );
+
 const saveOpenedFoldersIdsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
@@ -135,6 +158,7 @@ const UIEpics = combineEpics(
   saveShowPromptbarEpic,
   showToastErrorEpic,
   saveOpenedFoldersIdsEpic,
+  closeAnnouncementEpic,
 );
 
 export default UIEpics;
