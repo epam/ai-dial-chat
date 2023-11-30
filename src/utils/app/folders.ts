@@ -3,7 +3,6 @@ import { HighlightColor } from '@/src/types/common';
 import { FolderInterface, FolderItemFilters } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 
-
 export const getFoldersDepth = (
   childFolder: FolderInterface,
   allFolders: FolderInterface[],

@@ -10,6 +10,8 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { SharedByMeFilters } from '@/src/utils/app/folders';
+
 import { HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
 import { DisplayMenuItemProps } from '@/src/types/menu';
@@ -33,7 +35,6 @@ import { SharingType } from '../../Chat/ShareModal';
 import SharedByMeModal from '../../Chat/SharedByMe';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
-import { SharedByMeFilters } from '@/src/utils/app/folders';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation(Translation.SideBar);

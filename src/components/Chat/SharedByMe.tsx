@@ -146,7 +146,10 @@ export default function SharedByMeModal({ isOpen, onClose }: Props) {
                       );
                     }}
                   >
-                    <ConversationView conversation={item} isHighlited={selectedConversationsIds.has(item.id)}/>
+                    <ConversationView
+                      conversation={item}
+                      isHighlited={selectedConversationsIds.has(item.id)}
+                    />
                   </button>
                 ))}
                 {!conversations.length && <div>No items</div>}

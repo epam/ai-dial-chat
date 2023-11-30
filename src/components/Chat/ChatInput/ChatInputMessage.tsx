@@ -106,9 +106,7 @@ export const ChatInputMessage = ({
     ),
   );
   const isInputEmpty = useMemo(() => {
-    return (
-      content.trim().length === 0 && selectedFiles.length === 0
-    );
+    return content.trim().length === 0 && selectedFiles.length === 0;
   }, [content, selectedFiles.length]);
   const isSendDisabled =
     messageIsStreaming ||

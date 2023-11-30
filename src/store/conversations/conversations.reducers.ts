@@ -1,24 +1,23 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-
-
-import { Conversation, ConversationEntityModel, Message, Role } from '@/src/types/chat';
+import {
+  Conversation,
+  ConversationEntityModel,
+  Message,
+  Role,
+} from '@/src/types/chat';
 import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 
-
-
-import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/src/constants/default-settings';
+import {
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+} from '@/src/constants/default-settings';
 import { defaultReplay } from '@/src/constants/replay';
-
-
 
 import { ConversationsState } from './conversations.types';
 
-
-
 import { v4 as uuidv4 } from 'uuid';
-
 
 export * as ConversationsSelectors from './conversations.selectors';
 

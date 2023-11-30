@@ -32,16 +32,16 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 import { emptyImage } from '@/src/constants/drag-and-drop';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
-import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
-import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
-
 import { PlaybackIcon } from '@/src/components/Chat/PlaybackIcon';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import ShareModal, { SharingType } from '@/src/components/Chat/ShareModal';
+import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
+import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
+import ShareIcon from '@/src/components/Common/ShareIcon';
+
 import { ModelIcon } from './ModelIcon';
 
 import { v4 as uuidv4 } from 'uuid';
-import ShareIcon from '@/src/components/Common/ShareIcon';
 
 interface ViewProps {
   conversation: Conversation;
@@ -54,7 +54,11 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
 
   return (
     <>
-      <ShareIcon {...conversation} isHighlited={!!isHighlited} highlightColor={HighlightColor.Green}>
+      <ShareIcon
+        {...conversation}
+        isHighlited={!!isHighlited}
+        highlightColor={HighlightColor.Green}
+      >
         {conversation.replay.replayAsIs && (
           <span className="flex shrink-0">
             <ReplayAsIsIcon size={18} />
@@ -76,8 +80,7 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
               inverted={theme === 'dark'}
             />
           )}
-
-        </ShareIcon>
+      </ShareIcon>
       <div
         className={classNames(
           'relative max-h-5 flex-1 truncate break-all text-left',
@@ -272,7 +275,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
       dispatch(
         ConversationsActions.shareConversation({
-          id: conversationId
+          id: conversationId,
         }),
       );
     },
@@ -319,9 +322,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     <div
       className={classNames(
         'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-green/15',
-        isHighlited
-          ? 'border-l-green bg-green/15'
-          : 'border-l-transparent',
+        isHighlited ? 'border-l-green bg-green/15' : 'border-l-transparent',
       )}
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
@@ -331,7 +332,11 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     >
       {isRenaming ? (
         <div className="flex w-full items-center gap-2 pr-12">
-          <ShareIcon {...conversation} isHighlited={isHighlited} highlightColor={HighlightColor.Green}>
+          <ShareIcon
+            {...conversation}
+            isHighlited={isHighlited}
+            highlightColor={HighlightColor.Green}
+          >
             {conversation.replay.replayAsIs && (
               <span className="flex shrink-0">
                 <ReplayAsIsIcon size={18} />
@@ -352,7 +357,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
                   entityId={conversation.model.id}
                   entity={modelsMap[conversation.model.id]}
                 />
-            )}
+              )}
           </ShareIcon>
           <input
             className="flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
@@ -390,7 +395,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           }}
           ref={buttonRef}
         >
-          <ConversationView conversation={conversation} isHighlited={isHighlited} />
+          <ConversationView
+            conversation={conversation}
+            isHighlited={isHighlited}
+          />
         </button>
       )}
 
@@ -399,8 +407,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           ref={refs.setFloating}
           {...getFloatingProps()}
           className={classNames(
-            'absolute right-3 z-50 flex justify-end group-hover:visible',
-            isContextMenu ? 'visible' : 'invisible',
+            'invisible absolute right-3 z-50 flex justify-end group-hover:visible',
+            //isContextMenu ? 'visible' : 'invisible',
           )}
           data-qa="dots-menu"
         >

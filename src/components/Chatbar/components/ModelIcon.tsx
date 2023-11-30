@@ -61,7 +61,6 @@ const ModelIconTemplate = memo(
             aria-label={`${entityId} icon`}
           ></span>
         )}
-
       </>
     );
   },
