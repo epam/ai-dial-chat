@@ -43,9 +43,7 @@ export const doesAddonContainSearchTerm = (
 export const doesModelContainSearchTerm = (
   model: OpenAIEntityModel,
   searchTerm: string,
-) => {
-  model.name.toLowerCase().trim().includes(searchTerm);
-};
+) => model.name.toLowerCase().trim().includes(searchTerm);
 
 export const doesEntityContainSearchItem = <
   T extends Conversation | Prompt | DialFile,
