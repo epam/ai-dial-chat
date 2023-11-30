@@ -150,7 +150,6 @@ const selectAnnouncement = createSelector([rootSelector], (state) => {
   return state.announcement;
 });
 
-
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
