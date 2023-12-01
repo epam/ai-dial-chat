@@ -5,11 +5,11 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { PinnedChatsFilter, SharedWithMeFilter } from '@/src/utils/app/search';
+import { PinnedItemsFilter, SharedWithMeFilter } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityFilter, HighlightColor } from '@/src/types/common';
-import { ChatFoldersProps, FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 
 import {
   ConversationsActions,
@@ -175,9 +175,10 @@ export const ChatSection = ({
   itemFilter,
   hideIfEmpty,
   displayRootFiles,
-  showEmptyFolders: includeEmpty = false,
+  showEmptyFolders = false,
   openByDefault = false,
-}: ChatFoldersProps<Conversation>) => {
+  dataQa,
+}: FolderSectionProps<Conversation>) => {
   const { t } = useTranslation('chat');
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const [isSectionOpened, setIsSectionOpened] = useState(openByDefault);
@@ -187,7 +188,7 @@ export const ChatSection = ({
       state,
       itemFilter,
       searchTerm,
-      includeEmpty,
+      showEmptyFolders,
     ),
   );
   const conversations = useAppSelector((state) =>
@@ -242,10 +243,7 @@ export const ChatSection = ({
   if (hideIfEmpty && !conversations.length && !folders.length) return null;
 
   return (
-    <div
-      className="flex w-full flex-col py-1 pl-2 pr-0.5"
-      data-qa="chat-folders"
-    >
+    <div className="flex w-full flex-col py-1 pl-2 pr-0.5" data-qa={dataQa}>
       <button
         className={classNames(
           'flex items-center gap-1 py-1 text-xs',
@@ -274,7 +272,7 @@ export const ChatSection = ({
                   index={index}
                   isLast={index === arr.length - 1}
                   itemFilter={itemFilter}
-                  includeEmpty={includeEmpty}
+                  includeEmpty={showEmptyFolders}
                 />
               );
             })}
@@ -291,24 +289,29 @@ export const ChatSection = ({
   );
 };
 
-const folderItems: ChatFoldersProps<Conversation>[] = [
+const folderItems: FolderSectionProps<Conversation>[] = [
   {
     name: 'Share With Me',
     itemFilter: SharedWithMeFilter,
     hideIfEmpty: true,
     displayRootFiles: true,
+    dataQa: 'share-with-me',
   },
   {
     name: 'Pinned Chats',
-    itemFilter: PinnedChatsFilter,
+    itemFilter: PinnedItemsFilter,
     showEmptyFolders: true,
     openByDefault: true,
+    dataQa: 'pinned-chats',
   },
 ];
 
 export function ChatFolders() {
   return (
-    <div className="flex w-full flex-col gap-0.5 divide-y divide-gray-300 dark:divide-gray-900">
+    <div
+      className="flex w-full flex-col gap-0.5 divide-y divide-gray-200 dark:divide-gray-800"
+      data-qa="chat-folders"
+    >
       {folderItems.map((itemProps) => (
         <ChatSection key={itemProps.name} {...itemProps} />
       ))}

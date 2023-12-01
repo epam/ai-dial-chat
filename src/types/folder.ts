@@ -15,8 +15,9 @@ export enum FolderType {
   File = 'file',
 }
 
-export interface ChatFoldersProps<T> {
+export interface FolderSectionProps<T> {
   name: string;
+  dataQa: string;
   hideIfEmpty?: boolean;
   displayRootFiles?: boolean;
   itemFilter: EntityFilter<T>;

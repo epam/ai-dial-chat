@@ -66,7 +66,7 @@ export const doesEntityContainSearchItem = <
 };
 
 //TODO: for development purpose - emulate immediate sharing with yourself
-export const PinnedChatsFilter: EntityFilter<Conversation | Prompt> = (_item) =>
+export const PinnedItemsFilter: EntityFilter<Conversation | Prompt> = (_item) =>
   true; // !item.sharedWithMe;
 
 export const SharedWithMeFilter: EntityFilter<Conversation | Prompt> = (item) =>

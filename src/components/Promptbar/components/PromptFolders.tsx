@@ -1,9 +1,14 @@
-import { useCallback } from 'react';
+import { IconCaretRightFilled } from '@tabler/icons-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
+import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { PinnedItemsFilter, SharedWithMeFilter } from '@/src/utils/app/search';
+
 import { HighlightColor } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -141,28 +146,141 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
   );
 };
 
-export const PromptFolders = () => {
-  const folders = useAppSelector(PromptsSelectors.selectFolders);
+export const PromptSection = ({
+  name,
+  itemFilter,
+  hideIfEmpty,
+  displayRootFiles,
+  showEmptyFolders = false,
+  openByDefault = false,
+  dataQa,
+}: FolderSectionProps<Prompt>) => {
+  const { t } = useTranslation('chat');
+  const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
+  const [isSectionOpened, setIsSectionOpened] = useState(openByDefault);
+  const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
+  const folders = useAppSelector((state) =>
+    PromptsSelectors.selectFilteredFolders(
+      state,
+      itemFilter,
+      searchTerm,
+      showEmptyFolders,
+    ),
+  );
+  const prompts = useAppSelector((state) =>
+    PromptsSelectors.selectFilteredPrompts(state, itemFilter, searchTerm),
+  );
+
+  const rootfolders = useMemo(
+    () => folders.filter(({ folderId }) => !folderId),
+    [folders],
+  );
+
+  const rootPrompts = useMemo(
+    () => prompts.filter(({ folderId }) => !folderId),
+    [prompts],
+  );
+
+  const selectedFoldersIds = useAppSelector(
+    PromptsSelectors.selectSelectedPromptFoldersIds,
+  );
+
+  const selectSelectedPromptId = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
+  );
+
+  function handleSectionOpen() {
+    setIsSectionOpened((isOpen) => !isOpen);
+  }
+
+  useEffect(() => {
+    const shouldBeHighlighted =
+      rootfolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
+      (!!displayRootFiles &&
+        rootPrompts.some(({ id }) => selectSelectedPromptId === id));
+    if (isSectionHighlighted !== shouldBeHighlighted) {
+      setIsSectionHighlighted(shouldBeHighlighted);
+    }
+  }, [
+    displayRootFiles,
+    rootfolders,
+    isSectionHighlighted,
+    selectSelectedPromptId,
+    selectedFoldersIds,
+    rootPrompts,
+  ]);
+
+  if (hideIfEmpty && !prompts.length && !folders.length) return null;
 
   return (
-    <div
-      className={classNames('flex w-full flex-col')}
-      data-qa="prompt-folders"
-    >
-      {folders.map((folder, index, arr) => {
-        if (!folder.folderId) {
-          return (
-            <PromptFolderTemplate
-              key={folder.id}
-              folder={folder}
-              index={index}
-              isLast={index === arr.length - 1}
-            />
-          );
-        }
-
-        return null;
-      })}
+    <div className="flex w-full flex-col py-1 pl-2 pr-0.5" data-qa={dataQa}>
+      <button
+        className={classNames(
+          'flex items-center gap-1 py-1 text-xs',
+          isSectionHighlighted ? 'text-green' : '[&:not(:hover)]:text-gray-500',
+        )}
+        data-qa="chronology"
+        onClick={handleSectionOpen}
+      >
+        <IconCaretRightFilled
+          className={classNames(
+            'invisible text-gray-500 transition-all group-hover/sidebar:visible',
+            isSectionOpened && 'rotate-90',
+          )}
+          size={10}
+        />
+        {t(name)}
+      </button>
+      {isSectionOpened && (
+        <>
+          <div>
+            {rootfolders.map((folder, index, arr) => (
+              <PromptFolderTemplate
+                key={folder.id}
+                folder={folder}
+                index={index}
+                isLast={index === arr.length - 1}
+              />
+            ))}
+          </div>
+          <div>
+            {displayRootFiles &&
+              rootPrompts.map((item) => (
+                <PromptComponent key={item.id} item={item} />
+              ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
+
+const folderItems: FolderSectionProps<Prompt>[] = [
+  {
+    name: 'Share With Me',
+    itemFilter: SharedWithMeFilter,
+    hideIfEmpty: true,
+    displayRootFiles: true,
+    dataQa: 'share-with-me',
+  },
+  {
+    name: 'Pinned prompts',
+    itemFilter: PinnedItemsFilter,
+    showEmptyFolders: true,
+    openByDefault: true,
+    dataQa: 'pinned-prompts',
+  },
+];
+
+export function PromptFolders() {
+  return (
+    <div
+      className="flex w-full flex-col gap-0.5 divide-y divide-gray-200 dark:divide-gray-800"
+      data-qa="prompt-folders"
+    >
+      {folderItems.map((itemProps) => (
+        <PromptSection key={itemProps.name} {...itemProps} />
+      ))}
+    </div>
+  );
+}
