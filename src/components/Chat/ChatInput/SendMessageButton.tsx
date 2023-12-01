@@ -30,6 +30,7 @@ export const SendMessageButton = ({
       className="absolute right-4 top-[calc(50%_-_12px)] rounded hover:text-blue-500 disabled:cursor-not-allowed disabled:text-gray-400 disabled:dark:text-gray-600"
       onClick={handleSend}
       disabled={isDisabled}
+      data-qa="send"
     >
       <Tooltip hideTooltip={!isDisabled} tooltip={tooltip}>
         {messageIsStreaming || isModelsLoading ? (

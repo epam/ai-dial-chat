@@ -63,6 +63,9 @@ export class FolderConversations extends Folders {
     folderName: string,
     conversationName: string,
   ) {
+    await this.getFolderConversation(folderName, conversationName).waitFor({
+      state: 'attached',
+    });
     const folderConversation = await this.getFolderConversation(
       folderName,
       conversationName,

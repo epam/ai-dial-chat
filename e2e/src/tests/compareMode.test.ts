@@ -3,6 +3,7 @@ import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
 import {
+  API,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
@@ -462,6 +463,7 @@ test('Generate new response for two chats in compare mode. Bison and GPT-4-32 wh
   setTestIds,
   conversationData,
   localStorageManager,
+  page,
 }) => {
   setTestIds('EPMRTC-553');
   const request = ['beautiful'];
@@ -493,6 +495,20 @@ test('Generate new response for two chats in compare mode. Bison and GPT-4-32 wh
   await test.step('Send new message in compare chat and verify regenerate is not available until both responses received', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+
+    page.route(API.chatHost, async (route) => {
+      const request = route.request();
+      const postData = await request.postDataJSON();
+
+      if (postData.modelId === bisonModel.id) {
+        await route.fulfill({
+          status: 200,
+          body: '{}',
+        });
+      } else {
+        await route.continue();
+      }
+    });
 
     await chat.sendRequestInCompareMode(
       'write down 20 adjectives about person',

@@ -130,11 +130,11 @@ test(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await chatMessages.openEditMessageMode(userRequests[1]);
-      await chatMessages.fillEditData(editData);
+      await chatMessages.fillEditData(userRequests[1], editData);
       await chatMessages.cancel.click();
 
       const isEditTextareaVisible = await chatMessages
-        .getChatMessageTextarea()
+        .getChatMessageTextarea(userRequests[1])
         .isVisible();
       expect
         .soft(isEditTextareaVisible, ExpectedMessages.editModeIsClosed)
@@ -148,7 +148,7 @@ test(
 
     await test.step('Edit 2nd request, clear field and verify Save button is disabled', async () => {
       await chatMessages.openEditMessageMode(userRequests[1]);
-      await chatMessages.fillEditData('');
+      await chatMessages.fillEditData(userRequests[1], '');
 
       const isSaveButtonDisabled = await chatMessages.isSaveButtonEnabled();
       expect
@@ -159,7 +159,7 @@ test(
 
     await test.step('Edit 2nd request, save changes and verify response is received, last request is removed', async () => {
       await chatMessages.openEditMessageMode(userRequests[1]);
-      await chatMessages.editMessage(editData);
+      await chatMessages.editMessage(userRequests[1], editData);
 
       const messagesCount = await chatMessages.chatMessages.getElementsCount();
       expect

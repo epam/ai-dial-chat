@@ -183,8 +183,8 @@ export class ChatMessages extends BaseElement {
     return this.messageStage(messagesIndex, stageIndex).isVisible();
   }
 
-  public getChatMessageTextarea() {
-    return this.getChildElementBySelector(Tags.textarea);
+  public getChatMessageTextarea(message: string) {
+    return this.getChatMessage(message).locator(Tags.textarea);
   }
 
   public messageEditIcon = (message: string) =>
@@ -201,21 +201,23 @@ export class ChatMessages extends BaseElement {
   public async openEditMessageMode(message: string) {
     const chatMessage = await this.getChatMessage(message);
     await chatMessage.hover();
-    await this.messageEditIcon(message).click();
+    const editIcon = this.messageEditIcon(message);
+    await editIcon.waitFor();
+    await editIcon.click();
   }
 
-  public async editMessage(newMessage: string) {
-    await this.fillEditData(newMessage);
+  public async editMessage(oldMessage: string, newMessage: string) {
+    await this.fillEditData(oldMessage, newMessage);
     await this.saveAndSubmit.click();
     await this.waitForResponseReceived();
   }
 
-  public async fillEditData(newMessage: string) {
-    const textArea = this.getChatMessageTextarea();
-    await textArea.waitForState({ state: 'attached' });
+  public async fillEditData(oldMessage: string, newMessage: string) {
+    const textArea = this.getChatMessageTextarea(oldMessage);
+    await textArea.waitFor();
     await textArea.click();
     await this.page.keyboard.press(keys.ctrlPlusA);
-    await textArea.fillInInput(newMessage);
+    await textArea.fill(newMessage);
   }
 
   public async isSaveButtonEnabled() {

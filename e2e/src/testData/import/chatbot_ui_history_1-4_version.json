@@ -61,12 +61,12 @@
   "folders": [
     {
       "id": "b0a8d351-1f7f-463d-a530-b5a51f5e03a6",
-      "name": "Version 1.4",
+      "name": "Version 1.x",
       "type": "prompt"
     },
     {
       "id": "24843852-7d9c-4132-a427-6c4ac1d1ca4c",
-      "name": "Version 1.4",
+      "name": "Version 1.x",
       "type": "chat"
     }
   ],

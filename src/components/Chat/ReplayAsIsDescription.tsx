@@ -32,7 +32,10 @@ export const ReplayAsIsDescription = ({ isModelInMessages }: Props) => {
               )}
             </span>
             {isModelInMessages && (
-              <span className="mt-3 text-xxs leading-4 text-red-800 dark:text-red-400">
+              <span
+                className="mt-3 text-xxs leading-4 text-red-800 dark:text-red-400"
+                data-qa="replay-old-version"
+              >
                 {t(
                   'Please note that some of your messages were created in older DIAL version. "Replay as is" could be working not as expected.',
                 )}
