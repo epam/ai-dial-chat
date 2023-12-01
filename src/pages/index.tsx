@@ -29,6 +29,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import Header from '@/src/components/Header/Header';
@@ -150,7 +151,8 @@ export default function Home({ initialState }: Props) {
             <div className="flex w-full grow overflow-auto">
               {enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
 
-              <div className="flex min-w-0 flex-1">
+              <div className="flex min-w-0 grow flex-col">
+                <AnnouncementsBanner />
                 <Chat />
               </div>
 
@@ -208,6 +210,7 @@ export const getServerSideProps: GetServerSideProps = async ({
     ),
     isAuthDisabled: process.env.AUTH_DISABLED === 'true',
     storageType: process.env.STORAGE_TYPE || 'browserStorage',
+    announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
   };
 
   return {

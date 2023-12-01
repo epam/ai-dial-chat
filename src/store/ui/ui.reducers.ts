@@ -12,6 +12,7 @@ export interface UIState {
   isProfileOpen: boolean;
   isCompareMode: boolean;
   openedFoldersIds: string[];
+  textOfClosedAnnouncement?: string | undefined;
 }
 
 const initialState: UIState = {
@@ -22,6 +23,7 @@ const initialState: UIState = {
   isProfileOpen: false,
   isCompareMode: false,
   openedFoldersIds: [],
+  textOfClosedAnnouncement: undefined,
 };
 
 export const uiSlice = createSlice({
@@ -101,6 +103,12 @@ export const uiSlice = createSlice({
         );
       }
     },
+    closeAnnouncement: (
+      state,
+      { payload }: PayloadAction<{ announcement: string | undefined }>,
+    ) => {
+      state.textOfClosedAnnouncement = payload.announcement;
+    },
   },
 });
 
@@ -139,6 +147,12 @@ const selectIsFolderOpened = createSelector(
     return ids.includes(id);
   },
 );
+const selectTextOfClosedAnnouncement = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.textOfClosedAnnouncement;
+  },
+);
 
 export const UIActions = uiSlice.actions;
 
@@ -151,4 +165,5 @@ export const UISelectors = {
   selectIsCompareMode,
   selectOpenedFoldersIds,
   selectIsFolderOpened,
+  selectTextOfClosedAnnouncement,
 };

@@ -7,7 +7,7 @@ import { useTranslation } from 'next-i18next';
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
 
 import { Attachment } from '@/src/types/chat';
-import { ImageMIMEType } from '@/src/types/files';
+import { ImageMIMEType, MIMEType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { stopBubbling } from '@/src/constants/chat';
@@ -18,20 +18,105 @@ import ChatMDComponent from '../Markdown/ChatMDComponent';
 
 import { sanitize } from 'isomorphic-dompurify';
 
-interface Props {
-  attachment: Attachment;
-  isInner?: boolean;
-}
 const imageTypes: Set<ImageMIMEType> = new Set<ImageMIMEType>([
   'image/jpeg',
   'image/png',
 ]);
 
+interface AttachmentDataRendererProps {
+  attachment: Attachment;
+  isInner?: boolean;
+}
+
+const AttachmentDataRenderer = ({
+  attachment,
+  isInner,
+}: AttachmentDataRendererProps) => {
+  if (!attachment.data) {
+    return null;
+  }
+
+  if (imageTypes.has(attachment.type)) {
+    return (
+      <img
+        src={`data:${attachment.type};base64,${attachment.data}`}
+        className="m-0 aspect-auto w-full"
+        alt="Attachment image"
+      />
+    );
+  }
+
+  if (attachment.type === 'text/html') {
+    return (
+      <div className="flex max-w-full overflow-auto">
+        <span
+          className="prose shrink-0 whitespace-pre text-sm dark:prose-invert"
+          dangerouslySetInnerHTML={{
+            __html: sanitize(attachment.data || ''),
+          }}
+        ></span>
+      </div>
+    );
+  }
+  if (attachment.type === 'text/plain') {
+    return (
+      <div className="max-w-full overflow-hidden">
+        <span className="prose whitespace-pre-wrap text-sm dark:prose-invert">
+          {attachment.data}
+        </span>
+      </div>
+    );
+  }
+  if (attachment.type === 'text/markdown' || !attachment.type) {
+    return (
+      <ChatMDComponent
+        isShowResponseLoader={false}
+        content={attachment.data}
+        isInner={isInner}
+      />
+    );
+  }
+
+  return null;
+};
+
+interface AttachmentUrlRendererProps {
+  attachmentUrl: string | undefined;
+  attachmentType: MIMEType;
+}
+
+const AttachmentUrlRenderer = ({
+  attachmentUrl,
+  attachmentType,
+}: AttachmentUrlRendererProps) => {
+  if (!attachmentUrl) {
+    return null;
+  }
+
+  if (imageTypes.has(attachmentType)) {
+    return (
+      <img
+        src={attachmentUrl}
+        className="m-0 aspect-auto w-full"
+        alt="Attachment image"
+      />
+    );
+  }
+
+  return null;
+};
+
+interface Props {
+  attachment: Attachment;
+  isInner?: boolean;
+}
+
 export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const [isOpened, setIsOpened] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const isOpenable = !attachment.url;
+  const isOpenable =
+    attachment.data || (attachment.url && imageTypes.has(attachment.type));
   const mappedAttachmentUrl = useMemo(
     () => getMappedAttachmentUrl(attachment.url),
     [attachment.url],
@@ -73,7 +158,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
         <button
           onClick={() => {
             setIsExpanded((isExpanded) => !isExpanded);
-            if (!attachment.url) {
+            if (isOpenable) {
               setIsOpened((isOpened) => !isOpened);
             }
           }}
@@ -107,42 +192,19 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           )}
         </button>
       </div>
-      {isOpenable && attachment.data && isOpened && (
+      {isOpenable && isOpened && (
         <div
           className={`relative mt-2 h-auto w-full overflow-hidden p-3 pt-4 text-sm duration-200`}
         >
-          {imageTypes.has(attachment.type) ? (
-            <img
-              src={`data:${attachment.type};base64,${attachment.data}`}
-              className="m-0 aspect-auto w-full"
-              alt="Attachment image"
-            />
-          ) : attachment.type === 'text/html' ? (
-            <div className="flex max-w-full overflow-auto">
-              <span
-                className="prose shrink-0 whitespace-pre text-sm dark:prose-invert"
-                dangerouslySetInnerHTML={{
-                  __html: sanitize(attachment.data || ''),
-                }}
-              ></span>
-            </div>
-          ) : attachment.type === 'text/plain' ? (
-            <div className="max-w-full overflow-hidden">
-              <span className="prose whitespace-pre-wrap text-sm dark:prose-invert">
-                {attachment.data}
-              </span>
-            </div>
-          ) : (
-            (attachment.type === 'text/markdown' || !attachment.type) &&
-            attachment.data && (
-              <ChatMDComponent
-                isShowResponseLoader={false}
-                content={attachment.data}
-                isInner={isInner}
-              />
-            )
+          {attachment.data && (
+            <AttachmentDataRenderer attachment={attachment} isInner={isInner} />
           )}
-
+          {mappedAttachmentUrl && (
+            <AttachmentUrlRenderer
+              attachmentUrl={mappedAttachmentUrl}
+              attachmentType={attachment.type}
+            />
+          )}
           {mappedAttachmentReferenceUrl && (
             <a
               href={mappedAttachmentReferenceUrl}

@@ -116,6 +116,17 @@ export class DataService {
   ): Observable<void> {
     return BrowserStorage.setData('openedFoldersIds', openedFolderIds);
   }
+  public static getClosedAnnouncement(): Observable<string | undefined> {
+    return BrowserStorage.getData('textOfClosedAnnouncement', '');
+  }
+  public static setClosedAnnouncement(
+    closedAnnouncementText: string | undefined,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      'textOfClosedAnnouncement',
+      closedAnnouncementText || '',
+    );
+  }
 
   public static sendFile(
     formData: FormData,

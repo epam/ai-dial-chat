@@ -319,6 +319,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       className={classNames(
         'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-green/15',
         isHighlited ? 'border-l-green bg-green/15' : 'border-l-transparent',
+        { 'bg-green/15': isContextMenu },
       )}
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
@@ -404,7 +405,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           {...getFloatingProps()}
           className={classNames(
             'invisible absolute right-3 z-50 flex justify-end group-hover:visible',
-            //isContextMenu ? 'visible' : 'invisible',
           )}
           data-qa="dots-menu"
         >
