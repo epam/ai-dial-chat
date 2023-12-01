@@ -1,4 +1,3 @@
-import { IconCaretRightFilled } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -20,6 +19,7 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Folder from '@/src/components/Folder';
 
+import CaretIconComponent from '../../Folder/CaretIconComponent';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
 
@@ -252,13 +252,7 @@ export const ChatSection = ({
         data-qa="chronology"
         onClick={handleSectionOpen}
       >
-        <IconCaretRightFilled
-          className={classNames(
-            'invisible text-gray-500 transition-all group-hover/sidebar:visible',
-            isSectionOpened && 'rotate-90',
-          )}
-          size={10}
-        />
+        <CaretIconComponent isOpen={isSectionOpened} />
         {t(name)}
       </button>
       {isSectionOpened && (

@@ -1,5 +1,5 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconCaretRightFilled, IconFolder } from '@tabler/icons-react';
+import { IconFolder } from '@tabler/icons-react';
 import {
   DragEvent,
   FC,
@@ -45,22 +45,7 @@ import { FolderContextMenu } from '../Common/FolderContextMenu';
 import { Spinner } from '../Common/Spinner';
 import Tooltip from '../Common/Tooltip';
 import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
-
-interface CaretIconComponentProps {
-  isOpen: boolean;
-}
-
-const CaretIconComponent = ({ isOpen }: CaretIconComponentProps) => {
-  return (
-    <IconCaretRightFilled
-      className={classNames(
-        'invisible text-gray-500 transition-all group-hover/modal:[visibility:inherit] group-hover/sidebar:[visibility:inherit]',
-        isOpen && 'rotate-90',
-      )}
-      size={10}
-    />
-  );
-};
+import CaretIconComponent from './CaretIconComponent';
 
 interface Props<T, P = unknown> {
   currentFolder: FolderInterface;
@@ -416,15 +401,10 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
               paddingLeft: `${level * 1.5}rem`,
             }}
           >
-            <span
-              className={classNames(
-                hasChildElements || displayCaretAlways
-                  ? 'visible'
-                  : 'invisible',
-              )}
-            >
-              <CaretIconComponent isOpen={isFolderOpened} />
-            </span>
+            <CaretIconComponent
+              isOpen={isFolderOpened}
+              hidden={!hasChildElements && !displayCaretAlways}
+            />
 
             {loadingFolderId === currentFolder.id ? (
               <Spinner />
@@ -460,15 +440,10 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
               e.preventDefault();
             }}
           >
-            <span
-              className={classNames(
-                hasChildElements || displayCaretAlways
-                  ? 'visible'
-                  : 'invisible',
-              )}
-            >
-              <CaretIconComponent isOpen={isFolderOpened} />
-            </span>
+            <CaretIconComponent
+              isOpen={isFolderOpened}
+              hidden={!hasChildElements && !displayCaretAlways}
+            />
 
             {loadingFolderId === currentFolder.id ? (
               <Spinner className="mr-1" />

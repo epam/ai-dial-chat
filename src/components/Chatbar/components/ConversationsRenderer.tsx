@@ -1,4 +1,3 @@
-import { IconCaretRightFilled } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import classNames from 'classnames';
@@ -8,6 +7,7 @@ import { Conversation } from '@/src/types/chat';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
+import CaretIconComponent from '../../Folder/CaretIconComponent';
 import { ConversationComponent } from './Conversation';
 
 interface ConversationsRendererProps {
@@ -48,13 +48,7 @@ export const ConversationsRenderer = ({
             data-qa="chronology"
             onClick={handleSectionOpen}
           >
-            <IconCaretRightFilled
-              className={classNames(
-                'invisible text-gray-500 transition-all group-hover/sidebar:visible',
-                isSectionOpened && 'rotate-90',
-              )}
-              size={10}
-            />
+            <CaretIconComponent isOpen={isSectionOpened} />
             {label}
           </button>
           {isSectionOpened &&
