@@ -3,11 +3,14 @@ import {
   IconFileArrowRight,
   IconPaperclip,
   IconScale,
-  IconTrashX
+  IconTrashX,
+  IconUserShare,
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+
+import { SharedByMeFilter } from '@/src/utils/app/search';
 
 import { HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
@@ -28,11 +31,15 @@ import SidebarMenu from '@/src/components/Common/SidebarMenu';
 import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
 import { Import } from '@/src/components/Settings/Import';
 
+import { SharingType } from '../../Chat/ShareModal';
+import SharedByMeModal from '../../Chat/SharedByMe';
+
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation(Translation.SideBar);
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const [isSharedModalOpen, setIsSharedModalOpen] = useState(false);
 
   const dispatch = useAppDispatch();
 
@@ -64,6 +71,17 @@ export const ChatbarSettings = () => {
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
+      {
+        name: t('Shared by me'),
+        display:
+          enabledFeatures.has(Feature.ConversationsSharing) &&
+          conversations.filter(SharedByMeFilter).length > 0,
+        dataQa: 'shared-by-me',
+        Icon: IconUserShare,
+        onClick: () => {
+          setIsSharedModalOpen(true);
+        },
+      },
       {
         name: t('Delete all conversations'),
         display: conversations.length > 0,
@@ -164,6 +182,12 @@ export const ChatbarSettings = () => {
             dispatch(ConversationsActions.clearConversations());
           }
         }}
+      />
+
+      <SharedByMeModal
+        isOpen={isSharedModalOpen}
+        onClose={() => setIsSharedModalOpen(false)}
+        type={SharingType.Conversation}
       />
     </>
   );

@@ -1,13 +1,17 @@
 import {
   IconFileArrowLeft,
   IconFileArrowRight,
-  IconTrashX
+  IconTrashX,
+  IconUserShare,
 } from '@tabler/icons-react';
 import { FC, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { SharedByMeFilter } from '@/src/utils/app/search';
+
 import { HighlightColor } from '@/src/types/common';
+import { Feature } from '@/src/types/features';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
@@ -37,6 +41,17 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
+      {
+        name: t('Shared by me'),
+        display:
+          enabledFeatures.has(Feature.PromptsSharing) &&
+          allPrompts.filter(SharedByMeFilter).length > 0,
+        dataQa: 'shared-by-me',
+        Icon: IconUserShare,
+        onClick: () => {
+          setIsOpen(false);
+        },
+      },
       {
         name: t('Delete all prompts'),
         display: allPrompts.length > 0,
