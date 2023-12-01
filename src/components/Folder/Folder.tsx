@@ -37,8 +37,8 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { emptyImage } from '@/src/constants/drag-and-drop';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
-
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
+
 import CheckIcon from '../../../public/images/icons/check.svg';
 import XmarkIcon from '../../../public/images/icons/xmark.svg';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
@@ -449,14 +449,16 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             ) : (
               <IconFolder size={18} className="mr-1 text-gray-500" />
             )}
-            <div className={classNames(
+            <div
+              className={classNames(
                 `relative max-h-5 flex-1 truncate break-all text-left`,
                 isRenaming ? 'pr-10' : 'group-hover/button:pr-5',
                 !isRenaming &&
                   highlightedFolders?.includes(currentFolder.id) &&
                   textColor,
-              )}>
-                {currentFolder.name}
+              )}
+            >
+              {currentFolder.name}
             </div>
             {(onDeleteFolder || onRenameFolder || onAddFolder) &&
               !readonly &&

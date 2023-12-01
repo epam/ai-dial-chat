@@ -75,11 +75,7 @@ const Promptbar = () => {
       featureType={FeatureType.Prompt}
       side="right"
       isOpen={showPromptbar}
-      itemComponent={
-        <Prompts
-          prompts={filteredPrompts}
-        />
-      }
+      itemComponent={<Prompts prompts={filteredPrompts} />}
       actionButtons={<PromptActionsBlock />}
       folderComponent={<PromptFolders />}
       folders={promptsFolders}

@@ -1,11 +1,13 @@
 import { FC, useMemo } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
+
+import CollapsedSection from '@/src/components/Common/CollapsedSection';
 
 import { PromptComponent } from './Prompt';
-import CollapsedSection from '@/src/components/Common/CollapsedSection';
-import { Translation } from '@/src/types/translation';
-import { useTranslation } from 'next-i18next';
 
 interface Props {
   prompts: Prompt[];
@@ -18,15 +20,14 @@ export const Prompts: FC<Props> = ({ prompts }) => {
     [prompts],
   );
   return (
-    <CollapsedSection name={t('Recent')} openByDefault dataQa='promps-section'>
+    <CollapsedSection name={t('Recent')} openByDefault dataQa="promps-section">
       <div
         className="flex h-full w-full flex-col gap-0.5 py-1 pr-0.5"
         data-qa="prompts"
       >
-        {promptsToDisplay
-          .map((prompt) => (
-            <PromptComponent key={prompt.id} item={prompt} />
-          ))}
+        {promptsToDisplay.map((prompt) => (
+          <PromptComponent key={prompt.id} item={prompt} />
+        ))}
       </div>
     </CollapsedSection>
   );

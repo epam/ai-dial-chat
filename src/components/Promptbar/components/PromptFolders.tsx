@@ -18,9 +18,9 @@ import {
 } from '@/src/store/prompts/prompts.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 import Folder from '@/src/components/Folder';
 
-import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { PromptComponent } from './Prompt';
 

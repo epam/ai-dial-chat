@@ -23,11 +23,12 @@ import { Translation } from '@/src/types/translation';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
+import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
+
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
 import Folder from '../Folder';
-import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
 interface Props {
   isOpen: boolean;

@@ -237,7 +237,12 @@ export const ChatSection = ({
   if (hideIfEmpty && !conversations.length && !folders.length) return null;
 
   return (
-    <CollapsedSection name={t(name)} openByDefault={openByDefault} dataQa={dataQa} isHighlighted={isSectionHighlighted}>
+    <CollapsedSection
+      name={t(name)}
+      openByDefault={openByDefault}
+      dataQa={dataQa}
+      isHighlighted={isSectionHighlighted}
+    >
       <div>
         {rootfolders.map((folder, index, arr) => {
           return (

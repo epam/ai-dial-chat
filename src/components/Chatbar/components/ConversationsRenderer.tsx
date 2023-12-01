@@ -8,6 +8,7 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { useAppSelector } from '@/src/store/hooks';
 
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
+
 import { ConversationComponent } from './Conversation';
 
 interface ConversationsRendererProps {
