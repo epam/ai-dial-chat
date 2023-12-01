@@ -73,4 +73,5 @@ export const ChatSelectors = {
   footer: '[data-qa="footer-message"]',
   notAllowedModel: '[data-qa="not-allowed-model-error"]',
   replayOldVersion: '[data-qa="replay-old-version"]',
+  sendMessage: '[data-qa="send"]',
 };
