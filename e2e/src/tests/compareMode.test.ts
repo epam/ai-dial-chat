@@ -471,7 +471,7 @@ test('Generate new response for two chats in compare mode. Bison and GPT-4-32 wh
   await test.step('Prepare two conversations for comparing', async () => {
     firstConversation =
       conversationData.prepareModelConversationBasedOnRequests(
-        bisonModel,
+        ModelsUtil.getModel(ModelIds.AWS_TITAN)!,
         request,
       );
     conversationData.resetData();
