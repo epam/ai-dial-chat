@@ -3,7 +3,7 @@ import {
   IconFileArrowRight,
   IconPaperclip,
   IconScale,
-  IconTrashX
+  IconTrashX,
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 

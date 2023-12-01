@@ -1,7 +1,7 @@
 import {
   IconFileArrowLeft,
   IconFileArrowRight,
-  IconTrashX
+  IconTrashX,
 } from '@tabler/icons-react';
 import { FC, useMemo, useState } from 'react';
 
