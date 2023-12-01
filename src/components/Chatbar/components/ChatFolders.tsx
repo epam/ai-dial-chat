@@ -271,7 +271,6 @@ const folderItems: FolderSectionProps<Conversation>[] = [
   {
     name: 'Share With Me',
     itemFilter: SharedWithMeFilter,
-    hideIfEmpty: true,
     displayRootFiles: true,
     dataQa: 'share-with-me',
   },

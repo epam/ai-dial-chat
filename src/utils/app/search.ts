@@ -3,6 +3,7 @@ import { EntityFilter } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
+import { ShareInterface } from '@/src/types/share';
 
 export const doesConversationContainSearchTerm = (
   conversation: Conversation,
@@ -66,11 +67,10 @@ export const doesEntityContainSearchItem = <
 };
 
 //TODO: for development purpose - emulate immediate sharing with yourself
-export const PinnedItemsFilter: EntityFilter<Conversation | Prompt> = (_item) =>
-  true; // !item.sharedWithMe;
+export const PinnedItemsFilter: EntityFilter<ShareInterface> = (_item) => true; // !item.sharedWithMe;
 
-export const SharedWithMeFilter: EntityFilter<Conversation | Prompt> = (item) =>
+export const SharedWithMeFilter: EntityFilter<ShareInterface> = (item) =>
   !!item.sharedWithMe;
 
-export const SharedByMeFilter: EntityFilter<Conversation | Prompt> = (item) =>
+export const SharedByMeFilter: EntityFilter<ShareInterface> = (item) =>
   !!item.isShared;
