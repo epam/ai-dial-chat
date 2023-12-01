@@ -22,6 +22,8 @@ import classNames from 'classnames';
 
 import { SharedByMeFilter } from '@/src/utils/app/search';
 
+import { Translation } from '@/src/types/translation';
+
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -39,7 +41,7 @@ interface Props {
 }
 
 export default function SharedByMeModal({ isOpen, onClose }: Props) {
-  const { t } = useTranslation('sidebar');
+  const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
   const selectedConversationsIds = new Set(
     useAppSelector(ConversationsSelectors.selectSelectedConversationsIds),

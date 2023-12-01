@@ -9,6 +9,7 @@ import { PinnedItemsFilter, SharedWithMeFilter } from '@/src/utils/app/search';
 import { HighlightColor } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -155,7 +156,7 @@ export const PromptSection = ({
   openByDefault = false,
   dataQa,
 }: FolderSectionProps<Prompt>) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.PromptBar);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const [isSectionOpened, setIsSectionOpened] = useState(openByDefault);
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
@@ -217,7 +218,9 @@ export const PromptSection = ({
       <button
         className={classNames(
           'flex items-center gap-1 py-1 text-xs',
-          isSectionHighlighted ? 'text-green' : '[&:not(:hover)]:text-gray-500',
+          isSectionHighlighted
+            ? 'text-violet'
+            : '[&:not(:hover)]:text-gray-500',
         )}
         data-qa="chronology"
         onClick={handleSectionOpen}

@@ -9,6 +9,7 @@ import { PinnedItemsFilter, SharedWithMeFilter } from '@/src/utils/app/search';
 import { Conversation } from '@/src/types/chat';
 import { EntityFilter, HighlightColor } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
+import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
@@ -179,7 +180,7 @@ export const ChatSection = ({
   openByDefault = false,
   dataQa,
 }: FolderSectionProps<Conversation>) => {
-  const { t } = useTranslation('chat');
+  const { t } = useTranslation(Translation.SideBar);
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const [isSectionOpened, setIsSectionOpened] = useState(openByDefault);
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
