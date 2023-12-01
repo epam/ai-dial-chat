@@ -10,7 +10,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { SharedByMeFilter } from '@/src/utils/app/folders';
+import { SharedByMeFilter } from '@/src/utils/app/search';
 
 import { HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';

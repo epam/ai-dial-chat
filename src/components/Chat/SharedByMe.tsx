@@ -20,7 +20,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { SharedByMeFilter } from '@/src/utils/app/folders';
+import { SharedByMeFilter } from '@/src/utils/app/search';
 
 import {
   ConversationsActions,
