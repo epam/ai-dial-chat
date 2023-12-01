@@ -150,7 +150,7 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
 export const PromptSection = ({
   name,
   itemFilter,
-  hideIfEmpty,
+  hideIfEmpty = true,
   displayRootFiles,
   showEmptyFolders = false,
   openByDefault = false,
@@ -256,7 +256,6 @@ const folderItems: FolderSectionProps<Prompt>[] = [
   {
     name: 'Share With Me',
     itemFilter: SharedWithMeFilter,
-    hideIfEmpty: true,
     displayRootFiles: true,
     dataQa: 'share-with-me',
   },

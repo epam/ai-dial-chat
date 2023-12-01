@@ -2,6 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import {
   getChildAndCurrentFoldersIdsById,
+  getParentAndCurrentFolderIdsById,
   getParentAndCurrentFoldersById,
 } from '@/src/utils/app/folders';
 import { doesConversationContainSearchTerm } from '@/src/utils/app/search';
@@ -83,17 +84,12 @@ export const selectFilteredFolders = createSelector(
     if (includeEmptyFolders && !searchTerm?.trim().length) {
       folderIds.push(...emptyFolderIds);
     }
-    let childFolderIds = new Set(folderIds);
-    //collect all parent folders
-    while (childFolderIds.size) {
-      const parentIds = folders
-        .filter(({ id, folderId: fid }) => childFolderIds.has(id) && fid)
-        .map(({ folderId }) => folderId);
-      folderIds.push(...parentIds);
-      childFolderIds = new Set(parentIds);
-    }
 
-    const filteredFolderIds = new Set(folderIds);
+    const filteredFolderIds = new Set(
+      folderIds.flatMap((fid) =>
+        getParentAndCurrentFolderIdsById(folders, fid),
+      ),
+    );
 
     return folders.filter((folder) => filteredFolderIds.has(folder.id));
   },

@@ -172,7 +172,7 @@ const ChatFolderTemplate = ({
 export const ChatSection = ({
   name,
   itemFilter,
-  hideIfEmpty,
+  hideIfEmpty = true,
   displayRootFiles,
   showEmptyFolders = false,
   openByDefault = false,
