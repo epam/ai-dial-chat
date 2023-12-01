@@ -6,7 +6,7 @@ import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
 interface CollapsedSectionProps {
   name: string;
-  openByDefault: boolean;
+  openByDefault?: boolean;
   isHighlighted?: boolean;
   carentIconSize?: number;
   carentIconHidden?: boolean;

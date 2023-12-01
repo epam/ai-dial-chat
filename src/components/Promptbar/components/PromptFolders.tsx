@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
 import { PinnedItemsFilter, SharedWithMeFilter } from '@/src/utils/app/search';
 
 import { HighlightColor } from '@/src/types/common';
@@ -18,9 +16,9 @@ import {
 } from '@/src/store/prompts/prompts.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 import Folder from '@/src/components/Folder';
 
+import CollapsedSection from '../../Common/CollapsedSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { PromptComponent } from './Prompt';
 
@@ -158,7 +156,6 @@ export const PromptSection = ({
 }: FolderSectionProps<Prompt>) => {
   const { t } = useTranslation(Translation.PromptBar);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
-  const [isSectionOpened, setIsSectionOpened] = useState(openByDefault);
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
   const folders = useAppSelector((state) =>
     PromptsSelectors.selectFilteredFolders(
@@ -190,10 +187,6 @@ export const PromptSection = ({
     PromptsSelectors.selectSelectedPromptId,
   );
 
-  function handleSectionOpen() {
-    setIsSectionOpened((isOpen) => !isOpen);
-  }
-
   useEffect(() => {
     const shouldBeHighlighted =
       rootfolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
@@ -214,41 +207,29 @@ export const PromptSection = ({
   if (hideIfEmpty && !prompts.length && !folders.length) return null;
 
   return (
-    <div className="flex w-full flex-col py-1 pl-2 pr-0.5">
-      <button
-        className={classNames(
-          'flex items-center gap-1 py-1 text-xs',
-          isSectionHighlighted
-            ? 'text-violet'
-            : '[&:not(:hover)]:text-gray-500',
-        )}
-        data-qa={dataQa}
-        onClick={handleSectionOpen}
-      >
-        <CaretIconComponent isOpen={isSectionOpened} />
-        {t(name)}
-      </button>
-      {isSectionOpened && (
-        <>
-          <div>
-            {rootfolders.map((folder, index, arr) => (
-              <PromptFolderTemplate
-                key={folder.id}
-                folder={folder}
-                index={index}
-                isLast={index === arr.length - 1}
-              />
-            ))}
-          </div>
-          <div>
-            {displayRootFiles &&
-              rootPrompts.map((item) => (
-                <PromptComponent key={item.id} item={item} />
-              ))}
-          </div>
-        </>
-      )}
-    </div>
+    <CollapsedSection
+      name={t(name)}
+      openByDefault={openByDefault}
+      dataQa={dataQa}
+      isHighlighted={isSectionHighlighted}
+    >
+      <div>
+        {rootfolders.map((folder, index, arr) => (
+          <PromptFolderTemplate
+            key={folder.id}
+            folder={folder}
+            index={index}
+            isLast={index === arr.length - 1}
+          />
+        ))}
+      </div>
+      <div>
+        {displayRootFiles &&
+          rootPrompts.map((item) => (
+            <PromptComponent key={item.id} item={item} />
+          ))}
+      </div>
+    </CollapsedSection>
   );
 };
 
