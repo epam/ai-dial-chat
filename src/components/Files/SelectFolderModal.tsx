@@ -27,7 +27,7 @@ import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
 import Folder from '../Folder';
-import CaretIconComponent from '../Folder/CaretIconComponent';
+import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
 interface Props {
   isOpen: boolean;

@@ -20,7 +20,7 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Folder from '@/src/components/Folder';
 
-import CaretIconComponent from '../../Folder/CaretIconComponent';
+import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { PromptComponent } from './Prompt';
 
@@ -214,7 +214,7 @@ export const PromptSection = ({
   if (hideIfEmpty && !prompts.length && !folders.length) return null;
 
   return (
-    <div className="flex w-full flex-col py-1 pl-2 pr-0.5" data-qa={dataQa}>
+    <div className="flex w-full flex-col py-1 pl-2 pr-0.5">
       <button
         className={classNames(
           'flex items-center gap-1 py-1 text-xs',
@@ -222,7 +222,7 @@ export const PromptSection = ({
             ? 'text-violet'
             : '[&:not(:hover)]:text-gray-500',
         )}
-        data-qa="chronology"
+        data-qa={dataQa}
         onClick={handleSectionOpen}
       >
         <CaretIconComponent isOpen={isSectionOpened} />

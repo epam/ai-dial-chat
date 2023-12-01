@@ -38,14 +38,13 @@ import { emptyImage } from '@/src/constants/drag-and-drop';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 
+import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 import CheckIcon from '../../../public/images/icons/check.svg';
 import XmarkIcon from '../../../public/images/icons/xmark.svg';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { FolderContextMenu } from '../Common/FolderContextMenu';
 import { Spinner } from '../Common/Spinner';
-import Tooltip from '../Common/Tooltip';
 import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
-import CaretIconComponent from './CaretIconComponent';
 
 interface Props<T, P = unknown> {
   currentFolder: FolderInterface;
@@ -450,20 +449,15 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             ) : (
               <IconFolder size={18} className="mr-1 text-gray-500" />
             )}
-            <Tooltip tooltip={currentFolder.name}>
-              <div
-                className={classNames(
-                  `relative max-h-5 flex-1 truncate break-all text-left`,
-                  isRenaming ? 'pr-10' : 'group-hover/button:pr-5',
-                  !isRenaming &&
-                    highlightedFolders?.includes(currentFolder.id) &&
-                    textColor,
-                )}
-              >
+            <div className={classNames(
+                `relative max-h-5 flex-1 truncate break-all text-left`,
+                isRenaming ? 'pr-10' : 'group-hover/button:pr-5',
+                !isRenaming &&
+                  highlightedFolders?.includes(currentFolder.id) &&
+                  textColor,
+              )}>
                 {currentFolder.name}
-              </div>
-            </Tooltip>
-
+            </div>
             {(onDeleteFolder || onRenameFolder || onAddFolder) &&
               !readonly &&
               !isRenaming && (

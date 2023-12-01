@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
 import { PinnedItemsFilter, SharedWithMeFilter } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
@@ -20,7 +18,7 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Folder from '@/src/components/Folder';
 
-import CaretIconComponent from '../../Folder/CaretIconComponent';
+import CollapsedSection from '../../Common/CollapsedSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
 
@@ -182,7 +180,6 @@ export const ChatSection = ({
 }: FolderSectionProps<Conversation>) => {
   const { t } = useTranslation(Translation.SideBar);
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
-  const [isSectionOpened, setIsSectionOpened] = useState(openByDefault);
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
   const folders = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredFolders(
@@ -218,10 +215,6 @@ export const ChatSection = ({
     ConversationsSelectors.selectSelectedConversationsIds,
   );
 
-  function handleSectionOpen() {
-    setIsSectionOpened((isOpen) => !isOpen);
-  }
-
   useEffect(() => {
     const shouldBeHighlighted =
       rootfolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
@@ -244,43 +237,28 @@ export const ChatSection = ({
   if (hideIfEmpty && !conversations.length && !folders.length) return null;
 
   return (
-    <div className="flex w-full flex-col py-1 pl-2 pr-0.5" data-qa={dataQa}>
-      <button
-        className={classNames(
-          'flex items-center gap-1 py-1 text-xs',
-          isSectionHighlighted ? 'text-green' : '[&:not(:hover)]:text-gray-500',
-        )}
-        data-qa="chronology"
-        onClick={handleSectionOpen}
-      >
-        <CaretIconComponent isOpen={isSectionOpened} />
-        {t(name)}
-      </button>
-      {isSectionOpened && (
-        <>
-          <div>
-            {rootfolders.map((folder, index, arr) => {
-              return (
-                <ChatFolderTemplate
-                  key={folder.id}
-                  folder={folder}
-                  index={index}
-                  isLast={index === arr.length - 1}
-                  itemFilter={itemFilter}
-                  includeEmpty={showEmptyFolders}
-                />
-              );
-            })}
-          </div>
-          <div>
-            {displayRootFiles &&
-              rootConversations.map((item) => (
-                <ConversationComponent key={item.id} item={item} />
-              ))}
-          </div>
-        </>
-      )}
-    </div>
+    <CollapsedSection name={t(name)} openByDefault={openByDefault} dataQa={dataQa} isHighlighted={isSectionHighlighted}>
+      <div>
+        {rootfolders.map((folder, index, arr) => {
+          return (
+            <ChatFolderTemplate
+              key={folder.id}
+              folder={folder}
+              index={index}
+              isLast={index === arr.length - 1}
+              itemFilter={itemFilter}
+              includeEmpty={showEmptyFolders}
+            />
+          );
+        })}
+      </div>
+      <div>
+        {displayRootFiles &&
+          rootConversations.map((item) => (
+            <ConversationComponent key={item.id} item={item} />
+          ))}
+      </div>
+    </CollapsedSection>
   );
 };
 

@@ -7,7 +7,7 @@ import { Conversation } from '@/src/types/chat';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
-import CaretIconComponent from '../../Folder/CaretIconComponent';
+import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 import { ConversationComponent } from './Conversation';
 
 interface ConversationsRendererProps {

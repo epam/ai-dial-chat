@@ -77,7 +77,7 @@ const Promptbar = () => {
       isOpen={showPromptbar}
       itemComponent={
         <Prompts
-          prompts={filteredPrompts.filter((prompt) => !prompt.folderId)}
+          prompts={filteredPrompts}
         />
       }
       actionButtons={<PromptActionsBlock />}
