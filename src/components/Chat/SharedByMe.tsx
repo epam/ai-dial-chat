@@ -20,7 +20,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { SharedByMeFilters } from '@/src/utils/app/folders';
+import { SharedByMeFilter } from '@/src/utils/app/folders';
 
 import {
   ConversationsActions,
@@ -49,8 +49,7 @@ export default function SharedByMeModal({ isOpen, onClose }: Props) {
   const conversations = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredConversations(
       state,
-      SharedByMeFilters.filterItem,
-      false,
+      SharedByMeFilter,
       searchTerm,
     ),
   );

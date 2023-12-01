@@ -15,14 +15,11 @@ export enum FolderType {
   File = 'file',
 }
 
-export interface FolderItemFilters<T> {
-  filterFolder: EntityFilter<FolderInterface>;
-  filterItem: EntityFilter<T>;
-}
-
 export interface ChatFoldersProps<T> {
   name: string;
   hideIfEmpty?: boolean;
   displayRootFiles?: boolean;
-  filters: FolderItemFilters<T>;
+  itemFilter: EntityFilter<T>;
+  showEmptyFolders?: boolean;
+  openByDefault?: boolean;
 }

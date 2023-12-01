@@ -8,7 +8,6 @@ import { doesConversationContainSearchTerm } from '@/src/utils/app/search';
 
 import { Conversation, Role } from '@/src/types/chat';
 import { EntityFilter, EntityType } from '@/src/types/common';
-import { FolderInterface, FolderItemFilters } from '@/src/types/folder';
 
 import { RootState } from '../index';
 import { ModelsSelectors } from '../models/models.reducers';
@@ -24,14 +23,12 @@ export const selectConversations = createSelector([rootSelector], (state) => {
 export const selectFilteredConversations = createSelector(
   [
     selectConversations,
-    (_, filter?: EntityFilter<Conversation>) => filter,
-    (_, __, onlyRoot?: boolean) => onlyRoot,
-    (_, __, ___, searchTerm?: string) => searchTerm,
+    (_state, filter?: EntityFilter<Conversation>) => filter,
+    (_state, _filter, searchTerm?: string) => searchTerm,
   ],
-  (conversations, filter, onlyRoot, searchTerm) => {
+  (conversations, filter?, searchTerm?) => {
     return conversations.filter(
       (conversation) =>
-        (!onlyRoot || !conversation.folderId) &&
         (!searchTerm ||
           doesConversationContainSearchTerm(conversation, searchTerm)) &&
         (!filter || filter(conversation)),
@@ -43,27 +40,62 @@ export const selectFolders = createSelector([rootSelector], (state) => {
   return state.folders;
 });
 
-export const selectRootFolders = createSelector(
-  [selectFolders, (_, filter?: EntityFilter<FolderInterface>) => filter],
-  (folders, filter) => {
-    return folders.filter(
-      (folder) => !folder.folderId && (!filter || filter(folder)),
-    );
+export const selectEmptyFolderIds = createSelector(
+  [selectFolders, selectConversations],
+  (folders, conversations) => {
+    return folders
+      .filter(
+        ({ id }) =>
+          !folders.some((folder) => folder.folderId === id) &&
+          !conversations.some((conv) => conv.folderId === id),
+      )
+      .map(({ id }) => id);
   },
 );
 
-export const selectAreFolderItemsExists = createSelector(
+export const selectFilteredFolders = createSelector(
   [
+    (state) => state,
     selectFolders,
-    selectConversations,
-    (_, filters: FolderItemFilters<Conversation>) => filters,
+    selectEmptyFolderIds,
+    (_state, itemFilter?: EntityFilter<Conversation>) => itemFilter,
+    (_state, _itemFilter?, searchTerm?: string) => searchTerm,
+    (_state, _itemFilter?, _searchTerm?, includeEmptyFolders?: boolean) =>
+      includeEmptyFolders,
   ],
-  (folders, conversations, filters) => {
-    return (
-      folders.filter((folder) => filters.filterFolder(folder)).length ||
-      conversations.filter((conversation) => filters.filterItem(conversation))
-        .length
+  (
+    state,
+    folders,
+    emptyFolderIds,
+    itemFilter?,
+    searchTerm?,
+    includeEmptyFolders?,
+  ) => {
+    const filteredConversations = selectFilteredConversations(
+      state,
+      itemFilter,
+      searchTerm,
     );
+    const folderIds = filteredConversations // direct parent folders
+      .map((c) => c.folderId)
+      .filter((fid) => fid);
+    // include empty folders only if not search
+    if (includeEmptyFolders && !searchTerm?.trim().length) {
+      folderIds.push(...emptyFolderIds);
+    }
+    let childFolderIds = new Set(folderIds);
+    //collect all parent folders
+    while (childFolderIds.size) {
+      const parentIds = folders
+        .filter(({ id, folderId: fid }) => childFolderIds.has(id) && fid)
+        .map(({ folderId }) => folderId);
+      folderIds.push(...parentIds);
+      childFolderIds = new Set(parentIds);
+    }
+
+    const filteredFolderIds = new Set(folderIds);
+
+    return folders.filter((folder) => filteredFolderIds.has(folder.id));
   },
 );
 

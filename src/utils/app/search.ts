@@ -1,4 +1,5 @@
 import { Conversation } from '@/src/types/chat';
+import { EntityFilter } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
@@ -63,3 +64,13 @@ export const doesEntityContainSearchItem = <
   }
   throw new Error('unexpected entity');
 };
+
+//TODO: for development purpose - emulate immediate sharing with yourself
+export const PinnedChatsFilter: EntityFilter<Conversation | Prompt> = (_item) =>
+  true; // !item.sharedWithMe;
+
+export const SharedWithMeFilter: EntityFilter<Conversation | Prompt> = (item) =>
+  !!item.sharedWithMe;
+
+export const SharedByMeFilter: EntityFilter<Conversation | Prompt> = (item) =>
+  !!item.isShared;

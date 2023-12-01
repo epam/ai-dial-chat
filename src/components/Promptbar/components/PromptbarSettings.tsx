@@ -8,7 +8,7 @@ import { FC, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { SharedByMeFilters } from '@/src/utils/app/folders';
+import { SharedByMeFilter } from '@/src/utils/app/folders';
 
 import { HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
@@ -45,7 +45,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
         name: t('Shared by me'),
         display:
           enabledFeatures.has(Feature.PromptsSharing) &&
-          allPrompts.filter(SharedByMeFilters.filterItem).length > 0,
+          allPrompts.filter(SharedByMeFilter).length > 0,
         dataQa: 'shared-by-me',
         Icon: IconUserShare,
         onClick: () => {
