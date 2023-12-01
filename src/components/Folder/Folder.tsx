@@ -43,6 +43,7 @@ import XmarkIcon from '../../../public/images/icons/xmark.svg';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { FolderContextMenu } from '../Common/FolderContextMenu';
 import { Spinner } from '../Common/Spinner';
+import Tooltip from '../Common/Tooltip';
 import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
 
 interface CaretIconComponentProps {
@@ -474,18 +475,19 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             ) : (
               <IconFolder size={18} className="mr-1 text-gray-500" />
             )}
-
-            <div
-              className={classNames(
-                `relative max-h-5 flex-1 truncate break-all text-left`,
-                isRenaming ? 'pr-10' : 'group-hover/button:pr-5',
-                !isRenaming &&
-                  highlightedFolders?.includes(currentFolder.id) &&
-                  textColor,
-              )}
-            >
-              {currentFolder.name}
-            </div>
+            <Tooltip tooltip={currentFolder.name}>
+              <div
+                className={classNames(
+                  `relative max-h-5 flex-1 truncate break-all text-left`,
+                  isRenaming ? 'pr-10' : 'group-hover/button:pr-5',
+                  !isRenaming &&
+                    highlightedFolders?.includes(currentFolder.id) &&
+                    textColor,
+                )}
+              >
+                {currentFolder.name}
+              </div>
+            </Tooltip>
 
             {(onDeleteFolder || onRenameFolder || onAddFolder) &&
               !readonly &&

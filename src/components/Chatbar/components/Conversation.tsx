@@ -39,6 +39,7 @@ import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 import ShareIcon from '@/src/components/Common/ShareIcon';
 
+import Tooltip from '../../Common/Tooltip';
 import { ModelIcon } from './ModelIcon';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -81,13 +82,14 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
             />
           )}
       </ShareIcon>
-      <div
-        className={classNames(
+      <Tooltip
+        tooltip={conversation.name}
+        triggerClassName={classNames(
           'relative max-h-5 flex-1 truncate break-all text-left',
         )}
       >
         {conversation.name}
-      </div>
+      </Tooltip>
     </>
   );
 }
