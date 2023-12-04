@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { SearchFilters } from './../../types/search';
 import {
   Conversation,
   ConversationEntityModel,
@@ -26,6 +27,7 @@ const initialState: ConversationsState = {
   selectedConversationsIds: [],
   folders: [],
   searchTerm: '',
+  searchFilters: SearchFilters.None,
   conversationSignal: new AbortController(),
   isReplayPaused: true,
   isPlaybackPaused: true,
@@ -282,9 +284,12 @@ export const conversationsSlice = createSlice({
     },
     setSearchTerm: (
       state,
-      { payload }: PayloadAction<{ searchTerm: string }>,
+      {
+        payload,
+      }: PayloadAction<{ searchTerm: string; searchFilters?: SearchFilters }>,
     ) => {
       state.searchTerm = payload.searchTerm;
+      state.searchFilters = payload.searchFilters ?? SearchFilters.None;
     },
     updateMessage: (
       state,

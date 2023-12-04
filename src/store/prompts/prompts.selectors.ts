@@ -124,6 +124,10 @@ export const selectSearchTerm = createSelector([rootSelector], (state) => {
   return state.searchTerm;
 });
 
+export const selectSearchFilters = createSelector([rootSelector], (state) => {
+  return state.searchFilters;
+});
+
 export const selectSearchedPrompts = createSelector(
   [selectPrompts, selectSearchTerm],
   (prompts, searchTerm) => {

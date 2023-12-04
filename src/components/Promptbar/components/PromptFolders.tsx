@@ -244,7 +244,7 @@ export const PromptSection = ({
 
 const folderItems: FolderSectionProps<Prompt>[] = [
   {
-    name: 'Share With Me',
+    name: 'Shared with me',
     itemFilter: SharedWithMeFilter,
     displayRootFiles: true,
     dataQa: 'share-with-me',

@@ -6,6 +6,7 @@ import classNames from 'classnames';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
+import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
 import { NoData } from '../Common/NoData';
@@ -23,8 +24,9 @@ interface Props<T> {
   folders: FolderInterface[];
   footerComponent?: ReactNode;
   searchTerm: string;
+  searchFilters: SearchFilters;
   featureType: FeatureType;
-  handleSearchTerm: (searchTerm: string) => void;
+  handleSearchTerm: (searchTerm: string, searchFilters: SearchFilters) => void;
   toggleOpen?: () => void;
   handleDrop: (e: any) => void;
 }
@@ -40,6 +42,7 @@ const Sidebar = <T,>({
   folders,
   footerComponent,
   searchTerm,
+  searchFilters,
   featureType,
   handleSearchTerm,
   handleDrop,
@@ -75,14 +78,16 @@ const Sidebar = <T,>({
     <div
       className={classNames(
         `group/sidebar fixed top-12 z-40 flex h-[calc(100%-48px)] w-[260px] flex-none shrink-0 flex-col divide-y divide-gray-300 border-r border-gray-300 bg-gray-100 transition-all dark:divide-gray-900 dark:border-gray-900 dark:bg-gray-700  xl:relative xl:top-0 xl:h-full`,
-        side === 'left' ? `left-0` : 'right-0',
+        side === 'left' ? 'left-0' : 'right-0',
       )}
       data-qa="sidebar"
     >
       <Search
         placeholder={t('Search {{name}}...', { name: featureType })}
         searchTerm={searchTerm}
+        searchFilters={searchFilters}
         onSearch={handleSearchTerm}
+        featureType={featureType}
       />
       {actionButtons}
       <div className="flex grow flex-col gap-[1px] divide-y divide-gray-300 overflow-y-auto dark:divide-gray-900">

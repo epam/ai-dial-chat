@@ -269,13 +269,13 @@ export const ChatSection = ({
 
 const folderItems: FolderSectionProps<Conversation>[] = [
   {
-    name: 'Share With Me',
+    name: 'Shared with me',
     itemFilter: SharedWithMeFilter,
     displayRootFiles: true,
     dataQa: 'share-with-me',
   },
   {
-    name: 'Pinned Chats',
+    name: 'Pinned chats',
     itemFilter: PinnedItemsFilter,
     showEmptyFolders: true,
     openByDefault: true,

@@ -15,6 +15,8 @@ export enum Feature {
   PromptsSharing = 'prompts-sharing',
   InputFiles = 'input-files',
   AttachmentsManager = 'attachments-manager',
+  ConversationsPublishing = 'conversations-publishing',
+  PromptsPublishing = 'prompts-publishing',
 }
 
 export const availableFeatures: Record<Feature, boolean> = {
@@ -34,4 +36,6 @@ export const availableFeatures: Record<Feature, boolean> = {
   [Feature.PromptsSharing]: true,
   [Feature.InputFiles]: true,
   [Feature.AttachmentsManager]: true,
+  [Feature.ConversationsPublishing]: false,
+  [Feature.PromptsPublishing]: false,
 };

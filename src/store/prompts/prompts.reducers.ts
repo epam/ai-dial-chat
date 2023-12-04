@@ -5,6 +5,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { PromptsHistory } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
+import { SearchFilters } from '@/src/types/search';
 
 import { PromptsState } from './prompts.types';
 
@@ -16,6 +17,7 @@ const initialState: PromptsState = {
   prompts: [],
   folders: [],
   searchTerm: '',
+  searchFilters: SearchFilters.None,
   selectedPromptId: undefined,
   isEditModalOpen: false,
 };
@@ -155,9 +157,12 @@ export const promptsSlice = createSlice({
     },
     setSearchTerm: (
       state,
-      { payload }: PayloadAction<{ searchTerm: string }>,
+      {
+        payload,
+      }: PayloadAction<{ searchTerm: string; searchFilters?: SearchFilters }>,
     ) => {
       state.searchTerm = payload.searchTerm;
+      state.searchFilters = payload.searchFilters ?? SearchFilters.None;
     },
     setIsEditModalOpen: (
       state,

@@ -4,6 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { FeatureType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
+import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -49,6 +50,7 @@ const Promptbar = () => {
     PromptsSelectors.selectSearchedPrompts,
   );
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
+  const searchFilters = useAppSelector(PromptsSelectors.selectSearchFilters);
   const folders = useAppSelector((state) =>
     PromptsSelectors.selectFilteredFolders(state, undefined, searchTerm, true),
   );
@@ -84,8 +86,9 @@ const Promptbar = () => {
       items={prompts}
       filteredItems={filteredPrompts}
       searchTerm={searchTerm}
-      handleSearchTerm={(searchTerm: string) =>
-        dispatch(PromptsActions.setSearchTerm({ searchTerm }))
+      searchFilters={searchFilters}
+      handleSearchTerm={(searchTerm: string, searchFilters: SearchFilters) =>
+        dispatch(PromptsActions.setSearchTerm({ searchTerm, searchFilters }))
       }
       handleDrop={handleDrop}
       footerComponent={<PromptbarSettings allPrompts={prompts} />}

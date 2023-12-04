@@ -4,6 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
+import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -56,6 +57,9 @@ export const Chatbar = () => {
 
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
+  const searchFilters = useAppSelector(
+    ConversationsSelectors.selectSearchFilters,
+  );
   const folders = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredFolders(
       state,
@@ -100,8 +104,11 @@ export const Chatbar = () => {
       items={conversations}
       filteredItems={filteredConversations}
       searchTerm={searchTerm}
-      handleSearchTerm={(searchTerm: string) =>
-        dispatch(ConversationsActions.setSearchTerm({ searchTerm }))
+      searchFilters={searchFilters}
+      handleSearchTerm={(searchTerm: string, searchFilters: SearchFilters) =>
+        dispatch(
+          ConversationsActions.setSearchTerm({ searchTerm, searchFilters }),
+        )
       }
       handleDrop={handleDrop}
       footerComponent={<ChatbarSettings />}

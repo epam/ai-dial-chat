@@ -175,6 +175,10 @@ export const selectSearchTerm = createSelector([rootSelector], (state) => {
   return state.searchTerm;
 });
 
+export const selectSearchFilters = createSelector([rootSelector], (state) => {
+  return state.searchFilters;
+});
+
 export const selectSearchedConversations = createSelector(
   [selectConversations, selectSearchTerm],
   (conversations, searchTerm) =>
