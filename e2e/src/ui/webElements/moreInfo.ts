@@ -13,7 +13,7 @@ export class MoreInfo extends BaseElement {
   );
 
   public applicationDescription = this.getChildElementBySelector(
-    ChatSelectors.appDescr,
+    ChatSelectors.description,
   );
 
   public async getApplicationDescription() {

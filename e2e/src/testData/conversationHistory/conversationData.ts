@@ -32,9 +32,12 @@ export class ConversationData extends FolderData {
     this.resetFolderData();
   }
 
-  public prepareDefaultConversation(model?: OpenAIEntityModel, name?: string) {
+  public prepareDefaultConversation(
+    model?: OpenAIEntityModel | string,
+    name?: string,
+  ) {
     const modelToUse = model
-      ? { id: model.id }
+      ? { id: typeof model === 'string' ? model : model.id }
       : this.conversationBuilder.getConversation().model;
     const userMessage: Message = {
       role: Role.User,
@@ -114,12 +117,25 @@ export class ConversationData extends FolderData {
     return conversation;
   }
 
+  public prepareErrorResponseConversation(
+    model?: OpenAIEntityModel,
+    name?: string,
+  ) {
+    const defaultConversation = this.prepareDefaultConversation(model, name);
+    defaultConversation.messages.find(
+      (m) => m.role === 'assistant',
+    )!.errorMessage = ExpectedConstants.answerError;
+    return defaultConversation;
+  }
+
   public prepareDefaultReplayConversation(conversation: Conversation) {
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
     return this.fillReplayData(conversation, userMessages!);
   }
 
-  public preparePartiallyReplayedConversation(conversation: Conversation) {
+  public preparePartiallyReplayedStagedConversation(
+    conversation: Conversation,
+  ) {
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
     const assistantMessage = conversation.messages.filter(
       (m) => m.role === 'assistant',
@@ -139,7 +155,7 @@ export class ConversationData extends FolderData {
     return replayConversation;
   }
 
-  public preparePartiallyRepliedConversation(conversation: Conversation) {
+  public preparePartiallyReplayedConversation(conversation: Conversation) {
     const defaultReplayConversation =
       this.prepareDefaultReplayConversation(conversation);
     const assistantMessages = conversation.messages.find(
