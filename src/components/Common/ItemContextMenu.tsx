@@ -98,7 +98,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('Move to'),
-        dataQa: 'move-to',
+        dataQa: 'move-to-mobile',
         Icon: IconFolderShare,
         onClick: onOpenMoveToModal,
         className: 'md:hidden',

@@ -45,7 +45,7 @@ export const PromptModal: FC<Props> = ({
   const { t } = useTranslation(Translation.PromptBar);
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState(prompt.description);
-  const [content, setContent] = useState(prompt.content);
+  const [content, setContent] = useState(prompt.content || '');
 
   const [submitted, setSubmitted] = useState(false);
 
@@ -99,7 +99,7 @@ export const PromptModal: FC<Props> = ({
         ...prompt,
         name: name.trim(),
         description: description?.trim(),
-        content: (content || '').trim(),
+        content: content.trim(),
       };
 
       onUpdatePrompt(updatedPrompt);
@@ -116,7 +116,7 @@ export const PromptModal: FC<Props> = ({
           ...prompt,
           name,
           description,
-          content: (content || '').trim(),
+          content: content.trim(),
         });
         setSubmitted(false);
         onClose();

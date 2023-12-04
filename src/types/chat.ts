@@ -1,4 +1,5 @@
 import { MIMEType } from './files';
+import { ShareInterface } from './share';
 
 export interface Attachment {
   index?: number;
@@ -67,7 +68,12 @@ export interface RateBody {
   value: boolean;
 }
 
-export interface Conversation {
+export interface Share {
+  id: string;
+  createdDate: Date;
+}
+
+export interface Conversation extends ShareInterface {
   id: string;
   name: string;
   messages: Message[];
@@ -84,7 +90,6 @@ export interface Conversation {
   lastActivityDate?: number;
 
   isMessageStreaming: boolean;
-  isShared?: boolean;
   isNameChanged?: boolean;
 }
 export interface Replay {

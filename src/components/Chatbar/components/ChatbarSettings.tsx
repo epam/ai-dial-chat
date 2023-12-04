@@ -4,7 +4,6 @@ import {
   IconPaperclip,
   IconScale,
   IconTrashX,
-  IconUserShare,
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -33,7 +32,7 @@ import FolderPlus from '@/public/images/icons/folder-plus.svg';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation(Translation.SideBar);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
 
   const dispatch = useAppDispatch();
 
@@ -66,23 +65,12 @@ export const ChatbarSettings = () => {
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Shared by me'),
-        display:
-          enabledFeatures.has(Feature.ConversationsSharing) &&
-          conversations.filter((c) => c.isShared).length > 0,
-        dataQa: 'shared-by-me',
-        Icon: IconUserShare,
-        onClick: () => {
-          setIsOpen(false);
-        },
-      },
-      {
         name: t('Delete all conversations'),
         display: conversations.length > 0,
         dataQa: 'delete-conversations',
         Icon: IconTrashX,
         onClick: () => {
-          setIsOpen(true);
+          setIsClearModalOpen(true);
         },
       },
       {
@@ -163,7 +151,7 @@ export const ChatbarSettings = () => {
       )}
 
       <ConfirmDialog
-        isOpen={isOpen}
+        isOpen={isClearModalOpen}
         heading={t('Confirm clearing all conversations')}
         description={
           t('Are you sure that you want to delete all conversations?') || ''
@@ -171,7 +159,7 @@ export const ChatbarSettings = () => {
         confirmLabel={t('Clear')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
-          setIsOpen(false);
+          setIsClearModalOpen(false);
           if (result) {
             dispatch(ConversationsActions.clearConversations());
           }

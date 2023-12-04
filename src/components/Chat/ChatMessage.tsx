@@ -170,10 +170,6 @@ export const ChatMessage: FC<Props> = memo(
     const handleInputChange = useCallback(
       (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         setMessageContent(event.target.value);
-        if (textareaRef.current) {
-          textareaRef.current.style.height = 'inherit';
-          textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-        }
       },
       [],
     );
@@ -282,7 +278,7 @@ export const ChatMessage: FC<Props> = memo(
         textareaRef.current.style.height = 'inherit';
         textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
       }
-    }, [isEditing]);
+    }, [isEditing, messageContent]);
 
     return (
       <div

@@ -42,6 +42,12 @@ export const getParentAndCurrentFoldersById = (
   return parentFolders;
 };
 
+export const getParentAndCurrentFolderIdsById = (
+  folders: FolderInterface[],
+  folderId: string | undefined,
+) =>
+  getParentAndCurrentFoldersById(folders, folderId).map((folder) => folder.id);
+
 export const getChildAndCurrentFoldersIdsById = (
   folderId: string | undefined,
   allFolders: FolderInterface[],
