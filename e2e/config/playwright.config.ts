@@ -51,7 +51,11 @@ export default defineConfig({
     },
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], storageState: STORAGE_STATE },
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: STORAGE_STATE,
+        viewport: { width: 1536, height: 864 },
+      },
       dependencies: ['setup'],
     },
 

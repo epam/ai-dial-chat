@@ -631,6 +631,12 @@ test('Send button is disabled if the chat in replay mode', async ({
     await chat.startReplay();
     await sendMessage.messageInput.fillInInput(message);
 
+    await sendMessage.sendMessageButton.hoverOver();
+    const tooltipContent = await tooltip.getContent();
+    expect
+      .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
+      .toBe(ExpectedConstants.waitForAssistantAnswerTooltip);
+
     const isSendButtonEnabled =
       await sendMessage.sendMessageButton.isElementEnabled();
     expect

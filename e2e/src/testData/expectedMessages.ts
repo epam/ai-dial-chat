@@ -165,4 +165,8 @@ export enum ExpectedMessages {
   replayAsIsDescriptionIsVisible = 'Replay as is description is visible',
   replayOldVersionWarningIsVisible = 'Replay old version of DIAL conversation warning is displayed',
   warningLabelColorIsValid = 'Warning label color is valid',
+  compareButtonIsDisabled = 'Chat bar Compare button is disabled',
+  closeChatIconIsNotVisible = 'Close chat icon is not visible',
+  chatMessageIsRated = 'Chat message was rated',
+  entityNameIsTruncated = 'Entity name is truncated',
 }

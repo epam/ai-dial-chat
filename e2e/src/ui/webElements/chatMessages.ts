@@ -1,7 +1,7 @@
 import { ChatSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { Side } from '@/e2e/src/testData';
+import { Rate, Side } from '@/e2e/src/testData';
 import { Attributes, Tags } from '@/e2e/src/ui/domData';
 import { keys } from '@/e2e/src/ui/keyboard';
 import { Page } from '@playwright/test';
@@ -56,6 +56,14 @@ export class ChatMessages extends BaseElement {
 
   public getChatMessage(message: string) {
     return this.chatMessages.getElementLocatorByText(message);
+  }
+
+  public getChatMessageRate(message: string, rate: Rate) {
+    return this.getChatMessage(message).locator(ChatSelectors.rate(rate));
+  }
+
+  public async isChatMessageRated(message: string, rate: Rate) {
+    return this.getChatMessageRate(message, rate).isVisible();
   }
 
   public async getGeneratedChatContent(messagesCount: number) {
@@ -152,6 +160,94 @@ export class ChatMessages extends BaseElement {
       .nth(messageIndex);
   }
 
+  public async getCompareRowMessageRate(
+    comparedMessageSide: Side,
+    rate: Rate,
+    rowIndex?: number,
+  ) {
+    const compareRowMessage = await this.getCompareRowMessage(
+      comparedMessageSide,
+      rowIndex,
+    );
+    return compareRowMessage.locator(ChatSelectors.rate(rate));
+  }
+
+  public async rateCompareRowMessage(
+    comparedMessageSide: Side,
+    rate: Rate,
+    rowIndex?: number,
+  ) {
+    const thumb = await this.getCompareRowMessageRate(
+      comparedMessageSide,
+      rate,
+      rowIndex,
+    );
+    await thumb.hover({ force: true });
+    await thumb.waitFor();
+    await thumb.click();
+  }
+
+  public async isComparedRowMessageRated(
+    comparedMessageSide: Side,
+    rate: Rate,
+    rowIndex?: number,
+  ) {
+    const thumb = await this.getCompareRowMessageRate(
+      comparedMessageSide,
+      rate,
+      rowIndex,
+    );
+    return thumb.isVisible();
+  }
+
+  public async openDeleteCompareRowMessageDialog(
+    comparedMessageSide: Side,
+    rowIndex?: number,
+  ) {
+    await this.invokeCompareRowMessageAction(
+      ChatSelectors.deleteIcon,
+      comparedMessageSide,
+      rowIndex,
+    );
+  }
+
+  public async openEditCompareRowMessageMode(
+    comparedMessageSide: Side,
+    rowIndex?: number,
+  ) {
+    await this.invokeCompareRowMessageAction(
+      ChatSelectors.editIcon,
+      comparedMessageSide,
+      rowIndex,
+    );
+  }
+
+  public async copyCompareRowMessage(
+    comparedMessageSide: Side,
+    rowIndex?: number,
+  ) {
+    await this.invokeCompareRowMessageAction(
+      ChatSelectors.copyIcon,
+      comparedMessageSide,
+      rowIndex,
+    );
+  }
+
+  public async invokeCompareRowMessageAction(
+    selector: string,
+    comparedMessageSide: Side,
+    rowIndex?: number,
+  ) {
+    const messageToCopy = await this.getCompareRowMessage(
+      comparedMessageSide,
+      rowIndex,
+    );
+    await messageToCopy.hover();
+    const copyIcon = await messageToCopy.locator(selector);
+    await copyIcon.waitFor();
+    await copyIcon.click();
+  }
+
   public async waitForPartialMessageReceived(messagesIndex: number) {
     let isReceived = false;
     while (!isReceived) {
@@ -213,11 +309,16 @@ export class ChatMessages extends BaseElement {
   }
 
   public async fillEditData(oldMessage: string, newMessage: string) {
+    const textArea = await this.clearEditTextarea(oldMessage);
+    await textArea.fill(newMessage);
+  }
+
+  public async clearEditTextarea(oldMessage: string) {
     const textArea = this.getChatMessageTextarea(oldMessage);
     await textArea.waitFor();
     await textArea.click();
     await this.page.keyboard.press(keys.ctrlPlusA);
-    await textArea.fill(newMessage);
+    return textArea;
   }
 
   public async isSaveButtonEnabled() {
