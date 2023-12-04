@@ -270,8 +270,13 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     (_newShareId: string) => {
       //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
       dispatch(
-        ConversationsActions.shareConversation({
+        ConversationsActions.updateConversation({
           id: conversationId,
+          values: {
+            isShared: true,
+            //TODO: added for development purpose - emulate immediate sharing with yourself
+            sharedWithMe: true,
+          },
         }),
       );
     },

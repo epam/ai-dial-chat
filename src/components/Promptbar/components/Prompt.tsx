@@ -89,6 +89,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           promptId,
           values: {
             isShared: true,
+            //TODO: for development purpose - emulate immediate sharing with yourself
             sharedWithMe: true,
           },
         }),

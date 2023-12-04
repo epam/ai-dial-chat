@@ -1,10 +1,9 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -56,18 +55,21 @@ export const Chatbar = () => {
   const dispatch = useAppDispatch();
 
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
-  const folders = useAppSelector(ConversationsSelectors.selectFolders);
+  const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
+  const folders = useAppSelector((state) =>
+    ConversationsSelectors.selectFilteredFolders(
+      state,
+      undefined,
+      searchTerm,
+      true,
+    ),
+  );
   const conversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
-  const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
+
   const filteredConversations = useAppSelector(
     ConversationsSelectors.selectSearchedConversations,
-  );
-
-  const chatFolders = useMemo(
-    () => folders.filter(({ type }) => type === FolderType.Chat),
-    [folders],
   );
 
   const handleDrop = useCallback(
@@ -94,7 +96,7 @@ export const Chatbar = () => {
       isOpen={showChatbar}
       itemComponent={<Conversations conversations={filteredConversations} />}
       folderComponent={<ChatFolders />}
-      folders={chatFolders}
+      folders={folders}
       items={conversations}
       filteredItems={filteredConversations}
       searchTerm={searchTerm}

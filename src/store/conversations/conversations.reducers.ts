@@ -103,24 +103,6 @@ export const conversationsSlice = createSlice({
         return conv;
       });
     },
-    shareConversation: (state, { payload }: PayloadAction<{ id: string }>) => {
-      const conversation = state.conversations.find(
-        ({ id }) => id === payload.id,
-      );
-      if (conversation) {
-        conversation.isShared = true;
-        conversation.sharedWithMe = true; //TODO: for development purpose - emulate immediate sharing with yourself
-        let folderId = conversation.folderId;
-
-        while (folderId) {
-          const folder = state.folders.find(({ id }) => id === folderId);
-          if (folder) {
-            folder.sharedWithMe = true; //TODO: for development purpose - emulate immediate sharing with yourself
-            folderId = folder.folderId;
-          } else folderId = undefined;
-        }
-      }
-    },
     exportConversation: (
       state,
       _action: PayloadAction<{ conversationId: string }>,
