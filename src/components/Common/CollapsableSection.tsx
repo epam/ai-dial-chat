@@ -4,7 +4,7 @@ import classNames from 'classnames';
 
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
-interface CollapsedSectionProps {
+interface CollapsableSectionProps {
   name: string;
   openByDefault?: boolean;
   isHighlighted?: boolean;
@@ -15,7 +15,7 @@ interface CollapsedSectionProps {
   onToggle?: (isOpen: boolean) => void;
 }
 
-export default function CollapsedSection({
+export default function CollapsableSection({
   name,
   openByDefault = true,
   isHighlighted = false,
@@ -24,7 +24,7 @@ export default function CollapsedSection({
   carentIconHidden,
   dataQa,
   onToggle,
-}: CollapsedSectionProps) {
+}: CollapsableSectionProps) {
   const [isOpened, setIsOpened] = useState(openByDefault);
   const handleClick = useCallback(() => {
     onToggle && onToggle(!isOpened);

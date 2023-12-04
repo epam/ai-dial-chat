@@ -18,7 +18,7 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Folder from '@/src/components/Folder';
 
-import CollapsedSection from '../../Common/CollapsedSection';
+import CollapsableSection from '../../Common/CollapsableSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { PromptComponent } from './Prompt';
 
@@ -215,7 +215,7 @@ export const PromptSection = ({
   if (hideIfEmpty && !prompts.length && !folders.length) return null;
 
   return (
-    <CollapsedSection
+    <CollapsableSection
       name={t(name)}
       openByDefault={openByDefault}
       dataQa={dataQa}
@@ -238,7 +238,7 @@ export const PromptSection = ({
             <PromptComponent key={item.id} item={item} />
           ))}
       </div>
-    </CollapsedSection>
+    </CollapsableSection>
   );
 };
 

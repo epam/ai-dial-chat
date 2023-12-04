@@ -76,12 +76,12 @@ export const selectFilteredFolders = createSelector(
     searchTerm?,
     includeEmptyFolders?,
   ) => {
-    const filteredConversations = selectFilteredPrompts(
+    const filteredPrompts = selectFilteredPrompts(
       state,
       itemFilter,
       searchTerm,
     );
-    const folderIds = filteredConversations // direct parent folders
+    const folderIds = filteredPrompts // direct parent folders
       .map((c) => c.folderId)
       .filter((fid) => fid);
     // include empty folders only if not search

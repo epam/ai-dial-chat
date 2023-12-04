@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import CollapsedSection from '@/src/components/Common/CollapsedSection';
+import CollapsableSection from '@/src/components/Common/CollapsableSection';
 
 import { PromptComponent } from './Prompt';
 
@@ -21,7 +21,11 @@ export const Prompts: FC<Props> = ({ prompts }) => {
   );
   if (!promptsToDisplay.length) return null;
   return (
-    <CollapsedSection name={t('Recent')} openByDefault dataQa="promps-section">
+    <CollapsableSection
+      name={t('Recent')}
+      openByDefault
+      dataQa="promps-section"
+    >
       <div
         className="flex h-full w-full flex-col gap-0.5 py-1 pr-0.5"
         data-qa="prompts"
@@ -30,6 +34,6 @@ export const Prompts: FC<Props> = ({ prompts }) => {
           <PromptComponent key={prompt.id} item={prompt} />
         ))}
       </div>
-    </CollapsedSection>
+    </CollapsableSection>
   );
 };

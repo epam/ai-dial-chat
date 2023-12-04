@@ -216,6 +216,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   };
   const isHighlited =
     isDeleting || isRenaming || (showModal && isSelected) || isContextMenu;
+
   return (
     <>
       <div

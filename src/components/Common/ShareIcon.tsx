@@ -23,8 +23,12 @@ export default function ShareIcon({
   size = !isPublished ? 12 : 8,
   children,
 }: ShareIsonProps) {
-  if (!isPublished && !isShared) return <>{children}</>;
+  if (!isPublished && !isShared) {
+    return <>{children}</>;
+  }
+
   const AdditionalIcon = isPublished ? IconWorldLongitude : IconArrowUpRight;
+
   return (
     <div className="relative">
       {children}
