@@ -1,3 +1,4 @@
+import { IconArrowUpRight, IconWorldLongitude } from '@tabler/icons-react';
 import { ReactNode } from 'react';
 
 import classNames from 'classnames';
@@ -6,8 +7,6 @@ import { getByHighlightColor } from '@/src/utils/app/folders';
 
 import { HighlightColor } from '@/src/types/common';
 import { ShareInterface } from '@/src/types/share';
-
-import { IconArrowUpRight, IconWorldLongitude } from '@tabler/icons-react';
 
 interface ShareIsonProps extends ShareInterface {
   isHighlited: boolean;
@@ -29,8 +28,12 @@ export default function ShareIcon({
   return (
     <div className="relative">
       {children}
-      <div className={classNames("absolute bottom-0 left-0 h-[8px] w-[8px] overflow-hidden  bg-gray-100 align-text-top dark:bg-gray-700",
-       isPublished? 'rounded-md' : 'rounded-sm' )}>
+      <div
+        className={classNames(
+          'absolute bottom-0 left-0 h-[8px] w-[8px] overflow-hidden  bg-gray-100 align-text-top dark:bg-gray-700',
+          isPublished ? 'rounded-md' : 'rounded-sm',
+        )}
+      >
         <AdditionalIcon
           size={size}
           width={size}
