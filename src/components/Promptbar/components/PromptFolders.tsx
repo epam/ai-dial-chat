@@ -29,7 +29,12 @@ interface promptFolderProps {
   itemFilter: EntityFilter<Prompt>;
 }
 
-const PromptFolderTemplate = ({ folder, index, isLast, itemFilter }: promptFolderProps) => {
+const PromptFolderTemplate = ({
+  folder,
+  index,
+  isLast,
+  itemFilter,
+}: promptFolderProps) => {
   const dispatch = useAppDispatch();
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
