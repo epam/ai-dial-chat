@@ -7,8 +7,7 @@ import { getByHighlightColor } from '@/src/utils/app/folders';
 import { HighlightColor } from '@/src/types/common';
 import { ShareInterface } from '@/src/types/share';
 
-import ArrowUpRight from '@/public/images/icons/arrow-up-right.svg';
-import World from '@/public/images/icons/world.svg';
+import { IconArrowUpRight, IconWorldLongitude } from '@tabler/icons-react';
 
 interface ShareIsonProps extends ShareInterface {
   isHighlited: boolean;
@@ -22,15 +21,16 @@ export default function ShareIcon({
   isPublished,
   isHighlited,
   highlightColor,
-  size = 10,
+  size = !isPublished ? 12 : 8,
   children,
 }: ShareIsonProps) {
   if (!isPublished && !isShared) return <>{children}</>;
-  const AdditionalIcon = isPublished ? World : ArrowUpRight;
+  const AdditionalIcon = isPublished ? IconWorldLongitude : IconArrowUpRight;
   return (
     <div className="relative">
       {children}
-      <div className="absolute bottom-[-2px] left-[-2px] bg-gray-100 dark:bg-gray-700">
+      <div className={classNames("absolute bottom-0 left-0 h-[8px] w-[8px] overflow-hidden  bg-gray-100 align-text-top dark:bg-gray-700",
+       isPublished? 'rounded-md' : 'rounded-sm' )}>
         <AdditionalIcon
           size={size}
           width={size}
@@ -42,7 +42,7 @@ export default function ShareIcon({
               'text-violet group-hover:bg-violet/15',
               'text-blue-500 group-hover:bg-blue-500/20',
             ),
-            'p-[1px]',
+            !isPublished && 'm-[-2px]',
             isHighlited &&
               getByHighlightColor(
                 highlightColor,
