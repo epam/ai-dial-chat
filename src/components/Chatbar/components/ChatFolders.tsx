@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { PinnedItemsFilter, SharedWithMeFilter } from '@/src/utils/app/search';
+import { SharedWithMeFilter } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityFilter, HighlightColor } from '@/src/types/common';
@@ -267,23 +267,35 @@ export const ChatSection = ({
   );
 };
 
-const folderItems: FolderSectionProps<Conversation>[] = [
-  {
-    name: 'Shared with me',
-    itemFilter: SharedWithMeFilter,
-    displayRootFiles: true,
-    dataQa: 'share-with-me',
-  },
-  {
-    name: 'Pinned chats',
-    itemFilter: PinnedItemsFilter,
-    showEmptyFolders: true,
-    openByDefault: true,
-    dataQa: 'pinned-chats',
-  },
-];
-
 export function ChatFolders() {
+  const isFilterEmpty = useAppSelector(
+    ConversationsSelectors.selectIsEmptySearchFilter,
+  );
+  const commonItemFilter = useAppSelector(
+    ConversationsSelectors.selectItemFilter,
+  );
+
+  const folderItems: FolderSectionProps<Conversation>[] = useMemo(
+    () =>
+      [
+        {
+          hide: !isFilterEmpty,
+          name: 'Shared with me',
+          itemFilter: SharedWithMeFilter,
+          displayRootFiles: true,
+          dataQa: 'share-with-me',
+        },
+        {
+          name: 'Pinned chats',
+          itemFilter: commonItemFilter,
+          showEmptyFolders: true,
+          openByDefault: true,
+          dataQa: 'pinned-chats',
+        },
+      ].filter(({ hide }) => !hide),
+    [commonItemFilter, isFilterEmpty],
+  );
+
   return (
     <div
       className="flex w-full flex-col gap-0.5 divide-y divide-gray-200 dark:divide-gray-800"

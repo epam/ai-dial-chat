@@ -5,10 +5,14 @@ import {
   getParentAndCurrentFolderIdsById,
   getParentAndCurrentFoldersById,
 } from '@/src/utils/app/folders';
-import { doesConversationContainSearchTerm } from '@/src/utils/app/search';
+import {
+  doesConversationContainSearchTerm,
+  getItemFilter,
+} from '@/src/utils/app/search';
 
 import { Conversation, Role } from '@/src/types/chat';
 import { EntityFilter, EntityType } from '@/src/types/common';
+import { SearchFilters } from '@/src/types/search';
 
 import { RootState } from '../index';
 import { ModelsSelectors } from '../models/models.reducers';
@@ -175,9 +179,20 @@ export const selectSearchTerm = createSelector([rootSelector], (state) => {
   return state.searchTerm;
 });
 
-export const selectSearchFilters = createSelector([rootSelector], (state) => {
-  return state.searchFilters;
-});
+export const selectSearchFilters = createSelector(
+  [rootSelector],
+  (state) => state.searchFilters,
+);
+
+export const selectIsEmptySearchFilter = createSelector(
+  [rootSelector],
+  (state) => state.searchFilters === SearchFilters.None,
+);
+
+export const selectItemFilter = createSelector(
+  [selectSearchFilters],
+  (searchFilters) => getItemFilter(searchFilters),
+);
 
 export const selectSearchedConversations = createSelector(
   [selectConversations, selectSearchTerm],

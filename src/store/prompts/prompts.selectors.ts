@@ -5,10 +5,14 @@ import {
   getParentAndCurrentFolderIdsById,
   getParentAndCurrentFoldersById,
 } from '@/src/utils/app/folders';
-import { doesPromptContainSearchTerm } from '@/src/utils/app/search';
+import {
+  doesPromptContainSearchTerm,
+  getItemFilter,
+} from '@/src/utils/app/search';
 
 import { EntityFilter } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
+import { SearchFilters } from '@/src/types/search';
 
 import { RootState } from '../index';
 import { PromptsState } from './prompts.types';
@@ -124,9 +128,20 @@ export const selectSearchTerm = createSelector([rootSelector], (state) => {
   return state.searchTerm;
 });
 
-export const selectSearchFilters = createSelector([rootSelector], (state) => {
-  return state.searchFilters;
-});
+export const selectSearchFilters = createSelector(
+  [rootSelector],
+  (state) => state.searchFilters,
+);
+
+export const selectIsEmptySearchFilter = createSelector(
+  [rootSelector],
+  (state) => state.searchFilters === SearchFilters.None,
+);
+
+export const selectItemFilter = createSelector(
+  [selectSearchFilters],
+  (searchFilters) => getItemFilter(searchFilters),
+);
 
 export const selectSearchedPrompts = createSelector(
   [selectPrompts, selectSearchTerm],

@@ -68,12 +68,14 @@ export const Chatbar = () => {
       true,
     ),
   );
-  const conversations = useAppSelector(
-    ConversationsSelectors.selectConversations,
-  );
+  const itemFilter = useAppSelector(ConversationsSelectors.selectItemFilter);
 
-  const filteredConversations = useAppSelector(
-    ConversationsSelectors.selectSearchedConversations,
+  const filteredConversations = useAppSelector((state) =>
+    ConversationsSelectors.selectFilteredConversations(
+      state,
+      itemFilter,
+      searchTerm,
+    ),
   );
 
   const handleDrop = useCallback(
@@ -101,7 +103,6 @@ export const Chatbar = () => {
       itemComponent={<Conversations conversations={filteredConversations} />}
       folderComponent={<ChatFolders />}
       folders={folders}
-      items={conversations}
       filteredItems={filteredConversations}
       searchTerm={searchTerm}
       searchFilters={searchFilters}

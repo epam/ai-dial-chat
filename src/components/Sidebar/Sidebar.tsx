@@ -16,7 +16,6 @@ import Search from '../Search';
 interface Props<T> {
   isOpen: boolean;
   side: 'left' | 'right';
-  items: T[];
   filteredItems: T[];
   itemComponent: ReactNode;
   folderComponent: ReactNode;
@@ -35,7 +34,6 @@ const Sidebar = <T,>({
   isOpen,
   actionButtons,
   side,
-  items,
   filteredItems,
   itemComponent,
   folderComponent,
@@ -110,7 +108,7 @@ const Sidebar = <T,>({
           >
             {itemComponent}
           </div>
-        ) : items.length !== 0 ? (
+        ) : filteredItems.length !== 0 ? (
           <div className="flex grow content-center justify-center">
             <NoResultsFound />
           </div>

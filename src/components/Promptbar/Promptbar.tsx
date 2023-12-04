@@ -46,15 +46,17 @@ const PromptActionsBlock = () => {
 const Promptbar = () => {
   const dispatch = useAppDispatch();
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
-  const filteredPrompts = useAppSelector(
-    PromptsSelectors.selectSearchedPrompts,
-  );
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
+  const itemFilter = useAppSelector(PromptsSelectors.selectItemFilter);
+
+  const filteredPrompts = useAppSelector((state) =>
+    PromptsSelectors.selectFilteredPrompts(state, itemFilter, searchTerm),
+  );
+
   const searchFilters = useAppSelector(PromptsSelectors.selectSearchFilters);
   const folders = useAppSelector((state) =>
     PromptsSelectors.selectFilteredFolders(state, undefined, searchTerm, true),
   );
-  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
 
   const handleDrop = useCallback(
     (e: any) => {
@@ -83,7 +85,6 @@ const Promptbar = () => {
       actionButtons={<PromptActionsBlock />}
       folderComponent={<PromptFolders />}
       folders={folders}
-      items={prompts}
       filteredItems={filteredPrompts}
       searchTerm={searchTerm}
       searchFilters={searchFilters}
@@ -91,7 +92,7 @@ const Promptbar = () => {
         dispatch(PromptsActions.setSearchTerm({ searchTerm, searchFilters }))
       }
       handleDrop={handleDrop}
-      footerComponent={<PromptbarSettings allPrompts={prompts} />}
+      footerComponent={<PromptbarSettings />}
     />
   );
 };

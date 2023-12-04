@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { PinnedItemsFilter, SharedWithMeFilter } from '@/src/utils/app/search';
+import { SharedWithMeFilter } from '@/src/utils/app/search';
 
 import { EntityFilter, HighlightColor } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
@@ -242,23 +242,33 @@ export const PromptSection = ({
   );
 };
 
-const folderItems: FolderSectionProps<Prompt>[] = [
-  {
-    name: 'Shared with me',
-    itemFilter: SharedWithMeFilter,
-    displayRootFiles: true,
-    dataQa: 'share-with-me',
-  },
-  {
-    name: 'Pinned prompts',
-    itemFilter: PinnedItemsFilter,
-    showEmptyFolders: true,
-    openByDefault: true,
-    dataQa: 'pinned-prompts',
-  },
-];
-
 export function PromptFolders() {
+  const isFilterEmpty = useAppSelector(
+    PromptsSelectors.selectIsEmptySearchFilter,
+  );
+  const commonItemFilter = useAppSelector(PromptsSelectors.selectItemFilter);
+
+  const folderItems: FolderSectionProps<Prompt>[] = useMemo(
+    () =>
+      [
+        {
+          hide: !isFilterEmpty,
+          name: 'Shared with me',
+          itemFilter: SharedWithMeFilter,
+          displayRootFiles: true,
+          dataQa: 'share-with-me',
+        },
+        {
+          name: 'Pinned prompts',
+          itemFilter: commonItemFilter,
+          showEmptyFolders: true,
+          openByDefault: true,
+          dataQa: 'pinned-prompts',
+        },
+      ].filter(({ hide }) => !hide),
+    [commonItemFilter, isFilterEmpty],
+  );
+
   return (
     <div
       className="flex w-full flex-col gap-0.5 divide-y divide-gray-200 dark:divide-gray-800"

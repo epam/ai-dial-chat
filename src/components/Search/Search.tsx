@@ -11,6 +11,10 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { getByHighlightColor } from '@/src/utils/app/folders';
+import {
+  getNewSearchFiltersValue,
+  isSearchFilterSelected,
+} from '@/src/utils/app/search';
 
 import { FeatureType, HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
@@ -33,15 +37,6 @@ interface Props {
   searchFilters: SearchFilters;
   featureType: FeatureType;
 }
-
-const getFilterValue = (
-  filter: SearchFilters,
-  value: SearchFilters,
-  selected: boolean,
-) => (!selected ? filter & ~value : filter | value);
-
-const isSelected = (filter: SearchFilters, value: SearchFilters) =>
-  (filter & value) === value;
 
 export function CheckboxRenderer({
   //Renderer,
@@ -123,11 +118,15 @@ export default function Search({
           onClick: (selected: boolean) => {
             onSearch(
               searchTerm,
-              getFilterValue(searchFilters, SearchFilters.SharedByMe, selected),
+              getNewSearchFiltersValue(
+                searchFilters,
+                SearchFilters.SharedByMe,
+                selected,
+              ),
             );
           },
           CustomTriggerRenderer: CheckboxRenderer,
-          customTriggerData: isSelected(
+          customTriggerData: isSearchFilterSelected(
             searchFilters,
             SearchFilters.SharedByMe,
           ),
@@ -143,7 +142,7 @@ export default function Search({
           onClick: (selected: boolean) => {
             onSearch(
               searchTerm,
-              getFilterValue(
+              getNewSearchFiltersValue(
                 searchFilters,
                 SearchFilters.PublishedByMe,
                 selected,
@@ -151,7 +150,7 @@ export default function Search({
             );
           },
           CustomTriggerRenderer: CheckboxRenderer,
-          customTriggerData: isSelected(
+          customTriggerData: isSearchFilterSelected(
             searchFilters,
             SearchFilters.PublishedByMe,
           ),
