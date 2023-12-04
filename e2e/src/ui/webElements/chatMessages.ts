@@ -62,10 +62,6 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(ChatSelectors.rate(rate));
   }
 
-  public async isChatMessageRated(message: string, rate: Rate) {
-    return this.getChatMessageRate(message, rate).isVisible();
-  }
-
   public async getGeneratedChatContent(messagesCount: number) {
     const chatContent = await this.chatMessages.getElementsInnerContent();
     return chatContent.slice(0, messagesCount - 1).join('\n');

@@ -477,13 +477,7 @@ test(
 
       await conversations.selectConversation(firstConversation.name);
       const lastMessage = await chatMessages.getLastMessageContent();
-      const isMessageRated = await chatMessages.isChatMessageRated(
-        lastMessage,
-        rate,
-      );
-      expect
-        .soft(isMessageRated, ExpectedMessages.chatMessageIsRated)
-        .toBeTruthy();
+      await chatMessages.getChatMessageRate(lastMessage, rate).waitFor();
     });
   },
 );
