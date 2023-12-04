@@ -4,7 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { PinnedItemsFilter, SharedWithMeFilter } from '@/src/utils/app/search';
 
-import { HighlightColor } from '@/src/types/common';
+import { EntityFilter, HighlightColor } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
@@ -26,16 +26,19 @@ interface promptFolderProps {
   folder: FolderInterface;
   index: number;
   isLast: boolean;
+  itemFilter: EntityFilter<Prompt>;
 }
 
-const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
+const PromptFolderTemplate = ({ folder, index, isLast, itemFilter }: promptFolderProps) => {
   const dispatch = useAppDispatch();
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const highlightedFolders = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
-  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
+  const prompts = useAppSelector((state) =>
+    PromptsSelectors.selectFilteredPrompts(state, itemFilter, searchTerm),
+  );
   const conversationFolders = useAppSelector(PromptsSelectors.selectFolders);
   const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
 
@@ -220,6 +223,7 @@ export const PromptSection = ({
             folder={folder}
             index={index}
             isLast={index === arr.length - 1}
+            itemFilter={itemFilter}
           />
         ))}
       </div>
