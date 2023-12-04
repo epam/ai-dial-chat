@@ -144,7 +144,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       jobTitle: token?.jobTitle as string,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
-    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Content-Type', 'application/octet-stream');
 
     const reader = stream.getReader();
     const processStream = async () => {
