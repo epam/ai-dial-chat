@@ -1,12 +1,13 @@
 # ---- Base Node ----
 FROM node:20-alpine AS base
+RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
 WORKDIR /app
 COPY /tools ./tools
 COPY package*.json ./
 
 # ---- Dependencies ----
 FROM base AS dependencies
-RUN npm ci --omit=optional
+RUN npm ci
 
 # ---- Build ----
 FROM dependencies AS build
@@ -15,6 +16,7 @@ RUN npm run build
 
 # ---- Production ----
 FROM node:20-alpine AS production
+RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
 WORKDIR /app
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY --from=build /app/.next ./.next
