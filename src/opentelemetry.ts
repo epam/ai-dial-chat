@@ -1,4 +1,4 @@
-import pkg from './package.json';
+import pkg from '../package.json';
 
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
