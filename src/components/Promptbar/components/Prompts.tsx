@@ -19,7 +19,11 @@ export const Prompts: FC<Props> = ({ prompts }) => {
     () => prompts.filter((prompt) => !prompt.folderId).reverse(),
     [prompts],
   );
-  if (!promptsToDisplay.length) return null;
+
+  if (!promptsToDisplay.length) {
+    return null;
+  }
+
   return (
     <CollapsableSection
       name={t('Recent')}

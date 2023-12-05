@@ -240,8 +240,9 @@ export const ChatSection = ({
     hideIfEmpty &&
     (!displayRootFiles || !conversations.length) &&
     !folders.length
-  )
+  ) {
     return null;
+  }
 
   return (
     <CollapsableSection

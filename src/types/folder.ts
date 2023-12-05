@@ -1,6 +1,5 @@
 import { EntityFilter } from './common';
 
-
 export interface FolderInterface {
   id: string;
   name: string;

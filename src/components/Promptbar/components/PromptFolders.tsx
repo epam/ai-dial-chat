@@ -214,8 +214,13 @@ export const PromptSection = ({
     rootPrompts,
   ]);
 
-  if (hideIfEmpty && (!displayRootFiles || !prompts.length) && !folders.length)
+  if (
+    hideIfEmpty &&
+    (!displayRootFiles || !prompts.length) &&
+    !folders.length
+  ) {
     return null;
+  }
 
   return (
     <CollapsableSection
