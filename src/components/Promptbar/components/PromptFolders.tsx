@@ -214,7 +214,8 @@ export const PromptSection = ({
     rootPrompts,
   ]);
 
-  if (hideIfEmpty && !prompts.length && !folders.length) return null;
+  if (hideIfEmpty && (!displayRootFiles || !prompts.length) && !folders.length)
+    return null;
 
   return (
     <CollapsableSection
@@ -271,12 +272,12 @@ export function PromptFolders() {
           dataQa: 'pinned-prompts',
         },
       ].filter(({ hide }) => !hide),
-    [commonItemFilter, isFilterEmpty],
+    [commonItemFilter, isFilterEmpty, isSharingEnabled],
   );
 
   return (
     <div
-      className="flex w-full flex-col gap-0.5 divide-y divide-gray-200 dark:divide-gray-800"
+      className="flex w-full flex-col gap-0.5 divide-y divide-gray-200 empty:hidden dark:divide-gray-800"
       data-qa="prompt-folders"
     >
       {folderItems.map((itemProps) => (

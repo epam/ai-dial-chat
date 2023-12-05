@@ -61,14 +61,6 @@ export const Chatbar = () => {
     ConversationsSelectors.selectSearchFilters,
   );
   const itemFilter = useAppSelector(ConversationsSelectors.selectItemFilter);
-  const folders = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredFolders(
-      state,
-      searchFilters === SearchFilters.None ? undefined : itemFilter,
-      searchTerm,
-      searchFilters === SearchFilters.None,
-    ),
-  );
 
   const filteredConversations = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredConversations(
@@ -102,7 +94,6 @@ export const Chatbar = () => {
       isOpen={showChatbar}
       itemComponent={<Conversations conversations={filteredConversations} />}
       folderComponent={<ChatFolders />}
-      folders={folders}
       filteredItems={filteredConversations}
       searchTerm={searchTerm}
       searchFilters={searchFilters}

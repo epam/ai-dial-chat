@@ -5,7 +5,6 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { FeatureType } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -20,7 +19,6 @@ interface Props<T> {
   itemComponent: ReactNode;
   folderComponent: ReactNode;
   actionButtons: ReactNode;
-  folders: FolderInterface[];
   footerComponent?: ReactNode;
   searchTerm: string;
   searchFilters: SearchFilters;
@@ -37,7 +35,6 @@ const Sidebar = <T,>({
   filteredItems,
   itemComponent,
   folderComponent,
-  folders,
   footerComponent,
   searchTerm,
   searchFilters,
@@ -89,7 +86,7 @@ const Sidebar = <T,>({
       />
       {actionButtons}
       <div className="flex grow flex-col gap-[1px] divide-y divide-gray-300 overflow-y-auto dark:divide-gray-900">
-        {folders?.length > 0 && folderComponent}
+        {folderComponent}
 
         {filteredItems?.length > 0 ? (
           <div

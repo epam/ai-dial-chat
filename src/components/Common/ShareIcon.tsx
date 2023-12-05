@@ -17,7 +17,6 @@ import World from '@/public/images/icons/world.svg';
 interface ShareIsonProps extends ShareInterface {
   isHighlited: boolean;
   highlightColor: HighlightColor;
-  iconHighlightColor?: HighlightColor;
   size?: number;
   children: ReactNode | ReactNode[];
   featureType: FeatureType;
@@ -28,7 +27,6 @@ export default function ShareIcon({
   isPublished,
   isHighlited,
   highlightColor,
-  iconHighlightColor = highlightColor,
   size = 12,
   children,
   featureType,
@@ -73,15 +71,9 @@ export default function ShareIcon({
           className={classNames(
             getByHighlightColor(
               highlightColor,
-              'group-hover:bg-green/15',
-              'group-hover:bg-violet/15',
-              'group-hover:bg-blue-500/20',
-            ),
-            getByHighlightColor(
-              iconHighlightColor,
-              'text-green',
-              'text-violet',
-              'text-blue-500',
+              'text-green group-hover:bg-green/15',
+              'text-violet group-hover:bg-violet/15',
+              'text-blue-500 group-hover:bg-blue-500/20',
             ),
             'stroke-1 p-[1px]',
             isHighlited &&
