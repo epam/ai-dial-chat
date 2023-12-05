@@ -36,6 +36,6 @@ export const availableFeatures: Record<Feature, boolean> = {
   [Feature.PromptsSharing]: true,
   [Feature.InputFiles]: true,
   [Feature.AttachmentsManager]: true,
-  [Feature.ConversationsPublishing]: false,
-  [Feature.PromptsPublishing]: false,
+  [Feature.ConversationsPublishing]: true,
+  [Feature.PromptsPublishing]: true,
 };

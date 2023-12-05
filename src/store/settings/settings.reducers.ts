@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
+import { FeatureType } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
 import { StorageType } from '@/src/types/storage';
 
@@ -127,6 +128,28 @@ const isFeatureEnabled = createSelector(
   },
 );
 
+const isPublishingEnabled = createSelector(
+  [selectEnabledFeatures, (_, featureType: FeatureType) => featureType],
+  (enabledFeatures, featureType) => {
+    return enabledFeatures.has(
+      featureType === FeatureType.Chat
+        ? Feature.ConversationsPublishing
+        : Feature.PromptsPublishing,
+    );
+  },
+);
+
+const isSharingEnabled = createSelector(
+  [selectEnabledFeatures, (_, featureType: FeatureType) => featureType],
+  (enabledFeatures, featureType) => {
+    return enabledFeatures.has(
+      featureType === FeatureType.Chat
+        ? Feature.ConversationsSharing
+        : Feature.PromptsSharing,
+    );
+  },
+);
+
 const selectCodeWarning = createSelector([rootSelector], (state) => {
   return state.codeWarning;
 });
@@ -157,6 +180,8 @@ export const SettingsSelectors = {
   selectFooterHtmlMessage,
   selectEnabledFeatures,
   isFeatureEnabled,
+  isPublishingEnabled,
+  isSharingEnabled,
   selectCodeWarning,
   selectDefaultModelId,
   selectDefaultRecentModelsIds,

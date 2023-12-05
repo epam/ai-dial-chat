@@ -1,6 +1,8 @@
 import { IconCircleFilled, IconFilter } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
 
 import { getByHighlightColor } from '@/src/utils/app/folders';
@@ -13,6 +15,7 @@ import { FeatureType, HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { SearchFilters } from '@/src/types/search';
+import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -33,6 +36,12 @@ export default function SearchFiltersView({
   searchFilters,
   featureType,
 }: Props) {
+  const { t } = useTranslation(
+    featureType === FeatureType.Chat
+      ? Translation.SideBar
+      : Translation.PromptBar,
+  );
+
   const highlightColor =
     featureType === FeatureType.Chat
       ? HighlightColor.Green
@@ -51,7 +60,7 @@ export default function SearchFiltersView({
               ? Feature.ConversationsSharing
               : Feature.PromptsSharing,
           ),
-          name: 'Shared by me',
+          name: t('Shared by me'),
           dataQa: 'shared-by-me-filter',
           filterValue: SearchFilters.SharedByMe,
         },
@@ -61,7 +70,7 @@ export default function SearchFiltersView({
               ? Feature.ConversationsPublishing
               : Feature.PromptsPublishing,
           ),
-          name: 'Published by me',
+          name: t('Published by me'),
           dataQa: 'published-by-me-filter',
           filterValue: SearchFilters.PublishedByMe,
         },
@@ -78,7 +87,7 @@ export default function SearchFiltersView({
           CustomTriggerRenderer: SearchFilterRenderer,
           customTriggerData: isSearchFilterSelected(searchFilters, filterValue),
         })),
-    [enabledFeatures, featureType, searchFilters, onSearch, searchTerm],
+    [enabledFeatures, featureType, t, searchFilters, onSearch, searchTerm],
   );
 
   return (
@@ -89,7 +98,7 @@ export default function SearchFiltersView({
       TriggerCustomRenderer={
         <>
           <IconFilter size={18} className=" text-gray-500" />
-          {searchFilters != SearchFilters.None && (
+          {searchFilters !== SearchFilters.None && (
             <IconCircleFilled
               size={8}
               className={classNames(

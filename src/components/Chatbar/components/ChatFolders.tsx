@@ -275,6 +275,7 @@ export const ChatSection = ({
 };
 
 export function ChatFolders() {
+  const { t } = useTranslation(Translation.SideBar);
   const isFilterEmpty = useAppSelector(
     ConversationsSelectors.selectIsEmptySearchFilter,
   );
@@ -291,20 +292,20 @@ export function ChatFolders() {
       [
         {
           hide: !isSharingEnabled || !isFilterEmpty,
-          name: 'Shared with me',
+          name: t('Shared with me'),
           itemFilter: SharedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'share-with-me',
         },
         {
-          name: 'Pinned chats',
+          name: t('Pinned chats'),
           itemFilter: commonItemFilter,
           showEmptyFolders: isFilterEmpty,
           openByDefault: true,
           dataQa: 'pinned-chats',
         },
       ].filter(({ hide }) => !hide),
-    [commonItemFilter, isFilterEmpty, isSharingEnabled],
+    [commonItemFilter, isFilterEmpty, isSharingEnabled, t],
   );
 
   return (

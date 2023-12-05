@@ -8,7 +8,6 @@ import { getByHighlightColor } from '@/src/utils/app/folders';
 import { CustomTriggerMenuRendererProps } from '@/src/types/menu';
 
 export default function SearchFilterRenderer({
-  //Renderer,
   customTriggerData: isSelected,
   onClick,
   highlightColor,

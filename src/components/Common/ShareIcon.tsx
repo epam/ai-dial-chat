@@ -5,7 +5,6 @@ import classNames from 'classnames';
 import { getByHighlightColor } from '@/src/utils/app/folders';
 
 import { FeatureType, HighlightColor } from '@/src/types/common';
-import { Feature } from '@/src/types/features';
 import { ShareInterface } from '@/src/types/share';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -31,18 +30,11 @@ export default function ShareIcon({
   children,
   featureType,
 }: ShareIsonProps) {
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
+  const isSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isSharingEnabled(state, featureType),
   );
-  const isSharingEnabled = enabledFeatures.has(
-    featureType === FeatureType.Chat
-      ? Feature.ConversationsSharing
-      : Feature.PromptsSharing,
-  );
-  const isPublishingEnabled = enabledFeatures.has(
-    featureType === FeatureType.Chat
-      ? Feature.ConversationsPublishing
-      : Feature.PromptsPublishing,
+  const isPublishingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isPublishingEnabled(state, featureType),
   );
 
   if (
@@ -60,7 +52,7 @@ export default function ShareIcon({
       {children}
       <div
         className={classNames(
-          'absolute bottom-[-4px] left-[-4px] bg-gray-100 dark:bg-gray-700',
+          'absolute -bottom-1 -left-1 bg-gray-100 dark:bg-gray-700',
           isPublished ? 'rounded-md' : 'rounded-sm',
         )}
       >

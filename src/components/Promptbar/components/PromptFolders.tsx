@@ -246,6 +246,7 @@ export const PromptSection = ({
 };
 
 export function PromptFolders() {
+  const { t } = useTranslation(Translation.PromptBar);
   const isFilterEmpty = useAppSelector(
     PromptsSelectors.selectIsEmptySearchFilter,
   );
@@ -259,20 +260,20 @@ export function PromptFolders() {
       [
         {
           hide: !isSharingEnabled || !isFilterEmpty,
-          name: 'Shared with me',
+          name: t('Shared with me'),
           itemFilter: SharedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'share-with-me',
         },
         {
-          name: 'Pinned prompts',
+          name: t('Pinned prompts'),
           itemFilter: commonItemFilter,
           showEmptyFolders: isFilterEmpty,
           openByDefault: true,
           dataQa: 'pinned-prompts',
         },
       ].filter(({ hide }) => !hide),
-    [commonItemFilter, isFilterEmpty, isSharingEnabled],
+    [commonItemFilter, isFilterEmpty, isSharingEnabled, t],
   );
 
   return (
