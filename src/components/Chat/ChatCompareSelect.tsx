@@ -44,7 +44,6 @@ const Option = ({ item }: OptionProps) => {
         {...item}
         isHighlited={false}
         highlightColor={HighlightColor.Blue}
-        iconHighlightColor={HighlightColor.Green}
         featureType={FeatureType.Chat}
       >
         <ModelIcon
