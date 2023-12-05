@@ -21,6 +21,8 @@ import Folder from '@/src/components/Folder';
 import CollapsableSection from '../../Common/CollapsableSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { PromptComponent } from './Prompt';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { Feature } from '@/src/types/features';
 
 interface promptFolderProps {
   folder: FolderInterface;
@@ -247,12 +249,15 @@ export function PromptFolders() {
     PromptsSelectors.selectIsEmptySearchFilter,
   );
   const commonItemFilter = useAppSelector(PromptsSelectors.selectItemFilter);
+  const isSharingEnabled = useAppSelector(
+    state => SettingsSelectors.isFeatureEnabled(state, Feature.PromptsSharing),
+  );
 
   const folderItems: FolderSectionProps<Prompt>[] = useMemo(
     () =>
       [
         {
-          hide: !isFilterEmpty,
+          hide: !isSharingEnabled || !isFilterEmpty,
           name: 'Shared with me',
           itemFilter: SharedWithMeFilter,
           displayRootFiles: true,
@@ -261,7 +266,7 @@ export function PromptFolders() {
         {
           name: 'Pinned prompts',
           itemFilter: commonItemFilter,
-          showEmptyFolders: true,
+          showEmptyFolders: isFilterEmpty,
           openByDefault: true,
           dataQa: 'pinned-prompts',
         },

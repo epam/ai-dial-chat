@@ -1,34 +1,12 @@
-import {
-  IconCheck,
-  IconCircleFilled,
-  IconFilter,
-  IconSearch,
-} from '@tabler/icons-react';
-import { useCallback, useMemo, useState } from 'react';
+import { IconSearch } from '@tabler/icons-react';
+import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
-import { getByHighlightColor } from '@/src/utils/app/folders';
-import {
-  getNewSearchFiltersValue,
-  isSearchFilterSelected,
-} from '@/src/utils/app/search';
-
-import { FeatureType, HighlightColor } from '@/src/types/common';
-import { Feature } from '@/src/types/features';
-import {
-  CustomTriggerMenuRendererProps,
-  DisplayMenuItemProps,
-} from '@/src/types/menu';
-import { SearchFilters } from '@/src/types/search';
+import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
-
-import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-
-import ContextMenu from '../Common/ContextMenu';
+import SearchFiltersView from './SearchFiltersView';
+import { SearchFilters } from '@/src/types/search';
 
 interface Props {
   placeholder: string;
@@ -38,64 +16,14 @@ interface Props {
   featureType: FeatureType;
 }
 
-export function CheckboxRenderer({
-  //Renderer,
-  customTriggerData: isSelected,
-  onClick,
-  highlightColor,
-  dataQa,
-  ...props
-}: CustomTriggerMenuRendererProps) {
-  const [checked, setChecked] = useState(isSelected);
-  const handleCheck = useCallback(() => {
-    setChecked((check: boolean) => !check);
-    onClick && onClick(!checked);
-  }, [onClick, checked]);
-
-  return (
-    <div
-      className="relative flex h-[34px] w-full px-3 py-2 group-hover/file-item:flex"
-      data-qa={dataQa}
-    >
-      <input
-        id={dataQa}
-        className={classNames(
-          'checkbox peer h-[18px] w-[18px] cursor-pointer bg-gray-100 dark:bg-gray-700 checked:dark:border-green',
-          getByHighlightColor(
-            highlightColor,
-            'checked:border-green hover:border-green focus:border-green checked:dark:border-green',
-            'checked:border-violet hover:border-violet focus:border-violet checked:dark:border-violet',
-          ),
-        )}
-        type="checkbox"
-        checked={checked}
-        onChange={handleCheck}
-      />
-      <IconCheck
-        size={18}
-        className={classNames(
-          'pointer-events-none invisible absolute text-green peer-checked:visible',
-          getByHighlightColor(highlightColor, 'text-green', 'text-violet'),
-        )}
-      />
-      <label className=" cursor-pointer" htmlFor={dataQa}>
-        {props.name}
-      </label>
-    </div>
-  );
-}
-
-export default function Search({
-  placeholder,
-  searchTerm,
-  onSearch,
-  searchFilters,
-  featureType,
-}: Props) {
+export default function Search(props: Props) {
+  const {
+    placeholder,
+    searchTerm,
+    onSearch,
+    searchFilters,
+  } = props;
   const { t } = useTranslation(Translation.SideBar);
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
-  );
 
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,66 +31,6 @@ export default function Search({
     },
     [searchFilters, onSearch],
   );
-
-  const filterItems: DisplayMenuItemProps[] = useMemo(
-    () =>
-      [
-        {
-          display: enabledFeatures.has(
-            featureType === FeatureType.Chat
-              ? Feature.ConversationsSharing
-              : Feature.PromptsSharing,
-          ),
-          name: 'Shared by me',
-          dataQa: 'shared-by-me-filter',
-          onClick: (selected: boolean) => {
-            onSearch(
-              searchTerm,
-              getNewSearchFiltersValue(
-                searchFilters,
-                SearchFilters.SharedByMe,
-                selected,
-              ),
-            );
-          },
-          CustomTriggerRenderer: CheckboxRenderer,
-          customTriggerData: isSearchFilterSelected(
-            searchFilters,
-            SearchFilters.SharedByMe,
-          ),
-        },
-        {
-          display: enabledFeatures.has(
-            featureType === FeatureType.Chat
-              ? Feature.ConversationsPublishing
-              : Feature.PromptsPublishing,
-          ),
-          name: 'Published by me',
-          dataQa: 'published-by-me-filter',
-          onClick: (selected: boolean) => {
-            onSearch(
-              searchTerm,
-              getNewSearchFiltersValue(
-                searchFilters,
-                SearchFilters.PublishedByMe,
-                selected,
-              ),
-            );
-          },
-          CustomTriggerRenderer: CheckboxRenderer,
-          customTriggerData: isSearchFilterSelected(
-            searchFilters,
-            SearchFilters.PublishedByMe,
-          ),
-        },
-      ].filter(({ display }) => display),
-    [enabledFeatures, featureType, searchFilters, onSearch, searchTerm],
-  );
-
-  const highlightColor =
-    featureType === FeatureType.Chat
-      ? HighlightColor.Green
-      : HighlightColor.Violet;
 
   return (
     <div className="relative flex items-center py-1 pl-5 pr-2">
@@ -179,29 +47,7 @@ export default function Search({
         value={searchTerm}
         onChange={handleSearchChange}
       />
-      <ContextMenu
-        menuItems={filterItems}
-        highlightColor={highlightColor}
-        triggerIconClassName="absolute right-4 cursor-pointer max-h-[18px]"
-        TriggerCustomRenderer={
-          <>
-            <IconFilter size={18} className=" text-gray-500" />
-            {searchFilters != SearchFilters.None && (
-              <IconCircleFilled
-                size={8}
-                className={classNames(
-                  'absolute right-0 top-0 bg-gray-100 p-[0.3px]  dark:bg-gray-700',
-                  getByHighlightColor(
-                    highlightColor,
-                    'text-green',
-                    'text-violet',
-                  ),
-                )}
-              />
-            )}
-          </>
-        }
-      />
+      <SearchFiltersView {...props} />
     </div>
   );
 }

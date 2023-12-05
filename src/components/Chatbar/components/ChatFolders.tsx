@@ -21,6 +21,8 @@ import Folder from '@/src/components/Folder';
 import CollapsableSection from '../../Common/CollapsableSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { Feature } from '@/src/types/features';
 
 interface ChatFolderProps {
   folder: FolderInterface;
@@ -275,11 +277,15 @@ export function ChatFolders() {
     ConversationsSelectors.selectItemFilter,
   );
 
+  const isSharingEnabled = useAppSelector(
+    state => SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSharing),
+  );
+
   const folderItems: FolderSectionProps<Conversation>[] = useMemo(
     () =>
       [
         {
-          hide: !isFilterEmpty,
+          hide: !isSharingEnabled || !isFilterEmpty,
           name: 'Shared with me',
           itemFilter: SharedWithMeFilter,
           displayRootFiles: true,
@@ -288,12 +294,12 @@ export function ChatFolders() {
         {
           name: 'Pinned chats',
           itemFilter: commonItemFilter,
-          showEmptyFolders: true,
+          showEmptyFolders: isFilterEmpty,
           openByDefault: true,
           dataQa: 'pinned-chats',
         },
       ].filter(({ hide }) => !hide),
-    [commonItemFilter, isFilterEmpty],
+    [commonItemFilter, isFilterEmpty, isSharingEnabled],
   );
 
   return (

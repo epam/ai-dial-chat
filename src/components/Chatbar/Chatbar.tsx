@@ -60,15 +60,15 @@ export const Chatbar = () => {
   const searchFilters = useAppSelector(
     ConversationsSelectors.selectSearchFilters,
   );
+  const itemFilter = useAppSelector(ConversationsSelectors.selectItemFilter);
   const folders = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredFolders(
       state,
-      undefined,
+      searchFilters === SearchFilters.None ? undefined : itemFilter,
       searchTerm,
-      true,
+      searchFilters === SearchFilters.None,
     ),
   );
-  const itemFilter = useAppSelector(ConversationsSelectors.selectItemFilter);
 
   const filteredConversations = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredConversations(

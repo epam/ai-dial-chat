@@ -245,6 +245,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             {...prompt}
             isHighlited={isHighlited}
             highlightColor={HighlightColor.Violet}
+            featureType={FeatureType.Prompt}
           >
             <IconBulb size={18} className="text-gray-500" />
           </ShareIcon>

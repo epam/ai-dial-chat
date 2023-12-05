@@ -55,7 +55,12 @@ const Promptbar = () => {
 
   const searchFilters = useAppSelector(PromptsSelectors.selectSearchFilters);
   const folders = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredFolders(state, undefined, searchTerm, true),
+    PromptsSelectors.selectFilteredFolders(
+      state,
+      searchFilters === SearchFilters.None ? undefined : itemFilter,
+      searchTerm,
+      searchFilters === SearchFilters.None
+    ),
   );
 
   const handleDrop = useCallback(
