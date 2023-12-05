@@ -6,6 +6,7 @@ import { SharedWithMeFilter } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityFilter, HighlightColor } from '@/src/types/common';
+import { Feature } from '@/src/types/features';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
@@ -14,6 +15,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Folder from '@/src/components/Folder';
@@ -21,8 +23,6 @@ import Folder from '@/src/components/Folder';
 import CollapsableSection from '../../Common/CollapsableSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { Feature } from '@/src/types/features';
 
 interface ChatFolderProps {
   folder: FolderInterface;
@@ -277,8 +277,8 @@ export function ChatFolders() {
     ConversationsSelectors.selectItemFilter,
   );
 
-  const isSharingEnabled = useAppSelector(
-    state => SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSharing),
+  const isSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSharing),
   );
 
   const folderItems: FolderSectionProps<Conversation>[] = useMemo(

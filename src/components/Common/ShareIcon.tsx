@@ -6,10 +6,11 @@ import classNames from 'classnames';
 import { getByHighlightColor } from '@/src/utils/app/folders';
 
 import { FeatureType, HighlightColor } from '@/src/types/common';
+import { Feature } from '@/src/types/features';
 import { ShareInterface } from '@/src/types/share';
+
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { Feature } from '@/src/types/features';
 
 interface ShareIsonProps extends ShareInterface {
   isHighlited: boolean;
@@ -26,17 +27,31 @@ export default function ShareIcon({
   highlightColor,
   size = !isPublished ? 12 : 8,
   children,
-  featureType
+  featureType,
 }: ShareIsonProps) {
-  const enabledFeatures = useAppSelector(SettingsSelectors.selectEnabledFeatures);
-  const isSharingEnabled = enabledFeatures.has(featureType === FeatureType.Chat ? Feature.ConversationsSharing : Feature.PromptsSharing);
-  const isPublishingEnabled = enabledFeatures.has(featureType === FeatureType.Chat ? Feature.ConversationsPublishing : Feature.PromptsPublishing);
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+  const isSharingEnabled = enabledFeatures.has(
+    featureType === FeatureType.Chat
+      ? Feature.ConversationsSharing
+      : Feature.PromptsSharing,
+  );
+  const isPublishingEnabled = enabledFeatures.has(
+    featureType === FeatureType.Chat
+      ? Feature.ConversationsPublishing
+      : Feature.PromptsPublishing,
+  );
 
-  if ((!isSharingEnabled || !isShared) && (!isPublishingEnabled || !isPublished)) {
+  if (
+    (!isSharingEnabled || !isShared) &&
+    (!isPublishingEnabled || !isPublished)
+  ) {
     return <>{children}</>;
   }
 
-  const AdditionalIcon = isPublished && isPublishingEnabled ? IconWorldLongitude : IconArrowUpRight;
+  const AdditionalIcon =
+    isPublished && isPublishingEnabled ? IconWorldLongitude : IconArrowUpRight;
 
   return (
     <div className="relative">

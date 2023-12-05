@@ -33,16 +33,16 @@ export default function SearchFiltersView({
   searchFilters,
   featureType,
 }: Props) {
-    const highlightColor =
+  const highlightColor =
     featureType === FeatureType.Chat
       ? HighlightColor.Green
       : HighlightColor.Violet;
 
-    const enabledFeatures = useAppSelector(
-        SettingsSelectors.selectEnabledFeatures,
-    );
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
 
-    const filterItems: DisplayMenuItemProps[] = useMemo(
+  const filterItems: DisplayMenuItemProps[] = useMemo(
     () =>
       [
         {
@@ -66,51 +66,44 @@ export default function SearchFiltersView({
           filterValue: SearchFilters.PublishedByMe,
         },
       ]
-      .filter(({ display }) => display)
-      .map(({ filterValue, ...props })=> ({
+        .filter(({ display }) => display)
+        .map(({ filterValue, ...props }) => ({
           ...props,
           onClick: (selected: boolean) => {
             onSearch(
               searchTerm,
-              getNewSearchFiltersValue(
-                searchFilters,
-                filterValue,
-                selected,
-              ),
+              getNewSearchFiltersValue(searchFilters, filterValue, selected),
             );
           },
           CustomTriggerRenderer: SearchFilterRenderer,
-          customTriggerData: isSearchFilterSelected(
-            searchFilters,
-            filterValue,
-          ),
+          customTriggerData: isSearchFilterSelected(searchFilters, filterValue),
         })),
     [enabledFeatures, featureType, searchFilters, onSearch, searchTerm],
   );
 
   return (
     <ContextMenu
-        menuItems={filterItems}
-        highlightColor={highlightColor}
-        triggerIconClassName="absolute right-4 cursor-pointer max-h-[18px]"
-        TriggerCustomRenderer={
-          <>
-            <IconFilter size={18} className=" text-gray-500" />
-            {searchFilters != SearchFilters.None && (
-              <IconCircleFilled
-                size={8}
-                className={classNames(
-                  'absolute right-0 top-0 bg-gray-100 p-[0.3px]  dark:bg-gray-700',
-                  getByHighlightColor(
-                    highlightColor,
-                    'text-green',
-                    'text-violet',
-                  ),
-                )}
-              />
-            )}
-          </>
-        }
-      />
+      menuItems={filterItems}
+      highlightColor={highlightColor}
+      triggerIconClassName="absolute right-4 cursor-pointer max-h-[18px]"
+      TriggerCustomRenderer={
+        <>
+          <IconFilter size={18} className=" text-gray-500" />
+          {searchFilters != SearchFilters.None && (
+            <IconCircleFilled
+              size={8}
+              className={classNames(
+                'absolute right-0 top-0 bg-gray-100 p-[0.3px]  dark:bg-gray-700',
+                getByHighlightColor(
+                  highlightColor,
+                  'text-green',
+                  'text-violet',
+                ),
+              )}
+            />
+          )}
+        </>
+      }
+    />
   );
 }

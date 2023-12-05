@@ -4,9 +4,10 @@ import { useCallback } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { FeatureType } from '@/src/types/common';
-import { Translation } from '@/src/types/translation';
-import SearchFiltersView from './SearchFiltersView';
 import { SearchFilters } from '@/src/types/search';
+import { Translation } from '@/src/types/translation';
+
+import SearchFiltersView from './SearchFiltersView';
 
 interface Props {
   placeholder: string;
@@ -17,12 +18,7 @@ interface Props {
 }
 
 export default function Search(props: Props) {
-  const {
-    placeholder,
-    searchTerm,
-    onSearch,
-    searchFilters,
-  } = props;
+  const { placeholder, searchTerm, onSearch, searchFilters } = props;
   const { t } = useTranslation(Translation.SideBar);
 
   const handleSearchChange = useCallback(

@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { SharedWithMeFilter } from '@/src/utils/app/search';
 
 import { EntityFilter, HighlightColor } from '@/src/types/common';
+import { Feature } from '@/src/types/features';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
@@ -14,6 +15,7 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Folder from '@/src/components/Folder';
@@ -21,8 +23,6 @@ import Folder from '@/src/components/Folder';
 import CollapsableSection from '../../Common/CollapsableSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { PromptComponent } from './Prompt';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { Feature } from '@/src/types/features';
 
 interface promptFolderProps {
   folder: FolderInterface;
@@ -249,8 +249,8 @@ export function PromptFolders() {
     PromptsSelectors.selectIsEmptySearchFilter,
   );
   const commonItemFilter = useAppSelector(PromptsSelectors.selectItemFilter);
-  const isSharingEnabled = useAppSelector(
-    state => SettingsSelectors.isFeatureEnabled(state, Feature.PromptsSharing),
+  const isSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.PromptsSharing),
   );
 
   const folderItems: FolderSectionProps<Prompt>[] = useMemo(

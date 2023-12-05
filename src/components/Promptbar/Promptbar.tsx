@@ -59,7 +59,7 @@ const Promptbar = () => {
       state,
       searchFilters === SearchFilters.None ? undefined : itemFilter,
       searchTerm,
-      searchFilters === SearchFilters.None
+      searchFilters === SearchFilters.None,
     ),
   );
 
