@@ -259,7 +259,7 @@ export function PromptFolders() {
     () =>
       [
         {
-          hide: !isSharingEnabled || !isFilterEmpty,
+          hidden: !isSharingEnabled || !isFilterEmpty,
           name: t('Shared with me'),
           itemFilter: SharedWithMeFilter,
           displayRootFiles: true,
@@ -272,7 +272,7 @@ export function PromptFolders() {
           openByDefault: true,
           dataQa: 'pinned-prompts',
         },
-      ].filter(({ hide }) => !hide),
+      ].filter(({ hidden }) => !hidden),
     [commonItemFilter, isFilterEmpty, isSharingEnabled, t],
   );
 

@@ -1,5 +1,6 @@
 import { EntityFilter } from './common';
 
+
 export interface FolderInterface {
   id: string;
   name: string;
@@ -15,7 +16,7 @@ export enum FolderType {
 }
 
 export interface FolderSectionProps<T> {
-  hide?: boolean;
+  hidden?: boolean;
   name: string;
   dataQa: string;
   hideIfEmpty?: boolean;

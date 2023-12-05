@@ -291,7 +291,7 @@ export function ChatFolders() {
     () =>
       [
         {
-          hide: !isSharingEnabled || !isFilterEmpty,
+          hidden: !isSharingEnabled || !isFilterEmpty,
           name: t('Shared with me'),
           itemFilter: SharedWithMeFilter,
           displayRootFiles: true,
@@ -304,7 +304,7 @@ export function ChatFolders() {
           openByDefault: true,
           dataQa: 'pinned-chats',
         },
-      ].filter(({ hide }) => !hide),
+      ].filter(({ hidden }) => !hidden),
     [commonItemFilter, isFilterEmpty, isSharingEnabled, t],
   );
 
