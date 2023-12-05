@@ -9,6 +9,7 @@ export interface SettingsState {
   footerHtmlMessage: string;
   enabledFeatures: Feature[];
   codeWarning: string;
+  announcement: string;
 }
 
 const initialState: SettingsState = {
@@ -16,6 +17,7 @@ const initialState: SettingsState = {
   footerHtmlMessage: '',
   enabledFeatures: [],
   codeWarning: '',
+  announcement: '',
 };
 
 export const settingsSlice = createSlice({
@@ -46,6 +48,12 @@ export const settingsSlice = createSlice({
     ) => {
       state.codeWarning = payload;
     },
+    setAnnouncement: (
+      state,
+      { payload }: PayloadAction<SettingsState['announcement']>,
+    ) => {
+      state.announcement = payload;
+    },
   },
 });
 
@@ -66,6 +74,9 @@ const selectEnabledFeatures = createSelector([rootSelector], (state) => {
 const selectCodeWarning = createSelector([rootSelector], (state) => {
   return state.codeWarning;
 });
+const selectAnnouncement = createSelector([rootSelector], (state) => {
+  return state.announcement;
+});
 
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
@@ -73,4 +84,5 @@ export const SettingsSelectors = {
   selectFooterHtmlMessage,
   selectEnabledFeatures,
   selectCodeWarning,
+  selectAnnouncement,
 };

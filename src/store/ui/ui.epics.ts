@@ -80,11 +80,24 @@ const showToastErrorEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const closeAnnouncementEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.closeAnnouncement.match),
+    tap(({ payload }) => {
+      localStorage.setItem(
+        'textOfClosedAnnouncement',
+        JSON.stringify(payload.announcement),
+      );
+    }),
+    ignoreElements(),
+  );
+
 const UIEpics = combineEpics(
   saveThemeEpic,
   saveShowChatbarEpic,
   saveShowPromptbarEpic,
   showToastErrorEpic,
+  closeAnnouncementEpic,
 );
 
 export default UIEpics;

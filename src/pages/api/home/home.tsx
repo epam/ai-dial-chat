@@ -28,6 +28,7 @@ import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 import { SettingsActions } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { AnnouncementsBanner } from '../../../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import Header from '@/src/components/Header/Header';
@@ -47,6 +48,7 @@ interface Props {
   defaultRecentModelsIds: string[];
   defaultRecentAddonsIds: string[];
   codeWarning: string;
+  announcement: string;
 }
 
 const Home = ({
@@ -59,6 +61,7 @@ const Home = ({
   defaultRecentModelsIds,
   defaultRecentAddonsIds,
   codeWarning,
+  announcement,
 }: Props) => {
   const session = useSession();
 
@@ -132,6 +135,15 @@ const Home = ({
         }),
       );
     }
+
+    const textOfClosedAnnouncement = localStorage.getItem(
+      'textOfClosedAnnouncement',
+    );
+    dispatch(
+      UIActions.closeAnnouncement({
+        announcement: JSON.parse(textOfClosedAnnouncement || '""'),
+      }),
+    );
     dispatch(ConversationsActions.initConversations());
     dispatch(ModelsActions.getModels());
     dispatch(AddonsActions.getAddons());
@@ -169,6 +181,8 @@ const Home = ({
           ),
         }),
       );
+
+    announcement && dispatch(SettingsActions.setAnnouncement(announcement));
   }, [
     dispatch,
     defaultModelId,
@@ -178,6 +192,7 @@ const Home = ({
     defaultRecentModelsIds,
     defaultRecentAddonsIds,
     codeWarning,
+    announcement,
   ]);
 
   const handleIframeAuth = async () => {
@@ -242,7 +257,8 @@ const Home = ({
             <div className="flex w-full grow overflow-auto">
               {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
 
-              <div className="flex flex-1">
+              <div className="flex min-w-0 grow flex-col">
+                <AnnouncementsBanner />
                 <Chat appName={appName} />
               </div>
 
@@ -301,6 +317,7 @@ export const getServerSideProps: GetServerSideProps = async ({
           process.env.RECENT_ADDONS_IDS.split(',')) ||
         [],
       codeWarning: process.env.CODE_GENERATION_WARNING ?? '',
+      announcement: process.env.ANNOUNCEMENT || '',
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',

@@ -11,6 +11,7 @@ export interface UIState {
   isUserSettingsOpen: boolean;
   isProfileOpen: boolean;
   isCompareMode: boolean;
+  textOfClosedAnnouncement?: string | undefined;
 }
 
 const initialState: UIState = {
@@ -20,6 +21,7 @@ const initialState: UIState = {
   isUserSettingsOpen: false,
   isProfileOpen: false,
   isCompareMode: false,
+  textOfClosedAnnouncement: undefined,
 };
 
 export const uiSlice = createSlice({
@@ -67,6 +69,12 @@ export const uiSlice = createSlice({
         response?: Response;
       }>,
     ) => state,
+    closeAnnouncement: (
+      state,
+      { payload }: PayloadAction<{ announcement: string | undefined }>,
+    ) => {
+      state.textOfClosedAnnouncement = payload.announcement;
+    },
   },
 });
 
@@ -96,6 +104,13 @@ const selectIsCompareMode = createSelector([rootSelector], (state) => {
   return state.isCompareMode;
 });
 
+const selectTextOfClosedAnnouncement = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.textOfClosedAnnouncement;
+  },
+);
+
 export const UIActions = uiSlice.actions;
 
 export const UISelectors = {
@@ -105,4 +120,5 @@ export const UISelectors = {
   selectIsUserSettingsOpen,
   selectIsProfileOpen,
   selectIsCompareMode,
+  selectTextOfClosedAnnouncement,
 };
