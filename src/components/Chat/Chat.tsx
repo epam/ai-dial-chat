@@ -492,7 +492,10 @@ export const Chat = memo(({ appName }: Props) => {
   }, [isPlayback]);
 
   return (
-    <div className="relative min-w-0 shrink grow basis-0 overflow-y-auto" data-qa="chat">
+    <div
+      className="relative min-w-0 shrink grow basis-0 overflow-y-auto"
+      data-qa="chat"
+    >
       {modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : (
