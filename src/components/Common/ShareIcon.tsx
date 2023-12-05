@@ -15,6 +15,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 interface ShareIsonProps extends ShareInterface {
   isHighlited: boolean;
   highlightColor: HighlightColor;
+  iconHighlightColor?: HighlightColor;
   size?: number;
   children: ReactNode | ReactNode[];
   featureType: FeatureType;
@@ -25,6 +26,7 @@ export default function ShareIcon({
   isPublished,
   isHighlited,
   highlightColor,
+  iconHighlightColor = highlightColor,
   size = !isPublished ? 12 : 8,
   children,
   featureType,
@@ -58,7 +60,7 @@ export default function ShareIcon({
       {children}
       <div
         className={classNames(
-          'absolute bottom-0 left-0 h-[8px] w-[8px] overflow-hidden  bg-gray-100 align-text-top dark:bg-gray-700',
+          'absolute bottom-0 left-0 h-[8px] w-[8px] overflow-hidden bg-gray-100 align-text-top dark:bg-gray-700',
           isPublished ? 'rounded-md' : 'rounded-sm',
         )}
       >
@@ -69,9 +71,15 @@ export default function ShareIcon({
           className={classNames(
             getByHighlightColor(
               highlightColor,
-              'text-green group-hover:bg-green/15',
-              'text-violet group-hover:bg-violet/15',
-              'text-blue-500 group-hover:bg-blue-500/20',
+              'group-hover:bg-green/15',
+              'group-hover:bg-violet/15',
+              'group-hover:bg-blue-500/20',
+            ),
+            getByHighlightColor(
+              iconHighlightColor,
+              'text-green',
+              'text-violet',
+              'text-blue-500',
             ),
             !isPublished && 'm-[-2px]',
             isHighlited &&
