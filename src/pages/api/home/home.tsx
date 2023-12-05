@@ -257,7 +257,7 @@ const Home = ({
             <div className="flex w-full grow overflow-auto">
               {enabledFeaturesSet.has('conversations-section') && <Chatbar />}
 
-              <div className="flex min-w-0 flex-1 flex-col">
+              <div className="flex min-w-0 grow flex-col">
                 <AnnouncementsBanner />
                 <Chat appName={appName} />
               </div>
