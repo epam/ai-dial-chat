@@ -105,7 +105,7 @@ const Sidebar = <T,>({
           >
             {itemComponent}
           </div>
-        ) : filteredItems.length !== 0 ? (
+        ) : searchTerm.length ? (
           <div className="flex grow content-center justify-center">
             <NoResultsFound />
           </div>
