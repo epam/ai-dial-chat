@@ -4,8 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { SharedWithMeFilter } from '@/src/utils/app/search';
 
-import { EntityFilter, HighlightColor } from '@/src/types/common';
-import { Feature } from '@/src/types/features';
+import { EntityFilter, FeatureType, HighlightColor } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
@@ -141,6 +140,7 @@ const PromptFolderTemplate = ({
         }
         onDropBetweenFolders={onDropBetweenFolders}
         onClickFolder={handleFolderClick}
+        featureType={FeatureType.Prompt}
       />
       {isLast && (
         <BetweenFoldersLine
@@ -257,7 +257,7 @@ export function PromptFolders() {
   );
   const commonItemFilter = useAppSelector(PromptsSelectors.selectItemFilter);
   const isSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.PromptsSharing),
+    SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
   );
 
   const folderItems: FolderSectionProps<Prompt>[] = useMemo(

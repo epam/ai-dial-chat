@@ -17,7 +17,6 @@ import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, HighlightColor } from '@/src/types/common';
-import { Feature } from '@/src/types/features';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -118,7 +117,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   );
 
   const isSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSharing),
+    SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
 
   const [isDeleting, setIsDeleting] = useState(false);

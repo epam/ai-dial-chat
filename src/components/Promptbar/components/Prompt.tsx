@@ -13,7 +13,6 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { FeatureType, HighlightColor } from '@/src/types/common';
-import { Feature } from '@/src/types/features';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
@@ -58,7 +57,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const showModal = useAppSelector(PromptsSelectors.selectIsEditModalOpen);
 
   const isSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.PromptsSharing),
+    SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
   );
 
   const [isDeleting, setIsDeleting] = useState(false);

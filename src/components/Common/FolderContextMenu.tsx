@@ -3,6 +3,7 @@ import {
   IconFolderPlus,
   IconPencilMinus,
   IconTrashX,
+  IconUserShare,
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
@@ -21,12 +22,14 @@ interface FolderContextMenuProps {
   onOpenChange?: (isOpen: boolean) => void;
   highlightColor: HighlightColor;
   isOpen?: boolean;
+  onOpenShareModal?: MouseEventHandler<HTMLButtonElement>;
 }
 export const FolderContextMenu = ({
   onDelete,
   onRename,
   onAddFolder,
   onOpenChange,
+  onOpenShareModal,
   highlightColor,
   isOpen,
 }: FolderContextMenuProps) => {
@@ -39,6 +42,13 @@ export const FolderContextMenu = ({
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
+      },
+      {
+        name: t('Share'),
+        display: !!onOpenShareModal,
+        dataQa: 'share',
+        Icon: IconUserShare,
+        onClick: onOpenShareModal,
       },
       {
         name: t('Delete'),
@@ -55,7 +65,7 @@ export const FolderContextMenu = ({
         onClick: onAddFolder,
       },
     ],
-    [t, onRename, onDelete, onAddFolder],
+    [t, onRename, onOpenShareModal, onDelete, onAddFolder],
   );
 
   if (!onDelete && !onRename && !onAddFolder) {

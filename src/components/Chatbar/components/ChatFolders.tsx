@@ -5,8 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { SharedWithMeFilter } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
-import { EntityFilter, HighlightColor } from '@/src/types/common';
-import { Feature } from '@/src/types/features';
+import { EntityFilter, FeatureType, HighlightColor } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
@@ -157,6 +156,7 @@ const ChatFolderTemplate = ({
         }
         onDropBetweenFolders={onDropBetweenFolders}
         onClickFolder={handleFolderClick}
+        featureType={FeatureType.Chat}
       />
       {isLast && (
         <BetweenFoldersLine
@@ -285,7 +285,7 @@ export function ChatFolders() {
   );
 
   const isSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSharing),
+    SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
 
   const folderItems: FolderSectionProps<Conversation>[] = useMemo(

@@ -62,6 +62,23 @@ export const promptsSlice = createSlice({
         return conv;
       });
     },
+    updateFolder: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{ id: string; values: Partial<FolderInterface> }>,
+    ) => {
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.id) {
+          return {
+            ...folder,
+            ...payload.values,
+          };
+        }
+
+        return folder;
+      });
+    },
     updatePrompts: (
       state,
       { payload }: PayloadAction<{ prompts: Prompt[] }>,

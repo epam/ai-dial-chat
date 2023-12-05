@@ -1,8 +1,7 @@
-import { EntityFilter } from './common';
+import { Entity, EntityFilter } from './common';
+import { ShareInterface } from './share';
 
-export interface FolderInterface {
-  id: string;
-  name: string;
+export interface FolderInterface extends Entity, ShareInterface {
   type: FolderType;
   folderId?: string;
   serverSynced?: boolean;
