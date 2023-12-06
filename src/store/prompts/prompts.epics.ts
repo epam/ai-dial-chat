@@ -26,6 +26,7 @@ const savePromptsEpic: AppEpic = (action$, state$) =>
         PromptsActions.deletePrompts.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
         PromptsActions.updatePrompt.match(action) ||
+        PromptsActions.sharePrompt.match(action) ||
         PromptsActions.importPromptsSuccess.match(action),
     ),
     map(() => PromptsSelectors.selectPrompts(state$.value)),

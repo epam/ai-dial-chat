@@ -267,16 +267,11 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   }, []);
 
   const handleShared = useCallback(
-    (_newShareId: string) => {
-      //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
+    (shareId: string) => {
       dispatch(
-        ConversationsActions.updateConversation({
+        ConversationsActions.shareConversation({
           id: conversationId,
-          values: {
-            isShared: true,
-            //TODO: added for development purpose - emulate immediate sharing with yourself
-            sharedWithMe: true,
-          },
+          shareId,
         }),
       );
     },

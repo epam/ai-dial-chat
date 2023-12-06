@@ -1131,6 +1131,7 @@ const saveConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.createNewConversationsSuccess.match(action) ||
         ConversationsActions.createNewReplayConversation.match(action) ||
         ConversationsActions.updateConversation.match(action) ||
+        ConversationsActions.shareConversation.match(action) ||
         ConversationsActions.updateConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversations.match(action) ||

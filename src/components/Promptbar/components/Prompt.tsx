@@ -81,16 +81,11 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   }, []);
 
   const handleShared = useCallback(
-    (_newShareId: string) => {
-      //TODO: send newShareId to API to store {id, createdDate}
+    (shareId: string) => {
       dispatch(
-        PromptsActions.updatePrompt({
+        PromptsActions.sharePrompt({
           promptId,
-          values: {
-            isShared: true,
-            //TODO: for development purpose - emulate immediate sharing with yourself
-            sharedWithMe: true,
-          },
+          shareId,
         }),
       );
     },

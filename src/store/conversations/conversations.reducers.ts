@@ -9,7 +9,6 @@ import {
 } from '@/src/types/chat';
 import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
-import { ShareInterface } from '@/src/types/share';
 
 import {
   DEFAULT_SYSTEM_PROMPT,
@@ -106,17 +105,36 @@ export const conversationsSlice = createSlice({
         return conv;
       });
     },
+    shareConversation: (
+      state,
+      { payload }: PayloadAction<{ id: string; shareId: string }>,
+    ) => {
+      state.conversations = state.conversations.map((conv) => {
+        if (conv.id === payload.id) {
+          return {
+            ...conv,
+            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
+            isShared: true,
+            //TODO: added for development purpose - emulate immediate sharing with yourself
+            sharedWithMe: true,
+          };
+        }
+
+        return conv;
+      });
+    },
     shareFolder: (
       state,
-      {
-        payload,
-      }: PayloadAction<{ id: string; values: Partial<ShareInterface> }>,
+      { payload }: PayloadAction<{ id: string; shareId: string }>,
     ) => {
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.id) {
           return {
             ...folder,
-            ...payload.values,
+            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
+            isShared: true,
+            //TODO: added for development purpose - emulate immediate sharing with yourself
+            sharedWithMe: true,
           };
         }
 

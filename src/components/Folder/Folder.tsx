@@ -143,20 +143,15 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   }, []);
 
   const handleShared = useCallback(
-    (_newShareId: string) => {
-      // TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
-      const updateFolder =
+    (shareId: string) => {
+      const shareFolder =
         featureType === FeatureType.Chat
           ? ConversationsActions.shareFolder
           : PromptsActions.shareFolder;
       dispatch(
-        updateFolder({
+        shareFolder({
           id: currentFolder.id,
-          values: {
-            isShared: true,
-            //TODO: added for development purpose - emulate immediate sharing with yourself
-            sharedWithMe: true,
-          },
+          shareId,
         }),
       );
     },
