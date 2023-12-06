@@ -43,7 +43,7 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         PromptsActions.deleteFolder.match(action) ||
         PromptsActions.renameFolder.match(action) ||
         PromptsActions.moveFolder.match(action) ||
-        PromptsActions.updateFolder.match(action) ||
+        PromptsActions.shareFolder.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action),
     ),

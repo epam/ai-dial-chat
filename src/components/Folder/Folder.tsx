@@ -147,8 +147,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       // TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
       const updateFolder =
         featureType === FeatureType.Chat
-          ? ConversationsActions.updateFolder
-          : PromptsActions.updateFolder;
+          ? ConversationsActions.shareFolder
+          : PromptsActions.shareFolder;
       dispatch(
         updateFolder({
           id: currentFolder.id,

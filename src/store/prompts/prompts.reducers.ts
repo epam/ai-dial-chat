@@ -6,6 +6,7 @@ import { PromptsHistory } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
+import { ShareInterface } from '@/src/types/share';
 
 import { PromptsState } from './prompts.types';
 
@@ -62,11 +63,11 @@ export const promptsSlice = createSlice({
         return conv;
       });
     },
-    updateFolder: (
+    shareFolder: (
       state,
       {
         payload,
-      }: PayloadAction<{ id: string; values: Partial<FolderInterface> }>,
+      }: PayloadAction<{ id: string; values: Partial<ShareInterface> }>,
     ) => {
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.id) {
