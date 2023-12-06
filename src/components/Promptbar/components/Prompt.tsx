@@ -181,7 +181,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         localFolderId = uuidv4();
         dispatch(
           PromptsActions.createFolder({
-            name: t('New folder'),
             folderId: localFolderId,
           }),
         );

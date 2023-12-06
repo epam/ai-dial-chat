@@ -67,8 +67,8 @@ export const doesEntityContainSearchItem = <
   throw new Error('unexpected entity');
 };
 
-//TODO: for development purpose - emulate immediate sharing with yourself
-export const PinnedItemsFilter: EntityFilter<ShareInterface> = (_item) => true; // !item.sharedWithMe;
+export const PinnedItemsFilter: EntityFilter<ShareInterface> = (item) =>
+  !item.sharedWithMe;
 
 export const SharedWithMeFilter: EntityFilter<ShareInterface> = (item) =>
   !!item.sharedWithMe;

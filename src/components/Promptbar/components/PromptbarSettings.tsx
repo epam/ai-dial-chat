@@ -16,7 +16,6 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import SidebarMenu from '@/src/components/Common/SidebarMenu';
@@ -28,18 +27,16 @@ export function PromptbarSettings() {
   const { t } = useTranslation(Translation.PromptBar);
 
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
+  const folders = useAppSelector(PromptsSelectors.selectFolders);
 
   const dispatch = useAppDispatch();
   const [isOpen, setIsOpen] = useState(false);
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
-  );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Delete all prompts'),
-        display: allPrompts.length > 0,
+        name: t('Delete all'),
+        display: allPrompts.length > 0 || folders.length > 0,
         dataQa: 'delete-prompts',
         Icon: IconTrashX,
         onClick: () => {
@@ -70,11 +67,11 @@ export function PromptbarSettings() {
         dataQa: 'create-prompt-folder',
         Icon: FolderPlus,
         onClick: () => {
-          dispatch(PromptsActions.createFolder({ name: t('New folder') }));
+          dispatch(PromptsActions.createFolder());
         },
       },
     ],
-    [allPrompts, dispatch, enabledFeatures, t],
+    [allPrompts.length, dispatch, folders.length, t],
   );
 
   return (

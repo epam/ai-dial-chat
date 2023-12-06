@@ -1,5 +1,8 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { getNextDefaultName } from '@/src/utils/app/folders';
+import { translate } from '@/src/utils/app/translation';
+
 import { SearchFilters } from './../../types/search';
 import {
   Conversation,
@@ -11,6 +14,7 @@ import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 
 import {
+  DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-settings';
@@ -70,10 +74,17 @@ export const conversationsSlice = createSlice({
       }>,
     ) => {
       const newConversations: Conversation[] = payload.names.map(
-        (name): Conversation => {
+        (name, index): Conversation => {
           return {
             id: uuidv4(),
-            name,
+            name:
+              name !== DEFAULT_CONVERSATION_NAME
+                ? name
+                : getNextDefaultName(
+                    DEFAULT_CONVERSATION_NAME,
+                    state.conversations,
+                    index,
+                  ),
             messages: [],
             model: {
               id: payload.model.id,
@@ -115,8 +126,6 @@ export const conversationsSlice = createSlice({
             ...conv,
             //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
             isShared: true,
-            //TODO: added for development purpose - emulate immediate sharing with yourself
-            sharedWithMe: true,
           };
         }
 
@@ -133,8 +142,6 @@ export const conversationsSlice = createSlice({
             ...folder,
             //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
             isShared: true,
-            //TODO: added for development purpose - emulate immediate sharing with yourself
-            sharedWithMe: true,
           };
         }
 
@@ -247,17 +254,27 @@ export const conversationsSlice = createSlice({
     ) => {
       state.conversations = payload.conversations;
     },
+    addConversations: (
+      state,
+      { payload }: PayloadAction<{ conversations: Conversation[] }>,
+    ) => {
+      state.conversations = [...state.conversations, ...payload.conversations];
+    },
     clearConversations: (state) => {
       state.conversations = [];
       state.folders = [];
     },
     createFolder: (
       state,
-      { payload }: PayloadAction<{ name: string; folderId?: string }>,
+      {
+        payload,
+      }: PayloadAction<{ name?: string; folderId?: string } | undefined>,
     ) => {
       const newFolder: FolderInterface = {
-        id: payload.folderId || uuidv4(),
-        name: payload.name,
+        id: payload?.folderId || uuidv4(),
+        name:
+          payload?.name ?? // custom name
+          getNextDefaultName(translate('New folder'), state.folders), // default name with counter
         type: FolderType.Chat,
       };
 
@@ -318,6 +335,12 @@ export const conversationsSlice = createSlice({
     ) => {
       state.folders = payload.folders;
     },
+    addFolders: (
+      state,
+      { payload }: PayloadAction<{ folders: FolderInterface[] }>,
+    ) => {
+      state.folders = [...state.folders, ...payload.folders];
+    },
     setSearchTerm: (
       state,
       {
@@ -351,8 +374,10 @@ export const conversationsSlice = createSlice({
         rate: number;
       }>,
     ) => state,
-    rateMessageFail: (state, _action: PayloadAction<{ error: Response }>) =>
+    rateMessageFail: (
       state,
+      _action: PayloadAction<{ error: Response | string }>,
+    ) => state,
     cleanMessage: (state) => state,
     deleteMessage: (state, _action: PayloadAction<{ index: number }>) => state,
     sendMessages: (

@@ -11,13 +11,10 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, HighlightColor } from '@/src/types/common';
-import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
@@ -94,7 +91,6 @@ interface Props {
 }
 
 export const ConversationComponent = ({ item: conversation, level }: Props) => {
-  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -291,7 +287,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         localFolderId = uuidv4();
         dispatch(
           ConversationsActions.createFolder({
-            name: t('New folder'),
             folderId: localFolderId,
           }),
         );
@@ -303,7 +298,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         }),
       );
     },
-    [conversation.id, dispatch, t],
+    [conversation.id, dispatch],
   );
 
   const handleContextMenuOpen = (e: MouseEvent) => {
