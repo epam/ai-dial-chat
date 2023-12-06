@@ -88,9 +88,17 @@ export const selectFilteredFolders = createSelector(
     const folderIds = filteredPrompts // direct parent folders
       .map((c) => c.folderId)
       .filter((fid) => fid);
-    // include empty folders only if not search
-    if (includeEmptyFolders && !searchTerm?.trim().length) {
-      folderIds.push(...emptyFolderIds);
+
+    if (!searchTerm?.trim().length) {
+      const markedFolderIds = folders
+        .filter(({ isShared }) => isShared)
+        .flatMap((f) => getChildAndCurrentFoldersIdsById(f.id, folders));
+      folderIds.push(...markedFolderIds);
+
+      if (includeEmptyFolders) {
+        // include empty folders only if not search
+        folderIds.push(...emptyFolderIds);
+      }
     }
 
     const filteredFolderIds = new Set(
