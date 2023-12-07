@@ -53,7 +53,9 @@ test(
       for (const todayConversation of todayConversations) {
         expect
           .soft(todayConversation, ExpectedMessages.conversationOfToday)
-          .toBe(ExpectedConstants.newConversationTitle);
+          .toEqual(
+            expect.stringContaining(ExpectedConstants.newConversationTitle),
+          );
       }
     });
 

@@ -1,6 +1,7 @@
-import { i18n } from 'next-i18next';
-
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+
+import { getNextDefaultName } from '@/src/utils/app/folders';
+import { translate } from '@/src/utils/app/translation';
 
 import { PromptsHistory } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
@@ -30,7 +31,7 @@ export const promptsSlice = createSlice({
     createNewPrompt: (state) => {
       const newPrompt: Prompt = {
         id: uuidv4(),
-        name: (i18n as any).t(`Prompt ${state.prompts.length + 1}`),
+        name: getNextDefaultName(translate('Prompt'), state.prompts),
         description: '',
         content: '',
       };
@@ -88,11 +89,15 @@ export const promptsSlice = createSlice({
     },
     createFolder: (
       state,
-      { payload }: PayloadAction<{ name: string; folderId?: string }>,
+      {
+        payload,
+      }: PayloadAction<{ name?: string; folderId?: string } | undefined>,
     ) => {
       const newFolder: FolderInterface = {
-        id: payload.folderId || uuidv4(),
-        name: payload.name,
+        id: payload?.folderId || uuidv4(),
+        name:
+          payload?.name ?? // custom name
+          getNextDefaultName(translate('New folder'), state.folders), // default name with counter
         type: FolderType.Prompt,
       };
 

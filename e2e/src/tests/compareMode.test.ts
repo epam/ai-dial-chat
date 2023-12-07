@@ -45,12 +45,14 @@ test('Compare mode button creates two new chats and opens them in compare mode',
 
     const todayConversations = await conversations.getTodayConversations();
     expect
-      .soft(todayConversations, ExpectedMessages.conversationOfToday)
-      .toEqual([
-        ExpectedConstants.newConversationTitle,
-        ExpectedConstants.newConversationTitle,
-        ExpectedConstants.newConversationTitle,
-      ]);
+      .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
+      .toBe(3);
+
+    todayConversations.forEach((value) =>
+      expect
+        .soft(value, ExpectedMessages.conversationOfToday)
+        .toContain(ExpectedConstants.newConversationTitle),
+    );
   });
 });
 

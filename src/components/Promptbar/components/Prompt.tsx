@@ -8,14 +8,11 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { FeatureType, HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
 import { Prompt } from '@/src/types/prompt';
-import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -47,7 +44,6 @@ export interface PromptMoveToFolderProps {
 }
 
 export const PromptComponent = ({ item: prompt, level }: Props) => {
-  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
   const folders = useAppSelector(PromptsSelectors.selectFolders);
@@ -187,7 +183,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         localFolderId = uuidv4();
         dispatch(
           PromptsActions.createFolder({
-            name: t('New folder'),
             folderId: localFolderId,
           }),
         );
@@ -200,7 +195,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       );
       setIsContextMenu(false);
     },
-    [dispatch, prompt.id, t],
+    [dispatch, prompt.id],
   );
 
   const handleClose = useCallback(() => {
