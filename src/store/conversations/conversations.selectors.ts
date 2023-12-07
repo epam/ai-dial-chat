@@ -11,7 +11,7 @@ import {
 } from '@/src/utils/app/search';
 
 import { Conversation, Role } from '@/src/types/chat';
-import { EntityFilter, EntityType } from '@/src/types/common';
+import { EntityFilter, EntityType, ShareEntity } from '@/src/types/common';
 import { SearchFilters } from '@/src/types/search';
 
 import { RootState } from '../index';
@@ -63,7 +63,7 @@ export const selectFilteredFolders = createSelector(
     (state) => state,
     selectFolders,
     selectEmptyFolderIds,
-    (_state, itemFilter?: EntityFilter<Conversation>) => itemFilter,
+    (_state, itemFilter?: EntityFilter<ShareEntity>) => itemFilter,
     (_state, _itemFilter?, searchTerm?: string) => searchTerm,
     (_state, _itemFilter?, _searchTerm?, includeEmptyFolders?: boolean) =>
       includeEmptyFolders,
@@ -87,11 +87,11 @@ export const selectFilteredFolders = createSelector(
 
     if (!searchTerm?.trim().length) {
       const markedFolderIds = folders
-        .filter(({ isShared }) => isShared)
-        .flatMap((f) => getChildAndCurrentFoldersIdsById(f.id, folders));
+        .filter((folder) => !itemFilter || itemFilter(folder))
+        .map((f) => f.id);
       folderIds.push(...markedFolderIds);
 
-      if (includeEmptyFolders) {
+      if (includeEmptyFolders && !searchTerm?.length) {
         // include empty folders only if not search
         folderIds.push(...emptyFolderIds);
       }

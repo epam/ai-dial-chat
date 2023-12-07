@@ -65,7 +65,7 @@ export const promptsSlice = createSlice({
     },
     sharePrompt: (
       state,
-      { payload }: PayloadAction<{ promptId: string; shareId: string }>,
+      { payload }: PayloadAction<{ promptId: string; shareUniqueId: string }>,
     ) => {
       state.prompts = state.prompts.map((conv) => {
         if (conv.id === payload.promptId) {
@@ -81,7 +81,7 @@ export const promptsSlice = createSlice({
     },
     shareFolder: (
       state,
-      { payload }: PayloadAction<{ id: string; shareId: string }>,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
     ) => {
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.id) {

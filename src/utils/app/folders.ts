@@ -117,13 +117,12 @@ export const getNextDefaultName = (
     return `${prefix}${1 + index}`;
   }
 
-  const numeredEntities = entities
-    .filter((entity) => entity.name.match(regex))
-    .map((entity) => entity.name.replace(prefix, '').trim())
-    .sort()
-    .reverse(); // max number
+  const maxNumber = Math.max(
+    ...entities
+      .filter((entity) => entity.name.match(regex))
+      .map((entity) => parseInt(entity.name.replace(prefix, ''), 10)),
+    0,
+  ); // max number
 
-  return `${prefix}${
-    (numeredEntities.length ? parseInt(numeredEntities[0]) + 1 : 1) + index
-  }`;
+  return `${prefix}${maxNumber + 1 + index}`;
 };

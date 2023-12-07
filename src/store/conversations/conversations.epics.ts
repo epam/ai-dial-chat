@@ -1135,11 +1135,11 @@ const saveConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.createNewConversationsSuccess.match(action) ||
         ConversationsActions.createNewReplayConversation.match(action) ||
         ConversationsActions.updateConversation.match(action) ||
-        ConversationsActions.shareConversation.match(action) ||
         ConversationsActions.updateConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversations.match(action) ||
-        ConversationsActions.createNewPlaybackConversation.match(action),
+        ConversationsActions.createNewPlaybackConversation.match(action) ||
+        ConversationsActions.addConversations.match(action),
     ),
     map(() => ConversationsSelectors.selectConversations(state$.value)),
     switchMap((conversations) => {
@@ -1391,6 +1391,7 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.shareFolder.match),
     map(({ payload }) => ({
       sharedFolderId: payload.id,
+      shareUniqueId: payload.shareUniqueId,
       conversations: ConversationsSelectors.selectConversations(state$.value),
       childFolders: ConversationsSelectors.selectChildAndCurrentFoldersIdsById(
         state$.value,
@@ -1398,46 +1399,56 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
       ),
       folders: ConversationsSelectors.selectFolders(state$.value),
     })),
-    switchMap(({ sharedFolderId, conversations, childFolders, folders }) => {
-      const mapping = new Map();
-      childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
-      const newFolders = folders
-        .filter(({ id }) => childFolders.includes(id))
-        .map(({ folderId, ...folder }) => ({
-          ...folder,
-          id: mapping.get(folder.id),
-          folderId:
-            folder.id === sharedFolderId ? undefined : mapping.get(folderId),
-          sharedWithMe: folder.id === sharedFolderId || folder.sharedWithMe,
-          isShared: false,
-        }));
+    switchMap(
+      ({
+        sharedFolderId,
+        shareUniqueId,
+        conversations,
+        childFolders,
+        folders,
+      }) => {
+        const mapping = new Map();
+        childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
+        const newFolders = folders
+          .filter(({ id }) => childFolders.includes(id))
+          .map(({ folderId, ...folder }) => ({
+            ...folder,
+            id: mapping.get(folder.id),
+            folderId:
+              folder.id === sharedFolderId ? undefined : mapping.get(folderId), // show shared folder on root level
+            sharedWithMe: folder.id === sharedFolderId || folder.sharedWithMe,
+            isShared: false,
+            shareUniqueId:
+              folder.id === sharedFolderId ? shareUniqueId : undefined,
+          }));
 
-      const sharedConversations = conversations
-        .filter(
-          (conversation) =>
-            conversation.folderId &&
-            childFolders.includes(conversation.folderId),
-        )
-        .map(({ folderId, ...prompt }) => ({
-          ...prompt,
-          id: uuidv4(),
-          folderId: mapping.get(folderId),
-          isShared: false,
-        }));
+        const sharedConversations = conversations
+          .filter(
+            (conversation) =>
+              conversation.folderId &&
+              childFolders.includes(conversation.folderId),
+          )
+          .map(({ folderId, ...prompt }) => ({
+            ...prompt,
+            id: uuidv4(),
+            folderId: mapping.get(folderId),
+            isShared: false,
+          }));
 
-      return concat(
-        of(
-          ConversationsActions.addConversations({
-            conversations: sharedConversations,
-          }),
-        ),
-        of(
-          ConversationsActions.addFolders({
-            folders: newFolders,
-          }),
-        ),
-      );
-    }),
+        return concat(
+          of(
+            ConversationsActions.addConversations({
+              conversations: sharedConversations,
+            }),
+          ),
+          of(
+            ConversationsActions.addFolders({
+              folders: newFolders,
+            }),
+          ),
+        );
+      },
+    ),
   );
 
 //TODO: added for development purpose - emulate immediate sharing with yourself
@@ -1446,17 +1457,19 @@ const shareConversationEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.shareConversation.match),
     map(({ payload }) => ({
       sharedConversationId: payload.id,
+      shareUniqueId: payload.shareUniqueId,
       conversations: ConversationsSelectors.selectConversations(state$.value),
     })),
-    switchMap(({ sharedConversationId, conversations }) => {
+    switchMap(({ sharedConversationId, shareUniqueId, conversations }) => {
       const sharedConversations = conversations
         .filter((conversation) => conversation.id === sharedConversationId)
-        .map((conversation) => ({
+        .map(({ folderId: _, ...conversation }) => ({
           ...conversation,
           id: uuidv4(),
-          folderId: undefined,
+          folderId: undefined, // show on root level
           sharedWithMe: true,
           isShared: false,
+          shareUniqueId,
         }));
 
       return concat(

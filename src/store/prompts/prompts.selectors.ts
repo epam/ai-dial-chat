@@ -10,7 +10,7 @@ import {
   getItemFilter,
 } from '@/src/utils/app/search';
 
-import { EntityFilter } from '@/src/types/common';
+import { EntityFilter, ShareEntity } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 
@@ -67,7 +67,7 @@ export const selectFilteredFolders = createSelector(
     (state) => state,
     selectFolders,
     selectEmptyFolderIds,
-    (_state, itemFilter?: EntityFilter<Prompt>) => itemFilter,
+    (_state, itemFilter?: EntityFilter<ShareEntity>) => itemFilter,
     (_state, _itemFilter?, searchTerm?: string) => searchTerm,
     (_state, _itemFilter?, _searchTerm?, includeEmptyFolders?: boolean) =>
       includeEmptyFolders,
@@ -80,6 +80,7 @@ export const selectFilteredFolders = createSelector(
     searchTerm?,
     includeEmptyFolders?,
   ) => {
+    const rootFilter = (item: ShareEntity) => item.sharedWithMe;
     const filteredPrompts = selectFilteredPrompts(
       state,
       itemFilter,
@@ -91,11 +92,11 @@ export const selectFilteredFolders = createSelector(
 
     if (!searchTerm?.trim().length) {
       const markedFolderIds = folders
-        .filter(({ isShared }) => isShared)
-        .flatMap((f) => getChildAndCurrentFoldersIdsById(f.id, folders));
+        .filter((folder) => !itemFilter || itemFilter(folder))
+        .map((f) => f.id);
       folderIds.push(...markedFolderIds);
 
-      if (includeEmptyFolders) {
+      if (includeEmptyFolders && !searchTerm?.length) {
         // include empty folders only if not search
         folderIds.push(...emptyFolderIds);
       }
@@ -107,7 +108,11 @@ export const selectFilteredFolders = createSelector(
       ),
     );
 
-    return folders.filter((folder) => filteredFolderIds.has(folder.id));
+    return folders.filter(
+      (folder) =>
+        (folder.folderId || !rootFilter || rootFilter(folder)) &&
+        filteredFolderIds.has(folder.id),
+    );
   },
 );
 

@@ -195,6 +195,7 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
     filter(PromptsActions.shareFolder.match),
     map(({ payload }) => ({
       sharedFolderId: payload.id,
+      shareUniqueId: payload.shareUniqueId,
       prompts: PromptsSelectors.selectPrompts(state$.value),
       childFolders: PromptsSelectors.selectChildAndCurrentFoldersIdsById(
         state$.value,
@@ -202,44 +203,49 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
       ),
       folders: PromptsSelectors.selectFolders(state$.value),
     })),
-    switchMap(({ sharedFolderId, prompts, childFolders, folders }) => {
-      const mapping = new Map();
-      childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
-      const newFolders = folders
-        .filter(({ id }) => childFolders.includes(id))
-        .map(({ folderId, ...folder }) => ({
-          ...folder,
-          id: mapping.get(folder.id),
-          folderId:
-            folder.id === sharedFolderId ? undefined : mapping.get(folderId),
-          sharedWithMe: folder.id === sharedFolderId || folder.sharedWithMe,
-          isShared: false,
-        }));
+    switchMap(
+      ({ sharedFolderId, shareUniqueId, prompts, childFolders, folders }) => {
+        const mapping = new Map();
+        childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
+        const newFolders = folders
+          .filter(({ id }) => childFolders.includes(id))
+          .map(({ folderId, ...folder }) => ({
+            ...folder,
+            id: mapping.get(folder.id),
+            folderId:
+              folder.id === sharedFolderId ? undefined : mapping.get(folderId), // show shared folder on root level
+            sharedWithMe: folder.id === sharedFolderId || folder.sharedWithMe,
+            shareUniqueId:
+              folder.id === sharedFolderId ? shareUniqueId : undefined,
+            isShared: false,
+          }));
 
-      const sharedPrompts = prompts
-        .filter(
-          (prompt) => prompt.folderId && childFolders.includes(prompt.folderId),
-        )
-        .map(({ folderId, ...prompt }) => ({
-          ...prompt,
-          id: uuidv4(),
-          folderId: mapping.get(folderId),
-          isShared: false,
-        }));
+        const sharedPrompts = prompts
+          .filter(
+            (prompt) =>
+              prompt.folderId && childFolders.includes(prompt.folderId),
+          )
+          .map(({ folderId, ...prompt }) => ({
+            ...prompt,
+            id: uuidv4(),
+            folderId: mapping.get(folderId),
+            isShared: false,
+          }));
 
-      return concat(
-        of(
-          PromptsActions.addPrompts({
-            prompts: sharedPrompts,
-          }),
-        ),
-        of(
-          PromptsActions.addFolders({
-            folders: newFolders,
-          }),
-        ),
-      );
-    }),
+        return concat(
+          of(
+            PromptsActions.addPrompts({
+              prompts: sharedPrompts,
+            }),
+          ),
+          of(
+            PromptsActions.addFolders({
+              folders: newFolders,
+            }),
+          ),
+        );
+      },
+    ),
   );
 
 //TODO: added for development purpose - emulate immediate sharing with yourself
@@ -248,17 +254,20 @@ const sharePromptEpic: AppEpic = (action$, state$) =>
     filter(PromptsActions.sharePrompt.match),
     map(({ payload }) => ({
       sharedPromptId: payload.promptId,
+      shareUniqueId: payload.shareUniqueId,
       prompts: PromptsSelectors.selectPrompts(state$.value),
     })),
-    switchMap(({ sharedPromptId, prompts }) => {
+    switchMap(({ sharedPromptId, shareUniqueId, prompts }) => {
       const sharedPrompts = prompts
         .filter((prompt) => prompt.id === sharedPromptId)
-        .map((prompt) => ({
+        .map(({ folderId: _, ...prompt }) => ({
           ...prompt,
           id: uuidv4(),
-          folderId: undefined,
+          folderId: undefined, // show on root level
           sharedWithMe: true,
           isShared: false,
+          shareUniqueId:
+            prompt.id === sharedPromptId ? shareUniqueId : undefined,
         }));
 
       return concat(

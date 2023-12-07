@@ -143,7 +143,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   }, []);
 
   const handleShared = useCallback(
-    (shareId: string) => {
+    (shareUniqueId: string) => {
       const shareFolder =
         featureType === FeatureType.Chat
           ? ConversationsActions.shareFolder
@@ -151,7 +151,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       dispatch(
         shareFolder({
           id: currentFolder.id,
-          shareId,
+          shareUniqueId,
         }),
       );
     },

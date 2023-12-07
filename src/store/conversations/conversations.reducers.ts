@@ -118,7 +118,7 @@ export const conversationsSlice = createSlice({
     },
     shareConversation: (
       state,
-      { payload }: PayloadAction<{ id: string; shareId: string }>,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
     ) => {
       state.conversations = state.conversations.map((conv) => {
         if (conv.id === payload.id) {
@@ -134,7 +134,7 @@ export const conversationsSlice = createSlice({
     },
     shareFolder: (
       state,
-      { payload }: PayloadAction<{ id: string; shareId: string }>,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
     ) => {
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.id) {

@@ -81,11 +81,11 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   }, []);
 
   const handleShared = useCallback(
-    (shareId: string) => {
+    (shareUniqueId: string) => {
       dispatch(
         PromptsActions.sharePrompt({
           promptId,
-          shareId,
+          shareUniqueId,
         }),
       );
     },
