@@ -171,11 +171,8 @@ const Sidebar = <T,>({
     SIDEBAR_DEFAULT_WIDTH,
   ]);
 
-  const sideBarMinWidthClass = `min-w-[${SIDEBAR_MIN_WIDTH}px]`;
-  const sideBarHeightClass = `h-[${SIDEBAR_HEIGHT}]`;
-
   const sideBarClassName = classNames(
-    `group/sidebar !fixed top-12 z-40 flex ${sideBarHeightClass} ${sideBarMinWidthClass} flex-none shrink-0 select-none flex-col divide-y divide-gray-300 border-r border-gray-300 bg-gray-100 transition-all dark:divide-gray-900 dark:border-gray-900 dark:bg-gray-700 md:max-w-[45%]  xl:!relative xl:top-0 xl:h-full`,
+    `group/sidebar !fixed top-12 z-40 flex h-[calc(100%-48px)] min-w-[260px] flex-none shrink-0 select-none flex-col divide-y divide-gray-300 border-r border-gray-300 bg-gray-100 transition-all dark:divide-gray-900 dark:border-gray-900 dark:bg-gray-700 md:max-w-[45%]  xl:!relative xl:top-0 xl:h-full`,
     side === 'left' ? 'left-0' : 'right-0',
   );
 
