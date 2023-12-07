@@ -66,6 +66,10 @@ const Sidebar = <T,>({
 
   const isLeftSidebar = side === 'left';
   const isRightSidebar = side === 'right';
+  const dataQa = useMemo(
+    () => (isLeftSidebar ? 'chatbar' : 'promptbar'),
+    [isLeftSidebar],
+  );
   const draggingColor = isLeftSidebar ? 'bg-green/15' : 'bg-violet/15';
   const resizeTriggerColor = isLeftSidebar
     ? 'bg-green text-green'
@@ -180,7 +184,7 @@ const Sidebar = <T,>({
       ref={sideBarElementRef}
       {...resizeSettings}
       className={sideBarClassName}
-      data-qa="sidebar"
+      data-qa={dataQa}
     >
       <Search
         placeholder={t('Search {{name}}...', { name: featureType })}
