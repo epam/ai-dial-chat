@@ -258,8 +258,7 @@ test('System prompt is applied in Model', async ({
   });
 });
 
-//TODO: enable test when response is returned by chunks
-test.skip('Stop generating for models like GPT (1 symbol = 1 token)', async ({
+test('Stop generating for models like GPT (1 symbol = 1 token)', async ({
   dialHomePage,
   chat,
   setTestIds,
@@ -324,8 +323,7 @@ test.skip('Stop generating for models like GPT (1 symbol = 1 token)', async ({
   });
 });
 
-//TODO: enable test when response is returned by chunks
-test.skip(
+test(
   'Send button in new message is available for Model if previous response is partly received when Stop generating was used.\n' +
     'Compare mode button is not available while response is being generated',
   async ({

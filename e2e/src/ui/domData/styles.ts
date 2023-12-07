@@ -8,6 +8,7 @@ export enum Styles {
   color = 'color',
   cursor = 'cursor',
   overflow_x = 'overflow-x',
+  text_overflow = 'text-overflow',
 }
 
 export enum Cursors {
@@ -16,4 +17,5 @@ export enum Cursors {
 
 export enum Overflow {
   auto = 'auto',
+  ellipsis = 'ellipsis',
 }

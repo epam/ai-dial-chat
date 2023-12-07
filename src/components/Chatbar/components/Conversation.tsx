@@ -81,7 +81,10 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
             />
           )}
       </ShareIcon>
-      <div className="relative max-h-5 flex-1 truncate break-all text-left">
+      <div
+        className="relative max-h-5 flex-1 truncate break-all text-left"
+        data-qa="chat-name"
+      >
         {conversation.name}
       </div>
     </>

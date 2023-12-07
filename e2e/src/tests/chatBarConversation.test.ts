@@ -1,5 +1,7 @@
 import { ModelsUtil } from '@/e2e/src/utils/modelsUtil';
 
+import { Conversation } from '@/src/types/chat';
+import { FolderInterface } from '@/src/types/folder';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
@@ -10,13 +12,19 @@ import {
   MenuOptions,
   ModelIds,
 } from '@/e2e/src/testData';
-import { Colors } from '@/e2e/src/ui/domData';
+import { Colors, Overflow, Styles } from '@/e2e/src/ui/domData';
 import { GeneratorUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
 let gpt35Model: OpenAIEntityModel;
 let gpt4Model: OpenAIEntityModel;
 let bisonModel: OpenAIEntityModel;
+
+const request = 'What is epam official name?';
+const notMatchingSearchTerm = 'abc';
+const secondSearchTerm = 'epam official';
+const matchingConversationName = `${secondSearchTerm} name`;
+const specialSymbolsName = 'Chat_!@#$%^&*()+=\':",.<>';
 
 test.beforeAll(async () => {
   gpt35Model = ModelsUtil.getDefaultModel()!;
@@ -50,72 +58,143 @@ test(
   },
 );
 
-test('Rename chat. Cancel', async ({
-  dialHomePage,
-  conversations,
-  conversationDropdownMenu,
-  setTestIds,
-}) => {
-  setTestIds('EPMRTC-588');
-  const newName = 'new name to cancel';
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-  await conversations.openConversationDropdownMenu(
-    ExpectedConstants.newConversationTitle,
-  );
-  await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-  const nameInput = await conversations.openEditConversationNameMode(
-    ExpectedConstants.newConversationTitle,
-    newName,
-  );
-  await nameInput.clickCancelButton();
-  expect
-    .soft(
-      await conversations.getConversationByName(newName).isVisible(),
-      ExpectedMessages.conversationNameNotUpdated,
-    )
-    .toBeFalsy();
-});
+test(
+  'Rename chat. Cancel.\n' +
+    'Long Chat name is cut. Named automatically by the system.\n' +
+    'Long chat name while delete and edit',
+  async ({
+    dialHomePage,
+    conversations,
+    conversationDropdownMenu,
+    conversationData,
+    localStorageManager,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-588', 'EPMRTC-816', 'EPMRTC-1494');
+    const newName = 'new name to cancel';
+    let conversation: Conversation;
+    const conversationName = GeneratorUtil.randomString(70);
 
-test('Rename chat before starting the conversation', async ({
-  dialHomePage,
-  conversations,
-  conversationDropdownMenu,
-  chat,
-  setTestIds,
-}) => {
-  setTestIds('EPMRTC-584');
-  const newName = 'new conversation name';
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-  await conversations.openConversationDropdownMenu(
-    ExpectedConstants.newConversationTitle,
-  );
-  await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-  await conversations.editConversationNameWithTick(
-    ExpectedConstants.newConversationTitle,
-    newName,
-  );
-  expect
-    .soft(
-      await conversations.getConversationByName(newName).isVisible(),
-      ExpectedMessages.conversationNameUpdated,
-    )
-    .toBeTruthy();
+    await test.step('Prepare conversation with long name', async () => {
+      conversation = conversationData.prepareDefaultConversation(
+        gpt35Model,
+        conversationName,
+      );
+      await localStorageManager.setConversationHistory(conversation);
+      await localStorageManager.setSelectedConversation(conversation);
+    });
 
-  await chat.sendRequestWithButton('one more test message');
-  expect
-    .soft(
-      await conversations.getConversationByName(newName).isVisible(),
-      ExpectedMessages.conversationNameUpdated,
-    )
-    .toBeTruthy();
-});
+    await test.step('Open app and verify conversation name is truncated in the side panel', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+      const chatNameOverflow = await conversations
+        .getConversationName(conversationName)
+        .getComputedStyleProperty(Styles.text_overflow);
+      expect
+        .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
+        .toBe(Overflow.ellipsis);
+    });
+
+    await test.step('Hover over conversation name and verify it is truncated when menu dots appear', async () => {
+      await conversations.getConversationByName(conversationName).hover();
+      const chatNameOverflow = await conversations
+        .getConversationName(conversationName)
+        .getComputedStyleProperty(Styles.text_overflow);
+      expect
+        .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
+        .toBe(Overflow.ellipsis);
+    });
+
+    await test.step('Select "Rename" from chat menu and verify it is truncated, cursor set at the end', async () => {
+      await conversations.openConversationDropdownMenu(conversationName);
+      await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
+      const chatNameOverflow = await conversations
+        .getConversationName(conversationName)
+        .getComputedStyleProperty(Styles.text_overflow);
+      expect
+        .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
+        .toBe(undefined);
+    });
+
+    await test.step('Set new conversation name, cancel edit and verify conversation with initial name shown', async () => {
+      const nameInput = await conversations.openEditConversationNameMode(
+        conversation.name,
+        newName,
+      );
+      await nameInput.clickCancelButton();
+      expect
+        .soft(
+          await conversations.getConversationByName(newName).isVisible(),
+          ExpectedMessages.conversationNameNotUpdated,
+        )
+        .toBeFalsy();
+    });
+
+    await test.step('Select "Delete" from conversation menu and verify its name is truncated when menu dots appear', async () => {
+      await conversations.openConversationDropdownMenu(conversationName);
+      await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+      const chatNameOverflow = await conversations
+        .getConversationName(conversationName)
+        .getComputedStyleProperty(Styles.text_overflow);
+      expect
+        .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
+        .toBe(Overflow.ellipsis);
+    });
+  },
+);
+
+test(
+  'Rename chat before starting the conversation.\n' +
+    'Long Chat name is cut. Named manually',
+  async ({
+    dialHomePage,
+    conversations,
+    conversationDropdownMenu,
+    chat,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-584', 'EPMRTC-819');
+    const newName = GeneratorUtil.randomString(70);
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await conversations.openConversationDropdownMenu(
+      ExpectedConstants.newConversationTitle,
+    );
+    await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
+    await conversations.editConversationNameWithTick(
+      ExpectedConstants.newConversationTitle,
+      newName,
+    );
+    expect
+      .soft(
+        await conversations.getConversationByName(newName).isVisible(),
+        ExpectedMessages.conversationNameUpdated,
+      )
+      .toBeTruthy();
+
+    const chatNameOverflow = await conversations
+      .getConversationName(newName)
+      .getComputedStyleProperty(Styles.text_overflow);
+    expect
+      .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
+      .toBe(Overflow.ellipsis);
+
+    await chat.sendRequestWithButton('one more test message');
+    expect
+      .soft(
+        await conversations.getConversationByName(newName).isVisible(),
+        ExpectedMessages.conversationNameUpdated,
+      )
+      .toBeTruthy();
+  },
+);
 
 test(
   'Rename chat after starting the conversation.\n' +
     'Long Chat name is cut in chat header. Named manually.\n' +
-    'Tooltip shows full long chat name in chat header. Named manually',
+    'Tooltip shows full long chat name in chat header. Named manually.\n' +
+    'Long chat name is cut in chat header. Named automatically by the system.\n' +
+    'Tooltip shows full long chat name in chat header. Named automatically by the system',
   async ({
     dialHomePage,
     conversations,
@@ -127,7 +206,13 @@ test(
     setTestIds,
     errorPopup,
   }) => {
-    setTestIds('EPMRTC-585', 'EPMRTC-821', 'EPMRTC-822');
+    setTestIds(
+      'EPMRTC-585',
+      'EPMRTC-821',
+      'EPMRTC-822',
+      'EPMRTC-818',
+      'EPMRTC-820',
+    );
     const newName = GeneratorUtil.randomString(60);
     const conversation = conversationData.prepareDefaultConversation();
     await localStorageManager.setConversationHistory(conversation);
@@ -165,6 +250,15 @@ test(
         ExpectedMessages.headerTitleCorrespondRequest,
       )
       .toBe(newName);
+
+    const isTooltipChatHeaderTitleTruncated =
+      await tooltip.isElementWidthTruncated();
+    expect
+      .soft(
+        isTooltipChatHeaderTitleTruncated,
+        ExpectedMessages.headerTitleIsFullyVisible,
+      )
+      .toBeFalsy();
   },
 );
 
@@ -504,42 +598,64 @@ test('Chat is moved to folder created from Move to', async ({
     .toBe(Colors.highlightedFolderName);
 });
 
-test('Chat is moved to folder from Move to list', async ({
-  dialHomePage,
-  conversations,
-  conversationDropdownMenu,
-  conversationData,
-  localStorageManager,
-  folderConversations,
-  setTestIds,
-}) => {
-  setTestIds('EPMRTC-863');
-  const folderToMoveIn = conversationData.prepareFolder();
-  const conversation = conversationData.prepareDefaultConversation();
-  await localStorageManager.setConversationHistory(conversation);
-  await localStorageManager.setFolders(folderToMoveIn);
-  await localStorageManager.setSelectedConversation(conversation);
+test(
+  'Chat is moved to folder from Move to list.\n' +
+    'Long folder name is cut in Move to menu',
+  async ({
+    dialHomePage,
+    conversations,
+    conversationDropdownMenu,
+    conversationData,
+    localStorageManager,
+    folderConversations,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-863', 'EPMRTC-942');
+    const folderName = GeneratorUtil.randomString(70);
+    let conversation: Conversation;
 
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
-  await folderConversations.expandCollapseFolder(folderToMoveIn.name);
+    await test.step('Prepare conversation and folder with long name to move conversation in', async () => {
+      const folderToMoveIn = conversationData.prepareFolder(folderName);
+      conversation = conversationData.prepareDefaultConversation();
+      await localStorageManager.setConversationHistory(conversation);
+      await localStorageManager.setFolders(folderToMoveIn);
+      await localStorageManager.setSelectedConversation(conversation);
+      await localStorageManager.setOpenedFolders(folderToMoveIn);
+    });
 
-  await conversations.openConversationDropdownMenu(conversation.name);
-  await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
-  await conversationDropdownMenu.selectMenuOption(folderToMoveIn.name);
+    await test.step('Open "Move to" menu option for conversation and verify folder name is truncated', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+      await conversations.openConversationDropdownMenu(conversation.name);
+      await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
 
-  const isFolderConversationVisible =
-    await folderConversations.isFolderConversationVisible(
-      folderToMoveIn.name,
-      conversation.name,
-    );
-  expect
-    .soft(
-      isFolderConversationVisible,
-      ExpectedMessages.conversationMovedToFolder,
-    )
-    .toBeTruthy();
-});
+      const moveToFolder =
+        await conversationDropdownMenu.getMenuOption(folderName);
+      await moveToFolder.waitForState();
+      const moveToFolderOverflow = await moveToFolder.getComputedStyleProperty(
+        Styles.text_overflow,
+      );
+      expect
+        .soft(moveToFolderOverflow[0], ExpectedMessages.folderNameIsTruncated)
+        .toBe(Overflow.ellipsis);
+    });
+
+    await test.step('Select folder name from menu and conversation is moved into folder', async () => {
+      await conversationDropdownMenu.selectMenuOption(folderName);
+      const isFolderConversationVisible =
+        await folderConversations.isFolderConversationVisible(
+          folderName,
+          conversation.name,
+        );
+      expect
+        .soft(
+          isFolderConversationVisible,
+          ExpectedMessages.conversationMovedToFolder,
+        )
+        .toBeTruthy();
+    });
+  },
+);
 
 test('Delete all conversations. Cancel', async ({
   dialHomePage,
@@ -794,10 +910,7 @@ test('Search conversation when no folders', async ({
   setTestIds,
 }) => {
   setTestIds('EPMRTC-1188');
-  const request = 'What is epam official name?';
-  const notMatchingSearchTerm = 'abc';
   const firstSearchTerm = 'EPAM';
-  const secondSearchTerm = 'epam official';
   const specialSymbolsSearchTerm = '@';
 
   await test.step('Prepare conversations with different content', async () => {
@@ -811,7 +924,7 @@ test('Search conversation when no folders', async ({
       conversationData.prepareModelConversationBasedOnRequests(
         gpt4Model,
         ['What is AI?'],
-        'epam official name',
+        matchingConversationName,
       );
     conversationData.resetData();
 
@@ -819,7 +932,7 @@ test('Search conversation when no folders', async ({
       conversationData.prepareModelConversationBasedOnRequests(
         bisonModel,
         [request],
-        'Chat_!@#$%^&*()+=\':",.<>',
+        specialSymbolsName,
       );
 
     await localStorageManager.setConversationHistory(
@@ -863,5 +976,104 @@ test('Search conversation when no folders', async ({
     expect
       .soft(results.length, ExpectedMessages.searchResultCountIsValid)
       .toBe(1);
+  });
+});
+
+test('Search conversation located in folders', async ({
+  dialHomePage,
+  conversationData,
+  localStorageManager,
+  chatBar,
+  folderConversations,
+  setTestIds,
+}) => {
+  setTestIds('EPMRTC-1201');
+
+  let firstFolder: FolderInterface;
+  let secondFolder: FolderInterface;
+  let thirdFolder: FolderInterface;
+
+  await test.step('Prepare conversations in folders with different content', async () => {
+    firstFolder = conversationData.prepareFolder();
+    conversationData.resetData();
+
+    const firstConversation =
+      conversationData.prepareModelConversationBasedOnRequests(gpt35Model, [
+        request,
+      ]);
+    firstConversation.folderId = firstFolder.id;
+    conversationData.resetData();
+
+    const secondConversation = conversationData.prepareDefaultConversation(
+      gpt4Model,
+      matchingConversationName,
+    );
+    secondConversation.folderId = firstFolder.id;
+    conversationData.resetData();
+
+    secondFolder = conversationData.prepareFolder();
+    conversationData.resetData();
+
+    const thirdConversation =
+      conversationData.prepareModelConversationBasedOnRequests(
+        bisonModel,
+        [request],
+        specialSymbolsName,
+      );
+    thirdConversation.folderId = secondFolder.id;
+    conversationData.resetData();
+
+    const fourthConversation =
+      conversationData.prepareDefaultConversation(gpt35Model);
+    fourthConversation.folderId = secondFolder.id;
+    conversationData.resetData();
+
+    thirdFolder = conversationData.prepareFolder();
+
+    await localStorageManager.setConversationHistory(
+      firstConversation,
+      secondConversation,
+      thirdConversation,
+      fourthConversation,
+    );
+    await localStorageManager.setFolders(
+      firstFolder,
+      secondFolder,
+      thirdFolder,
+    );
+  });
+
+  await test.step('Type not matching search term is "Search chat..." field and verify no results found', async () => {
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await chatBar.searchChat.fill(notMatchingSearchTerm);
+    const noResult = await chatBar.noResultFoundIcon.getElementInnerContent();
+    expect
+      .soft(noResult, ExpectedMessages.noResultsFound)
+      .toBe(ExpectedConstants.noResults);
+  });
+
+  await test.step('Clear search field and verify all conversations are displayed', async () => {
+    await chatBar.searchChat.fill('');
+    const results = await folderConversations.getFoldersCount();
+    expect.soft(results, ExpectedMessages.searchResultCountIsValid).toBe(3);
+  });
+
+  await test.step('Search by search term and verify search results are correct, empty folder is not shown', async () => {
+    await chatBar.searchChat.fill(secondSearchTerm);
+    let results = await folderConversations
+      .getFolderConversations(firstFolder.name)
+      .count();
+    results += await folderConversations
+      .getFolderConversations(secondFolder.name)
+      .count();
+    expect.soft(results, ExpectedMessages.searchResultCountIsValid).toBe(3);
+
+    const isEmptyFolderVisible = await folderConversations
+      .getFolderByName(thirdFolder.name)
+      .isVisible();
+    expect
+      .soft(isEmptyFolderVisible, ExpectedMessages.folderIsNotVisible)
+      .toBeFalsy();
   });
 });

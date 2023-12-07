@@ -457,6 +457,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                   highlightedFolders?.includes(currentFolder.id) &&
                   textColor,
               )}
+              data-qa="folder-name"
             >
               {currentFolder.name}
             </div>

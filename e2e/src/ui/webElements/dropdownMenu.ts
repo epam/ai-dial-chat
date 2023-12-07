@@ -16,6 +16,12 @@ export class DropdownMenu extends BaseElement {
   public menuOption = (option: string) =>
     this.menuOptions().getElementLocatorByText(option);
 
+  public getMenuOption(option: string) {
+    return this.createElementFromLocator(
+      this.menuOption(option).locator(Attributes.span),
+    );
+  }
+
   public async selectMenuOption(option: string) {
     await this.menuOption(option).click();
   }
