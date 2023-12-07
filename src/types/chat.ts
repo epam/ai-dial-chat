@@ -1,3 +1,4 @@
+import { Entity } from './common';
 import { MIMEType } from './files';
 import { ShareInterface } from './share';
 
@@ -73,9 +74,7 @@ export interface Share {
   createdDate: Date;
 }
 
-export interface Conversation extends ShareInterface {
-  id: string;
-  name: string;
+export interface Conversation extends ShareInterface, Entity {
   messages: Message[];
   model: ConversationEntityModel;
   prompt: string;

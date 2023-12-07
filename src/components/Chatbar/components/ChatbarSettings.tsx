@@ -36,9 +36,6 @@ export const ChatbarSettings = () => {
 
   const dispatch = useAppDispatch();
 
-  const conversations = useAppSelector(
-    ConversationsSelectors.selectConversations,
-  );
   const isStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -65,12 +62,11 @@ export const ChatbarSettings = () => {
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Delete all conversations'),
-        display: conversations.length > 0,
-        dataQa: 'delete-conversations',
-        Icon: IconTrashX,
+        name: t('Create new folder'),
+        dataQa: 'create-folder',
+        Icon: FolderPlus,
         onClick: () => {
-          setIsClearModalOpen(true);
+          dispatch(ConversationsActions.createFolder());
         },
       },
       {
@@ -93,13 +89,11 @@ export const ChatbarSettings = () => {
         },
       },
       {
-        name: t('Create new folder'),
-        dataQa: 'create-folder',
-        Icon: FolderPlus,
+        name: t('Delete all conversations'),
+        dataQa: 'delete-conversations',
+        Icon: IconTrashX,
         onClick: () => {
-          dispatch(
-            ConversationsActions.createFolder({ name: t('New folder') }),
-          );
+          setIsClearModalOpen(true);
         },
       },
       {
@@ -122,14 +116,7 @@ export const ChatbarSettings = () => {
         },
       },
     ],
-    [
-      conversations,
-      dispatch,
-      enabledFeatures,
-      handleToggleCompare,
-      isStreaming,
-      t,
-    ],
+    [dispatch, enabledFeatures, handleToggleCompare, isStreaming, t],
   );
 
   return (

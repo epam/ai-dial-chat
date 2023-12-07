@@ -1,4 +1,4 @@
-import { HighlightColor } from '@/src/types/common';
+import { Entity, HighlightColor } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 
 export const getFoldersDepth = (
@@ -104,3 +104,26 @@ export function getByHighlightColor(
       return defaultColor || '';
   }
 }
+
+export const getNextDefaultName = (
+  defaultName: string,
+  entities: Entity[],
+  index = 0,
+) => {
+  const prefix = `${defaultName} `;
+  const regex = new RegExp(`^${prefix}(\\d+)$`);
+
+  if (!entities.length) {
+    return `${prefix}${1 + index}`;
+  }
+
+  const numeredEntities = entities
+    .filter((entity) => entity.name.match(regex))
+    .map((entity) => entity.name.replace(prefix, '').trim())
+    .sort()
+    .reverse(); // max number
+
+  return `${prefix}${
+    (numeredEntities.length ? parseInt(numeredEntities[0]) + 1 : 1) + index
+  }`;
+};
