@@ -29,7 +29,7 @@ export function PromptbarSettings() {
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
 
   const dispatch = useAppDispatch();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const folders = useAppSelector(PromptsSelectors.selectFolders);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
@@ -39,7 +39,7 @@ export function PromptbarSettings() {
         dataQa: 'create-prompt-folder',
         Icon: FolderPlus,
         onClick: () => {
-          dispatch(PromptsActions.createFolder({ name: t('New folder') }));
+          dispatch(PromptsActions.createFolder());
         },
       },
       {
@@ -68,7 +68,7 @@ export function PromptbarSettings() {
         dataQa: 'delete-prompts',
         Icon: IconTrashX,
         onClick: () => {
-          setIsOpen(true);
+          setIsClearModalOpen(true);
         },
       },
     ],
@@ -83,7 +83,7 @@ export function PromptbarSettings() {
       />
 
       <ConfirmDialog
-        isOpen={isOpen}
+        isOpen={isClearModalOpen}
         heading={t('Confirm clearing all prompts')}
         description={
           t('Are you sure that you want to delete all prompts?') || ''
@@ -91,7 +91,7 @@ export function PromptbarSettings() {
         confirmLabel={t('Clear')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
-          setIsOpen(false);
+          setIsClearModalOpen(false);
           if (result) {
             dispatch(PromptsActions.clearPrompts());
           }

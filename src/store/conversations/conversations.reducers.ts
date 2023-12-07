@@ -1,5 +1,8 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { getNextDefaultName } from '@/src/utils/app/folders';
+import { translate } from '@/src/utils/app/translation';
+
 import { SearchFilters } from './../../types/search';
 import {
   Conversation,
@@ -11,6 +14,7 @@ import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 
 import {
+  DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-settings';
@@ -70,10 +74,17 @@ export const conversationsSlice = createSlice({
       }>,
     ) => {
       const newConversations: Conversation[] = payload.names.map(
-        (name): Conversation => {
+        (name, index): Conversation => {
           return {
             id: uuidv4(),
-            name,
+            name:
+              name !== DEFAULT_CONVERSATION_NAME
+                ? name
+                : getNextDefaultName(
+                    DEFAULT_CONVERSATION_NAME,
+                    state.conversations,
+                    index,
+                  ),
             messages: [],
             model: {
               id: payload.model.id,
@@ -217,11 +228,15 @@ export const conversationsSlice = createSlice({
     },
     createFolder: (
       state,
-      { payload }: PayloadAction<{ name: string; folderId?: string }>,
+      {
+        payload,
+      }: PayloadAction<{ name?: string; folderId?: string } | undefined>,
     ) => {
       const newFolder: FolderInterface = {
-        id: payload.folderId || uuidv4(),
-        name: payload.name,
+        id: payload?.folderId || uuidv4(),
+        name:
+          payload?.name ?? // custom name
+          getNextDefaultName(translate('New folder'), state.folders), // default name with counter
         type: FolderType.Chat,
       };
 
