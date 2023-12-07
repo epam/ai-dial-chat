@@ -66,9 +66,7 @@ export const ChatbarSettings = () => {
         dataQa: 'create-folder',
         Icon: FolderPlus,
         onClick: () => {
-          dispatch(
-            ConversationsActions.createFolder({ name: t('New folder') }),
-          );
+          dispatch(ConversationsActions.createFolder());
         },
       },
       {

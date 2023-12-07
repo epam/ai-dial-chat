@@ -17,3 +17,8 @@ export enum HighlightColor {
 }
 
 export type EntityFilter<T> = (item: T) => boolean;
+
+export interface Entity {
+  id: string;
+  name: string;
+}
