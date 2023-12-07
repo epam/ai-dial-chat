@@ -39,9 +39,9 @@ export class Conversations extends BaseElement {
     if (!this.conversationInput) {
       this.conversationInput = new Input(
         this.page,
-        `${ChatBarSelectors.conversation} >> ${SideBarSelectors.renameInput(
-          name,
-        )}`,
+        `${
+          ChatBarSelectors.conversation
+        } >> ${SideBarSelectors.renameDefaultNameInput(name)}`,
       );
     }
     return this.conversationInput;
