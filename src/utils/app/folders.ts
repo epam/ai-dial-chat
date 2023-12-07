@@ -1,4 +1,4 @@
-import { HighlightColor } from '@/src/types/common';
+import { Entity, HighlightColor } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 
 export const getFoldersDepth = (
