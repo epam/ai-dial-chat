@@ -425,7 +425,7 @@ test(
       await dialHomePage.waitForPageLoaded();
       await compare.waitForComparedConversationsLoaded();
       const requestsData = await chat.sendRequestInCompareMode(
-        'test message',
+        'how are you?',
         {
           rightEntity: firstConversation.model.id,
           leftEntity: secondConversation.model.id,

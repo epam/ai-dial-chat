@@ -54,10 +54,8 @@ export class ChatMessages extends BaseElement {
     return loadingCursorCount > 0;
   }
 
-  public getChatMessage(message: string, index?: number) {
-    return index
-      ? this.chatMessages.getElementLocatorByText(message).nth(index - 1)
-      : this.chatMessages.getElementLocatorByText(message).last();
+  public getChatMessage(message: string) {
+    return this.chatMessages.getElementLocatorByText(message);
   }
 
   public getChatMessageRate(message: string, rate: Rate) {
