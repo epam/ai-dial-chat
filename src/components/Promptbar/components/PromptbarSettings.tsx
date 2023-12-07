@@ -12,9 +12,8 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppDispatch } from '@/src/store/hooks';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import SidebarMenu from '@/src/components/Common/SidebarMenu';
@@ -31,9 +30,6 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
   const { t } = useTranslation(Translation.PromptBar);
   const dispatch = useAppDispatch();
   const [isOpen, setIsOpen] = useState(false);
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
-  );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -70,11 +66,11 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
         dataQa: 'create-prompt-folder',
         Icon: FolderPlus,
         onClick: () => {
-          dispatch(PromptsActions.createFolder({ name: t('New folder') }));
+          dispatch(PromptsActions.createFolder());
         },
       },
     ],
-    [allPrompts, dispatch, enabledFeatures, t],
+    [allPrompts, dispatch, t],
   );
 
   return (
