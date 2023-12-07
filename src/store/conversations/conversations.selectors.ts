@@ -36,6 +36,7 @@ export const selectFilteredConversations = createSelector(
       (conversation) =>
         (!searchTerm ||
           doesConversationContainSearchTerm(conversation, searchTerm)) &&
+        filters.itemFilter(conversation) &&
         (conversation.folderId || filters.rootFilter(conversation)),
     );
   },

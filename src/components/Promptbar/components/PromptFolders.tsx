@@ -256,6 +256,7 @@ export function PromptFolders() {
   const isFilterEmpty = useAppSelector(
     PromptsSelectors.selectIsEmptySearchFilter,
   );
+  const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const commonItemFilter = useAppSelector(
     PromptsSelectors.selectMyItemsFilters,
   );
@@ -272,6 +273,7 @@ export function PromptFolders() {
           filters: SharedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'share-with-me',
+          openByDefault: !!searchTerm.length,
         },
         {
           name: t('Pinned prompts'),
@@ -281,7 +283,7 @@ export function PromptFolders() {
           dataQa: 'pinned-prompts',
         },
       ].filter(({ hidden }) => !hidden),
-    [commonItemFilter, isFilterEmpty, isSharingEnabled, t],
+    [commonItemFilter, isFilterEmpty, isSharingEnabled, searchTerm.length, t],
   );
 
   return (
