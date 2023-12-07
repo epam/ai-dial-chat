@@ -3,7 +3,6 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { translate } from '@/src/utils/app/translation';
 
-import { SearchFilters } from './../../types/search';
 import {
   Conversation,
   ConversationEntityModel,
@@ -12,6 +11,7 @@ import {
 } from '@/src/types/chat';
 import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
+import { SearchFilters } from '@/src/types/search';
 
 import {
   DEFAULT_CONVERSATION_NAME,

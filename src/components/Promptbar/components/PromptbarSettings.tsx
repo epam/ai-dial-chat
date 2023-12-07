@@ -27,20 +27,19 @@ export function PromptbarSettings() {
   const { t } = useTranslation(Translation.PromptBar);
 
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
-  const folders = useAppSelector(PromptsSelectors.selectFolders);
 
   const dispatch = useAppDispatch();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const folders = useAppSelector(PromptsSelectors.selectFolders);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Delete all'),
-        display: allPrompts.length > 0 || folders.length > 0,
-        dataQa: 'delete-prompts',
-        Icon: IconTrashX,
+        name: t('Create new folder'),
+        dataQa: 'create-prompt-folder',
+        Icon: FolderPlus,
         onClick: () => {
-          setIsOpen(true);
+          dispatch(PromptsActions.createFolder());
         },
       },
       {
@@ -55,6 +54,7 @@ export function PromptbarSettings() {
         CustomTriggerRenderer: Import,
       },
       {
+        display: allPrompts.length > 0 || folders.length > 0,
         name: t('Export prompts'),
         dataQa: 'export-prompts',
         Icon: IconFileArrowRight,
@@ -63,11 +63,12 @@ export function PromptbarSettings() {
         },
       },
       {
-        name: t('Create new folder'),
-        dataQa: 'create-prompt-folder',
-        Icon: FolderPlus,
+        name: t('Delete all'),
+        display: allPrompts.length > 0 || folders.length > 0,
+        dataQa: 'delete-prompts',
+        Icon: IconTrashX,
         onClick: () => {
-          dispatch(PromptsActions.createFolder());
+          setIsClearModalOpen(true);
         },
       },
     ],
@@ -82,7 +83,7 @@ export function PromptbarSettings() {
       />
 
       <ConfirmDialog
-        isOpen={isOpen}
+        isOpen={isClearModalOpen}
         heading={t('Confirm clearing all prompts')}
         description={
           t('Are you sure that you want to delete all prompts?') || ''
@@ -90,7 +91,7 @@ export function PromptbarSettings() {
         confirmLabel={t('Clear')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
-          setIsOpen(false);
+          setIsClearModalOpen(false);
           if (result) {
             dispatch(PromptsActions.clearPrompts());
           }
