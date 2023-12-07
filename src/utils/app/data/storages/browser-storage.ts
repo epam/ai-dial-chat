@@ -6,25 +6,12 @@ import { Observable, map, of, switchMap, throwError } from 'rxjs';
 import { Conversation } from '@/src/types/chat';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
-import { DialStorage } from '@/src/types/storage';
+import { DialStorage, UIStorageKeys } from '@/src/types/storage';
 
 import { errorsMessages } from '@/src/constants/errors';
 
 import { cleanConversationHistory } from '../../clean';
 import { isLocalStorageEnabled } from '../storage';
-
-type UIStorageKeys =
-  | 'prompts'
-  | 'conversationHistory'
-  | 'folders'
-  | 'selectedConversationIds'
-  | 'recentModelsIds'
-  | 'recentAddonsIds'
-  | 'settings'
-  | 'showChatbar'
-  | 'showPromptbar'
-  | 'openedFoldersIds'
-  | 'textOfClosedAnnouncement';
 
 export class BrowserStorage implements DialStorage {
   private static storage: globalThis.Storage | undefined;
@@ -38,25 +25,28 @@ export class BrowserStorage implements DialStorage {
   }
 
   getConversations(): Observable<Conversation[]> {
-    return BrowserStorage.getData('conversationHistory', []).pipe(
+    return BrowserStorage.getData(UIStorageKeys.ConversationHistory, []).pipe(
       map((conversations) => cleanConversationHistory(conversations)),
     );
   }
 
   setConversations(conversations: Conversation[]): Observable<void> {
-    return BrowserStorage.setData('conversationHistory', conversations);
+    return BrowserStorage.setData(
+      UIStorageKeys.ConversationHistory,
+      conversations,
+    );
   }
 
   getPrompts(): Observable<Prompt[]> {
-    return BrowserStorage.getData('prompts', []);
+    return BrowserStorage.getData(UIStorageKeys.Prompts, []);
   }
 
   setPrompts(prompts: Prompt[]): Observable<void> {
-    return BrowserStorage.setData('prompts', prompts);
+    return BrowserStorage.setData(UIStorageKeys.Prompts, prompts);
   }
 
   getConversationsFolders() {
-    return BrowserStorage.getData('folders', []).pipe(
+    return BrowserStorage.getData(UIStorageKeys.Folders, []).pipe(
       map((folders: FolderInterface[]) => {
         return folders.filter((folder) => folder.type === 'chat');
       }),
@@ -64,7 +54,7 @@ export class BrowserStorage implements DialStorage {
   }
 
   getPromptsFolders() {
-    return BrowserStorage.getData('folders', []).pipe(
+    return BrowserStorage.getData(UIStorageKeys.Folders, []).pipe(
       map((folders: FolderInterface[]) => {
         return folders.filter((folder) => folder.type === 'prompt');
       }),
@@ -74,25 +64,29 @@ export class BrowserStorage implements DialStorage {
   setConversationsFolders(
     conversationFolders: FolderInterface[],
   ): Observable<void> {
-    return BrowserStorage.getData('folders', []).pipe(
+    return BrowserStorage.getData(UIStorageKeys.Folders, []).pipe(
       map((items: FolderInterface[]) =>
         items.filter((item) => item.type !== 'chat'),
       ),
       map((promptsFolders: FolderInterface[]) => {
         return promptsFolders.concat(conversationFolders);
       }),
-      switchMap((folders) => BrowserStorage.setData('folders', folders)),
+      switchMap((folders) =>
+        BrowserStorage.setData(UIStorageKeys.Folders, folders),
+      ),
     );
   }
   setPromptsFolders(promptsFolders: FolderInterface[]): Observable<void> {
-    return BrowserStorage.getData('folders', []).pipe(
+    return BrowserStorage.getData(UIStorageKeys.Folders, []).pipe(
       map((items: FolderInterface[]) =>
         items.filter((item) => item.type !== 'prompt'),
       ),
       map((convFolders: FolderInterface[]) => {
         return convFolders.concat(promptsFolders);
       }),
-      switchMap((folders) => BrowserStorage.setData('folders', folders)),
+      switchMap((folders) =>
+        BrowserStorage.setData(UIStorageKeys.Folders, folders),
+      ),
     );
   }
 

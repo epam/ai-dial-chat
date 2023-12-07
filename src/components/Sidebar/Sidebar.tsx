@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useRef, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -8,9 +8,20 @@ import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+
+import {
+  HEADER_HEIGHT,
+  SIDEBAR_MIN_WIDTH,
+} from '@/src/constants/default-ui-settings';
+
 import { NoData } from '../Common/NoData';
 import { NoResultsFound } from '../Common/NoResultsFound';
 import Search from '../Search';
+import { LeftSideResizeIcon, RightSideResizeIcon } from './ResizeIcons';
+
+import { Resizable, ResizableProps } from 're-resizable';
 
 interface Props<T> {
   isOpen: boolean;
@@ -46,8 +57,26 @@ const Sidebar = <T,>({
 }: Props<T>) => {
   const { t } = useTranslation(Translation.PromptBar);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const dragDropElement = useRef<HTMLDivElement>(null);
-  const draggingColor = side === 'left' ? 'bg-green/15' : 'bg-violet/15';
+  const sideBarElementRef = useRef<Resizable>(null);
+  const dispatch = useAppDispatch();
+  const chatbarWidth = useAppSelector(UISelectors.selectChatbarWidth);
+  const promptbarWidth = useAppSelector(UISelectors.selectPromptbarWidth);
+
+  const isLeftSidebar = side === 'left';
+  const isRightSidebar = side === 'right';
+  const draggingColor = isLeftSidebar ? 'bg-green/15' : 'bg-violet/15';
+  const resizeTriggerColor = isLeftSidebar
+    ? 'bg-green text-green'
+    : 'bg-violet text-violet';
+
+  const SIDEBAR_DEFAULT_WIDTH = useMemo(
+    () => (isLeftSidebar ? chatbarWidth : promptbarWidth),
+    [isLeftSidebar, chatbarWidth, promptbarWidth],
+  );
+  const SIDEBAR_HEIGHT = `calc(100%-${HEADER_HEIGHT}px)`;
+
   const allowDrop = useCallback((e: any) => {
     e.preventDefault();
   }, []);
@@ -71,12 +100,86 @@ const Sidebar = <T,>({
     }
   }, []);
 
+  const onResizeStart = useCallback(() => {
+    setIsResizing(true);
+  }, []);
+
+  const onResizeStop = useCallback(() => {
+    setIsResizing(false);
+    const resizibleWidth =
+      sideBarElementRef.current?.resizable?.getClientRects()[0].width &&
+      Math.round(
+        sideBarElementRef.current?.resizable?.getClientRects()[0].width,
+      );
+
+    const width = resizibleWidth ?? SIDEBAR_MIN_WIDTH;
+
+    if (isLeftSidebar) {
+      dispatch(UIActions.setChatbarWidth(width));
+    }
+
+    if (isRightSidebar) {
+      dispatch(UIActions.setPromptbarWidth(width));
+    }
+  }, [dispatch, isLeftSidebar, isRightSidebar]);
+
+  const resizeTriggerClassName = classNames(
+    'invisible h-full w-[2px] group-hover:visible md:visible',
+    resizeTriggerColor,
+    isResizing ? 'xl:visible' : 'xl:invisible',
+  );
+
+  const resizeSettings: ResizableProps = useMemo(() => {
+    return {
+      defaultSize: {
+        width: SIDEBAR_DEFAULT_WIDTH ?? SIDEBAR_MIN_WIDTH,
+        height: SIDEBAR_HEIGHT,
+      },
+      enable: {
+        top: false,
+        right: isLeftSidebar,
+        bottom: false,
+        left: isRightSidebar,
+        topRight: false,
+        bottomRight: false,
+        bottomLeft: false,
+        topLeft: false,
+      },
+      handleClasses: {
+        right: 'group invisible md:visible',
+        left: 'group invisible md:visible',
+      },
+      handleStyles: { right: { right: '-10px' }, left: { left: '0px' } },
+      handleComponent: {
+        left: <LeftSideResizeIcon className={resizeTriggerClassName} />,
+        right: <RightSideResizeIcon className={resizeTriggerClassName} />,
+      },
+      onResizeStart: onResizeStart,
+      onResizeStop: onResizeStop,
+    };
+  }, [
+    onResizeStart,
+    onResizeStop,
+    resizeTriggerClassName,
+    isLeftSidebar,
+    isRightSidebar,
+    SIDEBAR_HEIGHT,
+    SIDEBAR_DEFAULT_WIDTH,
+  ]);
+
+  const sideBarMinWidthClass = `min-w-[${SIDEBAR_MIN_WIDTH}px]`;
+  const sideBarHeightClass = `h-[${SIDEBAR_HEIGHT}]`;
+
+  const sideBarClassName = classNames(
+    `group/sidebar !fixed top-12 z-40 flex ${sideBarHeightClass} ${sideBarMinWidthClass} flex-none shrink-0 select-none flex-col divide-y divide-gray-300 border-r border-gray-300 bg-gray-100 transition-all dark:divide-gray-900 dark:border-gray-900 dark:bg-gray-700 md:max-w-[45%]  xl:!relative xl:top-0 xl:h-full`,
+    side === 'left' ? 'left-0' : 'right-0',
+  );
+
   return isOpen ? (
-    <div
-      className={classNames(
-        `group/sidebar fixed top-12 z-40 flex h-[calc(100%-48px)] w-[260px] flex-none shrink-0 flex-col divide-y divide-gray-300 border-r border-gray-300 bg-gray-100 transition-all dark:divide-gray-900 dark:border-gray-900 dark:bg-gray-700  xl:relative xl:top-0 xl:h-full`,
-        side === 'left' ? `left-0` : 'right-0',
-      )}
+    <Resizable
+      ref={sideBarElementRef}
+      {...resizeSettings}
+      className={sideBarClassName}
       data-qa="sidebar"
     >
       <Search
@@ -118,7 +221,7 @@ const Sidebar = <T,>({
         )}
       </div>
       {footerComponent}
-    </div>
+    </Resizable>
   ) : null;
 };
 
