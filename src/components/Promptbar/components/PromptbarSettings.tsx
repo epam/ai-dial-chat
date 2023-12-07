@@ -16,7 +16,6 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import SidebarMenu from '@/src/components/Common/SidebarMenu';
@@ -31,19 +30,16 @@ export function PromptbarSettings() {
 
   const dispatch = useAppDispatch();
   const [isOpen, setIsOpen] = useState(false);
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
-  );
+  const folders = useAppSelector(PromptsSelectors.selectFolders);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Delete all prompts'),
-        display: allPrompts.length > 0,
-        dataQa: 'delete-prompts',
-        Icon: IconTrashX,
+        name: t('Create new folder'),
+        dataQa: 'create-prompt-folder',
+        Icon: FolderPlus,
         onClick: () => {
-          setIsOpen(true);
+          dispatch(PromptsActions.createFolder({ name: t('New folder') }));
         },
       },
       {
@@ -58,6 +54,7 @@ export function PromptbarSettings() {
         CustomTriggerRenderer: Import,
       },
       {
+        display: allPrompts.length > 0 || folders.length > 0,
         name: t('Export prompts'),
         dataQa: 'export-prompts',
         Icon: IconFileArrowRight,
@@ -66,15 +63,16 @@ export function PromptbarSettings() {
         },
       },
       {
-        name: t('Create new folder'),
-        dataQa: 'create-prompt-folder',
-        Icon: FolderPlus,
+        name: t('Delete all'),
+        display: allPrompts.length > 0 || folders.length > 0,
+        dataQa: 'delete-prompts',
+        Icon: IconTrashX,
         onClick: () => {
-          dispatch(PromptsActions.createFolder({ name: t('New folder') }));
+          setIsOpen(true);
         },
       },
     ],
-    [allPrompts, dispatch, enabledFeatures, t],
+    [allPrompts.length, dispatch, folders.length, t],
   );
 
   return (
