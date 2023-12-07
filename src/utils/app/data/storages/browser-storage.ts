@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { Observable, map, of, switchMap, throwError } from 'rxjs';
 
 import { Conversation } from '@/src/types/chat';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { DialStorage, UIStorageKeys } from '@/src/types/storage';
 
@@ -48,7 +48,7 @@ export class BrowserStorage implements DialStorage {
   getConversationsFolders() {
     return BrowserStorage.getData(UIStorageKeys.Folders, []).pipe(
       map((folders: FolderInterface[]) => {
-        return folders.filter((folder) => folder.type === 'chat');
+        return folders.filter((folder) => folder.type === FolderType.Chat);
       }),
     );
   }
@@ -56,7 +56,7 @@ export class BrowserStorage implements DialStorage {
   getPromptsFolders() {
     return BrowserStorage.getData(UIStorageKeys.Folders, []).pipe(
       map((folders: FolderInterface[]) => {
-        return folders.filter((folder) => folder.type === 'prompt');
+        return folders.filter((folder) => folder.type === FolderType.Prompt);
       }),
     );
   }
@@ -66,7 +66,7 @@ export class BrowserStorage implements DialStorage {
   ): Observable<void> {
     return BrowserStorage.getData(UIStorageKeys.Folders, []).pipe(
       map((items: FolderInterface[]) =>
-        items.filter((item) => item.type !== 'chat'),
+        items.filter((item) => item.type !== FolderType.Chat),
       ),
       map((promptsFolders: FolderInterface[]) => {
         return promptsFolders.concat(conversationFolders);
@@ -79,7 +79,7 @@ export class BrowserStorage implements DialStorage {
   setPromptsFolders(promptsFolders: FolderInterface[]): Observable<void> {
     return BrowserStorage.getData(UIStorageKeys.Folders, []).pipe(
       map((items: FolderInterface[]) =>
-        items.filter((item) => item.type !== 'prompt'),
+        items.filter((item) => item.type !== FolderType.Prompt),
       ),
       map((convFolders: FolderInterface[]) => {
         return convFolders.concat(promptsFolders);

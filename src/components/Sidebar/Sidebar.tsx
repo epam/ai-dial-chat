@@ -189,9 +189,7 @@ const Sidebar = <T,>({
       />
       {actionButtons}
       <div className="flex grow flex-col gap-[1px] divide-y divide-gray-300 overflow-y-auto dark:divide-gray-900">
-        {folders?.length > 0 && (
-          <div className="flex py-1 pl-1.5 pr-0.5">{folderComponent}</div>
-        )}
+        {folders?.length > 0 && folderComponent}
 
         {filteredItems?.length > 0 ? (
           <div

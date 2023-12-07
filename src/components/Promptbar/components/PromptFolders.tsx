@@ -1,10 +1,13 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import classNames from 'classnames';
+import { useTranslation } from 'next-i18next';
 
-import { HighlightColor } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
+import { PinnedItemsFilter, SharedWithMeFilter } from '@/src/utils/app/search';
+
+import { EntityFilter, HighlightColor } from '@/src/types/common';
+import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -15,6 +18,7 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Folder from '@/src/components/Folder';
 
+import CollapsableSection from '../../Common/CollapsableSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { PromptComponent } from './Prompt';
 
@@ -22,16 +26,24 @@ interface promptFolderProps {
   folder: FolderInterface;
   index: number;
   isLast: boolean;
+  itemFilter: EntityFilter<Prompt>;
 }
 
-const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
+const PromptFolderTemplate = ({
+  folder,
+  index,
+  isLast,
+  itemFilter,
+}: promptFolderProps) => {
   const dispatch = useAppDispatch();
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const highlightedFolders = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
-  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
+  const prompts = useAppSelector((state) =>
+    PromptsSelectors.selectFilteredPrompts(state, itemFilter, searchTerm),
+  );
   const conversationFolders = useAppSelector(PromptsSelectors.selectFolders);
   const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
 
@@ -141,28 +153,120 @@ const PromptFolderTemplate = ({ folder, index, isLast }: promptFolderProps) => {
   );
 };
 
-export const PromptFolders = () => {
-  const folders = useAppSelector(PromptsSelectors.selectFolders);
+export const PromptSection = ({
+  name,
+  itemFilter,
+  hideIfEmpty = true,
+  displayRootFiles,
+  showEmptyFolders = false,
+  openByDefault = false,
+  dataQa,
+}: FolderSectionProps<Prompt>) => {
+  const { t } = useTranslation(Translation.PromptBar);
+  const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
+  const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
+  const folders = useAppSelector((state) =>
+    PromptsSelectors.selectFilteredFolders(
+      state,
+      itemFilter,
+      searchTerm,
+      showEmptyFolders,
+    ),
+  );
+  const prompts = useAppSelector((state) =>
+    PromptsSelectors.selectFilteredPrompts(state, itemFilter, searchTerm),
+  );
+
+  const rootfolders = useMemo(
+    () => folders.filter(({ folderId }) => !folderId),
+    [folders],
+  );
+
+  const rootPrompts = useMemo(
+    () => prompts.filter(({ folderId }) => !folderId),
+    [prompts],
+  );
+
+  const selectedFoldersIds = useAppSelector(
+    PromptsSelectors.selectSelectedPromptFoldersIds,
+  );
+
+  const selectSelectedPromptId = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
+  );
+
+  useEffect(() => {
+    const shouldBeHighlighted =
+      rootfolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
+      (!!displayRootFiles &&
+        rootPrompts.some(({ id }) => selectSelectedPromptId === id));
+    if (isSectionHighlighted !== shouldBeHighlighted) {
+      setIsSectionHighlighted(shouldBeHighlighted);
+    }
+  }, [
+    displayRootFiles,
+    rootfolders,
+    isSectionHighlighted,
+    selectSelectedPromptId,
+    selectedFoldersIds,
+    rootPrompts,
+  ]);
+
+  if (hideIfEmpty && !prompts.length && !folders.length) return null;
 
   return (
-    <div
-      className={classNames('flex w-full flex-col')}
-      data-qa="prompt-folders"
+    <CollapsableSection
+      name={t(name)}
+      openByDefault={openByDefault}
+      dataQa={dataQa}
+      isHighlighted={isSectionHighlighted}
     >
-      {folders.map((folder, index, arr) => {
-        if (!folder.folderId) {
-          return (
-            <PromptFolderTemplate
-              key={folder.id}
-              folder={folder}
-              index={index}
-              isLast={index === arr.length - 1}
-            />
-          );
-        }
-
-        return null;
-      })}
-    </div>
+      <div>
+        {rootfolders.map((folder, index, arr) => (
+          <PromptFolderTemplate
+            key={folder.id}
+            folder={folder}
+            index={index}
+            isLast={index === arr.length - 1}
+            itemFilter={itemFilter}
+          />
+        ))}
+      </div>
+      <div>
+        {displayRootFiles &&
+          rootPrompts.map((item) => (
+            <PromptComponent key={item.id} item={item} />
+          ))}
+      </div>
+    </CollapsableSection>
   );
 };
+
+const folderItems: FolderSectionProps<Prompt>[] = [
+  {
+    name: 'Share With Me',
+    itemFilter: SharedWithMeFilter,
+    displayRootFiles: true,
+    dataQa: 'share-with-me',
+  },
+  {
+    name: 'Pinned prompts',
+    itemFilter: PinnedItemsFilter,
+    showEmptyFolders: true,
+    openByDefault: true,
+    dataQa: 'pinned-prompts',
+  },
+];
+
+export function PromptFolders() {
+  return (
+    <div
+      className="flex w-full flex-col gap-0.5 divide-y divide-gray-200 dark:divide-gray-800"
+      data-qa="prompt-folders"
+    >
+      {folderItems.map((itemProps) => (
+        <PromptSection key={itemProps.name} {...itemProps} />
+      ))}
+    </div>
+  );
+}

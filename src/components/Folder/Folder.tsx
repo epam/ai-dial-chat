@@ -1,5 +1,5 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconCaretRightFilled, IconFolder } from '@tabler/icons-react';
+import { IconFolder } from '@tabler/icons-react';
 import {
   DragEvent,
   FC,
@@ -22,6 +22,7 @@ import classNames from 'classnames';
 import useOutsideAlerter from '@/src/hooks/useOutsideAlerter';
 
 import { getByHighlightColor, getFoldersDepth } from '@/src/utils/app/folders';
+import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
 import { HighlightColor } from '@/src/types/common';
@@ -36,6 +37,7 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { emptyImage } from '@/src/constants/drag-and-drop';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
+import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
 import XmarkIcon from '../../../public/images/icons/xmark.svg';
@@ -44,27 +46,12 @@ import { FolderContextMenu } from '../Common/FolderContextMenu';
 import { Spinner } from '../Common/Spinner';
 import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
 
-interface CaretIconComponentProps {
-  isOpen: boolean;
-}
-
-const CaretIconComponent = ({ isOpen }: CaretIconComponentProps) => {
-  return (
-    <IconCaretRightFilled
-      className={classNames(
-        'invisible text-gray-500 transition-all group-hover/modal:[visibility:inherit] group-hover/sidebar:[visibility:inherit]',
-        isOpen && 'rotate-90',
-      )}
-      size={10}
-    />
-  );
-};
-
 interface Props<T, P = unknown> {
   currentFolder: FolderInterface;
   itemComponent?: FC<{
     item: T;
     level: number;
+    readonly?: boolean;
     additionalItemData?: Record<string, unknown>;
     onEvent?: (eventId: string, data: P) => void;
   }>;
@@ -92,6 +79,7 @@ interface Props<T, P = unknown> {
   onClickFolder: (folderId: string) => void;
 
   onItemEvent?: (eventId: string, data: unknown) => void;
+  readonly?: boolean;
 }
 
 const Folder = <T extends Conversation | Prompt | DialFile>({
@@ -116,6 +104,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   onClickFolder,
   onAddFolder,
   onItemEvent,
+
+  readonly = false,
 }: Props<T>) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -140,8 +130,14 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     return allFolders.filter((folder) => folder.folderId === currentFolder.id);
   }, [currentFolder, allFolders]);
   const filteredChildItems = useMemo(() => {
-    return allItems?.filter((item) => item.folderId === currentFolder.id) || [];
-  }, [currentFolder, allItems]);
+    return (
+      allItems?.filter(
+        (item) =>
+          item.folderId === currentFolder.id &&
+          doesEntityContainSearchItem(item, searchTerm),
+      ) || []
+    );
+  }, [allItems, currentFolder.id, searchTerm]);
   const hasChildElements = useMemo(() => {
     return filteredChildFolders.length > 0 || filteredChildItems.length > 0;
   }, [filteredChildFolders.length, filteredChildItems.length]);
@@ -316,7 +312,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   );
 
   const handleDragStart = useCallback(
-    (e: DragEvent<HTMLButtonElement>, folder: FolderInterface) => {
+    (e: DragEvent<HTMLDivElement>, folder: FolderInterface) => {
       if (e.dataTransfer) {
         e.dataTransfer.setDragImage(dragImageRef.current || new Image(), 0, 0);
         e.dataTransfer.setData('folder', JSON.stringify(folder));
@@ -404,15 +400,10 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
               paddingLeft: `${level * 1.5}rem`,
             }}
           >
-            <span
-              className={classNames(
-                hasChildElements || displayCaretAlways
-                  ? 'visible'
-                  : 'invisible',
-              )}
-            >
-              <CaretIconComponent isOpen={isFolderOpened} />
-            </span>
+            <CaretIconComponent
+              isOpen={isFolderOpened}
+              hidden={!hasChildElements && !displayCaretAlways}
+            />
 
             {loadingFolderId === currentFolder.id ? (
               <Spinner />
@@ -430,7 +421,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             />
           </div>
         ) : (
-          <button
+          <div
             className={classNames(
               `group/button flex h-full w-full cursor-pointer items-center gap-1 py-2 pr-3`,
             )}
@@ -448,22 +439,16 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
               e.preventDefault();
             }}
           >
-            <span
-              className={classNames(
-                hasChildElements || displayCaretAlways
-                  ? 'visible'
-                  : 'invisible',
-              )}
-            >
-              <CaretIconComponent isOpen={isFolderOpened} />
-            </span>
+            <CaretIconComponent
+              isOpen={isFolderOpened}
+              hidden={!hasChildElements && !displayCaretAlways}
+            />
 
             {loadingFolderId === currentFolder.id ? (
               <Spinner className="mr-1" />
             ) : (
               <IconFolder size={18} className="mr-1 text-gray-500" />
             )}
-
             <div
               className={classNames(
                 `relative max-h-5 flex-1 truncate break-all text-left`,
@@ -475,8 +460,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             >
               {currentFolder.name}
             </div>
-
             {(onDeleteFolder || onRenameFolder || onAddFolder) &&
+              !readonly &&
               !isRenaming && (
                 <div
                   ref={refs.setFloating}
@@ -501,7 +486,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                   />
                 </div>
               )}
-          </button>
+          </div>
         )}
         {isRenaming && (
           <div className="absolute right-1 z-10 flex">
@@ -557,6 +542,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       />
                     )}
                     <Folder
+                      readonly={readonly}
                       level={level + 1}
                       searchTerm={searchTerm}
                       currentFolder={item}
@@ -602,6 +588,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 {createElement(itemComponent, {
                   item,
                   level: level + 1,
+                  readonly,
                   additionalItemData,
                   ...(!!onItemEvent && { onEvent: onItemEvent }),
                 })}

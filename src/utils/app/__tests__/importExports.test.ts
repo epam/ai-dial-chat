@@ -22,6 +22,7 @@ import { OpenAIEntityModel, OpenAIEntityModelID, OpenAIEntityModels } from '@/sr
 import { describe, expect, it } from 'vitest';
 import { Conversation, Message, Role } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
+import { FolderType } from '@/src/types/folder';
 
 describe('Export Format Functions', () => {
   describe('isExportFormatV1', () => {
@@ -151,7 +152,7 @@ const expectedConversation: Conversation = {
           {
             id: '1',
             name: 'folder 1',
-            type: 'chat',
+            type: FolderType.Chat,
           },
         ],
         prompts: [],
@@ -177,7 +178,7 @@ const expectedConversation: Conversation = {
           {
             id: '1',
             name: 'folder 1',
-            type: 'chat',
+            type: FolderType.Chat,
           },
         ],
         prompts: [
@@ -201,7 +202,7 @@ const expectedConversation: Conversation = {
           {
             id: '1',
             name: 'folder 1',
-            type: 'chat',
+            type: FolderType.Chat,
           },
         ],
         prompts: [

@@ -11,6 +11,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { doesModelContainSearchTerm } from '@/src/utils/app/search';
+
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntity, OpenAIEntityModel } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
@@ -146,7 +148,7 @@ const getFilteredEntities = (
   return models.filter(
     (model) =>
       entityTypes.includes(model.type) &&
-      model.name.toLowerCase().trim().includes(searchTerm),
+      doesModelContainSearchTerm(model, searchTerm),
   );
 };
 

@@ -157,6 +157,7 @@ test('Export and import chat structure with all conversations', async ({
       conversationData.prepareConversationsForNestedFolders(nestedFolders);
 
     await localStorageManager.setFolders(emptyFolder, ...nestedFolders);
+    await localStorageManager.setOpenedFolders(...nestedFolders);
     await localStorageManager.setConversationHistory(
       conversationOutsideFolder,
       ...nestedConversations,
@@ -181,32 +182,18 @@ test('Export and import chat structure with all conversations', async ({
       chatBar.importButton.click(),
     );
 
-    expect
-      .soft(
-        await folderConversations.getFolderByName(emptyFolder.name).isVisible(),
-        ExpectedMessages.folderIsVisible,
-      )
-      .toBeTruthy();
-    expect
-      .soft(
-        await conversations
-          .getConversationByName(conversationOutsideFolder.name)
-          .isVisible(),
-        ExpectedMessages.conversationIsVisible,
-      )
-      .toBeTruthy();
+    await folderConversations.getFolderByName(emptyFolder.name).waitFor();
+    await conversations
+      .getConversationByName(conversationOutsideFolder.name)
+      .waitFor();
 
     for (let i = 0; i <= levelsCount; i++) {
-      await folderConversations.expandCollapseFolder(nestedFolders[i].name);
-      expect
-        .soft(
-          await folderConversations.isFolderConversationVisible(
-            nestedFolders[i].name,
-            nestedConversations[i].name,
-          ),
-          ExpectedMessages.conversationIsVisible,
+      await folderConversations
+        .getFolderConversation(
+          nestedFolders[i].name,
+          nestedConversations[i].name,
         )
-        .toBeTruthy();
+        .waitFor();
     }
   });
 });
@@ -384,7 +371,7 @@ test(
     await test.step('Edit 1st request in chat and verify 1st response is regenerated', async () => {
       const updatedMessage = '6+7=';
       await chatMessages.openEditMessageMode(requests[0]);
-      await chatMessages.editMessage(updatedMessage);
+      await chatMessages.editMessage(requests[0], updatedMessage);
       const messagesCount = await chatMessages.chatMessages.getElementsCount();
       expect
         .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
@@ -415,20 +402,22 @@ test(
         () => chatBar.importButton.click(),
       );
 
-      await folderConversations.expandCollapseFolder(Import.v14AppFolderName);
+      await folderConversations.expandCollapseFolder(
+        Import.oldVersionAppFolderName,
+      );
       expect
         .soft(
           await folderConversations.isFolderConversationVisible(
-            Import.v14AppFolderName,
-            Import.v14AppFolderChatName,
+            Import.oldVersionAppFolderName,
+            Import.oldVersionAppFolderChatName,
           ),
           ExpectedMessages.conversationIsVisible,
         )
         .toBeTruthy();
 
       await folderConversations.selectFolderConversation(
-        Import.v14AppFolderName,
-        Import.v14AppFolderChatName,
+        Import.oldVersionAppFolderName,
+        Import.oldVersionAppFolderChatName,
       );
       const folderChatMessagesCount =
         await chatMessages.chatMessages.getElementsCount();

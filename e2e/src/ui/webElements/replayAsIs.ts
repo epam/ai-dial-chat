@@ -11,6 +11,14 @@ export class ReplayAsIs extends BaseElement {
     ChatSelectors.replayAsIsLabel,
   );
 
+  public replayAsIsDescr = this.getChildElementBySelector(
+    ChatSelectors.description,
+  );
+
+  public replayOldVersionWarning = this.getChildElementBySelector(
+    ChatSelectors.replayOldVersion,
+  );
+
   public async getReplayAsIsLabelText() {
     return this.replayAsIsLabel.getElementContent();
   }

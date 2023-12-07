@@ -1,10 +1,13 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import classNames from 'classnames';
+import { useTranslation } from 'next-i18next';
+
+import { PinnedItemsFilter, SharedWithMeFilter } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
-import { HighlightColor } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
+import { EntityFilter, HighlightColor } from '@/src/types/common';
+import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
+import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
@@ -15,6 +18,7 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Folder from '@/src/components/Folder';
 
+import CollapsableSection from '../../Common/CollapsableSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
 
@@ -22,17 +26,36 @@ interface ChatFolderProps {
   folder: FolderInterface;
   index: number;
   isLast: boolean;
+  readonly?: boolean;
+  itemFilter: EntityFilter<Conversation>;
+  includeEmpty: boolean;
 }
 
-const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
+const ChatFolderTemplate = ({
+  folder,
+  index,
+  isLast,
+  readonly,
+  itemFilter,
+  includeEmpty = false,
+}: ChatFolderProps) => {
   const dispatch = useAppDispatch();
 
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
-  const conversations = useAppSelector(
-    ConversationsSelectors.selectConversations,
+  const conversations = useAppSelector((state) =>
+    ConversationsSelectors.selectFilteredConversations(
+      state,
+      itemFilter,
+      searchTerm,
+    ),
   );
-  const conversationFolders = useAppSelector(
-    ConversationsSelectors.selectFolders,
+  const conversationFolders = useAppSelector((state) =>
+    ConversationsSelectors.selectFilteredFolders(
+      state,
+      itemFilter,
+      searchTerm,
+      includeEmpty,
+    ),
   );
   const highlightedFolders = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
@@ -109,6 +132,7 @@ const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
         highlightColor={HighlightColor.Green}
       />
       <Folder
+        readonly={readonly}
         searchTerm={searchTerm}
         currentFolder={folder}
         itemComponent={ConversationComponent}
@@ -145,25 +169,129 @@ const ChatFolderTemplate = ({ folder, index, isLast }: ChatFolderProps) => {
   );
 };
 
-export const ChatFolders = () => {
-  const folders = useAppSelector(ConversationsSelectors.selectFolders);
+export const ChatSection = ({
+  name,
+  itemFilter,
+  hideIfEmpty = true,
+  displayRootFiles,
+  showEmptyFolders = false,
+  openByDefault = false,
+  dataQa,
+}: FolderSectionProps<Conversation>) => {
+  const { t } = useTranslation(Translation.SideBar);
+  const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
+  const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
+  const folders = useAppSelector((state) =>
+    ConversationsSelectors.selectFilteredFolders(
+      state,
+      itemFilter,
+      searchTerm,
+      showEmptyFolders,
+    ),
+  );
+  const conversations = useAppSelector((state) =>
+    ConversationsSelectors.selectFilteredConversations(
+      state,
+      itemFilter,
+      searchTerm,
+    ),
+  );
+
+  const rootfolders = useMemo(
+    () => folders.filter(({ folderId }) => !folderId),
+    [folders],
+  );
+
+  const rootConversations = useMemo(
+    () => conversations.filter(({ folderId }) => !folderId),
+    [conversations],
+  );
+
+  const selectedFoldersIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsFoldersIds,
+  );
+
+  const selectedConversationsIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
+
+  useEffect(() => {
+    const shouldBeHighlighted =
+      rootfolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
+      (!!displayRootFiles &&
+        rootConversations.some((chat) =>
+          selectedConversationsIds.includes(chat.id),
+        ));
+    if (isSectionHighlighted !== shouldBeHighlighted) {
+      setIsSectionHighlighted(shouldBeHighlighted);
+    }
+  }, [
+    displayRootFiles,
+    rootfolders,
+    isSectionHighlighted,
+    selectedConversationsIds,
+    selectedFoldersIds,
+    rootConversations,
+  ]);
+
+  if (hideIfEmpty && !conversations.length && !folders.length) return null;
 
   return (
-    <div className={classNames('flex w-full flex-col')} data-qa="chat-folders">
-      {folders.map((folder, index, arr) => {
-        if (!folder.folderId) {
+    <CollapsableSection
+      name={t(name)}
+      openByDefault={openByDefault}
+      dataQa={dataQa}
+      isHighlighted={isSectionHighlighted}
+    >
+      <div>
+        {rootfolders.map((folder, index, arr) => {
           return (
             <ChatFolderTemplate
               key={folder.id}
               folder={folder}
               index={index}
               isLast={index === arr.length - 1}
+              itemFilter={itemFilter}
+              includeEmpty={showEmptyFolders}
             />
           );
-        }
-
-        return null;
-      })}
-    </div>
+        })}
+      </div>
+      <div>
+        {displayRootFiles &&
+          rootConversations.map((item) => (
+            <ConversationComponent key={item.id} item={item} />
+          ))}
+      </div>
+    </CollapsableSection>
   );
 };
+
+const folderItems: FolderSectionProps<Conversation>[] = [
+  {
+    name: 'Share With Me',
+    itemFilter: SharedWithMeFilter,
+    displayRootFiles: true,
+    dataQa: 'share-with-me',
+  },
+  {
+    name: 'Pinned Chats',
+    itemFilter: PinnedItemsFilter,
+    showEmptyFolders: true,
+    openByDefault: true,
+    dataQa: 'pinned-chats',
+  },
+];
+
+export function ChatFolders() {
+  return (
+    <div
+      className="flex w-full flex-col gap-0.5 divide-y divide-gray-200 dark:divide-gray-800"
+      data-qa="chat-folders"
+    >
+      {folderItems.map((itemProps) => (
+        <ChatSection key={itemProps.name} {...itemProps} />
+      ))}
+    </div>
+  );
+}

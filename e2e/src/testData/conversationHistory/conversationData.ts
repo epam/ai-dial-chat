@@ -2,7 +2,7 @@ import { DateUtil } from '@/e2e/src/utils/dateUtil';
 import { GeneratorUtil } from '@/e2e/src/utils/generatorUtil';
 
 import { Conversation, Message, Role, Stage } from '@/src/types/chat';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
 import {
@@ -23,7 +23,7 @@ export class ConversationData extends FolderData {
   private conversationBuilder: ConversationBuilder;
 
   constructor() {
-    super('chat');
+    super(FolderType.Chat);
     this.conversationBuilder = new ConversationBuilder();
   }
 
@@ -32,9 +32,12 @@ export class ConversationData extends FolderData {
     this.resetFolderData();
   }
 
-  public prepareDefaultConversation(model?: OpenAIEntityModel, name?: string) {
+  public prepareDefaultConversation(
+    model?: OpenAIEntityModel | string,
+    name?: string,
+  ) {
     const modelToUse = model
-      ? { id: model.id }
+      ? { id: typeof model === 'string' ? model : model.id }
       : this.conversationBuilder.getConversation().model;
     const userMessage: Message = {
       role: Role.User,
@@ -114,12 +117,25 @@ export class ConversationData extends FolderData {
     return conversation;
   }
 
+  public prepareErrorResponseConversation(
+    model?: OpenAIEntityModel,
+    name?: string,
+  ) {
+    const defaultConversation = this.prepareDefaultConversation(model, name);
+    defaultConversation.messages.find(
+      (m) => m.role === 'assistant',
+    )!.errorMessage = ExpectedConstants.answerError;
+    return defaultConversation;
+  }
+
   public prepareDefaultReplayConversation(conversation: Conversation) {
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
     return this.fillReplayData(conversation, userMessages!);
   }
 
-  public preparePartiallyReplayedConversation(conversation: Conversation) {
+  public preparePartiallyReplayedStagedConversation(
+    conversation: Conversation,
+  ) {
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
     const assistantMessage = conversation.messages.filter(
       (m) => m.role === 'assistant',
@@ -139,7 +155,7 @@ export class ConversationData extends FolderData {
     return replayConversation;
   }
 
-  public preparePartiallyRepliedConversation(conversation: Conversation) {
+  public preparePartiallyReplayedConversation(conversation: Conversation) {
     const defaultReplayConversation =
       this.prepareDefaultReplayConversation(conversation);
     const assistantMessages = conversation.messages.find(
@@ -204,7 +220,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareNestedFolder(nestedLevel: number) {
-    return super.prepareNestedFolder(nestedLevel, 'chat');
+    return super.prepareNestedFolder(nestedLevel, FolderType.Chat);
   }
 
   public prepareConversationsForNestedFolders(

@@ -1,6 +1,6 @@
 import { GeneratorUtil } from '@/e2e/src/utils/generatorUtil';
 
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 
 import { FolderData } from '@/e2e/src/testData/folders/folderData';
@@ -15,7 +15,7 @@ export class PromptData extends FolderData {
   private promptBuilder: PromptBuilder;
 
   constructor() {
-    super('prompt');
+    super(FolderType.Prompt);
     this.promptBuilder = new PromptBuilder();
   }
 
@@ -31,7 +31,7 @@ export class PromptData extends FolderData {
   }
 
   public prepareNestedFolder(nestedLevel: number) {
-    return super.prepareNestedFolder(nestedLevel, 'prompt');
+    return super.prepareNestedFolder(nestedLevel, FolderType.Prompt);
   }
 
   public prepareDefaultPromptInFolder(name?: string): FolderPrompt {

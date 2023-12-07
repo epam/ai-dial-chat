@@ -79,7 +79,7 @@ export default function ShareModal({
   );
 
   const handleCopy = useCallback(
-    (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLDivElement>) => {
+    (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
       e.preventDefault();
       e.stopPropagation();
       if (!navigator.clipboard) return;

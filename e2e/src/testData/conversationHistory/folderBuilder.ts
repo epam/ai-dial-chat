@@ -10,7 +10,7 @@ export class FolderBuilder {
     this.folder = {
       id: uuidv4(),
       name: ExpectedConstants.newFolderTitle,
-      type: 'chat',
+      type: FolderType.Chat,
     };
   }
 

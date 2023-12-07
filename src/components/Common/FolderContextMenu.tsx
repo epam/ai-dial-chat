@@ -43,14 +43,14 @@ export const FolderContextMenu = ({
       {
         name: t('Delete'),
         display: !!onDelete,
-        dataQa: 'rename',
+        dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,
       },
       {
         name: t('Add new folder'),
         display: !!onAddFolder,
-        dataQa: 'rename',
+        dataQa: 'new-folder',
         Icon: IconFolderPlus,
         onClick: onAddFolder,
       },

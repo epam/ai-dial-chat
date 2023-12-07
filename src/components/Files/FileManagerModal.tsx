@@ -8,12 +8,7 @@ import {
   useInteractions,
   useRole,
 } from '@floating-ui/react';
-import {
-  IconCaretRightFilled,
-  IconDownload,
-  IconTrash,
-  IconX,
-} from '@tabler/icons-react';
+import { IconDownload, IconTrash, IconX } from '@tabler/icons-react';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -29,6 +24,8 @@ import { Translation } from '@/src/types/translation';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+
+import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { ErrorMessage } from '../Common/ErrorMessage';
@@ -351,13 +348,7 @@ export const FileManagerModal = ({
                         className="flex items-center gap-1 rounded py-1 text-xs text-gray-500"
                         onClick={() => handleToggleFolder(undefined)}
                       >
-                        <IconCaretRightFilled
-                          className={classNames(
-                            'invisible text-gray-500 transition-all group-hover/modal:visible',
-                            isAllFilesOpened && 'rotate-90',
-                          )}
-                          size={10}
-                        />
+                        <CaretIconComponent isOpen={isAllFilesOpened} />
                         {t('All files')}
                       </button>
                       {isAllFilesOpened && (

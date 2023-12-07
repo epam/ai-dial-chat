@@ -8,7 +8,7 @@ import {
   DialFile,
   FileFolderInterface,
 } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { Theme } from '@/src/types/settings';
 import { DialStorage, UIStorageKeys } from '@/src/types/storage';
@@ -230,7 +230,7 @@ export class DataService {
           return {
             id: getPathNameId(folder.name, relativePath),
             name: folder.name,
-            type: 'file',
+            type: FolderType.File,
             absolutePath: folder.path,
             relativePath: relativePath,
             folderId: relativePath,

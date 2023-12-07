@@ -1,27 +1,17 @@
-import { i18n } from 'next-i18next';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
-
-import {
-  getChildAndCurrentFoldersIdsById,
-  getParentAndCurrentFoldersById,
-} from '@/src/utils/app/folders';
+import { getNextDefaultName } from '@/src/utils/app/folders';
+import { translate } from '@/src/utils/app/translation';
 
 import { PromptsHistory } from '@/src/types/export';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 
-import { RootState } from '../index';
+import { PromptsState } from './prompts.types';
 
 import { v4 as uuidv4 } from 'uuid';
 
-export interface PromptsState {
-  prompts: Prompt[];
-  folders: FolderInterface[];
-  searchTerm: string;
-  selectedPromptId: string | undefined;
-  isEditModalOpen: boolean;
-}
+export * as PromptsSelectors from './prompts.selectors';
 
 const initialState: PromptsState = {
   prompts: [],
@@ -41,7 +31,7 @@ export const promptsSlice = createSlice({
     createNewPrompt: (state) => {
       const newPrompt: Prompt = {
         id: uuidv4(),
-        name: (i18n as any).t(`Prompt ${state.prompts.length + 1}`),
+        name: getNextDefaultName(translate('Prompt'), state.prompts),
         description: '',
         content: '',
       };
@@ -99,12 +89,16 @@ export const promptsSlice = createSlice({
     },
     createFolder: (
       state,
-      { payload }: PayloadAction<{ name: string; folderId?: string }>,
+      {
+        payload,
+      }: PayloadAction<{ name?: string; folderId?: string } | undefined>,
     ) => {
       const newFolder: FolderInterface = {
-        id: payload.folderId || uuidv4(),
-        name: payload.name,
-        type: 'prompt',
+        id: payload?.folderId || uuidv4(),
+        name:
+          payload?.name ?? // custom name
+          getNextDefaultName(translate('New folder'), state.folders), // default name with counter
+        type: FolderType.Prompt,
       };
 
       state.folders = state.folders.concat(newFolder);
@@ -184,102 +178,5 @@ export const promptsSlice = createSlice({
     },
   },
 });
-
-const rootSelector = (state: RootState): PromptsState => state.prompts;
-
-const selectPrompts = createSelector([rootSelector], (state) => {
-  return state.prompts;
-});
-const selectPrompt = createSelector(
-  [selectPrompts, (_state, promptId: string) => promptId],
-  (prompts, promptId) => {
-    return prompts.find((prompt) => prompt.id === promptId);
-  },
-);
-const selectFolders = createSelector([rootSelector], (state) => {
-  return state.folders;
-});
-const selectParentFolders = createSelector(
-  [selectFolders, (_state, folderId: string | undefined) => folderId],
-  (folders, folderId) => {
-    return getParentAndCurrentFoldersById(folders, folderId);
-  },
-);
-const selectParentFoldersIds = createSelector(
-  [selectParentFolders],
-  (folders) => {
-    return folders.map((folder) => folder.id);
-  },
-);
-const selectChildAndCurrentFoldersIdsById = createSelector(
-  [selectFolders, (_state, folderId: string | undefined) => folderId],
-  (folders, folderId) => {
-    return getChildAndCurrentFoldersIdsById(folderId, folders);
-  },
-);
-const selectSearchTerm = createSelector([rootSelector], (state) => {
-  return state.searchTerm;
-});
-
-const selectSearchedPrompts = createSelector(
-  [selectPrompts, selectSearchTerm],
-  (prompts, searchTerm) => {
-    return prompts.filter((prompt) => {
-      const searchable =
-        prompt.name.toLowerCase() +
-        ' ' +
-        prompt.description?.toLowerCase() +
-        ' ' +
-        prompt.content?.toLowerCase();
-      return searchable.includes(searchTerm.toLowerCase());
-    });
-  },
-);
-
-const selectIsEditModalOpen = createSelector([rootSelector], (state) => {
-  return state.isEditModalOpen;
-});
-
-const selectSelectedPromptId = createSelector([rootSelector], (state) => {
-  return state.selectedPromptId;
-});
-
-const selectSelectedPrompt = createSelector(
-  [selectPrompts, selectSelectedPromptId],
-  (prompts, selectedPromptId): Prompt | undefined => {
-    if (!selectedPromptId) {
-      return undefined;
-    }
-    return prompts.find((prompt) => prompt.id === selectedPromptId);
-  },
-);
-
-const selectSelectedPromptFoldersIds = createSelector(
-  [selectSelectedPrompt, (state) => state],
-  (prompt, state) => {
-    let selectedFolders: string[] = [];
-
-    selectedFolders = selectedFolders.concat(
-      selectParentFoldersIds(state, prompt?.folderId),
-    );
-
-    return selectedFolders;
-  },
-);
-
-export const PromptsSelectors = {
-  selectPrompts,
-  selectPrompt,
-  selectFolders,
-  selectSearchTerm,
-  selectSearchedPrompts,
-  selectSelectedPromptId,
-  selectSelectedPrompt,
-  selectIsEditModalOpen,
-  selectSelectedPromptFoldersIds,
-  selectParentFolders,
-  selectParentFoldersIds,
-  selectChildAndCurrentFoldersIdsById,
-};
 
 export const PromptsActions = promptsSlice.actions;
