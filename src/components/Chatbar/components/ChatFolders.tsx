@@ -5,8 +5,9 @@ import { useTranslation } from 'next-i18next';
 import { SharedWithMeFilter } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
-import { EntityFilter, FeatureType, HighlightColor } from '@/src/types/common';
+import { FeatureType, HighlightColor } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
+import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -28,7 +29,7 @@ interface ChatFolderProps {
   index: number;
   isLast: boolean;
   readonly?: boolean;
-  itemFilter: EntityFilter<Conversation>;
+  filters: EntityFilters;
   includeEmpty: boolean;
 }
 
@@ -37,7 +38,7 @@ const ChatFolderTemplate = ({
   index,
   isLast,
   readonly,
-  itemFilter,
+  filters,
   includeEmpty = false,
 }: ChatFolderProps) => {
   const dispatch = useAppDispatch();
@@ -46,14 +47,14 @@ const ChatFolderTemplate = ({
   const conversations = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredConversations(
       state,
-      itemFilter,
+      filters,
       searchTerm,
     ),
   );
   const conversationFolders = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredFolders(
       state,
-      itemFilter,
+      filters,
       searchTerm,
       includeEmpty,
     ),
@@ -173,20 +174,20 @@ const ChatFolderTemplate = ({
 
 export const ChatSection = ({
   name,
-  itemFilter,
+  filters,
   hideIfEmpty = true,
   displayRootFiles,
   showEmptyFolders = false,
   openByDefault = false,
   dataQa,
-}: FolderSectionProps<Conversation>) => {
+}: FolderSectionProps) => {
   const { t } = useTranslation(Translation.SideBar);
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
   const folders = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredFolders(
       state,
-      itemFilter,
+      filters,
       searchTerm,
       showEmptyFolders,
     ),
@@ -194,7 +195,7 @@ export const ChatSection = ({
   const conversations = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredConversations(
       state,
-      itemFilter,
+      filters,
       searchTerm,
     ),
   );
@@ -259,7 +260,7 @@ export const ChatSection = ({
               folder={folder}
               index={index}
               isLast={index === arr.length - 1}
-              itemFilter={itemFilter}
+              filters={filters}
               includeEmpty={showEmptyFolders}
             />
           );
@@ -281,26 +282,26 @@ export function ChatFolders() {
     ConversationsSelectors.selectIsEmptySearchFilter,
   );
   const commonItemFilter = useAppSelector(
-    ConversationsSelectors.selectItemFilter,
+    ConversationsSelectors.selectMyItemsFilters,
   );
 
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
 
-  const folderItems: FolderSectionProps<Conversation>[] = useMemo(
+  const folderItems: FolderSectionProps[] = useMemo(
     () =>
       [
         {
           hidden: !isSharingEnabled || !isFilterEmpty,
           name: t('Shared with me'),
-          itemFilter: SharedWithMeFilter,
+          filters: SharedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'share-with-me',
         },
         {
           name: t('Pinned chats'),
-          itemFilter: commonItemFilter,
+          filters: commonItemFilter,
           showEmptyFolders: isFilterEmpty,
           openByDefault: true,
           dataQa: 'pinned-chats',

@@ -263,11 +263,11 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   }, []);
 
   const handleShared = useCallback(
-    (shareId: string) => {
+    (shareUniqueId: string) => {
       dispatch(
         ConversationsActions.shareConversation({
           id: conversationId,
-          shareId,
+          shareUniqueId,
         }),
       );
     },

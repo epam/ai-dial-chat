@@ -1,4 +1,5 @@
-import { EntityFilter, ShareEntity } from './common';
+import { ShareEntity } from './common';
+import { EntityFilters } from './search';
 
 export interface FolderInterface extends ShareEntity {
   type: FolderType;
@@ -12,13 +13,13 @@ export enum FolderType {
   File = 'file',
 }
 
-export interface FolderSectionProps<T> {
+export interface FolderSectionProps {
   hidden?: boolean;
   name: string;
   dataQa: string;
   hideIfEmpty?: boolean;
   displayRootFiles?: boolean;
-  itemFilter: EntityFilter<T>;
+  filters: EntityFilters;
   showEmptyFolders?: boolean;
   openByDefault?: boolean;
 }
