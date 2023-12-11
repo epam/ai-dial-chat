@@ -132,6 +132,10 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
+  const [isPublishing, setIsPublishing] = useState(false);
+  const isPublishingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isPublishingEnabled(state, featureType),
+  );
 
   const handleOpenSharing: MouseEventHandler = useCallback((e) => {
     e.stopPropagation();
@@ -150,6 +154,31 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
           : PromptsActions.shareFolder;
       dispatch(
         shareFolder({
+          id: currentFolder.id,
+          shareUniqueId,
+        }),
+      );
+    },
+    [currentFolder.id, dispatch, featureType],
+  );
+
+  const handleOpenPublishing: MouseEventHandler = useCallback((e) => {
+    e.stopPropagation();
+    setIsPublishing(true);
+  }, []);
+
+  const handleClosePublishModal = useCallback(() => {
+    setIsPublishing(false);
+  }, []);
+
+  const handlePublished = useCallback(
+    (shareUniqueId: string) => {
+      const publishFolder =
+        featureType === FeatureType.Chat
+          ? ConversationsActions.publishFolder
+          : PromptsActions.publishFolder;
+      dispatch(
+        publishFolder({
           id: currentFolder.id,
           shareUniqueId,
         }),
@@ -521,6 +550,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                   )}
                 >
                   <FolderContextMenu
+                    folder={currentFolder}
+                    featureType={featureType}
                     onRename={
                       (onRenameFolder &&
                         !currentFolder.serverSynced &&
@@ -529,9 +560,10 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                     }
                     onDelete={onDeleteFolder && onDelete}
                     onAddFolder={onAddFolder && onAdd}
-                    onOpenShareModal={
-                      isSharingEnabled ? handleOpenSharing : undefined
-                    }
+                    onShare={handleOpenSharing}
+                    onPublish={handleOpenPublishing}
+                    onPublishUpdate={handleOpenPublishing}
+                    onUnpublish={handleOpenPublishing}
                     highlightColor={highlightColor}
                     onOpenChange={setIsContextMenu}
                     isOpen={isContextMenu}
@@ -679,6 +711,19 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
           isOpen
           onClose={handleCloseShareModal}
           onShare={handleShared}
+        />
+      )}
+      {isPublishing && isPublishingEnabled && (
+        <ShareModal
+          entity={currentFolder}
+          type={
+            featureType === FeatureType.Prompt
+              ? SharingType.PromptFolder
+              : SharingType.ConversationFolder
+          }
+          isOpen
+          onClose={handleClosePublishModal}
+          onShare={handlePublished}
         />
       )}
     </div>

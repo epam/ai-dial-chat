@@ -22,7 +22,6 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { emptyImage } from '@/src/constants/drag-and-drop';
@@ -112,10 +111,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
 
-  const isSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
-  );
-
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -124,6 +119,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const dragImageRef = useRef<HTMLImageElement | null>();
   const [isSharing, setIsSharing] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const { id: conversationId } = conversation;
   const isSelected = selectedConversationIds.includes(conversation.id);
@@ -274,6 +270,27 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     [conversationId, dispatch],
   );
 
+  const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsPublishing(true);
+    }, []);
+
+  const handleClosePublishModal = useCallback(() => {
+    setIsPublishing(false);
+  }, []);
+
+  const handlePublished = useCallback(
+    (shareUniqueId: string) => {
+      dispatch(
+        ConversationsActions.publishConversation({
+          id: conversationId,
+          shareUniqueId,
+        }),
+      );
+    },
+    [conversationId, dispatch],
+  );
+
   const handleMoveToFolder = useCallback(
     ({
       folderId,
@@ -405,6 +422,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           data-qa="dots-menu"
         >
           <ItemContextMenu
+            entity={conversation}
             isEmptyConversation={isEmptyConversation}
             folders={folders}
             featureType={FeatureType.Chat}
@@ -436,7 +454,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             }
             onReplay={!isPlayback ? handleStartReplay : undefined}
             onPlayback={handleCreatePlayback}
-            onOpenShareModal={isSharingEnabled ? handleOpenSharing : undefined}
+            onShare={handleOpenSharing}
+            onPublish={handleOpenPublishing}
+            onPublishUpdate={handleOpenPublishing}
+            onUnpublish={handleOpenPublishing}
             onOpenChange={setIsContextMenu}
             isOpen={isContextMenu}
           />
@@ -471,6 +492,15 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           isOpen
           onClose={handleCloseShareModal}
           onShare={handleShared}
+        />
+      )}
+      {isPublishing && (
+        <ShareModal
+          entity={conversation}
+          type={SharingType.Conversation}
+          isOpen
+          onClose={handleClosePublishModal}
+          onShare={handlePublished}
         />
       )}
     </div>

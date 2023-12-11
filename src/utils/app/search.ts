@@ -79,8 +79,10 @@ export const SharedWithMeFilter: EntityFilters = {
 export const SharedByMeFilter: EntityFilter<ShareInterface> = (item) =>
   !!item.isShared;
 
-export const PublishedWithMeFilter: EntityFilter<ShareInterface> = (item) =>
-  !!item.publishedWithMe;
+export const PublishedWithMeFilter: EntityFilters = {
+  rootFilter: (item) => !!item.publishedWithMe,
+  itemFilter: TrueFilter,
+};
 
 export const PublishedByMeFilter: EntityFilter<ShareInterface> = (item) =>
   !!item.isPublished;

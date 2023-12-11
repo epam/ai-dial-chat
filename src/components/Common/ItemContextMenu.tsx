@@ -1,4 +1,5 @@
 import {
+  IconClockShare,
   IconDots,
   IconFileArrowRight,
   IconFolderPlus,
@@ -8,6 +9,7 @@ import {
   IconRefreshDot,
   IconScale,
   IconUserShare,
+  IconWorldShare,
 } from '@tabler/icons-react';
 import { IconTrashX } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
@@ -16,14 +18,20 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { FeatureType, HighlightColor } from '@/src/types/common';
+import { FeatureType, HighlightColor, ShareEntity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+
 import ContextMenu from './ContextMenu';
 
+import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+
 interface ItemContextMenuProps {
+  entity: ShareEntity;
   folders: FolderInterface[];
   featureType: FeatureType;
   highlightColor: HighlightColor;
@@ -35,14 +43,18 @@ interface ItemContextMenuProps {
   onDelete: MouseEventHandler<unknown>;
   onRename: MouseEventHandler<unknown>;
   onExport: MouseEventHandler<unknown>;
-  onReplay?: MouseEventHandler<HTMLButtonElement>;
+  onReplay?: MouseEventHandler<unknown>;
   onCompare?: MouseEventHandler<unknown>;
-  onPlayback?: MouseEventHandler<HTMLButtonElement>;
-  onOpenShareModal?: MouseEventHandler<HTMLButtonElement>;
+  onPlayback?: MouseEventHandler<unknown>;
+  onShare?: MouseEventHandler<unknown>;
+  onPublish?: MouseEventHandler<unknown>;
+  onUnpublish?: MouseEventHandler<unknown>;
+  onPublishUpdate?: MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
 }
 
 export default function ItemContextMenu({
+  entity,
   featureType,
   isEmptyConversation,
   className,
@@ -57,10 +69,19 @@ export default function ItemContextMenu({
   onPlayback,
   onMoveToFolder,
   onOpenMoveToModal,
-  onOpenShareModal,
+  onShare,
+  onPublish,
+  onUnpublish,
+  onPublishUpdate,
   onOpenChange,
 }: ItemContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
+  const isPublishingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isPublishingEnabled(state, featureType),
+  );
+  const isSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isPublishingEnabled(state, featureType),
+  );
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -133,9 +154,31 @@ export default function ItemContextMenu({
       {
         name: t('Share'),
         dataQa: 'share',
-        display: !!onOpenShareModal,
+        display: isSharingEnabled && !!onShare,
         Icon: IconUserShare,
-        onClick: onOpenShareModal,
+        onClick: onShare,
+      },
+      {
+        name: t('Publish'),
+        dataQa: 'publish',
+        display: isPublishingEnabled && !entity.isPublished && !!onPublish,
+        Icon: IconWorldShare,
+        onClick: onPublish,
+      },
+      {
+        name: t('Update'),
+        dataQa: 'update-publishing',
+        display:
+          isPublishingEnabled && !!entity.isPublished && !!onPublishUpdate,
+        Icon: IconClockShare,
+        onClick: onPublishUpdate,
+      },
+      {
+        name: t('Unpublish'),
+        dataQa: 'unpublish',
+        display: isPublishingEnabled && !!entity.isPublished && !!onUnpublish,
+        Icon: UnpublishIcon,
+        onClick: onUnpublish,
       },
       {
         name: t('Delete'),
@@ -145,19 +188,25 @@ export default function ItemContextMenu({
       },
     ],
     [
-      featureType,
-      folders,
-      isEmptyConversation,
-      onCompare,
-      onDelete,
-      onExport,
-      onMoveToFolder,
-      onOpenMoveToModal,
-      onOpenShareModal,
-      onPlayback,
-      onRename,
-      onReplay,
       t,
+      featureType,
+      onRename,
+      onCompare,
+      isEmptyConversation,
+      onReplay,
+      onPlayback,
+      onExport,
+      onOpenMoveToModal,
+      folders,
+      isSharingEnabled,
+      onShare,
+      isPublishingEnabled,
+      entity.isPublished,
+      onPublish,
+      onPublishUpdate,
+      onUnpublish,
+      onDelete,
+      onMoveToFolder,
     ],
   );
 

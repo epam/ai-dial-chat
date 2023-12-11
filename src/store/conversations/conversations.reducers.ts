@@ -13,6 +13,7 @@ import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 
+import { resetShareEntity } from './../../constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
@@ -148,6 +149,38 @@ export const conversationsSlice = createSlice({
         return folder;
       });
     },
+    publishConversation: (
+      state,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
+    ) => {
+      state.conversations = state.conversations.map((conv) => {
+        if (conv.id === payload.id) {
+          return {
+            ...conv,
+            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
+            isPublished: true,
+          };
+        }
+
+        return conv;
+      });
+    },
+    publishFolder: (
+      state,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
+    ) => {
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.id) {
+          return {
+            ...folder,
+            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
+            isPublished: true,
+          };
+        }
+
+        return folder;
+      });
+    },
     exportConversation: (
       state,
       _action: PayloadAction<{ conversationId: string }>,
@@ -174,6 +207,7 @@ export const conversationsSlice = createSlice({
       );
       const newConversation: Conversation = {
         ...payload.conversation,
+        ...resetShareEntity,
         id: uuidv4(),
         name: newConversationName,
         messages: [],
@@ -191,8 +225,6 @@ export const conversationsSlice = createSlice({
           activePlaybackIndex: 0,
           messagesStack: [],
         },
-        isShared: false,
-        sharedWithMe: false,
       };
       state.conversations = state.conversations.concat([newConversation]);
       state.selectedConversationsIds = [newConversation.id];
@@ -205,6 +237,7 @@ export const conversationsSlice = createSlice({
 
       const newConversation: Conversation = {
         ...payload.conversation,
+        ...resetShareEntity,
         id: uuidv4(),
         name: newConversationName,
         messages: [],
@@ -222,8 +255,6 @@ export const conversationsSlice = createSlice({
           activeReplayIndex: 0,
           replayAsIs: false,
         },
-        isShared: false,
-        sharedWithMe: false,
       };
       state.conversations = state.conversations.concat([newConversation]);
       state.selectedConversationsIds = [newConversation.id];

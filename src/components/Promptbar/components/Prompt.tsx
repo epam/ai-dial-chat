@@ -18,7 +18,6 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
 
@@ -52,15 +51,12 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const isSelected = selectedPromptId === prompt.id;
   const showModal = useAppSelector(PromptsSelectors.selectIsEditModalOpen);
 
-  const isSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
-  );
-
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
 
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const { id: promptId } = prompt;
 
@@ -92,6 +88,27 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     useCallback(() => {
       setIsSharing(true);
     }, []);
+
+  const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsPublishing(true);
+    }, []);
+
+  const handleClosePublishModal = useCallback(() => {
+    setIsPublishing(false);
+  }, []);
+
+  const handlePublished = useCallback(
+    (shareUniqueId: string) => {
+      dispatch(
+        PromptsActions.publishPrompt({
+          promptId,
+          shareUniqueId,
+        }),
+      );
+    },
+    [dispatch, promptId],
+  );
 
   const handleUpdate = useCallback(
     (prompt: Prompt) => {
@@ -270,6 +287,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             onClick={stopBubbling}
           >
             <ItemContextMenu
+              entity={prompt}
               featureType={FeatureType.Prompt}
               folders={folders}
               onMoveToFolder={handleMoveToFolder}
@@ -280,9 +298,10 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
                 setIsShowMoveToModal(true);
               }}
               highlightColor={HighlightColor.Violet}
-              onOpenShareModal={
-                isSharingEnabled ? handleOpenSharing : undefined
-              }
+              onShare={handleOpenSharing}
+              onPublish={handleOpenPublishing}
+              onPublishUpdate={handleOpenPublishing}
+              onUnpublish={handleOpenPublishing}
               onOpenChange={setIsContextMenu}
               isOpen={isContextMenu}
             />
@@ -316,6 +335,16 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           isOpen
           onClose={handleCloseShareModal}
           onShare={handleShared}
+        />
+      )}
+
+      {isPublishing && (
+        <ShareModal
+          entity={prompt}
+          type={SharingType.Prompt}
+          isOpen
+          onClose={handleClosePublishModal}
+          onShare={handlePublished}
         />
       )}
     </>

@@ -95,6 +95,38 @@ export const promptsSlice = createSlice({
         return folder;
       });
     },
+    publishPrompt: (
+      state,
+      { payload }: PayloadAction<{ promptId: string; shareUniqueId: string }>,
+    ) => {
+      state.prompts = state.prompts.map((conv) => {
+        if (conv.id === payload.promptId) {
+          return {
+            ...conv,
+            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
+            isPublished: true,
+          };
+        }
+
+        return conv;
+      });
+    },
+    publishFolder: (
+      state,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
+    ) => {
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.id) {
+          return {
+            ...folder,
+            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
+            isPublished: true,
+          };
+        }
+
+        return folder;
+      });
+    },
     updatePrompts: (
       state,
       { payload }: PayloadAction<{ prompts: Prompt[] }>,

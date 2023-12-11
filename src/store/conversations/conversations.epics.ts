@@ -61,6 +61,7 @@ import {
 import { EntityType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
+import { resetShareEntity } from './../../constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -1416,8 +1417,8 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
             id: mapping.get(folder.id),
             folderId:
               folder.id === sharedFolderId ? undefined : mapping.get(folderId), // show shared folder on root level
+            ...resetShareEntity,
             sharedWithMe: folder.id === sharedFolderId || folder.sharedWithMe,
-            isShared: false,
             shareUniqueId:
               folder.id === sharedFolderId ? shareUniqueId : undefined,
           }));
@@ -1430,9 +1431,9 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
           )
           .map(({ folderId, ...prompt }) => ({
             ...prompt,
+            ...resetShareEntity,
             id: uuidv4(),
             folderId: mapping.get(folderId),
-            isShared: false,
           }));
 
         return concat(
@@ -1465,10 +1466,108 @@ const shareConversationEpic: AppEpic = (action$, state$) =>
         .filter((conversation) => conversation.id === sharedConversationId)
         .map(({ folderId: _, ...conversation }) => ({
           ...conversation,
+          ...resetShareEntity,
           id: uuidv4(),
           folderId: undefined, // show on root level
           sharedWithMe: true,
-          isShared: false,
+          shareUniqueId,
+        }));
+
+      return concat(
+        of(
+          ConversationsActions.addConversations({
+            conversations: sharedConversations,
+          }),
+        ),
+      );
+    }),
+  );
+
+//TODO: added for development purpose - emulate immediate sharing with yourself
+const publishFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.publishFolder.match),
+    map(({ payload }) => ({
+      sharedFolderId: payload.id,
+      shareUniqueId: payload.shareUniqueId,
+      conversations: ConversationsSelectors.selectConversations(state$.value),
+      childFolders: ConversationsSelectors.selectChildAndCurrentFoldersIdsById(
+        state$.value,
+        payload.id,
+      ),
+      folders: ConversationsSelectors.selectFolders(state$.value),
+    })),
+    switchMap(
+      ({
+        sharedFolderId,
+        shareUniqueId,
+        conversations,
+        childFolders,
+        folders,
+      }) => {
+        const mapping = new Map();
+        childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
+        const newFolders = folders
+          .filter(({ id }) => childFolders.includes(id))
+          .map(({ folderId, ...folder }) => ({
+            ...folder,
+            ...resetShareEntity,
+            id: mapping.get(folder.id),
+            folderId:
+              folder.id === sharedFolderId ? undefined : mapping.get(folderId), // show shared folder on root level
+            publishedWithMe:
+              folder.id === sharedFolderId || folder.sharedWithMe,
+            shareUniqueId:
+              folder.id === sharedFolderId ? shareUniqueId : undefined,
+          }));
+
+        const sharedConversations = conversations
+          .filter(
+            (conversation) =>
+              conversation.folderId &&
+              childFolders.includes(conversation.folderId),
+          )
+          .map(({ folderId, ...prompt }) => ({
+            ...prompt,
+            ...resetShareEntity,
+            id: uuidv4(),
+            folderId: mapping.get(folderId),
+          }));
+
+        return concat(
+          of(
+            ConversationsActions.addConversations({
+              conversations: sharedConversations,
+            }),
+          ),
+          of(
+            ConversationsActions.addFolders({
+              folders: newFolders,
+            }),
+          ),
+        );
+      },
+    ),
+  );
+
+//TODO: added for development purpose - emulate immediate sharing with yourself
+const publishConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.publishConversation.match),
+    map(({ payload }) => ({
+      sharedConversationId: payload.id,
+      shareUniqueId: payload.shareUniqueId,
+      conversations: ConversationsSelectors.selectConversations(state$.value),
+    })),
+    switchMap(({ sharedConversationId, shareUniqueId, conversations }) => {
+      const sharedConversations = conversations
+        .filter((conversation) => conversation.id === sharedConversationId)
+        .map(({ folderId: _, ...conversation }) => ({
+          ...conversation,
+          ...resetShareEntity,
+          id: uuidv4(),
+          folderId: undefined, // show on root level
+          publishedWithMe: true,
           shareUniqueId,
         }));
 
@@ -1518,4 +1617,6 @@ export const ConversationsEpics = combineEpics(
 
   shareFolderEpic,
   shareConversationEpic,
+  publishFolderEpic,
+  publishConversationEpic,
 );
