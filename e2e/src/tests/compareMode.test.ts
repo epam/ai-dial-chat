@@ -45,12 +45,14 @@ test('Compare mode button creates two new chats and opens them in compare mode',
 
     const todayConversations = await conversations.getTodayConversations();
     expect
-      .soft(todayConversations, ExpectedMessages.conversationOfToday)
-      .toEqual([
-        ExpectedConstants.newConversationTitle,
-        ExpectedConstants.newConversationTitle,
-        ExpectedConstants.newConversationTitle,
-      ]);
+      .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
+      .toBe(3);
+
+    todayConversations.forEach((value) =>
+      expect
+        .soft(value, ExpectedMessages.conversationOfToday)
+        .toContain(ExpectedConstants.newConversationTitle),
+    );
   });
 });
 
@@ -235,6 +237,7 @@ test(
     localStorageManager,
     compare,
     rightChatHeader,
+    leftChatHeader,
   }) => {
     setTestIds('EPMRTC-544', 'EPMRTC-545');
     let firstConversation: Conversation;
@@ -257,11 +260,26 @@ test(
     await test.step('Remove 1st conversation from compare mode using Close btn in the header', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await rightChatHeader.removeConversationFromComparison.click();
+      const randomSide = GeneratorUtil.randomArrayElement(Object.values(Side));
+      let activeChat;
+      if (randomSide === Side.right) {
+        await rightChatHeader.removeConversationFromComparison.click();
+        activeChat = firstConversation.name;
+      } else {
+        await leftChatHeader.removeConversationFromComparison.click();
+        activeChat = secondConversation.name;
+      }
+
       const isCompareModeOn = await compare.isVisible();
       expect
         .soft(isCompareModeOn, ExpectedMessages.compareModeClosed)
         .toBeFalsy();
+
+      const activeChatHeader =
+        await leftChatHeader.chatTitle.getElementContent();
+      expect
+        .soft(activeChatHeader, ExpectedMessages.headerTitleIsValid)
+        .toBe(activeChat);
     });
   },
 );
@@ -407,7 +425,7 @@ test(
       await dialHomePage.waitForPageLoaded();
       await compare.waitForComparedConversationsLoaded();
       const requestsData = await chat.sendRequestInCompareMode(
-        'test message',
+        'how are you?',
         {
           rightEntity: firstConversation.model.id,
           leftEntity: secondConversation.model.id,

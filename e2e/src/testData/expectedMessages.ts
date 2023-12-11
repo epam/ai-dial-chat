@@ -81,6 +81,7 @@ export enum ExpectedMessages {
   sendMessageButtonEnabled = 'Send message button is enabled',
   tooltipContentIsValid = 'Tooltip content is valid',
   headerTitleCorrespondRequest = 'Chat header title correspond sent request',
+  headerTitleIsValid = 'Chat header title is valid',
   headerTitleIsFullyVisible = 'Chat header title is fully visible on tooltip',
   headerIconsCountIsValid = 'Chat header icons number is valid',
   headerCleanConversationIconVisible = 'Chat header Clean Conversation icon is visible',
