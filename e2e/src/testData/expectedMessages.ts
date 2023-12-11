@@ -174,4 +174,5 @@ export enum ExpectedMessages {
   entityNameIsTruncated = 'Entity name is truncated',
   folderNameIsTruncated = 'Folder name is truncated in side panel',
   chatNameIsTruncated = 'Chat name is truncated in side panel',
+  sendButtonCursorIsNotAllowed = 'Send button cursor is not allowed',
 }

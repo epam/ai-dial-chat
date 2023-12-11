@@ -13,6 +13,7 @@ export enum Styles {
 
 export enum Cursors {
   pointer = 'pointer',
+  notAllowed = 'not-allowed',
 }
 
 export enum Overflow {
