@@ -631,6 +631,12 @@ test('Send button is disabled if the chat in replay mode', async ({
     await chat.startReplay();
     await sendMessage.messageInput.fillInInput(message);
 
+    await sendMessage.sendMessageButton.hoverOver();
+    const tooltipContent = await tooltip.getContent();
+    expect
+      .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
+      .toBe(ExpectedConstants.waitForAssistantAnswerTooltip);
+
     const isSendButtonEnabled =
       await sendMessage.sendMessageButton.isElementEnabled();
     expect
@@ -875,7 +881,7 @@ test(
         Import.oldVersionAppFolderChatName,
       );
 
-      const newModels = [ModelIds.AWS_TITAN, ModelIds.GPT_4];
+      const newModels = [ModelIds.BISON_001, ModelIds.GPT_4];
       for (let i = 1; i <= newModels.length; i++) {
         await chatHeader.openConversationSettings.click();
         await talkToSelector.selectModel(
@@ -925,7 +931,7 @@ test(
         ...newMessages,
       ]);
       for (let i = 0; i < requests.length; i++) {
-        const modelId = i === 1 ? ModelIds.AWS_TITAN : ModelIds.GPT_4;
+        const modelId = i === 1 ? ModelIds.BISON_001 : ModelIds.GPT_4;
         expect
           .soft(requests[i].modelId, ExpectedMessages.chatRequestModelIsValid)
           .toBe(modelId);
