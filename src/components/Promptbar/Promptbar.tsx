@@ -31,7 +31,7 @@ const PromptActionsBlock = () => {
         className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-violet/15 disabled:cursor-not-allowed"
         onClick={() => {
           dispatch(PromptsActions.createNewPrompt());
-          dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
+          dispatch(PromptsActions.resetSearch());
           dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
         }}
         data-qa="new-prompt"
@@ -84,8 +84,11 @@ const Promptbar = () => {
       filteredItems={filteredPrompts}
       searchTerm={searchTerm}
       searchFilters={searchFilters}
-      handleSearchTerm={(searchTerm: string, searchFilters: SearchFilters) =>
-        dispatch(PromptsActions.setSearchTerm({ searchTerm, searchFilters }))
+      handleSearchTerm={(searchTerm: string) =>
+        dispatch(PromptsActions.setSearchTerm({ searchTerm }))
+      }
+      handleSearchFilters={(searchFilters: SearchFilters) =>
+        dispatch(PromptsActions.setSearchFilters({ searchFilters }))
       }
       handleDrop={handleDrop}
       footerComponent={<PromptbarSettings />}

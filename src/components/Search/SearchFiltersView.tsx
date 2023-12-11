@@ -24,15 +24,13 @@ import ContextMenu from '../Common/ContextMenu';
 import SearchFilterRenderer from './SearchFilterRenderer';
 
 interface Props {
-  searchTerm: string;
-  onSearch: (searchTerm: string, searchFilters: SearchFilters) => void;
+  onSearchFiltersChanged: (searchFilters: SearchFilters) => void;
   searchFilters: SearchFilters;
   featureType: FeatureType;
 }
 
 export default function SearchFiltersView({
-  searchTerm,
-  onSearch,
+  onSearchFiltersChanged,
   searchFilters,
   featureType,
 }: Props) {
@@ -79,15 +77,14 @@ export default function SearchFiltersView({
         .map(({ filterValue, ...props }) => ({
           ...props,
           onClick: (selected: boolean) => {
-            onSearch(
-              searchTerm,
+            onSearchFiltersChanged(
               getNewSearchFiltersValue(searchFilters, filterValue, selected),
             );
           },
           CustomTriggerRenderer: SearchFilterRenderer,
           customTriggerData: isSearchFilterSelected(searchFilters, filterValue),
         })),
-    [enabledFeatures, featureType, t, searchFilters, onSearch, searchTerm],
+    [enabledFeatures, featureType, t, searchFilters, onSearchFiltersChanged],
   );
 
   return (
