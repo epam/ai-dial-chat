@@ -19,7 +19,7 @@ export const getApiHeaders = ({
   } else {
     headers['Api-Key'] = process.env.OPENAI_API_KEY;
   }
-  
+
   if (jobTitle) {
     headers['X-JOB-TITLE'] = jobTitle;
   }
