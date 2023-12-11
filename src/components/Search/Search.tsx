@@ -1,42 +1,49 @@
-import { FC, useCallback } from 'react';
+import { IconSearch } from '@tabler/icons-react';
+import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { FeatureType } from '@/src/types/common';
+import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
-import SearchIcon from '../../../public/images/icons/search.svg';
+import SearchFiltersView from './SearchFiltersView';
 
 interface Props {
   placeholder: string;
   searchTerm: string;
-  onSearch: (searchTerm: string) => void;
+  onSearch: (searchTerm: string, searchFilters: SearchFilters) => void;
+  searchFilters: SearchFilters;
+  featureType: FeatureType;
 }
-const Search: FC<Props> = ({ placeholder, searchTerm, onSearch }) => {
+
+export default function Search(props: Props) {
+  const { placeholder, searchTerm, onSearch, searchFilters } = props;
   const { t } = useTranslation(Translation.SideBar);
 
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      onSearch(e.target.value);
+      onSearch(e.target.value, searchFilters);
     },
-    [onSearch],
+    [searchFilters, onSearch],
   );
 
   return (
     <div className="relative flex items-center py-1 pl-5 pr-2">
-      <SearchIcon
+      <IconSearch
         className="absolute left-5 text-gray-500"
+        size={18}
         width={18}
         height={18}
       />
       <input
-        className="w-full bg-transparent py-2 pl-8 text-[14px] leading-3 outline-none placeholder:text-gray-500"
+        className="w-full bg-transparent px-8 py-2 text-[14px] leading-3 outline-none placeholder:text-gray-500"
         type="text"
         placeholder={t(placeholder) || ''}
         value={searchTerm}
         onChange={handleSearchChange}
       />
+      <SearchFiltersView {...props} />
     </div>
   );
-};
-
-export default Search;
+}

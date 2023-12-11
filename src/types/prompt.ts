@@ -1,7 +1,6 @@
-import { Entity } from './common';
-import { ShareInterface } from './share';
+import { ShareEntity } from './common';
 
-export interface Prompt extends ShareInterface, Entity {
+export interface Prompt extends ShareEntity {
   description?: string;
   content?: string;
   folderId?: string;

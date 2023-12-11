@@ -4,6 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
+import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -56,20 +57,19 @@ export const Chatbar = () => {
 
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
-  const folders = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredFolders(
-      state,
-      undefined,
-      searchTerm,
-      true,
-    ),
+  const searchFilters = useAppSelector(
+    ConversationsSelectors.selectSearchFilters,
   );
-  const conversations = useAppSelector(
-    ConversationsSelectors.selectConversations,
+  const myItemsFilters = useAppSelector(
+    ConversationsSelectors.selectMyItemsFilters,
   );
 
-  const filteredConversations = useAppSelector(
-    ConversationsSelectors.selectSearchedConversations,
+  const filteredConversations = useAppSelector((state) =>
+    ConversationsSelectors.selectFilteredConversations(
+      state,
+      myItemsFilters,
+      searchTerm,
+    ),
   );
 
   const handleDrop = useCallback(
@@ -96,12 +96,13 @@ export const Chatbar = () => {
       isOpen={showChatbar}
       itemComponent={<Conversations conversations={filteredConversations} />}
       folderComponent={<ChatFolders />}
-      folders={folders}
-      items={conversations}
       filteredItems={filteredConversations}
       searchTerm={searchTerm}
-      handleSearchTerm={(searchTerm: string) =>
-        dispatch(ConversationsActions.setSearchTerm({ searchTerm }))
+      searchFilters={searchFilters}
+      handleSearchTerm={(searchTerm: string, searchFilters: SearchFilters) =>
+        dispatch(
+          ConversationsActions.setSearchTerm({ searchTerm, searchFilters }),
+        )
       }
       handleDrop={handleDrop}
       footerComponent={<ChatbarSettings />}
