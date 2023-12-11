@@ -80,6 +80,7 @@ export enum ExpectedMessages {
   sendMessageButtonEnabled = 'Send message button is enabled',
   tooltipContentIsValid = 'Tooltip content is valid',
   headerTitleCorrespondRequest = 'Chat header title correspond sent request',
+  headerTitleIsValid = 'Chat header title is valid',
   headerIconsCountIsValid = 'Chat header icons number is valid',
   headerCleanConversationIconVisible = 'Chat header Clean Conversation icon is visible',
   headerIconEntityIsValid = 'Chat header icon entity is valid',
@@ -165,4 +166,8 @@ export enum ExpectedMessages {
   replayAsIsDescriptionIsVisible = 'Replay as is description is visible',
   replayOldVersionWarningIsVisible = 'Replay old version of DIAL conversation warning is displayed',
   warningLabelColorIsValid = 'Warning label color is valid',
+  compareButtonIsDisabled = 'Chat bar Compare button is disabled',
+  closeChatIconIsNotVisible = 'Close chat icon is not visible',
+  chatMessageIsRated = 'Chat message was rated',
+  entityNameIsTruncated = 'Entity name is truncated',
 }

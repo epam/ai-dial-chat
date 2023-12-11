@@ -7,8 +7,13 @@ export enum Styles {
   backgroundColor = 'background-color',
   color = 'color',
   cursor = 'cursor',
+  overflow_x = 'overflow-x',
 }
 
 export enum Cursors {
   pointer = 'pointer',
+}
+
+export enum Overflow {
+  auto = 'auto',
 }
