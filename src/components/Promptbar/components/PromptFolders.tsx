@@ -29,6 +29,7 @@ interface promptFolderProps {
   index: number;
   isLast: boolean;
   filters: EntityFilters;
+  includeEmpty: boolean;
 }
 
 const PromptFolderTemplate = ({
@@ -36,6 +37,7 @@ const PromptFolderTemplate = ({
   index,
   isLast,
   filters,
+  includeEmpty = false,
 }: promptFolderProps) => {
   const dispatch = useAppDispatch();
 
@@ -46,7 +48,14 @@ const PromptFolderTemplate = ({
   const prompts = useAppSelector((state) =>
     PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
   );
-  const conversationFolders = useAppSelector(PromptsSelectors.selectFolders);
+  const promptFolders = useAppSelector((state) =>
+    PromptsSelectors.selectFilteredFolders(
+      state,
+      filters,
+      searchTerm,
+      includeEmpty,
+    ),
+  );
   const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
 
   const handleDrop = useCallback(
@@ -123,7 +132,7 @@ const PromptFolderTemplate = ({
         currentFolder={folder}
         itemComponent={PromptComponent}
         allItems={prompts}
-        allFolders={conversationFolders}
+        allFolders={promptFolders}
         highlightColor={HighlightColor.Violet}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
@@ -238,6 +247,7 @@ export const PromptSection = ({
             index={index}
             isLast={index === arr.length - 1}
             filters={filters}
+            includeEmpty={showEmptyFolders}
           />
         ))}
       </div>
