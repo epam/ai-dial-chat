@@ -1189,7 +1189,7 @@ const playbackNextMessageStartEpic: AppEpic = (action$, state$) =>
                   messages: updatedMessages,
                   isMessageStreaming: true,
                   model: { ...conv.model, ...assistantMessage.model },
-                  prompt: prompt,
+                  prompt,
                   temperature: temperature,
                   selectedAddons: selectedAddons,
                   assistantModelId: assistantModelId,
@@ -1301,8 +1301,8 @@ const playbackPrevMessageEpic: AppEpic = (action$, state$) =>
               values: {
                 messages: updatedMessages,
                 isMessageStreaming: false,
-                model: model,
-                prompt: prompt,
+                model,
+                prompt,
                 temperature: temperature,
                 selectedAddons: selectedAddons,
                 assistantModelId: assistantModelId,
@@ -1415,6 +1415,7 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
           .map(({ folderId, ...folder }) => ({
             ...folder,
             id: mapping.get(folder.id),
+            originalId: folder.id,
             folderId:
               folder.id === sharedFolderId ? undefined : mapping.get(folderId), // show shared folder on root level
             ...resetShareEntity,
@@ -1429,10 +1430,11 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
               conversation.folderId &&
               childFolders.includes(conversation.folderId),
           )
-          .map(({ folderId, ...prompt }) => ({
-            ...prompt,
+          .map(({ folderId, ...conversation }) => ({
+            ...conversation,
             ...resetShareEntity,
             id: uuidv4(),
+            originalId: conversation.id,
             folderId: mapping.get(folderId),
           }));
 
@@ -1468,6 +1470,7 @@ const shareConversationEpic: AppEpic = (action$, state$) =>
           ...conversation,
           ...resetShareEntity,
           id: uuidv4(),
+          originalId: conversation.id,
           folderId: undefined, // show on root level
           sharedWithMe: true,
           shareUniqueId,
@@ -1513,6 +1516,7 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
             ...folder,
             ...resetShareEntity,
             id: mapping.get(folder.id),
+            originalId: folder.id,
             folderId:
               folder.id === sharedFolderId ? undefined : mapping.get(folderId), // show shared folder on root level
             publishedWithMe:
@@ -1527,10 +1531,11 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
               conversation.folderId &&
               childFolders.includes(conversation.folderId),
           )
-          .map(({ folderId, ...prompt }) => ({
-            ...prompt,
+          .map(({ folderId, ...conversation }) => ({
+            ...conversation,
             ...resetShareEntity,
             id: uuidv4(),
+            originalId: conversation.id,
             folderId: mapping.get(folderId),
           }));
 
@@ -1566,6 +1571,7 @@ const publishConversationEpic: AppEpic = (action$, state$) =>
           ...conversation,
           ...resetShareEntity,
           id: uuidv4(),
+          originalId: conversation.id,
           folderId: undefined, // show on root level
           publishedWithMe: true,
           shareUniqueId,

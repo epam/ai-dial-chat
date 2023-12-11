@@ -214,6 +214,7 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
             ...folder,
             ...resetShareEntity,
             id: mapping.get(folder.id),
+            originalId: folder.id,
             folderId:
               folder.id === sharedFolderId ? undefined : mapping.get(folderId), // show shared folder on root level
             sharedWithMe: folder.id === sharedFolderId || folder.sharedWithMe,
@@ -230,6 +231,7 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
             ...prompt,
             ...resetShareEntity,
             id: uuidv4(),
+            originalId: prompt.id,
             folderId: mapping.get(folderId),
           }));
 
@@ -265,6 +267,7 @@ const sharePromptEpic: AppEpic = (action$, state$) =>
           ...prompt,
           ...resetShareEntity,
           id: uuidv4(),
+          originalId: prompt.id,
           folderId: undefined, // show on root level
           sharedWithMe: true,
           shareUniqueId:
@@ -305,6 +308,7 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
             ...folder,
             ...resetShareEntity,
             id: mapping.get(folder.id),
+            originalId: folder.id,
             folderId:
               folder.id === sharedFolderId ? undefined : mapping.get(folderId), // show shared folder on root level
             publishedWithMe:
@@ -322,6 +326,7 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
             ...prompt,
             ...resetShareEntity,
             id: uuidv4(),
+            originalId: prompt.id,
             folderId: mapping.get(folderId),
           }));
 
@@ -357,6 +362,7 @@ const publishPromptEpic: AppEpic = (action$, state$) =>
           ...prompt,
           ...resetShareEntity,
           id: uuidv4(),
+          originalId: prompt.id,
           folderId: undefined, // show on root level
           publishedWithMe: true,
           shareUniqueId:

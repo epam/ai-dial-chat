@@ -4,4 +4,5 @@ export interface ShareInterface {
   isPublished?: boolean;
   publishedWithMe?: boolean;
   shareUniqueId?: string;
+  originalId?: string;
 }
