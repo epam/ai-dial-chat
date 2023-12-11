@@ -28,6 +28,9 @@ export class PromptBar extends BaseElement {
     ChatBarSelectors.exportPrompts,
   );
   public importButton = this.getChildElementBySelector(SideBarSelectors.import);
+  public draggableArea = this.getChildElementBySelector(
+    SideBarSelectors.draggableArea,
+  );
 
   getFolderPrompts(): FolderPrompts {
     if (!this.folderPrompts) {
@@ -89,5 +92,20 @@ export class PromptBar extends BaseElement {
 
   public async deleteAllPrompts() {
     await this.deleteAllPromptsButton.click();
+  }
+
+  public async dropPromptFromFolder(folderName: string, promptName: string) {
+    const folderPrompt = await this.getFolderPrompts().getFolderPrompt(
+      folderName,
+      promptName,
+    );
+    await folderPrompt.hover();
+    await this.page.mouse.down();
+    const draggableBounding = await this.draggableArea.getElementBoundingBox();
+    await this.page.mouse.move(
+      draggableBounding!.x + draggableBounding!.width / 2,
+      draggableBounding!.y + draggableBounding!.height / 2,
+    );
+    await this.page.mouse.up();
   }
 }
