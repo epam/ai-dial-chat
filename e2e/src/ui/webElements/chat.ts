@@ -153,6 +153,26 @@ export class Chat extends BaseElement {
     };
   }
 
+  public async regenerateResponseInCompareMode(
+    comparedEntities: { rightEntity: string; leftEntity: string },
+    waitForAnswer = false,
+  ) {
+    const rightRequestPromise = this.waitForRequestSent(
+      comparedEntities.rightEntity,
+    );
+    const leftRequestPromise = this.waitForRequestSent(
+      comparedEntities.leftEntity,
+    );
+    await this.regenerate.click();
+    const rightRequest = await rightRequestPromise;
+    const leftRequest = await leftRequestPromise;
+    await this.waitForResponse(waitForAnswer);
+    return {
+      rightRequest: rightRequest.postDataJSON(),
+      leftRequest: leftRequest.postDataJSON(),
+    };
+  }
+
   public waitForRequestSent(userRequest: string | undefined) {
     return userRequest
       ? this.page.waitForRequest((request) =>
