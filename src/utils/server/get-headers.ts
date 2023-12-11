@@ -9,7 +9,7 @@ export const getApiHeaders = ({
 }): Record<string, string> => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'Api-Key': process.env.OPENAI_API_KEY,
+    'Api-Key': process.env.DIAL_API_KEY,
   };
   if (chatId) {
     headers['X-CONVERSATION-ID'] = chatId;

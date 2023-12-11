@@ -32,7 +32,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
     const resultQuery = query.toString();
 
-    const url = `${process.env.OPENAI_API_HOST}/v1/files${
+    const url = `${process.env.DIAL_API_HOST}/v1/files${
       path && `/${encodeURI(path)}`
     }?${resultQuery}`;
     const response = await fetch(url, {

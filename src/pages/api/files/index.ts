@@ -53,7 +53,7 @@ async function handlePostRequest(
 ) {
   const readable = Readable.from(req);
   const { path = '' } = req.query as { path: string };
-  const url = `${process.env.OPENAI_API_HOST}/v1/files${
+  const url = `${process.env.DIAL_API_HOST}/v1/files${
     path && `/${encodeURI(path)}`
   }`;
   const proxyRes = await fetch(url, {
@@ -84,7 +84,7 @@ async function handleGetRequest(
   res: NextApiResponse,
 ) {
   const { path } = req.query as { path: string };
-  const url = `${process.env.OPENAI_API_HOST}/v1/files${
+  const url = `${process.env.DIAL_API_HOST}/v1/files${
     path && encodeURI(path)
   }?purpose=content`;
   const proxyRes = await fetch(url, {
@@ -111,7 +111,7 @@ async function handleDeleteRequest(
   res: NextApiResponse,
 ) {
   const { path = '' } = req.query as { path: string };
-  const url = `${process.env.OPENAI_API_HOST}/v1/files${
+  const url = `${process.env.DIAL_API_HOST}/v1/files${
     path && `/${encodeURI(path)}`
   }`;
   const proxyRes = await fetch(url, {
