@@ -29,6 +29,8 @@ export const ExpectedConstants = {
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
   proceedReplayTooltip: 'Please continue replay to continue working with chat',
+  waitForAssistantAnswerTooltip:
+    'Please wait for full assistant answer to continue working with chat',
   selectedPromptOptionAttribute: 'bg-blue-500/20',
   noResults: 'No results found',
   notAllowedModelError:
@@ -97,4 +99,9 @@ export enum ModelIds {
   GPT_4_32K = 'gpt-4-32k',
   BISON_001 = 'chat-bison@001',
   AWS_TITAN = 'amazon.titan-tg1-large',
+}
+
+export enum Rate {
+  like = 'like',
+  dislike = 'dislike',
 }

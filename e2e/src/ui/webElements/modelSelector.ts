@@ -12,7 +12,8 @@ export class ModelSelector extends BaseElement {
   private selectedModel = this.getChildElementBySelector(
     `${ChatSelectors.combobox}~${Tags.div}`,
   );
-  private listOptions = this.getChildElementBySelector(
+  public listbox = this.getChildElementBySelector(ChatSelectors.listbox);
+  private listOptions = this.listbox.getChildElementBySelector(
     ChatSelectors.listOptions,
   );
   private listOption = (option: string) =>

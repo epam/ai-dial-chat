@@ -476,6 +476,7 @@ export const ChatMessage: FC<Props> = memo(
                                 : 'visible text-gray-500'
                             }
                             disabled={message.like === 1}
+                            data-qa="like"
                           >
                             <IconThumbUp size={24} />
                           </Button>
@@ -489,6 +490,7 @@ export const ChatMessage: FC<Props> = memo(
                                 : 'visible text-gray-500'
                             }
                             disabled={message.like === -1}
+                            data-qa="dislike"
                           >
                             <IconThumbDown size={24} />
                           </Button>
