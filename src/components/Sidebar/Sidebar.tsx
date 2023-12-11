@@ -23,7 +23,8 @@ interface Props<T> {
   searchTerm: string;
   searchFilters: SearchFilters;
   featureType: FeatureType;
-  handleSearchTerm: (searchTerm: string, searchFilters: SearchFilters) => void;
+  handleSearchTerm: (searchTerm: string) => void;
+  handleSearchFilters: (searchFilters: SearchFilters) => void;
   toggleOpen?: () => void;
   handleDrop: (e: any) => void;
 }
@@ -40,6 +41,7 @@ const Sidebar = <T,>({
   searchFilters,
   featureType,
   handleSearchTerm,
+  handleSearchFilters,
   handleDrop,
 }: Props<T>) => {
   const { t } = useTranslation(Translation.PromptBar);
@@ -82,6 +84,7 @@ const Sidebar = <T,>({
         searchTerm={searchTerm}
         searchFilters={searchFilters}
         onSearch={handleSearchTerm}
+        onSearchFiltersChanged={handleSearchFilters}
         featureType={featureType}
       />
       {actionButtons}

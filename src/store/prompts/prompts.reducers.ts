@@ -203,12 +203,19 @@ export const promptsSlice = createSlice({
     },
     setSearchTerm: (
       state,
-      {
-        payload,
-      }: PayloadAction<{ searchTerm: string; searchFilters?: SearchFilters }>,
+      { payload }: PayloadAction<{ searchTerm: string }>,
     ) => {
       state.searchTerm = payload.searchTerm;
-      state.searchFilters = payload.searchFilters ?? SearchFilters.None;
+    },
+    setSearchFilters: (
+      state,
+      { payload }: PayloadAction<{ searchFilters: SearchFilters }>,
+    ) => {
+      state.searchFilters = payload.searchFilters;
+    },
+    resetSearch: (state) => {
+      state.searchTerm = '';
+      state.searchFilters = SearchFilters.None;
     },
     setIsEditModalOpen: (
       state,

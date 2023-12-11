@@ -12,20 +12,27 @@ import SearchFiltersView from './SearchFiltersView';
 interface Props {
   placeholder: string;
   searchTerm: string;
-  onSearch: (searchTerm: string, searchFilters: SearchFilters) => void;
+  onSearch: (searchTerm: string) => void;
+  onSearchFiltersChanged: (searchFilters: SearchFilters) => void;
   searchFilters: SearchFilters;
   featureType: FeatureType;
 }
 
-export default function Search(props: Props) {
-  const { placeholder, searchTerm, onSearch, searchFilters } = props;
+export default function Search({
+  placeholder,
+  searchTerm,
+  onSearch,
+  searchFilters,
+  onSearchFiltersChanged,
+  featureType,
+}: Props) {
   const { t } = useTranslation(Translation.SideBar);
 
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      onSearch(e.target.value, searchFilters);
+      onSearch(e.target.value);
     },
-    [searchFilters, onSearch],
+    [onSearch],
   );
 
   return (
@@ -43,7 +50,11 @@ export default function Search(props: Props) {
         value={searchTerm}
         onChange={handleSearchChange}
       />
-      <SearchFiltersView {...props} />
+      <SearchFiltersView
+        featureType={featureType}
+        onSearchFiltersChanged={onSearchFiltersChanged}
+        searchFilters={searchFilters}
+      />
     </div>
   );
 }

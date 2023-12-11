@@ -38,6 +38,7 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'off',
     screenshot: 'only-on-failure',
+    permissions: ['clipboard-read', 'clipboard-write'],
   },
   expect: {
     timeout: 20000,
@@ -51,7 +52,11 @@ export default defineConfig({
     },
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], storageState: STORAGE_STATE },
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: STORAGE_STATE,
+        viewport: { width: 1536, height: 864 },
+      },
       dependencies: ['setup'],
     },
 

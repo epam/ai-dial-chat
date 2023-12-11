@@ -98,7 +98,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       dispatch(
         PromptsActions.updatePrompt({ promptId: prompt.id, values: prompt }),
       );
-      dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
+      dispatch(PromptsActions.resetSearch());
       setIsRenaming(false);
     },
     [dispatch],
@@ -111,7 +111,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
       if (isDeleting) {
         dispatch(PromptsActions.deletePrompts({ promptIds: [prompt.id] }));
-        dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
+        dispatch(PromptsActions.resetSearch());
       }
 
       setIsDeleting(false);

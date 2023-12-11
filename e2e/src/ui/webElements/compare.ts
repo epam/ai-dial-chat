@@ -60,7 +60,7 @@ export class Compare extends BaseElement {
     return this.leftChatHeader;
   }
 
-  public async gerConversationsCount() {
+  public async getConversationsCount() {
     return (
       (await this.getLeftConversationSettings().getElementsCount()) +
       (await this.getRightConversationSettings().getElementsCount())

@@ -40,7 +40,7 @@ const ChatActionsBlock = () => {
               names: [DEFAULT_CONVERSATION_NAME],
             }),
           );
-          dispatch(ConversationsActions.setSearchTerm({ searchTerm: '' }));
+          dispatch(ConversationsActions.resetSearch());
         }}
         disabled={!!messageIsStreaming}
         data-qa="new-chat"
@@ -82,7 +82,7 @@ export const Chatbar = () => {
             values: { folderId: undefined },
           }),
         );
-        dispatch(ConversationsActions.setSearchTerm({ searchTerm: '' }));
+        dispatch(ConversationsActions.resetSearch());
       }
     },
     [dispatch],
@@ -99,10 +99,11 @@ export const Chatbar = () => {
       filteredItems={filteredConversations}
       searchTerm={searchTerm}
       searchFilters={searchFilters}
-      handleSearchTerm={(searchTerm: string, searchFilters: SearchFilters) =>
-        dispatch(
-          ConversationsActions.setSearchTerm({ searchTerm, searchFilters }),
-        )
+      handleSearchTerm={(searchTerm: string) =>
+        dispatch(ConversationsActions.setSearchTerm({ searchTerm }))
+      }
+      handleSearchFilters={(searchFilters: SearchFilters) =>
+        dispatch(ConversationsActions.setSearchFilters({ searchFilters }))
       }
       handleDrop={handleDrop}
       footerComponent={<ChatbarSettings />}
