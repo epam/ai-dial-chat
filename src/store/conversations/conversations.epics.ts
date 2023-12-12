@@ -1087,7 +1087,8 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         ConversationsActions.moveFolder.match(action) ||
         ConversationsActions.clearConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
-        ConversationsActions.addFolders.match(action),
+        ConversationsActions.addFolders.match(action) ||
+        ConversationsActions.unpublishFolder.match(action),
     ),
     map(() => ({
       conversationsFolders: ConversationsSelectors.selectFolders(state$.value),
@@ -1140,7 +1141,8 @@ const saveConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversations.match(action) ||
         ConversationsActions.createNewPlaybackConversation.match(action) ||
-        ConversationsActions.addConversations.match(action),
+        ConversationsActions.addConversations.match(action) ||
+        ConversationsActions.unpublishConversation.match(action),
     ),
     map(() => ConversationsSelectors.selectConversations(state$.value)),
     switchMap((conversations) => {

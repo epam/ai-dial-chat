@@ -29,7 +29,8 @@ const savePromptsEpic: AppEpic = (action$, state$) =>
         PromptsActions.clearPrompts.match(action) ||
         PromptsActions.updatePrompt.match(action) ||
         PromptsActions.addPrompts.match(action) ||
-        PromptsActions.importPromptsSuccess.match(action),
+        PromptsActions.importPromptsSuccess.match(action) ||
+        PromptsActions.unpublishPrompt.match(action),
     ),
     map(() => PromptsSelectors.selectPrompts(state$.value)),
     switchMap((prompts) => {
@@ -48,7 +49,8 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         PromptsActions.moveFolder.match(action) ||
         PromptsActions.addFolders.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
-        PromptsActions.importPromptsSuccess.match(action),
+        PromptsActions.importPromptsSuccess.match(action) ||
+        PromptsActions.unpublishFolder.match(action),
     ),
     map(() => ({
       promptsFolders: PromptsSelectors.selectFolders(state$.value),
@@ -256,7 +258,7 @@ const sharePromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.sharePrompt.match),
     map(({ payload }) => ({
-      sharedPromptId: payload.promptId,
+      sharedPromptId: payload.id,
       shareUniqueId: payload.shareUniqueId,
       prompts: PromptsSelectors.selectPrompts(state$.value),
     })),
@@ -351,7 +353,7 @@ const publishPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.publishPrompt.match),
     map(({ payload }) => ({
-      sharedPromptId: payload.promptId,
+      sharedPromptId: payload.id,
       shareUniqueId: payload.shareUniqueId,
       prompts: PromptsSelectors.selectPrompts(state$.value),
     })),

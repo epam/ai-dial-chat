@@ -65,10 +65,10 @@ export const promptsSlice = createSlice({
     },
     sharePrompt: (
       state,
-      { payload }: PayloadAction<{ promptId: string; shareUniqueId: string }>,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
     ) => {
       state.prompts = state.prompts.map((conv) => {
-        if (conv.id === payload.promptId) {
+        if (conv.id === payload.id) {
           return {
             ...conv,
             //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
@@ -97,10 +97,10 @@ export const promptsSlice = createSlice({
     },
     publishPrompt: (
       state,
-      { payload }: PayloadAction<{ promptId: string; shareUniqueId: string }>,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
     ) => {
       state.prompts = state.prompts.map((conv) => {
-        if (conv.id === payload.promptId) {
+        if (conv.id === payload.id) {
           return {
             ...conv,
             //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
@@ -121,6 +121,38 @@ export const promptsSlice = createSlice({
             ...folder,
             //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
             isPublished: true,
+          };
+        }
+
+        return folder;
+      });
+    },
+    unpublishPrompt: (
+      state,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
+    ) => {
+      state.prompts = state.prompts.map((conv) => {
+        if (conv.id === payload.id) {
+          return {
+            ...conv,
+            //TODO: unpublish prompt by API
+            isPublished: false,
+          };
+        }
+
+        return conv;
+      });
+    },
+    unpublishFolder: (
+      state,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
+    ) => {
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.id) {
+          return {
+            ...folder,
+            //TODO: unpublish folder by API
+            isPublished: false,
           };
         }
 

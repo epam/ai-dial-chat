@@ -6,3 +6,10 @@ export interface ShareInterface {
   shareUniqueId?: string;
   originalId?: string;
 }
+
+export enum SharingType {
+  Conversation = 'conversation',
+  ConversationFolder = 'conversations_folder',
+  Prompt = 'prompt',
+  PromptFolder = 'prompts_folder',
+}

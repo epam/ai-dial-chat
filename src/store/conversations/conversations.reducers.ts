@@ -181,6 +181,38 @@ export const conversationsSlice = createSlice({
         return folder;
       });
     },
+    unpublishConversation: (
+      state,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
+    ) => {
+      state.conversations = state.conversations.map((conv) => {
+        if (conv.id === payload.id) {
+          return {
+            ...conv,
+            //TODO: unpublish conversation by API
+            isPublished: false,
+          };
+        }
+
+        return conv;
+      });
+    },
+    unpublishFolder: (
+      state,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
+    ) => {
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.id) {
+          return {
+            ...folder,
+            //TODO: unpublish folder by API
+            isPublished: false,
+          };
+        }
+
+        return folder;
+      });
+    },
     exportConversation: (
       state,
       _action: PayloadAction<{ conversationId: string }>,

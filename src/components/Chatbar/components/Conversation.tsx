@@ -15,6 +15,7 @@ import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, HighlightColor } from '@/src/types/common';
+import { SharingType } from '@/src/types/share';
 
 import {
   ConversationsActions,
@@ -29,11 +30,13 @@ import { emptyImage } from '@/src/constants/drag-and-drop';
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { PlaybackIcon } from '@/src/components/Chat/PlaybackIcon';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
-import ShareModal, { SharingType } from '@/src/components/Chat/ShareModal';
+import ShareModal from '@/src/components/Chat/ShareModal';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 import ShareIcon from '@/src/components/Common/ShareIcon';
 
+import PublishModal from '../../Chat/PublishModal';
+import UnpublishModal from '../../Chat/UnpublishModal';
 import { ModelIcon } from './ModelIcon';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -120,8 +123,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const dragImageRef = useRef<HTMLImageElement | null>();
   const [isSharing, setIsSharing] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
-  const { id: conversationId } = conversation;
   const isSelected = selectedConversationIds.includes(conversation.id);
 
   const { refs, context } = useFloating({
@@ -258,18 +261,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     setIsSharing(false);
   }, []);
 
-  const handleShared = useCallback(
-    (shareUniqueId: string) => {
-      dispatch(
-        ConversationsActions.shareConversation({
-          id: conversationId,
-          shareUniqueId,
-        }),
-      );
-    },
-    [conversationId, dispatch],
-  );
-
   const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
       setIsPublishing(true);
@@ -279,17 +270,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     setIsPublishing(false);
   }, []);
 
-  const handlePublished = useCallback(
-    (shareUniqueId: string) => {
-      dispatch(
-        ConversationsActions.publishConversation({
-          id: conversationId,
-          shareUniqueId,
-        }),
-      );
-    },
-    [conversationId, dispatch],
-  );
+  const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsUnpublishing(true);
+    }, []);
+
+  const handleCloseUnpublishModal = useCallback(() => {
+    setIsUnpublishing(false);
+  }, []);
 
   const handleMoveToFolder = useCallback(
     ({
@@ -457,7 +445,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onShare={handleOpenSharing}
             onPublish={handleOpenPublishing}
             onPublishUpdate={handleOpenPublishing}
-            onUnpublish={handleOpenPublishing}
+            onUnpublish={handleOpenUnpublishing}
             onOpenChange={setIsContextMenu}
             isOpen={isContextMenu}
           />
@@ -491,16 +479,22 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           type={SharingType.Conversation}
           isOpen
           onClose={handleCloseShareModal}
-          onShare={handleShared}
         />
       )}
       {isPublishing && (
-        <ShareModal
+        <PublishModal
           entity={conversation}
           type={SharingType.Conversation}
           isOpen
           onClose={handleClosePublishModal}
-          onShare={handlePublished}
+        />
+      )}
+      {isUnpublishing && (
+        <UnpublishModal
+          entity={conversation}
+          type={SharingType.Conversation}
+          isOpen
+          onClose={handleCloseUnpublishModal}
         />
       )}
     </div>

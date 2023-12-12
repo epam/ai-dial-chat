@@ -18,36 +18,29 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
-import { Entity } from '@/src/types/common';
+import { getShareActionByType } from '@/src/utils/app/share';
+
+import { ShareEntity } from '@/src/types/common';
+import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
+
+import { useAppDispatch } from '@/src/store/hooks';
 
 import Tooltip from '../Common/Tooltip';
 
 import { v4 as uuidv4 } from 'uuid';
 
-export enum SharingType {
-  Conversation = 'conversation',
-  ConversationFolder = 'conversations_folder',
-  Prompt = 'prompt',
-  PromptFolder = 'prompts_folder',
-}
-
 interface Props {
-  entity: Entity;
+  entity: ShareEntity;
   type: SharingType;
   isOpen: boolean;
   onClose: () => void;
-  onShare: (shareId: string) => void;
 }
 
-export default function ShareModal({
-  entity,
-  isOpen,
-  onClose,
-  onShare,
-  type,
-}: Props) {
+export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
   const { t } = useTranslation(Translation.SideBar);
+  const dispatch = useAppDispatch();
+  const shareAction = getShareActionByType(type);
   const copyButtonRef = useRef<HTMLButtonElement>(null);
   const [urlCopied, setUrlCopied] = useState(false);
   const [urlWasCopied, setUrlWasCopied] = useState(false);
@@ -88,11 +81,13 @@ export default function ShareModal({
         }, 2000);
         if (!urlWasCopied) {
           setUrlWasCopied(true);
-          onShare(shareId.current);
+          dispatch(
+            shareAction({ id: entity.id, shareUniqueId: shareId.current }),
+          );
         }
       });
     },
-    [onShare, shareId, url, urlWasCopied],
+    [dispatch, entity.id, shareAction, url, urlWasCopied],
   );
 
   useEffect(() => () => clearTimeout(timeoutRef.current), []);

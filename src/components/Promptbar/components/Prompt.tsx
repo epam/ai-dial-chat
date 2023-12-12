@@ -12,6 +12,7 @@ import classNames from 'classnames';
 
 import { FeatureType, HighlightColor } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
+import { SharingType } from '@/src/types/share';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -25,7 +26,9 @@ import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
-import ShareModal, { SharingType } from '../../Chat/ShareModal';
+import PublishModal from '../../Chat/PublishModal';
+import ShareModal from '../../Chat/ShareModal';
+import UnpublishModal from '../../Chat/UnpublishModal';
 import ShareIcon from '../../Common/ShareIcon';
 import { PromptModal } from './PromptModal';
 
@@ -57,8 +60,8 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
-  const { id: promptId } = prompt;
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -71,18 +74,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const handleCloseShareModal = useCallback(() => {
     setIsSharing(false);
   }, []);
-
-  const handleShared = useCallback(
-    (shareUniqueId: string) => {
-      dispatch(
-        PromptsActions.sharePrompt({
-          promptId,
-          shareUniqueId,
-        }),
-      );
-    },
-    [dispatch, promptId],
-  );
 
   const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
@@ -98,17 +89,14 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     setIsPublishing(false);
   }, []);
 
-  const handlePublished = useCallback(
-    (shareUniqueId: string) => {
-      dispatch(
-        PromptsActions.publishPrompt({
-          promptId,
-          shareUniqueId,
-        }),
-      );
-    },
-    [dispatch, promptId],
-  );
+  const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsUnpublishing(true);
+    }, []);
+
+  const handleCloseUnpublishModal = useCallback(() => {
+    setIsUnpublishing(false);
+  }, []);
 
   const handleUpdate = useCallback(
     (prompt: Prompt) => {
@@ -301,7 +289,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               onShare={handleOpenSharing}
               onPublish={handleOpenPublishing}
               onPublishUpdate={handleOpenPublishing}
-              onUnpublish={handleOpenPublishing}
+              onUnpublish={handleOpenUnpublishing}
               onOpenChange={setIsContextMenu}
               isOpen={isContextMenu}
             />
@@ -334,17 +322,23 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           type={SharingType.Prompt}
           isOpen
           onClose={handleCloseShareModal}
-          onShare={handleShared}
         />
       )}
 
       {isPublishing && (
-        <ShareModal
+        <PublishModal
           entity={prompt}
           type={SharingType.Prompt}
           isOpen
           onClose={handleClosePublishModal}
-          onShare={handlePublished}
+        />
+      )}
+      {isUnpublishing && (
+        <UnpublishModal
+          entity={prompt}
+          type={SharingType.Prompt}
+          isOpen
+          onClose={handleCloseUnpublishModal}
         />
       )}
     </>
