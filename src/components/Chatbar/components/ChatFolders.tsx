@@ -282,7 +282,7 @@ export function ChatFolders() {
     ConversationsSelectors.selectIsEmptySearchFilter,
   );
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
-  const commonItemFilter = useAppSelector(
+  const commonSearchFilter = useAppSelector(
     ConversationsSelectors.selectMyItemsFilters,
   );
 
@@ -303,13 +303,13 @@ export function ChatFolders() {
         },
         {
           name: t('Pinned chats'),
-          filters: commonItemFilter,
+          filters: commonSearchFilter,
           showEmptyFolders: isFilterEmpty,
           openByDefault: true,
           dataQa: 'pinned-chats',
         },
       ].filter(({ hidden }) => !hidden),
-    [commonItemFilter, isFilterEmpty, isSharingEnabled, searchTerm.length, t],
+    [commonSearchFilter, isFilterEmpty, isSharingEnabled, searchTerm.length, t],
   );
 
   return (

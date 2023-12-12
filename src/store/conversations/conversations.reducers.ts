@@ -12,7 +12,6 @@ import {
 } from '@/src/types/chat';
 import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
-import { SearchFilters } from '@/src/types/search';
 
 import {
   DEFAULT_CONVERSATION_NAME,
