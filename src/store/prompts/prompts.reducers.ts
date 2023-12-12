@@ -6,6 +6,7 @@ import { translate } from '@/src/utils/app/translation';
 import { PromptsHistory } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
+import { SearchFilters } from '@/src/types/search';
 
 import { PromptsState } from './prompts.types';
 
@@ -17,6 +18,7 @@ const initialState: PromptsState = {
   prompts: [],
   folders: [],
   searchTerm: '',
+  searchFilters: SearchFilters.None,
   selectedPromptId: undefined,
   isEditModalOpen: false,
 };
@@ -163,6 +165,16 @@ export const promptsSlice = createSlice({
       { payload }: PayloadAction<{ searchTerm: string }>,
     ) => {
       state.searchTerm = payload.searchTerm;
+    },
+    setSearchFilters: (
+      state,
+      { payload }: PayloadAction<{ searchFilters: SearchFilters }>,
+    ) => {
+      state.searchFilters = payload.searchFilters;
+    },
+    resetSearch: (state) => {
+      state.searchTerm = '';
+      state.searchFilters = SearchFilters.None;
     },
     setIsEditModalOpen: (
       state,

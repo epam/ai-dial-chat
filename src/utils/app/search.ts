@@ -3,6 +3,7 @@ import { EntityFilter } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
+import { SearchFilters } from '@/src/types/search';
 import { ShareInterface } from '@/src/types/share';
 
 export const doesConversationContainSearchTerm = (
@@ -74,3 +75,34 @@ export const SharedWithMeFilter: EntityFilter<ShareInterface> = (item) =>
 
 export const SharedByMeFilter: EntityFilter<ShareInterface> = (item) =>
   !!item.isShared;
+
+export const PublishedByMeFilter: EntityFilter<ShareInterface> = (item) =>
+  !!item.isPublished;
+
+export const getNewSearchFiltersValue = (
+  filter: SearchFilters,
+  value: SearchFilters,
+  selected: boolean,
+) => (!selected ? filter & ~value : filter | value);
+
+export const isSearchFilterSelected = (
+  filter: SearchFilters,
+  value: SearchFilters,
+) => (filter & value) === value;
+
+export const getItemFilter = (
+  searchFilters: SearchFilters,
+): EntityFilter<ShareInterface> => {
+  if (searchFilters === SearchFilters.None) return PinnedItemsFilter;
+
+  const itemFilters: EntityFilter<ShareInterface>[] = [];
+  if (isSearchFilterSelected(searchFilters, SearchFilters.SharedByMe)) {
+    itemFilters.push(SharedByMeFilter);
+  }
+  if (isSearchFilterSelected(searchFilters, SearchFilters.PublishedByMe)) {
+    itemFilters.push(PublishedByMeFilter);
+  }
+  if (!itemFilters.length) return PinnedItemsFilter;
+
+  return (item: ShareInterface) => itemFilters.some((filter) => filter(item));
+};

@@ -69,11 +69,6 @@ export interface RateBody {
   value: boolean;
 }
 
-export interface Share {
-  id: string;
-  createdDate: Date;
-}
-
 export interface Conversation extends ShareInterface, Entity {
   messages: Message[];
   model: ConversationEntityModel;

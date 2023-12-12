@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { PinnedItemsFilter, SharedWithMeFilter } from '@/src/utils/app/search';
+import { SharedWithMeFilter } from '@/src/utils/app/search';
 
 import { EntityFilter, HighlightColor } from '@/src/types/common';
+import { Feature } from '@/src/types/features';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
@@ -14,6 +15,7 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Folder from '@/src/components/Folder';
@@ -212,7 +214,13 @@ export const PromptSection = ({
     rootPrompts,
   ]);
 
-  if (hideIfEmpty && !prompts.length && !folders.length) return null;
+  if (
+    hideIfEmpty &&
+    (!displayRootFiles || !prompts.length) &&
+    !folders.length
+  ) {
+    return null;
+  }
 
   return (
     <CollapsableSection
@@ -242,26 +250,40 @@ export const PromptSection = ({
   );
 };
 
-const folderItems: FolderSectionProps<Prompt>[] = [
-  {
-    name: 'Share With Me',
-    itemFilter: SharedWithMeFilter,
-    displayRootFiles: true,
-    dataQa: 'share-with-me',
-  },
-  {
-    name: 'Pinned prompts',
-    itemFilter: PinnedItemsFilter,
-    showEmptyFolders: true,
-    openByDefault: true,
-    dataQa: 'pinned-prompts',
-  },
-];
-
 export function PromptFolders() {
+  const { t } = useTranslation(Translation.PromptBar);
+  const isFilterEmpty = useAppSelector(
+    PromptsSelectors.selectIsEmptySearchFilter,
+  );
+  const commonItemFilter = useAppSelector(PromptsSelectors.selectItemFilter);
+  const isSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.PromptsSharing),
+  );
+
+  const folderItems: FolderSectionProps<Prompt>[] = useMemo(
+    () =>
+      [
+        {
+          hidden: !isSharingEnabled || !isFilterEmpty,
+          name: t('Shared with me'),
+          itemFilter: SharedWithMeFilter,
+          displayRootFiles: true,
+          dataQa: 'share-with-me',
+        },
+        {
+          name: t('Pinned prompts'),
+          itemFilter: commonItemFilter,
+          showEmptyFolders: isFilterEmpty,
+          openByDefault: true,
+          dataQa: 'pinned-prompts',
+        },
+      ].filter(({ hidden }) => !hidden),
+    [commonItemFilter, isFilterEmpty, isSharingEnabled, t],
+  );
+
   return (
     <div
-      className="flex w-full flex-col gap-0.5 divide-y divide-gray-200 dark:divide-gray-800"
+      className="flex w-full flex-col gap-0.5 divide-y divide-gray-200 empty:hidden dark:divide-gray-800"
       data-qa="prompt-folders"
     >
       {folderItems.map((itemProps) => (
