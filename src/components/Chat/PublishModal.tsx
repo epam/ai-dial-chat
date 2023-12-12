@@ -66,8 +66,6 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
     [dispatch, entity.id, onClose, publishAction],
   );
 
-  const actionText = t(entity.isPublished ? 'Update' : 'Publish');
-
   return (
     <FloatingPortal id="theme-main">
       <FloatingOverlay
@@ -77,7 +75,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
         <FloatingFocusManager context={context}>
           <form
             noValidate
-            className="relative inline-block max-h-full w-full max-w-[424px] rounded bg-gray-100 p-6 text-left dark:bg-gray-700"
+            className="relative inline-block h-[747px] max-h-full min-w-[550px] max-w-[1100px] rounded bg-gray-100 p-6 text-left dark:bg-gray-700"
             role="dialog"
             ref={refs.setFloating}
             {...getFloatingProps()}
@@ -91,13 +89,13 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
             >
               <IconX height={24} width={24} />
             </button>
-            <div className="flex flex-col justify-between gap-2">
+            <div className="flex h-full flex-col justify-between gap-2">
               <h4 className=" max-h-[50px] text-base font-semibold">
                 <span className="line-clamp-2 break-words">
-                  {`${actionText}: ${entity.name.trim()}`}
+                  {`${t('Publication request for')}: ${entity.name.trim()}`}
                 </span>
               </h4>
-              <div className="flex gap-3">
+              <div className="flex justify-end gap-3">
                 <button
                   className="button button-secondary"
                   onClick={handleClose}
@@ -110,7 +108,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
                   onClick={handlePublish}
                   data-qa="publish"
                 >
-                  {actionText}
+                  {t('Send request')}
                 </button>
               </div>
             </div>
