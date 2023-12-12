@@ -11,7 +11,6 @@ import {
 import classNames from 'classnames';
 
 import { FeatureType, HighlightColor } from '@/src/types/common';
-import { Feature } from '@/src/types/features';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -54,7 +53,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const showModal = useAppSelector(PromptsSelectors.selectIsEditModalOpen);
 
   const isSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.PromptsSharing),
+    SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
   );
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -78,16 +77,11 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   }, []);
 
   const handleShared = useCallback(
-    (_newShareId: string) => {
-      //TODO: send newShareId to API to store {id, createdDate}
+    (shareUniqueId: string) => {
       dispatch(
-        PromptsActions.updatePrompt({
+        PromptsActions.sharePrompt({
           promptId,
-          values: {
-            isShared: true,
-            //TODO: for development purpose - emulate immediate sharing with yourself
-            sharedWithMe: true,
-          },
+          shareUniqueId,
         }),
       );
     },

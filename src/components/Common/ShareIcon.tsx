@@ -18,7 +18,7 @@ interface ShareIsonProps extends ShareInterface {
   highlightColor: HighlightColor;
   size?: number;
   children: ReactNode | ReactNode[];
-  featureType: FeatureType;
+  featureType?: FeatureType;
 }
 
 export default function ShareIcon({

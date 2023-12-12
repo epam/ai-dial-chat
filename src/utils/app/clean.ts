@@ -57,6 +57,8 @@ export const cleanConversationHistory = (
           }),
           isShared: conversation.isShared,
           sharedWithMe: conversation.sharedWithMe,
+          isPublished: conversation.isPublished,
+          shareUniqueId: conversation.shareUniqueId,
         };
 
         acc.push(cleanConversation);

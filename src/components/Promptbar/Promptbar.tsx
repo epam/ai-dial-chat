@@ -47,10 +47,10 @@ const Promptbar = () => {
   const dispatch = useAppDispatch();
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
-  const itemFilter = useAppSelector(PromptsSelectors.selectItemFilter);
+  const myItemsFilters = useAppSelector(PromptsSelectors.selectMyItemsFilters);
 
   const filteredPrompts = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredPrompts(state, itemFilter, searchTerm),
+    PromptsSelectors.selectFilteredPrompts(state, myItemsFilters, searchTerm),
   );
 
   const searchFilters = useAppSelector(PromptsSelectors.selectSearchFilters);

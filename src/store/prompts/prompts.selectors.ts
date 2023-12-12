@@ -7,12 +7,11 @@ import {
 } from '@/src/utils/app/folders';
 import {
   doesPromptContainSearchTerm,
-  getItemFilter,
+  getMyItemsFilters,
 } from '@/src/utils/app/search';
 
-import { EntityFilter } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
-import { SearchFilters } from '@/src/types/search';
+import { EntityFilters, SearchFilters } from '@/src/types/search';
 
 import { RootState } from '../index';
 import { PromptsState } from './prompts.types';
@@ -26,14 +25,15 @@ export const selectPrompts = createSelector([rootSelector], (state) => {
 export const selectFilteredPrompts = createSelector(
   [
     selectPrompts,
-    (_state, filter?: EntityFilter<Prompt>) => filter,
-    (_state, _filter, searchTerm?: string) => searchTerm,
+    (_state, filters: EntityFilters) => filters,
+    (_state, _filters, searchTerm?: string) => searchTerm,
   ],
-  (prompts, filter?, searchTerm?) => {
+  (prompts, filters, searchTerm?) => {
     return prompts.filter(
       (prompt) =>
         (!searchTerm || doesPromptContainSearchTerm(prompt, searchTerm)) &&
-        (!filter || filter(prompt)),
+        filters.searchFilter(prompt) &&
+        (prompt.folderId || filters.sectionFilter(prompt)),
     );
   },
 );
@@ -67,30 +67,34 @@ export const selectFilteredFolders = createSelector(
     (state) => state,
     selectFolders,
     selectEmptyFolderIds,
-    (_state, itemFilter?: EntityFilter<Prompt>) => itemFilter,
-    (_state, _itemFilter?, searchTerm?: string) => searchTerm,
-    (_state, _itemFilter?, _searchTerm?, includeEmptyFolders?: boolean) =>
+    (_state, filters: EntityFilters) => filters,
+    (_state, _filters?, searchTerm?: string) => searchTerm,
+    (_state, _filters?, _searchTerm?, includeEmptyFolders?: boolean) =>
       includeEmptyFolders,
   ],
   (
     state,
     folders,
     emptyFolderIds,
-    itemFilter?,
+    filters?,
     searchTerm?,
     includeEmptyFolders?,
   ) => {
-    const filteredPrompts = selectFilteredPrompts(
-      state,
-      itemFilter,
-      searchTerm,
-    );
+    const filteredPrompts = selectFilteredPrompts(state, filters, searchTerm);
     const folderIds = filteredPrompts // direct parent folders
       .map((c) => c.folderId)
       .filter((fid) => fid);
-    // include empty folders only if not search
-    if (includeEmptyFolders && !searchTerm?.trim().length) {
-      folderIds.push(...emptyFolderIds);
+
+    if (!searchTerm?.trim().length) {
+      const markedFolderIds = folders
+        .filter((folder) => filters?.searchFilter(folder))
+        .map((f) => f.id);
+      folderIds.push(...markedFolderIds);
+
+      if (includeEmptyFolders && !searchTerm?.length) {
+        // include empty folders only if not search
+        folderIds.push(...emptyFolderIds);
+      }
     }
 
     const filteredFolderIds = new Set(
@@ -99,7 +103,11 @@ export const selectFilteredFolders = createSelector(
       ),
     );
 
-    return folders.filter((folder) => filteredFolderIds.has(folder.id));
+    return folders.filter(
+      (folder) =>
+        (folder.folderId || filters.sectionFilter(folder)) &&
+        filteredFolderIds.has(folder.id),
+    );
   },
 );
 
@@ -138,9 +146,9 @@ export const selectIsEmptySearchFilter = createSelector(
   (state) => state.searchFilters === SearchFilters.None,
 );
 
-export const selectItemFilter = createSelector(
+export const selectMyItemsFilters = createSelector(
   [selectSearchFilters],
-  (searchFilters) => getItemFilter(searchFilters),
+  (searchFilters) => getMyItemsFilters(searchFilters),
 );
 
 export const selectSearchedPrompts = createSelector(
