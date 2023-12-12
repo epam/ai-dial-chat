@@ -2,10 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { PinnedItemsFilter, SharedWithMeFilter } from '@/src/utils/app/search';
+import { SharedWithMeFilter } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityFilter, HighlightColor } from '@/src/types/common';
+import { Feature } from '@/src/types/features';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
@@ -14,6 +15,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Folder from '@/src/components/Folder';
@@ -234,7 +236,13 @@ export const ChatSection = ({
     rootConversations,
   ]);
 
-  if (hideIfEmpty && !conversations.length && !folders.length) return null;
+  if (
+    hideIfEmpty &&
+    (!displayRootFiles || !conversations.length) &&
+    !folders.length
+  ) {
+    return null;
+  }
 
   return (
     <CollapsableSection
@@ -267,26 +275,43 @@ export const ChatSection = ({
   );
 };
 
-const folderItems: FolderSectionProps<Conversation>[] = [
-  {
-    name: 'Share With Me',
-    itemFilter: SharedWithMeFilter,
-    displayRootFiles: true,
-    dataQa: 'share-with-me',
-  },
-  {
-    name: 'Pinned Chats',
-    itemFilter: PinnedItemsFilter,
-    showEmptyFolders: true,
-    openByDefault: true,
-    dataQa: 'pinned-chats',
-  },
-];
-
 export function ChatFolders() {
+  const { t } = useTranslation(Translation.SideBar);
+  const isFilterEmpty = useAppSelector(
+    ConversationsSelectors.selectIsEmptySearchFilter,
+  );
+  const commonItemFilter = useAppSelector(
+    ConversationsSelectors.selectItemFilter,
+  );
+
+  const isSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSharing),
+  );
+
+  const folderItems: FolderSectionProps<Conversation>[] = useMemo(
+    () =>
+      [
+        {
+          hidden: !isSharingEnabled || !isFilterEmpty,
+          name: t('Shared with me'),
+          itemFilter: SharedWithMeFilter,
+          displayRootFiles: true,
+          dataQa: 'share-with-me',
+        },
+        {
+          name: t('Pinned chats'),
+          itemFilter: commonItemFilter,
+          showEmptyFolders: isFilterEmpty,
+          openByDefault: true,
+          dataQa: 'pinned-chats',
+        },
+      ].filter(({ hidden }) => !hidden),
+    [commonItemFilter, isFilterEmpty, isSharingEnabled, t],
+  );
+
   return (
     <div
-      className="flex w-full flex-col gap-0.5 divide-y divide-gray-200 dark:divide-gray-800"
+      className="flex w-full flex-col gap-0.5 divide-y divide-gray-200 empty:hidden dark:divide-gray-800"
       data-qa="chat-folders"
     >
       {folderItems.map((itemProps) => (

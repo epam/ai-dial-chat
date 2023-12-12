@@ -104,7 +104,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       dispatch(
         PromptsActions.updatePrompt({ promptId: prompt.id, values: prompt }),
       );
-      dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
+      dispatch(PromptsActions.resetSearch());
       setIsRenaming(false);
     },
     [dispatch],
@@ -117,7 +117,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
       if (isDeleting) {
         dispatch(PromptsActions.deletePrompts({ promptIds: [prompt.id] }));
-        dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
+        dispatch(PromptsActions.resetSearch());
       }
 
       setIsDeleting(false);
@@ -240,6 +240,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             {...prompt}
             isHighlited={isHighlited}
             highlightColor={HighlightColor.Violet}
+            featureType={FeatureType.Prompt}
           >
             <IconBulb size={18} className="text-gray-500" />
           </ShareIcon>

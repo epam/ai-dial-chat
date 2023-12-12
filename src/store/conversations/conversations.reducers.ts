@@ -3,6 +3,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { translate } from '@/src/utils/app/translation';
 
+import { SearchFilters } from './../../types/search';
 import {
   Conversation,
   ConversationEntityModel,
@@ -30,6 +31,7 @@ const initialState: ConversationsState = {
   selectedConversationsIds: [],
   folders: [],
   searchTerm: '',
+  searchFilters: SearchFilters.None,
   conversationSignal: new AbortController(),
   isReplayPaused: true,
   isPlaybackPaused: true,
@@ -300,6 +302,16 @@ export const conversationsSlice = createSlice({
       { payload }: PayloadAction<{ searchTerm: string }>,
     ) => {
       state.searchTerm = payload.searchTerm;
+    },
+    setSearchFilters: (
+      state,
+      { payload }: PayloadAction<{ searchFilters: SearchFilters }>,
+    ) => {
+      state.searchFilters = payload.searchFilters;
+    },
+    resetSearch: (state) => {
+      state.searchTerm = '';
+      state.searchFilters = SearchFilters.None;
     },
     updateMessage: (
       state,
