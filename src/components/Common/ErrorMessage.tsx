@@ -10,7 +10,7 @@ export const ErrorMessage = ({ error }: Props) => {
   }
 
   return (
-    <div className="bg-red-200 text-red-800 flex w-full gap-3 rounded p-3">
+    <div className="flex w-full gap-3 rounded bg-error p-3 text-error">
       <span className="flex shrink-0 items-center">
         <IconExclamationCircle size={24} />
       </span>

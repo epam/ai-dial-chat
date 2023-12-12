@@ -29,7 +29,7 @@ export const ChatInputAttachment = ({
       {file.status !== 'FAILED' ? (
         <IconFile className="text-gray-500 shrink-0" size={18} />
       ) : (
-        <IconExclamationCircle className="text-red-800 shrink-0" size={18} />
+        <IconExclamationCircle className="shrink-0 text-error" size={18} />
       )}
 
       <div className="flex grow justify-between gap-3 overflow-hidden">
@@ -37,7 +37,7 @@ export const ChatInputAttachment = ({
           <span
             className={classNames(
               'block max-w-full truncate',
-              file.status === 'FAILED' && 'text-red-800',
+              file.status === 'FAILED' && 'text-error',
             )}
           >
             {file.name}

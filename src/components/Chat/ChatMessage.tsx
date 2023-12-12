@@ -449,7 +449,7 @@ export const ChatMessage: FC<Props> = memo(
                   {codeWarning &&
                     codeWarning.length !== 0 &&
                     codeDetection(message.content) && (
-                      <div className="text-red-800 text-xxs">
+                      <div className="text-xxs text-error">
                         {t(codeWarning)}
                       </div>
                     )}

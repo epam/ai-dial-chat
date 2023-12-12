@@ -91,7 +91,7 @@ export const FileItem = ({
                 tooltip={t('Uploading failed. Please, try again')}
               >
                 <IconExclamationCircle
-                  className="text-red-800 shrink-0"
+                  className="shrink-0 text-error"
                   size={18}
                 />
               </Tooltip>
@@ -120,7 +120,7 @@ export const FileItem = ({
         <span
           className={classNames(
             'block max-w-full truncate',
-            item.status === 'FAILED' && 'text-red-800',
+            item.status === 'FAILED' && 'text-error',
           )}
         >
           {item.name}
