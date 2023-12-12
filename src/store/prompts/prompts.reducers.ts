@@ -52,31 +52,31 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ promptId: string; values: Partial<Prompt> }>,
     ) => {
-      state.prompts = state.prompts.map((conv) => {
-        if (conv.id === payload.promptId) {
+      state.prompts = state.prompts.map((prompt) => {
+        if (prompt.id === payload.promptId) {
           return {
-            ...conv,
+            ...prompt,
             ...payload.values,
           };
         }
 
-        return conv;
+        return prompt;
       });
     },
     sharePrompt: (
       state,
       { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
     ) => {
-      state.prompts = state.prompts.map((conv) => {
-        if (conv.id === payload.id) {
+      state.prompts = state.prompts.map((prompt) => {
+        if (prompt.id === payload.id) {
           return {
-            ...conv,
+            ...prompt,
             //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
             isShared: true,
           };
         }
 
-        return conv;
+        return prompt;
       });
     },
     shareFolder: (
@@ -99,16 +99,16 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
     ) => {
-      state.prompts = state.prompts.map((conv) => {
-        if (conv.id === payload.id) {
+      state.prompts = state.prompts.map((prompt) => {
+        if (prompt.id === payload.id) {
           return {
-            ...conv,
+            ...prompt,
             //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
             isPublished: true,
           };
         }
 
-        return conv;
+        return prompt;
       });
     },
     publishFolder: (
@@ -131,16 +131,16 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
     ) => {
-      state.prompts = state.prompts.map((conv) => {
-        if (conv.id === payload.id) {
+      state.prompts = state.prompts.map((prompt) => {
+        if (prompt.id === payload.id) {
           return {
-            ...conv,
+            ...prompt,
             //TODO: unpublish prompt by API
             isPublished: false,
           };
         }
 
-        return conv;
+        return prompt;
       });
     },
     unpublishFolder: (
