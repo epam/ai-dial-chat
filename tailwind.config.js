@@ -29,6 +29,8 @@ module.exports = {
       primary: 'var(--stroke-primary, #333942)',
       secondary: 'var(--stroke-secondary, #222932)',
       error: 'var(--stroke-error, #F76464)',
+      'controls-hover': 'var(--controls-stroke-hover, #141A23)',
+      'controls-accent': 'var(--controls-stroke-accent, #2764D9)',
     },
     divideColor: {
       transparent: 'transparent',
