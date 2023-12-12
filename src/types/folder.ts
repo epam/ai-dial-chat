@@ -13,6 +13,7 @@ export enum FolderType {
 }
 
 export interface FolderSectionProps<T> {
+  hidden?: boolean;
   name: string;
   dataQa: string;
   hideIfEmpty?: boolean;

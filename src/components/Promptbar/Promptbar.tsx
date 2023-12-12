@@ -4,6 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { FeatureType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
+import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -30,7 +31,7 @@ const PromptActionsBlock = () => {
         className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-violet/15 disabled:cursor-not-allowed"
         onClick={() => {
           dispatch(PromptsActions.createNewPrompt());
-          dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
+          dispatch(PromptsActions.resetSearch());
           dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
         }}
         data-qa="new-prompt"
@@ -45,14 +46,14 @@ const PromptActionsBlock = () => {
 const Promptbar = () => {
   const dispatch = useAppDispatch();
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
-  const filteredPrompts = useAppSelector(
-    PromptsSelectors.selectSearchedPrompts,
-  );
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
-  const folders = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredFolders(state, undefined, searchTerm, true),
+  const itemFilter = useAppSelector(PromptsSelectors.selectItemFilter);
+
+  const filteredPrompts = useAppSelector((state) =>
+    PromptsSelectors.selectFilteredPrompts(state, itemFilter, searchTerm),
   );
-  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
+
+  const searchFilters = useAppSelector(PromptsSelectors.selectSearchFilters);
 
   const handleDrop = useCallback(
     (e: any) => {
@@ -80,15 +81,17 @@ const Promptbar = () => {
       itemComponent={<Prompts prompts={filteredPrompts} />}
       actionButtons={<PromptActionsBlock />}
       folderComponent={<PromptFolders />}
-      folders={folders}
-      items={prompts}
       filteredItems={filteredPrompts}
       searchTerm={searchTerm}
+      searchFilters={searchFilters}
       handleSearchTerm={(searchTerm: string) =>
         dispatch(PromptsActions.setSearchTerm({ searchTerm }))
       }
+      handleSearchFilters={(searchFilters: SearchFilters) =>
+        dispatch(PromptsActions.setSearchFilters({ searchFilters }))
+      }
       handleDrop={handleDrop}
-      footerComponent={<PromptbarSettings allPrompts={prompts} />}
+      footerComponent={<PromptbarSettings />}
     />
   );
 };

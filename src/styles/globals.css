@@ -45,6 +45,11 @@
   .dark ::-webkit-calendar-picker-indicator {
     filter: invert(1);
   }
+
+  .divide-y > :empty ~ :not([hidden]) {
+    border-top: none;
+    border-bottom: none;
+  }
 }
 
 html {

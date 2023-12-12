@@ -55,6 +55,7 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
         {...conversation}
         isHighlited={!!isHighlited}
         highlightColor={HighlightColor.Green}
+        featureType={FeatureType.Chat}
       >
         {conversation.replay.replayAsIs && (
           <span className="flex shrink-0">
@@ -336,6 +337,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             {...conversation}
             isHighlited={isHighlited}
             highlightColor={HighlightColor.Green}
+            featureType={FeatureType.Chat}
           >
             {conversation.replay.replayAsIs && (
               <span className="flex shrink-0">
