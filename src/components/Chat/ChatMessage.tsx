@@ -69,7 +69,7 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
     <button
       type={type}
       className={classNames(
-        'text-gray-500 focus:visible [&:not(:disabled)]:hover:text-blue-500',
+        'text-gray-500 [&:not(:disabled)]:hover:text-blue-500 focus:visible',
         className,
       )}
       {...props}
@@ -288,8 +288,8 @@ export const ChatMessage: FC<Props> = memo(
       <div
         className={`group h-full min-h-[90px] md:px-4 ${
           isAssistant
-            ? 'border-b border-gray-400 bg-gray-200 dark:border-gray-700 dark:bg-gray-800'
-            : 'border-b border-gray-400  dark:border-gray-700'
+            ? 'border-gray-400 bg-gray-200 border-b'
+            : 'border-gray-400  border-b'
         }`}
         style={{ overflowWrap: 'anywhere' }}
         data-qa="chat-message"
@@ -322,7 +322,7 @@ export const ChatMessage: FC<Props> = memo(
               <div className="flex">
                 {isEditing ? (
                   <div className="flex w-full flex-col gap-3 pr-[60px]">
-                    <div className="relative min-h-[100px] rounded border border-gray-400 bg-gray-100 px-3 py-2 focus-within:border-blue-500 dark:border-gray-600 dark:bg-gray-700">
+                    <div className="border-gray-400 bg-gray-100 focus-within:border-blue-500 relative min-h-[100px] rounded border px-3 py-2">
                       <textarea
                         ref={textareaRef}
                         className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
@@ -352,7 +352,7 @@ export const ChatMessage: FC<Props> = memo(
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <div className="flex h-[34px] w-[34px] items-center justify-center rounded hover:bg-blue-500/20">
+                      <div className="hover:bg-blue-500/20 flex h-[34px] w-[34px] items-center justify-center rounded">
                         <AttachButton
                           selectedFilesIds={newEditableAttachmentsIds}
                           onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
@@ -387,6 +387,7 @@ export const ChatMessage: FC<Props> = memo(
                 ) : (
                   <div className="mr-2 flex w-full flex-col gap-5">
                     {message.content && (
+                      // TODO: dark prose-invert
                       <div className="prose flex-1 whitespace-pre-wrap dark:prose-invert">
                         {message.content}
                       </div>
@@ -400,14 +401,14 @@ export const ChatMessage: FC<Props> = memo(
                 {!isPlayback && !isEditing && (
                   <div className="flex w-[60px] flex-col items-center justify-end gap-4 md:flex-row md:items-start md:justify-start md:gap-1">
                     <button
-                      className="invisible text-gray-500 hover:text-blue-500 focus:visible disabled:cursor-not-allowed group-hover:visible"
+                      className="text-gray-500 hover:text-blue-500 invisible focus:visible disabled:cursor-not-allowed group-hover:visible"
                       onClick={toggleEditing}
                       disabled={editDisabled}
                     >
                       <IconEdit size={20} />
                     </button>
                     <button
-                      className="invisible text-gray-500 hover:text-blue-500 focus:visible group-hover:visible"
+                      className="text-gray-500 hover:text-blue-500 invisible focus:visible group-hover:visible"
                       onClick={() => {
                         setIsRemoveConfirmationOpened(true);
                       }}
@@ -448,7 +449,7 @@ export const ChatMessage: FC<Props> = memo(
                   {codeWarning &&
                     codeWarning.length !== 0 &&
                     codeDetection(message.content) && (
-                      <div className="text-xxs text-red-800 dark:text-red-400">
+                      <div className="text-red-800 text-xxs">
                         {t(codeWarning)}
                       </div>
                     )}
@@ -477,7 +478,7 @@ export const ChatMessage: FC<Props> = memo(
                             className={
                               message.like !== 1
                                 ? void 0
-                                : 'visible text-gray-500'
+                                : 'text-gray-500 visible'
                             }
                             disabled={message.like === 1}
                           >
@@ -490,7 +491,7 @@ export const ChatMessage: FC<Props> = memo(
                             className={
                               message.like !== -1
                                 ? void 0
-                                : 'visible text-gray-500'
+                                : 'text-gray-500 visible'
                             }
                             disabled={message.like === -1}
                           >

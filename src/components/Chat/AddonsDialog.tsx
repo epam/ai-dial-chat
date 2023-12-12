@@ -47,11 +47,11 @@ const Addon = ({
         `flex flex-col gap-3 rounded border p-3 text-left`,
         {
           'bg-blue-500/20': isPreselected,
-          'hover:border-gray-800 dark:hover:border-gray-200': !isPreselected,
+          'hover:border-gray-800': !isPreselected,
         },
         {
           'border-blue-500': isSelected,
-          'border-gray-400 dark:border-gray-600': !isSelected,
+          'border-gray-400': !isSelected,
         },
       )}
       key={addon.id}
@@ -99,7 +99,7 @@ const SelectedAddon = ({
 
   return (
     <button
-      className="flex items-center gap-3 rounded bg-blue-500/20 px-3 py-2"
+      className="bg-blue-500/20 flex items-center gap-3 rounded px-3 py-2"
       key={addon.id}
       disabled={isPreselected}
       onClick={() => {
@@ -207,9 +207,9 @@ export const AddonsDialog: FC<Props> = ({
   // Render the dialog.
   return (
     <FloatingPortal id="chat">
-      <div className="fixed inset-0 top-[48px] z-30 flex items-center justify-center bg-gray-900/30 p-3 dark:bg-gray-900/70 md:p-5">
+      <div className="bg-gray-900/30 fixed inset-0 top-[48px] z-30 flex items-center justify-center p-3 md:p-5">
         <div
-          className="m-auto flex h-full w-full grow flex-col gap-4 overflow-y-auto rounded bg-gray-100 py-4 text-left dark:bg-gray-700 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
+          className="bg-gray-100 m-auto flex h-full w-full grow flex-col gap-4 overflow-y-auto rounded py-4 text-left md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
           role="dialog"
           ref={refs.setFloating}
           {...getFloatingProps()}
@@ -236,7 +236,7 @@ export const AddonsDialog: FC<Props> = ({
               onChange={(e) => {
                 handleSearch(e.target.value);
               }}
-              className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
+              className="border-gray-400 placeholder:text-gray-500 focus-visible:border-blue-500 m-0 w-full rounded border bg-transparent px-3 py-2 outline-none"
             ></input>
           </div>
           <div
@@ -306,9 +306,9 @@ export const AddonsDialog: FC<Props> = ({
             <div className="h-[40px] shrink-0"></div>
           </div>
           <div className="relative h-0 grow">
-            <div className="absolute bottom-0 flex h-[80px] w-full items-end justify-center bg-gradient-to-b from-transparent via-gray-100 to-gray-100 px-3 dark:via-gray-700 dark:to-gray-700 md:px-5">
+            <div className="absolute bottom-0 flex h-[80px] w-full items-end justify-center bg-gradient-to-b from-transparent via-gray-100 to-gray-100 px-3 md:px-5">
               <button
-                className="w-full rounded bg-blue-500 px-3 py-2.5 text-gray-100 hover:bg-blue-700 md:w-fit"
+                className="bg-blue-500 text-gray-100 hover:bg-blue-700 w-full rounded px-3 py-2.5 md:w-fit"
                 onClick={() => {
                   onClose();
                   onAddonsSelected(selectedAddons.map(({ id }) => id));

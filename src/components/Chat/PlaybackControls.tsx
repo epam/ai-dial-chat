@@ -147,7 +147,7 @@ export const PlaybackControls = ({
   return (
     <div
       ref={controlsContainerRef}
-      className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 pt-6 dark:via-gray-900 dark:to-gray-900 md:pt-2"
+      className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 pt-6 md:pt-2"
     >
       <div
         className="relative mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
@@ -157,18 +157,18 @@ export const PlaybackControls = ({
           data-qa="playback-prev"
           onClick={handlePrevMessage}
           disabled={activeIndex === 0}
-          className="absolute bottom-3 left-4 rounded outline-none hover:text-blue-500 disabled:cursor-not-allowed disabled:text-gray-400 disabled:dark:text-gray-600"
+          className="hover:text-blue-500 disabled:text-gray-400 absolute bottom-3 left-4 rounded outline-none disabled:cursor-not-allowed"
         >
           <IconPlayerPlay size={20} className="rotate-180" />
         </button>
         <div
           ref={nextMessageBoxRef}
-          className="m-0 max-h-[150px] min-h-[44px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-gray-100 px-12 py-3 text-left outline-none focus-visible:border-blue-500 dark:bg-gray-700"
+          className="bg-gray-100 focus-visible:border-blue-500 m-0 max-h-[150px] min-h-[44px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent px-12 py-3 text-left outline-none"
           data-qa="playback-message"
         >
           {isMessageStreaming ? (
             <div
-              className="absolute bottom-3 right-4 h-5 w-5 animate-spin rounded-full border-t-2 border-gray-500"
+              className="border-gray-500 absolute bottom-3 right-4 h-5 w-5 animate-spin rounded-full border-t-2"
               data-qa="message-input-spinner"
             ></div>
           ) : (
@@ -179,7 +179,7 @@ export const PlaybackControls = ({
               <button
                 data-qa="playback-next"
                 onClick={handlePlaynextMessage}
-                className="absolute bottom-3 right-4 rounded outline-none hover:text-blue-500 disabled:cursor-not-allowed disabled:text-gray-400 disabled:dark:text-gray-600"
+                className="hover:text-blue-500 disabled:text-gray-400 absolute bottom-3 right-4 rounded outline-none disabled:cursor-not-allowed"
                 disabled={isMessageStreaming || !isNextMessageInStack}
               >
                 <IconPlayerPlay size={20} className="shrink-0" />

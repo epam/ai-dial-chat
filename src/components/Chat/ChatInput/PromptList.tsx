@@ -40,7 +40,7 @@ export const PromptList: FC<Props> = ({
     <ul
       ref={refs.setFloating}
       {...getFloatingProps()}
-      className="z-10 max-h-52 w-full overflow-auto rounded bg-gray-100 dark:bg-gray-700"
+      className="bg-gray-100 z-10 max-h-52 w-full overflow-auto rounded"
       data-qa="prompt-list"
     >
       {prompts.map((prompt, index) => (

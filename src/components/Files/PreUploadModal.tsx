@@ -301,11 +301,11 @@ export const PreUploadDialog = ({
         {isOpen && (
           <FloatingOverlay
             lockScroll
-            className="z-50 flex items-center justify-center bg-gray-900/70 p-3 dark:bg-gray-900/30"
+            className="bg-gray-900/70 z-50 flex items-center justify-center p-3"
           >
             <FloatingFocusManager context={context}>
               <div
-                className="relative flex max-h-full flex-col gap-4 rounded bg-gray-100 p-6 dark:bg-gray-700 md:min-w-[425px] md:max-w-[500px]"
+                className="bg-gray-100 relative flex max-h-full flex-col gap-4 rounded p-6 md:min-w-[425px] md:max-w-[500px]"
                 ref={refs.setFloating}
                 {...getFloatingProps()}
               >
@@ -334,13 +334,13 @@ export const PreUploadDialog = ({
 
                   <div className="flex flex-col gap-1">
                     <div>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-gray-500 text-xs">
                         {t('Upload to')}
                       </span>
-                      <span className="text-xs text-blue-500">&nbsp;*</span>
+                      <span className="text-blue-500 text-xs">&nbsp;*</span>
                     </div>
                     <button
-                      className="flex grow items-center justify-between rounded border border-gray-400 bg-transparent px-3 py-2 placeholder:text-gray-500 hover:border-blue-500 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:hover:border-blue-500 dark:focus:border-blue-500"
+                      className="border-gray-400 placeholder:text-gray-500 hover:border-blue-500 focus:border-blue-500 flex grow items-center justify-between rounded border bg-transparent px-3 py-2 focus:outline-none"
                       onClick={handleFolderChange}
                     >
                       <span className="truncate">
@@ -353,10 +353,10 @@ export const PreUploadDialog = ({
                   {selectedFiles.length !== 0 && (
                     <div className="flex flex-col gap-1 overflow-auto">
                       <div>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-gray-500 text-xs">
                           {t('Files')}
                         </span>
-                        <span className="text-xs text-blue-500">&nbsp;*</span>
+                        <span className="text-blue-500 text-xs">&nbsp;*</span>
                       </div>
                       <div className="flex flex-col gap-3 overflow-auto text-sm">
                         {selectedFiles.map((file, index) => (
@@ -366,7 +366,7 @@ export const PreUploadDialog = ({
                           >
                             <div className="relative flex grow items-center">
                               <IconFile
-                                className="absolute left-2 top-[calc(50%_-_9px)] shrink-0 text-gray-500"
+                                className="text-gray-500 absolute left-2 top-[calc(50%_-_9px)] shrink-0"
                                 size={18}
                               />
                               <input
@@ -375,7 +375,7 @@ export const PreUploadDialog = ({
                                   0,
                                   file.name.lastIndexOf('.'),
                                 )}
-                                className="grow rounded border border-gray-400 bg-transparent py-2 pl-8 pr-12 placeholder:text-gray-500 hover:border-blue-500 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:hover:border-blue-500 dark:focus:border-blue-500"
+                                className="border-gray-400 placeholder:text-gray-500 hover:border-blue-500 focus:border-blue-500 grow rounded border bg-transparent py-2 pl-8 pr-12 focus:outline-none"
                                 onChange={handleRenameFile(index)}
                               />
                               <span className="absolute right-2 top-[calc(50%_-_9px)]">
@@ -386,7 +386,7 @@ export const PreUploadDialog = ({
                             <button onClick={handleUnselectFile(index)}>
                               <IconTrashX
                                 size={24}
-                                className="shrink-0 text-gray-500 hover:text-blue-500"
+                                className="text-gray-500 hover:text-blue-500 shrink-0"
                               />
                             </button>
                           </div>
@@ -396,7 +396,7 @@ export const PreUploadDialog = ({
                   )}
                 </div>
                 <div className="flex w-full justify-between gap-3">
-                  <label className="cursor-pointer rounded py-2.5 text-blue-500">
+                  <label className="text-blue-500 cursor-pointer rounded py-2.5">
                     {t('Add more files...')}
                     <input
                       ref={uploadInputRef}

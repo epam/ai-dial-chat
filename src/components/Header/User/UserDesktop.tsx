@@ -52,7 +52,7 @@ export const UserDesktop = () => {
               <span className="grow">{session?.user?.name || t('User')}</span>
             </div>
             <ChevronDownIcon
-              className={`shrink-0 text-gray-800 transition-all dark:text-gray-200 ${
+              className={`text-gray-800 shrink-0 transition-all ${
                 isOpen ? 'rotate-180' : ''
               }`}
               width={18}

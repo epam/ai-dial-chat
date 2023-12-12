@@ -44,10 +44,8 @@ const Entity = ({
   return (
     <button
       key={entity.id}
-      className={`flex items-center gap-3 rounded border px-3 py-2 hover:border-gray-800 dark:hover:border-gray-200 ${
-        selectedModelId === entity.id
-          ? 'border-blue-500'
-          : 'border-gray-400 dark:border-gray-600'
+      className={`hover:border-gray-800 flex items-center gap-3 rounded border px-3 py-2 ${
+        selectedModelId === entity.id ? 'border-blue-500' : 'border-gray-400'
       } ${isOpened ? 'md:col-span-2' : 'md:col-span-1'}`}
       onClick={() => {
         onSelect(entity.id);
@@ -248,9 +246,9 @@ export const ModelsDialog: FC<Props> = ({
   // Render the dialog.
   return (
     <FloatingPortal id="chat">
-      <div className="fixed inset-0 top-[48px] z-30 flex items-center justify-center bg-gray-900/30 p-3 dark:bg-gray-900/70 md:p-5">
+      <div className="bg-gray-900/30 fixed inset-0 top-[48px] z-30 flex items-center justify-center p-3 md:p-5">
         <div
-          className="flex h-full w-full grow flex-col gap-4 rounded bg-gray-100 py-4 text-left dark:bg-gray-700 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
+          className="bg-gray-100 flex h-full w-full grow flex-col gap-4 rounded py-4 text-left md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
           role="dialog"
           ref={refs.setFloating}
           {...getFloatingProps()}
@@ -275,17 +273,17 @@ export const ModelsDialog: FC<Props> = ({
               onChange={(e) => {
                 handleSearch(e.target.value);
               }}
-              className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
+              className="border-gray-400 placeholder:text-gray-500 focus-visible:border-blue-500 m-0 w-full rounded border bg-transparent px-3 py-2 outline-none"
             ></input>
           </div>
 
           <div className="flex gap-2 px-3 md:px-5">
             <button
               className={classNames(
-                'rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:hover:bg-blue-500/20',
+                'hover:bg-blue-500/20 rounded border-b-2 px-3 py-2',
                 entityTypes.includes(EntityType.Model)
-                  ? 'border-blue-500 bg-blue-500/20 dark:bg-blue-500/20'
-                  : 'border-gray-400 bg-gray-400 hover:border-transparent dark:border-gray-600 dark:bg-gray-600 dark:hover:border-transparent',
+                  ? 'border-blue-500 bg-blue-500/20'
+                  : 'border-gray-400 bg-gray-400 hover:border-transparent',
               )}
               onClick={() => {
                 handleFilterType(EntityType.Model);
@@ -296,10 +294,10 @@ export const ModelsDialog: FC<Props> = ({
             </button>
             <button
               className={classNames(
-                'rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:hover:bg-blue-500/20',
+                'hover:bg-blue-500/20 rounded border-b-2 px-3 py-2',
                 entityTypes.includes(EntityType.Assistant)
-                  ? 'border-blue-500 bg-blue-500/20 dark:bg-blue-500/20'
-                  : 'border-gray-400 bg-gray-400 hover:border-transparent dark:border-gray-600 dark:bg-gray-600 dark:hover:border-transparent',
+                  ? 'border-blue-500 bg-blue-500/20'
+                  : 'border-gray-400 bg-gray-400 hover:border-transparent',
               )}
               onClick={() => {
                 handleFilterType(EntityType.Assistant);
@@ -310,10 +308,10 @@ export const ModelsDialog: FC<Props> = ({
             </button>
             <button
               className={classNames(
-                'rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:hover:bg-blue-500/20',
+                'hover:bg-blue-500/20 rounded border-b-2 px-3 py-2',
                 entityTypes.includes(EntityType.Application)
-                  ? 'border-blue-500 bg-blue-500/20 dark:bg-blue-500/20'
-                  : 'border-gray-400 bg-gray-400 hover:border-transparent dark:border-gray-600 dark:bg-gray-600 dark:hover:border-transparent',
+                  ? 'border-blue-500 bg-blue-500/20'
+                  : 'border-gray-400 bg-gray-400 hover:border-transparent',
               )}
               onClick={() => {
                 handleFilterType(EntityType.Application);

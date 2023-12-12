@@ -108,13 +108,13 @@ export const PromptDialog: FC<Props> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-gray-900/30 p-3 dark:bg-gray-900/70 md:p-5"
+      className="bg-gray-900/30 fixed inset-0 z-50 flex items-center justify-center overflow-hidden p-3 md:p-5"
       onKeyDown={handleKeyDown}
     >
       <form
         ref={modalRef}
         noValidate
-        className="relative inline-block max-h-full w-full overflow-y-auto rounded bg-gray-100 px-3 py-4 text-left align-bottom transition-all dark:bg-gray-700 md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
+        className="bg-gray-100 relative inline-block max-h-full w-full overflow-y-auto rounded px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
         role="dialog"
         data-qa="variable-modal"
         onSubmit={handleSubmit}
@@ -133,7 +133,7 @@ export const PromptDialog: FC<Props> = ({
         )}
 
         <button
-          className="absolute right-2 top-2 rounded text-gray-500 hover:text-blue-700"
+          className="text-gray-500 hover:text-blue-700 absolute right-2 top-2 rounded"
           onClick={onClose}
         >
           <IconX size={24} />
@@ -141,9 +141,9 @@ export const PromptDialog: FC<Props> = ({
 
         {updatedVariables.map((variable, index) => (
           <div className="mb-4" key={variable.key}>
-            <div className="mb-1 flex text-xs text-gray-500">
+            <div className="text-gray-500 mb-1 flex text-xs">
               {variable.key}
-              <span className="ml-1 inline text-blue-500">*</span>
+              <span className="text-blue-500 ml-1 inline">*</span>
             </div>
 
             <textarea
@@ -171,7 +171,7 @@ export const PromptDialog: FC<Props> = ({
         <div className="mt-1 flex justify-end">
           <button
             type="submit"
-            className="w-full rounded bg-blue-500 p-3 text-gray-100 hover:bg-blue-700 focus:border focus:border-gray-800 focus-visible:outline-none dark:focus:border-gray-200 md:w-fit"
+            className="bg-blue-500 text-gray-100 hover:bg-blue-700 focus:border-gray-800 w-full rounded p-3 focus:border focus-visible:outline-none md:w-fit"
             data-qa="submit-variable"
           >
             {t('Submit')}

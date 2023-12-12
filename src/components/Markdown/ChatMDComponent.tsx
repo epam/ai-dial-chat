@@ -58,7 +58,7 @@ export const getMDComponents = (
     table({ children }) {
       return (
         <div className="max-w-full overflow-auto">
-          <table className="border-collapse border border-black px-3 py-1 text-sm dark:border-gray-100">
+          <table className="border-black border-collapse border px-3 py-1 text-sm">
             {children}
           </table>
         </div>
@@ -66,14 +66,14 @@ export const getMDComponents = (
     },
     th({ children }) {
       return (
-        <th className="break-words border border-black bg-gray-500 px-3 py-1 text-sm text-gray-200 dark:border-gray-100">
+        <th className="border-black bg-gray-500 text-gray-200 break-words border px-3 py-1 text-sm">
           {children}
         </th>
       );
     },
     td({ children }) {
       return (
-        <td className="break-words border border-black px-3 py-1 text-sm dark:border-gray-100">
+        <td className="border-black break-words border px-3 py-1 text-sm">
           {children}
         </td>
       );
@@ -104,7 +104,8 @@ const ChatMDComponent = ({
   return (
     <>
       <MemoizedReactMarkdown
-        className={`prose dark:prose-invert prose-a:text-blue-500 prose-a:no-underline hover:prose-a:underline`}
+        // TODO: dark prose-invert
+        className={`prose-a:text-blue-500 prose dark:prose-invert prose-a:no-underline hover:prose-a:underline`}
         remarkPlugins={[remarkGfm]}
         linkTarget="_blank"
         components={getMDComponents(isShowResponseLoader, isInner)}

@@ -7,9 +7,9 @@ import {
   IconPlayerPlay,
   IconRefreshDot,
   IconScale,
+  IconTrashX,
   IconUserShare,
 } from '@tabler/icons-react';
-import { IconTrashX } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -117,8 +117,7 @@ export default function ItemContextMenu({
               onMoveToFolder({ isNewFolder: true });
             },
             className: classNames('invisible md:visible', {
-              'border-b border-gray-400 dark:border-gray-600':
-                folders?.length > 0,
+              'border-gray-400 border-b': folders?.length > 0,
             }),
           },
           ...folders.map((folder) => ({

@@ -387,13 +387,13 @@ export const ChatInputMessage = ({
   return (
     <div className="mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0  md:last:mb-6 lg:mx-auto lg:max-w-3xl">
       <div
-        className="relative m-0 flex max-h-[400px] min-h-[40px] w-full grow flex-col rounded bg-gray-100 focus-within:border-blue-500 dark:bg-gray-700"
+        className="bg-gray-100 focus-within:border-blue-500 relative m-0 flex max-h-[400px] min-h-[40px] w-full grow flex-col rounded"
         data-qa="message"
       >
         <textarea
           ref={textareaRef}
           className={classNames(
-            'm-0 max-h-[320px] min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none placeholder:text-gray-500',
+            'placeholder:text-gray-500 m-0 max-h-[320px] min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none',
             displayAttachFunctionality ? 'pl-12' : 'pl-4',
           )}
           style={{

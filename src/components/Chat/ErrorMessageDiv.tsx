@@ -9,7 +9,7 @@ interface Props {
 
 export const ErrorMessageDiv: FC<Props> = ({ error }) => {
   return (
-    <div className="mx-6 flex h-full flex-col items-center justify-center text-red-400">
+    <div className="text-red-400 mx-6 flex h-full flex-col items-center justify-center">
       <div className="mb-5">
         <IconCircleX size={36} />
       </div>
@@ -20,7 +20,7 @@ export const ErrorMessageDiv: FC<Props> = ({ error }) => {
           {line}{' '}
         </div>
       ))}
-      <div className="mt-4 text-xs opacity-50 dark:text-red-400">
+      <div className="mt-4 text-xs opacity-50">
         {error.code ? <i>Code: {error.code}</i> : ''}
       </div>
     </div>

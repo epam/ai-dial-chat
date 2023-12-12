@@ -50,6 +50,7 @@ const AttachmentDataRenderer = ({
     return (
       <div className="flex max-w-full overflow-auto">
         <span
+          // TODO: dark prose-invert
           className="prose shrink-0 whitespace-pre text-sm dark:prose-invert"
           dangerouslySetInnerHTML={{
             __html: sanitize(attachment.data || ''),
@@ -60,6 +61,7 @@ const AttachmentDataRenderer = ({
   }
   if (attachment.type === 'text/plain') {
     return (
+      // TODO: dark prose-invert
       <div className="max-w-full overflow-hidden">
         <span className="prose whitespace-pre-wrap text-sm dark:prose-invert">
           {attachment.data}
@@ -130,11 +132,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     <div
       className={`rounded px-1 py-2 ${
         isExpanded ? 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3' : ''
-      } ${
-        isInner
-          ? 'bg-gray-100 dark:bg-gray-700'
-          : 'border border-gray-400 bg-gray-300 dark:border-gray-700 dark:bg-gray-900'
-      }`}
+      } ${isInner ? 'bg-gray-100' : 'border-gray-400 bg-gray-300 border'}`}
     >
       <div className={`flex items-center gap-3 px-2`}>
         <div className="flex items-center">
@@ -152,7 +150,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               />
             </a>
           ) : (
-            <IconPaperclip size={18} className="shrink-0 text-gray-500" />
+            <IconPaperclip size={18} className="text-gray-500 shrink-0" />
           )}
         </div>
         <button
@@ -176,7 +174,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             <ChevronDown
               height={18}
               width={18}
-              className={`shrink-0 text-gray-500 transition ${
+              className={`text-gray-500 shrink-0 transition ${
                 isOpened ? 'rotate-180' : ''
               }`}
             />
@@ -210,7 +208,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               href={mappedAttachmentReferenceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 block text-blue-500"
+              className="text-blue-500 mt-3 block"
             >
               {t('Reference...')}
             </a>

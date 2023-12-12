@@ -12,7 +12,7 @@ import 'rc-slider/assets/index.css';
 const TemperatureIndicator = ({ props, children }: any) => {
   return (
     <div
-      className="absolute top-[calc(50%-20px)] flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-gray-100 shadow dark:bg-gray-700"
+      className="bg-gray-100 absolute top-[calc(50%-20px)] flex h-10 w-10 cursor-pointer items-center justify-center rounded-full shadow"
       style={props.style}
       onKeyDown={props.onKeyDown}
       onMouseDown={props.onMouseDown}
@@ -47,7 +47,7 @@ export const TemperatureSlider: FC<Props> = ({
   return (
     <div className="flex flex-col gap-3" data-qa="temp-slider">
       <label className="text-left">{label}</label>
-      <span className="text-sm text-gray-500">
+      <span className="text-gray-500 text-sm">
         {t(
           'Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
         )}

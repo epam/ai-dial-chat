@@ -183,16 +183,16 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
 
   // Render the dialog.
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/30 p-3 dark:bg-gray-900/70 md:p-5">
+    <div className="bg-gray-900/30 fixed inset-0 z-50 flex items-center justify-center p-3 md:p-5">
       <form
         ref={modalRef}
         noValidate
-        className="relative inline-block max-h-full w-full overflow-y-auto rounded bg-gray-100 px-3 py-4 text-left align-bottom transition-all dark:bg-gray-700 md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
+        className="bg-gray-100 relative inline-block max-h-full w-full overflow-y-auto rounded px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
         role="dialog"
         onSubmit={handleSubmit}
       >
         <button
-          className="absolute right-2 top-2 rounded text-gray-500 hover:text-blue-700"
+          className="text-gray-500 hover:text-blue-700 absolute right-2 top-2 rounded"
           onClick={handleClose}
         >
           <IconX height={24} width={24} />
@@ -204,11 +204,11 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
 
         <div className="mb-4">
           <label
-            className="mb-1 flex text-xs text-gray-500"
+            className="text-gray-500 mb-1 flex text-xs"
             htmlFor="projectNameInput"
           >
             {t('Title')}
-            <span className="ml-1 inline text-blue-500">*</span>
+            <span className="text-blue-500 ml-1 inline">*</span>
           </label>
           <input
             ref={titleInputRef}
@@ -226,11 +226,11 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
 
         <div className="mb-5">
           <label
-            className="mb-1 flex text-xs text-gray-500"
+            className="text-gray-500 mb-1 flex text-xs"
             htmlFor="businessJustificationInput"
           >
             {t('Description')}
-            <span className="ml-1 inline text-blue-500">*</span>
+            <span className="text-blue-500 ml-1 inline">*</span>
           </label>
           <textarea
             ref={descriptionInputRef}
@@ -248,7 +248,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
         <div className="flex  justify-end">
           <button
             type="submit"
-            className="w-full rounded bg-blue-500 p-3 text-gray-100 hover:bg-blue-700 focus:border focus:border-gray-800 focus-visible:outline-none dark:focus:border-gray-200 md:w-fit"
+            className="bg-blue-500 text-gray-100 hover:bg-blue-700 focus:border-gray-800 w-full rounded p-3 focus:border focus-visible:outline-none md:w-fit"
           >
             {t('Report an issue')}
           </button>

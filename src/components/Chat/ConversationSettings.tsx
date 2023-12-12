@@ -129,7 +129,7 @@ export const ConversationSettings = ({
   return (
     <div
       ref={ref}
-      className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-gray-300 dark:bg-gray-900 [&:first-child]:rounded-t"
+      className="bg-gray-300 flex w-full flex-col gap-[1px] overflow-hidden rounded-b [&:first-child]:rounded-t"
     >
       <div
         className={classNames(
@@ -140,7 +140,7 @@ export const ConversationSettings = ({
         )}
         data-qa="conversation-settings"
       >
-        <div className="shrink overflow-auto bg-gray-200 px-3 py-4 dark:bg-gray-800 md:px-5">
+        <div className="bg-gray-200 shrink overflow-auto px-3 py-4 md:px-5">
           <ConversationSettingsModel
             conversationId={conversationId}
             replay={replay}
@@ -151,7 +151,7 @@ export const ConversationSettings = ({
         {!replay.replayAsIs ? (
           model ? (
             <div
-              className="flex max-h-full shrink flex-col divide-y divide-gray-300 overflow-auto bg-gray-200 dark:divide-gray-900 dark:bg-gray-800"
+              className="divide-gray-300 bg-gray-200 flex max-h-full shrink flex-col divide-y overflow-auto"
               data-qa="entity-settings"
             >
               {model.type === EntityType.Application && (
@@ -211,7 +211,7 @@ export const ConversationSettings = ({
         )}
         {isCloseEnabled && (
           <button
-            className="absolute right-3 top-3 text-gray-500 hover:text-blue-500"
+            className="text-gray-500 hover:text-blue-500 absolute right-3 top-3"
             onClick={onClose}
           >
             <XMark height={24} width={24} />

@@ -75,20 +75,18 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
 
   return (
     <div
-      className={`codeblock relative overflow-hidden rounded border border-gray-400 font text-sm text-gray-800 dark:border-gray-700 dark:text-gray-200`}
+      className={`codeblock border-gray-400 text-gray-800 relative overflow-hidden rounded border font text-sm`}
     >
       <div
-        className={`flex items-center justify-between border-b border-gray-400 p-3 dark:border-gray-700 ${
-          isInner
-            ? 'bg-gray-100 dark:bg-gray-700'
-            : 'bg-gray-300 dark:bg-gray-900'
+        className={`border-gray-400 flex items-center justify-between border-b p-3 ${
+          isInner ? 'bg-gray-100' : 'bg-gray-300'
         }`}
       >
         <span className="lowercase">{language}</span>
 
-        <div className="flex items-center gap-3 text-gray-500">
+        <div className="text-gray-500 flex items-center gap-3">
           <button
-            className="flex items-center [&:not(:disabled)]:hover:text-blue-500"
+            className="[&:not(:disabled)]:hover:text-blue-500 flex items-center"
             onClick={copyToClipboard}
             disabled={isCopied}
           >
@@ -104,7 +102,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
           </button>
           <Tooltip isTriggerClickable tooltip={t('Download')}>
             <button
-              className="flex items-center rounded bg-none hover:text-blue-500"
+              className="hover:text-blue-500 flex items-center rounded bg-none"
               onClick={downloadAsFile}
             >
               <Download width={18} height={18} />

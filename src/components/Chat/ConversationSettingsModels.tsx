@@ -59,7 +59,7 @@ export const ConversationSettingsModel = ({
               className={`flex items-center gap-3 rounded border p-3 text-left text-xs ${
                 modelId === entity.id && !replay.replayAsIs
                   ? 'border-blue-500'
-                  : 'border-gray-400 hover:border-gray-800 dark:border-gray-600 hover:dark:border-gray-200'
+                  : 'border-gray-400 hover:border-gray-800'
               }`}
               key={entity.id}
               onClick={() => onModelSelect(entity.id)}
@@ -85,7 +85,7 @@ export const ConversationSettingsModel = ({
         </div>
       </div>
       <button
-        className="mt-3 inline text-left text-blue-500"
+        className="text-blue-500 mt-3 inline text-left"
         onClick={() => setIsModelsDialogOpen(true)}
         data-qa="see-full-list"
       >

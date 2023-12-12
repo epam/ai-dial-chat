@@ -27,7 +27,7 @@ export const SendMessageButton = ({
 
   return (
     <button
-      className="absolute right-4 top-[calc(50%_-_12px)] rounded hover:text-blue-500 disabled:cursor-not-allowed disabled:text-gray-400 disabled:dark:text-gray-600"
+      className="hover:text-blue-500 disabled:text-gray-400 absolute right-4 top-[calc(50%_-_12px)] rounded disabled:cursor-not-allowed"
       onClick={handleSend}
       disabled={isDisabled}
     >

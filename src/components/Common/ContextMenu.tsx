@@ -24,13 +24,13 @@ function ContextMenuItemRenderer({
     <div
       className={classNames(
         'flex w-full items-center gap-3 truncate break-words',
-        !!childMenuItems && 'text-gray-800 dark:text-gray-200',
+        !!childMenuItems && 'text-gray-800',
         !!childMenuItems && className,
       )}
     >
       {Icon && (
         <Icon
-          className="shrink-0 text-gray-500"
+          className="text-gray-500 shrink-0"
           size={18}
           height={18}
           width={18}
@@ -120,7 +120,7 @@ export default function ContextMenu({
       trigger={
         <div
           className={classNames(
-            'flex w-full items-center justify-center rounded text-gray-500',
+            'text-gray-500 flex w-full items-center justify-center rounded',
             triggerIconHighlight &&
               getByHighlightColor(
                 highlightColor,

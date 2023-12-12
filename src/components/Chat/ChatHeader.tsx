@@ -86,7 +86,7 @@ export const ChatHeader = ({
   return (
     <>
       <div
-        className="sticky top-0 z-10 flex w-full min-w-0 flex-wrap items-center justify-center gap-2 bg-gray-200 py-2 text-sm dark:bg-gray-800 lg:flex-row"
+        className="bg-gray-200 sticky top-0 z-10 flex w-full min-w-0 flex-wrap items-center justify-center gap-2 py-2 text-sm lg:flex-row"
         data-qa="chat-header"
       >
         {isShowChatInfo && (
@@ -100,7 +100,7 @@ export const ChatHeader = ({
           </Tooltip>
         )}
         {model && (
-          <div className="flex lg:[&>*:first-child]:border-l-[1px] lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-gray-500 [&>*]:pl-2">
+          <div className="[&>*]:border-x-gray-500 flex lg:[&>*:first-child]:border-l-[1px] lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:pl-2">
             {isShowChatInfo && (
               <>
                 <span className="flex items-center" data-qa="chat-model">
@@ -173,7 +173,7 @@ export const ChatHeader = ({
                   tooltip={t('Conversation settings')}
                 >
                   <button
-                    className="cursor-pointer text-gray-500 hover:text-blue-500"
+                    className="text-gray-500 hover:text-blue-500 cursor-pointer"
                     onClick={() => {
                       setShowSettings(!isShowSettings);
                     }}
@@ -189,7 +189,7 @@ export const ChatHeader = ({
                   tooltip={t('Clear conversation messages')}
                 >
                   <button
-                    className="cursor-pointer text-gray-500 hover:text-blue-500"
+                    className="text-gray-500 hover:text-blue-500 cursor-pointer"
                     onClick={onClearConversation}
                     data-qa="clear-conversation"
                   >
@@ -203,7 +203,7 @@ export const ChatHeader = ({
                   tooltip={t('Remove conversation from compare mode')}
                 >
                   <button
-                    className="cursor-pointer text-gray-500 hover:text-blue-500 disabled:cursor-not-allowed"
+                    className="text-gray-500 hover:text-blue-500 cursor-pointer disabled:cursor-not-allowed"
                     onClick={() => onUnselectConversation(conversation.id)}
                     disabled={conversation.isMessageStreaming}
                     data-qa="remove-from-compare"
@@ -218,7 +218,7 @@ export const ChatHeader = ({
                   tooltip={t('To edit the chat, leave Playback mode')}
                 >
                   <button
-                    className="cursor-pointer text-gray-500 hover:text-blue-500"
+                    className="text-gray-500 hover:text-blue-500 cursor-pointer"
                     onClick={onCancelPlaybackMode}
                     data-qa="cancel-playback-mode"
                   >

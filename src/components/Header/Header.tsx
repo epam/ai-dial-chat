@@ -48,10 +48,10 @@ const Header = () => {
   };
 
   return (
-    <div className="z-40 flex h-[48px] w-full border-b border-gray-300 bg-gray-100 dark:border-gray-900 dark:bg-gray-700">
+    <div className="border-gray-300 bg-gray-100 z-40 flex h-[48px] w-full border-b">
       <Tooltip isTriggerClickable tooltip={t('Conversation list')}>
         <div
-          className="flex-none cursor-pointer border-r border-gray-300 p-3 dark:border-gray-900 md:px-5"
+          className="border-gray-300 flex-none cursor-pointer border-r p-3 md:px-5"
           onClick={handleToggleChatbar}
         >
           {showChatbar ? (
@@ -85,14 +85,14 @@ const Header = () => {
             backgroundImage: `var(--app-logo)`,
           }}
         ></span>
-        <div className="w-[48px] max-md:border-l max-md:border-gray-300 max-md:dark:border-gray-900 md:w-auto">
+        <div className="max-md:border-gray-300 max- w-[48px] max-md:border-l md:w-auto">
           <User />
         </div>
       </div>
 
       <Tooltip isTriggerClickable tooltip={t('Prompt list')}>
         <div
-          className="flex-none cursor-pointer border-l border-gray-300 p-3 dark:border-gray-900 md:px-5"
+          className="border-gray-300 flex-none cursor-pointer border-l p-3 md:px-5"
           onClick={handleTogglePromtbar}
         >
           {showPromptbar ? (

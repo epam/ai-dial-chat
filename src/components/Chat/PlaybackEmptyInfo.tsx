@@ -9,7 +9,7 @@ export const PlaybackEmptyInfo = ({ appName, conversationName }: Props) => {
       className="flex h-full w-full flex-col items-center px-3 pt-5"
       data-qa="playback"
     >
-      <div className="flex h-full w-full flex-col items-center justify-center gap-2 rounded bg-gray-200 p-4 dark:bg-gray-800 lg:mx-auto lg:max-w-3xl">
+      <div className="bg-gray-200 flex h-full w-full flex-col items-center justify-center gap-2 rounded p-4 lg:mx-auto lg:max-w-3xl">
         <h4
           className="w-full text-center text-xl font-semibold"
           data-qa="app-name"

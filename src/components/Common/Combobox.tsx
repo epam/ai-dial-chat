@@ -119,11 +119,11 @@ export const Combobox = ({
             {label}
           </label>
         )}
-        <div className="relative flex rounded border border-gray-400 focus-within:border-blue-500 dark:border-gray-600 dark:focus-within:border-blue-500 ">
+        <div className="border-gray-400 focus-within:border-blue-500 relative flex rounded border ">
           <input
             disabled={disabled}
             placeholder={placeholder || ''}
-            className="w-full bg-transparent px-3 py-2.5 outline-none placeholder:text-gray-500"
+            className="placeholder:text-gray-500 w-full bg-transparent px-3 py-2.5 outline-none"
             {...getInputProps({ ref: refs.reference as any })}
           />
           {!inputValue && itemRow && selectedItem && (
@@ -142,7 +142,7 @@ export const Combobox = ({
         </div>
       </div>
       <ul
-        className={`z-10 max-h-80 overflow-auto rounded bg-gray-100 dark:bg-gray-700 ${
+        className={`bg-gray-100 z-10 max-h-80 overflow-auto rounded ${
           !isOpen && 'hidden'
         }`}
         {...getMenuProps(

@@ -166,11 +166,11 @@ export const SelectFolderModal = ({
       {isOpen && (
         <FloatingOverlay
           lockScroll
-          className="z-50 flex items-center justify-center bg-gray-900/70 p-3 dark:bg-gray-900/30"
+          className="bg-gray-900/70 z-50 flex items-center justify-center p-3"
         >
           <FloatingFocusManager context={context}>
             <div
-              className="relative flex max-h-full min-w-full flex-col gap-4 rounded bg-gray-100 dark:bg-gray-700 md:min-w-[425px] md:max-w-full"
+              className="bg-gray-100 relative flex max-h-full min-w-full flex-col gap-4 rounded md:min-w-[425px] md:max-w-full"
               ref={refs.setFloating}
               {...getFloatingProps()}
             >
@@ -199,12 +199,12 @@ export const SelectFolderModal = ({
                       placeholder={t('Search folders') || ''}
                       type="text"
                       onChange={handleSearch}
-                      className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
+                      className="border-gray-400 placeholder:text-gray-500 focus-visible:border-blue-500 m-0 w-full rounded border bg-transparent px-3 py-2 outline-none"
                     ></input>
                     <div className="flex min-h-[350px] flex-col overflow-auto">
                       <button
                         className={classNames(
-                          'flex items-center gap-1 rounded border-l-2 py-1 text-xs text-gray-500',
+                          'text-gray-500 flex items-center gap-1 rounded border-l-2 py-1 text-xs',
                           !selectedFolderId
                             ? 'border-blue-500 bg-blue-500/20'
                             : 'border-transparent',
@@ -213,7 +213,7 @@ export const SelectFolderModal = ({
                       >
                         <IconCaretRightFilled
                           className={classNames(
-                            'invisible text-gray-500 transition-all group-hover/modal:visible',
+                            'text-gray-500 invisible transition-all group-hover/modal:visible',
                             isAllFilesOpened && 'rotate-90',
                           )}
                           size={10}
@@ -255,11 +255,11 @@ export const SelectFolderModal = ({
                     </div>
                   </div>
                 )}
-                <div className="flex items-center justify-between border-t border-gray-300 px-6 py-4 dark:border-gray-900">
+                <div className="border-gray-300 flex items-center justify-between border-t px-6 py-4">
                   <div className="flex items-center justify-center">
                     <button
                       onClick={handleNewFolder}
-                      className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
+                      className="text-gray-500 hover:bg-blue-500/20 hover:text-blue-500 flex h-[34px] w-[34px] items-center  justify-center rounded"
                     >
                       <FolderPlus
                         height={24}

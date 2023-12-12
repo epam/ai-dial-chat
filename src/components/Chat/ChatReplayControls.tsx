@@ -28,23 +28,23 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
     <>
       {showReplayStart ? (
         <button
-          className="absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600"
+          className="border-gray-400 bg-gray-200 hover:bg-gray-400 absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border p-3"
           onClick={onClickReplayStart}
           data-qa="start-replay"
         >
-          <Play height={18} width={18} className="shrink-0 text-gray-500" />
+          <Play height={18} width={18} className="text-gray-500 shrink-0" />
           <span>{t('Start replay')}</span>
         </button>
       ) : (
         <button
-          className="absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-gray-400 bg-gray-200 p-3 hover:bg-gray-400 dark:border-gray-600 dark:bg-gray-800 hover:dark:bg-gray-600"
+          className="border-gray-400 bg-gray-200 hover:bg-gray-400 absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border p-3"
           onClick={onClickReplayReStart}
           data-qa="proceed-reply"
         >
           <RefreshCW
             height={18}
             width={18}
-            className="shrink-0 text-gray-500"
+            className="text-gray-500 shrink-0"
           />
 
           {isError ? (
