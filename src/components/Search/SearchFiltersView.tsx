@@ -94,7 +94,17 @@ export default function SearchFiltersView({
       triggerIconClassName="absolute right-4 cursor-pointer max-h-[18px]"
       TriggerCustomRenderer={
         <>
-          <IconFilter size={18} className=" text-gray-500" />
+          <IconFilter
+            size={18}
+            className={classNames(
+              ' text-gray-500',
+              getByHighlightColor(
+                highlightColor,
+                'hover:text-green',
+                'hover:text-violet',
+              ),
+            )}
+          />
           {searchFilters !== SearchFilters.None && (
             <IconCircleFilled
               size={8}

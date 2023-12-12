@@ -32,8 +32,8 @@ export const selectFilteredPrompts = createSelector(
     return prompts.filter(
       (prompt) =>
         (!searchTerm || doesPromptContainSearchTerm(prompt, searchTerm)) &&
-        filters.itemFilter(prompt) &&
-        (prompt.folderId || filters.rootFilter(prompt)),
+        filters.searchFilter(prompt) &&
+        (prompt.folderId || filters.sectionFilter(prompt)),
     );
   },
 );
@@ -87,7 +87,7 @@ export const selectFilteredFolders = createSelector(
 
     if (!searchTerm?.trim().length) {
       const markedFolderIds = folders
-        .filter((folder) => filters?.itemFilter(folder))
+        .filter((folder) => filters?.searchFilter(folder))
         .map((f) => f.id);
       folderIds.push(...markedFolderIds);
 
@@ -105,7 +105,7 @@ export const selectFilteredFolders = createSelector(
 
     return folders.filter(
       (folder) =>
-        (folder.folderId || filters.rootFilter(folder)) &&
+        (folder.folderId || filters.sectionFilter(folder)) &&
         filteredFolderIds.has(folder.id),
     );
   },

@@ -36,8 +36,8 @@ export const selectFilteredConversations = createSelector(
       (conversation) =>
         (!searchTerm ||
           doesConversationContainSearchTerm(conversation, searchTerm)) &&
-        filters.itemFilter(conversation) &&
-        (conversation.folderId || filters.rootFilter(conversation)),
+        filters.searchFilter(conversation) &&
+        (conversation.folderId || filters.sectionFilter(conversation)),
     );
   },
 );
@@ -88,7 +88,7 @@ export const selectFilteredFolders = createSelector(
 
     if (!searchTerm?.trim().length) {
       const markedFolderIds = folders
-        .filter((folder) => filters?.itemFilter(folder))
+        .filter((folder) => filters?.searchFilter(folder))
         .map((f) => f.id);
       folderIds.push(...markedFolderIds);
 
@@ -106,7 +106,7 @@ export const selectFilteredFolders = createSelector(
 
     return folders.filter(
       (folder) =>
-        (folder.folderId || filters.rootFilter(folder)) &&
+        (folder.folderId || filters.sectionFilter(folder)) &&
         filteredFolderIds.has(folder.id),
     );
   },

@@ -503,7 +503,15 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 highlightColor={highlightColor}
                 featureType={featureType}
               >
-                <IconFolder size={18} className="mr-1 text-gray-500" />
+                <IconFolder
+                  size={18}
+                  className={classNames(
+                    'mr-1 text-gray-500',
+                    !isRenaming &&
+                      highlightedFolders?.includes(currentFolder.id) &&
+                      textColor,
+                  )}
+                />
               </ShareIcon>
             )}
             <div

@@ -72,16 +72,16 @@ export const MyItemFilter: EntityFilter<ShareInterface> = (item) =>
   !item.sharedWithMe && !item.publishedWithMe;
 
 export const SharedWithMeFilter: EntityFilters = {
-  rootFilter: (item) => !!item.sharedWithMe,
-  itemFilter: TrueFilter,
+  searchFilter: (item) => !!item.sharedWithMe,
+  sectionFilter: TrueFilter,
 };
 
 export const SharedByMeFilter: EntityFilter<ShareInterface> = (item) =>
   !!item.isShared;
 
 export const PublishedWithMeFilter: EntityFilters = {
-  rootFilter: (item) => !!item.publishedWithMe,
-  itemFilter: TrueFilter,
+  searchFilter: (item) => !!item.publishedWithMe,
+  sectionFilter: TrueFilter,
 };
 
 export const PublishedByMeFilter: EntityFilter<ShareInterface> = (item) =>
@@ -116,6 +116,6 @@ export const getMyItemsFilter = (
 export const getMyItemsFilters = (
   searchFilters: SearchFilters,
 ): EntityFilters => ({
-  rootFilter: MyItemFilter,
-  itemFilter: getMyItemsFilter(searchFilters),
+  sectionFilter: MyItemFilter,
+  searchFilter: getMyItemsFilter(searchFilters),
 });
