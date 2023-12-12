@@ -80,10 +80,27 @@ const Sidebar = <T,>({
     'bg-green/15',
     'bg-violet/15',
   );
+
+  const chatbarColor = classNames(
+    'xl:bg-green xl:text-green xl:dark:bg-green',
+    isResizing ? 'bg-green text-green dark:bg-green' : '',
+  );
+
+  const promptbarColor = classNames(
+    'xl:bg-violet xl:text-violet xl:dark:bg-violet',
+    isResizing ? 'bg-violet text-violet dark:bg-violet' : '',
+  );
+
   const resizeTriggerColor = getByHighlightColor(
     highlightColor,
-    'bg-green text-green',
-    'bg-violet text-violet',
+    chatbarColor,
+    promptbarColor,
+  );
+
+  const resizeTriggerClassName = classNames(
+    'invisible h-full w-0.5 bg-gray-500 text-gray-500 group-hover:visible dark:bg-gray-600  md:visible',
+    resizeTriggerColor,
+    isResizing ? 'xl:visible' : 'xl:invisible',
   );
 
   const SIDEBAR_DEFAULT_WIDTH = useMemo(
@@ -138,12 +155,6 @@ const Sidebar = <T,>({
     }
   }, [dispatch, isLeftSidebar, isRightSidebar]);
 
-  const resizeTriggerClassName = classNames(
-    'invisible h-full w-0.5 group-hover:visible md:visible',
-    resizeTriggerColor,
-    isResizing ? 'xl:visible' : 'xl:invisible',
-  );
-
   const resizeSettings: ResizableProps = useMemo(() => {
     return {
       defaultSize: {
@@ -164,7 +175,7 @@ const Sidebar = <T,>({
         right: 'group invisible md:visible',
         left: 'group invisible md:visible',
       },
-      handleStyles: { right: { right: '-10px' }, left: { left: '0px' } },
+      handleStyles: { right: { right: '-11px' }, left: { left: '-3px' } },
       handleComponent: {
         left: <LeftSideResizeIcon className={resizeTriggerClassName} />,
         right: <RightSideResizeIcon className={resizeTriggerClassName} />,
@@ -183,8 +194,8 @@ const Sidebar = <T,>({
   ]);
 
   const resizableWrapperClassName = classNames(
-    `!fixed top-12 z-40 flex h-[calc(100%-48px)] min-w-[260px] md:max-w-[45%] xl:!relative xl:top-0 xl:h-full`,
-    isLeftSidebar ? 'left-0' : 'right-0',
+    `!fixed top-12 z-40 flex h-[calc(100%-48px)] min-w-[260px] border-gray-300 dark:border-gray-900 md:max-w-[45%] xl:!relative xl:top-0 xl:h-full`,
+    isLeftSidebar ? 'left-0 border-r' : 'right-0 border-l',
   );
 
   return isOpen ? (
@@ -194,7 +205,7 @@ const Sidebar = <T,>({
       className={resizableWrapperClassName}
       data-qa={dataQa}
     >
-      <div className="group/sidebar flex h-full w-full flex-none shrink-0 select-none flex-col divide-y divide-gray-300 border-r border-gray-300 bg-gray-100 transition-all dark:divide-gray-900 dark:border-gray-900 dark:bg-gray-700">
+      <div className="group/sidebar flex h-full w-full flex-none shrink-0 select-none flex-col divide-y divide-gray-300 bg-gray-100 transition-all dark:divide-gray-900 dark:bg-gray-700">
         <Search
           placeholder={t('Search {{name}}...', { name: featureType })}
           searchTerm={searchTerm}
