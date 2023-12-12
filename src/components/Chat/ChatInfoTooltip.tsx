@@ -20,6 +20,25 @@ interface Props {
   temperature: number | null;
 }
 
+const getHeightBasedLineClamp = () => {
+  const SM_HEIGHT_THRESHOLDS = [
+    { threshold: 480, lineClamp: 'line-clamp-3' },
+    { threshold: 640, lineClamp: 'line-clamp-6' },
+    { threshold: 800, lineClamp: 'line-clamp-[14]' },
+    { threshold: 960, lineClamp: 'line-clamp-[22]' },
+  ];
+
+  const DEFAULT_SM_LINE_CLAMP = 'line-clamp-[30]';
+
+  for (const item of SM_HEIGHT_THRESHOLDS) {
+    if (window.innerHeight <= item.threshold) {
+      return item.lineClamp;
+    }
+  }
+
+  return DEFAULT_SM_LINE_CLAMP;
+};
+
 const getModelTemplate = (
   model: OpenAIEntityModel,
   theme: Theme,
@@ -52,6 +71,7 @@ export const ChatInfoTooltip = ({
   temperature,
 }: Props) => {
   const theme = useAppSelector(UISelectors.selectThemeState);
+  const lineClampClass = getHeightBasedLineClamp();
 
   const { t } = useTranslation(Translation.Chat);
   const getModelLabel = useCallback(() => {
@@ -76,7 +96,10 @@ export const ChatInfoTooltip = ({
       {prompt && (
         <>
           <span className="text-gray-500">{t('System prompt')}:</span>
-          <div className="whitespace-pre-wrap" data-qa="prompt-info">
+          <div
+            className={`whitespace-pre-wrap ${lineClampClass}`}
+            data-qa="prompt-info"
+          >
             {prompt}
           </div>
         </>
