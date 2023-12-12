@@ -107,7 +107,7 @@ export const VariableModal: FC<Props> = ({
 
   return (
     <div
-      className="bg-black/50 fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-blackout"
       onKeyDown={handleKeyDown}
     >
       <form
