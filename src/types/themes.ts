@@ -1,10 +1,10 @@
 export interface ThemesConfig {
   themes: {
-    colorsPalette: Record<string, string>;
-  };
-  images: {
+    colors: Record<string, string>;
     'app-logo': string;
-    'app-logo-dark': string;
+    cssClass: string;
+  }[];
+  images: {
     'default-model': string;
     'default-addon': string;
     favicon: string;

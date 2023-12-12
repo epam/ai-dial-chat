@@ -12,24 +12,6 @@ import fetch from 'node-fetch';
 let cachedTheme = '';
 let cachedThemeExpiration: number | undefined;
 
-const hexToRgb = (hex: string) => {
-  // http://stackoverflow.com/a/5624139
-  const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
-  hex = hex.replace(shorthandRegex, (_, r, g, b) => {
-    return r + r + g + g + b + b;
-  });
-
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-
-  return result
-    ? [
-        parseInt(result[1], 16),
-        parseInt(result[2], 16),
-        parseInt(result[3], 16),
-      ]
-    : null;
-};
-
 function generateColorsCssVariables(
   variables: Record<string, string> | undefined,
 ) {
@@ -40,13 +22,9 @@ function generateColorsCssVariables(
   let cssContent = '';
   Object.entries(variables).forEach(([variable, value]) => {
     let compiledValue = value;
-    const rgbRegex = '\\d{1,3} \\d{1,3} \\d{1,3}';
 
-    if (value.startsWith('#')) {
-      const rgbValue = hexToRgb(value);
-      compiledValue = `${rgbValue?.join(' ') || ''}`;
-    } else if (!value.match(rgbRegex)) {
-      compiledValue = `var(--${value})`;
+    if (!value.startsWith('#')) {
+      compiledValue = '';
     }
     cssContent += `--${cssEscape(variable)}: ${compiledValue};\n`;
   });
@@ -74,8 +52,8 @@ function generateUrlsCssVariables(
   return cssContent;
 }
 
-function wrapCssContents(contents: string[]): string {
-  return `:root:root {\n ${contents.join('')}\n }\n`;
+function wrapCssContents(wrapper: string, contents: string[]): string {
+  return `${wrapper} {\n ${contents.join('')}\n }\n`;
 }
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -118,12 +96,19 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const json = (await response.json()) as ThemesConfig;
 
   const dayInMs = 86400000;
-  cachedTheme = wrapCssContents([
-    generateColorsCssVariables(json.themes.colorsPalette),
+  console.log(json.themes);
+
+  cachedTheme = [
+    ...json.themes.map((theme) =>
+      wrapCssContents(`.${theme.cssClass}`, [
+        generateColorsCssVariables(theme.colors),
+        generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
+      ]),
+    ),
     generateUrlsCssVariables({
       ...json.images,
     }),
-  ]);
+  ].join('\n');
   cachedThemeExpiration = Date.now() + dayInMs;
 
   return res
