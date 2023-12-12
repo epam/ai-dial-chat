@@ -298,7 +298,7 @@ export function ChatFolders() {
           name: t('Shared with me'),
           filters: SharedWithMeFilter,
           displayRootFiles: true,
-          dataQa: 'share-with-me',
+          dataQa: 'shared-with-me',
           openByDefault: !!searchTerm.length,
         },
         {

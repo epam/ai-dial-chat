@@ -3,6 +3,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { translate } from '@/src/utils/app/translation';
 
+import { SearchFilters } from './../../types/search';
 import {
   Conversation,
   ConversationEntityModel,
