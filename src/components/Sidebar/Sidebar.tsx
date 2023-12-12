@@ -4,7 +4,9 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { FeatureType } from '@/src/types/common';
+import { getByHighlightColor } from '@/src/utils/app/folders';
+
+import { FeatureType, HighlightColor } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
@@ -70,10 +72,19 @@ const Sidebar = <T,>({
     () => (isLeftSidebar ? 'chatbar' : 'promptbar'),
     [isLeftSidebar],
   );
-  const draggingColor = isLeftSidebar ? 'bg-green/15' : 'bg-violet/15';
-  const resizeTriggerColor = isLeftSidebar
-    ? 'bg-green text-green'
-    : 'bg-violet text-violet';
+  const highlightColor = isLeftSidebar
+    ? HighlightColor.Green
+    : HighlightColor.Violet;
+  const draggingColor = getByHighlightColor(
+    highlightColor,
+    'bg-green/15',
+    'bg-violet/15',
+  );
+  const resizeTriggerColor = getByHighlightColor(
+    highlightColor,
+    'bg-green text-green',
+    'bg-violet text-violet',
+  );
 
   const SIDEBAR_DEFAULT_WIDTH = useMemo(
     () => (isLeftSidebar ? chatbarWidth : promptbarWidth),
@@ -128,7 +139,7 @@ const Sidebar = <T,>({
   }, [dispatch, isLeftSidebar, isRightSidebar]);
 
   const resizeTriggerClassName = classNames(
-    'invisible h-full w-[2px] group-hover:visible md:visible',
+    'invisible h-full w-0.5 group-hover:visible md:visible',
     resizeTriggerColor,
     isResizing ? 'xl:visible' : 'xl:invisible',
   );
@@ -171,55 +182,60 @@ const Sidebar = <T,>({
     SIDEBAR_DEFAULT_WIDTH,
   ]);
 
-  const sideBarClassName = classNames(
-    `group/sidebar !fixed top-12 z-40 flex h-[calc(100%-48px)] min-w-[260px] flex-none shrink-0 select-none flex-col divide-y divide-gray-300 border-r border-gray-300 bg-gray-100 transition-all dark:divide-gray-900 dark:border-gray-900 dark:bg-gray-700 md:max-w-[45%]  xl:!relative xl:top-0 xl:h-full`,
-    side === 'left' ? 'left-0' : 'right-0',
+  const resizableWrapperClassName = classNames(
+    `!fixed top-12 z-40 flex h-[calc(100%-48px)] min-w-[260px] md:max-w-[45%] xl:!relative xl:top-0 xl:h-full`,
+    isLeftSidebar ? 'left-0' : 'right-0',
   );
 
   return isOpen ? (
     <Resizable
       ref={sideBarElementRef}
       {...resizeSettings}
-      className={sideBarClassName}
+      className={resizableWrapperClassName}
       data-qa={dataQa}
     >
-      <Search
-        placeholder={t('Search {{name}}...', { name: featureType })}
-        searchTerm={searchTerm}
-        onSearch={handleSearchTerm}
-      />
-      {actionButtons}
-      <div className="flex grow flex-col gap-[1px] divide-y divide-gray-300 overflow-y-auto dark:divide-gray-900">
-        {folders?.length > 0 && folderComponent}
+      <div className="group/sidebar flex h-full w-full flex-none shrink-0 select-none flex-col divide-y divide-gray-300 border-r border-gray-300 bg-gray-100 transition-all dark:divide-gray-900 dark:border-gray-900 dark:bg-gray-700">
+        <Search
+          placeholder={t('Search {{name}}...', { name: featureType })}
+          searchTerm={searchTerm}
+          onSearch={handleSearchTerm}
+        />
 
-        {filteredItems?.length > 0 ? (
-          <div
-            ref={dragDropElement}
-            className={`min-h-[100px] min-w-[42px] grow ${
-              isDraggingOver ? draggingColor : ''
-            }`}
-            onDrop={(e) => {
-              setIsDraggingOver(false);
-              handleDrop(e);
-            }}
-            onDragOver={allowDrop}
-            onDragEnter={highlightDrop}
-            onDragLeave={removeHighlight}
-            data-qa="draggable-area"
-          >
-            {itemComponent}
-          </div>
-        ) : items.length !== 0 ? (
-          <div className="flex grow content-center justify-center">
-            <NoResultsFound />
-          </div>
-        ) : (
-          <div className="flex grow content-center justify-center">
-            <NoData />
-          </div>
-        )}
+        {actionButtons}
+
+        <div className="flex grow flex-col gap-[1px] divide-y divide-gray-300 overflow-y-auto dark:divide-gray-900">
+          {folders?.length > 0 && folderComponent}
+
+          {filteredItems?.length > 0 ? (
+            <div
+              ref={dragDropElement}
+              className={`min-h-[100px] min-w-[42px] grow ${
+                isDraggingOver ? draggingColor : ''
+              }`}
+              onDrop={(e) => {
+                setIsDraggingOver(false);
+                handleDrop(e);
+              }}
+              onDragOver={allowDrop}
+              onDragEnter={highlightDrop}
+              onDragLeave={removeHighlight}
+              data-qa="draggable-area"
+            >
+              {itemComponent}
+            </div>
+          ) : items.length !== 0 ? (
+            <div className="flex grow content-center justify-center">
+              <NoResultsFound />
+            </div>
+          ) : (
+            <div className="flex grow content-center justify-center">
+              <NoData />
+            </div>
+          )}
+        </div>
+
+        {footerComponent}
       </div>
-      {footerComponent}
     </Resizable>
   ) : null;
 };

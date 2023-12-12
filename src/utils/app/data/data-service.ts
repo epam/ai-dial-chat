@@ -110,7 +110,7 @@ export class DataService {
     return BrowserStorage.getData(
       UIStorageKeys.ChatbarWidth,
       SIDEBAR_MIN_WIDTH,
-    ).pipe(map((chatbarWidth) => chatbarWidth));
+    );
   }
 
   public static setChatbarWidth(chatBarWidth: number): Observable<void> {
@@ -121,7 +121,7 @@ export class DataService {
     return BrowserStorage.getData(
       UIStorageKeys.PromptbarWidth,
       SIDEBAR_MIN_WIDTH,
-    ).pipe(map((promptBarWidth) => promptBarWidth));
+    );
   }
 
   public static setPromptbarWidth(promptBarWidth: number): Observable<void> {

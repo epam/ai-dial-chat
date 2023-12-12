@@ -25,13 +25,10 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
     childMenuItems,
   } = props;
 
-  const itemPadding = `p-[${ITEM_PADDING}px]`;
-
   const item = (
     <button
       className={classNames(
-        'flex cursor-pointer items-center justify-center rounded disabled:cursor-not-allowed',
-        itemPadding,
+        'flex cursor-pointer items-center justify-center rounded p-[5px] disabled:cursor-not-allowed',
         getByHighlightColor(
           highlightColor,
           'hover:bg-green/15 hover:text-green',
@@ -70,7 +67,7 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
 export default function SidebarMenu({
   menuItems,
   highlightColor,
-  displayMenuItemCount = 5, // calculate in future based on width of container
+  displayMenuItemCount = 5,
   isOpen,
   onOpenChange,
 }: MenuProps) {

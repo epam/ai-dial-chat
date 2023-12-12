@@ -7,7 +7,7 @@ interface ResizeIconProps {
 export const LeftSideResizeIcon = ({ className }: ResizeIconProps) => {
   return (
     <div className={className} data-qa="left-rezise-icon">
-      <IconChevronLeft className="ml-[-24px] h-full" />
+      <IconChevronLeft className="-ml-6 h-full" />
     </div>
   );
 };
