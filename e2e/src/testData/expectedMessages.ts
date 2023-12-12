@@ -15,6 +15,8 @@ export enum ExpectedMessages {
   newFolderCreated = 'New folder is created',
   folderCollapsed = 'Folder is collapsed',
   folderExpanded = 'Folder is expanded',
+  folderCaretIsVisible = 'Folder caret is visible',
+  folderCaretIsNotVisible = 'Folder caret is not visible',
   folderNameUpdated = 'Folder name is updated',
   folderNameNotUpdated = 'Folder name is not updated',
   folderDeleted = 'Folder is deleted',
