@@ -1,11 +1,14 @@
 import { ReactNode } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
 
 import { getByHighlightColor } from '@/src/utils/app/folders';
 
 import { FeatureType, HighlightColor } from '@/src/types/common';
 import { ShareInterface } from '@/src/types/share';
+import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -14,8 +17,6 @@ import Tooltip from './Tooltip';
 
 import ArrowUpRight from '@/public/images/icons/arrow-up-right.svg';
 import World from '@/public/images/icons/world.svg';
-import { useTranslation } from 'next-i18next';
-import { Translation } from '@/src/types/translation';
 
 interface ShareIsonProps extends ShareInterface {
   isHighlited: boolean;
