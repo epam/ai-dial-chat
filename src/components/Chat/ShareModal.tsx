@@ -18,6 +18,7 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import { Entity } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import Tooltip from '../Common/Tooltip';
@@ -29,11 +30,6 @@ export enum SharingType {
   ConversationFolder = 'conversations_folder',
   Prompt = 'prompt',
   PromptFolder = 'prompts_folder',
-}
-
-interface Entity {
-  id: string;
-  name: string;
 }
 
 interface Props {

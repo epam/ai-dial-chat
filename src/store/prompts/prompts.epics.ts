@@ -1,5 +1,3 @@
-import { i18n } from 'next-i18next';
-
 import { concat, filter, ignoreElements, map, of, switchMap, tap } from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
@@ -10,6 +8,7 @@ import {
   exportPrompts,
   importPrompts,
 } from '@/src/utils/app/import-export';
+import { translate } from '@/src/utils/app/translation';
 
 import { AppEpic } from '@/src/types/store';
 
@@ -17,6 +16,8 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { UIActions } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
+
+import { v4 as uuidv4 } from 'uuid';
 
 const savePromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -26,6 +27,7 @@ const savePromptsEpic: AppEpic = (action$, state$) =>
         PromptsActions.deletePrompts.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
         PromptsActions.updatePrompt.match(action) ||
+        PromptsActions.addPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action),
     ),
     map(() => PromptsSelectors.selectPrompts(state$.value)),
@@ -43,6 +45,7 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         PromptsActions.deleteFolder.match(action) ||
         PromptsActions.renameFolder.match(action) ||
         PromptsActions.moveFolder.match(action) ||
+        PromptsActions.addFolders.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action),
     ),
@@ -135,7 +138,7 @@ const importPromptsEpic: AppEpic = (action$, state$) =>
       if (isError) {
         return of(
           UIActions.showToast({
-            message: (i18n as any).t(errorsMessages.unsupportedDataFormat, {
+            message: translate(errorsMessages.unsupportedDataFormat, {
               ns: 'common',
             }),
             type: 'error',
@@ -186,6 +189,97 @@ const initEpic: AppEpic = (action$) =>
     ),
   );
 
+//TODO: added for development purpose - emulate immediate sharing with yourself
+const shareFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.shareFolder.match),
+    map(({ payload }) => ({
+      sharedFolderId: payload.id,
+      shareUniqueId: payload.shareUniqueId,
+      prompts: PromptsSelectors.selectPrompts(state$.value),
+      childFolders: PromptsSelectors.selectChildAndCurrentFoldersIdsById(
+        state$.value,
+        payload.id,
+      ),
+      folders: PromptsSelectors.selectFolders(state$.value),
+    })),
+    switchMap(
+      ({ sharedFolderId, shareUniqueId, prompts, childFolders, folders }) => {
+        const mapping = new Map();
+        childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
+        const newFolders = folders
+          .filter(({ id }) => childFolders.includes(id))
+          .map(({ folderId, ...folder }) => ({
+            ...folder,
+            id: mapping.get(folder.id),
+            folderId:
+              folder.id === sharedFolderId ? undefined : mapping.get(folderId), // show shared folder on root level
+            sharedWithMe: folder.id === sharedFolderId || folder.sharedWithMe,
+            shareUniqueId:
+              folder.id === sharedFolderId ? shareUniqueId : undefined,
+            isShared: false,
+          }));
+
+        const sharedPrompts = prompts
+          .filter(
+            (prompt) =>
+              prompt.folderId && childFolders.includes(prompt.folderId),
+          )
+          .map(({ folderId, ...prompt }) => ({
+            ...prompt,
+            id: uuidv4(),
+            folderId: mapping.get(folderId),
+            isShared: false,
+          }));
+
+        return concat(
+          of(
+            PromptsActions.addPrompts({
+              prompts: sharedPrompts,
+            }),
+          ),
+          of(
+            PromptsActions.addFolders({
+              folders: newFolders,
+            }),
+          ),
+        );
+      },
+    ),
+  );
+
+//TODO: added for development purpose - emulate immediate sharing with yourself
+const sharePromptEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.sharePrompt.match),
+    map(({ payload }) => ({
+      sharedPromptId: payload.promptId,
+      shareUniqueId: payload.shareUniqueId,
+      prompts: PromptsSelectors.selectPrompts(state$.value),
+    })),
+    switchMap(({ sharedPromptId, shareUniqueId, prompts }) => {
+      const sharedPrompts = prompts
+        .filter((prompt) => prompt.id === sharedPromptId)
+        .map(({ folderId: _, ...prompt }) => ({
+          ...prompt,
+          id: uuidv4(),
+          folderId: undefined, // show on root level
+          sharedWithMe: true,
+          isShared: false,
+          shareUniqueId:
+            prompt.id === sharedPromptId ? shareUniqueId : undefined,
+        }));
+
+      return concat(
+        of(
+          PromptsActions.addPrompts({
+            prompts: sharedPrompts,
+          }),
+        ),
+      );
+    }),
+  );
+
 export const PromptsEpics = combineEpics(
   initEpic,
   initPromptsEpic,
@@ -196,4 +290,6 @@ export const PromptsEpics = combineEpics(
   exportPromptsEpic,
   exportPromptEpic,
   importPromptsEpic,
+  shareFolderEpic,
+  sharePromptEpic,
 );

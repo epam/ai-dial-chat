@@ -7,7 +7,7 @@ import classNames from 'classnames';
 import { getByHighlightColor } from '@/src/utils/app/folders';
 
 import { FeatureType, HighlightColor } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
+import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -28,16 +28,16 @@ import { Resizable, ResizableProps } from 're-resizable';
 interface Props<T> {
   isOpen: boolean;
   side: 'left' | 'right';
-  items: T[];
   filteredItems: T[];
   itemComponent: ReactNode;
   folderComponent: ReactNode;
   actionButtons: ReactNode;
-  folders: FolderInterface[];
   footerComponent?: ReactNode;
   searchTerm: string;
+  searchFilters: SearchFilters;
   featureType: FeatureType;
   handleSearchTerm: (searchTerm: string) => void;
+  handleSearchFilters: (searchFilters: SearchFilters) => void;
   toggleOpen?: () => void;
   handleDrop: (e: any) => void;
 }
@@ -46,15 +46,15 @@ const Sidebar = <T,>({
   isOpen,
   actionButtons,
   side,
-  items,
   filteredItems,
   itemComponent,
   folderComponent,
-  folders,
   footerComponent,
   searchTerm,
+  searchFilters,
   featureType,
   handleSearchTerm,
+  handleSearchFilters,
   handleDrop,
 }: Props<T>) => {
   const { t } = useTranslation(Translation.PromptBar);
@@ -205,17 +205,20 @@ const Sidebar = <T,>({
       className={resizableWrapperClassName}
       data-qa={dataQa}
     >
-      <div className="group/sidebar flex h-full w-full flex-none shrink-0 select-none flex-col divide-y divide-gray-300 bg-gray-100 transition-all dark:divide-gray-900 dark:bg-gray-700">
+      <div className="group/sidebar flex h-full w-full flex-none shrink-0 flex-col divide-y divide-gray-300 bg-gray-100 transition-all dark:divide-gray-900 dark:bg-gray-700">
         <Search
           placeholder={t('Search {{name}}...', { name: featureType })}
           searchTerm={searchTerm}
+          searchFilters={searchFilters}
           onSearch={handleSearchTerm}
+          onSearchFiltersChanged={handleSearchFilters}
+          featureType={featureType}
         />
 
         {actionButtons}
 
-        <div className="flex grow flex-col gap-[1px] divide-y divide-gray-300 overflow-y-auto dark:divide-gray-900">
-          {folders?.length > 0 && folderComponent}
+        <div className="flex grow flex-col gap-px divide-y divide-gray-300 overflow-y-auto dark:divide-gray-900">
+          {folderComponent}
 
           {filteredItems?.length > 0 ? (
             <div
@@ -234,7 +237,7 @@ const Sidebar = <T,>({
             >
               {itemComponent}
             </div>
-          ) : items.length !== 0 ? (
+          ) : searchTerm.length ? (
             <div className="flex grow content-center justify-center">
               <NoResultsFound />
             </div>
@@ -244,7 +247,6 @@ const Sidebar = <T,>({
             </div>
           )}
         </div>
-
         {footerComponent}
       </div>
     </Resizable>
