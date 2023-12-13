@@ -43,6 +43,7 @@ class BasePathResolver {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   i18n,
+  poweredByHeader: false,
   reactStrictMode: true,
   experimental: {
     instrumentationHook: true,

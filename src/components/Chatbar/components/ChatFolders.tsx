@@ -2,7 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { SharedWithMeFilter } from '@/src/utils/app/search';
+import {
+  PublishedWithMeFilter,
+  SharedWithMeFilter,
+} from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, HighlightColor } from '@/src/types/common';
@@ -282,7 +285,7 @@ export function ChatFolders() {
     ConversationsSelectors.selectIsEmptySearchFilter,
   );
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
-  const commonSearchFilter = useAppSelector(
+  const commonItemFilter = useAppSelector(
     ConversationsSelectors.selectMyItemsFilters,
   );
 
@@ -295,6 +298,14 @@ export function ChatFolders() {
       [
         {
           hidden: !isSharingEnabled || !isFilterEmpty,
+          name: t('Organization'),
+          filters: PublishedWithMeFilter,
+          displayRootFiles: true,
+          dataQa: 'published-with-me',
+          openByDefault: !!searchTerm.length,
+        },
+        {
+          hidden: !isSharingEnabled || !isFilterEmpty,
           name: t('Shared with me'),
           filters: SharedWithMeFilter,
           displayRootFiles: true,
@@ -303,13 +314,13 @@ export function ChatFolders() {
         },
         {
           name: t('Pinned chats'),
-          filters: commonSearchFilter,
+          filters: commonItemFilter,
           showEmptyFolders: isFilterEmpty,
           openByDefault: true,
           dataQa: 'pinned-chats',
         },
       ].filter(({ hidden }) => !hidden),
-    [commonSearchFilter, isFilterEmpty, isSharingEnabled, searchTerm.length, t],
+    [commonItemFilter, isFilterEmpty, isSharingEnabled, searchTerm.length, t],
   );
 
   return (
