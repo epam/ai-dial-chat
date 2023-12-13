@@ -58,7 +58,7 @@ export default function ShareIcon({
           isPublished ? 'rounded-md' : 'rounded-sm',
         )}
       >
-        <Tooltip tooltip={isShared ? 'shared' : 'published'}>
+        <Tooltip tooltip={isPublished ? 'published' : 'shared'}>
           <AdditionalIcon
             size={size}
             width={size}
