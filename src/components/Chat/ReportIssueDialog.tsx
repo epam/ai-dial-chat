@@ -183,16 +183,16 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
 
   // Render the dialog.
   return (
-    <div className="bg-gray-900/30 fixed inset-0 z-50 flex items-center justify-center p-3 md:p-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-blackout p-3 md:p-5">
       <form
         ref={modalRef}
         noValidate
-        className="bg-gray-100 relative inline-block max-h-full w-full overflow-y-auto rounded px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
+        className="relative inline-block max-h-full w-full overflow-y-auto rounded bg-layer-3 px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
         role="dialog"
         onSubmit={handleSubmit}
       >
         <button
-          className="hover:text-blue-700 absolute right-2 top-2 rounded text-secondary"
+          className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
           onClick={handleClose}
         >
           <IconX height={24} width={24} />
@@ -208,7 +208,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
             htmlFor="projectNameInput"
           >
             {t('Title')}
-            <span className="text-blue-500 ml-1 inline">*</span>
+            <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <input
             ref={titleInputRef}
@@ -230,7 +230,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
             htmlFor="businessJustificationInput"
           >
             {t('Description')}
-            <span className="text-blue-500 ml-1 inline">*</span>
+            <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <textarea
             ref={descriptionInputRef}
