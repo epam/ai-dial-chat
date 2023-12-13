@@ -189,6 +189,7 @@ test('Menu for New conversation', async ({
       MenuOptions.export,
       MenuOptions.moveTo,
       MenuOptions.share,
+      MenuOptions.publish,
       MenuOptions.delete,
     ]);
 });
@@ -227,6 +228,7 @@ test(
         MenuOptions.export,
         MenuOptions.moveTo,
         MenuOptions.share,
+        MenuOptions.publish,
         MenuOptions.delete,
       ]);
   },
