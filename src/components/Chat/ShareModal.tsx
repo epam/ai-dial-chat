@@ -122,9 +122,11 @@ export default function ShareModal({
             </button>
             <div className="flex flex-col justify-between gap-2">
               <h4 className=" max-h-[50px] text-base font-semibold">
-                <span className="line-clamp-2 break-words">
-                  {`${t('Share')}: ${entity.name.trim()}`}
-                </span>
+                <Tooltip tooltip={entity.name.trim()}>
+                  <span className="line-clamp-2 break-words">
+                    {`${t('Share')}: ${entity.name.trim()}`}
+                  </span>
+                </Tooltip>
               </h4>
               <p className="text-sm text-gray-500">
                 {t('share.modal.link.description')}
@@ -133,13 +135,15 @@ export default function ShareModal({
                 {t('share.modal.link', { context: type })}
               </p>
               <div className="relative mt-2">
-                <input
-                  type="text"
-                  readOnly
-                  className="w-full gap-2 truncate rounded border border-gray-400 bg-gray-100 p-3 pr-10 outline-none dark:border-gray-600 dark:bg-gray-700"
-                  onCopyCapture={handleCopy}
-                  value={url}
-                />
+                <Tooltip tooltip={url}>
+                  <input
+                    type="text"
+                    readOnly
+                    className="w-full gap-2 truncate rounded border border-gray-400 bg-gray-100 p-3 pr-10 outline-none dark:border-gray-600 dark:bg-gray-700"
+                    onCopyCapture={handleCopy}
+                    value={url}
+                  />
+                </Tooltip>
                 <div className="absolute right-3 top-3">
                   {urlCopied ? (
                     <Tooltip tooltip={t('Copied!')}>
