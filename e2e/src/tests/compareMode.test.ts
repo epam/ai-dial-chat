@@ -829,7 +829,9 @@ test(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await compare.waitForComparedConversationsLoaded();
-      await chat.sendRequestInCompareMode('write cinderella story', {
+      await dialHomePage.throttleAPIResponse(API.chatHost);
+
+      await chat.sendRequestInCompareMode('write down 30 adjectives', {
         rightEntity: firstConversation.model.id,
         leftEntity: secondConversation.model.id,
       });

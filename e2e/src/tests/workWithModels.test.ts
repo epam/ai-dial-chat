@@ -3,6 +3,7 @@ import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
 import {
+  API,
   ExpectedConstants,
   ExpectedMessages,
   ModelIds,
@@ -268,6 +269,7 @@ test('Stop generating for models like GPT (1 symbol = 1 token)', async ({
   await test.step('Send request and stop generation immediately', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.throttleAPIResponse(API.chatHost);
     await chat.sendRequestWithButton(request, false);
     await chat.stopGenerating.click();
   });
@@ -295,6 +297,7 @@ test('Stop generating for models like GPT (1 symbol = 1 token)', async ({
   });
 
   await test.step('Send request and stop generation when partial content received', async () => {
+    await dialHomePage.unRouteResponse(API.chatHost);
     await chat.regenerateResponse(false);
     await chatMessages.waitForPartialMessageReceived(2);
     await chat.stopGenerating.click();
@@ -338,6 +341,7 @@ test(
     await test.step('Send request, verify Compare button is disabled while generating the response and stop generation immediately', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      await dialHomePage.throttleAPIResponse(API.chatHost, 1500);
       await chat.sendRequestWithButton(request, false);
 
       const isCompareButtonEnabled =
