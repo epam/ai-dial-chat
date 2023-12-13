@@ -301,11 +301,11 @@ export const PreUploadDialog = ({
         {isOpen && (
           <FloatingOverlay
             lockScroll
-            className="bg-gray-900/70 z-50 flex items-center justify-center p-3"
+            className="z-50 flex items-center justify-center bg-blackout p-3"
           >
             <FloatingFocusManager context={context}>
               <div
-                className="bg-gray-100 relative flex max-h-full flex-col gap-4 rounded p-6 md:min-w-[425px] md:max-w-[500px]"
+                className="relative flex max-h-full flex-col gap-4 rounded bg-layer-3 p-6 md:min-w-[425px] md:max-w-[500px]"
                 ref={refs.setFloating}
                 {...getFloatingProps()}
               >

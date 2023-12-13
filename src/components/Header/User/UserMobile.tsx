@@ -98,7 +98,7 @@ const UserMenu = () => {
 export const UserMobile = () => {
   return (
     <div
-      className="border-gray-300 bg-gray-100 fixed right-0 top-12 z-40 flex w-[260px] flex-col overflow-y-auto md:hidden"
+      className="border-gray-300 fixed right-0 top-12 z-40 flex w-[260px] flex-col overflow-y-auto bg-layer-3 md:hidden"
       style={{ height: 'calc(100% - 48px)' }}
     >
       <UserInfo />

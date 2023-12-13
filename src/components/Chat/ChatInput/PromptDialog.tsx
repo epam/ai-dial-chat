@@ -108,13 +108,13 @@ export const PromptDialog: FC<Props> = ({
 
   return (
     <div
-      className="bg-gray-900/30 fixed inset-0 z-50 flex items-center justify-center overflow-hidden p-3 md:p-5"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-blackout p-3 md:p-5"
       onKeyDown={handleKeyDown}
     >
       <form
         ref={modalRef}
         noValidate
-        className="bg-gray-100 relative inline-block max-h-full w-full overflow-y-auto rounded px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
+        className="relative inline-block max-h-full w-full overflow-y-auto rounded bg-layer-3 px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
         role="dialog"
         data-qa="variable-modal"
         onSubmit={handleSubmit}
@@ -171,7 +171,7 @@ export const PromptDialog: FC<Props> = ({
         <div className="mt-1 flex justify-end">
           <button
             type="submit"
-            className="bg-blue-500 text-gray-100 hover:bg-blue-700 focus:border-gray-800 w-full rounded p-3 focus:border focus-visible:outline-none md:w-fit"
+            className="button button-primary"
             data-qa="submit-variable"
           >
             {t('Submit')}

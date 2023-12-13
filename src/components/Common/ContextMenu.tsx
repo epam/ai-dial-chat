@@ -46,12 +46,12 @@ function ContextMenuItemRenderer({
         highlightColor={highlightColor}
         triggerIconClassName={classNames(
           className,
-          'text-gray-200',
+          'text-secondary',
           getByHighlightColor(
             highlightColor,
-            'hover:bg-green/15',
-            'hover:bg-violet/15',
-            'hover:bg-blue-500/20',
+            'hover:bg-accent-secondary/15',
+            'hover:bg-accent-tertiary/15',
+            'hover:bg-accent-primary',
           ),
         )}
         TriggerCustomRenderer={item}
@@ -63,9 +63,9 @@ function ContextMenuItemRenderer({
       className={classNames(
         getByHighlightColor(
           highlightColor,
-          'hover:bg-green/15',
-          'hover:bg-violet/15',
-          'hover:bg-blue-500/20',
+          'hover:bg-accent-secondary/15',
+          'hover:bg-accent-tertiary/15',
+          'hover:bg-accent-primary',
         ),
         className,
       )}
@@ -124,9 +124,9 @@ export default function ContextMenu({
             triggerIconHighlight &&
               getByHighlightColor(
                 highlightColor,
-                'hover:text-green',
-                'hover:text-violet',
-                'hover:text-blue-500',
+                'hover:text-accent-secondary',
+                'hover:text-accent-tertiary',
+                'hover:text-accent-primary',
               ),
             className,
           )}

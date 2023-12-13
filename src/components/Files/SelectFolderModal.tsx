@@ -166,11 +166,11 @@ export const SelectFolderModal = ({
       {isOpen && (
         <FloatingOverlay
           lockScroll
-          className="bg-gray-900/70 z-50 flex items-center justify-center p-3"
+          className="z-50 flex items-center justify-center bg-blackout p-3"
         >
           <FloatingFocusManager context={context}>
             <div
-              className="bg-gray-100 relative flex max-h-full min-w-full flex-col gap-4 rounded md:min-w-[425px] md:max-w-full"
+              className="relative flex max-h-full min-w-full flex-col gap-4 rounded bg-layer-3 md:min-w-[425px] md:max-w-full"
               ref={refs.setFloating}
               {...getFloatingProps()}
             >
@@ -206,7 +206,7 @@ export const SelectFolderModal = ({
                         className={classNames(
                           'flex items-center gap-1 rounded border-l-2 py-1 text-xs text-secondary',
                           !selectedFolderId
-                            ? 'border-blue-500 bg-blue-500/20'
+                            ? 'border-blue-500 bg-accent-primary'
                             : 'border-transparent',
                         )}
                         onClick={() => handleToggleFolder(undefined)}
@@ -259,7 +259,7 @@ export const SelectFolderModal = ({
                   <div className="flex items-center justify-center">
                     <button
                       onClick={handleNewFolder}
-                      className="hover:bg-blue-500/20 hover:text-blue-500 flex h-[34px] w-[34px] items-center justify-center  rounded text-secondary"
+                      className="hover:text-blue-500 flex h-[34px] w-[34px] items-center justify-center rounded  text-secondary hover:bg-accent-primary"
                     >
                       <FolderPlus
                         height={24}

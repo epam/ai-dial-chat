@@ -45,14 +45,14 @@ export const ConfirmDialog = ({
       {isOpen && (
         <FloatingOverlay
           lockScroll
-          className="bg-gray-900/70 z-50 flex items-center justify-center p-3"
+          className="z-50 flex items-center justify-center bg-blackout p-3"
         >
           <FloatingFocusManager
             context={context}
             initialFocus={confirmLabelRef}
           >
             <div
-              className="bg-gray-100 z-50 flex min-w-[90%] flex-col items-center gap-4 rounded p-6 text-center md:min-w-[300px] md:max-w-[500px]"
+              className="z-50 flex min-w-[90%] flex-col items-center gap-4 rounded bg-layer-3 p-6 text-center md:min-w-[300px] md:max-w-[500px]"
               ref={refs.setFloating}
               aria-labelledby={headingId}
               aria-describedby={descriptionId}
@@ -81,7 +81,7 @@ export const ConfirmDialog = ({
                 </button>
                 <button
                   ref={confirmLabelRef}
-                  className="bg-blue-500 text-gray-100 hover:bg-blue-700 rounded px-3 py-2.5"
+                  className="button button-primary"
                   onClick={() => onClose(true)}
                   data-qa="confirm"
                 >

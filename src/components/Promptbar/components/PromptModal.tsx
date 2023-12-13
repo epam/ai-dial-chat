@@ -142,13 +142,13 @@ export const PromptModal: FC<Props> = ({
     <FloatingPortal id="theme-main">
       <FloatingOverlay
         lockScroll
-        className="bg-gray-900/30 z-50 flex items-center justify-center p-3 md:p-5"
+        className="z-50 flex items-center justify-center bg-blackout p-3 md:p-5"
         onKeyDown={handleEnter}
       >
         <FloatingFocusManager context={context} initialFocus={nameInputRef}>
           <form
             noValidate
-            className="bg-gray-100 relative inline-block max-h-full w-full overflow-y-auto rounded px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
+            className="relative inline-block max-h-full w-full overflow-y-auto rounded bg-layer-3 px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
             role="dialog"
             ref={refs.setFloating}
             {...getFloatingProps()}
@@ -234,7 +234,7 @@ export const PromptModal: FC<Props> = ({
             <div className="flex justify-end">
               <button
                 type="submit"
-                className="bg-blue-500 text-gray-100 hover:bg-blue-700 focus:border-gray-800 w-full rounded p-3 focus:border focus-visible:outline-none md:w-fit"
+                className="button button-primary"
                 data-qa="save-prompt"
                 onClick={handleSubmit}
               >

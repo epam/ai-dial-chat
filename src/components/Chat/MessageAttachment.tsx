@@ -50,8 +50,7 @@ const AttachmentDataRenderer = ({
     return (
       <div className="flex max-w-full overflow-auto">
         <span
-          // TODO: dark prose-invert
-          className="prose shrink-0 whitespace-pre text-sm dark:prose-invert"
+          className="prose shrink-0 whitespace-pre text-sm"
           dangerouslySetInnerHTML={{
             __html: sanitize(attachment.data || ''),
           }}
@@ -61,9 +60,8 @@ const AttachmentDataRenderer = ({
   }
   if (attachment.type === 'text/plain') {
     return (
-      // TODO: dark prose-invert
       <div className="max-w-full overflow-hidden">
-        <span className="prose whitespace-pre-wrap text-sm dark:prose-invert">
+        <span className="prose whitespace-pre-wrap text-sm">
           {attachment.data}
         </span>
       </div>
@@ -132,7 +130,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     <div
       className={`rounded px-1 py-2 ${
         isExpanded ? 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3' : ''
-      } ${isInner ? 'bg-gray-100' : 'border-gray-400 border bg-layer-1'}`}
+      } ${isInner ? 'bg-layer-3' : 'border border-primary bg-layer-1'}`}
     >
       <div className={`flex items-center gap-3 px-2`}>
         <div className="flex items-center">
@@ -146,7 +144,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               <Link
                 height={18}
                 width={18}
-                className="hover:text-blue-500 text-secondary"
+                className="text-secondary hover:text-accent-primary"
               />
             </a>
           ) : (
@@ -183,7 +181,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               download={attachment.title}
               href={mappedAttachmentUrl}
               onClick={stopBubbling}
-              className="hover:text-blue-500 text-secondary"
+              className="text-secondary hover:text-accent-primary"
             >
               <IconDownload size={18} />
             </a>
@@ -208,7 +206,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               href={mappedAttachmentReferenceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-500 mt-3 block"
+              className="mt-3 block text-accent-primary"
             >
               {t('Reference...')}
             </a>

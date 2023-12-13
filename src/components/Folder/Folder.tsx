@@ -354,21 +354,21 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const hoverIconColor = getByHighlightColor(
     highlightColor,
-    'hover:text-green',
-    'hover:text-violet',
-    'hover:text-blue-500',
+    'hover:text-accent-secondary',
+    'hover:text-accent-tertiary',
+    'hover:text-primary',
   );
   const textColor = getByHighlightColor(
     highlightColor,
-    'text-green',
-    'text-violet',
-    'text-blue-500',
+    'text-accent-secondary',
+    'text-accent-tertiary',
+    'text-primary',
   );
   const bgColor = getByHighlightColor(
     highlightColor,
-    'bg-green/15',
-    'bg-violet/15',
-    'bg-blue-500/20',
+    'bg-accent-secondary',
+    'bg-accent-tertiary',
+    'bg-accent-primary',
   );
 
   return (
@@ -392,7 +392,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             isContextMenu ||
             (allItems === undefined &&
               highlightedFolders?.includes(currentFolder.id))
-            ? classNames(bgColor, 'border-blue-500')
+            ? classNames(bgColor, 'border-accent-primary')
             : 'border-transparent',
         )}
         data-qa="folder"

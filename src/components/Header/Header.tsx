@@ -48,7 +48,7 @@ const Header = () => {
   };
 
   return (
-    <div className="border-gray-300 bg-gray-100 z-40 flex h-[48px] w-full border-b">
+    <div className="border-gray-300 z-40 flex h-[48px] w-full border-b bg-layer-3">
       <Tooltip isTriggerClickable tooltip={t('Conversation list')}>
         <div
           className="border-gray-300 flex-none cursor-pointer border-r p-3 md:px-5"

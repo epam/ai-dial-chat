@@ -66,7 +66,7 @@ export const getMDComponents = (
     },
     th({ children }) {
       return (
-        <th className="bg-gray-500 text-gray-200 break-words border border-primary px-3 py-1 text-sm">
+        <th className="text-gray-200 break-words border border-primary bg-layer-4 px-3 py-1 text-sm">
           {children}
         </th>
       );
@@ -104,8 +104,7 @@ const ChatMDComponent = ({
   return (
     <>
       <MemoizedReactMarkdown
-        // TODO: dark prose-invert
-        className={`prose-a:text-blue-500 prose dark:prose-invert prose-a:no-underline hover:prose-a:underline`}
+        className={`prose prose-a:no-underline hover:prose-a:underline`}
         remarkPlugins={[remarkGfm]}
         linkTarget="_blank"
         components={getMDComponents(isShowResponseLoader, isInner)}

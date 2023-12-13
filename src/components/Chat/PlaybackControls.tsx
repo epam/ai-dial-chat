@@ -163,7 +163,7 @@ export const PlaybackControls = ({
         </button>
         <div
           ref={nextMessageBoxRef}
-          className="bg-gray-100 focus-visible:border-blue-500 m-0 max-h-[150px] min-h-[44px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent px-12 py-3 text-left outline-none"
+          className="focus-visible:border-blue-500 m-0 max-h-[150px] min-h-[44px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-layer-3 px-12 py-3 text-left outline-none"
           data-qa="playback-message"
         >
           {isMessageStreaming ? (

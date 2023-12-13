@@ -26,9 +26,9 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
         'flex cursor-pointer items-center justify-center rounded p-[5px] disabled:cursor-not-allowed',
         getByHighlightColor(
           highlightColor,
-          'hover:bg-green/15 hover:text-green',
-          'hover:bg-violet/15 hover:text-violet',
-          'hover:bg-blue-500/20 hover:text-blue-500',
+          'hover:bg-accent-secondary hover:text-accent-secondary',
+          'hover:bg-accent-tertiary hover:text-accent-tertiary',
+          'hover:bg-accent-primary hover:text-accent-primary',
         ),
         className,
       )}

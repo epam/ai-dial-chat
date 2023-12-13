@@ -295,11 +295,11 @@ export const FileManagerModal = ({
       {isOpen && (
         <FloatingOverlay
           lockScroll
-          className="bg-gray-900/70 z-50 flex items-center justify-center p-3"
+          className="z-50 flex items-center justify-center bg-blackout p-3"
         >
           <FloatingFocusManager context={context}>
             <div
-              className="bg-gray-100 relative flex max-h-full flex-col gap-4 rounded md:w-[525px]"
+              className="relative flex max-h-full flex-col gap-4 rounded bg-layer-3 md:w-[525px]"
               ref={refs.setFloating}
               {...getFloatingProps()}
             >
@@ -424,13 +424,13 @@ export const FileManagerModal = ({
                     <>
                       <button
                         onClick={handleRemoveMultipleFiles}
-                        className="hover:bg-blue-500/20 hover:text-blue-500 flex h-[34px] w-[34px] items-center justify-center  rounded text-secondary"
+                        className="hover:text-blue-500 flex h-[34px] w-[34px] items-center justify-center rounded  text-secondary hover:bg-accent-primary"
                       >
                         <IconTrash size={24} />
                       </button>
                       <button
                         onClick={handleDownloadMultipleFiles}
-                        className="hover:bg-blue-500/20 hover:text-blue-500 flex h-[34px] w-[34px] items-center justify-center  rounded text-secondary"
+                        className="hover:text-blue-500 flex h-[34px] w-[34px] items-center justify-center rounded  text-secondary hover:bg-accent-primary"
                       >
                         <IconDownload size={24} />
                       </button>
@@ -438,7 +438,7 @@ export const FileManagerModal = ({
                   ) : (
                     <button
                       onClick={handleNewFolder}
-                      className="hover:bg-blue-500/20 hover:text-blue-500 flex h-[34px] w-[34px] items-center justify-center  rounded text-secondary"
+                      className="hover:text-blue-500 flex h-[34px] w-[34px] items-center justify-center rounded  text-secondary hover:bg-accent-primary"
                     >
                       <FolderPlus height={24} width={24} />
                     </button>

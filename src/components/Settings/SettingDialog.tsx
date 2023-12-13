@@ -76,10 +76,10 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   // Render the dialog.
   return (
     <FloatingPortal id="theme-main">
-      <div className="bg-gray-900/30 fixed inset-0 z-40 flex w-full items-center justify-center overflow-hidden p-3">
+      <div className="fixed inset-0 z-40 flex w-full items-center justify-center overflow-hidden bg-blackout p-3">
         <div
           ref={modalRef}
-          className="bg-gray-100 relative inline-block max-h-full w-[500px] overflow-y-auto rounded p-4 text-left align-bottom transition-all md:max-h-[400px]"
+          className="relative inline-block max-h-full w-[500px] overflow-y-auto rounded bg-layer-3 p-4 text-left align-bottom transition-all md:max-h-[400px]"
           role="dialog"
         >
           <button
@@ -109,10 +109,10 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
             </div>
           </div>
 
-          <div className="flex  justify-end">
+          <div className="flex justify-end">
             <button
               type="button"
-              className="bg-blue-500 text-gray-100 hover:bg-blue-700 focus:border-gray-800 w-full rounded p-3 focus:border focus-visible:outline-none md:w-fit"
+              className="button button-primary"
               onClick={handleSave}
             >
               {t('Save')}

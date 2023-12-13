@@ -47,7 +47,8 @@ const Sidebar = <T,>({
   const { t } = useTranslation(Translation.PromptBar);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const dragDropElement = useRef<HTMLDivElement>(null);
-  const draggingColor = side === 'left' ? 'bg-green/15' : 'bg-violet/15';
+  const draggingColor =
+    side === 'left' ? 'bg-accent-secondary' : 'bg-accent-tertiary';
   const allowDrop = useCallback((e: any) => {
     e.preventDefault();
   }, []);
@@ -74,7 +75,7 @@ const Sidebar = <T,>({
   return isOpen ? (
     <div
       className={classNames(
-        `group/sidebar divide-gray-300 border-gray-300 bg-gray-100 fixed top-12 z-40 flex h-[calc(100%-48px)] w-[260px] flex-none shrink-0 flex-col divide-y border-r transition-all  xl:relative xl:top-0 xl:h-full`,
+        `group/sidebar divide-gray-300 border-gray-300 fixed top-12 z-40 flex h-[calc(100%-48px)] w-[260px] flex-none shrink-0 flex-col divide-y border-r bg-layer-3 transition-all  xl:relative xl:top-0 xl:h-full`,
         side === 'left' ? `left-0` : 'right-0',
       )}
       data-qa="sidebar"

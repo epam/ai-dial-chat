@@ -70,7 +70,7 @@ export const FileItem = ({
 
   return (
     <div
-      className="group/file-item hover:bg-blue-500/20 flex justify-between gap-3 rounded px-3 py-1.5"
+      className="group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-accent-primary"
       style={{
         paddingLeft: `${1.005 + level * 1.5}rem`,
       }}
@@ -105,7 +105,7 @@ export const FileItem = ({
               )}
             >
               <input
-                className="checkbox bg-gray-100 peer h-[18px] w-[18px]"
+                className="checkbox peer h-[18px] w-[18px] bg-layer-3"
                 type="checkbox"
                 checked={isSelected}
                 onChange={handleToggleFile}
@@ -129,9 +129,9 @@ export const FileItem = ({
 
       <div className="flex items-center gap-2">
         {item.status === 'UPLOADING' && (
-          <div className="bg-gray-100 h-[3px] w-[60px] overflow-hidden rounded-full">
+          <div className="h-[3px] w-[60px] overflow-hidden rounded-full bg-layer-3">
             <div
-              className="bg-blue-500 h-full"
+              className="h-full bg-controls-accent"
               style={{ width: `${item.percent}%` }}
             ></div>
           </div>

@@ -113,7 +113,7 @@ export const VariableModal: FC<Props> = ({
       <form
         ref={modalRef}
         noValidate
-        className="bg-gray-100 relative inline-block max-h-[400px] overflow-y-auto rounded px-4 pb-4 pt-5 text-left align-bottom transition-all sm:my-8 sm:max-h-[600px] sm:w-full sm:max-w-lg sm:p-6 sm:align-middle"
+        className="relative inline-block max-h-[400px] overflow-y-auto rounded bg-layer-3 px-4 pb-4 pt-5 text-left align-bottom transition-all sm:my-8 sm:max-h-[600px] sm:w-full sm:max-w-lg sm:p-6 sm:align-middle"
         role="dialog"
         data-qa="variable-modal"
         onSubmit={handleSubmit}
@@ -170,7 +170,7 @@ export const VariableModal: FC<Props> = ({
         <div className="mt-1 flex justify-end">
           <button
             type="submit"
-            className="bg-blue-500 text-gray-100 hover:bg-blue-700 focus:border-gray-800 rounded p-3 focus:border focus-visible:outline-none"
+            className="button button-primary"
             data-qa="submit-variable"
           >
             {t('Submit')}

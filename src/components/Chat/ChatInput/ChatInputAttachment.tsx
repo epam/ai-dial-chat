@@ -43,9 +43,9 @@ export const ChatInputAttachment = ({
             {file.name}
           </span>
           {file.status === 'UPLOADING' && (
-            <div className="bg-gray-100 h-[3px] w-full overflow-hidden rounded-full">
+            <div className="h-[3px] w-full overflow-hidden rounded-full bg-layer-3">
               <div
-                className="bg-blue-500 h-full"
+                className="h-full bg-controls-accent"
                 style={{ width: `${file.percent}%` }}
               ></div>
             </div>

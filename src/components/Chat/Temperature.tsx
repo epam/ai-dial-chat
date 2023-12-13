@@ -12,7 +12,7 @@ import 'rc-slider/assets/index.css';
 const TemperatureIndicator = ({ props, children }: any) => {
   return (
     <div
-      className="bg-gray-100 absolute top-[calc(50%-20px)] flex h-10 w-10 cursor-pointer items-center justify-center rounded-full shadow"
+      className="absolute top-[calc(50%-20px)] flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-layer-3 shadow"
       style={props.style}
       onKeyDown={props.onKeyDown}
       onMouseDown={props.onMouseDown}

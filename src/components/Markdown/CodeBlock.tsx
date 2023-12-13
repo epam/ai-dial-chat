@@ -79,7 +79,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
     >
       <div
         className={`border-gray-400 flex items-center justify-between border-b p-3 ${
-          isInner ? 'bg-gray-100' : 'bg-layer-1'
+          isInner ? 'bg-layer-3' : 'bg-layer-1'
         }`}
       >
         <span className="lowercase">{language}</span>
@@ -122,11 +122,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
           letterSpacing: 0,
           fontFamily: 'var(--font-inter)',
         }}
-        className={`${
-          isInner
-            ? '!bg-gray-100 dark:!bg-gray-700'
-            : 'dark:!bg-gray-900 !bg-layer-1'
-        }`}
+        className={`${isInner ? '!bg-layer-3' : '!bg-layer-1'}`}
         codeTagProps={{
           style: {
             fontFamily: 'var(--font-inter)',

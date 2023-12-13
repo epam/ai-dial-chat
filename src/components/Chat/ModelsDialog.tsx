@@ -246,9 +246,9 @@ export const ModelsDialog: FC<Props> = ({
   // Render the dialog.
   return (
     <FloatingPortal id="chat">
-      <div className="bg-gray-900/30 fixed inset-0 top-[48px] z-30 flex items-center justify-center p-3 md:p-5">
+      <div className="fixed inset-0 top-[48px] z-30 flex items-center justify-center bg-blackout p-3 md:p-5">
         <div
-          className="bg-gray-100 flex h-full w-full grow flex-col gap-4 rounded py-4 text-left md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
+          className="flex h-full w-full grow flex-col gap-4 rounded bg-layer-3 py-4 text-left md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
           role="dialog"
           ref={refs.setFloating}
           {...getFloatingProps()}
@@ -280,9 +280,9 @@ export const ModelsDialog: FC<Props> = ({
           <div className="flex gap-2 px-3 md:px-5">
             <button
               className={classNames(
-                'hover:bg-blue-500/20 rounded border-b-2 px-3 py-2',
+                'rounded border-b-2 px-3 py-2 hover:bg-accent-primary',
                 entityTypes.includes(EntityType.Model)
-                  ? 'border-blue-500 bg-blue-500/20'
+                  ? 'border-blue-500 bg-accent-primary'
                   : 'border-gray-400 bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {
@@ -294,9 +294,9 @@ export const ModelsDialog: FC<Props> = ({
             </button>
             <button
               className={classNames(
-                'hover:bg-blue-500/20 rounded border-b-2 px-3 py-2',
+                'rounded border-b-2 px-3 py-2 hover:bg-accent-primary',
                 entityTypes.includes(EntityType.Assistant)
-                  ? 'border-blue-500 bg-blue-500/20'
+                  ? 'border-blue-500 bg-accent-primary'
                   : 'border-gray-400 bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {
@@ -308,9 +308,9 @@ export const ModelsDialog: FC<Props> = ({
             </button>
             <button
               className={classNames(
-                'hover:bg-blue-500/20 rounded border-b-2 px-3 py-2',
+                'rounded border-b-2 px-3 py-2 hover:bg-accent-primary',
                 entityTypes.includes(EntityType.Application)
-                  ? 'border-blue-500 bg-blue-500/20'
+                  ? 'border-blue-500 bg-accent-primary'
                   : 'border-gray-400 bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {

@@ -105,12 +105,12 @@ export default function ShareModal({
     <FloatingPortal id="theme-main">
       <FloatingOverlay
         lockScroll
-        className="bg-gray-900/30 z-50 flex items-center justify-center p-3 md:p-5"
+        className="z-50 flex items-center justify-center bg-blackout p-3 md:p-5"
       >
         <FloatingFocusManager context={context} initialFocus={copyButtonRef}>
           <form
             noValidate
-            className="bg-gray-100 relative inline-block max-h-full w-full max-w-[424px] rounded p-6 text-left"
+            className="relative inline-block max-h-full w-full max-w-[424px] rounded bg-layer-3 p-6 text-left"
             role="dialog"
             ref={refs.setFloating}
             {...getFloatingProps()}
@@ -140,7 +140,7 @@ export default function ShareModal({
                 <input
                   type="text"
                   readOnly
-                  className="border-gray-400 bg-gray-100 w-full gap-2 truncate rounded border p-3 pr-10 outline-none"
+                  className="border-gray-400 w-full gap-2 truncate rounded border bg-layer-3 p-3 pr-10 outline-none"
                   onCopyCapture={handleCopy}
                   value={url}
                 />
@@ -159,7 +159,7 @@ export default function ShareModal({
                         <IconCopy
                           height={20}
                           width={20}
-                          className="hover:text-blue-500 text-secondary"
+                          className="text-secondary hover:text-accent-primary"
                         />
                       </button>
                     </Tooltip>

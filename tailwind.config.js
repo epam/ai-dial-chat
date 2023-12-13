@@ -31,6 +31,9 @@ module.exports = {
       error: 'var(--stroke-error, #F76464)',
       'controls-hover': 'var(--controls-stroke-hover, #141A23)',
       'controls-accent': 'var(--controls-stroke-accent, #2764D9)',
+      'accent-primary': 'var(--stroke-accent-primary, #5C8DEA)',
+      'accent-secondary': 'var(--stroke-accent-secondary, #37BABC)',
+      'accent-tertiary': 'var(--stroke-accent-tertiary, #A972FF)',
     },
     divideColor: {
       transparent: 'transparent',
@@ -39,7 +42,7 @@ module.exports = {
     },
     textColor: {
       transparent: 'transparent',
-      primary: 'var(--text-icons, #F3F4F6)',
+      primary: 'var(--text-primary, #F3F4F6)',
       secondary: 'var(--text-secondary, #7F8792)',
       error: 'var(--text-error, #F76464)',
       'accent-primary': 'var(--text-accent-primary, #5C8DEA)',
@@ -74,6 +77,10 @@ module.exports = {
       typography: {
         DEFAULT: {
           css: {
+            color: 'var(--text-primary, #F3F4F6)',
+            a: {
+              color: 'var(--text-accent-primary, #5C8DEA)',
+            },
             pre: {
               border: 'none',
               borderRadius: '0',

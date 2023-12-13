@@ -387,7 +387,7 @@ export const ChatInputMessage = ({
   return (
     <div className="mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0  md:last:mb-6 lg:mx-auto lg:max-w-3xl">
       <div
-        className="bg-gray-100 focus-within:border-blue-500 relative m-0 flex max-h-[400px] min-h-[40px] w-full grow flex-col rounded"
+        className="focus-within:border-blue-500 relative m-0 flex max-h-[400px] min-h-[40px] w-full grow flex-col rounded bg-layer-3"
         data-qa="message"
       >
         <textarea

@@ -275,11 +275,11 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   return (
     <div
       className={classNames(
-        'hover:bg-green/15 group relative flex h-[30px] items-center rounded border-l-2 pr-3',
+        'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-accent-secondary',
         isSelected || isRenaming || isDeleting
-          ? 'border-l-green bg-green/15'
+          ? 'border-l-accent-secondary bg-accent-secondary'
           : 'border-l-transparent',
-        { 'bg-green/15': isContextMenu },
+        { 'bg-accent-secondary': isContextMenu },
       )}
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
@@ -436,10 +436,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       {(isDeleting || isRenaming) && (
         <div className="absolute right-1 z-10 flex">
           <SidebarActionButton handleClick={handleConfirm}>
-            <IconCheck size={18} className="hover:text-green" />
+            <IconCheck size={18} className="hover:text-accent-secondary" />
           </SidebarActionButton>
           <SidebarActionButton handleClick={handleCancel}>
-            <IconX size={18} strokeWidth="2" className="hover:text-green" />
+            <IconX
+              size={18}
+              strokeWidth="2"
+              className="hover:text-accent-secondary"
+            />
           </SidebarActionButton>
         </div>
       )}

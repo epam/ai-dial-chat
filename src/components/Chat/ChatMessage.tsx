@@ -69,7 +69,7 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
     <button
       type={type}
       className={classNames(
-        '[&:not(:disabled)]:hover:text-blue-500 text-secondary focus:visible',
+        'text-secondary focus:visible [&:not(:disabled)]:hover:text-accent-primary',
         className,
       )}
       {...props}
@@ -288,8 +288,8 @@ export const ChatMessage: FC<Props> = memo(
       <div
         className={`group h-full min-h-[90px] md:px-4 ${
           isAssistant
-            ? 'border-gray-400 border-b bg-layer-2'
-            : 'border-gray-400  border-b'
+            ? 'border-b border-primary bg-layer-2'
+            : 'border-b border-primary'
         }`}
         style={{ overflowWrap: 'anywhere' }}
         data-qa="chat-message"
@@ -322,7 +322,7 @@ export const ChatMessage: FC<Props> = memo(
               <div className="flex">
                 {isEditing ? (
                   <div className="flex w-full flex-col gap-3 pr-[60px]">
-                    <div className="border-gray-400 bg-gray-100 focus-within:border-blue-500 relative min-h-[100px] rounded border px-3 py-2">
+                    <div className="focus-within:border-controls-accent relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2">
                       <textarea
                         ref={textareaRef}
                         className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
@@ -352,7 +352,7 @@ export const ChatMessage: FC<Props> = memo(
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <div className="hover:bg-blue-500/20 flex h-[34px] w-[34px] items-center justify-center rounded">
+                      <div className="flex h-[34px] w-[34px] items-center justify-center rounded hover:bg-accent-primary">
                         <AttachButton
                           selectedFilesIds={newEditableAttachmentsIds}
                           onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
@@ -387,8 +387,7 @@ export const ChatMessage: FC<Props> = memo(
                 ) : (
                   <div className="mr-2 flex w-full flex-col gap-5">
                     {message.content && (
-                      // TODO: dark prose-invert
-                      <div className="prose flex-1 whitespace-pre-wrap dark:prose-invert">
+                      <div className="prose flex-1 whitespace-pre-wrap">
                         {message.content}
                       </div>
                     )}
@@ -401,14 +400,14 @@ export const ChatMessage: FC<Props> = memo(
                 {!isPlayback && !isEditing && (
                   <div className="flex w-[60px] flex-col items-center justify-end gap-4 md:flex-row md:items-start md:justify-start md:gap-1">
                     <button
-                      className="hover:text-blue-500 invisible text-secondary focus:visible disabled:cursor-not-allowed group-hover:visible"
+                      className="invisible text-secondary hover:text-accent-primary focus:visible disabled:cursor-not-allowed group-hover:visible"
                       onClick={toggleEditing}
                       disabled={editDisabled}
                     >
                       <IconEdit size={20} />
                     </button>
                     <button
-                      className="hover:text-blue-500 invisible text-secondary focus:visible group-hover:visible"
+                      className="invisible text-secondary hover:text-accent-primary focus:visible group-hover:visible"
                       onClick={() => {
                         setIsRemoveConfirmationOpened(true);
                       }}
