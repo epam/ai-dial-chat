@@ -3,24 +3,24 @@ import { Observable } from 'rxjs';
 import { Conversation } from './chat';
 import { FolderInterface } from './folder';
 import { Prompt } from './prompt';
-import { Theme } from './settings';
 
 export type StorageType = 'browserStorage' | 'api' | 'apiMock';
 
-// keep track of local storage schema
-export interface LocalStorage {
-  conversationHistory: Conversation[];
-  selectedConversationIds: string[];
-  theme: Theme;
-  // added folders (3/23/23)
-  folders: FolderInterface[];
-  // added prompts (3/26/23)
-  prompts: Prompt[];
-  // added showChatbar and showPromptbar (3/26/23)
-  showChatbar: boolean;
-  showPromptbar: boolean;
+export enum UIStorageKeys {
+  Prompts = 'prompts',
+  ConversationHistory = 'conversationHistory',
+  Folders = 'folders',
+  SelectedConversationIds = 'selectedConversationIds',
+  RecentModelsIds = 'recentModelsIds',
+  RecentAddonsIds = 'recentAddonsIds',
+  Settings = 'settings',
+  ShowChatbar = 'showChatbar',
+  ShowPromptbar = 'showPromptbar',
+  ChatbarWidth = 'chatbarWidth',
+  PromptbarWidth = 'promptbarWidth',
+  OpenedFoldersIds = 'openedFoldersIds',
+  TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
 }
-
 export interface DialStorage {
   getConversationsFolders(): Observable<FolderInterface[]>;
   setConversationsFolders(folders: FolderInterface[]): Observable<void>;

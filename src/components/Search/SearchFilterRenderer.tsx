@@ -31,8 +31,8 @@ export default function SearchFilterRenderer({
           'checkbox peer h-[18px] w-[18px] cursor-pointer bg-gray-100 dark:bg-gray-700 checked:dark:border-green',
           getByHighlightColor(
             highlightColor,
-            'checked:border-green hover:border-green focus:border-green checked:dark:border-green',
-            'checked:border-violet hover:border-violet focus:border-violet checked:dark:border-violet',
+            'checked:border-green hover:border-green  checked:dark:border-green',
+            'checked:border-violet hover:border-violet checked:dark:border-violet',
           ),
         )}
         type="checkbox"

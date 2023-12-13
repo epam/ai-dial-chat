@@ -12,6 +12,7 @@ import { translate } from '@/src/utils/app/translation';
 
 import { AppEpic } from '@/src/types/store';
 
+import { resetShareEntity } from './../../constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { UIActions } from '../ui/ui.reducers';
@@ -28,7 +29,8 @@ const savePromptsEpic: AppEpic = (action$, state$) =>
         PromptsActions.clearPrompts.match(action) ||
         PromptsActions.updatePrompt.match(action) ||
         PromptsActions.addPrompts.match(action) ||
-        PromptsActions.importPromptsSuccess.match(action),
+        PromptsActions.importPromptsSuccess.match(action) ||
+        PromptsActions.unpublishPrompt.match(action),
     ),
     map(() => PromptsSelectors.selectPrompts(state$.value)),
     switchMap((prompts) => {
@@ -47,7 +49,8 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         PromptsActions.moveFolder.match(action) ||
         PromptsActions.addFolders.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
-        PromptsActions.importPromptsSuccess.match(action),
+        PromptsActions.importPromptsSuccess.match(action) ||
+        PromptsActions.unpublishFolder.match(action),
     ),
     map(() => ({
       promptsFolders: PromptsSelectors.selectFolders(state$.value),
@@ -211,13 +214,14 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
           .filter(({ id }) => childFolders.includes(id))
           .map(({ folderId, ...folder }) => ({
             ...folder,
+            ...resetShareEntity,
             id: mapping.get(folder.id),
+            originalId: folder.id,
             folderId:
               folder.id === sharedFolderId ? undefined : mapping.get(folderId), // show shared folder on root level
             sharedWithMe: folder.id === sharedFolderId || folder.sharedWithMe,
             shareUniqueId:
               folder.id === sharedFolderId ? shareUniqueId : undefined,
-            isShared: false,
           }));
 
         const sharedPrompts = prompts
@@ -227,9 +231,10 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
           )
           .map(({ folderId, ...prompt }) => ({
             ...prompt,
+            ...resetShareEntity,
             id: uuidv4(),
+            originalId: prompt.id,
             folderId: mapping.get(folderId),
-            isShared: false,
           }));
 
         return concat(
@@ -253,7 +258,7 @@ const sharePromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.sharePrompt.match),
     map(({ payload }) => ({
-      sharedPromptId: payload.promptId,
+      sharedPromptId: payload.id,
       shareUniqueId: payload.shareUniqueId,
       prompts: PromptsSelectors.selectPrompts(state$.value),
     })),
@@ -262,10 +267,106 @@ const sharePromptEpic: AppEpic = (action$, state$) =>
         .filter((prompt) => prompt.id === sharedPromptId)
         .map(({ folderId: _, ...prompt }) => ({
           ...prompt,
+          ...resetShareEntity,
           id: uuidv4(),
+          originalId: prompt.id,
           folderId: undefined, // show on root level
           sharedWithMe: true,
-          isShared: false,
+          shareUniqueId:
+            prompt.id === sharedPromptId ? shareUniqueId : undefined,
+        }));
+
+      return concat(
+        of(
+          PromptsActions.addPrompts({
+            prompts: sharedPrompts,
+          }),
+        ),
+      );
+    }),
+  );
+
+//TODO: added for development purpose - emulate immediate sharing with yourself
+const publishFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.publishFolder.match),
+    map(({ payload }) => ({
+      sharedFolderId: payload.id,
+      shareUniqueId: payload.shareUniqueId,
+      prompts: PromptsSelectors.selectPrompts(state$.value),
+      childFolders: PromptsSelectors.selectChildAndCurrentFoldersIdsById(
+        state$.value,
+        payload.id,
+      ),
+      folders: PromptsSelectors.selectFolders(state$.value),
+    })),
+    switchMap(
+      ({ sharedFolderId, shareUniqueId, prompts, childFolders, folders }) => {
+        const mapping = new Map();
+        childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
+        const newFolders = folders
+          .filter(({ id }) => childFolders.includes(id))
+          .map(({ folderId, ...folder }) => ({
+            ...folder,
+            ...resetShareEntity,
+            id: mapping.get(folder.id),
+            originalId: folder.id,
+            folderId:
+              folder.id === sharedFolderId ? undefined : mapping.get(folderId), // show shared folder on root level
+            publishedWithMe:
+              folder.id === sharedFolderId || folder.sharedWithMe,
+            shareUniqueId:
+              folder.id === sharedFolderId ? shareUniqueId : undefined,
+          }));
+
+        const sharedPrompts = prompts
+          .filter(
+            (prompt) =>
+              prompt.folderId && childFolders.includes(prompt.folderId),
+          )
+          .map(({ folderId, ...prompt }) => ({
+            ...prompt,
+            ...resetShareEntity,
+            id: uuidv4(),
+            originalId: prompt.id,
+            folderId: mapping.get(folderId),
+          }));
+
+        return concat(
+          of(
+            PromptsActions.addPrompts({
+              prompts: sharedPrompts,
+            }),
+          ),
+          of(
+            PromptsActions.addFolders({
+              folders: newFolders,
+            }),
+          ),
+        );
+      },
+    ),
+  );
+
+//TODO: added for development purpose - emulate immediate sharing with yourself
+const publishPromptEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.publishPrompt.match),
+    map(({ payload }) => ({
+      sharedPromptId: payload.id,
+      shareUniqueId: payload.shareUniqueId,
+      prompts: PromptsSelectors.selectPrompts(state$.value),
+    })),
+    switchMap(({ sharedPromptId, shareUniqueId, prompts }) => {
+      const sharedPrompts = prompts
+        .filter((prompt) => prompt.id === sharedPromptId)
+        .map(({ folderId: _, ...prompt }) => ({
+          ...prompt,
+          ...resetShareEntity,
+          id: uuidv4(),
+          originalId: prompt.id,
+          folderId: undefined, // show on root level
+          publishedWithMe: true,
           shareUniqueId:
             prompt.id === sharedPromptId ? shareUniqueId : undefined,
         }));
@@ -290,6 +391,9 @@ export const PromptsEpics = combineEpics(
   exportPromptsEpic,
   exportPromptEpic,
   importPromptsEpic,
+
   shareFolderEpic,
   sharePromptEpic,
+  publishFolderEpic,
+  publishPromptEpic,
 );

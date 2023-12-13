@@ -61,6 +61,7 @@ import {
 import { EntityType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
+import { resetShareEntity } from './../../constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -1086,7 +1087,8 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         ConversationsActions.moveFolder.match(action) ||
         ConversationsActions.clearConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
-        ConversationsActions.addFolders.match(action),
+        ConversationsActions.addFolders.match(action) ||
+        ConversationsActions.unpublishFolder.match(action),
     ),
     map(() => ({
       conversationsFolders: ConversationsSelectors.selectFolders(state$.value),
@@ -1139,7 +1141,8 @@ const saveConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversations.match(action) ||
         ConversationsActions.createNewPlaybackConversation.match(action) ||
-        ConversationsActions.addConversations.match(action),
+        ConversationsActions.addConversations.match(action) ||
+        ConversationsActions.unpublishConversation.match(action),
     ),
     map(() => ConversationsSelectors.selectConversations(state$.value)),
     switchMap((conversations) => {
@@ -1188,7 +1191,7 @@ const playbackNextMessageStartEpic: AppEpic = (action$, state$) =>
                   messages: updatedMessages,
                   isMessageStreaming: true,
                   model: { ...conv.model, ...assistantMessage.model },
-                  prompt: prompt,
+                  prompt,
                   temperature: temperature,
                   selectedAddons: selectedAddons,
                   assistantModelId: assistantModelId,
@@ -1300,8 +1303,8 @@ const playbackPrevMessageEpic: AppEpic = (action$, state$) =>
               values: {
                 messages: updatedMessages,
                 isMessageStreaming: false,
-                model: model,
-                prompt: prompt,
+                model,
+                prompt,
                 temperature: temperature,
                 selectedAddons: selectedAddons,
                 assistantModelId: assistantModelId,
@@ -1414,10 +1417,11 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
           .map(({ folderId, ...folder }) => ({
             ...folder,
             id: mapping.get(folder.id),
+            originalId: folder.id,
             folderId:
               folder.id === sharedFolderId ? undefined : mapping.get(folderId), // show shared folder on root level
+            ...resetShareEntity,
             sharedWithMe: folder.id === sharedFolderId || folder.sharedWithMe,
-            isShared: false,
             shareUniqueId:
               folder.id === sharedFolderId ? shareUniqueId : undefined,
           }));
@@ -1428,11 +1432,12 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
               conversation.folderId &&
               childFolders.includes(conversation.folderId),
           )
-          .map(({ folderId, ...prompt }) => ({
-            ...prompt,
+          .map(({ folderId, ...conversation }) => ({
+            ...conversation,
+            ...resetShareEntity,
             id: uuidv4(),
+            originalId: conversation.id,
             folderId: mapping.get(folderId),
-            isShared: false,
           }));
 
         return concat(
@@ -1465,10 +1470,112 @@ const shareConversationEpic: AppEpic = (action$, state$) =>
         .filter((conversation) => conversation.id === sharedConversationId)
         .map(({ folderId: _, ...conversation }) => ({
           ...conversation,
+          ...resetShareEntity,
           id: uuidv4(),
+          originalId: conversation.id,
           folderId: undefined, // show on root level
           sharedWithMe: true,
-          isShared: false,
+          shareUniqueId,
+        }));
+
+      return concat(
+        of(
+          ConversationsActions.addConversations({
+            conversations: sharedConversations,
+          }),
+        ),
+      );
+    }),
+  );
+
+//TODO: added for development purpose - emulate immediate sharing with yourself
+const publishFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.publishFolder.match),
+    map(({ payload }) => ({
+      sharedFolderId: payload.id,
+      shareUniqueId: payload.shareUniqueId,
+      conversations: ConversationsSelectors.selectConversations(state$.value),
+      childFolders: ConversationsSelectors.selectChildAndCurrentFoldersIdsById(
+        state$.value,
+        payload.id,
+      ),
+      folders: ConversationsSelectors.selectFolders(state$.value),
+    })),
+    switchMap(
+      ({
+        sharedFolderId,
+        shareUniqueId,
+        conversations,
+        childFolders,
+        folders,
+      }) => {
+        const mapping = new Map();
+        childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
+        const newFolders = folders
+          .filter(({ id }) => childFolders.includes(id))
+          .map(({ folderId, ...folder }) => ({
+            ...folder,
+            ...resetShareEntity,
+            id: mapping.get(folder.id),
+            originalId: folder.id,
+            folderId:
+              folder.id === sharedFolderId ? undefined : mapping.get(folderId), // show shared folder on root level
+            publishedWithMe:
+              folder.id === sharedFolderId || folder.sharedWithMe,
+            shareUniqueId:
+              folder.id === sharedFolderId ? shareUniqueId : undefined,
+          }));
+
+        const sharedConversations = conversations
+          .filter(
+            (conversation) =>
+              conversation.folderId &&
+              childFolders.includes(conversation.folderId),
+          )
+          .map(({ folderId, ...conversation }) => ({
+            ...conversation,
+            ...resetShareEntity,
+            id: uuidv4(),
+            originalId: conversation.id,
+            folderId: mapping.get(folderId),
+          }));
+
+        return concat(
+          of(
+            ConversationsActions.addConversations({
+              conversations: sharedConversations,
+            }),
+          ),
+          of(
+            ConversationsActions.addFolders({
+              folders: newFolders,
+            }),
+          ),
+        );
+      },
+    ),
+  );
+
+//TODO: added for development purpose - emulate immediate sharing with yourself
+const publishConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.publishConversation.match),
+    map(({ payload }) => ({
+      sharedConversationId: payload.id,
+      shareUniqueId: payload.shareUniqueId,
+      conversations: ConversationsSelectors.selectConversations(state$.value),
+    })),
+    switchMap(({ sharedConversationId, shareUniqueId, conversations }) => {
+      const sharedConversations = conversations
+        .filter((conversation) => conversation.id === sharedConversationId)
+        .map(({ folderId: _, ...conversation }) => ({
+          ...conversation,
+          ...resetShareEntity,
+          id: uuidv4(),
+          originalId: conversation.id,
+          folderId: undefined, // show on root level
+          publishedWithMe: true,
           shareUniqueId,
         }));
 
@@ -1518,4 +1625,6 @@ export const ConversationsEpics = combineEpics(
 
   shareFolderEpic,
   shareConversationEpic,
+  publishFolderEpic,
+  publishConversationEpic,
 );
