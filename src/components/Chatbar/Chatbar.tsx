@@ -60,12 +60,14 @@ export const Chatbar = () => {
   const searchFilters = useAppSelector(
     ConversationsSelectors.selectSearchFilters,
   );
-  const itemFilter = useAppSelector(ConversationsSelectors.selectItemFilter);
+  const myItemsFilters = useAppSelector(
+    ConversationsSelectors.selectMyItemsFilters,
+  );
 
   const filteredConversations = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredConversations(
       state,
-      itemFilter,
+      myItemsFilters,
       searchTerm,
     ),
   );

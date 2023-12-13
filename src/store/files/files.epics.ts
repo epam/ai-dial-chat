@@ -1,5 +1,3 @@
-import { i18n } from 'next-i18next';
-
 import {
   catchError,
   concat,
@@ -16,6 +14,7 @@ import { combineEpics } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
 import { triggerDownload } from '@/src/utils/app/file';
+import { translate } from '@/src/utils/app/translation';
 
 import { AppEpic } from '@/src/types/store';
 
@@ -170,7 +169,7 @@ const removeFileFailEpic: AppEpic = (action$) =>
     filter(FilesActions.removeFileFail.match),
     map(({ payload }) => {
       return UIActions.showToast({
-        message: i18n!.t(
+        message: translate(
           'Removing file {{fileName}} failed. Please try again later',
           {
             ns: 'file',

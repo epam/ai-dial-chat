@@ -15,7 +15,6 @@ import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, HighlightColor } from '@/src/types/common';
-import { Feature } from '@/src/types/features';
 
 import {
   ConversationsActions,
@@ -117,7 +116,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   );
 
   const isSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSharing),
+    SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -267,16 +266,11 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   }, []);
 
   const handleShared = useCallback(
-    (_newShareId: string) => {
-      //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
+    (shareUniqueId: string) => {
       dispatch(
-        ConversationsActions.updateConversation({
+        ConversationsActions.shareConversation({
           id: conversationId,
-          values: {
-            isShared: true,
-            //TODO: added for development purpose - emulate immediate sharing with yourself
-            sharedWithMe: true,
-          },
+          shareUniqueId,
         }),
       );
     },

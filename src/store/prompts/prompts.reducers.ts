@@ -63,11 +63,46 @@ export const promptsSlice = createSlice({
         return conv;
       });
     },
+    sharePrompt: (
+      state,
+      { payload }: PayloadAction<{ promptId: string; shareUniqueId: string }>,
+    ) => {
+      state.prompts = state.prompts.map((conv) => {
+        if (conv.id === payload.promptId) {
+          return {
+            ...conv,
+            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
+            isShared: true,
+          };
+        }
+
+        return conv;
+      });
+    },
+    shareFolder: (
+      state,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
+    ) => {
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.id) {
+          return {
+            ...folder,
+            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
+            isShared: true,
+          };
+        }
+
+        return folder;
+      });
+    },
     updatePrompts: (
       state,
       { payload }: PayloadAction<{ prompts: Prompt[] }>,
     ) => {
       state.prompts = payload.prompts;
+    },
+    addPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
+      state.prompts = [...state.prompts, ...payload.prompts];
     },
     clearPrompts: (state) => {
       state.prompts = [];
@@ -159,6 +194,12 @@ export const promptsSlice = createSlice({
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
       state.folders = payload.folders;
+    },
+    addFolders: (
+      state,
+      { payload }: PayloadAction<{ folders: FolderInterface[] }>,
+    ) => {
+      state.folders = [...state.folders, ...payload.folders];
     },
     setSearchTerm: (
       state,
