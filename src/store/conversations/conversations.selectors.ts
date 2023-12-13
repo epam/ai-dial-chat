@@ -5,10 +5,14 @@ import {
   getParentAndCurrentFolderIdsById,
   getParentAndCurrentFoldersById,
 } from '@/src/utils/app/folders';
-import { doesConversationContainSearchTerm } from '@/src/utils/app/search';
+import {
+  doesConversationContainSearchTerm,
+  getMyItemsFilters,
+} from '@/src/utils/app/search';
 
 import { Conversation, Role } from '@/src/types/chat';
-import { EntityFilter, EntityType } from '@/src/types/common';
+import { EntityType } from '@/src/types/common';
+import { EntityFilters, SearchFilters } from '@/src/types/search';
 
 import { RootState } from '../index';
 import { ModelsSelectors } from '../models/models.reducers';
@@ -24,15 +28,16 @@ export const selectConversations = createSelector([rootSelector], (state) => {
 export const selectFilteredConversations = createSelector(
   [
     selectConversations,
-    (_state, filter?: EntityFilter<Conversation>) => filter,
-    (_state, _filter, searchTerm?: string) => searchTerm,
+    (_state, filters: EntityFilters) => filters,
+    (_state, _filters, searchTerm?: string) => searchTerm,
   ],
-  (conversations, filter?, searchTerm?) => {
+  (conversations, filters, searchTerm?) => {
     return conversations.filter(
       (conversation) =>
         (!searchTerm ||
           doesConversationContainSearchTerm(conversation, searchTerm)) &&
-        (!filter || filter(conversation)),
+        filters.searchFilter(conversation) &&
+        (conversation.folderId || filters.sectionFilter(conversation)),
     );
   },
 );
@@ -59,30 +64,38 @@ export const selectFilteredFolders = createSelector(
     (state) => state,
     selectFolders,
     selectEmptyFolderIds,
-    (_state, itemFilter?: EntityFilter<Conversation>) => itemFilter,
-    (_state, _itemFilter?, searchTerm?: string) => searchTerm,
-    (_state, _itemFilter?, _searchTerm?, includeEmptyFolders?: boolean) =>
+    (_state, filters: EntityFilters) => filters,
+    (_state, _filters, searchTerm?: string) => searchTerm,
+    (_state, _filters, _searchTerm?, includeEmptyFolders?: boolean) =>
       includeEmptyFolders,
   ],
   (
     state,
     folders,
     emptyFolderIds,
-    itemFilter?,
+    filters?,
     searchTerm?,
     includeEmptyFolders?,
   ) => {
     const filteredConversations = selectFilteredConversations(
       state,
-      itemFilter,
+      filters,
       searchTerm,
     );
     const folderIds = filteredConversations // direct parent folders
       .map((c) => c.folderId)
       .filter((fid) => fid);
-    // include empty folders only if not search
-    if (includeEmptyFolders && !searchTerm?.trim().length) {
-      folderIds.push(...emptyFolderIds);
+
+    if (!searchTerm?.trim().length) {
+      const markedFolderIds = folders
+        .filter((folder) => filters?.searchFilter(folder))
+        .map((f) => f.id);
+      folderIds.push(...markedFolderIds);
+
+      if (includeEmptyFolders && !searchTerm?.length) {
+        // include empty folders only if not search
+        folderIds.push(...emptyFolderIds);
+      }
     }
 
     const filteredFolderIds = new Set(
@@ -91,7 +104,11 @@ export const selectFilteredFolders = createSelector(
       ),
     );
 
-    return folders.filter((folder) => filteredFolderIds.has(folder.id));
+    return folders.filter(
+      (folder) =>
+        (folder.folderId || filters.sectionFilter(folder)) &&
+        filteredFolderIds.has(folder.id),
+    );
   },
 );
 
@@ -174,6 +191,21 @@ export const selectIsConversationsStreaming = createSelector(
 export const selectSearchTerm = createSelector([rootSelector], (state) => {
   return state.searchTerm;
 });
+
+export const selectSearchFilters = createSelector(
+  [rootSelector],
+  (state) => state.searchFilters,
+);
+
+export const selectIsEmptySearchFilter = createSelector(
+  [rootSelector],
+  (state) => state.searchFilters === SearchFilters.None,
+);
+
+export const selectMyItemsFilters = createSelector(
+  [selectSearchFilters],
+  (searchFilters) => getMyItemsFilters(searchFilters),
+);
 
 export const selectSearchedConversations = createSelector(
   [selectConversations, selectSearchTerm],

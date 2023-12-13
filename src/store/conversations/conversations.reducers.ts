@@ -3,6 +3,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { translate } from '@/src/utils/app/translation';
 
+import { SearchFilters } from './../../types/search';
 import {
   Conversation,
   ConversationEntityModel,
@@ -30,6 +31,7 @@ const initialState: ConversationsState = {
   selectedConversationsIds: [],
   folders: [],
   searchTerm: '',
+  searchFilters: SearchFilters.None,
   conversationSignal: new AbortController(),
   isReplayPaused: true,
   isPlaybackPaused: true,
@@ -112,6 +114,38 @@ export const conversationsSlice = createSlice({
         }
 
         return conv;
+      });
+    },
+    shareConversation: (
+      state,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
+    ) => {
+      state.conversations = state.conversations.map((conv) => {
+        if (conv.id === payload.id) {
+          return {
+            ...conv,
+            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
+            isShared: true,
+          };
+        }
+
+        return conv;
+      });
+    },
+    shareFolder: (
+      state,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
+    ) => {
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.id) {
+          return {
+            ...folder,
+            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
+            isShared: true,
+          };
+        }
+
+        return folder;
       });
     },
     exportConversation: (
@@ -220,6 +254,12 @@ export const conversationsSlice = createSlice({
     ) => {
       state.conversations = payload.conversations;
     },
+    addConversations: (
+      state,
+      { payload }: PayloadAction<{ conversations: Conversation[] }>,
+    ) => {
+      state.conversations = [...state.conversations, ...payload.conversations];
+    },
     clearConversations: (state) => {
       state.conversations = [];
       state.folders = [];
@@ -295,11 +335,27 @@ export const conversationsSlice = createSlice({
     ) => {
       state.folders = payload.folders;
     },
+    addFolders: (
+      state,
+      { payload }: PayloadAction<{ folders: FolderInterface[] }>,
+    ) => {
+      state.folders = [...state.folders, ...payload.folders];
+    },
     setSearchTerm: (
       state,
       { payload }: PayloadAction<{ searchTerm: string }>,
     ) => {
       state.searchTerm = payload.searchTerm;
+    },
+    setSearchFilters: (
+      state,
+      { payload }: PayloadAction<{ searchFilters: SearchFilters }>,
+    ) => {
+      state.searchFilters = payload.searchFilters;
+    },
+    resetSearch: (state) => {
+      state.searchTerm = '';
+      state.searchFilters = SearchFilters.None;
     },
     updateMessage: (
       state,
@@ -325,8 +381,10 @@ export const conversationsSlice = createSlice({
         rate: number;
       }>,
     ) => state,
-    rateMessageFail: (state, _action: PayloadAction<{ error: Response }>) =>
+    rateMessageFail: (
       state,
+      _action: PayloadAction<{ error: Response | string }>,
+    ) => state,
     cleanMessage: (state) => state,
     deleteMessage: (state, _action: PayloadAction<{ index: number }>) => state,
     sendMessages: (

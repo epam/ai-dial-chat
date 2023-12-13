@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { FeatureType } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
+import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
 import { NoData } from '../Common/NoData';
@@ -15,16 +15,16 @@ import Search from '../Search';
 interface Props<T> {
   isOpen: boolean;
   side: 'left' | 'right';
-  items: T[];
   filteredItems: T[];
   itemComponent: ReactNode;
   folderComponent: ReactNode;
   actionButtons: ReactNode;
-  folders: FolderInterface[];
   footerComponent?: ReactNode;
   searchTerm: string;
+  searchFilters: SearchFilters;
   featureType: FeatureType;
   handleSearchTerm: (searchTerm: string) => void;
+  handleSearchFilters: (searchFilters: SearchFilters) => void;
   toggleOpen?: () => void;
   handleDrop: (e: any) => void;
 }
@@ -33,15 +33,15 @@ const Sidebar = <T,>({
   isOpen,
   actionButtons,
   side,
-  items,
   filteredItems,
   itemComponent,
   folderComponent,
-  folders,
   footerComponent,
   searchTerm,
+  searchFilters,
   featureType,
   handleSearchTerm,
+  handleSearchFilters,
   handleDrop,
 }: Props<T>) => {
   const { t } = useTranslation(Translation.PromptBar);
@@ -75,18 +75,21 @@ const Sidebar = <T,>({
     <div
       className={classNames(
         `group/sidebar fixed top-12 z-40 flex h-[calc(100%-48px)] w-[260px] flex-none shrink-0 flex-col divide-y divide-gray-300 border-r border-gray-300 bg-gray-100 transition-all dark:divide-gray-900 dark:border-gray-900 dark:bg-gray-700  xl:relative xl:top-0 xl:h-full`,
-        side === 'left' ? `left-0` : 'right-0',
+        side === 'left' ? 'left-0' : 'right-0',
       )}
       data-qa="sidebar"
     >
       <Search
         placeholder={t('Search {{name}}...', { name: featureType })}
         searchTerm={searchTerm}
+        searchFilters={searchFilters}
         onSearch={handleSearchTerm}
+        onSearchFiltersChanged={handleSearchFilters}
+        featureType={featureType}
       />
       {actionButtons}
       <div className="flex grow flex-col gap-[1px] divide-y divide-gray-300 overflow-y-auto dark:divide-gray-900">
-        {folders?.length > 0 && folderComponent}
+        {folderComponent}
 
         {filteredItems?.length > 0 ? (
           <div
@@ -105,7 +108,7 @@ const Sidebar = <T,>({
           >
             {itemComponent}
           </div>
-        ) : items.length !== 0 ? (
+        ) : searchTerm.length ? (
           <div className="flex grow content-center justify-center">
             <NoResultsFound />
           </div>
