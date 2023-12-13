@@ -132,7 +132,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     <div
       className={`rounded px-1 py-2 ${
         isExpanded ? 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3' : ''
-      } ${isInner ? 'bg-gray-100' : 'border-gray-400 bg-gray-300 border'}`}
+      } ${isInner ? 'bg-gray-100' : 'border-gray-400 border bg-layer-1'}`}
     >
       <div className={`flex items-center gap-3 px-2`}>
         <div className="flex items-center">

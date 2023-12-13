@@ -46,7 +46,7 @@ export const ChatSettingsEmpty = ({
     <>
       <div className="flex h-full w-full flex-col items-center p-0 md:px-5 md:pt-5">
         <div className="flex h-full w-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
-          <div className="bg-gray-200 flex w-full items-center justify-center rounded-t p-4">
+          <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">
             {!isModels ? (
               <div>
                 <Spinner size={16} className="mx-auto" />

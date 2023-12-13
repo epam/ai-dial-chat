@@ -288,7 +288,7 @@ export const ChatMessage: FC<Props> = memo(
       <div
         className={`group h-full min-h-[90px] md:px-4 ${
           isAssistant
-            ? 'border-gray-400 bg-gray-200 border-b'
+            ? 'border-gray-400 border-b bg-layer-2'
             : 'border-gray-400  border-b'
         }`}
         style={{ overflowWrap: 'anywhere' }}

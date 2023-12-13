@@ -101,7 +101,7 @@ export const ChatCompareSelect = ({
       className="flex grow flex-col items-center justify-center p-5 py-2"
       data-qa="conversation-to-compare"
     >
-      <div className="bg-gray-200 flex max-w-[465px] flex-col gap-3 rounded p-6">
+      <div className="flex max-w-[465px] flex-col gap-3 rounded bg-layer-2 p-6">
         <div className="flex flex-col gap-2 text-center">
           <h5 className="text-base font-semibold">
             {t('Select conversation to compare with')}

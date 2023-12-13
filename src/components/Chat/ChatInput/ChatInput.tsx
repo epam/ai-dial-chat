@@ -69,7 +69,7 @@ export const ChatInput = ({
       <div className="relative">
         {messageIsStreaming && (
           <button
-            className="border-gray-400 bg-gray-200 hover:bg-gray-400 absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border p-3"
+            className="border-gray-400 hover:bg-layer-4 absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border bg-layer-2 p-3"
             onClick={onStopConversation}
             data-qa="stop-generating"
           >
@@ -84,7 +84,7 @@ export const ChatInput = ({
 
         {!children && !messageIsStreaming && isMessagesPresented && (
           <button
-            className="border-gray-400 bg-gray-200 hover:bg-gray-400 absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border p-3"
+            className="border-gray-400 hover:bg-layer-4 absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border bg-layer-2 p-3"
             onClick={onRegenerate}
             data-qa="regenerate"
           >

@@ -60,7 +60,7 @@ export const MessageStage = ({ stage }: Props) => {
   }, [stage?.content, stage?.attachments?.length]);
 
   return (
-    <div className="border-gray-400 bg-gray-300 block min-w-0 shrink rounded border">
+    <div className="border-gray-400 block min-w-0 shrink rounded border bg-layer-1">
       {hasContent ? (
         <button
           className="flex w-full min-w-0 shrink items-center gap-2 p-2"

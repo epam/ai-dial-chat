@@ -24,7 +24,7 @@ export const ChatInputAttachment = ({
   return (
     <div
       key={file.id}
-      className="border-gray-400 bg-gray-300 flex gap-3 rounded border p-3"
+      className="border-gray-400 flex gap-3 rounded border bg-layer-1 p-3"
     >
       {file.status !== 'FAILED' ? (
         <IconFile className="shrink-0 text-secondary" size={18} />

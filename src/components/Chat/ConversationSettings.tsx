@@ -129,7 +129,7 @@ export const ConversationSettings = ({
   return (
     <div
       ref={ref}
-      className="bg-gray-300 flex w-full flex-col gap-[1px] overflow-hidden rounded-b [&:first-child]:rounded-t"
+      className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t"
     >
       <div
         className={classNames(
@@ -140,7 +140,7 @@ export const ConversationSettings = ({
         )}
         data-qa="conversation-settings"
       >
-        <div className="bg-gray-200 shrink overflow-auto px-3 py-4 md:px-5">
+        <div className="shrink overflow-auto bg-layer-2 px-3 py-4 md:px-5">
           <ConversationSettingsModel
             conversationId={conversationId}
             replay={replay}
@@ -151,7 +151,7 @@ export const ConversationSettings = ({
         {!replay.replayAsIs ? (
           model ? (
             <div
-              className="divide-gray-300 bg-gray-200 flex max-h-full shrink flex-col divide-y overflow-auto"
+              className="divide-gray-300 flex max-h-full shrink flex-col divide-y overflow-auto bg-layer-2"
               data-qa="entity-settings"
             >
               {model.type === EntityType.Application && (

@@ -283,7 +283,7 @@ export const ModelsDialog: FC<Props> = ({
                 'hover:bg-blue-500/20 rounded border-b-2 px-3 py-2',
                 entityTypes.includes(EntityType.Model)
                   ? 'border-blue-500 bg-blue-500/20'
-                  : 'border-gray-400 bg-gray-400 hover:border-transparent',
+                  : 'border-gray-400 bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {
                 handleFilterType(EntityType.Model);
@@ -297,7 +297,7 @@ export const ModelsDialog: FC<Props> = ({
                 'hover:bg-blue-500/20 rounded border-b-2 px-3 py-2',
                 entityTypes.includes(EntityType.Assistant)
                   ? 'border-blue-500 bg-blue-500/20'
-                  : 'border-gray-400 bg-gray-400 hover:border-transparent',
+                  : 'border-gray-400 bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {
                 handleFilterType(EntityType.Assistant);
@@ -311,7 +311,7 @@ export const ModelsDialog: FC<Props> = ({
                 'hover:bg-blue-500/20 rounded border-b-2 px-3 py-2',
                 entityTypes.includes(EntityType.Application)
                   ? 'border-blue-500 bg-blue-500/20'
-                  : 'border-gray-400 bg-gray-400 hover:border-transparent',
+                  : 'border-gray-400 bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {
                 handleFilterType(EntityType.Application);

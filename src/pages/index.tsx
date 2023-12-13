@@ -132,10 +132,10 @@ export default function Home({ initialState }: Props) {
       </Head>
 
       {shouldIframeLogin ? (
-        <div className="bg-gray-900 text-gray-200 grid h-full min-h-[100px] w-full place-items-center text-sm ">
+        <div className="grid h-full min-h-[100px] w-full place-items-center bg-layer-1 text-sm text-primary ">
           <button
             onClick={handleIframeAuth}
-            className="border-gray-600 hover:bg-gray-600 appearance-none rounded-lg p-3"
+            className="button button-secondary"
             disabled={session.status === 'loading'}
           >
             {t('Login')}
@@ -143,7 +143,7 @@ export default function Home({ initialState }: Props) {
         </div>
       ) : (
         <main
-          className={`bg-gray-300 h-screen w-screen flex-col text-sm text-primary`}
+          className={`h-screen w-screen flex-col bg-layer-1 text-sm text-primary`}
           id="theme-main"
         >
           <div className={`flex h-full w-full flex-col sm:pt-0`}>

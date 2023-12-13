@@ -132,7 +132,7 @@ export const ChatSettings = ({
           onApplyAddons={handleOnApplyAddons}
           onClose={onClose}
         />
-        <div className="bg-gray-200 flex w-full items-center justify-center overflow-hidden px-3 py-4 md:px-5">
+        <div className="flex w-full items-center justify-center overflow-hidden bg-layer-2 px-3 py-4 md:px-5">
           <button
             className="bg-blue-500 text-gray-100 hover:bg-blue-700 w-full rounded px-3 py-2.5 md:w-fit"
             data-qa="apply-changes"
