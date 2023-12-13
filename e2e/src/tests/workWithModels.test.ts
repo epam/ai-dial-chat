@@ -12,7 +12,7 @@ import { expect } from '@playwright/test';
 
 const userRequests = ['first request', 'second request', 'third request'];
 const requestTerm = 'qwer';
-const request = 'write down 30 adjectives';
+const request = 'write cinderella story';
 const expectedResponse = 'The sky is blue.';
 const sysPrompt = `Type: "${expectedResponse}" if user types ${requestTerm}`;
 let gpt35Model: OpenAIEntityModel;
