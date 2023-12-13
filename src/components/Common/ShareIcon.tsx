@@ -14,6 +14,8 @@ import Tooltip from './Tooltip';
 
 import ArrowUpRight from '@/public/images/icons/arrow-up-right.svg';
 import World from '@/public/images/icons/world.svg';
+import { useTranslation } from 'next-i18next';
+import { Translation } from '@/src/types/translation';
 
 interface ShareIsonProps extends ShareInterface {
   isHighlited: boolean;
@@ -32,6 +34,7 @@ export default function ShareIcon({
   children,
   featureType,
 }: ShareIsonProps) {
+  const { t } = useTranslation(Translation.SideBar);
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
@@ -58,7 +61,7 @@ export default function ShareIcon({
           isPublished ? 'rounded-md' : 'rounded-sm',
         )}
       >
-        <Tooltip tooltip={isPublished ? 'published' : 'shared'}>
+        <Tooltip tooltip={t(isPublished ? 'Published' : 'Shared')}>
           <AdditionalIcon
             size={size}
             width={size}
