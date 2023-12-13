@@ -1,6 +1,6 @@
-import { i18n } from 'next-i18next';
-
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+
+import { translate } from '@/src/utils/app/translation';
 
 import { EntityType } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
@@ -54,11 +54,11 @@ export const modelsSlice = createSlice({
     getModelsFail: (state, { payload }: PayloadAction<{ error: any }>) => {
       state.isLoading = false;
       state.error = {
-        title: i18n?.t('Error fetching models.'),
+        title: translate('Error fetching models.'),
         code: payload.error.status || 'unknown',
         messageLines: payload.error.statusText
           ? [payload.error.statusText]
-          : [i18n?.t(errorsMessages.generalServer, { ns: 'common' })],
+          : [translate(errorsMessages.generalServer, { ns: 'common' })],
       } as ErrorMessage;
     },
     initRecentModels: (
