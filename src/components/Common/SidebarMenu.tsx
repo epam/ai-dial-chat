@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -10,6 +10,10 @@ import Tooltip from '@/src/components/Common/Tooltip';
 
 import ContextMenu from './ContextMenu';
 
+const ICON_WIDTH = 24;
+const ITEM_PADDING = 5;
+const ITEMS_GAP_IN_PIXELS = 8;
+const ITEM_WIDTH = ITEM_PADDING * 2 + ICON_WIDTH + ITEMS_GAP_IN_PIXELS;
 export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
   const {
     Icon,
@@ -20,6 +24,7 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
     className,
     childMenuItems,
   } = props;
+
   const item = (
     <button
       className={classNames(
@@ -36,7 +41,14 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
       data-qa={dataQa}
       disabled={disabled}
     >
-      {Icon && <Icon size={24} height={24} width={24} strokeWidth="1.5" />}
+      {Icon && (
+        <Icon
+          size={ICON_WIDTH}
+          height={ICON_WIDTH}
+          width={ICON_WIDTH}
+          strokeWidth="1.5"
+        />
+      )}
     </button>
   );
 
@@ -55,19 +67,43 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
 export default function SidebarMenu({
   menuItems,
   highlightColor,
-  displayMenuItemCount = 5, // calculate in future based on width of container
+  displayMenuItemCount = 5,
   isOpen,
   onOpenChange,
 }: MenuProps) {
+  const [displayItemsCount, setDisplayItemsCount] =
+    useState<number>(displayMenuItemCount);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [visibleItems, hiddenItems] = useMemo(() => {
     const displayedItems = menuItems.filter(({ display = true }) => display);
-    const visibleItems = displayedItems.slice(0, displayMenuItemCount);
-    const hiddenItems = displayedItems.slice(displayMenuItemCount);
+    const visibleItems = displayedItems.slice(0, displayItemsCount);
+    const hiddenItems = displayedItems.slice(displayItemsCount);
     return [visibleItems, hiddenItems];
-  }, [displayMenuItemCount, menuItems]);
+  }, [menuItems, displayItemsCount]);
+
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentBoxSize) {
+          const itemsContainerWidth = entry.contentBoxSize[0].inlineSize;
+
+          setDisplayItemsCount(itemsContainerWidth / ITEM_WIDTH);
+        }
+      }
+    });
+    const containerElement = containerRef.current;
+    containerElement && resizeObserver.observe(containerElement);
+
+    return () => {
+      containerElement && resizeObserver.observe(containerElement);
+    };
+  }, []);
 
   return (
-    <div className="flex items-start gap-2 p-2 text-gray-500">
+    <div
+      ref={containerRef}
+      className="flex items-start gap-2 p-2 text-gray-500"
+    >
       {visibleItems.map(({ CustomTriggerRenderer, ...props }) => {
         const Trigger = CustomTriggerRenderer ? (
           <CustomTriggerRenderer

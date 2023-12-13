@@ -121,7 +121,7 @@ export const ConversationSettings = ({
     });
     ref.current && resizeObserver.observe(ref.current);
 
-    () => {
+    return () => {
       resizeObserver.disconnect();
     };
   }, [ref]);
