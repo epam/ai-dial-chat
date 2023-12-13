@@ -111,7 +111,19 @@ export const FolderContextMenu = ({
         onClick: onAddFolder,
       },
     ],
-    [t, onRename, onShare, onDelete, onAddFolder],
+    [
+      t,
+      onRename,
+      isSharingEnabled,
+      onShare,
+      isPublishingEnabled,
+      folder.isPublished,
+      onPublish,
+      onPublishUpdate,
+      onUnpublish,
+      onDelete,
+      onAddFolder,
+    ],
   );
 
   if (!onDelete && !onRename && !onAddFolder) {

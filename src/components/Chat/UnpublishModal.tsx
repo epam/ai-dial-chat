@@ -36,7 +36,7 @@ export default function UnpublishModal({
 }: Props) {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
-  const publishAction = getUnpublishActionByType(type);
+  const unpublishAction = getUnpublishActionByType(type);
   const shareId = useRef(uuidv4());
 
   const { refs, context } = useFloating({
@@ -58,17 +58,17 @@ export default function UnpublishModal({
     [onClose],
   );
 
-  const handlePublish = useCallback(
+  const handleUnpublish = useCallback(
     (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
       e.preventDefault();
       e.stopPropagation();
 
       dispatch(
-        publishAction({ id: entity.id, shareUniqueId: shareId.current }),
+        unpublishAction({ id: entity.id, shareUniqueId: shareId.current }),
       );
       onClose();
     },
-    [dispatch, entity.id, onClose, publishAction],
+    [dispatch, entity.id, onClose, unpublishAction],
   );
 
   return (
@@ -84,7 +84,7 @@ export default function UnpublishModal({
             role="dialog"
             ref={refs.setFloating}
             {...getFloatingProps()}
-            data-qa="publish-modal"
+            data-qa="unpublish-modal"
           >
             <button
               type="button"
@@ -110,8 +110,8 @@ export default function UnpublishModal({
                 </button>
                 <button
                   className="button button-primary"
-                  onClick={handlePublish}
-                  data-qa="publish"
+                  onClick={handleUnpublish}
+                  data-qa="unpublish"
                 >
                   {t('Unpublish')}
                 </button>
