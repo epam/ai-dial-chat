@@ -20,24 +20,13 @@ interface Props {
   temperature: number | null;
 }
 
-const getHeightBasedLineClamp = () => {
-  const SM_HEIGHT_THRESHOLDS = [
-    { threshold: 480, lineClamp: 'line-clamp-3' },
-    { threshold: 640, lineClamp: 'line-clamp-6' },
-    { threshold: 800, lineClamp: 'line-clamp-[14]' },
-    { threshold: 960, lineClamp: 'line-clamp-[22]' },
-  ];
-
-  const DEFAULT_SM_LINE_CLAMP = 'line-clamp-[30]';
-
-  for (const item of SM_HEIGHT_THRESHOLDS) {
-    if (window.innerHeight <= item.threshold) {
-      return item.lineClamp;
-    }
-  }
-
-  return DEFAULT_SM_LINE_CLAMP;
-};
+const SM_HEIGHT_THRESHOLDS = [
+  { threshold: 480, class: 'line-clamp-3' },
+  { threshold: 640, class: 'line-clamp-6' },
+  { threshold: 800, class: 'line-clamp-[14]' },
+  { threshold: 960, class: 'line-clamp-[20]' },
+];
+const DEFAULT_SM_LINE_CLAMP = 'line-clamp-[28]';
 
 const getModelTemplate = (
   model: OpenAIEntityModel,
@@ -70,8 +59,12 @@ export const ChatInfoTooltip = ({
   prompt,
   temperature,
 }: Props) => {
+  const lineClampClass =
+    SM_HEIGHT_THRESHOLDS.find(
+      (lineClamp) => window.innerHeight <= lineClamp.threshold,
+    )?.class || DEFAULT_SM_LINE_CLAMP;
+
   const theme = useAppSelector(UISelectors.selectThemeState);
-  const lineClampClass = getHeightBasedLineClamp();
 
   const { t } = useTranslation(Translation.Chat);
   const getModelLabel = useCallback(() => {
