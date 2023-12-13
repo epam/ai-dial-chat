@@ -83,7 +83,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
           role="dialog"
         >
           <button
-            className="text-gray-500 hover:text-blue-700 absolute right-2 top-2 rounded"
+            className="hover:text-blue-700 absolute right-2 top-2 rounded text-secondary"
             onClick={onClose}
           >
             <XMark height={24} width={24} />

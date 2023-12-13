@@ -52,7 +52,7 @@ const CaretIconComponent = ({ isOpen }: CaretIconComponentProps) => {
   return (
     <IconCaretRightFilled
       className={classNames(
-        'invisible text-gray-500 transition-all group-hover/modal:[visibility:inherit] group-hover/sidebar:[visibility:inherit]',
+        'invisible text-secondary transition-all group-hover/modal:[visibility:inherit] group-hover/sidebar:[visibility:inherit]',
         isOpen && 'rotate-90',
       )}
       size={10}
@@ -417,7 +417,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             {loadingFolderId === currentFolder.id ? (
               <Spinner />
             ) : (
-              <IconFolder size={18} className="mr-1 text-gray-500" />
+              <IconFolder size={18} className="mr-1 text-secondary" />
             )}
 
             <input
@@ -461,7 +461,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             {loadingFolderId === currentFolder.id ? (
               <Spinner className="mr-1" />
             ) : (
-              <IconFolder size={18} className="mr-1 text-gray-500" />
+              <IconFolder size={18} className="mr-1 text-secondary" />
             )}
 
             <div

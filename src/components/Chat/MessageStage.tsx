@@ -23,19 +23,19 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
         <Loader
           height={20}
           width={20}
-          className="text-gray-500 shrink-0 grow-0 basis-auto animate-spin"
+          className="shrink-0 grow-0 basis-auto animate-spin text-secondary"
         />
       ) : stage.status === 'completed' ? (
         <CircleCheck
           height={20}
           width={20}
-          className="text-gray-500 shrink-0 grow-0 basis-auto"
+          className="shrink-0 grow-0 basis-auto text-secondary"
           data-qa="stage-completed"
         />
       ) : (
         <IconExclamationCircle
           size={20}
-          className="text-gray-500 shrink-0 grow-0 basis-auto"
+          className="shrink-0 grow-0 basis-auto text-secondary"
         />
       )}
       <span className={`block ${isOpened ? 'max-w-full' : 'truncate'}`}>
@@ -73,7 +73,7 @@ export const MessageStage = ({ stage }: Props) => {
           <ChevronDown
             height={20}
             width={20}
-            className={`text-gray-500 shrink-0 transition ${
+            className={`shrink-0 text-secondary transition ${
               isOpened ? 'rotate-180' : ''
             }`}
           />

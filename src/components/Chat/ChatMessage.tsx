@@ -69,7 +69,7 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
     <button
       type={type}
       className={classNames(
-        'text-gray-500 [&:not(:disabled)]:hover:text-blue-500 focus:visible',
+        '[&:not(:disabled)]:hover:text-blue-500 text-secondary focus:visible',
         className,
       )}
       {...props}
@@ -401,14 +401,14 @@ export const ChatMessage: FC<Props> = memo(
                 {!isPlayback && !isEditing && (
                   <div className="flex w-[60px] flex-col items-center justify-end gap-4 md:flex-row md:items-start md:justify-start md:gap-1">
                     <button
-                      className="text-gray-500 hover:text-blue-500 invisible focus:visible disabled:cursor-not-allowed group-hover:visible"
+                      className="hover:text-blue-500 invisible text-secondary focus:visible disabled:cursor-not-allowed group-hover:visible"
                       onClick={toggleEditing}
                       disabled={editDisabled}
                     >
                       <IconEdit size={20} />
                     </button>
                     <button
-                      className="text-gray-500 hover:text-blue-500 invisible focus:visible group-hover:visible"
+                      className="hover:text-blue-500 invisible text-secondary focus:visible group-hover:visible"
                       onClick={() => {
                         setIsRemoveConfirmationOpened(true);
                       }}
@@ -462,7 +462,7 @@ export const ChatMessage: FC<Props> = memo(
                 <div className="flex w-[60px] shrink-0 flex-col justify-between">
                   <div className="ml-1 flex flex-col items-center justify-end gap-4 md:-mr-8 md:ml-0 md:flex-row md:items-start md:justify-start md:gap-1">
                     {messagedCopied ? (
-                      <IconCheck size={20} className="text-gray-500" />
+                      <IconCheck size={20} className="text-secondary" />
                     ) : (
                       <Button onClick={copyOnClick}>
                         <IconCopy size={20} />
@@ -478,7 +478,7 @@ export const ChatMessage: FC<Props> = memo(
                             className={
                               message.like !== 1
                                 ? void 0
-                                : 'text-gray-500 visible'
+                                : 'visible text-secondary'
                             }
                             disabled={message.like === 1}
                           >
@@ -491,7 +491,7 @@ export const ChatMessage: FC<Props> = memo(
                             className={
                               message.like !== -1
                                 ? void 0
-                                : 'text-gray-500 visible'
+                                : 'visible text-secondary'
                             }
                             disabled={message.like === -1}
                           >

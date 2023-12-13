@@ -18,7 +18,7 @@ import UserIcon from '../../../../public/images/icons/user.svg';
 const UserInfo = () => {
   const { data: session } = useSession();
   return (
-    <div className=" border-gray-300 text-gray-800 w-full border-b p-2">
+    <div className=" border-gray-300 w-full border-b p-2 text-primary">
       <div className="flex h-[42px] items-center">
         <UserIcon className="mx-2" width={18} height={18} />
 
@@ -38,7 +38,7 @@ const UserSettings = () => {
 
   return (
     <div className="flex h-[42px] items-center gap-2 px-2" onClick={onClick}>
-      <IconSettings className="text-gray-500" size={18} />
+      <IconSettings className="text-secondary" size={18} />
       <span>{t('Settings')}</span>
     </div>
   );
@@ -67,7 +67,7 @@ const Logout = () => {
           setIsLogoutConfirmationOpened(true);
         }}
       >
-        <LogOutIcon className="text-gray-500" width={18} height={18} />
+        <LogOutIcon className="text-secondary" width={18} height={18} />
         <span>{session ? t('Log out') : t('Login')}</span>
       </div>
       <ConfirmDialog

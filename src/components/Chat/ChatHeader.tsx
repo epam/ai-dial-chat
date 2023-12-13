@@ -173,7 +173,7 @@ export const ChatHeader = ({
                   tooltip={t('Conversation settings')}
                 >
                   <button
-                    className="text-gray-500 hover:text-blue-500 cursor-pointer"
+                    className="hover:text-blue-500 cursor-pointer text-secondary"
                     onClick={() => {
                       setShowSettings(!isShowSettings);
                     }}
@@ -189,7 +189,7 @@ export const ChatHeader = ({
                   tooltip={t('Clear conversation messages')}
                 >
                   <button
-                    className="text-gray-500 hover:text-blue-500 cursor-pointer"
+                    className="hover:text-blue-500 cursor-pointer text-secondary"
                     onClick={onClearConversation}
                     data-qa="clear-conversation"
                   >
@@ -203,7 +203,7 @@ export const ChatHeader = ({
                   tooltip={t('Remove conversation from compare mode')}
                 >
                   <button
-                    className="text-gray-500 hover:text-blue-500 cursor-pointer disabled:cursor-not-allowed"
+                    className="hover:text-blue-500 cursor-pointer text-secondary disabled:cursor-not-allowed"
                     onClick={() => onUnselectConversation(conversation.id)}
                     disabled={conversation.isMessageStreaming}
                     data-qa="remove-from-compare"
@@ -218,7 +218,7 @@ export const ChatHeader = ({
                   tooltip={t('To edit the chat, leave Playback mode')}
                 >
                   <button
-                    className="text-gray-500 hover:text-blue-500 cursor-pointer"
+                    className="hover:text-blue-500 cursor-pointer text-secondary"
                     onClick={onCancelPlaybackMode}
                     data-qa="cancel-playback-mode"
                   >

@@ -75,7 +75,7 @@ export const ChatInput = ({
           >
             <IconPlayerStop
               size={18}
-              className="text-gray-500"
+              className="text-secondary"
               strokeWidth="1.5"
             />{' '}
             {t('Stop generating')}
@@ -88,7 +88,7 @@ export const ChatInput = ({
             onClick={onRegenerate}
             data-qa="regenerate"
           >
-            <span className="text-gray-500">
+            <span className="text-secondary">
               <RefreshCWAlt width={18} height={18} />
             </span>
             {t('Regenerate response')}

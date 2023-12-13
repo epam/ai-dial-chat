@@ -123,7 +123,7 @@ export const Combobox = ({
           <input
             disabled={disabled}
             placeholder={placeholder || ''}
-            className="placeholder:text-gray-500 w-full bg-transparent px-3 py-2.5 outline-none"
+            className="w-full bg-transparent px-3 py-2.5 outline-none placeholder:text-secondary"
             {...getInputProps({ ref: refs.reference as any })}
           />
           {!inputValue && itemRow && selectedItem && (

@@ -157,7 +157,7 @@ export const PromptModal: FC<Props> = ({
             <button
               type="button"
               role="button"
-              className="text-gray-500 hover:text-blue-700 absolute right-2 top-2 rounded"
+              className="hover:text-blue-700 absolute right-2 top-2 rounded text-secondary"
               onClick={handleClose}
             >
               <IconX size={24} />
@@ -168,7 +168,7 @@ export const PromptModal: FC<Props> = ({
 
             <div className="mb-4">
               <label
-                className="text-gray-500 mb-1 flex text-xs"
+                className="mb-1 flex text-xs text-secondary"
                 htmlFor="promptName"
               >
                 {t('Name')}
@@ -191,7 +191,7 @@ export const PromptModal: FC<Props> = ({
 
             <div className="mb-4">
               <label
-                className="text-gray-500 mb-1 flex text-xs"
+                className="mb-1 flex text-xs text-secondary"
                 htmlFor="description"
               >
                 {t('Description')}
@@ -210,7 +210,7 @@ export const PromptModal: FC<Props> = ({
             </div>
             <div className="mb-5">
               <label
-                className="text-gray-500 mb-1 flex text-xs"
+                className="mb-1 flex text-xs text-secondary"
                 htmlFor="content"
               >
                 {t('Prompt')}

@@ -245,7 +245,7 @@ export const MenuComponent = forwardRef<
                 returnFocus={!isNested}
               >
                 <div
-                  className="bg-gray-100 text-gray-800 z-50 overflow-auto rounded shadow focus-visible:outline-none"
+                  className="bg-gray-100 z-50 overflow-auto rounded text-primary shadow focus-visible:outline-none"
                   data-qa="dropdown-menu"
                   ref={refs.setFloating}
                   style={{

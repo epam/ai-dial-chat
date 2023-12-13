@@ -27,7 +27,7 @@ const getModelTemplate = (
 ) => {
   return (
     <>
-      <span className="text-gray-500">{label}:</span>
+      <span className="text-secondary">{label}:</span>
       <div
         className="flex items-center gap-2"
         data-qa={label.toLowerCase().concat('-info')}
@@ -75,7 +75,7 @@ export const ChatInfoTooltip = ({
         getModelTemplate(subModel, theme, t('Assistant model'))}
       {prompt && (
         <>
-          <span className="text-gray-500">{t('System prompt')}:</span>
+          <span className="text-secondary">{t('System prompt')}:</span>
           <div className="whitespace-pre-wrap" data-qa="prompt-info">
             {prompt}
           </div>
@@ -83,18 +83,18 @@ export const ChatInfoTooltip = ({
       )}
       {temperature !== null && (
         <>
-          <span className="text-gray-500">{t('Temperature')}:</span>
+          <span className="text-secondary">{t('Temperature')}:</span>
           <div data-qa="temp-info">{temperature}</div>
         </>
       )}
       {selectedAddons !== null && selectedAddons?.length > 0 && (
         <>
-          <span className="text-gray-500">{t('Addons')}:</span>
+          <span className="text-secondary">{t('Addons')}:</span>
           <div className="flex flex-wrap gap-1">
             {selectedAddons.map((addon) => (
               <span
                 key={addon.id}
-                className="flex gap-2 rounded bg-blue-500/20 px-3 py-2"
+                className="bg-blue-500/20 flex gap-2 rounded px-3 py-2"
                 data-qa="addons-info"
               >
                 <ModelIcon

@@ -143,7 +143,7 @@ export default function Home({ initialState }: Props) {
         </div>
       ) : (
         <main
-          className={`bg-gray-300 text-gray-800 h-screen w-screen flex-col text-sm`}
+          className={`bg-gray-300 h-screen w-screen flex-col text-sm text-primary`}
           id="theme-main"
         >
           <div className={`flex h-full w-full flex-col sm:pt-0`}>

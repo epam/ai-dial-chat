@@ -304,7 +304,7 @@ export const FileManagerModal = ({
               {...getFloatingProps()}
             >
               <button
-                className="text-gray-500 hover:text-blue-500 absolute right-2 top-2"
+                className="hover:text-blue-500 absolute right-2 top-2 text-secondary"
                 onClick={() => onClose(false)}
               >
                 <IconX />
@@ -344,16 +344,16 @@ export const FileManagerModal = ({
                       placeholder={t('Search files') || ''}
                       type="text"
                       onChange={handleSearch}
-                      className="border-gray-400 placeholder:text-gray-500 focus-visible:border-blue-500 m-0 w-full rounded border bg-transparent px-3 py-2 outline-none"
+                      className="border-gray-400 focus-visible:border-blue-500 m-0 w-full rounded border bg-transparent px-3 py-2 outline-none placeholder:text-secondary"
                     ></input>
                     <div className="flex min-h-[350px] flex-col overflow-auto">
                       <button
-                        className="text-gray-500 flex items-center gap-1 rounded py-1 text-xs"
+                        className="flex items-center gap-1 rounded py-1 text-xs text-secondary"
                         onClick={() => handleToggleFolder(undefined)}
                       >
                         <IconCaretRightFilled
                           className={classNames(
-                            'text-gray-500 invisible transition-all group-hover/modal:visible',
+                            'invisible text-secondary transition-all group-hover/modal:visible',
                             isAllFilesOpened && 'rotate-90',
                           )}
                           size={10}
@@ -424,13 +424,13 @@ export const FileManagerModal = ({
                     <>
                       <button
                         onClick={handleRemoveMultipleFiles}
-                        className="text-gray-500 hover:bg-blue-500/20 hover:text-blue-500 flex h-[34px] w-[34px] items-center  justify-center rounded"
+                        className="hover:bg-blue-500/20 hover:text-blue-500 flex h-[34px] w-[34px] items-center justify-center  rounded text-secondary"
                       >
                         <IconTrash size={24} />
                       </button>
                       <button
                         onClick={handleDownloadMultipleFiles}
-                        className="text-gray-500 hover:bg-blue-500/20 hover:text-blue-500 flex h-[34px] w-[34px] items-center  justify-center rounded"
+                        className="hover:bg-blue-500/20 hover:text-blue-500 flex h-[34px] w-[34px] items-center justify-center  rounded text-secondary"
                       >
                         <IconDownload size={24} />
                       </button>
@@ -438,7 +438,7 @@ export const FileManagerModal = ({
                   ) : (
                     <button
                       onClick={handleNewFolder}
-                      className="text-gray-500 hover:bg-blue-500/20 hover:text-blue-500 flex h-[34px] w-[34px] items-center  justify-center rounded"
+                      className="hover:bg-blue-500/20 hover:text-blue-500 flex h-[34px] w-[34px] items-center justify-center  rounded text-secondary"
                     >
                       <FolderPlus height={24} width={24} />
                     </button>

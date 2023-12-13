@@ -72,7 +72,7 @@ const Addon = ({
         </span>
       </div>
       {addon.description && (
-        <span className="text-gray-500">
+        <span className="text-secondary">
           <EntityMarkdownDescription>
             {addon.description}
           </EntityMarkdownDescription>
@@ -117,7 +117,7 @@ const SelectedAddon = ({
         <XMark
           height={12}
           width={12}
-          className="text-gray-500 hover:text-blue-500"
+          className="hover:text-blue-500 text-secondary"
         />
       )}
     </button>
@@ -221,7 +221,7 @@ export const AddonsDialog: FC<Props> = ({
               onClick={() => {
                 onClose();
               }}
-              className="text-gray-500 hover:text-blue-500"
+              className="hover:text-blue-500 text-secondary"
               data-qa="close-addons-dialog"
             >
               <XMark height={24} width={24} />
@@ -236,7 +236,7 @@ export const AddonsDialog: FC<Props> = ({
               onChange={(e) => {
                 handleSearch(e.target.value);
               }}
-              className="border-gray-400 placeholder:text-gray-500 focus-visible:border-blue-500 m-0 w-full rounded border bg-transparent px-3 py-2 outline-none"
+              className="border-gray-400 focus-visible:border-blue-500 m-0 w-full rounded border bg-transparent px-3 py-2 outline-none placeholder:text-secondary"
             ></input>
           </div>
           <div
@@ -247,7 +247,7 @@ export const AddonsDialog: FC<Props> = ({
               0 ||
               preselectedAddonsIds?.length > 0) && (
               <div className="flex flex-col gap-3">
-                <span className="text-gray-500">{t('Selected')}</span>
+                <span className="text-secondary">{t('Selected')}</span>
 
                 <div className="flex flex-wrap gap-1">
                   {preselectedAddonsIds.map((addonID) => {
@@ -283,7 +283,7 @@ export const AddonsDialog: FC<Props> = ({
             )}
             {displayedAddons?.length > 0 ? (
               <div className="flex shrink grow flex-col gap-3 overflow-auto">
-                <span className="text-gray-500">{t('Search results')}</span>
+                <span className="text-secondary">{t('Search results')}</span>
 
                 <div className="grid grid-cols-2 flex-wrap gap-3 md:grid-cols-3">
                   {displayedAddons.map((addon) => (

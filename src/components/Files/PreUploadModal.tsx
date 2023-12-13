@@ -313,7 +313,7 @@ export const PreUploadDialog = ({
                   className="absolute right-2 top-2"
                   onClick={() => onClose(false)}
                 >
-                  <IconX className="text-gray-500" />
+                  <IconX className="text-secondary" />
                 </button>
                 <div className="flex flex-col gap-2 overflow-auto">
                   <div className="flex justify-between">
@@ -334,13 +334,13 @@ export const PreUploadDialog = ({
 
                   <div className="flex flex-col gap-1">
                     <div>
-                      <span className="text-gray-500 text-xs">
+                      <span className="text-xs text-secondary">
                         {t('Upload to')}
                       </span>
                       <span className="text-blue-500 text-xs">&nbsp;*</span>
                     </div>
                     <button
-                      className="border-gray-400 placeholder:text-gray-500 hover:border-blue-500 focus:border-blue-500 flex grow items-center justify-between rounded border bg-transparent px-3 py-2 focus:outline-none"
+                      className="border-gray-400 hover:border-blue-500 focus:border-blue-500 flex grow items-center justify-between rounded border bg-transparent px-3 py-2 placeholder:text-secondary focus:outline-none"
                       onClick={handleFolderChange}
                     >
                       <span className="truncate">
@@ -353,7 +353,7 @@ export const PreUploadDialog = ({
                   {selectedFiles.length !== 0 && (
                     <div className="flex flex-col gap-1 overflow-auto">
                       <div>
-                        <span className="text-gray-500 text-xs">
+                        <span className="text-xs text-secondary">
                           {t('Files')}
                         </span>
                         <span className="text-blue-500 text-xs">&nbsp;*</span>
@@ -366,7 +366,7 @@ export const PreUploadDialog = ({
                           >
                             <div className="relative flex grow items-center">
                               <IconFile
-                                className="text-gray-500 absolute left-2 top-[calc(50%_-_9px)] shrink-0"
+                                className="absolute left-2 top-[calc(50%_-_9px)] shrink-0 text-secondary"
                                 size={18}
                               />
                               <input
@@ -375,7 +375,7 @@ export const PreUploadDialog = ({
                                   0,
                                   file.name.lastIndexOf('.'),
                                 )}
-                                className="border-gray-400 placeholder:text-gray-500 hover:border-blue-500 focus:border-blue-500 grow rounded border bg-transparent py-2 pl-8 pr-12 focus:outline-none"
+                                className="border-gray-400 hover:border-blue-500 focus:border-blue-500 grow rounded border bg-transparent py-2 pl-8 pr-12 placeholder:text-secondary focus:outline-none"
                                 onChange={handleRenameFile(index)}
                               />
                               <span className="absolute right-2 top-[calc(50%_-_9px)]">
@@ -386,7 +386,7 @@ export const PreUploadDialog = ({
                             <button onClick={handleUnselectFile(index)}>
                               <IconTrashX
                                 size={24}
-                                className="text-gray-500 hover:text-blue-500 shrink-0"
+                                className="hover:text-blue-500 shrink-0 text-secondary"
                               />
                             </button>
                           </div>

@@ -146,11 +146,11 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               <Link
                 height={18}
                 width={18}
-                className="text-gray-500 hover:text-blue-500"
+                className="hover:text-blue-500 text-secondary"
               />
             </a>
           ) : (
-            <IconPaperclip size={18} className="text-gray-500 shrink-0" />
+            <IconPaperclip size={18} className="shrink-0 text-secondary" />
           )}
         </div>
         <button
@@ -174,7 +174,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             <ChevronDown
               height={18}
               width={18}
-              className={`text-gray-500 shrink-0 transition ${
+              className={`shrink-0 text-secondary transition ${
                 isOpened ? 'rotate-180' : ''
               }`}
             />
@@ -183,7 +183,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               download={attachment.title}
               href={mappedAttachmentUrl}
               onClick={stopBubbling}
-              className="text-gray-500 hover:text-blue-500"
+              className="hover:text-blue-500 text-secondary"
             >
               <IconDownload size={18} />
             </a>

@@ -27,7 +27,7 @@ export const ChatInputAttachment = ({
       className="border-gray-400 bg-gray-300 flex gap-3 rounded border p-3"
     >
       {file.status !== 'FAILED' ? (
-        <IconFile className="text-gray-500 shrink-0" size={18} />
+        <IconFile className="shrink-0 text-secondary" size={18} />
       ) : (
         <IconExclamationCircle className="shrink-0 text-error" size={18} />
       )}
@@ -54,11 +54,11 @@ export const ChatInputAttachment = ({
         <div className="flex gap-3">
           {file.status === 'FAILED' && (
             <button onClick={() => onRetryFile(file.id)}>
-              <IconReload className="text-gray-500 shrink-0" size={18} />
+              <IconReload className="shrink-0 text-secondary" size={18} />
             </button>
           )}
           <button onClick={() => onUnselectFile(file.id)}>
-            <IconX className="text-gray-500 shrink-0" size={18} />
+            <IconX className="shrink-0 text-secondary" size={18} />
           </button>
         </div>
       </div>

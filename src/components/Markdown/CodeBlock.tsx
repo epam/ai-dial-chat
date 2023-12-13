@@ -75,7 +75,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
 
   return (
     <div
-      className={`codeblock border-gray-400 text-gray-800 relative overflow-hidden rounded border font text-sm`}
+      className={`codeblock border-gray-400 relative overflow-hidden rounded border font text-sm text-primary`}
     >
       <div
         className={`border-gray-400 flex items-center justify-between border-b p-3 ${
@@ -84,7 +84,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
       >
         <span className="lowercase">{language}</span>
 
-        <div className="text-gray-500 flex items-center gap-3">
+        <div className="flex items-center gap-3 text-secondary">
           <button
             className="[&:not(:disabled)]:hover:text-blue-500 flex items-center"
             onClick={copyToClipboard}

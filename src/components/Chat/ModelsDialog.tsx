@@ -62,7 +62,7 @@ const Entity = ({
         <span data-qa="group-entity-name">{entity.name}</span>
         {entity.description && (
           <span
-            className="text-gray-500"
+            className="text-secondary"
             onClick={(e) => {
               if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
                 e.stopPropagation();
@@ -112,7 +112,7 @@ const EntityListing = ({
 }: EntityListingProps) => {
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
-      <span className="text-gray-500">{heading}</span>
+      <span className="text-secondary">{heading}</span>
       <div className="grid min-h-0 shrink grid-cols-1 gap-3 overflow-y-auto md:grid-cols-2">
         {entities.map((entity) => (
           <Entity
@@ -258,7 +258,7 @@ export const ModelsDialog: FC<Props> = ({
             {t('Talk to')}
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-blue-500"
+              className="hover:text-blue-500 text-secondary"
               data-qa="close-models-dialog"
             >
               <XMark height={24} width={24} />
@@ -273,7 +273,7 @@ export const ModelsDialog: FC<Props> = ({
               onChange={(e) => {
                 handleSearch(e.target.value);
               }}
-              className="border-gray-400 placeholder:text-gray-500 focus-visible:border-blue-500 m-0 w-full rounded border bg-transparent px-3 py-2 outline-none"
+              className="border-gray-400 focus-visible:border-blue-500 m-0 w-full rounded border bg-transparent px-3 py-2 outline-none placeholder:text-secondary"
             ></input>
           </div>
 

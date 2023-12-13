@@ -47,7 +47,7 @@ export const TemperatureSlider: FC<Props> = ({
   return (
     <div className="flex flex-col gap-3" data-qa="temp-slider">
       <label className="text-left">{label}</label>
-      <span className="text-gray-500 text-sm">
+      <span className="text-sm text-secondary">
         {t(
           'Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
         )}

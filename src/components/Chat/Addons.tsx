@@ -61,7 +61,7 @@ const Addon = ({
       />
       <span>{addonsMap[addonId]?.name || addonId}</span>
       {isSelected && !preselectedAddonsIds.includes(addonId) && (
-        <XMark height={12} width={12} className="text-gray-500" />
+        <XMark height={12} width={12} className="text-secondary" />
       )}
     </button>
   );
@@ -144,7 +144,7 @@ export const Addons = ({
       {(selectedAddonsIds?.filter((id) => addonsMap[id]).length > 0 ||
         preselectedAddonsIds?.length > 0) && (
         <>
-          <span className="text-gray-500">{t('Selected')}</span>
+          <span className="text-secondary">{t('Selected')}</span>
           <div className="flex flex-wrap gap-1" data-qa="selected-addons">
             {preselectedAddonsIds.map((addon) => (
               <Addon
@@ -176,7 +176,7 @@ export const Addons = ({
         <>
           {filteredRecentAddons?.length > 0 && (
             <>
-              <span className="text-gray-500">{t('Recent')}</span>
+              <span className="text-secondary">{t('Recent')}</span>
               <div className="flex flex-wrap gap-1" data-qa="recent-addons">
                 {filteredRecentAddons
                   .map((addon) => (

@@ -73,7 +73,7 @@ export const ConversationSettingsModel = ({
               <div className="flex flex-col gap-1">
                 <span data-qa="entity-name">{entity.name}</span>
                 {entity.description && (
-                  <span className="text-gray-500" data-qa="entity-descr">
+                  <span className="text-secondary" data-qa="entity-descr">
                     <EntityMarkdownDescription isShortDescription>
                       {entity.description}
                     </EntityMarkdownDescription>

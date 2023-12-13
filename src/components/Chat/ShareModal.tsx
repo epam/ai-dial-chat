@@ -119,7 +119,7 @@ export default function ShareModal({
             <button
               type="button"
               role="button"
-              className="text-gray-500 hover:text-blue-700 absolute right-2 top-2 rounded"
+              className="hover:text-blue-700 absolute right-2 top-2 rounded text-secondary"
               onClick={handleClose}
             >
               <IconX height={24} width={24} />
@@ -130,10 +130,10 @@ export default function ShareModal({
                   {`${t('Share')}: ${entity.name.trim()}`}
                 </span>
               </h4>
-              <p className="text-gray-500 text-sm">
+              <p className="text-sm text-secondary">
                 {t('share.modal.link.description')}
               </p>
-              <p className="text-gray-500 text-sm">
+              <p className="text-sm text-secondary">
                 {t('share.modal.link', { context: type })}
               </p>
               <div className="relative mt-2">
@@ -147,7 +147,7 @@ export default function ShareModal({
                 <div className="absolute right-3 top-3">
                   {urlCopied ? (
                     <Tooltip tooltip={t('Copied!')}>
-                      <IconCheck size={20} className="text-gray-500" />
+                      <IconCheck size={20} className="text-secondary" />
                     </Tooltip>
                   ) : (
                     <Tooltip tooltip={t('Copy URL')}>
@@ -159,7 +159,7 @@ export default function ShareModal({
                         <IconCopy
                           height={20}
                           width={20}
-                          className="text-gray-500 hover:text-blue-500"
+                          className="hover:text-blue-500 text-secondary"
                         />
                       </button>
                     </Tooltip>

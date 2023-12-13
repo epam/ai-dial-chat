@@ -178,7 +178,7 @@ export const SelectFolderModal = ({
                 className="absolute right-2 top-2"
                 onClick={() => onClose(false)}
               >
-                <IconX className="text-gray-500" />
+                <IconX className="text-secondary" />
               </button>
               <div className="flex flex-col gap-2 overflow-auto">
                 <div className="flex justify-between px-6 pt-4">
@@ -199,12 +199,12 @@ export const SelectFolderModal = ({
                       placeholder={t('Search folders') || ''}
                       type="text"
                       onChange={handleSearch}
-                      className="border-gray-400 placeholder:text-gray-500 focus-visible:border-blue-500 m-0 w-full rounded border bg-transparent px-3 py-2 outline-none"
+                      className="border-gray-400 focus-visible:border-blue-500 m-0 w-full rounded border bg-transparent px-3 py-2 outline-none placeholder:text-secondary"
                     ></input>
                     <div className="flex min-h-[350px] flex-col overflow-auto">
                       <button
                         className={classNames(
-                          'text-gray-500 flex items-center gap-1 rounded border-l-2 py-1 text-xs',
+                          'flex items-center gap-1 rounded border-l-2 py-1 text-xs text-secondary',
                           !selectedFolderId
                             ? 'border-blue-500 bg-blue-500/20'
                             : 'border-transparent',
@@ -213,7 +213,7 @@ export const SelectFolderModal = ({
                       >
                         <IconCaretRightFilled
                           className={classNames(
-                            'text-gray-500 invisible transition-all group-hover/modal:visible',
+                            'invisible text-secondary transition-all group-hover/modal:visible',
                             isAllFilesOpened && 'rotate-90',
                           )}
                           size={10}
@@ -259,12 +259,12 @@ export const SelectFolderModal = ({
                   <div className="flex items-center justify-center">
                     <button
                       onClick={handleNewFolder}
-                      className="text-gray-500 hover:bg-blue-500/20 hover:text-blue-500 flex h-[34px] w-[34px] items-center  justify-center rounded"
+                      className="hover:bg-blue-500/20 hover:text-blue-500 flex h-[34px] w-[34px] items-center justify-center  rounded text-secondary"
                     >
                       <FolderPlus
                         height={24}
                         width={24}
-                        className="text-gray-500 hover:text-blue-500"
+                        className="hover:text-blue-500 text-secondary"
                       />
                     </button>
                   </div>

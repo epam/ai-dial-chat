@@ -76,7 +76,7 @@ export const FileItem = ({
       }}
     >
       <div className="flex items-center gap-2 overflow-hidden">
-        <div className="text-gray-500">
+        <div className="text-secondary">
           {!isSelected && item.status !== 'FAILED' ? (
             <IconFile
               className={classNames(
@@ -138,12 +138,12 @@ export const FileItem = ({
         )}
         {item.status === 'FAILED' && (
           <button onClick={handleRetry}>
-            <IconReload className="text-gray-500 shrink-0" size={18} />
+            <IconReload className="shrink-0 text-secondary" size={18} />
           </button>
         )}
         {item.status && cancelAllowedStatuses.has(item.status) ? (
           <button onClick={handleCancelFile}>
-            <IconX className="text-gray-500 shrink-0" size={18} />
+            <IconX className="shrink-0 text-secondary" size={18} />
           </button>
         ) : (
           <FileItemContextMenu

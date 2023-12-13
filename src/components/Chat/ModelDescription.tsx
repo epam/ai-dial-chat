@@ -32,7 +32,7 @@ export const ModelDescription = ({ model }: Props) => {
         <span>{model.name}</span>
       </div>
       {model.description && (
-        <span className="text-xs text-gray-500" data-qa="app-descr">
+        <span className="text-xs text-secondary" data-qa="app-descr">
           <EntityMarkdownDescription>
             {model.description}
           </EntityMarkdownDescription>

@@ -35,7 +35,7 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
         <ChevronDown
           height={18}
           width={18}
-          className={`text-gray-500 shrink-0 transition ${
+          className={`shrink-0 text-secondary transition ${
             isSectionOpened ? 'rotate-180' : ''
           }`}
         />

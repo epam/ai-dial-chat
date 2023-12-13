@@ -26,7 +26,7 @@ export const CreateNewChatMobile = () => {
           );
         }}
       >
-        <CirclePlusIcon className="text-gray-500" width={24} height={24} />
+        <CirclePlusIcon className="text-secondary" width={24} height={24} />
       </div>
     </Tooltip>
   );

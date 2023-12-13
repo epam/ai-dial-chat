@@ -52,7 +52,7 @@ export const UserDesktop = () => {
               <span className="grow">{session?.user?.name || t('User')}</span>
             </div>
             <ChevronDownIcon
-              className={`text-gray-800 shrink-0 transition-all ${
+              className={`shrink-0 text-primary transition-all ${
                 isOpen ? 'rotate-180' : ''
               }`}
               width={18}
@@ -65,7 +65,7 @@ export const UserDesktop = () => {
           className={`hover:bg-blue-500/20`}
           item={
             <div className="flex">
-              <IconSettings size={18} className="text-gray-500" />
+              <IconSettings size={18} className="text-secondary" />
               <span className="ml-3">{t('Settings')}</span>
             </div>
           }
@@ -77,7 +77,7 @@ export const UserDesktop = () => {
           className={`hover:bg-blue-500/20`}
           item={
             <div className="flex gap-3">
-              <LogOutIcon width={18} height={18} className="text-gray-500" />
+              <LogOutIcon width={18} height={18} className="text-secondary" />
               <span>{session ? t('Log out') : t('Login')}</span>
             </div>
           }

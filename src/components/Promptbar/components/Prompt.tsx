@@ -217,7 +217,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     <>
       <div
         className={classNames(
-          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-violet/15',
+          'hover:bg-violet/15 group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200',
           isDeleting || isRenaming || (showModal && isSelected) || isContextMenu
             ? 'border-l-violet bg-violet/15'
             : 'border-l-transparent',
@@ -239,7 +239,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           draggable="true"
           onDragStart={(e) => handleDragStart(e, prompt)}
         >
-          <IconBulb size={18} className="text-gray-500" />
+          <IconBulb size={18} className="text-secondary" />
 
           <div
             className={classNames(
@@ -249,7 +249,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             {prompt.name}
           </div>
           {showSharedIcon && (
-            <span className="flex shrink-0 text-gray-500">
+            <span className="flex shrink-0 text-secondary">
               <IconUserShare size={14} />
             </span>
           )}

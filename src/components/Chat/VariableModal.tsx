@@ -132,7 +132,7 @@ export const VariableModal: FC<Props> = ({
         )}
 
         <button
-          className="text-gray-500 hover:text-blue-700 absolute right-2 top-2 rounded"
+          className="hover:text-blue-700 absolute right-2 top-2 rounded text-secondary"
           onClick={onClose}
         >
           <XMark height={24} width={24} />
@@ -140,7 +140,7 @@ export const VariableModal: FC<Props> = ({
 
         {updatedVariables.map((variable, index) => (
           <div className="mb-4" key={variable.key}>
-            <div className="text-gray-500 mb-1 flex text-xs">
+            <div className="mb-1 flex text-xs text-secondary">
               {variable.key}
               <span className="text-blue-500 ml-1 inline">*</span>
             </div>

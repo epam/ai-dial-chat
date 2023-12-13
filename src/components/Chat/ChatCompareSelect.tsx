@@ -106,7 +106,7 @@ export const ChatCompareSelect = ({
           <h5 className="text-base font-semibold">
             {t('Select conversation to compare with')}
           </h5>
-          <span className="text-gray-500">
+          <span className="text-secondary">
             (
             {t(
               'Note: only conversations with same user messages can be compared',

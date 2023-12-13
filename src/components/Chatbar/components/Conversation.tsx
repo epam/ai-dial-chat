@@ -275,7 +275,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   return (
     <div
       className={classNames(
-        'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-green/15',
+        'hover:bg-green/15 group relative flex h-[30px] items-center rounded border-l-2 pr-3',
         isSelected || isRenaming || isDeleting
           ? 'border-l-green bg-green/15'
           : 'border-l-transparent',
@@ -367,7 +367,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             {conversation.name}
           </div>
           {showSharedIcon && (
-            <span className="flex shrink-0 text-gray-500">
+            <span className="flex shrink-0 text-secondary">
               <IconUserShare size={14} />
             </span>
           )}

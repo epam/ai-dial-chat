@@ -57,20 +57,20 @@ const Header = () => {
           {showChatbar ? (
             <>
               <XmarkIcon
-                className="text-gray-500 md:hidden"
+                className="text-secondary md:hidden"
                 width={24}
                 height={24}
               />
 
               <MoveLeftIcon
-                className="text-gray-500 hover:text-green max-md:hidden"
+                className="hover:text-green text-secondary max-md:hidden"
                 width={24}
                 height={24}
               />
             </>
           ) : (
             <MoveRightIcon
-              className="text-gray-500 hover:text-green"
+              className="hover:text-green text-secondary"
               width={24}
               height={24}
             />
@@ -98,20 +98,20 @@ const Header = () => {
           {showPromptbar ? (
             <>
               <XmarkIcon
-                className="text-gray-500 md:hidden"
+                className="text-secondary md:hidden"
                 width={24}
                 height={24}
               />
 
               <MoveRightIcon
-                className="text-gray-500 hover:text-violet max-md:hidden"
+                className="hover:text-violet text-secondary max-md:hidden"
                 width={24}
                 height={24}
               />
             </>
           ) : (
             <MoveLeftIcon
-              className="text-gray-500 hover:text-violet"
+              className="hover:text-violet text-secondary"
               width={24}
               height={24}
             />

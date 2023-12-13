@@ -43,14 +43,14 @@ export const ConversationsRenderer = ({
               'flex items-center gap-1 py-1 text-xs',
               isSectionHighlighted
                 ? 'text-green'
-                : '[&:not(:hover)]:text-gray-500',
+                : '[&:not(:hover)]:text-secondary',
             )}
             data-qa="chronology"
             onClick={handleSectionOpen}
           >
             <IconCaretRightFilled
               className={classNames(
-                'invisible text-gray-500 transition-all group-hover/sidebar:visible',
+                'invisible text-secondary transition-all group-hover/sidebar:visible',
                 isSectionOpened && 'rotate-90',
               )}
               size={10}

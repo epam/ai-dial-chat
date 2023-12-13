@@ -67,7 +67,7 @@ export default function SidebarMenu({
   }, [displayMenuItemCount, menuItems]);
 
   return (
-    <div className="flex items-start gap-2 p-2 text-gray-500">
+    <div className="flex items-start gap-2 p-2 text-secondary">
       {visibleItems.map(({ CustomTriggerRenderer, ...props }) => {
         const Trigger = CustomTriggerRenderer ? (
           <CustomTriggerRenderer

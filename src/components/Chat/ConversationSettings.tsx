@@ -211,7 +211,7 @@ export const ConversationSettings = ({
         )}
         {isCloseEnabled && (
           <button
-            className="text-gray-500 hover:text-blue-500 absolute right-3 top-3"
+            className="hover:text-blue-500 absolute right-3 top-3 text-secondary"
             onClick={onClose}
           >
             <XMark height={24} width={24} />

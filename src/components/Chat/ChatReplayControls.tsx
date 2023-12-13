@@ -32,7 +32,7 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
           onClick={onClickReplayStart}
           data-qa="start-replay"
         >
-          <Play height={18} width={18} className="text-gray-500 shrink-0" />
+          <Play height={18} width={18} className="shrink-0 text-secondary" />
           <span>{t('Start replay')}</span>
         </button>
       ) : (
@@ -44,7 +44,7 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
           <RefreshCW
             height={18}
             width={18}
-            className="text-gray-500 shrink-0"
+            className="shrink-0 text-secondary"
           />
 
           {isError ? (

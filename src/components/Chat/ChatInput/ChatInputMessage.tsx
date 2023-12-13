@@ -393,7 +393,7 @@ export const ChatInputMessage = ({
         <textarea
           ref={textareaRef}
           className={classNames(
-            'placeholder:text-gray-500 m-0 max-h-[320px] min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none',
+            'm-0 max-h-[320px] min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none placeholder:text-secondary',
             displayAttachFunctionality ? 'pl-12' : 'pl-4',
           )}
           style={{
