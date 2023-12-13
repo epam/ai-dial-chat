@@ -9,14 +9,17 @@ export const getApiHeaders = ({
 }): Record<string, string> => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'Api-Key': process.env.OPENAI_API_KEY,
   };
   if (chatId) {
     headers['X-CONVERSATION-ID'] = chatId;
   }
+
   if (jwt) {
     headers['authorization'] = 'Bearer ' + jwt;
+  } else {
+    headers['Api-Key'] = process.env.OPENAI_API_KEY;
   }
+
   if (jobTitle) {
     headers['X-JOB-TITLE'] = jobTitle;
   }
