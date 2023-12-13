@@ -168,7 +168,7 @@ export const PlaybackControls = ({
         >
           {isMessageStreaming ? (
             <div
-              className="border-gray-500 absolute bottom-3 right-4 h-5 w-5 animate-spin rounded-full border-t-2"
+              className="absolute bottom-3 right-4 h-5 w-5 animate-spin rounded-full border-t-2 border-primary"
               data-qa="message-input-spinner"
             ></div>
           ) : (

@@ -140,7 +140,7 @@ export default function ShareModal({
                 <input
                   type="text"
                   readOnly
-                  className="border-gray-400 w-full gap-2 truncate rounded border bg-layer-3 p-3 pr-10 outline-none"
+                  className="w-full gap-2 truncate rounded border border-primary bg-layer-3 p-3 pr-10 outline-none"
                   onCopyCapture={handleCopy}
                   value={url}
                 />

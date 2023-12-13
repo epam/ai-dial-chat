@@ -75,7 +75,7 @@ const Sidebar = <T,>({
   return isOpen ? (
     <div
       className={classNames(
-        `group/sidebar divide-gray-300 border-gray-300 fixed top-12 z-40 flex h-[calc(100%-48px)] w-[260px] flex-none shrink-0 flex-col divide-y border-r bg-layer-3 transition-all  xl:relative xl:top-0 xl:h-full`,
+        `group/sidebar fixed top-12 z-40 flex h-[calc(100%-48px)] w-[260px] flex-none shrink-0 flex-col divide-y divide-primary border-r border-primary bg-layer-3 transition-all  xl:relative xl:top-0 xl:h-full`,
         side === 'left' ? `left-0` : 'right-0',
       )}
       data-qa="sidebar"
@@ -86,7 +86,7 @@ const Sidebar = <T,>({
         onSearch={handleSearchTerm}
       />
       {actionButtons}
-      <div className="divide-gray-300 flex grow flex-col gap-[1px] divide-y overflow-y-auto">
+      <div className="flex grow flex-col gap-[1px] divide-y divide-primary overflow-y-auto">
         {folders?.length > 0 && (
           <div className="flex py-1 pl-1.5 pr-0.5">{folderComponent}</div>
         )}

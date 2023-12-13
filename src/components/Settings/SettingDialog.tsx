@@ -92,7 +92,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
           <div className="mb-4">
             <div className="flex items-center gap-5">
               <div className="w-[120px]">{t('Theme')}</div>
-              <div className="border-gray-400 focus-within:border-blue-500 focus:border-blue-500 w-full rounded border px-3">
+              <div className="focus-within:border-blue-500 focus:border-blue-500 w-full rounded border border-primary px-3">
                 <select
                   className="h-[38px] w-full cursor-pointer rounded border-none focus:outline-none"
                   value={localTheme}

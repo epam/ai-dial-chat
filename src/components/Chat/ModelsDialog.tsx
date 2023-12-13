@@ -44,8 +44,8 @@ const Entity = ({
   return (
     <button
       key={entity.id}
-      className={`hover:border-gray-800 flex items-center gap-3 rounded border px-3 py-2 ${
-        selectedModelId === entity.id ? 'border-blue-500' : 'border-gray-400'
+      className={`hover:border-controls-hover flex items-center gap-3 rounded border px-3 py-2 ${
+        selectedModelId === entity.id ? 'border-blue-500' : 'border-primary'
       } ${isOpened ? 'md:col-span-2' : 'md:col-span-1'}`}
       onClick={() => {
         onSelect(entity.id);
@@ -273,7 +273,7 @@ export const ModelsDialog: FC<Props> = ({
               onChange={(e) => {
                 handleSearch(e.target.value);
               }}
-              className="border-gray-400 focus-visible:border-blue-500 m-0 w-full rounded border bg-transparent px-3 py-2 outline-none placeholder:text-secondary"
+              className="focus-visible:border-blue-500 m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary"
             ></input>
           </div>
 
@@ -283,7 +283,7 @@ export const ModelsDialog: FC<Props> = ({
                 'rounded border-b-2 px-3 py-2 hover:bg-accent-primary',
                 entityTypes.includes(EntityType.Model)
                   ? 'border-blue-500 bg-accent-primary'
-                  : 'border-gray-400 bg-layer-4 hover:border-transparent',
+                  : 'border-primary bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {
                 handleFilterType(EntityType.Model);
@@ -297,7 +297,7 @@ export const ModelsDialog: FC<Props> = ({
                 'rounded border-b-2 px-3 py-2 hover:bg-accent-primary',
                 entityTypes.includes(EntityType.Assistant)
                   ? 'border-blue-500 bg-accent-primary'
-                  : 'border-gray-400 bg-layer-4 hover:border-transparent',
+                  : 'border-primary bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {
                 handleFilterType(EntityType.Assistant);
@@ -311,7 +311,7 @@ export const ModelsDialog: FC<Props> = ({
                 'rounded border-b-2 px-3 py-2 hover:bg-accent-primary',
                 entityTypes.includes(EntityType.Application)
                   ? 'border-blue-500 bg-accent-primary'
-                  : 'border-gray-400 bg-layer-4 hover:border-transparent',
+                  : 'border-primary bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {
                 handleFilterType(EntityType.Application);

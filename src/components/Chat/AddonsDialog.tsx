@@ -47,11 +47,11 @@ const Addon = ({
         `flex flex-col gap-3 rounded border p-3 text-left`,
         {
           'bg-accent-primary': isPreselected,
-          'hover:border-gray-800': !isPreselected,
+          'hover:border-controls-hover': !isPreselected,
         },
         {
           'border-blue-500': isSelected,
-          'border-gray-400': !isSelected,
+          'border-primary': !isSelected,
         },
       )}
       key={addon.id}

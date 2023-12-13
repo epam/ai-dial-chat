@@ -151,7 +151,7 @@ export const ConversationSettings = ({
         {!replay.replayAsIs ? (
           model ? (
             <div
-              className="divide-gray-300 flex max-h-full shrink flex-col divide-y overflow-auto bg-layer-2"
+              className="flex max-h-full shrink flex-col divide-y divide-primary overflow-auto bg-layer-2"
               data-qa="entity-settings"
             >
               {model.type === EntityType.Application && (
@@ -211,7 +211,7 @@ export const ConversationSettings = ({
         )}
         {isCloseEnabled && (
           <button
-            className="hover:text-blue-500 absolute right-3 top-3 text-secondary"
+            className="absolute right-3 top-3 text-secondary hover:text-accent-primary"
             onClick={onClose}
           >
             <XMark height={24} width={24} />

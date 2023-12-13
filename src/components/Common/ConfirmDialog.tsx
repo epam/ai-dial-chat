@@ -71,7 +71,7 @@ export const ConfirmDialog = ({
               </div>
               <div className="flex items-center gap-3">
                 <button
-                  className="border-gray-400 rounded border px-3 py-2.5 hover:bg-layer-4"
+                  className="rounded border border-primary px-3 py-2.5 hover:bg-layer-4"
                   onClick={() => {
                     onClose(false);
                   }}

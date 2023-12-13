@@ -28,6 +28,8 @@ module.exports = {
       transparent: 'transparent',
       primary: 'var(--stroke-primary, #333942)',
       secondary: 'var(--stroke-secondary, #222932)',
+      'divider-primary': 'var(--divider-primary, #090D13)',
+      'divider-secondary': 'var(--divider-secondary, #222932)',
       error: 'var(--stroke-error, #F76464)',
       'controls-hover': 'var(--controls-stroke-hover, #141A23)',
       'controls-accent': 'var(--controls-stroke-accent, #2764D9)',

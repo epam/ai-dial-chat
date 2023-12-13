@@ -344,7 +344,7 @@ export const FileManagerModal = ({
                       placeholder={t('Search files') || ''}
                       type="text"
                       onChange={handleSearch}
-                      className="border-gray-400 focus-visible:border-blue-500 m-0 w-full rounded border bg-transparent px-3 py-2 outline-none placeholder:text-secondary"
+                      className="focus-visible:border-blue-500 m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary"
                     ></input>
                     <div className="flex min-h-[350px] flex-col overflow-auto">
                       <button
@@ -418,7 +418,7 @@ export const FileManagerModal = ({
                   </div>
                 )}
               </div>
-              <div className="border-gray-300 flex items-center justify-between border-t px-6 py-4">
+              <div className="flex items-center justify-between border-t border-primary px-6 py-4">
                 <div className="flex items-center justify-center gap-2">
                   {selectedFilesIds.length > 0 ? (
                     <>

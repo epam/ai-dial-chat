@@ -26,7 +26,7 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
   }
 
   return isUnderSection && !isInner ? (
-    <div className="border-gray-400 rounded border bg-layer-1">
+    <div className="rounded border border-primary bg-layer-1">
       <button
         className="flex w-full items-center gap-2 p-2 text-sm"
         onClick={() => setIsSectionOpened((val) => !val)}
@@ -41,7 +41,7 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
         />
       </button>
       {isSectionOpened && (
-        <div className="border-gray-400 grid max-w-full grid-cols-1 gap-1 border-t p-2 sm:grid-cols-2 md:grid-cols-3">
+        <div className="grid max-w-full grid-cols-1 gap-1 border-t border-primary p-2 sm:grid-cols-2 md:grid-cols-3">
           {attachments?.map((attachment) => (
             <MessageAttachment
               key={attachment.index}

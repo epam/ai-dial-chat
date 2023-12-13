@@ -33,7 +33,7 @@ export const MoveToFolderMobileModal = ({
 
   return (
     <FloatingOverlay className="z-50 flex items-center justify-center bg-blackout p-3 md:p-5">
-      <div className="divide-gray-300 flex h-full w-full flex-col divide-y overflow-y-auto bg-layer-3">
+      <div className="flex h-full w-full flex-col divide-y divide-primary overflow-y-auto bg-layer-3">
         <div className="flex items-end justify-between px-3 pb-2 pt-4">
           <span className="h-min">{t('Move to')}</span>
           <span onClick={onClose}>

@@ -340,7 +340,7 @@ export const PreUploadDialog = ({
                       <span className="text-blue-500 text-xs">&nbsp;*</span>
                     </div>
                     <button
-                      className="border-gray-400 hover:border-blue-500 focus:border-blue-500 flex grow items-center justify-between rounded border bg-transparent px-3 py-2 placeholder:text-secondary focus:outline-none"
+                      className="hover:border-blue-500 focus:border-blue-500 flex grow items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary focus:outline-none"
                       onClick={handleFolderChange}
                     >
                       <span className="truncate">
@@ -375,7 +375,7 @@ export const PreUploadDialog = ({
                                   0,
                                   file.name.lastIndexOf('.'),
                                 )}
-                                className="border-gray-400 hover:border-blue-500 focus:border-blue-500 grow rounded border bg-transparent py-2 pl-8 pr-12 placeholder:text-secondary focus:outline-none"
+                                className="hover:border-blue-500 focus:border-blue-500 grow rounded border border-primary bg-transparent py-2 pl-8 pr-12 placeholder:text-secondary focus:outline-none"
                                 onChange={handleRenameFile(index)}
                               />
                               <span className="absolute right-2 top-[calc(50%_-_9px)]">

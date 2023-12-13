@@ -117,7 +117,7 @@ export default function ItemContextMenu({
               onMoveToFolder({ isNewFolder: true });
             },
             className: classNames('invisible md:visible', {
-              'border-gray-400 border-b': folders?.length > 0,
+              'border-b border-primary': folders?.length > 0,
             }),
           },
           ...folders.map((folder) => ({
