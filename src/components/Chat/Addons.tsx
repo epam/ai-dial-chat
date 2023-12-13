@@ -194,7 +194,7 @@ export const Addons = ({
           )}
           <div>
             <button
-              className="text-blue-500 mt-3 inline text-left"
+              className="mt-3 inline text-left text-accent-primary"
               onClick={() => {
                 setIsAddonsDialogOpen(true);
               }}

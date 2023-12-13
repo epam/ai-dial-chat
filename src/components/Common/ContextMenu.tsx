@@ -49,8 +49,8 @@ function ContextMenuItemRenderer({
           'text-secondary',
           getByHighlightColor(
             highlightColor,
-            'hover:bg-accent-secondary/15',
-            'hover:bg-accent-tertiary/15',
+            'hover:bg-accent-secondary',
+            'hover:bg-accent-tertiary',
             'hover:bg-accent-primary',
           ),
         )}
@@ -63,8 +63,8 @@ function ContextMenuItemRenderer({
       className={classNames(
         getByHighlightColor(
           highlightColor,
-          'hover:bg-accent-secondary/15',
-          'hover:bg-accent-tertiary/15',
+          'hover:bg-accent-secondary',
+          'hover:bg-accent-tertiary',
           'hover:bg-accent-primary',
         ),
         className,

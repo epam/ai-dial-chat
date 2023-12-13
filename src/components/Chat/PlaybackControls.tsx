@@ -157,13 +157,13 @@ export const PlaybackControls = ({
           data-qa="playback-prev"
           onClick={handlePrevMessage}
           disabled={activeIndex === 0}
-          className="hover:text-blue-500 disabled:text-gray-400 absolute bottom-3 left-4 rounded outline-none disabled:cursor-not-allowed"
+          className="absolute bottom-3 left-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
         >
           <IconPlayerPlay size={20} className="rotate-180" />
         </button>
         <div
           ref={nextMessageBoxRef}
-          className="focus-visible:border-blue-500 m-0 max-h-[150px] min-h-[44px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-layer-3 px-12 py-3 text-left outline-none"
+          className="focus-visible:border-accent-primary m-0 max-h-[150px] min-h-[44px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-layer-3 px-12 py-3 text-left outline-none"
           data-qa="playback-message"
         >
           {isMessageStreaming ? (
@@ -179,7 +179,7 @@ export const PlaybackControls = ({
               <button
                 data-qa="playback-next"
                 onClick={handlePlaynextMessage}
-                className="hover:text-blue-500 disabled:text-gray-400 absolute bottom-3 right-4 rounded outline-none disabled:cursor-not-allowed"
+                className="absolute bottom-3 right-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                 disabled={isMessageStreaming || !isNextMessageInStack}
               >
                 <IconPlayerPlay size={20} className="shrink-0" />

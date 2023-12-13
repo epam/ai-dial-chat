@@ -112,7 +112,7 @@ export const FileItem = ({
               />
               <IconCheck
                 size={18}
-                className="text-blue-500 pointer-events-none invisible absolute peer-checked:visible"
+                className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
               />
             </div>
           )}

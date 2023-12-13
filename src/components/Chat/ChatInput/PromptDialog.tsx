@@ -133,7 +133,7 @@ export const PromptDialog: FC<Props> = ({
         )}
 
         <button
-          className="hover:text-blue-700 absolute right-2 top-2 rounded text-secondary"
+          className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
           onClick={onClose}
         >
           <IconX size={24} />
@@ -143,7 +143,7 @@ export const PromptDialog: FC<Props> = ({
           <div className="mb-4" key={variable.key}>
             <div className="mb-1 flex text-xs text-secondary">
               {variable.key}
-              <span className="text-blue-500 ml-1 inline">*</span>
+              <span className="ml-1 inline text-accent-primary">*</span>
             </div>
 
             <textarea

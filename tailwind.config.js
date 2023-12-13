@@ -37,6 +37,19 @@ module.exports = {
       'accent-secondary': 'var(--stroke-accent-secondary, #37BABC)',
       'accent-tertiary': 'var(--stroke-accent-tertiary, #A972FF)',
     },
+    stroke: {
+      transparent: 'transparent',
+      primary: 'var(--stroke-primary, #333942)',
+      secondary: 'var(--stroke-secondary, #222932)',
+      'divider-primary': 'var(--divider-primary, #090D13)',
+      'divider-secondary': 'var(--divider-secondary, #222932)',
+      error: 'var(--stroke-error, #F76464)',
+      'controls-hover': 'var(--controls-stroke-hover, #141A23)',
+      'controls-accent': 'var(--controls-stroke-accent, #2764D9)',
+      'accent-primary': 'var(--stroke-accent-primary, #5C8DEA)',
+      'accent-secondary': 'var(--stroke-accent-secondary, #37BABC)',
+      'accent-tertiary': 'var(--stroke-accent-tertiary, #A972FF)',
+    },
     divideColor: {
       transparent: 'transparent',
       primary: 'var(--divider-primary, #090D13)',
@@ -53,6 +66,11 @@ module.exports = {
       'controls-permanent': 'var(--controls-text-permanent, #FCFCFC)',
       'controls-disable': 'var(--controls-text-disable, #333942)',
     },
+    gradientColorStops: {
+      'accent-primary': 'var(--text-accent-primary, #5C8DEA)',
+      'accent-secondary': 'var(--text-accent-secondary, #37BABC)',
+      'accent-tertiary': 'var(--text-accent-tertiary, #A972FF)',
+    },
     /////////
     extend: {
       colors: {
@@ -68,7 +86,7 @@ module.exports = {
         15: '15%',
       },
       boxShadow: {
-        DEFAULT: '0 0 4px 0 rgb(var(--gray-900, 9 13 19) / 15%)',
+        DEFAULT: '0 0 4px 0 var(--bg-blackout, #090D13B3)',
       },
       fontFamily: {
         DEFAULT: ['var(--font-inter)'],

@@ -117,7 +117,7 @@ const SelectedAddon = ({
         <XMark
           height={12}
           width={12}
-          className="hover:text-blue-500 text-secondary"
+          className="text-secondary hover:text-accent-primary"
         />
       )}
     </button>

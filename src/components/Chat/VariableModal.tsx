@@ -132,7 +132,7 @@ export const VariableModal: FC<Props> = ({
         )}
 
         <button
-          className="hover:text-blue-700 absolute right-2 top-2 rounded text-secondary"
+          className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
           onClick={onClose}
         >
           <XMark height={24} width={24} />
@@ -142,7 +142,7 @@ export const VariableModal: FC<Props> = ({
           <div className="mb-4" key={variable.key}>
             <div className="mb-1 flex text-xs text-secondary">
               {variable.key}
-              <span className="text-blue-500 ml-1 inline">*</span>
+              <span className="ml-1 inline text-accent-primary">*</span>
             </div>
 
             <textarea

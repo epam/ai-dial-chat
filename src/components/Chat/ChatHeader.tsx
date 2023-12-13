@@ -100,7 +100,7 @@ export const ChatHeader = ({
           </Tooltip>
         )}
         {model && (
-          <div className="[&>*]:border-x-gray-500 flex lg:[&>*:first-child]:border-l-[1px] lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:pl-2">
+          <div className="flex lg:[&>*:first-child]:border-l-[1px] lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-secondary [&>*]:pl-2">
             {isShowChatInfo && (
               <>
                 <span className="flex items-center" data-qa="chat-model">
@@ -173,7 +173,7 @@ export const ChatHeader = ({
                   tooltip={t('Conversation settings')}
                 >
                   <button
-                    className="hover:text-blue-500 cursor-pointer text-secondary"
+                    className="cursor-pointer text-secondary hover:text-accent-primary"
                     onClick={() => {
                       setShowSettings(!isShowSettings);
                     }}
@@ -189,7 +189,7 @@ export const ChatHeader = ({
                   tooltip={t('Clear conversation messages')}
                 >
                   <button
-                    className="hover:text-blue-500 cursor-pointer text-secondary"
+                    className="cursor-pointer text-secondary hover:text-accent-primary"
                     onClick={onClearConversation}
                     data-qa="clear-conversation"
                   >
@@ -203,7 +203,7 @@ export const ChatHeader = ({
                   tooltip={t('Remove conversation from compare mode')}
                 >
                   <button
-                    className="hover:text-blue-500 cursor-pointer text-secondary disabled:cursor-not-allowed"
+                    className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
                     onClick={() => onUnselectConversation(conversation.id)}
                     disabled={conversation.isMessageStreaming}
                     data-qa="remove-from-compare"
@@ -218,7 +218,7 @@ export const ChatHeader = ({
                   tooltip={t('To edit the chat, leave Playback mode')}
                 >
                   <button
-                    className="hover:text-blue-500 cursor-pointer text-secondary"
+                    className="cursor-pointer text-secondary hover:text-accent-primary"
                     onClick={onCancelPlaybackMode}
                     data-qa="cancel-playback-mode"
                   >

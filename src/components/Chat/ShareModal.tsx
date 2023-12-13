@@ -119,7 +119,7 @@ export default function ShareModal({
             <button
               type="button"
               role="button"
-              className="hover:text-blue-700 absolute right-2 top-2 rounded text-secondary"
+              className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
               onClick={handleClose}
             >
               <IconX height={24} width={24} />

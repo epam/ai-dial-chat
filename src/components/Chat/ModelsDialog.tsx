@@ -45,7 +45,9 @@ const Entity = ({
     <button
       key={entity.id}
       className={`hover:border-controls-hover flex items-center gap-3 rounded border px-3 py-2 ${
-        selectedModelId === entity.id ? 'border-blue-500' : 'border-primary'
+        selectedModelId === entity.id
+          ? 'border-accent-primary'
+          : 'border-primary'
       } ${isOpened ? 'md:col-span-2' : 'md:col-span-1'}`}
       onClick={() => {
         onSelect(entity.id);
@@ -258,7 +260,7 @@ export const ModelsDialog: FC<Props> = ({
             {t('Talk to')}
             <button
               onClick={onClose}
-              className="hover:text-blue-500 text-secondary"
+              className="text-secondary hover:text-accent-primary"
               data-qa="close-models-dialog"
             >
               <XMark height={24} width={24} />
@@ -273,7 +275,7 @@ export const ModelsDialog: FC<Props> = ({
               onChange={(e) => {
                 handleSearch(e.target.value);
               }}
-              className="focus-visible:border-blue-500 m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary"
+              className="focus-visible:border-accent-primary m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary"
             ></input>
           </div>
 
@@ -282,7 +284,7 @@ export const ModelsDialog: FC<Props> = ({
               className={classNames(
                 'rounded border-b-2 px-3 py-2 hover:bg-accent-primary',
                 entityTypes.includes(EntityType.Model)
-                  ? 'border-blue-500 bg-accent-primary'
+                  ? 'border-accent-primary bg-accent-primary'
                   : 'border-primary bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {
@@ -296,7 +298,7 @@ export const ModelsDialog: FC<Props> = ({
               className={classNames(
                 'rounded border-b-2 px-3 py-2 hover:bg-accent-primary',
                 entityTypes.includes(EntityType.Assistant)
-                  ? 'border-blue-500 bg-accent-primary'
+                  ? 'border-accent-primary bg-accent-primary'
                   : 'border-primary bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {
@@ -310,7 +312,7 @@ export const ModelsDialog: FC<Props> = ({
               className={classNames(
                 'rounded border-b-2 px-3 py-2 hover:bg-accent-primary',
                 entityTypes.includes(EntityType.Application)
-                  ? 'border-blue-500 bg-accent-primary'
+                  ? 'border-accent-primary bg-accent-primary'
                   : 'border-primary bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {

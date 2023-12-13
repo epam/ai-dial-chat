@@ -58,7 +58,7 @@ export const ConversationSettingsModel = ({
             <button
               className={`flex items-center gap-3 rounded border p-3 text-left text-xs ${
                 modelId === entity.id && !replay.replayAsIs
-                  ? 'border-blue-500'
+                  ? 'border-accent-primary'
                   : 'hover:border-controls-hover border-primary'
               }`}
               key={entity.id}
@@ -85,7 +85,7 @@ export const ConversationSettingsModel = ({
         </div>
       </div>
       <button
-        className="text-blue-500 mt-3 inline text-left"
+        className="mt-3 inline text-left text-accent-primary"
         onClick={() => setIsModelsDialogOpen(true)}
         data-qa="see-full-list"
       >
