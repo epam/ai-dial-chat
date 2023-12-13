@@ -1,8 +1,8 @@
 import { Attributes, Tags } from '@/e2e/src/ui/domData';
 
 export const SideBarSelectors = {
-  chatBar: '[data-qa="sidebar"].fixed.left-0',
-  promptBar: '[data-qa="sidebar"].fixed.right-0',
+  chatBar: '[data-qa="chatbar"]',
+  promptBar: '[data-qa="promptbar"]',
   folder: '[data-qa="folder"]',
   folderName: '[data-qa="folder-name"]',
   dotsMenu: '[aria-haspopup="menu"]',

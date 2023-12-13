@@ -15,6 +15,7 @@ import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, HighlightColor } from '@/src/types/common';
+import { SharingType } from '@/src/types/share';
 
 import {
   ConversationsActions,
@@ -22,7 +23,6 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { emptyImage } from '@/src/constants/drag-and-drop';
@@ -30,11 +30,13 @@ import { emptyImage } from '@/src/constants/drag-and-drop';
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { PlaybackIcon } from '@/src/components/Chat/PlaybackIcon';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
-import ShareModal, { SharingType } from '@/src/components/Chat/ShareModal';
+import ShareModal from '@/src/components/Chat/ShareModal';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 import ShareIcon from '@/src/components/Common/ShareIcon';
 
+import PublishModal from '../../Chat/PublishModal';
+import UnpublishModal from '../../Chat/UnpublishModal';
 import { ModelIcon } from './ModelIcon';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -115,10 +117,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
 
-  const isSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
-  );
-
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -127,8 +125,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const dragImageRef = useRef<HTMLImageElement | null>();
   const [isSharing, setIsSharing] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
-  const { id: conversationId } = conversation;
   const isSelected = selectedConversationIds.includes(conversation.id);
 
   const { refs, context } = useFloating({
@@ -265,17 +264,23 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     setIsSharing(false);
   }, []);
 
-  const handleShared = useCallback(
-    (shareUniqueId: string) => {
-      dispatch(
-        ConversationsActions.shareConversation({
-          id: conversationId,
-          shareUniqueId,
-        }),
-      );
-    },
-    [conversationId, dispatch],
-  );
+  const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsPublishing(true);
+    }, []);
+
+  const handleClosePublishModal = useCallback(() => {
+    setIsPublishing(false);
+  }, []);
+
+  const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsUnpublishing(true);
+    }, []);
+
+  const handleCloseUnpublishModal = useCallback(() => {
+    setIsUnpublishing(false);
+  }, []);
 
   const handleMoveToFolder = useCallback(
     ({
@@ -408,6 +413,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           data-qa="dots-menu"
         >
           <ItemContextMenu
+            entity={conversation}
             isEmptyConversation={isEmptyConversation}
             folders={folders}
             featureType={FeatureType.Chat}
@@ -439,7 +445,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             }
             onReplay={!isPlayback ? handleStartReplay : undefined}
             onPlayback={handleCreatePlayback}
-            onOpenShareModal={isSharingEnabled ? handleOpenSharing : undefined}
+            onShare={handleOpenSharing}
+            onPublish={handleOpenPublishing}
+            onPublishUpdate={handleOpenPublishing}
+            onUnpublish={handleOpenUnpublishing}
             onOpenChange={setIsContextMenu}
             isOpen={isContextMenu}
           />
@@ -473,7 +482,22 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           type={SharingType.Conversation}
           isOpen
           onClose={handleCloseShareModal}
-          onShare={handleShared}
+        />
+      )}
+      {isPublishing && (
+        <PublishModal
+          entity={conversation}
+          type={SharingType.Conversation}
+          isOpen
+          onClose={handleClosePublishModal}
+        />
+      )}
+      {isUnpublishing && (
+        <UnpublishModal
+          entity={conversation}
+          type={SharingType.Conversation}
+          isOpen
+          onClose={handleCloseUnpublishModal}
         />
       )}
     </div>
