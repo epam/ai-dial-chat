@@ -34,7 +34,10 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import { isSettingsChanged } from '@/src/utils/app/conversation';
+import {
+  getNewConversationName,
+  isSettingsChanged,
+} from '@/src/utils/app/conversation';
 import { DataService } from '@/src/utils/app/data/data-service';
 import {
   ImportConversationsResponse,
@@ -480,14 +483,11 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           : payload.conversation.messages
       ).concat(userMessage, assistantMessage);
 
-      const newConversationName =
-        !payload.conversation.replay.isReplay &&
-        updatedMessages.length === 2 &&
-        !payload.conversation.isNameChanged
-          ? payload.message.content.length > 160
-            ? payload.message.content.substring(0, 160) + '...'
-            : payload.message.content
-          : payload.conversation.name;
+      const newConversationName = getNewConversationName(
+        payload.conversation,
+        payload.message,
+        updatedMessages,
+      );
 
       const updatedConversation: Conversation = {
         ...payload.conversation,
