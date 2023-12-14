@@ -13,7 +13,7 @@ import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../../public/images/icons/move-right.svg';
 import XmarkIcon from '../../../public/images/icons/xmark.svg';
 import Tooltip from '../Common/Tooltip';
-import { SettingDialog } from '../Settings/SettingDialog';
+import SettingDialog from '../Settings/SettingDialog';
 import { CreateNewChatMobile } from './CreateNewChatMobile';
 import { User } from './User/User';
 

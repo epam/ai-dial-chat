@@ -128,6 +128,17 @@ export class DataService {
     return BrowserStorage.setData(UIStorageKeys.PromptbarWidth, promptBarWidth);
   }
 
+  public static getIsChatFullWidth(): Observable<boolean> {
+    return BrowserStorage.getData(UIStorageKeys.IsChatFullWidth, false);
+  }
+
+  public static setIsChatFullWidth(IsChatFullWidth: boolean): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.IsChatFullWidth,
+      IsChatFullWidth,
+    );
+  }
+
   public static getShowChatbar(): Observable<boolean> {
     return BrowserStorage.getData(UIStorageKeys.ShowChatbar, true);
   }

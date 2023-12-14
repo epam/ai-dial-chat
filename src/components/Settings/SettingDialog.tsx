@@ -1,12 +1,5 @@
 import { FloatingPortal } from '@floating-ui/react';
-import {
-  ChangeEventHandler,
-  FC,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -17,16 +10,21 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import XMark from '../../../public/images/icons/xmark.svg';
+import { ThemeSelect } from './ThemeSelect';
+import { ToggleFullWidth } from './ToggleFullWidth';
 
 interface Props {
   open: boolean;
   onClose: () => void;
 }
 
-export const SettingDialog: FC<Props> = ({ open, onClose }) => {
+const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const theme = useAppSelector(UISelectors.selectThemeState);
+  const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
   const [localTheme, setLocalTheme] = useState(theme);
+  const [isChatFullWidthLocal, setIsChatFullWidthLocal] =
+    useState(isChatFullWidth);
 
   const dispatch = useAppDispatch();
 
@@ -37,6 +35,10 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   useEffect(() => {
     setLocalTheme(theme);
   }, [theme]);
+
+  useEffect(() => {
+    setIsChatFullWidthLocal(isChatFullWidth);
+  }, [isChatFullWidth]);
 
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
@@ -57,16 +59,19 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     };
   }, [onClose]);
 
-  const onThemeChangeHandler: ChangeEventHandler<HTMLSelectElement> =
-    useCallback((event) => {
-      const theme = event.target.value as Theme;
-      setLocalTheme(theme);
-    }, []);
+  const onThemeChangeHandler = useCallback((theme: Theme) => {
+    setLocalTheme(theme);
+  }, []);
+
+  const onChangeHandlerFullWidth = useCallback(() => {
+    setIsChatFullWidthLocal((prev) => !prev);
+  }, []);
 
   const handleSave = useCallback(() => {
     dispatch(UIActions.setTheme(localTheme));
+    dispatch(UIActions.setIsChatFullWidth(isChatFullWidthLocal));
     onClose();
-  }, [dispatch, localTheme, onClose]);
+  }, [dispatch, localTheme, onClose, isChatFullWidthLocal]);
 
   // Render nothing if the dialog is not open.
   if (!open) {
@@ -89,24 +94,15 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
             <XMark height={24} width={24} />
           </button>
           <div className="mb-4 text-base font-bold">{t('Settings')}</div>
-          <div className="mb-4">
-            <div className="flex items-center gap-5">
-              <div className="w-[120px]">{t('Theme')}</div>
-              <div className="w-full rounded border border-gray-400 px-3 focus-within:border-blue-500 focus:border-blue-500 dark:border-gray-600">
-                <select
-                  className="h-[38px] w-full cursor-pointer rounded border-none focus:outline-none dark:bg-gray-700"
-                  value={localTheme}
-                  onChange={onThemeChangeHandler}
-                >
-                  <option className="border-none dark:bg-gray-700" value="dark">
-                    {t('Dark')}
-                  </option>
-                  <option className="dark:bg-gray-700" value="light">
-                    {t('Light')}
-                  </option>
-                </select>
-              </div>
-            </div>
+          <div className="mb-4 flex flex-col gap-5">
+            <ThemeSelect
+              localTheme={localTheme}
+              onThemeChangeHandler={onThemeChangeHandler}
+            />
+            <ToggleFullWidth
+              isOn={isChatFullWidthLocal}
+              handleSwitch={onChangeHandlerFullWidth}
+            />
           </div>
 
           <div className="flex  justify-end">
@@ -123,3 +119,5 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     </FloatingPortal>
   );
 };
+
+export default SettingDialog;
