@@ -22,6 +22,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import ContextMenu from '../Common/ContextMenu';
 import SearchFilterRenderer from './SearchFilterRenderer';
+import Tooltip from '../Common/Tooltip';
 
 interface Props {
   onSearchFiltersChanged: (searchFilters: SearchFilters) => void;
@@ -93,7 +94,7 @@ export default function SearchFiltersView({
       highlightColor={highlightColor}
       triggerIconClassName="absolute right-4 cursor-pointer max-h-[18px]"
       TriggerCustomRenderer={
-        <>
+        <Tooltip tooltip="Search filter">
           <IconFilter
             size={18}
             className={classNames(
@@ -118,7 +119,7 @@ export default function SearchFiltersView({
               )}
             />
           )}
-        </>
+        </Tooltip>
       }
     />
   );
