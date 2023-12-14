@@ -75,6 +75,7 @@ export default function ShareIcon({
                 'text-blue-500 group-hover:bg-blue-500/20',
               ),
               'stroke-1 p-[1px]',
+              isPublished ? 'rounded-md' : 'rounded-sm',
               isHighlited &&
                 getByHighlightColor(
                   highlightColor,
