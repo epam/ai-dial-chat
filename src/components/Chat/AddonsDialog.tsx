@@ -292,7 +292,7 @@ export const AddonsDialog: FC<Props> = ({
             <div className="h-[40px] shrink-0"></div>
           </div>
           <div className="relative h-0 grow">
-            <div className="from-transparent via-layer-3 to-layer-3 absolute bottom-0 flex h-[80px] w-full items-end justify-center bg-gradient-to-b px-3 md:px-5">
+            <div className="absolute bottom-0 flex h-[80px] w-full items-end justify-center bg-gradient-to-b from-transparent via-layer-3 to-layer-3 px-3 md:px-5">
               <button
                 className="button button-primary"
                 onClick={() => {
