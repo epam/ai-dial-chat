@@ -415,6 +415,12 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     'hover:bg-violet/15',
     'hover:bg-blue-500/20',
   );
+  const borderColor = getByHighlightColor(
+      highlightColor,
+      'border-green',
+      'border-violet',
+      'border-blue-500',
+  );
 
   return (
     <div
@@ -438,7 +444,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             isContextMenu ||
             (allItems === undefined &&
               highlightedFolders?.includes(currentFolder.id))
-            ? classNames(bgColor, 'border-blue-500')
+            ? classNames(bgColor, borderColor)
             : 'border-transparent',
         )}
         data-qa="folder"
