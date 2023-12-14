@@ -416,10 +416,10 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     'hover:bg-blue-500/20',
   );
   const borderColor = getByHighlightColor(
-      highlightColor,
-      'border-green',
-      'border-violet',
-      'border-blue-500',
+    highlightColor,
+    'border-green',
+    'border-violet',
+    'border-blue-500',
   );
 
   return (
