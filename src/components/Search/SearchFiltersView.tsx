@@ -21,8 +21,8 @@ import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import ContextMenu from '../Common/ContextMenu';
-import SearchFilterRenderer from './SearchFilterRenderer';
 import Tooltip from '../Common/Tooltip';
+import SearchFilterRenderer from './SearchFilterRenderer';
 
 interface Props {
   onSearchFiltersChanged: (searchFilters: SearchFilters) => void;
