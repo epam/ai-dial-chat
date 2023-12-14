@@ -169,17 +169,18 @@ test('Prompt is moved out of the folder via drag&drop', async ({
   folderPrompts,
   localStorageManager,
   prompts,
+  promptBar,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-961');
   const promptInFolder = promptData.prepareDefaultPromptInFolder();
   await localStorageManager.setFolders(promptInFolder.folders);
   await localStorageManager.setPrompts(promptInFolder.prompts[0]);
+  await localStorageManager.setOpenedFolders(promptInFolder.folders);
 
   await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
-  await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
-  await folderPrompts.dropPromptFromFolder(
+  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+  await promptBar.dropPromptFromFolder(
     promptInFolder.folders.name,
     promptInFolder.prompts[0].name,
   );
@@ -463,10 +464,8 @@ test('Search prompt located in folders', async ({
   promptBar,
   folderPrompts,
   setTestIds,
-  setIssueIds,
 }) => {
   setTestIds('EPMRTC-1174');
-  setIssueIds('175');
   let firstFolderPrompt: FolderPrompt;
   let secondFolderPrompts: FolderPrompt;
 

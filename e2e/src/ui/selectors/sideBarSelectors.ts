@@ -1,9 +1,10 @@
 import { Attributes, Tags } from '@/e2e/src/ui/domData';
 
 export const SideBarSelectors = {
-  chatBar: '[data-qa="sidebar"].fixed.left-0',
-  promptBar: '[data-qa="sidebar"].fixed.right-0',
+  chatBar: '[data-qa="chatbar"]',
+  promptBar: '[data-qa="promptbar"]',
   folder: '[data-qa="folder"]',
+  folderName: '[data-qa="folder-name"]',
   dotsMenu: '[aria-haspopup="menu"]',
   renameInput: (value: string) =>
     `${Tags.input}[${Attributes.value}="${value}"]`,
@@ -22,6 +23,7 @@ export const ChatBarSelectors = {
   compare: '[data-qa="compare"]',
   conversations: '[data-qa="conversations"]',
   conversation: '[data-qa="conversation"]',
+  conversationName: '[data-qa="chat-name"]',
   chatFolders: '[data-qa="chat-folders"]',
   actionButton: '[data-qa="action-button"]',
   exportConversations: '[data-qa="export-conversations"]',

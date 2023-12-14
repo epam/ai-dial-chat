@@ -52,31 +52,31 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ promptId: string; values: Partial<Prompt> }>,
     ) => {
-      state.prompts = state.prompts.map((conv) => {
-        if (conv.id === payload.promptId) {
+      state.prompts = state.prompts.map((prompt) => {
+        if (prompt.id === payload.promptId) {
           return {
-            ...conv,
+            ...prompt,
             ...payload.values,
           };
         }
 
-        return conv;
+        return prompt;
       });
     },
     sharePrompt: (
       state,
-      { payload }: PayloadAction<{ promptId: string; shareUniqueId: string }>,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
     ) => {
-      state.prompts = state.prompts.map((conv) => {
-        if (conv.id === payload.promptId) {
+      state.prompts = state.prompts.map((prompt) => {
+        if (prompt.id === payload.id) {
           return {
-            ...conv,
+            ...prompt,
             //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
             isShared: true,
           };
         }
 
-        return conv;
+        return prompt;
       });
     },
     shareFolder: (
@@ -89,6 +89,70 @@ export const promptsSlice = createSlice({
             ...folder,
             //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
             isShared: true,
+          };
+        }
+
+        return folder;
+      });
+    },
+    publishPrompt: (
+      state,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
+    ) => {
+      state.prompts = state.prompts.map((prompt) => {
+        if (prompt.id === payload.id) {
+          return {
+            ...prompt,
+            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
+            isPublished: true,
+          };
+        }
+
+        return prompt;
+      });
+    },
+    publishFolder: (
+      state,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
+    ) => {
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.id) {
+          return {
+            ...folder,
+            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
+            isPublished: true,
+          };
+        }
+
+        return folder;
+      });
+    },
+    unpublishPrompt: (
+      state,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
+    ) => {
+      state.prompts = state.prompts.map((prompt) => {
+        if (prompt.id === payload.id) {
+          return {
+            ...prompt,
+            //TODO: unpublish prompt by API
+            isPublished: false,
+          };
+        }
+
+        return prompt;
+      });
+    },
+    unpublishFolder: (
+      state,
+      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
+    ) => {
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.id) {
+          return {
+            ...folder,
+            //TODO: unpublish folder by API
+            isPublished: false,
           };
         }
 

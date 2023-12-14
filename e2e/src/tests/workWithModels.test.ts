@@ -3,6 +3,7 @@ import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
 import {
+  API,
   ExpectedConstants,
   ExpectedMessages,
   ModelIds,
@@ -12,7 +13,7 @@ import { expect } from '@playwright/test';
 
 const userRequests = ['first request', 'second request', 'third request'];
 const requestTerm = 'qwer';
-const request = 'write down 30 adjectives';
+const request = 'write cinderella story';
 const expectedResponse = 'The sky is blue.';
 const sysPrompt = `Type: "${expectedResponse}" if user types ${requestTerm}`;
 let gpt35Model: OpenAIEntityModel;
@@ -258,8 +259,7 @@ test('System prompt is applied in Model', async ({
   });
 });
 
-//TODO: enable test when response is returned by chunks
-test.skip('Stop generating for models like GPT (1 symbol = 1 token)', async ({
+test('Stop generating for models like GPT (1 symbol = 1 token)', async ({
   dialHomePage,
   chat,
   setTestIds,
@@ -269,6 +269,7 @@ test.skip('Stop generating for models like GPT (1 symbol = 1 token)', async ({
   await test.step('Send request and stop generation immediately', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.throttleAPIResponse(API.chatHost);
     await chat.sendRequestWithButton(request, false);
     await chat.stopGenerating.click();
   });
@@ -296,6 +297,7 @@ test.skip('Stop generating for models like GPT (1 symbol = 1 token)', async ({
   });
 
   await test.step('Send request and stop generation when partial content received', async () => {
+    await dialHomePage.unRouteResponse(API.chatHost);
     await chat.regenerateResponse(false);
     await chatMessages.waitForPartialMessageReceived(2);
     await chat.stopGenerating.click();
@@ -324,8 +326,7 @@ test.skip('Stop generating for models like GPT (1 symbol = 1 token)', async ({
   });
 });
 
-//TODO: enable test when response is returned by chunks
-test.skip(
+test(
   'Send button in new message is available for Model if previous response is partly received when Stop generating was used.\n' +
     'Compare mode button is not available while response is being generated',
   async ({
@@ -340,6 +341,7 @@ test.skip(
     await test.step('Send request, verify Compare button is disabled while generating the response and stop generation immediately', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      await dialHomePage.throttleAPIResponse(API.chatHost, 1500);
       await chat.sendRequestWithButton(request, false);
 
       const isCompareButtonEnabled =

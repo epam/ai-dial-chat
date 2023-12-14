@@ -1,11 +1,14 @@
 import { ReactNode } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
 
 import { getByHighlightColor } from '@/src/utils/app/folders';
 
 import { FeatureType, HighlightColor } from '@/src/types/common';
 import { ShareInterface } from '@/src/types/share';
+import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -32,6 +35,7 @@ export default function ShareIcon({
   children,
   featureType,
 }: ShareIsonProps) {
+  const { t } = useTranslation(Translation.SideBar);
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
@@ -58,7 +62,7 @@ export default function ShareIcon({
           isPublished ? 'rounded-md' : 'rounded-sm',
         )}
       >
-        <Tooltip tooltip={isShared ? 'shared' : 'published'}>
+        <Tooltip tooltip={t(isPublished ? 'Published' : 'Shared')}>
           <AdditionalIcon
             size={size}
             width={size}
