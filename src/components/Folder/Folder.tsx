@@ -409,6 +409,12 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     'bg-violet/15',
     'bg-blue-500/20',
   );
+  const hoverBgColor = getByHighlightColor(
+    highlightColor,
+    'hover:bg-green/15',
+    'hover:bg-violet/15',
+    'hover:bg-blue-500/20',
+  );
 
   return (
     <div
@@ -427,6 +433,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       <div
         className={classNames(
           'relative flex h-[30px] items-center rounded border-l-2',
+          hoverBgColor,
           isRenaming ||
             isContextMenu ||
             (allItems === undefined &&
@@ -503,15 +510,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 highlightColor={highlightColor}
                 featureType={featureType}
               >
-                <IconFolder
-                  size={18}
-                  className={classNames(
-                    'mr-1 text-gray-500',
-                    !isRenaming &&
-                      highlightedFolders?.includes(currentFolder.id) &&
-                      textColor,
-                  )}
-                />
+                <IconFolder size={18} className={'mr-1 text-gray-500'} />
               </ShareIcon>
             )}
             <div
