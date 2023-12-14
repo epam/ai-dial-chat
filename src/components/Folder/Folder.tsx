@@ -410,7 +410,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             isContextMenu ||
             (allItems === undefined &&
               highlightedFolders?.includes(currentFolder.id))
-            ? classNames('border-accent-primary bg-accent-primary')
+            ? 'border-accent-primary bg-accent-primary'
             : 'border-transparent',
         )}
         data-qa="folder"
@@ -491,6 +491,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                   highlightedFolders?.includes(currentFolder.id) &&
                   'text-primary',
               )}
+              data-qa="folder-name"
             >
               {currentFolder.name}
             </div>

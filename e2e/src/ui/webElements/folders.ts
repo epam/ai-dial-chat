@@ -43,6 +43,12 @@ export class Folders extends BaseElement {
     ).getElementLocatorByText(name, index);
   }
 
+  public getFolderName(name: string, index?: number) {
+    return this.createElementFromLocator(
+      this.getFolderByName(name, index).locator(SideBarSelectors.folderName),
+    );
+  }
+
   public async getFoldersCount() {
     return this.getChildElementBySelector(
       SideBarSelectors.folder,

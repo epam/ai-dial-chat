@@ -62,6 +62,14 @@ export class Conversations extends BaseElement {
     ).getElementLocatorByText(name, index);
   }
 
+  public getConversationName(name: string, index?: number) {
+    return this.createElementFromLocator(
+      this.getConversationByName(name, index).locator(
+        ChatBarSelectors.conversationName,
+      ),
+    );
+  }
+
   public getConversationIcon(name: string, index?: number) {
     return this.getConversationByName(name, index).locator(
       ChatSelectors.chatIcon,
