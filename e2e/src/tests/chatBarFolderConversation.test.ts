@@ -7,6 +7,7 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/e2e/src/testData';
+import { Overflow, Styles } from '@/e2e/src/ui/domData';
 import { GeneratorUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
@@ -110,40 +111,79 @@ test(`Cancel folder renaming on "x"`, async ({
     .toBeTruthy();
 });
 
-test('Rename chat folder when chats are inside using check button', async ({
-  dialHomePage,
-  conversationData,
-  folderConversations,
-  localStorageManager,
-  folderDropdownMenu,
-  setTestIds,
-}) => {
-  setTestIds('EPMRTC-573');
-  const conversationInFolder =
-    conversationData.prepareDefaultConversationInFolder();
-  await localStorageManager.setFolders(conversationInFolder.folders);
-  await localStorageManager.setConversationHistory(
-    conversationInFolder.conversations[0],
-  );
+test(
+  'Rename chat folder when chats are inside using check button\n' +
+    'Long Folder name is cut',
+  async ({
+    dialHomePage,
+    conversationData,
+    folderConversations,
+    localStorageManager,
+    folderDropdownMenu,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-573', 'EPMRTC-574');
+    const folderName = GeneratorUtil.randomString(70);
+    const newConversationName = 'updated folder name';
 
-  const newName = 'updated folder name';
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
-  await folderConversations.openFolderDropdownMenu(
-    conversationInFolder.folders.name,
-  );
-  await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-  await folderConversations.editFolderNameWithTick(
-    conversationInFolder.folders.name,
-    newName,
-  );
-  expect
-    .soft(
-      await folderConversations.getFolderByName(newName).isVisible(),
-      ExpectedMessages.folderNameUpdated,
-    )
-    .toBeTruthy();
-});
+    await test.step('Prepare folder with long name and conversation inside folder', async () => {
+      const conversationInFolder =
+        conversationData.prepareDefaultConversationInFolder();
+      conversationInFolder.folders.name = folderName;
+      await localStorageManager.setFolders(conversationInFolder.folders);
+      await localStorageManager.setConversationHistory(
+        conversationInFolder.conversations[0],
+      );
+    });
+
+    await test.step('Open app and verify folder name is truncated in the side panel', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      const folderNameOverflow = await folderConversations
+        .getFolderName(folderName)
+        .getComputedStyleProperty(Styles.text_overflow);
+      expect
+        .soft(folderNameOverflow[0], ExpectedMessages.folderNameIsTruncated)
+        .toBe(Overflow.ellipsis);
+    });
+
+    await test.step('Hover over folder name and verify it is truncated when menu dots appear', async () => {
+      await folderConversations.getFolderByName(folderName).hover();
+      const folderNameOverflow = await folderConversations
+        .getFolderName(folderName)
+        .getComputedStyleProperty(Styles.text_overflow);
+      expect
+        .soft(folderNameOverflow[0], ExpectedMessages.folderNameIsTruncated)
+        .toBe(Overflow.ellipsis);
+    });
+
+    await test.step('Open edit folder name mode and verify it is truncated', async () => {
+      await folderConversations.openFolderDropdownMenu(folderName);
+      await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+      const folderInputOverflow = await folderConversations
+        .getFolderInput(folderName)
+        .getComputedStyleProperty(Styles.text_overflow);
+      expect
+        .soft(folderInputOverflow[0], ExpectedMessages.folderNameIsTruncated)
+        .toBe(Overflow.ellipsis);
+    });
+
+    await test.step('Edit folder name using tick button and verify it is renamed', async () => {
+      await folderConversations.editFolderNameWithTick(
+        folderName,
+        newConversationName,
+      );
+      expect
+        .soft(
+          await folderConversations
+            .getFolderByName(newConversationName)
+            .isVisible(),
+          ExpectedMessages.folderNameUpdated,
+        )
+        .toBeTruthy();
+    });
+  },
+);
 
 test('Folders can expand and collapse', async ({
   dialHomePage,

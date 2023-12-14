@@ -11,6 +11,7 @@ export enum ExpectedMessages {
   conversationIsNotVisible = 'Conversation is not visible in chat bar',
   conversationsCountIsValid = 'Conversation4s count is valid',
   folderIsVisible = 'Folder is visible in chat bar',
+  folderIsNotVisible = 'Folder is not visible in chat bar',
   newFolderCreated = 'New folder is created',
   folderCollapsed = 'Folder is collapsed',
   folderExpanded = 'Folder is expanded',
@@ -81,6 +82,7 @@ export enum ExpectedMessages {
   tooltipContentIsValid = 'Tooltip content is valid',
   headerTitleCorrespondRequest = 'Chat header title correspond sent request',
   headerTitleIsValid = 'Chat header title is valid',
+  headerTitleIsFullyVisible = 'Chat header title is fully visible on tooltip',
   headerIconsCountIsValid = 'Chat header icons number is valid',
   headerCleanConversationIconVisible = 'Chat header Clean Conversation icon is visible',
   headerIconEntityIsValid = 'Chat header icon entity is valid',
@@ -170,4 +172,6 @@ export enum ExpectedMessages {
   closeChatIconIsNotVisible = 'Close chat icon is not visible',
   chatMessageIsRated = 'Chat message was rated',
   entityNameIsTruncated = 'Entity name is truncated',
+  folderNameIsTruncated = 'Folder name is truncated in side panel',
+  chatNameIsTruncated = 'Chat name is truncated in side panel',
 }

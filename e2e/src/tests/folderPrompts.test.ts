@@ -464,10 +464,8 @@ test('Search prompt located in folders', async ({
   promptBar,
   folderPrompts,
   setTestIds,
-  setIssueIds,
 }) => {
   setTestIds('EPMRTC-1174');
-  setIssueIds('175');
   let firstFolderPrompt: FolderPrompt;
   let secondFolderPrompts: FolderPrompt;
 
