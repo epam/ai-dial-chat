@@ -79,7 +79,7 @@ export const BetweenFoldersLine = ({
       onDragEnter={highlightDrop}
       onDragLeave={removeHighlight}
       ref={dragDropElement}
-      className={classNames('h-1', isDraggingOver && highlightColorBg)}
+      className={classNames('h-0.5', isDraggingOver && highlightColorBg)}
       style={{
         marginLeft: (level && `${level * 24}px`) || 0,
       }}
