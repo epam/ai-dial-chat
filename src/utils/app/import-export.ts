@@ -9,7 +9,7 @@ import {
   PromptsHistory,
   SupportedExportFormats,
 } from '@/src/types/export';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 
 import { cleanConversationHistory } from './clean';
@@ -65,7 +65,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
       folders: (data.folders || []).map((chatFolder) => ({
         id: chatFolder.id.toString(),
         name: chatFolder.name,
-        type: 'chat',
+        type: FolderType.Chat,
       })),
       prompts: [],
       isError: false,
@@ -219,7 +219,7 @@ export const importConversations = (
       (folder, index, self) =>
         index === self.findIndex((f) => f.id === folder.id),
     )
-    .filter((folder) => folder.type === 'chat');
+    .filter((folder) => folder.type === FolderType.Chat);
 
   return {
     history: newHistory,

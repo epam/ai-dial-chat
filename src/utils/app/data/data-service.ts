@@ -8,10 +8,12 @@ import {
   DialFile,
   FileFolderInterface,
 } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
-import { DialStorage } from '@/src/types/storage';
+import { DialStorage, UIStorageKeys } from '@/src/types/storage';
 import { Theme } from '@/src/types/themes';
+
+import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
 import { getPathNameId, getRelativePath } from '../file';
 import { ApiMockStorage } from './storages/api-mock-storage';
@@ -60,73 +62,109 @@ export class DataService {
     return this.getDataStorage().setConversations(conversations);
   }
   public static getSelectedConversationsIds(): Observable<string[]> {
-    return BrowserStorage.getData('selectedConversationIds', []);
+    return BrowserStorage.getData(UIStorageKeys.SelectedConversationIds, []);
   }
   public static setSelectedConversationsIds(
     selectedConversationsIds: string[],
   ): Observable<void> {
     return BrowserStorage.setData(
-      'selectedConversationIds',
+      UIStorageKeys.SelectedConversationIds,
       selectedConversationsIds,
     );
   }
   public static getRecentModelsIds(): Observable<string[]> {
-    return BrowserStorage.getData('recentModelsIds', []);
+    return BrowserStorage.getData(UIStorageKeys.RecentModelsIds, []);
   }
   public static setRecentModelsIds(
     recentModelsIds: string[],
   ): Observable<void> {
-    return BrowserStorage.setData('recentModelsIds', recentModelsIds);
+    return BrowserStorage.setData(
+      UIStorageKeys.RecentModelsIds,
+      recentModelsIds,
+    );
   }
 
   public static getRecentAddonsIds(): Observable<string[]> {
-    return BrowserStorage.getData('recentAddonsIds', []);
+    return BrowserStorage.getData(UIStorageKeys.RecentAddonsIds, []);
   }
   public static setRecentAddonsIds(
     recentAddonsIds: string[],
   ): Observable<void> {
-    return BrowserStorage.setData('recentAddonsIds', recentAddonsIds);
+    return BrowserStorage.setData(
+      UIStorageKeys.RecentAddonsIds,
+      recentAddonsIds,
+    );
   }
 
   public static getTheme(): Observable<string> {
-    return BrowserStorage.getData('settings', { theme: '' }).pipe(
+    return BrowserStorage.getData(UIStorageKeys.Settings, { theme: '' }).pipe(
       map((settings) => settings.theme),
     );
   }
   public static setTheme(theme: string): Observable<void> {
-    return BrowserStorage.setData('settings', { theme });
+    return BrowserStorage.setData(UIStorageKeys.Settings, { theme });
   }
   public static getAvailableThemes(): Observable<Theme[]> {
     return ApiStorage.request('api/themes/listing');
   }
+
+  public static getChatbarWidth(): Observable<number> {
+    return BrowserStorage.getData(
+      UIStorageKeys.ChatbarWidth,
+      SIDEBAR_MIN_WIDTH,
+    );
+  }
+
+  public static setChatbarWidth(chatBarWidth: number): Observable<void> {
+    return BrowserStorage.setData(UIStorageKeys.ChatbarWidth, chatBarWidth);
+  }
+
+  public static getPromptbarWidth(): Observable<number> {
+    return BrowserStorage.getData(
+      UIStorageKeys.PromptbarWidth,
+      SIDEBAR_MIN_WIDTH,
+    );
+  }
+
+  public static setPromptbarWidth(promptBarWidth: number): Observable<void> {
+    return BrowserStorage.setData(UIStorageKeys.PromptbarWidth, promptBarWidth);
+  }
+
   public static getShowChatbar(): Observable<boolean> {
-    return BrowserStorage.getData('showChatbar', true);
+    return BrowserStorage.getData(UIStorageKeys.ShowChatbar, true);
   }
+
   public static setShowChatbar(showChatbar: boolean): Observable<void> {
-    return BrowserStorage.setData('showChatbar', showChatbar);
+    return BrowserStorage.setData(UIStorageKeys.ShowChatbar, showChatbar);
   }
+
   public static getShowPromptbar(): Observable<boolean> {
-    return BrowserStorage.getData('showPromptbar', true);
+    return BrowserStorage.getData(UIStorageKeys.ShowPromptbar, true);
   }
+
   public static setShowPromptbar(showPromptbar: boolean): Observable<void> {
-    return BrowserStorage.setData('showPromptbar', showPromptbar);
+    return BrowserStorage.setData(UIStorageKeys.ShowPromptbar, showPromptbar);
   }
+
   public static getOpenedFolderIds(): Observable<string[]> {
-    return BrowserStorage.getData('openedFoldersIds', []);
+    return BrowserStorage.getData(UIStorageKeys.OpenedFoldersIds, []);
   }
   public static setOpenedFolderIds(
     openedFolderIds: string[],
   ): Observable<void> {
-    return BrowserStorage.setData('openedFoldersIds', openedFolderIds);
+    return BrowserStorage.setData(
+      UIStorageKeys.OpenedFoldersIds,
+      openedFolderIds,
+    );
   }
   public static getClosedAnnouncement(): Observable<string | undefined> {
-    return BrowserStorage.getData('textOfClosedAnnouncement', '');
+    return BrowserStorage.getData(UIStorageKeys.TextOfClosedAnnouncement, '');
   }
   public static setClosedAnnouncement(
     closedAnnouncementText: string | undefined,
   ): Observable<void> {
     return BrowserStorage.setData(
-      'textOfClosedAnnouncement',
+      UIStorageKeys.TextOfClosedAnnouncement,
       closedAnnouncementText || '',
     );
   }
@@ -194,7 +232,7 @@ export class DataService {
           return {
             id: getPathNameId(folder.name, relativePath),
             name: folder.name,
-            type: 'file',
+            type: FolderType.File,
             absolutePath: folder.path,
             relativePath: relativePath,
             folderId: relativePath,

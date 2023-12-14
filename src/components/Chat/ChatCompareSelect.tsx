@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { isMobile } from '@/src/utils/app/mobile';
 
 import { Conversation, Role } from '@/src/types/chat';
+import { FeatureType, HighlightColor } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -14,6 +15,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 import { Combobox } from '../Common/Combobox';
+import ShareIcon from '../Common/ShareIcon';
 
 interface OptionProps {
   item: Conversation;
@@ -35,8 +37,15 @@ const Option = ({ item }: OptionProps) => {
   }
 
   return (
-    <div className="flex items-center gap-3 pl-1">
-      <ModelIcon entity={model} entityId={model.id} size={24} />
+    <div className="group flex items-center gap-3 pl-1">
+      <ShareIcon
+        {...item}
+        isHighlited={false}
+        highlightColor={HighlightColor.Blue}
+        featureType={FeatureType.Chat}
+      >
+        <ModelIcon entity={model} entityId={model.id} size={24} />
+      </ShareIcon>
       <span>{item.name}</span>
     </div>
   );

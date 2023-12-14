@@ -21,7 +21,9 @@ export class SendMessage extends BaseElement {
   }
 
   public messageInput = this.getChildElementBySelector(Tags.textarea);
-  public sendMessageButton = this.getChildElementBySelector(Tags.button);
+  public sendMessageButton = this.getChildElementBySelector(
+    ChatSelectors.sendMessage,
+  );
   public messageInputSpinner = this.messageInput.getChildElementBySelector(
     ChatSelectors.messageSpinner,
   );

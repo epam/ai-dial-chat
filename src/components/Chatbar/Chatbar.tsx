@@ -1,9 +1,10 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
+import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -39,7 +40,7 @@ const ChatActionsBlock = () => {
               names: [DEFAULT_CONVERSATION_NAME],
             }),
           );
-          dispatch(ConversationsActions.setSearchTerm({ searchTerm: '' }));
+          dispatch(ConversationsActions.resetSearch());
         }}
         disabled={!!messageIsStreaming}
         data-qa="new-chat"
@@ -55,18 +56,20 @@ export const Chatbar = () => {
   const dispatch = useAppDispatch();
 
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
-  const folders = useAppSelector(ConversationsSelectors.selectFolders);
-  const conversations = useAppSelector(
-    ConversationsSelectors.selectConversations,
-  );
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
-  const filteredConversations = useAppSelector(
-    ConversationsSelectors.selectSearchedConversations,
+  const searchFilters = useAppSelector(
+    ConversationsSelectors.selectSearchFilters,
+  );
+  const myItemsFilters = useAppSelector(
+    ConversationsSelectors.selectMyItemsFilters,
   );
 
-  const chatFolders = useMemo(
-    () => folders.filter(({ type }) => type === 'chat'),
-    [folders],
+  const filteredConversations = useAppSelector((state) =>
+    ConversationsSelectors.selectFilteredConversations(
+      state,
+      myItemsFilters,
+      searchTerm,
+    ),
   );
 
   const handleDrop = useCallback(
@@ -79,7 +82,7 @@ export const Chatbar = () => {
             values: { folderId: undefined },
           }),
         );
-        dispatch(ConversationsActions.setSearchTerm({ searchTerm: '' }));
+        dispatch(ConversationsActions.resetSearch());
       }
     },
     [dispatch],
@@ -93,12 +96,14 @@ export const Chatbar = () => {
       isOpen={showChatbar}
       itemComponent={<Conversations conversations={filteredConversations} />}
       folderComponent={<ChatFolders />}
-      folders={chatFolders}
-      items={conversations}
       filteredItems={filteredConversations}
       searchTerm={searchTerm}
+      searchFilters={searchFilters}
       handleSearchTerm={(searchTerm: string) =>
         dispatch(ConversationsActions.setSearchTerm({ searchTerm }))
+      }
+      handleSearchFilters={(searchFilters: SearchFilters) =>
+        dispatch(ConversationsActions.setSearchFilters({ searchFilters }))
       }
       handleDrop={handleDrop}
       footerComponent={<ChatbarSettings />}

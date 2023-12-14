@@ -46,16 +46,4 @@ export class FolderPrompts extends Folders {
     await this.folderPromptDotsMenu(folderName, promptName).click();
     await this.getDropdownMenu().waitForState();
   }
-
-  public async dropPromptFromFolder(folderName: string, promptName: string) {
-    const folderPrompt = await this.getFolderPrompt(folderName, promptName);
-    await folderPrompt.hover();
-    await this.page.mouse.down();
-    const foldersBounding = await this.getElementBoundingBox();
-    await this.page.mouse.move(
-      foldersBounding!.x,
-      foldersBounding!.y + 1.5 * foldersBounding!.height,
-    );
-    await this.page.mouse.up();
-  }
 }

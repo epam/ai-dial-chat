@@ -45,7 +45,7 @@
           "message": "Use DataService instead."
       }
     ],
-    "no-multiple-empty-lines": ["warn", { "max": 2, "maxBOF": 0 }]
+    "no-multiple-empty-lines": ["warn", { "max": 1, "maxBOF": 0 }]
   },
   "overrides": [
     {

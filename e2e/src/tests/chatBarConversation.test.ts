@@ -189,6 +189,7 @@ test('Menu for New conversation', async ({
       MenuOptions.export,
       MenuOptions.moveTo,
       MenuOptions.share,
+      MenuOptions.publish,
       MenuOptions.delete,
     ]);
 });
@@ -227,6 +228,7 @@ test(
         MenuOptions.export,
         MenuOptions.moveTo,
         MenuOptions.share,
+        MenuOptions.publish,
         MenuOptions.delete,
       ]);
   },
@@ -382,7 +384,7 @@ test(
     const messageToEdit = lastWeekConversation.messages[0].content;
     await conversations.selectConversation(lastWeekConversation.name);
     await chatMessages.openEditMessageMode(messageToEdit);
-    await chatMessages.editMessage('updated message');
+    await chatMessages.editMessage(messageToEdit, 'updated message');
     todayConversations = await conversations.getTodayConversations();
     expect
       .soft(todayConversations.length, ExpectedMessages.conversationOfToday)

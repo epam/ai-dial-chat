@@ -2,21 +2,20 @@ import {
   IconFileArrowLeft,
   IconFileArrowRight,
   IconTrashX,
-  IconUserShare,
 } from '@tabler/icons-react';
-import { FC, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { HighlightColor } from '@/src/types/common';
-import { Feature } from '@/src/types/features';
 import { DisplayMenuItemProps } from '@/src/types/menu';
-import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import {
+  PromptsActions,
+  PromptsSelectors,
+} from '@/src/store/prompts/prompts.reducers';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import SidebarMenu from '@/src/components/Common/SidebarMenu';
@@ -24,39 +23,23 @@ import { Import } from '@/src/components/Settings/Import';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 
-interface PromptbarSettingsProps {
-  allPrompts: Prompt[];
-}
-export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
-  allPrompts,
-}) => {
+export function PromptbarSettings() {
   const { t } = useTranslation(Translation.PromptBar);
+
+  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
+
   const dispatch = useAppDispatch();
-  const [isOpen, setIsOpen] = useState(false);
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
-  );
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const folders = useAppSelector(PromptsSelectors.selectFolders);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Shared by me'),
-        display:
-          enabledFeatures.has(Feature.PromptsSharing) &&
-          allPrompts.filter((c) => c.isShared).length > 0,
-        dataQa: 'shared-by-me',
-        Icon: IconUserShare,
+        name: t('Create new folder'),
+        dataQa: 'create-prompt-folder',
+        Icon: FolderPlus,
         onClick: () => {
-          setIsOpen(false);
-        },
-      },
-      {
-        name: t('Delete all prompts'),
-        display: allPrompts.length > 0,
-        dataQa: 'delete-prompts',
-        Icon: IconTrashX,
-        onClick: () => {
-          setIsOpen(true);
+          dispatch(PromptsActions.createFolder());
         },
       },
       {
@@ -71,6 +54,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
         CustomTriggerRenderer: Import,
       },
       {
+        display: allPrompts.length > 0 || folders.length > 0,
         name: t('Export prompts'),
         dataQa: 'export-prompts',
         Icon: IconFileArrowRight,
@@ -79,15 +63,16 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
         },
       },
       {
-        name: t('Create new folder'),
-        dataQa: 'create-prompt-folder',
-        Icon: FolderPlus,
+        name: t('Delete all'),
+        display: allPrompts.length > 0 || folders.length > 0,
+        dataQa: 'delete-prompts',
+        Icon: IconTrashX,
         onClick: () => {
-          dispatch(PromptsActions.createFolder({ name: t('New folder') }));
+          setIsClearModalOpen(true);
         },
       },
     ],
-    [allPrompts, dispatch, enabledFeatures, t],
+    [allPrompts.length, dispatch, folders.length, t],
   );
 
   return (
@@ -98,7 +83,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
       />
 
       <ConfirmDialog
-        isOpen={isOpen}
+        isOpen={isClearModalOpen}
         heading={t('Confirm clearing all prompts')}
         description={
           t('Are you sure that you want to delete all prompts?') || ''
@@ -106,7 +91,7 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
         confirmLabel={t('Clear')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
-          setIsOpen(false);
+          setIsClearModalOpen(false);
           if (result) {
             dispatch(PromptsActions.clearPrompts());
           }
@@ -114,4 +99,4 @@ export const PromptbarSettings: FC<PromptbarSettingsProps> = ({
       />
     </>
   );
-};
+}

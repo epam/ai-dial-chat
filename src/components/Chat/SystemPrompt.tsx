@@ -24,6 +24,8 @@ interface Props {
   onChangePrompt: (prompt: string) => void;
 }
 
+const MAX_HEIGHT = 300;
+
 export const SystemPrompt: FC<Props> = ({
   prompts,
   maxLength,
@@ -216,7 +218,7 @@ export const SystemPrompt: FC<Props> = ({
       const scrollHeight = textareaRef.current.scrollHeight; // then check scroll height
       textareaRef.current.style.height = `${scrollHeight}px`;
       textareaRef.current.style.overflow = `${
-        scrollHeight > 300 ? 'auto' : 'hidden'
+        scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden'
       }`;
     }
   }, [value, textareaRef]);
@@ -226,10 +228,11 @@ export const SystemPrompt: FC<Props> = ({
       <label className="mb-4 text-left">{t('System prompt')}</label>
       <textarea
         ref={textareaRef}
-        className="max-h-[300px] w-full resize-none overflow-y-auto rounded border border-primary bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-within:border-accent-primary"
+        className="w-full resize-none overflow-y-auto rounded border border-primary bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-within:border-accent-primary"
         placeholder={
           t(`Enter a prompt or type "/" to select a prompt...`) || ''
         }
+        style={{ maxHeight: `${MAX_HEIGHT}px` }}
         value={value}
         rows={1}
         onChange={handleChange}

@@ -38,6 +38,10 @@ export class Chat extends BaseElement {
     ChatSelectors.proceedGenerating,
   );
   public chatSpinner = this.getChildElementBySelector(ChatSelectors.spinner);
+  public footer = this.getChildElementBySelector(ChatSelectors.footer);
+  public notAllowedModelLabel = this.getChildElementBySelector(
+    ChatSelectors.notAllowedModel,
+  );
 
   getChatHeader(): ChatHeader {
     if (!this.chatHeader) {
@@ -112,16 +116,20 @@ export class Chat extends BaseElement {
 
   public async startReplayForDifferentModels(userRequests: string[]) {
     await this.replay.waitForState();
-    const requests = [];
+    const requestPromises = [];
     for (const req of userRequests) {
-      const resp = this.waitForRequestSent(req);
-      requests.push(resp);
+      const requestPromise = this.waitForRequestSent(req);
+      requestPromises.push(requestPromise);
     }
     await this.replay.click();
-    for (const req of requests) {
-      await req;
+
+    const requests = [];
+    for (const req of requestPromises) {
+      const request = await req;
+      requests.push(request);
     }
     await this.waitForResponse(true);
+    return requests.map((r) => r.postDataJSON());
   }
 
   public async sendRequestInCompareMode(
@@ -136,6 +144,26 @@ export class Chat extends BaseElement {
       comparedEntities.leftEntity,
     );
     await this.getSendMessage().send(message);
+    const rightRequest = await rightRequestPromise;
+    const leftRequest = await leftRequestPromise;
+    await this.waitForResponse(waitForAnswer);
+    return {
+      rightRequest: rightRequest.postDataJSON(),
+      leftRequest: leftRequest.postDataJSON(),
+    };
+  }
+
+  public async regenerateResponseInCompareMode(
+    comparedEntities: { rightEntity: string; leftEntity: string },
+    waitForAnswer = false,
+  ) {
+    const rightRequestPromise = this.waitForRequestSent(
+      comparedEntities.rightEntity,
+    );
+    const leftRequestPromise = this.waitForRequestSent(
+      comparedEntities.leftEntity,
+    );
+    await this.regenerate.click();
     const rightRequest = await rightRequestPromise;
     const leftRequest = await leftRequestPromise;
     await this.waitForResponse(waitForAnswer);

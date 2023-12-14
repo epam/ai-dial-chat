@@ -168,10 +168,6 @@ export const ChatMessage: FC<Props> = memo(
     const handleInputChange = useCallback(
       (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         setMessageContent(event.target.value);
-        if (textareaRef.current) {
-          textareaRef.current.style.height = 'inherit';
-          textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-        }
       },
       [],
     );
@@ -280,7 +276,7 @@ export const ChatMessage: FC<Props> = memo(
         textareaRef.current.style.height = 'inherit';
         textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
       }
-    }, [isEditing]);
+    }, [isEditing, messageContent]);
 
     return (
       <div
@@ -373,7 +369,10 @@ export const ChatMessage: FC<Props> = memo(
                         <button
                           className="button button-primary"
                           onClick={handleEditMessage}
-                          disabled={messageContent.trim().length <= 0}
+                          disabled={
+                            messageContent.trim().length <= 0 &&
+                            newEditableAttachments.length <= 0
+                          }
                           data-qa="save-and-submit"
                         >
                           {t('Save & Submit')}
@@ -477,6 +476,7 @@ export const ChatMessage: FC<Props> = memo(
                                 : 'visible text-secondary'
                             }
                             disabled={message.like === 1}
+                            data-qa="like"
                           >
                             <IconThumbUp size={24} />
                           </Button>
@@ -490,6 +490,7 @@ export const ChatMessage: FC<Props> = memo(
                                 : 'visible text-secondary'
                             }
                             disabled={message.like === -1}
+                            data-qa="dislike"
                           >
                             <IconThumbDown size={24} />
                           </Button>

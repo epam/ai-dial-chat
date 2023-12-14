@@ -2,7 +2,7 @@ import { Observable, of } from 'rxjs';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
 
@@ -65,17 +65,17 @@ export class ApiMockStorage implements DialStorage {
       {
         id: 'Some prompt folder id 1',
         name: 'Folder name 1',
-        type: 'chat',
+        type: FolderType.Chat,
       },
       {
         id: 'Some prompt folder id 2',
         name: 'Folder name 2',
-        type: 'chat',
+        type: FolderType.Chat,
       },
       {
         id: 'Some prompt folder id 3',
         name: 'Folder name 3',
-        type: 'chat',
+        type: FolderType.Chat,
       },
     ];
 
@@ -86,17 +86,17 @@ export class ApiMockStorage implements DialStorage {
       {
         id: 'Some chat folder id 1',
         name: 'Folder name 1',
-        type: 'chat',
+        type: FolderType.Chat,
       },
       {
         id: 'Some chat folder id 2',
         name: 'Folder name 2',
-        type: 'chat',
+        type: FolderType.Chat,
       },
       {
         id: 'Some chat folder id 3',
         name: 'Folder name 3',
-        type: 'chat',
+        type: FolderType.Chat,
       },
     ];
 

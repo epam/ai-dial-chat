@@ -1,19 +1,18 @@
-import { IconCaretRightFilled } from '@tabler/icons-react';
-import { useCallback, useEffect, useState } from 'react';
-
-import classNames from 'classnames';
+import { useEffect, useState } from 'react';
 
 import { Conversation } from '@/src/types/chat';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
+import CollapsableSection from '../../Common/CollapsableSection';
 import { ConversationComponent } from './Conversation';
 
 interface ConversationsRendererProps {
   conversations: Conversation[];
   label: string;
 }
+
 export const ConversationsRenderer = ({
   conversations,
   label,
@@ -21,12 +20,7 @@ export const ConversationsRenderer = ({
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
-  const [isSectionOpened, setIsSectionOpened] = useState(true);
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
-
-  const handleSectionOpen = useCallback(() => {
-    setIsSectionOpened((isOpen) => !isOpen);
-  }, []);
 
   useEffect(() => {
     setIsSectionHighlighted(
@@ -37,34 +31,21 @@ export const ConversationsRenderer = ({
   return (
     <>
       {conversations.length > 0 && (
-        <div className="flex flex-col gap-0.5 pl-2 pr-1">
-          <button
-            className={classNames(
-              'flex items-center gap-1 py-1 text-xs',
-              isSectionHighlighted
-                ? 'text-accent-secondary'
-                : '[&:not(:hover)]:text-secondary',
-            )}
-            data-qa="chronology"
-            onClick={handleSectionOpen}
-          >
-            <IconCaretRightFilled
-              className={classNames(
-                'invisible text-secondary transition-all group-hover/sidebar:visible',
-                isSectionOpened && 'rotate-90',
-              )}
-              size={10}
-            />
-            {label}
-          </button>
-          {isSectionOpened &&
-            conversations.map((conversation) => (
+        <CollapsableSection
+          name={label}
+          dataQa="chronology"
+          isHighlighted={isSectionHighlighted}
+          openByDefault
+        >
+          <div className="flex flex-col gap-0.5 py-1">
+            {conversations.map((conversation) => (
               <ConversationComponent
                 key={conversation.id}
                 item={conversation}
               />
             ))}
-        </div>
+          </div>
+        </CollapsableSection>
       )}
     </>
   );

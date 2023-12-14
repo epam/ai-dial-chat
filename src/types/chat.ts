@@ -1,3 +1,4 @@
+import { ShareEntity } from './common';
 import { MIMEType } from './files';
 
 export interface Attachment {
@@ -67,9 +68,7 @@ export interface RateBody {
   value: boolean;
 }
 
-export interface Conversation {
-  id: string;
-  name: string;
+export interface Conversation extends ShareEntity {
   messages: Message[];
   model: ConversationEntityModel;
   prompt: string;
@@ -84,7 +83,6 @@ export interface Conversation {
   lastActivityDate?: number;
 
   isMessageStreaming: boolean;
-  isShared?: boolean;
   isNameChanged?: boolean;
 }
 export interface Replay {

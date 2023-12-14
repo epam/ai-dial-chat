@@ -32,6 +32,8 @@ const initEpic: AppEpic = (action$) =>
         showPromptbar: DataService.getShowPromptbar(),
         openedFoldersIds: DataService.getOpenedFolderIds(),
         textOfClosedAnnouncement: DataService.getClosedAnnouncement(),
+        chatbarWidth: DataService.getChatbarWidth(),
+        promptbarWidth: DataService.getPromptbarWidth(),
       }),
     ),
     switchMap(
@@ -42,6 +44,8 @@ const initEpic: AppEpic = (action$) =>
         showChatbar,
         showPromptbar,
         textOfClosedAnnouncement,
+        chatbarWidth,
+        promptbarWidth,
       }) => {
         const actions = [];
 
@@ -59,6 +63,8 @@ const initEpic: AppEpic = (action$) =>
             announcement: textOfClosedAnnouncement,
           }),
         );
+        actions.push(UIActions.setChatbarWidth(chatbarWidth));
+        actions.push(UIActions.setPromptbarWidth(promptbarWidth));
 
         return concat(actions);
       },
@@ -158,6 +164,20 @@ const saveOpenedFoldersIdsEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
+const saveChatbarWidthEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.setChatbarWidth.match),
+    switchMap(({ payload }) => DataService.setChatbarWidth(payload)),
+    ignoreElements(),
+  );
+
+const savePromptbarWidthEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.setPromptbarWidth.match),
+    switchMap(({ payload }) => DataService.setPromptbarWidth(payload)),
+    ignoreElements(),
+  );
+
 const UIEpics = combineEpics(
   initEpic,
   saveThemeEpic,
@@ -166,6 +186,8 @@ const UIEpics = combineEpics(
   showToastErrorEpic,
   saveOpenedFoldersIdsEpic,
   closeAnnouncementEpic,
+  saveChatbarWidthEpic,
+  savePromptbarWidthEpic,
 );
 
 export default UIEpics;

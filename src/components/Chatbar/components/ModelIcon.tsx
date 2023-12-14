@@ -49,27 +49,17 @@ export const ModelIcon = ({
   isCustomTooltip,
 }: Props) => {
   return (
-    <>
-      {isCustomTooltip ? (
-        <ModelIconTemplate
-          entity={entity}
-          entityId={entityId}
-          size={size}
-          animate={animate}
-        />
-      ) : (
-        <Tooltip
-          tooltip={entity?.name || entityId}
-          triggerClassName="flex shrink-0"
-        >
-          <ModelIconTemplate
-            entity={entity}
-            entityId={entityId}
-            size={size}
-            animate={animate}
-          />
-        </Tooltip>
-      )}
-    </>
+    <Tooltip
+      hideTooltip={isCustomTooltip}
+      tooltip={entity?.name || entityId}
+      triggerClassName="flex shrink-0 relative"
+    >
+      <ModelIconTemplate
+        entity={entity}
+        entityId={entityId}
+        size={size}
+        animate={animate}
+      />
+    </Tooltip>
   );
 };

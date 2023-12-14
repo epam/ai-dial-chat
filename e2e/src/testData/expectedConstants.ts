@@ -28,8 +28,17 @@ export const ExpectedConstants = {
     'Are you sure that you want to remove a folder with all nested elements?',
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
+  proceedReplayTooltip: 'Please continue replay to continue working with chat',
+  waitForAssistantAnswerTooltip:
+    'Please wait for full assistant answer to continue working with chat',
   selectedPromptOptionAttribute: 'bg-blue-500/20',
   noResults: 'No results found',
+  notAllowedModelError:
+    'Not allowed model selected. Please, change the model to proceed',
+  replayAsIsDescr:
+    'This mode replicates user requests from the original conversation including settings set in each message.',
+  replayOldVersionWarning:
+    'Please note that some of your messages were created in older DIAL version. "Replay as is" could be working not as expected.',
 };
 
 export enum Groups {
@@ -47,6 +56,9 @@ export enum MenuOptions {
   export = 'Export',
   moveTo = 'Move to',
   share = 'Share',
+  publish = 'Publish',
+  update = 'Update',
+  unpublish = 'Unpublish',
   delete = 'Delete',
   newFolder = 'New folder',
 }
@@ -70,11 +82,13 @@ export const API = {
 export const Import = {
   importPath: path.resolve(__dirname, 'import'),
   exportPath: path.resolve(__dirname, 'export'),
-  v14AppFolderName: 'Version 1.4',
-  v14AppFolderChatName: '3-5 GPT math',
+  oldVersionAppFolderName: 'Version 1.x',
+  oldVersionAppFolderChatName: '3-5 GPT math',
   v14AppBisonChatName: 'bison chat king',
   v14AppImportedFilename: 'chatbot_ui_history_1-4_version.json',
+  v19AppImportedFilename: 'chatbot_ui_history_1-9_version.json',
   v14AppFolderPromptName: 'Version 1.4 A*B',
+  oldVersionAppGpt35Message: '11 * 12 =',
 };
 
 export enum Side {
@@ -87,4 +101,10 @@ export enum ModelIds {
   GPT_4 = 'gpt-4',
   GPT_4_32K = 'gpt-4-32k',
   BISON_001 = 'chat-bison@001',
+  AWS_TITAN = 'amazon.titan-tg1-large',
+}
+
+export enum Rate {
+  like = 'like',
+  dislike = 'dislike',
 }

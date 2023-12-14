@@ -2,6 +2,8 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { Theme } from '@/src/types/themes';
 
+import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
+
 import { RootState } from '..';
 
 export interface UIState {
@@ -14,6 +16,8 @@ export interface UIState {
   isCompareMode: boolean;
   openedFoldersIds: string[];
   textOfClosedAnnouncement?: string | undefined;
+  chatbarWidth?: number;
+  promptbarWidth?: number;
 }
 
 const initialState: UIState = {
@@ -26,6 +30,8 @@ const initialState: UIState = {
   isCompareMode: false,
   openedFoldersIds: [],
   textOfClosedAnnouncement: undefined,
+  chatbarWidth: SIDEBAR_MIN_WIDTH,
+  promptbarWidth: SIDEBAR_MIN_WIDTH,
 };
 
 export const uiSlice = createSlice({
@@ -41,6 +47,12 @@ export const uiSlice = createSlice({
       { payload }: PayloadAction<UIState['availableThemes']>,
     ) => {
       state.availableThemes = payload;
+    },
+    setChatbarWidth: (state, { payload }: PayloadAction<Partial<number>>) => {
+      state.chatbarWidth = payload;
+    },
+    setPromptbarWidth: (state, { payload }: PayloadAction<Partial<number>>) => {
+      state.promptbarWidth = payload;
     },
     setShowChatbar: (
       state,
@@ -165,6 +177,14 @@ const selectTextOfClosedAnnouncement = createSelector(
   },
 );
 
+const selectChatbarWidth = createSelector([rootSelector], (state) => {
+  return state.chatbarWidth;
+});
+
+const selectPromptbarWidth = createSelector([rootSelector], (state) => {
+  return state.promptbarWidth;
+});
+
 export const UIActions = uiSlice.actions;
 
 export const UISelectors = {
@@ -178,4 +198,6 @@ export const UISelectors = {
   selectIsFolderOpened,
   selectTextOfClosedAnnouncement,
   selectAvailableThemes,
+  selectChatbarWidth,
+  selectPromptbarWidth,
 };

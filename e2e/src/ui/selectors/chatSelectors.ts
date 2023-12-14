@@ -1,3 +1,4 @@
+import { Rate } from '@/e2e/src/testData';
 import { Attributes } from '@/e2e/src/ui/domData';
 
 export const ChatSelectors = {
@@ -31,16 +32,18 @@ export const ChatSelectors = {
   editIcon: '.tabler-icon-edit',
   deleteIcon: '.tabler-icon-trash',
   playbackIcon: '.tabler-icon-player-play',
+  copyIcon: '.tabler-icon-copy',
   saveAndSubmit: '[data-qa="save-and-submit"]',
   cancelEdit: '[data-qa="cancel"]',
   modelSelector: '[data-qa="model-selector"]',
-  listOptions: '[role="listbox"] > [role="option"]',
+  listbox: '[role="listbox"]',
+  listOptions: '[role="option"]',
   combobox: '[role="combobox"]',
   promptList: '[data-qa="prompt-list"]',
   promptOption: '[data-qa="prompt-option"]',
   moreInfo: '[data-qa="more-info"]',
   infoApplication: '[data-qa="info-app"]',
-  appDescr: '[data-qa="app-descr"]',
+  description: '[data-qa="app-descr"]',
   startReplay: '[data-qa="start-replay"]',
   applyChanges: '[data-qa="apply-changes"]',
   stopGenerating: '[data-qa="stop-generating"]',
@@ -70,4 +73,9 @@ export const ChatSelectors = {
   replayAsIsLabel: '[data-qa="info-as-is"]',
   iconAnimation: '.animate-bounce',
   noResultFound: '[data-qa="no-data"]',
+  footer: '[data-qa="footer-message"]',
+  notAllowedModel: '[data-qa="not-allowed-model-error"]',
+  replayOldVersion: '[data-qa="replay-old-version"]',
+  sendMessage: '[data-qa="send"]',
+  rate: (rate: Rate) => `[data-qa="${rate}"]`,
 };

@@ -130,11 +130,11 @@ test(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await chatMessages.openEditMessageMode(userRequests[1]);
-      await chatMessages.fillEditData(editData);
+      await chatMessages.fillEditData(userRequests[1], editData);
       await chatMessages.cancel.click();
 
       const isEditTextareaVisible = await chatMessages
-        .getChatMessageTextarea()
+        .getChatMessageTextarea(userRequests[1])
         .isVisible();
       expect
         .soft(isEditTextareaVisible, ExpectedMessages.editModeIsClosed)
@@ -148,7 +148,7 @@ test(
 
     await test.step('Edit 2nd request, clear field and verify Save button is disabled', async () => {
       await chatMessages.openEditMessageMode(userRequests[1]);
-      await chatMessages.fillEditData('');
+      await chatMessages.fillEditData(userRequests[1], '');
 
       const isSaveButtonDisabled = await chatMessages.isSaveButtonEnabled();
       expect
@@ -159,7 +159,7 @@ test(
 
     await test.step('Edit 2nd request, save changes and verify response is received, last request is removed', async () => {
       await chatMessages.openEditMessageMode(userRequests[1]);
-      await chatMessages.editMessage(editData);
+      await chatMessages.editMessage(userRequests[1], editData);
 
       const messagesCount = await chatMessages.chatMessages.getElementsCount();
       expect
@@ -258,7 +258,8 @@ test('System prompt is applied in Model', async ({
   });
 });
 
-test('Stop generating for models like GPT (1 symbol = 1 token)', async ({
+//TODO: enable test when response is returned by chunks
+test.skip('Stop generating for models like GPT (1 symbol = 1 token)', async ({
   dialHomePage,
   chat,
   setTestIds,
@@ -323,29 +324,44 @@ test('Stop generating for models like GPT (1 symbol = 1 token)', async ({
   });
 });
 
-test('Send button in new message is available for Model if previous response is partly received when Stop generating was used', async ({
-  dialHomePage,
-  chat,
-  setTestIds,
-  chatMessages,
-  sendMessage,
-}) => {
-  setTestIds('EPMRTC-1533');
-  await test.step('Send request and stop generation immediately', async () => {
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await chat.sendRequestWithButton(request, false);
-    await chatMessages.waitForPartialMessageReceived(2);
-    await chat.stopGenerating.click();
-    await chat.stopGenerating.waitForState({ state: 'hidden' });
-  });
+//TODO: enable test when response is returned by chunks
+test.skip(
+  'Send button in new message is available for Model if previous response is partly received when Stop generating was used.\n' +
+    'Compare mode button is not available while response is being generated',
+  async ({
+    dialHomePage,
+    chat,
+    setTestIds,
+    chatMessages,
+    sendMessage,
+    chatBar,
+  }) => {
+    setTestIds('EPMRTC-1533', 'EPMRTC-538');
+    await test.step('Send request, verify Compare button is disabled while generating the response and stop generation immediately', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      await chat.sendRequestWithButton(request, false);
 
-  await test.step('Type a new message and verify Send button is enabled', async () => {
-    await sendMessage.messageInput.fillInInput(GeneratorUtil.randomString(10));
-    const isSendButtonEnabled =
-      await sendMessage.sendMessageButton.isElementEnabled();
-    expect
-      .soft(isSendButtonEnabled, ExpectedMessages.sendMessageButtonEnabled)
-      .toBeTruthy();
-  });
-});
+      const isCompareButtonEnabled =
+        await chatBar.compareButton.isElementEnabled();
+      expect
+        .soft(isCompareButtonEnabled, ExpectedMessages.compareButtonIsDisabled)
+        .toBeFalsy();
+
+      await chatMessages.waitForPartialMessageReceived(2);
+      await chat.stopGenerating.click();
+      await chat.stopGenerating.waitForState({ state: 'hidden' });
+    });
+
+    await test.step('Type a new message and verify Send button is enabled', async () => {
+      await sendMessage.messageInput.fillInInput(
+        GeneratorUtil.randomString(10),
+      );
+      const isSendButtonEnabled =
+        await sendMessage.sendMessageButton.isElementEnabled();
+      expect
+        .soft(isSendButtonEnabled, ExpectedMessages.sendMessageButtonEnabled)
+        .toBeTruthy();
+    });
+  },
+);

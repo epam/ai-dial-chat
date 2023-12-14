@@ -1,5 +1,5 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconBulb, IconCheck, IconUserShare, IconX } from '@tabler/icons-react';
+import { IconBulb, IconCheck, IconX } from '@tabler/icons-react';
 import {
   DragEvent,
   MouseEvent,
@@ -8,21 +8,17 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { FeatureType, HighlightColor } from '@/src/types/common';
-import { Feature } from '@/src/types/features';
 import { Prompt } from '@/src/types/prompt';
-import { Translation } from '@/src/types/translation';
+import { SharingType } from '@/src/types/share';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
 
@@ -30,7 +26,10 @@ import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
-import ShareModal, { SharingType } from '../../Chat/ShareModal';
+import PublishModal from '../../Chat/PublishModal';
+import ShareModal from '../../Chat/ShareModal';
+import UnpublishModal from '../../Chat/UnpublishModal';
+import ShareIcon from '../../Common/ShareIcon';
 import { PromptModal } from './PromptModal';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -46,7 +45,6 @@ export interface PromptMoveToFolderProps {
 }
 
 export const PromptComponent = ({ item: prompt, level }: Props) => {
-  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
   const folders = useAppSelector(PromptsSelectors.selectFolders);
@@ -56,18 +54,14 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const isSelected = selectedPromptId === prompt.id;
   const showModal = useAppSelector(PromptsSelectors.selectIsEditModalOpen);
 
-  const isSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.PromptsSharing),
-  );
-
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
 
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
-  const { id: promptId, isShared } = prompt;
-  const showSharedIcon = isSharingEnabled && isShared && !isDeleting;
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -81,32 +75,35 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     setIsSharing(false);
   }, []);
 
-  const handleShared = useCallback(
-    (_newShareId: string) => {
-      //TODO: send newShareId to API to store {id, createdDate}
-      dispatch(
-        PromptsActions.updatePrompt({
-          promptId,
-          values: {
-            isShared: true,
-          },
-        }),
-      );
-    },
-    [dispatch, promptId],
-  );
-
   const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
       setIsSharing(true);
     }, []);
+
+  const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsPublishing(true);
+    }, []);
+
+  const handleClosePublishModal = useCallback(() => {
+    setIsPublishing(false);
+  }, []);
+
+  const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsUnpublishing(true);
+    }, []);
+
+  const handleCloseUnpublishModal = useCallback(() => {
+    setIsUnpublishing(false);
+  }, []);
 
   const handleUpdate = useCallback(
     (prompt: Prompt) => {
       dispatch(
         PromptsActions.updatePrompt({ promptId: prompt.id, values: prompt }),
       );
-      dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
+      dispatch(PromptsActions.resetSearch());
       setIsRenaming(false);
     },
     [dispatch],
@@ -119,7 +116,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
       if (isDeleting) {
         dispatch(PromptsActions.deletePrompts({ promptIds: [prompt.id] }));
-        dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));
+        dispatch(PromptsActions.resetSearch());
       }
 
       setIsDeleting(false);
@@ -185,7 +182,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         localFolderId = uuidv4();
         dispatch(
           PromptsActions.createFolder({
-            name: t('New folder'),
             folderId: localFolderId,
           }),
         );
@@ -198,7 +194,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       );
       setIsContextMenu(false);
     },
-    [dispatch, prompt.id, t],
+    [dispatch, prompt.id],
   );
 
   const handleClose = useCallback(() => {
@@ -212,13 +208,15 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     e.stopPropagation();
     setIsContextMenu(true);
   };
+  const isHighlited =
+    isDeleting || isRenaming || (showModal && isSelected) || isContextMenu;
 
   return (
     <>
       <div
         className={classNames(
           'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-tertiary',
-          isDeleting || isRenaming || (showModal && isSelected) || isContextMenu
+          isHighlited
             ? 'border-l-accent-tertiary bg-accent-tertiary'
             : 'border-l-transparent',
         )}
@@ -239,7 +237,14 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           draggable="true"
           onDragStart={(e) => handleDragStart(e, prompt)}
         >
-          <IconBulb size={18} className="text-secondary" />
+          <ShareIcon
+            {...prompt}
+            isHighlited={isHighlited}
+            highlightColor={HighlightColor.Violet}
+            featureType={FeatureType.Prompt}
+          >
+            <IconBulb size={18} className="text-secondary" />
+          </ShareIcon>
 
           <div
             className={classNames(
@@ -248,11 +253,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           >
             {prompt.name}
           </div>
-          {showSharedIcon && (
-            <span className="flex shrink-0 text-secondary">
-              <IconUserShare size={14} />
-            </span>
-          )}
         </div>
 
         {isDeleting && (
@@ -281,6 +281,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             onClick={stopBubbling}
           >
             <ItemContextMenu
+              entity={prompt}
               featureType={FeatureType.Prompt}
               folders={folders}
               onMoveToFolder={handleMoveToFolder}
@@ -291,9 +292,10 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
                 setIsShowMoveToModal(true);
               }}
               highlightColor={HighlightColor.Violet}
-              onOpenShareModal={
-                isSharingEnabled ? handleOpenSharing : undefined
-              }
+              onShare={handleOpenSharing}
+              onPublish={handleOpenPublishing}
+              onPublishUpdate={handleOpenPublishing}
+              onUnpublish={handleOpenUnpublishing}
               onOpenChange={setIsContextMenu}
               isOpen={isContextMenu}
             />
@@ -326,7 +328,23 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           type={SharingType.Prompt}
           isOpen
           onClose={handleCloseShareModal}
-          onShare={handleShared}
+        />
+      )}
+
+      {isPublishing && (
+        <PublishModal
+          entity={prompt}
+          type={SharingType.Prompt}
+          isOpen
+          onClose={handleClosePublishModal}
+        />
+      )}
+      {isUnpublishing && (
+        <UnpublishModal
+          entity={prompt}
+          type={SharingType.Prompt}
+          isOpen
+          onClose={handleCloseUnpublishModal}
         />
       )}
     </>

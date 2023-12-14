@@ -151,7 +151,7 @@ export default function ContextMenu({
         ) : (
           <ContextMenuItemRenderer {...props} highlightColor={highlightColor} />
         );
-        return <Fragment key={props.name}>{Renderer}</Fragment>;
+        return <Fragment key={props.dataQa}>{Renderer}</Fragment>;
       })}
     </Menu>
   );
