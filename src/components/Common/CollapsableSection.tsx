@@ -36,7 +36,9 @@ export default function CollapsableSection({
       <div
         className={classNames(
           'flex cursor-pointer items-center gap-1 py-1 text-xs',
-          isHighlighted ? 'text-green' : '[&:not(:hover)]:text-gray-500',
+          isHighlighted
+            ? 'text-accent-secondary'
+            : '[&:not(:hover)]:text-secondary',
         )}
         onClick={handleClick}
         data-qa={dataQa}

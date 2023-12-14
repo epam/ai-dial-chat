@@ -28,11 +28,11 @@ export default function SearchFilterRenderer({
       <input
         id={dataQa}
         className={classNames(
-          'checkbox peer h-[18px] w-[18px] cursor-pointer bg-gray-100 dark:bg-gray-700 checked:dark:border-green',
+          'checkbox peer h-[18px] w-[18px] cursor-pointer',
           getByHighlightColor(
             highlightColor,
-            'checked:border-green hover:border-green  checked:dark:border-green',
-            'checked:border-violet hover:border-violet checked:dark:border-violet',
+            'checked:border-accent-secondary hover:border-accent-secondary',
+            'checked:border-accent-tertiary hover:border-accent-tertiary',
           ),
         )}
         type="checkbox"
@@ -42,8 +42,12 @@ export default function SearchFilterRenderer({
       <IconCheck
         size={18}
         className={classNames(
-          'pointer-events-none invisible absolute text-green peer-checked:visible',
-          getByHighlightColor(highlightColor, 'text-green', 'text-violet'),
+          'pointer-events-none invisible absolute peer-checked:visible',
+          getByHighlightColor(
+            highlightColor,
+            'text-accent-secondary',
+            'text-accent-tertiary',
+          ),
         )}
       />
       <label className=" cursor-pointer" htmlFor={dataQa}>

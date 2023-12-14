@@ -411,9 +411,9 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   );
   const hoverBgColor = getByHighlightColor(
     highlightColor,
-    'hover:bg-green/15',
-    'hover:bg-violet/15',
-    'hover:bg-blue-500/20',
+    'hover:bg-accent-secondary',
+    'hover:bg-accent-tertiary',
+    'hover:bg-accent-primary',
   );
 
   return (

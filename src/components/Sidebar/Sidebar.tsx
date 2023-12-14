@@ -77,18 +77,20 @@ const Sidebar = <T,>({
     : HighlightColor.Violet;
   const draggingColor = getByHighlightColor(
     highlightColor,
-    'bg-green/15',
-    'bg-violet/15',
+    'bg-accent-secondary',
+    'bg-accent-tertiary',
   );
 
   const chatbarColor = classNames(
-    'xl:bg-green xl:text-green xl:dark:bg-green',
-    isResizing ? 'bg-green text-green dark:bg-green' : '',
+    'xl:bg-accent-secondary xl:text-accent-secondary',
+    isResizing
+      ? 'bg-accent-secondary text-accent-secondary dark:bg-accent-secondary'
+      : '',
   );
 
   const promptbarColor = classNames(
-    'xl:bg-violet xl:text-violet xl:dark:bg-violet',
-    isResizing ? 'bg-violet text-violet dark:bg-violet' : '',
+    'xl:bg-accent-tertiary xl:text-accent-tertiary',
+    isResizing ? 'bg-accent-tertiary text-accent-tertiary' : '',
   );
 
   const resizeTriggerColor = getByHighlightColor(
@@ -98,7 +100,7 @@ const Sidebar = <T,>({
   );
 
   const resizeTriggerClassName = classNames(
-    'bg-gray-500 text-gray-500 dark:bg-gray-600 invisible h-full w-0.5 group-hover:visible  md:visible',
+    'invisible h-full w-0.5 bg-layer-3 text-secondary group-hover:visible md:visible',
     resizeTriggerColor,
     isResizing ? 'xl:visible' : 'xl:invisible',
   );
@@ -194,7 +196,7 @@ const Sidebar = <T,>({
   ]);
 
   const resizableWrapperClassName = classNames(
-    `border-gray-300 dark:border-gray-900 !fixed top-12 z-40 flex h-[calc(100%-48px)] min-w-[260px] md:max-w-[45%] xl:!relative xl:top-0 xl:h-full`,
+    `!fixed top-12 z-40 flex h-[calc(100%-48px)] min-w-[260px] border-primary md:max-w-[45%] xl:!relative xl:top-0 xl:h-full`,
     isLeftSidebar ? 'left-0 border-r' : 'right-0 border-l',
   );
 
@@ -205,7 +207,7 @@ const Sidebar = <T,>({
       className={resizableWrapperClassName}
       data-qa={dataQa}
     >
-      <div className="group/sidebar divide-gray-300 bg-gray-100 dark:divide-gray-900 dark:bg-gray-700 flex h-full w-full flex-none shrink-0 flex-col divide-y transition-all">
+      <div className="group/sidebar flex h-full w-full flex-none shrink-0 flex-col divide-y divide-primary bg-layer-3 transition-all">
         <Search
           placeholder={t('Search {{name}}...', { name: featureType })}
           searchTerm={searchTerm}
@@ -217,7 +219,7 @@ const Sidebar = <T,>({
 
         {actionButtons}
 
-        <div className="divide-gray-300 dark:divide-gray-900 flex grow flex-col gap-px divide-y overflow-y-auto">
+        <div className="flex grow flex-col gap-px divide-y divide-primary overflow-y-auto">
           {folderComponent}
 
           {filteredItems?.length > 0 ? (

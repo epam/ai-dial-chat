@@ -98,11 +98,11 @@ export default function SearchFiltersView({
           <IconFilter
             size={18}
             className={classNames(
-              ' text-gray-500',
+              'text-secondary',
               getByHighlightColor(
                 highlightColor,
-                'hover:text-green',
-                'hover:text-violet',
+                'hover:text-accent-secondary',
+                'hover:text-accent-tertiary',
               ),
             )}
           />
@@ -110,11 +110,11 @@ export default function SearchFiltersView({
             <IconCircleFilled
               size={8}
               className={classNames(
-                'absolute right-0 top-0 bg-gray-100 p-[0.3px]  dark:bg-gray-700',
+                'absolute right-0 top-0 bg-layer-0 p-[0.3px]',
                 getByHighlightColor(
                   highlightColor,
-                  'text-green',
-                  'text-violet',
+                  'text-accent-secondary',
+                  'text-accent-tertiary',
                 ),
               )}
             />

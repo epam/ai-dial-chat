@@ -58,7 +58,7 @@ export default function ShareIcon({
       {children}
       <div
         className={classNames(
-          'absolute -bottom-1 -left-1 bg-gray-100 dark:bg-gray-700',
+          'absolute -bottom-1 -left-1 bg-layer-3',
           isPublished ? 'rounded-md' : 'rounded-sm',
         )}
       >
@@ -70,17 +70,17 @@ export default function ShareIcon({
             className={classNames(
               getByHighlightColor(
                 highlightColor,
-                'text-green group-hover:bg-green/15',
-                'text-violet group-hover:bg-violet/15',
-                'text-blue-500 group-hover:bg-blue-500/20',
+                'text-accent-secondary group-hover:bg-accent-secondary',
+                'text-accent-tertiary group-hover:bg-accent-tertiary',
+                'text-accent-primary group-hover:bg-accent-primary',
               ),
               'stroke-1 p-[1px]',
               isHighlited &&
                 getByHighlightColor(
                   highlightColor,
-                  'bg-green/15',
-                  'bg-violet/15',
-                  'bg-blue-500/20',
+                  'bg-accent-secondary',
+                  'bg-accent-tertiary',
+                  'bg-accent-primary',
                 ),
             )}
           />
