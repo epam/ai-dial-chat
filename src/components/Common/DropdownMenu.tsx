@@ -61,6 +61,7 @@ const MenuContext = createContext<{
 });
 
 interface MenuProps {
+  listClassName?: string;
   trigger?: ReactNode;
   nested?: boolean;
   children?: ReactNode;
@@ -77,6 +78,7 @@ export const MenuComponent = forwardRef<
     children,
     style,
     className,
+    listClassName,
     label,
     trigger,
     type = 'dropdown',
@@ -245,7 +247,10 @@ export const MenuComponent = forwardRef<
                 returnFocus={!isNested}
               >
                 <div
-                  className="z-50 overflow-auto rounded bg-layer-0 text-primary shadow focus-visible:outline-none"
+                  className={classNames(
+                    'z-50 overflow-auto rounded bg-layer-0 text-primary shadow focus-visible:outline-none',
+                    listClassName,
+                  )}
                   data-qa="dropdown-menu"
                   ref={refs.setFloating}
                   style={{

@@ -18,7 +18,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { FeatureType, HighlightColor, ShareEntity } from '@/src/types/common';
+import { FeatureType, ShareEntity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -34,7 +34,6 @@ interface ItemContextMenuProps {
   entity: ShareEntity;
   folders: FolderInterface[];
   featureType: FeatureType;
-  highlightColor: HighlightColor;
   isEmptyConversation?: boolean;
   className?: string;
   isOpen?: boolean;
@@ -58,7 +57,6 @@ export default function ItemContextMenu({
   featureType,
   isEmptyConversation,
   className,
-  highlightColor,
   folders,
   isOpen,
   onDelete,
@@ -214,8 +212,8 @@ export default function ItemContextMenu({
       menuItems={menuItems}
       TriggerIcon={IconDots}
       triggerIconSize={18}
-      highlightColor={highlightColor}
-      className={className}
+      className={classNames(className)}
+      featureType={featureType}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
     />

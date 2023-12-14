@@ -98,7 +98,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
                   onChange={onThemeChangeHandler}
                 >
                   {availableThemes.map((theme) => (
-                    <option key={theme.cssClass} value={theme.cssClass}>
+                    <option key={theme.id} value={theme.id}>
                       {t(theme.displayName)}
                     </option>
                   ))}

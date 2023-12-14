@@ -6,9 +6,6 @@ import { EntityType } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
-
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 interface Props {
@@ -27,11 +24,7 @@ const SM_HEIGHT_THRESHOLDS = [
 ];
 const DEFAULT_SM_LINE_CLAMP = 'line-clamp-[28]';
 
-const getModelTemplate = (
-  model: OpenAIEntityModel,
-  theme: Theme,
-  label: string,
-) => {
+const getModelTemplate = (model: OpenAIEntityModel, label: string) => {
   return (
     <>
       <span className="text-secondary">{label}:</span>
@@ -58,8 +51,6 @@ export const ChatInfoTooltip = ({
       (lineClamp) => window.innerHeight <= lineClamp.threshold,
     )?.class || DEFAULT_SM_LINE_CLAMP;
 
-  const theme = useAppSelector(UISelectors.selectThemeState);
-
   const { t } = useTranslation(Translation.Chat);
   const getModelLabel = useCallback(() => {
     switch (model.type) {
@@ -77,9 +68,8 @@ export const ChatInfoTooltip = ({
       className="grid max-w-[880px] grid-cols-[max-content_1fr] gap-4 px-2 py-3"
       data-qa="chat-info-tooltip"
     >
-      {model && getModelTemplate(model, theme, getModelLabel())}
-      {subModel != null &&
-        getModelTemplate(subModel, theme, t('Assistant model'))}
+      {model && getModelTemplate(model, getModelLabel())}
+      {subModel != null && getModelTemplate(subModel, t('Assistant model'))}
       {prompt && (
         <>
           <span className="text-secondary">{t('System prompt')}:</span>

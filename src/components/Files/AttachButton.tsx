@@ -7,7 +7,6 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { HighlightColor } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -81,7 +80,6 @@ export const AttachButton = ({
         TriggerIcon={IconPaperclip}
         triggerIconSize={24}
         triggerTooltip={t('Attach files') || ''}
-        highlightColor={HighlightColor.Blue}
         disabled={messageIsStreaming || isModelsLoading}
         triggerIconHighlight
       />

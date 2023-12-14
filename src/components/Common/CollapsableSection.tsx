@@ -37,7 +37,7 @@ export default function CollapsableSection({
         className={classNames(
           'flex cursor-pointer items-center gap-1 py-1 text-xs',
           isHighlighted
-            ? 'text-accent-secondary'
+            ? 'text-accent-primary'
             : '[&:not(:hover)]:text-secondary',
         )}
         onClick={handleClick}

@@ -9,7 +9,6 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { HighlightColor } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -121,10 +120,7 @@ export const ChatbarSettings = () => {
 
   return (
     <>
-      <SidebarMenu
-        menuItems={menuItems}
-        highlightColor={HighlightColor.Green}
-      />
+      <SidebarMenu menuItems={menuItems} />
 
       {isSelectFilesDialogOpened && (
         <FileManagerModal

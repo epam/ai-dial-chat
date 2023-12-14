@@ -14,7 +14,7 @@ import {
 import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType, HighlightColor } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
 import {
@@ -53,8 +53,7 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
     <>
       <ShareIcon
         {...conversation}
-        isHighlited={!!isHighlited}
-        highlightColor={HighlightColor.Green}
+        isHighlighted={!!isHighlited}
         featureType={FeatureType.Chat}
       >
         {conversation.replay.replayAsIs && (
@@ -313,11 +312,11 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   return (
     <div
       className={classNames(
-        'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-accent-secondary',
+        'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-accent-primary',
         isHighlited
-          ? 'border-l-accent-secondary bg-accent-secondary'
+          ? 'border-l-accent-primary bg-accent-primary'
           : 'border-l-transparent',
-        { 'bg-accent-secondary': isContextMenu },
+        { 'bg-accent-primary': isContextMenu },
       )}
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
@@ -329,8 +328,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         <div className="flex w-full items-center gap-2 pr-12">
           <ShareIcon
             {...conversation}
-            isHighlited={isHighlited}
-            highlightColor={HighlightColor.Green}
+            isHighlighted={isHighlited}
             featureType={FeatureType.Chat}
           >
             {conversation.replay.replayAsIs && (
@@ -411,7 +409,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             isEmptyConversation={isEmptyConversation}
             folders={folders}
             featureType={FeatureType.Chat}
-            highlightColor={HighlightColor.Green}
             onOpenMoveToModal={() => {
               setIsShowMoveToModal(true);
             }}
@@ -463,13 +460,13 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       {(isDeleting || isRenaming) && (
         <div className="absolute right-1 z-10 flex">
           <SidebarActionButton handleClick={handleConfirm}>
-            <IconCheck size={18} className="hover:text-accent-secondary" />
+            <IconCheck size={18} className="hover:text-accent-primary" />
           </SidebarActionButton>
           <SidebarActionButton handleClick={handleCancel}>
             <IconX
               size={18}
               strokeWidth="2"
-              className="hover:text-accent-secondary"
+              className="hover:text-accent-primary"
             />
           </SidebarActionButton>
         </div>

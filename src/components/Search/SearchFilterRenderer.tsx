@@ -3,14 +3,11 @@ import { useCallback, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { getByHighlightColor } from '@/src/utils/app/folders';
-
 import { CustomTriggerMenuRendererProps } from '@/src/types/menu';
 
 export default function SearchFilterRenderer({
   customTriggerData: isSelected,
   onClick,
-  highlightColor,
   dataQa,
   ...props
 }: CustomTriggerMenuRendererProps) {
@@ -27,14 +24,7 @@ export default function SearchFilterRenderer({
     >
       <input
         id={dataQa}
-        className={classNames(
-          'checkbox peer h-[18px] w-[18px] cursor-pointer',
-          getByHighlightColor(
-            highlightColor,
-            'checked:border-accent-secondary hover:border-accent-secondary',
-            'checked:border-accent-tertiary hover:border-accent-tertiary',
-          ),
-        )}
+        className={classNames('checkbox peer h-[18px] w-[18px] cursor-pointer')}
         type="checkbox"
         checked={checked}
         onChange={handleCheck}
@@ -43,11 +33,7 @@ export default function SearchFilterRenderer({
         size={18}
         className={classNames(
           'pointer-events-none invisible absolute peer-checked:visible',
-          getByHighlightColor(
-            highlightColor,
-            'text-accent-secondary',
-            'text-accent-tertiary',
-          ),
+          'text-accent-primary',
         )}
       />
       <label className=" cursor-pointer" htmlFor={dataQa}>

@@ -7,7 +7,6 @@ import { useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { HighlightColor } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
@@ -77,10 +76,7 @@ export function PromptbarSettings() {
 
   return (
     <>
-      <SidebarMenu
-        menuItems={menuItems}
-        highlightColor={HighlightColor.Violet}
-      />
+      <SidebarMenu menuItems={menuItems} />
 
       <ConfirmDialog
         isOpen={isClearModalOpen}

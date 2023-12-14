@@ -18,7 +18,6 @@ import classNames from 'classnames';
 import { getDialFilesWithInvalidFileType } from '@/src/utils/app/file';
 import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
-import { HighlightColor } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
@@ -367,7 +366,6 @@ export const FileManagerModal = ({
                                       searchTerm={searchQuery}
                                       currentFolder={folder}
                                       allFolders={folders}
-                                      highlightColor={HighlightColor.Blue}
                                       highlightedFolders={[]}
                                       isInitialRenameEnabled
                                       newAddedFolderId={newFolderId}

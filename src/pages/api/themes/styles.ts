@@ -99,7 +99,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   cachedTheme = [
     ...json.themes.map((theme) =>
-      wrapCssContents(`.${theme.cssClass}`, [
+      wrapCssContents(`.${theme.id}`, [
         generateColorsCssVariables(theme.colors),
         generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
       ]),

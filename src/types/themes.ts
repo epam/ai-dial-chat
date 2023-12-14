@@ -2,7 +2,7 @@ export interface Theme {
   displayName: string;
   colors: Record<string, string>;
   'app-logo': string;
-  cssClass: string;
+  id: string;
 }
 
 export interface ThemesConfig {

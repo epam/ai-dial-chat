@@ -21,11 +21,11 @@ import classNames from 'classnames';
 
 import useOutsideAlerter from '@/src/hooks/useOutsideAlerter';
 
-import { getByHighlightColor, getFoldersDepth } from '@/src/utils/app/folders';
+import { getFoldersDepth } from '@/src/utils/app/folders';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType, HighlightColor } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
@@ -64,7 +64,6 @@ interface Props<T, P = unknown> {
   allItems?: T[];
   allFolders: FolderInterface[];
   level?: number;
-  highlightColor: HighlightColor;
   highlightedFolders?: string[];
   searchTerm: string;
   openedFoldersIds: string[];
@@ -94,7 +93,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   itemComponent,
   allItems,
   allFolders,
-  highlightColor,
   highlightedFolders,
   openedFoldersIds,
   level = 0,
@@ -391,37 +389,12 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   useOutsideAlerter(dragDropElement, setIsSelected);
 
-  const hoverIconColor = getByHighlightColor(
-    highlightColor,
-    'hover:text-accent-secondary',
-    'hover:text-accent-tertiary',
-    'hover:text-primary',
-  );
-  const textColor = getByHighlightColor(
-    highlightColor,
-    'text-accent-secondary',
-    'text-accent-tertiary',
-    'text-primary',
-  );
-  const bgColor = getByHighlightColor(
-    highlightColor,
-    'bg-accent-secondary',
-    'bg-accent-tertiary',
-    'bg-accent-primary',
-  );
-  const hoverBgColor = getByHighlightColor(
-    highlightColor,
-    'hover:bg-accent-secondary',
-    'hover:bg-accent-tertiary',
-    'hover:bg-accent-primary',
-  );
-
   return (
     <div
       id="folder"
       className={classNames(
         'transition-colors duration-200',
-        isDraggingOver && isDropAllowed && bgColor,
+        isDraggingOver && isDropAllowed && 'bg-accent-primary',
       )}
       onDrop={dropHandler}
       onDragOver={allowDrop}
@@ -432,13 +405,12 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     >
       <div
         className={classNames(
-          'relative flex h-[30px] items-center rounded border-l-2',
-          hoverBgColor,
+          'relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary',
           isRenaming ||
             isContextMenu ||
             (allItems === undefined &&
               highlightedFolders?.includes(currentFolder.id))
-            ? classNames(bgColor, 'border-accent-primary')
+            ? classNames('border-accent-primary bg-accent-primary')
             : 'border-transparent',
         )}
         data-qa="folder"
@@ -460,8 +432,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             ) : (
               <ShareIcon
                 {...currentFolder}
-                isHighlited
-                highlightColor={highlightColor}
+                isHighlighted
                 featureType={featureType}
               >
                 <IconFolder size={18} className="mr-1 text-secondary" />
@@ -506,8 +477,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             ) : (
               <ShareIcon
                 {...currentFolder}
-                isHighlited={isContextMenu}
-                highlightColor={highlightColor}
+                isHighlighted={isContextMenu}
                 featureType={featureType}
               >
                 <IconFolder size={18} className="mr-1 text-secondary" />
@@ -519,7 +489,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 isRenaming ? 'pr-10' : 'group-hover/button:pr-5',
                 !isRenaming &&
                   highlightedFolders?.includes(currentFolder.id) &&
-                  textColor,
+                  'text-primary',
               )}
             >
               {currentFolder.name}
@@ -550,7 +520,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                     onPublish={handleOpenPublishing}
                     onPublishUpdate={handleOpenPublishing}
                     onUnpublish={handleOpenUnpublishing}
-                    highlightColor={highlightColor}
                     onOpenChange={setIsContextMenu}
                     isOpen={isContextMenu}
                   />
@@ -574,7 +543,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 width={18}
                 height={18}
                 size={18}
-                className={hoverIconColor}
+                className="hover:text-primary"
               />
             </SidebarActionButton>
             <SidebarActionButton
@@ -587,7 +556,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 width={18}
                 height={18}
                 size={18}
-                className={hoverIconColor}
+                className="hover:text-primary"
                 strokeWidth="2"
               />
             </SidebarActionButton>
@@ -608,7 +577,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                         onDraggingOver={onDraggingBetweenFolders}
                         index={index}
                         parentFolderId={item.folderId}
-                        highlightColor={highlightColor}
                       />
                     )}
                     <Folder
@@ -619,7 +587,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       itemComponent={itemComponent}
                       allItems={allItems}
                       allFolders={allFolders}
-                      highlightColor={highlightColor}
                       highlightedFolders={highlightedFolders}
                       openedFoldersIds={openedFoldersIds}
                       loadingFolderId={loadingFolderId}
@@ -643,7 +610,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                         onDraggingOver={onDraggingBetweenFolders}
                         index={index + 1}
                         parentFolderId={item.folderId}
-                        highlightColor={highlightColor}
                       />
                     )}
                   </Fragment>

@@ -63,14 +63,14 @@ const Header = () => {
               />
 
               <MoveLeftIcon
-                className="text-secondary hover:text-accent-secondary max-md:hidden"
+                className="text-secondary hover:text-accent-primary max-md:hidden"
                 width={24}
                 height={24}
               />
             </>
           ) : (
             <MoveRightIcon
-              className="text-secondary hover:text-accent-secondary"
+              className="text-secondary hover:text-accent-primary"
               width={24}
               height={24}
             />
@@ -104,14 +104,14 @@ const Header = () => {
               />
 
               <MoveRightIcon
-                className="text-secondary hover:text-accent-tertiary max-md:hidden"
+                className="text-secondary hover:text-accent-primary max-md:hidden"
                 width={24}
                 height={24}
               />
             </>
           ) : (
             <MoveLeftIcon
-              className="text-secondary hover:text-accent-tertiary"
+              className="text-secondary hover:text-accent-primary"
               width={24}
               height={24}
             />

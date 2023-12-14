@@ -7,7 +7,7 @@ import {
   SharedWithMeFilter,
 } from '@/src/utils/app/search';
 
-import { FeatureType, HighlightColor } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
@@ -128,7 +128,6 @@ const PromptFolderTemplate = ({
         onDrop={onDropBetweenFolders}
         index={index}
         parentFolderId={folder.folderId}
-        highlightColor={HighlightColor.Violet}
       />
       <Folder
         searchTerm={searchTerm}
@@ -136,7 +135,6 @@ const PromptFolderTemplate = ({
         itemComponent={PromptComponent}
         allItems={prompts}
         allFolders={promptFolders}
-        highlightColor={HighlightColor.Violet}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
@@ -161,7 +159,6 @@ const PromptFolderTemplate = ({
           onDrop={onDropBetweenFolders}
           index={index + 1}
           parentFolderId={folder.folderId}
-          highlightColor={HighlightColor.Violet}
         />
       )}
     </>

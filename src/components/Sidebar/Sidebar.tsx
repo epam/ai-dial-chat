@@ -4,9 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getByHighlightColor } from '@/src/utils/app/folders';
-
-import { FeatureType, HighlightColor } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -72,31 +70,10 @@ const Sidebar = <T,>({
     () => (isLeftSidebar ? 'chatbar' : 'promptbar'),
     [isLeftSidebar],
   );
-  const highlightColor = isLeftSidebar
-    ? HighlightColor.Green
-    : HighlightColor.Violet;
-  const draggingColor = getByHighlightColor(
-    highlightColor,
-    'bg-accent-secondary',
-    'bg-accent-tertiary',
-  );
 
-  const chatbarColor = classNames(
-    'xl:bg-accent-secondary xl:text-accent-secondary',
-    isResizing
-      ? 'bg-accent-secondary text-accent-secondary dark:bg-accent-secondary'
-      : '',
-  );
-
-  const promptbarColor = classNames(
-    'xl:bg-accent-tertiary xl:text-accent-tertiary',
-    isResizing ? 'bg-accent-tertiary text-accent-tertiary' : '',
-  );
-
-  const resizeTriggerColor = getByHighlightColor(
-    highlightColor,
-    chatbarColor,
-    promptbarColor,
+  const resizeTriggerColor = classNames(
+    'xl:bg-accent-primary xl:text-accent-primary',
+    isResizing ? 'bg-accent-primary text-accent-primary' : '',
   );
 
   const resizeTriggerClassName = classNames(
@@ -197,7 +174,9 @@ const Sidebar = <T,>({
 
   const resizableWrapperClassName = classNames(
     `!fixed top-12 z-40 flex h-[calc(100%-48px)] min-w-[260px] border-primary md:max-w-[45%] xl:!relative xl:top-0 xl:h-full`,
-    isLeftSidebar ? 'left-0 border-r' : 'right-0 border-l',
+    isLeftSidebar
+      ? 'sidebar-left left-0 border-r'
+      : 'sidebar-right right-0 border-l',
   );
 
   return isOpen ? (
@@ -226,7 +205,7 @@ const Sidebar = <T,>({
             <div
               ref={dragDropElement}
               className={`min-h-[100px] min-w-[42px] grow ${
-                isDraggingOver ? draggingColor : ''
+                isDraggingOver ? 'bg-accent-primary' : ''
               }`}
               onDrop={(e) => {
                 setIsDraggingOver(false);

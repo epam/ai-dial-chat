@@ -52,7 +52,7 @@ const initEpic: AppEpic = (action$) =>
         if (theme) {
           actions.push(UIActions.setTheme(theme));
         } else {
-          actions.push(UIActions.setTheme(availableThemes[0]?.cssClass));
+          actions.push(UIActions.setTheme(availableThemes[0]?.id));
         }
         actions.push(UIActions.setAvailableThemes(availableThemes));
         actions.push(UIActions.setShowChatbar(showChatbar));

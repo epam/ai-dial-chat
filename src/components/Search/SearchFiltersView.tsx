@@ -5,13 +5,12 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getByHighlightColor } from '@/src/utils/app/folders';
 import {
   getNewSearchFiltersValue,
   isSearchFilterSelected,
 } from '@/src/utils/app/search';
 
-import { FeatureType, HighlightColor } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { SearchFilters } from '@/src/types/search';
@@ -40,11 +39,6 @@ export default function SearchFiltersView({
       ? Translation.SideBar
       : Translation.PromptBar,
   );
-
-  const highlightColor =
-    featureType === FeatureType.Chat
-      ? HighlightColor.Green
-      : HighlightColor.Violet;
 
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
@@ -91,31 +85,19 @@ export default function SearchFiltersView({
   return (
     <ContextMenu
       menuItems={filterItems}
-      highlightColor={highlightColor}
+      featureType={featureType}
       triggerIconClassName="absolute right-4 cursor-pointer max-h-[18px]"
       TriggerCustomRenderer={
         <Tooltip tooltip={t('Search filter')}>
           <IconFilter
             size={18}
-            className={classNames(
-              'text-secondary',
-              getByHighlightColor(
-                highlightColor,
-                'hover:text-accent-secondary',
-                'hover:text-accent-tertiary',
-              ),
-            )}
+            className={classNames('text-secondary hover:text-accent-primary')}
           />
           {searchFilters !== SearchFilters.None && (
             <IconCircleFilled
               size={8}
               className={classNames(
-                'absolute right-0 top-0 bg-layer-0 p-[0.3px]',
-                getByHighlightColor(
-                  highlightColor,
-                  'text-accent-secondary',
-                  'text-accent-tertiary',
-                ),
+                'absolute right-0 top-0 bg-layer-0 p-[0.3px] text-accent-primary',
               )}
             />
           )}

@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { isMobile } from '@/src/utils/app/mobile';
 
 import { Conversation, Role } from '@/src/types/chat';
-import { FeatureType, HighlightColor } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -38,12 +38,7 @@ const Option = ({ item }: OptionProps) => {
 
   return (
     <div className="group flex items-center gap-3 pl-1">
-      <ShareIcon
-        {...item}
-        isHighlited={false}
-        highlightColor={HighlightColor.Blue}
-        featureType={FeatureType.Chat}
-      >
+      <ShareIcon {...item} isHighlighted={false} featureType={FeatureType.Chat}>
         <ModelIcon entity={model} entityId={model.id} size={24} />
       </ShareIcon>
       <span>{item.name}</span>

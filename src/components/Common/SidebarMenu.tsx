@@ -2,8 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { getByHighlightColor } from '@/src/utils/app/folders';
-
 import { MenuItemRendererProps, MenuProps } from '@/src/types/menu';
 
 import Tooltip from '@/src/components/Common/Tooltip';
@@ -20,7 +18,7 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
     dataQa,
     onClick,
     disabled,
-    highlightColor,
+    featureType,
     className,
     childMenuItems,
   } = props;
@@ -29,12 +27,7 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
     <button
       className={classNames(
         'flex cursor-pointer items-center justify-center rounded p-[5px] disabled:cursor-not-allowed',
-        getByHighlightColor(
-          highlightColor,
-          'hover:bg-accent-secondary hover:text-accent-secondary',
-          'hover:bg-accent-tertiary hover:text-accent-tertiary',
-          'hover:bg-accent-primary hover:text-accent-primary',
-        ),
+        'hover:bg-accent-primary hover:text-accent-primary',
         className,
       )}
       onClick={!childMenuItems ? onClick : undefined}
@@ -56,7 +49,7 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
     return (
       <ContextMenu
         menuItems={childMenuItems}
-        highlightColor={highlightColor}
+        featureType={featureType}
         TriggerCustomRenderer={item}
       />
     );
@@ -66,7 +59,7 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
 
 export default function SidebarMenu({
   menuItems,
-  highlightColor,
+  featureType,
   displayMenuItemCount = 5,
   isOpen,
   onOpenChange,
@@ -108,11 +101,11 @@ export default function SidebarMenu({
         const Trigger = CustomTriggerRenderer ? (
           <CustomTriggerRenderer
             {...props}
-            highlightColor={highlightColor}
+            featureType={featureType}
             Renderer={SidebarMenuItemRenderer}
           />
         ) : (
-          <SidebarMenuItemRenderer {...props} highlightColor={highlightColor} />
+          <SidebarMenuItemRenderer {...props} featureType={featureType} />
         );
 
         return (
@@ -124,9 +117,8 @@ export default function SidebarMenu({
 
       <ContextMenu
         menuItems={hiddenItems}
-        highlightColor={highlightColor}
-        className="p-[5px]"
         isOpen={isOpen}
+        featureType={featureType}
         onOpenChange={onOpenChange}
       />
     </div>

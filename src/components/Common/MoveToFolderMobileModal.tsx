@@ -41,7 +41,7 @@ export const MoveToFolderMobileModal = ({
           </span>
         </div>
         <div
-          className="flex h-[42px] gap-3  rounded px-6 py-2 hover:bg-accent-secondary"
+          className="flex h-[42px] gap-3  rounded px-6 py-2 hover:bg-accent-primary"
           onClick={() => {
             handleMoveToFolder({ isNewFolder: true });
           }}
@@ -53,7 +53,7 @@ export const MoveToFolderMobileModal = ({
           {folders.map((folder) => (
             <div
               key={folder.id}
-              className="flex h-[42px] items-center rounded px-6 hover:bg-accent-secondary"
+              className="flex h-[42px] items-center rounded px-6 hover:bg-accent-primary"
               onClick={() => {
                 handleMoveToFolder({ folderId: folder.id });
               }}
