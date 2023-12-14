@@ -304,7 +304,7 @@ export const FileManagerModal = ({
               {...getFloatingProps()}
             >
               <button
-                className="hover:text-blue-500 absolute right-2 top-2 text-secondary"
+                className="absolute right-2 top-2 text-secondary hover:text-accent-primary"
                 onClick={() => onClose(false)}
               >
                 <IconX />
@@ -344,7 +344,7 @@ export const FileManagerModal = ({
                       placeholder={t('Search files') || ''}
                       type="text"
                       onChange={handleSearch}
-                      className="focus-visible:border-blue-500 m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary"
+                      className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
                     ></input>
                     <div className="flex min-h-[350px] flex-col overflow-auto">
                       <button
@@ -424,13 +424,13 @@ export const FileManagerModal = ({
                     <>
                       <button
                         onClick={handleRemoveMultipleFiles}
-                        className="hover:text-blue-500 flex h-[34px] w-[34px] items-center justify-center rounded  text-secondary hover:bg-accent-primary"
+                        className="flex h-[34px] w-[34px] items-center justify-center rounded text-secondary  hover:bg-accent-primary hover:text-accent-primary"
                       >
                         <IconTrash size={24} />
                       </button>
                       <button
                         onClick={handleDownloadMultipleFiles}
-                        className="hover:text-blue-500 flex h-[34px] w-[34px] items-center justify-center rounded  text-secondary hover:bg-accent-primary"
+                        className="flex h-[34px] w-[34px] items-center justify-center rounded text-secondary  hover:bg-accent-primary hover:text-accent-primary"
                       >
                         <IconDownload size={24} />
                       </button>
@@ -438,7 +438,7 @@ export const FileManagerModal = ({
                   ) : (
                     <button
                       onClick={handleNewFolder}
-                      className="hover:text-blue-500 flex h-[34px] w-[34px] items-center justify-center rounded  text-secondary hover:bg-accent-primary"
+                      className="flex h-[34px] w-[34px] items-center justify-center rounded text-secondary  hover:bg-accent-primary hover:text-accent-primary"
                     >
                       <FolderPlus height={24} width={24} />
                     </button>

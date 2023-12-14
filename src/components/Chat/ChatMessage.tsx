@@ -36,7 +36,6 @@ import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -94,7 +93,6 @@ export const ChatMessage: FC<Props> = memo(
     const dispatch = useAppDispatch();
 
     const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-    const theme = useAppSelector(UISelectors.selectThemeState);
     const codeWarning = useAppSelector(SettingsSelectors.selectCodeWarning);
     const isPlayback = useAppSelector(
       ConversationsSelectors.selectIsPlaybackSelectedConversations,
@@ -304,7 +302,6 @@ export const ChatMessage: FC<Props> = memo(
                     (message.model?.id && modelsMap[message.model?.id]) ||
                     undefined
                   }
-                  inverted={theme === 'dark'}
                   animate={isShowResponseLoader}
                   size={28}
                 />
@@ -322,7 +319,7 @@ export const ChatMessage: FC<Props> = memo(
               <div className="flex">
                 {isEditing ? (
                   <div className="flex w-full flex-col gap-3 pr-[60px]">
-                    <div className="focus-within:border-controls-accent relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2">
+                    <div className="relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-controls-accent">
                       <textarea
                         ref={textareaRef}
                         className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"

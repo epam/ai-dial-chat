@@ -27,7 +27,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { emptyImage } from '@/src/constants/drag-and-drop';
 
@@ -52,8 +52,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-
-  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const selectedConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
@@ -296,7 +294,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           ) : (
             <ModelIcon
               size={18}
-              inverted={theme === 'dark'}
               entityId={conversation.model.id}
               entity={modelsMap[conversation.model.id]}
             />
@@ -355,7 +352,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
                 size={18}
                 entityId={conversation.model.id}
                 entity={modelsMap[conversation.model.id]}
-                inverted={theme === 'dark'}
               />
             )}
 

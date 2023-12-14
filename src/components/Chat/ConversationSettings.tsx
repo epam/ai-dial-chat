@@ -12,7 +12,6 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 
@@ -55,16 +54,9 @@ interface Props {
 }
 
 export const ModelSelectRow = ({ item }: ModelSelectRowProps) => {
-  const theme = useAppSelector(UISelectors.selectThemeState);
-
   return (
     <div className="flex items-center gap-2">
-      <ModelIcon
-        entity={item}
-        entityId={item.id}
-        size={18}
-        inverted={theme === 'dark'}
-      />
+      <ModelIcon entity={item} entityId={item.id} size={18} />
       <span>{item.name || item.id}</span>
     </div>
   );

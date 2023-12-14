@@ -64,7 +64,7 @@ pre:has(div.codeblock) {
   }
 
   .input-form {
-    @apply hover:border-controls-accent focus:border-controls-accent m-0.5 w-full rounded border border-primary bg-transparent p-3 placeholder:text-secondary focus:outline-none;
+    @apply m-0.5 w-full rounded border border-primary bg-transparent p-3 placeholder:text-secondary hover:border-controls-accent focus:border-controls-accent focus:outline-none;
   }
 
   .submitted {
@@ -110,7 +110,7 @@ pre:has(div.codeblock) {
 
 @layer components {
   .checkbox {
-    @apply checked:border-controls-accent hover:border-controls-accent focus:border-controls-accent relative m-0 mr-2 inline h-4 w-4 shrink-0 appearance-none rounded-sm border border-primary text-accent-primary focus-visible:outline-none;
+    @apply relative m-0 mr-2 inline h-4 w-4 shrink-0 appearance-none rounded-sm border border-primary text-accent-primary checked:border-controls-accent hover:border-controls-accent focus:border-controls-accent focus-visible:outline-none;
   }
 }
 

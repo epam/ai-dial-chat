@@ -27,7 +27,7 @@ const PromptActionsBlock = () => {
   return (
     <div className="flex px-2 py-1">
       <button
-        className="hover:bg-violet/15 flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 disabled:cursor-not-allowed"
+        className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-tertiary disabled:cursor-not-allowed"
         onClick={() => {
           dispatch(PromptsActions.createNewPrompt());
           dispatch(PromptsActions.setSearchTerm({ searchTerm: '' }));

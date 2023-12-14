@@ -147,7 +147,7 @@ export const PlaybackControls = ({
   return (
     <div
       ref={controlsContainerRef}
-      className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 pt-6 md:pt-2"
+      className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-layer-1 to-layer-1 pt-6 md:pt-2"
     >
       <div
         className="relative mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
@@ -163,7 +163,7 @@ export const PlaybackControls = ({
         </button>
         <div
           ref={nextMessageBoxRef}
-          className="focus-visible:border-accent-primary m-0 max-h-[150px] min-h-[44px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-layer-3 px-12 py-3 text-left outline-none"
+          className="m-0 max-h-[150px] min-h-[44px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-layer-3 px-12 py-3 text-left outline-none focus-visible:border-accent-primary"
           data-qa="playback-message"
         >
           {isMessageStreaming ? (

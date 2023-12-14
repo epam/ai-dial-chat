@@ -199,14 +199,14 @@ export const SelectFolderModal = ({
                       placeholder={t('Search folders') || ''}
                       type="text"
                       onChange={handleSearch}
-                      className="focus-visible:border-blue-500 m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary"
+                      className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
                     ></input>
                     <div className="flex min-h-[350px] flex-col overflow-auto">
                       <button
                         className={classNames(
                           'flex items-center gap-1 rounded border-l-2 py-1 text-xs text-secondary',
                           !selectedFolderId
-                            ? 'border-blue-500 bg-accent-primary'
+                            ? 'border-accent-primary bg-accent-primary'
                             : 'border-transparent',
                         )}
                         onClick={() => handleToggleFolder(undefined)}
@@ -259,12 +259,12 @@ export const SelectFolderModal = ({
                   <div className="flex items-center justify-center">
                     <button
                       onClick={handleNewFolder}
-                      className="hover:text-blue-500 flex h-[34px] w-[34px] items-center justify-center rounded  text-secondary hover:bg-accent-primary"
+                      className="flex h-[34px] w-[34px] items-center justify-center rounded text-secondary  hover:bg-accent-primary hover:text-accent-primary"
                     >
                       <FolderPlus
                         height={24}
                         width={24}
-                        className="hover:text-blue-500 text-secondary"
+                        className="text-secondary hover:text-accent-primary"
                       />
                     </button>
                   </div>

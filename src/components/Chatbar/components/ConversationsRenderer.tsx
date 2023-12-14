@@ -42,7 +42,7 @@ export const ConversationsRenderer = ({
             className={classNames(
               'flex items-center gap-1 py-1 text-xs',
               isSectionHighlighted
-                ? 'text-green'
+                ? 'text-accent-secondary'
                 : '[&:not(:hover)]:text-secondary',
             )}
             data-qa="chronology"

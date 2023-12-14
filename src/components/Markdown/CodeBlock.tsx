@@ -86,7 +86,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
 
         <div className="flex items-center gap-3 text-secondary">
           <button
-            className="[&:not(:disabled)]:hover:text-blue-500 flex items-center"
+            className="flex items-center [&:not(:disabled)]:hover:text-accent-primary"
             onClick={copyToClipboard}
             disabled={isCopied}
           >
@@ -102,7 +102,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
           </button>
           <Tooltip isTriggerClickable tooltip={t('Download')}>
             <button
-              className="hover:text-blue-500 flex items-center rounded bg-none"
+              className="flex items-center rounded bg-none hover:text-accent-primary"
               onClick={downloadAsFile}
             >
               <Download width={18} height={18} />

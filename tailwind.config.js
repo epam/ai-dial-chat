@@ -67,6 +67,12 @@ module.exports = {
       'controls-disable': 'var(--controls-text-disable, #333942)',
     },
     gradientColorStops: {
+      transparent: 'transparent',
+      'layer-0': 'var(--bg-layer-0, #000000)',
+      'layer-1': 'var(--bg-layer-1, #090D13)',
+      'layer-2': 'var(--bg-layer-2, #141A23)',
+      'layer-3': 'var(--bg-layer-3, #222932)',
+      'layer-4': 'var(--bg-layer-4, #333942)',
       'accent-primary': 'var(--text-accent-primary, #5C8DEA)',
       'accent-secondary': 'var(--text-accent-secondary, #37BABC)',
       'accent-tertiary': 'var(--text-accent-tertiary, #A972FF)',

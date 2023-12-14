@@ -20,7 +20,6 @@ import {
   ModelsActions,
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -37,14 +36,12 @@ const Entity = ({
   selectedModelId: string | undefined;
   onSelect: (id: string) => void;
 }) => {
-  const theme = useAppSelector(UISelectors.selectThemeState);
-
   const [isOpened, setIsOpened] = useState(false);
 
   return (
     <button
       key={entity.id}
-      className={`hover:border-controls-hover flex items-center gap-3 rounded border px-3 py-2 ${
+      className={`flex items-center gap-3 rounded border px-3 py-2 hover:border-controls-hover ${
         selectedModelId === entity.id
           ? 'border-accent-primary'
           : 'border-primary'
@@ -54,12 +51,7 @@ const Entity = ({
       }}
       data-qa="group-entity"
     >
-      <ModelIcon
-        entityId={entity.id}
-        entity={entity}
-        size={24}
-        inverted={theme === 'dark'}
-      />
+      <ModelIcon entityId={entity.id} entity={entity} size={24} />
       <div className="flex flex-col gap-1 text-left">
         <span data-qa="group-entity-name">{entity.name}</span>
         {entity.description && (
@@ -275,7 +267,7 @@ export const ModelsDialog: FC<Props> = ({
               onChange={(e) => {
                 handleSearch(e.target.value);
               }}
-              className="focus-visible:border-accent-primary m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary"
+              className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
             ></input>
           </div>
 

@@ -8,7 +8,6 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -32,7 +31,6 @@ export const ConversationSettingsModel = ({
   const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
-  const theme = useAppSelector(UISelectors.selectThemeState);
   const [mappedEntities, setMappedEntities] = useState<OpenAIEntityModel[]>([]);
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
@@ -59,17 +57,12 @@ export const ConversationSettingsModel = ({
               className={`flex items-center gap-3 rounded border p-3 text-left text-xs ${
                 modelId === entity.id && !replay.replayAsIs
                   ? 'border-accent-primary'
-                  : 'hover:border-controls-hover border-primary'
+                  : 'border-primary hover:border-controls-hover'
               }`}
               key={entity.id}
               onClick={() => onModelSelect(entity.id)}
             >
-              <ModelIcon
-                entityId={entity.id}
-                entity={entity}
-                size={24}
-                inverted={theme === 'dark'}
-              />
+              <ModelIcon entityId={entity.id} entity={entity} size={24} />
               <div className="flex flex-col gap-1">
                 <span data-qa="entity-name">{entity.name}</span>
                 {entity.description && (

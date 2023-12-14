@@ -48,10 +48,10 @@ const Header = () => {
   };
 
   return (
-    <div className="border-divider-primary z-40 flex h-[48px] w-full border-b bg-layer-3">
+    <div className="z-40 flex h-[48px] w-full border-b border-divider-primary bg-layer-3">
       <Tooltip isTriggerClickable tooltip={t('Conversation list')}>
         <div
-          className="border-divider-primary flex-none cursor-pointer border-r p-3 md:px-5"
+          className="flex-none cursor-pointer border-r border-divider-primary p-3 md:px-5"
           onClick={handleToggleChatbar}
         >
           {showChatbar ? (
@@ -63,14 +63,14 @@ const Header = () => {
               />
 
               <MoveLeftIcon
-                className="hover:text-green text-secondary max-md:hidden"
+                className="text-secondary hover:text-accent-secondary max-md:hidden"
                 width={24}
                 height={24}
               />
             </>
           ) : (
             <MoveRightIcon
-              className="hover:text-green text-secondary"
+              className="text-secondary hover:text-accent-secondary"
               width={24}
               height={24}
             />
@@ -85,14 +85,14 @@ const Header = () => {
             backgroundImage: `var(--app-logo)`,
           }}
         ></span>
-        <div className="max-md:border-divider-primary w-[48px] max-md:border-l md:w-auto">
+        <div className="w-[48px] max-md:border-l max-md:border-divider-primary md:w-auto">
           <User />
         </div>
       </div>
 
       <Tooltip isTriggerClickable tooltip={t('Prompt list')}>
         <div
-          className="border-divider-primary flex-none cursor-pointer border-l p-3 md:px-5"
+          className="flex-none cursor-pointer border-l border-divider-primary p-3 md:px-5"
           onClick={handleTogglePromtbar}
         >
           {showPromptbar ? (
@@ -104,14 +104,14 @@ const Header = () => {
               />
 
               <MoveRightIcon
-                className="hover:text-violet text-secondary max-md:hidden"
+                className="text-secondary hover:text-accent-tertiary max-md:hidden"
                 width={24}
                 height={24}
               />
             </>
           ) : (
             <MoveLeftIcon
-              className="hover:text-violet text-secondary"
+              className="text-secondary hover:text-accent-tertiary"
               width={24}
               height={24}
             />

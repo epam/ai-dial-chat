@@ -119,7 +119,7 @@ export const Combobox = ({
             {label}
           </label>
         )}
-        <div className="focus-within:border-blue-500 relative flex rounded border border-primary ">
+        <div className="relative flex rounded border border-primary focus-within:border-accent-primary ">
           <input
             disabled={disabled}
             placeholder={placeholder || ''}

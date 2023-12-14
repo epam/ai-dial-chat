@@ -157,7 +157,7 @@ export const PromptModal: FC<Props> = ({
             <button
               type="button"
               role="button"
-              className="hover:text-blue-700 absolute right-2 top-2 rounded text-secondary"
+              className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
               onClick={handleClose}
             >
               <IconX size={24} />
@@ -172,7 +172,7 @@ export const PromptModal: FC<Props> = ({
                 htmlFor="promptName"
               >
                 {t('Name')}
-                <span className="text-blue-500 ml-1 inline">*</span>
+                <span className="ml-1 inline text-accent-primary">*</span>
               </label>
               <input
                 ref={nameInputRef}

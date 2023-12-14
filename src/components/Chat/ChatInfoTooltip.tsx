@@ -32,12 +32,7 @@ const getModelTemplate = (
         className="flex items-center gap-2"
         data-qa={label.toLowerCase().concat('-info')}
       >
-        <ModelIcon
-          entityId={model.id}
-          entity={model}
-          size={18}
-          inverted={theme === 'dark'}
-        />
+        <ModelIcon entityId={model.id} entity={model} size={18} />
         {model.name}
       </div>
     </>
@@ -97,12 +92,7 @@ export const ChatInfoTooltip = ({
                 className="flex gap-2 rounded bg-accent-primary px-3 py-2"
                 data-qa="addons-info"
               >
-                <ModelIcon
-                  entityId={addon.id}
-                  entity={addon}
-                  size={18}
-                  inverted={theme === 'dark'}
-                />
+                <ModelIcon entityId={addon.id} entity={addon} size={18} />
                 {addon.name}
               </span>
             ))}

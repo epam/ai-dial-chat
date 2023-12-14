@@ -96,7 +96,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const json = (await response.json()) as ThemesConfig;
 
   const dayInMs = 86400000;
-  console.log(json.themes);
 
   cachedTheme = [
     ...json.themes.map((theme) =>

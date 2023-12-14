@@ -132,7 +132,6 @@ export const ChatHeader = ({
                       entityId={conversation.model.id}
                       entity={model}
                       size={18}
-                      inverted={theme === 'dark'}
                       isCustomTooltip
                     />
                   </Tooltip>
@@ -148,7 +147,6 @@ export const ChatHeader = ({
                           entityId={addon}
                           size={18}
                           entity={addonsMap[addon]}
-                          inverted={theme === 'dark'}
                         />
                       ))}
                       {conversation.selectedAddons
@@ -159,7 +157,6 @@ export const ChatHeader = ({
                             entityId={addon}
                             size={18}
                             entity={addonsMap[addon]}
-                            inverted={theme === 'dark'}
                           />
                         ))}
                     </span>

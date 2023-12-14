@@ -83,7 +83,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
           role="dialog"
         >
           <button
-            className="hover:text-blue-700 absolute right-2 top-2 rounded text-secondary"
+            className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
             onClick={onClose}
           >
             <XMark height={24} width={24} />
@@ -92,9 +92,9 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
           <div className="mb-4">
             <div className="flex items-center gap-5">
               <div className="w-[120px]">{t('Theme')}</div>
-              <div className="focus-within:border-blue-500 focus:border-blue-500 w-full rounded border border-primary px-3">
+              <div className="w-full rounded border border-primary px-3 focus-within:border-accent-primary focus:border-accent-primary">
                 <select
-                  className="h-[38px] w-full cursor-pointer rounded border-none focus:outline-none"
+                  className="h-[38px] w-full cursor-pointer rounded border-none bg-transparent focus:outline-none"
                   value={localTheme}
                   onChange={onThemeChangeHandler}
                 >

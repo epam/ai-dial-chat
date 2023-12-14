@@ -10,7 +10,6 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -23,7 +22,6 @@ interface OptionProps {
 const Option = ({ item }: OptionProps) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const defaultModelId = useAppSelector(SettingsSelectors.selectDefaultModelId);
-  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const model = useMemo(
     () =>
@@ -38,12 +36,7 @@ const Option = ({ item }: OptionProps) => {
 
   return (
     <div className="flex items-center gap-3 pl-1">
-      <ModelIcon
-        entity={model}
-        entityId={model.id}
-        size={24}
-        inverted={theme === 'dark'}
-      />
+      <ModelIcon entity={model} entityId={model.id} size={24} />
       <span>{item.name}</span>
     </div>
   );

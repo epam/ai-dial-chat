@@ -20,7 +20,7 @@ export const AnnouncementsBanner = () => {
   }
 
   return (
-    <div className="from-accent-secondary to-accent-tertiary relative flex items-center justify-center bg-gradient-to-r text-controls-permanent">
+    <div className="relative flex items-center justify-center bg-gradient-to-r from-accent-secondary to-accent-tertiary text-controls-permanent">
       <div className="flex grow items-center justify-center gap-2 py-2 pl-2 pr-8 text-center md:gap-3 md:px-14">
         <IconSpeakerphone size={24} strokeWidth={1.5} className="shrink-0" />
         <span dangerouslySetInnerHTML={{ __html: announcement }}></span>

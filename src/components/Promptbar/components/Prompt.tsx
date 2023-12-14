@@ -217,9 +217,9 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     <>
       <div
         className={classNames(
-          'hover:bg-violet/15 group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200',
+          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-tertiary',
           isDeleting || isRenaming || (showModal && isSelected) || isContextMenu
-            ? 'border-l-violet bg-violet/15'
+            ? 'border-l-accent-tertiary bg-accent-tertiary'
             : 'border-l-transparent',
         )}
         style={{
@@ -258,11 +258,15 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         {isDeleting && (
           <div className="absolute right-1 z-10 flex">
             <SidebarActionButton handleClick={handleDelete}>
-              <IconCheck size={18} className="hover:text-violet" />
+              <IconCheck size={18} className="hover:text-accent-tertiary" />
             </SidebarActionButton>
 
             <SidebarActionButton handleClick={handleCancelDelete}>
-              <IconX size={18} strokeWidth="2" className="hover:text-violet" />
+              <IconX
+                size={18}
+                strokeWidth="2"
+                className="hover:text-accent-tertiary"
+              />
             </SidebarActionButton>
           </div>
         )}
