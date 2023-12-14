@@ -10,7 +10,6 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
-import { Theme } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -25,7 +24,7 @@ interface Props {
 
 export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const theme = useAppSelector(UISelectors.selectThemeState);
-
+  const availableThemes = useAppSelector(UISelectors.selectAvailableThemes);
   const [localTheme, setLocalTheme] = useState(theme);
 
   const dispatch = useAppDispatch();
@@ -59,7 +58,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
 
   const onThemeChangeHandler: ChangeEventHandler<HTMLSelectElement> =
     useCallback((event) => {
-      const theme = event.target.value as Theme;
+      const theme = event.target.value;
       setLocalTheme(theme);
     }, []);
 
@@ -98,12 +97,11 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
                   value={localTheme}
                   onChange={onThemeChangeHandler}
                 >
-                  <option className="border-none" value="dark">
-                    {t('Dark')}
-                  </option>
-                  <option className="" value="light">
-                    {t('Light')}
-                  </option>
+                  {availableThemes.map((theme) => (
+                    <option key={theme.cssClass} value={theme.cssClass}>
+                      {t(theme.displayName)}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

@@ -21,8 +21,8 @@ const ModelIconTemplate = memo(
     const url =
       entity?.iconUrl ??
       (entity?.type === EntityType.Addon
-        ? `api/themes-image?name=default-addon`
-        : `api/themes-image?name=default-model`);
+        ? `api/themes/image?name=default-addon`
+        : `api/themes/image?name=default-model`);
 
     return (
       <>

@@ -1,11 +1,12 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import { Theme } from '@/src/types/settings';
+import { Theme } from '@/src/types/themes';
 
 import { RootState } from '..';
 
 export interface UIState {
-  theme: Theme;
+  theme: string;
+  availableThemes: Theme[];
   showChatbar: boolean;
   showPromptbar: boolean;
   isUserSettingsOpen: boolean;
@@ -16,7 +17,8 @@ export interface UIState {
 }
 
 const initialState: UIState = {
-  theme: 'dark',
+  theme: '',
+  availableThemes: [],
   showChatbar: false,
   showPromptbar: false,
   isUserSettingsOpen: false,
@@ -31,8 +33,14 @@ export const uiSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    setTheme: (state, { payload }: PayloadAction<Theme>) => {
+    setTheme: (state, { payload }: PayloadAction<string>) => {
       state.theme = payload;
+    },
+    setAvailableThemes: (
+      state,
+      { payload }: PayloadAction<UIState['availableThemes']>,
+    ) => {
+      state.availableThemes = payload;
     },
     setShowChatbar: (
       state,
@@ -117,6 +125,9 @@ const rootSelector = (state: RootState): UIState => state.ui;
 const selectThemeState = createSelector([rootSelector], (state) => {
   return state.theme;
 });
+const selectAvailableThemes = createSelector([rootSelector], (state) => {
+  return state.availableThemes;
+});
 
 const selectShowChatbar = createSelector([rootSelector], (state) => {
   return state.showChatbar;
@@ -166,4 +177,5 @@ export const UISelectors = {
   selectOpenedFoldersIds,
   selectIsFolderOpened,
   selectTextOfClosedAnnouncement,
+  selectAvailableThemes,
 };

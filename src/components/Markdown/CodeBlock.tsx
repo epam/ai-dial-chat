@@ -1,5 +1,5 @@
 import { IconCheck, IconCopy } from '@tabler/icons-react';
-import { FC, memo, useCallback, useState } from 'react';
+import { CSSProperties, FC, memo, useCallback, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import {
   oneDark,
@@ -23,7 +23,7 @@ interface Props {
   value: string;
   isInner?: boolean;
 }
-const codeBlockTheme = {
+const codeBlockTheme: Record<string, Record<string, CSSProperties>> = {
   dark: oneDark,
   light: oneLight,
 };
@@ -113,7 +113,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
 
       <SyntaxHighlighter
         language={language}
-        style={codeBlockTheme[theme]}
+        style={codeBlockTheme[theme] || oneDark}
         customStyle={{
           margin: 0,
           borderRadius: 0,

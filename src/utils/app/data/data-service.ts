@@ -10,8 +10,8 @@ import {
 } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
-import { Theme } from '@/src/types/settings';
 import { DialStorage } from '@/src/types/storage';
+import { Theme } from '@/src/types/themes';
 
 import { getPathNameId, getRelativePath } from '../file';
 import { ApiMockStorage } from './storages/api-mock-storage';
@@ -88,13 +88,16 @@ export class DataService {
     return BrowserStorage.setData('recentAddonsIds', recentAddonsIds);
   }
 
-  public static getTheme(): Observable<Theme> {
-    return BrowserStorage.getData('settings', { theme: 'dark' as Theme }).pipe(
+  public static getTheme(): Observable<string> {
+    return BrowserStorage.getData('settings', { theme: '' }).pipe(
       map((settings) => settings.theme),
     );
   }
-  public static setTheme(theme: Theme): Observable<void> {
+  public static setTheme(theme: string): Observable<void> {
     return BrowserStorage.setData('settings', { theme });
+  }
+  public static getAvailableThemes(): Observable<Theme[]> {
+    return ApiStorage.request('api/themes/listing');
   }
   public static getShowChatbar(): Observable<boolean> {
     return BrowserStorage.getData('showChatbar', true);

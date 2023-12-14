@@ -15,7 +15,6 @@ import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -36,8 +35,6 @@ const Addon = ({
   selectedAddons,
   onSelectAddons,
 }: AddonProps) => {
-  const theme = useAppSelector(UISelectors.selectThemeState);
-
   const isPreselected = preselectedAddonsIds.includes(addon.id);
   const isSelected = selectedAddons.map(({ id }) => id).includes(addon.id);
 
@@ -61,12 +58,7 @@ const Addon = ({
       }}
     >
       <div className="flex items-center gap-2">
-        <ModelIcon
-          entity={addon}
-          entityId={addon.id}
-          size={24}
-          inverted={!addon.iconUrl && theme === 'dark'}
-        />
+        <ModelIcon entity={addon} entityId={addon.id} size={24} />
         <span className="text-left" data-qa="addon-name">
           {addon.name}
         </span>
@@ -95,7 +87,6 @@ const SelectedAddon = ({
   onSelectAddons,
 }: SelectedAddonProps) => {
   const isPreselected = preselectedAddonsIds.includes(addon.id);
-  const theme = useAppSelector(UISelectors.selectThemeState);
 
   return (
     <button
@@ -106,12 +97,7 @@ const SelectedAddon = ({
         onSelectAddons(addon, true);
       }}
     >
-      <ModelIcon
-        entity={addon}
-        entityId={addon.id}
-        size={15}
-        inverted={!addon.iconUrl && theme === 'dark'}
-      />
+      <ModelIcon entity={addon} entityId={addon.id} size={15} />
       <span>{addon.name}</span>
       {!isPreselected && (
         <XMark
@@ -306,7 +292,7 @@ export const AddonsDialog: FC<Props> = ({
             <div className="h-[40px] shrink-0"></div>
           </div>
           <div className="relative h-0 grow">
-            <div className="absolute bottom-0 flex h-[80px] w-full items-end justify-center bg-gradient-to-b from-transparent via-layer-3 to-layer-3 px-3 md:px-5">
+            <div className="from-transparent via-layer-3 to-layer-3 absolute bottom-0 flex h-[80px] w-full items-end justify-center bg-gradient-to-b px-3 md:px-5">
               <button
                 className="button button-primary"
                 onClick={() => {

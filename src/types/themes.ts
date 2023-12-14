@@ -1,9 +1,12 @@
+export interface Theme {
+  displayName: string;
+  colors: Record<string, string>;
+  'app-logo': string;
+  cssClass: string;
+}
+
 export interface ThemesConfig {
-  themes: {
-    colors: Record<string, string>;
-    'app-logo': string;
-    cssClass: string;
-  }[];
+  themes: Theme[];
   images: {
     'default-model': string;
     'default-addon': string;

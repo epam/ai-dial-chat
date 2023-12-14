@@ -9,7 +9,6 @@ import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -31,7 +30,6 @@ const Addon = ({
   isSelected = false,
   onChangeAddon,
 }: AddonProps) => {
-  const theme = useAppSelector(UISelectors.selectThemeState);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
 
   const description = useMemo(
@@ -53,12 +51,7 @@ const Addon = ({
         onChangeAddon(addonId);
       }}
     >
-      <ModelIcon
-        entity={addonsMap[addonId]}
-        entityId={addonId}
-        size={15}
-        inverted={!addonsMap[addonId]?.iconUrl && theme === 'dark'}
-      />
+      <ModelIcon entity={addonsMap[addonId]} entityId={addonId} size={15} />
       <span>{addonsMap[addonId]?.name || addonId}</span>
       {isSelected && !preselectedAddonsIds.includes(addonId) && (
         <XMark height={12} width={12} className="text-secondary" />
