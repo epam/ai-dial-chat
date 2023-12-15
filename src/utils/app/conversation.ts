@@ -1,4 +1,4 @@
-import { Conversation, MessageSettings } from '@/src/types/chat';
+import { Conversation, Message, MessageSettings } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 
@@ -57,4 +57,27 @@ export const isSettingsChanged = (
   });
 
   return isChanged;
+};
+
+export const getNewConversationName = (
+  conversation: Conversation,
+  message: Message,
+  updatedMessages: Message[],
+) => {
+  if (
+    conversation.replay.isReplay ||
+    updatedMessages.length !== 2 ||
+    conversation.isNameChanged
+  ) {
+    return conversation.name;
+  }
+  const content = message.content.trim();
+  if (content.length > 0) {
+    return content.length > 160 ? content.substring(0, 160) + '...' : content;
+  } else if (message.custom_content?.attachments?.length) {
+    const files = message.custom_content.attachments;
+    return files[0].title;
+  }
+
+  return conversation.name;
 };
