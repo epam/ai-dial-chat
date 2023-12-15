@@ -355,7 +355,7 @@ export const FileManagerModal = ({
                         <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">
                           {(folders.length !== 0 ||
                             filteredFiles.length !== 0) && (
-                            <div className="overflow-auto">
+                            <div className="flex flex-col gap-1 overflow-auto">
                               {folders.map((folder) => {
                                 if (folder.folderId) {
                                   return null;

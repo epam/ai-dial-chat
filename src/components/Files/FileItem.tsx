@@ -42,6 +42,8 @@ export const FileItem = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Files);
 
+  const [isContextMenu, setIsContextMenu] = useState(false);
+
   const [isSelected, setIsSelected] = useState(false);
   const handleCancelFile = useCallback(() => {
     onEvent?.(FileItemEventIds.Cancel, item.id);
@@ -70,7 +72,10 @@ export const FileItem = ({
 
   return (
     <div
-      className="group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-blue-500/20"
+      className={classNames(
+        'group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-blue-500/20',
+        isContextMenu && 'bg-blue-500/20',
+      )}
       style={{
         paddingLeft: `${1.005 + level * 1.5}rem`,
       }}
@@ -149,6 +154,7 @@ export const FileItem = ({
           <FileItemContextMenu
             file={item}
             onDelete={handleRemove}
+            onOpenChange={setIsContextMenu}
             className="invisible group-hover/file-item:visible"
           />
         )}
