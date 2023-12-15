@@ -106,13 +106,15 @@ const ChatMDComponent = ({
 }: ChatMDComponentProps) => {
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
+  const mdClassNames = classnames(
+    'prose dark:prose-invert prose-a:text-blue-500 prose-a:no-underline hover:prose-a:underline',
+    { 'max-w-none': isChatFullWidth },
+  );
+
   return (
     <>
       <MemoizedReactMarkdown
-        className={classnames(
-          'prose dark:prose-invert prose-a:text-blue-500 prose-a:no-underline hover:prose-a:underline',
-          { 'max-w-none': isChatFullWidth },
-        )}
+        className={mdClassNames}
         remarkPlugins={[remarkGfm]}
         linkTarget="_blank"
         components={getMDComponents(isShowResponseLoader, isInner)}
