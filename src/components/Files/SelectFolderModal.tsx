@@ -25,11 +25,11 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
+import Folder from '@/src/components/Folder/Folder';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
-import Folder from '@/src/components/Folder/Folder';
 
 interface Props {
   isOpen: boolean;
