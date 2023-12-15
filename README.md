@@ -162,7 +162,7 @@ Also we have a lot of auth specific env variables:
 | `AUTH_AZURE_AD_NAME`      | No                   | Azure AD Name                                                       | Any string       |                |
 | `AUTH_AZURE_AD_SECRET`    | No                   | Azure AD Secret                                                     | Any string       |                |
 | `AUTH_AZURE_AD_TENANT_ID` | No                   | Azure AD Tenant ID                                                  | Any string       |                |
-| `AUTH_AZURE_AD_SCOPE`| No                 | Azure AD Scope                                                      | Any string       | `openid profile user.Read email offline_access` |
+| `AUTH_AZURE_AD_SCOPE`     | No                   | Azure AD Scope                                                      | Any string       | `openid profile user.Read email offline_access` |
 | `AUTH_GITLAB_CLIENT_ID`   | No                   | GitLab Client ID                                                    | Any string       |                |
 | `AUTH_GITLAB_HOST`        | No                   | GitLab Host                                                         | Any string       |                |
 | `AUTH_GITLAB_NAME`        | No                   | GitLab Name                                                         | Any string       |                |
