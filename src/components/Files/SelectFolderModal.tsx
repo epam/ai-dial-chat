@@ -29,7 +29,7 @@ import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
-import Folder from '../Folder';
+import Folder from '@/src/components/Folder/Folder';
 
 interface Props {
   isOpen: boolean;

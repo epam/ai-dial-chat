@@ -30,7 +30,7 @@ import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
-import Folder from '../Folder';
+import Folder from '@/src/components/Folder/Folder';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
 
@@ -146,6 +146,19 @@ export const FileManagerModal = ({
   const handleAddFolder = useCallback(
     (relativePath: string) => {
       dispatch(FilesActions.addNewFolder({ relativePath }));
+
+      if (!openedFoldersIds.includes(relativePath)) {
+        setOpenedFoldersIds(openedFoldersIds.concat(relativePath));
+        dispatch(FilesActions.getFolders({ path: relativePath }));
+      }
+    },
+    [dispatch, openedFoldersIds],
+  );
+
+  const handleUploadFile = useCallback(
+    (relativePath: string) => {
+      // TODO: upload file
+      //dispatch(FilesActions.addNewFolder({ relativePath }));
 
       if (!openedFoldersIds.includes(relativePath)) {
         setOpenedFoldersIds(openedFoldersIds.concat(relativePath));
@@ -379,6 +392,7 @@ export const FileManagerModal = ({
                                       itemComponent={FileItem}
                                       onClickFolder={handleFolderSelect}
                                       onAddFolder={handleAddFolder}
+                                      onFileUpload={handleUploadFile}
                                       onRenameFolder={handleRenameFolder}
                                       onItemEvent={handleItemCallback}
                                     />
