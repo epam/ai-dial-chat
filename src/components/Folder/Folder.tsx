@@ -602,7 +602,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         )}
       </div>
       {isFolderOpened ? (
-        <div className={classNames('flex flex-col gap-0.5')}>
+        <div className={classNames('flex flex-col gap-1')}>
           <div className={classNames('flex flex-col')}>
             {allFolders.map((item, index, arr) => {
               if (item.folderId === currentFolder.id) {
