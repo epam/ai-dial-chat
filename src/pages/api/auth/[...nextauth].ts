@@ -30,7 +30,7 @@ const allProviders: (Provider | boolean)[] = [
       authorization: {
         params: {
           scope:
-            process.env.AUTH_AZURE_AD_CLIENT_SCOPE ||
+            process.env.AUTH_AZURE_AD_SCOPE ||
             'openid profile user.Read email offline_access',
         },
       },
