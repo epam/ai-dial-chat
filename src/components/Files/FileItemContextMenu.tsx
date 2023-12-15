@@ -17,12 +17,14 @@ interface ContextMenuProps {
   file: DialFile;
   className: string;
   onDelete: MouseEventHandler<unknown>;
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
 export function FileItemContextMenu({
   file,
   className,
   onDelete,
+  onOpenChange,
 }: ContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
   const menuItems: DisplayMenuItemProps[] = useMemo(
@@ -49,6 +51,7 @@ export function FileItemContextMenu({
 
   return (
     <ContextMenu
+      onOpenChange={onOpenChange}
       menuItems={menuItems}
       TriggerIcon={IconDots}
       triggerIconSize={18}

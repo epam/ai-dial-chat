@@ -61,7 +61,7 @@ export const ChatInputAttachment = ({
             </button>
           )}
           <button onClick={() => onUnselectFile(file.id)}>
-            <IconX className="shrink-0 text-gray-500" size={18} />
+            <IconX className="shrink-0 text-gray-500 hover:text-blue-500" size={18} />
           </button>
         </div>
       </div>
