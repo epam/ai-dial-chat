@@ -7,7 +7,7 @@ The package contains Dial end-to-end tests. Tests are implemented using [Playwri
 Tests are using Auth0 credentials to access an application.
 Please, set `AUTH_TEST_TOKEN` variable in .env file in order to enable it.
 
-When run tests on CI, `PREVIEW_TEST_TOKEN` CI variable should be set.
+When run tests on CI, `E2E_USERNAME` and `E2E_PASSWORD` CI variable should be set to perform Auth0 login.
 
 
 ## Run tests locally
