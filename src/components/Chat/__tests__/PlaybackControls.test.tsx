@@ -3,6 +3,7 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 import { Role } from '@/src/types/chat';
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
@@ -32,6 +33,16 @@ vi.mock('@/src/store/conversations/conversations.reducers', async () => {
       selectSelectedConversations: vi.fn(),
       selectIsConversationsStreaming: vi.fn(),
       selectPlaybackActiveIndex: vi.fn(),
+    }
+  }
+});
+
+vi.mock('@/src/store/ui/ui.reducers', async () => {
+  const actual:any = await vi.importActual('@/src/store/ui/ui.reducers')
+  return {
+    ...actual,
+    UISelectors: {
+      selectIsChatFullWidth: vi.fn(),
     }
   }
 });
@@ -88,6 +99,7 @@ describe('PlaybackControls', () => {
           isMessageStreaming: false
         },
       ]);
+      vi.mocked(UISelectors.selectIsChatFullWidth).mockReturnValue(false);
   });
 
    it('renders properly', () => {
