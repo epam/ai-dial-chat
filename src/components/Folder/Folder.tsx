@@ -438,7 +438,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     >
       <div
         className={classNames(
-          'relative flex h-[30px] items-center rounded border-l-2',
+          'group relative flex h-[30px] items-center rounded border-l-2',
           hoverBgColor,
           isRenaming ||
             isContextMenu ||
