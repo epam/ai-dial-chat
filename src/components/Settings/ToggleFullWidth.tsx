@@ -7,6 +7,8 @@ import { Translation } from '@/src/types/translation';
 interface ToggleFullWidthProps {
   isOn: boolean;
   handleSwitch: () => void;
+  labelText?: string | null;
+  labelClassName?: string;
 }
 
 interface SwitchStateTextProps {
@@ -19,6 +21,8 @@ const SwitchStateText = ({ switchText }: SwitchStateTextProps) => (
 
 export const ToggleFullWidth = ({
   isOn,
+  labelText,
+  labelClassName,
   handleSwitch,
 }: ToggleFullWidthProps) => {
   const { t } = useTranslation(Translation.Settings);
@@ -29,7 +33,7 @@ export const ToggleFullWidth = ({
 
   return (
     <label htmlFor="toggle" className="flex w-full items-center gap-5">
-      <span className="w-[120px]">{t('Full width chat')}</span>
+      {labelText && <span className={labelClassName ?? ''}>{labelText}</span>}
       <input
         type="checkbox"
         onChange={handleSwitch}
@@ -40,7 +44,7 @@ export const ToggleFullWidth = ({
 
       <div
         className={classNames(
-          'flex h-[22px] w-[50px] shrink-0 cursor-pointer items-center  gap-1 rounded-2xl p-1.5 transition-all duration-200',
+          'flex  min-w-[50px] shrink-0 cursor-pointer items-center  gap-1 rounded-full p-1.5 transition-all duration-200',
           switchBackground,
         )}
       >

@@ -18,7 +18,7 @@ interface Props {
   onClose: () => void;
 }
 
-const SettingDialog: FC<Props> = ({ open, onClose }) => {
+export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const theme = useAppSelector(UISelectors.selectThemeState);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
@@ -107,6 +107,8 @@ const SettingDialog: FC<Props> = ({ open, onClose }) => {
             />
             <ToggleFullWidth
               isOn={isChatFullWidthLocal}
+              labelText={t('Full width chat')}
+              labelClassName="basis-1/3 md:basis-1/4"
               handleSwitch={onChangeHandlerFullWidth}
             />
           </div>
@@ -125,5 +127,3 @@ const SettingDialog: FC<Props> = ({ open, onClose }) => {
     </FloatingPortal>
   );
 };
-
-export default SettingDialog;

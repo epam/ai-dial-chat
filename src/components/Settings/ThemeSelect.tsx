@@ -23,7 +23,7 @@ export const ThemeSelect = ({
 
   return (
     <div className="flex items-center gap-5">
-      <div className="w-[120px]">{t('Theme')}</div>
+      <div className="basis-1/3 md:basis-1/4">{t('Theme')}</div>
       <div className="grow rounded border border-gray-400 px-3 focus-within:border-blue-500 focus:border-blue-500 dark:border-gray-600">
         <select
           className="h-[38px] w-full cursor-pointer rounded border-none focus:outline-none dark:bg-gray-700"
