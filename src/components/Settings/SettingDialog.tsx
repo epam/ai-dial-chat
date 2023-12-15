@@ -32,6 +32,12 @@ const SettingDialog: FC<Props> = ({ open, onClose }) => {
 
   const modalRef = useRef<HTMLDivElement>(null);
 
+  const handleClose = useCallback(() => {
+    setLocalTheme(theme);
+    setIsChatFullWidthLocal(isChatFullWidth);
+    onClose();
+  }, [onClose, isChatFullWidth, theme]);
+
   useEffect(() => {
     setLocalTheme(theme);
   }, [theme]);
@@ -49,7 +55,7 @@ const SettingDialog: FC<Props> = ({ open, onClose }) => {
 
     const handleMouseUp = () => {
       window.removeEventListener('mouseup', handleMouseUp);
-      onClose();
+      handleClose();
     };
 
     window.addEventListener('mousedown', handleMouseDown);
@@ -57,7 +63,7 @@ const SettingDialog: FC<Props> = ({ open, onClose }) => {
     return () => {
       window.removeEventListener('mousedown', handleMouseDown);
     };
-  }, [onClose]);
+  }, [handleClose]);
 
   const onThemeChangeHandler = useCallback((theme: Theme) => {
     setLocalTheme(theme);
@@ -89,7 +95,7 @@ const SettingDialog: FC<Props> = ({ open, onClose }) => {
         >
           <button
             className="absolute right-2 top-2 rounded text-gray-500 hover:text-blue-700"
-            onClick={onClose}
+            onClick={handleClose}
           >
             <XMark height={24} width={24} />
           </button>
