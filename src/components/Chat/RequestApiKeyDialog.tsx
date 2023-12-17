@@ -316,6 +316,26 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
         <div>
           <label
             className="mb-1 flex text-xs text-gray-500"
+            htmlFor="formDescription"
+          >
+            <span className="ml-1">
+              {t(
+                'We are glad to provide API access for PoC, research, accelerators development purposes, and internal projects. It is also possible to use this as a very short-term solution for early development stages while you are spinning up your dedicated environment. Any kind of client external must use their own dedicated infrastructure, not this API - you can install DIAL there, see instructions at ',
+              )}
+            </span>
+            <a
+              href="https://github.com/epam/ai-dial"
+              className="underline"
+              rel="noopener noreferrer"
+            >
+              https://github.com/epam/ai-dial
+            </a>
+          </label>
+        </div>
+
+        <div>
+          <label
+            className="mb-1 flex text-xs text-gray-500"
             htmlFor="projectNameInput"
           >
             <span>1.</span>
@@ -345,7 +365,9 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
           >
             <span>2.</span>
             <span className="ml-1">
-              {t('Stream Name (use one from Delivery Central)')}
+              {t(
+                'Stream Name (use one from Delivery Central). Must be unique per key request.',
+              )}
             </span>
             <span className="ml-1 inline text-blue-500">*</span>
           </label>
@@ -375,7 +397,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               </span>
             </span>
             <span className="ml-1">
-              {t('Please provide name')}
+              {t('Please provide email')}
               <span className="ml-1 inline text-blue-500">*</span>
             </span>
           </label>
@@ -421,7 +443,9 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
             htmlFor="projectEndDateInput"
           >
             <span>5.</span>
-            <span className="ml-1">{t('End date of the project')}</span>
+            <span className="ml-1">
+              {t('End date of the project (YYYY-MM-DD)')}
+            </span>
             <span className="ml-1 inline text-blue-500">*</span>
           </label>
           <input
@@ -471,7 +495,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               <span>7.</span>
               <span className="ml-1">
                 {t(
-                  'We need to understand, how much cost your solution will generate monthly, and your workload pattern in terms of requests quantity and tokens usage during standard and peak workloads. Please describe this. More information is available at ',
+                  'We need to understand, how much cost your solution will generate monthly, and your workload pattern in terms of requests quantity and tokens usage during standard and peak workloads. Please describe this. Ensure you provided "max X USD/month" metric. More information is available at ',
                 )}
               </span>
             </span>
@@ -484,11 +508,11 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
             </a>
             <span className="mr-1">,</span>
             <a
-              href="https://openai.com/pricing"
+              href="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/"
               className="underline"
               rel="noopener noreferrer"
             >
-              https://openai.com/pricing
+              https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/
             </a>
             <span className="ml-1 inline text-blue-500">*</span>
           </label>
