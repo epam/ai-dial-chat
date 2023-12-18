@@ -48,6 +48,7 @@ interface Props {
     selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
     folderPath: string | undefined,
   ) => void;
+  uploadFolderId?: string;
 }
 
 const bytesInMb = 1_048_576;
@@ -59,6 +60,7 @@ export const PreUploadDialog = ({
   allowedTypes = [],
   onClose,
   onUploadFiles,
+  uploadFolderId,
 }: Props) => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.Chat);
@@ -74,9 +76,7 @@ export const PreUploadDialog = ({
   >([]);
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
-  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
-    undefined,
-  );
+  const [selectedFolderId, setSelectedFolderId] = useState(uploadFolderId);
 
   const { refs, context } = useFloating({
     open: isOpen,
