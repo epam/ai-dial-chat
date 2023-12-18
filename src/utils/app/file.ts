@@ -137,7 +137,7 @@ export const getDialFilesFromAttachments = (
     .filter(Boolean) as Omit<DialFile, 'contentLength'>[];
 };
 
-export const getExtensionsList = (mimeType: string) => {
+export const getExtensionsListForMimeType = (mimeType: string) => {
   const [subset, name] = mimeType.split('/');
 
   if (subset === '*') {
@@ -154,4 +154,11 @@ export const getExtensionsList = (mimeType: string) => {
   } else {
     return [extension(mimeType)];
   }
+};
+
+export const getExtensionsListForMimeTypes = (mimeTypes: string[]) => {
+  return mimeTypes
+    .map((mimeType) => getExtensionsListForMimeType(mimeType))
+    .flat()
+    .map((type) => `.${type}`);
 };

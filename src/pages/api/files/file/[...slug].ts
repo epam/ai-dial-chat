@@ -52,8 +52,9 @@ async function handlePutRequest(
   res: NextApiResponse,
 ) {
   const readable = Readable.from(req);
-  const slugs =
-    typeof req.query.slug === 'string' ? [req.query.slug] : req.query.slug;
+  const slugs = Array.isArray(req.query.slug)
+    ? req.query.slug
+    : [req.query.slug];
 
   if (!slugs || slugs.length === 0) {
     throw new OpenAIError('No file path provided', '', '', '400');
@@ -88,8 +89,9 @@ async function handleGetRequest(
   token: JWT | null,
   res: NextApiResponse,
 ) {
-  const slugs =
-    typeof req.query.slug === 'string' ? [req.query.slug] : req.query.slug;
+  const slugs = Array.isArray(req.query.slug)
+    ? req.query.slug
+    : [req.query.slug];
 
   if (!slugs || slugs.length === 0) {
     throw new OpenAIError('No file path provided', '', '', '400');
@@ -120,8 +122,9 @@ async function handleDeleteRequest(
   token: JWT | null,
   res: NextApiResponse,
 ) {
-  const slugs =
-    typeof req.query.slug === 'string' ? [req.query.slug] : req.query.slug;
+  const slugs = Array.isArray(req.query.slug)
+    ? req.query.slug
+    : [req.query.slug];
 
   if (!slugs || slugs.length === 0) {
     throw new OpenAIError('No file path provided', '', '', '400');
