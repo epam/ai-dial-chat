@@ -91,8 +91,9 @@ export const SelectFolderModal = ({
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery('');
+      dispatch(FilesActions.resetNewFolderId());
     }
-  }, [isOpen]);
+  }, [dispatch, isOpen]);
 
   const handleSearch = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value),
