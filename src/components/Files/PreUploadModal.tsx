@@ -48,6 +48,7 @@ interface Props {
     selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
     folderPath: string | undefined,
   ) => void;
+  uploadFolderId?: string;
 }
 
 const bytesInMb = 1_048_576;
@@ -59,6 +60,7 @@ export const PreUploadDialog = ({
   allowedTypes = [],
   onClose,
   onUploadFiles,
+  uploadFolderId,
 }: Props) => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.Chat);
@@ -74,9 +76,7 @@ export const PreUploadDialog = ({
   >([]);
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
-  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
-    undefined,
-  );
+  const [selectedFolderId, setSelectedFolderId] = useState(uploadFolderId);
 
   const { refs, context } = useFloating({
     open: isOpen,
@@ -313,7 +313,7 @@ export const PreUploadDialog = ({
                   className="absolute right-2 top-2"
                   onClick={() => onClose(false)}
                 >
-                  <IconX className="text-gray-500" />
+                  <IconX className="text-gray-500 hover:text-blue-500" />
                 </button>
                 <div className="flex flex-col gap-2 overflow-auto">
                   <div className="flex justify-between">
@@ -375,10 +375,10 @@ export const PreUploadDialog = ({
                                   0,
                                   file.name.lastIndexOf('.'),
                                 )}
-                                className="grow rounded border border-gray-400 bg-transparent py-2 pl-8 pr-12 placeholder:text-gray-500 hover:border-blue-500 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:hover:border-blue-500 dark:focus:border-blue-500"
+                                className="grow text-ellipsis rounded border border-gray-400 bg-transparent px-8 py-2 placeholder:text-gray-500 hover:border-blue-500 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:hover:border-blue-500 dark:focus:border-blue-500"
                                 onChange={handleRenameFile(index)}
                               />
-                              <span className="absolute right-2 top-[calc(50%_-_9px)]">
+                              <span className="absolute right-2">
                                 {file.name.slice(file.name.lastIndexOf('.'))}
                               </span>
                             </div>

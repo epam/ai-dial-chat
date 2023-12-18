@@ -34,7 +34,10 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import { isSettingsChanged } from '@/src/utils/app/conversation';
+import {
+  getNewConversationName,
+  isSettingsChanged,
+} from '@/src/utils/app/conversation';
 import { DataService } from '@/src/utils/app/data/data-service';
 import {
   ImportConversationsResponse,
@@ -47,6 +50,7 @@ import {
   parseStreamMessages,
 } from '@/src/utils/app/merge-streams';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
+import { translate } from '@/src/utils/app/translation';
 
 import {
   ChatBody,
@@ -60,6 +64,7 @@ import {
 import { EntityType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
+import { resetShareEntity } from './../../constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -70,6 +75,8 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from './conversations.reducers';
+
+import { v4 as uuidv4 } from 'uuid';
 
 const createNewConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -220,7 +227,7 @@ const clearConversationsEpic: AppEpic = (action$) =>
     switchMap(() => {
       return of(
         ConversationsActions.createNewConversations({
-          names: [(i18n as any).t(DEFAULT_CONVERSATION_NAME)],
+          names: [translate(DEFAULT_CONVERSATION_NAME)],
         }),
       );
     }),
@@ -238,7 +245,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
       if (conversations.length === 0) {
         return of(
           ConversationsActions.createNewConversations({
-            names: [(i18n as any).t(DEFAULT_CONVERSATION_NAME)],
+            names: [translate(DEFAULT_CONVERSATION_NAME)],
           }),
         );
       } else if (selectedConversationsIds.length === 0) {
@@ -296,7 +303,7 @@ const initConversationsEpic: AppEpic = (action$) =>
         actions.push(
           of(
             ConversationsActions.createNewConversations({
-              names: [(i18n as any).t(DEFAULT_CONVERSATION_NAME)],
+              names: [translate(DEFAULT_CONVERSATION_NAME)],
             }),
           ),
         );
@@ -476,14 +483,11 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           : payload.conversation.messages
       ).concat(userMessage, assistantMessage);
 
-      const newConversationName =
-        !payload.conversation.replay.isReplay &&
-        updatedMessages.length === 2 &&
-        !payload.conversation.isNameChanged
-          ? payload.message.content.length > 160
-            ? payload.message.content.substring(0, 160) + '...'
-            : payload.message.content
-          : payload.conversation.name;
+      const newConversationName = getNewConversationName(
+        payload.conversation,
+        payload.message,
+        updatedMessages,
+      );
 
       const updatedConversation: Conversation = {
         ...payload.conversation,
@@ -713,7 +717,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             return of(
               ConversationsActions.streamMessageFail({
                 conversation: payload.conversation,
-                message: (i18n as any).t(errorsMessages.timeoutError),
+                message: translate(errorsMessages.timeoutError),
               }),
             );
           }
@@ -724,7 +728,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
                 conversation: payload.conversation,
                 message:
                   (error.cause as any).message ||
-                  (i18n as any).t(errorsMessages.generalServer),
+                  translate(errorsMessages.generalServer),
                 response:
                   error.cause instanceof Response ? error.cause : undefined,
               }),
@@ -734,7 +738,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           return of(
             ConversationsActions.streamMessageFail({
               conversation: payload.conversation,
-              message: (i18n as any).t(errorsMessages.generalClient),
+              message: translate(errorsMessages.generalClient),
             }),
           );
         }),
@@ -1082,7 +1086,9 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         ConversationsActions.renameFolder.match(action) ||
         ConversationsActions.moveFolder.match(action) ||
         ConversationsActions.clearConversations.match(action) ||
-        ConversationsActions.importConversationsSuccess.match(action),
+        ConversationsActions.importConversationsSuccess.match(action) ||
+        ConversationsActions.addFolders.match(action) ||
+        ConversationsActions.unpublishFolder.match(action),
     ),
     map(() => ({
       conversationsFolders: ConversationsSelectors.selectFolders(state$.value),
@@ -1103,7 +1109,8 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.createNewReplayConversation.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.createNewPlaybackConversation.match(action) ||
-        ConversationsActions.deleteConversations.match(action),
+        ConversationsActions.deleteConversations.match(action) ||
+        ConversationsActions.addConversations.match(action),
     ),
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
@@ -1133,7 +1140,9 @@ const saveConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.updateConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversations.match(action) ||
-        ConversationsActions.createNewPlaybackConversation.match(action),
+        ConversationsActions.createNewPlaybackConversation.match(action) ||
+        ConversationsActions.addConversations.match(action) ||
+        ConversationsActions.unpublishConversation.match(action),
     ),
     map(() => ConversationsSelectors.selectConversations(state$.value)),
     switchMap((conversations) => {
@@ -1182,7 +1191,7 @@ const playbackNextMessageStartEpic: AppEpic = (action$, state$) =>
                   messages: updatedMessages,
                   isMessageStreaming: true,
                   model: { ...conv.model, ...assistantMessage.model },
-                  prompt: prompt,
+                  prompt,
                   temperature: temperature,
                   selectedAddons: selectedAddons,
                   assistantModelId: assistantModelId,
@@ -1294,8 +1303,8 @@ const playbackPrevMessageEpic: AppEpic = (action$, state$) =>
               values: {
                 messages: updatedMessages,
                 isMessageStreaming: false,
-                model: model,
-                prompt: prompt,
+                model,
+                prompt,
                 temperature: temperature,
                 selectedAddons: selectedAddons,
                 assistantModelId: assistantModelId,
@@ -1379,6 +1388,207 @@ const initEpic: AppEpic = (action$) =>
     ),
   );
 
+//TODO: added for development purpose - emulate immediate sharing with yourself
+const shareFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.shareFolder.match),
+    map(({ payload }) => ({
+      sharedFolderId: payload.id,
+      shareUniqueId: payload.shareUniqueId,
+      conversations: ConversationsSelectors.selectConversations(state$.value),
+      childFolders: ConversationsSelectors.selectChildAndCurrentFoldersIdsById(
+        state$.value,
+        payload.id,
+      ),
+      folders: ConversationsSelectors.selectFolders(state$.value),
+    })),
+    switchMap(
+      ({
+        sharedFolderId,
+        shareUniqueId,
+        conversations,
+        childFolders,
+        folders,
+      }) => {
+        const mapping = new Map();
+        childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
+        const newFolders = folders
+          .filter(({ id }) => childFolders.includes(id))
+          .map(({ folderId, ...folder }) => ({
+            ...folder,
+            id: mapping.get(folder.id),
+            originalId: folder.id,
+            folderId:
+              folder.id === sharedFolderId ? undefined : mapping.get(folderId), // show shared folder on root level
+            ...resetShareEntity,
+            sharedWithMe: folder.id === sharedFolderId || folder.sharedWithMe,
+            shareUniqueId:
+              folder.id === sharedFolderId ? shareUniqueId : undefined,
+          }));
+
+        const sharedConversations = conversations
+          .filter(
+            (conversation) =>
+              conversation.folderId &&
+              childFolders.includes(conversation.folderId),
+          )
+          .map(({ folderId, ...conversation }) => ({
+            ...conversation,
+            ...resetShareEntity,
+            id: uuidv4(),
+            originalId: conversation.id,
+            folderId: mapping.get(folderId),
+          }));
+
+        return concat(
+          of(
+            ConversationsActions.addConversations({
+              conversations: sharedConversations,
+            }),
+          ),
+          of(
+            ConversationsActions.addFolders({
+              folders: newFolders,
+            }),
+          ),
+        );
+      },
+    ),
+  );
+
+//TODO: added for development purpose - emulate immediate sharing with yourself
+const shareConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.shareConversation.match),
+    map(({ payload }) => ({
+      sharedConversationId: payload.id,
+      shareUniqueId: payload.shareUniqueId,
+      conversations: ConversationsSelectors.selectConversations(state$.value),
+    })),
+    switchMap(({ sharedConversationId, shareUniqueId, conversations }) => {
+      const sharedConversations = conversations
+        .filter((conversation) => conversation.id === sharedConversationId)
+        .map(({ folderId: _, ...conversation }) => ({
+          ...conversation,
+          ...resetShareEntity,
+          id: uuidv4(),
+          originalId: conversation.id,
+          folderId: undefined, // show on root level
+          sharedWithMe: true,
+          shareUniqueId,
+        }));
+
+      return concat(
+        of(
+          ConversationsActions.addConversations({
+            conversations: sharedConversations,
+          }),
+        ),
+      );
+    }),
+  );
+
+//TODO: added for development purpose - emulate immediate sharing with yourself
+const publishFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.publishFolder.match),
+    map(({ payload }) => ({
+      sharedFolderId: payload.id,
+      shareUniqueId: payload.shareUniqueId,
+      conversations: ConversationsSelectors.selectConversations(state$.value),
+      childFolders: ConversationsSelectors.selectChildAndCurrentFoldersIdsById(
+        state$.value,
+        payload.id,
+      ),
+      folders: ConversationsSelectors.selectFolders(state$.value),
+    })),
+    switchMap(
+      ({
+        sharedFolderId,
+        shareUniqueId,
+        conversations,
+        childFolders,
+        folders,
+      }) => {
+        const mapping = new Map();
+        childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
+        const newFolders = folders
+          .filter(({ id }) => childFolders.includes(id))
+          .map(({ folderId, ...folder }) => ({
+            ...folder,
+            ...resetShareEntity,
+            id: mapping.get(folder.id),
+            originalId: folder.id,
+            folderId:
+              folder.id === sharedFolderId ? undefined : mapping.get(folderId), // show shared folder on root level
+            publishedWithMe:
+              folder.id === sharedFolderId || folder.sharedWithMe,
+            shareUniqueId:
+              folder.id === sharedFolderId ? shareUniqueId : undefined,
+          }));
+
+        const sharedConversations = conversations
+          .filter(
+            (conversation) =>
+              conversation.folderId &&
+              childFolders.includes(conversation.folderId),
+          )
+          .map(({ folderId, ...conversation }) => ({
+            ...conversation,
+            ...resetShareEntity,
+            id: uuidv4(),
+            originalId: conversation.id,
+            folderId: mapping.get(folderId),
+          }));
+
+        return concat(
+          of(
+            ConversationsActions.addConversations({
+              conversations: sharedConversations,
+            }),
+          ),
+          of(
+            ConversationsActions.addFolders({
+              folders: newFolders,
+            }),
+          ),
+        );
+      },
+    ),
+  );
+
+//TODO: added for development purpose - emulate immediate sharing with yourself
+const publishConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.publishConversation.match),
+    map(({ payload }) => ({
+      sharedConversationId: payload.id,
+      shareUniqueId: payload.shareUniqueId,
+      conversations: ConversationsSelectors.selectConversations(state$.value),
+    })),
+    switchMap(({ sharedConversationId, shareUniqueId, conversations }) => {
+      const sharedConversations = conversations
+        .filter((conversation) => conversation.id === sharedConversationId)
+        .map(({ folderId: _, ...conversation }) => ({
+          ...conversation,
+          ...resetShareEntity,
+          id: uuidv4(),
+          originalId: conversation.id,
+          folderId: undefined, // show on root level
+          publishedWithMe: true,
+          shareUniqueId,
+        }));
+
+      return concat(
+        of(
+          ConversationsActions.addConversations({
+            conversations: sharedConversations,
+          }),
+        ),
+      );
+    }),
+  );
+
 export const ConversationsEpics = combineEpics(
   initEpic,
   initConversationsEpic,
@@ -1412,4 +1622,9 @@ export const ConversationsEpics = combineEpics(
   playbackNextMessageEndEpic,
   playbackPrevMessageEpic,
   playbackCalncelEpic,
+
+  shareFolderEpic,
+  shareConversationEpic,
+  publishFolderEpic,
+  publishConversationEpic,
 );

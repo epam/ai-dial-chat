@@ -21,6 +21,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import ContextMenu from '../Common/ContextMenu';
+import Tooltip from '../Common/Tooltip';
 import SearchFilterRenderer from './SearchFilterRenderer';
 
 interface Props {
@@ -93,8 +94,18 @@ export default function SearchFiltersView({
       highlightColor={highlightColor}
       triggerIconClassName="absolute right-4 cursor-pointer max-h-[18px]"
       TriggerCustomRenderer={
-        <>
-          <IconFilter size={18} className=" text-gray-500" />
+        <Tooltip tooltip={t('Search filter')}>
+          <IconFilter
+            size={18}
+            className={classNames(
+              ' text-gray-500',
+              getByHighlightColor(
+                highlightColor,
+                'hover:text-green',
+                'hover:text-violet',
+              ),
+            )}
+          />
           {searchFilters !== SearchFilters.None && (
             <IconCircleFilled
               size={8}
@@ -108,7 +119,7 @@ export default function SearchFiltersView({
               )}
             />
           )}
-        </>
+        </Tooltip>
       }
     />
   );

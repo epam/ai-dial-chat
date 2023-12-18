@@ -129,24 +129,30 @@ const isFeatureEnabled = createSelector(
 );
 
 const isPublishingEnabled = createSelector(
-  [selectEnabledFeatures, (_, featureType: FeatureType) => featureType],
+  [selectEnabledFeatures, (_, featureType?: FeatureType) => featureType],
   (enabledFeatures, featureType) => {
-    return enabledFeatures.has(
-      featureType === FeatureType.Chat
-        ? Feature.ConversationsPublishing
-        : Feature.PromptsPublishing,
-    );
+    switch (featureType) {
+      case FeatureType.Chat:
+        return enabledFeatures.has(Feature.ConversationsPublishing);
+      case FeatureType.Prompt:
+        return enabledFeatures.has(Feature.PromptsPublishing);
+      default:
+        return false;
+    }
   },
 );
 
 const isSharingEnabled = createSelector(
-  [selectEnabledFeatures, (_, featureType: FeatureType) => featureType],
+  [selectEnabledFeatures, (_, featureType?: FeatureType) => featureType],
   (enabledFeatures, featureType) => {
-    return enabledFeatures.has(
-      featureType === FeatureType.Chat
-        ? Feature.ConversationsSharing
-        : Feature.PromptsSharing,
-    );
+    switch (featureType) {
+      case FeatureType.Chat:
+        return enabledFeatures.has(Feature.ConversationsSharing);
+      case FeatureType.Prompt:
+        return enabledFeatures.has(Feature.PromptsSharing);
+      default:
+        return false;
+    }
   },
 );
 

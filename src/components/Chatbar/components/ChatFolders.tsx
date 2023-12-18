@@ -2,12 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { SharedWithMeFilter } from '@/src/utils/app/search';
+import {
+  PublishedWithMeFilter,
+  SharedWithMeFilter,
+} from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
-import { EntityFilter, HighlightColor } from '@/src/types/common';
-import { Feature } from '@/src/types/features';
+import { FeatureType, HighlightColor } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
+import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -18,7 +21,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import Folder from '@/src/components/Folder';
+import Folder from '@/src/components/Folder/Folder';
 
 import CollapsableSection from '../../Common/CollapsableSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
@@ -29,7 +32,7 @@ interface ChatFolderProps {
   index: number;
   isLast: boolean;
   readonly?: boolean;
-  itemFilter: EntityFilter<Conversation>;
+  filters: EntityFilters;
   includeEmpty: boolean;
 }
 
@@ -38,7 +41,7 @@ const ChatFolderTemplate = ({
   index,
   isLast,
   readonly,
-  itemFilter,
+  filters,
   includeEmpty = false,
 }: ChatFolderProps) => {
   const dispatch = useAppDispatch();
@@ -47,14 +50,14 @@ const ChatFolderTemplate = ({
   const conversations = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredConversations(
       state,
-      itemFilter,
+      filters,
       searchTerm,
     ),
   );
   const conversationFolders = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredFolders(
       state,
-      itemFilter,
+      filters,
       searchTerm,
       includeEmpty,
     ),
@@ -157,6 +160,7 @@ const ChatFolderTemplate = ({
         }
         onDropBetweenFolders={onDropBetweenFolders}
         onClickFolder={handleFolderClick}
+        featureType={FeatureType.Chat}
       />
       {isLast && (
         <BetweenFoldersLine
@@ -173,20 +177,20 @@ const ChatFolderTemplate = ({
 
 export const ChatSection = ({
   name,
-  itemFilter,
+  filters,
   hideIfEmpty = true,
   displayRootFiles,
   showEmptyFolders = false,
   openByDefault = false,
   dataQa,
-}: FolderSectionProps<Conversation>) => {
+}: FolderSectionProps) => {
   const { t } = useTranslation(Translation.SideBar);
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
   const folders = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredFolders(
       state,
-      itemFilter,
+      filters,
       searchTerm,
       showEmptyFolders,
     ),
@@ -194,7 +198,7 @@ export const ChatSection = ({
   const conversations = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredConversations(
       state,
-      itemFilter,
+      filters,
       searchTerm,
     ),
   );
@@ -259,7 +263,7 @@ export const ChatSection = ({
               folder={folder}
               index={index}
               isLast={index === arr.length - 1}
-              itemFilter={itemFilter}
+              filters={filters}
               includeEmpty={showEmptyFolders}
             />
           );
@@ -280,33 +284,43 @@ export function ChatFolders() {
   const isFilterEmpty = useAppSelector(
     ConversationsSelectors.selectIsEmptySearchFilter,
   );
+  const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const commonItemFilter = useAppSelector(
-    ConversationsSelectors.selectItemFilter,
+    ConversationsSelectors.selectMyItemsFilters,
   );
 
   const isSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSharing),
+    SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
 
-  const folderItems: FolderSectionProps<Conversation>[] = useMemo(
+  const folderItems: FolderSectionProps[] = useMemo(
     () =>
       [
         {
           hidden: !isSharingEnabled || !isFilterEmpty,
-          name: t('Shared with me'),
-          itemFilter: SharedWithMeFilter,
+          name: t('Organization'),
+          filters: PublishedWithMeFilter,
           displayRootFiles: true,
-          dataQa: 'share-with-me',
+          dataQa: 'published-with-me',
+          openByDefault: !!searchTerm.length,
+        },
+        {
+          hidden: !isSharingEnabled || !isFilterEmpty,
+          name: t('Shared with me'),
+          filters: SharedWithMeFilter,
+          displayRootFiles: true,
+          dataQa: 'shared-with-me',
+          openByDefault: !!searchTerm.length,
         },
         {
           name: t('Pinned chats'),
-          itemFilter: commonItemFilter,
+          filters: commonItemFilter,
           showEmptyFolders: isFilterEmpty,
           openByDefault: true,
           dataQa: 'pinned-chats',
         },
       ].filter(({ hidden }) => !hidden),
-    [commonItemFilter, isFilterEmpty, isSharingEnabled, t],
+    [commonItemFilter, isFilterEmpty, isSharingEnabled, searchTerm.length, t],
   );
 
   return (

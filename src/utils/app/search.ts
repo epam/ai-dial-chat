@@ -1,9 +1,8 @@
 import { Conversation } from '@/src/types/chat';
-import { EntityFilter } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
-import { SearchFilters } from '@/src/types/search';
+import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { ShareInterface } from '@/src/types/share';
 
 export const doesConversationContainSearchTerm = (
@@ -67,14 +66,23 @@ export const doesEntityContainSearchItem = <
   throw new Error('unexpected entity');
 };
 
-//TODO: for development purpose - emulate immediate sharing with yourself
-export const PinnedItemsFilter: EntityFilter<ShareInterface> = (_item) => true; // !item.sharedWithMe;
+export const TrueFilter: EntityFilter<ShareInterface> = () => true;
 
-export const SharedWithMeFilter: EntityFilter<ShareInterface> = (item) =>
-  !!item.sharedWithMe;
+export const MyItemFilter: EntityFilter<ShareInterface> = (item) =>
+  !item.sharedWithMe && !item.publishedWithMe;
+
+export const SharedWithMeFilter: EntityFilters = {
+  searchFilter: (item) => !!item.sharedWithMe,
+  sectionFilter: TrueFilter,
+};
 
 export const SharedByMeFilter: EntityFilter<ShareInterface> = (item) =>
   !!item.isShared;
+
+export const PublishedWithMeFilter: EntityFilters = {
+  searchFilter: (item) => !!item.publishedWithMe,
+  sectionFilter: TrueFilter,
+};
 
 export const PublishedByMeFilter: EntityFilter<ShareInterface> = (item) =>
   !!item.isPublished;
@@ -90,11 +98,9 @@ export const isSearchFilterSelected = (
   value: SearchFilters,
 ) => (filter & value) === value;
 
-export const getItemFilter = (
+export const getMyItemsFilter = (
   searchFilters: SearchFilters,
 ): EntityFilter<ShareInterface> => {
-  if (searchFilters === SearchFilters.None) return PinnedItemsFilter;
-
   const itemFilters: EntityFilter<ShareInterface>[] = [];
   if (isSearchFilterSelected(searchFilters, SearchFilters.SharedByMe)) {
     itemFilters.push(SharedByMeFilter);
@@ -102,7 +108,14 @@ export const getItemFilter = (
   if (isSearchFilterSelected(searchFilters, SearchFilters.PublishedByMe)) {
     itemFilters.push(PublishedByMeFilter);
   }
-  if (!itemFilters.length) return PinnedItemsFilter;
+  if (!itemFilters.length) return TrueFilter;
 
   return (item: ShareInterface) => itemFilters.some((filter) => filter(item));
 };
+
+export const getMyItemsFilters = (
+  searchFilters: SearchFilters,
+): EntityFilters => ({
+  sectionFilter: MyItemFilter,
+  searchFilter: getMyItemsFilter(searchFilters),
+});

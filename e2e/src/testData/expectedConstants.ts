@@ -58,6 +58,9 @@ export enum MenuOptions {
   export = 'Export',
   moveTo = 'Move to',
   share = 'Share',
+  publish = 'Publish',
+  update = 'Update',
+  unpublish = 'Unpublish',
   delete = 'Delete',
   newFolder = 'New folder',
 }

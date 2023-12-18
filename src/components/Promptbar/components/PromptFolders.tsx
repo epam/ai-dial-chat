@@ -2,12 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { SharedWithMeFilter } from '@/src/utils/app/search';
+import {
+  PublishedWithMeFilter,
+  SharedWithMeFilter,
+} from '@/src/utils/app/search';
 
-import { EntityFilter, HighlightColor } from '@/src/types/common';
-import { Feature } from '@/src/types/features';
+import { FeatureType, HighlightColor } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
+import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -18,7 +21,7 @@ import {
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import Folder from '@/src/components/Folder';
+import Folder from '@/src/components/Folder/Folder';
 
 import CollapsableSection from '../../Common/CollapsableSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
@@ -28,14 +31,16 @@ interface promptFolderProps {
   folder: FolderInterface;
   index: number;
   isLast: boolean;
-  itemFilter: EntityFilter<Prompt>;
+  filters: EntityFilters;
+  includeEmpty: boolean;
 }
 
 const PromptFolderTemplate = ({
   folder,
   index,
   isLast,
-  itemFilter,
+  filters,
+  includeEmpty = false,
 }: promptFolderProps) => {
   const dispatch = useAppDispatch();
 
@@ -44,9 +49,16 @@ const PromptFolderTemplate = ({
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
   const prompts = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredPrompts(state, itemFilter, searchTerm),
+    PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
   );
-  const conversationFolders = useAppSelector(PromptsSelectors.selectFolders);
+  const promptFolders = useAppSelector((state) =>
+    PromptsSelectors.selectFilteredFolders(
+      state,
+      filters,
+      searchTerm,
+      includeEmpty,
+    ),
+  );
   const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
 
   const handleDrop = useCallback(
@@ -123,7 +135,7 @@ const PromptFolderTemplate = ({
         currentFolder={folder}
         itemComponent={PromptComponent}
         allItems={prompts}
-        allFolders={conversationFolders}
+        allFolders={promptFolders}
         highlightColor={HighlightColor.Violet}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
@@ -141,6 +153,7 @@ const PromptFolderTemplate = ({
         }
         onDropBetweenFolders={onDropBetweenFolders}
         onClickFolder={handleFolderClick}
+        featureType={FeatureType.Prompt}
       />
       {isLast && (
         <BetweenFoldersLine
@@ -157,26 +170,26 @@ const PromptFolderTemplate = ({
 
 export const PromptSection = ({
   name,
-  itemFilter,
+  filters,
   hideIfEmpty = true,
   displayRootFiles,
   showEmptyFolders = false,
   openByDefault = false,
   dataQa,
-}: FolderSectionProps<Prompt>) => {
+}: FolderSectionProps) => {
   const { t } = useTranslation(Translation.PromptBar);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
   const folders = useAppSelector((state) =>
     PromptsSelectors.selectFilteredFolders(
       state,
-      itemFilter,
+      filters,
       searchTerm,
       showEmptyFolders,
     ),
   );
   const prompts = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredPrompts(state, itemFilter, searchTerm),
+    PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
   );
 
   const rootfolders = useMemo(
@@ -236,7 +249,8 @@ export const PromptSection = ({
             folder={folder}
             index={index}
             isLast={index === arr.length - 1}
-            itemFilter={itemFilter}
+            filters={filters}
+            includeEmpty={showEmptyFolders}
           />
         ))}
       </div>
@@ -255,30 +269,42 @@ export function PromptFolders() {
   const isFilterEmpty = useAppSelector(
     PromptsSelectors.selectIsEmptySearchFilter,
   );
-  const commonItemFilter = useAppSelector(PromptsSelectors.selectItemFilter);
+  const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
+  const commonSearchFilter = useAppSelector(
+    PromptsSelectors.selectMyItemsFilters,
+  );
   const isSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.PromptsSharing),
+    SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
   );
 
-  const folderItems: FolderSectionProps<Prompt>[] = useMemo(
+  const folderItems: FolderSectionProps[] = useMemo(
     () =>
       [
         {
           hidden: !isSharingEnabled || !isFilterEmpty,
-          name: t('Shared with me'),
-          itemFilter: SharedWithMeFilter,
+          name: t('Organization'),
+          filters: PublishedWithMeFilter,
           displayRootFiles: true,
-          dataQa: 'share-with-me',
+          dataQa: 'published-with-me',
+          openByDefault: !!searchTerm.length,
+        },
+        {
+          hidden: !isSharingEnabled || !isFilterEmpty,
+          name: t('Shared with me'),
+          filters: SharedWithMeFilter,
+          displayRootFiles: true,
+          dataQa: 'shared-with-me',
+          openByDefault: !!searchTerm.length,
         },
         {
           name: t('Pinned prompts'),
-          itemFilter: commonItemFilter,
+          filters: commonSearchFilter,
           showEmptyFolders: isFilterEmpty,
           openByDefault: true,
           dataQa: 'pinned-prompts',
         },
       ].filter(({ hidden }) => !hidden),
-    [commonItemFilter, isFilterEmpty, isSharingEnabled, t],
+    [commonSearchFilter, isFilterEmpty, isSharingEnabled, searchTerm.length, t],
   );
 
   return (

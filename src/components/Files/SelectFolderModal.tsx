@@ -24,11 +24,12 @@ import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
+import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
+import Folder from '@/src/components/Folder/Folder';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
-import Folder from '../Folder';
 
 interface Props {
   isOpen: boolean;
@@ -180,7 +181,7 @@ export const SelectFolderModal = ({
                 className="absolute right-2 top-2"
                 onClick={() => onClose(false)}
               >
-                <IconX className="text-gray-500" />
+                <IconX className="text-gray-500 hover:text-blue-500" />
               </button>
               <div className="flex flex-col gap-2 overflow-auto">
                 <div className="flex justify-between px-6 pt-4">
@@ -206,7 +207,7 @@ export const SelectFolderModal = ({
                     <div className="flex min-h-[350px] flex-col overflow-auto">
                       <button
                         className={classNames(
-                          'flex items-center gap-1 rounded border-l-2 py-1 text-xs text-gray-500',
+                          'mb-0.5 flex items-center gap-1 rounded border-l-2 py-1 text-xs text-gray-500',
                           !selectedFolderId
                             ? 'border-blue-500 bg-blue-500/20'
                             : 'border-transparent',
@@ -218,8 +219,8 @@ export const SelectFolderModal = ({
                       </button>
                       {isAllFilesOpened && (
                         <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">
-                          {filteredFolders.length !== 0 && (
-                            <div className="overflow-auto">
+                          {filteredFolders.length !== 0 ? (
+                            <div className="flex flex-col gap-1 overflow-auto">
                               {filteredFolders.map((folder) => {
                                 if (folder.folderId) {
                                   return null;
@@ -244,6 +245,10 @@ export const SelectFolderModal = ({
                                   </div>
                                 );
                               })}
+                            </div>
+                          ) : (
+                            <div className="flex grow items-center justify-center">
+                              <NoResultsFound />
                             </div>
                           )}
                         </div>

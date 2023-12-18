@@ -12,6 +12,7 @@ interface ConversationsRendererProps {
   conversations: Conversation[];
   label: string;
 }
+
 export const ConversationsRenderer = ({
   conversations,
   label,
@@ -36,9 +37,14 @@ export const ConversationsRenderer = ({
           isHighlighted={isSectionHighlighted}
           openByDefault
         >
-          {conversations.map((conversation) => (
-            <ConversationComponent key={conversation.id} item={conversation} />
-          ))}
+          <div className="flex flex-col gap-1 py-1">
+            {conversations.map((conversation) => (
+              <ConversationComponent
+                key={conversation.id}
+                item={conversation}
+              />
+            ))}
+          </div>
         </CollapsableSection>
       )}
     </>

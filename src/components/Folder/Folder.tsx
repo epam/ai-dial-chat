@@ -25,13 +25,15 @@ import { getByHighlightColor, getFoldersDepth } from '@/src/utils/app/folders';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
-import { HighlightColor } from '@/src/types/common';
+import { FeatureType, HighlightColor } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
+import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { emptyImage } from '@/src/constants/drag-and-drop';
@@ -41,8 +43,12 @@ import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
 import XmarkIcon from '../../../public/images/icons/xmark.svg';
+import PublishModal from '../Chat/PublishModal';
+import ShareModal from '../Chat/ShareModal';
+import UnpublishModal from '../Chat/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { FolderContextMenu } from '../Common/FolderContextMenu';
+import ShareIcon from '../Common/ShareIcon';
 import { Spinner } from '../Common/Spinner';
 import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
 
@@ -77,9 +83,10 @@ interface Props<T, P = unknown> {
   onDeleteFolder?: (folderId: string) => void;
   onAddFolder?: (parentFolderId: string) => void;
   onClickFolder: (folderId: string) => void;
-
+  featureType?: FeatureType;
   onItemEvent?: (eventId: string, data: unknown) => void;
   readonly?: boolean;
+  onFileUpload?: (parentFolderId: string) => void;
 }
 
 const Folder = <T extends Conversation | Prompt | DialFile>({
@@ -103,8 +110,9 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   onDeleteFolder,
   onClickFolder,
   onAddFolder,
+  onFileUpload,
   onItemEvent,
-
+  featureType,
   readonly = false,
 }: Props<T>) => {
   const { t } = useTranslation(Translation.Chat);
@@ -122,6 +130,43 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const [isDropAllowed, setIsDropAllowed] = useState(true);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const dragDropElement = useRef<HTMLDivElement>(null);
+
+  const [isSharing, setIsSharing] = useState(false);
+  const isSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isSharingEnabled(state, featureType),
+  );
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isUnpublishing, setIsUnpublishing] = useState(false);
+  const isPublishingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isPublishingEnabled(state, featureType),
+  );
+
+  const handleOpenSharing: MouseEventHandler = useCallback((e) => {
+    e.stopPropagation();
+    setIsSharing(true);
+  }, []);
+
+  const handleCloseShareModal = useCallback(() => {
+    setIsSharing(false);
+  }, []);
+
+  const handleOpenPublishing: MouseEventHandler = useCallback((e) => {
+    e.stopPropagation();
+    setIsPublishing(true);
+  }, []);
+
+  const handleClosePublishModal = useCallback(() => {
+    setIsPublishing(false);
+  }, []);
+
+  const handleOpenUnpublishing: MouseEventHandler = useCallback((e) => {
+    e.stopPropagation();
+    setIsUnpublishing(true);
+  }, []);
+
+  const handleCloseUnpublishModal = useCallback(() => {
+    setIsUnpublishing(false);
+  }, []);
 
   const isFolderOpened = useMemo(() => {
     return openedFoldersIds.includes(currentFolder.id);
@@ -311,6 +356,18 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     [currentFolder.id, onAddFolder],
   );
 
+  const onUpload: MouseEventHandler = useCallback(
+    (e) => {
+      if (!onFileUpload) {
+        return;
+      }
+
+      e.stopPropagation();
+      onFileUpload(currentFolder.id);
+    },
+    [currentFolder.id, onFileUpload],
+  );
+
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLDivElement>, folder: FolderInterface) => {
       if (e.dataTransfer) {
@@ -366,6 +423,18 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     'bg-violet/15',
     'bg-blue-500/20',
   );
+  const hoverBgColor = getByHighlightColor(
+    highlightColor,
+    'hover:bg-green/15',
+    'hover:bg-violet/15',
+    'hover:bg-blue-500/20',
+  );
+  const borderColor = getByHighlightColor(
+    highlightColor,
+    'border-green',
+    'border-violet',
+    'border-blue-500',
+  );
 
   return (
     <div
@@ -383,12 +452,13 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     >
       <div
         className={classNames(
-          'relative flex h-[30px] items-center rounded border-l-2',
+          'group relative flex h-[30px] items-center rounded border-l-2',
+          hoverBgColor,
           isRenaming ||
             isContextMenu ||
             (allItems === undefined &&
               highlightedFolders?.includes(currentFolder.id))
-            ? classNames(bgColor, 'border-blue-500')
+            ? classNames(bgColor, borderColor)
             : 'border-transparent',
         )}
         data-qa="folder"
@@ -408,7 +478,14 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             {loadingFolderId === currentFolder.id ? (
               <Spinner />
             ) : (
-              <IconFolder size={18} className="mr-1 text-gray-500" />
+              <ShareIcon
+                {...currentFolder}
+                isHighlited
+                highlightColor={highlightColor}
+                featureType={featureType}
+              >
+                <IconFolder size={18} className="mr-1 text-gray-500" />
+              </ShareIcon>
             )}
 
             <input
@@ -447,7 +524,14 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             {loadingFolderId === currentFolder.id ? (
               <Spinner className="mr-1" />
             ) : (
-              <IconFolder size={18} className="mr-1 text-gray-500" />
+              <ShareIcon
+                {...currentFolder}
+                isHighlited={isContextMenu}
+                highlightColor={highlightColor}
+                featureType={featureType}
+              >
+                <IconFolder size={18} className="mr-1 text-gray-500" />
+              </ShareIcon>
             )}
             <div
               className={classNames(
@@ -473,6 +557,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                   )}
                 >
                   <FolderContextMenu
+                    folder={currentFolder}
+                    featureType={featureType}
                     onRename={
                       (onRenameFolder &&
                         !currentFolder.serverSynced &&
@@ -481,8 +567,13 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                     }
                     onDelete={onDeleteFolder && onDelete}
                     onAddFolder={onAddFolder && onAdd}
+                    onShare={handleOpenSharing}
+                    onPublish={handleOpenPublishing}
+                    onPublishUpdate={handleOpenPublishing}
+                    onUnpublish={handleOpenUnpublishing}
                     highlightColor={highlightColor}
                     onOpenChange={setIsContextMenu}
+                    onUpload={onFileUpload && onUpload}
                     isOpen={isContextMenu}
                   />
                 </div>
@@ -526,7 +617,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         )}
       </div>
       {isFolderOpened ? (
-        <div className={classNames('flex flex-col gap-0.5')}>
+        <div className={classNames('flex flex-col gap-1')}>
           <div className={classNames('flex flex-col')}>
             {allFolders.map((item, index, arr) => {
               if (item.folderId === currentFolder.id) {
@@ -561,10 +652,12 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       handleDrop={handleDrop}
                       onDropBetweenFolders={onDropBetweenFolders}
                       onRenameFolder={onRenameFolder}
+                      onFileUpload={onFileUpload}
                       onDeleteFolder={onDeleteFolder}
                       onAddFolder={onAddFolder}
                       onClickFolder={onClickFolder}
                       onItemEvent={onItemEvent}
+                      featureType={featureType}
                     />
                     {onDropBetweenFolders && index === arr.length - 1 && (
                       <BetweenFoldersLine
@@ -614,6 +707,42 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
               onDeleteFolder(currentFolder.id);
             }
           }}
+        />
+      )}
+      {isSharing && isSharingEnabled && (
+        <ShareModal
+          entity={currentFolder}
+          type={
+            featureType === FeatureType.Prompt
+              ? SharingType.PromptFolder
+              : SharingType.ConversationFolder
+          }
+          isOpen
+          onClose={handleCloseShareModal}
+        />
+      )}
+      {isPublishing && isPublishingEnabled && (
+        <PublishModal
+          entity={currentFolder}
+          type={
+            featureType === FeatureType.Prompt
+              ? SharingType.PromptFolder
+              : SharingType.ConversationFolder
+          }
+          isOpen
+          onClose={handleClosePublishModal}
+        />
+      )}
+      {isUnpublishing && isPublishingEnabled && (
+        <UnpublishModal
+          entity={currentFolder}
+          type={
+            featureType === FeatureType.Prompt
+              ? SharingType.PromptFolder
+              : SharingType.ConversationFolder
+          }
+          isOpen
+          onClose={handleCloseUnpublishModal}
         />
       )}
     </div>

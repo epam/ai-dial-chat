@@ -8,6 +8,7 @@ export interface UploadDownloadData {
 }
 
 const apiTimeout = 35000;
+const responseThrottlingTimeout = 2500;
 
 export class BasePage {
   protected page: Page;
@@ -72,6 +73,19 @@ export class BasePage {
       }
     }
     return responseBodies;
+  }
+
+  async throttleAPIResponse(url: string, timeout?: number) {
+    await this.page.route(url, async (route) => {
+      await new Promise((f) =>
+        setTimeout(f, timeout ?? responseThrottlingTimeout),
+      );
+      await route.continue();
+    });
+  }
+
+  async unRouteResponse(url: string) {
+    await this.page.unroute(url);
   }
 
   async reloadPage() {

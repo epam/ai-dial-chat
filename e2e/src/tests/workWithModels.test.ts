@@ -4,6 +4,7 @@ import { availableThemes } from '@/src/types/settings';
 
 import test from '@/e2e/src/core/fixtures';
 import {
+  API,
   ExpectedConstants,
   ExpectedMessages,
   ModelIds,
@@ -15,7 +16,7 @@ import { expect } from '@playwright/test';
 
 const userRequests = ['first request', 'second request', 'third request'];
 const requestTerm = 'qwer';
-const request = 'write down 30 adjectives';
+const request = 'write cinderella story';
 const expectedResponse = 'The sky is blue.';
 const sysPrompt = `Type: "${expectedResponse}" if user types ${requestTerm}`;
 let gpt35Model: OpenAIEntityModel;
@@ -370,6 +371,7 @@ test(
     await test.step('Send request and stop generation immediately', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      await dialHomePage.throttleAPIResponse(API.chatHost);
       await chat.sendRequestWithButton(request, false);
       await chat.stopGenerating.click();
     });
@@ -441,7 +443,8 @@ test(
     });
 
     await test.step('Send request and stop generation when partial content received', async () => {
-      await chat.regenerateResponse(false);
+      await dialHomePage.unRouteResponse(API.chatHost);
+    await chat.regenerateResponse(false);
       await chatMessages.waitForPartialMessageReceived(2);
       await chat.stopGenerating.click();
     });
@@ -498,6 +501,7 @@ test(
     await test.step('Send request, verify Compare button is disabled while generating the response and stop generation immediately', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      await dialHomePage.throttleAPIResponse(API.chatHost, 1500);
       await chat.sendRequestWithButton(request, false);
 
       const isCompareButtonEnabled =
