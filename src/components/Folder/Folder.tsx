@@ -86,6 +86,7 @@ interface Props<T, P = unknown> {
   featureType?: FeatureType;
   onItemEvent?: (eventId: string, data: unknown) => void;
   readonly?: boolean;
+  onFileUpload?: (parentFolderId: string) => void;
 }
 
 const Folder = <T extends Conversation | Prompt | DialFile>({
@@ -109,6 +110,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   onDeleteFolder,
   onClickFolder,
   onAddFolder,
+  onFileUpload,
   onItemEvent,
   featureType,
   readonly = false,
@@ -117,6 +119,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const dispatch = useAppDispatch();
 
   const [isDeletingConfirmDialog, setIsDeletingConfirmDialog] = useState(false);
+  const [search, setSearch] = useState(searchTerm);
+  const renameInputRef = useRef<HTMLInputElement>(null);
   const [isRenaming, setIsRenaming] = useState(
     isInitialRenameEnabled &&
       newAddedFolderId === currentFolder.id &&
@@ -138,6 +142,22 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );
+
+  useEffect(() => {
+    // only if search term was changed after first render
+    // to allow `isInitialRenameEnabled` be used
+    if (search !== searchTerm) {
+      setIsRenaming(false);
+    }
+    setSearch(searchTerm);
+  }, [search, searchTerm]);
+
+  useEffect(() => {
+    if (isRenaming) {
+      // focus manually because `autoFocus` doesn't work well with several items and rerender
+      renameInputRef.current?.focus();
+    }
+  }, [isRenaming]);
 
   const handleOpenSharing: MouseEventHandler = useCallback((e) => {
     e.stopPropagation();
@@ -327,6 +347,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       e.stopPropagation();
       setIsRenaming(true);
       setRenameValue(currentFolder.name);
+      // `setTimeout` because isRenaming should be applied to render input and only after that it can be focused
+      setTimeout(() => renameInputRef.current?.focus());
     },
     [currentFolder.name, onRenameFolder],
   );
@@ -352,6 +374,18 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       onAddFolder(currentFolder.id);
     },
     [currentFolder.id, onAddFolder],
+  );
+
+  const onUpload: MouseEventHandler = useCallback(
+    (e) => {
+      if (!onFileUpload) {
+        return;
+      }
+
+      e.stopPropagation();
+      onFileUpload(currentFolder.id);
+    },
+    [currentFolder.id, onFileUpload],
   );
 
   const handleDragStart = useCallback(
@@ -480,7 +514,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
               onKeyDown={handleEnterDown}
-              autoFocus
+              ref={renameInputRef}
             />
           </div>
         ) : (
@@ -559,6 +593,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                     onUnpublish={handleOpenUnpublishing}
                     highlightColor={highlightColor}
                     onOpenChange={setIsContextMenu}
+                    onUpload={onFileUpload && onUpload}
                     isOpen={isContextMenu}
                   />
                 </div>
@@ -602,7 +637,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         )}
       </div>
       {isFolderOpened ? (
-        <div className={classNames('flex flex-col gap-0.5')}>
+        <div className={classNames('flex flex-col gap-1')}>
           <div className={classNames('flex flex-col')}>
             {allFolders.map((item, index, arr) => {
               if (item.folderId === currentFolder.id) {
@@ -637,6 +672,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       handleDrop={handleDrop}
                       onDropBetweenFolders={onDropBetweenFolders}
                       onRenameFolder={onRenameFolder}
+                      onFileUpload={onFileUpload}
                       onDeleteFolder={onDeleteFolder}
                       onAddFolder={onAddFolder}
                       onClickFolder={onClickFolder}

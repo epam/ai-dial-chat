@@ -258,6 +258,9 @@ export const filesSlice = createSlice({
         };
       });
     },
+    resetNewFolderId: (state) => {
+      state.newAddedFolderId = undefined;
+    },
     removeFilesList: (
       state,
       _action: PayloadAction<{

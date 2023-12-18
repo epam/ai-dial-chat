@@ -29,11 +29,11 @@ import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
+import Folder from '@/src/components/Folder/Folder';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
-import Folder from '../Folder';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
 
@@ -78,6 +78,9 @@ export const FileManagerModal = ({
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
+  const [uploadFolderId, setUploadFolderId] = useState<string | undefined>(
+    undefined,
+  );
   const [isUploadFromDeviceOpened, setIsUploadFromDeviceOpened] =
     useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -104,6 +107,7 @@ export const FileManagerModal = ({
   useEffect(() => {
     if (isOpen) {
       dispatch(FilesActions.getFilesWithFolders({}));
+      dispatch(FilesActions.resetNewFolderId());
     }
   }, [dispatch, isOpen]);
 
@@ -150,6 +154,19 @@ export const FileManagerModal = ({
   const handleAddFolder = useCallback(
     (relativePath: string) => {
       dispatch(FilesActions.addNewFolder({ relativePath }));
+
+      if (!openedFoldersIds.includes(relativePath)) {
+        setOpenedFoldersIds(openedFoldersIds.concat(relativePath));
+        dispatch(FilesActions.getFolders({ path: relativePath }));
+      }
+    },
+    [dispatch, openedFoldersIds],
+  );
+
+  const handleUploadFile = useCallback(
+    (relativePath: string) => {
+      setUploadFolderId(relativePath);
+      setIsUploadFromDeviceOpened(true);
 
       if (!openedFoldersIds.includes(relativePath)) {
         setOpenedFoldersIds(openedFoldersIds.concat(relativePath));
@@ -253,6 +270,11 @@ export const FileManagerModal = ({
     selectedFilesIds,
     t,
   ]);
+
+  const handleStartUploadFiles = useCallback(() => {
+    setUploadFolderId(undefined);
+    setIsUploadFromDeviceOpened(true);
+  }, []);
 
   const handleUploadFiles = useCallback(
     (
@@ -383,6 +405,7 @@ export const FileManagerModal = ({
                                       itemComponent={FileItem}
                                       onClickFolder={handleFolderSelect}
                                       onAddFolder={handleAddFolder}
+                                      onFileUpload={handleUploadFile}
                                       onRenameFolder={handleRenameFolder}
                                       onItemEvent={handleItemCallback}
                                     />
@@ -441,7 +464,7 @@ export const FileManagerModal = ({
                 </div>
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => setIsUploadFromDeviceOpened(true)}
+                    onClick={handleStartUploadFiles}
                     className={classNames(
                       'button',
                       isInConversation ? 'button-secondary' : 'button-primary',
@@ -463,6 +486,7 @@ export const FileManagerModal = ({
 
               {isUploadFromDeviceOpened && (
                 <PreUploadDialog
+                  uploadFolderId={uploadFolderId}
                   isOpen
                   allowedTypes={allowedTypes}
                   initialFilesSelect

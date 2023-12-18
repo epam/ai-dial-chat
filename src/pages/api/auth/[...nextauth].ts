@@ -28,7 +28,11 @@ const allProviders: (Provider | boolean)[] = [
       tenantId: process.env.AUTH_AZURE_AD_TENANT_ID,
       name: process.env.AUTH_AZURE_AD_NAME ?? DEFAULT_NAME,
       authorization: {
-        params: { scope: 'openid profile user.Read email offline_access' },
+        params: {
+          scope:
+            process.env.AUTH_AZURE_AD_SCOPE ||
+            'openid profile user.Read email offline_access',
+        },
       },
       token: tokenConfig,
     }),
@@ -41,7 +45,7 @@ const allProviders: (Provider | boolean)[] = [
       name: process.env.AUTH_GITLAB_NAME ?? DEFAULT_NAME,
       gitlabHost: process.env.AUTH_GITLAB_HOST,
       authorization: {
-        params: { scope: 'read_user' },
+        params: { scope: process.env.AUTH_GITLAB_SCOPE || 'read_user' },
       },
       token: tokenConfig,
     }),
@@ -54,7 +58,9 @@ const allProviders: (Provider | boolean)[] = [
       name: process.env.AUTH_GOOGLE_NAME ?? DEFAULT_NAME,
       authorization: {
         params: {
-          scope: 'openid email profile offline_access',
+          scope:
+            process.env.AUTH_GOOGLE_SCOPE ||
+            'openid email profile offline_access',
         },
       },
       token: tokenConfig,
@@ -71,7 +77,9 @@ const allProviders: (Provider | boolean)[] = [
       authorization: {
         params: {
           audience: process.env.AUTH_AUTH0_AUDIENCE,
-          scope: 'openid email profile offline_access',
+          scope:
+            process.env.AUTH_AUTH0_SCOPE ||
+            'openid email profile offline_access',
         },
       },
       token: tokenConfig,
@@ -87,7 +95,7 @@ const allProviders: (Provider | boolean)[] = [
       issuer: process.env.AUTH_PING_ID_HOST,
       authorization: {
         params: {
-          scope: 'offline_access',
+          scope: process.env.AUTH_PING_ID_SCOPE || 'offline_access',
         },
       },
       token: tokenConfig,
@@ -111,7 +119,9 @@ const allProviders: (Provider | boolean)[] = [
       },
       authorization: {
         params: {
-          scope: 'openid email profile offline_access',
+          scope:
+            process.env.AUTH_KEYCLOAK_SCOPE ||
+            'openid email profile offline_access',
         },
       },
       token: tokenConfig,

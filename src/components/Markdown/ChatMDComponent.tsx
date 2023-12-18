@@ -2,6 +2,9 @@ import { Components } from 'react-markdown';
 
 import classnames from 'classnames';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
+
 import {
   modelCursorSign,
   modelCursorSignWithBackquote,
@@ -101,10 +104,17 @@ const ChatMDComponent = ({
   content,
   isInner = false,
 }: ChatMDComponentProps) => {
+  const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+
+  const mdClassNames = classnames(
+    'prose dark:prose-invert prose-a:text-blue-500 prose-a:no-underline hover:prose-a:underline',
+    { 'max-w-none': isChatFullWidth },
+  );
+
   return (
     <>
       <MemoizedReactMarkdown
-        className={`prose dark:prose-invert prose-a:text-blue-500 prose-a:no-underline hover:prose-a:underline`}
+        className={mdClassNames}
         remarkPlugins={[remarkGfm]}
         linkTarget="_blank"
         components={getMDComponents(isShowResponseLoader, isInner)}

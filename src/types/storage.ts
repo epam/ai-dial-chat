@@ -18,6 +18,7 @@ export enum UIStorageKeys {
   ShowPromptbar = 'showPromptbar',
   ChatbarWidth = 'chatbarWidth',
   PromptbarWidth = 'promptbarWidth',
+  IsChatFullWidth = 'isChatFullWidth',
   OpenedFoldersIds = 'openedFoldersIds',
   TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
 }

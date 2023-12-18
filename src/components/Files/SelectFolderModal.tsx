@@ -25,11 +25,11 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
+import Folder from '@/src/components/Folder/Folder';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
-import Folder from '../Folder';
 
 interface Props {
   isOpen: boolean;
@@ -87,6 +87,13 @@ export const SelectFolderModal = ({
       );
     }
   }, [dispatch, isOpen, openedFoldersIds]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchQuery('');
+      dispatch(FilesActions.resetNewFolderId());
+    }
+  }, [dispatch, isOpen]);
 
   const handleSearch = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value),
@@ -203,6 +210,7 @@ export const SelectFolderModal = ({
                       type="text"
                       onChange={handleSearch}
                       className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
+                      value={searchQuery}
                     ></input>
                     <div className="flex min-h-[350px] flex-col overflow-auto">
                       <button
