@@ -5,7 +5,7 @@ interface ToggleSwitchLabeledProps extends ToggleSwitchProps {
   labelClassName?: string;
 }
 
-export default function ToggleSwitchLabeled({
+export function ToggleSwitchLabeled({
   isOn,
   labelText,
   switchOnText,

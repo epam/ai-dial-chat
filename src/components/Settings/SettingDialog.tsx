@@ -11,7 +11,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import XMark from '../../../public/images/icons/xmark.svg';
-import ToggleFullWidth from '../Common/ToggleSwitch/ToggleSwitchLabeled';
+import { ToggleSwitchLabeled } from '../Common/ToggleSwitch/ToggleSwitchLabeled';
 import { ThemeSelect } from './ThemeSelect';
 
 interface Props {
@@ -106,7 +106,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
               localTheme={localTheme}
               onThemeChangeHandler={onThemeChangeHandler}
             />
-            <ToggleFullWidth
+            <ToggleSwitchLabeled
               isOn={isChatFullWidthLocal}
               labelText={t('Full width chat')}
               labelClassName="basis-1/3 md:basis-1/4"
