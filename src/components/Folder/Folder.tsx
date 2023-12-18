@@ -119,6 +119,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const dispatch = useAppDispatch();
 
   const [isDeletingConfirmDialog, setIsDeletingConfirmDialog] = useState(false);
+  const [search, setSearch] = useState(searchTerm);
+  const renameInputRef = useRef<HTMLInputElement>(null);
   const [isRenaming, setIsRenaming] = useState(
     isInitialRenameEnabled &&
       newAddedFolderId === currentFolder.id &&
@@ -140,6 +142,19 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );
+
+  useEffect(() => {
+    if (search !== searchTerm) {
+      setIsRenaming(false);
+    }
+    setSearch(searchTerm);
+  }, [search, searchTerm]);
+
+  useEffect(() => {
+    if (isRenaming) {
+      renameInputRef.current?.focus();
+    }
+  }, [isRenaming]);
 
   const handleOpenSharing: MouseEventHandler = useCallback((e) => {
     e.stopPropagation();
@@ -329,6 +344,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       e.stopPropagation();
       setIsRenaming(true);
       setRenameValue(currentFolder.name);
+      // `setTimeout` because isRenaming should be applied to render input and only after that it can be focused
+      setTimeout(() => renameInputRef.current?.focus());
     },
     [currentFolder.name, onRenameFolder],
   );
@@ -494,7 +511,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
               onKeyDown={handleEnterDown}
-              autoFocus
+              ref={renameInputRef}
             />
           </div>
         ) : (
