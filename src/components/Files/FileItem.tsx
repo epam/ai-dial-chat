@@ -102,7 +102,7 @@ export const FileItem = ({
               </Tooltip>
             )
           )}
-          {item.status !== 'UPLOADING' && (
+          {item.status !== 'UPLOADING' && item.status !== 'FAILED' && (
             <div
               className={classNames(
                 'relative h-[18px] w-[18px] group-hover/file-item:flex',
