@@ -103,6 +103,7 @@ export const FileManagerModal = ({
   useEffect(() => {
     if (isOpen) {
       dispatch(FilesActions.getFilesWithFolders({}));
+      dispatch(FilesActions.resetNewFolderId());
     }
   }, [dispatch, isOpen]);
 
