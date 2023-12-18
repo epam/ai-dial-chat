@@ -4,7 +4,9 @@ export const getMappedAttachmentUrl = (url: string | undefined) => {
   if (!url) {
     return undefined;
   }
-  return url.startsWith('/') ? `api/files?path=${url}` : url;
+  return url.startsWith('//') || url.startsWith('http')
+    ? url
+    : `api/files/file/${url}`;
 };
 
 export const getMappedAttachment = (attachment: Attachment): Attachment => {

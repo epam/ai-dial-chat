@@ -14,8 +14,10 @@ export function triggerDownload(url: string, name: string): void {
   URL.revokeObjectURL(url);
 }
 
-export const getPathNameId = (name: string, relativePath?: string): string => {
-  return [relativePath, name].filter(Boolean).join('/');
+export const constructPath = (
+  ...values: (string | undefined | null)[]
+): string => {
+  return values.filter(Boolean).join('/');
 };
 
 export const getRelativePath = (
@@ -126,7 +128,7 @@ export const getDialFilesFromAttachments = (
       const relativePath = getRelativePath(absolutePath);
 
       return {
-        id: getPathNameId(name, relativePath),
+        id: constructPath(name, relativePath),
         name,
         contentType: attachment.type,
         absolutePath: absolutePath,

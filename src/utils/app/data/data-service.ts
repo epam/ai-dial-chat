@@ -15,7 +15,7 @@ import { DialStorage, UIStorageKeys } from '@/src/types/storage';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
-import { getPathNameId, getRelativePath } from '../file';
+import { constructPath, getRelativePath } from '../file';
 import { ApiMockStorage } from './storages/api-mock-storage';
 import { ApiStorage } from './storages/api-storage';
 import { BrowserStorage } from './storages/browser-storage';
@@ -223,9 +223,9 @@ export class DataService {
 
           return {
             result: {
-              id: getPathNameId(result.name, relativePath),
+              id: constructPath(result.name, relativePath),
               name: result.name,
-              absolutePath: [result.bucket, relativePath].join('/'),
+              absolutePath: constructPath(result.bucket, relativePath),
               relativePath: relativePath,
               folderId: relativePath,
               contentLength: result.contentLength,
@@ -255,7 +255,7 @@ export class DataService {
           const relativePath = getRelativePath(folder.path);
 
           return {
-            id: getPathNameId(folder.name, relativePath),
+            id: constructPath(folder.name, relativePath),
             name: folder.name,
             type: FolderType.File,
             absolutePath: folder.path,
@@ -269,7 +269,7 @@ export class DataService {
   }
 
   public static removeFile(bucket: string, filePath: string): Observable<void> {
-    const resultPath = encodeURI([bucket, filePath].join('/'));
+    const resultPath = encodeURI(constructPath(bucket, filePath));
 
     return ApiStorage.request(`api/files/file/${resultPath}`, {
       method: 'DELETE',
@@ -296,9 +296,9 @@ export class DataService {
           const relativePath = file.parentPath || undefined;
 
           return {
-            id: getPathNameId(file.name, relativePath),
+            id: constructPath(relativePath, file.name),
             name: file.name,
-            absolutePath: [file.bucket, relativePath].join('/'),
+            absolutePath: constructPath(file.bucket, relativePath),
             relativePath: relativePath,
             folderId: relativePath,
             contentLength: file.contentLength,

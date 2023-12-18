@@ -1,6 +1,6 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import { getPathNameId } from '@/src/utils/app/file';
+import { constructPath } from '@/src/utils/app/file';
 import { getAvailableNameOnSameFolderLevel } from '@/src/utils/app/folders';
 
 import { DialFile, FileFolderInterface } from '@/src/types/files';
@@ -222,7 +222,7 @@ export const filesSlice = createSlice({
         payload.relativePath,
       );
 
-      const folderId = getPathNameId(folderName, payload.relativePath);
+      const folderId = constructPath(folderName, payload.relativePath);
       state.folders.push({
         id: folderId,
         name: folderName,
@@ -254,7 +254,7 @@ export const filesSlice = createSlice({
         return {
           ...folder,
           name: payload.newName.trim(),
-          id: getPathNameId(payload.newName, oldFolderIdPath),
+          id: constructPath(payload.newName, oldFolderIdPath),
         };
       });
     },

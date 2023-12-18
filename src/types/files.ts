@@ -31,7 +31,7 @@ export type DialFile = Omit<
   // Combination of relative path and name
   id: string;
   // Only for files fetched uploaded to backend
-  // Same as relative path but has some absolute prefix like Users/<SUB>/files
+  // Same as relative path but has some absolute prefix like <HASH>
   absolutePath?: string;
   relativePath?: string;
   // Same as relative path, but needed for simplicity and backward compatibility
