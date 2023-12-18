@@ -95,6 +95,7 @@ export const ChatMessage: FC<Props> = memo(
 
     const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
     const theme = useAppSelector(UISelectors.selectThemeState);
+    const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
     const codeWarning = useAppSelector(SettingsSelectors.selectCodeWarning);
     const isPlayback = useAppSelector(
       ConversationsSelectors.selectIsPlaybackSelectedConversations,
@@ -282,7 +283,7 @@ export const ChatMessage: FC<Props> = memo(
 
     return (
       <div
-        className={`group h-full min-h-[90px] md:px-4 ${
+        className={`group h-full min-h-[90px] md:px-4 xl:px-8 ${
           isAssistant
             ? 'border-b border-gray-400 bg-gray-200 dark:border-gray-700 dark:bg-gray-800'
             : 'border-b border-gray-400  dark:border-gray-700'
@@ -290,7 +291,12 @@ export const ChatMessage: FC<Props> = memo(
         style={{ overflowWrap: 'anywhere' }}
         data-qa="chat-message"
       >
-        <div className="relative m-auto flex h-full p-4 md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
+        <div
+          className={classNames(
+            'relative m-auto flex h-full p-4  md:gap-6 md:py-6 lg:px-0',
+            { 'md:max-w-2xl xl:max-w-3xl': !isChatFullWidth },
+          )}
+        >
           <div className="min-w-[40px] font-bold" data-qa="message-icon">
             <div className="flex justify-center">
               {isAssistant ? (
