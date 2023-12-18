@@ -88,6 +88,12 @@ export const SelectFolderModal = ({
     }
   }, [dispatch, isOpen, openedFoldersIds]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchQuery('');
+    }
+  }, [isOpen]);
+
   const handleSearch = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value),
     [],
@@ -203,6 +209,7 @@ export const SelectFolderModal = ({
                       type="text"
                       onChange={handleSearch}
                       className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
+                      value={searchQuery}
                     ></input>
                     <div className="flex min-h-[350px] flex-col overflow-auto">
                       <button
