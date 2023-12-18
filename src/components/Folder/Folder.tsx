@@ -86,6 +86,7 @@ interface Props<T, P = unknown> {
   featureType?: FeatureType;
   onItemEvent?: (eventId: string, data: unknown) => void;
   readonly?: boolean;
+  onFileUpload?: (parentFolderId: string) => void;
 }
 
 const Folder = <T extends Conversation | Prompt | DialFile>({
@@ -109,6 +110,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   onDeleteFolder,
   onClickFolder,
   onAddFolder,
+  onFileUpload,
   onItemEvent,
   featureType,
   readonly = false,
@@ -354,6 +356,18 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     [currentFolder.id, onAddFolder],
   );
 
+  const onUpload: MouseEventHandler = useCallback(
+    (e) => {
+      if (!onFileUpload) {
+        return;
+      }
+
+      e.stopPropagation();
+      onFileUpload(currentFolder.id);
+    },
+    [currentFolder.id, onFileUpload],
+  );
+
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLDivElement>, folder: FolderInterface) => {
       if (e.dataTransfer) {
@@ -559,6 +573,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                     onUnpublish={handleOpenUnpublishing}
                     highlightColor={highlightColor}
                     onOpenChange={setIsContextMenu}
+                    onUpload={onFileUpload && onUpload}
                     isOpen={isContextMenu}
                   />
                 </div>
@@ -637,6 +652,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       handleDrop={handleDrop}
                       onDropBetweenFolders={onDropBetweenFolders}
                       onRenameFolder={onRenameFolder}
+                      onFileUpload={onFileUpload}
                       onDeleteFolder={onDeleteFolder}
                       onAddFolder={onAddFolder}
                       onClickFolder={onClickFolder}

@@ -4,6 +4,7 @@ import {
   IconFolderPlus,
   IconPencilMinus,
   IconTrashX,
+  IconUpload,
   IconUserShare,
   IconWorldShare,
 } from '@tabler/icons-react';
@@ -36,6 +37,7 @@ interface FolderContextMenuProps {
   onPublish?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
   onPublishUpdate?: MouseEventHandler<unknown>;
+  onUpload?: MouseEventHandler<unknown>;
 }
 export const FolderContextMenu = ({
   folder,
@@ -48,6 +50,7 @@ export const FolderContextMenu = ({
   onPublish,
   onUnpublish,
   onPublishUpdate,
+  onUpload,
   highlightColor,
   isOpen,
 }: FolderContextMenuProps) => {
@@ -60,6 +63,13 @@ export const FolderContextMenu = ({
   );
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
+      {
+        name: t('Upload'),
+        display: !!onUpload,
+        dataQa: 'upload',
+        Icon: IconUpload,
+        onClick: onUpload,
+      },
       {
         name: t('Rename'),
         display: !!onRename,
@@ -113,6 +123,7 @@ export const FolderContextMenu = ({
     ],
     [
       t,
+      onUpload,
       onRename,
       isSharingEnabled,
       onShare,

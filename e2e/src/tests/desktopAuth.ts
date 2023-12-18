@@ -3,9 +3,15 @@ import test from '../core/fixtures';
 
 import { API } from '@/e2e/src/testData';
 
-test('Authenticate', async ({ page, loginPage, localStorageManager }) => {
+test('Authenticate', async ({
+  page,
+  loginPage,
+  auth0Page,
+  localStorageManager,
+}) => {
   await loginPage.navigateToBaseUrl();
-  const retrievedResponses = await loginPage.loginToChatBot();
+  await loginPage.ssoSignInButton.click();
+  const retrievedResponses = await auth0Page.loginToChatBot();
   process.env.MODELS = retrievedResponses.get(API.modelsHost);
   process.env.ADDONS = retrievedResponses.get(API.addonsHost);
   process.env.RECENT_ADDONS = await localStorageManager.getRecentAddons();
