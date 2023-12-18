@@ -144,6 +144,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   );
 
   useEffect(() => {
+    // only if search term was changed after first render
+    // to allow `isInitialRenameEnabled` be used
     if (search !== searchTerm) {
       setIsRenaming(false);
     }
@@ -152,6 +154,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   useEffect(() => {
     if (isRenaming) {
+      // focus manually because `autoFocus` doesn't work well with several items and rerender
       renameInputRef.current?.focus();
     }
   }, [isRenaming]);
