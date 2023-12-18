@@ -73,7 +73,7 @@ export const FileItem = ({
   return (
     <div
       className={classNames(
-        'group/file-item hover:bg-blue-500/20 flex justify-between gap-3 rounded px-3 py-1.5',
+        'group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-blue-500/20',
         isContextMenu && 'bg-blue-500/20',
       )}
       style={{
@@ -96,7 +96,7 @@ export const FileItem = ({
                 tooltip={t('Uploading failed. Please, try again')}
               >
                 <IconExclamationCircle
-                  className="text-red-800 dark:text-red-400 shrink-0"
+                  className="shrink-0 text-red-800 dark:text-red-400"
                   size={18}
                 />
               </Tooltip>
@@ -110,14 +110,14 @@ export const FileItem = ({
               )}
             >
               <input
-                className="checkbox bg-gray-100 dark:bg-gray-700 peer h-[18px] w-[18px]"
+                className="checkbox peer h-[18px] w-[18px] bg-gray-100 dark:bg-gray-700"
                 type="checkbox"
                 checked={isSelected}
                 onChange={handleToggleFile}
               />
               <IconCheck
                 size={18}
-                className="text-blue-500 pointer-events-none invisible absolute peer-checked:visible"
+                className="pointer-events-none invisible absolute text-blue-500 peer-checked:visible"
               />
             </div>
           )}
@@ -134,21 +134,21 @@ export const FileItem = ({
 
       <div className="flex items-center gap-2">
         {item.status === 'UPLOADING' && (
-          <div className="bg-gray-100 dark:bg-gray-700 h-[3px] w-[60px] overflow-hidden rounded-full">
+          <div className="h-[3px] w-[60px] overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
             <div
-              className="bg-blue-500 h-full"
+              className="h-full bg-blue-500"
               style={{ width: `${item.percent}%` }}
             ></div>
           </div>
         )}
         {item.status === 'FAILED' && (
           <button onClick={handleRetry}>
-            <IconReload className="text-gray-500 shrink-0" size={18} />
+            <IconReload className="shrink-0 text-gray-500" size={18} />
           </button>
         )}
         {item.status && cancelAllowedStatuses.has(item.status) ? (
           <button onClick={handleCancelFile}>
-            <IconX className="text-gray-500 shrink-0" size={18} />
+            <IconX className="shrink-0 text-gray-500" size={18} />
           </button>
         ) : (
           <FileItemContextMenu
