@@ -1,6 +1,8 @@
 import { Attachment } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 
+import { extension, extensions } from 'mime-types';
+
 export function triggerDownload(url: string, name: string): void {
   const link = document.createElement('a');
   link.download = name;
@@ -19,8 +21,8 @@ export const getPathNameId = (name: string, relativePath?: string): string => {
 export const getRelativePath = (
   absolutePath: string | undefined,
 ): string | undefined => {
-  // '/users/asd/files/folder-1/folder-2' -> folder-1/folder-2
-  return absolutePath?.split('/').toSpliced(0, 4).join('/') || undefined;
+  // 'HASH/files/folder-1/folder-2' -> folder-1/folder-2
+  return absolutePath?.split('/').toSpliced(0, 2).join('/') || undefined;
 };
 
 export const getUserCustomContent = (
@@ -45,13 +47,34 @@ export const getUserCustomContent = (
   };
 };
 
+export const isAllowedMimeType = (
+  allowedMimeTypes: string[],
+  resourceMimeType: string,
+) => {
+  if (allowedMimeTypes.includes('*/*')) {
+    return true;
+  }
+
+  const [resourceSubset, resourceTypeName] = resourceMimeType.split('/');
+
+  return allowedMimeTypes.some((allowedMimeType) => {
+    const [subset, name] = allowedMimeType.split('/');
+
+    return (
+      subset === resourceSubset && (name === '*' || name === resourceTypeName)
+    );
+  });
+};
+
 export const getDialFilesWithInvalidFileType = (
   files: DialFile[],
   allowedFileTypes: string[],
 ): DialFile[] => {
   return allowedFileTypes.includes('*/*')
     ? []
-    : files.filter((file) => !allowedFileTypes.includes(file.contentType));
+    : files.filter(
+        (file) => !isAllowedMimeType(allowedFileTypes, file.contentType),
+      );
 };
 
 export const getDialFilesWithInvalidFileSize = (
@@ -110,4 +133,23 @@ export const getDialFilesFromAttachments = (
       };
     })
     .filter(Boolean) as Omit<DialFile, 'contentLength'>[];
+};
+
+export const getExtensionsList = (mimeType: string) => {
+  const [subset, name] = mimeType.split('/');
+
+  if (subset === '*') {
+    return ['all'];
+  } else if (name === '*') {
+    return Object.entries(extensions).reduce((acc, [key, value]) => {
+      const [keySubset] = key.split('/');
+      if (keySubset === subset) {
+        acc.push(...value);
+      }
+
+      return acc;
+    }, [] as string[]);
+  } else {
+    return [extension(mimeType)];
+  }
 };

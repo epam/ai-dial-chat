@@ -9,7 +9,7 @@ import { logger } from '@/src/utils/server/logger';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import { authOptions } from '../auth/[...nextauth]';
+import { authOptions } from '../../auth/[...nextauth]';
 
 import fetch from 'node-fetch';
 import { Readable } from 'stream';
@@ -25,8 +25,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     if (req.method === 'GET') {
       return await handleGetRequest(req, token, res);
-    } else if (req.method === 'POST') {
-      return await handlePostRequest(req, token, res);
+    } else if (req.method === 'PUT') {
+      return await handlePutRequest(req, token, res);
     } else if (req.method === 'DELETE') {
       return await handleDeleteRequest(req, token, res);
     }
@@ -46,18 +46,23 @@ export const config = {
   },
 };
 
-async function handlePostRequest(
+async function handlePutRequest(
   req: NextApiRequest,
   token: JWT | null,
   res: NextApiResponse,
 ) {
   const readable = Readable.from(req);
-  const { path = '' } = req.query as { path: string };
-  const url = `${process.env.OPENAI_API_HOST}/v1/files${
-    path && `/${encodeURI(path)}`
-  }`;
+  const slugs =
+    typeof req.query.slug === 'string' ? [req.query.slug] : req.query.slug;
+
+  if (!slugs || slugs.length === 0) {
+    throw new OpenAIError('No file path provided', '', '', '400');
+  }
+  const url = `${process.env.OPENAI_API_HOST}/v1/files/${encodeURI(
+    slugs.join('/'),
+  )}`;
   const proxyRes = await fetch(url, {
-    method: 'POST',
+    method: 'PUT',
     headers: {
       ...getApiHeaders({ jwt: token?.access_token as string }),
       'Content-Type': req.headers['content-type'] as string,
@@ -83,10 +88,15 @@ async function handleGetRequest(
   token: JWT | null,
   res: NextApiResponse,
 ) {
-  const { path } = req.query as { path: string };
-  const url = `${process.env.OPENAI_API_HOST}/v1/files${
-    path && encodeURI(path)
-  }?purpose=content`;
+  const slugs =
+    typeof req.query.slug === 'string' ? [req.query.slug] : req.query.slug;
+
+  if (!slugs || slugs.length === 0) {
+    throw new OpenAIError('No file path provided', '', '', '400');
+  }
+  const url = `${process.env.OPENAI_API_HOST}/v1/files/${encodeURI(
+    slugs.join('/'),
+  )}`;
   const proxyRes = await fetch(url, {
     headers: getApiHeaders({ jwt: token?.access_token as string }),
   });
@@ -110,10 +120,16 @@ async function handleDeleteRequest(
   token: JWT | null,
   res: NextApiResponse,
 ) {
-  const { path = '' } = req.query as { path: string };
-  const url = `${process.env.OPENAI_API_HOST}/v1/files${
-    path && `/${encodeURI(path)}`
-  }`;
+  const slugs =
+    typeof req.query.slug === 'string' ? [req.query.slug] : req.query.slug;
+
+  if (!slugs || slugs.length === 0) {
+    throw new OpenAIError('No file path provided', '', '', '400');
+  }
+  const url = `${process.env.OPENAI_API_HOST}/v1/files/${encodeURI(
+    slugs.join('/'),
+  )}`;
+
   const proxyRes = await fetch(url, {
     method: 'DELETE',
     headers: getApiHeaders({ jwt: token?.access_token as string }),

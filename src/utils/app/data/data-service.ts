@@ -167,13 +167,28 @@ export class DataService {
     );
   }
 
+  public static getFilesBucket(): Observable<{ bucket: string }> {
+    return ApiStorage.request(`api/files/bucket`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+
   public static sendFile(
     formData: FormData,
-    path?: string | null | undefined,
+    bucket: string,
+    relativePath: string | undefined,
+    fileName: string,
   ): Observable<{ percent?: number; result?: DialFile }> {
+    const resultPath = encodeURI(
+      `${bucket}/${relativePath ? `${relativePath}/` : ''}${fileName}`,
+    );
+
     return ApiStorage.requestOld({
-      url: `api/files${path ? '?path=' + path : ''}`,
-      method: 'POST',
+      url: `api/files/file/${resultPath}`,
+      method: 'PUT',
       async: true,
       body: formData,
     }).pipe(
@@ -193,12 +208,13 @@ export class DataService {
             return {};
           }
 
-          const relativePath = getRelativePath(result.path);
+          const relativePath = result.parentPath || undefined;
+
           return {
             result: {
               id: getPathNameId(result.name, relativePath),
               name: result.name,
-              absolutePath: result.path,
+              absolutePath: [result.bucket, relativePath].join('/'),
               relativePath: relativePath,
               folderId: relativePath,
               contentLength: result.contentLength,
@@ -212,17 +228,17 @@ export class DataService {
   }
 
   public static getFileFolders(
+    bucket: string,
     parentPath?: string,
   ): Observable<FileFolderInterface[]> {
     const query = new URLSearchParams({
       filter: 'FOLDER',
+      bucket,
       ...(parentPath && { path: parentPath }),
     });
     const resultQuery = query.toString();
 
-    return ApiStorage.request(
-      `api/files/listing${resultQuery ? '?' + resultQuery : ''}`,
-    ).pipe(
+    return ApiStorage.request(`api/files/listing?${resultQuery}`).pipe(
       map((folders: BackendFileFolder[]) => {
         return folders.map((folder): FileFolderInterface => {
           const relativePath = getRelativePath(folder.path);
@@ -241,13 +257,10 @@ export class DataService {
     );
   }
 
-  public static removeFile(filePath: string): Observable<void> {
-    const query = new URLSearchParams({
-      path: filePath,
-    });
-    const resultQuery = query.toString();
+  public static removeFile(bucket: string, filePath: string): Observable<void> {
+    const resultPath = encodeURI([bucket, filePath].join('/'));
 
-    return ApiStorage.request(`api/files${'?' + resultQuery}`, {
+    return ApiStorage.request(`api/files/file/${resultPath}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -255,24 +268,26 @@ export class DataService {
     });
   }
 
-  public static getFiles(parentPath?: string): Observable<DialFile[]> {
+  public static getFiles(
+    bucket: string,
+    parentPath?: string,
+  ): Observable<DialFile[]> {
     const query = new URLSearchParams({
       filter: 'FILE',
+      bucket,
       ...(parentPath && { path: parentPath }),
     });
     const resultQuery = query.toString();
 
-    return ApiStorage.request(
-      `api/files/listing${resultQuery ? '?' + resultQuery : ''}`,
-    ).pipe(
+    return ApiStorage.request(`api/files/listing?${resultQuery}`).pipe(
       map((files: BackendFile[]) => {
         return files.map((file): DialFile => {
-          const relativePath = getRelativePath(file.path);
+          const relativePath = file.parentPath || undefined;
 
           return {
             id: getPathNameId(file.name, relativePath),
             name: file.name,
-            absolutePath: file.path,
+            absolutePath: [file.bucket, relativePath].join('/'),
             relativePath: relativePath,
             folderId: relativePath,
             contentLength: file.contentLength,
