@@ -315,16 +315,16 @@ export const FileManagerModal = ({
       {isOpen && (
         <FloatingOverlay
           lockScroll
-          className="bg-gray-900/70 dark:bg-gray-900/30 z-50 flex items-center justify-center p-3"
+          className="z-50 flex items-center justify-center bg-gray-900/70 p-3 dark:bg-gray-900/30"
         >
           <FloatingFocusManager context={context}>
             <div
-              className="bg-gray-100 dark:bg-gray-700 relative flex max-h-full flex-col gap-4 rounded md:w-[525px]"
+              className="relative flex max-h-full flex-col gap-4 rounded bg-gray-100 dark:bg-gray-700 md:w-[525px]"
               ref={refs.setFloating}
               {...getFloatingProps()}
             >
               <button
-                className="text-gray-500 hover:text-blue-500 absolute right-2 top-2"
+                className="absolute right-2 top-2 text-gray-500 hover:text-blue-500"
                 onClick={() => onClose(false)}
               >
                 <IconX />
@@ -364,11 +364,11 @@ export const FileManagerModal = ({
                       placeholder={t('Search files') || ''}
                       type="text"
                       onChange={handleSearch}
-                      className="border-gray-400 placeholder:text-gray-500 focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500 m-0 w-full rounded border bg-transparent px-3 py-2 outline-none"
+                      className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
                     ></input>
                     <div className="flex min-h-[350px] flex-col overflow-auto">
                       <button
-                        className="text-gray-500 flex items-center gap-1 rounded py-1 text-xs"
+                        className="flex items-center gap-1 rounded py-1 text-xs text-gray-500"
                         onClick={() => handleToggleFolder(undefined)}
                       >
                         <CaretIconComponent isOpen={isAllFilesOpened} />
@@ -433,19 +433,19 @@ export const FileManagerModal = ({
                   </div>
                 )}
               </div>
-              <div className="border-gray-300 dark:border-gray-900 flex items-center justify-between border-t px-6 py-4">
+              <div className="flex items-center justify-between border-t border-gray-300 px-6 py-4 dark:border-gray-900">
                 <div className="flex items-center justify-center gap-2">
                   {selectedFilesIds.length > 0 ? (
                     <>
                       <button
                         onClick={handleRemoveMultipleFiles}
-                        className="text-gray-500 hover:bg-blue-500/20 hover:text-blue-500 flex h-[34px] w-[34px] items-center  justify-center rounded"
+                        className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
                       >
                         <IconTrash size={24} />
                       </button>
                       <button
                         onClick={handleDownloadMultipleFiles}
-                        className="text-gray-500 hover:bg-blue-500/20 hover:text-blue-500 flex h-[34px] w-[34px] items-center  justify-center rounded"
+                        className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
                       >
                         <IconDownload size={24} />
                       </button>
@@ -453,7 +453,7 @@ export const FileManagerModal = ({
                   ) : (
                     <button
                       onClick={handleNewFolder}
-                      className="text-gray-500 hover:bg-blue-500/20 hover:text-blue-500 flex h-[34px] w-[34px] items-center  justify-center rounded"
+                      className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
                     >
                       <FolderPlus height={24} width={24} />
                     </button>
