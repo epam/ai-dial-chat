@@ -12,7 +12,8 @@ export type MIMEType =
 export interface BackendFile {
   name: string;
   type: 'FILE';
-  path: string | undefined;
+  bucket: string;
+  parentPath: string | null;
   contentLength: number;
   contentType: MIMEType;
 }
@@ -20,13 +21,17 @@ export interface BackendFileFolder {
   name: string;
   type: 'FOLDER';
   path: string | undefined;
+  files: (BackendFile | BackendFileFolder)[];
 }
 
-export type DialFile = Omit<BackendFile, 'path' | 'type'> & {
+export type DialFile = Omit<
+  BackendFile,
+  'path' | 'type' | 'bucket' | 'parentPath'
+> & {
   // Combination of relative path and name
   id: string;
   // Only for files fetched uploaded to backend
-  // Same as relative path but has some absolute prefix like Users/<SUB>/files
+  // Same as relative path but has some absolute prefix like <HASH>
   absolutePath?: string;
   relativePath?: string;
   // Same as relative path, but needed for simplicity and backward compatibility

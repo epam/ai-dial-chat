@@ -15,7 +15,10 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getDialFilesWithInvalidFileType } from '@/src/utils/app/file';
+import {
+  getDialFilesWithInvalidFileType,
+  getExtensionsListForMimeTypes,
+} from '@/src/utils/app/file';
 import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
 import { HighlightColor } from '@/src/types/common';
@@ -33,8 +36,6 @@ import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
-
-import { extension } from 'mime-types';
 
 interface Props {
   isOpen: boolean;
@@ -95,7 +96,7 @@ export const FileManagerModal = ({
     if (allowedTypes.includes('*/*')) {
       return [t('all')];
     }
-    return allowedTypes.map((mimeType) => `.${extension(mimeType)}`);
+    return getExtensionsListForMimeTypes(allowedTypes);
   }, [allowedTypes, t]);
   const showSpinner =
     folders.length === 0 && loadingStatuses.has(foldersStatus);

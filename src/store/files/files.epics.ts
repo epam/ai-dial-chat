@@ -18,20 +18,57 @@ import { translate } from '@/src/utils/app/translation';
 
 import { AppEpic } from '@/src/types/store';
 
+import { errorsMessages } from '@/src/constants/errors';
+
 import { UIActions } from '../ui/ui.reducers';
 import { FilesActions, FilesSelectors } from './files.reducers';
 
 const initEpic: AppEpic = (action$) =>
-  action$.pipe(filter(FilesActions.init.match), ignoreElements());
+  action$.pipe(
+    filter(FilesActions.init.match),
+    switchMap(() => {
+      const actions = [];
 
-const uploadFileEpic: AppEpic = (action$) =>
+      actions.push(FilesActions.getBucket());
+
+      return concat(actions);
+    }),
+  );
+
+const getBucketEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(FilesActions.getBucket.match),
+    switchMap(() => {
+      return DataService.getFilesBucket().pipe(
+        map(({ bucket }) => {
+          return FilesActions.setBucket({ bucket });
+        }),
+        catchError(() => {
+          return of(
+            UIActions.showToast({
+              message: errorsMessages.errorGettingUserFileBucket,
+              type: 'error',
+            }),
+          );
+        }),
+      );
+    }),
+  );
+
+const uploadFileEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(FilesActions.uploadFile.match),
     mergeMap(({ payload }) => {
+      const bucket = FilesSelectors.selectBucket(state$.value);
       const formData = new FormData();
       formData.append('attachment', payload.fileContent, payload.name);
 
-      return DataService.sendFile(formData, payload.relativePath).pipe(
+      return DataService.sendFile(
+        formData,
+        bucket,
+        payload.relativePath,
+        payload.name,
+      ).pipe(
         filter(
           ({ percent, result }) =>
             typeof percent !== 'undefined' || typeof result !== 'undefined',
@@ -77,11 +114,13 @@ const reuploadFileEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const getFilesEpic: AppEpic = (action$) =>
+const getFilesEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(FilesActions.getFiles.match),
     switchMap(({ payload }) => {
-      return DataService.getFiles(payload.path).pipe(
+      const bucket = FilesSelectors.selectBucket(state$.value);
+
+      return DataService.getFiles(bucket, payload.path).pipe(
         map((files) => {
           return FilesActions.getFilesSuccess({
             relativePath: payload.path,
@@ -95,11 +134,13 @@ const getFilesEpic: AppEpic = (action$) =>
     }),
   );
 
-const getFileFoldersEpic: AppEpic = (action$) =>
+const getFileFoldersEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(FilesActions.getFolders.match),
     switchMap(({ payload }) => {
-      return DataService.getFileFolders(payload?.path).pipe(
+      const bucket = FilesSelectors.selectBucket(state$.value);
+
+      return DataService.getFileFolders(bucket, payload?.path).pipe(
         map((folders) => {
           return FilesActions.getFoldersSuccess({
             folders,
@@ -139,6 +180,8 @@ const removeFileEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(FilesActions.removeFile.match),
     mergeMap(({ payload }) => {
+      const bucket = FilesSelectors.selectBucket(state$.value);
+
       const file = FilesSelectors.selectFiles(state$.value).find(
         (file) => file.id === payload.fileId,
       );
@@ -151,7 +194,7 @@ const removeFileEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      return DataService.removeFile(payload.fileId).pipe(
+      return DataService.removeFile(bucket, payload.fileId).pipe(
         map(() => {
           return FilesActions.removeFileSuccess({
             fileId: payload.fileId,
@@ -202,9 +245,7 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
     tap(({ files }) => {
       files.forEach((file) =>
         triggerDownload(
-          `api/files?path=${encodeURIComponent(
-            `${file.absolutePath}/${file.name}`,
-          )}`,
+          `api/files/file/${encodeURI(`${file.absolutePath}/${file.name}`)}`,
           file.name,
         ),
       );
@@ -224,4 +265,5 @@ export const FilesEpics = combineEpics(
   removeMultipleFilesEpic,
   downloadFilesListEpic,
   removeFileFailEpic,
+  getBucketEpic,
 );

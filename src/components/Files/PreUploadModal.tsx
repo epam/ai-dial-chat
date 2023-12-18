@@ -21,9 +21,10 @@ import {
 import { useTranslation } from 'next-i18next';
 
 import {
+  constructPath,
+  getExtensionsListForMimeTypes,
   getFilesWithInvalidFileSize,
   getFilesWithInvalidFileType,
-  getPathNameId,
 } from '@/src/utils/app/file';
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
 
@@ -35,8 +36,6 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { SelectFolderModal } from './SelectFolderModal';
-
-import { extension } from 'mime-types';
 
 interface Props {
   isOpen: boolean;
@@ -100,7 +99,7 @@ export const PreUploadDialog = ({
     if (allowedTypes.includes('*/*')) {
       return [t('all')];
     }
-    return allowedTypes.map((mimeType) => extension(mimeType));
+    return getExtensionsListForMimeTypes(allowedTypes);
   }, [allowedTypes, t]);
 
   const handleSelectFiles = useCallback(
@@ -156,7 +155,7 @@ export const PreUploadDialog = ({
           filteredFiles.map((file) => {
             return {
               fileContent: file,
-              id: getPathNameId(file.name, folderPath),
+              id: constructPath(file.name, folderPath),
               name: file.name,
             };
           }),
@@ -246,7 +245,7 @@ export const PreUploadDialog = ({
               return {
                 ...file,
                 name: e.target.value + formatFile,
-                id: getPathNameId(e.target.value + formatFile, folderPath),
+                id: constructPath(e.target.value + formatFile, folderPath),
               };
             }
 
@@ -288,7 +287,7 @@ export const PreUploadDialog = ({
       oldFiles.map((file) => {
         return {
           ...file,
-          id: getPathNameId(file.name, folderPath),
+          id: constructPath(file.name, folderPath),
           folderPath,
         };
       }),
@@ -344,7 +343,7 @@ export const PreUploadDialog = ({
                       onClick={handleFolderChange}
                     >
                       <span className="truncate">
-                        {[t('All files'), folderPath].filter(Boolean).join('/')}
+                        {constructPath(t('All files'), folderPath)}
                       </span>
                       <span className="text-blue-500">{t('Change')}</span>
                     </button>
@@ -360,10 +359,7 @@ export const PreUploadDialog = ({
                       </div>
                       <div className="flex flex-col gap-3 overflow-auto text-sm">
                         {selectedFiles.map((file, index) => (
-                          <div
-                            key={file.id}
-                            className="flex items-center gap-3"
-                          >
+                          <div key={index} className="flex items-center gap-3">
                             <div className="relative flex grow items-center">
                               <IconFile
                                 className="absolute left-2 top-[calc(50%_-_9px)] shrink-0 text-gray-500"

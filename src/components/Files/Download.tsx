@@ -1,3 +1,5 @@
+import { constructPath } from '@/src/utils/app/file';
+
 import { DialFile } from '@/src/types/files';
 import { CustomTriggerMenuRendererProps } from '@/src/types/menu';
 
@@ -12,7 +14,7 @@ export default function DownloadRenderer({
   return (
     <a
       download={file.name}
-      href={`api/files?path=${[file.absolutePath, file.name].join('/')}`}
+      href={`api/files/file/${constructPath(file.absolutePath, file.name)}`}
       onClick={onClick}
       className={className}
     >
