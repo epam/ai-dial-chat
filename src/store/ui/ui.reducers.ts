@@ -15,6 +15,7 @@ export interface UIState {
   isCompareMode: boolean;
   openedFoldersIds: string[];
   textOfClosedAnnouncement?: string | undefined;
+  isChatFullWidth: boolean;
   chatbarWidth?: number;
   promptbarWidth?: number;
 }
@@ -30,6 +31,7 @@ const initialState: UIState = {
   textOfClosedAnnouncement: undefined,
   chatbarWidth: SIDEBAR_MIN_WIDTH,
   promptbarWidth: SIDEBAR_MIN_WIDTH,
+  isChatFullWidth: false,
 };
 
 export const uiSlice = createSlice({
@@ -40,10 +42,10 @@ export const uiSlice = createSlice({
     setTheme: (state, { payload }: PayloadAction<Theme>) => {
       state.theme = payload;
     },
-    setChatbarWidth: (state, { payload }: PayloadAction<Partial<number>>) => {
+    setChatbarWidth: (state, { payload }: PayloadAction<number>) => {
       state.chatbarWidth = payload;
     },
-    setPromptbarWidth: (state, { payload }: PayloadAction<Partial<number>>) => {
+    setPromptbarWidth: (state, { payload }: PayloadAction<number>) => {
       state.promptbarWidth = payload;
     },
     setShowChatbar: (
@@ -75,6 +77,9 @@ export const uiSlice = createSlice({
       { payload }: PayloadAction<UIState['isCompareMode']>,
     ) => {
       state.isCompareMode = payload;
+    },
+    setIsChatFullWidth: (state, { payload }: PayloadAction<boolean>) => {
+      state.isChatFullWidth = payload;
     },
     showToast: (
       state,
@@ -174,6 +179,10 @@ const selectPromptbarWidth = createSelector([rootSelector], (state) => {
   return state.promptbarWidth;
 });
 
+const selectIsChatFullWidth = createSelector([rootSelector], (state) => {
+  return state.isChatFullWidth;
+});
+
 export const UIActions = uiSlice.actions;
 
 export const UISelectors = {
@@ -188,4 +197,5 @@ export const UISelectors = {
   selectTextOfClosedAnnouncement,
   selectChatbarWidth,
   selectPromptbarWidth,
+  selectIsChatFullWidth,
 };
