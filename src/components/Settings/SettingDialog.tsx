@@ -3,6 +3,7 @@ import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { HighlightColor } from '@/src/types/common';
 import { Theme } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
 
@@ -10,8 +11,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import XMark from '../../../public/images/icons/xmark.svg';
+import ToggleFullWidth from '../Common/ToggleSwitch/ToggleSwitchLabeled';
 import { ThemeSelect } from './ThemeSelect';
-import { ToggleFullWidth } from './ToggleFullWidth';
 
 interface Props {
   open: boolean;
@@ -110,6 +111,9 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
               labelText={t('Full width chat')}
               labelClassName="basis-1/3 md:basis-1/4"
               handleSwitch={onChangeHandlerFullWidth}
+              switchOnBackgroungColor={HighlightColor.Blue}
+              switchOnText={t('ON')}
+              switchOFFText={t('OFF')}
             />
           </div>
 
