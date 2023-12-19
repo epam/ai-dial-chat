@@ -34,7 +34,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   } catch (error: unknown) {
     logger.error(error);
     if (error instanceof OpenAIError) {
-      return res.status(parseInt(error.code, 10)).send(error.message);
+      return res
+        .status(parseInt(error.code, 10) || 500)
+        .send(error.message || errorsMessages.generalServer);
     }
     return res.status(500).send(errorsMessages.errorDuringFileRequest);
   }
