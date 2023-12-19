@@ -15,7 +15,7 @@ import { DialStorage, UIStorageKeys } from '@/src/types/storage';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
-import { constructPath, getRelativePath } from '../file';
+import { constructPath } from '../file';
 import { ApiMockStorage } from './storages/api-mock-storage';
 import { ApiStorage } from './storages/api-storage';
 import { BrowserStorage } from './storages/browser-storage';
@@ -223,7 +223,7 @@ export class DataService {
 
           return {
             result: {
-              id: constructPath(result.name, relativePath),
+              id: constructPath(relativePath, result.name),
               name: result.name,
               absolutePath: constructPath(result.bucket, relativePath),
               relativePath: relativePath,
@@ -252,13 +252,13 @@ export class DataService {
     return ApiStorage.request(`api/files/listing?${resultQuery}`).pipe(
       map((folders: BackendFileFolder[]) => {
         return folders.map((folder): FileFolderInterface => {
-          const relativePath = getRelativePath(folder.path);
+          const relativePath = folder.parentPath || undefined;
 
           return {
-            id: constructPath(folder.name, relativePath),
+            id: constructPath(relativePath, folder.name),
             name: folder.name,
             type: FolderType.File,
-            absolutePath: folder.path,
+            absolutePath: constructPath(bucket, relativePath),
             relativePath: relativePath,
             folderId: relativePath,
             serverSynced: true,

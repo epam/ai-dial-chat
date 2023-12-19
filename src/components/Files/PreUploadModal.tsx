@@ -155,7 +155,7 @@ export const PreUploadDialog = ({
           filteredFiles.map((file) => {
             return {
               fileContent: file,
-              id: constructPath(file.name, folderPath),
+              id: constructPath(folderPath, file.name),
               name: file.name,
             };
           }),
@@ -245,7 +245,7 @@ export const PreUploadDialog = ({
               return {
                 ...file,
                 name: e.target.value + formatFile,
-                id: constructPath(e.target.value + formatFile, folderPath),
+                id: constructPath(folderPath, e.target.value + formatFile),
               };
             }
 
@@ -287,7 +287,7 @@ export const PreUploadDialog = ({
       oldFiles.map((file) => {
         return {
           ...file,
-          id: constructPath(file.name, folderPath),
+          id: constructPath(folderPath, file.name),
           folderPath,
         };
       }),

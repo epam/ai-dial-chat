@@ -20,7 +20,8 @@ export interface BackendFile {
 export interface BackendFileFolder {
   name: string;
   type: 'FOLDER';
-  path: string | undefined;
+  bucket: string;
+  parentPath: string | undefined;
   files: (BackendFile | BackendFileFolder)[];
 }
 
