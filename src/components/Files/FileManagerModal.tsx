@@ -18,6 +18,8 @@ import classNames from 'classnames';
 import {
   getDialFilesWithInvalidFileType,
   getExtensionsListForMimeTypes,
+  notAllowedSymbols,
+  notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
 import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
@@ -185,6 +187,17 @@ export const FileManagerModal = ({
       if (folderWithSameName) {
         setErrorMessage(
           t(`Not allowed to have folders with same names`) as string,
+        );
+        return;
+      }
+
+      if (newName.match(notAllowedSymbolsRegex)) {
+        setErrorMessage(
+          t(
+            `The symbols ${notAllowedSymbols.join(
+              '',
+            )} are not allowed in folder name`,
+          ) as string,
         );
         return;
       }
