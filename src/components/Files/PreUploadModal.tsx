@@ -23,8 +23,10 @@ import { useTranslation } from 'next-i18next';
 import {
   constructPath,
   getExtensionsListForMimeTypes,
+  getFilesWithInvalidFileName,
   getFilesWithInvalidFileSize,
   getFilesWithInvalidFileType,
+  notAllowedSymbols,
 } from '@/src/utils/app/file';
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
 
@@ -68,7 +70,7 @@ export const PreUploadDialog = ({
   const folders = useAppSelector(FilesSelectors.selectFolders);
 
   const uploadInputRef = useRef<HTMLInputElement>(null);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>();
+  const [errorMessage, setErrorMessage] = useState('');
 
   const [selectedFiles, setSelectedFiles] = useState<
     Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[]
@@ -118,36 +120,50 @@ export const PreUploadDialog = ({
         files,
         allowedTypes,
       ).map((file) => file.name);
+      const incorrectFileNames: string[] = getFilesWithInvalidFileName(
+        files,
+      ).map((file) => file.name);
+      const invalidFileNames = new Set([
+        ...incorrectSizeFiles,
+        ...incorrectTypeFiles,
+        ...incorrectFileNames,
+      ]);
       const filteredFiles = files.filter(
-        (file) =>
-          !incorrectSizeFiles.includes(file.name) &&
-          !incorrectTypeFiles.includes(file.name),
+        (file) => !invalidFileNames.has(file.name),
       );
-
+      const errors = [];
       if (incorrectSizeFiles.length > 0) {
-        setErrorMessage(
-          (oldMessage) =>
-            oldMessage +
-            '\n' +
-            t(
-              `Max file size up to 512 Mb. Next files haven't been uploaded: {{incorrectSizeFileNames}}`,
-              { incorrectSizeFileNames: incorrectSizeFiles.join(', ') },
-            ),
+        errors.push(
+          t(
+            `Max file size up to 512 Mb. Next files haven't been uploaded: {{incorrectSizeFileNames}}`,
+            { incorrectSizeFileNames: incorrectSizeFiles.join(', ') },
+          ),
         );
       }
       if (incorrectTypeFiles.length > 0) {
-        setErrorMessage(
-          (oldMessage) =>
-            oldMessage +
-            '\n' +
-            t(
-              `Supported types: {{allowedExtensions}}. Next files haven't been uploaded: {{incorrectTypeFileNames}}`,
-              {
-                allowedExtensions: allowedExtensions.join(', '),
-                incorrectTypeFileNames: incorrectTypeFiles.join(', '),
-              },
-            ),
+        errors.push(
+          t(
+            `Supported types: {{allowedExtensions}}. Next files haven't been uploaded: {{incorrectTypeFileNames}}`,
+            {
+              allowedExtensions: allowedExtensions.join(', '),
+              incorrectTypeFileNames: incorrectTypeFiles.join(', '),
+            },
+          ),
         );
+      }
+      if (incorrectFileNames.length > 0) {
+        errors.push(
+          t(
+            `The symbols {{notAllowedSymbols}} are not allowed in file name. Next files haven't been uploaded: {{incorrectTypeFileNames}}`,
+            {
+              notAllowedSymbols: notAllowedSymbols.join(''),
+              incorrectTypeFileNames: incorrectFileNames.join(', '),
+            },
+          ),
+        );
+      }
+      if (errors.length) {
+        setErrorMessage(errors.join('\n'));
       }
 
       setSelectedFiles((oldFiles) =>
