@@ -5,10 +5,6 @@ import { TokenEndpointHandler } from 'next-auth/providers';
 import { logger } from '../server/logger';
 import NextClient, { RefreshToken } from './nextauth-client';
 
-export const TEST_TOKENS = new Set(
-  (process.env.AUTH_TEST_TOKEN ?? '').split(','),
-);
-
 // Need to be set for all providers
 export const tokenConfig: TokenEndpointHandler = {
   request: async (context) => {
@@ -154,14 +150,6 @@ export const callbacks: Partial<CallbacksOptions<Profile, Account>> = {
     return refreshAccessToken(options.token);
   },
   signIn: async (options) => {
-    if (
-      options.account?.type === 'credentials' &&
-      !!options.credentials?.access_token &&
-      TEST_TOKENS.has(options.credentials.access_token as string)
-    ) {
-      return true;
-    }
-
     if (!options.account?.access_token) {
       return false;
     }
