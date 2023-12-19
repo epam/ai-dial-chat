@@ -222,7 +222,7 @@ export const filesSlice = createSlice({
         payload.relativePath,
       );
 
-      const folderId = constructPath(folderName, payload.relativePath);
+      const folderId = constructPath(payload.relativePath, folderName);
       state.folders.push({
         id: folderId,
         name: folderName,
@@ -254,7 +254,7 @@ export const filesSlice = createSlice({
         return {
           ...folder,
           name: payload.newName.trim(),
-          id: constructPath(payload.newName, oldFolderIdPath),
+          id: constructPath(oldFolderIdPath, payload.newName),
         };
       });
     },
