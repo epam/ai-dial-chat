@@ -198,6 +198,22 @@ export const PreUploadDialog = ({
       );
       return;
     }
+    const incorrectFileNames: string[] = getFilesWithInvalidFileName(
+      selectedFiles,
+    ).map((file) => file.name);
+
+    if (incorrectFileNames.length > 0) {
+      setErrorMessage(
+        t(
+          `The symbols {{notAllowedSymbols}} are not allowed in file name. Please rename or remove them from uploading files list: {{fileNames}}`,
+          {
+            notAllowedSymbols: notAllowedSymbols.join(''),
+            fileNames: incorrectFileNames.join(', '),
+          },
+        ) as string,
+      );
+      return;
+    }
 
     const attachmentsNames = files
       .filter((file) => file.folderId === folderPath)
@@ -214,6 +230,7 @@ export const PreUploadDialog = ({
       );
       return;
     }
+
     let isFilesNamesSame = false;
     for (let i = 0; i < selectedFiles.length - 1; i++) {
       for (let j = i + 1; j < selectedFiles.length; j++) {
