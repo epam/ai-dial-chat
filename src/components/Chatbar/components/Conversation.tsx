@@ -47,7 +47,11 @@ interface ViewProps {
   isContextMenu: boolean;
 }
 
-export function ConversationView({ conversation, isHighlited, isContextMenu }: ViewProps) {
+export function ConversationView({
+  conversation,
+  isHighlited,
+  isContextMenu,
+}: ViewProps) {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const theme = useAppSelector(UISelectors.selectThemeState);
 
