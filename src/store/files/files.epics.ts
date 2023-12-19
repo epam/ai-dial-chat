@@ -1,4 +1,5 @@
 import {
+  EMPTY,
   catchError,
   concat,
   filter,
@@ -7,6 +8,7 @@ import {
   mergeMap,
   of,
   switchMap,
+  takeUntil,
   tap,
 } from 'rxjs';
 
@@ -85,6 +87,12 @@ const uploadFileEpic: AppEpic = (action$, state$) =>
             percent: percent!,
           });
         }),
+        takeUntil(
+          action$.pipe(
+            filter(FilesActions.uploadFileCancel.match),
+            filter((action) => action.payload.id === payload.id),
+          ),
+        ),
         catchError(() => {
           return of(FilesActions.uploadFileFail({ id: payload.id }));
         }),
@@ -187,10 +195,17 @@ const removeFileEpic: AppEpic = (action$, state$) =>
       );
 
       if (!file?.serverSynced) {
-        return of(
-          FilesActions.removeFileSuccess({
-            fileId: payload.fileId,
-          }),
+        return concat(
+          of(
+            FilesActions.uploadFileCancel({
+              id: payload.fileId,
+            }),
+          ),
+          of(
+            FilesActions.removeFileSuccess({
+              fileId: payload.fileId,
+            }),
+          ),
         );
       }
 
@@ -236,6 +251,19 @@ const removeMultipleFilesEpic: AppEpic = (action$) =>
     }),
   );
 
+const unselectFilesEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(FilesActions.unselectFiles.match),
+    switchMap(({ payload }) => {
+      const files = FilesSelectors.selectFilesByIds(state$.value, payload.ids);
+      const cancelFileActions = files
+        .filter((file) => !file.serverSynced && file.status === 'UPLOADING')
+        .map((file) => of(FilesActions.uploadFileCancel({ id: file.id })));
+
+      return cancelFileActions.length ? concat(...cancelFileActions) : EMPTY;
+    }),
+  );
+
 const downloadFilesListEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(FilesActions.downloadFilesList.match),
@@ -266,4 +294,5 @@ export const FilesEpics = combineEpics(
   downloadFilesListEpic,
   removeFileFailEpic,
   getBucketEpic,
+  unselectFilesEpic,
 );

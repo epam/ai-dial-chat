@@ -74,6 +74,12 @@ export const filesSlice = createSlice({
         contentType: payload.fileContent.type,
       });
     },
+    uploadFileCancel: (
+      state,
+      _action: PayloadAction<{
+        id: string;
+      }>,
+    ) => state,
     reuploadFile: (state, { payload }: PayloadAction<{ fileId: string }>) => {
       const file = state.files.find((file) => payload.fileId === file.id);
       if (!file) {
