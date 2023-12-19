@@ -151,7 +151,6 @@ Also we have a lot of auth specific env variables:
 | `AUTH_DISABLED`           | No                   | A flag to enable or disable authentication.                         | `true`, `false`  | false          |
 | `NEXTAUTH_URL`            | Yes (for production) | NextAuth URL                                                        | Any string       |                |
 | `NEXTAUTH_SECRET`         | Yes                  | NextAuth Secret (generate by `openssl rand -base64 32` for example) | Any string       |                |
-| `AUTH_TEST_TOKEN`         | No                   | Test Token                                                          | Any string       |                |
 | `AUTH_AUTH0_AUDIENCE`     | No                   | Auth0 Audience                                                      | Any string       |                |
 | `AUTH_AUTH0_CLIENT_ID`    | No                   | Auth0 Client ID                                                     | Any string       |                |
 | `AUTH_AUTH0_HOST`         | No                   | Auth0 Host                                                          | Any string       |                |
