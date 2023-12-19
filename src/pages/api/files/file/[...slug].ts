@@ -31,8 +31,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return await handleDeleteRequest(req, token, res);
     }
     return res.status(405).json({ error: 'Method not allowed' });
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(error);
+    if (error instanceof OpenAIError) {
+      return res.status(parseInt(error.code, 10)).send(error.message);
+    }
     return res.status(500).send(errorsMessages.errorDuringFileRequest);
   }
 };
