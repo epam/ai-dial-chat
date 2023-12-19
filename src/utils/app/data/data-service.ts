@@ -223,7 +223,7 @@ export class DataService {
 
           return {
             result: {
-              id: constructPath(result.name, relativePath),
+              id: constructPath(relativePath, result.name),
               name: result.name,
               absolutePath: constructPath(result.bucket, relativePath),
               relativePath: relativePath,
@@ -255,7 +255,7 @@ export class DataService {
           const relativePath = folder.parentPath || undefined;
 
           return {
-            id: constructPath(folder.name, relativePath),
+            id: constructPath(relativePath, folder.name),
             name: folder.name,
             type: FolderType.File,
             absolutePath: constructPath(bucket, relativePath),
