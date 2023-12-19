@@ -392,7 +392,12 @@ export const ChatMessage: FC<Props> = memo(
                 ) : (
                   <div className="mr-2 flex w-full flex-col gap-5">
                     {message.content && (
-                      <div className="prose flex-1 whitespace-pre-wrap dark:prose-invert">
+                      <div
+                        className={classNames(
+                          'prose flex-1 whitespace-pre-wrap dark:prose-invert',
+                          { 'max-w-none': isChatFullWidth },
+                        )}
+                      >
                         {message.content}
                       </div>
                     )}
