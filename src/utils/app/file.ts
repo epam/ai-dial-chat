@@ -94,6 +94,12 @@ export const getFilesWithInvalidFileType = (
     ? []
     : files.filter((file) => !allowedFileTypes.includes(file.type));
 };
+export const notAllowedSymbols = [':', ';', ',', '=', '/'];
+export const getFilesWithInvalidFileName = (files: File[]): File[] => {
+  return files.filter(({ name }) =>
+    notAllowedSymbols.some((symbol) => name.includes(symbol)),
+  );
+};
 
 export const getFilesWithInvalidFileSize = (
   files: File[],

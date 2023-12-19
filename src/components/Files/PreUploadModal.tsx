@@ -23,8 +23,10 @@ import { useTranslation } from 'next-i18next';
 import {
   constructPath,
   getExtensionsListForMimeTypes,
+  getFilesWithInvalidFileName,
   getFilesWithInvalidFileSize,
   getFilesWithInvalidFileType,
+  notAllowedSymbols,
 } from '@/src/utils/app/file';
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
 
@@ -118,10 +120,16 @@ export const PreUploadDialog = ({
         files,
         allowedTypes,
       ).map((file) => file.name);
+      const incorrectFileNames: string[] = getFilesWithInvalidFileName(
+        files,
+      ).map((file) => file.name);
+      const invalidFileNames = new Set([
+        ...incorrectSizeFiles,
+        ...incorrectTypeFiles,
+        ...incorrectFileNames,
+      ]);
       const filteredFiles = files.filter(
-        (file) =>
-          !incorrectSizeFiles.includes(file.name) &&
-          !incorrectTypeFiles.includes(file.name),
+        (file) => !invalidFileNames.has(file.name),
       );
 
       if (incorrectSizeFiles.length > 0) {
@@ -145,6 +153,20 @@ export const PreUploadDialog = ({
               {
                 allowedExtensions: allowedExtensions.join(', '),
                 incorrectTypeFileNames: incorrectTypeFiles.join(', '),
+              },
+            ),
+        );
+      }
+      if (incorrectFileNames.length > 0) {
+        setErrorMessage(
+          (oldMessage) =>
+            oldMessage +
+            '\n' +
+            t(
+              `The symbols {{notAllowedSymbols}} are not allowed in file name. Next files haven't been uploaded: {{incorrectTypeFileNames}}`,
+              {
+                notAllowedSymbols: notAllowedSymbols.join(''),
+                incorrectTypeFileNames: incorrectFileNames.join(', '),
               },
             ),
         );
