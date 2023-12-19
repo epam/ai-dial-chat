@@ -21,7 +21,6 @@ import classNames from 'classnames';
 
 import useOutsideAlerter from '@/src/hooks/useOutsideAlerter';
 
-import { excludeNotAllowedSymbols } from '@/src/utils/app/file';
 import { getByHighlightColor, getFoldersDepth } from '@/src/utils/app/folders';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 
@@ -513,9 +512,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
               className="mr-12 flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
               type="text"
               value={renameValue}
-              onChange={(e) =>
-                setRenameValue(excludeNotAllowedSymbols(e.target.value))
-              }
+              onChange={(e) => setRenameValue(e.target.value)}
               onKeyDown={handleEnterDown}
               ref={renameInputRef}
             />
