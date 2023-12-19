@@ -95,10 +95,15 @@ export const getFilesWithInvalidFileType = (
     : files.filter((file) => !allowedFileTypes.includes(file.type));
 };
 export const notAllowedSymbols = [':', ';', ',', '=', '/'];
+export const notAllowedSymbolsRegex = new RegExp(
+  `[${notAllowedSymbols.join()}]`,
+  'g',
+);
 export const getFilesWithInvalidFileName = (files: File[]): File[] => {
-  return files.filter(({ name }) =>
-    notAllowedSymbols.some((symbol) => name.includes(symbol)),
-  );
+  return files.filter(({ name }) => name.match(notAllowedSymbolsRegex));
+};
+export const excludeNotAllowedSymbols = (name: string) => {
+  return name.replaceAll(notAllowedSymbolsRegex, '');
 };
 
 export const getFilesWithInvalidFileSize = (
