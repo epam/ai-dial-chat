@@ -128,7 +128,11 @@ export const getDialFilesFromAttachments = (
 
   return attachments
     .map((attachment): Omit<DialFile, 'contentLength'> | null => {
-      if (!attachment.url?.startsWith('/')) {
+      if (
+        !attachment.url ||
+        attachment.url.startsWith('http') ||
+        attachment.url.startsWith('//')
+      ) {
         return null;
       }
 

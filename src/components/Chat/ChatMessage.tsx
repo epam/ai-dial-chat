@@ -229,9 +229,16 @@ export const ChatMessage: FC<Props> = memo(
       });
     };
 
-    const handleUnselectFile = useCallback((fileId: string) => {
-      setNewEditableAttachmentsIds((ids) => ids.filter((id) => id !== fileId));
-    }, []);
+    const handleUnselectFile = useCallback(
+      (fileId: string) => {
+        dispatch(FilesActions.uploadFileCancel({ id: fileId }));
+        setNewEditableAttachmentsIds((ids) =>
+          ids.filter((id) => id !== fileId),
+        );
+      },
+      [dispatch],
+    );
+
     const handleRetry = useCallback(
       (fileId: string) => {
         return () => dispatch(FilesActions.reuploadFile({ fileId }));
