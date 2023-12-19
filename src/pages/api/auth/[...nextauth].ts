@@ -3,7 +3,6 @@ import NextAuth from 'next-auth/next';
 import { Provider } from 'next-auth/providers';
 import Auth0Provider from 'next-auth/providers/auth0';
 import AzureProvider from 'next-auth/providers/azure-ad';
-import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import KeycloakProvider from 'next-auth/providers/keycloak';
 
@@ -12,11 +11,7 @@ import PingId from '../../../utils/auth/ping-identity';
 import { callbacks, tokenConfig } from '@/src/utils/auth/nextauth';
 import { logger } from '@/src/utils/server/logger';
 
-import { v5 as uuid } from 'uuid';
-
 const DEFAULT_NAME = 'SSO';
-
-const TEST_TOKENS = new Set((process.env.AUTH_TEST_TOKEN ?? '').split(','));
 
 const allProviders: (Provider | boolean)[] = [
   !!process.env.AUTH_AZURE_AD_CLIENT_ID &&
@@ -125,33 +120,6 @@ const allProviders: (Provider | boolean)[] = [
         },
       },
       token: tokenConfig,
-    }),
-
-  !!process.env.AUTH_TEST_TOKEN &&
-    CredentialsProvider({
-      name: 'Credentials',
-      credentials: {
-        access_token: {
-          label: 'Token',
-          type: 'password',
-        },
-      },
-      async authorize(credentials) {
-        if (
-          !!credentials?.access_token &&
-          TEST_TOKENS.has(credentials.access_token)
-        ) {
-          return {
-            id: uuid(
-              credentials.access_token,
-              'd9428888-122b-11e1-b85c-61cd3cbb3210',
-            ),
-            email: 'test',
-            name: 'test: ' + credentials.access_token,
-          };
-        }
-        return null;
-      },
     }),
 ];
 
