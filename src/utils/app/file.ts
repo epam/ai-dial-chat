@@ -102,9 +102,6 @@ export const notAllowedSymbolsRegex = new RegExp(
 export const getFilesWithInvalidFileName = (files: File[]): File[] => {
   return files.filter(({ name }) => name.match(notAllowedSymbolsRegex));
 };
-export const excludeNotAllowedSymbols = (name: string) => {
-  return name.replaceAll(notAllowedSymbolsRegex, '');
-};
 
 export const getFilesWithInvalidFileSize = (
   files: File[],
