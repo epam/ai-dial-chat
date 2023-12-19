@@ -44,14 +44,9 @@ import { v4 as uuidv4 } from 'uuid';
 interface ViewProps {
   conversation: Conversation;
   isHighlited: boolean;
-  isContextMenu: boolean;
 }
 
-export function ConversationView({
-  conversation,
-  isHighlited,
-  isContextMenu,
-}: ViewProps) {
+export function ConversationView({ conversation, isHighlited }: ViewProps) {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const theme = useAppSelector(UISelectors.selectThemeState);
 
@@ -59,7 +54,7 @@ export function ConversationView({
     <>
       <ShareIcon
         {...conversation}
-        isHighlited={isHighlited || isContextMenu}
+        isHighlited={isHighlited}
         highlightColor={HighlightColor.Green}
         featureType={FeatureType.Chat}
       >
@@ -403,8 +398,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         >
           <ConversationView
             conversation={conversation}
-            isHighlited={isHighlited}
-            isContextMenu={isContextMenu}
+            isHighlited={isHighlited || isContextMenu}
           />
         </button>
       )}
