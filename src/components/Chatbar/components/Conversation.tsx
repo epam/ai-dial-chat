@@ -44,9 +44,10 @@ import { v4 as uuidv4 } from 'uuid';
 interface ViewProps {
   conversation: Conversation;
   isHighlited: boolean;
+  isContextMenu: boolean;
 }
 
-export function ConversationView({ conversation, isHighlited }: ViewProps) {
+export function ConversationView({ conversation, isHighlited, isContextMenu }: ViewProps) {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const theme = useAppSelector(UISelectors.selectThemeState);
 
@@ -54,7 +55,7 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
     <>
       <ShareIcon
         {...conversation}
-        isHighlited={!!isHighlited}
+        isHighlited={isHighlited || isContextMenu}
         highlightColor={HighlightColor.Green}
         featureType={FeatureType.Chat}
       >
@@ -334,7 +335,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         <div className="flex w-full items-center gap-2 pr-12">
           <ShareIcon
             {...conversation}
-            isHighlited={isHighlited}
+            isHighlited={isHighlited || isContextMenu}
             highlightColor={HighlightColor.Green}
             featureType={FeatureType.Chat}
           >
@@ -399,6 +400,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           <ConversationView
             conversation={conversation}
             isHighlited={isHighlited}
+            isContextMenu={isContextMenu}
           />
         </button>
       )}
