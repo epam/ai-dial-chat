@@ -61,6 +61,7 @@ export const filesSlice = createSlice({
         name: string;
       }>,
     ) => {
+      state.files = state.files.filter((file) => file.id !== payload.id);
       state.files.push({
         id: payload.id,
         name: payload.name,
