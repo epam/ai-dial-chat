@@ -16,18 +16,24 @@ const getImageUrl = (theme: ThemesConfig, name: string): string | undefined => {
 };
 
 const getImage = async (
+  req: NextApiRequest,
   res: NextApiResponse,
   cachedTheme: ThemesConfig,
   name: string,
 ) => {
   const imageUrl = getImageUrl(cachedTheme, name);
-
   if (!imageUrl) {
+    if (name === 'default-model') {
+      return res.redirect(
+        307,
+        `//${req.headers.host}/images/icons/message-square-lines-alt.svg`,
+      );
+    }
     return res.status(404).send('Image not found');
   }
 
   let finalUrl = imageUrl;
-  if (!imageUrl.startsWith('http') && !imageUrl.startsWith('//')) {
+  if (!finalUrl.startsWith('http') && !finalUrl.startsWith('//')) {
     finalUrl = `${process.env.THEMES_CONFIG_HOST}/${finalUrl}`;
   }
   const response = await fetch(finalUrl);
@@ -62,7 +68,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       cachedTheme &&
       cachedThemeExpiration > Date.now()
     ) {
-      return getImage(res, cachedTheme, name);
+      return getImage(req, res, cachedTheme, name);
     }
 
     const controller = new AbortController();
@@ -92,7 +98,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     cachedThemeExpiration = Date.now() + dayInMs;
     cachedTheme = json;
 
-    return getImage(res, cachedTheme, name);
+    return getImage(req, res, cachedTheme, name);
   } catch (e) {
     logger.error(e);
     return res.status(500).send(errorsMessages.generalServer);

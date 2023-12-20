@@ -19,7 +19,6 @@ interface Props {
 
 export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const theme = useAppSelector(UISelectors.selectThemeState);
-  const availableThemes = useAppSelector(UISelectors.selectAvailableThemes);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
   const [localTheme, setLocalTheme] = useState(theme);

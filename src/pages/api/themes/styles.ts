@@ -97,23 +97,30 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const dayInMs = 86400000;
 
-  cachedTheme = [
-    ...json.themes.map((theme) =>
-      wrapCssContents(`.${theme.id}`, [
-        generateColorsCssVariables(theme.colors),
-        generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
-      ]),
-    ),
-    generateUrlsCssVariables({
-      ...json.images,
-    }),
-  ].join('\n');
-  cachedThemeExpiration = Date.now() + dayInMs;
+  try {
+    cachedTheme = [
+      ...json.themes.map((theme) =>
+        wrapCssContents(`.${theme.id}`, [
+          generateColorsCssVariables(theme.colors),
+          generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
+        ]),
+      ),
+      generateUrlsCssVariables({
+        ...json.images,
+      }),
+    ].join('\n');
+    cachedThemeExpiration = Date.now() + dayInMs;
 
-  return res
-    .status(200)
-    .setHeader('Content-Type', 'text/css')
-    .send(cachedTheme);
+    return res
+      .status(200)
+      .setHeader('Content-Type', 'text/css')
+      .send(cachedTheme);
+  } catch (e: unknown) {
+    logger.error(
+      `Error happened during parsing theme file: ${(e as Error).message}`,
+    );
+    return res.status(500).send(errorsMessages.generalServer);
+  }
 };
 
 export default handler;
