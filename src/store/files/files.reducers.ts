@@ -331,6 +331,10 @@ const selectSelectedFiles = createSelector(
       .filter(Boolean) as FilesState['files'];
   },
 );
+const selectIsUploadingFilePresent = createSelector(
+  [selectSelectedFiles],
+  (selectedFiles) => selectedFiles.some((file) => file.status === 'UPLOADING'),
+);
 
 const selectFolders = createSelector([rootSelector], (state) => {
   return [...state.folders].sort((a, b) =>
@@ -354,6 +358,7 @@ export const FilesSelectors = {
   selectFiles,
   selectSelectedFilesIds,
   selectSelectedFiles,
+  selectIsUploadingFilePresent,
   selectFolders,
   selectFoldersStatus,
   selectLoadingFolderId,
