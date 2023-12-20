@@ -21,9 +21,12 @@ import {
 import { useTranslation } from 'next-i18next';
 
 import {
+  constructPath,
+  getExtensionsListForMimeTypes,
+  getFilesWithInvalidFileName,
   getFilesWithInvalidFileSize,
   getFilesWithInvalidFileType,
-  getPathNameId,
+  notAllowedSymbols,
 } from '@/src/utils/app/file';
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
 
@@ -35,8 +38,6 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { SelectFolderModal } from './SelectFolderModal';
-
-import { extension } from 'mime-types';
 
 interface Props {
   isOpen: boolean;
@@ -69,7 +70,7 @@ export const PreUploadDialog = ({
   const folders = useAppSelector(FilesSelectors.selectFolders);
 
   const uploadInputRef = useRef<HTMLInputElement>(null);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>();
+  const [errorMessage, setErrorMessage] = useState('');
 
   const [selectedFiles, setSelectedFiles] = useState<
     Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[]
@@ -100,7 +101,7 @@ export const PreUploadDialog = ({
     if (allowedTypes.includes('*/*')) {
       return [t('all')];
     }
-    return allowedTypes.map((mimeType) => extension(mimeType));
+    return getExtensionsListForMimeTypes(allowedTypes);
   }, [allowedTypes, t]);
 
   const handleSelectFiles = useCallback(
@@ -119,36 +120,50 @@ export const PreUploadDialog = ({
         files,
         allowedTypes,
       ).map((file) => file.name);
+      const incorrectFileNames: string[] = getFilesWithInvalidFileName(
+        files,
+      ).map((file) => file.name);
+      const invalidFileNames = new Set([
+        ...incorrectSizeFiles,
+        ...incorrectTypeFiles,
+        ...incorrectFileNames,
+      ]);
       const filteredFiles = files.filter(
-        (file) =>
-          !incorrectSizeFiles.includes(file.name) &&
-          !incorrectTypeFiles.includes(file.name),
+        (file) => !invalidFileNames.has(file.name),
       );
-
+      const errors = [];
       if (incorrectSizeFiles.length > 0) {
-        setErrorMessage(
-          (oldMessage) =>
-            oldMessage +
-            '\n' +
-            t(
-              `Max file size up to 512 Mb. Next files haven't been uploaded: {{incorrectSizeFileNames}}`,
-              { incorrectSizeFileNames: incorrectSizeFiles.join(', ') },
-            ),
+        errors.push(
+          t(
+            `Max file size up to 512 Mb. Next files haven't been uploaded: {{incorrectSizeFileNames}}`,
+            { incorrectSizeFileNames: incorrectSizeFiles.join(', ') },
+          ),
         );
       }
       if (incorrectTypeFiles.length > 0) {
-        setErrorMessage(
-          (oldMessage) =>
-            oldMessage +
-            '\n' +
-            t(
-              `Supported types: {{allowedExtensions}}. Next files haven't been uploaded: {{incorrectTypeFileNames}}`,
-              {
-                allowedExtensions: allowedExtensions.join(', '),
-                incorrectTypeFileNames: incorrectTypeFiles.join(', '),
-              },
-            ),
+        errors.push(
+          t(
+            `Supported types: {{allowedExtensions}}. Next files haven't been uploaded: {{incorrectTypeFileNames}}`,
+            {
+              allowedExtensions: allowedExtensions.join(', '),
+              incorrectTypeFileNames: incorrectTypeFiles.join(', '),
+            },
+          ),
         );
+      }
+      if (incorrectFileNames.length > 0) {
+        errors.push(
+          t(
+            `The symbols {{notAllowedSymbols}} are not allowed in file name. Next files haven't been uploaded: {{incorrectTypeFileNames}}`,
+            {
+              notAllowedSymbols: notAllowedSymbols.join(''),
+              incorrectTypeFileNames: incorrectFileNames.join(', '),
+            },
+          ),
+        );
+      }
+      if (errors.length) {
+        setErrorMessage(errors.join('\n'));
       }
 
       setSelectedFiles((oldFiles) =>
@@ -156,7 +171,7 @@ export const PreUploadDialog = ({
           filteredFiles.map((file) => {
             return {
               fileContent: file,
-              id: getPathNameId(file.name, folderPath),
+              id: constructPath(folderPath, file.name),
               name: file.name,
             };
           }),
@@ -170,8 +185,9 @@ export const PreUploadDialog = ({
   );
 
   const handleUpload = useCallback(() => {
+    const errors = [];
     if (attachments.length + selectedFiles.length > 10) {
-      setErrorMessage(
+      errors.push(
         t(
           `Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploadings amount will be {{selectedAttachmentsAmount}}`,
           {
@@ -181,7 +197,21 @@ export const PreUploadDialog = ({
           },
         ) as string,
       );
-      return;
+    }
+    const incorrectFileNames: string[] = getFilesWithInvalidFileName(
+      selectedFiles,
+    ).map((file) => file.name);
+
+    if (incorrectFileNames.length > 0) {
+      errors.push(
+        t(
+          `The symbols {{notAllowedSymbols}} are not allowed in file name. Please rename or remove them from uploading files list: {{fileNames}}`,
+          {
+            notAllowedSymbols: notAllowedSymbols.join(''),
+            fileNames: incorrectFileNames.join(', '),
+          },
+        ) as string,
+      );
     }
 
     const attachmentsNames = files
@@ -191,32 +221,25 @@ export const PreUploadDialog = ({
       .filter((file) => attachmentsNames.includes(file.name))
       .map((file) => file.name);
     if (localIncorrectSameNameFiles.length > 0) {
-      setErrorMessage(
+      errors.push(
         t(
           'Files which you trying to upload already presented in selected folder. Please rename or remove them from uploading files list: {{fileNames}}',
           { fileNames: localIncorrectSameNameFiles.join(', ') },
         ) as string,
       );
-      return;
     }
-    let isFilesNamesSame = false;
-    for (let i = 0; i < selectedFiles.length - 1; i++) {
-      for (let j = i + 1; j < selectedFiles.length; j++) {
-        if (selectedFiles[i].name === selectedFiles[j].name) {
-          isFilesNamesSame = true;
-          break;
-        }
-      }
-      if (isFilesNamesSame) {
-        break;
-      }
-    }
-    if (isFilesNamesSame) {
-      setErrorMessage(
+
+    const fileNameSet = new Set(selectedFiles.map((file) => file.name));
+    if (fileNameSet.size < selectedFiles.length) {
+      errors.push(
         t(
           'Files which you trying to upload have same names. Please rename or remove them from uploading files list',
         ) as string,
       );
+    }
+
+    if (errors.length) {
+      setErrorMessage(errors.join('\n'));
       return;
     }
 
@@ -246,7 +269,7 @@ export const PreUploadDialog = ({
               return {
                 ...file,
                 name: e.target.value + formatFile,
-                id: getPathNameId(e.target.value + formatFile, folderPath),
+                id: constructPath(folderPath, e.target.value + formatFile),
               };
             }
 
@@ -288,7 +311,7 @@ export const PreUploadDialog = ({
       oldFiles.map((file) => {
         return {
           ...file,
-          id: getPathNameId(file.name, folderPath),
+          id: constructPath(folderPath, file.name),
           folderPath,
         };
       }),
@@ -344,7 +367,7 @@ export const PreUploadDialog = ({
                       onClick={handleFolderChange}
                     >
                       <span className="truncate">
-                        {[t('All files'), folderPath].filter(Boolean).join('/')}
+                        {constructPath(t('All files'), folderPath)}
                       </span>
                       <span className="text-blue-500">{t('Change')}</span>
                     </button>
@@ -360,10 +383,7 @@ export const PreUploadDialog = ({
                       </div>
                       <div className="flex flex-col gap-3 overflow-auto text-sm">
                         {selectedFiles.map((file, index) => (
-                          <div
-                            key={file.id}
-                            className="flex items-center gap-3"
-                          >
+                          <div key={index} className="flex items-center gap-3">
                             <div className="relative flex grow items-center">
                               <IconFile
                                 className="absolute left-2 top-[calc(50%_-_9px)] shrink-0 text-gray-500"

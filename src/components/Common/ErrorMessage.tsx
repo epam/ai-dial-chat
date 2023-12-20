@@ -5,7 +5,7 @@ export interface Props {
 }
 
 export const ErrorMessage = ({ error }: Props) => {
-  if (!error) {
+  if (!error?.length) {
     return null;
   }
 
@@ -14,7 +14,7 @@ export const ErrorMessage = ({ error }: Props) => {
       <span className="flex shrink-0 items-center">
         <IconExclamationCircle size={24} />
       </span>
-      <span>{error}</span>
+      <span className="whitespace-pre-wrap">{error}</span>
     </div>
   );
 };

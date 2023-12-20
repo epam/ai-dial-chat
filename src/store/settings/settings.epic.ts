@@ -8,6 +8,7 @@ import { AppEpic } from '@/src/types/store';
 
 import { AddonsActions } from '../addons/addons.reducers';
 import { ConversationsActions } from '../conversations/conversations.reducers';
+import { FilesActions } from '../files/files.reducers';
 import { ModelsActions } from '../models/models.reducers';
 import { PromptsActions } from '../prompts/prompts.reducers';
 import { UIActions } from '../ui/ui.reducers';
@@ -27,6 +28,7 @@ const initEpic: AppEpic = (action$, state$) =>
         of(ConversationsActions.init()),
         of(PromptsActions.init()),
         of(UIActions.init()),
+        of(FilesActions.init()),
       ),
     ),
   );

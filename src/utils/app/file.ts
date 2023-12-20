@@ -1,6 +1,8 @@
 import { Attachment } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 
+import { extension, extensions } from 'mime-types';
+
 export function triggerDownload(url: string, name: string): void {
   const link = document.createElement('a');
   link.download = name;
@@ -12,15 +14,17 @@ export function triggerDownload(url: string, name: string): void {
   URL.revokeObjectURL(url);
 }
 
-export const getPathNameId = (name: string, relativePath?: string): string => {
-  return [relativePath, name].filter(Boolean).join('/');
+export const constructPath = (
+  ...values: (string | undefined | null)[]
+): string => {
+  return values.filter(Boolean).join('/');
 };
 
 export const getRelativePath = (
   absolutePath: string | undefined,
 ): string | undefined => {
-  // '/users/asd/files/folder-1/folder-2' -> folder-1/folder-2
-  return absolutePath?.split('/').toSpliced(0, 4).join('/') || undefined;
+  // 'HASH/files/folder-1/folder-2' -> folder-1/folder-2
+  return absolutePath?.split('/').toSpliced(0, 2).join('/') || undefined;
 };
 
 export const getUserCustomContent = (
@@ -45,13 +49,34 @@ export const getUserCustomContent = (
   };
 };
 
+export const isAllowedMimeType = (
+  allowedMimeTypes: string[],
+  resourceMimeType: string,
+) => {
+  if (allowedMimeTypes.includes('*/*')) {
+    return true;
+  }
+
+  const [resourceSubset, resourceTypeName] = resourceMimeType.split('/');
+
+  return allowedMimeTypes.some((allowedMimeType) => {
+    const [subset, name] = allowedMimeType.split('/');
+
+    return (
+      subset === resourceSubset && (name === '*' || name === resourceTypeName)
+    );
+  });
+};
+
 export const getDialFilesWithInvalidFileType = (
   files: DialFile[],
   allowedFileTypes: string[],
 ): DialFile[] => {
   return allowedFileTypes.includes('*/*')
     ? []
-    : files.filter((file) => !allowedFileTypes.includes(file.contentType));
+    : files.filter(
+        (file) => !isAllowedMimeType(allowedFileTypes, file.contentType),
+      );
 };
 
 export const getDialFilesWithInvalidFileSize = (
@@ -68,6 +93,16 @@ export const getFilesWithInvalidFileType = (
   return allowedFileTypes.includes('*/*')
     ? []
     : files.filter((file) => !allowedFileTypes.includes(file.type));
+};
+export const notAllowedSymbols = [':', ';', ',', '=', '/'];
+export const notAllowedSymbolsRegex = new RegExp(
+  `[${notAllowedSymbols.join()}]`,
+  'g',
+);
+export const getFilesWithInvalidFileName = <T extends { name: string }>(
+  files: T[],
+): T[] => {
+  return files.filter(({ name }) => name.match(notAllowedSymbolsRegex));
 };
 
 export const getFilesWithInvalidFileSize = (
@@ -95,7 +130,11 @@ export const getDialFilesFromAttachments = (
 
   return attachments
     .map((attachment): Omit<DialFile, 'contentLength'> | null => {
-      if (!attachment.url?.startsWith('/')) {
+      if (
+        !attachment.url ||
+        attachment.url.startsWith('http') ||
+        attachment.url.startsWith('//')
+      ) {
         return null;
       }
 
@@ -103,11 +142,37 @@ export const getDialFilesFromAttachments = (
       const relativePath = getRelativePath(absolutePath);
 
       return {
-        id: getPathNameId(name, relativePath),
+        id: constructPath(relativePath, name),
         name,
         contentType: attachment.type,
         absolutePath: absolutePath,
       };
     })
     .filter(Boolean) as Omit<DialFile, 'contentLength'>[];
+};
+
+export const getExtensionsListForMimeType = (mimeType: string) => {
+  const [subset, name] = mimeType.split('/');
+
+  if (subset === '*') {
+    return ['all'];
+  } else if (name === '*') {
+    return Object.entries(extensions).reduce((acc, [key, value]) => {
+      const [keySubset] = key.split('/');
+      if (keySubset === subset) {
+        acc.push(...value);
+      }
+
+      return acc;
+    }, [] as string[]);
+  } else {
+    return [extension(mimeType)];
+  }
+};
+
+export const getExtensionsListForMimeTypes = (mimeTypes: string[]) => {
+  return mimeTypes
+    .map((mimeType) => getExtensionsListForMimeType(mimeType))
+    .flat()
+    .map((type) => `.${type}`);
 };

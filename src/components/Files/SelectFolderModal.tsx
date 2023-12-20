@@ -15,6 +15,10 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import {
+  notAllowedSymbols,
+  notAllowedSymbolsRegex,
+} from '@/src/utils/app/file';
 import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
 import { HighlightColor } from '@/src/types/common';
@@ -91,12 +95,16 @@ export const SelectFolderModal = ({
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery('');
+      dispatch(FilesActions.resetNewFolderId());
     }
-  }, [isOpen]);
+  }, [dispatch, isOpen]);
 
   const handleSearch = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value),
-    [],
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+      dispatch(FilesActions.resetNewFolderId());
+    },
+    [dispatch],
   );
 
   const handleNewFolder = useCallback(() => {
@@ -162,6 +170,16 @@ export const SelectFolderModal = ({
       if (folderWithSameName) {
         setErrorMessage(
           t(`Not allowed to have folders with same names`) as string,
+        );
+        return;
+      }
+      if (newName.match(notAllowedSymbolsRegex)) {
+        setErrorMessage(
+          t(
+            `The symbols ${notAllowedSymbols.join(
+              '',
+            )} are not allowed in folder name`,
+          ) as string,
         );
         return;
       }

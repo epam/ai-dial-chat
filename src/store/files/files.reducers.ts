@@ -1,6 +1,6 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import { getPathNameId } from '@/src/utils/app/file';
+import { constructPath } from '@/src/utils/app/file';
 import { getAvailableNameOnSameFolderLevel } from '@/src/utils/app/folders';
 
 import { DialFile, FileFolderInterface } from '@/src/types/files';
@@ -12,6 +12,7 @@ type Status = undefined | 'LOADING' | 'LOADED' | 'FAILED';
 
 export interface FilesState {
   files: DialFile[];
+  bucket: string;
   selectedFilesIds: string[];
   filesStatus: Status;
 
@@ -23,6 +24,7 @@ export interface FilesState {
 
 const initialState: FilesState = {
   files: [],
+  bucket: '',
   filesStatus: undefined,
   selectedFilesIds: [],
 
@@ -37,6 +39,17 @@ export const filesSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    getBucket: (state) => state,
+    setBucket: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        bucket: string;
+      }>,
+    ) => {
+      state.bucket = payload.bucket;
+    },
     uploadFile: (
       state,
       {
@@ -61,6 +74,12 @@ export const filesSlice = createSlice({
         contentType: payload.fileContent.type,
       });
     },
+    uploadFileCancel: (
+      state,
+      _action: PayloadAction<{
+        id: string;
+      }>,
+    ) => state,
     reuploadFile: (state, { payload }: PayloadAction<{ fileId: string }>) => {
       const file = state.files.find((file) => payload.fileId === file.id);
       if (!file) {
@@ -209,7 +228,7 @@ export const filesSlice = createSlice({
         payload.relativePath,
       );
 
-      const folderId = getPathNameId(folderName, payload.relativePath);
+      const folderId = constructPath(payload.relativePath, folderName);
       state.folders.push({
         id: folderId,
         name: folderName,
@@ -241,9 +260,12 @@ export const filesSlice = createSlice({
         return {
           ...folder,
           name: payload.newName.trim(),
-          id: getPathNameId(payload.newName, oldFolderIdPath),
+          id: constructPath(oldFolderIdPath, payload.newName),
         };
       });
+    },
+    resetNewFolderId: (state) => {
+      state.newAddedFolderId = undefined;
     },
     removeFilesList: (
       state,
@@ -323,6 +345,9 @@ const selectLoadingFolderId = createSelector([rootSelector], (state) => {
 const selectNewAddedFolderId = createSelector([rootSelector], (state) => {
   return state.newAddedFolderId;
 });
+const selectBucket = createSelector([rootSelector], (state) => {
+  return state.bucket;
+});
 
 export const FilesSelectors = {
   selectFiles,
@@ -333,6 +358,7 @@ export const FilesSelectors = {
   selectLoadingFolderId,
   selectNewAddedFolderId,
   selectFilesByIds,
+  selectBucket,
 };
 
 export const FilesActions = filesSlice.actions;

@@ -15,7 +15,12 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getDialFilesWithInvalidFileType } from '@/src/utils/app/file';
+import {
+  getDialFilesWithInvalidFileType,
+  getExtensionsListForMimeTypes,
+  notAllowedSymbols,
+  notAllowedSymbolsRegex,
+} from '@/src/utils/app/file';
 import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
 import { HighlightColor } from '@/src/types/common';
@@ -33,8 +38,6 @@ import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
-
-import { extension } from 'mime-types';
 
 interface Props {
   isOpen: boolean;
@@ -95,7 +98,7 @@ export const FileManagerModal = ({
     if (allowedTypes.includes('*/*')) {
       return [t('all')];
     }
-    return allowedTypes.map((mimeType) => `.${extension(mimeType)}`);
+    return getExtensionsListForMimeTypes(allowedTypes);
   }, [allowedTypes, t]);
   const showSpinner =
     folders.length === 0 && loadingStatuses.has(foldersStatus);
@@ -103,6 +106,7 @@ export const FileManagerModal = ({
   useEffect(() => {
     if (isOpen) {
       dispatch(FilesActions.getFilesWithFolders({}));
+      dispatch(FilesActions.resetNewFolderId());
     }
   }, [dispatch, isOpen]);
 
@@ -183,6 +187,17 @@ export const FileManagerModal = ({
       if (folderWithSameName) {
         setErrorMessage(
           t(`Not allowed to have folders with same names`) as string,
+        );
+        return;
+      }
+
+      if (newName.match(notAllowedSymbolsRegex)) {
+        setErrorMessage(
+          t(
+            `The symbols ${notAllowedSymbols.join(
+              '',
+            )} are not allowed in folder name`,
+          ) as string,
         );
         return;
       }

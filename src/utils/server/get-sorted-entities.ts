@@ -34,6 +34,7 @@ export const getSortedEntities = async (token: JWT | null) => {
     logger.error(error.message);
     return [];
   });
+
   const applications = await getEntities<
     ProxyOpenAIEntity<EntityType.Application>[]
   >(EntityType.Application, accessToken, jobTitle).catch((error) => {
