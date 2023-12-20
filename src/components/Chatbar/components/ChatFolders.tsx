@@ -289,6 +289,10 @@ export function ChatFolders() {
     ConversationsSelectors.selectMyItemsFilters,
   );
 
+  const isPublishingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isPublishingEnabled(state, FeatureType.Chat),
+  );
+
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
@@ -297,7 +301,7 @@ export function ChatFolders() {
     () =>
       [
         {
-          hidden: !isSharingEnabled || !isFilterEmpty,
+          hidden: !isPublishingEnabled || !isFilterEmpty,
           name: t('Organization'),
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
@@ -320,7 +324,14 @@ export function ChatFolders() {
           dataQa: 'pinned-chats',
         },
       ].filter(({ hidden }) => !hidden),
-    [commonItemFilter, isFilterEmpty, isSharingEnabled, searchTerm.length, t],
+    [
+      commonItemFilter,
+      isFilterEmpty,
+      isPublishingEnabled,
+      isSharingEnabled,
+      searchTerm.length,
+      t,
+    ],
   );
 
   return (
