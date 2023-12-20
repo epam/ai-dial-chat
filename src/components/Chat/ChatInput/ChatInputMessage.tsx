@@ -79,6 +79,10 @@ export const ChatInputMessage = ({
     SettingsSelectors.selectEnabledFeatures,
   );
   const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
+  const selectedFilesStatus = useAppSelector(
+    FilesSelectors.selectSelectedFilesStatus,
+  );
+
   const maximumAttachmentsAmount = useAppSelector(
     ConversationsSelectors.selectMaximumAttachmentsAmount,
   );
@@ -420,7 +424,9 @@ export const ChatInputMessage = ({
 
         <SendMessageButton
           handleSend={handleSend}
-          isDisabled={isSendDisabled}
+          isDisabled={
+            isSendDisabled || selectedFilesStatus.includes('UPLOADING')
+          }
           tooltip={tooltipContent()}
         />
 

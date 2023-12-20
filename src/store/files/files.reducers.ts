@@ -331,6 +331,11 @@ const selectSelectedFiles = createSelector(
       .filter(Boolean) as FilesState['files'];
   },
 );
+const selectSelectedFilesStatus = createSelector(
+  [selectSelectedFiles],
+  (selectedFiles): DialFile['status'][] =>
+    selectedFiles.map((file) => file.status),
+);
 
 const selectFolders = createSelector([rootSelector], (state) => {
   return [...state.folders].sort((a, b) =>
@@ -354,6 +359,7 @@ export const FilesSelectors = {
   selectFiles,
   selectSelectedFilesIds,
   selectSelectedFiles,
+  selectSelectedFilesStatus,
   selectFolders,
   selectFoldersStatus,
   selectLoadingFolderId,

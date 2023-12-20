@@ -141,6 +141,7 @@ export const ChatMessage: FC<Props> = memo(
       const newFiles = newIds
         .map((id) => files.find((file) => file.id === id))
         .filter(Boolean) as DialFile[];
+
       return mappedUserEditableAttachments
         .filter(({ id }) => newEditableAttachmentsIds.includes(id))
         .concat(newFiles);
@@ -386,8 +387,11 @@ export const ChatMessage: FC<Props> = memo(
                           className="button button-primary"
                           onClick={handleEditMessage}
                           disabled={
-                            messageContent.trim().length <= 0 &&
-                            newEditableAttachments.length <= 0
+                            (messageContent.trim().length <= 0 &&
+                              newEditableAttachments.length <= 0) ||
+                            newEditableAttachments.some(
+                              (item) => item.status === 'UPLOADING',
+                            )
                           }
                           data-qa="save-and-submit"
                         >
