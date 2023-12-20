@@ -143,12 +143,18 @@ export const FileItem = ({
         )}
         {item.status === 'FAILED' && (
           <button onClick={handleRetry}>
-            <IconReload className="shrink-0 text-gray-500" size={18} />
+            <IconReload
+              className="shrink-0 text-gray-500 hover:text-blue-500"
+              size={18}
+            />
           </button>
         )}
         {item.status && cancelAllowedStatuses.has(item.status) ? (
           <button onClick={handleCancelFile}>
-            <IconX className="shrink-0 text-gray-500" size={18} />
+            <IconX
+              className="shrink-0 text-gray-500 hover:text-blue-500"
+              size={18}
+            />
           </button>
         ) : (
           <FileItemContextMenu

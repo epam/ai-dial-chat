@@ -99,7 +99,9 @@ export const notAllowedSymbolsRegex = new RegExp(
   `[${notAllowedSymbols.join()}]`,
   'g',
 );
-export const getFilesWithInvalidFileName = (files: File[]): File[] => {
+export const getFilesWithInvalidFileName = <T extends { name: string }>(
+  files: T[],
+): T[] => {
   return files.filter(({ name }) => name.match(notAllowedSymbolsRegex));
 };
 
