@@ -185,8 +185,9 @@ export const PreUploadDialog = ({
   );
 
   const handleUpload = useCallback(() => {
+    const errors = [];
     if (attachments.length + selectedFiles.length > 10) {
-      setErrorMessage(
+      errors.push(
         t(
           `Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploadings amount will be {{selectedAttachmentsAmount}}`,
           {
@@ -196,7 +197,21 @@ export const PreUploadDialog = ({
           },
         ) as string,
       );
-      return;
+    }
+    const incorrectFileNames: string[] = getFilesWithInvalidFileName(
+      selectedFiles,
+    ).map((file) => file.name);
+
+    if (incorrectFileNames.length > 0) {
+      errors.push(
+        t(
+          `The symbols {{notAllowedSymbols}} are not allowed in file name. Please rename or remove them from uploading files list: {{fileNames}}`,
+          {
+            notAllowedSymbols: notAllowedSymbols.join(''),
+            fileNames: incorrectFileNames.join(', '),
+          },
+        ) as string,
+      );
     }
 
     const attachmentsNames = files
@@ -206,32 +221,25 @@ export const PreUploadDialog = ({
       .filter((file) => attachmentsNames.includes(file.name))
       .map((file) => file.name);
     if (localIncorrectSameNameFiles.length > 0) {
-      setErrorMessage(
+      errors.push(
         t(
           'Files which you trying to upload already presented in selected folder. Please rename or remove them from uploading files list: {{fileNames}}',
           { fileNames: localIncorrectSameNameFiles.join(', ') },
         ) as string,
       );
-      return;
     }
-    let isFilesNamesSame = false;
-    for (let i = 0; i < selectedFiles.length - 1; i++) {
-      for (let j = i + 1; j < selectedFiles.length; j++) {
-        if (selectedFiles[i].name === selectedFiles[j].name) {
-          isFilesNamesSame = true;
-          break;
-        }
-      }
-      if (isFilesNamesSame) {
-        break;
-      }
-    }
-    if (isFilesNamesSame) {
-      setErrorMessage(
+
+    const fileNameSet = new Set(selectedFiles.map((file) => file.name));
+    if (fileNameSet.size < selectedFiles.length) {
+      errors.push(
         t(
           'Files which you trying to upload have same names. Please rename or remove them from uploading files list',
         ) as string,
       );
+    }
+
+    if (errors.length) {
+      setErrorMessage(errors.join('\n'));
       return;
     }
 
