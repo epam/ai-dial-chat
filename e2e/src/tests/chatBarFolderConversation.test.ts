@@ -5,9 +5,10 @@ import test from '@/e2e/src/core/fixtures';
 import {
   ExpectedConstants,
   ExpectedMessages,
+  FolderConversation,
   MenuOptions,
 } from '@/e2e/src/testData';
-import { Overflow, Styles } from '@/e2e/src/ui/domData';
+import { Attributes, Overflow, Styles } from '@/e2e/src/ui/domData';
 import { GeneratorUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
@@ -185,43 +186,100 @@ test(
   },
 );
 
-test('Folders can expand and collapse', async ({
-  dialHomePage,
-  conversationData,
-  folderConversations,
-  localStorageManager,
-  setTestIds,
-}) => {
-  setTestIds('EPMRTC-579');
-  const conversationInFolder =
-    conversationData.prepareDefaultConversationInFolder();
-  await localStorageManager.setFolders(conversationInFolder.folders);
-  await localStorageManager.setConversationHistory(
-    conversationInFolder.conversations[0],
-  );
-  const folderName = conversationInFolder.folders.name;
+test(
+  'Folders can expand and collapse.\n' +
+    'Expanded and collapsed chat folders are stored locally.\n' +
+    '[UI] Expand/collapse icon near chat folder appears if there is any chat inside',
+  async ({
+    dialHomePage,
+    conversationData,
+    folderConversations,
+    localStorageManager,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-579', 'EPMRTC-1315', 'EPMRTC-1365');
+    let firstConversationInFolder: FolderConversation;
+    let secondConversationInFolder: FolderConversation;
+    let emptyFolder: FolderInterface;
 
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded();
-  await folderConversations.expandCollapseFolder(folderName);
-  let isConversationVisible =
-    await folderConversations.isFolderConversationVisible(
-      folderName,
-      conversationInFolder.conversations[0].name,
-    );
-  expect
-    .soft(isConversationVisible, ExpectedMessages.folderExpanded)
-    .toBeTruthy();
+    await test.step('Prepare 2 conversations inside folders and one empty folder', async () => {
+      firstConversationInFolder =
+        conversationData.prepareFolderWithConversations(1);
+      conversationData.resetData();
+      secondConversationInFolder =
+        conversationData.prepareFolderWithConversations(1);
+      conversationData.resetData();
+      emptyFolder = conversationData.prepareFolder();
+      await localStorageManager.setFolders(
+        firstConversationInFolder.folders,
+        secondConversationInFolder.folders,
+        emptyFolder,
+      );
+      await localStorageManager.setConversationHistory(
+        firstConversationInFolder.conversations[0],
+        secondConversationInFolder.conversations[0],
+      );
+    });
+    await test.step('Hover over folder with conversation and verify it has blue arrow', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+      await folderConversations
+        .getFolderByName(firstConversationInFolder.folders.name)
+        .hover();
+      const firstFolderCaret = await folderConversations.getFolderCaret(
+        firstConversationInFolder.folders.name,
+      );
+      expect
+        .soft(firstFolderCaret, ExpectedMessages.folderCaretIsVisible)
+        .toBe(Attributes.visible);
 
-  await folderConversations.expandCollapseFolder(folderName);
-  isConversationVisible = await folderConversations.isFolderConversationVisible(
-    folderName,
-    conversationInFolder.conversations[0].name,
-  );
-  expect
-    .soft(isConversationVisible, ExpectedMessages.folderCollapsed)
-    .toBeFalsy();
-});
+      await folderConversations.getFolderByName(emptyFolder.name).hover();
+      const emptyFolderCaret = await folderConversations.getFolderCaret(
+        emptyFolder.name,
+      );
+      expect
+        .soft(emptyFolderCaret, ExpectedMessages.folderCaretIsNotVisible)
+        .toBe(Attributes.invisible);
+    });
+
+    await test.step('Expand one folder, collapse another and verify state is saved after browser refresh', async () => {
+      await folderConversations.expandCollapseFolder(
+        firstConversationInFolder.folders.name,
+      );
+      for (let i = 1; i <= 2; i++) {
+        await folderConversations.expandCollapseFolder(
+          secondConversationInFolder.folders.name,
+        );
+      }
+
+      let i = 2;
+      while (i > 0) {
+        if (i === 1) {
+          await dialHomePage.reloadPage();
+          await dialHomePage.waitForPageLoaded();
+        }
+        const isFirstConversationVisible =
+          await folderConversations.isFolderConversationVisible(
+            firstConversationInFolder.folders.name,
+            firstConversationInFolder.conversations[0].name,
+          );
+        expect
+          .soft(isFirstConversationVisible, ExpectedMessages.folderExpanded)
+          .toBeTruthy();
+
+        const isSecondConversationVisible =
+          await folderConversations.isFolderConversationVisible(
+            secondConversationInFolder.folders.name,
+            secondConversationInFolder.conversations[0].name,
+          );
+        expect
+          .soft(isSecondConversationVisible, ExpectedMessages.folderCollapsed)
+          .toBeFalsy();
+        i--;
+      }
+    });
+  },
+);
 
 test(
   'Delete folder. Cancel.\n' + 'Delete root folder with nested folders',

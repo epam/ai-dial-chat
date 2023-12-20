@@ -39,6 +39,8 @@ export const ExpectedConstants = {
     'This mode replicates user requests from the original conversation including settings set in each message.',
   replayOldVersionWarning:
     'Please note that some of your messages were created in older DIAL version. "Replay as is" could be working not as expected.',
+  regenerateResponseTooltip:
+    'Please regenerate response to continue working with chat',
 };
 
 export enum Groups {
