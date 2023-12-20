@@ -128,7 +128,8 @@ This project leverages environment variables for configuration.
 | `RECENT_MODELS_IDS`                 | No                              | A list of IDs for recently used AI models.                                                                                   | Any string                                           |                  |
 | `RECENT_ADDONS_IDS`                 | No                              | A list of IDs for recently used AI model addons.                                                                             | Any string                                           |                  |
 | `E2E_HOST`                          | No                              | The host URL for end-to-end testing. More info in [E2E tests documentation](e2e/README.md)                                   | Any string                                           |                  |
-| `PREVIEW_TEST_TOKEN`                | No                              | A test token for e2e authentification. More info in [E2E tests documentation](e2e/README.md)                                 | Any string                                           |                  |
+| `E2E_USERNAME`                      | No                              | A username for e2e authentification  | Any string  |                  |
+| `E2E_PASSWORD`                      | No                              | A password for e2e authentification  | Any string  |                  |
 | `TRACES_URL`                        | No                              | Traces URL                                                                                                                   | Any string                                           |                  |
 | `TMS_URL`                           | No                              | TMS URL                                                                                                                      | Any string                                           |                  |
 | `ISSUE_URL`                         | No                              | Issue URL                                                                                                                    | Any string                                           |                  |
@@ -151,28 +152,33 @@ Also we have a lot of auth specific env variables:
 | `AUTH_DISABLED`           | No                   | A flag to enable or disable authentication.                         | `true`, `false`  | false          |
 | `NEXTAUTH_URL`            | Yes (for production) | NextAuth URL                                                        | Any string       |                |
 | `NEXTAUTH_SECRET`         | Yes                  | NextAuth Secret (generate by `openssl rand -base64 32` for example) | Any string       |                |
-| `AUTH_TEST_TOKEN`         | No                   | Test Token                                                          | Any string       |                |
 | `AUTH_AUTH0_AUDIENCE`     | No                   | Auth0 Audience                                                      | Any string       |                |
 | `AUTH_AUTH0_CLIENT_ID`    | No                   | Auth0 Client ID                                                     | Any string       |                |
 | `AUTH_AUTH0_HOST`         | No                   | Auth0 Host                                                          | Any string       |                |
 | `AUTH_AUTH0_NAME`         | No                   | Auth0 Name                                                          | Any string       |                |
 | `AUTH_AUTH0_SECRET`       | No                   | Auth0 Secret                                                        | Any string       |                |
+| `AUTH_AUTH0_SCOPE`        | No                   | Auth0 Scope                                                         | Any string       | `openid email profile offline_access` |
 | `AUTH_AZURE_AD_CLIENT_ID` | No                   | Azure AD Client ID                                                  | Any string       |                |
 | `AUTH_AZURE_AD_NAME`      | No                   | Azure AD Name                                                       | Any string       |                |
 | `AUTH_AZURE_AD_SECRET`    | No                   | Azure AD Secret                                                     | Any string       |                |
 | `AUTH_AZURE_AD_TENANT_ID` | No                   | Azure AD Tenant ID                                                  | Any string       |                |
+| `AUTH_AZURE_AD_SCOPE`     | No                   | Azure AD Scope                                                      | Any string       | `openid profile user.Read email offline_access` |
 | `AUTH_GITLAB_CLIENT_ID`   | No                   | GitLab Client ID                                                    | Any string       |                |
 | `AUTH_GITLAB_HOST`        | No                   | GitLab Host                                                         | Any string       |                |
 | `AUTH_GITLAB_NAME`        | No                   | GitLab Name                                                         | Any string       |                |
 | `AUTH_GITLAB_SECRET`      | No                   | GitLab Secret                                                       | Any string       |                |
+| `AUTH_GITLAB_SCOPE`       | No                   | GitLab Scope                                                        | Any string       | `read_user`    |
 | `AUTH_GOOGLE_CLIENT_ID`   | No                   | Google Client ID                                                    | Any string       |                |
 | `AUTH_GOOGLE_NAME`        | No                   | Google Name                                                         | Any string       |                |
 | `AUTH_GOOGLE_SECRET`      | No                   | Google Secret                                                       | Any string       |                |
+| `AUTH_GOOGLE_SCOPE`       | No                   | Google Scope                                                        | Any string       | `openid email profile offline_access` |
 | `AUTH_KEYCLOAK_CLIENT_ID` | No                   | Keycloak Client ID                                                  | Any string       |                |
 | `AUTH_KEYCLOAK_HOST`      | No                   | Keycloak Host                                                       | Any string       |                |
 | `AUTH_KEYCLOAK_NAME`      | No                   | Keycloak Name                                                       | Any string       |                |
 | `AUTH_KEYCLOAK_SECRET`    | No                   | Keycloak Secret                                                     | Any string       |                |
+| `AUTH_KEYCLOAK_SCOPE`     | No                   | Keycloak Scope                                                      | Any string       | `openid email profile offline_access` |
 | `AUTH_PING_ID_CLIENT_ID`  | No                   | PingID Client ID                                                    | Any string       |                |
 | `AUTH_PING_ID_HOST`       | No                   | PingID Host                                                         | Any string       |                |
 | `AUTH_PING_ID_NAME`       | No                   | PingID Name                                                         | Any string       |                |
 | `AUTH_PING_ID_SECRET`     | No                   | PingID Secret                                                       | Any string       |                |
+| `AUTH_PING_ID_SCOPE`      | No                   | PingID Scope                                                        | Any string       | `offline_access` |

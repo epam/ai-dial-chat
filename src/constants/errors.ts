@@ -18,4 +18,6 @@ export const errorsMessages = {
     'The custom config host url not provided. Please recheck application settings',
   errorDuringFileRequest:
     'Error happened during file request. Please try again later.',
+  errorGettingUserFileBucket:
+    'Error happened during getting file user bucket. Please reload the page to being able to load files.',
 };

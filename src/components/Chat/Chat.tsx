@@ -459,6 +459,7 @@ export const Chat = memo(() => {
 
   const onEditMessage = useCallback(
     (editedMessage: Message, index: number) => {
+      dispatch(ConversationsActions.stopStreamMessage());
       dispatch(
         ConversationsActions.sendMessages({
           conversations: selectedConversations,

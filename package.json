@@ -1,6 +1,6 @@
 {
   "name": "dial-chat",
-  "version": "0.3.0-rc",
+  "version": "0.4.0-rc",
   "private": true,
   "scripts": {
     "postinstall": "node tools/patch-nextjs.js",

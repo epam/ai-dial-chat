@@ -21,7 +21,7 @@ import {
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import Folder from '@/src/components/Folder';
+import Folder from '@/src/components/Folder/Folder';
 
 import CollapsableSection from '../../Common/CollapsableSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
@@ -274,11 +274,15 @@ export function PromptFolders() {
     SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
   );
 
+  const isPublishingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isPublishingEnabled(state, FeatureType.Prompt),
+  );
+
   const folderItems: FolderSectionProps[] = useMemo(
     () =>
       [
         {
-          hidden: !isSharingEnabled || !isFilterEmpty,
+          hidden: !isPublishingEnabled || !isFilterEmpty,
           name: t('Organization'),
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
@@ -301,7 +305,14 @@ export function PromptFolders() {
           dataQa: 'pinned-prompts',
         },
       ].filter(({ hidden }) => !hidden),
-    [commonSearchFilter, isFilterEmpty, isSharingEnabled, searchTerm.length, t],
+    [
+      commonSearchFilter,
+      isFilterEmpty,
+      isPublishingEnabled,
+      isSharingEnabled,
+      searchTerm.length,
+      t,
+    ],
   );
 
   return (

@@ -21,7 +21,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import Folder from '@/src/components/Folder';
+import Folder from '@/src/components/Folder/Folder';
 
 import CollapsableSection from '../../Common/CollapsableSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
@@ -286,6 +286,10 @@ export function ChatFolders() {
     ConversationsSelectors.selectMyItemsFilters,
   );
 
+  const isPublishingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isPublishingEnabled(state, FeatureType.Chat),
+  );
+
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
@@ -294,7 +298,7 @@ export function ChatFolders() {
     () =>
       [
         {
-          hidden: !isSharingEnabled || !isFilterEmpty,
+          hidden: !isPublishingEnabled || !isFilterEmpty,
           name: t('Organization'),
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
@@ -317,7 +321,14 @@ export function ChatFolders() {
           dataQa: 'pinned-chats',
         },
       ].filter(({ hidden }) => !hidden),
-    [commonItemFilter, isFilterEmpty, isSharingEnabled, searchTerm.length, t],
+    [
+      commonItemFilter,
+      isFilterEmpty,
+      isPublishingEnabled,
+      isSharingEnabled,
+      searchTerm.length,
+      t,
+    ],
   );
 
   return (

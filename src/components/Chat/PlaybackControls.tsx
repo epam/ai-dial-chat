@@ -7,11 +7,14 @@ import {
   useRef,
 } from 'react';
 
+import classNames from 'classnames';
+
 import {
   ConversationsActions,
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
@@ -44,6 +47,8 @@ export const PlaybackControls = ({
   const activeIndex = useAppSelector(
     ConversationsSelectors.selectPlaybackActiveIndex,
   );
+
+  const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
   const controlsContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -150,7 +155,10 @@ export const PlaybackControls = ({
       className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-layer-1 to-layer-1 pt-6 md:pt-2"
     >
       <div
-        className="relative mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
+        className={classNames(
+          'relative mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-6',
+          isChatFullWidth ? 'lg:ml-20 lg:mr-[84px]' : 'lg:mx-auto lg:max-w-3xl',
+        )}
         data-qa="playback-control"
       >
         <button

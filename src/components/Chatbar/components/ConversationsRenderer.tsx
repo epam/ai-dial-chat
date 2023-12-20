@@ -37,7 +37,7 @@ export const ConversationsRenderer = ({
           isHighlighted={isSectionHighlighted}
           openByDefault
         >
-          <div className="flex flex-col gap-0.5 py-1">
+          <div className="flex flex-col gap-1 py-1">
             {conversations.map((conversation) => (
               <ConversationComponent
                 key={conversation.id}

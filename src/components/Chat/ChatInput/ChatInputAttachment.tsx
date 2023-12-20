@@ -54,11 +54,17 @@ export const ChatInputAttachment = ({
         <div className="flex gap-3">
           {file.status === 'FAILED' && (
             <button onClick={() => onRetryFile(file.id)}>
-              <IconReload className="shrink-0 text-secondary" size={18} />
+              <IconReload
+                className="shrink-0 text-secondary hover:text-accent-primary"
+                size={18}
+              />
             </button>
           )}
           <button onClick={() => onUnselectFile(file.id)}>
-            <IconX className="shrink-0 text-secondary" size={18} />
+            <IconX
+              className="shrink-0 text-secondary hover:text-accent-primary"
+              size={18}
+            />
           </button>
         </div>
       </div>

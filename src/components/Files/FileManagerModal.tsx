@@ -15,7 +15,12 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getDialFilesWithInvalidFileType } from '@/src/utils/app/file';
+import {
+  getDialFilesWithInvalidFileType,
+  getExtensionsListForMimeTypes,
+  notAllowedSymbols,
+  notAllowedSymbolsRegex,
+} from '@/src/utils/app/file';
 import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
 import { DialFile } from '@/src/types/files';
@@ -25,15 +30,13 @@ import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
+import Folder from '@/src/components/Folder/Folder';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
-import Folder from '../Folder';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
-
-import { extension } from 'mime-types';
 
 interface Props {
   isOpen: boolean;
@@ -76,6 +79,9 @@ export const FileManagerModal = ({
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
+  const [uploadFolderId, setUploadFolderId] = useState<string | undefined>(
+    undefined,
+  );
   const [isUploadFromDeviceOpened, setIsUploadFromDeviceOpened] =
     useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -91,7 +97,7 @@ export const FileManagerModal = ({
     if (allowedTypes.includes('*/*')) {
       return [t('all')];
     }
-    return allowedTypes.map((mimeType) => `.${extension(mimeType)}`);
+    return getExtensionsListForMimeTypes(allowedTypes);
   }, [allowedTypes, t]);
   const showSpinner =
     folders.length === 0 && loadingStatuses.has(foldersStatus);
@@ -99,6 +105,7 @@ export const FileManagerModal = ({
   useEffect(() => {
     if (isOpen) {
       dispatch(FilesActions.getFilesWithFolders({}));
+      dispatch(FilesActions.resetNewFolderId());
     }
   }, [dispatch, isOpen]);
 
@@ -153,6 +160,19 @@ export const FileManagerModal = ({
     },
     [dispatch, openedFoldersIds],
   );
+
+  const handleUploadFile = useCallback(
+    (relativePath: string) => {
+      setUploadFolderId(relativePath);
+      setIsUploadFromDeviceOpened(true);
+
+      if (!openedFoldersIds.includes(relativePath)) {
+        setOpenedFoldersIds(openedFoldersIds.concat(relativePath));
+        dispatch(FilesActions.getFolders({ path: relativePath }));
+      }
+    },
+    [dispatch, openedFoldersIds],
+  );
   const handleRenameFolder = useCallback(
     (newName: string, folderId: string) => {
       const renamingFolder = folders.find((folder) => folder.id === folderId);
@@ -166,6 +186,17 @@ export const FileManagerModal = ({
       if (folderWithSameName) {
         setErrorMessage(
           t(`Not allowed to have folders with same names`) as string,
+        );
+        return;
+      }
+
+      if (newName.match(notAllowedSymbolsRegex)) {
+        setErrorMessage(
+          t(
+            `The symbols ${notAllowedSymbols.join(
+              '',
+            )} are not allowed in folder name`,
+          ) as string,
         );
         return;
       }
@@ -248,6 +279,11 @@ export const FileManagerModal = ({
     selectedFilesIds,
     t,
   ]);
+
+  const handleStartUploadFiles = useCallback(() => {
+    setUploadFolderId(undefined);
+    setIsUploadFromDeviceOpened(true);
+  }, []);
 
   const handleUploadFiles = useCallback(
     (
@@ -354,7 +390,7 @@ export const FileManagerModal = ({
                         <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">
                           {(folders.length !== 0 ||
                             filteredFiles.length !== 0) && (
-                            <div className="overflow-auto">
+                            <div className="flex flex-col gap-1 overflow-auto">
                               {folders.map((folder) => {
                                 if (folder.folderId) {
                                   return null;
@@ -377,6 +413,7 @@ export const FileManagerModal = ({
                                       itemComponent={FileItem}
                                       onClickFolder={handleFolderSelect}
                                       onAddFolder={handleAddFolder}
+                                      onFileUpload={handleUploadFile}
                                       onRenameFolder={handleRenameFolder}
                                       onItemEvent={handleItemCallback}
                                     />
@@ -435,7 +472,7 @@ export const FileManagerModal = ({
                 </div>
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => setIsUploadFromDeviceOpened(true)}
+                    onClick={handleStartUploadFiles}
                     className={classNames(
                       'button',
                       isInConversation ? 'button-secondary' : 'button-primary',
@@ -457,6 +494,7 @@ export const FileManagerModal = ({
 
               {isUploadFromDeviceOpened && (
                 <PreUploadDialog
+                  uploadFolderId={uploadFolderId}
                   isOpen
                   allowedTypes={allowedTypes}
                   initialFilesSelect

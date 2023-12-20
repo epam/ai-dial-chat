@@ -93,6 +93,7 @@ export const ChatMessage: FC<Props> = memo(
     const dispatch = useAppDispatch();
 
     const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+    const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
     const codeWarning = useAppSelector(SettingsSelectors.selectCodeWarning);
     const isPlayback = useAppSelector(
       ConversationsSelectors.selectIsPlaybackSelectedConversations,
@@ -226,9 +227,16 @@ export const ChatMessage: FC<Props> = memo(
       });
     };
 
-    const handleUnselectFile = useCallback((fileId: string) => {
-      setNewEditableAttachmentsIds((ids) => ids.filter((id) => id !== fileId));
-    }, []);
+    const handleUnselectFile = useCallback(
+      (fileId: string) => {
+        dispatch(FilesActions.uploadFileCancel({ id: fileId }));
+        setNewEditableAttachmentsIds((ids) =>
+          ids.filter((id) => id !== fileId),
+        );
+      },
+      [dispatch],
+    );
+
     const handleRetry = useCallback(
       (fileId: string) => {
         return () => dispatch(FilesActions.reuploadFile({ fileId }));
@@ -280,7 +288,7 @@ export const ChatMessage: FC<Props> = memo(
 
     return (
       <div
-        className={`group h-full min-h-[90px] md:px-4 ${
+        className={`group h-full min-h-[90px] md:px-4 xl:px-8 ${
           isAssistant
             ? 'border-b border-primary bg-layer-2'
             : 'border-b border-primary'
@@ -288,7 +296,12 @@ export const ChatMessage: FC<Props> = memo(
         style={{ overflowWrap: 'anywhere' }}
         data-qa="chat-message"
       >
-        <div className="relative m-auto flex h-full p-4 md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
+        <div
+          className={classNames(
+            'relative m-auto flex h-full p-4  md:gap-6 md:py-6 lg:px-0',
+            { 'md:max-w-2xl xl:max-w-3xl': !isChatFullWidth },
+          )}
+        >
           <div className="min-w-[40px] font-bold" data-qa="message-icon">
             <div className="flex justify-center">
               {isAssistant ? (
@@ -383,7 +396,12 @@ export const ChatMessage: FC<Props> = memo(
                 ) : (
                   <div className="mr-2 flex w-full flex-col gap-5">
                     {message.content && (
-                      <div className="prose flex-1 whitespace-pre-wrap">
+                      <div
+                        className={classNames(
+                          'prose flex-1 whitespace-pre-wrap',
+                          { 'max-w-none': isChatFullWidth },
+                        )}
+                      >
                         {message.content}
                       </div>
                     )}

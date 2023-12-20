@@ -34,6 +34,7 @@ const initEpic: AppEpic = (action$) =>
         textOfClosedAnnouncement: DataService.getClosedAnnouncement(),
         chatbarWidth: DataService.getChatbarWidth(),
         promptbarWidth: DataService.getPromptbarWidth(),
+        isChatFullWidth: DataService.getIsChatFullWidth(),
       }),
     ),
     switchMap(
@@ -46,6 +47,7 @@ const initEpic: AppEpic = (action$) =>
         textOfClosedAnnouncement,
         chatbarWidth,
         promptbarWidth,
+        isChatFullWidth,
       }) => {
         const actions = [];
 
@@ -65,6 +67,7 @@ const initEpic: AppEpic = (action$) =>
         );
         actions.push(UIActions.setChatbarWidth(chatbarWidth));
         actions.push(UIActions.setPromptbarWidth(promptbarWidth));
+        actions.push(UIActions.setIsChatFullWidth(isChatFullWidth));
 
         return concat(actions);
       },
@@ -178,6 +181,13 @@ const savePromptbarWidthEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const saveIsChatFullWidthEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.setIsChatFullWidth.match),
+    switchMap(({ payload }) => DataService.setIsChatFullWidth(payload)),
+    ignoreElements(),
+  );
+
 const UIEpics = combineEpics(
   initEpic,
   saveThemeEpic,
@@ -188,6 +198,7 @@ const UIEpics = combineEpics(
   closeAnnouncementEpic,
   saveChatbarWidthEpic,
   savePromptbarWidthEpic,
+  saveIsChatFullWidthEpic,
 );
 
 export default UIEpics;

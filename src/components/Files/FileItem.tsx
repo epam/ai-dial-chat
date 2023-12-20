@@ -42,6 +42,8 @@ export const FileItem = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Files);
 
+  const [isContextMenu, setIsContextMenu] = useState(false);
+
   const [isSelected, setIsSelected] = useState(false);
   const handleCancelFile = useCallback(() => {
     onEvent?.(FileItemEventIds.Cancel, item.id);
@@ -70,7 +72,10 @@ export const FileItem = ({
 
   return (
     <div
-      className="group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-accent-primary"
+      className={classNames(
+        'group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-accent-primary',
+        isContextMenu && 'bg-accent-primary',
+      )}
       style={{
         paddingLeft: `${1.005 + level * 1.5}rem`,
       }}
@@ -97,7 +102,7 @@ export const FileItem = ({
               </Tooltip>
             )
           )}
-          {item.status !== 'UPLOADING' && (
+          {item.status !== 'UPLOADING' && item.status !== 'FAILED' && (
             <div
               className={classNames(
                 'relative h-[18px] w-[18px] group-hover/file-item:flex',
@@ -138,17 +143,24 @@ export const FileItem = ({
         )}
         {item.status === 'FAILED' && (
           <button onClick={handleRetry}>
-            <IconReload className="shrink-0 text-secondary" size={18} />
+            <IconReload
+              className="shrink-0 text-secondary hover:text-accent-primary"
+              size={18}
+            />
           </button>
         )}
         {item.status && cancelAllowedStatuses.has(item.status) ? (
           <button onClick={handleCancelFile}>
-            <IconX className="shrink-0 text-secondary" size={18} />
+            <IconX
+              className="shrink-0 text-secondary hover:text-accent-primary"
+              size={18}
+            />
           </button>
         ) : (
           <FileItemContextMenu
             file={item}
             onDelete={handleRemove}
+            onOpenChange={setIsContextMenu}
             className="invisible group-hover/file-item:visible"
           />
         )}

@@ -15,6 +15,10 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import {
+  notAllowedSymbols,
+  notAllowedSymbolsRegex,
+} from '@/src/utils/app/file';
 import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
 import { Translation } from '@/src/types/translation';
@@ -23,11 +27,12 @@ import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
+import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
+import Folder from '@/src/components/Folder/Folder';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
-import Folder from '../Folder';
 
 interface Props {
   isOpen: boolean;
@@ -86,9 +91,19 @@ export const SelectFolderModal = ({
     }
   }, [dispatch, isOpen, openedFoldersIds]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchQuery('');
+      dispatch(FilesActions.resetNewFolderId());
+    }
+  }, [dispatch, isOpen]);
+
   const handleSearch = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value),
-    [],
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+      dispatch(FilesActions.resetNewFolderId());
+    },
+    [dispatch],
   );
 
   const handleNewFolder = useCallback(() => {
@@ -157,6 +172,16 @@ export const SelectFolderModal = ({
         );
         return;
       }
+      if (newName.match(notAllowedSymbolsRegex)) {
+        setErrorMessage(
+          t(
+            `The symbols ${notAllowedSymbols.join(
+              '',
+            )} are not allowed in folder name`,
+          ) as string,
+        );
+        return;
+      }
       dispatch(FilesActions.renameFolder({ folderId, newName }));
     },
     [dispatch, folders, t],
@@ -179,7 +204,7 @@ export const SelectFolderModal = ({
                 className="absolute right-2 top-2"
                 onClick={() => onClose(false)}
               >
-                <IconX className="text-secondary" />
+                <IconX className="text-secondary hover:text-accent-primary" />
               </button>
               <div className="flex flex-col gap-2 overflow-auto">
                 <div className="flex justify-between px-6 pt-4">
@@ -201,11 +226,12 @@ export const SelectFolderModal = ({
                       type="text"
                       onChange={handleSearch}
                       className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+                      value={searchQuery}
                     ></input>
                     <div className="flex min-h-[350px] flex-col overflow-auto">
                       <button
                         className={classNames(
-                          'flex items-center gap-1 rounded border-l-2 py-1 text-xs text-secondary',
+                          'mb-0.5 flex items-center gap-1 rounded border-l-2 py-1 text-xs text-secondary',
                           !selectedFolderId
                             ? 'border-accent-primary bg-accent-primary'
                             : 'border-transparent',
@@ -217,8 +243,8 @@ export const SelectFolderModal = ({
                       </button>
                       {isAllFilesOpened && (
                         <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">
-                          {filteredFolders.length !== 0 && (
-                            <div className="overflow-auto">
+                          {filteredFolders.length !== 0 ? (
+                            <div className="flex flex-col gap-1 overflow-auto">
                               {filteredFolders.map((folder) => {
                                 if (folder.folderId) {
                                   return null;
@@ -242,6 +268,10 @@ export const SelectFolderModal = ({
                                   </div>
                                 );
                               })}
+                            </div>
+                          ) : (
+                            <div className="flex grow items-center justify-center">
+                              <NoResultsFound />
                             </div>
                           )}
                         </div>

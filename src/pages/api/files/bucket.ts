@@ -7,8 +7,6 @@ import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIError } from '@/src/utils/server';
 import { logger } from '@/src/utils/server/logger';
 
-import { BackendFile, BackendFileFolder } from '@/src/types/files';
-
 import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from '../auth/[...nextauth]';
@@ -23,22 +21,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const {
-      path = '',
-      filter = '',
-      bucket,
-    } = req.query as {
-      path: string;
-      filter: string;
-      bucket: string;
-    };
-
     const token = await getToken({ req });
 
-    const url = `${process.env.OPENAI_API_HOST}/v1/files/metadata/${bucket}${
-      path && `/${encodeURI(path)}`
-    }/`;
-
+    const url = `${process.env.OPENAI_API_HOST}/v1/bucket`;
     const response = await fetch(url, {
       headers: getApiHeaders({ jwt: token?.access_token as string }),
     });
@@ -48,13 +33,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       throw new OpenAIError(serverErrorMessage, '', '', response.status + '');
     }
 
-    const json = (await response.json()) as BackendFileFolder;
-    let result: (BackendFileFolder | BackendFile)[] = [];
-    if (filter) {
-      result = (json.files || []).filter((item) => item.type === filter);
-    }
+    const json = (await response.json()) as { bucket: string };
 
-    return res.status(200).send(result);
+    return res.status(200).send(json);
   } catch (error) {
     logger.error(error);
     return res.status(500).json(errorsMessages.generalServer);

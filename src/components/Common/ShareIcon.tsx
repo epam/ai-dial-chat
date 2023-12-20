@@ -67,6 +67,7 @@ export default function ShareIcon({
               'text-accent-primary group-hover:bg-accent-primary',
               'stroke-1 p-[1px]',
               isHighlighted && 'bg-accent-primary',
+              isPublished ? 'rounded-md' : 'rounded-sm',
             )}
           />
         </Tooltip>

@@ -1,12 +1,5 @@
 import { FloatingPortal } from '@floating-ui/react';
-import {
-  ChangeEventHandler,
-  FC,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -16,6 +9,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import XMark from '../../../public/images/icons/xmark.svg';
+import { ToggleSwitchLabeled } from '../Common/ToggleSwitch/ToggleSwitchLabeled';
+import { ThemeSelect } from './ThemeSelect';
 
 interface Props {
   open: boolean;
@@ -25,7 +20,11 @@ interface Props {
 export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const theme = useAppSelector(UISelectors.selectThemeState);
   const availableThemes = useAppSelector(UISelectors.selectAvailableThemes);
+  const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+
   const [localTheme, setLocalTheme] = useState(theme);
+  const [isChatFullWidthLocal, setIsChatFullWidthLocal] =
+    useState(isChatFullWidth);
 
   const dispatch = useAppDispatch();
 
@@ -33,9 +32,19 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
 
   const modalRef = useRef<HTMLDivElement>(null);
 
+  const handleClose = useCallback(() => {
+    setLocalTheme(theme);
+    setIsChatFullWidthLocal(isChatFullWidth);
+    onClose();
+  }, [onClose, isChatFullWidth, theme]);
+
   useEffect(() => {
     setLocalTheme(theme);
   }, [theme]);
+
+  useEffect(() => {
+    setIsChatFullWidthLocal(isChatFullWidth);
+  }, [isChatFullWidth]);
 
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
@@ -46,7 +55,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
 
     const handleMouseUp = () => {
       window.removeEventListener('mouseup', handleMouseUp);
-      onClose();
+      handleClose();
     };
 
     window.addEventListener('mousedown', handleMouseDown);
@@ -54,18 +63,21 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     return () => {
       window.removeEventListener('mousedown', handleMouseDown);
     };
-  }, [onClose]);
+  }, [handleClose]);
 
-  const onThemeChangeHandler: ChangeEventHandler<HTMLSelectElement> =
-    useCallback((event) => {
-      const theme = event.target.value;
-      setLocalTheme(theme);
-    }, []);
+  const onThemeChangeHandler = useCallback((theme: string) => {
+    setLocalTheme(theme);
+  }, []);
+
+  const onChangeHandlerFullWidth = useCallback(() => {
+    setIsChatFullWidthLocal((prev) => !prev);
+  }, []);
 
   const handleSave = useCallback(() => {
     dispatch(UIActions.setTheme(localTheme));
+    dispatch(UIActions.setIsChatFullWidth(isChatFullWidthLocal));
     onClose();
-  }, [dispatch, localTheme, onClose]);
+  }, [dispatch, localTheme, onClose, isChatFullWidthLocal]);
 
   // Render nothing if the dialog is not open.
   if (!open) {
@@ -83,28 +95,24 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
         >
           <button
             className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-            onClick={onClose}
+            onClick={handleClose}
           >
             <XMark height={24} width={24} />
           </button>
           <div className="mb-4 text-base font-bold">{t('Settings')}</div>
-          <div className="mb-4">
-            <div className="flex items-center gap-5">
-              <div className="w-[120px]">{t('Theme')}</div>
-              <div className="w-full rounded border border-primary px-3 focus-within:border-accent-primary focus:border-accent-primary">
-                <select
-                  className="h-[38px] w-full cursor-pointer rounded border-none bg-transparent focus:outline-none"
-                  value={localTheme}
-                  onChange={onThemeChangeHandler}
-                >
-                  {availableThemes.map((theme) => (
-                    <option key={theme.id} value={theme.id}>
-                      {t(theme.displayName)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+          <div className="mb-4 flex flex-col gap-5">
+            <ThemeSelect
+              localTheme={localTheme}
+              onThemeChangeHandler={onThemeChangeHandler}
+            />
+            <ToggleSwitchLabeled
+              isOn={isChatFullWidthLocal}
+              labelText={t('Full width chat')}
+              labelClassName="basis-1/3 md:basis-1/4"
+              handleSwitch={onChangeHandlerFullWidth}
+              switchOnText={t('ON')}
+              switchOFFText={t('OFF')}
+            />
           </div>
 
           <div className="flex justify-end">

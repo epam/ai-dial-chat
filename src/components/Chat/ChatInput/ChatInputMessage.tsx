@@ -27,6 +27,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
 import { AttachButton } from '../../Files/AttachButton';
@@ -97,6 +98,8 @@ export const ChatInputMessage = ({
     ConversationsSelectors.selectNotModelConversations,
   );
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+
   const isError =
     isLastAssistantMessageEmpty || (isMessageError && notModelConversations);
 
@@ -385,7 +388,12 @@ export const ChatInputMessage = ({
   };
 
   return (
-    <div className="mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0  md:last:mb-6 lg:mx-auto lg:max-w-3xl">
+    <div
+      className={classNames(
+        'mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0  md:last:mb-6',
+        isChatFullWidth ? 'lg:ml-20 lg:mr-[84px]' : 'lg:mx-auto lg:max-w-3xl',
+      )}
+    >
       <div
         className="relative m-0 flex max-h-[400px] min-h-[40px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary"
         data-qa="message"

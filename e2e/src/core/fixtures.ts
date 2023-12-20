@@ -1,3 +1,5 @@
+import { Auth0Page } from '@/e2e/src/ui/pages/auth0Page';
+
 import { DialHomePage } from '../ui/pages';
 import { LoginPage } from '../ui/pages';
 import {
@@ -49,6 +51,7 @@ const test = base.extend<
   ReportAttributes & {
     dialHomePage: DialHomePage;
     loginPage: LoginPage;
+    auth0Page: Auth0Page;
     chatBar: ChatBar;
     promptBar: PromptBar;
     chat: Chat;
@@ -118,6 +121,10 @@ const test = base.extend<
   loginPage: async ({ page }, use) => {
     const loginPage = new LoginPage(page);
     await use(loginPage);
+  },
+  auth0Page: async ({ page }, use) => {
+    const auth0Page = new Auth0Page(page);
+    await use(auth0Page);
   },
   chatBar: async ({ dialHomePage }, use) => {
     const chatBar = dialHomePage.getChatBar();

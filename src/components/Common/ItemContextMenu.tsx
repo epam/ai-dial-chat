@@ -78,7 +78,7 @@ export default function ItemContextMenu({
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );
   const isSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isPublishingEnabled(state, featureType),
+    SettingsSelectors.isSharingEnabled(state, featureType),
   );
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [

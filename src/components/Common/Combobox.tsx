@@ -160,7 +160,7 @@ export const Combobox = ({
           (displayedItems?.length > 0 ? (
             displayedItems.map((item, index) => (
               <li
-                className={`flex cursor-pointer flex-col px-3 py-2 ${
+                className={`group flex cursor-pointer flex-col px-3 py-2 ${
                   highlightedIndex === index ? 'bg-accent-primary' : ''
                 } ${selectedItem === item ? 'bg-accent-primary' : ''}`}
                 key={`${getItemValue(item)}${index}`}

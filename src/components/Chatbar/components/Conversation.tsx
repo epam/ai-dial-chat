@@ -310,13 +310,13 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     setIsContextMenu(true);
   };
 
-  const isHighlited = isSelected || isRenaming || isDeleting;
+  const isHighlighted = isSelected || isRenaming || isDeleting;
 
   return (
     <div
       className={classNames(
         'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-accent-primary',
-        isHighlited
+        isHighlighted
           ? 'border-l-accent-primary bg-accent-primary'
           : 'border-l-transparent',
         { 'bg-accent-primary': isContextMenu },
@@ -331,7 +331,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         <div className="flex w-full items-center gap-2 pr-12">
           <ShareIcon
             {...conversation}
-            isHighlighted={isHighlited}
+            isHighlighted={isHighlighted}
             featureType={FeatureType.Chat}
           >
             {conversation.replay.replayAsIs && (
@@ -393,7 +393,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         >
           <ConversationView
             conversation={conversation}
-            isHighlited={isHighlited}
+            isHighlited={isHighlighted || isContextMenu}
           />
         </button>
       )}

@@ -11,10 +11,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import {
-  HEADER_HEIGHT,
-  SIDEBAR_MIN_WIDTH,
-} from '@/src/constants/default-ui-settings';
+import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
 import { NoData } from '../Common/NoData';
 import { NoResultsFound } from '../Common/NoResultsFound';
@@ -86,7 +83,7 @@ const Sidebar = <T,>({
     () => (isLeftSidebar ? chatbarWidth : promptbarWidth),
     [isLeftSidebar, chatbarWidth, promptbarWidth],
   );
-  const SIDEBAR_HEIGHT = `calc(100%-${HEADER_HEIGHT}px)`;
+  const SIDEBAR_HEIGHT = 'auto';
 
   const allowDrop = useCallback((e: any) => {
     e.preventDefault();
@@ -173,7 +170,7 @@ const Sidebar = <T,>({
   ]);
 
   const resizableWrapperClassName = classNames(
-    `!fixed top-12 z-40 flex h-[calc(100%-48px)] min-w-[260px] border-primary md:max-w-[45%] xl:!relative xl:top-0 xl:h-full`,
+    `!fixed top-12 z-40 flex !h-[calc(100%-48px)] min-w-[260px] border-primary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full`,
     isLeftSidebar
       ? 'sidebar-left left-0 border-r'
       : 'sidebar-right right-0 border-l',

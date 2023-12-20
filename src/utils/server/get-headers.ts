@@ -16,7 +16,7 @@ export const getApiHeaders = ({
 
   if (jwt) {
     headers['authorization'] = 'Bearer ' + jwt;
-  } else {
+  } else if (process.env.AUTH_DISABLED === 'true') {
     headers['Api-Key'] = process.env.OPENAI_API_KEY;
   }
 
