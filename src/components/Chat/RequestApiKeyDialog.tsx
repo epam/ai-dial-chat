@@ -90,7 +90,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
   const modalRef = useRef<HTMLFormElement>(null);
   const projectNameInputRef = useRef<HTMLInputElement>(null);
   const streamNameInputRef = useRef<HTMLInputElement>(null);
-  const techLeadNameInputRef = useRef<HTMLInputElement>(null);
+  const techLeadEmailInputRef = useRef<HTMLInputElement>(null);
   const businessJustificationInputRef = useRef<HTMLTextAreaElement>(null);
   const projectEndDateInputRef = useRef<HTMLInputElement>(null);
   const scenarioInputRef = useRef<HTMLTextAreaElement>(null);
@@ -105,7 +105,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
   const [businessJustification, setBusinessJustification] =
     useState<string>('');
   const [projectEndDate, setProjectEndDate] = useState<string>('');
-  const [techLeadName, setTechLeadName] = useState<string>('');
+  const [techLeadEmail, setTechLeadEmail] = useState<string>('');
   const [streamName, setStreamName] = useState<string>('');
   const [cost, setCost] = useState<string>('');
   const [azureAgreement, setAzureAgreement] = useState<boolean>(false);
@@ -141,8 +141,8 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
     setBusinessJustification(e.target.value);
   };
 
-  const techLeadNameOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
-    setTechLeadName(e.target.value);
+  const techLeadEmailOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
+    setTechLeadEmail(e.target.value);
   };
 
   const projectEndDateOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
@@ -183,7 +183,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
       const inputs = [
         projectNameInputRef,
         streamNameInputRef,
-        techLeadNameInputRef,
+        techLeadEmailInputRef,
         businessJustificationInputRef,
         projectEndDateInputRef,
         scenarioInputRef,
@@ -213,7 +213,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
           business_reason: businessJustification,
           project_end: transformDateString(projectEndDate),
           project_id: projectName,
-          project_lead: techLeadName,
+          project_lead: techLeadEmail,
           project_stream: streamName,
           workload_pattern: cost,
         });
@@ -223,7 +223,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
           setBusinessJustification('');
           setProjectEndDate('');
           setProjectName('');
-          setTechLeadName('');
+          setTechLeadEmail('');
           setStreamName('');
           setCost('');
 
@@ -255,7 +255,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
       scenario,
       streamName,
       t,
-      techLeadName,
+      techLeadEmail,
     ],
   );
 
@@ -388,7 +388,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
         <div>
           <label
             className="mb-1 flex flex-col text-xs text-gray-500 md:flex-row"
-            htmlFor="techLeadNameInput"
+            htmlFor="techLeadEmailInput"
           >
             <span>
               <span>3.</span>
@@ -402,14 +402,14 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
             </span>
           </label>
           <input
-            ref={techLeadNameInputRef}
-            name="techLeadNameInput"
-            value={techLeadName}
+            ref={techLeadEmailInputRef}
+            name="techLeadEmailInput"
+            value={techLeadEmail}
             required
             title=""
             type="text"
             onBlur={onBlur}
-            onChange={techLeadNameOnChangeHandler}
+            onChange={techLeadEmailOnChangeHandler}
             className={inputClassName}
           ></input>
           <EmptyRequiredInputMessage />
