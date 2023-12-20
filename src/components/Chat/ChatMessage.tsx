@@ -187,6 +187,10 @@ export const ChatMessage: FC<Props> = memo(
     );
 
     const handleEditMessage = useCallback(() => {
+      if (isSubmitAllowed) {
+        return;
+      }
+
       const isFinalAttachmentIdsSame =
         newEditableAttachmentsIds.length ===
           mappedUserEditableAttachmentsIds.length &&
