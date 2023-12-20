@@ -331,10 +331,9 @@ const selectSelectedFiles = createSelector(
       .filter(Boolean) as FilesState['files'];
   },
 );
-const selectSelectedFilesStatus = createSelector(
+const selectIsUploadingFilePresent = createSelector(
   [selectSelectedFiles],
-  (selectedFiles): DialFile['status'][] =>
-    selectedFiles.map((file) => file.status),
+  (selectedFiles) => selectedFiles.some((file) => file.status === 'UPLOADING'),
 );
 
 const selectFolders = createSelector([rootSelector], (state) => {
@@ -359,7 +358,7 @@ export const FilesSelectors = {
   selectFiles,
   selectSelectedFilesIds,
   selectSelectedFiles,
-  selectSelectedFilesStatus,
+  selectIsUploadingFilePresent,
   selectFolders,
   selectFoldersStatus,
   selectLoadingFolderId,

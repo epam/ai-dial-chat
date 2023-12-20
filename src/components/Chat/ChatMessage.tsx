@@ -152,6 +152,16 @@ export const ChatMessage: FC<Props> = memo(
       newEditableAttachmentsIds,
     ]);
 
+    const isSubmitAllowed = useMemo(() => {
+      const isContentEmptyAndNoAttachments =
+        messageContent.trim().length <= 0 && newEditableAttachments.length <= 0;
+      const isUploadingAttachmentPresent = newEditableAttachments.some(
+        (item) => item.status === 'UPLOADING',
+      );
+
+      return isContentEmptyAndNoAttachments || isUploadingAttachmentPresent;
+    }, [messageContent, newEditableAttachments]);
+
     useEffect(() => {
       setNewEditableAttachmentsIds(mappedUserEditableAttachmentsIds);
     }, [mappedUserEditableAttachmentsIds]);
@@ -386,13 +396,7 @@ export const ChatMessage: FC<Props> = memo(
                         <button
                           className="button button-primary"
                           onClick={handleEditMessage}
-                          disabled={
-                            (messageContent.trim().length <= 0 &&
-                              newEditableAttachments.length <= 0) ||
-                            newEditableAttachments.some(
-                              (item) => item.status === 'UPLOADING',
-                            )
-                          }
+                          disabled={isSubmitAllowed}
                           data-qa="save-and-submit"
                         >
                           {t('Save & Submit')}
