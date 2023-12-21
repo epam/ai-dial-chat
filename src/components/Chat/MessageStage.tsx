@@ -60,7 +60,7 @@ export const MessageStage = ({ stage }: Props) => {
   }, [stage?.content, stage?.attachments?.length]);
 
   return (
-    <div className="block min-w-0 shrink rounded border border-primary bg-layer-1">
+    <div className="block min-w-0 shrink rounded border border-secondary bg-layer-1">
       {hasContent ? (
         <button
           className="flex w-full min-w-0 shrink items-center gap-2 p-2"
@@ -87,7 +87,7 @@ export const MessageStage = ({ stage }: Props) => {
       {(stage.content || stage.attachments) && (
         <div
           className={`grid max-w-full grid-flow-row overflow-auto  ${
-            isOpened ? 'border-t border-primary p-2' : 'h-0'
+            isOpened ? 'border-t border-secondary p-2' : 'h-0'
           }`}
         >
           {stage.content && (
