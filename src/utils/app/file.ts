@@ -1,7 +1,7 @@
 import { Attachment } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 
-import { extension, extensions } from 'mime-types';
+import { extensions } from 'mime-types';
 
 export function triggerDownload(url: string, name: string): void {
   const link = document.createElement('a');
@@ -166,7 +166,7 @@ export const getExtensionsListForMimeType = (mimeType: string) => {
       return acc;
     }, [] as string[]);
   } else {
-    return [extension(mimeType)];
+    return extensions[mimeType] || [];
   }
 };
 

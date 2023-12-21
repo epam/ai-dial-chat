@@ -15,6 +15,8 @@ export enum ExpectedMessages {
   newFolderCreated = 'New folder is created',
   folderCollapsed = 'Folder is collapsed',
   folderExpanded = 'Folder is expanded',
+  folderCaretIsVisible = 'Folder caret is visible',
+  folderCaretIsNotVisible = 'Folder caret is not visible',
   folderNameUpdated = 'Folder name is updated',
   folderNameNotUpdated = 'Folder name is not updated',
   folderDeleted = 'Folder is deleted',
@@ -174,4 +176,5 @@ export enum ExpectedMessages {
   entityNameIsTruncated = 'Entity name is truncated',
   folderNameIsTruncated = 'Folder name is truncated in side panel',
   chatNameIsTruncated = 'Chat name is truncated in side panel',
+  sendButtonCursorIsNotAllowed = 'Send button cursor is not allowed',
 }

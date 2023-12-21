@@ -79,6 +79,10 @@ export const ChatInputMessage = ({
     SettingsSelectors.selectEnabledFeatures,
   );
   const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
+  const isUploadingFilePresent = useAppSelector(
+    FilesSelectors.selectIsUploadingFilePresent,
+  );
+
   const maximumAttachmentsAmount = useAppSelector(
     ConversationsSelectors.selectMaximumAttachmentsAmount,
   );
@@ -116,7 +120,8 @@ export const ChatInputMessage = ({
     isReplay ||
     isError ||
     isInputEmpty ||
-    isModelsLoading;
+    isModelsLoading ||
+    isUploadingFilePresent;
   const maxLength = useMemo(() => {
     const maxLengthArray = selectedConversations.map(
       ({ model }) =>
@@ -383,6 +388,9 @@ export const ChatInputMessage = ({
     }
     if (isError) {
       return t('Please regenerate response to continue working with chat');
+    }
+    if (isUploadingFilePresent) {
+      return t('Please wait for the attachment to load');
     }
     return t('Please type a message');
   };

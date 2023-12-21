@@ -140,6 +140,7 @@ export const ChatMessage: FC<Props> = memo(
       const newFiles = newIds
         .map((id) => files.find((file) => file.id === id))
         .filter(Boolean) as DialFile[];
+
       return mappedUserEditableAttachments
         .filter(({ id }) => newEditableAttachmentsIds.includes(id))
         .concat(newFiles);
@@ -149,6 +150,16 @@ export const ChatMessage: FC<Props> = memo(
       mappedUserEditableAttachmentsIds,
       newEditableAttachmentsIds,
     ]);
+
+    const isSubmitAllowed = useMemo(() => {
+      const isContentEmptyAndNoAttachments =
+        messageContent.trim().length <= 0 && newEditableAttachments.length <= 0;
+      const isUploadingAttachmentPresent = newEditableAttachments.some(
+        (item) => item.status === 'UPLOADING',
+      );
+
+      return isContentEmptyAndNoAttachments || isUploadingAttachmentPresent;
+    }, [messageContent, newEditableAttachments]);
 
     useEffect(() => {
       setNewEditableAttachmentsIds(mappedUserEditableAttachmentsIds);
@@ -175,6 +186,10 @@ export const ChatMessage: FC<Props> = memo(
     );
 
     const handleEditMessage = useCallback(() => {
+      if (isSubmitAllowed) {
+        return;
+      }
+
       const isFinalAttachmentIdsSame =
         newEditableAttachmentsIds.length ===
           mappedUserEditableAttachmentsIds.length &&
@@ -383,10 +398,7 @@ export const ChatMessage: FC<Props> = memo(
                         <button
                           className="button button-primary"
                           onClick={handleEditMessage}
-                          disabled={
-                            messageContent.trim().length <= 0 &&
-                            newEditableAttachments.length <= 0
-                          }
+                          disabled={isSubmitAllowed}
                           data-qa="save-and-submit"
                         >
                           {t('Save & Submit')}

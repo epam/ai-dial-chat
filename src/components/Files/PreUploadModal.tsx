@@ -348,7 +348,9 @@ export const PreUploadDialog = ({
                     {t(
                       'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
                       {
-                        allowedExtensions: allowedExtensions.join(', '),
+                        allowedExtensions:
+                          allowedExtensions.join(', ') ||
+                          'no available extensions',
                       },
                     )}
                   </p>
