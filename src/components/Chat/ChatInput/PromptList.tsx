@@ -47,7 +47,7 @@ export const PromptList: FC<Props> = ({
         <li
           key={prompt.id}
           className={`${
-            index === activePromptIndex ? 'bg-accent-primary' : ''
+            index === activePromptIndex ? 'bg-accent-primary-alpha' : ''
           } cursor-pointer px-3 py-2`}
           onClick={(e) => {
             e.preventDefault();

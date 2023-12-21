@@ -233,7 +233,7 @@ export const SelectFolderModal = ({
                         className={classNames(
                           'mb-0.5 flex items-center gap-1 rounded border-l-2 py-1 text-xs text-secondary',
                           !selectedFolderId
-                            ? 'border-accent-primary bg-accent-primary'
+                            ? 'border-accent-primary bg-accent-primary-alpha'
                             : 'border-transparent',
                         )}
                         onClick={() => handleToggleFolder(undefined)}
@@ -283,7 +283,7 @@ export const SelectFolderModal = ({
                   <div className="flex items-center justify-center">
                     <button
                       onClick={handleNewFolder}
-                      className="flex h-[34px] w-[34px] items-center justify-center rounded text-secondary  hover:bg-accent-primary hover:text-accent-primary"
+                      className="flex h-[34px] w-[34px] items-center justify-center rounded text-secondary  hover:bg-accent-primary-alpha hover:text-accent-primary"
                     >
                       <FolderPlus
                         height={24}

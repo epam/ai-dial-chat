@@ -44,7 +44,7 @@ function ContextMenuItemRenderer({
         triggerIconClassName={classNames(
           className,
           'text-secondary',
-          'hover:bg-accent-primary',
+          'hover:bg-accent-primary-alpha',
         )}
         TriggerCustomRenderer={item}
       />
@@ -52,7 +52,7 @@ function ContextMenuItemRenderer({
   }
   return (
     <MenuItem
-      className={classNames('hover:bg-accent-primary', className)}
+      className={classNames('hover:bg-accent-primary-alpha', className)}
       item={item}
       onClick={onClick}
       data-qa={dataQa}

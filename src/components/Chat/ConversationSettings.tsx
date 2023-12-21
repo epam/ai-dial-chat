@@ -143,7 +143,7 @@ export const ConversationSettings = ({
         {!replay.replayAsIs ? (
           model ? (
             <div
-              className="flex max-h-full shrink flex-col divide-y divide-primary overflow-auto bg-layer-2"
+              className="flex max-h-full shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
               data-qa="entity-settings"
             >
               {model.type === EntityType.Application && (

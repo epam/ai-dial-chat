@@ -57,7 +57,7 @@ export const ConversationSettingsModel = ({
               className={`flex items-center gap-3 rounded border p-3 text-left text-xs ${
                 modelId === entity.id && !replay.replayAsIs
                   ? 'border-accent-primary'
-                  : 'border-primary hover:border-controls-hover'
+                  : 'border-primary hover:border-hover'
               }`}
               key={entity.id}
               onClick={() => onModelSelect(entity.id)}

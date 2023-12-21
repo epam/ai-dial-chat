@@ -329,7 +329,7 @@ export const ChatMessage: FC<Props> = memo(
               <div className="flex">
                 {isEditing ? (
                   <div className="flex w-full flex-col gap-3 pr-[60px]">
-                    <div className="relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-controls-accent">
+                    <div className="relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary">
                       <textarea
                         ref={textareaRef}
                         className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
@@ -359,7 +359,7 @@ export const ChatMessage: FC<Props> = memo(
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <div className="flex h-[34px] w-[34px] items-center justify-center rounded hover:bg-accent-primary">
+                      <div className="flex h-[34px] w-[34px] items-center justify-center rounded hover:bg-accent-primary-alpha">
                         <AttachButton
                           selectedFilesIds={newEditableAttachmentsIds}
                           onSelectAlreadyUploaded={handleSelectAlreadyUploaded}

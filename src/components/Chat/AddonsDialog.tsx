@@ -45,8 +45,8 @@ const Addon = ({
       className={classNames(
         `flex flex-col gap-3 rounded border p-3 text-left`,
         {
-          'bg-accent-primary': isPreselected,
-          'hover:border-controls-hover': !isPreselected,
+          'bg-accent-primary-alpha': isPreselected,
+          'hover:border-hover': !isPreselected,
         },
         {
           'border-blue-500': isSelected,
@@ -92,7 +92,7 @@ const SelectedAddon = ({
 
   return (
     <button
-      className="flex items-center gap-3 rounded bg-accent-primary px-3 py-2"
+      className="flex items-center gap-3 rounded bg-accent-primary-alpha px-3 py-2"
       key={addon.id}
       disabled={isPreselected}
       onClick={() => {
@@ -222,7 +222,7 @@ export const AddonsDialog: FC<Props> = ({
               onChange={(e) => {
                 handleSearch(e.target.value);
               }}
-              className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-controls-accent"
+              className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
             ></input>
           </div>
           <div

@@ -73,8 +73,8 @@ export const FileItem = ({
   return (
     <div
       className={classNames(
-        'group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-accent-primary',
-        isContextMenu && 'bg-accent-primary',
+        'group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-accent-primary-alpha',
+        isContextMenu && 'bg-accent-primary-alpha',
       )}
       style={{
         paddingLeft: `${1.005 + level * 1.5}rem`,

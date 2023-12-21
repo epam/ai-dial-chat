@@ -333,7 +333,7 @@ export function ChatFolders() {
 
   return (
     <div
-      className="flex w-full flex-col gap-0.5 divide-y divide-primary empty:hidden"
+      className="flex w-full flex-col gap-0.5 divide-y divide-tertiary empty:hidden"
       data-qa="chat-folders"
     >
       {folderItems.map((itemProps) => (

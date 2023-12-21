@@ -161,8 +161,8 @@ export const Combobox = ({
             displayedItems.map((item, index) => (
               <li
                 className={`group flex cursor-pointer flex-col px-3 py-2 ${
-                  highlightedIndex === index ? 'bg-accent-primary' : ''
-                } ${selectedItem === item ? 'bg-accent-primary' : ''}`}
+                  highlightedIndex === index ? 'bg-accent-primary-alpha' : ''
+                } ${selectedItem === item ? 'bg-accent-primary-alpha' : ''}`}
                 key={`${getItemValue(item)}${index}`}
                 {...getItemProps({ item, index })}
               >

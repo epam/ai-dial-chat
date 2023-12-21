@@ -67,7 +67,7 @@ export const BetweenFoldersLine = ({
       onDragEnter={highlightDrop}
       onDragLeave={removeHighlight}
       ref={dragDropElement}
-      className={classNames('h-1', isDraggingOver && 'bg-accent-primary')}
+      className={classNames('h-1', isDraggingOver && 'bg-accent-primary-alpha')}
       style={{
         marginLeft: (level && `${level * 24}px`) || 0,
       }}

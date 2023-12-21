@@ -27,7 +27,7 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
     <button
       className={classNames(
         'flex cursor-pointer items-center justify-center rounded p-[5px] disabled:cursor-not-allowed',
-        'hover:bg-accent-primary hover:text-accent-primary',
+        'hover:bg-accent-primary-alpha hover:text-accent-primary',
         className,
       )}
       onClick={!childMenuItems ? onClick : undefined}

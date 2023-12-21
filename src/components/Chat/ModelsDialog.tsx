@@ -43,7 +43,7 @@ const Entity = ({
   return (
     <button
       key={entity.id}
-      className={`flex items-center gap-3 rounded border px-3 py-2 hover:border-controls-hover ${
+      className={`flex items-center gap-3 rounded border px-3 py-2 hover:border-hover ${
         selectedModelId === entity.id
           ? 'border-accent-primary'
           : 'border-primary'
@@ -276,9 +276,9 @@ export const ModelsDialog: FC<Props> = ({
           <div className="flex gap-2 px-3 md:px-5">
             <button
               className={classNames(
-                'rounded border-b-2 px-3 py-2 hover:bg-accent-primary',
+                'rounded border-b-2 px-3 py-2 hover:bg-accent-primary-alpha',
                 entityTypes.includes(EntityType.Model)
-                  ? 'border-accent-primary bg-accent-primary'
+                  ? 'border-accent-primary bg-accent-primary-alpha'
                   : 'border-primary bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {
@@ -290,9 +290,9 @@ export const ModelsDialog: FC<Props> = ({
             </button>
             <button
               className={classNames(
-                'rounded border-b-2 px-3 py-2 hover:bg-accent-primary',
+                'rounded border-b-2 px-3 py-2 hover:bg-accent-primary-alpha',
                 entityTypes.includes(EntityType.Assistant)
-                  ? 'border-accent-primary bg-accent-primary'
+                  ? 'border-accent-primary bg-accent-primary-alpha'
                   : 'border-primary bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {
@@ -304,9 +304,9 @@ export const ModelsDialog: FC<Props> = ({
             </button>
             <button
               className={classNames(
-                'rounded border-b-2 px-3 py-2 hover:bg-accent-primary',
+                'rounded border-b-2 px-3 py-2 hover:bg-accent-primary-alpha',
                 entityTypes.includes(EntityType.Application)
-                  ? 'border-accent-primary bg-accent-primary'
+                  ? 'border-accent-primary bg-accent-primary-alpha'
                   : 'border-primary bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {

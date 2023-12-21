@@ -428,7 +428,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       id="folder"
       className={classNames(
         'transition-colors duration-200',
-        isDraggingOver && isDropAllowed && 'bg-accent-primary',
+        isDraggingOver && isDropAllowed && 'bg-accent-primary-alpha',
       )}
       onDrop={dropHandler}
       onDragOver={allowDrop}
@@ -439,12 +439,12 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     >
       <div
         className={classNames(
-          'group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary',
+          'group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
           isRenaming ||
             isContextMenu ||
             (allItems === undefined &&
               highlightedFolders?.includes(currentFolder.id))
-            ? 'border-accent-primary bg-accent-primary'
+            ? 'border-accent-primary bg-accent-primary-alpha'
             : 'border-transparent',
         )}
         data-qa="folder"

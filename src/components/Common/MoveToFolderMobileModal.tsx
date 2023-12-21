@@ -33,7 +33,7 @@ export const MoveToFolderMobileModal = ({
 
   return (
     <FloatingOverlay className="z-50 flex items-center justify-center bg-blackout p-3 md:p-5">
-      <div className="flex h-full w-full flex-col divide-y divide-primary overflow-y-auto bg-layer-3">
+      <div className="flex h-full w-full flex-col divide-y divide-tertiary overflow-y-auto bg-layer-3">
         <div className="flex items-end justify-between px-3 pb-2 pt-4">
           <span className="h-min">{t('Move to')}</span>
           <span onClick={onClose}>
@@ -41,7 +41,7 @@ export const MoveToFolderMobileModal = ({
           </span>
         </div>
         <div
-          className="flex h-[42px] gap-3  rounded px-6 py-2 hover:bg-accent-primary"
+          className="flex h-[42px] gap-3  rounded px-6 py-2 hover:bg-accent-primary-alpha"
           onClick={() => {
             handleMoveToFolder({ isNewFolder: true });
           }}
@@ -53,7 +53,7 @@ export const MoveToFolderMobileModal = ({
           {folders.map((folder) => (
             <div
               key={folder.id}
-              className="flex h-[42px] items-center rounded px-6 hover:bg-accent-primary"
+              className="flex h-[42px] items-center rounded px-6 hover:bg-accent-primary-alpha"
               onClick={() => {
                 handleMoveToFolder({ folderId: folder.id });
               }}

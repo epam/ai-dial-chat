@@ -183,7 +183,7 @@ const Sidebar = <T,>({
       className={resizableWrapperClassName}
       data-qa={dataQa}
     >
-      <div className="group/sidebar flex h-full w-full flex-none shrink-0 flex-col divide-y divide-primary bg-layer-3 transition-all">
+      <div className="group/sidebar flex h-full w-full flex-none shrink-0 flex-col divide-y divide-tertiary bg-layer-3 transition-all">
         <Search
           placeholder={t('Search {{name}}...', { name: featureType })}
           searchTerm={searchTerm}
@@ -195,14 +195,14 @@ const Sidebar = <T,>({
 
         {actionButtons}
 
-        <div className="flex grow flex-col gap-px divide-y divide-primary overflow-y-auto">
+        <div className="flex grow flex-col gap-px divide-y divide-tertiary overflow-y-auto">
           {folderComponent}
 
           {filteredItems?.length > 0 ? (
             <div
               ref={dragDropElement}
               className={`min-h-[100px] min-w-[42px] grow ${
-                isDraggingOver ? 'bg-accent-primary' : ''
+                isDraggingOver ? 'bg-accent-primary-alpha' : ''
               }`}
               onDrop={(e) => {
                 setIsDraggingOver(false);

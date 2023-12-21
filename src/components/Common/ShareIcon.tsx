@@ -64,9 +64,9 @@ export default function ShareIcon({
             width={size}
             height={size}
             className={classNames(
-              'text-accent-primary group-hover:bg-accent-primary',
+              'text-accent-primary group-hover:bg-accent-primary-alpha',
               'stroke-1 p-[1px]',
-              isHighlighted && 'bg-accent-primary',
+              isHighlighted && 'bg-accent-primary-alpha',
               isPublished ? 'rounded-md' : 'rounded-sm',
             )}
           />

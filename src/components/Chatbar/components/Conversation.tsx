@@ -315,11 +315,11 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   return (
     <div
       className={classNames(
-        'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-accent-primary',
+        'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha',
         isHighlighted
-          ? 'border-l-accent-primary bg-accent-primary'
+          ? 'border-l-accent-primary bg-accent-primary-alpha'
           : 'border-l-transparent',
-        { 'bg-accent-primary': isContextMenu },
+        { 'bg-accent-primary-alpha': isContextMenu },
       )}
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',

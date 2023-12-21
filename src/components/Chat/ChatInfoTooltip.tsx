@@ -94,7 +94,7 @@ export const ChatInfoTooltip = ({
             {selectedAddons.map((addon) => (
               <span
                 key={addon.id}
-                className="flex gap-2 rounded bg-accent-primary px-3 py-2"
+                className="flex gap-2 rounded bg-accent-primary-alpha px-3 py-2"
                 data-qa="addons-info"
               >
                 <ModelIcon entityId={addon.id} entity={addon} size={18} />

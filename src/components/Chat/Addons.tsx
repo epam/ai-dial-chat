@@ -41,7 +41,7 @@ const Addon = ({
     <button
       className={classNames(
         `flex items-center gap-2 rounded px-3 py-2 text-left`,
-        { 'bg-accent-primary': isSelected },
+        { 'bg-accent-primary-alpha': isSelected },
         {
           'bg-layer-3 hover:bg-layer-4': !isSelected,
         },

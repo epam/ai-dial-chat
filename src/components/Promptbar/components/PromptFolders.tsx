@@ -317,7 +317,7 @@ export function PromptFolders() {
 
   return (
     <div
-      className="flex w-full flex-col gap-0.5 divide-y divide-primary empty:hidden"
+      className="flex w-full flex-col gap-0.5 divide-y divide-tertiary empty:hidden"
       data-qa="prompt-folders"
     >
       {folderItems.map((itemProps) => (
