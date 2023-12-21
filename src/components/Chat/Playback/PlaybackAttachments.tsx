@@ -1,4 +1,4 @@
-import { IconFile,IconX } from '@tabler/icons-react';
+import { IconFile, IconX } from '@tabler/icons-react';
 import { PlaybackAttachment } from './playback.types';
 
 interface PlaybackAttachmentProps {
@@ -11,14 +11,14 @@ export interface PlaybackAttachmentsProps {
 
 export function PlaybackAttachment({
   attachmentTitle,
-}: PlaybackAttachmentProps) {
+}: PlaybackAttachmentProps){
   return (
     <div className="flex gap-3 rounded border border-gray-400 bg-gray-300 p-3 dark:border-gray-600 dark:bg-gray-900">
       <IconFile className="shrink-0 text-gray-500" size={18} />
 
       <div className="flex grow justify-between gap-3 overflow-hidden">
         <div className="flex grow flex-col overflow-hidden">
-          <span className={'block max-w-full truncate'}>{attachmentTitle}</span>
+          <span className="block max-w-full truncate">{attachmentTitle}</span>
         </div>
       </div>
 
@@ -27,7 +27,7 @@ export function PlaybackAttachment({
   );
 }
 
-export function PlaybackAttachments({ attachments }: PlaybackAttachmentsProps) {
+export function PlaybackAttachments({ attachments }: PlaybackAttachmentsProps){
   return (
     <div className="relative rounded">
     <div className="flex max-h-[100px] flex-col gap-1 overflow-auto pt-3 md:grid md:grid-cols-3">
