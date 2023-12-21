@@ -73,7 +73,7 @@ export const selectFilteredFolders = createSelector(
     state,
     folders,
     emptyFolderIds,
-    filters?,
+    filters,
     searchTerm?,
     includeEmptyFolders?,
   ) => {
