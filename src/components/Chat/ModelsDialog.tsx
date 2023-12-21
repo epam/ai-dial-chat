@@ -44,7 +44,7 @@ const Entity = ({
   const [isOpened, setIsOpened] = useState(false);
 
   return (
-    <button
+    <div
       key={entity.id}
       className={`flex items-center gap-3 rounded border px-3 py-2 hover:border-gray-800 dark:hover:border-gray-200 ${
         selectedModelId === entity.id
@@ -81,23 +81,21 @@ const Entity = ({
         )}
       </div>
       {entity.description && entity.description.indexOf('\n\n') !== -1 && (
-        <span>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsOpened((isOpened) => !isOpened);
-            }}
-            data-qa="expand-group-entity"
-          >
-            <IconChevronDown
-              size={18}
-              className={`transition-all ${isOpened ? 'rotate-180' : ''}`}
-            />
-          </button>
-        </span>
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsOpened((isOpened) => !isOpened);
+          }}
+          data-qa="expand-group-entity"
+        >
+          <IconChevronDown
+            size={18}
+            className={`transition-all ${isOpened ? 'rotate-180' : ''}`}
+          />
+        </button>
       )}
-    </button>
+    </div>
   );
 };
 
