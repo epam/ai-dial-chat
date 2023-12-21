@@ -231,6 +231,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const handleEnterDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
+      e.stopPropagation();
       if (e.key === 'Enter') {
         e.preventDefault();
         handleRename();
@@ -643,7 +644,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
               if (item.folderId === currentFolder.id) {
                 return (
                   <Fragment key={item.id}>
-                    {onDropBetweenFolders && (
+                    {onDropBetweenFolders ? (
                       <BetweenFoldersLine
                         level={level + 1}
                         onDrop={onDropBetweenFolders}
@@ -652,6 +653,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                         parentFolderId={item.folderId}
                         highlightColor={highlightColor}
                       />
+                    ) : (
+                      <div className="h-1"></div>
                     )}
                     <Folder
                       readonly={readonly}

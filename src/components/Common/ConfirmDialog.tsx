@@ -45,6 +45,7 @@ export const ConfirmDialog = ({
       {isOpen && (
         <FloatingOverlay
           lockScroll
+          data-floating-overlay
           className="z-50 flex items-center justify-center bg-gray-900/70 p-3 dark:bg-gray-900/30"
         >
           <FloatingFocusManager

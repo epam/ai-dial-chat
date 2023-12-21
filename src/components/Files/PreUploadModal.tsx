@@ -302,7 +302,8 @@ export const PreUploadDialog = ({
 
   useEffect(() => {
     if (initialFilesSelect && isOpen) {
-      setTimeout(() => uploadInputRef.current?.click());
+      const timeout = setTimeout(() => uploadInputRef.current?.click());
+      return () => clearTimeout(timeout);
     }
   }, [initialFilesSelect, isOpen]);
 
@@ -324,6 +325,7 @@ export const PreUploadDialog = ({
         {isOpen && (
           <FloatingOverlay
             lockScroll
+            data-floating-overlay
             className="z-50 flex items-center justify-center bg-gray-900/70 p-3 dark:bg-gray-900/30"
           >
             <FloatingFocusManager context={context}>
@@ -348,7 +350,9 @@ export const PreUploadDialog = ({
                     {t(
                       'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
                       {
-                        allowedExtensions: allowedExtensions.join(', '),
+                        allowedExtensions:
+                          allowedExtensions.join(', ') ||
+                          'no available extensions',
                       },
                     )}
                   </p>
@@ -395,7 +399,7 @@ export const PreUploadDialog = ({
                                   0,
                                   file.name.lastIndexOf('.'),
                                 )}
-                                className="grow text-ellipsis rounded border border-gray-400 bg-transparent px-8 py-2 placeholder:text-gray-500 hover:border-blue-500 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:hover:border-blue-500 dark:focus:border-blue-500"
+                                className="grow text-ellipsis rounded border border-gray-400 bg-transparent py-2 pl-8 pr-9 placeholder:text-gray-500 hover:border-blue-500 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:hover:border-blue-500 dark:focus:border-blue-500"
                                 onChange={handleRenameFile(index)}
                               />
                               <span className="absolute right-2">

@@ -1,6 +1,5 @@
 export enum Attributes {
   value = 'value',
-  span = 'span',
   class = 'class',
   hidden = 'hidden',
   placeholder = 'placeholder',
@@ -9,4 +8,6 @@ export enum Attributes {
   disabled = 'disabled',
   style = 'style',
   ariaLabel = 'aria-label',
+  visible = 'visible',
+  invisible = 'invisible',
 }

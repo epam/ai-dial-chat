@@ -18,7 +18,7 @@ export class DropdownMenu extends BaseElement {
 
   public getMenuOption(option: string) {
     return this.createElementFromLocator(
-      this.menuOption(option).locator(Attributes.span),
+      this.menuOption(option).locator(Tags.span),
     );
   }
 

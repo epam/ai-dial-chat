@@ -9,6 +9,8 @@ import {
 
 import classNames from 'classnames';
 
+import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
+
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -111,7 +113,13 @@ export const PlaybackControls = ({
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (!isPlayback) {
+      if (
+        !isPlayback ||
+        hasParentWithFloatingOverlay(
+          e.target as Element,
+          'data-floating-overlay',
+        )
+      ) {
         return;
       }
 

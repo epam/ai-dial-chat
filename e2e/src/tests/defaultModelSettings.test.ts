@@ -2,8 +2,9 @@ import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '../core/fixtures';
 import { ExpectedConstants, ExpectedMessages, ModelIds } from '../testData';
-import { Colors } from '../ui/domData';
+import { Colors, Cursors, Styles } from '../ui/domData';
 
+import { keys } from '@/e2e/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
@@ -174,7 +175,8 @@ test(
 test(
   'Default model in new chat is set as in previous chat.\n' +
     'Send button is disabled if the message box is empty.\n' +
-    'Chat name is shown in chat header',
+    'Chat name is shown in chat header.\n' +
+    `It's impossible to send a message with spaces only`,
   async ({
     dialHomePage,
     chatBar,
@@ -184,48 +186,100 @@ test(
     sendMessage,
     chatHeader,
     tooltip,
+    chatMessages,
+    page,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-400', 'EPMRTC-474', 'EPMRTC-817');
+    setTestIds('EPMRTC-400', 'EPMRTC-474', 'EPMRTC-817', 'EPMRTC-1568');
     const request = 'test';
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await talkToSelector.selectModel(bison.name);
+    await test.step('Verify Send button is disabled if no request message set and tooltip is shown on button hover', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      await talkToSelector.selectModel(bison.name);
 
-    const isSendMessageBtnEnabled =
-      await sendMessage.sendMessageButton.isElementEnabled();
-    expect
-      .soft(isSendMessageBtnEnabled, ExpectedMessages.sendMessageButtonDisabled)
-      .toBeFalsy();
+      const isSendMessageBtnEnabled =
+        await sendMessage.sendMessageButton.isElementEnabled();
+      expect
+        .soft(
+          isSendMessageBtnEnabled,
+          ExpectedMessages.sendMessageButtonDisabled,
+        )
+        .toBeFalsy();
 
-    await sendMessage.sendMessageButton.hoverOver();
-    const tooltipContent = await tooltip.getContent();
-    expect
-      .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-      .toBe(ExpectedConstants.sendMessageTooltip);
-
-    await chat.sendRequestWithButton(request);
-    const chatTitle = await chatHeader.chatTitle.getElementInnerContent();
-    expect
-      .soft(chatTitle, ExpectedMessages.headerTitleCorrespondRequest)
-      .toBe(request);
-
-    await chatBar.createNewConversation();
-    const modelBorderColors = await recentEntities
-      .getRecentEntity(bison.name)
-      .getAllBorderColors();
-    Object.values(modelBorderColors).forEach((borders) => {
-      borders.forEach((borderColor) => {
-        expect
-          .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
-          .toBe(Colors.highlightedEntity);
-      });
+      await sendMessage.sendMessageButton.hoverOver();
+      const tooltipContent = await tooltip.getContent();
+      expect
+        .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
+        .toBe(ExpectedConstants.sendMessageTooltip);
     });
 
-    const recentTalkTo = await recentEntities.getRecentEntityNames();
-    expect
-      .soft(recentTalkTo[0], ExpectedMessages.recentEntitiesIsOnTop)
-      .toBe(bison.name);
+    await test.step('Set spaces in the message input and Send button is disabled, tooltip is shown on hover, no message send on hit Enter', async () => {
+      for (let i = 1; i <= 2; i++) {
+        if (i === 2) {
+          const messagesCountBefore =
+            await chatMessages.chatMessages.getElementsCount();
+          await sendMessage.messageInput.fillInInput('   ');
+          await page.keyboard.press(keys.enter);
+          const messagesCountAfter =
+            await chatMessages.chatMessages.getElementsCount();
+          expect
+            .soft(
+              messagesCountBefore === messagesCountAfter,
+              ExpectedMessages.messageCountIsCorrect,
+            )
+            .toBeTruthy();
+        }
+        const isSendMessageBtnEnabled =
+          await sendMessage.sendMessageButton.isElementEnabled();
+        expect
+          .soft(
+            isSendMessageBtnEnabled,
+            ExpectedMessages.sendMessageButtonDisabled,
+          )
+          .toBeFalsy();
+
+        await sendMessage.sendMessageButton.hoverOver();
+        const sendBtnCursor =
+          await sendMessage.sendMessageButton.getComputedStyleProperty(
+            Styles.cursor,
+          );
+        expect
+          .soft(sendBtnCursor[0], ExpectedMessages.sendButtonCursorIsNotAllowed)
+          .toBe(Cursors.notAllowed);
+
+        const tooltipContent = await tooltip.getContent();
+        expect
+          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
+          .toBe(ExpectedConstants.sendMessageTooltip);
+      }
+    });
+
+    await test.step('Send new request and verify it is reflected in chat header', async () => {
+      await chat.sendRequestWithButton(request);
+      const chatTitle = await chatHeader.chatTitle.getElementInnerContent();
+      expect
+        .soft(chatTitle, ExpectedMessages.headerTitleCorrespondRequest)
+        .toBe(request);
+    });
+
+    await test.step('Create new conversation and verify previous model is preselected and highlighted', async () => {
+      await chatBar.createNewConversation();
+      const modelBorderColors = await recentEntities
+        .getRecentEntity(bison.name)
+        .getAllBorderColors();
+      Object.values(modelBorderColors).forEach((borders) => {
+        borders.forEach((borderColor) => {
+          expect
+            .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
+            .toBe(Colors.highlightedEntity);
+        });
+      });
+
+      const recentTalkTo = await recentEntities.getRecentEntityNames();
+      expect
+        .soft(recentTalkTo[0], ExpectedMessages.recentEntitiesIsOnTop)
+        .toBe(bison.name);
+    });
   },
 );
 

@@ -328,6 +328,7 @@ export const FileManagerModal = ({
       {isOpen && (
         <FloatingOverlay
           lockScroll
+          data-floating-overlay
           className="z-50 flex items-center justify-center bg-gray-900/70 p-3 dark:bg-gray-900/30"
         >
           <FloatingFocusManager context={context}>
@@ -354,7 +355,9 @@ export const FileManagerModal = ({
                   {t(
                     'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
                     {
-                      allowedExtensions: allowedExtensions.join(', '),
+                      allowedExtensions:
+                        allowedExtensions.join(', ') ||
+                        'no available extensions',
                     },
                   )}
                   &nbsp;

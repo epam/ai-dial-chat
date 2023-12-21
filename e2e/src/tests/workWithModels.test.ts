@@ -1,5 +1,6 @@
 import { Conversation } from '@/src/types/chat';
 import { OpenAIEntityModel } from '@/src/types/openai';
+import { availableThemes } from '@/src/types/settings';
 
 import test from '@/e2e/src/core/fixtures';
 import {
@@ -8,6 +9,8 @@ import {
   ExpectedMessages,
   ModelIds,
 } from '@/e2e/src/testData';
+import { Cursors, Styles } from '@/e2e/src/ui/domData';
+import { keys } from '@/e2e/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
@@ -67,41 +70,125 @@ test('Regenerate response when answer was received', async ({
   });
 });
 
-test('Regenerate response when answer was not received', async ({
-  dialHomePage,
-  chat,
-  setTestIds,
-  chatMessages,
-  context,
-}) => {
-  setTestIds('EPMRTC-477');
-  await test.step('Send a request in chat and emulate error until response received', async () => {
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await context.setOffline(true);
-    await chat.sendRequestWithButton('Type a fairytale', false);
-  });
-  await test.step('Verify error is displayed as a response, regenerate button is available', async () => {
-    const generatedContent = await chatMessages.getLastMessageContent();
-    expect
-      .soft(generatedContent, ExpectedMessages.errorReceivedOnReplay)
-      .toBe(ExpectedConstants.answerError);
+test(
+  'Regenerate response when answer was not received.\n' +
+    'Model: Send action is unavailable if there is an error instead of response',
+  async ({
+    dialHomePage,
+    chat,
+    setTestIds,
+    chatMessages,
+    context,
+    sendMessage,
+    tooltip,
+    localStorageManager,
+    page,
+  }) => {
+    setTestIds('EPMRTC-477', 'EPMRTC-1463');
+    await test.step('Set random application theme', async () => {
+      const theme = GeneratorUtil.randomArrayElement(
+        Object.keys(availableThemes),
+      );
+      await localStorageManager.setSettings(theme);
+    });
 
-    const isGenerateResponseVisible = await chat.regenerate.isVisible();
-    expect
-      .soft(isGenerateResponseVisible, ExpectedMessages.regenerateIsAvailable)
-      .toBeTruthy();
-  });
-  await test.step('Click Regenerate response and validate answer received', async () => {
-    await context.setOffline(false);
-    await chat.regenerateResponse(false);
-    await chatMessages.waitForPartialMessageReceived(2);
-    const generatedContent = await chatMessages.getLastMessageContent();
-    expect
-      .soft(generatedContent, ExpectedMessages.messageContentIsValid)
-      .not.toContain(ExpectedConstants.answerError);
-  });
-});
+    await test.step('Send a request in chat and emulate error until response received', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      await context.setOffline(true);
+      await chat.sendRequestWithButton('Type a fairytale', false);
+    });
+    await test.step('Verify error is displayed as a response, regenerate button is available', async () => {
+      const generatedContent = await chatMessages.getLastMessageContent();
+      expect
+        .soft(generatedContent, ExpectedMessages.errorReceivedOnReplay)
+        .toBe(ExpectedConstants.answerError);
+
+      const isGenerateResponseVisible = await chat.regenerate.isVisible();
+      expect
+        .soft(isGenerateResponseVisible, ExpectedMessages.regenerateIsAvailable)
+        .toBeTruthy();
+    });
+
+    await test.step('Hover over Send button and verify it is disabled and tooltip is shown', async () => {
+      await context.setOffline(false);
+      for (let i = 1; i <= 2; i++) {
+        if (i === 2) {
+          const messagesCountBefore =
+            await chatMessages.chatMessages.getElementsCount();
+          await sendMessage.messageInput.fillInInput(
+            GeneratorUtil.randomString(5),
+          );
+          await page.keyboard.press(keys.enter);
+          const messagesCountAfter =
+            await chatMessages.chatMessages.getElementsCount();
+          expect
+            .soft(
+              messagesCountBefore === messagesCountAfter,
+              ExpectedMessages.messageCountIsCorrect,
+            )
+            .toBeTruthy();
+        }
+        const isSendMessageBtnEnabled =
+          await sendMessage.sendMessageButton.isElementEnabled();
+        expect
+          .soft(
+            isSendMessageBtnEnabled,
+            ExpectedMessages.sendMessageButtonDisabled,
+          )
+          .toBeFalsy();
+
+        await sendMessage.sendMessageButton.hoverOver();
+        const sendBtnCursor =
+          await sendMessage.sendMessageButton.getComputedStyleProperty(
+            Styles.cursor,
+          );
+        expect
+          .soft(sendBtnCursor[0], ExpectedMessages.sendButtonCursorIsNotAllowed)
+          .toBe(Cursors.notAllowed);
+
+        const tooltipContent = await tooltip.getContent();
+        expect
+          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
+          .toBe(ExpectedConstants.regenerateResponseTooltip);
+      }
+    });
+
+    await test.step('Type any message, hit Enter key and verify Send button is disabled and tooltip is shown', async () => {
+      const isSendMessageBtnEnabled =
+        await sendMessage.sendMessageButton.isElementEnabled();
+      expect
+        .soft(
+          isSendMessageBtnEnabled,
+          ExpectedMessages.sendMessageButtonDisabled,
+        )
+        .toBeFalsy();
+
+      await sendMessage.sendMessageButton.hoverOver();
+      const sendBtnCursor =
+        await sendMessage.sendMessageButton.getComputedStyleProperty(
+          Styles.cursor,
+        );
+      expect
+        .soft(sendBtnCursor[0], ExpectedMessages.sendButtonCursorIsNotAllowed)
+        .toBe(Cursors.notAllowed);
+
+      const tooltipContent = await tooltip.getContent();
+      expect
+        .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
+        .toBe(ExpectedConstants.regenerateResponseTooltip);
+    });
+
+    await test.step('Click Regenerate response and validate answer received', async () => {
+      await chat.regenerateResponse(false);
+      await chatMessages.waitForPartialMessageReceived(2);
+      const generatedContent = await chatMessages.getLastMessageContent();
+      expect
+        .soft(generatedContent, ExpectedMessages.messageContentIsValid)
+        .not.toContain(ExpectedConstants.answerError);
+    });
+  },
+);
 
 test(
   'Edit the message in the middle. Cancel.\n' +
@@ -259,72 +346,145 @@ test('System prompt is applied in Model', async ({
   });
 });
 
-test('Stop generating for models like GPT (1 symbol = 1 token)', async ({
-  dialHomePage,
-  chat,
-  setTestIds,
-  chatMessages,
-}) => {
-  setTestIds('EPMRTC-478');
-  await test.step('Send request and stop generation immediately', async () => {
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await dialHomePage.throttleAPIResponse(API.chatHost);
-    await chat.sendRequestWithButton(request, false);
-    await chat.stopGenerating.click();
-  });
+test(
+  'Stop generating for models like GPT (1 symbol = 1 token).\n' +
+    'Model: Send action is unavailable if there is empty response.\n' +
+    'Edit the message after the response was stopped',
+  async ({
+    dialHomePage,
+    chat,
+    setTestIds,
+    chatMessages,
+    sendMessage,
+    page,
+    tooltip,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-478', 'EPMRTC-1480', 'EPMRTC-1309');
+    await test.step('Set random application theme', async () => {
+      const theme = GeneratorUtil.randomArrayElement(
+        Object.keys(availableThemes),
+      );
+      await localStorageManager.setSettings(theme);
+    });
 
-  await test.step('Verify no content received and model icon is visible', async () => {
-    const receivedContent = await chatMessages.getLastMessageContent();
-    expect
-      .soft(receivedContent, ExpectedMessages.messageContentIsValid)
-      .toBe('');
-    const conversationIcon = await chatMessages.getIconAttributesForMessage();
-    expect
-      .soft(
-        conversationIcon.iconEntity,
-        ExpectedMessages.chatBarIconEntityIsValid,
-      )
-      .toBe(gpt35Model.id);
-    expect
-      .soft(conversationIcon.iconUrl, ExpectedMessages.chatBarIconSourceIsValid)
-      .toBe(gpt35Model.iconUrl);
+    await test.step('Send request and stop generation immediately', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      await dialHomePage.throttleAPIResponse(API.chatHost);
+      await chat.sendRequestWithButton(request, false);
+      await chat.stopGenerating.click();
+    });
 
-    const isRegenerateButtonVisible = await chat.regenerate.isVisible();
-    expect
-      .soft(isRegenerateButtonVisible, ExpectedMessages.regenerateIsAvailable)
-      .toBeTruthy();
-  });
+    await test.step('Verify no content received and model icon is visible', async () => {
+      const receivedContent = await chatMessages.getLastMessageContent();
+      expect
+        .soft(receivedContent, ExpectedMessages.messageContentIsValid)
+        .toBe('');
+      const conversationIcon = await chatMessages.getIconAttributesForMessage();
+      expect
+        .soft(
+          conversationIcon.iconEntity,
+          ExpectedMessages.chatBarIconEntityIsValid,
+        )
+        .toBe(gpt35Model.id);
+      expect
+        .soft(
+          conversationIcon.iconUrl,
+          ExpectedMessages.chatBarIconSourceIsValid,
+        )
+        .toBe(gpt35Model.iconUrl);
 
-  await test.step('Send request and stop generation when partial content received', async () => {
-    await dialHomePage.unRouteResponse(API.chatHost);
+      const isRegenerateButtonVisible = await chat.regenerate.isVisible();
+      expect
+        .soft(isRegenerateButtonVisible, ExpectedMessages.regenerateIsAvailable)
+        .toBeTruthy();
+    });
+
+    await test.step('Hover over Send button and verify it is disabled and tooltip is shown', async () => {
+      for (let i = 1; i <= 2; i++) {
+        if (i === 2) {
+          const messagesCountBefore =
+            await chatMessages.chatMessages.getElementsCount();
+          await sendMessage.messageInput.fillInInput('   ');
+          await page.keyboard.press(keys.enter);
+          const messagesCountAfter =
+            await chatMessages.chatMessages.getElementsCount();
+          expect
+            .soft(
+              messagesCountBefore === messagesCountAfter,
+              ExpectedMessages.messageCountIsCorrect,
+            )
+            .toBeTruthy();
+        }
+        const isSendMessageBtnEnabled =
+          await sendMessage.sendMessageButton.isElementEnabled();
+        expect
+          .soft(
+            isSendMessageBtnEnabled,
+            ExpectedMessages.sendMessageButtonDisabled,
+          )
+          .toBeFalsy();
+
+        await sendMessage.sendMessageButton.hoverOver();
+        const sendBtnCursor =
+          await sendMessage.sendMessageButton.getComputedStyleProperty(
+            Styles.cursor,
+          );
+        expect
+          .soft(sendBtnCursor[0], ExpectedMessages.sendButtonCursorIsNotAllowed)
+          .toBe(Cursors.notAllowed);
+
+        const tooltipContent = await tooltip.getContent();
+        expect
+          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
+          .toBe(ExpectedConstants.regenerateResponseTooltip);
+      }
+    });
+
+    await test.step('Send request and stop generation when partial content received', async () => {
+      await dialHomePage.unRouteResponse(API.chatHost);
     await chat.regenerateResponse(false);
-    await chatMessages.waitForPartialMessageReceived(2);
-    await chat.stopGenerating.click();
-  });
+      await chatMessages.waitForPartialMessageReceived(2);
+      await chat.stopGenerating.click();
+    });
 
-  await test.step('Verify partial content is preserved and model icon is visible', async () => {
-    const generatedContent = await chatMessages.getLastMessageContent();
-    expect
-      .soft(generatedContent, ExpectedMessages.messageContentIsValid)
-      .not.toBe('');
-    const conversationIcon = await chatMessages.getIconAttributesForMessage();
-    expect
-      .soft(
-        conversationIcon.iconEntity,
-        ExpectedMessages.chatBarIconEntityIsValid,
-      )
-      .toBe(gpt35Model.id);
-    expect
-      .soft(conversationIcon.iconUrl, ExpectedMessages.chatBarIconSourceIsValid)
-      .toBe(gpt35Model.iconUrl);
+    await test.step('Verify partial content is preserved and model icon is visible', async () => {
+      const generatedContent = await chatMessages.getLastMessageContent();
+      expect
+        .soft(generatedContent, ExpectedMessages.messageContentIsValid)
+        .not.toBe('');
+      const conversationIcon = await chatMessages.getIconAttributesForMessage();
+      expect
+        .soft(
+          conversationIcon.iconEntity,
+          ExpectedMessages.chatBarIconEntityIsValid,
+        )
+        .toBe(gpt35Model.id);
+      expect
+        .soft(
+          conversationIcon.iconUrl,
+          ExpectedMessages.chatBarIconSourceIsValid,
+        )
+        .toBe(gpt35Model.iconUrl);
 
-    const isRegenerateButtonVisible = await chat.regenerate.isVisible();
-    expect
-      .soft(isRegenerateButtonVisible, ExpectedMessages.regenerateIsAvailable)
-      .toBeTruthy();
-  });
-});
+      const isRegenerateButtonVisible = await chat.regenerate.isVisible();
+      expect
+        .soft(isRegenerateButtonVisible, ExpectedMessages.regenerateIsAvailable)
+        .toBeTruthy();
+    });
+
+    await test.step('Edit request, click "Save & Submit" and verify response is regenerated', async () => {
+      const updatedRequest = '1+2=';
+      await chatMessages.openEditMessageMode(request);
+      await chatMessages.editMessage(request, updatedRequest);
+      const messagesCount = await chatMessages.chatMessages.getElementsCount();
+      expect
+        .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
+        .toBe(2);
+    });
+  },
+);
 
 test(
   'Send button in new message is available for Model if previous response is partly received when Stop generating was used.\n' +

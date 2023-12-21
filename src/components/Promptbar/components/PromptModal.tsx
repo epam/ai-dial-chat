@@ -142,6 +142,7 @@ export const PromptModal: FC<Props> = ({
     <FloatingPortal id="theme-main">
       <FloatingOverlay
         lockScroll
+        data-floating-overlay
         className="z-50 flex items-center justify-center bg-gray-900/30 p-3 dark:bg-gray-900/70 md:p-5"
         onKeyDown={handleEnter}
       >
