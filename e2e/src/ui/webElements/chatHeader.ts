@@ -28,6 +28,12 @@ export class ChatHeader extends BaseElement {
     ChatSelectors.leavePlayback,
   );
 
+  public async isArrowIconVisible() {
+    return this.chatModel
+      .getChildElementBySelector(ChatSelectors.arrowAdditionalIcon)
+      .isVisible();
+  }
+
   async getHeaderIcons() {
     const allIcons: Icons[] = [];
     await this.icons.getNthElement(1).waitFor();

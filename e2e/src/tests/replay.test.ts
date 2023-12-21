@@ -116,7 +116,7 @@ test(
         borders.forEach((borderColor) => {
           expect
             .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
-            .toBe(Colors.highlightedEntity);
+            .toBe(Colors.blue);
         });
       });
 
@@ -922,7 +922,7 @@ test(
         );
       expect
         .soft(warningColor[0], ExpectedMessages.warningLabelColorIsValid)
-        .toBe(Colors.warningLabel);
+        .toBe(Colors.coralRed);
     });
 
     await test.step('Start replaying and verify old requests are replayed using gpt-4 model', async () => {

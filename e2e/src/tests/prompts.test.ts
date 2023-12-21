@@ -33,7 +33,7 @@ test('Create new prompt', async ({
   const newPromptColor = await promptBar.getNewPromptBackgroundColor();
   expect
     .soft(newPromptColor, ExpectedMessages.newPromptButtonIsHighlighted)
-    .toBe(Colors.highlightedNewPrompt);
+    .toBe(Colors.violet);
 
   await promptBar.createNewPrompt();
   expect

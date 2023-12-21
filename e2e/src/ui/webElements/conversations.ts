@@ -6,8 +6,9 @@ import {
 import { BaseElement } from './baseElement';
 
 import { Chronology, ExpectedConstants } from '@/e2e/src/testData';
-import { Attributes } from '@/e2e/src/ui/domData';
+import { Attributes, Styles, Tags } from '@/e2e/src/ui/domData';
 import { keys } from '@/e2e/src/ui/keyboard';
+import { IconSelectors } from '@/e2e/src/ui/selectors/iconSelectors';
 import { DropdownMenu } from '@/e2e/src/ui/webElements/dropdownMenu';
 import { Input } from '@/e2e/src/ui/webElements/input';
 import { Page } from '@playwright/test';
@@ -74,6 +75,18 @@ export class Conversations extends BaseElement {
     return this.getConversationByName(name, index).locator(
       ChatSelectors.chatIcon,
     );
+  }
+
+  public getConversationArrowIcon(name: string, index?: number) {
+    return this.getConversationByName(name, index).locator(
+      ChatSelectors.arrowAdditionalIcon,
+    );
+  }
+
+  public getConversationArrowIconColor(name: string, index?: number) {
+    return this.createElementFromLocator(
+      this.getConversationArrowIcon(name, index).locator(Tags.svg),
+    ).getComputedStyleProperty(Styles.color);
   }
 
   public async getConversationsByChronology() {
@@ -177,7 +190,7 @@ export class Conversations extends BaseElement {
 
   public async isConversationHasPlaybackIcon(name: string, index?: number) {
     const playBackIcon = await this.getConversationByName(name, index).locator(
-      ChatSelectors.playbackIcon,
+      IconSelectors.playbackIcon,
     );
     return playBackIcon.isVisible();
   }

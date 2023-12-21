@@ -1,4 +1,4 @@
-import { Attributes, Tags } from '@/e2e/src/ui/domData';
+import { Attributes, Styles, Tags } from '@/e2e/src/ui/domData';
 import { ChatSelectors } from '@/e2e/src/ui/selectors';
 import { BaseElement, Icons } from '@/e2e/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
@@ -25,6 +25,10 @@ export class ModelSelector extends BaseElement {
 
   public async getListOptions() {
     return this.listOptions.getElementsInnerContent();
+  }
+
+  public getOptionAdditionalIcon(option: string) {
+    return this.listOption(option).locator(ChatSelectors.arrowAdditionalIcon);
   }
 
   public async selectModel(name: string, isOpen = false) {
@@ -60,5 +64,11 @@ export class ModelSelector extends BaseElement {
       }
     }
     return allIcons;
+  }
+
+  public getOptionArrowIconColor(option: string) {
+    return this.createElementFromLocator(
+      this.getOptionAdditionalIcon(option).locator(Tags.svg),
+    ).getComputedStyleProperty(Styles.color);
   }
 }

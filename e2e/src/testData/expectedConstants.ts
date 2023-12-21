@@ -12,6 +12,7 @@ export const ExpectedConstants = {
   model: 'Model',
   replayAsIsLabel: 'Replay as is',
   replayConversation: '[Replay] ',
+  playbackConversation: '[Playback] ',
   startReplayLabel: 'Start replay',
   continueReplayLabel: 'Continue replay',
   continueReplayAfterErrorLabel:
@@ -41,6 +42,8 @@ export const ExpectedConstants = {
     'Please note that some of your messages were created in older DIAL version. "Replay as is" could be working not as expected.',
   regenerateResponseTooltip:
     'Please regenerate response to continue working with chat',
+  sharedConversationTooltip: 'Shared',
+  copyUrlTooltip: 'Copy URL',
 };
 
 export enum Groups {

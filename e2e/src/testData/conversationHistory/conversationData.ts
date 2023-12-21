@@ -310,6 +310,12 @@ export class ConversationData extends FolderData {
     return playbackConversation;
   }
 
+  public prepareDefaultSharedConversation() {
+    const conversation = this.prepareDefaultConversation();
+    conversation.isShared = true;
+    return conversation;
+  }
+
   private fillReplayData(
     conversation: Conversation,
     userMessages: Message[],
