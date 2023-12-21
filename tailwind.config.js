@@ -24,6 +24,7 @@ module.exports = {
       'accent-secondary-alpha': 'var(--bg-accent-secondary-alpha, #37BABC26)',
       'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2B)',
       'controls-accent': 'var(--controls-bg-accent, #5C8DEA)',
+      'controls-permanent': 'var(--controls-text-permanent, #FCFCFC)',
       'controls-accent-hover': 'var(--controls-bg-accent-hover, #4878D2)',
       'controls-disable': 'var(--controls-bg-disable, #7F8792)',
     },

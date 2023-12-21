@@ -114,7 +114,7 @@ export const ChatHeader = ({
           </Tooltip>
         )}
         {model && (
-          <div className="flex lg:[&>*:first-child]:border-l-[1px] lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-secondary [&>*]:pl-2">
+          <div className="flex lg:[&>*:first-child]:border-l-[1px] lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-primary [&>*]:pl-2">
             {isShowChatInfo && (
               <>
                 <span className="flex items-center" data-qa="chat-model">

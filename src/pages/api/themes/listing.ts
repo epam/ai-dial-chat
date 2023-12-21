@@ -52,7 +52,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const dayInMs = 86400000;
 
-  cachedThemes = json.themes;
+  cachedThemes = Array.isArray(json.themes) ? json.themes : [];
   cachedThemesExpiration = Date.now() + dayInMs;
 
   return res

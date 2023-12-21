@@ -24,7 +24,7 @@ export function ToggleSwitch({
   const switchText = isOn ? switchOnText : switchOFFText;
   const switchClassName = classNames(
     'flex min-w-[50px] shrink-0 cursor-pointer items-center gap-1 rounded-full p-1.5 transition-all duration-200',
-    isOn ? 'flex-row bg-accent-primary-alpha' : 'flex-row-reverse bg-layer-4',
+    isOn ? 'flex-row bg-accent-primary' : 'flex-row-reverse bg-layer-4',
   );
 
   return (
@@ -39,7 +39,7 @@ export function ToggleSwitch({
 
       <div className={switchClassName}>
         {switchText && <SwitchStateText switchText={switchText} />}
-        <span className="h-3 w-3 rounded-full bg-layer-3"></span>
+        <span className="h-3 w-3 rounded-full bg-controls-permanent"></span>
       </div>
     </div>
   );

@@ -30,7 +30,7 @@ export const ThemeSelect = ({
       <div className="basis-1/3 md:basis-1/4">{t('Theme')}</div>
       <div className="grow rounded border border-primary px-3 focus-within:border-accent-primary focus:border-accent-primary">
         <select
-          className="h-[38px] w-full cursor-pointer rounded border-none focus:outline-none"
+          className="h-[38px] w-full cursor-pointer rounded border-none bg-transparent focus:outline-none"
           value={localTheme}
           onChange={onChangeHandler}
         >
