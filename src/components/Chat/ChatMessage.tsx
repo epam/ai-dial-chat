@@ -39,6 +39,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { ErrorMessage } from '../Common/ErrorMessage';
@@ -212,6 +213,7 @@ export const ChatMessage: FC<Props> = memo(
       }
       setIsEditing(false);
     }, [
+      isSubmitAllowed,
       newEditableAttachmentsIds,
       mappedUserEditableAttachmentsIds,
       message,
@@ -470,10 +472,12 @@ export const ChatMessage: FC<Props> = memo(
                   {!!message.custom_content?.stages?.length && (
                     <MessageStages stages={message.custom_content?.stages} />
                   )}
-                  <ChatMDComponent
-                    isShowResponseLoader={isShowResponseLoader}
-                    content={message.content}
-                  />
+                  {message.content && (
+                    <ChatMDComponent
+                      isShowResponseLoader={isShowResponseLoader}
+                      content={message.content}
+                    />
+                  )}
                   {codeWarning &&
                     codeWarning.length !== 0 &&
                     codeDetection(message.content) && (
@@ -487,14 +491,20 @@ export const ChatMessage: FC<Props> = memo(
                   <ErrorMessage error={message.errorMessage}></ErrorMessage>
                 </div>
 
-                <div className="flex w-[60px] shrink-0 flex-col justify-between">
+                <div className="flex w-[60px] shrink-0 flex-col justify-between gap-2">
                   <div className="ml-1 flex flex-col items-center justify-end gap-4 md:-mr-8 md:ml-0 md:flex-row md:items-start md:justify-start md:gap-1">
                     {messagedCopied ? (
                       <IconCheck size={20} className="text-gray-500" />
                     ) : (
-                      <Button onClick={copyOnClick}>
-                        <IconCopy size={20} />
-                      </Button>
+                      <Tooltip
+                        placement="top"
+                        isTriggerClickable
+                        tooltip={t('Copy text')}
+                      >
+                        <Button onClick={copyOnClick}>
+                          <IconCopy size={20} />
+                        </Button>
+                      </Tooltip>
                     )}
                   </div>
                   <div className="bottom-0 right-8 flex flex-row gap-2">

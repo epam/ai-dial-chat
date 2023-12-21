@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
 
 import { Attachment } from '@/src/types/chat';
@@ -173,13 +175,26 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             {attachment.title || t('Attachment')}
           </span>
           {isOpenable ? (
-            <ChevronDown
-              height={18}
-              width={18}
-              className={`shrink-0 text-gray-500 transition ${
-                isOpened ? 'rotate-180' : ''
-              }`}
-            />
+            <div className="flex gap-2">
+              {imageTypes.has(attachment.type) && (
+                <a
+                  download={attachment.title}
+                  href={mappedAttachmentUrl}
+                  onClick={stopBubbling}
+                  className="text-gray-500 hover:text-blue-500"
+                >
+                  <IconDownload size={18} />
+                </a>
+              )}
+              <ChevronDown
+                height={18}
+                width={18}
+                className={classNames(
+                  'shrink-0 text-gray-500 transition',
+                  isOpened && 'rotate-180',
+                )}
+              />
+            </div>
           ) : (
             <a
               download={attachment.title}
