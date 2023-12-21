@@ -43,7 +43,7 @@ const Entity = ({
   return (
     <div
       key={entity.id}
-      className={`flex items-center gap-3 rounded border px-3 py-2 hover:border-hover ${
+      className={`flex cursor-pointer items-center gap-3 rounded border px-3 py-2 hover:border-hover ${
         selectedModelId === entity.id
           ? 'border-accent-primary'
           : 'border-primary'

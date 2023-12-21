@@ -97,6 +97,7 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
       <FloatingOverlay
         lockScroll
         className="z-50 flex items-center justify-center bg-blackout p-3 md:p-5"
+        data-floating-overlay
       >
         <FloatingFocusManager context={context} initialFocus={copyButtonRef}>
           <form

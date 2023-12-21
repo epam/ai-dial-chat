@@ -193,6 +193,7 @@ export const SelectFolderModal = ({
         <FloatingOverlay
           lockScroll
           className="z-50 flex items-center justify-center bg-blackout p-3"
+          data-floating-overlay
         >
           <FloatingFocusManager context={context}>
             <div
