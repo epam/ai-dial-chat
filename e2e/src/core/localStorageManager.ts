@@ -110,7 +110,7 @@ export class LocalStorageManager {
   }
 
   async setSettings(theme: string) {
-    const settings: Settings = { theme: theme };
+    const settings: Settings = { theme };
     await this.page.addInitScript(
       this.setSettingsKey(),
       JSON.stringify(settings),
