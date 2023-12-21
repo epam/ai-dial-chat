@@ -18,7 +18,10 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
-import { ChatInputFooter } from './ChatInput/ChatInputFooter';
+import { ChatInputFooter } from '../ChatInput/ChatInputFooter';
+import { PlaybackAttachments } from './PlaybackAttachments';
+
+import { v4 as uuidv4 } from 'uuid';
 
 interface Props {
   showScrollDownButton: boolean;
@@ -26,6 +29,7 @@ interface Props {
   onResize: (height: number) => void;
   nextMessageBoxRef: MutableRefObject<HTMLDivElement | null>;
 }
+
 export const PlaybackControls = ({
   onScrollDownClick,
   onResize,
@@ -64,20 +68,34 @@ export const PlaybackControls = ({
     );
   }, [activeIndex, isActiveIndex, selectedConversations]);
 
-  const activeMessageContent = useMemo(() => {
-    if (
-      isActiveIndex &&
-      isNextMessageInStack &&
-      selectedConversations.length &&
-      selectedConversations[0].playback &&
-      selectedConversations[0].playback.messagesStack[activeIndex].content
-    ) {
-      return selectedConversations[0].playback.messagesStack[activeIndex]
-        .content;
+  const activeMessage = useMemo(() => {
+    if (!isActiveIndex) {
+      return;
     }
+    const CURRENT_PLAYBACK = selectedConversations[0]?.playback;
+    const CURRENT_MESSAGE = CURRENT_PLAYBACK?.messagesStack[activeIndex];
 
-    return '';
+    const content =
+      isNextMessageInStack && CURRENT_MESSAGE && CURRENT_MESSAGE?.content;
+
+    const attachments =
+      CURRENT_MESSAGE && CURRENT_MESSAGE?.custom_content?.attachments?.length
+        ? CURRENT_MESSAGE.custom_content.attachments.map(
+            ({ title, index }) => ({ title, index: index ?? uuidv4() }),
+          )
+        : [];
+
+    const message = attachments.length
+      ? { content, custom_content: { attachments } }
+      : { content };
+    return message;
   }, [activeIndex, isActiveIndex, isNextMessageInStack, selectedConversations]);
+
+  const isAttachments =
+    activeMessage &&
+    activeMessage.custom_content &&
+    activeMessage.custom_content.attachments &&
+    activeMessage.custom_content.attachments.length;
 
   const handlePlaynextMessage = useCallback(() => {
     if (isMessageStreaming || !isNextMessageInStack) {
@@ -96,6 +114,7 @@ export const PlaybackControls = ({
       if (!isPlayback) {
         return;
       }
+
       if (
         isNextMessageInStack &&
         (e.key === 'Enter' ||
@@ -181,17 +200,30 @@ export const PlaybackControls = ({
             ></div>
           ) : (
             <>
-              <span className="break-words" data-qa="playback-message-content">
-                {activeMessageContent}
-              </span>
-              <button
-                data-qa="playback-next"
-                onClick={handlePlaynextMessage}
-                className="absolute bottom-3 right-4 rounded outline-none hover:text-blue-500 disabled:cursor-not-allowed disabled:text-gray-400 disabled:dark:text-gray-600"
-                disabled={isMessageStreaming || !isNextMessageInStack}
-              >
-                <IconPlayerPlay size={20} className="shrink-0" />
-              </button>
+              {activeMessage && (
+                <>
+                  <span
+                    className="break-words"
+                    data-qa="playback-message-content"
+                  >
+                    {activeMessage.content ?? ''}
+                  </span>
+
+                  {isAttachments && (
+                    <PlaybackAttachments
+                      attachments={activeMessage.custom_content.attachments}
+                    />
+                  )}
+                  <button
+                    data-qa="playback-next"
+                    onClick={handlePlaynextMessage}
+                    className="absolute bottom-3 right-4 rounded outline-none hover:text-blue-500 disabled:cursor-not-allowed disabled:text-gray-400 disabled:dark:text-gray-600"
+                    disabled={isMessageStreaming || !isNextMessageInStack}
+                  >
+                    <IconPlayerPlay size={20} className="shrink-0" />
+                  </button>
+                </>
+              )}
             </>
           )}
         </div>
