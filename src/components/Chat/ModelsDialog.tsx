@@ -46,7 +46,7 @@ const Entity = ({
   return (
     <div
       key={entity.id}
-      className={`flex items-center gap-3 rounded border px-3 py-2 hover:border-gray-800 dark:hover:border-gray-200 ${
+      className={`flex cursor-pointer items-center gap-3 rounded border px-3 py-2 hover:border-gray-800 dark:hover:border-gray-200 ${
         selectedModelId === entity.id
           ? 'border-blue-500'
           : 'border-gray-400 dark:border-gray-600'
