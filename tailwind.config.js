@@ -1,3 +1,33 @@
+// Default color palette is black when no themes presented
+const commonBgColors = {
+  transparent: 'transparent',
+  'layer-0': 'var(--bg-layer-0, #000000)',
+  'layer-1': 'var(--bg-layer-1, #090D13)',
+  'layer-2': 'var(--bg-layer-2, #141A23)',
+  'layer-3': 'var(--bg-layer-3, #222932)',
+  'layer-4': 'var(--bg-layer-4, #333942)',
+  blackout: 'var(--bg-blackout, #090D13B3)',
+  error: 'var(--bg-error, #402027)',
+  'accent-primary': 'var(--bg-accent-primary, #5C8DEA)',
+  'accent-secondary': 'var(--bg-accent-secondary, #37BABC)',
+  'accent-tertiary': 'var(--bg-accent-tertiary, #A972FF)',
+  'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #5C8DEA2B)',
+  'accent-secondary-alpha': 'var(--bg-accent-secondary-alpha, #37BABC26)',
+  'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2B)',
+};
+
+const commonBorderColors = {
+  transparent: 'transparent',
+  primary: 'var(--stroke-primary, #333942)',
+  secondary: 'var(--stroke-secondary, #222932)',
+  tertiary: 'var(--stroke-tertiary, #090D13)',
+  error: 'var(--stroke-error, #F76464)',
+  hover: 'var(--stroke-hover, #F3F4F6)',
+  'accent-primary': 'var(--stroke-accent-primary, #5C8DEA)',
+  'accent-secondary': 'var(--stroke-accent-secondary, #37BABC)',
+  'accent-tertiary': 'var(--stroke-accent-tertiary, #A972FF)',
+};
+
 // Do not use palette directly, only through semantic colors
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -9,60 +39,15 @@ module.exports = {
   darkMode: 'class',
   theme: {
     backgroundColor: {
-      transparent: 'transparent',
-      'layer-0': 'var(--bg-layer-0, #000000)',
-      'layer-1': 'var(--bg-layer-1, #090D13)',
-      'layer-2': 'var(--bg-layer-2, #141A23)',
-      'layer-3': 'var(--bg-layer-3, #222932)',
-      'layer-4': 'var(--bg-layer-4, #333942)',
-      blackout: 'var(--bg-blackout, #090D13B3)',
-      error: 'var(--bg-error, #402027)',
-      'accent-primary': 'var(--bg-accent-primary, #5C8DEA)',
-      'accent-secondary': 'var(--bg-accent-secondary, #37BABC)',
-      'accent-tertiary': 'var(--bg-accent-tertiary, #A972FF)',
-      'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #5C8DEA2B)',
-      'accent-secondary-alpha': 'var(--bg-accent-secondary-alpha, #37BABC26)',
-      'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2B)',
+      ...commonBgColors,
       'controls-accent': 'var(--controls-bg-accent, #5C8DEA)',
       'controls-permanent': 'var(--controls-text-permanent, #FCFCFC)',
       'controls-accent-hover': 'var(--controls-bg-accent-hover, #4878D2)',
       'controls-disable': 'var(--controls-bg-disable, #7F8792)',
     },
-    borderColor: {
-      transparent: 'transparent',
-      primary: 'var(--stroke-primary, #333942)',
-      secondary: 'var(--stroke-secondary, #222932)',
-      tertiary: 'var(--stroke-tertiary, #090D13)',
-      error: 'var(--stroke-error, #F76464)',
-      hover: 'var(--stroke-hover, #F3F4F6)',
-      'accent-primary': 'var(--stroke-accent-primary, #5C8DEA)',
-      'accent-secondary': 'var(--stroke-accent-secondary, #37BABC)',
-      'accent-tertiary': 'var(--stroke-accent-tertiary, #A972FF)',
-    },
-    // Same as border color
-    stroke: {
-      transparent: 'transparent',
-      primary: 'var(--stroke-primary, #333942)',
-      secondary: 'var(--stroke-secondary, #222932)',
-      tertiary: 'var(--stroke-tertiary, #090D13)',
-      error: 'var(--stroke-error, #F76464)',
-      hover: 'var(--stroke-hover, #F3F4F6)',
-      'accent-primary': 'var(--stroke-accent-primary, #5C8DEA)',
-      'accent-secondary': 'var(--stroke-accent-secondary, #37BABC)',
-      'accent-tertiary': 'var(--stroke-accent-tertiary, #A972FF)',
-    },
-    // Same as border color
-    divideColor: {
-      transparent: 'transparent',
-      primary: 'var(--stroke-primary, #333942)',
-      secondary: 'var(--stroke-secondary, #222932)',
-      tertiary: 'var(--stroke-tertiary, #090D13)',
-      error: 'var(--stroke-error, #F76464)',
-      hover: 'var(--stroke-hover, #F3F4F6)',
-      'accent-primary': 'var(--stroke-accent-primary, #5C8DEA)',
-      'accent-secondary': 'var(--stroke-accent-secondary, #37BABC)',
-      'accent-tertiary': 'var(--stroke-accent-tertiary, #A972FF)',
-    },
+    borderColor: commonBorderColors,
+    stroke: commonBorderColors,
+    divideColor: commonBorderColors,
     textColor: {
       transparent: 'transparent',
       primary: 'var(--text-primary, #F3F4F6)',
@@ -74,22 +59,7 @@ module.exports = {
       'controls-permanent': 'var(--controls-text-permanent, #FCFCFC)',
       'controls-disable': 'var(--controls-text-disable, #333942)',
     },
-    gradientColorStops: {
-      transparent: 'transparent',
-      'layer-0': 'var(--bg-layer-0, #000000)',
-      'layer-1': 'var(--bg-layer-1, #090D13)',
-      'layer-2': 'var(--bg-layer-2, #141A23)',
-      'layer-3': 'var(--bg-layer-3, #222932)',
-      'layer-4': 'var(--bg-layer-4, #333942)',
-      blackout: 'var(--bg-blackout, #090D13B3)',
-      error: 'var(--bg-error, #402027)',
-      'accent-primary': 'var(--bg-accent-primary, #5C8DEA)',
-      'accent-secondary': 'var(--bg-accent-secondary, #37BABC)',
-      'accent-tertiary': 'var(--bg-accent-tertiary, #A972FF)',
-      'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #5C8DEA2B)',
-      'accent-secondary-alpha': 'var(--bg-accent-secondary-alpha, #37BABC26)',
-      'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2B)',
-    },
+    gradientColorStops: commonBgColors,
     /////////
     extend: {
       colors: {
