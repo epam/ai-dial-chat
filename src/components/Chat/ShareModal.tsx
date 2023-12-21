@@ -118,7 +118,10 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
             <div className="flex flex-col justify-between gap-2">
               <h4 className=" max-h-[50px] text-base font-semibold">
                 <Tooltip tooltip={entity.name.trim()}>
-                  <span className="line-clamp-2 break-words" data-qa="share-chat-name">
+                  <span
+                    className="line-clamp-2 break-words"
+                    data-qa="share-chat-name"
+                  >
                     {`${t('Share')}: ${entity.name.trim()}`}
                   </span>
                 </Tooltip>
@@ -137,7 +140,8 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
                     className="w-full gap-2 truncate rounded border border-gray-400 bg-gray-100 p-3 pr-10 outline-none dark:border-gray-600 dark:bg-gray-700"
                     onCopyCapture={handleCopy}
                     value={url}
-                  data-qa="share-link"/>
+                    data-qa="share-link"
+                  />
                 </Tooltip>
                 <div className="absolute right-3 top-3">
                   {urlCopied ? (
