@@ -231,6 +231,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const handleEnterDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
+      e.stopPropagation();
       if (e.key === 'Enter') {
         e.preventDefault();
         handleRename();
