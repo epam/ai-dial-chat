@@ -2,15 +2,14 @@ import { ChangeEventHandler } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { Theme } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 interface ThemeSelectProps {
-  localTheme: Theme;
-  onThemeChangeHandler: (theme: Theme) => void;
+  localTheme: string;
+  onThemeChangeHandler: (theme: string) => void;
 }
 
 export const ThemeSelect = ({
@@ -21,7 +20,7 @@ export const ThemeSelect = ({
   const availableThemes = useAppSelector(UISelectors.selectAvailableThemes);
 
   const onChangeHandler: ChangeEventHandler<HTMLSelectElement> = (event) => {
-    const theme = event.target.value as Theme;
+    const theme = event.target.value;
     onThemeChangeHandler(theme);
   };
 
