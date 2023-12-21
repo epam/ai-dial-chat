@@ -4,7 +4,7 @@ This documentation will guide you through customizing the colors and image URLs 
 
 ## 1. Setting up custom themes configuration
 
-To apply a custom theme configuration, provide a `THEMES_CONFIG_HOST` environment variable containing the URL to your nginx server with the configuration and images. This ensures that the application fetches your configuration file during loading. If the environment variable is not provided, default themes and logos will be applied.
+To apply a custom theme configuration, provide a `THEMES_CONFIG_HOST` environment variable containing the URL to your nginx server with the configuration and images. This ensures that the application fetches your configuration file during loading. If the environment variable is not provided, default themes and model icons will be applied.
 
 ```bash
 THEMES_CONFIG_HOST=https://your-config-host.com
@@ -44,20 +44,21 @@ To declare new theme you should create an object inside your themes property and
       "id": "light",            // Some kebab case id name
       "app-logo": "logo.svg",   // Url for website logo displayed
       "colors": {
-        // Semantic colors which commonly used across entire application
+        // Semantic colors which commonly used across entire application. 
+        // See default configuration to check available colors
       }
     },
     // Other themes
   ],
 ```
 
-You should specify hex value (See [link](https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color)).
+You should specify hex value in colors (See [link](https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color)).
 
-By following these guidelines, you can effectively and safely customize the colors and opacity of your theme.
+*NOTE*: First theme in array will be used as default one for new users.
 
 ## 2. Default Configuration
 
-Below is the default configuration for the theme. This configuration includes the color palette, dark and light themes, and image URLs. You can use this as a starting point for customizing your own theme.
+Below is the default configuration for the theme. This configuration includes the color palettes for dark and light themes, and image URLs. You can use this as a starting point for customizing your own theme.
 
 ```json
 {
