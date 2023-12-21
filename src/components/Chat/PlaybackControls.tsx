@@ -99,7 +99,7 @@ export const PlaybackControls = ({
       if (
         !isPlayback ||
         hasParentWithFloatingOverlay(
-          (e.target as Element).parentElement,
+          e.target as Element,
           'data-floating-overlay',
         )
       ) {
