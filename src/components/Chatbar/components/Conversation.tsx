@@ -241,6 +241,17 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       );
     }, [conversation, dispatch]);
 
+  const handleCompare: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      if (isReplay || isPlayback) return;
+      dispatch(
+        ConversationsActions.selectConversations({
+          conversationIds: [conversation.id],
+        }),
+      );
+      dispatch(UIActions.setIsCompareMode(true));
+    }, [conversation.id, dispatch, isPlayback, isReplay]);
+
   useEffect(() => {
     if (isRenaming) {
       setIsDeleting(false);
@@ -425,18 +436,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
                 }),
               );
             }}
-            onCompare={
-              !isReplay && !isPlayback
-                ? () => {
-                    dispatch(
-                      ConversationsActions.selectConversations({
-                        conversationIds: [conversation.id],
-                      }),
-                    );
-                    dispatch(UIActions.setIsCompareMode(true));
-                  }
-                : undefined
-            }
+            onCompare={!isReplay && !isPlayback ? handleCompare : undefined}
             onReplay={!isPlayback ? handleStartReplay : undefined}
             onPlayback={handleCreatePlayback}
             onShare={handleOpenSharing}

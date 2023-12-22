@@ -34,7 +34,7 @@ export const ThemeSelect = ({
           onChange={onChangeHandler}
         >
           {availableThemes.map((theme) => (
-            <option key={theme.id} value={theme.id}>
+            <option key={theme.id} value={theme.id} className='bg-layer-3'>
               {t(theme.displayName)}
             </option>
           ))}
