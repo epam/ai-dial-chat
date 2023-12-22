@@ -12,10 +12,7 @@ export const ReplayAsIsDescription = ({ isModelInMessages }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   return (
     <div className="flex max-h-full shrink flex-col overflow-auto">
-      <div
-        className="grow bg-gray-200 px-5 py-4 dark:bg-gray-800"
-        data-qa="replay-as-is"
-      >
+      <div className="grow bg-layer-2 px-5 py-4" data-qa="replay-as-is">
         <div className="flex flex-col gap-3" data-qa="more-info">
           <span>{t('More info')}</span>
           <div className="flex items-center gap-2" data-qa="info-as-is">
@@ -26,14 +23,14 @@ export const ReplayAsIsDescription = ({ isModelInMessages }: Props) => {
           </div>
 
           <div className="flex flex-col justify-center">
-            <span className="text-xs text-gray-500" data-qa="app-descr">
+            <span className="text-xs text-secondary" data-qa="app-descr">
               {t(
                 'This mode replicates user requests from the original conversation including settings set in each message.',
               )}
             </span>
             {isModelInMessages && (
               <span
-                className="mt-3 text-xxs leading-4 text-red-800 dark:text-red-400"
+                className="mt-3 text-xxs leading-4 text-error"
                 data-qa="replay-old-version"
               >
                 {t(

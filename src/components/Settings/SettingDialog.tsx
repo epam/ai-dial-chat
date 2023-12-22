@@ -3,8 +3,6 @@ import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { HighlightColor } from '@/src/types/common';
-import { Theme } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -66,7 +64,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     };
   }, [handleClose]);
 
-  const onThemeChangeHandler = useCallback((theme: Theme) => {
+  const onThemeChangeHandler = useCallback((theme: string) => {
     setLocalTheme(theme);
   }, []);
 
@@ -88,14 +86,14 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   // Render the dialog.
   return (
     <FloatingPortal id="theme-main">
-      <div className="fixed inset-0 z-40 flex w-full items-center justify-center overflow-hidden bg-gray-900/30 p-3 dark:bg-gray-900/70">
+      <div className="fixed inset-0 z-40 flex w-full items-center justify-center overflow-hidden bg-blackout p-3">
         <div
           ref={modalRef}
-          className="relative inline-block max-h-full w-[500px] overflow-y-auto rounded bg-gray-100 p-4 text-left align-bottom transition-all dark:bg-gray-700 md:max-h-[400px]"
+          className="relative inline-block max-h-full w-[500px] overflow-y-auto rounded bg-layer-3 p-4 text-left align-bottom transition-all md:max-h-[400px]"
           role="dialog"
         >
           <button
-            className="absolute right-2 top-2 rounded text-gray-500 hover:text-blue-700"
+            className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
             onClick={handleClose}
           >
             <XMark height={24} width={24} />
@@ -111,16 +109,15 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
               labelText={t('Full width chat')}
               labelClassName="basis-1/3 md:basis-1/4"
               handleSwitch={onChangeHandlerFullWidth}
-              switchOnBackgroungColor={HighlightColor.Blue}
               switchOnText={t('ON')}
               switchOFFText={t('OFF')}
             />
           </div>
 
-          <div className="flex  justify-end">
+          <div className="flex justify-end">
             <button
               type="button"
-              className="w-full rounded bg-blue-500 p-3 text-gray-100 hover:bg-blue-700 focus:border focus:border-gray-800 focus-visible:outline-none dark:focus:border-gray-200 md:w-fit"
+              className="button button-primary"
               onClick={handleSave}
             >
               {t('Save')}

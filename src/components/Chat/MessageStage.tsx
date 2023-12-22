@@ -23,19 +23,19 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
         <Loader
           height={20}
           width={20}
-          className="shrink-0 grow-0 basis-auto animate-spin text-gray-500"
+          className="shrink-0 grow-0 basis-auto animate-spin text-secondary"
         />
       ) : stage.status === 'completed' ? (
         <CircleCheck
           height={20}
           width={20}
-          className="shrink-0 grow-0 basis-auto text-gray-500"
+          className="shrink-0 grow-0 basis-auto text-secondary"
           data-qa="stage-completed"
         />
       ) : (
         <IconExclamationCircle
           size={20}
-          className="shrink-0 grow-0 basis-auto text-gray-500"
+          className="shrink-0 grow-0 basis-auto text-secondary"
         />
       )}
       <span className={`block ${isOpened ? 'max-w-full' : 'truncate'}`}>
@@ -60,7 +60,7 @@ export const MessageStage = ({ stage }: Props) => {
   }, [stage?.content, stage?.attachments?.length]);
 
   return (
-    <div className="block min-w-0 shrink rounded border border-gray-400 bg-gray-300 dark:border-gray-700 dark:bg-gray-900">
+    <div className="block min-w-0 shrink rounded border border-secondary bg-layer-1">
       {hasContent ? (
         <button
           className="flex w-full min-w-0 shrink items-center gap-2 p-2"
@@ -73,7 +73,7 @@ export const MessageStage = ({ stage }: Props) => {
           <ChevronDown
             height={20}
             width={20}
-            className={`shrink-0 text-gray-500 transition ${
+            className={`shrink-0 text-secondary transition ${
               isOpened ? 'rotate-180' : ''
             }`}
           />
@@ -87,9 +87,7 @@ export const MessageStage = ({ stage }: Props) => {
       {(stage.content || stage.attachments) && (
         <div
           className={`grid max-w-full grid-flow-row overflow-auto  ${
-            isOpened
-              ? 'border-t border-gray-400 p-2 dark:border-gray-700'
-              : 'h-0'
+            isOpened ? 'border-t border-secondary p-2' : 'h-0'
           }`}
         >
           {stage.content && (
