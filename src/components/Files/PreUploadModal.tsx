@@ -120,13 +120,9 @@ export const PreUploadDialog = ({
         files,
         allowedTypes,
       ).map((file) => file.name);
-      const incorrectFileNames: string[] = getFilesWithInvalidFileName(
-        files,
-      ).map((file) => file.name);
       const invalidFileNames = new Set([
         ...incorrectSizeFiles,
         ...incorrectTypeFiles,
-        ...incorrectFileNames,
       ]);
       const filteredFiles = files.filter(
         (file) => !invalidFileNames.has(file.name),
@@ -147,17 +143,6 @@ export const PreUploadDialog = ({
             {
               allowedExtensions: allowedExtensions.join(', '),
               incorrectTypeFileNames: incorrectTypeFiles.join(', '),
-            },
-          ),
-        );
-      }
-      if (incorrectFileNames.length > 0) {
-        errors.push(
-          t(
-            `The symbols {{notAllowedSymbols}} are not allowed in file name. Next files haven't been uploaded: {{incorrectTypeFileNames}}`,
-            {
-              notAllowedSymbols: notAllowedSymbols.join(''),
-              incorrectTypeFileNames: incorrectFileNames.join(', '),
             },
           ),
         );
