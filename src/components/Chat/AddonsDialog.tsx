@@ -17,7 +17,6 @@ import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -38,8 +37,6 @@ const Addon = ({
   selectedAddons,
   onSelectAddons,
 }: AddonProps) => {
-  const theme = useAppSelector(UISelectors.selectThemeState);
-
   const isPreselected = preselectedAddonsIds.includes(addon.id);
   const isSelected = selectedAddons.map(({ id }) => id).includes(addon.id);
 
@@ -48,12 +45,12 @@ const Addon = ({
       className={classNames(
         `flex flex-col gap-3 rounded border p-3 text-left`,
         {
-          'bg-blue-500/20': isPreselected,
-          'hover:border-gray-800 dark:hover:border-gray-200': !isPreselected,
+          'bg-accent-primary-alpha': isPreselected,
+          'hover:border-hover': !isPreselected,
         },
         {
           'border-blue-500': isSelected,
-          'border-gray-400 dark:border-gray-600': !isSelected,
+          'border-primary': !isSelected,
         },
       )}
       key={addon.id}
@@ -63,18 +60,13 @@ const Addon = ({
       }}
     >
       <div className="flex items-center gap-2">
-        <ModelIcon
-          entity={addon}
-          entityId={addon.id}
-          size={24}
-          inverted={!addon.iconUrl && theme === 'dark'}
-        />
+        <ModelIcon entity={addon} entityId={addon.id} size={24} />
         <span className="text-left" data-qa="addon-name">
           {addon.name}
         </span>
       </div>
       {addon.description && (
-        <span className="text-gray-500">
+        <span className="text-secondary">
           <EntityMarkdownDescription>
             {addon.description}
           </EntityMarkdownDescription>
@@ -97,29 +89,23 @@ const SelectedAddon = ({
   onSelectAddons,
 }: SelectedAddonProps) => {
   const isPreselected = preselectedAddonsIds.includes(addon.id);
-  const theme = useAppSelector(UISelectors.selectThemeState);
 
   return (
     <button
-      className="flex items-center gap-3 rounded bg-blue-500/20 px-3 py-2"
+      className="flex items-center gap-3 rounded bg-accent-primary-alpha px-3 py-2"
       key={addon.id}
       disabled={isPreselected}
       onClick={() => {
         onSelectAddons(addon, true);
       }}
     >
-      <ModelIcon
-        entity={addon}
-        entityId={addon.id}
-        size={15}
-        inverted={!addon.iconUrl && theme === 'dark'}
-      />
+      <ModelIcon entity={addon} entityId={addon.id} size={15} />
       <span>{addon.name}</span>
       {!isPreselected && (
         <XMark
           height={12}
           width={12}
-          className="text-gray-500 hover:text-blue-500"
+          className="text-secondary hover:text-accent-primary"
         />
       )}
     </button>
@@ -207,9 +193,9 @@ export const AddonsDialog: FC<Props> = ({
   // Render the dialog.
   return (
     <FloatingPortal id="chat">
-      <div className="fixed inset-0 top-[48px] z-30 flex items-center justify-center bg-gray-900/30 p-3 dark:bg-gray-900/70 md:p-5">
+      <div className="fixed inset-0 top-[48px] z-30 flex items-center justify-center bg-blackout p-3 md:p-5">
         <div
-          className="m-auto flex h-full w-full grow flex-col gap-4 overflow-y-auto rounded bg-gray-100 py-4 text-left dark:bg-gray-700 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
+          className="m-auto flex h-full w-full grow flex-col gap-4 overflow-y-auto rounded bg-layer-3 py-4 text-left md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
           role="dialog"
           ref={refs.setFloating}
           {...getFloatingProps()}
@@ -221,7 +207,7 @@ export const AddonsDialog: FC<Props> = ({
               onClick={() => {
                 onClose();
               }}
-              className="text-gray-500 hover:text-blue-500"
+              className="text-secondary hover:text-accent-primary"
               data-qa="close-addons-dialog"
             >
               <XMark height={24} width={24} />
@@ -236,7 +222,7 @@ export const AddonsDialog: FC<Props> = ({
               onChange={(e) => {
                 handleSearch(e.target.value);
               }}
-              className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
+              className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
             ></input>
           </div>
           <div
@@ -247,7 +233,7 @@ export const AddonsDialog: FC<Props> = ({
               0 ||
               preselectedAddonsIds?.length > 0) && (
               <div className="flex flex-col gap-3">
-                <span className="text-gray-500">{t('Selected')}</span>
+                <span className="text-secondary">{t('Selected')}</span>
 
                 <div className="flex flex-wrap gap-1">
                   {preselectedAddonsIds.map((addonID) => {
@@ -283,7 +269,7 @@ export const AddonsDialog: FC<Props> = ({
             )}
             {displayedAddons?.length > 0 ? (
               <div className="flex shrink grow flex-col gap-3 overflow-auto">
-                <span className="text-gray-500">{t('Search results')}</span>
+                <span className="text-secondary">{t('Search results')}</span>
 
                 <div className="grid grid-cols-2 flex-wrap gap-3 md:grid-cols-3">
                   {displayedAddons.map((addon) => (
@@ -306,9 +292,9 @@ export const AddonsDialog: FC<Props> = ({
             <div className="h-[40px] shrink-0"></div>
           </div>
           <div className="relative h-0 grow">
-            <div className="absolute bottom-0 flex h-[80px] w-full items-end justify-center bg-gradient-to-b from-transparent via-gray-100 to-gray-100 px-3 dark:via-gray-700 dark:to-gray-700 md:px-5">
+            <div className="absolute bottom-0 flex h-[80px] w-full items-end justify-center bg-gradient-to-b from-transparent via-layer-3 to-layer-3 px-3 md:px-5">
               <button
-                className="w-full rounded bg-blue-500 px-3 py-2.5 text-gray-100 hover:bg-blue-700 md:w-fit"
+                className="button button-primary"
                 onClick={() => {
                   onClose();
                   onAddonsSelected(selectedAddons.map(({ id }) => id));

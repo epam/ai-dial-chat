@@ -10,7 +10,7 @@ import {
 
 import classNames from 'classnames';
 
-import { FeatureType, HighlightColor } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 
@@ -215,8 +215,10 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     <>
       <div
         className={classNames(
-          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-violet/15',
-          isHighlited ? 'border-l-violet bg-violet/15' : 'border-l-transparent',
+          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha',
+          isHighlited
+            ? 'border-l-accent-primary bg-accent-primary-alpha'
+            : 'border-l-transparent',
         )}
         style={{
           paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
@@ -237,11 +239,10 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         >
           <ShareIcon
             {...prompt}
-            isHighlited={isHighlited}
-            highlightColor={HighlightColor.Violet}
+            isHighlighted={isHighlited}
             featureType={FeatureType.Prompt}
           >
-            <IconBulb size={18} className="text-gray-500" />
+            <IconBulb size={18} className="text-secondary" />
           </ShareIcon>
 
           <div
@@ -256,11 +257,15 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         {isDeleting && (
           <div className="absolute right-1 z-10 flex">
             <SidebarActionButton handleClick={handleDelete}>
-              <IconCheck size={18} className="hover:text-violet" />
+              <IconCheck size={18} className="hover:text-accent-primary" />
             </SidebarActionButton>
 
             <SidebarActionButton handleClick={handleCancelDelete}>
-              <IconX size={18} strokeWidth="2" className="hover:text-violet" />
+              <IconX
+                size={18}
+                strokeWidth="2"
+                className="hover:text-accent-primary"
+              />
             </SidebarActionButton>
           </div>
         )}
@@ -285,7 +290,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               onOpenMoveToModal={() => {
                 setIsShowMoveToModal(true);
               }}
-              highlightColor={HighlightColor.Violet}
               onShare={handleOpenSharing}
               onPublish={handleOpenPublishing}
               onPublishUpdate={handleOpenPublishing}

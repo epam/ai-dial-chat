@@ -25,7 +25,7 @@ export const NotAllowedModel = ({ type = EntityType.Model }) => {
     >
       <div
         className={classNames(
-          'flex w-full items-center gap-2 rounded bg-red-200 p-4 text-base text-red-800 dark:bg-red-900 dark:text-red-400',
+          'flex w-full items-center gap-2 rounded bg-error p-4 text-base text-error',
           { 'lg:max-w-3xl': !isChatFullWidth },
         )}
         data-qa="not-allowed-model-error"

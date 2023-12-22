@@ -70,13 +70,13 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
     <FloatingPortal id="theme-main">
       <FloatingOverlay
         lockScroll
+        className="z-50 flex items-center justify-center bg-blackout p-3 md:p-5"
         data-floating-overlay
-        className="z-50 flex items-center justify-center bg-gray-900/30 p-3 dark:bg-gray-900/70 md:p-5"
       >
         <FloatingFocusManager context={context}>
           <form
             noValidate
-            className="relative inline-block h-[747px] max-h-full min-w-[550px] max-w-[1100px] rounded bg-gray-100 p-6 text-left dark:bg-gray-700"
+            className="relative inline-block h-[747px] max-h-full min-w-[550px] max-w-[1100px] rounded bg-layer-3 p-6 text-left"
             role="dialog"
             ref={refs.setFloating}
             {...getFloatingProps()}
@@ -85,7 +85,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
             <button
               type="button"
               role="button"
-              className="absolute right-2 top-2 rounded text-gray-500 hover:text-blue-700"
+              className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
               onClick={handleClose}
             >
               <IconX height={24} width={24} />

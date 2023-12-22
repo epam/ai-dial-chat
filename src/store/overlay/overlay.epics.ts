@@ -20,13 +20,11 @@ import {
   sendPMEvent,
   sendPMResponse,
 } from '@/src/utils/app/overlay';
-import { validateTheme } from '@/src/utils/app/settings';
 
 import { Message, Role } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
 import { OpenAIEntityModel } from '@/src/types/openai';
-import { Theme } from '@/src/types/settings';
 import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
@@ -41,7 +39,7 @@ import {
   SettingsActions,
   SettingsSelectors,
 } from '../settings/settings.reducers';
-import { UIActions } from '../ui/ui.reducers';
+import { UIActions, UISelectors } from '../ui/ui.reducers';
 import {
   OverlayActions,
   OverlayOptions,
@@ -173,12 +171,14 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
     map(({ payload: { ...options } }) => {
       const currentConversation =
         ConversationsSelectors.selectFirstSelectedConversation(state$.value);
+      const availableThemes = UISelectors.selectAvailableThemes(state$.value);
 
-      return { ...options, currentConversation };
+      return { ...options, currentConversation, availableThemes };
     }),
     switchMap(
       ({
         theme,
+        availableThemes,
         hostDomain,
         currentConversation,
         modelId,
@@ -203,8 +203,8 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         }
 
         if (theme) {
-          if (validateTheme(theme)) {
-            actions.push(of(UIActions.setTheme(theme as Theme)));
+          if (availableThemes.some(({ id }) => id === theme)) {
+            actions.push(of(UIActions.setTheme(theme)));
           } else {
             console.warn(
               `[Overlay](Theme) No such theme: ${theme}.\nTheme isn't set.`,
