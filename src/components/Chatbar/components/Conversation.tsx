@@ -252,6 +252,17 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       dispatch(UIActions.setIsCompareMode(true));
     }, [conversation.id, dispatch, isPlayback, isReplay]);
 
+  const handleDuplicate: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      // if (isReplay || isPlayback) return;
+      // dispatch(
+      //   ConversationsActions.selectConversations({
+      //     conversationIds: [conversation.id],
+      //   }),
+      // );
+      // dispatch(UIActions.setIsCompareMode(true));
+    }, []);
+
   useEffect(() => {
     if (isRenaming) {
       setIsDeleting(false);
@@ -437,6 +448,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
               );
             }}
             onCompare={!isReplay && !isPlayback ? handleCompare : undefined}
+            onDuplicate={handleDuplicate}
             onReplay={!isPlayback ? handleStartReplay : undefined}
             onPlayback={handleCreatePlayback}
             onShare={handleOpenSharing}

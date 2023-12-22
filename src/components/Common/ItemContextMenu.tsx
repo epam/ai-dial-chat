@@ -83,7 +83,7 @@ export default function ItemContextMenu({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
-  const isExternal = entity.sharedWithMe || entity.publishedWithMe;
+  const isExternal = !!(entity.sharedWithMe || entity.publishedWithMe);
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -208,6 +208,7 @@ export default function ItemContextMenu({
       isExternal,
       onRename,
       onCompare,
+      onDuplicate,
       isEmptyConversation,
       onReplay,
       onPlayback,

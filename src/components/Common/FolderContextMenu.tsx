@@ -59,7 +59,7 @@ export const FolderContextMenu = ({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
-  const isExternal = folder.sharedWithMe || folder.publishedWithMe;
+  const isExternal = !!(folder.sharedWithMe || folder.publishedWithMe);
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
