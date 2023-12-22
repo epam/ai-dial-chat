@@ -72,15 +72,15 @@ export const PlaybackControls = ({
     if (!isActiveIndex) {
       return;
     }
-    const CURRENT_PLAYBACK = selectedConversations[0]?.playback;
-    const CURRENT_MESSAGE = CURRENT_PLAYBACK?.messagesStack[activeIndex];
+    const currentPlayback = selectedConversations[0]?.playback;
+    const currentMessage = currentPlayback?.messagesStack[activeIndex];
 
     const content =
-      isNextMessageInStack && CURRENT_MESSAGE && CURRENT_MESSAGE?.content;
+      isNextMessageInStack && currentMessage && currentMessage?.content;
 
     const attachments =
-      CURRENT_MESSAGE && CURRENT_MESSAGE?.custom_content?.attachments?.length
-        ? CURRENT_MESSAGE.custom_content.attachments
+      currentMessage && currentMessage?.custom_content?.attachments?.length
+        ? currentMessage.custom_content.attachments
         : [];
     const message = attachments.length
       ? { content, custom_content: { attachments } }
