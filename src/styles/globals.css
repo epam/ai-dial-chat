@@ -86,7 +86,7 @@ pre:has(div.codeblock) {
   }
 
   .button:disabled {
-    @apply text-controls-disable;
+    @apply bg-controls-disable text-controls-disable;
   }
 
   .button:focus-visible,

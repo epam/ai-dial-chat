@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { memo } from 'react';
 import SVG from 'react-inlinesvg';
 
@@ -17,12 +18,12 @@ interface Props {
 }
 
 const ModelIconTemplate = memo(
-  ({ entity, size, animate }: Omit<Props, 'isCustomTooltip'>) => {
-    const url =
-      entity?.iconUrl ??
-      (entity?.type === EntityType.Addon
+  ({ entity, size, animate, entityId }: Omit<Props, 'isCustomTooltip'>) => {
+    const fallbackUrl =
+      entity?.type === EntityType.Addon
         ? `api/themes/image?name=default-addon`
-        : `api/themes/image?name=default-model`);
+        : `api/themes/image?name=default-model`;
+    const url = entity?.iconUrl ?? fallbackUrl;
 
     return (
       <>
@@ -33,7 +34,19 @@ const ModelIconTemplate = memo(
           )}
           style={{ height: `${size}px`, width: `${size}px` }}
         >
-          <SVG src={url} width={size} height={size} />
+          <SVG
+            src={url}
+            width={size}
+            height={size}
+            description={entity?.name || entityId}
+          >
+            <SVG
+              src={fallbackUrl}
+              width={size}
+              height={size}
+              description={entity?.name || entityId}
+            />
+          </SVG>
         </span>
       </>
     );

@@ -170,7 +170,7 @@ const Sidebar = <T,>({
   ]);
 
   const resizableWrapperClassName = classNames(
-    `!fixed top-12 z-40 flex !h-[calc(100%-48px)] min-w-[260px] border-primary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full`,
+    `!fixed top-12 z-40 flex !h-[calc(100%-48px)] min-w-[260px] border-tertiary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full`,
     isLeftSidebar
       ? 'sidebar-left left-0 border-r'
       : 'sidebar-right right-0 border-l',
