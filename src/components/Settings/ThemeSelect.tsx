@@ -24,6 +24,10 @@ export const ThemeSelect = ({
     onThemeChangeHandler(theme);
   };
 
+  if (availableThemes.length < 2) {
+    return null;
+  }
+
   return (
     <div className="flex items-center gap-5">
       <div className="basis-1/3 md:basis-1/4">{t('Theme')}</div>
