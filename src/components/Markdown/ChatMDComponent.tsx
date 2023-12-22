@@ -61,7 +61,7 @@ export const getMDComponents = (
     table({ children }) {
       return (
         <div className="max-w-full overflow-auto">
-          <table className="border-collapse border border-primary px-3 py-1 text-sm">
+          <table className="border-collapse border border-tertiary px-3 py-1 text-sm">
             {children}
           </table>
         </div>
@@ -69,14 +69,14 @@ export const getMDComponents = (
     },
     th({ children }) {
       return (
-        <th className="break-words border border-primary bg-layer-4 px-3 py-1 text-sm text-secondary">
+        <th className="break-words border border-tertiary bg-layer-4 px-3 py-1 text-sm text-secondary">
           {children}
         </th>
       );
     },
     td({ children }) {
       return (
-        <td className="break-words border border-primary px-3 py-1 text-sm">
+        <td className="break-words border border-tertiary px-3 py-1 text-sm">
           {children}
         </td>
       );

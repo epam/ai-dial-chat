@@ -17,7 +17,7 @@ export const CreateNewChatMobile = () => {
   return (
     <Tooltip isTriggerClickable tooltip={t('New conversation')}>
       <div
-        className="flex border-r border-primary p-3 md:hidden"
+        className="flex border-r border-tertiary p-3 md:hidden"
         onClick={() => {
           dispatch(
             ConversationsActions.createNewConversations({

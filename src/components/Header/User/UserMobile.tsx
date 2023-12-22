@@ -18,7 +18,7 @@ import UserIcon from '../../../../public/images/icons/user.svg';
 const UserInfo = () => {
   const { data: session } = useSession();
   return (
-    <div className=" w-full border-b border-primary p-2 text-primary">
+    <div className=" w-full border-b border-tertiary p-2 text-primary">
       <div className="flex h-[42px] items-center">
         <UserIcon className="mx-2" width={18} height={18} />
 
@@ -98,13 +98,13 @@ const UserMenu = () => {
 export const UserMobile = () => {
   return (
     <div
-      className="fixed right-0 top-12 z-40 flex w-[260px] flex-col overflow-y-auto border-primary bg-layer-3 md:hidden"
+      className="fixed right-0 top-12 z-40 flex w-[260px] flex-col overflow-y-auto border-tertiary bg-layer-3 md:hidden"
       style={{ height: 'calc(100% - 48px)' }}
     >
       <UserInfo />
       <UserMenu />
       <div className="grow"></div>
-      <div className="border-t border-primary p-4">
+      <div className="border-t border-tertiary p-4">
         <FooterMessage />
       </div>
     </div>

@@ -182,7 +182,7 @@ export const TooltipContent = forwardRef<
           ...style,
         }}
         {...context.getFloatingProps(props)}
-        className={`z-50 rounded border-primary bg-layer-0 px-2 py-1 text-left shadow ${
+        className={`z-50 rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow ${
           context.getFloatingProps(props).className
         }`}
         data-qa="tooltip"

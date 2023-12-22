@@ -142,7 +142,7 @@ export const Combobox = ({
         </div>
       </div>
       <ul
-        className={`z-10 max-h-80 overflow-auto rounded bg-layer-0 ${
+        className={`z-10 max-h-80 overflow-auto rounded bg-layer-3 ${
           !isOpen && 'hidden'
         }`}
         {...getMenuProps(
