@@ -23,8 +23,6 @@ import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 import { ChatInputFooter } from '../ChatInput/ChatInputFooter';
 import { PlaybackAttachments } from './PlaybackAttachments';
 
-import { v4 as uuidv4 } from 'uuid';
-
 interface Props {
   showScrollDownButton: boolean;
   onScrollDownClick: () => void;
@@ -82,11 +80,8 @@ export const PlaybackControls = ({
 
     const attachments =
       CURRENT_MESSAGE && CURRENT_MESSAGE?.custom_content?.attachments?.length
-        ? CURRENT_MESSAGE.custom_content.attachments.map(
-            ({ title, index }) => ({ title, index: index ?? uuidv4() }),
-          )
+        ? CURRENT_MESSAGE.custom_content.attachments
         : [];
-
     const message = attachments.length
       ? { content, custom_content: { attachments } }
       : { content };

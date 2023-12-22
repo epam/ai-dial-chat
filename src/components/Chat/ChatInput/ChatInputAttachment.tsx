@@ -12,8 +12,8 @@ import { DialFile } from '@/src/types/files';
 interface Props {
   file: Pick<DialFile, 'name' | 'id' | 'status' | 'percent'>;
 
-  onUnselectFile: (fileId: string) => void;
-  onRetryFile: (fileId: string) => void;
+  onUnselectFile?: (fileId: string) => void;
+  onRetryFile?: (fileId: string) => void;
 }
 
 export const ChatInputAttachment = ({
@@ -55,7 +55,7 @@ export const ChatInputAttachment = ({
           )}
         </div>
         <div className="flex gap-3">
-          {file.status === 'FAILED' && (
+          {onRetryFile && file.status === 'FAILED' && (
             <button onClick={() => onRetryFile(file.id)}>
               <IconReload
                 className="shrink-0 text-gray-500 hover:text-blue-500"
@@ -63,12 +63,14 @@ export const ChatInputAttachment = ({
               />
             </button>
           )}
-          <button onClick={() => onUnselectFile(file.id)}>
-            <IconX
-              className="shrink-0 text-gray-500 hover:text-blue-500"
-              size={18}
-            />
-          </button>
+          {onUnselectFile && (
+            <button onClick={() => onUnselectFile(file.id)}>
+              <IconX
+                className="shrink-0 text-gray-500 hover:text-blue-500"
+                size={18}
+              />
+            </button>
+          )}
         </div>
       </div>
     </div>
