@@ -75,10 +75,10 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
 
   return (
     <div
-      className={`codeblock relative overflow-hidden rounded border border-primary font text-sm text-primary`}
+      className={`codeblock relative overflow-hidden rounded border border-secondary font text-sm text-primary`}
     >
       <div
-        className={`flex items-center justify-between border-b border-primary p-3 ${
+        className={`flex items-center justify-between border-b border-secondary p-3 ${
           isInner ? 'bg-layer-3' : 'bg-layer-1'
         }`}
       >

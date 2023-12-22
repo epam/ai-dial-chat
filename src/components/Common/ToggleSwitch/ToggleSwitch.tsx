@@ -9,10 +9,18 @@ export interface ToggleSwitchProps {
 
 interface SwitchStateTextProps {
   switchText: string;
+  isOn: boolean;
 }
 
-const SwitchStateText = ({ switchText }: SwitchStateTextProps) => (
-  <span className="h-[15px] w-6 text-xs">{switchText}</span>
+const SwitchStateText = ({ switchText, isOn }: SwitchStateTextProps) => (
+  <span
+    className={classNames(
+      'h-[15px] w-6 text-xs',
+      isOn && 'text-controls-permanent',
+    )}
+  >
+    {switchText}
+  </span>
 );
 
 export function ToggleSwitch({
@@ -38,7 +46,7 @@ export function ToggleSwitch({
       />
 
       <div className={switchClassName}>
-        {switchText && <SwitchStateText switchText={switchText} />}
+        {switchText && <SwitchStateText switchText={switchText} isOn={isOn} />}
         <span className="h-3 w-3 rounded-full bg-controls-permanent"></span>
       </div>
     </div>
