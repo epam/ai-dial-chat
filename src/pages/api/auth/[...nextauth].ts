@@ -3,7 +3,6 @@ import NextAuth from 'next-auth/next';
 import { Provider } from 'next-auth/providers';
 import Auth0Provider from 'next-auth/providers/auth0';
 import AzureProvider from 'next-auth/providers/azure-ad';
-import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import KeycloakProvider from 'next-auth/providers/keycloak';
 
@@ -12,11 +11,7 @@ import PingId from '../../../utils/auth/ping-identity';
 import { callbacks, tokenConfig } from '@/src/utils/auth/nextauth';
 import { logger } from '@/src/utils/server/logger';
 
-import { v5 as uuid } from 'uuid';
-
 const DEFAULT_NAME = 'SSO';
-
-const TEST_TOKENS = new Set((process.env.AUTH_TEST_TOKEN ?? '').split(','));
 
 const allProviders: (Provider | boolean)[] = [
   !!process.env.AUTH_AZURE_AD_CLIENT_ID &&
@@ -28,7 +23,11 @@ const allProviders: (Provider | boolean)[] = [
       tenantId: process.env.AUTH_AZURE_AD_TENANT_ID,
       name: process.env.AUTH_AZURE_AD_NAME ?? DEFAULT_NAME,
       authorization: {
-        params: { scope: 'openid profile user.Read email offline_access' },
+        params: {
+          scope:
+            process.env.AUTH_AZURE_AD_SCOPE ||
+            'openid profile user.Read email offline_access',
+        },
       },
       token: tokenConfig,
     }),
@@ -41,7 +40,7 @@ const allProviders: (Provider | boolean)[] = [
       name: process.env.AUTH_GITLAB_NAME ?? DEFAULT_NAME,
       gitlabHost: process.env.AUTH_GITLAB_HOST,
       authorization: {
-        params: { scope: 'read_user' },
+        params: { scope: process.env.AUTH_GITLAB_SCOPE || 'read_user' },
       },
       token: tokenConfig,
     }),
@@ -54,7 +53,9 @@ const allProviders: (Provider | boolean)[] = [
       name: process.env.AUTH_GOOGLE_NAME ?? DEFAULT_NAME,
       authorization: {
         params: {
-          scope: 'openid email profile offline_access',
+          scope:
+            process.env.AUTH_GOOGLE_SCOPE ||
+            'openid email profile offline_access',
         },
       },
       token: tokenConfig,
@@ -71,7 +72,9 @@ const allProviders: (Provider | boolean)[] = [
       authorization: {
         params: {
           audience: process.env.AUTH_AUTH0_AUDIENCE,
-          scope: 'openid email profile offline_access',
+          scope:
+            process.env.AUTH_AUTH0_SCOPE ||
+            'openid email profile offline_access',
         },
       },
       token: tokenConfig,
@@ -87,7 +90,7 @@ const allProviders: (Provider | boolean)[] = [
       issuer: process.env.AUTH_PING_ID_HOST,
       authorization: {
         params: {
-          scope: 'offline_access',
+          scope: process.env.AUTH_PING_ID_SCOPE || 'offline_access',
         },
       },
       token: tokenConfig,
@@ -111,37 +114,12 @@ const allProviders: (Provider | boolean)[] = [
       },
       authorization: {
         params: {
-          scope: 'openid email profile offline_access',
+          scope:
+            process.env.AUTH_KEYCLOAK_SCOPE ||
+            'openid email profile offline_access',
         },
       },
       token: tokenConfig,
-    }),
-
-  !!process.env.AUTH_TEST_TOKEN &&
-    CredentialsProvider({
-      name: 'Credentials',
-      credentials: {
-        access_token: {
-          label: 'Token',
-          type: 'password',
-        },
-      },
-      async authorize(credentials) {
-        if (
-          !!credentials?.access_token &&
-          TEST_TOKENS.has(credentials.access_token)
-        ) {
-          return {
-            id: uuid(
-              credentials.access_token,
-              'd9428888-122b-11e1-b85c-61cd3cbb3210',
-            ),
-            email: 'test',
-            name: 'test: ' + credentials.access_token,
-          };
-        }
-        return null;
-      },
     }),
 ];
 
@@ -231,7 +209,7 @@ export const authOptions: AuthOptions = {
   },
   theme: {
     logo: process.env.THEMES_CONFIG_HOST
-      ? `${process.env.APP_BASE_PATH || ''}/api/themes-image?name=favicon`
+      ? `${process.env.APP_BASE_PATH || ''}/api/themes/image?name=favicon`
       : undefined,
   },
 };

@@ -5,9 +5,8 @@ The package contains Dial end-to-end tests. Tests are implemented using [Playwri
 ## Prerequisites
 
 Tests are using Auth0 credentials to access an application.
-Please, set `AUTH_TEST_TOKEN` variable in .env file in order to enable it.
 
-When run tests on CI, `PREVIEW_TEST_TOKEN` CI variable should be set.
+When run tests on CI, `E2E_USERNAME` and `E2E_PASSWORD` CI variable should be set to perform Auth0 login.
 
 
 ## Run tests locally
@@ -43,7 +42,6 @@ npm run test:e2e
 
 Image version should correspond Playwright version.
 
-
 ## Run tests on CI
 
 Config file used for CI pipeline: `playwright.config.ts`.
@@ -52,7 +50,8 @@ Config file used for CI pipeline: `playwright.config.ts`.
 
 Generated Allure report is attached as a job artifact.
 To view CI Allure report:
+
 - for Chrome: run `chrome.exe --disable-web-security --disable-gpu --user-data-dir=~/chromeTemp`
 - for FireFox: open `about:config` in browser and set `security.fileuri.strict_origin_policy` to false.
 
-CI report includes screenshots for failed tests. 
+CI report includes screenshots for failed tests.

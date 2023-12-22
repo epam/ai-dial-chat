@@ -9,7 +9,7 @@ export const Spinner = ({ size = 16, className = '' }: Props) => {
   return (
     <div
       className={classNames(
-        'animate-spin rounded-full border-t-2 border-gray-500',
+        'animate-spin rounded-full border-t-2 border-primary',
         className,
       )}
       data-qa="message-input-spinner"

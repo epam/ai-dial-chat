@@ -47,8 +47,8 @@ import { ChatSettingsEmpty } from './ChatSettingsEmpty';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
-import { PlaybackControls } from './PlaybackControls';
-import { PlaybackEmptyInfo } from './PlaybackEmptyInfo';
+import { PlaybackControls } from './Playback/PlaybackControls';
+import { PlaybackEmptyInfo } from './Playback/PlaybackEmptyInfo';
 
 const scrollThrottlingTimeout = 250;
 
@@ -459,6 +459,7 @@ export const Chat = memo(() => {
 
   const onEditMessage = useCallback(
     (editedMessage: Message, index: number) => {
+      dispatch(ConversationsActions.stopStreamMessage());
       dispatch(
         ConversationsActions.sendMessages({
           conversations: selectedConversations,

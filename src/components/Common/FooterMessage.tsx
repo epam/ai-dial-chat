@@ -47,7 +47,7 @@ export const FooterMessage = () => {
 
   return enabledFeatures.has(Feature.Footer) ? (
     <div data-qa="footer-message">
-      <div className="text-[12px] text-gray-500 md:text-center">
+      <div className="text-[12px] text-secondary md:text-center">
         <span
           dangerouslySetInnerHTML={{ __html: footerHtmlMessage || '' }}
         ></span>

@@ -16,8 +16,8 @@ export const getApiHeaders = ({
 
   if (jwt) {
     headers['authorization'] = 'Bearer ' + jwt;
-  } else {
-    headers['Api-Key'] = process.env.DIAL_API_KEY;
+  } else if (process.env.AUTH_DISABLED === 'true') {
+    headers['Api-Key'] = process.env.DIAL_API_HOST;
   }
 
   if (jobTitle) {

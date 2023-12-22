@@ -15,10 +15,14 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getDialFilesWithInvalidFileType } from '@/src/utils/app/file';
+import {
+  getDialFilesWithInvalidFileType,
+  getExtensionsListForMimeTypes,
+  notAllowedSymbols,
+  notAllowedSymbolsRegex,
+} from '@/src/utils/app/file';
 import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
-import { HighlightColor } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
@@ -26,15 +30,13 @@ import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
+import Folder from '@/src/components/Folder/Folder';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
-import Folder from '../Folder';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
-
-import { extension } from 'mime-types';
 
 interface Props {
   isOpen: boolean;
@@ -77,6 +79,9 @@ export const FileManagerModal = ({
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
+  const [uploadFolderId, setUploadFolderId] = useState<string | undefined>(
+    undefined,
+  );
   const [isUploadFromDeviceOpened, setIsUploadFromDeviceOpened] =
     useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -92,7 +97,7 @@ export const FileManagerModal = ({
     if (allowedTypes.includes('*/*')) {
       return [t('all')];
     }
-    return allowedTypes.map((mimeType) => `.${extension(mimeType)}`);
+    return getExtensionsListForMimeTypes(allowedTypes);
   }, [allowedTypes, t]);
   const showSpinner =
     folders.length === 0 && loadingStatuses.has(foldersStatus);
@@ -100,6 +105,7 @@ export const FileManagerModal = ({
   useEffect(() => {
     if (isOpen) {
       dispatch(FilesActions.getFilesWithFolders({}));
+      dispatch(FilesActions.resetNewFolderId());
     }
   }, [dispatch, isOpen]);
 
@@ -154,6 +160,19 @@ export const FileManagerModal = ({
     },
     [dispatch, openedFoldersIds],
   );
+
+  const handleUploadFile = useCallback(
+    (relativePath: string) => {
+      setUploadFolderId(relativePath);
+      setIsUploadFromDeviceOpened(true);
+
+      if (!openedFoldersIds.includes(relativePath)) {
+        setOpenedFoldersIds(openedFoldersIds.concat(relativePath));
+        dispatch(FilesActions.getFolders({ path: relativePath }));
+      }
+    },
+    [dispatch, openedFoldersIds],
+  );
   const handleRenameFolder = useCallback(
     (newName: string, folderId: string) => {
       const renamingFolder = folders.find((folder) => folder.id === folderId);
@@ -167,6 +186,17 @@ export const FileManagerModal = ({
       if (folderWithSameName) {
         setErrorMessage(
           t(`Not allowed to have folders with same names`) as string,
+        );
+        return;
+      }
+
+      if (newName.match(notAllowedSymbolsRegex)) {
+        setErrorMessage(
+          t(
+            `The symbols ${notAllowedSymbols.join(
+              '',
+            )} are not allowed in folder name`,
+          ) as string,
         );
         return;
       }
@@ -250,6 +280,11 @@ export const FileManagerModal = ({
     t,
   ]);
 
+  const handleStartUploadFiles = useCallback(() => {
+    setUploadFolderId(undefined);
+    setIsUploadFromDeviceOpened(true);
+  }, []);
+
   const handleUploadFiles = useCallback(
     (
       selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
@@ -292,16 +327,17 @@ export const FileManagerModal = ({
       {isOpen && (
         <FloatingOverlay
           lockScroll
-          className="z-50 flex items-center justify-center bg-gray-900/70 p-3 dark:bg-gray-900/30"
+          className="z-50 flex items-center justify-center bg-blackout p-3"
+          data-floating-overlay
         >
           <FloatingFocusManager context={context}>
             <div
-              className="relative flex max-h-full flex-col gap-4 rounded bg-gray-100 dark:bg-gray-700 md:w-[525px]"
+              className="relative flex max-h-full flex-col gap-4 rounded bg-layer-3 md:w-[525px]"
               ref={refs.setFloating}
               {...getFloatingProps()}
             >
               <button
-                className="absolute right-2 top-2 text-gray-500 hover:text-blue-500"
+                className="absolute right-2 top-2 text-secondary hover:text-accent-primary"
                 onClick={() => onClose(false)}
               >
                 <IconX />
@@ -318,7 +354,9 @@ export const FileManagerModal = ({
                   {t(
                     'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
                     {
-                      allowedExtensions: allowedExtensions.join(', '),
+                      allowedExtensions:
+                        allowedExtensions.join(', ') ||
+                        'no available extensions',
                     },
                   )}
                   &nbsp;
@@ -341,11 +379,11 @@ export const FileManagerModal = ({
                       placeholder={t('Search files') || ''}
                       type="text"
                       onChange={handleSearch}
-                      className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
+                      className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
                     ></input>
                     <div className="flex min-h-[350px] flex-col overflow-auto">
                       <button
-                        className="flex items-center gap-1 rounded py-1 text-xs text-gray-500"
+                        className="flex items-center gap-1 rounded py-1 text-xs text-secondary"
                         onClick={() => handleToggleFolder(undefined)}
                       >
                         <CaretIconComponent isOpen={isAllFilesOpened} />
@@ -355,7 +393,7 @@ export const FileManagerModal = ({
                         <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">
                           {(folders.length !== 0 ||
                             filteredFiles.length !== 0) && (
-                            <div className="overflow-auto">
+                            <div className="flex flex-col gap-1 overflow-auto">
                               {folders.map((folder) => {
                                 if (folder.folderId) {
                                   return null;
@@ -367,7 +405,6 @@ export const FileManagerModal = ({
                                       searchTerm={searchQuery}
                                       currentFolder={folder}
                                       allFolders={folders}
-                                      highlightColor={HighlightColor.Blue}
                                       highlightedFolders={[]}
                                       isInitialRenameEnabled
                                       newAddedFolderId={newFolderId}
@@ -379,6 +416,7 @@ export const FileManagerModal = ({
                                       itemComponent={FileItem}
                                       onClickFolder={handleFolderSelect}
                                       onAddFolder={handleAddFolder}
+                                      onFileUpload={handleUploadFile}
                                       onRenameFolder={handleRenameFolder}
                                       onItemEvent={handleItemCallback}
                                     />
@@ -409,19 +447,19 @@ export const FileManagerModal = ({
                   </div>
                 )}
               </div>
-              <div className="flex items-center justify-between border-t border-gray-300 px-6 py-4 dark:border-gray-900">
+              <div className="flex items-center justify-between border-t border-primary px-6 py-4">
                 <div className="flex items-center justify-center gap-2">
                   {selectedFilesIds.length > 0 ? (
                     <>
                       <button
                         onClick={handleRemoveMultipleFiles}
-                        className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
+                        className="flex h-[34px] w-[34px] items-center justify-center rounded text-secondary  hover:bg-accent-primary-alpha hover:text-accent-primary"
                       >
                         <IconTrash size={24} />
                       </button>
                       <button
                         onClick={handleDownloadMultipleFiles}
-                        className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
+                        className="flex h-[34px] w-[34px] items-center justify-center rounded text-secondary  hover:bg-accent-primary-alpha hover:text-accent-primary"
                       >
                         <IconDownload size={24} />
                       </button>
@@ -429,7 +467,7 @@ export const FileManagerModal = ({
                   ) : (
                     <button
                       onClick={handleNewFolder}
-                      className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
+                      className="flex h-[34px] w-[34px] items-center justify-center rounded text-secondary  hover:bg-accent-primary-alpha hover:text-accent-primary"
                     >
                       <FolderPlus height={24} width={24} />
                     </button>
@@ -437,7 +475,7 @@ export const FileManagerModal = ({
                 </div>
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => setIsUploadFromDeviceOpened(true)}
+                    onClick={handleStartUploadFiles}
                     className={classNames(
                       'button',
                       isInConversation ? 'button-secondary' : 'button-primary',
@@ -459,6 +497,7 @@ export const FileManagerModal = ({
 
               {isUploadFromDeviceOpened && (
                 <PreUploadDialog
+                  uploadFolderId={uploadFolderId}
                   isOpen
                   allowedTypes={allowedTypes}
                   initialFilesSelect

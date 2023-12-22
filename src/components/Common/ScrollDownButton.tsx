@@ -11,7 +11,7 @@ export const ScrollDownButton = ({ onScrollDownClick, className }: Props) => {
     <div className={classNames('absolute aspect-square h-11', className)}>
       <button
         data-qa="scroll-down-button"
-        className="flex h-full w-full items-center justify-center rounded-full bg-gray-100 p-2 hover:bg-gray-400 dark:bg-gray-700 hover:dark:bg-gray-600"
+        className="flex h-full w-full items-center justify-center rounded-full bg-layer-3 p-2 hover:bg-layer-4"
         onClick={onScrollDownClick}
       >
         <IconArrowDown width={24} height={24} />

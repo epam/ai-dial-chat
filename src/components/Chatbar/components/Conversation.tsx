@@ -14,7 +14,7 @@ import {
 import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType, HighlightColor } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
 import {
@@ -23,12 +23,12 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { emptyImage } from '@/src/constants/drag-and-drop';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
-import { PlaybackIcon } from '@/src/components/Chat/PlaybackIcon';
+import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import ShareModal from '@/src/components/Chat/ShareModal';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
@@ -48,14 +48,12 @@ interface ViewProps {
 
 export function ConversationView({ conversation, isHighlited }: ViewProps) {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const theme = useAppSelector(UISelectors.selectThemeState);
 
   return (
     <>
       <ShareIcon
         {...conversation}
-        isHighlited={!!isHighlited}
-        highlightColor={HighlightColor.Green}
+        isHighlighted={!!isHighlited}
         featureType={FeatureType.Chat}
       >
         {conversation.replay.replayAsIs && (
@@ -76,7 +74,6 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
               size={18}
               entityId={conversation.model.id}
               entity={modelsMap[conversation.model.id]}
-              inverted={theme === 'dark'}
             />
           )}
       </ShareIcon>
@@ -99,8 +96,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-
-  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const selectedConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
@@ -315,14 +310,16 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     setIsContextMenu(true);
   };
 
-  const isHighlited = isSelected || isRenaming || isDeleting;
+  const isHighlighted = isSelected || isRenaming || isDeleting;
 
   return (
     <div
       className={classNames(
-        'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-green/15',
-        isHighlited ? 'border-l-green bg-green/15' : 'border-l-transparent',
-        { 'bg-green/15': isContextMenu },
+        'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha',
+        isHighlighted
+          ? 'border-l-accent-primary bg-accent-primary-alpha'
+          : 'border-l-transparent',
+        { 'bg-accent-primary-alpha': isContextMenu },
       )}
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
@@ -334,8 +331,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         <div className="flex w-full items-center gap-2 pr-12">
           <ShareIcon
             {...conversation}
-            isHighlited={isHighlited}
-            highlightColor={HighlightColor.Green}
+            isHighlighted={isHighlighted}
             featureType={FeatureType.Chat}
           >
             {conversation.replay.replayAsIs && (
@@ -354,7 +350,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
               !conversation.playback?.isPlayback && (
                 <ModelIcon
                   size={18}
-                  inverted={theme === 'dark'}
                   entityId={conversation.model.id}
                   entity={modelsMap[conversation.model.id]}
                 />
@@ -398,7 +393,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         >
           <ConversationView
             conversation={conversation}
-            isHighlited={isHighlited}
+            isHighlited={isHighlighted || isContextMenu}
           />
         </button>
       )}
@@ -417,7 +412,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             isEmptyConversation={isEmptyConversation}
             folders={folders}
             featureType={FeatureType.Chat}
-            highlightColor={HighlightColor.Green}
             onOpenMoveToModal={() => {
               setIsShowMoveToModal(true);
             }}
@@ -469,10 +463,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       {(isDeleting || isRenaming) && (
         <div className="absolute right-1 z-10 flex">
           <SidebarActionButton handleClick={handleConfirm}>
-            <IconCheck size={18} className="hover:text-green" />
+            <IconCheck size={18} className="hover:text-accent-primary" />
           </SidebarActionButton>
           <SidebarActionButton handleClick={handleCancel}>
-            <IconX size={18} strokeWidth="2" className="hover:text-green" />
+            <IconX
+              size={18}
+              strokeWidth="2"
+              className="hover:text-accent-primary"
+            />
           </SidebarActionButton>
         </div>
       )}

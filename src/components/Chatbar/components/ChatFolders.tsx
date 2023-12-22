@@ -8,7 +8,7 @@ import {
 } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType, HighlightColor } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -21,7 +21,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import Folder from '@/src/components/Folder';
+import Folder from '@/src/components/Folder/Folder';
 
 import CollapsableSection from '../../Common/CollapsableSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
@@ -134,7 +134,6 @@ const ChatFolderTemplate = ({
         onDrop={onDropBetweenFolders}
         index={index}
         parentFolderId={folder.folderId}
-        highlightColor={HighlightColor.Green}
       />
       <Folder
         readonly={readonly}
@@ -143,7 +142,6 @@ const ChatFolderTemplate = ({
         itemComponent={ConversationComponent}
         allItems={conversations}
         allFolders={conversationFolders}
-        highlightColor={HighlightColor.Green}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
@@ -168,7 +166,6 @@ const ChatFolderTemplate = ({
           onDrop={onDropBetweenFolders}
           index={index + 1}
           parentFolderId={folder.folderId}
-          highlightColor={HighlightColor.Green}
         />
       )}
     </>
@@ -289,6 +286,10 @@ export function ChatFolders() {
     ConversationsSelectors.selectMyItemsFilters,
   );
 
+  const isPublishingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isPublishingEnabled(state, FeatureType.Chat),
+  );
+
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
@@ -297,7 +298,7 @@ export function ChatFolders() {
     () =>
       [
         {
-          hidden: !isSharingEnabled || !isFilterEmpty,
+          hidden: !isPublishingEnabled || !isFilterEmpty,
           name: t('Organization'),
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
@@ -320,12 +321,19 @@ export function ChatFolders() {
           dataQa: 'pinned-chats',
         },
       ].filter(({ hidden }) => !hidden),
-    [commonItemFilter, isFilterEmpty, isSharingEnabled, searchTerm.length, t],
+    [
+      commonItemFilter,
+      isFilterEmpty,
+      isPublishingEnabled,
+      isSharingEnabled,
+      searchTerm.length,
+      t,
+    ],
   );
 
   return (
     <div
-      className="flex w-full flex-col gap-0.5 divide-y divide-gray-200 empty:hidden dark:divide-gray-800"
+      className="flex w-full flex-col gap-0.5 divide-y divide-tertiary empty:hidden"
       data-qa="chat-folders"
     >
       {folderItems.map((itemProps) => (

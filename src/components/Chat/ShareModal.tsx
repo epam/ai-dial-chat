@@ -96,12 +96,13 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
     <FloatingPortal id="theme-main">
       <FloatingOverlay
         lockScroll
-        className="z-50 flex items-center justify-center bg-gray-900/30 p-3 dark:bg-gray-900/70 md:p-5"
+        className="z-50 flex items-center justify-center bg-blackout p-3 md:p-5"
+        data-floating-overlay
       >
         <FloatingFocusManager context={context} initialFocus={copyButtonRef}>
           <form
             noValidate
-            className="relative inline-block max-h-full w-full max-w-[424px] rounded bg-gray-100 p-6 text-left dark:bg-gray-700"
+            className="relative inline-block max-h-full w-full max-w-[424px] rounded bg-layer-3 p-6 text-left"
             role="dialog"
             ref={refs.setFloating}
             {...getFloatingProps()}
@@ -110,7 +111,7 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
             <button
               type="button"
               role="button"
-              className="absolute right-2 top-2 rounded text-gray-500 hover:text-blue-700"
+              className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
               onClick={handleClose}
             >
               <IconX height={24} width={24} />
@@ -123,10 +124,10 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
                   </span>
                 </Tooltip>
               </h4>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-secondary">
                 {t('share.modal.link.description')}
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-secondary">
                 {t('share.modal.link', { context: type })}
               </p>
               <div className="relative mt-2">
@@ -134,7 +135,7 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
                   <input
                     type="text"
                     readOnly
-                    className="w-full gap-2 truncate rounded border border-gray-400 bg-gray-100 p-3 pr-10 outline-none dark:border-gray-600 dark:bg-gray-700"
+                    className="w-full gap-2 truncate rounded border border-primary bg-layer-3 p-3 pr-10 outline-none"
                     onCopyCapture={handleCopy}
                     value={url}
                   />
@@ -142,7 +143,7 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
                 <div className="absolute right-3 top-3">
                   {urlCopied ? (
                     <Tooltip tooltip={t('Copied!')}>
-                      <IconCheck size={20} className="text-gray-500" />
+                      <IconCheck size={20} className="text-secondary" />
                     </Tooltip>
                   ) : (
                     <Tooltip tooltip={t('Copy URL')}>
@@ -154,7 +155,7 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
                         <IconCopy
                           height={20}
                           width={20}
-                          className="text-gray-500 hover:text-blue-500"
+                          className="text-secondary hover:text-accent-primary"
                         />
                       </button>
                     </Tooltip>

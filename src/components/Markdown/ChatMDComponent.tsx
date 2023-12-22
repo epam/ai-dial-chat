@@ -2,6 +2,9 @@ import { Components } from 'react-markdown';
 
 import classnames from 'classnames';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
+
 import {
   modelCursorSign,
   modelCursorSignWithBackquote,
@@ -58,7 +61,7 @@ export const getMDComponents = (
     table({ children }) {
       return (
         <div className="max-w-full overflow-auto">
-          <table className="border-collapse border border-black px-3 py-1 text-sm dark:border-gray-100">
+          <table className="border-collapse border border-tertiary px-3 py-1 text-sm">
             {children}
           </table>
         </div>
@@ -66,14 +69,14 @@ export const getMDComponents = (
     },
     th({ children }) {
       return (
-        <th className="break-words border border-black bg-gray-500 px-3 py-1 text-sm text-gray-200 dark:border-gray-100">
+        <th className="break-words border border-tertiary bg-layer-4 px-3 py-1 text-sm text-secondary">
           {children}
         </th>
       );
     },
     td({ children }) {
       return (
-        <td className="break-words border border-black px-3 py-1 text-sm dark:border-gray-100">
+        <td className="break-words border border-tertiary px-3 py-1 text-sm">
           {children}
         </td>
       );
@@ -101,10 +104,17 @@ const ChatMDComponent = ({
   content,
   isInner = false,
 }: ChatMDComponentProps) => {
+  const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+
+  const mdClassNames = classnames(
+    'prose dark:prose-invert prose-a:text-accent-primary prose-a:no-underline hover:prose-a:underline',
+    { 'max-w-none': isChatFullWidth },
+  );
+
   return (
     <>
       <MemoizedReactMarkdown
-        className={`prose dark:prose-invert prose-a:text-blue-500 prose-a:no-underline hover:prose-a:underline`}
+        className={mdClassNames}
         remarkPlugins={[remarkGfm]}
         linkTarget="_blank"
         components={getMDComponents(isShowResponseLoader, isInner)}

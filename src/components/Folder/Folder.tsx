@@ -21,11 +21,11 @@ import classNames from 'classnames';
 
 import useOutsideAlerter from '@/src/hooks/useOutsideAlerter';
 
-import { getByHighlightColor, getFoldersDepth } from '@/src/utils/app/folders';
+import { getFoldersDepth } from '@/src/utils/app/folders';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType, HighlightColor } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
@@ -64,7 +64,6 @@ interface Props<T, P = unknown> {
   allItems?: T[];
   allFolders: FolderInterface[];
   level?: number;
-  highlightColor: HighlightColor;
   highlightedFolders?: string[];
   searchTerm: string;
   openedFoldersIds: string[];
@@ -86,6 +85,7 @@ interface Props<T, P = unknown> {
   featureType?: FeatureType;
   onItemEvent?: (eventId: string, data: unknown) => void;
   readonly?: boolean;
+  onFileUpload?: (parentFolderId: string) => void;
 }
 
 const Folder = <T extends Conversation | Prompt | DialFile>({
@@ -94,7 +94,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   itemComponent,
   allItems,
   allFolders,
-  highlightColor,
   highlightedFolders,
   openedFoldersIds,
   level = 0,
@@ -109,6 +108,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   onDeleteFolder,
   onClickFolder,
   onAddFolder,
+  onFileUpload,
   onItemEvent,
   featureType,
   readonly = false,
@@ -117,6 +117,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const dispatch = useAppDispatch();
 
   const [isDeletingConfirmDialog, setIsDeletingConfirmDialog] = useState(false);
+  const [search, setSearch] = useState(searchTerm);
+  const renameInputRef = useRef<HTMLInputElement>(null);
   const [isRenaming, setIsRenaming] = useState(
     isInitialRenameEnabled &&
       newAddedFolderId === currentFolder.id &&
@@ -138,6 +140,22 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );
+
+  useEffect(() => {
+    // only if search term was changed after first render
+    // to allow `isInitialRenameEnabled` be used
+    if (search !== searchTerm) {
+      setIsRenaming(false);
+    }
+    setSearch(searchTerm);
+  }, [search, searchTerm]);
+
+  useEffect(() => {
+    if (isRenaming) {
+      // focus manually because `autoFocus` doesn't work well with several items and rerender
+      renameInputRef.current?.focus();
+    }
+  }, [isRenaming]);
 
   const handleOpenSharing: MouseEventHandler = useCallback((e) => {
     e.stopPropagation();
@@ -211,6 +229,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const handleEnterDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
+      e.stopPropagation();
       if (e.key === 'Enter') {
         e.preventDefault();
         handleRename();
@@ -327,6 +346,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       e.stopPropagation();
       setIsRenaming(true);
       setRenameValue(currentFolder.name);
+      // `setTimeout` because isRenaming should be applied to render input and only after that it can be focused
+      setTimeout(() => renameInputRef.current?.focus());
     },
     [currentFolder.name, onRenameFolder],
   );
@@ -352,6 +373,18 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       onAddFolder(currentFolder.id);
     },
     [currentFolder.id, onAddFolder],
+  );
+
+  const onUpload: MouseEventHandler = useCallback(
+    (e) => {
+      if (!onFileUpload) {
+        return;
+      }
+
+      e.stopPropagation();
+      onFileUpload(currentFolder.id);
+    },
+    [currentFolder.id, onFileUpload],
   );
 
   const handleDragStart = useCallback(
@@ -391,43 +424,12 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   useOutsideAlerter(dragDropElement, setIsSelected);
 
-  const hoverIconColor = getByHighlightColor(
-    highlightColor,
-    'hover:text-green',
-    'hover:text-violet',
-    'hover:text-blue-500',
-  );
-  const textColor = getByHighlightColor(
-    highlightColor,
-    'text-green',
-    'text-violet',
-    'text-blue-500',
-  );
-  const bgColor = getByHighlightColor(
-    highlightColor,
-    'bg-green/15',
-    'bg-violet/15',
-    'bg-blue-500/20',
-  );
-  const hoverBgColor = getByHighlightColor(
-    highlightColor,
-    'hover:bg-green/15',
-    'hover:bg-violet/15',
-    'hover:bg-blue-500/20',
-  );
-  const borderColor = getByHighlightColor(
-    highlightColor,
-    'border-green',
-    'border-violet',
-    'border-blue-500',
-  );
-
   return (
     <div
       id="folder"
       className={classNames(
         'transition-colors duration-200',
-        isDraggingOver && isDropAllowed && bgColor,
+        isDraggingOver && isDropAllowed && 'bg-accent-primary-alpha',
       )}
       onDrop={dropHandler}
       onDragOver={allowDrop}
@@ -438,13 +440,12 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     >
       <div
         className={classNames(
-          'relative flex h-[30px] items-center rounded border-l-2',
-          hoverBgColor,
+          'group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
           isRenaming ||
             isContextMenu ||
             (allItems === undefined &&
               highlightedFolders?.includes(currentFolder.id))
-            ? classNames(bgColor, borderColor)
+            ? 'border-accent-primary bg-accent-primary-alpha'
             : 'border-transparent',
         )}
         data-qa="folder"
@@ -466,11 +467,10 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             ) : (
               <ShareIcon
                 {...currentFolder}
-                isHighlited
-                highlightColor={highlightColor}
+                isHighlighted
                 featureType={featureType}
               >
-                <IconFolder size={18} className="mr-1 text-gray-500" />
+                <IconFolder size={18} className="mr-1 text-secondary" />
               </ShareIcon>
             )}
 
@@ -480,7 +480,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
               onKeyDown={handleEnterDown}
-              autoFocus
+              ref={renameInputRef}
             />
           </div>
         ) : (
@@ -512,11 +512,10 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             ) : (
               <ShareIcon
                 {...currentFolder}
-                isHighlited={isContextMenu}
-                highlightColor={highlightColor}
+                isHighlighted={isContextMenu}
                 featureType={featureType}
               >
-                <IconFolder size={18} className="mr-1 text-gray-500" />
+                <IconFolder size={18} className="mr-1 text-secondary" />
               </ShareIcon>
             )}
             <div
@@ -525,7 +524,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 isRenaming ? 'pr-10' : 'group-hover/button:pr-5',
                 !isRenaming &&
                   highlightedFolders?.includes(currentFolder.id) &&
-                  textColor,
+                  'text-primary',
               )}
               data-qa="folder-name"
             >
@@ -557,8 +556,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                     onPublish={handleOpenPublishing}
                     onPublishUpdate={handleOpenPublishing}
                     onUnpublish={handleOpenUnpublishing}
-                    highlightColor={highlightColor}
                     onOpenChange={setIsContextMenu}
+                    onUpload={onFileUpload && onUpload}
                     isOpen={isContextMenu}
                   />
                 </div>
@@ -581,7 +580,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 width={18}
                 height={18}
                 size={18}
-                className={hoverIconColor}
+                className="hover:text-primary"
               />
             </SidebarActionButton>
             <SidebarActionButton
@@ -594,7 +593,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 width={18}
                 height={18}
                 size={18}
-                className={hoverIconColor}
+                className="hover:text-primary"
                 strokeWidth="2"
               />
             </SidebarActionButton>
@@ -602,21 +601,22 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         )}
       </div>
       {isFolderOpened ? (
-        <div className={classNames('flex flex-col gap-0.5')}>
+        <div className={classNames('flex flex-col gap-1')}>
           <div className={classNames('flex flex-col')}>
             {allFolders.map((item, index, arr) => {
               if (item.folderId === currentFolder.id) {
                 return (
                   <Fragment key={item.id}>
-                    {onDropBetweenFolders && (
+                    {onDropBetweenFolders ? (
                       <BetweenFoldersLine
                         level={level + 1}
                         onDrop={onDropBetweenFolders}
                         onDraggingOver={onDraggingBetweenFolders}
                         index={index}
                         parentFolderId={item.folderId}
-                        highlightColor={highlightColor}
                       />
+                    ) : (
+                      <div className="h-1"></div>
                     )}
                     <Folder
                       readonly={readonly}
@@ -626,7 +626,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       itemComponent={itemComponent}
                       allItems={allItems}
                       allFolders={allFolders}
-                      highlightColor={highlightColor}
                       highlightedFolders={highlightedFolders}
                       openedFoldersIds={openedFoldersIds}
                       loadingFolderId={loadingFolderId}
@@ -637,6 +636,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       handleDrop={handleDrop}
                       onDropBetweenFolders={onDropBetweenFolders}
                       onRenameFolder={onRenameFolder}
+                      onFileUpload={onFileUpload}
                       onDeleteFolder={onDeleteFolder}
                       onAddFolder={onAddFolder}
                       onClickFolder={onClickFolder}
@@ -650,7 +650,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                         onDraggingOver={onDraggingBetweenFolders}
                         index={index + 1}
                         parentFolderId={item.folderId}
-                        highlightColor={highlightColor}
                       />
                     )}
                   </Fragment>

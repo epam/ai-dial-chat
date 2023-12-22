@@ -7,7 +7,7 @@ import {
   SharedWithMeFilter,
 } from '@/src/utils/app/search';
 
-import { FeatureType, HighlightColor } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
@@ -21,7 +21,7 @@ import {
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import Folder from '@/src/components/Folder';
+import Folder from '@/src/components/Folder/Folder';
 
 import CollapsableSection from '../../Common/CollapsableSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
@@ -128,7 +128,6 @@ const PromptFolderTemplate = ({
         onDrop={onDropBetweenFolders}
         index={index}
         parentFolderId={folder.folderId}
-        highlightColor={HighlightColor.Violet}
       />
       <Folder
         searchTerm={searchTerm}
@@ -136,7 +135,6 @@ const PromptFolderTemplate = ({
         itemComponent={PromptComponent}
         allItems={prompts}
         allFolders={promptFolders}
-        highlightColor={HighlightColor.Violet}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
@@ -161,7 +159,6 @@ const PromptFolderTemplate = ({
           onDrop={onDropBetweenFolders}
           index={index + 1}
           parentFolderId={folder.folderId}
-          highlightColor={HighlightColor.Violet}
         />
       )}
     </>
@@ -277,11 +274,15 @@ export function PromptFolders() {
     SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
   );
 
+  const isPublishingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isPublishingEnabled(state, FeatureType.Prompt),
+  );
+
   const folderItems: FolderSectionProps[] = useMemo(
     () =>
       [
         {
-          hidden: !isSharingEnabled || !isFilterEmpty,
+          hidden: !isPublishingEnabled || !isFilterEmpty,
           name: t('Organization'),
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
@@ -304,12 +305,19 @@ export function PromptFolders() {
           dataQa: 'pinned-prompts',
         },
       ].filter(({ hidden }) => !hidden),
-    [commonSearchFilter, isFilterEmpty, isSharingEnabled, searchTerm.length, t],
+    [
+      commonSearchFilter,
+      isFilterEmpty,
+      isPublishingEnabled,
+      isSharingEnabled,
+      searchTerm.length,
+      t,
+    ],
   );
 
   return (
     <div
-      className="flex w-full flex-col gap-0.5 divide-y divide-gray-200 empty:hidden dark:divide-gray-800"
+      className="flex w-full flex-col gap-0.5 divide-y divide-tertiary empty:hidden"
       data-qa="prompt-folders"
     >
       {folderItems.map((itemProps) => (

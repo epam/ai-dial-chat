@@ -13,10 +13,7 @@
   "settings": {
     "tailwindcss": {
       "config": "./tailwind.config.js",
-      "callees":  [
-        "classnames", "classNames", "clsx", // defaults
-        "getByHighlightColor" // our helpers
-      ]
+      "callees": ["classnames", "classNames"]
     }
   },
   "rules": {
@@ -31,18 +28,16 @@
     ],
     "no-restricted-imports": ["error", { "paths": ["react-i18next"] }],
     "tailwindcss/no-custom-classname": "error",
-    "tailwindcss/no-contradicting-classname": ["error", { "callees": [
-      "classnames", "classNames", "clsx" // only default
-    ]}],
+    "tailwindcss/no-contradicting-classname": "error",
     "no-restricted-globals": [
       "error",
       {
-          "name": "localStorage",
-          "message": "Use DataService instead."
+        "name": "localStorage",
+        "message": "Use DataService instead."
       },
       {
-          "name": "sessionStorage",
-          "message": "Use DataService instead."
+        "name": "sessionStorage",
+        "message": "Use DataService instead."
       }
     ],
     "no-multiple-empty-lines": ["warn", { "max": 1, "maxBOF": 0 }]
@@ -50,7 +45,10 @@
   "overrides": [
     {
       "plugins": ["testing-library"],
-      "files": ["**/__tests__/**/*.[jt]s?(x)", "**/?(*.)+(spec|test).[jt]s?(x)"],
+      "files": [
+        "**/__tests__/**/*.[jt]s?(x)",
+        "**/?(*.)+(spec|test).[jt]s?(x)"
+      ],
       "extends": ["plugin:testing-library/react"],
       "rules": {
         "testing-library/await-async-queries": "error",

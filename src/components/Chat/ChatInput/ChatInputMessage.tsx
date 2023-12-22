@@ -27,6 +27,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
 import { AttachButton } from '../../Files/AttachButton';
@@ -78,6 +79,10 @@ export const ChatInputMessage = ({
     SettingsSelectors.selectEnabledFeatures,
   );
   const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
+  const isUploadingFilePresent = useAppSelector(
+    FilesSelectors.selectIsUploadingFilePresent,
+  );
+
   const maximumAttachmentsAmount = useAppSelector(
     ConversationsSelectors.selectMaximumAttachmentsAmount,
   );
@@ -97,6 +102,8 @@ export const ChatInputMessage = ({
     ConversationsSelectors.selectNotModelConversations,
   );
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+
   const isError =
     isLastAssistantMessageEmpty || (isMessageError && notModelConversations);
 
@@ -113,7 +120,8 @@ export const ChatInputMessage = ({
     isReplay ||
     isError ||
     isInputEmpty ||
-    isModelsLoading;
+    isModelsLoading ||
+    isUploadingFilePresent;
   const maxLength = useMemo(() => {
     const maxLengthArray = selectedConversations.map(
       ({ model }) =>
@@ -381,19 +389,27 @@ export const ChatInputMessage = ({
     if (isError) {
       return t('Please regenerate response to continue working with chat');
     }
+    if (isUploadingFilePresent) {
+      return t('Please wait for the attachment to load');
+    }
     return t('Please type a message');
   };
 
   return (
-    <div className="mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0  md:last:mb-6 lg:mx-auto lg:max-w-3xl">
+    <div
+      className={classNames(
+        'mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0  md:last:mb-6',
+        isChatFullWidth ? 'lg:ml-20 lg:mr-[84px]' : 'lg:mx-auto lg:max-w-3xl',
+      )}
+    >
       <div
-        className="relative m-0 flex max-h-[400px] min-h-[40px] w-full grow flex-col rounded bg-gray-100 focus-within:border-blue-500 dark:bg-gray-700"
+        className="relative m-0 flex max-h-[400px] min-h-[40px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary"
         data-qa="message"
       >
         <textarea
           ref={textareaRef}
           className={classNames(
-            'm-0 min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none placeholder:text-gray-500',
+            'm-0 min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none placeholder:text-secondary',
             displayAttachFunctionality ? 'pl-12' : 'pl-4',
           )}
           style={{ maxHeight: `${MAX_HEIGHT}px` }}
@@ -426,7 +442,7 @@ export const ChatInputMessage = ({
               />
             </div>
             {selectedFiles.length > 0 && (
-              <div className="mb-2.5 grid max-h-[100px] grid-cols-3 gap-1 overflow-auto px-12">
+              <div className="mb-2.5 flex max-h-[100px] flex-col gap-1 overflow-auto px-12 md:grid md:grid-cols-3">
                 <ChatInputAttachments
                   files={selectedFiles}
                   onUnselectFile={handleUnselectFile}

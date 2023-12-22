@@ -22,7 +22,6 @@ import {
   ModelsActions,
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -39,34 +38,27 @@ const Entity = ({
   selectedModelId: string | undefined;
   onSelect: (id: string) => void;
 }) => {
-  const theme = useAppSelector(UISelectors.selectThemeState);
-
   const [isOpened, setIsOpened] = useState(false);
 
   return (
-    <button
+    <div
       key={entity.id}
-      className={`flex items-center gap-3 rounded border px-3 py-2 hover:border-gray-800 dark:hover:border-gray-200 ${
+      className={`flex cursor-pointer items-center gap-3 rounded border px-3 py-2 hover:border-hover ${
         selectedModelId === entity.id
-          ? 'border-blue-500'
-          : 'border-gray-400 dark:border-gray-600'
+          ? 'border-accent-primary'
+          : 'border-primary'
       } ${isOpened ? 'md:col-span-2' : 'md:col-span-1'}`}
       onClick={() => {
         onSelect(entity.id);
       }}
       data-qa="group-entity"
     >
-      <ModelIcon
-        entityId={entity.id}
-        entity={entity}
-        size={24}
-        inverted={theme === 'dark'}
-      />
+      <ModelIcon entityId={entity.id} entity={entity} size={24} />
       <div className="flex flex-col gap-1 text-left">
         <span data-qa="group-entity-name">{entity.name}</span>
         {entity.description && (
           <span
-            className="text-gray-500"
+            className="text-secondary"
             onClick={(e) => {
               if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
                 e.stopPropagation();
@@ -81,23 +73,21 @@ const Entity = ({
         )}
       </div>
       {entity.description && entity.description.indexOf('\n\n') !== -1 && (
-        <span>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsOpened((isOpened) => !isOpened);
-            }}
-            data-qa="expand-group-entity"
-          >
-            <IconChevronDown
-              size={18}
-              className={`transition-all ${isOpened ? 'rotate-180' : ''}`}
-            />
-          </button>
-        </span>
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsOpened((isOpened) => !isOpened);
+          }}
+          data-qa="expand-group-entity"
+        >
+          <IconChevronDown
+            size={18}
+            className={`transition-all ${isOpened ? 'rotate-180' : ''}`}
+          />
+        </button>
       )}
-    </button>
+    </div>
   );
 };
 
@@ -116,7 +106,7 @@ const EntityListing = ({
 }: EntityListingProps) => {
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
-      <span className="text-gray-500">{heading}</span>
+      <span className="text-secondary">{heading}</span>
       <div className="grid min-h-0 shrink grid-cols-1 gap-3 overflow-y-auto md:grid-cols-2">
         {entities.map((entity) => (
           <Entity
@@ -250,9 +240,9 @@ export const ModelsDialog: FC<Props> = ({
   // Render the dialog.
   return (
     <FloatingPortal id="chat">
-      <div className="fixed inset-0 top-[48px] z-30 flex items-center justify-center bg-gray-900/30 p-3 dark:bg-gray-900/70 md:p-5">
+      <div className="fixed inset-0 top-[48px] z-30 flex items-center justify-center bg-blackout p-3 md:p-5">
         <div
-          className="flex h-full w-full grow flex-col gap-4 rounded bg-gray-100 py-4 text-left dark:bg-gray-700 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
+          className="flex h-full w-full grow flex-col gap-4 rounded bg-layer-3 py-4 text-left md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
           role="dialog"
           ref={refs.setFloating}
           {...getFloatingProps()}
@@ -262,7 +252,7 @@ export const ModelsDialog: FC<Props> = ({
             {t('Talk to')}
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-blue-500"
+              className="text-secondary hover:text-accent-primary"
               data-qa="close-models-dialog"
             >
               <XMark height={24} width={24} />
@@ -277,17 +267,17 @@ export const ModelsDialog: FC<Props> = ({
               onChange={(e) => {
                 handleSearch(e.target.value);
               }}
-              className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
+              className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
             ></input>
           </div>
 
           <div className="flex gap-2 px-3 md:px-5">
             <button
               className={classNames(
-                'rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:hover:bg-blue-500/20',
+                'rounded border-b-2 px-3 py-2 hover:bg-accent-primary-alpha',
                 entityTypes.includes(EntityType.Model)
-                  ? 'border-blue-500 bg-blue-500/20 dark:bg-blue-500/20'
-                  : 'border-gray-400 bg-gray-400 hover:border-transparent dark:border-gray-600 dark:bg-gray-600 dark:hover:border-transparent',
+                  ? 'border-accent-primary bg-accent-primary-alpha'
+                  : 'border-primary bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {
                 handleFilterType(EntityType.Model);
@@ -298,10 +288,10 @@ export const ModelsDialog: FC<Props> = ({
             </button>
             <button
               className={classNames(
-                'rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:hover:bg-blue-500/20',
+                'rounded border-b-2 px-3 py-2 hover:bg-accent-primary-alpha',
                 entityTypes.includes(EntityType.Assistant)
-                  ? 'border-blue-500 bg-blue-500/20 dark:bg-blue-500/20'
-                  : 'border-gray-400 bg-gray-400 hover:border-transparent dark:border-gray-600 dark:bg-gray-600 dark:hover:border-transparent',
+                  ? 'border-accent-primary bg-accent-primary-alpha'
+                  : 'border-primary bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {
                 handleFilterType(EntityType.Assistant);
@@ -312,10 +302,10 @@ export const ModelsDialog: FC<Props> = ({
             </button>
             <button
               className={classNames(
-                'rounded border-b-2 px-3 py-2 hover:bg-blue-500/20 dark:hover:bg-blue-500/20',
+                'rounded border-b-2 px-3 py-2 hover:bg-accent-primary-alpha',
                 entityTypes.includes(EntityType.Application)
-                  ? 'border-blue-500 bg-blue-500/20 dark:bg-blue-500/20'
-                  : 'border-gray-400 bg-gray-400 hover:border-transparent dark:border-gray-600 dark:bg-gray-600 dark:hover:border-transparent',
+                  ? 'border-accent-primary bg-accent-primary-alpha'
+                  : 'border-primary bg-layer-4 hover:border-transparent',
               )}
               onClick={() => {
                 handleFilterType(EntityType.Application);

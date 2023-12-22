@@ -119,11 +119,11 @@ export const Combobox = ({
             {label}
           </label>
         )}
-        <div className="relative flex rounded border border-gray-400 focus-within:border-blue-500 dark:border-gray-600 dark:focus-within:border-blue-500 ">
+        <div className="relative flex rounded border border-primary focus-within:border-accent-primary ">
           <input
             disabled={disabled}
             placeholder={placeholder || ''}
-            className="w-full bg-transparent px-3 py-2.5 outline-none placeholder:text-gray-500"
+            className="w-full bg-transparent px-3 py-2.5 outline-none placeholder:text-secondary"
             {...getInputProps({ ref: refs.reference as any })}
           />
           {!inputValue && itemRow && selectedItem && (
@@ -142,7 +142,7 @@ export const Combobox = ({
         </div>
       </div>
       <ul
-        className={`z-10 max-h-80 overflow-auto rounded bg-gray-100 dark:bg-gray-700 ${
+        className={`z-10 max-h-80 overflow-auto rounded bg-layer-3 ${
           !isOpen && 'hidden'
         }`}
         {...getMenuProps(
@@ -160,9 +160,9 @@ export const Combobox = ({
           (displayedItems?.length > 0 ? (
             displayedItems.map((item, index) => (
               <li
-                className={`flex cursor-pointer flex-col px-3 py-2 ${
-                  highlightedIndex === index ? 'bg-blue-500/20' : ''
-                } ${selectedItem === item ? 'bg-blue-500/20' : ''}`}
+                className={`group flex cursor-pointer flex-col px-3 py-2 ${
+                  highlightedIndex === index ? 'bg-accent-primary-alpha' : ''
+                } ${selectedItem === item ? 'bg-accent-primary-alpha' : ''}`}
                 key={`${getItemValue(item)}${index}`}
                 {...getItemProps({ item, index })}
               >

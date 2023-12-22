@@ -112,7 +112,7 @@ export const ChatSettings = ({
   }, [handleChangeSettings]);
 
   return (
-    <div className="absolute z-30 flex h-full w-full grow items-start justify-center bg-gray-900/30 dark:bg-gray-900/70 md:top-0 md:p-5">
+    <div className="absolute z-30 flex h-full w-full grow items-start justify-center bg-blackout md:top-0 md:p-5">
       <div className="h-full overflow-auto xl:max-w-[720px] 2xl:max-w-[1000px]">
         <ConversationSettings
           conversationId={conversation.id}
@@ -132,9 +132,9 @@ export const ChatSettings = ({
           onApplyAddons={handleOnApplyAddons}
           onClose={onClose}
         />
-        <div className="flex w-full items-center justify-center overflow-hidden bg-gray-200 px-3 py-4 dark:bg-gray-800 md:px-5">
+        <div className="flex w-full items-center justify-center overflow-hidden bg-layer-2 px-3 py-4 md:px-5">
           <button
-            className="w-full rounded bg-blue-500 px-3 py-2.5 text-gray-100 hover:bg-blue-700 md:w-fit"
+            className="button button-primary"
             data-qa="apply-changes"
             onClick={handleOnApplySettings}
           >

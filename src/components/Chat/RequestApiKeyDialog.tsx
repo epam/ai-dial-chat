@@ -90,7 +90,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
   const modalRef = useRef<HTMLFormElement>(null);
   const projectNameInputRef = useRef<HTMLInputElement>(null);
   const streamNameInputRef = useRef<HTMLInputElement>(null);
-  const techLeadNameInputRef = useRef<HTMLInputElement>(null);
+  const techLeadEmailInputRef = useRef<HTMLInputElement>(null);
   const businessJustificationInputRef = useRef<HTMLTextAreaElement>(null);
   const projectEndDateInputRef = useRef<HTMLInputElement>(null);
   const scenarioInputRef = useRef<HTMLTextAreaElement>(null);
@@ -105,7 +105,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
   const [businessJustification, setBusinessJustification] =
     useState<string>('');
   const [projectEndDate, setProjectEndDate] = useState<string>('');
-  const [techLeadName, setTechLeadName] = useState<string>('');
+  const [techLeadEmail, setTechLeadEmail] = useState<string>('');
   const [streamName, setStreamName] = useState<string>('');
   const [cost, setCost] = useState<string>('');
   const [azureAgreement, setAzureAgreement] = useState<boolean>(false);
@@ -141,8 +141,8 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
     setBusinessJustification(e.target.value);
   };
 
-  const techLeadNameOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
-    setTechLeadName(e.target.value);
+  const techLeadEmailOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
+    setTechLeadEmail(e.target.value);
   };
 
   const projectEndDateOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
@@ -183,7 +183,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
       const inputs = [
         projectNameInputRef,
         streamNameInputRef,
-        techLeadNameInputRef,
+        techLeadEmailInputRef,
         businessJustificationInputRef,
         projectEndDateInputRef,
         scenarioInputRef,
@@ -213,7 +213,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
           business_reason: businessJustification,
           project_end: transformDateString(projectEndDate),
           project_id: projectName,
-          project_lead: techLeadName,
+          project_lead: techLeadEmail,
           project_stream: streamName,
           workload_pattern: cost,
         });
@@ -223,7 +223,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
           setBusinessJustification('');
           setProjectEndDate('');
           setProjectName('');
-          setTechLeadName('');
+          setTechLeadEmail('');
           setStreamName('');
           setCost('');
 
@@ -255,7 +255,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
       scenario,
       streamName,
       t,
-      techLeadName,
+      techLeadEmail,
     ],
   );
 
@@ -294,16 +294,16 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/30 p-3 dark:bg-gray-900/70 md:p-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-blackout p-3 md:p-5">
       <form
         ref={modalRef}
         noValidate
-        className="relative inline-block h-full overflow-y-auto rounded bg-gray-100 px-3 py-4 text-left align-bottom transition-all dark:bg-gray-700 md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
+        className="relative inline-block h-full overflow-y-auto rounded bg-layer-3 px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
         role="dialog"
         onSubmit={handleSubmit}
       >
         <button
-          className="absolute right-2 top-2 rounded text-gray-500 hover:text-blue-700"
+          className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
           onClick={handleClose}
         >
           <IconX height={24} width={24} />
@@ -315,14 +315,34 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
         <div>
           <label
-            className="mb-1 flex text-xs text-gray-500"
+            className="mb-1 flex text-xs text-secondary"
+            htmlFor="formDescription"
+          >
+            <span className="ml-1">
+              {t(
+                'We are glad to provide API access for PoC, research, accelerators development purposes, and internal projects. It is also possible to use this as a very short-term solution for early development stages while you are spinning up your dedicated environment. Any kind of client external must use their own dedicated infrastructure, not this API - you can install DIAL there, see instructions at ',
+              )}
+            </span>
+            <a
+              href="https://github.com/epam/ai-dial"
+              className="underline"
+              rel="noopener noreferrer"
+            >
+              https://github.com/epam/ai-dial
+            </a>
+          </label>
+        </div>
+
+        <div>
+          <label
+            className="mb-1 flex text-xs text-secondary"
             htmlFor="projectNameInput"
           >
             <span>1.</span>
             <span className="ml-1">
               {t('Project name (use one from Delivery Central)')}
             </span>
-            <span className="ml-1 inline text-blue-500">*</span>
+            <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <input
             ref={projectNameInputRef}
@@ -340,14 +360,16 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
         <div>
           <label
-            className="flex text-xs text-gray-500"
+            className="flex text-xs text-secondary"
             htmlFor="streamNameInput"
           >
             <span>2.</span>
             <span className="ml-1">
-              {t('Stream Name (use one from Delivery Central)')}
+              {t(
+                'Stream Name (use one from Delivery Central). Must be unique per key request.',
+              )}
             </span>
-            <span className="ml-1 inline text-blue-500">*</span>
+            <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <input
             ref={streamNameInputRef}
@@ -365,8 +387,8 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
         <div>
           <label
-            className="mb-1 flex flex-col text-xs text-gray-500 md:flex-row"
-            htmlFor="techLeadNameInput"
+            className="mb-1 flex flex-col text-xs text-secondary md:flex-row"
+            htmlFor="techLeadEmailInput"
           >
             <span>
               <span>3.</span>
@@ -375,19 +397,19 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               </span>
             </span>
             <span className="ml-1">
-              {t('Please provide name')}
-              <span className="ml-1 inline text-blue-500">*</span>
+              {t('Please provide email')}
+              <span className="ml-1 inline text-accent-primary">*</span>
             </span>
           </label>
           <input
-            ref={techLeadNameInputRef}
-            name="techLeadNameInput"
-            value={techLeadName}
+            ref={techLeadEmailInputRef}
+            name="techLeadEmailInput"
+            value={techLeadEmail}
             required
             title=""
-            type="text"
+            type="email"
             onBlur={onBlur}
-            onChange={techLeadNameOnChangeHandler}
+            onChange={techLeadEmailOnChangeHandler}
             className={inputClassName}
           ></input>
           <EmptyRequiredInputMessage />
@@ -395,12 +417,12 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
         <div>
           <label
-            className="mb-1 flex text-xs text-gray-500"
+            className="mb-1 flex text-xs text-secondary"
             htmlFor="businessJustificationInput"
           >
             <span>4.</span>
             <span className="ml-1">{t('Business justification')}</span>
-            <span className="ml-1 inline text-blue-500">*</span>
+            <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <textarea
             ref={businessJustificationInputRef}
@@ -417,12 +439,14 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
         <div>
           <label
-            className="mb-1 flex text-xs text-gray-500"
+            className="mb-1 flex text-xs text-secondary"
             htmlFor="projectEndDateInput"
           >
             <span>5.</span>
-            <span className="ml-1">{t('End date of the project')}</span>
-            <span className="ml-1 inline text-blue-500">*</span>
+            <span className="ml-1">
+              {t('End date of the project (YYYY-MM-DD)')}
+            </span>
+            <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <input
             ref={projectEndDateInputRef}
@@ -440,14 +464,17 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
         </div>
 
         <div>
-          <label className="mb-1 text-xs text-gray-500" htmlFor="scenarioInput">
+          <label
+            className="mb-1 text-xs text-secondary"
+            htmlFor="scenarioInput"
+          >
             <span>6.</span>
             <span className="ml-1">
               {t(
                 'By default, access to the model is available from EPAM VPN only. If you want to deploy your solution anywhere beyond your personal laptop, please describe your scenario.',
               )}
             </span>
-            <span className="ml-1 inline text-blue-500">*</span>
+            <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <textarea
             ref={scenarioInputRef}
@@ -464,14 +491,14 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
         <div>
           <label
-            className="mb-1 flex flex-wrap text-xs text-gray-500 xl:inline-block"
+            className="mb-1 flex flex-wrap text-xs text-secondary xl:inline-block"
             htmlFor="costInput"
           >
             <span>
               <span>7.</span>
               <span className="ml-1">
                 {t(
-                  'We need to understand, how much cost your solution will generate monthly, and your workload pattern in terms of requests quantity and tokens usage during standard and peak workloads. Please describe this. More information is available at ',
+                  'We need to understand, how much cost your solution will generate monthly, and your workload pattern in terms of requests quantity and tokens usage during standard and peak workloads. Please describe this. Ensure you provided "max X USD/month" metric. More information is available at ',
                 )}
               </span>
             </span>
@@ -484,13 +511,13 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
             </a>
             <span className="mr-1">,</span>
             <a
-              href="https://openai.com/pricing"
+              href="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/"
               className="underline"
               rel="noopener noreferrer"
             >
-              https://openai.com/pricing
+              https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/
             </a>
-            <span className="ml-1 inline text-blue-500">*</span>
+            <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <textarea
             ref={costInputRef}
@@ -533,13 +560,13 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
             >
               (https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct)
             </a>
-            <span className="ml-1 inline text-blue-500">*</span>
+            <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <IconCheck
             width={16}
             height={16}
             size={16}
-            className="pointer-events-none invisible absolute text-blue-500 peer-checked:visible"
+            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
           />
         </div>
 
@@ -559,13 +586,13 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
             <span className="ml-1">
               {t('Usage is complaint to EPAM company policies')}
             </span>
-            <span className="ml-1 inline text-blue-500">*</span>
+            <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <IconCheck
             width={16}
             height={16}
             size={16}
-            className="pointer-events-none invisible absolute text-blue-500 peer-checked:visible"
+            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
           />
         </div>
 
@@ -587,13 +614,13 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                 'Confirm that this key will not be used for client project production load.',
               )}
             </span>
-            <span className="ml-1 inline text-blue-500">*</span>
+            <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <IconCheck
             width={16}
             height={16}
             size={16}
-            className="pointer-events-none invisible absolute text-blue-500 peer-checked:visible"
+            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
           />
         </div>
 
@@ -611,21 +638,18 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
           <label className="inline-block" htmlFor="localAgreementInput">
             <span>4.</span>
             <span className="ml-1">{t('Local law regulations (if some)')}</span>
-            <span className="ml-1 inline text-blue-500">*</span>
+            <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <IconCheck
             width={16}
             height={16}
             size={16}
-            className="pointer-events-none invisible absolute text-blue-500 peer-checked:visible"
+            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
           />
         </div>
 
         <div className="flex justify-end">
-          <button
-            type="submit"
-            className="w-full rounded bg-blue-500 p-3 text-gray-100 hover:bg-blue-700 focus:border focus:border-gray-800 focus-visible:outline-none dark:focus:border-gray-200 md:w-fit"
-          >
+          <button type="submit" className="button button-primary">
             {t('Send request')}
           </button>
         </div>

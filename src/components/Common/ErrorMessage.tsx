@@ -5,16 +5,16 @@ export interface Props {
 }
 
 export const ErrorMessage = ({ error }: Props) => {
-  if (!error) {
+  if (!error?.length) {
     return null;
   }
 
   return (
-    <div className="flex w-full gap-3 rounded bg-red-200 p-3 text-red-800 dark:bg-red-900 dark:text-red-400">
+    <div className="flex w-full gap-3 rounded bg-error p-3 text-error">
       <span className="flex shrink-0 items-center">
         <IconExclamationCircle size={24} />
       </span>
-      <span>{error}</span>
+      <span className="whitespace-pre-wrap">{error}</span>
     </div>
   );
 };

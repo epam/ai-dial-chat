@@ -20,7 +20,8 @@ declare global {
       RECENT_MODELS_IDS?: string;
       RECENT_ADDONS_IDS?: string;
       E2E_HOST?: string;
-      PREVIEW_TEST_TOKEN?: string;
+      E2E_USERNAME?: string;
+      E2E_PASSWORD?: string;
       TRACES_URL?: string;
       TMS_URL?: string;
       ISSUE_URL?: string;
@@ -44,25 +45,31 @@ declare global {
       AUTH_AUTH0_HOST?: string;
       AUTH_AUTH0_NAME?: string;
       AUTH_AUTH0_SECRET?: string;
+      AUTH_AUTH0_SCOPE?: string;
       AUTH_AZURE_AD_CLIENT_ID?: string;
       AUTH_AZURE_AD_NAME?: string;
       AUTH_AZURE_AD_SECRET?: string;
       AUTH_AZURE_AD_TENANT_ID?: string;
+      AUTH_AZURE_AD_SCOPE?: string;
       AUTH_GITLAB_CLIENT_ID?: string;
       AUTH_GITLAB_HOST?: string;
       AUTH_GITLAB_NAME?: string;
       AUTH_GITLAB_SECRET?: string;
+      AUTH_GITLAB_SCOPE?: string;
       AUTH_GOOGLE_CLIENT_ID?: string;
       AUTH_GOOGLE_NAME?: string;
       AUTH_GOOGLE_SECRET?: string;
+      AUTH_GOOGLE_SCOPE?: string;
       AUTH_KEYCLOAK_CLIENT_ID?: string;
       AUTH_KEYCLOAK_HOST?: string;
       AUTH_KEYCLOAK_NAME?: string;
       AUTH_KEYCLOAK_SECRET?: string;
+      AUTH_KEYCLOAK_SCOPE?: string;
       AUTH_PING_ID_CLIENT_ID?: string;
       AUTH_PING_ID_HOST?: string;
       AUTH_PING_ID_NAME?: string;
       AUTH_PING_ID_SECRET?: string;
+      AUTH_PING_ID_SCOPE?: string;
     }
   }
 }
