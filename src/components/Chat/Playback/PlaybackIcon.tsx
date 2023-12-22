@@ -4,7 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { Translation } from '@/src/types/translation';
 
-import { IconNonModelWithTooltip } from './IconNonModelWithTooltip';
+import { IconNonModelWithTooltip } from '../IconNonModelWithTooltip';
 
 interface Props {
   isCustomTooltip?: boolean;

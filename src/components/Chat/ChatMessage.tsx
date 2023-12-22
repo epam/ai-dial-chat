@@ -221,6 +221,7 @@ export const ChatMessage: FC<Props> = memo(
       onEdit,
       newEditableAttachments,
       messageIndex,
+      isSubmitAllowed,
     ]);
 
     const handleDeleteMessage = useCallback(() => {

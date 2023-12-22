@@ -5,8 +5,8 @@ import { ChatInputAttachment } from './ChatInputAttachment';
 interface Props {
   files: Pick<DialFile, 'name' | 'id' | 'status' | 'percent'>[];
 
-  onUnselectFile: (fileId: string) => void;
-  onRetryFile: (fileId: string) => void;
+  onUnselectFile?: (fileId: string) => void;
+  onRetryFile?: (fileId: string) => void;
 }
 
 export const ChatInputAttachments = ({

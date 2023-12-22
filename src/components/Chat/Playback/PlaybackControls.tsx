@@ -20,7 +20,8 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
-import { ChatInputFooter } from './ChatInput/ChatInputFooter';
+import { ChatInputFooter } from '../ChatInput/ChatInputFooter';
+import { PlaybackAttachments } from './PlaybackAttachments';
 
 interface Props {
   showScrollDownButton: boolean;
@@ -67,20 +68,31 @@ export const PlaybackControls = ({
     );
   }, [activeIndex, isActiveIndex, selectedConversations]);
 
-  const activeMessageContent = useMemo(() => {
-    if (
-      isActiveIndex &&
-      isNextMessageInStack &&
-      selectedConversations.length &&
-      selectedConversations[0].playback &&
-      selectedConversations[0].playback.messagesStack[activeIndex].content
-    ) {
-      return selectedConversations[0].playback.messagesStack[activeIndex]
-        .content;
+  const activeMessage = useMemo(() => {
+    if (!isActiveIndex) {
+      return;
     }
+    const currentPlayback = selectedConversations[0]?.playback;
+    const currentMessage = currentPlayback?.messagesStack[activeIndex];
 
-    return '';
+    const content =
+      isNextMessageInStack && currentMessage && currentMessage?.content;
+
+    const attachments =
+      currentMessage && currentMessage?.custom_content?.attachments?.length
+        ? currentMessage.custom_content.attachments
+        : [];
+    const message = attachments.length
+      ? { content, custom_content: { attachments } }
+      : { content };
+    return message;
   }, [activeIndex, isActiveIndex, isNextMessageInStack, selectedConversations]);
+
+  const hasAttachments =
+    activeMessage &&
+    activeMessage.custom_content &&
+    activeMessage.custom_content.attachments &&
+    activeMessage.custom_content.attachments.length;
 
   const handlePlaynextMessage = useCallback(() => {
     if (isMessageStreaming || !isNextMessageInStack) {
@@ -105,6 +117,7 @@ export const PlaybackControls = ({
       ) {
         return;
       }
+
       if (
         isNextMessageInStack &&
         (e.key === 'Enter' ||
@@ -190,17 +203,30 @@ export const PlaybackControls = ({
             ></div>
           ) : (
             <>
-              <span className="break-words" data-qa="playback-message-content">
-                {activeMessageContent}
-              </span>
-              <button
-                data-qa="playback-next"
-                onClick={handlePlaynextMessage}
-                className="absolute bottom-3 right-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                disabled={isMessageStreaming || !isNextMessageInStack}
-              >
-                <IconPlayerPlay size={20} className="shrink-0" />
-              </button>
+              {activeMessage && (
+                <>
+                  <span
+                    className="break-words"
+                    data-qa="playback-message-content"
+                  >
+                    {activeMessage.content ?? ''}
+                  </span>
+
+                  {hasAttachments && (
+                    <PlaybackAttachments
+                      attachments={activeMessage.custom_content.attachments}
+                    />
+                  )}
+                  <button
+                    data-qa="playback-next"
+                    onClick={handlePlaynextMessage}
+                    className="absolute bottom-3 right-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                    disabled={isMessageStreaming || !isNextMessageInStack}
+                  >
+                    <IconPlayerPlay size={20} className="shrink-0" />
+                  </button>
+                </>
+              )}
             </>
           )}
         </div>
