@@ -88,7 +88,7 @@ export const PlaybackControls = ({
     return message;
   }, [activeIndex, isActiveIndex, isNextMessageInStack, selectedConversations]);
 
-  const isAttachments =
+  const hasAttachments =
     activeMessage &&
     activeMessage.custom_content &&
     activeMessage.custom_content.attachments &&
@@ -212,7 +212,7 @@ export const PlaybackControls = ({
                     {activeMessage.content ?? ''}
                   </span>
 
-                  {isAttachments && (
+                  {hasAttachments && (
                     <PlaybackAttachments
                       attachments={activeMessage.custom_content.attachments}
                     />
