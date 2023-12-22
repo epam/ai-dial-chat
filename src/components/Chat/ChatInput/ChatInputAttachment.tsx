@@ -24,12 +24,12 @@ export const ChatInputAttachment = ({
   return (
     <div
       key={file.id}
-      className="border-primary bg-layer-1 flex gap-3 rounded border p-3"
+      className="flex gap-3 rounded border border-primary bg-layer-1 p-3"
     >
       {file.status !== 'FAILED' ? (
-        <IconFile className="text-secondary shrink-0" size={18} />
+        <IconFile className="shrink-0 text-secondary" size={18} />
       ) : (
-        <IconExclamationCircle className="text-error shrink-0" size={18} />
+        <IconExclamationCircle className="shrink-0 text-error" size={18} />
       )}
 
       <div className="flex grow justify-between gap-3 overflow-hidden">
@@ -43,9 +43,9 @@ export const ChatInputAttachment = ({
             {file.name}
           </span>
           {file.status === 'UPLOADING' && (
-            <div className="bg-layer-3 h-[3px] w-full overflow-hidden rounded-full">
+            <div className="h-[3px] w-full overflow-hidden rounded-full bg-layer-3">
               <div
-                className="bg-controls-accent h-full"
+                className="h-full bg-controls-accent"
                 style={{ width: `${file.percent}%` }}
               ></div>
             </div>
@@ -55,7 +55,7 @@ export const ChatInputAttachment = ({
           {onRetryFile && file.status === 'FAILED' && (
             <button onClick={() => onRetryFile(file.id)}>
               <IconReload
-                className="text-secondary hover:text-accent-primary shrink-0"
+                className="shrink-0 text-secondary hover:text-accent-primary"
                 size={18}
               />
             </button>
@@ -63,7 +63,7 @@ export const ChatInputAttachment = ({
           {onUnselectFile && (
             <button onClick={() => onUnselectFile(file.id)}>
               <IconX
-                className="text-secondary hover:text-accent-primary shrink-0"
+                className="shrink-0 text-secondary hover:text-accent-primary"
                 size={18}
               />
             </button>
