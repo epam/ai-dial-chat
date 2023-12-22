@@ -12,7 +12,7 @@ import { MouseEventHandler, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { FeatureType, HighlightColor } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -27,12 +27,11 @@ import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 interface FolderContextMenuProps {
   folder: FolderInterface;
   featureType?: FeatureType;
+  isOpen?: boolean;
   onDelete?: MouseEventHandler<unknown>;
   onRename?: MouseEventHandler<unknown>;
   onAddFolder?: MouseEventHandler;
   onOpenChange?: (isOpen: boolean) => void;
-  highlightColor: HighlightColor;
-  isOpen?: boolean;
   onShare?: MouseEventHandler<unknown>;
   onPublish?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
@@ -51,7 +50,6 @@ export const FolderContextMenu = ({
   onUnpublish,
   onPublishUpdate,
   onUpload,
-  highlightColor,
   isOpen,
 }: FolderContextMenuProps) => {
   const { t } = useTranslation(Translation.SideBar);
@@ -146,8 +144,8 @@ export const FolderContextMenu = ({
       menuItems={menuItems}
       TriggerIcon={IconDots}
       triggerIconSize={18}
-      highlightColor={highlightColor}
       className="m-0 justify-self-end"
+      featureType={featureType}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
     />

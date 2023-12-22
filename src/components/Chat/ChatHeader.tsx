@@ -62,7 +62,6 @@ export const ChatHeader = ({
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
-  const theme = useAppSelector(UISelectors.selectThemeState);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
   const isPlayback = useAppSelector(
@@ -90,7 +89,7 @@ export const ChatHeader = ({
     <>
       <div
         className={classNames(
-          'sticky top-0 z-10 flex w-full min-w-0 flex-wrap items-center justify-center gap-2 bg-gray-200 py-2 text-sm dark:bg-gray-800 lg:flex-row',
+          'sticky top-0 z-10 flex w-full min-w-0 flex-wrap items-center justify-center gap-2 bg-layer-2 py-2 text-sm lg:flex-row',
           { 'px-3 md:px-5 lg:flex-nowrap': isChatFullWidth },
         )}
         data-qa="chat-header"
@@ -115,7 +114,7 @@ export const ChatHeader = ({
           </Tooltip>
         )}
         {model && (
-          <div className="flex lg:[&>*:first-child]:border-l-[1px] lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-gray-500 [&>*]:pl-2">
+          <div className="flex lg:[&>*:first-child]:border-l-[1px] lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-primary [&>*]:pl-2">
             {isShowChatInfo && (
               <>
                 <span className="flex items-center" data-qa="chat-model">
@@ -147,7 +146,6 @@ export const ChatHeader = ({
                       entityId={conversation.model.id}
                       entity={model}
                       size={18}
-                      inverted={theme === 'dark'}
                       isCustomTooltip
                     />
                   </Tooltip>
@@ -163,7 +161,6 @@ export const ChatHeader = ({
                           entityId={addon}
                           size={18}
                           entity={addonsMap[addon]}
-                          inverted={theme === 'dark'}
                         />
                       ))}
                       {conversation.selectedAddons
@@ -174,7 +171,6 @@ export const ChatHeader = ({
                             entityId={addon}
                             size={18}
                             entity={addonsMap[addon]}
-                            inverted={theme === 'dark'}
                           />
                         ))}
                     </span>
@@ -188,7 +184,7 @@ export const ChatHeader = ({
                   tooltip={t('Conversation settings')}
                 >
                   <button
-                    className="cursor-pointer text-gray-500 hover:text-blue-500"
+                    className="cursor-pointer text-secondary hover:text-accent-primary"
                     onClick={() => {
                       setShowSettings(!isShowSettings);
                     }}
@@ -204,7 +200,7 @@ export const ChatHeader = ({
                   tooltip={t('Clear conversation messages')}
                 >
                   <button
-                    className="cursor-pointer text-gray-500 hover:text-blue-500"
+                    className="cursor-pointer text-secondary hover:text-accent-primary"
                     onClick={onClearConversation}
                     data-qa="clear-conversation"
                   >
@@ -218,7 +214,7 @@ export const ChatHeader = ({
                   tooltip={t('Remove conversation from compare mode')}
                 >
                   <button
-                    className="cursor-pointer text-gray-500 hover:text-blue-500 disabled:cursor-not-allowed"
+                    className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
                     onClick={() => onUnselectConversation(conversation.id)}
                     disabled={conversation.isMessageStreaming}
                     data-qa="remove-from-compare"
@@ -233,7 +229,7 @@ export const ChatHeader = ({
                   tooltip={t('To edit the chat, leave Playback mode')}
                 >
                   <button
-                    className="cursor-pointer text-gray-500 hover:text-blue-500"
+                    className="cursor-pointer text-secondary hover:text-accent-primary"
                     onClick={onCancelPlaybackMode}
                     data-qa="cancel-playback-mode"
                   >

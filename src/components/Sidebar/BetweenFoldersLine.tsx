@@ -2,9 +2,6 @@ import { useCallback, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { getByHighlightColor } from '@/src/utils/app/folders';
-
-import { HighlightColor } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 
 interface BetweenFoldersLineProps {
@@ -17,14 +14,12 @@ interface BetweenFoldersLineProps {
     index: number,
   ) => void;
   onDraggingOver?: (isDraggingOver: boolean) => void;
-  highlightColor: HighlightColor;
 }
 
 export const BetweenFoldersLine = ({
   level,
   index,
   parentFolderId,
-  highlightColor,
   onDrop,
   onDraggingOver,
 }: BetweenFoldersLineProps) => {
@@ -65,13 +60,6 @@ export const BetweenFoldersLine = ({
     onDraggingOver?.(false);
   }, [onDraggingOver]);
 
-  const highlightColorBg = getByHighlightColor(
-    highlightColor,
-    'bg-green/60',
-    'bg-violet/60',
-    'bg-blue-500/60',
-  );
-
   return (
     <div
       onDrop={dropHandler}
@@ -79,7 +67,7 @@ export const BetweenFoldersLine = ({
       onDragEnter={highlightDrop}
       onDragLeave={removeHighlight}
       ref={dragDropElement}
-      className={classNames('h-1', isDraggingOver && highlightColorBg)}
+      className={classNames('h-1', isDraggingOver && 'bg-accent-primary-alpha')}
       style={{
         marginLeft: (level && `${level * 24}px`) || 0,
       }}

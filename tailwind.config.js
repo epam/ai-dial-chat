@@ -1,3 +1,33 @@
+// Default color palette is black when no themes presented
+const commonBgColors = {
+  transparent: 'transparent',
+  'layer-0': 'var(--bg-layer-0, #000000)',
+  'layer-1': 'var(--bg-layer-1, #090D13)',
+  'layer-2': 'var(--bg-layer-2, #141A23)',
+  'layer-3': 'var(--bg-layer-3, #222932)',
+  'layer-4': 'var(--bg-layer-4, #333942)',
+  blackout: 'var(--bg-blackout, #090D13B3)',
+  error: 'var(--bg-error, #402027)',
+  'accent-primary': 'var(--bg-accent-primary, #5C8DEA)',
+  'accent-secondary': 'var(--bg-accent-secondary, #37BABC)',
+  'accent-tertiary': 'var(--bg-accent-tertiary, #A972FF)',
+  'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #5C8DEA2B)',
+  'accent-secondary-alpha': 'var(--bg-accent-secondary-alpha, #37BABC26)',
+  'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2B)',
+};
+
+const commonBorderColors = {
+  transparent: 'transparent',
+  primary: 'var(--stroke-primary, #333942)',
+  secondary: 'var(--stroke-secondary, #222932)',
+  tertiary: 'var(--stroke-tertiary, #090D13)',
+  error: 'var(--stroke-error, #F76464)',
+  hover: 'var(--stroke-hover, #F3F4F6)',
+  'accent-primary': 'var(--stroke-accent-primary, #5C8DEA)',
+  'accent-secondary': 'var(--stroke-accent-secondary, #37BABC)',
+  'accent-tertiary': 'var(--stroke-accent-tertiary, #A972FF)',
+};
+
 // Do not use palette directly, only through semantic colors
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -8,38 +38,36 @@ module.exports = {
   ],
   darkMode: 'class',
   theme: {
-    colors: {
-      transparent: 'transparent',
-      green: 'rgb(var(--green, 55 186 188) / <alpha-value>)', // #37BABC
-      blue: {
-        500: 'rgb(var(--blue-500, 90 140 233) / <alpha-value>)', // #5A8CE9,
-        700: 'rgb(var(--blue-700, 72 120 210) / <alpha-value>)', // #4878D2
-      },
-      violet: 'rgb(var(--violet, 148 89 241) / <alpha-value>)', // #9459F1
-      gray: {
-        100: 'rgb(var(--gray-100, 252 252 252) / <alpha-value>)', // #FCFCFC, L3 (white)
-        200: 'rgb(var(--gray-200, 243 244 246) / <alpha-value>)', // #F3F4F6, L2 (white), text (dark)
-        300: 'rgb(var(--gray-300, 234 237 240) / <alpha-value>)', // #EAEDF0, L1 (white)
-        400: 'rgb(var(--gray-400, 221 225 230) / <alpha-value>)', // #DDE1E6, L4 (white), divider(white)
-        500: 'rgb(var(--gray-500, 127 135 146) / <alpha-value>)', // #7F8792, icons, sec text
-        600: 'rgb(var(--gray-600, 51 57 66) / <alpha-value>)', // #333942, L4 (dark)
-        700: 'rgb(var(--gray-700, 34 41 50) / <alpha-value>)', // #222932, L3 (dark), divider(black)
-        800: 'rgb(var(--gray-800, 20 26 35) / <alpha-value>)', // #141A23, L2 (dark), text(white)
-        900: 'rgb(var(--gray-900, 9 13 19) / <alpha-value>)', // #090D13, L1 (dark)
-      },
-      black: 'rgb(var(--black, 0 0 0) / <alpha-value>)', // #000000
-      red: {
-        200: 'rgb(var(--red-200, 243 214 216) / <alpha-value>)', // #F3D6D8, Error-bg
-        400: 'rgb(var(--red-400, 247 100 100) / <alpha-value>)', // #F76464, Error-text, error-stroke(dark)
-        800: 'rgb(var(--red-800, 174 47 47) / <alpha-value>)', // #AE2F2F, Error-text, error-stroke
-        900: 'rgb(var(--red-900, 64 32 39) / <alpha-value>)', // #402027, Error-bg (dark)
-      },
+    backgroundColor: {
+      ...commonBgColors,
+      'controls-accent': 'var(--controls-bg-accent, #5C8DEA)',
+      'controls-permanent': 'var(--controls-text-permanent, #FCFCFC)',
+      'controls-accent-hover': 'var(--controls-bg-accent-hover, #4878D2)',
+      'controls-disable': 'var(--controls-bg-disable, #7F8792)',
     },
+    borderColor: commonBorderColors,
+    stroke: commonBorderColors,
+    divideColor: commonBorderColors,
+    textColor: {
+      transparent: 'transparent',
+      primary: 'var(--text-primary, #F3F4F6)',
+      secondary: 'var(--text-secondary, #7F8792)',
+      error: 'var(--text-error, #F76464)',
+      'accent-primary': 'var(--text-accent-primary, #5C8DEA)',
+      'accent-secondary': 'var(--text-accent-secondary, #37BABC)',
+      'accent-tertiary': 'var(--text-accent-tertiary, #A972FF)',
+      'controls-permanent': 'var(--controls-text-permanent, #FCFCFC)',
+      'controls-disable': 'var(--controls-text-disable, #333942)',
+    },
+    gradientColorStops: commonBgColors,
+    /////////
     extend: {
+      colors: {
+        transparent: 'transparent',
+      },
       screens: {
         sm: '560px',
       },
-
       borderRadius: {
         DEFAULT: '3px',
       },
@@ -47,7 +75,7 @@ module.exports = {
         15: '15%',
       },
       boxShadow: {
-        DEFAULT: '0 0 4px 0 rgb(var(--gray-900, 9 13 19) / 15%)',
+        DEFAULT: '0 0 4px 0 var(--bg-blackout, #090D13B3)',
       },
       fontFamily: {
         DEFAULT: ['var(--font-inter)'],
@@ -58,6 +86,10 @@ module.exports = {
       typography: {
         DEFAULT: {
           css: {
+            color: 'var(--text-primary, #F3F4F6)',
+            a: {
+              color: 'var(--text-accent-primary, #5C8DEA)',
+            },
             pre: {
               border: 'none',
               borderRadius: '0',

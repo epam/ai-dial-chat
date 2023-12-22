@@ -21,7 +21,6 @@ import {
 } from '@/src/utils/app/file';
 import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
-import { HighlightColor } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
@@ -193,11 +192,12 @@ export const SelectFolderModal = ({
       {isOpen && (
         <FloatingOverlay
           lockScroll
-          className="z-50 flex items-center justify-center bg-gray-900/70 p-3 dark:bg-gray-900/30"
+          className="z-50 flex items-center justify-center bg-blackout p-3"
+          data-floating-overlay
         >
           <FloatingFocusManager context={context}>
             <div
-              className="relative flex max-h-full min-w-full flex-col gap-4 rounded bg-gray-100 dark:bg-gray-700 md:min-w-[425px] md:max-w-full"
+              className="relative flex max-h-full min-w-full flex-col gap-4 rounded bg-layer-3 md:min-w-[425px] md:max-w-full"
               ref={refs.setFloating}
               {...getFloatingProps()}
             >
@@ -205,7 +205,7 @@ export const SelectFolderModal = ({
                 className="absolute right-2 top-2"
                 onClick={() => onClose(false)}
               >
-                <IconX className="text-gray-500 hover:text-blue-500" />
+                <IconX className="text-secondary hover:text-accent-primary" />
               </button>
               <div className="flex flex-col gap-2 overflow-auto">
                 <div className="flex justify-between px-6 pt-4">
@@ -226,15 +226,15 @@ export const SelectFolderModal = ({
                       placeholder={t('Search folders') || ''}
                       type="text"
                       onChange={handleSearch}
-                      className="m-0 w-full rounded border border-gray-400 bg-transparent px-3 py-2 outline-none placeholder:text-gray-500 focus-visible:border-blue-500 dark:border-gray-600 dark:focus-visible:border-blue-500"
+                      className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
                       value={searchQuery}
                     ></input>
                     <div className="flex min-h-[350px] flex-col overflow-auto">
                       <button
                         className={classNames(
-                          'mb-0.5 flex items-center gap-1 rounded border-l-2 py-1 text-xs text-gray-500',
+                          'mb-0.5 flex items-center gap-1 rounded border-l-2 py-1 text-xs text-secondary',
                           !selectedFolderId
-                            ? 'border-blue-500 bg-blue-500/20'
+                            ? 'border-accent-primary bg-accent-primary-alpha'
                             : 'border-transparent',
                         )}
                         onClick={() => handleToggleFolder(undefined)}
@@ -257,7 +257,6 @@ export const SelectFolderModal = ({
                                       searchTerm={searchQuery}
                                       currentFolder={folder}
                                       allFolders={folders}
-                                      highlightColor={HighlightColor.Blue}
                                       highlightedFolders={highlightedFolders}
                                       isInitialRenameEnabled
                                       newAddedFolderId={newFolderId}
@@ -281,16 +280,16 @@ export const SelectFolderModal = ({
                     </div>
                   </div>
                 )}
-                <div className="flex items-center justify-between border-t border-gray-300 px-6 py-4 dark:border-gray-900">
+                <div className="flex items-center justify-between border-t border-primary px-6 py-4">
                   <div className="flex items-center justify-center">
                     <button
                       onClick={handleNewFolder}
-                      className="flex h-[34px] w-[34px] items-center justify-center rounded text-gray-500  hover:bg-blue-500/20 hover:text-blue-500"
+                      className="flex h-[34px] w-[34px] items-center justify-center rounded text-secondary  hover:bg-accent-primary-alpha hover:text-accent-primary"
                     >
                       <FolderPlus
                         height={24}
                         width={24}
-                        className="text-gray-500 hover:text-blue-500"
+                        className="text-secondary hover:text-accent-primary"
                       />
                     </button>
                   </div>

@@ -17,7 +17,7 @@ export const CreateNewChatMobile = () => {
   return (
     <Tooltip isTriggerClickable tooltip={t('New conversation')}>
       <div
-        className="flex border-r border-gray-300 p-3 dark:border-gray-900 md:hidden"
+        className="flex border-r border-tertiary p-3 md:hidden"
         onClick={() => {
           dispatch(
             ConversationsActions.createNewConversations({
@@ -26,7 +26,7 @@ export const CreateNewChatMobile = () => {
           );
         }}
       >
-        <CirclePlusIcon className="text-gray-500" width={24} height={24} />
+        <CirclePlusIcon className="text-secondary" width={24} height={24} />
       </div>
     </Tooltip>
   );

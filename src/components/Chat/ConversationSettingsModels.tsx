@@ -8,7 +8,6 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -32,7 +31,6 @@ export const ConversationSettingsModel = ({
   const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
-  const theme = useAppSelector(UISelectors.selectThemeState);
   const [mappedEntities, setMappedEntities] = useState<OpenAIEntityModel[]>([]);
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
@@ -58,22 +56,17 @@ export const ConversationSettingsModel = ({
             <button
               className={`flex items-center gap-3 rounded border p-3 text-left text-xs ${
                 modelId === entity.id && !replay.replayAsIs
-                  ? 'border-blue-500'
-                  : 'border-gray-400 hover:border-gray-800 dark:border-gray-600 hover:dark:border-gray-200'
+                  ? 'border-accent-primary'
+                  : 'border-primary hover:border-hover'
               }`}
               key={entity.id}
               onClick={() => onModelSelect(entity.id)}
             >
-              <ModelIcon
-                entityId={entity.id}
-                entity={entity}
-                size={24}
-                inverted={theme === 'dark'}
-              />
+              <ModelIcon entityId={entity.id} entity={entity} size={24} />
               <div className="flex flex-col gap-1">
                 <span data-qa="entity-name">{entity.name}</span>
                 {entity.description && (
-                  <span className="text-gray-500" data-qa="entity-descr">
+                  <span className="text-secondary" data-qa="entity-descr">
                     <EntityMarkdownDescription isShortDescription>
                       {entity.description}
                     </EntityMarkdownDescription>
@@ -85,7 +78,7 @@ export const ConversationSettingsModel = ({
         </div>
       </div>
       <button
-        className="mt-3 inline text-left text-blue-500"
+        className="mt-3 inline text-left text-accent-primary"
         onClick={() => setIsModelsDialogOpen(true)}
         data-qa="see-full-list"
       >

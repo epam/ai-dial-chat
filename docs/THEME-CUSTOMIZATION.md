@@ -4,7 +4,7 @@ This documentation will guide you through customizing the colors and image URLs 
 
 ## 1. Setting up custom themes configuration
 
-To apply a custom theme configuration, provide a `THEMES_CONFIG_HOST` environment variable containing the URL to your nginx server with the configuration and images. This ensures that the application fetches your configuration file during loading. If the environment variable is not provided, default themes and logos will be applied.
+To apply a custom theme configuration, provide a `THEMES_CONFIG_HOST` environment variable containing the URL to your nginx server with the configuration and images. This ensures that the application fetches your configuration file during loading. If the environment variable is not provided, default themes and model icons will be applied.
 
 ```bash
 THEMES_CONFIG_HOST=https://your-config-host.com
@@ -18,15 +18,11 @@ The application enables you to customize color palettes and image URLs using a c
 
 ```json
 {
-  "themes": {
-    "colorsPalette": {
-      // color values...
-    }
-  },
+  "themes": [
+    // defined themes as an array
+  ],
   "images": {
-    // image urls
-    "app-logo": "app-logo.svg",
-    "app-logo-dark": "",
+    // common for all themes image urls
     "default-model": "",
     "default-addon": "",
     "favicon": "favicon.png"
@@ -36,56 +32,125 @@ The application enables you to customize color palettes and image URLs using a c
 
 The url for app logo will be recognized as relative url and transformed into {{host}}/app-logo.svg. You can also specify full path to your images like `https://some-path.svg`, if you are hosting image somewhere else.
 
-### Configuring Colors Palette
+### Configuring theme
 
-Specify your custom colors within the `colorsPalette` object, using the desired color name as the key and the corresponding color value which should be valid in CSS. The colors palette is shared between dark and light themes, so you don't need to specify it twice.
+To declare new theme you should create an object inside your themes property and fill all required fields:
 
 ```json
-  "colorsPalette": {
-    // HEX
-    "green": "#37BABC",
-
-    // RGB
-    "blue-500": "90 140 233",
-    // ...
-  }
+  // defined themes as an array
+  "themes": [
+    {
+      "displayName": "Light",   // Displayed name in settings modal
+      "id": "light",            // Some kebab case id name
+      "app-logo": "logo.svg",   // Url for website logo displayed
+      "colors": {
+        // Semantic colors which commonly used across entire application. 
+        // See default configuration to check available colors
+      }
+    },
+    // Other themes
+  ],
 ```
 
-You should specify hex value or inner rgb values without opacity values.
+You should specify hex value in colors (See [link](https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color)).
 
-By following these guidelines, you can effectively and safely customize the colors and opacity of your theme.
+*NOTE*: First theme in array will be used as default one for new users.
 
 ## 2. Default Configuration
 
-Below is the default configuration for the theme. This configuration includes the color palette, dark and light themes, and image URLs. You can use this as a starting point for customizing your own theme.
+Below is the default configuration for the theme. This configuration includes the color palettes for dark and light themes, and image URLs. You can use this as a starting point for customizing your own theme.
 
 ```json
 {
-  "themes": {
-    "colorsPalette": {
-      "green": "#37BABC",
-      "blue-500": "#5A8CE9",
-      "blue-700": "#4878D2",
-      "violet": "#9459F1",
-      "gray-100": "#FCFCFC",
-      "gray-200": "#F3F4F6",
-      "gray-300": "#EAEDF0",
-      "gray-400": "#DDE1E6",
-      "gray-500": "#7F8792",
-      "gray-600": "#333942",
-      "gray-700": "#222932",
-      "gray-800": "#141A23",
-      "gray-900": "#090D13",
-      "black": "#000000",
-      "red-200": "#F3D6D8",
-      "red-400": "#F76464",
-      "red-800": "#AE2F2F",
-      "red-900": "#402027"
+  "themes": [
+    {
+      "displayName": "Light",
+      "id": "light",
+      "app-logo": "logo.svg",
+      "colors": {
+        "bg-layer-0": "#FCFCFC",
+        "bg-layer-1": "#EAEDF0",
+        "bg-layer-2": "#F3F4F6",
+        "bg-layer-3": "#FCFCFC",
+        "bg-layer-4": "#DDE1E6",
+        "bg-blackout": "#090D134D",
+        "bg-error": "#F3D6D8",
+        "bg-accent-primary": "#2764d9",
+        "bg-accent-secondary": "#009D9F",
+        "bg-accent-tertiary": "#843EF3",
+        "bg-accent-primary-alpha": "#2764d91A",
+        "bg-accent-secondary-alpha": "#009D9F1A",
+        "bg-accent-tertiary-alpha": "#843EF31A",
+
+        "text-primary": "#141A23",
+        "text-secondary": "#7F8792",
+        "text-error": "#AE2F2F",
+        "text-accent-primary": "#2764D9",
+        "text-accent-secondary": "#009D9F",
+        "text-accent-tertiary": "#843EF3",
+
+        "stroke-primary": "#DDE1E6",
+        "stroke-secondary": "#DDE1E6",
+        "stroke-tertiary": "#EAEDF0",
+        "stroke-hover": "#141A23",
+        "stroke-error": "#AE2F2F",
+        "stroke-accent-primary": "#2764D9",
+        "stroke-accent-secondary": "#009D9F",
+        "stroke-accent-tertiary": "#843EF3",
+
+        "controls-bg-accent": "#5C8DEA",
+        "controls-bg-accent-hover": "#4878D2",
+        "controls-bg-disable": "#7F8792",
+
+        "controls-text-permanent": "#FCFCFC",
+        "controls-text-disable": "#DDE1E6"
+      }
+    },
+    {
+      "displayName": "Dark",
+      "id": "dark",
+      "app-logo": "logo-dark.svg",
+      "colors": {
+        "bg-layer-0": "#000000",
+        "bg-layer-1": "#090D13",
+        "bg-layer-2": "#141A23",
+        "bg-layer-3": "#222932",
+        "bg-layer-4": "#333942",
+        "bg-blackout": "#090D13B3",
+        "bg-error": "#402027",
+        "bg-accent-primary": "#5C8DEA",
+        "bg-accent-secondary": "#37BABC",
+        "bg-accent-tertiary": "#A972FF",
+        "bg-accent-primary-alpha": "#5C8DEA2B",
+        "bg-accent-secondary-alpha": "#37BABC26",
+        "bg-accent-tertiary-alpha": "#A972FF2B",
+
+        "text-primary": "#F3F4F6",
+        "text-secondary": "#7F8792",
+        "text-error": "#F76464",
+        "text-accent-primary": "#5C8DEA",
+        "text-accent-secondary": "#37BABC",
+        "text-accent-tertiary": "#A972FF",
+
+        "stroke-primary": "#333942",
+        "stroke-secondary": "#222932",
+        "stroke-tertiary": "#090D13",
+        "stroke-error": "#F76464",
+        "stroke-hover": "#F3F4F6",
+        "stroke-accent-primary": "#5C8DEA",
+        "stroke-accent-secondary": "#37BABC",
+        "stroke-accent-tertiary": "#A972FF",
+
+        "controls-bg-accent": "#5C8DEA",
+        "controls-bg-accent-hover": "#4878D2",
+        "controls-bg-disable": "#7F8792",
+
+        "controls-text-permanent": "#FCFCFC",
+        "controls-text-disable": "#333942"
+      }
     }
-  },
+  ],
   "images": {
-    "app-logo": "",
-    "app-logo-dark": "",
     "default-model": "",
     "default-addon": "",
     "favicon": "favicon.png"

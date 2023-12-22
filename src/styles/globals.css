@@ -8,10 +8,7 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply cursor-pointer rounded bg-gray-400;
-  }
-  .dark ::-webkit-scrollbar-thumb {
-    @apply bg-gray-600;
+    @apply cursor-pointer rounded bg-layer-4;
   }
   :not(:hover)::-webkit-scrollbar-thumb {
     @apply bg-transparent;
@@ -28,22 +25,19 @@
     @apply h-[4px] w-[4px];
   }
 
-  /* Firefox-compatible styles */
   * {
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
   }
 
   :hover {
-    scrollbar-color: theme('colors.gray.400') theme('colors.transparent');
+    scrollbar-color: theme('backgroundColor.layer-4')
+      theme('colors.transparent');
   }
 
-  .dark :hover {
-    scrollbar-color: theme('colors.gray.600') theme('colors.transparent');
-  }
-
-  .dark ::-webkit-calendar-picker-indicator {
-    filter: invert(1);
+  /* TODO: fix calendar color for different themes */
+  ::-webkit-calendar-picker-indicator {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://ww.w3.org/2000/svg" width="16" height="15" viewBox="0 0 24 24"><path fill="var(--icon-color)" d="M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13z"/></svg>');
   }
 
   .divide-y > :empty ~ :not([hidden]) {
@@ -53,7 +47,7 @@
 }
 
 html {
-  @apply bg-gray-900 text-gray-200;
+  @apply bg-layer-1 text-primary;
 }
 
 pre:has(div.codeblock) {
@@ -67,22 +61,22 @@ pre:has(div.codeblock) {
   }
 
   .temperature-slider .rc-slider-rail {
-    @apply rounded-full bg-gray-300 dark:bg-gray-900;
+    @apply rounded-full bg-layer-1;
   }
 
   .temperature-slider .rc-slider-track {
-    @apply rounded-full bg-blue-500;
+    @apply rounded-full bg-controls-accent;
   }
 
   .input-form {
-    @apply m-0.5 w-full rounded border border-gray-400 bg-transparent p-3 placeholder:text-gray-500 hover:border-blue-500 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:hover:border-blue-500 dark:focus:border-blue-500;
+    @apply m-0.5 w-full rounded border border-primary bg-transparent p-3 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none;
   }
 
   .submitted {
   }
 
   .input-invalid {
-    @apply invalid:border-red-800 dark:invalid:border-red-400;
+    @apply invalid:border-error;
   }
 }
 
@@ -92,36 +86,53 @@ pre:has(div.codeblock) {
   }
 
   .button:disabled {
-    @apply bg-gray-500;
+    @apply bg-controls-disable text-controls-disable;
   }
 
   .button:focus-visible,
   .button.button-secondary:focus-visible {
-    @apply border-gray-800 dark:border-gray-200;
+    @apply border-hover;
   }
 
   .button.button-primary {
-    @apply text-gray-200;
+    @apply text-controls-permanent;
   }
   .button.button-primary:not(:disabled) {
-    @apply bg-blue-500 hover:bg-blue-700;
+    @apply bg-controls-accent hover:bg-controls-accent-hover;
   }
 
   .button.button-secondary {
-    @apply border-gray-400 text-gray-800 dark:border-gray-600 dark:text-gray-200;
+    @apply border-primary text-primary;
   }
 
   .button.button-secondary:not(:disabled) {
-    @apply bg-transparent hover:bg-gray-400 hover:dark:bg-gray-600;
+    @apply bg-transparent hover:bg-layer-4;
   }
   .button.button-secondary:disabled {
-    @apply text-gray-200;
+    @apply text-controls-disable;
   }
 }
 
 @layer components {
   .checkbox {
-    @apply relative m-0 mr-2 inline h-4 w-4 shrink-0 appearance-none rounded-sm border border-gray-400 text-blue-500 checked:border-blue-500 hover:border-blue-500 focus-visible:outline-none dark:border-gray-600 checked:dark:border-blue-500;
+    @apply relative m-0 mr-2 inline h-4 w-4 shrink-0 appearance-none rounded-sm border border-primary text-accent-primary checked:border-accent-primary hover:border-accent-primary focus-visible:outline-none;
+  }
+}
+
+@layer components {
+  .sidebar-left,
+  .context-menu-chat {
+    --text-accent-primary: var(--text-accent-secondary, #37babc);
+    --stroke-accent-primary: var(--stroke-accent-secondary, #37babc);
+    --bg-accent-primary-alpha: var(--bg-accent-secondary-alpha, #37babc26);
+    --bg-accent-primary: var(--bg-accent-secondary, #37babc);
+  }
+  .sidebar-right,
+  .context-menu-prompt {
+    --text-accent-primary: var(--text-accent-tertiary, #a972ff);
+    --stroke-accent-primary: var(--stroke-accent-tertiary, #a972ff);
+    --bg-accent-primary-alpha: var(--bg-accent-tertiary-alpha, #a972ff26);
+    --bg-accent-primary: var(--bg-accent-tertiary, #a972ff);
   }
 }
 

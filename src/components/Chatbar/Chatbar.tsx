@@ -33,7 +33,7 @@ const ChatActionsBlock = () => {
   return (
     <div className="flex px-2 py-1">
       <button
-        className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-green/15 disabled:cursor-not-allowed"
+        className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed"
         onClick={() => {
           dispatch(
             ConversationsActions.createNewConversations({
@@ -45,7 +45,7 @@ const ChatActionsBlock = () => {
         disabled={!!messageIsStreaming}
         data-qa="new-chat"
       >
-        <PlusIcon className="text-gray-500" width={18} height={18} />
+        <PlusIcon className="text-secondary" width={18} height={18} />
         {t('New conversation')}
       </button>
     </div>

@@ -10,8 +10,8 @@ import {
 } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
-import { Theme } from '@/src/types/settings';
 import { DialStorage, UIStorageKeys } from '@/src/types/storage';
+import { Theme } from '@/src/types/themes';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
@@ -96,14 +96,16 @@ export class DataService {
     );
   }
 
-  public static getTheme(): Observable<Theme> {
-    return BrowserStorage.getData(UIStorageKeys.Settings, {
-      theme: 'dark' as Theme,
-    }).pipe(map((settings) => settings.theme));
+  public static getTheme(): Observable<string> {
+    return BrowserStorage.getData(UIStorageKeys.Settings, { theme: '' }).pipe(
+      map((settings) => settings.theme),
+    );
   }
-
-  public static setTheme(theme: Theme): Observable<void> {
+  public static setTheme(theme: string): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.Settings, { theme });
+  }
+  public static getAvailableThemes(): Observable<Theme[]> {
+    return ApiStorage.request('api/themes/listing');
   }
 
   public static getChatbarWidth(): Observable<number> {
