@@ -9,7 +9,7 @@ export const ChatCompareRotate = () => {
 
   return (
     <div className="flex grow flex-col items-center justify-center gap-4">
-      <div className="text-blue-500">
+      <div className="text-accent-primary">
         <Rotate width={60} height={60} />
       </div>
       <div className="text-base">

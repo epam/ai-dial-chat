@@ -3,7 +3,6 @@ import { MouseEventHandler, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { HighlightColor } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -55,7 +54,6 @@ export function FileItemContextMenu({
       menuItems={menuItems}
       TriggerIcon={IconDots}
       triggerIconSize={18}
-      highlightColor={HighlightColor.Blue}
       className={className}
     />
   );

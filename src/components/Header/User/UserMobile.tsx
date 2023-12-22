@@ -18,7 +18,7 @@ import UserIcon from '../../../../public/images/icons/user.svg';
 const UserInfo = () => {
   const { data: session } = useSession();
   return (
-    <div className=" w-full border-b border-gray-300 p-2 text-gray-800 dark:border-gray-900 dark:text-gray-200">
+    <div className=" w-full border-b border-tertiary p-2 text-primary">
       <div className="flex h-[42px] items-center">
         <UserIcon className="mx-2" width={18} height={18} />
 
@@ -38,7 +38,7 @@ const UserSettings = () => {
 
   return (
     <div className="flex h-[42px] items-center gap-2 px-2" onClick={onClick}>
-      <IconSettings className="text-gray-500" size={18} />
+      <IconSettings className="text-secondary" size={18} />
       <span>{t('Settings')}</span>
     </div>
   );
@@ -67,7 +67,7 @@ const Logout = () => {
           setIsLogoutConfirmationOpened(true);
         }}
       >
-        <LogOutIcon className="text-gray-500" width={18} height={18} />
+        <LogOutIcon className="text-secondary" width={18} height={18} />
         <span>{session ? t('Log out') : t('Login')}</span>
       </div>
       <ConfirmDialog
@@ -98,13 +98,13 @@ const UserMenu = () => {
 export const UserMobile = () => {
   return (
     <div
-      className="fixed right-0 top-12 z-40 flex w-[260px] flex-col overflow-y-auto border-gray-300 bg-gray-100 dark:border-gray-900 dark:bg-gray-700 md:hidden"
+      className="fixed right-0 top-12 z-40 flex w-[260px] flex-col overflow-y-auto border-tertiary bg-layer-3 md:hidden"
       style={{ height: 'calc(100% - 48px)' }}
     >
       <UserInfo />
       <UserMenu />
       <div className="grow"></div>
-      <div className="border-t border-gray-300 p-4 dark:border-gray-900">
+      <div className="border-t border-tertiary p-4">
         <FooterMessage />
       </div>
     </div>

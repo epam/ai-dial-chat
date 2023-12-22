@@ -174,7 +174,7 @@ export const PlaybackControls = ({
   return (
     <div
       ref={controlsContainerRef}
-      className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-gray-300 to-gray-300 pt-6 dark:via-gray-900 dark:to-gray-900 md:pt-2"
+      className="via-layer-1 to-layer-1 absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent pt-6 md:pt-2"
     >
       <div
         className={classNames(

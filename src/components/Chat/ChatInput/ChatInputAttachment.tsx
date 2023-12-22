@@ -24,15 +24,12 @@ export const ChatInputAttachment = ({
   return (
     <div
       key={file.id}
-      className="flex gap-3 rounded border border-gray-400 bg-gray-300 p-3 dark:border-gray-600 dark:bg-gray-900"
+      className="border-primary bg-layer-1 flex gap-3 rounded border p-3"
     >
       {file.status !== 'FAILED' ? (
-        <IconFile className="shrink-0 text-gray-500" size={18} />
+        <IconFile className="text-secondary shrink-0" size={18} />
       ) : (
-        <IconExclamationCircle
-          className="shrink-0 text-red-800 dark:text-red-400"
-          size={18}
-        />
+        <IconExclamationCircle className="text-error shrink-0" size={18} />
       )}
 
       <div className="flex grow justify-between gap-3 overflow-hidden">
@@ -40,15 +37,15 @@ export const ChatInputAttachment = ({
           <span
             className={classNames(
               'block max-w-full truncate',
-              file.status === 'FAILED' && 'text-red-800 dark:text-red-400',
+              file.status === 'FAILED' && 'text-error',
             )}
           >
             {file.name}
           </span>
           {file.status === 'UPLOADING' && (
-            <div className="h-[3px] w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
+            <div className="bg-layer-3 h-[3px] w-full overflow-hidden rounded-full">
               <div
-                className="h-full bg-blue-500"
+                className="bg-controls-accent h-full"
                 style={{ width: `${file.percent}%` }}
               ></div>
             </div>
@@ -58,7 +55,7 @@ export const ChatInputAttachment = ({
           {onRetryFile && file.status === 'FAILED' && (
             <button onClick={() => onRetryFile(file.id)}>
               <IconReload
-                className="shrink-0 text-gray-500 hover:text-blue-500"
+                className="text-secondary hover:text-accent-primary shrink-0"
                 size={18}
               />
             </button>
@@ -66,7 +63,7 @@ export const ChatInputAttachment = ({
           {onUnselectFile && (
             <button onClick={() => onUnselectFile(file.id)}>
               <IconX
-                className="shrink-0 text-gray-500 hover:text-blue-500"
+                className="text-secondary hover:text-accent-primary shrink-0"
                 size={18}
               />
             </button>

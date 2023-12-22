@@ -28,7 +28,7 @@ export const ProfileButton = () => {
       onClick={onClick}
     >
       {isProfileOpen ? (
-        <XmarkIcon className="text-gray-500" width={24} height={24} />
+        <XmarkIcon className="text-secondary" width={24} height={24} />
       ) : session?.user?.image ? (
         <img
           className="rounded"

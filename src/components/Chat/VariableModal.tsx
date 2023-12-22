@@ -108,13 +108,13 @@ export const VariableModal: FC<Props> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-blackout"
       onKeyDown={handleKeyDown}
     >
       <form
         ref={modalRef}
         noValidate
-        className="relative inline-block max-h-[400px] overflow-y-auto rounded bg-gray-100 px-4 pb-4 pt-5 text-left align-bottom transition-all dark:bg-gray-700 sm:my-8 sm:max-h-[600px] sm:w-full sm:max-w-lg sm:p-6 sm:align-middle"
+        className="relative inline-block max-h-[400px] overflow-y-auto rounded bg-layer-3 px-4 pb-4 pt-5 text-left align-bottom transition-all sm:my-8 sm:max-h-[600px] sm:w-full sm:max-w-lg sm:p-6 sm:align-middle"
         role="dialog"
         data-qa="variable-modal"
         onSubmit={handleSubmit}
@@ -133,7 +133,7 @@ export const VariableModal: FC<Props> = ({
         )}
 
         <button
-          className="absolute right-2 top-2 rounded text-gray-500 hover:text-blue-700"
+          className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
           onClick={onClose}
         >
           <XMark height={24} width={24} />
@@ -141,9 +141,9 @@ export const VariableModal: FC<Props> = ({
 
         {updatedVariables.map((variable, index) => (
           <div className="mb-4" key={variable.key}>
-            <div className="mb-1 flex text-xs text-gray-500">
+            <div className="mb-1 flex text-xs text-secondary">
               {variable.key}
-              <span className="ml-1 inline text-blue-500">*</span>
+              <span className="ml-1 inline text-accent-primary">*</span>
             </div>
 
             <textarea
@@ -171,7 +171,7 @@ export const VariableModal: FC<Props> = ({
         <div className="mt-1 flex justify-end">
           <button
             type="submit"
-            className="rounded bg-blue-500 p-3 text-gray-100 hover:bg-blue-700 focus:border focus:border-gray-800 focus-visible:outline-none dark:focus:border-gray-200"
+            className="button button-primary"
             data-qa="submit-variable"
           >
             {t('Submit')}

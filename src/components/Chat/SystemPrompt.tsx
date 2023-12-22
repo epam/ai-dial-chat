@@ -228,7 +228,7 @@ export const SystemPrompt: FC<Props> = ({
       <label className="mb-4 text-left">{t('System prompt')}</label>
       <textarea
         ref={textareaRef}
-        className="w-full resize-none overflow-y-auto rounded border border-gray-400 bg-transparent px-4 py-3 outline-none placeholder:text-gray-500 focus-within:border-blue-500 dark:border-gray-600 dark:focus-within:border-blue-500"
+        className="w-full resize-none overflow-y-auto rounded border border-primary bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-within:border-accent-primary"
         placeholder={
           t(`Enter a prompt or type "/" to select a prompt...`) || ''
         }

@@ -50,7 +50,7 @@ const AttachmentDataRenderer = ({
     return (
       <div className="flex max-w-full overflow-auto">
         <span
-          className="prose shrink-0 whitespace-pre text-sm dark:prose-invert"
+          className="prose shrink-0 whitespace-pre text-sm"
           dangerouslySetInnerHTML={{
             __html: sanitize(attachment.data || ''),
           }}
@@ -61,7 +61,7 @@ const AttachmentDataRenderer = ({
   if (attachment.type === 'text/plain') {
     return (
       <div className="max-w-full overflow-hidden">
-        <span className="prose whitespace-pre-wrap text-sm dark:prose-invert">
+        <span className="prose whitespace-pre-wrap text-sm">
           {attachment.data}
         </span>
       </div>
@@ -130,11 +130,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     <div
       className={`rounded px-1 py-2 ${
         isExpanded ? 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3' : ''
-      } ${
-        isInner
-          ? 'bg-gray-100 dark:bg-gray-700'
-          : 'border border-gray-400 bg-gray-300 dark:border-gray-700 dark:bg-gray-900'
-      }`}
+      } ${isInner ? 'bg-layer-3' : 'border border-secondary bg-layer-1'}`}
     >
       <div className={`flex items-center gap-3 px-2`}>
         <div className="flex items-center">
@@ -148,11 +144,11 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               <Link
                 height={18}
                 width={18}
-                className="text-gray-500 hover:text-blue-500"
+                className="text-secondary hover:text-accent-primary"
               />
             </a>
           ) : (
-            <IconPaperclip size={18} className="shrink-0 text-gray-500" />
+            <IconPaperclip size={18} className="shrink-0 text-secondary" />
           )}
         </div>
         <button
@@ -176,7 +172,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             <ChevronDown
               height={18}
               width={18}
-              className={`shrink-0 text-gray-500 transition ${
+              className={`shrink-0 text-secondary transition ${
                 isOpened ? 'rotate-180' : ''
               }`}
             />
@@ -185,7 +181,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               download={attachment.title}
               href={mappedAttachmentUrl}
               onClick={stopBubbling}
-              className="text-gray-500 hover:text-blue-500"
+              className="text-secondary hover:text-accent-primary"
             >
               <IconDownload size={18} />
             </a>
@@ -210,7 +206,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               href={mappedAttachmentReferenceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 block text-blue-500"
+              className="mt-3 block text-accent-primary"
             >
               {t('Reference...')}
             </a>

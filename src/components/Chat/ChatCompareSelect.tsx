@@ -5,13 +5,12 @@ import { useTranslation } from 'next-i18next';
 import { isMobile } from '@/src/utils/app/mobile';
 
 import { Conversation, Role } from '@/src/types/chat';
-import { FeatureType, HighlightColor } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -25,7 +24,6 @@ interface OptionProps {
 const Option = ({ item }: OptionProps) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const defaultModelId = useAppSelector(SettingsSelectors.selectDefaultModelId);
-  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const model = useMemo(
     () =>
@@ -40,18 +38,8 @@ const Option = ({ item }: OptionProps) => {
 
   return (
     <div className="group flex items-center gap-3 pl-1">
-      <ShareIcon
-        {...item}
-        isHighlited={false}
-        highlightColor={HighlightColor.Blue}
-        featureType={FeatureType.Chat}
-      >
-        <ModelIcon
-          entity={model}
-          entityId={model.id}
-          size={24}
-          inverted={theme === 'dark'}
-        />
+      <ShareIcon {...item} isHighlighted={false} featureType={FeatureType.Chat}>
+        <ModelIcon entity={model} entityId={model.id} size={24} />
       </ShareIcon>
       <span>{item.name}</span>
     </div>
@@ -110,12 +98,12 @@ export const ChatCompareSelect = ({
       className="flex grow flex-col items-center justify-center p-5 py-2"
       data-qa="conversation-to-compare"
     >
-      <div className="flex max-w-[465px] flex-col gap-3 rounded bg-gray-200 p-6 dark:bg-gray-800">
+      <div className="flex max-w-[465px] flex-col gap-3 rounded bg-layer-2 p-6">
         <div className="flex flex-col gap-2 text-center">
           <h5 className="text-base font-semibold">
             {t('Select conversation to compare with')}
           </h5>
-          <span className="text-gray-500">
+          <span className="text-secondary">
             (
             {t(
               'Note: only conversations with same user messages can be compared',

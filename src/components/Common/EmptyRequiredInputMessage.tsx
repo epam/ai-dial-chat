@@ -11,7 +11,7 @@ const EmptyRequiredInputMessage = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Settings);
   return (
-    <div className="invisible text-xxs text-red-800 peer-invalid:peer-[.submitted]:visible peer-invalid:peer-[.submitted]:mb-4 dark:text-red-400">
+    <div className="invisible text-xxs text-error peer-invalid:peer-[.submitted]:visible peer-invalid:peer-[.submitted]:mb-4">
       {t(text)}
     </div>
   );

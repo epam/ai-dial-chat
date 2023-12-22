@@ -3,8 +3,7 @@ import { Fragment, useMemo } from 'react';
 
 import classNames from 'classnames';
 
-import { getByHighlightColor } from '@/src/utils/app/folders';
-
+import { FeatureType } from '@/src/types/common';
 import { ContextMenuProps, MenuItemRendererProps } from '@/src/types/menu';
 
 import { Menu, MenuItem } from './DropdownMenu';
@@ -16,7 +15,6 @@ function ContextMenuItemRenderer({
   dataQa,
   onClick,
   disabled,
-  highlightColor,
   className,
   childMenuItems,
 }: MenuItemRendererProps) {
@@ -24,13 +22,13 @@ function ContextMenuItemRenderer({
     <div
       className={classNames(
         'flex w-full items-center gap-3 truncate break-words',
-        !!childMenuItems && 'text-gray-800 dark:text-gray-200',
+        !!childMenuItems && 'text-primary',
         !!childMenuItems && className,
       )}
     >
       {Icon && (
         <Icon
-          className="shrink-0 text-gray-500"
+          className="shrink-0 text-secondary"
           size={18}
           height={18}
           width={18}
@@ -43,16 +41,10 @@ function ContextMenuItemRenderer({
     return (
       <ContextMenu
         menuItems={childMenuItems}
-        highlightColor={highlightColor}
         triggerIconClassName={classNames(
           className,
-          'text-gray-200',
-          getByHighlightColor(
-            highlightColor,
-            'hover:bg-green/15',
-            'hover:bg-violet/15',
-            'hover:bg-blue-500/20',
-          ),
+          'text-secondary',
+          'hover:bg-accent-primary-alpha',
         )}
         TriggerCustomRenderer={item}
       />
@@ -60,15 +52,7 @@ function ContextMenuItemRenderer({
   }
   return (
     <MenuItem
-      className={classNames(
-        getByHighlightColor(
-          highlightColor,
-          'hover:bg-green/15',
-          'hover:bg-violet/15',
-          'hover:bg-blue-500/20',
-        ),
-        className,
-      )}
+      className={classNames('hover:bg-accent-primary-alpha', className)}
       item={item}
       onClick={onClick}
       data-qa={dataQa}
@@ -79,7 +63,7 @@ function ContextMenuItemRenderer({
 
 export default function ContextMenu({
   menuItems,
-  highlightColor,
+  featureType,
   TriggerIcon = IconDotsVertical,
   triggerIconSize = 24,
   className,
@@ -112,7 +96,13 @@ export default function ContextMenu({
 
   return (
     <Menu
-      className={triggerIconClassName}
+      className={classNames(triggerIconClassName)}
+      listClassName={classNames(
+        featureType &&
+          (featureType === FeatureType.Chat
+            ? 'context-menu-chat'
+            : 'context-menu-prompt'),
+      )}
       disabled={disabled}
       type="contextMenu"
       onOpenChange={onOpenChange}
@@ -120,14 +110,8 @@ export default function ContextMenu({
       trigger={
         <div
           className={classNames(
-            'flex w-full items-center justify-center rounded text-gray-500',
-            triggerIconHighlight &&
-              getByHighlightColor(
-                highlightColor,
-                'hover:text-green',
-                'hover:text-violet',
-                'hover:text-blue-500',
-              ),
+            'flex w-full items-center justify-center rounded text-secondary',
+            triggerIconHighlight && 'hover:text-accent-primary',
             className,
           )}
         >
@@ -145,11 +129,11 @@ export default function ContextMenu({
         const Renderer = CustomTriggerRenderer ? (
           <CustomTriggerRenderer
             {...props}
-            highlightColor={highlightColor}
             Renderer={ContextMenuItemRenderer}
+            featureType={featureType}
           />
         ) : (
-          <ContextMenuItemRenderer {...props} highlightColor={highlightColor} />
+          <ContextMenuItemRenderer {...props} featureType={featureType} />
         );
         return <Fragment key={props.dataQa}>{Renderer}</Fragment>;
       })}

@@ -403,13 +403,13 @@ export const ChatInputMessage = ({
       )}
     >
       <div
-        className="relative m-0 flex max-h-[400px] min-h-[40px] w-full grow flex-col rounded bg-gray-100 focus-within:border-blue-500 dark:bg-gray-700"
+        className="relative m-0 flex max-h-[400px] min-h-[40px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary"
         data-qa="message"
       >
         <textarea
           ref={textareaRef}
           className={classNames(
-            'm-0 min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none placeholder:text-gray-500',
+            'm-0 min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none placeholder:text-secondary',
             displayAttachFunctionality ? 'pl-12' : 'pl-4',
           )}
           style={{ maxHeight: `${MAX_HEIGHT}px` }}

@@ -26,7 +26,7 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
   }
 
   return isUnderSection && !isInner ? (
-    <div className="rounded border border-gray-400 bg-gray-300  dark:border-gray-700 dark:bg-gray-900">
+    <div className="rounded border border-primary bg-layer-1">
       <button
         className="flex w-full items-center gap-2 p-2 text-sm"
         onClick={() => setIsSectionOpened((val) => !val)}
@@ -35,13 +35,13 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
         <ChevronDown
           height={18}
           width={18}
-          className={`shrink-0 text-gray-500 transition ${
+          className={`shrink-0 text-secondary transition ${
             isSectionOpened ? 'rotate-180' : ''
           }`}
         />
       </button>
       {isSectionOpened && (
-        <div className="grid max-w-full grid-cols-1 gap-1 border-t border-gray-400 p-2 dark:border-gray-700 sm:grid-cols-2 md:grid-cols-3">
+        <div className="grid max-w-full grid-cols-1 gap-1 border-t border-secondary p-2 sm:grid-cols-2 md:grid-cols-3">
           {attachments?.map((attachment) => (
             <MessageAttachment
               key={attachment.url || attachment.title}
