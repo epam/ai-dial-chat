@@ -306,15 +306,16 @@ export const ChatMessage: FC<Props> = memo(
 
     return (
       <div
-        className={`group h-full min-h-[90px] border-b border-secondary md:px-4 xl:px-8 ${
-          isAssistant && 'bg-layer-2'
-        }`}
+        className={classNames(
+          'group h-full min-h-[78px] border-b border-primary md:px-4 xl:px-8',
+          isAssistant && 'bg-layer-2',
+        )}
         style={{ overflowWrap: 'anywhere' }}
         data-qa="chat-message"
       >
         <div
           className={classNames(
-            'relative m-auto flex h-full p-4  md:gap-6 md:py-6 lg:px-0',
+            'relative m-auto flex h-full items-center p-4 md:gap-6 md:py-6 lg:px-0',
             { 'md:max-w-2xl xl:max-w-3xl': !isChatFullWidth },
           )}
         >
@@ -463,17 +464,20 @@ export const ChatMessage: FC<Props> = memo(
                 )}
               </div>
             ) : (
-              <div className="flex h-full flex-row gap-1">
-                <div className="flex min-w-0 shrink grow flex-col gap-4">
+              <div className="flex h-full flex-row items-center gap-1">
+                <div
+                  className={classNames(
+                    'flex min-w-0 shrink grow flex-col',
+                    message.content && 'gap-4',
+                  )}
+                >
                   {!!message.custom_content?.stages?.length && (
                     <MessageStages stages={message.custom_content?.stages} />
                   )}
-                  {message.content && (
-                    <ChatMDComponent
-                      isShowResponseLoader={isShowResponseLoader}
-                      content={message.content}
-                    />
-                  )}
+                  <ChatMDComponent
+                    isShowResponseLoader={isShowResponseLoader}
+                    content={message.content}
+                  />
                   {codeWarning &&
                     codeWarning.length !== 0 &&
                     codeDetection(message.content) && (
