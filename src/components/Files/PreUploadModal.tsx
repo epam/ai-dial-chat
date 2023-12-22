@@ -302,7 +302,8 @@ export const PreUploadDialog = ({
 
   useEffect(() => {
     if (initialFilesSelect && isOpen) {
-      setTimeout(() => uploadInputRef.current?.click());
+      const timeout = setTimeout(() => uploadInputRef.current?.click());
+      return () => clearTimeout(timeout);
     }
   }, [initialFilesSelect, isOpen]);
 
@@ -324,6 +325,7 @@ export const PreUploadDialog = ({
         {isOpen && (
           <FloatingOverlay
             lockScroll
+            data-floating-overlay
             className="z-50 flex items-center justify-center bg-gray-900/70 p-3 dark:bg-gray-900/30"
           >
             <FloatingFocusManager context={context}>
