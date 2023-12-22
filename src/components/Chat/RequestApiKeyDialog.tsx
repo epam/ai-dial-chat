@@ -407,7 +407,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
             value={techLeadEmail}
             required
             title=""
-            type="text"
+            type="email"
             onBlur={onBlur}
             onChange={techLeadEmailOnChangeHandler}
             className={inputClassName}
