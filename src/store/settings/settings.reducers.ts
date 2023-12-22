@@ -19,6 +19,7 @@ export interface SettingsState {
   defaultRecentModelsIds: string[];
   defaultRecentAddonsIds: string[];
   storageType: StorageType | string;
+  themesHostDefined: boolean;
 }
 
 const initialState: SettingsState = {
@@ -33,6 +34,7 @@ const initialState: SettingsState = {
   defaultRecentModelsIds: [],
   defaultRecentAddonsIds: [],
   storageType: 'browserStorage',
+  themesHostDefined: false,
 };
 
 export const settingsSlice = createSlice({
@@ -99,6 +101,12 @@ export const settingsSlice = createSlice({
       { payload }: PayloadAction<{ storageType: StorageType }>,
     ) => {
       state.storageType = payload.storageType;
+    },
+    setThemeHostDefined: (
+      state,
+      { payload }: PayloadAction<{ themesHostDefined: boolean }>,
+    ) => {
+      state.themesHostDefined = payload.themesHostDefined;
     },
   },
 });
@@ -178,6 +186,9 @@ const selectStorageType = createSelector([rootSelector], (state) => {
 const selectAnnouncement = createSelector([rootSelector], (state) => {
   return state.announcement;
 });
+const selectThemeHostDefined = createSelector([rootSelector], (state) => {
+  return state.themesHostDefined;
+});
 
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
@@ -195,4 +206,5 @@ export const SettingsSelectors = {
   selectIsAuthDisabled,
   selectStorageType,
   selectAnnouncement,
+  selectThemeHostDefined,
 };
