@@ -315,7 +315,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
         <div>
           <label
-            className="mb-1 flex text-xs text-gray-500"
+            className="mb-1 flex text-xs text-secondary"
             htmlFor="formDescription"
           >
             <span className="ml-1">
