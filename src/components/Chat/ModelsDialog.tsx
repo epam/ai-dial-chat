@@ -4,13 +4,14 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import { IconChevronDown } from '@tabler/icons-react';
+import { IconChevronDown, IconInfoCircle } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { doesModelContainSearchTerm } from '@/src/utils/app/search';
 
 import { EntityType } from '@/src/types/common';
@@ -28,6 +29,7 @@ import { ModelIcon } from '../Chatbar/components/ModelIcon';
 import XMark from '../../../public/images/icons/xmark.svg';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
+import Tooltip from '../Common/Tooltip';
 
 const Entity = ({
   entity,
@@ -48,8 +50,12 @@ const Entity = ({
           ? 'border-accent-primary'
           : 'border-primary'
       } ${isOpened ? 'md:col-span-2' : 'md:col-span-1'}`}
-      onClick={() => {
-        onSelect(entity.id);
+      onClick={(e) => {
+        if (
+          !hasParentWithFloatingOverlay(e.target as Element, 'data-model-info')
+        ) {
+          onSelect(entity.id);
+        }
       }}
       data-qa="group-entity"
     >
@@ -87,6 +93,46 @@ const Entity = ({
           />
         </button>
       )}
+      <Tooltip
+        tooltip={
+          <div>
+            <p data-block-key="tdje2">
+              PaLM 2 is a state-of-the-art language model with improved
+              multilingual, reasoning and coding capabilities.
+            </p>
+            <ul className="list-disc">
+              <li data-block-key="9ksrr">
+                <b>Multilinguality:</b> PaLM 2 is more heavily trained on
+                multilingual text, spanning more than 100 languages. This has
+                significantly improved its ability to understand, generate and
+                translate nuanced text — including idioms, poems and riddles —
+                across a wide variety of languages, a hard problem to solve.
+                PaLM 2 also passes advanced language proficiency exams at the
+                “mastery” level.
+              </li>
+              <li data-block-key="b60d3">
+                <b>Reasoning:</b> PaLM 2’s wide-ranging dataset includes
+                scientific papers and web pages that contain mathematical
+                expressions. As a result, it demonstrates improved capabilities
+                in logic, common sense reasoning, and mathematics.
+              </li>
+              <li data-block-key="5u34s">
+                <b>Coding:</b> PaLM 2 was pre-trained on a large quantity of
+                publicly available source code datasets. This means that it
+                excels at popular programming languages like Python and
+                JavaScript, but can also generate specialized code in languages
+                like Prolog, Fortran and Verilog.
+              </li>
+            </ul>
+            <p data-block-key="5l830">
+              As we continue to develop PaLM 2, we’ll also be introducing
+              version updates for PaLM 2 as it is implemented into products.
+            </p>
+          </div>
+        }
+      >
+        <IconInfoCircle size={18} data-model-info />
+      </Tooltip>
     </div>
   );
 };
