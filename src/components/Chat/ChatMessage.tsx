@@ -192,7 +192,7 @@ export const ChatMessage: FC<Props> = memo(
 
       const isFinalAttachmentIdsSame =
         newEditableAttachmentsIds.length ===
-        mappedUserEditableAttachmentsIds.length &&
+          mappedUserEditableAttachmentsIds.length &&
         newEditableAttachmentsIds.every((id) =>
           mappedUserEditableAttachmentsIds.includes(id),
         );
@@ -219,7 +219,7 @@ export const ChatMessage: FC<Props> = memo(
       onEdit,
       newEditableAttachments,
       messageIndex,
-      isSubmitAllowed
+      isSubmitAllowed,
     ]);
 
     const handleDeleteMessage = useCallback(() => {
@@ -305,8 +305,9 @@ export const ChatMessage: FC<Props> = memo(
 
     return (
       <div
-        className={`group h-full min-h-[90px] border-b border-secondary md:px-4 xl:px-8 ${isAssistant && 'bg-layer-2'
-          }`}
+        className={`group h-full min-h-[90px] border-b border-secondary md:px-4 xl:px-8 ${
+          isAssistant && 'bg-layer-2'
+        }`}
         style={{ overflowWrap: 'anywhere' }}
         data-qa="chat-message"
       >
