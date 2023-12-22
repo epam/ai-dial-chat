@@ -315,7 +315,7 @@ export const ChatMessage: FC<Props> = memo(
       >
         <div
           className={classNames(
-            'relative m-auto flex h-full items-center p-4 md:gap-6 md:py-6 lg:px-0',
+            'relative m-auto flex h-full p-4 md:gap-6 md:py-6 lg:px-0',
             { 'md:max-w-2xl xl:max-w-3xl': !isChatFullWidth },
           )}
         >
@@ -464,7 +464,7 @@ export const ChatMessage: FC<Props> = memo(
                 )}
               </div>
             ) : (
-              <div className="flex h-full flex-row items-center gap-1">
+              <div className="flex h-full flex-row gap-1">
                 <div
                   className={classNames(
                     'flex min-w-0 shrink grow flex-col',
@@ -491,7 +491,7 @@ export const ChatMessage: FC<Props> = memo(
                   <ErrorMessage error={message.errorMessage}></ErrorMessage>
                 </div>
 
-                <div className="flex w-[60px] shrink-0 flex-col justify-between gap-2">
+                <div className="flex w-[60px] shrink-0 flex-col justify-between">
                   <div className="ml-1 flex flex-col items-center justify-end gap-4 md:-mr-8 md:ml-0 md:flex-row md:items-start md:justify-start md:gap-1">
                     {messagedCopied ? (
                       <IconCheck size={20} className="text-secondary" />
