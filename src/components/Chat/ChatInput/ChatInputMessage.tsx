@@ -442,7 +442,7 @@ export const ChatInputMessage = ({
               />
             </div>
             {selectedFiles.length > 0 && (
-              <div className="mb-2.5 grid max-h-[100px] grid-cols-3 gap-1 overflow-auto px-12">
+              <div className="mb-2.5 flex max-h-[100px] flex-col gap-1 overflow-auto px-12 md:grid md:grid-cols-3">
                 <ChatInputAttachments
                   files={selectedFiles}
                   onUnselectFile={handleUnselectFile}
