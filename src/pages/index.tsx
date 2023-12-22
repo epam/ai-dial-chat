@@ -211,6 +211,7 @@ export const getServerSideProps: GetServerSideProps = async ({
     isAuthDisabled: process.env.AUTH_DISABLED === 'true',
     storageType: process.env.STORAGE_TYPE || 'browserStorage',
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
+    themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
   };
 
   return {
