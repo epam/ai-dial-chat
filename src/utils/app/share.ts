@@ -1,3 +1,4 @@
+import { ShareEntity } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
@@ -47,3 +48,6 @@ export const getUnpublishActionByType = (type: SharingType) => {
       throw new Error('unknown type');
   }
 };
+
+export const isEntityExternal = (entity: ShareEntity) =>
+  !!(entity.sharedWithMe || entity.publishedWithMe);

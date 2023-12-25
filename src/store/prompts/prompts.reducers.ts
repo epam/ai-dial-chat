@@ -8,6 +8,8 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 
+import { resetShareEntity } from './../../constants/chat';
+
 import { PromptsState } from './prompts.types';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -37,7 +39,7 @@ export const promptsSlice = createSlice({
         description: '',
         content: '',
       };
-      state.prompts = state.prompts.concat(newPrompt);
+      state.prompts = [...state.prompts, newPrompt];
       state.selectedPromptId = newPrompt.id;
     },
     deletePrompts: (
@@ -159,6 +161,18 @@ export const promptsSlice = createSlice({
         return folder;
       });
     },
+    duplicatePrompt: (
+      state,
+      { payload }: PayloadAction<{ prompt: Prompt }>,
+    ) => {
+      const newPrompt: Prompt = {
+        ...payload.prompt,
+        ...resetShareEntity,
+        id: uuidv4(),
+      };
+      state.prompts = [...state.prompts, newPrompt];
+      state.selectedPromptId = newPrompt.id;
+    },
     updatePrompts: (
       state,
       { payload }: PayloadAction<{ prompts: Prompt[] }>,
@@ -202,7 +216,7 @@ export const promptsSlice = createSlice({
         type: FolderType.Prompt,
       };
 
-      state.folders = state.folders.concat(newFolder);
+      state.folders = [...state.folders, newFolder];
     },
     deleteFolder: (state, { payload }: PayloadAction<{ folderId: string }>) => {
       state.folders = state.folders.filter(({ id }) => id !== payload.folderId);
