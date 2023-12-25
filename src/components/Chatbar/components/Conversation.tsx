@@ -28,7 +28,7 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { emptyImage } from '@/src/constants/drag-and-drop';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
-import { PlaybackIcon } from '@/src/components/Chat/PlaybackIcon';
+import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import ShareModal from '@/src/components/Chat/ShareModal';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
