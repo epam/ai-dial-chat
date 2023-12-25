@@ -168,6 +168,7 @@ export const promptsSlice = createSlice({
       const newPrompt: Prompt = {
         ...payload.prompt,
         ...resetShareEntity,
+        name: getNextDefaultName(payload.prompt.name, state.prompts, 0, true),
         id: uuidv4(),
       };
       state.prompts = [...state.prompts, newPrompt];

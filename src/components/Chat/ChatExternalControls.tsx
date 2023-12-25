@@ -18,7 +18,7 @@ export default function ChatExternalControls() {
 
   return (
     <button
-      className="absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-primary bg-layer-2 p-3 hover:bg-layer-4"
+      className="absolute inset-x-0 -top-10 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-primary bg-layer-2 p-3 hover:bg-layer-4"
       onClick={handleDuplicate}
       data-qa="duplicate"
     >

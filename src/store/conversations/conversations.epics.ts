@@ -1111,7 +1111,8 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.createNewPlaybackConversation.match(action) ||
         ConversationsActions.deleteConversations.match(action) ||
         ConversationsActions.addConversations.match(action) ||
-        ConversationsActions.duplicateConversation.match(action),
+        ConversationsActions.duplicateConversation.match(action) ||
+        ConversationsActions.duplicateSelectedConversations.match(action),
     ),
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
@@ -1144,7 +1145,8 @@ const saveConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.createNewPlaybackConversation.match(action) ||
         ConversationsActions.addConversations.match(action) ||
         ConversationsActions.unpublishConversation.match(action) ||
-        ConversationsActions.duplicateConversation.match(action),
+        ConversationsActions.duplicateConversation.match(action) ||
+        ConversationsActions.duplicateSelectedConversations.match(action),
     ),
     map(() => ConversationsSelectors.selectConversations(state$.value)),
     switchMap((conversations) => {

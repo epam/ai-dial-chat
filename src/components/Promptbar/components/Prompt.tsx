@@ -211,6 +211,19 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const isHighlited =
     isDeleting || isRenaming || (showModal && isSelected) || isContextMenu;
 
+  const handleDuplicate: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (e) => {
+      e.stopPropagation();
+      setIsContextMenu(false);
+      dispatch(
+        PromptsActions.duplicatePrompt({
+          prompt,
+        }),
+      );
+    },
+    [dispatch, prompt],
+  );
+
   return (
     <>
       <div
@@ -295,6 +308,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               onPublishUpdate={handleOpenPublishing}
               onUnpublish={handleOpenUnpublishing}
               onOpenChange={setIsContextMenu}
+              onDuplicate={handleDuplicate}
               isOpen={isContextMenu}
             />
           </div>
