@@ -222,7 +222,7 @@ export const ChatInputMessage = ({
 
   const handleInitModal = useCallback(() => {
     const selectedPrompt = filteredPrompts[activePromptIndex];
-    if (selectedPrompt && !!selectedPrompt.content) {
+    if (selectedPrompt) {
       setContent((prevContent) => {
         const newContent = prevContent?.replace(
           /\/\w*$/,

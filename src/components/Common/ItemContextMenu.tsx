@@ -1,5 +1,6 @@
 import {
   IconClockShare,
+  IconCopy,
   IconDots,
   IconFileArrowRight,
   IconFolderPlus,
@@ -17,6 +18,8 @@ import { MouseEventHandler, useMemo } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
+
+import { isEntityExternal } from '@/src/utils/app/share';
 
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -50,6 +53,7 @@ interface ItemContextMenuProps {
   onUnpublish?: MouseEventHandler<unknown>;
   onPublishUpdate?: MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
+  onDuplicate?: MouseEventHandler<unknown>;
 }
 
 export default function ItemContextMenu({
@@ -72,6 +76,7 @@ export default function ItemContextMenu({
   onUnpublish,
   onPublishUpdate,
   onOpenChange,
+  onDuplicate,
 }: ItemContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isPublishingEnabled = useAppSelector((state) =>
@@ -80,10 +85,12 @@ export default function ItemContextMenu({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
+  const isExternal = isEntityExternal(entity);
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
         name: t(featureType === FeatureType.Chat ? 'Rename' : 'Edit'),
+        display: !isExternal,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
@@ -96,6 +103,13 @@ export default function ItemContextMenu({
         onClick: onCompare,
       },
       {
+        name: t('Duplicate'),
+        display: !!onDuplicate && isExternal,
+        dataQa: 'duplicate',
+        Icon: IconCopy,
+        onClick: onDuplicate,
+      },
+      {
         name: t('Replay'),
         display: !isEmptyConversation && !!onReplay,
         dataQa: 'replay',
@@ -104,7 +118,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('Playback'),
-        display: !isEmptyConversation && !!onPlayback,
+        display: !isEmptyConversation && !!onPlayback && !isExternal,
         dataQa: 'playback',
         Icon: IconPlayerPlay,
         onClick: onPlayback,
@@ -117,6 +131,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('Move to'),
+        display: !isExternal,
         dataQa: 'move-to-mobile',
         Icon: IconFolderShare,
         onClick: onOpenMoveToModal,
@@ -124,6 +139,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('Move to'),
+        display: !isExternal,
         dataQa: 'move-to',
         Icon: IconFolderShare,
         className: 'max-md:hidden',
@@ -151,14 +167,18 @@ export default function ItemContextMenu({
       {
         name: t('Share'),
         dataQa: 'share',
-        display: isSharingEnabled && !!onShare,
+        display: isSharingEnabled && !!onShare && !isExternal,
         Icon: IconUserShare,
         onClick: onShare,
       },
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: isPublishingEnabled && !entity.isPublished && !!onPublish,
+        display:
+          isPublishingEnabled &&
+          !entity.isPublished &&
+          !!onPublish &&
+          !isExternal,
         Icon: IconWorldShare,
         onClick: onPublish,
       },
@@ -187,8 +207,10 @@ export default function ItemContextMenu({
     [
       t,
       featureType,
+      isExternal,
       onRename,
       onCompare,
+      onDuplicate,
       isEmptyConversation,
       onReplay,
       onPlayback,

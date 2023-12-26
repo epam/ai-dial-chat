@@ -1,12 +1,14 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { getNextDefaultName } from '@/src/utils/app/folders';
+import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
 import { translate } from '@/src/utils/app/translation';
 
 import { PromptsHistory } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
+
+import { resetShareEntity } from './../../constants/chat';
 
 import { PromptsState } from './prompts.types';
 
@@ -159,6 +161,23 @@ export const promptsSlice = createSlice({
         return folder;
       });
     },
+    duplicatePrompt: (
+      state,
+      { payload }: PayloadAction<{ prompt: Prompt }>,
+    ) => {
+      const newPrompt: Prompt = {
+        ...payload.prompt,
+        ...resetShareEntity,
+        name: generateNextName(
+          translate('Prompt'),
+          payload.prompt.name,
+          state.prompts,
+        ),
+        id: uuidv4(),
+      };
+      state.prompts = state.prompts.concat(newPrompt);
+      state.selectedPromptId = newPrompt.id;
+    },
     updatePrompts: (
       state,
       { payload }: PayloadAction<{ prompts: Prompt[] }>,
@@ -166,7 +185,7 @@ export const promptsSlice = createSlice({
       state.prompts = payload.prompts;
     },
     addPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
-      state.prompts = [...state.prompts, ...payload.prompts];
+      state.prompts = state.prompts.concat(payload.prompts);
     },
     clearPrompts: (state) => {
       state.prompts = [];
@@ -263,7 +282,7 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
-      state.folders = [...state.folders, ...payload.folders];
+      state.folders = state.folders.concat(payload.folders);
     },
     setSearchTerm: (
       state,

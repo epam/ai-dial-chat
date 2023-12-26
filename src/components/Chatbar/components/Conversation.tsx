@@ -226,7 +226,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const handleStartReplay: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       e.stopPropagation();
-
+      setIsContextMenu(false);
       dispatch(
         ConversationsActions.createNewReplayConversation({ conversation }),
       );
@@ -239,7 +239,32 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       dispatch(
         ConversationsActions.createNewPlaybackConversation({ conversation }),
       );
+      setIsContextMenu(false);
     }, [conversation, dispatch]);
+
+  const handleCompare: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      if (isReplay || isPlayback) return;
+      dispatch(
+        ConversationsActions.selectConversations({
+          conversationIds: [conversation.id],
+        }),
+      );
+      dispatch(UIActions.setIsCompareMode(true));
+    }, [conversation.id, dispatch, isPlayback, isReplay]);
+
+  const handleDuplicate: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (e) => {
+      e.stopPropagation();
+      setIsContextMenu(false);
+      dispatch(
+        ConversationsActions.duplicateConversation({
+          conversation,
+        }),
+      );
+    },
+    [conversation, dispatch],
+  );
 
   useEffect(() => {
     if (isRenaming) {
@@ -425,18 +450,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
                 }),
               );
             }}
-            onCompare={
-              !isReplay && !isPlayback
-                ? () => {
-                    dispatch(
-                      ConversationsActions.selectConversations({
-                        conversationIds: [conversation.id],
-                      }),
-                    );
-                    dispatch(UIActions.setIsCompareMode(true));
-                  }
-                : undefined
-            }
+            onCompare={!isReplay && !isPlayback ? handleCompare : undefined}
+            onDuplicate={handleDuplicate}
             onReplay={!isPlayback ? handleStartReplay : undefined}
             onPlayback={handleCreatePlayback}
             onShare={handleOpenSharing}

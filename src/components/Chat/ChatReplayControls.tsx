@@ -28,7 +28,7 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
     <>
       {showReplayStart ? (
         <button
-          className="absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-primary bg-layer-2 p-3 hover:bg-layer-4"
+          className="button button-chat"
           onClick={onClickReplayStart}
           data-qa="start-replay"
         >
@@ -37,7 +37,7 @@ const ChatReplayControls: FC<ChatReplayControlsProps> = ({
         </button>
       ) : (
         <button
-          className="absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-primary bg-layer-2 p-3 hover:bg-layer-4"
+          className="button button-chat"
           onClick={onClickReplayReStart}
           data-qa="proceed-reply"
         >

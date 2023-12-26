@@ -30,7 +30,8 @@ const savePromptsEpic: AppEpic = (action$, state$) =>
         PromptsActions.updatePrompt.match(action) ||
         PromptsActions.addPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action) ||
-        PromptsActions.unpublishPrompt.match(action),
+        PromptsActions.unpublishPrompt.match(action) ||
+        PromptsActions.duplicatePrompt.match(action),
     ),
     map(() => PromptsSelectors.selectPrompts(state$.value)),
     switchMap((prompts) => {
