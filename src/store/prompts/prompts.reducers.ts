@@ -39,7 +39,7 @@ export const promptsSlice = createSlice({
         description: '',
         content: '',
       };
-      state.prompts = [...state.prompts, newPrompt];
+      state.prompts = state.prompts.concat(newPrompt);
       state.selectedPromptId = newPrompt.id;
     },
     deletePrompts: (
@@ -175,7 +175,7 @@ export const promptsSlice = createSlice({
         ),
         id: uuidv4(),
       };
-      state.prompts = [...state.prompts, newPrompt];
+      state.prompts = state.prompts.concat(newPrompt);
       state.selectedPromptId = newPrompt.id;
     },
     updatePrompts: (
@@ -185,7 +185,7 @@ export const promptsSlice = createSlice({
       state.prompts = payload.prompts;
     },
     addPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
-      state.prompts = [...state.prompts, ...payload.prompts];
+      state.prompts = state.prompts.concat(payload.prompts);
     },
     clearPrompts: (state) => {
       state.prompts = [];
@@ -221,7 +221,7 @@ export const promptsSlice = createSlice({
         type: FolderType.Prompt,
       };
 
-      state.folders = [...state.folders, newFolder];
+      state.folders = state.folders.concat(newFolder);
     },
     deleteFolder: (state, { payload }: PayloadAction<{ folderId: string }>) => {
       state.folders = state.folders.filter(({ id }) => id !== payload.folderId);
@@ -282,7 +282,7 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
-      state.folders = [...state.folders, ...payload.folders];
+      state.folders = state.folders.concat(payload.folders);
     },
     setSearchTerm: (
       state,

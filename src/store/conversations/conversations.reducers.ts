@@ -100,7 +100,7 @@ export const conversationsSlice = createSlice({
           };
         },
       );
-      state.conversations = [...state.conversations, ...newConversations];
+      state.conversations = state.conversations.concat(newConversations);
       state.selectedConversationsIds = newConversations.map(({ id }) => id);
     },
     updateConversation: (
@@ -259,7 +259,7 @@ export const conversationsSlice = createSlice({
           messagesStack: [],
         },
       };
-      state.conversations = [...state.conversations, newConversation];
+      state.conversations = state.conversations.concat(newConversation);
       state.selectedConversationsIds = [newConversation.id];
     },
     createNewPlaybackConversation: (
@@ -289,7 +289,7 @@ export const conversationsSlice = createSlice({
           replayAsIs: false,
         },
       };
-      state.conversations = [...state.conversations, newConversation];
+      state.conversations = state.conversations.concat(newConversation);
       state.selectedConversationsIds = [newConversation.id];
     },
     duplicateConversation: (
@@ -308,7 +308,7 @@ export const conversationsSlice = createSlice({
         id: uuidv4(),
         lastActivityDate: Date.now(),
       };
-      state.conversations = [...state.conversations, newConversation];
+      state.conversations = state.conversations.concat(newConversation);
       state.selectedConversationsIds = [newConversation.id];
     },
     duplicateSelectedConversations: (state) => {
@@ -324,7 +324,7 @@ export const conversationsSlice = createSlice({
             name: generateNextName(
               DEFAULT_CONVERSATION_NAME,
               conversation.name,
-              [...state.conversations, ...newConversations],
+              state.conversations.concat(newConversations),
               0,
             ),
             id: uuidv4(),
@@ -336,7 +336,7 @@ export const conversationsSlice = createSlice({
           newSelectedIds.push(id);
         }
       });
-      state.conversations = [...state.conversations, ...newConversations];
+      state.conversations = state.conversations.concat(newConversations);
       state.selectedConversationsIds = newSelectedIds;
     },
     exportConversations: (state) => state,
@@ -369,7 +369,7 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ conversations: Conversation[] }>,
     ) => {
-      state.conversations = [...state.conversations, ...payload.conversations];
+      state.conversations = state.conversations.concat(payload.conversations);
     },
     clearConversations: (state) => {
       state.conversations = [];
@@ -389,7 +389,7 @@ export const conversationsSlice = createSlice({
         type: FolderType.Chat,
       };
 
-      state.folders = [...state.folders, newFolder];
+      state.folders = state.folders.concat(newFolder);
     },
     deleteFolder: (state, { payload }: PayloadAction<{ folderId: string }>) => {
       state.folders = state.folders.filter(({ id }) => id !== payload.folderId);
@@ -450,7 +450,7 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
-      state.folders = [...state.folders, ...payload.folders];
+      state.folders = state.folders.concat(payload.folders);
     },
     setSearchTerm: (
       state,
