@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { getNextDefaultName } from '@/src/utils/app/folders';
+import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
 import { translate } from '@/src/utils/app/translation';
 
 import { PromptsHistory } from '@/src/types/export';
@@ -168,7 +168,11 @@ export const promptsSlice = createSlice({
       const newPrompt: Prompt = {
         ...payload.prompt,
         ...resetShareEntity,
-        name: getNextDefaultName(payload.prompt.name, state.prompts, 0, true),
+        name: generateNextName(
+          translate('Prompt'),
+          payload.prompt.name,
+          state.prompts,
+        ),
         id: uuidv4(),
       };
       state.prompts = [...state.prompts, newPrompt];

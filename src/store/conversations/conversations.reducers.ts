@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { getNextDefaultName } from '@/src/utils/app/folders';
+import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
 import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
@@ -299,11 +299,11 @@ export const conversationsSlice = createSlice({
       const newConversation: Conversation = {
         ...payload.conversation,
         ...resetShareEntity,
-        name: getNextDefaultName(
+        name: generateNextName(
+          DEFAULT_CONVERSATION_NAME,
           payload.conversation.name,
           state.conversations,
           0,
-          true,
         ),
         id: uuidv4(),
         lastActivityDate: Date.now(),
@@ -321,11 +321,11 @@ export const conversationsSlice = createSlice({
           const newConversation: Conversation = {
             ...conversation,
             ...resetShareEntity,
-            name: getNextDefaultName(
+            name: generateNextName(
+              DEFAULT_CONVERSATION_NAME,
               conversation.name,
               [...state.conversations, ...newConversations],
               0,
-              true,
             ),
             id: uuidv4(),
             lastActivityDate: Date.now(),

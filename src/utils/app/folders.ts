@@ -120,3 +120,16 @@ export const getNextDefaultName = (
 
   return `${prefix}${maxNumber + 1 + index}`;
 };
+
+export const generateNextName = (
+  defaultName: string,
+  currentName: string,
+  entities: ShareEntity[],
+  index = 0,
+) => {
+  const prefix = `${defaultName} `;
+  const regex = new RegExp(`^${prefix}(\\d+)$`);
+  return currentName.match(regex)
+    ? getNextDefaultName(defaultName, entities, index)
+    : getNextDefaultName(currentName, entities, index, true);
+};
