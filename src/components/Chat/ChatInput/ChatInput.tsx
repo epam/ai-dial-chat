@@ -1,5 +1,11 @@
 import { IconPlayerStop } from '@tabler/icons-react';
-import { MutableRefObject, ReactNode, useEffect, useRef } from 'react';
+import {
+  Children,
+  MutableRefObject,
+  ReactNode,
+  useEffect,
+  useRef,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -69,7 +75,7 @@ export const ChatInput = ({
       <div className="relative">
         {messageIsStreaming && (
           <button
-            className="absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-primary bg-layer-2 p-3 hover:bg-layer-4"
+            className="button button-chat"
             onClick={onStopConversation}
             data-qa="stop-generating"
           >
@@ -82,18 +88,20 @@ export const ChatInput = ({
           </button>
         )}
 
-        {!children && !messageIsStreaming && isMessagesPresented && (
-          <button
-            className="absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-primary bg-layer-2 p-3 hover:bg-layer-4"
-            onClick={onRegenerate}
-            data-qa="regenerate"
-          >
-            <span className="text-secondary">
-              <RefreshCWAlt width={18} height={18} />
-            </span>
-            {t('Regenerate response')}
-          </button>
-        )}
+        {!Children.toArray(children).length &&
+          !messageIsStreaming &&
+          isMessagesPresented && (
+            <button
+              className="button button-chat"
+              onClick={onRegenerate}
+              data-qa="regenerate"
+            >
+              <span className="text-secondary">
+                <RefreshCWAlt width={18} height={18} />
+              </span>
+              {t('Regenerate response')}
+            </button>
+          )}
         {!messageIsStreaming && children}
       </div>
       {isShowInput && (

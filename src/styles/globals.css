@@ -111,6 +111,10 @@ pre:has(div.codeblock) {
   .button.button-secondary:disabled {
     @apply text-controls-disable;
   }
+
+  .button.button-chat {
+    @apply absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 border-primary bg-layer-2 p-3 hover:bg-layer-4;
+  }
 }
 
 @layer components {
