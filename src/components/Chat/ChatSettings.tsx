@@ -113,7 +113,7 @@ export const ChatSettings = ({
 
   return (
     <div className="absolute z-30 flex h-full w-full grow items-start justify-center bg-blackout md:top-0 md:p-5">
-      <div className="h-full overflow-auto xl:max-w-[720px] 2xl:max-w-[1000px]">
+      <div className="h-full min-w-full overflow-auto p-3 sm:min-w-[450px] sm:px-0 xl:max-w-[720px] 2xl:max-w-[1000px]">
         <ConversationSettings
           conversationId={conversation.id}
           replay={conversation.replay}
