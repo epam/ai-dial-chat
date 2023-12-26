@@ -221,7 +221,6 @@ export const ChatMessage: FC<Props> = memo(
       onEdit,
       newEditableAttachments,
       messageIndex,
-      isSubmitAllowed,
     ]);
 
     const handleDeleteMessage = useCallback(() => {
@@ -365,7 +364,7 @@ export const ChatMessage: FC<Props> = memo(
                       />
 
                       {newEditableAttachments.length > 0 && (
-                        <div className="mb-2.5 grid max-h-[100px] grid-cols-3 gap-1 overflow-auto">
+                        <div className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3">
                           <ChatInputAttachments
                             files={newEditableAttachments}
                             onUnselectFile={handleUnselectFile}
