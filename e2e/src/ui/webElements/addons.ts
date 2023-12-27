@@ -1,5 +1,5 @@
 import { ChatSelectors } from '../selectors';
-import { BaseElement, EntityIcon } from './baseElement';
+import { BaseElement } from './baseElement';
 
 import { Tags } from '@/e2e/src/ui/domData';
 import { AddonsDialog } from '@/e2e/src/ui/webElements/addonsDialog';
@@ -57,23 +57,11 @@ export class Addons extends BaseElement {
     await this.seeAllAddonsButton.click();
   }
 
-  public async getAddonsIconAttributes(addons: BaseElement) {
-    const allIcons: EntityIcon[] = [];
-    const addonsCount = await addons.getElementsCount();
-    for (let i = 1; i <= addonsCount; i++) {
-      const addon = await addons.getNthElement(i);
-      const addonName = await addon.textContent();
-      const iconHtml = await this.getElementIconHtml(addon);
-      allIcons.push({ entityName: addonName!, icon: iconHtml });
-    }
-    return allIcons;
+  public async getRecentAddonsIcons() {
+    return this.getElementIcons(this.recentAddons);
   }
 
-  public async getRecentAddonsIconAttributes() {
-    return this.getAddonsIconAttributes(this.recentAddons);
-  }
-
-  public async getSelectedAddonsIconAttributes() {
-    return this.getAddonsIconAttributes(this.selectedAddons);
+  public async getSelectedAddonsIcons() {
+    return this.getElementIcons(this.selectedAddons);
   }
 }

@@ -1,5 +1,5 @@
 import { ChatSelectors, ModelDialog } from '../selectors';
-import { BaseElement, EntityIcon } from './baseElement';
+import { BaseElement } from './baseElement';
 
 import { Groups } from '@/e2e/src/testData';
 import { Styles, Tags } from '@/e2e/src/ui/domData';
@@ -106,17 +106,7 @@ export class ModelsDialog extends BaseElement {
   }
 
   public async getEntitiesIcons() {
-    const allIcons: EntityIcon[] = [];
-    const entitiesCount = await this.groupEntity.getElementsCount();
-    for (let i = 1; i <= entitiesCount; i++) {
-      const entity = await this.groupEntity.getNthElement(i);
-      const entityName = await entity
-        .locator(ModelDialog.groupEntityName)
-        .textContent();
-      const iconHtml = await this.getElementIconHtml(entity);
-      allIcons.push({ entityName: entityName!, icon: iconHtml });
-    }
-    return allIcons;
+    return this.getElementIcons(this.groupEntity, ModelDialog.groupEntityName);
   }
 
   public async closeDialog() {

@@ -1,6 +1,6 @@
 import { Tags } from '@/e2e/src/ui/domData';
 import { InfoTooltip } from '@/e2e/src/ui/selectors/dialogSelectors';
-import { BaseElement, EntityIcon } from '@/e2e/src/ui/webElements/baseElement';
+import { BaseElement } from '@/e2e/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
 
 export class ChatInfoTooltip extends BaseElement {
@@ -57,14 +57,6 @@ export class ChatInfoTooltip extends BaseElement {
   }
 
   public async getAddonIcons() {
-    const allIcons: EntityIcon[] = [];
-    const addonsCount = await this.addonsInfo.getElementsCount();
-    for (let i = 1; i <= addonsCount; i++) {
-      const addon = await this.addonsInfo.getNthElement(i);
-      const addonName = await addon.locator(Tags.desc).textContent();
-      const iconHtml = await this.getElementIconHtml(addon);
-      allIcons.push({ entityName: addonName!, icon: iconHtml });
-    }
-    return allIcons;
+    return this.getElementIcons(this.addonsInfo, Tags.desc);
   }
 }

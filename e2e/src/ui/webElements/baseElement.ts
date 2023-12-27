@@ -177,6 +177,23 @@ export class BaseElement {
     return scrollHeight > clientHeight;
   }
 
+  public async getElementIcons(
+    elements: BaseElement,
+    iconNameSelector?: string,
+  ) {
+    const allIcons: EntityIcon[] = [];
+    const elementsCount = await elements.getElementsCount();
+    for (let i = 1; i <= elementsCount; i++) {
+      const element = await elements.getNthElement(i);
+      const elementIconName = iconNameSelector
+        ? await element.locator(iconNameSelector).textContent()
+        : await element.textContent();
+      const elementIconHtml = await this.getElementIconHtml(element);
+      allIcons.push({ entityName: elementIconName!, icon: elementIconHtml });
+    }
+    return allIcons;
+  }
+
   public async getElementIconHtml(elementLocator: Locator): Promise<string> {
     const iconLocator = await elementLocator.locator(Tags.svg).first();
     return iconLocator.innerHTML().then((icon) =>

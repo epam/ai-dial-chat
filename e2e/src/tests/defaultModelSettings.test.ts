@@ -115,8 +115,7 @@ test(
     });
 
     await test.step('Verify recent entities icons are displayed and valid', async () => {
-      const recentEntitiesIcons =
-        await recentEntities.getRecentEntitiesIconAttributes();
+      const recentEntitiesIcons = await recentEntities.getRecentEntitiesIcons();
       expect
         .soft(
           recentEntitiesIcons.length,
@@ -140,7 +139,7 @@ test(
     });
 
     await test.step('Verify recent addon icons are displayed and valid', async () => {
-      const recentAddonsIcons = await addons.getRecentAddonsIconAttributes();
+      const recentAddonsIcons = await addons.getRecentAddonsIcons();
       expect
         .soft(
           recentAddonsIcons.length,

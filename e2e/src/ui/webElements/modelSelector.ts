@@ -1,6 +1,6 @@
 import { Attributes, Tags } from '@/e2e/src/ui/domData';
 import { ChatSelectors } from '@/e2e/src/ui/selectors';
-import { BaseElement, EntityIcon } from '@/e2e/src/ui/webElements/baseElement';
+import { BaseElement } from '@/e2e/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
 
 export class ModelSelector extends BaseElement {
@@ -37,14 +37,6 @@ export class ModelSelector extends BaseElement {
   }
 
   public async getOptionsIcons() {
-    const allIcons: EntityIcon[] = [];
-    const optionsCount = await this.listOptions.getElementsCount();
-    for (let i = 1; i <= optionsCount; i++) {
-      const option = await this.listOptions.getNthElement(i);
-      const optionName = await option.locator(Tags.desc).textContent();
-      const optionIcon = await this.getElementIconHtml(option);
-      allIcons.push({ entityName: optionName!, icon: optionIcon });
-    }
-    return allIcons;
+    return this.getElementIcons(this.listOptions, Tags.desc);
   }
 }

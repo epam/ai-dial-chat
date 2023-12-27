@@ -1,5 +1,5 @@
 import { ChatSelectors } from '../selectors';
-import { BaseElement, EntityIcon } from './baseElement';
+import { BaseElement } from './baseElement';
 
 import { Tags } from '@/e2e/src/ui/domData';
 import { Page } from '@playwright/test';
@@ -40,15 +40,6 @@ export class ChatHeader extends BaseElement {
   }
 
   async getHeaderAddonsIcons() {
-    const allIcons: EntityIcon[] = [];
-    await this.chatAddonIcons.getNthElement(1).waitFor();
-    const addonsCount = await this.chatAddonIcons.getElementsCount();
-    for (let i = 1; i <= addonsCount; i++) {
-      const addon = await this.chatAddonIcons.getNthElement(i);
-      const addonName = await addon.locator(Tags.desc).textContent();
-      const iconHtml = await this.getElementIconHtml(addon);
-      allIcons.push({ entityName: addonName!, icon: iconHtml });
-    }
-    return allIcons;
+    return this.getElementIcons(this.chatAddonIcons, Tags.desc);
   }
 }
