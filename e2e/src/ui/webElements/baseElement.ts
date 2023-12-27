@@ -1,10 +1,10 @@
-import { Attributes, Styles } from '../domData';
+import { Styles, Tags } from '../domData';
 
 import { Locator, Page } from '@playwright/test';
 
-export interface Icons {
-  iconEntity: string;
-  iconUrl: string | undefined;
+export interface EntityIcon {
+  entityName: string;
+  icon: string;
 }
 
 export class BaseElement {
@@ -20,6 +20,10 @@ export class BaseElement {
       this.rootLocator = this.page.locator(selector);
     }
     this.rootSelector = selector;
+  }
+
+  public getElementLocator() {
+    return this.rootLocator;
   }
 
   public createElementFromLocator(locator: Locator): BaseElement {
@@ -173,27 +177,15 @@ export class BaseElement {
     return scrollHeight > clientHeight;
   }
 
-  public async getElementIconAttributes(
-    elementLocator: Locator,
-  ): Promise<Icons> {
-    const iconEntity = await elementLocator.getAttribute(Attributes.alt);
-    const iconUrl = await elementLocator.getAttribute(Attributes.src);
-    return {
-      iconEntity: iconEntity!.replaceAll(' icon', ''),
-      iconUrl: iconUrl!,
-    };
-  }
-
-  public async getElementDefaultIconAttributes(
-    elementLocator: Locator,
-  ): Promise<Icons> {
-    const defaultIconEntity = await elementLocator.getByRole('img');
-    const defaultIconEntityName = await defaultIconEntity.getAttribute(
-      Attributes.ariaLabel,
+  public async getElementIconHtml(elementLocator: Locator): Promise<string> {
+    const iconLocator = await elementLocator.locator(Tags.svg).first();
+    return iconLocator.innerHTML().then((icon) =>
+      icon
+        .replaceAll('\n', '')
+        .replaceAll(/<desc>.*<\/desc>/g, '')
+        .replaceAll(/><\/path>(?=<.*)/g, '/>')
+        .replaceAll(/><\/rect>/g, '/>')
+        .replaceAll(/><\/polygon>/g, '/>'),
     );
-    return {
-      iconEntity: defaultIconEntityName!.replaceAll(' icon', ''),
-      iconUrl: undefined,
-    };
   }
 }

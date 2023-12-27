@@ -76,17 +76,18 @@ export class ChatMessages extends BaseElement {
 
   public async getIconAttributesForMessage(index?: number) {
     const messagesCount = await this.chatMessages.getElementsCount();
-    const messageIcon = await this.chatMessages
-      .getNthElement(index ?? messagesCount)
-      .locator(ChatSelectors.chatIcon);
-    return this.getElementIconAttributes(messageIcon);
+    const messageIcon = await this.chatMessages.getNthElement(
+      index ?? messagesCount,
+    );
+    return this.getElementIconHtml(messageIcon);
   }
 
   public async getMessageIconSize(index?: number) {
     const messagesCount = await this.chatMessages.getElementsCount();
     const iconBounding = await this.chatMessages
       .getNthElement(index ?? messagesCount)
-      .locator(ChatSelectors.chatIcon)
+      .locator(Tags.svg)
+      .first()
       .boundingBox();
     return {
       width: Number(iconBounding!.width.toFixed(2)),
@@ -101,7 +102,8 @@ export class ChatMessages extends BaseElement {
       await this.getCompareRowMessage(comparedMessageSide);
     await compareRowMessage
       .locator(ChatSelectors.iconAnimation)
-      .locator(ChatSelectors.chatIcon)
+      .locator(Tags.svg)
+      .first()
       .waitFor({ state: 'detached' });
   }
 
@@ -110,7 +112,8 @@ export class ChatMessages extends BaseElement {
     return this.chatMessages
       .getNthElement(index ?? messagesCount)
       .locator(ChatSelectors.iconAnimation)
-      .locator(ChatSelectors.chatIcon);
+      .locator(Tags.svg)
+      .first();
   }
 
   public async getCompareMessageJumpingIcon(
@@ -123,7 +126,8 @@ export class ChatMessages extends BaseElement {
     );
     return compareRowMessage
       .locator(ChatSelectors.iconAnimation)
-      .locator(ChatSelectors.chatIcon);
+      .locator(Tags.svg)
+      .first();
   }
 
   public async getIconAttributesForCompareMessage(
@@ -134,8 +138,7 @@ export class ChatMessages extends BaseElement {
       comparedMessageSide,
       rowIndex,
     );
-    const messageIcon = await compareRowMessage.locator(ChatSelectors.chatIcon);
-    return this.getElementIconAttributes(messageIcon);
+    return this.getElementIconHtml(compareRowMessage);
   }
 
   public async getCompareMessagesCount() {

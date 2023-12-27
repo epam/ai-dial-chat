@@ -19,6 +19,7 @@ test(
     addons,
     addonsDialog,
     conversations,
+    apiHelper,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1036', 'EPMRTC-1038', 'EPMRTC-378');
@@ -30,8 +31,7 @@ test(
 
     await test.step('Verify all entities have valid icons', async () => {
       const allExpectedEntities = ModelsUtil.getOpenAIEntities();
-      const actualEntitiesIcons =
-        await modelsDialog.getEntitiesIconAttributes();
+      const actualEntitiesIcons = await modelsDialog.getEntitiesIcons();
       expect
         .soft(
           actualEntitiesIcons.length,
@@ -39,16 +39,17 @@ test(
         )
         .toBe(allExpectedEntities.length);
 
-      for (const item of allExpectedEntities) {
-        const actualEntityIcon = actualEntitiesIcons.find(
-          (e) => e.iconEntity === item.id,
+      for (const entity of allExpectedEntities) {
+        const actualEntity = actualEntitiesIcons.find(
+          (e) => e.entityName === entity.name,
         )!;
+        const expectedEntityIcon = await apiHelper.getEntityIcon(entity);
         expect
           .soft(
-            actualEntityIcon.iconUrl,
-            ExpectedMessages.entityIconSourceIsValid,
+            actualEntity.icon,
+            `${ExpectedMessages.entityIconIsValid} for ${entity.name}`,
           )
-          .toBe(item.iconUrl);
+          .toBe(expectedEntityIcon);
       }
 
       await modelsDialog.closeDialog();
@@ -57,7 +58,7 @@ test(
     await test.step('Click "See all addons" and verify all addons have valid icons', async () => {
       const expectedAddons = ModelsUtil.getAddons();
       await addons.seeAllAddons();
-      const actualAddonsIcons = await addonsDialog.getAddonsIconAttributes();
+      const actualAddonsIcons = await addonsDialog.getAddonsIcons();
       expect
         .soft(
           actualAddonsIcons.length,
@@ -65,29 +66,32 @@ test(
         )
         .toBeGreaterThanOrEqual(expectedAddons.length);
 
-      for (const actualAddon of actualAddonsIcons) {
-        const expectedIcon = expectedAddons.find(
-          (a) => a.id === actualAddon.iconEntity,
-        )!.iconUrl;
+      for (const addon of expectedAddons) {
+        const actualAddon = actualAddonsIcons.find(
+          (a) => a.entityName === addon.name,
+        )!;
+        const expectedAddonIcon = await apiHelper.getEntityIcon(addon);
         expect
-          .soft(actualAddon.iconUrl, ExpectedMessages.addonIconIsValid)
-          .toBe(expectedIcon);
+          .soft(
+            actualAddon.icon,
+            `${ExpectedMessages.addonIconIsValid} for ${addon.name}`,
+          )
+          .toBe(expectedAddonIcon);
       }
 
       await addonsDialog.closeDialog();
     });
 
     await test.step('Verify default model icon is displayed on chat bar panel', async () => {
-      const defaultConversationIcon =
-        await conversations.getConversationIconAttributes(
-          ExpectedConstants.newConversationTitle,
-        );
+      const defaultConversationIcon = await conversations.getConversationIcon(
+        ExpectedConstants.newConversationTitle,
+      );
+      const expectedDefaultIcon = await apiHelper.getEntityIcon(
+        ModelsUtil.getDefaultModel()!,
+      );
       expect
-        .soft(
-          defaultConversationIcon.iconUrl,
-          ExpectedMessages.chatBarIconSourceIsValid,
-        )
-        .toBe(ModelsUtil.getDefaultModel()!.iconUrl);
+        .soft(defaultConversationIcon, ExpectedMessages.entityIconIsValid)
+        .toBe(expectedDefaultIcon);
     });
 
     await test.step('Select any entity and verify corresponding icon is displayed on chat bar panel', async () => {
@@ -96,16 +100,14 @@ test(
       );
       await talkToSelector.selectEntity(randomEntity.name, Groups.models);
 
-      const conversationIcon =
-        await conversations.getConversationIconAttributes(
-          ExpectedConstants.newConversationTitle,
-        );
+      const conversationIcon = await conversations.getConversationIcon(
+        ExpectedConstants.newConversationTitle,
+      );
+      const expectedIcon = await apiHelper.getEntityIcon(randomEntity);
+
       expect
-        .soft(
-          conversationIcon.iconUrl,
-          ExpectedMessages.chatBarIconSourceIsValid,
-        )
-        .toBe(randomEntity.iconUrl);
+        .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
+        .toBe(expectedIcon);
     });
   },
 );
@@ -141,7 +143,7 @@ test('"Talk to" item icon is jumping while generating an answer', async ({
     expect
       .soft(
         JSON.stringify(lastMessageIconSize),
-        ExpectedMessages.chatBarIconSourceIsValid,
+        ExpectedMessages.iconSizeIsValid,
       )
       .toBe(JSON.stringify(initialMessageIconSize));
   });

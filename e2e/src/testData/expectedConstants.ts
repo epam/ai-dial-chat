@@ -31,7 +31,7 @@ export const ExpectedConstants = {
   proceedReplayTooltip: 'Please continue replay to continue working with chat',
   waitForAssistantAnswerTooltip:
     'Please wait for full assistant answer to continue working with chat',
-  selectedPromptOptionAttribute: 'bg-blue-500/20',
+  selectedPromptOptionAttribute: 'bg-accent-primary-alpha',
   noResults: 'No results found',
   notAllowedModelError:
     'Not allowed model selected. Please, change the model to proceed',
@@ -79,6 +79,7 @@ export const API = {
   addonsHost: '/api/addons',
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
+  defaultIconHost: '/api/themes/image?name=default-model',
 };
 
 export const Import = {
@@ -109,4 +110,9 @@ export enum ModelIds {
 export enum Rate {
   like = 'like',
   dislike = 'dislike',
+}
+
+export enum Theme {
+  light = 'light',
+  dark = 'dark',
 }

@@ -1,9 +1,8 @@
 import { ChatSelectors, ModelDialog } from '../selectors';
-import { BaseElement, Icons } from './baseElement';
+import { BaseElement, EntityIcon } from './baseElement';
 
 import { Groups } from '@/e2e/src/testData';
 import { Styles, Tags } from '@/e2e/src/ui/domData';
-import { ModelsUtil } from '@/e2e/src/utils';
 import { Page } from '@playwright/test';
 
 export class ModelsDialog extends BaseElement {
@@ -106,26 +105,16 @@ export class ModelsDialog extends BaseElement {
     ).getComputedStyleProperty(Styles.textColor);
   }
 
-  public async getEntitiesIconAttributes() {
-    const allIcons: Icons[] = [];
+  public async getEntitiesIcons() {
+    const allIcons: EntityIcon[] = [];
     const entitiesCount = await this.groupEntity.getElementsCount();
     for (let i = 1; i <= entitiesCount; i++) {
       const entity = await this.groupEntity.getNthElement(i);
-      const customIconEntity = await entity.locator(ChatSelectors.chatIcon);
-      if (await customIconEntity.isVisible()) {
-        const iconAttributes =
-          await this.getElementIconAttributes(customIconEntity);
-        allIcons.push(iconAttributes);
-      } else {
-        const defaultIconEntity = await entity.locator(
-          ModelDialog.groupEntityName,
-        );
-        const defaultIconEntityName = await defaultIconEntity.textContent();
-        const defaultIconEntityId = ModelsUtil.getOpenAIEntities().find(
-          (e) => e.name === defaultIconEntityName,
-        )!.id;
-        allIcons.push({ iconEntity: defaultIconEntityId, iconUrl: undefined });
-      }
+      const entityName = await entity
+        .locator(ModelDialog.groupEntityName)
+        .textContent();
+      const iconHtml = await this.getElementIconHtml(entity);
+      allIcons.push({ entityName: entityName!, icon: iconHtml });
     }
     return allIcons;
   }

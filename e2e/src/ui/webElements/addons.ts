@@ -1,9 +1,8 @@
 import { ChatSelectors } from '../selectors';
-import { BaseElement, Icons } from './baseElement';
+import { BaseElement, EntityIcon } from './baseElement';
 
 import { Tags } from '@/e2e/src/ui/domData';
 import { AddonsDialog } from '@/e2e/src/ui/webElements/addonsDialog';
-import { ModelsUtil } from '@/e2e/src/utils';
 import { Locator, Page } from '@playwright/test';
 
 export class Addons extends BaseElement {
@@ -59,21 +58,13 @@ export class Addons extends BaseElement {
   }
 
   public async getAddonsIconAttributes(addons: BaseElement) {
-    const allIcons: Icons[] = [];
+    const allIcons: EntityIcon[] = [];
     const addonsCount = await addons.getElementsCount();
     for (let i = 1; i <= addonsCount; i++) {
       const addon = await addons.getNthElement(i);
-      const customAddonIcon = await addon.locator(ChatSelectors.chatIcon);
-      if (await customAddonIcon.isVisible()) {
-        const icon = await this.getElementIconAttributes(customAddonIcon);
-        allIcons.push(icon);
-      } else {
-        const addonName = await addon.textContent();
-        const defaultIconAddonId = ModelsUtil.getAddons().find(
-          (a) => a.name === addonName,
-        )!.id;
-        allIcons.push({ iconEntity: defaultIconAddonId, iconUrl: undefined });
-      }
+      const addonName = await addon.textContent();
+      const iconHtml = await this.getElementIconHtml(addon);
+      allIcons.push({ entityName: addonName!, icon: iconHtml });
     }
     return allIcons;
   }

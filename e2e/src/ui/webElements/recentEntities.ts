@@ -1,6 +1,6 @@
 import { Tags } from '../domData';
 import { ChatSelectors } from '../selectors';
-import { BaseElement, Icons } from './baseElement';
+import { BaseElement, EntityIcon } from './baseElement';
 
 import { Locator, Page } from '@playwright/test';
 
@@ -43,13 +43,15 @@ export class RecentEntities extends BaseElement {
   }
 
   public async getRecentEntitiesIconAttributes() {
-    const allIcons: Icons[] = [];
+    const allIcons: EntityIcon[] = [];
     const entitiesCount = await this.recentEntities.getElementsCount();
     for (let i = 1; i <= entitiesCount; i++) {
-      const icon = await this.recentEntities
-        .getChildElementBySelector(ChatSelectors.chatIcon)
-        .getNthElement(i);
-      allIcons.push(await this.getElementIconAttributes(icon));
+      const entity = await this.recentEntities.getNthElement(i);
+      const entityName = await entity
+        .locator(ChatSelectors.recentEntityNames)
+        .textContent();
+      const iconHtml = await this.getElementIconHtml(entity);
+      allIcons.push({ entityName: entityName!, icon: iconHtml });
     }
     return allIcons;
   }

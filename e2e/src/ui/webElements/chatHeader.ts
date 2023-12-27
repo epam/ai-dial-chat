@@ -1,6 +1,7 @@
 import { ChatSelectors } from '../selectors';
-import { BaseElement, Icons } from './baseElement';
+import { BaseElement, EntityIcon } from './baseElement';
 
+import { Tags } from '@/e2e/src/ui/domData';
 import { Page } from '@playwright/test';
 
 export class ChatHeader extends BaseElement {
@@ -13,8 +14,13 @@ export class ChatHeader extends BaseElement {
   }
 
   public chatTitle = this.getChildElementBySelector(ChatSelectors.chatTitle);
-  public icons = this.getChildElementBySelector(ChatSelectors.chatIcon);
   public chatModel = this.getChildElementBySelector(ChatSelectors.chatModel);
+  public chatModelIcon = this.getChildElementBySelector(
+    `${ChatSelectors.chatModel} >> ${Tags.svg}`,
+  );
+  public chatAddonIcons = this.getChildElementBySelector(
+    `${ChatSelectors.chatAddons} > ${Tags.span}`,
+  );
   public removeConversationFromComparison = this.getChildElementBySelector(
     ChatSelectors.removeFromCompareIcon,
   );
@@ -28,13 +34,20 @@ export class ChatHeader extends BaseElement {
     ChatSelectors.leavePlayback,
   );
 
-  async getHeaderIcons() {
-    const allIcons: Icons[] = [];
-    await this.icons.getNthElement(1).waitFor();
-    const iconsCount = await this.icons.getElementsCount();
-    for (let i = 1; i <= iconsCount; i++) {
-      const customIcon = await this.icons.getNthElement(i);
-      allIcons.push(await this.getElementIconAttributes(customIcon));
+  async getHeaderModelIcon() {
+    await this.chatModelIcon.waitForState();
+    return this.getElementIconHtml(this.rootLocator);
+  }
+
+  async getHeaderAddonsIcons() {
+    const allIcons: EntityIcon[] = [];
+    await this.chatAddonIcons.getNthElement(1).waitFor();
+    const addonsCount = await this.chatAddonIcons.getElementsCount();
+    for (let i = 1; i <= addonsCount; i++) {
+      const addon = await this.chatAddonIcons.getNthElement(i);
+      const addonName = await addon.locator(Tags.desc).textContent();
+      const iconHtml = await this.getElementIconHtml(addon);
+      allIcons.push({ entityName: addonName!, icon: iconHtml });
     }
     return allIcons;
   }
