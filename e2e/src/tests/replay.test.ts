@@ -941,6 +941,7 @@ test('Chat is in replay mode if while replaying to clear all messages', async ({
   chat,
   chatHeader,
   replayAsIs,
+  confirmationDialog,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-1542');
@@ -964,10 +965,8 @@ test('Chat is in replay mode if while replaying to clear all messages', async ({
   await test.step('Clear conversation messages and verify "Replay As Is" option, "Start replay" button are available, ', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await dialHomePage.acceptBrowserDialog(
-      ExpectedConstants.clearAllConversationsAlert,
-    );
     await chatHeader.clearConversation.click();
+    await confirmationDialog.confirm();
 
     const isStartReplayEnabled = await chat.replay.isElementEnabled();
     expect

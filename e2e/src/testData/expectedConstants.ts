@@ -22,7 +22,6 @@ export const ExpectedConstants = {
   talkToReply: 'Replay as is',
   fillVariablesAlertText: 'Please fill out all variables',
   enterMessageAlert: 'Please enter a message',
-  clearAllConversationsAlert: 'Are you sure you want to clear all messages?',
   defaultIconUrl: 'url(images/icons/message-square-lines-alt.svg))',
   deleteFolderMessage:
     'Are you sure that you want to remove a folder with all nested elements?',
