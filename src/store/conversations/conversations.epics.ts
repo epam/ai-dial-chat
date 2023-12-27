@@ -139,7 +139,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     })),
     switchMap(({ conversations, childFolders, folders }) => {
       const removedConversationsIds = conversations
-        .filter((conv) => conv.folderId && childFolders.includes(conv.folderId))
+        .filter((conv) => conv.folderId && childFolders.has(conv.folderId))
         .map((conv) => conv.id);
 
       return concat(
@@ -150,9 +150,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         ),
         of(
           ConversationsActions.setFolders({
-            folders: folders.filter(
-              (folder) => !childFolders.includes(folder.id),
-            ),
+            folders: folders.filter((folder) => !childFolders.has(folder.id)),
           }),
         ),
       );
@@ -1088,7 +1086,8 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         ConversationsActions.clearConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.addFolders.match(action) ||
-        ConversationsActions.unpublishFolder.match(action),
+        ConversationsActions.unpublishFolder.match(action) ||
+        ConversationsActions.setFolders.match(action),
     ),
     map(() => ({
       conversationsFolders: ConversationsSelectors.selectFolders(state$.value),
@@ -1417,7 +1416,7 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
         const mapping = new Map();
         childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
         const newFolders = folders
-          .filter(({ id }) => childFolders.includes(id))
+          .filter(({ id }) => childFolders.has(id))
           .map(({ folderId, ...folder }) => ({
             ...folder,
             id: mapping.get(folder.id),
@@ -1433,8 +1432,7 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
         const sharedConversations = conversations
           .filter(
             (conversation) =>
-              conversation.folderId &&
-              childFolders.includes(conversation.folderId),
+              conversation.folderId && childFolders.has(conversation.folderId),
           )
           .map(({ folderId, ...conversation }) => ({
             ...conversation,
@@ -1517,7 +1515,7 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
         const mapping = new Map();
         childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
         const newFolders = folders
-          .filter(({ id }) => childFolders.includes(id))
+          .filter(({ id }) => childFolders.has(id))
           .map(({ folderId, ...folder }) => ({
             ...folder,
             ...resetShareEntity,
@@ -1534,8 +1532,7 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
         const sharedConversations = conversations
           .filter(
             (conversation) =>
-              conversation.folderId &&
-              childFolders.includes(conversation.folderId),
+              conversation.folderId && childFolders.has(conversation.folderId),
           )
           .map(({ folderId, ...conversation }) => ({
             ...conversation,
