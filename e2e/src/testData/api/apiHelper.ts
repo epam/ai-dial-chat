@@ -1,6 +1,7 @@
 import { OpenAIEntityModel } from '@/src/types/openai';
 
 import { API } from '@/e2e/src/testData';
+import { Tags } from '@/e2e/src/ui/domData';
 import { APIRequestContext } from '@playwright/test';
 
 export class ApiHelper {
@@ -33,7 +34,7 @@ export class ApiHelper {
         .replaceAll(/.*<svg[^>]*>/g, '')
         .replaceAll(/<\/svg>/g, '')
         .replaceAll(/\s{2,}/g, '')
-        .replaceAll(/\/>$/g, '></path>'),
+        .replaceAll(/><\/path>$/g, Tags.closingTag),
     );
   }
 }

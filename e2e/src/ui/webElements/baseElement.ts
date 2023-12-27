@@ -183,9 +183,10 @@ export class BaseElement {
       icon
         .replaceAll('\n', '')
         .replaceAll(/<desc>.*<\/desc>/g, '')
-        .replaceAll(/><\/path>(?=<.*)/g, '/>')
-        .replaceAll(/><\/rect>/g, '/>')
-        .replaceAll(/><\/polygon>/g, '/>'),
+        .replaceAll(/><\/path>/g, Tags.closingTag)
+        .replaceAll(/><\/rect>/g, Tags.closingTag)
+        .replaceAll(/><\/polygon>/g, Tags.closingTag)
+        .replaceAll(/><\/circle>/g, Tags.closingTag),
     );
   }
 }

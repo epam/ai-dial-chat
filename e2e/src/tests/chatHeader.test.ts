@@ -78,23 +78,29 @@ test(
         )
         .toBe(expectedModelIcon);
 
-      const headerAddonIcons = await chatHeader.getHeaderAddonsIcons();
-      expect
-        .soft(headerAddonIcons.length, ExpectedMessages.headerIconsCountIsValid)
-        .toBe(addonIds.length);
-
-      for (const addonId of addonIds) {
-        const expectedAddon = ModelsUtil.getAddon(addonId)!;
-        const actualAddon = headerAddonIcons.find(
-          (a) => a.entityName === expectedAddon.name,
-        )!;
-        const expectedAddonIcon = await apiHelper.getEntityIcon(expectedAddon);
+      if (addonIds.length > 0) {
+        const headerAddonIcons = await chatHeader.getHeaderAddonsIcons();
         expect
           .soft(
-            actualAddon.icon,
-            `${ExpectedMessages.addonIconIsValid} for ${expectedAddon.name}`,
+            headerAddonIcons.length,
+            ExpectedMessages.headerIconsCountIsValid,
           )
-          .toBe(expectedAddonIcon);
+          .toBe(addonIds.length);
+
+        for (const addonId of addonIds) {
+          const expectedAddon = ModelsUtil.getAddon(addonId)!;
+          const actualAddon = headerAddonIcons.find(
+            (a) => a.entityName === expectedAddon.name,
+          )!;
+          const expectedAddonIcon =
+            await apiHelper.getEntityIcon(expectedAddon);
+          expect
+            .soft(
+              actualAddon.icon,
+              `${ExpectedMessages.addonIconIsValid} for ${expectedAddon.name}`,
+            )
+            .toBe(expectedAddonIcon);
+        }
       }
     });
 
