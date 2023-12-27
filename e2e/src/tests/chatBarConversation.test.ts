@@ -528,7 +528,7 @@ test('Chat is moved from the folder via drag&drop', async ({
   const draggableAreaColor = await chatBar.getDraggableAreaColor();
   expect
     .soft(draggableAreaColor[0], ExpectedMessages.draggableAreaColorIsValid)
-    .toBe(Colors.highlightedDraggableArea);
+    .toBe(Colors.backgroundAccentSecondary);
   await page.mouse.up();
 
   expect
@@ -554,7 +554,7 @@ test('Chat is moved from the folder via drag&drop', async ({
   );
   expect
     .soft(folderNameColor[0], ExpectedMessages.folderNameColorIsValid)
-    .toBe(Colors.notHighlightedFolderName);
+    .toBe(Colors.textPrimary);
 });
 
 test('Chat is moved to folder created from Move to', async ({
@@ -597,7 +597,7 @@ test('Chat is moved to folder created from Move to', async ({
   );
   expect
     .soft(folderNameColor[0], ExpectedMessages.folderNameColorIsValid)
-    .toBe(Colors.highlightedFolderName);
+    .toBe(Colors.textPrimary);
 });
 
 test(

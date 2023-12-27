@@ -157,7 +157,10 @@ export const ChatHeader = ({
                   (conversation.selectedAddons.length > 0 ||
                     (model.selectedAddons &&
                       model.selectedAddons.length > 0)) && (
-                    <span className="flex items-center gap-2">
+                    <span
+                      className="flex items-center gap-2"
+                      data-qa="chat-addons"
+                    >
                       {model.selectedAddons?.map((addon) => (
                         <ModelIcon
                           key={addon}

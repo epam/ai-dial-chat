@@ -392,6 +392,7 @@ test(
     chatMessages,
     conversations,
     chat,
+    apiHelper,
   }) => {
     setTestIds('EPMRTC-906', 'EPMRTC-779');
     await test.step('Import conversation from 1.4 app version and verify folder with Gpt-3.5 chat and its history is visible', async () => {
@@ -430,23 +431,14 @@ test(
       await conversations
         .getConversationByName(ExpectedConstants.newConversationTitle, 2)
         .waitFor();
-      const newGpt4ConversationIcon =
-        await conversations.getConversationIconAttributes(
-          ExpectedConstants.newConversationTitle,
-          2,
-        );
+      const expectedModelIcon = await apiHelper.getEntityIcon(gpt4Model);
+      const newGpt4ConversationIcon = await conversations.getConversationIcon(
+        ExpectedConstants.newConversationTitle,
+        2,
+      );
       expect
-        .soft(
-          newGpt4ConversationIcon.iconEntity,
-          ExpectedMessages.chatBarIconEntityIsValid,
-        )
-        .toBe(gpt4Model!.id);
-      expect
-        .soft(
-          newGpt4ConversationIcon.iconUrl,
-          ExpectedMessages.chatBarIconSourceIsValid,
-        )
-        .toBe(gpt4Model!.iconUrl);
+        .soft(newGpt4ConversationIcon, ExpectedMessages.entityIconIsValid)
+        .toBe(expectedModelIcon);
     });
 
     await test.step('Verify Bison conversation with default icon is imported', async () => {
@@ -454,16 +446,16 @@ test(
         .getConversationByName(Import.v14AppBisonChatName)
         .waitFor();
 
-      const isBisonConversationHasDefaultIcon =
-        await conversations.isConversationHasDefaultIcon(
-          Import.v14AppBisonChatName,
-        );
+      const defaultIcon = await apiHelper.getDefaultEntityIcon();
+      const bisonConversationIcon = await conversations.getConversationIcon(
+        Import.v14AppBisonChatName,
+      );
       expect
         .soft(
-          isBisonConversationHasDefaultIcon,
+          bisonConversationIcon,
           ExpectedMessages.chatBarConversationIconIsDefault,
         )
-        .toBeTruthy();
+        .toBe(defaultIcon);
     });
 
     await test.step('Verify no prompts are imported', async () => {

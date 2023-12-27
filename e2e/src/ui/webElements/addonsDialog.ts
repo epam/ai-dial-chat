@@ -1,8 +1,7 @@
-import { AddonDialog, ChatSelectors } from '../selectors';
-import { BaseElement, Icons } from './baseElement';
+import { AddonDialog } from '../selectors';
+import { BaseElement } from './baseElement';
 
 import { Tags } from '@/e2e/src/ui/domData';
-import { ModelsUtil } from '@/e2e/src/utils';
 import { Page } from '@playwright/test';
 
 export class AddonsDialog extends BaseElement {
@@ -16,27 +15,8 @@ export class AddonsDialog extends BaseElement {
 
   public closeButton = this.getChildElementBySelector(AddonDialog.closeDialog);
 
-  public async getAddonsIconAttributes() {
-    const allIcons: Icons[] = [];
-    const addonsCount = await this.searchResults.getElementsCount();
-    for (let i = 1; i <= addonsCount; i++) {
-      const addon = await this.searchResults.getNthElement(i);
-      const customIconAddon = await addon.locator(ChatSelectors.chatIcon);
-      if (await customIconAddon.isVisible()) {
-        const iconAttributes = await this.getElementIconAttributes(
-          customIconAddon,
-        );
-        allIcons.push(iconAttributes);
-      } else {
-        const defaultIconEntity = await addon.locator(AddonDialog.addonName);
-        const defaultIconEntityName = await defaultIconEntity.textContent();
-        const defaultIconEntityId = ModelsUtil.getAddons().find(
-          (e) => e.name === defaultIconEntityName,
-        )!.id;
-        allIcons.push({ iconEntity: defaultIconEntityId, iconUrl: undefined });
-      }
-    }
-    return allIcons;
+  public async getAddonsIcons() {
+    return this.getElementIcons(this.searchResults, AddonDialog.addonName);
   }
 
   public async closeDialog() {

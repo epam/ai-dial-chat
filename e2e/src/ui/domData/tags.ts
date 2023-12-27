@@ -6,4 +6,6 @@ export enum Tags {
   div = 'div',
   svg = 'svg',
   a = 'a',
+  desc = 'desc',
+  closingTag = '/>',
 }

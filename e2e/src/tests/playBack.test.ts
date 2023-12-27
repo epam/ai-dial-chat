@@ -1,9 +1,13 @@
 import { Conversation } from '@/src/types/chat';
 import { OpenAIEntityModel } from '@/src/types/openai';
-import { availableThemes } from '@/src/types/settings';
 
 import test from '@/e2e/src/core/fixtures';
-import { ExpectedMessages, MenuOptions, ModelIds } from '@/e2e/src/testData';
+import {
+  ExpectedMessages,
+  MenuOptions,
+  ModelIds,
+  Theme,
+} from '@/e2e/src/testData';
 import { keys } from '@/e2e/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
@@ -32,11 +36,16 @@ test(
     chatMessages,
     chatHeader,
     setTestIds,
+    apiHelper,
   }) => {
     setTestIds('EPMRTC-1417', 'EPMRTC-1418', 'EPMRTC-1422');
     let conversation: Conversation;
     const conversationModels = [defaultModel, gpt4Model];
     let playbackConversationName: string;
+
+    const expectedDefaultModelIcon =
+      await apiHelper.getEntityIcon(defaultModel);
+    const expectedSecondModelIcon = await apiHelper.getEntityIcon(gpt4Model);
 
     await test.step('Prepare conversation to playback based on different models', async () => {
       conversation =
@@ -46,9 +55,7 @@ test(
       await localStorageManager.setConversationHistory(conversation);
       await localStorageManager.setSelectedConversation(conversation);
 
-      const theme = GeneratorUtil.randomArrayElement(
-        Object.keys(availableThemes),
-      );
+      const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
       await localStorageManager.setSettings(theme);
     });
 
@@ -140,19 +147,10 @@ test(
         .soft(headerTitle, ExpectedMessages.headerTitleCorrespondRequest)
         .toBe(playbackConversationName);
 
-      const headerIcons = await chatHeader.getHeaderIcons();
+      const headerModelIcon = await chatHeader.getHeaderModelIcon();
       expect
-        .soft(headerIcons.length, ExpectedMessages.headerIconsCountIsValid)
-        .toBe(1);
-      expect
-        .soft(
-          headerIcons[0].iconEntity,
-          ExpectedMessages.headerIconEntityIsValid,
-        )
-        .toBe(defaultModel.id);
-      expect
-        .soft(headerIcons[0].iconUrl, ExpectedMessages.headerIconSourceIsValid)
-        .toBe(defaultModel.iconUrl);
+        .soft(headerModelIcon, ExpectedMessages.entityIconIsValid)
+        .toBe(expectedDefaultModelIcon);
 
       const isConversationHasPlaybackIcon =
         await conversations.isConversationHasPlaybackIcon(
@@ -209,19 +207,10 @@ test(
         .soft(headerTitle, ExpectedMessages.headerTitleCorrespondRequest)
         .toBe(playbackConversationName);
 
-      const headerIcons = await chatHeader.getHeaderIcons();
+      const headerIcon = await chatHeader.getHeaderModelIcon();
       expect
-        .soft(headerIcons.length, ExpectedMessages.headerIconsCountIsValid)
-        .toBe(1);
-      expect
-        .soft(
-          headerIcons[0].iconEntity,
-          ExpectedMessages.headerIconEntityIsValid,
-        )
-        .toBe(gpt4Model.id);
-      expect
-        .soft(headerIcons[0].iconUrl, ExpectedMessages.headerIconSourceIsValid)
-        .toBe(gpt4Model.iconUrl);
+        .soft(headerIcon, ExpectedMessages.entityIconIsValid)
+        .toBe(expectedSecondModelIcon);
 
       const isConversationHasPlaybackIcon =
         await conversations.isConversationHasPlaybackIcon(
@@ -277,19 +266,10 @@ test(
         .soft(headerTitle, ExpectedMessages.headerTitleCorrespondRequest)
         .toBe(playbackConversationName);
 
-      const headerIcons = await chatHeader.getHeaderIcons();
+      const headerModelIcon = await chatHeader.getHeaderModelIcon();
       expect
-        .soft(headerIcons.length, ExpectedMessages.headerIconsCountIsValid)
-        .toBe(1);
-      expect
-        .soft(
-          headerIcons[0].iconEntity,
-          ExpectedMessages.headerIconEntityIsValid,
-        )
-        .toBe(defaultModel.id);
-      expect
-        .soft(headerIcons[0].iconUrl, ExpectedMessages.headerIconSourceIsValid)
-        .toBe(defaultModel.iconUrl);
+        .soft(headerModelIcon, ExpectedMessages.entityIconIsValid)
+        .toBe(expectedDefaultModelIcon);
 
       const isConversationHasPlaybackIcon =
         await conversations.isConversationHasPlaybackIcon(
@@ -594,6 +574,7 @@ test('Playback: exit the mode at the end of playback', async ({
   chatMessages,
   sendMessage,
   chatHeader,
+  apiHelper,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-1425');
@@ -633,15 +614,13 @@ test('Playback: exit the mode at the end of playback', async ({
       .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
       .toBe(conversation.messages.length + 2);
 
+    const expectedModelIcon = await apiHelper.getEntityIcon(defaultModel);
     const sentMessageIcon = await chatMessages.getIconAttributesForMessage(
       conversation.messages.length + 2,
     );
     expect
-      .soft(sentMessageIcon.iconEntity, ExpectedMessages.chatIconEntityIsValid)
-      .toBe(defaultModel.id);
-    expect
-      .soft(sentMessageIcon.iconUrl, ExpectedMessages.chatIconSourceIsValid)
-      .toBe(defaultModel.iconUrl);
+      .soft(sentMessageIcon, ExpectedMessages.entityIconIsValid)
+      .toBe(expectedModelIcon);
   });
 });
 

@@ -19,6 +19,7 @@ import { PromptBar } from '../ui/webElements';
 import { LocalStorageManager } from './localStorageManager';
 
 import { ConversationData } from '@/e2e/src/testData';
+import { ApiHelper } from '@/e2e/src/testData/api/apiHelper';
 import { PromptData } from '@/e2e/src/testData/prompts/promptData';
 import { Addons } from '@/e2e/src/ui/webElements/addons';
 import { AddonsDialog } from '@/e2e/src/ui/webElements/addonsDialog';
@@ -93,6 +94,7 @@ const test = base.extend<
     replayAsIs: ReplayAsIs;
     playback: Playback;
     playbackControl: PlaybackControl;
+    apiHelper: ApiHelper;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -293,6 +295,10 @@ const test = base.extend<
   playbackControl: async ({ chat }, use) => {
     const playbackControl = chat.getPlaybackControl();
     await use(playbackControl);
+  },
+  apiHelper: async ({ request }, use) => {
+    const apiHelper = new ApiHelper(request);
+    await use(apiHelper);
   },
 });
 
