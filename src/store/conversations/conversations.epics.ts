@@ -131,15 +131,17 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.deleteFolder.match),
     map(({ payload }) => ({
       conversations: ConversationsSelectors.selectConversations(state$.value),
-      childFolders: ConversationsSelectors.selectChildAndCurrentFoldersIdsById(
-        state$.value,
-        payload.folderId,
+      childFolders: new Set(
+        ConversationsSelectors.selectChildAndCurrentFoldersIdsById(
+          state$.value,
+          payload.folderId,
+        ),
       ),
       folders: ConversationsSelectors.selectFolders(state$.value),
     })),
     switchMap(({ conversations, childFolders, folders }) => {
       const removedConversationsIds = conversations
-        .filter((conv) => conv.folderId && childFolders.includes(conv.folderId))
+        .filter((conv) => conv.folderId && childFolders.has(conv.folderId))
         .map((conv) => conv.id);
 
       return concat(
@@ -150,9 +152,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         ),
         of(
           ConversationsActions.setFolders({
-            folders: folders.filter(
-              (folder) => !childFolders.includes(folder.id),
-            ),
+            folders: folders.filter((folder) => !childFolders.has(folder.id)),
           }),
         ),
       );
@@ -1400,9 +1400,11 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
       sharedFolderId: payload.id,
       shareUniqueId: payload.shareUniqueId,
       conversations: ConversationsSelectors.selectConversations(state$.value),
-      childFolders: ConversationsSelectors.selectChildAndCurrentFoldersIdsById(
-        state$.value,
-        payload.id,
+      childFolders: new Set(
+        ConversationsSelectors.selectChildAndCurrentFoldersIdsById(
+          state$.value,
+          payload.id,
+        ),
       ),
       folders: ConversationsSelectors.selectFolders(state$.value),
     })),
@@ -1417,7 +1419,7 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
         const mapping = new Map();
         childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
         const newFolders = folders
-          .filter(({ id }) => childFolders.includes(id))
+          .filter(({ id }) => childFolders.has(id))
           .map(({ folderId, ...folder }) => ({
             ...folder,
             id: mapping.get(folder.id),
@@ -1433,8 +1435,7 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
         const sharedConversations = conversations
           .filter(
             (conversation) =>
-              conversation.folderId &&
-              childFolders.includes(conversation.folderId),
+              conversation.folderId && childFolders.has(conversation.folderId),
           )
           .map(({ folderId, ...conversation }) => ({
             ...conversation,
@@ -1500,9 +1501,11 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
       sharedFolderId: payload.id,
       shareUniqueId: payload.shareUniqueId,
       conversations: ConversationsSelectors.selectConversations(state$.value),
-      childFolders: ConversationsSelectors.selectChildAndCurrentFoldersIdsById(
-        state$.value,
-        payload.id,
+      childFolders: new Set(
+        ConversationsSelectors.selectChildAndCurrentFoldersIdsById(
+          state$.value,
+          payload.id,
+        ),
       ),
       folders: ConversationsSelectors.selectFolders(state$.value),
     })),
@@ -1517,7 +1520,7 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
         const mapping = new Map();
         childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
         const newFolders = folders
-          .filter(({ id }) => childFolders.includes(id))
+          .filter(({ id }) => childFolders.has(id))
           .map(({ folderId, ...folder }) => ({
             ...folder,
             ...resetShareEntity,
@@ -1534,8 +1537,7 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
         const sharedConversations = conversations
           .filter(
             (conversation) =>
-              conversation.folderId &&
-              childFolders.includes(conversation.folderId),
+              conversation.folderId && childFolders.has(conversation.folderId),
           )
           .map(({ folderId, ...conversation }) => ({
             ...conversation,
