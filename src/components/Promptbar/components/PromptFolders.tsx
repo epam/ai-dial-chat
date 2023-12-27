@@ -226,8 +226,8 @@ export const PromptSection = ({
 
   if (
     hideIfEmpty &&
-    (!displayRootFiles || !prompts.length) &&
-    !folders.length
+    (!displayRootFiles || !rootPrompts.length) &&
+    !rootfolders.length
   ) {
     return null;
   }
