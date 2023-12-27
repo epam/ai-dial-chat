@@ -67,11 +67,9 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     filter(PromptsActions.deleteFolder.match),
     map(({ payload }) => ({
       prompts: PromptsSelectors.selectPrompts(state$.value),
-      childFolders: new Set(
-        PromptsSelectors.selectChildAndCurrentFoldersIdsById(
-          state$.value,
-          payload.folderId,
-        ),
+      childFolders: PromptsSelectors.selectChildAndCurrentFoldersIdsById(
+        state$.value,
+        payload.folderId,
       ),
       folders: PromptsSelectors.selectFolders(state$.value),
     })),
@@ -201,11 +199,9 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
       sharedFolderId: payload.id,
       shareUniqueId: payload.shareUniqueId,
       prompts: PromptsSelectors.selectPrompts(state$.value),
-      childFolders: new Set(
-        PromptsSelectors.selectChildAndCurrentFoldersIdsById(
-          state$.value,
-          payload.id,
-        ),
+      childFolders: PromptsSelectors.selectChildAndCurrentFoldersIdsById(
+        state$.value,
+        payload.id,
       ),
       folders: PromptsSelectors.selectFolders(state$.value),
     })),
@@ -296,11 +292,9 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
       sharedFolderId: payload.id,
       shareUniqueId: payload.shareUniqueId,
       prompts: PromptsSelectors.selectPrompts(state$.value),
-      childFolders: new Set(
-        PromptsSelectors.selectChildAndCurrentFoldersIdsById(
-          state$.value,
-          payload.id,
-        ),
+      childFolders: PromptsSelectors.selectChildAndCurrentFoldersIdsById(
+        state$.value,
+        payload.id,
       ),
       folders: PromptsSelectors.selectFolders(state$.value),
     })),

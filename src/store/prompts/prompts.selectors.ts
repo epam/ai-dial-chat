@@ -128,7 +128,7 @@ export const selectParentFoldersIds = createSelector(
 export const selectChildAndCurrentFoldersIdsById = createSelector(
   [selectFolders, (_state, folderId: string | undefined) => folderId],
   (folders, folderId) => {
-    return getChildAndCurrentFoldersIdsById(folderId, folders);
+    return new Set(getChildAndCurrentFoldersIdsById(folderId, folders));
   },
 );
 
