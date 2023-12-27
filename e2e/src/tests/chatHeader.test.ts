@@ -139,7 +139,7 @@ test(
   },
 );
 
-test.only(
+test(
   'Clear conversations using button in chat. Cancel.\n' +
     'Clear conversation using button in chat. Ok',
   async ({
