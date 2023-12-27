@@ -159,6 +159,7 @@ test(
     localStorageManager,
     chatHeader,
     conversationSettings,
+    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-490', 'EPMRTC-491');
     let conversation: Conversation;
@@ -175,8 +176,8 @@ test(
     await test.step('Try to clear conversation messages using header button but cancel clearing and verify no messages deleted', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await dialHomePage.dismissBrowserDialog();
       await chatHeader.clearConversation.click();
+      await confirmationDialog.cancelDialog();
 
       const messagesCount = await chatMessages.chatMessages.getElementsCount();
       expect
@@ -185,10 +186,8 @@ test(
     });
 
     await test.step('Clear conversation messages using header button and verify messages deleted, setting are shown', async () => {
-      await dialHomePage.acceptBrowserDialog(
-        ExpectedConstants.clearAllConversationsAlert,
-      );
       await chatHeader.clearConversation.click();
+      await confirmationDialog.confirm();
 
       const isConversationSettingsVisible =
         await conversationSettings.isVisible();
