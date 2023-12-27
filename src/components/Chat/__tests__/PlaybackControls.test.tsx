@@ -1,4 +1,4 @@
-import { PlaybackControls } from '@/src/components/Chat/PlaybackControls';
+import { PlaybackControls } from '@/src/components/Chat/Playback/PlaybackControls';
 import {
   ConversationsActions,
   ConversationsSelectors,

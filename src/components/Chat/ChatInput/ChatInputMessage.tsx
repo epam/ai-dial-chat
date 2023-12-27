@@ -222,7 +222,7 @@ export const ChatInputMessage = ({
 
   const handleInitModal = useCallback(() => {
     const selectedPrompt = filteredPrompts[activePromptIndex];
-    if (selectedPrompt && !!selectedPrompt.content) {
+    if (selectedPrompt) {
       setContent((prevContent) => {
         const newContent = prevContent?.replace(
           /\/\w*$/,
@@ -403,13 +403,13 @@ export const ChatInputMessage = ({
       )}
     >
       <div
-        className="relative m-0 flex max-h-[400px] min-h-[40px] w-full grow flex-col rounded bg-gray-100 focus-within:border-blue-500 dark:bg-gray-700"
+        className="relative m-0 flex max-h-[400px] min-h-[40px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary"
         data-qa="message"
       >
         <textarea
           ref={textareaRef}
           className={classNames(
-            'm-0 min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none placeholder:text-gray-500',
+            'm-0 min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none placeholder:text-secondary',
             displayAttachFunctionality ? 'pl-12' : 'pl-4',
           )}
           style={{ maxHeight: `${MAX_HEIGHT}px` }}
@@ -442,7 +442,7 @@ export const ChatInputMessage = ({
               />
             </div>
             {selectedFiles.length > 0 && (
-              <div className="mb-2.5 grid max-h-[100px] grid-cols-3 gap-1 overflow-auto px-12">
+              <div className="mb-2.5 flex max-h-[100px] flex-col gap-1 overflow-auto px-12 md:grid md:grid-cols-3">
                 <ChatInputAttachments
                   files={selectedFiles}
                   onUnselectFile={handleUnselectFile}

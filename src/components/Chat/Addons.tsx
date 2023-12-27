@@ -9,7 +9,6 @@ import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -31,7 +30,6 @@ const Addon = ({
   isSelected = false,
   onChangeAddon,
 }: AddonProps) => {
-  const theme = useAppSelector(UISelectors.selectThemeState);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
 
   const description = useMemo(
@@ -43,10 +41,9 @@ const Addon = ({
     <button
       className={classNames(
         `flex items-center gap-2 rounded px-3 py-2 text-left`,
-        { 'bg-blue-500/20': isSelected },
+        { 'bg-accent-primary-alpha': isSelected },
         {
-          'bg-gray-100 hover:bg-gray-400 dark:bg-gray-700 hover:dark:bg-gray-600':
-            !isSelected,
+          'bg-layer-3 hover:bg-layer-4': !isSelected,
         },
       )}
       disabled={preselectedAddonsIds.includes(addonId)}
@@ -54,15 +51,10 @@ const Addon = ({
         onChangeAddon(addonId);
       }}
     >
-      <ModelIcon
-        entity={addonsMap[addonId]}
-        entityId={addonId}
-        size={15}
-        inverted={!addonsMap[addonId]?.iconUrl && theme === 'dark'}
-      />
+      <ModelIcon entity={addonsMap[addonId]} entityId={addonId} size={15} />
       <span>{addonsMap[addonId]?.name || addonId}</span>
       {isSelected && !preselectedAddonsIds.includes(addonId) && (
-        <XMark height={12} width={12} className="text-gray-500" />
+        <XMark height={12} width={12} className="text-secondary" />
       )}
     </button>
   );
@@ -145,7 +137,7 @@ export const Addons = ({
       {(selectedAddonsIds?.filter((id) => addonsMap[id]).length > 0 ||
         preselectedAddonsIds?.length > 0) && (
         <>
-          <span className="text-gray-500">{t('Selected')}</span>
+          <span className="text-secondary">{t('Selected')}</span>
           <div className="flex flex-wrap gap-1" data-qa="selected-addons">
             {preselectedAddonsIds.map((addon) => (
               <Addon
@@ -177,7 +169,7 @@ export const Addons = ({
         <>
           {filteredRecentAddons?.length > 0 && (
             <>
-              <span className="text-gray-500">{t('Recent')}</span>
+              <span className="text-secondary">{t('Recent')}</span>
               <div className="flex flex-wrap gap-1" data-qa="recent-addons">
                 {filteredRecentAddons
                   .map((addon) => (
@@ -195,7 +187,7 @@ export const Addons = ({
           )}
           <div>
             <button
-              className="mt-3 inline text-left text-blue-500"
+              className="mt-3 inline text-left text-accent-primary"
               onClick={() => {
                 setIsAddonsDialogOpen(true);
               }}

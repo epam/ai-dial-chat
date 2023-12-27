@@ -4,11 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
-import { Theme } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
-
-import { useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
@@ -28,24 +24,15 @@ const SM_HEIGHT_THRESHOLDS = [
 ];
 const DEFAULT_SM_LINE_CLAMP = 'line-clamp-[28]';
 
-const getModelTemplate = (
-  model: OpenAIEntityModel,
-  theme: Theme,
-  label: string,
-) => {
+const getModelTemplate = (model: OpenAIEntityModel, label: string) => {
   return (
     <>
-      <span className="text-gray-500">{label}:</span>
+      <span className="text-secondary">{label}:</span>
       <div
         className="flex items-center gap-2"
         data-qa={label.toLowerCase().concat('-info')}
       >
-        <ModelIcon
-          entityId={model.id}
-          entity={model}
-          size={18}
-          inverted={theme === 'dark'}
-        />
+        <ModelIcon entityId={model.id} entity={model} size={18} />
         {model.name}
       </div>
     </>
@@ -64,8 +51,6 @@ export const ChatInfoTooltip = ({
       (lineClamp) => window.innerHeight <= lineClamp.threshold,
     )?.class || DEFAULT_SM_LINE_CLAMP;
 
-  const theme = useAppSelector(UISelectors.selectThemeState);
-
   const { t } = useTranslation(Translation.Chat);
   const getModelLabel = useCallback(() => {
     switch (model.type) {
@@ -83,12 +68,11 @@ export const ChatInfoTooltip = ({
       className="grid max-w-[880px] grid-cols-[max-content_1fr] gap-4 px-2 py-3"
       data-qa="chat-info-tooltip"
     >
-      {model && getModelTemplate(model, theme, getModelLabel())}
-      {subModel != null &&
-        getModelTemplate(subModel, theme, t('Assistant model'))}
+      {model && getModelTemplate(model, getModelLabel())}
+      {subModel != null && getModelTemplate(subModel, t('Assistant model'))}
       {prompt && (
         <>
-          <span className="text-gray-500">{t('System prompt')}:</span>
+          <span className="text-secondary">{t('System prompt')}:</span>
           <div
             className={`whitespace-pre-wrap ${lineClampClass}`}
             data-qa="prompt-info"
@@ -99,26 +83,21 @@ export const ChatInfoTooltip = ({
       )}
       {temperature !== null && (
         <>
-          <span className="text-gray-500">{t('Temperature')}:</span>
+          <span className="text-secondary">{t('Temperature')}:</span>
           <div data-qa="temp-info">{temperature}</div>
         </>
       )}
       {selectedAddons !== null && selectedAddons?.length > 0 && (
         <>
-          <span className="text-gray-500">{t('Addons')}:</span>
+          <span className="text-secondary">{t('Addons')}:</span>
           <div className="flex flex-wrap gap-1">
             {selectedAddons.map((addon) => (
               <span
                 key={addon.id}
-                className="flex gap-2 rounded bg-blue-500/20 px-3 py-2"
+                className="flex gap-2 rounded bg-accent-primary-alpha px-3 py-2"
                 data-qa="addons-info"
               >
-                <ModelIcon
-                  entityId={addon.id}
-                  entity={addon}
-                  size={18}
-                  inverted={theme === 'dark'}
-                />
+                <ModelIcon entityId={addon.id} entity={addon} size={18} />
                 {addon.name}
               </span>
             ))}

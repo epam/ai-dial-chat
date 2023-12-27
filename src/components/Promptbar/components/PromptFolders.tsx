@@ -7,7 +7,7 @@ import {
   SharedWithMeFilter,
 } from '@/src/utils/app/search';
 
-import { FeatureType, HighlightColor } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
@@ -128,7 +128,6 @@ const PromptFolderTemplate = ({
         onDrop={onDropBetweenFolders}
         index={index}
         parentFolderId={folder.folderId}
-        highlightColor={HighlightColor.Violet}
       />
       <Folder
         searchTerm={searchTerm}
@@ -136,7 +135,6 @@ const PromptFolderTemplate = ({
         itemComponent={PromptComponent}
         allItems={prompts}
         allFolders={promptFolders}
-        highlightColor={HighlightColor.Violet}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
@@ -161,7 +159,6 @@ const PromptFolderTemplate = ({
           onDrop={onDropBetweenFolders}
           index={index + 1}
           parentFolderId={folder.folderId}
-          highlightColor={HighlightColor.Violet}
         />
       )}
     </>
@@ -192,7 +189,7 @@ export const PromptSection = ({
     PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
   );
 
-  const rootfolders = useMemo(
+  const rootFolders = useMemo(
     () => folders.filter(({ folderId }) => !folderId),
     [folders],
   );
@@ -212,7 +209,7 @@ export const PromptSection = ({
 
   useEffect(() => {
     const shouldBeHighlighted =
-      rootfolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
+      rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
       (!!displayRootFiles &&
         rootPrompts.some(({ id }) => selectSelectedPromptId === id));
     if (isSectionHighlighted !== shouldBeHighlighted) {
@@ -220,7 +217,7 @@ export const PromptSection = ({
     }
   }, [
     displayRootFiles,
-    rootfolders,
+    rootFolders,
     isSectionHighlighted,
     selectSelectedPromptId,
     selectedFoldersIds,
@@ -229,8 +226,8 @@ export const PromptSection = ({
 
   if (
     hideIfEmpty &&
-    (!displayRootFiles || !prompts.length) &&
-    !folders.length
+    (!displayRootFiles || !rootPrompts.length) &&
+    !rootFolders.length
   ) {
     return null;
   }
@@ -243,7 +240,7 @@ export const PromptSection = ({
       isHighlighted={isSectionHighlighted}
     >
       <div>
-        {rootfolders.map((folder, index, arr) => (
+        {rootFolders.map((folder, index, arr) => (
           <PromptFolderTemplate
             key={folder.id}
             folder={folder}
@@ -320,7 +317,7 @@ export function PromptFolders() {
 
   return (
     <div
-      className="flex w-full flex-col gap-0.5 divide-y divide-gray-200 empty:hidden dark:divide-gray-800"
+      className="flex w-full flex-col gap-0.5 divide-y divide-tertiary empty:hidden"
       data-qa="prompt-folders"
     >
       {folderItems.map((itemProps) => (

@@ -11,7 +11,6 @@ export function ToggleSwitchLabeled({
   switchOnText,
   switchOFFText,
   labelClassName,
-  switchOnBackgroungColor,
   handleSwitch,
 }: ToggleSwitchLabeledProps) {
   return (
@@ -27,7 +26,6 @@ export function ToggleSwitchLabeled({
         handleSwitch={handleSwitch}
         switchOnText={switchOnText}
         switchOFFText={switchOFFText}
-        switchOnBackgroungColor={switchOnBackgroungColor}
       />
     </label>
   );

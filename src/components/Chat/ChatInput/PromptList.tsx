@@ -40,14 +40,14 @@ export const PromptList: FC<Props> = ({
     <ul
       ref={refs.setFloating}
       {...getFloatingProps()}
-      className="z-10 max-h-52 w-full overflow-auto rounded bg-gray-100 dark:bg-gray-700"
+      className="z-10 max-h-52 w-full overflow-auto rounded bg-layer-3"
       data-qa="prompt-list"
     >
       {prompts.map((prompt, index) => (
         <li
           key={prompt.id}
           className={`${
-            index === activePromptIndex ? 'bg-blue-500/20' : ''
+            index === activePromptIndex ? 'bg-accent-primary-alpha' : ''
           } cursor-pointer px-3 py-2`}
           onClick={(e) => {
             e.preventDefault();

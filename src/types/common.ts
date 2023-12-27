@@ -12,12 +12,6 @@ export enum FeatureType {
   Prompt = 'prompt',
 }
 
-export enum HighlightColor {
-  Green = 'green',
-  Violet = 'violet',
-  Blue = 'blue',
-}
-
 export interface Entity {
   id: string;
   name: string;

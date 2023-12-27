@@ -1,6 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { getNextDefaultName } from '@/src/utils/app/folders';
+import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
+import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import { SearchFilters } from './../../types/search';
@@ -258,7 +259,7 @@ export const conversationsSlice = createSlice({
           messagesStack: [],
         },
       };
-      state.conversations = state.conversations.concat([newConversation]);
+      state.conversations = state.conversations.concat(newConversation);
       state.selectedConversationsIds = [newConversation.id];
     },
     createNewPlaybackConversation: (
@@ -288,8 +289,55 @@ export const conversationsSlice = createSlice({
           replayAsIs: false,
         },
       };
-      state.conversations = state.conversations.concat([newConversation]);
+      state.conversations = state.conversations.concat(newConversation);
       state.selectedConversationsIds = [newConversation.id];
+    },
+    duplicateConversation: (
+      state,
+      { payload }: PayloadAction<{ conversation: Conversation }>,
+    ) => {
+      const newConversation: Conversation = {
+        ...payload.conversation,
+        ...resetShareEntity,
+        name: generateNextName(
+          DEFAULT_CONVERSATION_NAME,
+          payload.conversation.name,
+          state.conversations,
+          0,
+        ),
+        id: uuidv4(),
+        lastActivityDate: Date.now(),
+      };
+      state.conversations = state.conversations.concat(newConversation);
+      state.selectedConversationsIds = [newConversation.id];
+    },
+    duplicateSelectedConversations: (state) => {
+      const selectedIds = new Set(state.selectedConversationsIds);
+      const newSelectedIds: string[] = [];
+      const newConversations: Conversation[] = [];
+      selectedIds.forEach((id) => {
+        const conversation = state.conversations.find((conv) => conv.id === id);
+        if (conversation && isEntityExternal(conversation)) {
+          const newConversation: Conversation = {
+            ...conversation,
+            ...resetShareEntity,
+            name: generateNextName(
+              DEFAULT_CONVERSATION_NAME,
+              conversation.name,
+              state.conversations.concat(newConversations),
+              0,
+            ),
+            id: uuidv4(),
+            lastActivityDate: Date.now(),
+          };
+          newConversations.push(newConversation);
+          newSelectedIds.push(newConversation.id);
+        } else {
+          newSelectedIds.push(id);
+        }
+      });
+      state.conversations = state.conversations.concat(newConversations);
+      state.selectedConversationsIds = newSelectedIds;
     },
     exportConversations: (state) => state,
     importConversations: (
@@ -321,7 +369,7 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ conversations: Conversation[] }>,
     ) => {
-      state.conversations = [...state.conversations, ...payload.conversations];
+      state.conversations = state.conversations.concat(payload.conversations);
     },
     clearConversations: (state) => {
       state.conversations = [];
@@ -402,7 +450,7 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
-      state.folders = [...state.folders, ...payload.folders];
+      state.folders = state.folders.concat(payload.folders);
     },
     setSearchTerm: (
       state,

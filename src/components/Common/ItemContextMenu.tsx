@@ -1,5 +1,6 @@
 import {
   IconClockShare,
+  IconCopy,
   IconDots,
   IconFileArrowRight,
   IconFolderPlus,
@@ -8,17 +9,19 @@ import {
   IconPlayerPlay,
   IconRefreshDot,
   IconScale,
+  IconTrashX,
   IconUserShare,
   IconWorldShare,
 } from '@tabler/icons-react';
-import { IconTrashX } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { FeatureType, HighlightColor, ShareEntity } from '@/src/types/common';
+import { isEntityExternal } from '@/src/utils/app/share';
+
+import { FeatureType, ShareEntity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -34,7 +37,6 @@ interface ItemContextMenuProps {
   entity: ShareEntity;
   folders: FolderInterface[];
   featureType: FeatureType;
-  highlightColor: HighlightColor;
   isEmptyConversation?: boolean;
   className?: string;
   isOpen?: boolean;
@@ -51,6 +53,7 @@ interface ItemContextMenuProps {
   onUnpublish?: MouseEventHandler<unknown>;
   onPublishUpdate?: MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
+  onDuplicate?: MouseEventHandler<unknown>;
 }
 
 export default function ItemContextMenu({
@@ -58,7 +61,6 @@ export default function ItemContextMenu({
   featureType,
   isEmptyConversation,
   className,
-  highlightColor,
   folders,
   isOpen,
   onDelete,
@@ -74,6 +76,7 @@ export default function ItemContextMenu({
   onUnpublish,
   onPublishUpdate,
   onOpenChange,
+  onDuplicate,
 }: ItemContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isPublishingEnabled = useAppSelector((state) =>
@@ -82,10 +85,12 @@ export default function ItemContextMenu({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
+  const isExternal = isEntityExternal(entity);
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
         name: t(featureType === FeatureType.Chat ? 'Rename' : 'Edit'),
+        display: !isExternal,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
@@ -98,6 +103,13 @@ export default function ItemContextMenu({
         onClick: onCompare,
       },
       {
+        name: t('Duplicate'),
+        display: !!onDuplicate && isExternal,
+        dataQa: 'duplicate',
+        Icon: IconCopy,
+        onClick: onDuplicate,
+      },
+      {
         name: t('Replay'),
         display: !isEmptyConversation && !!onReplay,
         dataQa: 'replay',
@@ -106,7 +118,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('Playback'),
-        display: !isEmptyConversation && !!onPlayback,
+        display: !isEmptyConversation && !!onPlayback && !isExternal,
         dataQa: 'playback',
         Icon: IconPlayerPlay,
         onClick: onPlayback,
@@ -119,6 +131,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('Move to'),
+        display: !isExternal,
         dataQa: 'move-to-mobile',
         Icon: IconFolderShare,
         onClick: onOpenMoveToModal,
@@ -126,6 +139,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('Move to'),
+        display: !isExternal,
         dataQa: 'move-to',
         Icon: IconFolderShare,
         className: 'max-md:hidden',
@@ -138,8 +152,7 @@ export default function ItemContextMenu({
               onMoveToFolder({ isNewFolder: true });
             },
             className: classNames('invisible md:visible', {
-              'border-b border-gray-400 dark:border-gray-600':
-                folders?.length > 0,
+              'border-b border-primary': folders?.length > 0,
             }),
           },
           ...folders.map((folder) => ({
@@ -154,14 +167,18 @@ export default function ItemContextMenu({
       {
         name: t('Share'),
         dataQa: 'share',
-        display: isSharingEnabled && !!onShare,
+        display: isSharingEnabled && !!onShare && !isExternal,
         Icon: IconUserShare,
         onClick: onShare,
       },
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: isPublishingEnabled && !entity.isPublished && !!onPublish,
+        display:
+          isPublishingEnabled &&
+          !entity.isPublished &&
+          !!onPublish &&
+          !isExternal,
         Icon: IconWorldShare,
         onClick: onPublish,
       },
@@ -190,8 +207,10 @@ export default function ItemContextMenu({
     [
       t,
       featureType,
+      isExternal,
       onRename,
       onCompare,
+      onDuplicate,
       isEmptyConversation,
       onReplay,
       onPlayback,
@@ -215,8 +234,8 @@ export default function ItemContextMenu({
       menuItems={menuItems}
       TriggerIcon={IconDots}
       triggerIconSize={18}
-      highlightColor={highlightColor}
-      className={className}
+      className={classNames(className)}
+      featureType={featureType}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
     />

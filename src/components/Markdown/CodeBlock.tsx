@@ -1,5 +1,5 @@
 import { IconCheck, IconCopy } from '@tabler/icons-react';
-import { FC, memo, useCallback, useState } from 'react';
+import { CSSProperties, FC, memo, useCallback, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import {
   oneDark,
@@ -23,7 +23,7 @@ interface Props {
   value: string;
   isInner?: boolean;
 }
-const codeBlockTheme = {
+const codeBlockTheme: Record<string, Record<string, CSSProperties>> = {
   dark: oneDark,
   light: oneLight,
 };
@@ -75,20 +75,18 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
 
   return (
     <div
-      className={`codeblock relative overflow-hidden rounded border border-gray-400 font text-sm text-gray-800 dark:border-gray-700 dark:text-gray-200`}
+      className={`codeblock relative overflow-hidden rounded border border-secondary font text-sm text-primary`}
     >
       <div
-        className={`flex items-center justify-between border-b border-gray-400 p-3 dark:border-gray-700 ${
-          isInner
-            ? 'bg-gray-100 dark:bg-gray-700'
-            : 'bg-gray-300 dark:bg-gray-900'
+        className={`flex items-center justify-between border-b border-secondary p-3 ${
+          isInner ? 'bg-layer-3' : 'bg-layer-1'
         }`}
       >
         <span className="lowercase">{language}</span>
 
-        <div className="flex items-center gap-3 text-gray-500">
+        <div className="flex items-center gap-3 text-secondary">
           <button
-            className="flex items-center [&:not(:disabled)]:hover:text-blue-500"
+            className="flex items-center [&:not(:disabled)]:hover:text-accent-primary"
             onClick={copyToClipboard}
             disabled={isCopied}
           >
@@ -104,7 +102,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
           </button>
           <Tooltip isTriggerClickable tooltip={t('Download')}>
             <button
-              className="flex items-center rounded bg-none hover:text-blue-500"
+              className="flex items-center rounded bg-none hover:text-accent-primary"
               onClick={downloadAsFile}
             >
               <Download width={18} height={18} />
@@ -115,7 +113,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
 
       <SyntaxHighlighter
         language={language}
-        style={codeBlockTheme[theme]}
+        style={codeBlockTheme[theme] || oneDark}
         customStyle={{
           margin: 0,
           borderRadius: 0,
@@ -124,11 +122,7 @@ export const CodeBlock: FC<Props> = memo(({ language, value, isInner }) => {
           letterSpacing: 0,
           fontFamily: 'var(--font-inter)',
         }}
-        className={`${
-          isInner
-            ? '!bg-gray-100 dark:!bg-gray-700'
-            : '!bg-gray-300 dark:!bg-gray-900'
-        }`}
+        className={`${isInner ? '!bg-layer-3' : '!bg-layer-1'}`}
         codeTagProps={{
           style: {
             fontFamily: 'var(--font-inter)',

@@ -1,7 +1,7 @@
 import { TablerIconsProps } from '@tabler/icons-react';
 import { FC, MouseEventHandler } from 'react';
 
-import { HighlightColor } from './common';
+import { FeatureType } from './common';
 
 export interface CustomTriggerMenuRendererProps extends MenuItemRendererProps {
   Renderer: (props: MenuItemRendererProps) => JSX.Element;
@@ -21,12 +21,12 @@ export interface DisplayMenuItemProps {
 }
 
 export type MenuItemRendererProps = DisplayMenuItemProps & {
-  highlightColor: HighlightColor;
+  featureType?: FeatureType;
 };
 
 export interface MenuProps {
   menuItems: DisplayMenuItemProps[];
-  highlightColor: HighlightColor;
+  featureType?: FeatureType;
   displayMenuItemCount?: number;
   className?: string;
   disabled?: boolean;

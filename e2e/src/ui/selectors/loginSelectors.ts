@@ -1,7 +1,6 @@
 export const LoginSelectors = {
-  token: '#input-access_token-for-credentials-provider',
-  signIn: '[type=submit]',
   auth0Container: '.auth0-lock-widget-container',
+  ssoSignIn: 'form[action$=auth0] > button',
   username: '[name="email"]',
   password: '[name="password"]',
   login: '[name="submit"]',

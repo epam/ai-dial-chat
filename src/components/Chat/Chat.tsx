@@ -39,6 +39,7 @@ import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
+import ChatExternalControls from './ChatExternalControls';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput/ChatInput';
 import ChatReplayControls from './ChatReplayControls';
@@ -47,8 +48,8 @@ import { ChatSettingsEmpty } from './ChatSettingsEmpty';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
-import { PlaybackControls } from './PlaybackControls';
-import { PlaybackEmptyInfo } from './PlaybackEmptyInfo';
+import { PlaybackControls } from './Playback/PlaybackControls';
+import { PlaybackEmptyInfo } from './Playback/PlaybackEmptyInfo';
 
 const scrollThrottlingTimeout = 250;
 
@@ -87,6 +88,9 @@ export const Chat = memo(() => {
   );
   const isReplayPaused = useAppSelector(
     ConversationsSelectors.selectIsReplayPaused,
+  );
+  const isExternal = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
 
   const isPlayback = useAppSelector(
@@ -661,12 +665,16 @@ export const Chat = memo(() => {
                               isShowClearConversation={
                                 enabledFeatures.has(
                                   Feature.TopClearСonversation,
-                                ) && !isPlayback
+                                ) &&
+                                !isPlayback &&
+                                !isExternal
                               }
                               isShowModelSelect={
                                 enabledFeatures.has(
                                   Feature.TopChatModelSettings,
-                                ) && !isPlayback
+                                ) &&
+                                !isPlayback &&
+                                !isExternal
                               }
                               isShowSettings={isShowChatSettings}
                               setShowSettings={(isShow) => {
@@ -827,7 +835,9 @@ export const Chat = memo(() => {
                       dispatch(ConversationsActions.stopStreamMessage());
                     }}
                     onResize={onChatInputResize}
-                    isShowInput={!isReplay || isNotEmptyConversations}
+                    isShowInput={
+                      (!isReplay || isNotEmptyConversations) && !isExternal
+                    }
                   >
                     {showReplayControls && (
                       <ChatReplayControls
@@ -836,6 +846,7 @@ export const Chat = memo(() => {
                         showReplayStart={!isNotEmptyConversations}
                       />
                     )}
+                    {isExternal && <ChatExternalControls />}
                   </ChatInput>
                 )}
 

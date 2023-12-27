@@ -39,6 +39,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { ErrorMessage } from '../Common/ErrorMessage';
@@ -69,7 +70,7 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
     <button
       type={type}
       className={classNames(
-        'text-gray-500 focus:visible [&:not(:disabled)]:hover:text-blue-500',
+        'text-secondary focus:visible [&:not(:disabled)]:hover:text-accent-primary',
         className,
       )}
       {...props}
@@ -94,7 +95,6 @@ export const ChatMessage: FC<Props> = memo(
     const dispatch = useAppDispatch();
 
     const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-    const theme = useAppSelector(UISelectors.selectThemeState);
     const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
     const codeWarning = useAppSelector(SettingsSelectors.selectCodeWarning);
     const isPlayback = useAppSelector(
@@ -212,6 +212,7 @@ export const ChatMessage: FC<Props> = memo(
       }
       setIsEditing(false);
     }, [
+      isSubmitAllowed,
       newEditableAttachmentsIds,
       mappedUserEditableAttachmentsIds,
       message,
@@ -305,17 +306,16 @@ export const ChatMessage: FC<Props> = memo(
 
     return (
       <div
-        className={`group h-full min-h-[90px] md:px-4 xl:px-8 ${
-          isAssistant
-            ? 'border-b border-gray-400 bg-gray-200 dark:border-gray-700 dark:bg-gray-800'
-            : 'border-b border-gray-400  dark:border-gray-700'
-        }`}
+        className={classNames(
+          'group h-full min-h-[78px] border-b border-primary md:px-4 xl:px-8',
+          isAssistant && 'bg-layer-2',
+        )}
         style={{ overflowWrap: 'anywhere' }}
         data-qa="chat-message"
       >
         <div
           className={classNames(
-            'relative m-auto flex h-full p-4  md:gap-6 md:py-6 lg:px-0',
+            'relative m-auto flex h-full p-4 md:gap-6 md:py-6 lg:px-0',
             { 'md:max-w-2xl xl:max-w-3xl': !isChatFullWidth },
           )}
         >
@@ -328,7 +328,6 @@ export const ChatMessage: FC<Props> = memo(
                     (message.model?.id && modelsMap[message.model?.id]) ||
                     undefined
                   }
-                  inverted={theme === 'dark'}
                   animate={isShowResponseLoader}
                   size={28}
                 />
@@ -346,7 +345,7 @@ export const ChatMessage: FC<Props> = memo(
               <div className="flex">
                 {isEditing ? (
                   <div className="flex w-full flex-col gap-3 pr-[60px]">
-                    <div className="relative min-h-[100px] rounded border border-gray-400 bg-gray-100 px-3 py-2 focus-within:border-blue-500 dark:border-gray-600 dark:bg-gray-700">
+                    <div className="relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary">
                       <textarea
                         ref={textareaRef}
                         className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
@@ -365,7 +364,7 @@ export const ChatMessage: FC<Props> = memo(
                       />
 
                       {newEditableAttachments.length > 0 && (
-                        <div className="mb-2.5 grid max-h-[100px] grid-cols-3 gap-1 overflow-auto">
+                        <div className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3">
                           <ChatInputAttachments
                             files={newEditableAttachments}
                             onUnselectFile={handleUnselectFile}
@@ -376,7 +375,7 @@ export const ChatMessage: FC<Props> = memo(
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <div className="flex h-[34px] w-[34px] items-center justify-center rounded hover:bg-blue-500/20">
+                      <div className="flex h-[34px] w-[34px] items-center justify-center rounded hover:bg-accent-primary-alpha">
                         <AttachButton
                           selectedFilesIds={newEditableAttachmentsIds}
                           onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
@@ -413,7 +412,7 @@ export const ChatMessage: FC<Props> = memo(
                     {message.content && (
                       <div
                         className={classNames(
-                          'prose flex-1 whitespace-pre-wrap dark:prose-invert',
+                          'prose flex-1 whitespace-pre-wrap',
                           { 'max-w-none': isChatFullWidth },
                         )}
                       >
@@ -429,14 +428,14 @@ export const ChatMessage: FC<Props> = memo(
                 {!isPlayback && !isEditing && (
                   <div className="flex w-[60px] flex-col items-center justify-end gap-4 md:flex-row md:items-start md:justify-start md:gap-1">
                     <button
-                      className="invisible text-gray-500 hover:text-blue-500 focus:visible disabled:cursor-not-allowed group-hover:visible"
+                      className="invisible text-secondary hover:text-accent-primary focus:visible disabled:cursor-not-allowed group-hover:visible"
                       onClick={toggleEditing}
                       disabled={editDisabled}
                     >
                       <IconEdit size={20} />
                     </button>
                     <button
-                      className="invisible text-gray-500 hover:text-blue-500 focus:visible group-hover:visible"
+                      className="invisible text-secondary hover:text-accent-primary focus:visible group-hover:visible"
                       onClick={() => {
                         setIsRemoveConfirmationOpened(true);
                       }}
@@ -466,7 +465,12 @@ export const ChatMessage: FC<Props> = memo(
               </div>
             ) : (
               <div className="flex h-full flex-row gap-1">
-                <div className="flex min-w-0 shrink grow flex-col gap-4">
+                <div
+                  className={classNames(
+                    'flex min-w-0 shrink grow flex-col',
+                    message.content && 'gap-4',
+                  )}
+                >
                   {!!message.custom_content?.stages?.length && (
                     <MessageStages stages={message.custom_content?.stages} />
                   )}
@@ -477,7 +481,7 @@ export const ChatMessage: FC<Props> = memo(
                   {codeWarning &&
                     codeWarning.length !== 0 &&
                     codeDetection(message.content) && (
-                      <div className="text-xxs text-red-800 dark:text-red-400">
+                      <div className="text-xxs text-error">
                         {t(codeWarning)}
                       </div>
                     )}
@@ -490,11 +494,17 @@ export const ChatMessage: FC<Props> = memo(
                 <div className="flex w-[60px] shrink-0 flex-col justify-between">
                   <div className="ml-1 flex flex-col items-center justify-end gap-4 md:-mr-8 md:ml-0 md:flex-row md:items-start md:justify-start md:gap-1">
                     {messagedCopied ? (
-                      <IconCheck size={20} className="text-gray-500" />
+                      <IconCheck size={20} className="text-secondary" />
                     ) : (
-                      <Button onClick={copyOnClick}>
-                        <IconCopy size={20} />
-                      </Button>
+                      <Tooltip
+                        placement="top"
+                        isTriggerClickable
+                        tooltip={t('Copy text')}
+                      >
+                        <Button onClick={copyOnClick}>
+                          <IconCopy size={20} />
+                        </Button>
+                      </Tooltip>
                     )}
                   </div>
                   <div className="bottom-0 right-8 flex flex-row gap-2">
@@ -506,7 +516,7 @@ export const ChatMessage: FC<Props> = memo(
                             className={
                               message.like !== 1
                                 ? void 0
-                                : 'visible text-gray-500'
+                                : 'visible text-secondary'
                             }
                             disabled={message.like === 1}
                             data-qa="like"
@@ -520,7 +530,7 @@ export const ChatMessage: FC<Props> = memo(
                             className={
                               message.like !== -1
                                 ? void 0
-                                : 'visible text-gray-500'
+                                : 'visible text-secondary'
                             }
                             disabled={message.like === -1}
                             data-qa="dislike"

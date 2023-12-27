@@ -19,14 +19,22 @@ import { AppEpic } from '@/src/types/store';
 
 import { errorsMessages } from '@/src/constants/errors';
 
+import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions, UISelectors } from './ui.reducers';
 
-const initEpic: AppEpic = (action$) =>
+const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(UIActions.init.match),
-    switchMap(() =>
-      forkJoin({
+    switchMap(() => {
+      const isThemesDefined = SettingsSelectors.selectThemeHostDefined(
+        state$.value,
+      );
+
+      return forkJoin({
         theme: DataService.getTheme(),
+        availableThemes: isThemesDefined
+          ? DataService.getAvailableThemes()
+          : [],
         showChatbar: DataService.getShowChatbar(),
         showPromptbar: DataService.getShowPromptbar(),
         openedFoldersIds: DataService.getOpenedFolderIds(),
@@ -34,11 +42,12 @@ const initEpic: AppEpic = (action$) =>
         chatbarWidth: DataService.getChatbarWidth(),
         promptbarWidth: DataService.getPromptbarWidth(),
         isChatFullWidth: DataService.getIsChatFullWidth(),
-      }),
-    ),
+      });
+    }),
     switchMap(
       ({
         theme,
+        availableThemes,
         openedFoldersIds,
         showChatbar,
         showPromptbar,
@@ -49,7 +58,12 @@ const initEpic: AppEpic = (action$) =>
       }) => {
         const actions = [];
 
-        actions.push(UIActions.setTheme(theme));
+        if (theme) {
+          actions.push(UIActions.setTheme(theme));
+        } else {
+          actions.push(UIActions.setTheme(availableThemes[0]?.id));
+        }
+        actions.push(UIActions.setAvailableThemes(availableThemes));
         actions.push(UIActions.setShowChatbar(showChatbar));
         actions.push(UIActions.setShowPromptbar(showPromptbar));
         actions.push(UIActions.setOpenedFoldersIds(openedFoldersIds));

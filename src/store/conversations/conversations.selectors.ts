@@ -9,6 +9,7 @@ import {
   doesConversationContainSearchTerm,
   getMyItemsFilters,
 } from '@/src/utils/app/search';
+import { isEntityExternal } from '@/src/utils/app/share';
 
 import { Conversation, Role } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -173,7 +174,7 @@ export const selectSelectedConversationsFoldersIds = createSelector(
 export const selectChildAndCurrentFoldersIdsById = createSelector(
   [selectFolders, (_state, folderId: string | undefined) => folderId],
   (folders, folderId) => {
-    return getChildAndCurrentFoldersIdsById(folderId, folders);
+    return new Set(getChildAndCurrentFoldersIdsById(folderId, folders));
   },
 );
 export const selectFirstSelectedConversation = createSelector(
@@ -237,6 +238,13 @@ export const selectIsPlaybackSelectedConversations = createSelector(
     return conversations.some(
       (conv) => conv.playback && conv.playback.isPlayback,
     );
+  },
+);
+
+export const selectAreSelectedConversationsExternal = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some((conv) => isEntityExternal(conv));
   },
 );
 

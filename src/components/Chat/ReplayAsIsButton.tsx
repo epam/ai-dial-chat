@@ -39,8 +39,7 @@ export const ReplayAsIsButton = ({ replay, conversationId }: Props) => {
     'flex items-center gap-3 rounded border p-3 text-left text-xs',
     {
       'border-blue-500': replay.replayAsIs,
-      'border-gray-400 hover:border-gray-800 dark:border-gray-600 hover:dark:border-gray-200':
-        !replay.replayAsIs,
+      'border-primary hover:border-hover': !replay.replayAsIs,
     },
   );
 

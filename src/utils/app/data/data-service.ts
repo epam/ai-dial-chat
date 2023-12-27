@@ -1,6 +1,8 @@
 /* eslint-disable no-restricted-globals */
 import { Observable, map } from 'rxjs';
 
+import { isMobile } from '@/src/utils/app/mobile';
+
 import { Conversation } from '@/src/types/chat';
 import {
   BackendFile,
@@ -10,8 +12,8 @@ import {
 } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
-import { Theme } from '@/src/types/settings';
 import { DialStorage, UIStorageKeys } from '@/src/types/storage';
+import { Theme } from '@/src/types/themes';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
@@ -41,6 +43,7 @@ export class DataService {
   public static getPromptsFolders(): Observable<FolderInterface[]> {
     return this.getDataStorage().getPromptsFolders();
   }
+
   public static setPromptFolders(folders: FolderInterface[]): Observable<void> {
     return this.getDataStorage().setPromptsFolders(folders);
   }
@@ -56,14 +59,17 @@ export class DataService {
   public static getConversations(): Observable<Conversation[]> {
     return this.getDataStorage().getConversations();
   }
+
   public static setConversations(
     conversations: Conversation[],
   ): Observable<void> {
     return this.getDataStorage().setConversations(conversations);
   }
+
   public static getSelectedConversationsIds(): Observable<string[]> {
     return BrowserStorage.getData(UIStorageKeys.SelectedConversationIds, []);
   }
+
   public static setSelectedConversationsIds(
     selectedConversationsIds: string[],
   ): Observable<void> {
@@ -72,9 +78,11 @@ export class DataService {
       selectedConversationsIds,
     );
   }
+
   public static getRecentModelsIds(): Observable<string[]> {
     return BrowserStorage.getData(UIStorageKeys.RecentModelsIds, []);
   }
+
   public static setRecentModelsIds(
     recentModelsIds: string[],
   ): Observable<void> {
@@ -87,6 +95,7 @@ export class DataService {
   public static getRecentAddonsIds(): Observable<string[]> {
     return BrowserStorage.getData(UIStorageKeys.RecentAddonsIds, []);
   }
+
   public static setRecentAddonsIds(
     recentAddonsIds: string[],
   ): Observable<void> {
@@ -96,14 +105,18 @@ export class DataService {
     );
   }
 
-  public static getTheme(): Observable<Theme> {
-    return BrowserStorage.getData(UIStorageKeys.Settings, {
-      theme: 'dark' as Theme,
-    }).pipe(map((settings) => settings.theme));
+  public static getTheme(): Observable<string> {
+    return BrowserStorage.getData(UIStorageKeys.Settings, { theme: '' }).pipe(
+      map((settings) => settings.theme),
+    );
   }
 
-  public static setTheme(theme: Theme): Observable<void> {
+  public static setTheme(theme: string): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.Settings, { theme });
+  }
+
+  public static getAvailableThemes(): Observable<Theme[]> {
+    return ApiStorage.request('api/themes/listing');
   }
 
   public static getChatbarWidth(): Observable<number> {
@@ -140,7 +153,7 @@ export class DataService {
   }
 
   public static getShowChatbar(): Observable<boolean> {
-    return BrowserStorage.getData(UIStorageKeys.ShowChatbar, true);
+    return BrowserStorage.getData(UIStorageKeys.ShowChatbar, !isMobile());
   }
 
   public static setShowChatbar(showChatbar: boolean): Observable<void> {
@@ -148,7 +161,7 @@ export class DataService {
   }
 
   public static getShowPromptbar(): Observable<boolean> {
-    return BrowserStorage.getData(UIStorageKeys.ShowPromptbar, true);
+    return BrowserStorage.getData(UIStorageKeys.ShowPromptbar, !isMobile());
   }
 
   public static setShowPromptbar(showPromptbar: boolean): Observable<void> {
@@ -158,6 +171,7 @@ export class DataService {
   public static getOpenedFolderIds(): Observable<string[]> {
     return BrowserStorage.getData(UIStorageKeys.OpenedFoldersIds, []);
   }
+
   public static setOpenedFolderIds(
     openedFolderIds: string[],
   ): Observable<void> {
@@ -166,9 +180,11 @@ export class DataService {
       openedFolderIds,
     );
   }
+
   public static getClosedAnnouncement(): Observable<string | undefined> {
     return BrowserStorage.getData(UIStorageKeys.TextOfClosedAnnouncement, '');
   }
+
   public static setClosedAnnouncement(
     closedAnnouncementText: string | undefined,
   ): Observable<void> {

@@ -4,9 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getByHighlightColor } from '@/src/utils/app/folders';
-
-import { FeatureType, HighlightColor } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { ShareInterface } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -18,9 +16,8 @@ import Tooltip from './Tooltip';
 import ArrowUpRight from '@/public/images/icons/arrow-up-right.svg';
 import World from '@/public/images/icons/world.svg';
 
-interface ShareIsonProps extends ShareInterface {
-  isHighlited: boolean;
-  highlightColor: HighlightColor;
+interface ShareIсonProps extends ShareInterface {
+  isHighlighted: boolean;
   size?: number;
   children: ReactNode | ReactNode[];
   featureType?: FeatureType;
@@ -29,12 +26,11 @@ interface ShareIsonProps extends ShareInterface {
 export default function ShareIcon({
   isShared,
   isPublished,
-  isHighlited,
-  highlightColor,
+  isHighlighted,
   size = 12,
   children,
   featureType,
-}: ShareIsonProps) {
+}: ShareIсonProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
@@ -58,7 +54,7 @@ export default function ShareIcon({
       {children}
       <div
         className={classNames(
-          'absolute -bottom-1 -left-1 bg-gray-100 dark:bg-gray-700',
+          'absolute -bottom-1 -left-1 bg-layer-3',
           isPublished ? 'rounded-md' : 'rounded-sm',
         )}
         data-qa={
@@ -71,21 +67,10 @@ export default function ShareIcon({
             width={size}
             height={size}
             className={classNames(
-              getByHighlightColor(
-                highlightColor,
-                'text-green group-hover:bg-green/15',
-                'text-violet group-hover:bg-violet/15',
-                'text-blue-500 group-hover:bg-blue-500/20',
-              ),
+              'text-accent-primary group-hover:bg-accent-primary-alpha',
               'stroke-1 p-[1px]',
+              isHighlighted && 'bg-accent-primary-alpha',
               isPublished ? 'rounded-md' : 'rounded-sm',
-              isHighlited &&
-                getByHighlightColor(
-                  highlightColor,
-                  'bg-green/15',
-                  'bg-violet/15',
-                  'bg-blue-500/20',
-                ),
             )}
           />
         </Tooltip>
