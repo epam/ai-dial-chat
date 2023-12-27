@@ -74,7 +74,6 @@ export const ConfirmDialog = ({
                 {cancelLabel && (
                   <button
                     className="button button-secondary"
-                    autoFocus
                     onClick={() => {
                       onClose(false);
                     }}
@@ -85,6 +84,7 @@ export const ConfirmDialog = ({
                 )}
                 <button
                   ref={confirmLabelRef}
+                  autoFocus
                   className="button button-primary"
                   onClick={() => onClose(true)}
                   data-qa="confirm"
