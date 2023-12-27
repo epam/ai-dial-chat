@@ -270,10 +270,7 @@ export const Chat = memo(() => {
 
   const handleClearConversation = useCallback(
     (conversation: Conversation) => {
-      if (
-        confirm(t<string>('Are you sure you want to clear all messages?')) &&
-        conversation
-      ) {
+      if (conversation) {
         const { messages } = conversation;
 
         dispatch(
@@ -664,7 +661,7 @@ export const Chat = memo(() => {
                               )}
                               isShowClearConversation={
                                 enabledFeatures.has(
-                                  Feature.TopClearСonversation,
+                                  Feature.TopClearConversation,
                                 ) &&
                                 !isPlayback &&
                                 !isExternal

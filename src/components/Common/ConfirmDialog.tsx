@@ -14,7 +14,7 @@ interface Props {
   heading: string;
   description?: string;
   confirmLabel: string;
-  cancelLabel: string;
+  cancelLabel?: string | null;
   onClose: (result: boolean) => void;
 }
 
@@ -71,15 +71,17 @@ export const ConfirmDialog = ({
                 )}
               </div>
               <div className="flex items-center gap-3">
-                <button
-                  className="button button-secondary"
-                  onClick={() => {
-                    onClose(false);
-                  }}
-                  data-qa="cancel-dialog"
-                >
-                  {cancelLabel}
-                </button>
+                {cancelLabel && (
+                  <button
+                    className="button button-secondary"
+                    onClick={() => {
+                      onClose(false);
+                    }}
+                    data-qa="cancel-dialog"
+                  >
+                    {cancelLabel}
+                  </button>
+                )}
                 <button
                   ref={confirmLabelRef}
                   className="button button-primary"
