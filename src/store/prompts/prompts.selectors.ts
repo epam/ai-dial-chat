@@ -68,15 +68,15 @@ export const selectFilteredFolders = createSelector(
     selectFolders,
     selectEmptyFolderIds,
     (_state, filters: EntityFilters) => filters,
-    (_state, _filters?, searchTerm?: string) => searchTerm,
-    (_state, _filters?, _searchTerm?, includeEmptyFolders?: boolean) =>
+    (_state, _filters, searchTerm?: string) => searchTerm,
+    (_state, _filters, _searchTerm?, includeEmptyFolders?: boolean) =>
       includeEmptyFolders,
   ],
   (
     state,
     folders,
     emptyFolderIds,
-    filters?,
+    filters,
     searchTerm?,
     includeEmptyFolders?,
   ) => {
