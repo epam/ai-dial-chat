@@ -58,7 +58,7 @@ export const SystemPrompt: FC<Props> = ({
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const value = e.target.value;
 
-      if (value.length > 5) {
+      if (value.length > maxLength) {
         setIsPromptLimitModalOpen(true);
         return;
       }

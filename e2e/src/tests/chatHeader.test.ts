@@ -3,6 +3,7 @@ import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
 import { ExpectedConstants, ExpectedMessages } from '@/e2e/src/testData';
+import { ChatSelectors } from '@/e2e/src/ui/selectors';
 import { ModelsUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
@@ -150,6 +151,7 @@ test(
     localStorageManager,
     chatHeader,
     conversationSettings,
+    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-490', 'EPMRTC-491');
     let conversation: Conversation;
@@ -179,7 +181,8 @@ test(
       await dialHomePage.acceptBrowserDialog(
         ExpectedConstants.clearAllConversationsAlert,
       );
-      await chatHeader.clearConversation.click();
+
+      await confirmationDialog.confirm();
 
       const isConversationSettingsVisible =
         await conversationSettings.isVisible();

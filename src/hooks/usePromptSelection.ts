@@ -98,7 +98,7 @@ export const usePromptSelection = (maxLength: number) => {
     if (!selectedPrompt.content) {
       return;
     }
-    if (selectedPrompt.content.length > 5) {
+    if (selectedPrompt.content.length > maxLength) {
       setIsPromptLimitModalOpen(true);
       return;
     }

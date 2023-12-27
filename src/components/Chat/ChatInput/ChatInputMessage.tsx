@@ -147,7 +147,7 @@ export const ChatInputMessage = ({
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const value = e.target.value;
 
-      if (maxLength && value.length > 5) {
+      if (maxLength && value.length > maxLength) {
         setIsPromptLimitModalOpen(true);
         return;
       }
