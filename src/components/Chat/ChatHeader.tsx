@@ -27,6 +27,7 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import Tooltip from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
@@ -71,6 +72,8 @@ export const ChatHeader = ({
   const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });
+  const [isClearConversationModalOpen, setIsClearConversationModalOpen] =
+    useState(false);
 
   const selectedAddons = useMemo(
     () => getSelectedAddons(conversation.selectedAddons, addonsMap, model),
@@ -201,7 +204,7 @@ export const ChatHeader = ({
                 >
                   <button
                     className="cursor-pointer text-secondary hover:text-accent-primary"
-                    onClick={onClearConversation}
+                    onClick={() => setIsClearConversationModalOpen(true)}
                     data-qa="clear-conversation"
                   >
                     <IconEraser size={18} />
@@ -241,6 +244,21 @@ export const ChatHeader = ({
           </div>
         )}
       </div>
+      <ConfirmDialog
+        isOpen={isClearConversationModalOpen}
+        heading={t('Confirm clearing all messages in the conversation')}
+        description={
+          t('Are you sure that you want to delete all messages?') || ''
+        }
+        confirmLabel={t('Clear')}
+        cancelLabel={t('Cancel')}
+        onClose={(result) => {
+          setIsClearConversationModalOpen(false);
+          if (result) {
+            onClearConversation();
+          }
+        }}
+      />
     </>
   );
 };
