@@ -34,6 +34,12 @@ export class ChatHeader extends BaseElement {
     ChatSelectors.leavePlayback,
   );
 
+  public async isArrowIconVisible() {
+    return this.chatModel
+      .getChildElementBySelector(ChatSelectors.arrowAdditionalIcon)
+      .isVisible();
+  }
+
   async getHeaderModelIcon() {
     await this.chatModelIcon.waitForState();
     return this.getElementIconHtml(this.rootLocator);

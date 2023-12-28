@@ -37,6 +37,7 @@ import { PlaybackControl } from '@/e2e/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/e2e/src/ui/webElements/promptModalDialog';
 import { Prompts } from '@/e2e/src/ui/webElements/prompts';
 import { ReplayAsIs } from '@/e2e/src/ui/webElements/replayAsIs';
+import { ShareModal } from '@/e2e/src/ui/webElements/shareModal';
 import { TemperatureSlider } from '@/e2e/src/ui/webElements/temperatureSlider';
 import { Tooltip } from '@/e2e/src/ui/webElements/tooltip';
 import { VariableModalDialog } from '@/e2e/src/ui/webElements/variableModalDialog';
@@ -94,6 +95,7 @@ const test = base.extend<
     replayAsIs: ReplayAsIs;
     playback: Playback;
     playbackControl: PlaybackControl;
+    shareModal: ShareModal;
     apiHelper: ApiHelper;
   }
 >({
@@ -295,6 +297,10 @@ const test = base.extend<
   playbackControl: async ({ chat }, use) => {
     const playbackControl = chat.getPlaybackControl();
     await use(playbackControl);
+  },
+  shareModal: async ({ page }, use) => {
+    const shareModal = new ShareModal(page);
+    await use(shareModal);
   },
   apiHelper: async ({ request }, use) => {
     const apiHelper = new ApiHelper(request);

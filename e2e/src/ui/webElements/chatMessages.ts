@@ -4,6 +4,7 @@ import { BaseElement } from './baseElement';
 import { Rate, Side } from '@/e2e/src/testData';
 import { Attributes, Tags } from '@/e2e/src/ui/domData';
 import { keys } from '@/e2e/src/ui/keyboard';
+import { IconSelectors } from '@/e2e/src/ui/selectors/iconSelectors';
 import { Page } from '@playwright/test';
 
 export class ChatMessages extends BaseElement {
@@ -206,7 +207,7 @@ export class ChatMessages extends BaseElement {
     rowIndex?: number,
   ) {
     await this.invokeCompareRowMessageAction(
-      ChatSelectors.deleteIcon,
+      IconSelectors.deleteIcon,
       comparedMessageSide,
       rowIndex,
     );
@@ -217,7 +218,7 @@ export class ChatMessages extends BaseElement {
     rowIndex?: number,
   ) {
     await this.invokeCompareRowMessageAction(
-      ChatSelectors.editIcon,
+      IconSelectors.editIcon,
       comparedMessageSide,
       rowIndex,
     );
@@ -228,7 +229,7 @@ export class ChatMessages extends BaseElement {
     rowIndex?: number,
   ) {
     await this.invokeCompareRowMessageAction(
-      ChatSelectors.copyIcon,
+      IconSelectors.copyIcon,
       comparedMessageSide,
       rowIndex,
     );
@@ -285,7 +286,7 @@ export class ChatMessages extends BaseElement {
   }
 
   public messageEditIcon = (message: string) =>
-    this.getChatMessage(message).locator(ChatSelectors.editIcon);
+    this.getChatMessage(message).locator(IconSelectors.editIcon);
   public saveAndSubmit = new BaseElement(
     this.page,
     ChatSelectors.saveAndSubmit,
@@ -293,7 +294,7 @@ export class ChatMessages extends BaseElement {
   public cancel = new BaseElement(this.page, ChatSelectors.cancelEdit);
 
   public messageDeleteIcon = (message: string) =>
-    this.getChatMessage(message).locator(ChatSelectors.deleteIcon);
+    this.getChatMessage(message).locator(IconSelectors.deleteIcon);
 
   public async openEditMessageMode(message: string) {
     const chatMessage = await this.getChatMessage(message);
@@ -333,5 +334,14 @@ export class ChatMessages extends BaseElement {
     const chatMessage = await this.getChatMessage(message);
     await chatMessage.hover();
     await this.messageDeleteIcon(message).click();
+  }
+
+  public async isArrowIconVisibleForMessage(index?: number) {
+    const messagesCount = await this.chatMessages.getElementsCount();
+    return this.chatMessages
+      .getNthElement(index ?? messagesCount)
+      .locator(ChatSelectors.messageIcon)
+      .locator(ChatSelectors.arrowAdditionalIcon)
+      .isVisible();
   }
 }
