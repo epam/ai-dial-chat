@@ -116,7 +116,7 @@ test(
         borders.forEach((borderColor) => {
           expect
             .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
-            .toBe(Colors.blue);
+            .toBe(Colors.textPrimary);
         });
       });
 
@@ -206,6 +206,7 @@ test('Start replay with the new Model settings', async ({
   talkToSelector,
   chatInfoTooltip,
   errorPopup,
+  apiHelper,
 }) => {
   setTestIds('EPMRTC-508');
   const replayTemp = 0;
@@ -250,16 +251,11 @@ test('Start replay with the new Model settings', async ({
   });
 
   await test.step('Verify chat header icons are updated with new model and addon', async () => {
-    const headerIcons = await chatHeader.getHeaderIcons();
+    const headerModelIcon = await chatHeader.getHeaderModelIcon();
+    const expectedModelIcon = await apiHelper.getEntityIcon(bison);
     expect
-      .soft(headerIcons.length, ExpectedMessages.headerIconsCountIsValid)
-      .toBe(1);
-    expect
-      .soft(headerIcons[0].iconEntity, ExpectedMessages.headerIconEntityIsValid)
-      .toBe(bison.id);
-    expect
-      .soft(headerIcons[0].iconUrl, ExpectedMessages.headerIconSourceIsValid)
-      .toBe(replayModel!.iconUrl);
+      .soft(headerModelIcon, ExpectedMessages.entityIconIsValid)
+      .toBe(expectedModelIcon);
   });
 
   await test.step('Hover over chat header model and verify chat settings on tooltip', async () => {
@@ -270,10 +266,11 @@ test('Start replay with the new Model settings', async ({
       .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
       .toBe(bison.name);
 
+    const expectedReplayModelIcon = await apiHelper.getEntityIcon(replayModel);
     const modelInfoIcon = await chatInfoTooltip.getModelIcon();
     expect
       .soft(modelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-      .toBe(replayModel!.iconUrl);
+      .toBe(expectedReplayModelIcon);
 
     const promptInfo = await chatInfoTooltip.getPromptInfo();
     expect
@@ -415,12 +412,13 @@ test(
     chatHeader,
     chatInfoTooltip,
     errorPopup,
+    apiHelper,
   }) => {
     setTestIds('EPMRTC-1323', 'EPMRTC-1324');
     const replayTemp = 0.8;
     const replayPrompt = 'reply the same text';
     let conversation: Conversation;
-    const replayModel = gpt35Model;
+    const expectedModelIcon = await apiHelper.getEntityIcon(gpt35Model);
 
     await test.step('Prepare conversation to replay', async () => {
       conversation = conversationData.prepareModelConversation(
@@ -458,19 +456,10 @@ test(
     });
 
     await test.step('Verify chat header icons are the same as initial model', async () => {
-      const headerIcons = await chatHeader.getHeaderIcons();
+      const headerModelIcon = await chatHeader.getHeaderModelIcon();
       expect
-        .soft(headerIcons.length, ExpectedMessages.headerIconsCountIsValid)
-        .toBe(1);
-      expect
-        .soft(
-          headerIcons[0].iconEntity,
-          ExpectedMessages.headerIconEntityIsValid,
-        )
-        .toBe(conversation.model.id);
-      expect
-        .soft(headerIcons[0].iconUrl, ExpectedMessages.headerIconSourceIsValid)
-        .toBe(replayModel!.iconUrl);
+        .soft(headerModelIcon, ExpectedMessages.entityIconIsValid)
+        .toBe(expectedModelIcon);
     });
 
     await test.step('Hover over chat header model and verify chat settings on tooltip', async () => {
@@ -484,7 +473,7 @@ test(
       const modelInfoIcon = await chatInfoTooltip.getModelIcon();
       expect
         .soft(modelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-        .toBe(replayModel!.iconUrl);
+        .toBe(expectedModelIcon);
 
       const promptInfo = await chatInfoTooltip.getPromptInfo();
       expect
@@ -509,6 +498,7 @@ test(
     localStorageManager,
     chatMessages,
     conversations,
+    apiHelper,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1322', 'EPMRTC-388');
@@ -542,52 +532,28 @@ test(
         conversation.messages[2].content,
       ]);
 
+      const expectedFirstModelIcon = await apiHelper.getEntityIcon(firstModel);
+      const expectedSecondModelIcon =
+        await apiHelper.getEntityIcon(secondModel);
+
       const firstConversationIcon =
         await chatMessages.getIconAttributesForMessage(2);
       expect
-        .soft(
-          firstConversationIcon.iconEntity,
-          ExpectedMessages.chatIconEntityIsValid,
-        )
-        .toBe(firstModel!.id);
-      expect
-        .soft(
-          firstConversationIcon.iconUrl,
-          ExpectedMessages.chatIconSourceIsValid,
-        )
-        .toBe(firstModel!.iconUrl);
+        .soft(firstConversationIcon, ExpectedMessages.entityIconIsValid)
+        .toBe(expectedFirstModelIcon);
 
       const secondConversationIcon =
         await chatMessages.getIconAttributesForMessage(4);
       expect
-        .soft(
-          secondConversationIcon.iconEntity,
-          ExpectedMessages.chatIconEntityIsValid,
-        )
-        .toBe(secondModel!.id);
-      expect
-        .soft(
-          secondConversationIcon.iconUrl,
-          ExpectedMessages.chatIconSourceIsValid,
-        )
-        .toBe(secondModel!.iconUrl);
+        .soft(secondConversationIcon, ExpectedMessages.entityIconIsValid)
+        .toBe(expectedSecondModelIcon);
 
-      const chatBarConversationIcon =
-        await conversations.getConversationIconAttributes(
-          ExpectedConstants.replayConversation + conversation.name,
-        );
+      const chatBarConversationIcon = await conversations.getConversationIcon(
+        ExpectedConstants.replayConversation + conversation.name,
+      );
       expect
-        .soft(
-          chatBarConversationIcon.iconEntity,
-          ExpectedMessages.chatBarIconEntityIsValid,
-        )
-        .toBe(secondModel!.id);
-      expect
-        .soft(
-          chatBarConversationIcon.iconUrl,
-          ExpectedMessages.chatBarIconSourceIsValid,
-        )
-        .toBe(secondModel!.iconUrl);
+        .soft(chatBarConversationIcon, ExpectedMessages.entityIconIsValid)
+        .toBe(expectedSecondModelIcon);
     });
   },
 );
@@ -922,7 +888,7 @@ test(
         );
       expect
         .soft(warningColor[0], ExpectedMessages.warningLabelColorIsValid)
-        .toBe(Colors.coralRed);
+        .toBe(Colors.textError);
     });
 
     await test.step('Start replaying and verify old requests are replayed using gpt-4 model', async () => {
@@ -975,6 +941,7 @@ test('Chat is in replay mode if while replaying to clear all messages', async ({
   chat,
   chatHeader,
   replayAsIs,
+  confirmationDialog,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-1542');
@@ -998,10 +965,8 @@ test('Chat is in replay mode if while replaying to clear all messages', async ({
   await test.step('Clear conversation messages and verify "Replay As Is" option, "Start replay" button are available, ', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await dialHomePage.acceptBrowserDialog(
-      ExpectedConstants.clearAllConversationsAlert,
-    );
     await chatHeader.clearConversation.click();
+    await confirmationDialog.confirm();
 
     const isStartReplayEnabled = await chat.replay.isElementEnabled();
     expect

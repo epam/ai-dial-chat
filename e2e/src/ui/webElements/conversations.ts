@@ -5,7 +5,7 @@ import {
 } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { Chronology, ExpectedConstants } from '@/e2e/src/testData';
+import { Chronology } from '@/e2e/src/testData';
 import { Attributes, Styles, Tags } from '@/e2e/src/ui/domData';
 import { keys } from '@/e2e/src/ui/keyboard';
 import { IconSelectors } from '@/e2e/src/ui/selectors/iconSelectors';
@@ -68,12 +68,6 @@ export class Conversations extends BaseElement {
       this.getConversationByName(name, index).locator(
         ChatBarSelectors.conversationName,
       ),
-    );
-  }
-
-  public getConversationIcon(name: string, index?: number) {
-    return this.getConversationByName(name, index).locator(
-      ChatSelectors.chatIcon,
     );
   }
 
@@ -170,22 +164,9 @@ export class Conversations extends BaseElement {
     return input;
   }
 
-  public async getConversationIconAttributes(name: string, index?: number) {
-    const icon = this.getConversationIcon(name, index);
-    if (await icon.isVisible()) {
-      return this.getElementIconAttributes(icon);
-    } else {
-      return this.getElementDefaultIconAttributes(
-        this.getConversationByName(name, index),
-      );
-    }
-  }
-
-  public async isConversationHasDefaultIcon(name: string, index?: number) {
-    const styleAttribute = await this.getConversationByName(name, index)
-      .getByRole('img')
-      .getAttribute(Attributes.style);
-    return styleAttribute?.includes(ExpectedConstants.defaultIconUrl);
+  public async getConversationIcon(name: string, index?: number) {
+    const conversation = this.getConversationByName(name, index);
+    return this.getElementIconHtml(conversation);
   }
 
   public async isConversationHasPlaybackIcon(name: string, index?: number) {

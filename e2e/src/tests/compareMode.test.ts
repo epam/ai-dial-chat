@@ -68,6 +68,7 @@ test(
     localStorageManager,
     compare,
     compareConversationSelector,
+    apiHelper,
   }) => {
     setTestIds('EPMRTC-546', 'EPMRTC-383');
     let firstModelConversation: Conversation;
@@ -139,7 +140,7 @@ test(
         ]);
 
       const compareOptionsIcons =
-        await compareConversationSelector.getOptionsIconAttributes();
+        await compareConversationSelector.getOptionsIcons();
       const expectedModels = [defaultModel, gpt4Model, bisonModel];
       expect
         .soft(
@@ -150,14 +151,12 @@ test(
 
       for (const expectedModel of expectedModels) {
         const actualOptionIcon = compareOptionsIcons.find(
-          (o) => o.iconEntity === expectedModel.id,
+          (o) => o.entityName === expectedModel.name,
         )!;
+        const expectedModelIcon = await apiHelper.getEntityIcon(expectedModel);
         expect
-          .soft(
-            actualOptionIcon.iconUrl,
-            ExpectedMessages.chatIconSourceIsValid,
-          )
-          .toBe(expectedModel.iconUrl);
+          .soft(actualOptionIcon.icon, ExpectedMessages.entityIconIsValid)
+          .toBe(expectedModelIcon);
       }
     });
   },
@@ -616,6 +615,7 @@ test('Apply changes with new settings for both chats in compare mode and check c
   conversations,
   chatInfoTooltip,
   errorPopup,
+  apiHelper,
 }) => {
   setTestIds('EPMRTC-1021');
 
@@ -632,6 +632,12 @@ test('Apply changes with new settings for both chats in compare mode and check c
   const secondUpdatedPrompt = 'second prompt';
   const firstUpdatedTemp = 0.5;
   const secondUpdatedTemp = 0;
+  const expectedSecondUpdatedRandomModelIcon = await apiHelper.getEntityIcon(
+    secondUpdatedRandomModel,
+  );
+  const expectedFirstUpdatedRandomModelIcon = await apiHelper.getEntityIcon(
+    firstUpdatedRandomModel,
+  );
 
   await test.step('Prepare two model conversations for comparing', async () => {
     firstConversation = conversationData.prepareModelConversation(
@@ -678,71 +684,35 @@ test('Apply changes with new settings for both chats in compare mode and check c
   });
 
   await test.step('Verify chat icons are updated with new model and addons in the header and chat bar', async () => {
-    const rightHeaderIcons = await rightChatHeader.getHeaderIcons();
-    expect
-      .soft(rightHeaderIcons.length, ExpectedMessages.headerIconsCountIsValid)
-      .toBe(1);
+    const rightHeaderModelIcon = await rightChatHeader.getHeaderModelIcon();
     expect
       .soft(
-        rightHeaderIcons[0].iconEntity,
-        ExpectedMessages.headerIconEntityIsValid,
+        rightHeaderModelIcon,
+        `${ExpectedMessages.entityIconIsValid} for ${secondUpdatedRandomModel.name}`,
       )
-      .toBe(secondUpdatedRandomModel.id);
-    expect
-      .soft(
-        rightHeaderIcons[0].iconUrl,
-        ExpectedMessages.headerIconSourceIsValid,
-      )
-      .toBe(secondUpdatedRandomModel!.iconUrl);
+      .toBe(expectedSecondUpdatedRandomModelIcon);
 
-    const leftHeaderIcons = await leftChatHeader.getHeaderIcons();
-    expect
-      .soft(leftHeaderIcons.length, ExpectedMessages.headerIconsCountIsValid)
-      .toBe(1);
+    const leftHeaderModelIcon = await leftChatHeader.getHeaderModelIcon();
     expect
       .soft(
-        leftHeaderIcons[0].iconEntity,
-        ExpectedMessages.headerIconEntityIsValid,
+        leftHeaderModelIcon,
+        `${ExpectedMessages.entityIconIsValid} for ${firstUpdatedRandomModel.name}`,
       )
-      .toBe(firstUpdatedRandomModel.id);
-    expect
-      .soft(
-        leftHeaderIcons[0].iconUrl,
-        ExpectedMessages.headerIconSourceIsValid,
-      )
-      .toBe(firstUpdatedRandomModel.iconUrl);
+      .toBe(expectedFirstUpdatedRandomModelIcon);
 
-    const firstConversationIcon =
-      await conversations.getConversationIconAttributes(firstConversation.name);
+    const firstConversationIcon = await conversations.getConversationIcon(
+      firstConversation.name,
+    );
     expect
-      .soft(
-        firstConversationIcon.iconEntity,
-        ExpectedMessages.chatBarIconEntityIsValid,
-      )
-      .toBe(firstUpdatedRandomModel.id);
-    expect
-      .soft(
-        firstConversationIcon.iconUrl,
-        ExpectedMessages.chatBarIconSourceIsValid,
-      )
-      .toBe(firstUpdatedRandomModel!.iconUrl);
+      .soft(firstConversationIcon, ExpectedMessages.entityIconIsValid)
+      .toBe(expectedFirstUpdatedRandomModelIcon);
 
-    const secondConversationIcon =
-      await conversations.getConversationIconAttributes(
-        secondConversation.name,
-      );
+    const secondConversationIcon = await conversations.getConversationIcon(
+      secondConversation.name,
+    );
     expect
-      .soft(
-        secondConversationIcon.iconEntity,
-        ExpectedMessages.chatBarIconEntityIsValid,
-      )
-      .toBe(secondUpdatedRandomModel.id);
-    expect
-      .soft(
-        secondConversationIcon.iconUrl,
-        ExpectedMessages.chatBarIconSourceIsValid,
-      )
-      .toBe(secondUpdatedRandomModel!.iconUrl);
+      .soft(secondConversationIcon, ExpectedMessages.entityIconIsValid)
+      .toBe(expectedSecondUpdatedRandomModelIcon);
   });
 
   await test.step('Hover over chat headers and verify chat settings updated on tooltip', async () => {
@@ -756,7 +726,7 @@ test('Apply changes with new settings for both chats in compare mode and check c
     const rightModelInfoIcon = await chatInfoTooltip.getModelIcon();
     expect
       .soft(rightModelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-      .toBe(secondUpdatedRandomModel.iconUrl);
+      .toBe(expectedSecondUpdatedRandomModelIcon);
 
     const rightPromptInfo = await chatInfoTooltip.getPromptInfo();
     expect
@@ -778,7 +748,7 @@ test('Apply changes with new settings for both chats in compare mode and check c
     const leftModelInfoIcon = await chatInfoTooltip.getModelIcon();
     expect
       .soft(leftModelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-      .toBe(firstUpdatedRandomModel.iconUrl);
+      .toBe(expectedFirstUpdatedRandomModelIcon);
 
     const leftPromptInfo = await chatInfoTooltip.getPromptInfo();
     expect
@@ -803,6 +773,7 @@ test(
     conversationData,
     localStorageManager,
     compare,
+    apiHelper,
   }) => {
     setTestIds('EPMRTC-556', 'EPMRTC-1134');
     let firstConversation: Conversation;
@@ -855,12 +826,13 @@ test(
         .soft(isStopButtonVisible, ExpectedMessages.responseLoadingStopped)
         .toBeFalsy();
 
+      const expectedModelIcon = await apiHelper.getEntityIcon(defaultModel);
       for (const side of sides) {
         const messageIcon =
           await chatMessages.getIconAttributesForCompareMessage(side);
         expect
-          .soft(messageIcon.iconUrl, ExpectedMessages.chatIconSourceIsValid)
-          .toBe(defaultModel.iconUrl);
+          .soft(messageIcon, ExpectedMessages.entityIconIsValid)
+          .toBe(expectedModelIcon);
       }
     });
   },

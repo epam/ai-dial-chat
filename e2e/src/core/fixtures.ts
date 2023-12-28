@@ -19,6 +19,7 @@ import { PromptBar } from '../ui/webElements';
 import { LocalStorageManager } from './localStorageManager';
 
 import { ConversationData } from '@/e2e/src/testData';
+import { ApiHelper } from '@/e2e/src/testData/api/apiHelper';
 import { PromptData } from '@/e2e/src/testData/prompts/promptData';
 import { Addons } from '@/e2e/src/ui/webElements/addons';
 import { AddonsDialog } from '@/e2e/src/ui/webElements/addonsDialog';
@@ -95,6 +96,7 @@ const test = base.extend<
     playback: Playback;
     playbackControl: PlaybackControl;
     shareModal: ShareModal;
+    apiHelper: ApiHelper;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -299,6 +301,10 @@ const test = base.extend<
   shareModal: async ({ page }, use) => {
     const shareModal = new ShareModal(page);
     await use(shareModal);
+  },
+  apiHelper: async ({ request }, use) => {
+    const apiHelper = new ApiHelper(request);
+    await use(apiHelper);
   },
 });
 
