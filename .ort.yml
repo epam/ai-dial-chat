@@ -1,0 +1,13 @@
+---
+excludes:
+  paths:
+  - pattern: "package-lock.json"
+    reason: "BUILD_TOOL_OF"
+  scopes:
+  - pattern: "devDependencies"
+    reason: "DEV_DEPENDENCY_OF"
+    comment: "Packages for development only."
+license_choices:
+  repository_license_choices:
+  - given: "GPL-2.0-only OR MIT"
+    choice: "MIT"
