@@ -43,14 +43,14 @@ test(
         await shareModal.closeButton.getComputedStyleProperty(Styles.color);
       expect
         .soft(closeButtonColor[0], ExpectedMessages.buttonColorIsValid)
-        .toBe(Colors.deepBlue);
+        .toBe(Colors.controlsBackgroundAccent);
 
       await shareModal.copyLinkButton.hoverOver();
       const copyButtonColor =
         await shareModal.copyLinkButton.getComputedStyleProperty(Styles.color);
       expect
         .soft(copyButtonColor[0], ExpectedMessages.buttonColorIsValid)
-        .toBe(Colors.blue);
+        .toBe(Colors.controlsBackgroundAccent);
 
       const copyLinkTooltip = await tooltip.getContent();
       expect
@@ -105,7 +105,7 @@ test(
           arrowIconColor[0],
           ExpectedMessages.sharedConversationIconColorIsValid,
         )
-        .toBe(Colors.turquoise);
+        .toBe(Colors.textAccentSecondary);
     });
 
     await test.step('Open Share modal again, click on "Copy" button in modal window and verify only one green shared icon is shown on model icon', async () => {
@@ -234,7 +234,7 @@ test(
           arrowIconColor[0],
           ExpectedMessages.sharedConversationIconColorIsValid,
         )
-        .toBe(Colors.turquoise);
+        .toBe(Colors.textAccentSecondary);
     });
 
     await test.step('Verify no shared icon shown in chat header and chat response', async () => {
@@ -335,7 +335,7 @@ test(
       await localStorageManager.setSelectedConversation(notSharedConversation);
     });
 
-    await test.step('Open Compare mode for not shared conversation and verify hared conversation has blue arrow in Compare dropdown list', async () => {
+    await test.step('Open Compare mode for not shared conversation and verify shared conversation has blue arrow in Compare dropdown list', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await conversations.openConversationDropdownMenu(
@@ -355,7 +355,7 @@ test(
           arrowIconColor[0],
           ExpectedMessages.sharedConversationIconColorIsValid,
         )
-        .toBe(Colors.blue);
+        .toBe(Colors.controlsBackgroundAccent);
     });
 
     await test.step('Hover over arrow in the dropdown list option and verify tooltop shown', async () => {

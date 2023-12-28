@@ -5,5 +5,5 @@ export enum Colors {
   textAccentSecondary = 'rgb(55, 186, 188)',
   backgroundAccentTertiary = 'rgba(169, 114, 255)',
   textError = 'rgb(247, 100, 100)',
-  deepBlue = 'rgb(72, 120, 210)',
+  controlsBackgroundAccent = 'rgb(92, 141, 234)',
 }
