@@ -32,7 +32,7 @@ function App({ Component, ...rest }: AppProps<SessionProviderProps>) {
                   backgroundColor: 'var(--bg-error)',
                   borderRadius: '3px',
                   maxWidth: '730px',
-                  padding: '16px 10px'
+                  padding: '16px 10px',
                 }}
                 toast={t}
               >
@@ -40,7 +40,11 @@ function App({ Component, ...rest }: AppProps<SessionProviderProps>) {
                   <>
                     <span>
                       {t.type === 'error' ? (
-                        <IconAlertCircle size={24} className="text-error" stroke={1.5} />
+                        <IconAlertCircle
+                          size={24}
+                          className="text-error"
+                          stroke={1.5}
+                        />
                       ) : (
                         icon
                       )}
