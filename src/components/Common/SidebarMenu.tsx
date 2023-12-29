@@ -96,6 +96,7 @@ export default function SidebarMenu({
     <div
       ref={containerRef}
       className="flex items-start gap-2 p-2 text-secondary"
+      data-qa="bottom-panel"
     >
       {visibleItems.map(({ CustomTriggerRenderer, ...props }) => {
         const Trigger = CustomTriggerRenderer ? (

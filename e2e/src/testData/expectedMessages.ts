@@ -175,4 +175,9 @@ export enum ExpectedMessages {
   chatNameIsFullyVisible = 'Chat name is fully visible on tooltip',
   shareLinkIsFullyVisible = 'Share link is fully visible on tooltip',
   buttonColorIsValid = 'Button color is valid',
+  sideBarPanelWidthIsValid = 'Side bar panel width is valid',
+  sideBarPanelIsHidden = 'Side bar panel is hidden',
+  dotsMenuIsHidden = 'Three dots menu is hidden',
+  iconColorIsValid = 'Icon color is valid',
+  iconIsHidden = 'Icon is hidden',
 }

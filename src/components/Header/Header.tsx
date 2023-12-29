@@ -48,11 +48,15 @@ const Header = () => {
   };
 
   return (
-    <div className="z-40 flex h-[48px] w-full border-b border-tertiary bg-layer-3">
+    <div
+      className="z-40 flex h-[48px] w-full border-b border-tertiary bg-layer-3"
+      data-qa="header"
+    >
       <Tooltip isTriggerClickable tooltip={t('Conversation list')}>
         <div
           className="flex-none cursor-pointer border-r border-tertiary p-3 md:px-5"
           onClick={handleToggleChatbar}
+          data-qa="chat-panel-toggle"
         >
           {showChatbar ? (
             <>
@@ -94,6 +98,7 @@ const Header = () => {
         <div
           className="flex-none cursor-pointer border-l border-tertiary p-3 md:px-5"
           onClick={handleTogglePromtbar}
+          data-qa="prompts-panel-toggle"
         >
           {showPromptbar ? (
             <>
