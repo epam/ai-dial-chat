@@ -2,12 +2,15 @@ import {
   FloatingFocusManager,
   FloatingOverlay,
   FloatingPortal,
+  UseDismissProps,
   useDismiss,
   useFloating,
   useInteractions,
+  useRole,
 } from '@floating-ui/react';
 import { IconX } from '@tabler/icons-react';
 import {
+  FormHTMLAttributes,
   KeyboardEventHandler,
   MouseEvent,
   ReactNode,
@@ -16,7 +19,7 @@ import {
 
 import classNames from 'classnames';
 
-interface Props {
+interface Props extends FormHTMLAttributes<HTMLFormElement> {
   portalId: string;
   isOpen: boolean;
   onClose: () => void;
@@ -26,9 +29,10 @@ interface Props {
   overlayClassName?: string;
   containerClassName: string;
   lockScroll?: boolean;
-  noValidate?: boolean;
   hideClose?: boolean;
-  onKeyDownOverlay?: KeyboardEventHandler<HTMLDivElement> | undefined;
+  onKeyDownOverlay?: KeyboardEventHandler<HTMLDivElement>;
+  dismissProps?: UseDismissProps;
+  applyRole?: boolean;
 }
 
 export default function Modal({
@@ -44,16 +48,18 @@ export default function Modal({
   noValidate = true,
   hideClose = false,
   onKeyDownOverlay,
+  dismissProps,
+  applyRole = false,
 }: Props) {
   const { refs, context } = useFloating({
     open: isOpen,
-    onOpenChange: () => {
-      onClose();
-    },
+    onOpenChange: onClose,
   });
-
-  const dismiss = useDismiss(context);
-  const { getFloatingProps } = useInteractions([dismiss]);
+  const role = useRole(context);
+  const dismiss = useDismiss(context, dismissProps);
+  const { getFloatingProps } = useInteractions(
+    applyRole ? [role, dismiss] : [dismiss],
+  );
 
   const handleClose = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
