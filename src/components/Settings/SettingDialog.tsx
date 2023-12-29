@@ -1,4 +1,5 @@
 import { FloatingPortal } from '@floating-ui/react';
+import { IconX } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -8,7 +9,6 @@ import { Translation } from '@/src/types/translation';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import XMark from '../../../public/images/icons/xmark.svg';
 import { ToggleSwitchLabeled } from '../Common/ToggleSwitch/ToggleSwitchLabeled';
 import { ThemeSelect } from './ThemeSelect';
 
@@ -96,7 +96,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
             className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
             onClick={handleClose}
           >
-            <XMark height={24} width={24} />
+            <IconX height={24} width={24} />
           </button>
           <div className="mb-4 text-base font-bold">{t('Settings')}</div>
           <div className="mb-4 flex flex-col gap-5">

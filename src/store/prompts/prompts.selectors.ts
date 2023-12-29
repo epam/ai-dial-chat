@@ -9,6 +9,7 @@ import {
   doesPromptContainSearchTerm,
   getMyItemsFilters,
 } from '@/src/utils/app/search';
+import { isEntityExternal } from '@/src/utils/app/share';
 
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
@@ -191,5 +192,13 @@ export const selectSelectedPromptFoldersIds = createSelector(
     );
 
     return selectedFolders;
+  },
+);
+
+export const hasExternalParent = createSelector(
+  [selectFolders, (_state: RootState, folderId?: string) => folderId],
+  (folders, folderId?) => {
+    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
+    return parentFolders.some((folder) => isEntityExternal(folder));
   },
 );

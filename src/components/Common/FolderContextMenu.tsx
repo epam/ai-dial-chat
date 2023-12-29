@@ -12,7 +12,7 @@ import { MouseEventHandler, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { isEntityExternal } from '@/src/utils/app/share';
+import { hasExternalParent, isEntityExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -61,7 +61,11 @@ export const FolderContextMenu = ({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
-  const isExternal = isEntityExternal(folder);
+  const isExternalEntity = isEntityExternal(folder);
+  const _hasExternalParent = useAppSelector((state) =>
+    hasExternalParent(state, folder.folderId, featureType),
+  );
+  const isExternal = isExternalEntity || _hasExternalParent;
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {

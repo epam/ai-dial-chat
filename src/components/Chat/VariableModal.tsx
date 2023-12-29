@@ -1,3 +1,4 @@
+import { IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
@@ -18,7 +19,6 @@ import { onBlur } from '@/src/utils/app/style-helpers';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import XMark from '../../../public/images/icons/xmark.svg';
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
 
 interface Props {
@@ -136,7 +136,7 @@ export const VariableModal: FC<Props> = ({
           className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
           onClick={onClose}
         >
-          <XMark height={24} width={24} />
+          <IconX height={24} width={24} />
         </button>
 
         {updatedVariables.map((variable, index) => (

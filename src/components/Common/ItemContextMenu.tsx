@@ -19,7 +19,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { isEntityExternal } from '@/src/utils/app/share';
+import { hasExternalParent, isEntityExternal } from '@/src/utils/app/share';
 
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -85,7 +85,11 @@ export default function ItemContextMenu({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
-  const isExternal = isEntityExternal(entity);
+  const isExternalEntity = isEntityExternal(entity);
+  const _hasExternalParent = useAppSelector((state) =>
+    hasExternalParent(state, entity.folderId, featureType),
+  );
+  const isExternal = isExternalEntity || _hasExternalParent;
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {

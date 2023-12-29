@@ -1,8 +1,16 @@
-import { ShareEntity } from '@/src/types/common';
+import { FeatureType, ShareEntity } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
+import {
+  PromptsActions,
+  PromptsSelectors,
+} from '@/src/store/prompts/prompts.reducers';
+
+import { RootState } from '@/src/store';
 
 export const getShareActionByType = (type: SharingType) => {
   switch (type) {
@@ -51,3 +59,15 @@ export const getUnpublishActionByType = (type: SharingType) => {
 
 export const isEntityExternal = (entity: ShareEntity) =>
   !!(entity.sharedWithMe || entity.publishedWithMe);
+
+export const hasExternalParent = (
+  state: RootState,
+  folderId?: string,
+  featureType?: FeatureType,
+) => {
+  if (!featureType || !folderId) return false;
+
+  return featureType === FeatureType.Chat
+    ? ConversationsSelectors.hasExternalParent(state, folderId)
+    : PromptsSelectors.hasExternalParent(state, folderId);
+};

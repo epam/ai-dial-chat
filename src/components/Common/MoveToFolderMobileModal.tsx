@@ -1,5 +1,5 @@
 import { FloatingOverlay } from '@floating-ui/react';
-import { IconFolderPlus } from '@tabler/icons-react';
+import { IconFolderPlus, IconX } from '@tabler/icons-react';
 import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -8,8 +8,6 @@ import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
 import { PromptMoveToFolderProps } from '../Promptbar/components/Prompt';
-
-import XmarkIcon from '../../../public/images/icons/xmark.svg';
 
 interface MoveToFolderMobileModalProps {
   folders: FolderInterface[];
@@ -37,7 +35,7 @@ export const MoveToFolderMobileModal = ({
         <div className="flex items-end justify-between px-3 pb-2 pt-4">
           <span className="h-min">{t('Move to')}</span>
           <span onClick={onClose}>
-            <XmarkIcon width={24} height={24} className="text-secondary" />
+            <IconX width={24} height={24} className="text-secondary" />
           </span>
         </div>
         <div

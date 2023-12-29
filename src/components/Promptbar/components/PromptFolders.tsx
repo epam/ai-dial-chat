@@ -251,12 +251,13 @@ export const PromptSection = ({
           />
         ))}
       </div>
-      <div>
-        {displayRootFiles &&
-          rootPrompts.map((item) => (
+      {displayRootFiles && (
+        <div className="flex flex-col gap-1">
+          {rootPrompts.map((item) => (
             <PromptComponent key={item.id} item={item} />
           ))}
-      </div>
+        </div>
+      )}
     </CollapsableSection>
   );
 };
