@@ -305,7 +305,6 @@ export const PreUploadDialog = ({
   }, [folderPath]);
 
   return (
-    <>
       <FloatingPortal id="theme-main">
         {isOpen && (
           <FloatingOverlay
@@ -446,6 +445,5 @@ export const PreUploadDialog = ({
           </FloatingOverlay>
         )}
       </FloatingPortal>
-    </>
   );
 };
