@@ -43,9 +43,12 @@ export const selectFilteredConversations = createSelector(
   },
 );
 
-export const selectFolders = createSelector([rootSelector], (state) => {
-  return state.folders;
-});
+export const selectFolders = createSelector(
+  [rootSelector],
+  (state: ConversationsState) => {
+    return state.folders;
+  },
+);
 
 export const selectEmptyFolderIds = createSelector(
   [selectFolders, selectConversations],
@@ -242,9 +245,12 @@ export const selectIsPlaybackSelectedConversations = createSelector(
 );
 
 export const selectAreSelectedConversationsExternal = createSelector(
-  [selectSelectedConversations],
-  (conversations) => {
-    return conversations.some((conv) => isEntityExternal(conv));
+  [(state: RootState) => state, selectSelectedConversations],
+  (state, conversations) => {
+    return conversations.some(
+      (conv) =>
+        isEntityExternal(conv) || hasExternalParent(state, conv.folderId),
+    );
   },
 );
 

@@ -22,6 +22,7 @@ import {
 } from '@/src/constants/default-settings';
 import { defaultReplay } from '@/src/constants/replay';
 
+import { hasExternalParent } from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -317,10 +318,15 @@ export const conversationsSlice = createSlice({
       const newConversations: Conversation[] = [];
       selectedIds.forEach((id) => {
         const conversation = state.conversations.find((conv) => conv.id === id);
-        if (conversation && isEntityExternal(conversation)) {
+        if (
+          conversation &&
+          (isEntityExternal(conversation) ||
+            hasExternalParent({ conversations: state }, conversation.folderId))
+        ) {
           const newConversation: Conversation = {
             ...conversation,
             ...resetShareEntity,
+            folderId: undefined,
             name: generateNextName(
               DEFAULT_CONVERSATION_NAME,
               conversation.name,
