@@ -87,6 +87,8 @@ test(
     await test.step('Delete all prompts and folders, re-import again and verify they are displayed', async () => {
       await promptBar.deleteAllEntities();
       await confirmationDialog.confirm();
+      await promptBar.deleteEntitiesButton.waitForState({ state: 'hidden' });
+
       await dialHomePage.uploadData(exportedData, () =>
         promptBar.importButton.click(),
       );
