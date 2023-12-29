@@ -1,13 +1,4 @@
 import {
-  FloatingFocusManager,
-  FloatingOverlay,
-  FloatingPortal,
-  useDismiss,
-  useFloating,
-  useInteractions,
-} from '@floating-ui/react';
-import { IconX } from '@tabler/icons-react';
-import {
   ChangeEvent,
   FC,
   KeyboardEvent,
@@ -28,6 +19,7 @@ import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
+import Modal from '../../Common/Modal';
 
 interface Props {
   prompt: Prompt;
@@ -53,25 +45,10 @@ export const PromptModal: FC<Props> = ({
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const contentInputRef = useRef<HTMLTextAreaElement>(null);
 
-  const { refs, context } = useFloating({
-    open: isOpen,
-    onOpenChange: () => {
-      onClose();
-    },
-  });
-  const dismiss = useDismiss(context);
-  const { getFloatingProps } = useInteractions([dismiss]);
-
-  const handleClose = useCallback(
-    (e: MouseEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      setSubmitted(false);
-      onClose();
-    },
-    [onClose],
-  );
+  const handleClose = useCallback(() => {
+    setSubmitted(false);
+    onClose();
+  }, [onClose]);
 
   const nameOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
@@ -139,112 +116,91 @@ export const PromptModal: FC<Props> = ({
   }, [prompt.name]);
 
   return (
-    <FloatingPortal id="theme-main">
-      <FloatingOverlay
-        lockScroll
-        className="z-50 flex items-center justify-center bg-blackout p-3 md:p-5"
-        data-floating-overlay
-        onKeyDown={handleEnter}
-      >
-        <FloatingFocusManager context={context} initialFocus={nameInputRef}>
-          <form
-            noValidate
-            className="relative inline-block max-h-full w-full overflow-y-auto rounded bg-layer-3 px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
-            role="dialog"
-            ref={refs.setFloating}
-            {...getFloatingProps()}
-            data-qa="prompt-modal"
-          >
-            <button
-              type="button"
-              role="button"
-              className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-              onClick={handleClose}
-            >
-              <IconX size={24} />
-            </button>
-            <div className="flex justify-between pb-4 text-base font-bold">
-              {t('Edit prompt')}
-            </div>
+    <Modal
+      portalId="theme-main"
+      containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
+      dataQA="prompt-modal"
+      isOpen={isOpen}
+      onClose={handleClose}
+      onKeyDownOverlay={handleEnter}
+      initialFocus={nameInputRef}
+    >
+      <div className="flex justify-between pb-4 text-base font-bold">
+        {t('Edit prompt')}
+      </div>
 
-            <div className="mb-4">
-              <label
-                className="mb-1 flex text-xs text-secondary"
-                htmlFor="promptName"
-              >
-                {t('Name')}
-                <span className="ml-1 inline text-accent-primary">*</span>
-              </label>
-              <input
-                ref={nameInputRef}
-                name="promptName"
-                className={inputClassName}
-                placeholder={t('A name for your prompt.') || ''}
-                value={name}
-                required
-                type="text"
-                onBlur={onBlur}
-                onChange={nameOnChangeHandler}
-                data-qa="prompt-name"
-              />
-              <EmptyRequiredInputMessage />
-            </div>
+      <div className="mb-4">
+        <label
+          className="mb-1 flex text-xs text-secondary"
+          htmlFor="promptName"
+        >
+          {t('Name')}
+          <span className="ml-1 inline text-accent-primary">*</span>
+        </label>
+        <input
+          ref={nameInputRef}
+          name="promptName"
+          className={inputClassName}
+          placeholder={t('A name for your prompt.') || ''}
+          value={name}
+          required
+          type="text"
+          onBlur={onBlur}
+          onChange={nameOnChangeHandler}
+          data-qa="prompt-name"
+        />
+        <EmptyRequiredInputMessage />
+      </div>
 
-            <div className="mb-4">
-              <label
-                className="mb-1 flex text-xs text-secondary"
-                htmlFor="description"
-              >
-                {t('Description')}
-              </label>
-              <textarea
-                ref={descriptionInputRef}
-                name="description"
-                className={inputClassName}
-                style={{ resize: 'none' }}
-                placeholder={t('A description for your prompt.') || ''}
-                value={description}
-                onChange={descriptionOnChangeHandler}
-                rows={3}
-                data-qa="prompt-descr"
-              />
-            </div>
-            <div className="mb-5">
-              <label
-                className="mb-1 flex text-xs text-secondary"
-                htmlFor="content"
-              >
-                {t('Prompt')}
-              </label>
-              <textarea
-                ref={contentInputRef}
-                name="content"
-                className={inputClassName}
-                style={{ resize: 'none' }}
-                placeholder={
-                  t(
-                    'Prompt content. Use {{}} to denote a variable. Ex: {{name}} is a {{adjective}} {{noun}}',
-                  ) || ''
-                }
-                value={content}
-                onChange={contentOnChangeHandler}
-                rows={10}
-                data-qa="prompt-value"
-              />
-            </div>
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                className="button button-primary"
-                data-qa="save-prompt"
-                onClick={handleSubmit}
-              >
-                {t('Save')}
-              </button>
-            </div>
-          </form>
-        </FloatingFocusManager>
-      </FloatingOverlay>
-    </FloatingPortal>
+      <div className="mb-4">
+        <label
+          className="mb-1 flex text-xs text-secondary"
+          htmlFor="description"
+        >
+          {t('Description')}
+        </label>
+        <textarea
+          ref={descriptionInputRef}
+          name="description"
+          className={inputClassName}
+          style={{ resize: 'none' }}
+          placeholder={t('A description for your prompt.') || ''}
+          value={description}
+          onChange={descriptionOnChangeHandler}
+          rows={3}
+          data-qa="prompt-descr"
+        />
+      </div>
+      <div className="mb-5">
+        <label className="mb-1 flex text-xs text-secondary" htmlFor="content">
+          {t('Prompt')}
+        </label>
+        <textarea
+          ref={contentInputRef}
+          name="content"
+          className={inputClassName}
+          style={{ resize: 'none' }}
+          placeholder={
+            t(
+              'Prompt content. Use {{}} to denote a variable. Ex: {{name}} is a {{adjective}} {{noun}}',
+            ) || ''
+          }
+          value={content}
+          onChange={contentOnChangeHandler}
+          rows={10}
+          data-qa="prompt-value"
+        />
+      </div>
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          className="button button-primary"
+          data-qa="save-prompt"
+          onClick={handleSubmit}
+        >
+          {t('Save')}
+        </button>
+      </div>
+    </Modal>
   );
 };

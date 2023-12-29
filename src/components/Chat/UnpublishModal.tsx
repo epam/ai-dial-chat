@@ -1,12 +1,3 @@
-import {
-  FloatingFocusManager,
-  FloatingOverlay,
-  FloatingPortal,
-  useDismiss,
-  useFloating,
-  useInteractions,
-} from '@floating-ui/react';
-import { IconX } from '@tabler/icons-react';
 import { ClipboardEvent, MouseEvent, useCallback, useRef } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -18,6 +9,8 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch } from '@/src/store/hooks';
+
+import Modal from '../Common/Modal';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -38,15 +31,6 @@ export default function UnpublishModal({
   const dispatch = useAppDispatch();
   const unpublishAction = getUnpublishActionByType(type);
   const shareId = useRef(uuidv4());
-
-  const { refs, context } = useFloating({
-    open: isOpen,
-    onOpenChange: () => {
-      onClose();
-    },
-  });
-  const dismiss = useDismiss(context);
-  const { getFloatingProps } = useInteractions([dismiss]);
 
   const handleClose = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
@@ -72,55 +56,37 @@ export default function UnpublishModal({
   );
 
   return (
-    <FloatingPortal id="theme-main">
-      <FloatingOverlay
-        lockScroll
-        className="z-50 flex items-center justify-center bg-blackout p-3 md:p-5"
-        data-floating-overlay
-      >
-        <FloatingFocusManager context={context}>
-          <form
-            noValidate
-            className="relative inline-block h-[434px] max-h-full w-[424px] rounded bg-layer-3 p-6 text-left"
-            role="dialog"
-            ref={refs.setFloating}
-            {...getFloatingProps()}
-            data-qa="unpublish-modal"
+    <Modal
+      portalId="theme-main"
+      containerClassName="inline-block h-[434px] w-[424px] p-6"
+      dataQA="unpublish-modal"
+      isOpen={isOpen}
+      onClose={onClose}
+    >
+      <div className="flex h-full flex-col justify-between gap-2">
+        <h4 className=" max-h-[50px] text-base font-semibold">
+          <span className="line-clamp-2 break-words">
+            {`${t('Unpublish')}: ${entity.name.trim()}`}
+          </span>
+        </h4>
+        <div className="flex justify-end gap-3">
+          <button
+            className="button button-secondary"
+            onClick={handleClose}
+            data-qa="cancel"
           >
-            <button
-              type="button"
-              role="button"
-              className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-              onClick={handleClose}
-            >
-              <IconX height={24} width={24} />
-            </button>
-            <div className="flex h-full flex-col justify-between gap-2">
-              <h4 className=" max-h-[50px] text-base font-semibold">
-                <span className="line-clamp-2 break-words">
-                  {`${t('Unpublish')}: ${entity.name.trim()}`}
-                </span>
-              </h4>
-              <div className="flex justify-end gap-3">
-                <button
-                  className="button button-secondary"
-                  onClick={handleClose}
-                  data-qa="cancel"
-                >
-                  {t('Cancel')}
-                </button>
-                <button
-                  className="button button-primary"
-                  onClick={handleUnpublish}
-                  data-qa="unpublish"
-                >
-                  {t('Unpublish')}
-                </button>
-              </div>
-            </div>
-          </form>
-        </FloatingFocusManager>
-      </FloatingOverlay>
-    </FloatingPortal>
+            {t('Cancel')}
+          </button>
+          <button
+            className="button button-primary"
+            onClick={handleUnpublish}
+            data-qa="unpublish"
+            autoFocus
+          >
+            {t('Unpublish')}
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }

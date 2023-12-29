@@ -1,12 +1,4 @@
-import {
-  FloatingFocusManager,
-  FloatingOverlay,
-  FloatingPortal,
-  useDismiss,
-  useFloating,
-  useInteractions,
-} from '@floating-ui/react';
-import { IconCheck, IconCopy, IconX } from '@tabler/icons-react';
+import { IconCheck, IconCopy } from '@tabler/icons-react';
 import {
   ClipboardEvent,
   MouseEvent,
@@ -26,6 +18,7 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch } from '@/src/store/hooks';
 
+import Modal from '../Common/Modal';
 import Tooltip from '../Common/Tooltip';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -47,25 +40,6 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
   const shareId = useRef(uuidv4());
   const url = `${window?.location.origin}/share/${shareId.current}`;
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
-
-  const { refs, context } = useFloating({
-    open: isOpen,
-    onOpenChange: () => {
-      onClose();
-    },
-  });
-  const dismiss = useDismiss(context);
-  const { getFloatingProps } = useInteractions([dismiss]);
-
-  const handleClose = useCallback(
-    (e: MouseEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      onClose();
-    },
-    [onClose],
-  );
 
   const handleCopy = useCallback(
     (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
@@ -93,84 +67,65 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
   useEffect(() => () => clearTimeout(timeoutRef.current), []);
 
   return (
-    <FloatingPortal id="theme-main">
-      <FloatingOverlay
-        lockScroll
-        className="z-50 flex items-center justify-center bg-blackout p-3 md:p-5"
-        data-floating-overlay
-      >
-        <FloatingFocusManager context={context} initialFocus={copyButtonRef}>
-          <form
-            noValidate
-            className="relative inline-block max-h-full w-full max-w-[424px] rounded bg-layer-3 p-6 text-left"
-            role="dialog"
-            ref={refs.setFloating}
-            {...getFloatingProps()}
-            data-qa="share-modal"
-          >
-            <button
-              type="button"
-              role="button"
-              className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-              onClick={handleClose}
+    <Modal
+      portalId="theme-main"
+      containerClassName="inline-block w-full max-w-[424px] p-6"
+      dataQA="share-modal"
+      isOpen={isOpen}
+      onClose={onClose}
+    >
+      <div className="flex flex-col justify-between gap-2">
+        <h4 className=" max-h-[50px] text-base font-semibold">
+          <Tooltip tooltip={entity.name.trim()}>
+            <span
+              className="line-clamp-2 break-words"
+              data-qa="share-chat-name"
             >
-              <IconX height={24} width={24} />
-            </button>
-            <div className="flex flex-col justify-between gap-2">
-              <h4 className=" max-h-[50px] text-base font-semibold">
-                <Tooltip tooltip={entity.name.trim()}>
-                  <span
-                    className="line-clamp-2 break-words"
-                    data-qa="share-chat-name"
-                  >
-                    {`${t('Share')}: ${entity.name.trim()}`}
-                  </span>
-                </Tooltip>
-              </h4>
-              <p className="text-sm text-secondary">
-                {t('share.modal.link.description')}
-              </p>
-              <p className="text-sm text-secondary">
-                {t('share.modal.link', { context: type })}
-              </p>
-              <div className="relative mt-2">
-                <Tooltip tooltip={url}>
-                  <input
-                    type="text"
-                    readOnly
-                    className="w-full gap-2 truncate rounded border border-primary bg-layer-3 p-3 pr-10 outline-none"
-                    onCopyCapture={handleCopy}
-                    value={url}
-                    data-qa="share-link"
+              {`${t('Share')}: ${entity.name.trim()}`}
+            </span>
+          </Tooltip>
+        </h4>
+        <p className="text-sm text-secondary">
+          {t('share.modal.link.description')}
+        </p>
+        <p className="text-sm text-secondary">
+          {t('share.modal.link', { context: type })}
+        </p>
+        <div className="relative mt-2">
+          <Tooltip tooltip={url}>
+            <input
+              type="text"
+              readOnly
+              className="w-full gap-2 truncate rounded border border-primary bg-layer-3 p-3 pr-10 outline-none"
+              onCopyCapture={handleCopy}
+              value={url}
+              data-qa="share-link"
+            />
+          </Tooltip>
+          <div className="absolute right-3 top-3">
+            {urlCopied ? (
+              <Tooltip tooltip={t('Copied!')}>
+                <IconCheck size={20} className="text-secondary" />
+              </Tooltip>
+            ) : (
+              <Tooltip tooltip={t('Copy URL')}>
+                <button
+                  className="outline-none"
+                  onClick={handleCopy}
+                  ref={copyButtonRef}
+                  data-qa="copy-link"
+                >
+                  <IconCopy
+                    height={20}
+                    width={20}
+                    className="text-secondary hover:text-accent-primary"
                   />
-                </Tooltip>
-                <div className="absolute right-3 top-3">
-                  {urlCopied ? (
-                    <Tooltip tooltip={t('Copied!')}>
-                      <IconCheck size={20} className="text-secondary" />
-                    </Tooltip>
-                  ) : (
-                    <Tooltip tooltip={t('Copy URL')}>
-                      <button
-                        className="outline-none"
-                        onClick={handleCopy}
-                        ref={copyButtonRef}
-                        data-qa="copy-link"
-                      >
-                        <IconCopy
-                          height={20}
-                          width={20}
-                          className="text-secondary hover:text-accent-primary"
-                        />
-                      </button>
-                    </Tooltip>
-                  )}
-                </div>
-              </div>
-            </div>
-          </form>
-        </FloatingFocusManager>
-      </FloatingOverlay>
-    </FloatingPortal>
+                </button>
+              </Tooltip>
+            )}
+          </div>
+        </div>
+      </div>
+    </Modal>
   );
 }
