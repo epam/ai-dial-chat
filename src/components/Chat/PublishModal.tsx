@@ -54,7 +54,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
     <Modal
       portalId="theme-main"
       containerClassName="inline-block h-[747px] min-w-[550px] max-w-[1100px] p-6"
-      dataQA="publish-modal"
+      dataQa="publish-modal"
       isOpen={isOpen}
       onClose={onClose}
     >

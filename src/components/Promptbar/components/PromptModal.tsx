@@ -119,7 +119,7 @@ export const PromptModal: FC<Props> = ({
     <Modal
       portalId="theme-main"
       containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
-      dataQA="prompt-modal"
+      dataQa="prompt-modal"
       isOpen={isOpen}
       onClose={handleClose}
       onKeyDownOverlay={handleEnter}

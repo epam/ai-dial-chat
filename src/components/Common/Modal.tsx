@@ -21,7 +21,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   children: ReactNode | ReactNode[];
-  dataQA: string;
+  dataQa: string;
   initialFocus?: number | React.MutableRefObject<HTMLElement | null>;
   overlayClassName?: string;
   containerClassName: string;
@@ -36,7 +36,7 @@ export default function Modal({
   isOpen,
   onClose,
   children,
-  dataQA,
+  dataQa,
   initialFocus,
   overlayClassName,
   containerClassName,
@@ -87,7 +87,7 @@ export default function Modal({
               role="dialog"
               ref={refs.setFloating}
               {...getFloatingProps()}
-              data-qa={dataQA}
+              data-qa={dataQa}
             >
               {!hideClose && (
                 <button

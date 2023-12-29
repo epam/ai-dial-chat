@@ -70,7 +70,7 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
     <Modal
       portalId="theme-main"
       containerClassName="inline-block w-full max-w-[424px] p-6"
-      dataQA="share-modal"
+      dataQa="share-modal"
       isOpen={isOpen}
       onClose={onClose}
     >
