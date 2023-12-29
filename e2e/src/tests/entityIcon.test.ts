@@ -21,10 +21,8 @@ test(
     conversations,
     apiHelper,
     setTestIds,
-    setIssueIds,
   }) => {
     setTestIds('EPMRTC-1036', 'EPMRTC-1038', 'EPMRTC-378');
-    setIssueIds('421');
     await test.step('Open initial screen and click "See full list" to view all available entities', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
