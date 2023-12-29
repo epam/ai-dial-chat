@@ -28,11 +28,13 @@ test(
     chatHeader,
     chatInfoTooltip,
     errorPopup,
+    apiHelper,
   }) => {
     setTestIds('EPMRTC-1115', 'EPMRTC-473');
     let conversation: Conversation;
     const temp = 0;
     const request = 'This is a test request';
+    const expectedModelIcon = await apiHelper.getEntityIcon(defaultModel);
 
     await test.step('Prepare model conversation with all available addons and temperature', async () => {
       conversation = conversationData.prepareModelConversation(
@@ -68,34 +70,37 @@ test(
     });
 
     await test.step('Verify chat icons are updated with model, temperature and addons in the header', async () => {
-      const headerIcons = await chatHeader.getHeaderIcons();
-      expect
-        .soft(headerIcons.length, ExpectedMessages.headerIconsCountIsValid)
-        .toBe(1 + addonIds.length);
+      const headerModelIcon = await chatHeader.getHeaderModelIcon();
       expect
         .soft(
-          headerIcons[0].iconEntity,
-          ExpectedMessages.headerIconEntityIsValid,
+          headerModelIcon,
+          `${ExpectedMessages.entityIconIsValid} for ${defaultModel.name}`,
         )
-        .toBe(conversation.model.id);
-      expect
-        .soft(headerIcons[0].iconUrl, ExpectedMessages.headerIconSourceIsValid)
-        .toBe(defaultModel.iconUrl);
+        .toBe(expectedModelIcon);
 
-      for (let i = 0; i < addonIds.length; i++) {
-        const addon = allAddons.find((a) => a.id === addonIds[i]);
+      if (addonIds.length > 0) {
+        const headerAddonIcons = await chatHeader.getHeaderAddonsIcons();
         expect
           .soft(
-            headerIcons[i + 1].iconEntity,
-            ExpectedMessages.headerIconEntityIsValid,
+            headerAddonIcons.length,
+            ExpectedMessages.headerIconsCountIsValid,
           )
-          .toBe(addon!.id);
-        expect
-          .soft(
-            headerIcons[i + 1].iconUrl,
-            ExpectedMessages.headerIconSourceIsValid,
-          )
-          .toBe(addon!.iconUrl);
+          .toBe(addonIds.length);
+
+        for (const addonId of addonIds) {
+          const expectedAddon = ModelsUtil.getAddon(addonId)!;
+          const actualAddon = headerAddonIcons.find(
+            (a) => a.entityName === expectedAddon.name,
+          )!;
+          const expectedAddonIcon =
+            await apiHelper.getEntityIcon(expectedAddon);
+          expect
+            .soft(
+              actualAddon.icon,
+              `${ExpectedMessages.addonIconIsValid} for ${expectedAddon.name}`,
+            )
+            .toBe(expectedAddonIcon);
+        }
       }
     });
 
@@ -110,7 +115,7 @@ test(
       const modelInfoIcon = await chatInfoTooltip.getModelIcon();
       expect
         .soft(modelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-        .toBe(defaultModel.iconUrl);
+        .toBe(expectedModelIcon);
 
       const promptInfo = await chatInfoTooltip.getPromptInfo();
       expect.soft(promptInfo, ExpectedMessages.chatInfoPromptIsValid).toBe('');
@@ -121,19 +126,23 @@ test(
         .toBe(conversation.temperature.toString());
 
       const addonsInfo = await chatInfoTooltip.getAddonsInfo();
-      const addonInfoIcons = await chatInfoTooltip.getAddonIcons();
+      const actualAddonsInfoIcons = await chatInfoTooltip.getAddonIcons();
       expect
         .soft(addonsInfo.length, ExpectedMessages.chatInfoAddonsCountIsValid)
         .toBe(allAddons.length);
 
-      for (let i = 0; i < addonIds.length; i++) {
-        const addon = allAddons.find((a) => a.id === addonIds[i]);
+      for (const addonId of addonIds) {
+        const expectedAddon = ModelsUtil.getAddon(addonId)!;
+        const actualAddonInfoIcon = actualAddonsInfoIcons.find(
+          (a) => a.entityName === expectedAddon.name,
+        )!;
+        const expectedAddonIcon = await apiHelper.getEntityIcon(expectedAddon);
         expect
-          .soft(addonsInfo[i], ExpectedMessages.chatInfoAddonIsValid)
-          .toBe(addon!.name);
-        expect
-          .soft(addonInfoIcons[i], ExpectedMessages.chatInfoAddonIconIsValid)
-          .toBe(addon!.iconUrl);
+          .soft(
+            actualAddonInfoIcon.icon,
+            `${ExpectedMessages.chatInfoAddonIconIsValid} for ${expectedAddon.name}`,
+          )
+          .toBe(expectedAddonIcon);
       }
     });
   },
@@ -150,6 +159,7 @@ test(
     localStorageManager,
     chatHeader,
     conversationSettings,
+    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-490', 'EPMRTC-491');
     let conversation: Conversation;
@@ -166,8 +176,8 @@ test(
     await test.step('Try to clear conversation messages using header button but cancel clearing and verify no messages deleted', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await dialHomePage.dismissBrowserDialog();
       await chatHeader.clearConversation.click();
+      await confirmationDialog.cancelDialog();
 
       const messagesCount = await chatMessages.chatMessages.getElementsCount();
       expect
@@ -176,10 +186,8 @@ test(
     });
 
     await test.step('Clear conversation messages using header button and verify messages deleted, setting are shown', async () => {
-      await dialHomePage.acceptBrowserDialog(
-        ExpectedConstants.clearAllConversationsAlert,
-      );
       await chatHeader.clearConversation.click();
+      await confirmationDialog.confirm();
 
       const isConversationSettingsVisible =
         await conversationSettings.isVisible();

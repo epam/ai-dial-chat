@@ -11,23 +11,26 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { usePromptSelection } from '@/src/hooks/usePromptSelection';
+
 import { getUserCustomContent } from '@/src/utils/app/file';
 import { isMobile } from '@/src/utils/app/mobile';
+import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
 import { Message, Role } from '@/src/types/chat';
 import { Feature } from '@/src/types/features';
 import { DialFile } from '@/src/types/files';
 import { OpenAIEntityModels, defaultModelLimits } from '@/src/types/openai';
-import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
+
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
 import { AttachButton } from '../../Files/AttachButton';
@@ -54,16 +57,9 @@ export const ChatInputMessage = ({
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
-  const [content, setContent] = useState<string>('');
   const [isTyping, setIsTyping] = useState<boolean>(false);
-  const [showPromptList, setShowPromptList] = useState(false);
-  const [activePromptIndex, setActivePromptIndex] = useState(0);
-  const [promptInputValue, setPromptInputValue] = useState('');
-  const [variables, setVariables] = useState<string[]>([]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const [showPluginSelect, setShowPluginSelect] = useState(false);
 
-  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
@@ -107,21 +103,6 @@ export const ChatInputMessage = ({
   const isError =
     isLastAssistantMessageEmpty || (isMessageError && notModelConversations);
 
-  const [filteredPrompts, setFilteredPrompts] = useState(() =>
-    prompts.filter((prompt) =>
-      prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
-    ),
-  );
-  const isInputEmpty = useMemo(() => {
-    return content.trim().length === 0 && selectedFiles.length === 0;
-  }, [content, selectedFiles.length]);
-  const isSendDisabled =
-    messageIsStreaming ||
-    isReplay ||
-    isError ||
-    isInputEmpty ||
-    isModelsLoading ||
-    isUploadingFilePresent;
   const maxLength = useMemo(() => {
     const maxLengthArray = selectedConversations.map(
       ({ model }) =>
@@ -133,36 +114,53 @@ export const ChatInputMessage = ({
     return Math.min(...maxLengthArray);
   }, [modelsMap, selectedConversations]);
 
-  const updatePromptListVisibility = useCallback((text: string) => {
-    const match = text.match(/\/\w*$/);
+  const {
+    content,
+    setContent,
+    activePromptIndex,
+    setActivePromptIndex,
+    isModalVisible,
+    setIsModalVisible,
+    isPromptLimitModalOpen,
+    setIsPromptLimitModalOpen,
+    showPromptList,
+    setShowPromptList,
+    updatePromptListVisibility,
+    handleInitModal,
+    filteredPrompts,
+    variables,
+    handleKeyDownIfShown,
+  } = usePromptSelection(maxLength);
 
-    if (match) {
-      setShowPromptList(true);
-      setPromptInputValue(match[0].slice(1));
-    } else {
-      setShowPromptList(false);
-      setPromptInputValue('');
-    }
-  }, []);
+  const isInputEmpty = useMemo(() => {
+    return content.trim().length === 0 && selectedFiles.length === 0;
+  }, [content, selectedFiles.length]);
+  const isSendDisabled =
+    messageIsStreaming ||
+    isReplay ||
+    isError ||
+    isInputEmpty ||
+    isModelsLoading ||
+    isUploadingFilePresent;
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const value = e.target.value;
 
       if (maxLength && value.length > maxLength) {
-        alert(
-          t(
-            `Message limit is {{maxLength}} characters. You have entered {{valueLength}} characters.`,
-            { maxLength, valueLength: value.length },
-          ),
-        );
+        setIsPromptLimitModalOpen(true);
         return;
       }
 
       setContent(value);
       updatePromptListVisibility(value);
     },
-    [maxLength, t, updatePromptListVisibility],
+    [
+      maxLength,
+      setContent,
+      setIsPromptLimitModalOpen,
+      updatePromptListVisibility,
+    ],
   );
 
   const handleSend = useCallback(() => {
@@ -181,87 +179,20 @@ export const ChatInputMessage = ({
     if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
       textareaRef.current.blur();
     }
-  }, [isSendDisabled, onSend, content, selectedFiles, dispatch, textareaRef]);
-
-  const parseVariables = useCallback((content: string) => {
-    const regex = /{{(.*?)}}/g;
-    const foundVariables = [];
-    let match;
-
-    while ((match = regex.exec(content)) !== null) {
-      foundVariables.push(match[1]);
-    }
-
-    return foundVariables;
-  }, []);
-
-  const handlePromptSelect = useCallback(
-    (prompt: Prompt) => {
-      if (!prompt.content) {
-        return;
-      }
-
-      const parsedVariables = parseVariables(prompt.content);
-      setVariables(parsedVariables);
-
-      if (parsedVariables.length > 0) {
-        setIsModalVisible(true);
-      } else {
-        setContent((prevContent) => {
-          const updatedContent = prevContent?.replace(
-            /\/\w*$/,
-            prompt.content as string,
-          );
-          return updatedContent;
-        });
-        updatePromptListVisibility(prompt.content);
-      }
-    },
-    [parseVariables, updatePromptListVisibility],
-  );
-
-  const handleInitModal = useCallback(() => {
-    const selectedPrompt = filteredPrompts[activePromptIndex];
-    if (selectedPrompt && !!selectedPrompt.content) {
-      setContent((prevContent) => {
-        const newContent = prevContent?.replace(
-          /\/\w*$/,
-          selectedPrompt.content as string,
-        );
-        return newContent;
-      });
-      handlePromptSelect(selectedPrompt);
-    }
-    setShowPromptList(false);
-  }, [activePromptIndex, filteredPrompts, handlePromptSelect]);
+  }, [
+    isSendDisabled,
+    onSend,
+    content,
+    selectedFiles,
+    dispatch,
+    setContent,
+    textareaRef,
+  ]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
       if (showPromptList) {
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          setActivePromptIndex((prevIndex) =>
-            prevIndex < prompts.length - 1 ? prevIndex + 1 : prevIndex,
-          );
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          setActivePromptIndex((prevIndex) =>
-            prevIndex > 0 ? prevIndex - 1 : prevIndex,
-          );
-        } else if (e.key === 'Tab') {
-          e.preventDefault();
-          setActivePromptIndex((prevIndex) =>
-            prevIndex < prompts.length - 1 ? prevIndex + 1 : 0,
-          );
-        } else if (e.key === 'Enter') {
-          e.preventDefault();
-          handleInitModal();
-        } else if (e.key === 'Escape') {
-          e.preventDefault();
-          setShowPromptList(false);
-        } else {
-          setActivePromptIndex(0);
-        }
+        handleKeyDownIfShown(e);
       } else if (e.key === 'Enter' && !isTyping && !isMobile() && !e.shiftKey) {
         e.preventDefault();
         if (isReplay) {
@@ -274,11 +205,10 @@ export const ChatInputMessage = ({
       }
     },
     [
-      handleInitModal,
+      handleKeyDownIfShown,
       handleSend,
       isReplay,
       isTyping,
-      prompts.length,
       showPluginSelect,
       showPromptList,
     ],
@@ -297,16 +227,8 @@ export const ChatInputMessage = ({
         textareaRef.current.focus();
       }
     },
-    [content, textareaRef, variables],
+    [content, setContent, textareaRef, variables],
   );
-
-  useEffect(() => {
-    setFilteredPrompts(
-      prompts.filter((prompt) =>
-        prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
-      ),
-    );
-  }, [prompts, promptInputValue]);
 
   useEffect(() => {
     if (textareaRef && textareaRef.current) {
@@ -482,6 +404,21 @@ export const ChatInputMessage = ({
           />
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={isPromptLimitModalOpen}
+        heading={t('Prompt limit exceeded')}
+        description={
+          t(
+            `Prompt limit is ${maxLength} characters. 
+            ${getPromptLimitDescription(content, maxLength)}`,
+          ) || ''
+        }
+        confirmLabel={t('Confirm')}
+        onClose={() => {
+          setIsPromptLimitModalOpen(false);
+        }}
+      />
     </div>
   );
 };

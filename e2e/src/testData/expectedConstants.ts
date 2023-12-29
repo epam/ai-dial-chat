@@ -12,6 +12,7 @@ export const ExpectedConstants = {
   model: 'Model',
   replayAsIsLabel: 'Replay as is',
   replayConversation: '[Replay] ',
+  playbackConversation: '[Playback] ',
   startReplayLabel: 'Start replay',
   continueReplayLabel: 'Continue replay',
   continueReplayAfterErrorLabel:
@@ -22,7 +23,6 @@ export const ExpectedConstants = {
   talkToReply: 'Replay as is',
   fillVariablesAlertText: 'Please fill out all variables',
   enterMessageAlert: 'Please enter a message',
-  clearAllConversationsAlert: 'Are you sure you want to clear all messages?',
   defaultIconUrl: 'url(images/icons/message-square-lines-alt.svg))',
   deleteFolderMessage:
     'Are you sure that you want to remove a folder with all nested elements?',
@@ -31,7 +31,7 @@ export const ExpectedConstants = {
   proceedReplayTooltip: 'Please continue replay to continue working with chat',
   waitForAssistantAnswerTooltip:
     'Please wait for full assistant answer to continue working with chat',
-  selectedPromptOptionAttribute: 'bg-blue-500/20',
+  selectedPromptOptionAttribute: 'bg-accent-primary-alpha',
   noResults: 'No results found',
   notAllowedModelError:
     'Not allowed model selected. Please, change the model to proceed',
@@ -41,6 +41,8 @@ export const ExpectedConstants = {
     'Please note that some of your messages were created in older DIAL version. "Replay as is" could be working not as expected.',
   regenerateResponseTooltip:
     'Please regenerate response to continue working with chat',
+  sharedConversationTooltip: 'Shared',
+  copyUrlTooltip: 'Copy URL',
 };
 
 export enum Groups {
@@ -79,6 +81,7 @@ export const API = {
   addonsHost: '/api/addons',
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
+  defaultIconHost: '/api/themes/image?name=default-model',
 };
 
 export const Import = {
@@ -109,4 +112,9 @@ export enum ModelIds {
 export enum Rate {
   like = 'like',
   dislike = 'dislike',
+}
+
+export enum Theme {
+  light = 'light',
+  dark = 'dark',
 }

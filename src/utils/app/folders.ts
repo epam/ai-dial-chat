@@ -1,4 +1,4 @@
-import { Entity } from '@/src/types/common';
+import { ShareEntity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 
 export const getFoldersDepth = (
@@ -91,8 +91,9 @@ export const getAvailableNameOnSameFolderLevel = (
 
 export const getNextDefaultName = (
   defaultName: string,
-  entities: Entity[],
+  entities: ShareEntity[],
   index = 0,
+  startWithEmptyPostfix = false,
 ) => {
   const prefix = `${defaultName} `;
   const regex = new RegExp(`^${prefix}(\\d+)$`);
@@ -103,10 +104,32 @@ export const getNextDefaultName = (
 
   const maxNumber = Math.max(
     ...entities
-      .filter((entity) => entity.name.match(regex))
-      .map((entity) => parseInt(entity.name.replace(prefix, ''), 10)),
+      .filter(
+        (entity) =>
+          !entity.sharedWithMe &&
+          !entity.publishedWithMe &&
+          (entity.name === defaultName || entity.name.match(regex)),
+      )
+      .map((entity) => parseInt(entity.name.replace(prefix, ''), 10) || 1),
     0,
   ); // max number
 
+  if (startWithEmptyPostfix && maxNumber === 0) {
+    return defaultName;
+  }
+
   return `${prefix}${maxNumber + 1 + index}`;
+};
+
+export const generateNextName = (
+  defaultName: string,
+  currentName: string,
+  entities: ShareEntity[],
+  index = 0,
+) => {
+  const prefix = `${defaultName} `;
+  const regex = new RegExp(`^${prefix}(\\d+)$`);
+  return currentName.match(regex)
+    ? getNextDefaultName(defaultName, entities, index)
+    : getNextDefaultName(currentName, entities, index, true);
 };

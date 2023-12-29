@@ -12,6 +12,8 @@ import { MouseEventHandler, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isEntityExternal } from '@/src/utils/app/share';
+
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { DisplayMenuItemProps } from '@/src/types/menu';
@@ -59,25 +61,26 @@ export const FolderContextMenu = ({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
+  const isExternal = isEntityExternal(folder);
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
         name: t('Upload'),
-        display: !!onUpload,
+        display: !!onUpload && !isExternal,
         dataQa: 'upload',
         Icon: IconUpload,
         onClick: onUpload,
       },
       {
         name: t('Rename'),
-        display: !!onRename,
+        display: !!onRename && !isExternal,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
       },
       {
         name: t('Share'),
-        display: isSharingEnabled && !!onShare,
+        display: isSharingEnabled && !!onShare && !isExternal,
         dataQa: 'share',
         Icon: IconUserShare,
         onClick: onShare,
@@ -85,7 +88,11 @@ export const FolderContextMenu = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: isPublishingEnabled && !folder.isPublished && !!onPublish,
+        display:
+          isPublishingEnabled &&
+          !folder.isPublished &&
+          !!onPublish &&
+          !isExternal,
         Icon: IconWorldShare,
         onClick: onPublish,
       },
@@ -113,7 +120,7 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Add new folder'),
-        display: !!onAddFolder,
+        display: !!onAddFolder && !isExternal,
         dataQa: 'new-folder',
         Icon: IconFolderPlus,
         onClick: onAddFolder,
@@ -122,6 +129,7 @@ export const FolderContextMenu = ({
     [
       t,
       onUpload,
+      isExternal,
       onRename,
       isSharingEnabled,
       onShare,

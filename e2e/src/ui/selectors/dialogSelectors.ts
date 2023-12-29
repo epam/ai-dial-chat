@@ -7,7 +7,6 @@ export const Dialog = {
 
 export const Popup = {
   errorPopup: '[style*="animation"]',
-  cancelIcon: '.tabler-icon-x',
 };
 
 export const PromptModal = {

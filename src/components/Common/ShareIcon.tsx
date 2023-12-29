@@ -57,6 +57,9 @@ export default function ShareIcon({
           'absolute -bottom-1 -left-1 bg-layer-3',
           isPublished ? 'rounded-md' : 'rounded-sm',
         )}
+        data-qa={
+          isPublished && isPublishingEnabled ? 'world-icon' : 'arrow-icon'
+        }
       >
         <Tooltip tooltip={t(isPublished ? 'Published' : 'Shared')}>
           <AdditionalIcon

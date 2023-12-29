@@ -23,32 +23,29 @@ const ModelIconTemplate = memo(
       entity?.type === EntityType.Addon
         ? `api/themes/image?name=default-addon`
         : `api/themes/image?name=default-model`;
-    const url = entity?.iconUrl ?? fallbackUrl;
 
     return (
-      <>
-        <span
-          className={classNames(
-            'relative inline-block shrink-0 leading-none text-primary',
-            animate && 'animate-bounce',
-          )}
-          style={{ height: `${size}px`, width: `${size}px` }}
+      <span
+        className={classNames(
+          'relative inline-block shrink-0 leading-none text-primary',
+          animate && 'animate-bounce',
+        )}
+        style={{ height: `${size}px`, width: `${size}px` }}
+      >
+        <SVG
+          src={entity?.iconUrl || ''}
+          width={size}
+          height={size}
+          description={entity?.name || entityId}
         >
           <SVG
-            src={url}
+            src={fallbackUrl}
             width={size}
             height={size}
             description={entity?.name || entityId}
-          >
-            <SVG
-              src={fallbackUrl}
-              width={size}
-              height={size}
-              description={entity?.name || entityId}
-            />
-          </SVG>
-        </span>
-      </>
+          />
+        </SVG>
+      </span>
     );
   },
 );

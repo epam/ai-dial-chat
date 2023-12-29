@@ -1,6 +1,7 @@
 import { ChatSelectors } from '../selectors';
-import { BaseElement, Icons } from './baseElement';
+import { BaseElement } from './baseElement';
 
+import { Tags } from '@/e2e/src/ui/domData';
 import { Page } from '@playwright/test';
 
 export class ChatHeader extends BaseElement {
@@ -13,8 +14,13 @@ export class ChatHeader extends BaseElement {
   }
 
   public chatTitle = this.getChildElementBySelector(ChatSelectors.chatTitle);
-  public icons = this.getChildElementBySelector(ChatSelectors.chatIcon);
   public chatModel = this.getChildElementBySelector(ChatSelectors.chatModel);
+  public chatModelIcon = this.getChildElementBySelector(
+    `${ChatSelectors.chatModel} >> ${Tags.svg}`,
+  );
+  public chatAddonIcons = this.getChildElementBySelector(
+    `${ChatSelectors.chatAddons} > ${Tags.span}`,
+  );
   public removeConversationFromComparison = this.getChildElementBySelector(
     ChatSelectors.removeFromCompareIcon,
   );
@@ -28,14 +34,18 @@ export class ChatHeader extends BaseElement {
     ChatSelectors.leavePlayback,
   );
 
-  async getHeaderIcons() {
-    const allIcons: Icons[] = [];
-    await this.icons.getNthElement(1).waitFor();
-    const iconsCount = await this.icons.getElementsCount();
-    for (let i = 1; i <= iconsCount; i++) {
-      const customIcon = await this.icons.getNthElement(i);
-      allIcons.push(await this.getElementIconAttributes(customIcon));
-    }
-    return allIcons;
+  public async isArrowIconVisible() {
+    return this.chatModel
+      .getChildElementBySelector(ChatSelectors.arrowAdditionalIcon)
+      .isVisible();
+  }
+
+  async getHeaderModelIcon() {
+    await this.chatModelIcon.waitForState();
+    return this.getElementIconHtml(this.rootLocator);
+  }
+
+  async getHeaderAddonsIcons() {
+    return this.getElementIcons(this.chatAddonIcons, Tags.desc);
   }
 }

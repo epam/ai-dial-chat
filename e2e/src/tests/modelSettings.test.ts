@@ -44,7 +44,7 @@ test('Selected settings are saved if to switch from Model1 to Model2', async ({
     borders.forEach((borderColor) => {
       expect
         .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
-        .toBe(Colors.highlightedEntity);
+        .toBe(Colors.backgroundAccentPrimary);
     });
   });
 
