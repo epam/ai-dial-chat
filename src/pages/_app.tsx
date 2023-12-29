@@ -1,4 +1,4 @@
-import { IconX } from '@tabler/icons-react';
+import { IconAlertCircle, IconX } from '@tabler/icons-react';
 import { SessionProvider, SessionProviderProps } from 'next-auth/react';
 import toast, { ToastBar, Toaster } from 'react-hot-toast';
 import { Provider } from 'react-redux';
@@ -27,14 +27,34 @@ function App({ Component, ...rest }: AppProps<SessionProviderProps>) {
         <div className={`${inter.variable} font`}>
           <Toaster toastOptions={{ duration: 9000 }}>
             {(t) => (
-              <ToastBar toast={t}>
+              <ToastBar
+                style={{
+                  backgroundColor: 'var(--bg-error)',
+                  borderRadius: '3px',
+                  maxWidth: '730px',
+                  padding: '16px 10px'
+                }}
+                toast={t}
+              >
                 {({ icon, message }) => (
                   <>
-                    {icon}
-                    {message}
+                    <span>
+                      {t.type === 'error' ? (
+                        <IconAlertCircle size={24} className="text-error" stroke={1.5} />
+                      ) : (
+                        icon
+                      )}
+                    </span>
+                    <p className="mx-0.5 text-sm leading-[21px] text-error">
+                      {message}
+                    </p>
                     {t.type !== 'loading' && (
                       <button onClick={() => toast.dismiss(t.id)}>
-                        <IconX />
+                        <IconX
+                          stroke={1}
+                          size={24}
+                          className="text-secondary"
+                        />
                       </button>
                     )}
                   </>
