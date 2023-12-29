@@ -377,3 +377,11 @@ export const selectMaximumAttachmentsAmount = createSelector(
     );
   },
 );
+
+export const hasExternalParent = createSelector(
+  [selectFolders, (_state: RootState, folderId?: string) => folderId],
+  (folders, folderId?) => {
+    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
+    return parentFolders.some((folder) => isEntityExternal(folder));
+  },
+);
