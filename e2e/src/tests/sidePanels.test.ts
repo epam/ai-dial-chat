@@ -46,7 +46,7 @@ test(
   },
 );
 
-test.only(
+test(
   'Resize panels max and min size.\n' +
     'Resized panels are stored if to close/open or refresh.\n' +
     'Resize panel with chats max and min size.\n' +
