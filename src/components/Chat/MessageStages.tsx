@@ -18,6 +18,7 @@ export const MessageStages = ({ stages }: Props) => {
     0,
     showAll ? stages.length : NUMBER_OF_VISIBLE_STAGES,
   );
+  const ShowIcon = showAll ? IconChevronsUp : IconChevronsDown;
 
   return (
     <div className="flex flex-col gap-1">
@@ -27,11 +28,7 @@ export const MessageStages = ({ stages }: Props) => {
 
       {stages.length > NUMBER_OF_VISIBLE_STAGES && (
         <button onClick={() => setShowAll(!showAll)} className="mx-auto mt-2">
-          {showAll ? (
-            <IconChevronsUp size={24} className="text-secondary" />
-          ) : (
-            <IconChevronsDown size={24} className="text-secondary" />
-          )}
+          <ShowIcon size={24} className="text-secondary" />
         </button>
       )}
     </div>
