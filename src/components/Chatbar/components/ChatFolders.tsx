@@ -266,12 +266,13 @@ export const ChatSection = ({
           );
         })}
       </div>
-      <div>
-        {displayRootFiles &&
-          rootConversations.map((item) => (
+      {displayRootFiles && (
+        <div className="flex flex-col gap-1">
+          {rootConversations.map((item) => (
             <ConversationComponent key={item.id} item={item} />
           ))}
-      </div>
+        </div>
+      )}
     </CollapsableSection>
   );
 };
