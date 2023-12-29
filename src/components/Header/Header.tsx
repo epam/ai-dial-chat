@@ -1,3 +1,4 @@
+import { IconX } from '@tabler/icons-react';
 import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -11,7 +12,6 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../../public/images/icons/move-right.svg';
-import XmarkIcon from '../../../public/images/icons/xmark.svg';
 import Tooltip from '../Common/Tooltip';
 import { SettingDialog } from '../Settings/SettingDialog';
 import { CreateNewChatMobile } from './CreateNewChatMobile';
@@ -56,7 +56,7 @@ const Header = () => {
         >
           {showChatbar ? (
             <>
-              <XmarkIcon
+              <IconX
                 className="text-secondary md:hidden"
                 width={24}
                 height={24}
@@ -97,7 +97,7 @@ const Header = () => {
         >
           {showPromptbar ? (
             <>
-              <XmarkIcon
+              <IconX
                 className="text-secondary md:hidden"
                 width={24}
                 height={24}

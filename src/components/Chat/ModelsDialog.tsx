@@ -4,7 +4,7 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import { IconChevronDown } from '@tabler/icons-react';
+import { IconChevronDown, IconX } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -25,7 +25,6 @@ import {
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
-import XMark from '../../../public/images/icons/xmark.svg';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
 
@@ -255,7 +254,7 @@ export const ModelsDialog: FC<Props> = ({
               className="text-secondary hover:text-accent-primary"
               data-qa="close-models-dialog"
             >
-              <XMark height={24} width={24} />
+              <IconX height={24} width={24} />
             </button>
           </div>
 
