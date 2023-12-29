@@ -196,6 +196,7 @@ export class BaseElement {
 
   public async getElementIconHtml(elementLocator: Locator): Promise<string> {
     const iconLocator = await elementLocator.locator(Tags.svg).first();
+    await iconLocator.waitFor();
     return iconLocator.innerHTML().then((icon) =>
       icon
         .replaceAll('\n', '')
