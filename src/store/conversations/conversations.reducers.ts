@@ -300,6 +300,7 @@ export const conversationsSlice = createSlice({
       const newConversation: Conversation = {
         ...payload.conversation,
         ...resetShareEntity,
+        folderId: undefined,
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
           payload.conversation.name,
