@@ -73,7 +73,6 @@ export interface Conversation extends ShareEntity {
   model: ConversationEntityModel;
   prompt: string;
   temperature: number;
-  folderId?: string;
   replay: Replay;
   playback?: Playback;
 

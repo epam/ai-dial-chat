@@ -15,6 +15,7 @@ export enum FeatureType {
 export interface Entity {
   id: string;
   name: string;
+  folderId?: string;
 }
 
 export interface ShareEntity extends Entity, ShareInterface {}
