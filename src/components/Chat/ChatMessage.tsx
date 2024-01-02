@@ -471,7 +471,7 @@ export const ChatMessage: FC<Props> = memo(
                 <div
                   className={classNames(
                     'flex min-w-0 shrink grow flex-col',
-                    message.content && 'gap-4',
+                    (message.content || message.errorMessage) && 'gap-4',
                   )}
                 >
                   {!!message.custom_content?.stages?.length && (
