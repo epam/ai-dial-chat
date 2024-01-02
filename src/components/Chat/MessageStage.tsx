@@ -1,6 +1,8 @@
 import { IconExclamationCircle } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 
+import classNames from 'classnames';
+
 import { Stage } from '@/src/types/chat';
 
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
@@ -16,9 +18,7 @@ interface StageTitleProps {
 
 const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
   return (
-    <div
-      className={`grid min-w-0 grid-flow-col items-center gap-3 overflow-hidden`}
-    >
+    <div className="grid min-w-0 grid-flow-col items-center gap-3 overflow-hidden">
       {stage.status == null ? (
         <Loader
           height={20}
@@ -38,7 +38,12 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
           className="shrink-0 grow-0 basis-auto text-secondary"
         />
       )}
-      <span className={`block ${isOpened ? 'max-w-full' : 'truncate'}`}>
+      <span
+        className={classNames(
+          'block text-start',
+          isOpened ? 'max-w-full' : 'truncate',
+        )}
+      >
         {stage.name}
       </span>
     </div>
@@ -73,9 +78,10 @@ export const MessageStage = ({ stage }: Props) => {
           <ChevronDown
             height={20}
             width={20}
-            className={`shrink-0 text-secondary transition ${
-              isOpened ? 'rotate-180' : ''
-            }`}
+            className={classNames(
+              'shrink-0 text-secondary transition',
+              isOpened && 'rotate-180',
+            )}
           />
         </button>
       ) : (
@@ -86,9 +92,10 @@ export const MessageStage = ({ stage }: Props) => {
 
       {(stage.content || stage.attachments) && (
         <div
-          className={`grid max-w-full grid-flow-row overflow-auto  ${
-            isOpened ? 'border-t border-secondary p-2' : 'h-0'
-          }`}
+          className={classNames(
+            'grid max-w-full grid-flow-row overflow-auto',
+            isOpened ? 'border-t border-secondary p-2' : 'h-0',
+          )}
         >
           {stage.content && (
             <span className="inline-block overflow-auto">
