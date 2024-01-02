@@ -376,6 +376,7 @@ test(
     });
 
     await test.step('Verify no content received and model icon is visible', async () => {
+      await dialHomePage.unRouteResponse(API.chatHost);
       const receivedContent = await chatMessages.getLastMessageContent();
       expect
         .soft(receivedContent, ExpectedMessages.messageContentIsValid)
@@ -434,7 +435,6 @@ test(
     });
 
     await test.step('Send request and stop generation when partial content received', async () => {
-      await dialHomePage.unRouteResponse(API.chatHost);
       await chat.regenerateResponse(false);
       await chatMessages.waitForPartialMessageReceived(2);
       await chat.stopGenerating.click();

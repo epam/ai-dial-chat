@@ -35,7 +35,7 @@ export class RecentEntities extends BaseElement {
   }
 
   public async selectEntity(option: string) {
-    await this.getRecentEntity(option).click();
+    await this.getRecentEntity(option).click({ force: true });
   }
 
   public async getRecentEntityNames() {

@@ -70,7 +70,7 @@ test(
         borders.forEach((borderColor) => {
           expect
             .soft(borderColor, ExpectedMessages.defaultTalkToIsValid)
-            .toBe(Colors.backgroundAccentPrimary);
+            .toBe(Colors.controlsBackgroundAccent);
         });
       });
     });
