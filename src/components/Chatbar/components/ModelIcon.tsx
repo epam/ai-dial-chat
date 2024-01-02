@@ -38,13 +38,14 @@ const ModelIconTemplate = memo(
           height={size}
           description={entity?.name || entityId}
         />
-        <SVG
-          src={fallbackUrl}
-          className={classNames(entity?.iconUrl && 'hidden')}
-          width={size}
-          height={size}
-          description={entity?.name || entityId}
-        />
+        {!entity?.iconUrl && (
+          <SVG
+            src={fallbackUrl}
+            width={size}
+            height={size}
+            description={entity?.name || entityId}
+          />
+        )}
       </span>
     );
   },
