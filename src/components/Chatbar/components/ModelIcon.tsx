@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import { memo } from 'react';
 import SVG from 'react-inlinesvg';
 
@@ -34,17 +33,19 @@ const ModelIconTemplate = memo(
       >
         <SVG
           src={entity?.iconUrl || ''}
+          className={classNames(!entity?.iconUrl && 'hidden')}
           width={size}
           height={size}
           description={entity?.name || entityId}
-        >
+        />
+        {!entity?.iconUrl && (
           <SVG
             src={fallbackUrl}
             width={size}
             height={size}
             description={entity?.name || entityId}
           />
-        </SVG>
+        )}
       </span>
     );
   },
