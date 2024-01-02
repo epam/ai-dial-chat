@@ -1,16 +1,10 @@
-import {
-  ChatBarSelectors,
-  ChatSelectors,
-  SideBarSelectors,
-} from '../selectors';
-import { BaseElement } from './baseElement';
+import { ChatBarSelectors, SideBarSelectors } from '../selectors';
 
 import { Chronology } from '@/e2e/src/testData';
-import { Attributes, Styles, Tags } from '@/e2e/src/ui/domData';
 import { keys } from '@/e2e/src/ui/keyboard';
 import { IconSelectors } from '@/e2e/src/ui/selectors/iconSelectors';
-import { DropdownMenu } from '@/e2e/src/ui/webElements/dropdownMenu';
 import { Input } from '@/e2e/src/ui/webElements/input';
+import { SideBarEntities } from '@/e2e/src/ui/webElements/sideBarEntities';
 import { Page } from '@playwright/test';
 
 interface ConversationsChronologyType {
@@ -18,9 +12,13 @@ interface ConversationsChronologyType {
   conversations: string[];
 }
 
-export class Conversations extends BaseElement {
+export class Conversations extends SideBarEntities {
   constructor(page: Page) {
-    super(page, ChatBarSelectors.conversations);
+    super(page, ChatBarSelectors.conversations, ChatBarSelectors.conversation);
+  }
+
+  getConversationInput(name: string): Input {
+    return this.getEntityInput(this.entitySelector, name);
   }
 
   public chronologyByTitle = (chronology: string) =>
@@ -28,59 +26,25 @@ export class Conversations extends BaseElement {
       SideBarSelectors.chronology,
     ).getElementLocatorByText(chronology);
 
-  public conversationDotsMenu = (name: string, index?: number) => {
-    return this.getConversationByName(name, index).locator(
-      SideBarSelectors.dotsMenu,
-    );
-  };
-
-  private conversationInput!: Input;
-
-  getConversationInput(name: string): Input {
-    if (!this.conversationInput) {
-      this.conversationInput = new Input(
-        this.page,
-        `${
-          ChatBarSelectors.conversation
-        } >> ${SideBarSelectors.renameDefaultNameInput(name)}`,
-      );
-    }
-    return this.conversationInput;
-  }
-
-  private dropdownMenu!: DropdownMenu;
-
-  getDropdownMenu(): DropdownMenu {
-    if (!this.dropdownMenu) {
-      this.dropdownMenu = new DropdownMenu(this.page);
-    }
-    return this.dropdownMenu;
-  }
-
   public getConversationByName(name: string, index?: number) {
-    return this.getChildElementBySelector(
-      ChatBarSelectors.conversation,
-    ).getElementLocatorByText(name, index);
+    return this.getEntityByName(this.entitySelector, name, index);
   }
 
   public getConversationName(name: string, index?: number) {
-    return this.createElementFromLocator(
-      this.getConversationByName(name, index).locator(
-        ChatBarSelectors.conversationName,
-      ),
+    return this.getEntityName(
+      this.entitySelector,
+      ChatBarSelectors.conversationName,
+      name,
+      index,
     );
   }
 
   public getConversationArrowIcon(name: string, index?: number) {
-    return this.getConversationByName(name, index).locator(
-      ChatSelectors.arrowAdditionalIcon,
-    );
+    return this.getEntityArrowIcon(this.entitySelector, name, index);
   }
 
   public getConversationArrowIconColor(name: string, index?: number) {
-    return this.createElementFromLocator(
-      this.getConversationArrowIcon(name, index).locator(Tags.svg),
-    ).getComputedStyleProperty(Styles.color);
+    return this.getEntityArrowIconColor(this.entitySelector, name, index);
   }
 
   public async getConversationsByChronology() {
@@ -141,15 +105,11 @@ export class Conversations extends BaseElement {
   }
 
   public async openConversationDropdownMenu(name: string, index?: number) {
-    const conversation = this.getConversationByName(name, index);
-    await conversation.hover();
-    await this.conversationDotsMenu(name, index).click();
-    await this.getDropdownMenu().waitForState();
+    await this.openEntityDropdownMenu(this.entitySelector, name, index);
   }
 
   public async editConversationNameWithTick(name: string, newName: string) {
-    const input = await this.openEditConversationNameMode(name, newName);
-    await input.clickTickButton();
+    await this.editEntityNameWithTick(this.entitySelector, name, newName);
   }
 
   public async editConversationNameWithEnter(name: string, newName: string) {
@@ -159,14 +119,11 @@ export class Conversations extends BaseElement {
   }
 
   public async openEditConversationNameMode(name: string, newName: string) {
-    const input = await this.getConversationInput(name);
-    await input.editValue(newName);
-    return input;
+    return this.openEditEntityNameMode(this.entitySelector, name, newName);
   }
 
   public async getConversationIcon(name: string, index?: number) {
-    const conversation = this.getConversationByName(name, index);
-    return this.getElementIconHtml(conversation);
+    return this.getEntityIcon(this.entitySelector, name, index);
   }
 
   public async isConversationHasPlaybackIcon(name: string, index?: number) {

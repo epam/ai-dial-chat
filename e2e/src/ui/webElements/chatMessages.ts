@@ -1,4 +1,4 @@
-import { ChatSelectors } from '../selectors';
+import { ChatSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Rate, Side } from '@/e2e/src/testData';
@@ -342,7 +342,7 @@ export class ChatMessages extends BaseElement {
     return this.chatMessages
       .getNthElement(index ?? messagesCount)
       .locator(ChatSelectors.messageIcon)
-      .locator(ChatSelectors.arrowAdditionalIcon)
+      .locator(SideBarSelectors.arrowAdditionalIcon)
       .isVisible();
   }
 }

@@ -47,7 +47,6 @@ export const ChatSelectors = {
   proceedGenerating: '[data-qa="proceed-reply"]',
   chatHeader: '[data-qa="chat-header"]',
   chatTitle: '[data-qa="chat-title"]',
-  arrowAdditionalIcon: '[data-qa="arrow-icon"]',
   worldAdditionalIcon: '[data-qa="world-icon"]',
   chatModel: '[data-qa="chat-model"]',
   chatAddons: '[data-qa="chat-addons"]',
