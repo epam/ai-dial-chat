@@ -239,7 +239,7 @@ describe('Export helpers functions', () => {
         {
           id: 'pf-1',
           name: 'Test folder',
-          type: 'prompt',
+          type: FolderType.Prompt,
         },
       ],
     };
