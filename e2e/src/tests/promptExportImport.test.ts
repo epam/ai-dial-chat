@@ -85,8 +85,10 @@ test(
     });
 
     await test.step('Delete all prompts and folders, re-import again and verify they are displayed', async () => {
-      await promptBar.deleteAllPrompts();
+      await promptBar.deleteAllEntities();
       await confirmationDialog.confirm();
+      await promptBar.deleteEntitiesButton.waitForState({ state: 'hidden' });
+
       await dialHomePage.uploadData(exportedData, () =>
         promptBar.importButton.click(),
       );
@@ -498,7 +500,7 @@ test(
     });
 
     await test.step('Delete all prompts and folders, import exported prompt and verify folder structure with 3rd level prompt are displayed', async () => {
-      await promptBar.deleteAllPrompts();
+      await promptBar.deleteAllEntities();
       await confirmationDialog.confirm();
       await dialHomePage.uploadData(exportedData, () =>
         promptBar.importButton.click(),

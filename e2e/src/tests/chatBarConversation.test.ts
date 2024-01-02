@@ -690,7 +690,7 @@ test('Delete all conversations. Cancel', async ({
   await folderConversations.expandCollapseFolder(
     conversationInFolder.folders.name,
   );
-  await chatBar.deleteAllConversations();
+  await chatBar.deleteAllEntities();
   await confirmationDialog.cancelDialog();
 
   const isFolderConversationVisible =
@@ -769,7 +769,7 @@ test('Delete all conversations. Clear', async ({
 
   await dialHomePage.reloadPage();
   await dialHomePage.waitForPageLoaded();
-  await chatBar.deleteAllConversations();
+  await chatBar.deleteAllEntities();
   await confirmationDialog.confirm();
 
   let i = 2;

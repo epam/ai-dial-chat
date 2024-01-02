@@ -85,11 +85,12 @@ export class ChatMessages extends BaseElement {
 
   public async getMessageIconSize(index?: number) {
     const messagesCount = await this.chatMessages.getElementsCount();
-    const iconBounding = await this.chatMessages
+    const icon = await this.chatMessages
       .getNthElement(index ?? messagesCount)
       .locator(Tags.svg)
-      .first()
-      .boundingBox();
+      .first();
+    await icon.waitFor();
+    const iconBounding = await icon.boundingBox();
     return {
       width: Number(iconBounding!.width.toFixed(2)),
       height: Number(iconBounding!.height.toFixed(2)),

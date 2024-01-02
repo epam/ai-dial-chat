@@ -23,6 +23,7 @@ import { ApiHelper } from '@/e2e/src/testData/api/apiHelper';
 import { PromptData } from '@/e2e/src/testData/prompts/promptData';
 import { Addons } from '@/e2e/src/ui/webElements/addons';
 import { AddonsDialog } from '@/e2e/src/ui/webElements/addonsDialog';
+import { AppContainer } from '@/e2e/src/ui/webElements/appContainer';
 import { ChatInfoTooltip } from '@/e2e/src/ui/webElements/chatInfoTooltip';
 import { Compare } from '@/e2e/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/e2e/src/ui/webElements/confirmationDialog';
@@ -31,6 +32,7 @@ import { EntitySettings } from '@/e2e/src/ui/webElements/entitySettings';
 import { ErrorPopup } from '@/e2e/src/ui/webElements/errorPopup';
 import { FolderConversations } from '@/e2e/src/ui/webElements/folderConversations';
 import { FolderPrompts } from '@/e2e/src/ui/webElements/folderPrompts';
+import { Header } from '@/e2e/src/ui/webElements/header';
 import { ModelSelector } from '@/e2e/src/ui/webElements/modelSelector';
 import { Playback } from '@/e2e/src/ui/webElements/playback';
 import { PlaybackControl } from '@/e2e/src/ui/webElements/playbackControl';
@@ -54,7 +56,9 @@ const test = base.extend<
     dialHomePage: DialHomePage;
     loginPage: LoginPage;
     auth0Page: Auth0Page;
+    appContainer: AppContainer;
     chatBar: ChatBar;
+    header: Header;
     promptBar: PromptBar;
     chat: Chat;
     chatMessages: ChatMessages;
@@ -130,16 +134,24 @@ const test = base.extend<
     const auth0Page = new Auth0Page(page);
     await use(auth0Page);
   },
-  chatBar: async ({ dialHomePage }, use) => {
-    const chatBar = dialHomePage.getChatBar();
+  appContainer: async ({ dialHomePage }, use) => {
+    const appContainer = dialHomePage.getAppContainer();
+    await use(appContainer);
+  },
+  chatBar: async ({ appContainer }, use) => {
+    const chatBar = appContainer.getChatBar();
     await use(chatBar);
   },
-  promptBar: async ({ dialHomePage }, use) => {
-    const promptBar = dialHomePage.getPromptBar();
+  header: async ({ appContainer }, use) => {
+    const header = appContainer.getHeader();
+    await use(header);
+  },
+  promptBar: async ({ appContainer }, use) => {
+    const promptBar = appContainer.getPromptBar();
     await use(promptBar);
   },
-  chat: async ({ dialHomePage }, use) => {
-    const chat = dialHomePage.getChat();
+  chat: async ({ appContainer }, use) => {
+    const chat = appContainer.getChat();
     await use(chat);
   },
   chatMessages: async ({ chat }, use) => {

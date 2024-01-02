@@ -36,7 +36,7 @@ export function PromptbarSettings() {
     () => [
       {
         name: t('Create new folder'),
-        dataQa: 'create-prompt-folder',
+        dataQa: 'create-folder',
         Icon: FolderPlus,
         onClick: () => {
           dispatch(PromptsActions.createFolder());
@@ -56,7 +56,7 @@ export function PromptbarSettings() {
       {
         display: allPrompts.length > 0 || folders.length > 0,
         name: t('Export prompts'),
-        dataQa: 'export-prompts',
+        dataQa: 'export',
         Icon: IconFileArrowRight,
         onClick: () => {
           dispatch(PromptsActions.exportPrompts());
@@ -65,7 +65,7 @@ export function PromptbarSettings() {
       {
         name: t('Delete all'),
         display: allPrompts.length > 0 || folders.length > 0,
-        dataQa: 'delete-prompts',
+        dataQa: 'delete-entities',
         Icon: IconTrashX,
         onClick: () => {
           setIsClearModalOpen(true);

@@ -79,7 +79,7 @@ export const ChatbarSettings = () => {
       },
       {
         name: t('Export conversations'),
-        dataQa: 'export-conversations',
+        dataQa: 'export',
         Icon: IconFileArrowRight,
         onClick: () => {
           dispatch(ConversationsActions.exportConversations());
@@ -87,7 +87,7 @@ export const ChatbarSettings = () => {
       },
       {
         name: t('Delete all conversations'),
-        dataQa: 'delete-conversations',
+        dataQa: 'delete-entities',
         Icon: IconTrashX,
         onClick: () => {
           setIsClearModalOpen(true);

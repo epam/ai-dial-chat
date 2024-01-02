@@ -43,6 +43,9 @@ export const ExpectedConstants = {
     'Please regenerate response to continue working with chat',
   sharedConversationTooltip: 'Shared',
   copyUrlTooltip: 'Copy URL',
+  maxSidePanelWidthPercentage: 0.45,
+  minSidePanelWidthPx: 260,
+  attachments: 'Attachments',
 };
 
 export enum Groups {

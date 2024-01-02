@@ -1,49 +1,26 @@
-import { Chat, ChatBar, ConversationSettings, PromptBar } from '../webElements';
 import { BasePage } from './basePage';
 
 import { ExpectedConstants } from '@/e2e/src/testData';
+import { AppContainer } from '@/e2e/src/ui/webElements/appContainer';
 
 export class DialHomePage extends BasePage {
-  private chat!: Chat;
-  private chatBar!: ChatBar;
-  private promptBar!: PromptBar;
-  private conversationSettings!: ConversationSettings;
+  private appContainer!: AppContainer;
 
-  getChat(): Chat {
-    if (!this.chat) {
-      this.chat = new Chat(this.page);
+  getAppContainer(): AppContainer {
+    if (!this.appContainer) {
+      this.appContainer = new AppContainer(this.page);
     }
-    return this.chat;
-  }
-
-  getChatBar(): ChatBar {
-    if (!this.chatBar) {
-      this.chatBar = new ChatBar(this.page);
-    }
-    return this.chatBar;
-  }
-
-  getPromptBar(): PromptBar {
-    if (!this.promptBar) {
-      this.promptBar = new PromptBar(this.page);
-    }
-    return this.promptBar;
-  }
-
-  getConversationSettings(): ConversationSettings {
-    if (!this.conversationSettings) {
-      this.conversationSettings = new ConversationSettings(this.page);
-    }
-    return this.conversationSettings;
+    return this.appContainer;
   }
 
   public async waitForPageLoaded(options?: {
     isNewConversationVisible?: boolean;
   }) {
-    const chatBar = this.getChatBar();
+    const appContainer = this.getAppContainer();
+    const chatBar = appContainer.getChatBar();
     await chatBar.waitForState({ state: 'attached' });
-    await this.getPromptBar().waitForState({ state: 'attached' });
-    const chat = this.getChat();
+    await appContainer.getPromptBar().waitForState({ state: 'attached' });
+    const chat = appContainer.getChat();
     await chat.waitForState({ state: 'attached' });
     await chat.waitForChatLoaded();
     await chat.getSendMessage().waitForMessageInputLoaded();
@@ -53,7 +30,7 @@ export class DialHomePage extends BasePage {
         .getConversationByName(ExpectedConstants.newConversationTitle);
       await newConversation.waitFor();
       await newConversation.waitFor({ state: 'attached' });
-      const conversationSettings = this.getConversationSettings();
+      const conversationSettings = appContainer.getConversationSettings();
       await conversationSettings
         .getTalkToSelector()
         .waitForState({ state: 'attached' });

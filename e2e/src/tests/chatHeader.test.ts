@@ -2,7 +2,7 @@ import { Conversation } from '@/src/types/chat';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
 import test from '@/e2e/src/core/fixtures';
-import { ExpectedConstants, ExpectedMessages } from '@/e2e/src/testData';
+import { ExpectedMessages } from '@/e2e/src/testData';
 import { ModelsUtil } from '@/e2e/src/utils';
 import { expect } from '@playwright/test';
 
