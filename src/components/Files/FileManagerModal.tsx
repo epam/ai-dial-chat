@@ -359,6 +359,12 @@ export const FileManagerModal = ({
                         'no available extensions',
                     },
                   )}
+                  &nbsp;
+                  {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
+                    !!maximumAttachmentsAmount &&
+                    t('Max selected files is {{maxAttachmentsAmount}}.', {
+                      maxAttachmentsAmount: maximumAttachmentsAmount,
+                    })}
                 </p>
 
                 <ErrorMessage error={errorMessage} />
