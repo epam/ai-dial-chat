@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { DragEvent, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -73,7 +73,7 @@ export const Chatbar = () => {
   );
 
   const handleDrop = useCallback(
-    (e: any) => {
+    (e: DragEvent) => {
       if (e.dataTransfer) {
         const conversation = JSON.parse(e.dataTransfer.getData('conversation'));
         dispatch(
