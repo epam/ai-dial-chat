@@ -14,8 +14,7 @@ export function ToggleSwitchLabeled({
   handleSwitch,
 }: ToggleSwitchLabeledProps) {
   return (
-    <label
-      htmlFor="toggle"
+    <div
       className="flex w-full items-center gap-5"
       data-qa="toggle-switch-labeled"
     >
@@ -27,6 +26,6 @@ export function ToggleSwitchLabeled({
         switchOnText={switchOnText}
         switchOFFText={switchOFFText}
       />
-    </label>
+    </div>
   );
 }
