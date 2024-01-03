@@ -1,27 +1,37 @@
-import { ChangeEventHandler } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 
 import { useTranslation } from 'next-i18next';
+
+import classNames from 'classnames';
 
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
+
+import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
+
 interface ThemeSelectProps {
   localTheme: string;
+  isOpen: boolean;
+  setIsOpen: Dispatch<SetStateAction<boolean>>;
   onThemeChangeHandler: (theme: string) => void;
 }
 
 export const ThemeSelect = ({
   localTheme,
+  isOpen,
+  setIsOpen,
   onThemeChangeHandler,
 }: ThemeSelectProps) => {
   const { t } = useTranslation(Translation.Settings);
   const availableThemes = useAppSelector(UISelectors.selectAvailableThemes);
 
-  const onChangeHandler: ChangeEventHandler<HTMLSelectElement> = (event) => {
-    const theme = event.target.value;
-    onThemeChangeHandler(theme);
+  const onChangeHandler = (themeId: string) => {
+    onThemeChangeHandler(themeId);
+    setIsOpen(false);
   };
 
   if (availableThemes.length < 2) {
@@ -31,18 +41,33 @@ export const ThemeSelect = ({
   return (
     <div className="flex items-center gap-5">
       <div className="basis-1/3 md:basis-1/4">{t('Theme')}</div>
-      <div className="grow rounded border border-primary px-3 focus-within:border-accent-primary focus:border-accent-primary">
-        <select
-          className="h-[38px] w-full cursor-pointer rounded border-none bg-transparent focus:outline-none"
-          value={localTheme}
-          onChange={onChangeHandler}
+      <div className="h-[38px] grow rounded border border-primary focus-within:border-accent-primary focus:border-accent-primary">
+        <Menu
+          className="w-full px-3 focus:outline-none"
+          onOpenChange={setIsOpen}
+          trigger={
+            <div className="flex min-w-[120px] items-center justify-between gap-2 capitalize">
+              {localTheme}
+              <ChevronDownIcon
+                className={classNames(
+                  'shrink-0 text-primary transition-all',
+                  isOpen && 'rotate-180',
+                )}
+                width={18}
+                height={18}
+              />
+            </div>
+          }
         >
           {availableThemes.map((theme) => (
-            <option key={theme.id} value={theme.id} className="bg-layer-3">
-              {t(theme.displayName)}
-            </option>
+            <MenuItem
+              key={theme.id}
+              className="max-w-[350px] hover:bg-accent-primary-alpha"
+              item={t(theme.displayName)}
+              onClick={() => onChangeHandler(theme.id)}
+            />
           ))}
-        </select>
+        </Menu>
       </div>
     </div>
   );

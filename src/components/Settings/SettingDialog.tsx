@@ -30,6 +30,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const { t } = useTranslation(Translation.Settings);
 
   const modalRef = useRef<HTMLDivElement>(null);
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
 
   const handleClose = useCallback(() => {
     setLocalTheme(theme);
@@ -47,7 +48,11 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
 
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(e.target as Node) &&
+        !isThemeDropdownOpen
+      ) {
         window.addEventListener('mouseup', handleMouseUp);
       }
     };
@@ -62,7 +67,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     return () => {
       window.removeEventListener('mousedown', handleMouseDown);
     };
-  }, [handleClose]);
+  }, [handleClose, isThemeDropdownOpen]);
 
   const onThemeChangeHandler = useCallback((theme: string) => {
     setLocalTheme(theme);
@@ -101,6 +106,8 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
           <div className="mb-4 text-base font-bold">{t('Settings')}</div>
           <div className="mb-4 flex flex-col gap-5">
             <ThemeSelect
+              isOpen={isThemeDropdownOpen}
+              setIsOpen={setIsThemeDropdownOpen}
               localTheme={localTheme}
               onThemeChangeHandler={onThemeChangeHandler}
             />
