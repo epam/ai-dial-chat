@@ -3,7 +3,6 @@ import {
   ChangeEvent,
   FC,
   FormEvent,
-  MutableRefObject,
   useCallback,
   useEffect,
   useRef,
@@ -25,34 +24,7 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { errorsMessages } from '@/src/constants/errors';
 
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
-
-const checkValidity = (
-  inputsRefs: MutableRefObject<HTMLInputElement | HTMLTextAreaElement>[],
-) => {
-  let isValid = true;
-  let focusableElement: HTMLInputElement | HTMLTextAreaElement | null = null;
-
-  inputsRefs.forEach(({ current }) => {
-    if (
-      current.required &&
-      (!current.value || (current.value === 'on' && !(current as any).checked))
-    ) {
-      isValid = false;
-      current.focus();
-      current.blur();
-
-      if (!focusableElement) {
-        focusableElement = current;
-      }
-    }
-  });
-
-  if (focusableElement) {
-    (focusableElement as HTMLInputElement | HTMLTextAreaElement).focus();
-  }
-
-  return isValid;
-};
+import { checkValidity } from '@/src/utils/app/forms';
 
 const requestApiKey = async (
   fields: Omit<RequestAPIKeyBody, 'requester_email'>,
@@ -195,9 +167,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
       ];
       if (
         checkValidity(
-          inputs as unknown as MutableRefObject<
-            HTMLInputElement | HTMLTextAreaElement
-          >[],
+          inputs,
         )
       ) {
         dispatch(
