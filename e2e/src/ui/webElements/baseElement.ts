@@ -77,8 +77,8 @@ export class BaseElement {
     await this.rootLocator.click(options);
   }
 
-  async hoverOver() {
-    await this.rootLocator.hover();
+  async hoverOver(options?: { force?: boolean }) {
+    await this.rootLocator.hover(options);
   }
 
   async getElementContent() {
@@ -195,7 +195,10 @@ export class BaseElement {
   }
 
   public async getElementIconHtml(elementLocator: Locator): Promise<string> {
-    const iconLocator = await elementLocator.locator(Tags.svg).first();
+    const iconLocator = await elementLocator
+      .locator(`${Tags.svg}:visible`)
+      .first();
+    await iconLocator.waitFor();
     return iconLocator.innerHTML().then((icon) =>
       icon
         .replaceAll('\n', '')

@@ -1,5 +1,5 @@
 import { Attributes, Styles, Tags } from '@/e2e/src/ui/domData';
-import { ChatSelectors } from '@/e2e/src/ui/selectors';
+import { ChatSelectors, SideBarSelectors } from '@/e2e/src/ui/selectors';
 import { BaseElement } from '@/e2e/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
 
@@ -21,7 +21,9 @@ export class ModelSelector extends BaseElement {
   }
 
   public getOptionAdditionalIcon(option: string) {
-    return this.listOption(option).locator(ChatSelectors.arrowAdditionalIcon);
+    return this.listOption(option).locator(
+      SideBarSelectors.arrowAdditionalIcon,
+    );
   }
 
   public async selectModel(name: string, isOpen = false) {

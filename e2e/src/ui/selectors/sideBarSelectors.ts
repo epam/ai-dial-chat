@@ -3,6 +3,7 @@ import { Attributes, Tags } from '@/e2e/src/ui/domData';
 export const SideBarSelectors = {
   chatBar: '[data-qa="chatbar"]',
   promptBar: '[data-qa="promptbar"]',
+  newEntity: '[data-qa="new-entity"]',
   folder: '[data-qa="folder"]',
   folderName: '[data-qa="folder-name"]',
   dotsMenu: '[aria-haspopup="menu"]',
@@ -12,15 +13,21 @@ export const SideBarSelectors = {
     `${Tags.input}[${Attributes.value}^="${value}"]`,
   dropdownMenu: '[data-qa="dropdown-menu"]',
   import: '[data-qa="import"]',
+  export: '[data-qa="export"]',
+  deleteEntities: '[data-qa="delete-entities"]',
   draggableArea: '[data-qa="draggable-area"]',
   chronology: '[data-qa="chronology"]',
+  newFolder: '[data-qa="create-folder"]',
+  resizeIcon: '[data-qa="resize-icon"]',
+  bottomPanel: '[data-qa="bottom-panel"]',
+  arrowAdditionalIcon: '[data-qa="arrow-icon"]',
 };
 
 export const ChatBarSelectors = {
-  newConversationButton: '[data-qa="new-chat"]',
   newFolder: '[data-qa="create-folder"]',
   deleteConversations: '[data-qa="delete-conversations"]',
   compare: '[data-qa="compare"]',
+  attachments: '[data-qa="attachments"]',
   conversations: '[data-qa="conversations"]',
   conversation: '[data-qa="conversation"]',
   conversationName: '[data-qa="chat-name"]',
@@ -37,4 +44,5 @@ export const PromptBarSelectors = {
   prompts: '[data-qa="prompts"]',
   prompt: '[data-qa="prompt"]',
   deletePrompts: '[data-qa="delete-prompts"]',
+  leftResizeIcon: '[data-qa="left-resize-icon"]',
 };

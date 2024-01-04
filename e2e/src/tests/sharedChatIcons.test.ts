@@ -14,6 +14,7 @@ import { expect } from '@playwright/test';
 
 test(
   'Shared icon appears in chat model icon if to click on copy icon.\n' +
+    'Share chat: copy button changes.\n' +
     'Shared icon does not appear in chat model icon if to close the pop-up on X button.\n' +
     'Shared icon does not appear in chat model icon if to close the pop-up on click out of it.\n' +
     'Shared icon appears only once if to click on copy several times',
@@ -26,7 +27,13 @@ test(
     tooltip,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1502', 'EPMRTC-1505', 'EPMRTC-1507', 'EPMRTC-1506');
+    setTestIds(
+      'EPMRTC-1502',
+      'EPMRTC-1512',
+      'EPMRTC-1505',
+      'EPMRTC-1507',
+      'EPMRTC-1506',
+    );
 
     await test.step('Open conversation dropdown menu and choose "Share" option', async () => {
       await dialHomePage.openHomePage();
@@ -101,10 +108,7 @@ test(
         ExpectedConstants.newConversationTitle,
       );
       expect
-        .soft(
-          arrowIconColor[0],
-          ExpectedMessages.sharedConversationIconColorIsValid,
-        )
+        .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
         .toBe(Colors.textAccentSecondary);
     });
 
@@ -230,10 +234,7 @@ test(
         conversation.name,
       );
       expect
-        .soft(
-          arrowIconColor[0],
-          ExpectedMessages.sharedConversationIconColorIsValid,
-        )
+        .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
         .toBe(Colors.textAccentSecondary);
     });
 
@@ -258,6 +259,7 @@ test(
 
     await test.step('Change chat model, send a new request and verify share icon is preserved on chat bar', async () => {
       await chatHeader.openConversationSettings.click();
+      await talkToSelector.waitForState();
       await talkToSelector.selectModel(
         ModelsUtil.getModel(ModelIds.GPT_4)!.name,
       );
@@ -351,10 +353,7 @@ test(
           sharedConversation.name,
         );
       expect
-        .soft(
-          arrowIconColor[0],
-          ExpectedMessages.sharedConversationIconColorIsValid,
-        )
+        .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
         .toBe(Colors.controlsBackgroundAccent);
     });
 

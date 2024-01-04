@@ -1,4 +1,4 @@
-import { ChatSelectors } from '../selectors';
+import { ChatSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Rate, Side } from '@/e2e/src/testData';
@@ -85,11 +85,12 @@ export class ChatMessages extends BaseElement {
 
   public async getMessageIconSize(index?: number) {
     const messagesCount = await this.chatMessages.getElementsCount();
-    const iconBounding = await this.chatMessages
+    const icon = await this.chatMessages
       .getNthElement(index ?? messagesCount)
       .locator(Tags.svg)
-      .first()
-      .boundingBox();
+      .first();
+    await icon.waitFor();
+    const iconBounding = await icon.boundingBox();
     return {
       width: Number(iconBounding!.width.toFixed(2)),
       height: Number(iconBounding!.height.toFixed(2)),
@@ -341,7 +342,7 @@ export class ChatMessages extends BaseElement {
     return this.chatMessages
       .getNthElement(index ?? messagesCount)
       .locator(ChatSelectors.messageIcon)
-      .locator(ChatSelectors.arrowAdditionalIcon)
+      .locator(SideBarSelectors.arrowAdditionalIcon)
       .isVisible();
   }
 }

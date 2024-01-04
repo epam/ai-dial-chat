@@ -176,7 +176,7 @@ test('Export and import chat structure with all conversations', async ({
   });
 
   await test.step('Delete all conversations and folders, re-import again and verify they are displayed', async () => {
-    await chatBar.deleteAllConversations();
+    await chatBar.deleteAllEntities();
     await confirmationDialog.confirm();
     await dialHomePage.uploadData(exportedData, () =>
       chatBar.importButton.click(),
@@ -535,7 +535,7 @@ test(
     });
 
     await test.step('Delete all conversations and folders, re-import exported file and verify only last nested conversation with folders structure imported', async () => {
-      await chatBar.deleteAllConversations();
+      await chatBar.deleteAllEntities();
       await confirmationDialog.confirm();
       await dialHomePage.uploadData(exportedData, () =>
         chatBar.importButton.click(),

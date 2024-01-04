@@ -361,6 +361,7 @@ export const FileManagerModal = ({
                   )}
                   &nbsp;
                   {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
+                    !!maximumAttachmentsAmount &&
                     t('Max selected files is {{maxAttachmentsAmount}}.', {
                       maxAttachmentsAmount: maximumAttachmentsAmount,
                     })}
