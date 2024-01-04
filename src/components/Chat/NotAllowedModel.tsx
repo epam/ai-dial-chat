@@ -19,7 +19,7 @@ export const NotAllowedModel = ({ type = EntityType.Model }) => {
   return (
     <div
       className={classNames(
-        'absolute bottom-0 flex w-full flex-col items-center justify-center',
+        'absolute bottom-0 left-0 flex w-full flex-col items-center justify-center border-transparent bg-gradient-to-b from-transparent via-layer-1 to-layer-1 pt-6 md:pt-2',
         { 'lg:pl-20 lg:pr-[84px]': isChatFullWidth },
       )}
     >
