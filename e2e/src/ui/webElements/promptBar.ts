@@ -12,7 +12,6 @@ export class PromptBar extends SideBar {
 
   private prompts!: Prompts;
   private folderPrompts!: FolderPrompts;
-  public searchPrompt = this.getElementByPlaceholder('Search prompt...');
 
   getFolderPrompts(): FolderPrompts {
     if (!this.folderPrompts) {

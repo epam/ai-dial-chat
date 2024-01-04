@@ -3,11 +3,21 @@ import { BaseElement } from './baseElement';
 
 import { ExpectedConstants } from '@/e2e/src/testData';
 import { Styles } from '@/e2e/src/ui/domData';
+import { Search } from '@/e2e/src/ui/webElements/search';
 import { Page } from '@playwright/test';
 
 export class SideBar extends BaseElement {
   constructor(page: Page, selector: string) {
     super(page, selector);
+  }
+
+  private search!: Search;
+
+  getSearch(): Search {
+    if (!this.search) {
+      this.search = new Search(this.page, this.rootLocator);
+    }
+    return this.search;
   }
 
   public newEntityButton = this.getChildElementBySelector(
