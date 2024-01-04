@@ -278,6 +278,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
       setIsSharing(true);
+      setIsContextMenu(false);
     }, []);
 
   const handleCloseShareModal = useCallback(() => {
@@ -287,6 +288,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
       setIsPublishing(true);
+      setIsContextMenu(false);
     }, []);
 
   const handleClosePublishModal = useCallback(() => {
@@ -296,6 +298,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
       setIsUnpublishing(true);
+      setIsContextMenu(false);
     }, []);
 
   const handleCloseUnpublishModal = useCallback(() => {
