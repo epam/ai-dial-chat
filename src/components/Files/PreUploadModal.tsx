@@ -305,145 +305,143 @@ export const PreUploadDialog = ({
   }, [folderPath]);
 
   return (
-      <FloatingPortal id="theme-main">
-        {isOpen && (
-          <FloatingOverlay
-            lockScroll
-            className="z-50 flex items-center justify-center bg-blackout p-3"
-            data-floating-overlay
-          >
-            <FloatingFocusManager context={context}>
-              <div
-                className="relative flex max-h-full flex-col gap-4 rounded bg-layer-3 p-6 md:min-w-[425px] md:max-w-[500px]"
-                ref={refs.setFloating}
-                {...getFloatingProps()}
+    <FloatingPortal id="theme-main">
+      {isOpen && (
+        <FloatingOverlay
+          lockScroll
+          className="z-50 flex items-center justify-center bg-blackout p-3"
+          data-floating-overlay
+        >
+          <FloatingFocusManager context={context}>
+            <div
+              className="relative flex max-h-full flex-col gap-4 rounded bg-layer-3 p-6 md:min-w-[425px] md:max-w-[500px]"
+              ref={refs.setFloating}
+              {...getFloatingProps()}
+            >
+              <button
+                className="absolute right-2 top-2"
+                onClick={() => onClose(false)}
               >
-                <button
-                  className="absolute right-2 top-2"
-                  onClick={() => onClose(false)}
-                >
-                  <IconX className="text-secondary hover:text-accent-primary" />
-                </button>
-                <div className="flex flex-col gap-2 overflow-auto">
-                  <div className="flex justify-between">
-                    <h2 id={headingId} className="text-base font-semibold">
-                      {t('Upload from device')}
-                    </h2>
+                <IconX className="text-secondary hover:text-accent-primary" />
+              </button>
+              <div className="flex flex-col gap-2 overflow-auto">
+                <div className="flex justify-between">
+                  <h2 id={headingId} className="text-base font-semibold">
+                    {t('Upload from device')}
+                  </h2>
+                </div>
+                <p id={descriptionId}>
+                  {t(
+                    'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
+                    {
+                      allowedExtensions:
+                        allowedExtensions.join(', ') ||
+                        'no available extensions',
+                    },
+                  )}
+                </p>
+
+                <ErrorMessage error={errorMessage} />
+
+                <div className="flex flex-col gap-1">
+                  <div>
+                    <span className="text-xs text-secondary">
+                      {t('Upload to')}
+                    </span>
+                    <span className="text-xs text-accent-primary">&nbsp;*</span>
                   </div>
-                  <p id={descriptionId}>
-                    {t(
-                      'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
-                      {
-                        allowedExtensions:
-                          allowedExtensions.join(', ') ||
-                          'no available extensions',
-                      },
-                    )}
-                  </p>
+                  <button
+                    className="flex grow items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
+                    onClick={handleFolderChange}
+                  >
+                    <span className="truncate">
+                      {constructPath(t('All files'), folderPath)}
+                    </span>
+                    <span className="text-accent-primary">{t('Change')}</span>
+                  </button>
+                </div>
 
-                  <ErrorMessage error={errorMessage} />
-
-                  <div className="flex flex-col gap-1">
+                {selectedFiles.length !== 0 && (
+                  <div className="flex flex-col gap-1 overflow-auto">
                     <div>
                       <span className="text-xs text-secondary">
-                        {t('Upload to')}
+                        {t('Files')}
                       </span>
                       <span className="text-xs text-accent-primary">
                         &nbsp;*
                       </span>
                     </div>
-                    <button
-                      className="flex grow items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
-                      onClick={handleFolderChange}
-                    >
-                      <span className="truncate">
-                        {constructPath(t('All files'), folderPath)}
-                      </span>
-                      <span className="text-accent-primary">{t('Change')}</span>
-                    </button>
-                  </div>
-
-                  {selectedFiles.length !== 0 && (
-                    <div className="flex flex-col gap-1 overflow-auto">
-                      <div>
-                        <span className="text-xs text-secondary">
-                          {t('Files')}
-                        </span>
-                        <span className="text-xs text-accent-primary">
-                          &nbsp;*
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-3 overflow-auto text-sm">
-                        {selectedFiles.map((file, index) => (
-                          <div key={index} className="flex items-center gap-3">
-                            <div className="relative flex grow items-center">
-                              <IconFile
-                                className="absolute left-2 top-[calc(50%_-_9px)] shrink-0 text-secondary"
-                                size={18}
-                              />
-                              <input
-                                type="text"
-                                value={file.name.slice(
-                                  0,
-                                  file.name.lastIndexOf('.'),
-                                )}
-                                className="grow text-ellipsis rounded border border-primary bg-transparent py-2 pl-8 pr-12 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
-                                onChange={handleRenameFile(index)}
-                              />
-                              <span className="absolute right-2">
-                                {file.name.slice(file.name.lastIndexOf('.'))}
-                              </span>
-                            </div>
-
-                            <button onClick={handleUnselectFile(index)}>
-                              <IconTrashX
-                                size={24}
-                                className="shrink-0 text-secondary hover:text-accent-primary"
-                              />
-                            </button>
+                    <div className="flex flex-col gap-3 overflow-auto text-sm">
+                      {selectedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <div className="relative flex grow items-center">
+                            <IconFile
+                              className="absolute left-2 top-[calc(50%_-_9px)] shrink-0 text-secondary"
+                              size={18}
+                            />
+                            <input
+                              type="text"
+                              value={file.name.slice(
+                                0,
+                                file.name.lastIndexOf('.'),
+                              )}
+                              className="grow text-ellipsis rounded border border-primary bg-transparent py-2 pl-8 pr-12 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
+                              onChange={handleRenameFile(index)}
+                            />
+                            <span className="absolute right-2">
+                              {file.name.slice(file.name.lastIndexOf('.'))}
+                            </span>
                           </div>
-                        ))}
-                      </div>
+
+                          <button onClick={handleUnselectFile(index)}>
+                            <IconTrashX
+                              size={24}
+                              className="shrink-0 text-secondary hover:text-accent-primary"
+                            />
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                  )}
-                </div>
-                <div className="flex w-full justify-between gap-3">
-                  <label className="cursor-pointer rounded py-2.5 text-accent-primary">
-                    {t('Add more files...')}
-                    <input
-                      ref={uploadInputRef}
-                      id="file"
-                      type="file"
-                      className="hidden"
-                      multiple
-                      accept={allowedTypes.join()}
-                      onChange={handleSelectFiles}
-                    />
-                  </label>
-
-                  <button
-                    className="button button-primary"
-                    onClick={handleUpload}
-                    disabled={selectedFiles.length === 0}
-                  >
-                    {t('Upload and attach files')}
-                  </button>
-                </div>
-
-                <SelectFolderModal
-                  isOpen={isChangeFolderModalOpened}
-                  selectedFolderName={selectedFolderId}
-                  onClose={(folderId) => {
-                    if (typeof folderId !== 'boolean') {
-                      setSelectedFolderId(folderId);
-                    }
-                    setIsChangeFolderModalOpened(false);
-                  }}
-                />
+                  </div>
+                )}
               </div>
-            </FloatingFocusManager>
-          </FloatingOverlay>
-        )}
-      </FloatingPortal>
+              <div className="flex w-full justify-between gap-3">
+                <label className="cursor-pointer rounded py-2.5 text-accent-primary">
+                  {t('Add more files...')}
+                  <input
+                    ref={uploadInputRef}
+                    id="file"
+                    type="file"
+                    className="hidden"
+                    multiple
+                    accept={allowedTypes.join()}
+                    onChange={handleSelectFiles}
+                  />
+                </label>
+
+                <button
+                  className="button button-primary"
+                  onClick={handleUpload}
+                  disabled={selectedFiles.length === 0}
+                >
+                  {t('Upload and attach files')}
+                </button>
+              </div>
+
+              <SelectFolderModal
+                isOpen={isChangeFolderModalOpened}
+                selectedFolderName={selectedFolderId}
+                onClose={(folderId) => {
+                  if (typeof folderId !== 'boolean') {
+                    setSelectedFolderId(folderId);
+                  }
+                  setIsChangeFolderModalOpened(false);
+                }}
+              />
+            </div>
+          </FloatingFocusManager>
+        </FloatingOverlay>
+      )}
+    </FloatingPortal>
   );
 };
