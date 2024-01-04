@@ -1,8 +1,8 @@
 import { EntityType } from '@/src/types/common';
 
 import {
-  OPENAI_API_HOST,
-  OPENAI_API_VERSION,
+  DIAL_API_HOST,
+  DIAL_API_VERSION,
 } from '../../constants/default-settings';
 
 import { getApiHeaders } from './get-headers';
@@ -14,7 +14,7 @@ export async function getEntities<T>(
   jwt: string,
   jobTitle: string | undefined,
 ): Promise<T> {
-  const url = `${OPENAI_API_HOST}/openai/${type}s?api-version=${OPENAI_API_VERSION}`;
+  const url = `${DIAL_API_HOST}/openai/${type}s?api-version=${DIAL_API_VERSION}`;
   const errMsg = `Request for ${type}s returned an error`;
   const response = await fetch(url, {
     headers: getApiHeaders({ jwt, jobTitle }),
