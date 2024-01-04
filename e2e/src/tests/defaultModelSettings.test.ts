@@ -62,6 +62,7 @@ test(
     });
 
     await test.step('Verify default model is selected by default', async () => {
+      await recentEntities.waitForState();
       const modelBorderColors = await recentEntities
         .getRecentEntity(defaultModel.name)
         .getAllBorderColors();
@@ -69,7 +70,7 @@ test(
         borders.forEach((borderColor) => {
           expect
             .soft(borderColor, ExpectedMessages.defaultTalkToIsValid)
-            .toBe(Colors.backgroundAccentPrimary);
+            .toBe(Colors.controlsBackgroundAccent);
         });
       });
     });
@@ -296,6 +297,7 @@ test('Settings on default screen are saved in local storage when temperature = 0
   await dialHomePage.reloadPage();
   await dialHomePage.waitForPageLoaded();
 
+  await recentEntities.waitForState();
   const modelBorderColors = await recentEntities
     .getRecentEntity(randomModel.name)
     .getAllBorderColors();

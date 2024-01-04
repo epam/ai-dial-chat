@@ -31,3 +31,5 @@ export * from './chatInfoTooltip';
 export * from './compare';
 export * from './conversationToCompare';
 export * from './replayAsIs';
+export * from './appContainer';
+export * from './sideBar';

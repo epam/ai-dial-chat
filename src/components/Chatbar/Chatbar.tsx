@@ -43,7 +43,7 @@ const ChatActionsBlock = () => {
           dispatch(ConversationsActions.resetSearch());
         }}
         disabled={!!messageIsStreaming}
-        data-qa="new-chat"
+        data-qa="new-entity"
       >
         <PlusIcon className="text-secondary" width={18} height={18} />
         {t('New conversation')}

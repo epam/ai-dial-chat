@@ -1,3 +1,4 @@
+import { IconX } from '@tabler/icons-react';
 import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -11,7 +12,6 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../../public/images/icons/move-right.svg';
-import XmarkIcon from '../../../public/images/icons/xmark.svg';
 import Tooltip from '../Common/Tooltip';
 import { SettingDialog } from '../Settings/SettingDialog';
 import { CreateNewChatMobile } from './CreateNewChatMobile';
@@ -48,15 +48,19 @@ const Header = () => {
   };
 
   return (
-    <div className="z-40 flex h-[48px] w-full border-b border-tertiary bg-layer-3">
+    <div
+      className="z-40 flex h-[48px] w-full border-b border-tertiary bg-layer-3"
+      data-qa="header"
+    >
       <Tooltip isTriggerClickable tooltip={t('Conversation list')}>
         <div
           className="flex-none cursor-pointer border-r border-tertiary p-3 md:px-5"
           onClick={handleToggleChatbar}
+          data-qa="chat-panel-toggle"
         >
           {showChatbar ? (
             <>
-              <XmarkIcon
+              <IconX
                 className="text-secondary md:hidden"
                 width={24}
                 height={24}
@@ -94,10 +98,11 @@ const Header = () => {
         <div
           className="flex-none cursor-pointer border-l border-tertiary p-3 md:px-5"
           onClick={handleTogglePromtbar}
+          data-qa="prompts-panel-toggle"
         >
           {showPromptbar ? (
             <>
-              <XmarkIcon
+              <IconX
                 className="text-secondary md:hidden"
                 width={24}
                 height={24}

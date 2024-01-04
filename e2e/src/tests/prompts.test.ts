@@ -24,13 +24,13 @@ test('Create new prompt', async ({
   await dialHomePage.openHomePage();
   await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
   await conversationSettings.waitForState();
-  await promptBar.hoverOverNewPrompt();
-  const newPromptCursor = await promptBar.getNewPromptCursor();
+  await promptBar.hoverOverNewEntity();
+  const newPromptCursor = await promptBar.getNewEntityCursor();
   expect
     .soft(newPromptCursor[0], ExpectedMessages.newPromptButtonCursorIsPointer)
     .toBe(Cursors.pointer);
 
-  const newPromptColor = await promptBar.getNewPromptBackgroundColor();
+  const newPromptColor = await promptBar.getNewEntityBackgroundColor();
   expect
     .soft(newPromptColor, ExpectedMessages.newPromptButtonIsHighlighted)
     .toBe(Colors.backgroundAccentTertiary);
@@ -306,7 +306,7 @@ test('Clear prompts. Cancel', async ({
   await folderConversations.expandCollapseFolder(
     conversationInFolder.folders.name,
   );
-  await promptBar.deleteAllPrompts();
+  await promptBar.deleteAllEntities();
   await confirmationDialog.cancelDialog();
 
   const isFolderConversationVisible =
@@ -406,7 +406,7 @@ test('Clear prompts. Clear', async ({
   await dialHomePage.waitForPageLoaded();
   await conversations.getConversationByName(singleConversation.name).waitFor();
 
-  await promptBar.deleteAllPrompts();
+  await promptBar.deleteAllEntities();
   await confirmationDialog.confirm();
 
   while (i > 0) {
@@ -472,7 +472,7 @@ test(`[UI] Delete all prompts button doesn't exist if not prompts are created`, 
   await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
 
   const isDeleteAllPromptVisible =
-    await promptBar.deleteAllPromptsButton.isVisible();
+    await promptBar.deleteEntitiesButton.isVisible();
   expect
     .soft(
       isDeleteAllPromptVisible,

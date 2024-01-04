@@ -1,6 +1,7 @@
 import { Rate } from '@/e2e/src/testData';
 import { Attributes } from '@/e2e/src/ui/domData';
 
+export const appContainer = '#theme-main';
 export const ChatSelectors = {
   chat: '[data-qa="chat"]',
   spinner: '[data-qa="spinner"]',
@@ -46,7 +47,6 @@ export const ChatSelectors = {
   proceedGenerating: '[data-qa="proceed-reply"]',
   chatHeader: '[data-qa="chat-header"]',
   chatTitle: '[data-qa="chat-title"]',
-  arrowAdditionalIcon: '[data-qa="arrow-icon"]',
   worldAdditionalIcon: '[data-qa="world-icon"]',
   chatModel: '[data-qa="chat-model"]',
   chatAddons: '[data-qa="chat-addons"]',

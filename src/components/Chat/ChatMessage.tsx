@@ -100,6 +100,9 @@ export const ChatMessage: FC<Props> = memo(
     const isPlayback = useAppSelector(
       ConversationsSelectors.selectIsPlaybackSelectedConversations,
     );
+    const isExternal = useAppSelector(
+      ConversationsSelectors.selectAreSelectedConversationsExternal,
+    );
 
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [isTyping, setIsTyping] = useState<boolean>(false);
@@ -425,7 +428,7 @@ export const ChatMessage: FC<Props> = memo(
                   </div>
                 )}
 
-                {!isPlayback && !isEditing && (
+                {!isPlayback && !isEditing && !isExternal && (
                   <div className="flex w-[60px] flex-col items-center justify-end gap-4 md:flex-row md:items-start md:justify-start md:gap-1">
                     <button
                       className="invisible text-secondary hover:text-accent-primary focus:visible disabled:cursor-not-allowed group-hover:visible"
@@ -468,7 +471,7 @@ export const ChatMessage: FC<Props> = memo(
                 <div
                   className={classNames(
                     'flex min-w-0 shrink grow flex-col',
-                    message.content && 'gap-4',
+                    (message.content || message.errorMessage) && 'gap-4',
                   )}
                 >
                   {!!message.custom_content?.stages?.length && (

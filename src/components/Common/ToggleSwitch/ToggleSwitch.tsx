@@ -44,11 +44,10 @@ export function ToggleSwitch({
         className="sr-only"
         checked={isOn}
       />
-
-      <div className={switchClassName}>
+      <label htmlFor="toggle" className={switchClassName}>
         {switchText && <SwitchStateText switchText={switchText} isOn={isOn} />}
         <span className="h-3 w-3 rounded-full bg-controls-permanent"></span>
-      </div>
+      </label>
     </div>
   );
 }
