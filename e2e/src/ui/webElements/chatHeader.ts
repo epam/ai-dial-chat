@@ -1,4 +1,4 @@
-import { ChatSelectors } from '../selectors';
+import { ChatSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Tags } from '@/e2e/src/ui/domData';
@@ -36,7 +36,7 @@ export class ChatHeader extends BaseElement {
 
   public async isArrowIconVisible() {
     return this.chatModel
-      .getChildElementBySelector(ChatSelectors.arrowAdditionalIcon)
+      .getChildElementBySelector(SideBarSelectors.arrowAdditionalIcon)
       .isVisible();
   }
 

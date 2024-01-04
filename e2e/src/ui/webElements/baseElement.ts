@@ -195,7 +195,9 @@ export class BaseElement {
   }
 
   public async getElementIconHtml(elementLocator: Locator): Promise<string> {
-    const iconLocator = await elementLocator.locator(Tags.svg).first();
+    const iconLocator = await elementLocator
+      .locator(`${Tags.svg}:visible`)
+      .first();
     await iconLocator.waitFor();
     return iconLocator.innerHTML().then((icon) =>
       icon
