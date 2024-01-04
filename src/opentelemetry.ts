@@ -35,7 +35,9 @@ const sdk = new NodeSDK({
   instrumentations: [
     new HttpInstrumentation({
       ignoreOutgoingRequestHook: (request) =>
-        !!request.path?.match(/^\/openai\/deployments\/[^/]+\/chat\//),
+        !!request.path?.match(
+          /^\/+openai\/deployments\/([-.@a-zA-Z0-9]+)\/(completions|chat\/completions|embeddings)/,
+        ),
     }),
   ],
   spanProcessor,
