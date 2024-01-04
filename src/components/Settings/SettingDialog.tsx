@@ -8,7 +8,7 @@ import {
   useRole,
 } from '@floating-ui/react';
 import { IconX } from '@tabler/icons-react';
-import { FC, useCallback, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -32,6 +32,8 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const [localTheme, setLocalTheme] = useState(theme);
   const [isChatFullWidthLocal, setIsChatFullWidthLocal] =
     useState(isChatFullWidth);
+
+  const saveBtnRef = useRef<HTMLButtonElement>(null);
 
   const { refs, context } = useFloating({
     open,
@@ -84,7 +86,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
         className="z-50 flex items-center justify-center bg-blackout p-3"
         data-floating-overlay
       >
-        <FloatingFocusManager context={context}>
+        <FloatingFocusManager context={context} initialFocus={saveBtnRef}>
           <div
             className="relative inline-block max-h-full w-[500px] overflow-y-auto rounded bg-layer-3 p-4 text-left align-bottom transition-all md:max-h-[400px]"
             ref={refs.setFloating}
@@ -115,6 +117,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
             <div className="flex justify-end">
               <button
                 type="button"
+                ref={saveBtnRef}
                 className="button button-primary"
                 onClick={handleSave}
               >
