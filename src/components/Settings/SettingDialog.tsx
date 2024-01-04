@@ -1,6 +1,14 @@
-import { FloatingPortal } from '@floating-ui/react';
+import {
+  FloatingFocusManager,
+  FloatingOverlay,
+  FloatingPortal,
+  useDismiss,
+  useFloating,
+  useInteractions,
+  useRole,
+} from '@floating-ui/react';
 import { IconX } from '@tabler/icons-react';
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -25,12 +33,17 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const [isChatFullWidthLocal, setIsChatFullWidthLocal] =
     useState(isChatFullWidth);
 
+  const { refs, context } = useFloating({
+    open,
+    onOpenChange: onClose,
+  });
+  const role = useRole(context);
+  const dismiss = useDismiss(context);
+  const { getFloatingProps } = useInteractions([role, dismiss]);
+
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Settings);
-
-  const modalRef = useRef<HTMLDivElement>(null);
-  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
 
   const handleClose = useCallback(() => {
     setLocalTheme(theme);
@@ -46,29 +59,6 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     setIsChatFullWidthLocal(isChatFullWidth);
   }, [isChatFullWidth]);
 
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      if (
-        modalRef.current &&
-        !modalRef.current.contains(e.target as Node) &&
-        !isThemeDropdownOpen
-      ) {
-        window.addEventListener('mouseup', handleMouseUp);
-      }
-    };
-
-    const handleMouseUp = () => {
-      window.removeEventListener('mouseup', handleMouseUp);
-      handleClose();
-    };
-
-    window.addEventListener('mousedown', handleMouseDown);
-
-    return () => {
-      window.removeEventListener('mousedown', handleMouseDown);
-    };
-  }, [handleClose, isThemeDropdownOpen]);
-
   const onThemeChangeHandler = useCallback((theme: string) => {
     setLocalTheme(theme);
   }, []);
@@ -83,55 +73,57 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     onClose();
   }, [dispatch, localTheme, onClose, isChatFullWidthLocal]);
 
-  // Render nothing if the dialog is not open.
   if (!open) {
     return <></>;
   }
 
-  // Render the dialog.
   return (
     <FloatingPortal id="theme-main">
-      <div className="fixed inset-0 z-40 flex w-full items-center justify-center overflow-hidden bg-blackout p-3">
-        <div
-          ref={modalRef}
-          className="relative inline-block max-h-full w-[500px] overflow-y-auto rounded bg-layer-3 p-4 text-left align-bottom transition-all md:max-h-[400px]"
-          role="dialog"
-        >
-          <button
-            className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-            onClick={handleClose}
+      <FloatingOverlay
+        lockScroll
+        className="z-50 flex items-center justify-center bg-blackout p-3"
+        data-floating-overlay
+      >
+        <FloatingFocusManager context={context}>
+          <div
+            className="relative inline-block max-h-full w-[500px] overflow-y-auto rounded bg-layer-3 p-4 text-left align-bottom transition-all md:max-h-[400px]"
+            ref={refs.setFloating}
+            {...getFloatingProps()}
           >
-            <IconX height={24} width={24} />
-          </button>
-          <div className="mb-4 text-base font-bold">{t('Settings')}</div>
-          <div className="mb-4 flex flex-col gap-5">
-            <ThemeSelect
-              isOpen={isThemeDropdownOpen}
-              setIsOpen={setIsThemeDropdownOpen}
-              localTheme={localTheme}
-              onThemeChangeHandler={onThemeChangeHandler}
-            />
-            <ToggleSwitchLabeled
-              isOn={isChatFullWidthLocal}
-              labelText={t('Full width chat')}
-              labelClassName="basis-1/3 md:basis-1/4"
-              handleSwitch={onChangeHandlerFullWidth}
-              switchOnText={t('ON')}
-              switchOFFText={t('OFF')}
-            />
-          </div>
-
-          <div className="flex justify-end">
             <button
-              type="button"
-              className="button button-primary"
-              onClick={handleSave}
+              className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
+              onClick={handleClose}
             >
-              {t('Save')}
+              <IconX height={24} width={24} />
             </button>
+            <div className="mb-4 text-base font-bold">{t('Settings')}</div>
+            <div className="mb-4 flex flex-col gap-5">
+              <ThemeSelect
+                localTheme={localTheme}
+                onThemeChangeHandler={onThemeChangeHandler}
+              />
+              <ToggleSwitchLabeled
+                isOn={isChatFullWidthLocal}
+                labelText={t('Full width chat')}
+                labelClassName="basis-1/3 md:basis-1/4"
+                handleSwitch={onChangeHandlerFullWidth}
+                switchOnText={t('ON')}
+                switchOFFText={t('OFF')}
+              />
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                className="button button-primary"
+                onClick={handleSave}
+              >
+                {t('Save')}
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
+        </FloatingFocusManager>
+      </FloatingOverlay>
     </FloatingPortal>
   );
 };

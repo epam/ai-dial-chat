@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from 'react';
+import { MouseEvent, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -15,22 +15,20 @@ import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
 
 interface ThemeSelectProps {
   localTheme: string;
-  isOpen: boolean;
-  setIsOpen: Dispatch<SetStateAction<boolean>>;
   onThemeChangeHandler: (theme: string) => void;
 }
 
 export const ThemeSelect = ({
   localTheme,
-  isOpen,
-  setIsOpen,
   onThemeChangeHandler,
 }: ThemeSelectProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   const { t } = useTranslation(Translation.Settings);
   const availableThemes = useAppSelector(UISelectors.selectAvailableThemes);
 
-  const onChangeHandler = (themeId: string) => {
-    onThemeChangeHandler(themeId);
+  const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
+    onThemeChangeHandler(e.currentTarget.value);
     setIsOpen(false);
   };
 
@@ -43,7 +41,7 @@ export const ThemeSelect = ({
       <div className="basis-1/3 md:basis-1/4">{t('Theme')}</div>
       <div className="h-[38px] grow rounded border border-primary focus-within:border-accent-primary focus:border-accent-primary">
         <Menu
-          className="w-full px-3 focus:outline-none"
+          className="w-full px-3"
           onOpenChange={setIsOpen}
           trigger={
             <div className="flex min-w-[120px] items-center justify-between gap-2 capitalize">
@@ -64,7 +62,8 @@ export const ThemeSelect = ({
               key={theme.id}
               className="max-w-[350px] hover:bg-accent-primary-alpha"
               item={t(theme.displayName)}
-              onClick={() => onChangeHandler(theme.id)}
+              value={theme.id}
+              onClick={onChangeHandler}
             />
           ))}
         </Menu>
