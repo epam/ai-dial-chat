@@ -33,6 +33,7 @@ import ShareIcon from '../../Common/ShareIcon';
 import { PromptModal } from './PromptModal';
 
 import { v4 as uuidv4 } from 'uuid';
+import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 
 interface Props {
   item: Prompt;
@@ -204,6 +205,11 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   }, [dispatch]);
 
   const handleContextMenuOpen = (e: MouseEvent) => {
+    if(hasParentWithFloatingOverlay(
+          e.target as Element,
+        )) {
+          return;
+        }
     e.preventDefault();
     e.stopPropagation();
     setIsContextMenu(true);
