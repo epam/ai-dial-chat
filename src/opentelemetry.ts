@@ -32,7 +32,12 @@ const sdk = new NodeSDK({
       [SemanticResourceAttributes.SERVICE_VERSION]: pkg.version,
     }),
   ),
-  instrumentations: [new HttpInstrumentation()],
+  instrumentations: [
+    new HttpInstrumentation({
+      ignoreOutgoingRequestHook: (request) =>
+        !!request.path?.match(/^\/openai\/deployments\/[^/]+\/chat\//),
+    }),
+  ],
   spanProcessor,
 });
 sdk.start();
