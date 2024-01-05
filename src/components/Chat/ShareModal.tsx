@@ -75,7 +75,7 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
       onClose={onClose}
     >
       <div className="flex flex-col justify-between gap-2">
-        <h4 className=" max-h-[50px] text-base font-semibold">
+        <h4 className="max-h-[50px] text-base font-semibold">
           <Tooltip tooltip={entity.name.trim()}>
             <span
               className="line-clamp-2 break-words"
