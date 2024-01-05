@@ -13,7 +13,6 @@ export class ChatBar extends SideBar {
 
   private conversations!: Conversations;
   private folderConversations!: FolderConversations;
-  public searchChat = this.getElementByPlaceholder('Search chat...');
   public compareButton = this.getChildElementBySelector(
     ChatBarSelectors.compare,
   );

@@ -370,7 +370,7 @@ test(
 
     await test.step('Edit 1st request in chat and verify 1st response is regenerated', async () => {
       const updatedMessage = '6+7=';
-      await chatMessages.openEditMessageMode(requests[0]);
+      await chatMessages.openEditMessageMode(1);
       await chatMessages.editMessage(requests[0], updatedMessage);
       const messagesCount = await chatMessages.chatMessages.getElementsCount();
       expect

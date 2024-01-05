@@ -36,7 +36,7 @@ export default function Search({
   );
 
   return (
-    <div className="relative flex items-center py-1 pl-5 pr-2">
+    <div className="relative flex items-center py-1 pl-5 pr-2" data-qa="search">
       <IconSearch
         className="absolute left-5 text-secondary"
         size={18}

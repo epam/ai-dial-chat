@@ -909,6 +909,7 @@ test('Search conversation when no folders', async ({
   conversationData,
   localStorageManager,
   chatBar,
+  chatBarSearch,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-1188');
@@ -947,7 +948,7 @@ test('Search conversation when no folders', async ({
   await test.step('Type not matching search term is "Search chat..." field and verify no results found', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await chatBar.searchChat.fill(notMatchingSearchTerm);
+    await chatBarSearch.setSearchValue(notMatchingSearchTerm);
     const noResult = await chatBar.noResultFoundIcon.getElementInnerContent();
     expect
       .soft(noResult, ExpectedMessages.noResultsFound)
@@ -955,7 +956,7 @@ test('Search conversation when no folders', async ({
   });
 
   await test.step('Clear search field and verify all conversations are displayed', async () => {
-    await chatBar.searchChat.fill('');
+    await chatBarSearch.setSearchValue('');
     const results = await conversations.getTodayConversations();
     expect
       .soft(results.length, ExpectedMessages.searchResultCountIsValid)
@@ -964,7 +965,7 @@ test('Search conversation when no folders', async ({
 
   await test.step('Search by first term and verify search results are correct', async () => {
     for (const term of [firstSearchTerm, secondSearchTerm]) {
-      await chatBar.searchChat.fill(term);
+      await chatBarSearch.setSearchValue(term);
       const results = await conversations.getTodayConversations();
       expect
         .soft(results.length, ExpectedMessages.searchResultCountIsValid)
@@ -973,7 +974,7 @@ test('Search conversation when no folders', async ({
   });
 
   await test.step('Search by special symbol and verify search results are correct', async () => {
-    await chatBar.searchChat.fill(specialSymbolsSearchTerm);
+    await chatBarSearch.setSearchValue(specialSymbolsSearchTerm);
     const results = await conversations.getTodayConversations();
     expect
       .soft(results.length, ExpectedMessages.searchResultCountIsValid)
@@ -987,6 +988,7 @@ test('Search conversation located in folders', async ({
   localStorageManager,
   chatBar,
   folderConversations,
+  chatBarSearch,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-1201');
@@ -1048,7 +1050,7 @@ test('Search conversation located in folders', async ({
   await test.step('Type not matching search term is "Search chat..." field and verify no results found', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await chatBar.searchChat.fill(notMatchingSearchTerm);
+    await chatBarSearch.setSearchValue(notMatchingSearchTerm);
     const noResult = await chatBar.noResultFoundIcon.getElementInnerContent();
     expect
       .soft(noResult, ExpectedMessages.noResultsFound)
@@ -1056,13 +1058,13 @@ test('Search conversation located in folders', async ({
   });
 
   await test.step('Clear search field and verify all conversations are displayed', async () => {
-    await chatBar.searchChat.fill('');
+    await chatBarSearch.setSearchValue('');
     const results = await folderConversations.getFoldersCount();
     expect.soft(results, ExpectedMessages.searchResultCountIsValid).toBe(3);
   });
 
   await test.step('Search by search term and verify search results are correct, empty folder is not shown', async () => {
-    await chatBar.searchChat.fill(secondSearchTerm);
+    await chatBarSearch.setSearchValue(secondSearchTerm);
     let results = await folderConversations
       .getFolderConversations(firstFolder.name)
       .count();

@@ -5,7 +5,7 @@ import { Rate, Side } from '@/e2e/src/testData';
 import { Attributes, Tags } from '@/e2e/src/ui/domData';
 import { keys } from '@/e2e/src/ui/keyboard';
 import { IconSelectors } from '@/e2e/src/ui/selectors/iconSelectors';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class ChatMessages extends BaseElement {
   constructor(page: Page) {
@@ -55,10 +55,10 @@ export class ChatMessages extends BaseElement {
     return loadingCursorCount > 0;
   }
 
-  public getChatMessage(message: string, index?: number) {
-    return index
-      ? this.chatMessages.getElementLocatorByText(message).nth(index - 1)
-      : this.chatMessages.getElementLocatorByText(message).last();
+  public getChatMessage(message: string | number) {
+    return typeof message === 'string'
+      ? this.chatMessages.getElementLocatorByText(message).last()
+      : this.chatMessages.getNthElement(message);
   }
 
   public getChatMessageRate(message: string, rate: Rate) {
@@ -286,8 +286,8 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(Tags.textarea);
   }
 
-  public messageEditIcon = (message: string) =>
-    this.getChatMessage(message).locator(IconSelectors.editIcon);
+  public messageEditIcon = (messageLocator: Locator) =>
+    messageLocator.locator(IconSelectors.editIcon);
   public saveAndSubmit = new BaseElement(
     this.page,
     ChatSelectors.saveAndSubmit,
@@ -297,10 +297,10 @@ export class ChatMessages extends BaseElement {
   public messageDeleteIcon = (message: string) =>
     this.getChatMessage(message).locator(IconSelectors.deleteIcon);
 
-  public async openEditMessageMode(message: string) {
-    const chatMessage = await this.getChatMessage(message);
+  public async openEditMessageMode(message: string | number) {
+    const chatMessage = this.getChatMessage(message);
     await chatMessage.hover();
-    const editIcon = this.messageEditIcon(message);
+    const editIcon = this.messageEditIcon(chatMessage);
     await editIcon.waitFor();
     await editIcon.click();
   }
