@@ -35,7 +35,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const token = await getToken({ req });
 
-    const url = `${process.env.OPENAI_API_HOST}/v1/files/metadata/${bucket}${
+    const url = `${process.env.DIAL_API_HOST}/v1/files/metadata/${bucket}${
       path && `/${encodeURI(path)}`
     }/`;
 

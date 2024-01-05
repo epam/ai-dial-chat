@@ -8,7 +8,7 @@ import { logger } from '@/src/utils/server/logger';
 
 import { RateBody } from '../../types/chat';
 
-import { OPENAI_API_HOST } from '@/src/constants/default-settings';
+import { DIAL_API_HOST } from '@/src/constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from './auth/[...nextauth]';
@@ -30,7 +30,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(400).send(errorsMessages[400]);
     }
 
-    const url = `${OPENAI_API_HOST}/v1/${modelId}/rate`;
+    const url = `${DIAL_API_HOST}/v1/${modelId}/rate`;
     const token = await getToken({ req });
 
     await fetch(url, {

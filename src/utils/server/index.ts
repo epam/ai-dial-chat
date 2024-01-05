@@ -8,8 +8,8 @@ import {
 
 import {
   DEFAULT_ASSISTANT_SUBMODEL,
-  OPENAI_API_HOST,
-  OPENAI_API_VERSION,
+  DIAL_API_HOST,
+  DIAL_API_VERSION,
 } from '../../constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -42,10 +42,10 @@ function getUrl(
   isAddonsAdded: boolean,
 ): string {
   if (modelType === EntityType.Model && isAddonsAdded) {
-    return `${OPENAI_API_HOST}/openai/deployments/assistant/chat/completions?api-version=${OPENAI_API_VERSION}`;
+    return `${DIAL_API_HOST}/openai/deployments/assistant/chat/completions?api-version=${DIAL_API_VERSION}`;
   }
 
-  return `${OPENAI_API_HOST}/openai/deployments/${modelId}/chat/completions?api-version=${OPENAI_API_VERSION}`;
+  return `${DIAL_API_HOST}/openai/deployments/${modelId}/chat/completions?api-version=${DIAL_API_VERSION}`;
 }
 
 const encoder = new TextEncoder();
