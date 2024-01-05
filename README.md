@@ -43,8 +43,8 @@ npm install
 4. Create `.env.local` file and add next variables with appropriate values(more info in [Environment Variables](#environment-variables)):
 
 ```
-OPENAI_API_HOST="ADD_VALUE_HERE"
-OPENAI_API_KEY="ADD_VALUE_HERE"
+DIAL_API_HOST="ADD_VALUE_HERE"
+DIAL_API_KEY="ADD_VALUE_HERE"
 NEXTAUTH_SECRET="ADD_VALUE_HERE"
 ```
 
