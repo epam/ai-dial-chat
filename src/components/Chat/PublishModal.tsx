@@ -35,6 +35,16 @@ interface Props {
   onClose: () => void;
 }
 
+const getPrefix = (item: ShareEntity):string => {
+  if ('messages' in item) {
+    return 'Conversation';
+  } else if ('description' in item) {
+    return 'Prompt';
+  } else {
+    return 'Collection';
+  }
+}
+
 export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
@@ -48,7 +58,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
     useState(false);
   const [version, setVersion] = useState<string>('');
 
-  const isVersionUnique = (version: string) => !version; // TODO: check if unique
+  const isVersionUnique = (version: string) => version.length >=0; // TODO: check if version is unique
 
   const nameOnChangeHandler = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -90,19 +100,26 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
       const trimmedVersion = version?.trim();
       const trimmedPath = path?.trim();
 
-      if (!trimmedName || !trimmedVersion || !trimmedPath) {
+      if (!trimmedName || !trimmedVersion) {
         return;
       }
 
       if (!isVersionUnique(trimmedVersion)) return;
 
+      // eslint-disable-next-line no-console
+      console.log(trimmedName, trimmedPath, trimmedVersion); // TODO: send request
+
       dispatch(
-        publishAction({ id: entity.id, shareUniqueId: shareId.current }),
+        publishAction({ id: entity.id, shareUniqueId: shareId.current, }),
       );
       onClose();
     },
     [dispatch, entity.id, name, onClose, path, publishAction, version],
   );
+
+  const handleBlur = useCallback(()=> {
+    setSubmitted(true);
+  },[])
 
   const inputClassName = classNames('input-form py-2', 'peer', {
     'input-invalid submitted': submitted,
@@ -137,7 +154,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
               className="mb-1 flex text-xs text-secondary"
               htmlFor="requestName"
             >
-              {t('Name')}
+              {t(`${getPrefix(entity)} name`)}
               <span className="ml-1 inline text-accent-primary">*</span>
             </label>
             <input
@@ -152,10 +169,10 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
               onChange={nameOnChangeHandler}
               data-qa="request-name"
             />
-            <EmptyRequiredInputMessage />
+            <EmptyRequiredInputMessage useDisplay className="!mb-0" />
           </div>
 
-          <div className="mb-4">
+          <div>
             <label
               className="mb-1 flex text-xs text-secondary"
               htmlFor="requestPath"
@@ -185,13 +202,13 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
             <input
               ref={nameInputRef}
               name="requestVersion"
-              className={inputClassName}
+              className={classNames(inputClassName, { '!border-error': !isVersionUnique(version) })}
               placeholder={t('A version for your request.') || ''}
               value={version}
               required
               type="text"
               data-qa="request-version"
-              onBlur={onBlur}
+              onBlur={handleBlur}
               onChange={versionOnChangeHandler}
             />
             {submitted && (!isVersionUnique(version) || !version.trim()) && (
