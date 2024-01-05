@@ -1,3 +1,4 @@
+/*eslint-disable @next/next/no-img-element*/
 import { IconSettings } from '@tabler/icons-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useCallback, useState } from 'react';
@@ -52,9 +53,8 @@ export const UserDesktop = () => {
               <span className="grow">{session?.user?.name || t('User')}</span>
             </div>
             <ChevronDownIcon
-              className={`shrink-0 text-primary transition-all ${
-                isOpen ? 'rotate-180' : ''
-              }`}
+              className={`shrink-0 text-primary transition-all ${isOpen ? 'rotate-180' : ''
+                }`}
               width={18}
               height={18}
             />

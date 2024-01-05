@@ -5,7 +5,7 @@ import {
   size,
   useFloating,
 } from '@floating-ui/react';
-import { FC, createElement, useEffect, useLayoutEffect, useState } from 'react';
+import { FC, RefObject, createElement, useEffect, useLayoutEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -15,6 +15,7 @@ import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 
 import { useCombobox } from 'downshift';
 
+/*eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 interface Props<T = any> {
   items: T[];
   initialSelectedItem?: T;
@@ -75,9 +76,9 @@ export const Combobox = ({
         items.filter((item) =>
           inputValue
             ? getItemLabel(item)
-                .trim()
-                .toLowerCase()
-                .includes(inputValue.trim().toLowerCase())
+              .trim()
+              .toLowerCase()
+              .includes(inputValue.trim().toLowerCase())
             : true,
         ),
       );
@@ -97,9 +98,9 @@ export const Combobox = ({
       items.filter((item) =>
         inputValue
           ? getItemLabel(item)
-              .trim()
-              .toLowerCase()
-              .includes(inputValue.trim().toLowerCase())
+            .trim()
+            .toLowerCase()
+            .includes(inputValue.trim().toLowerCase())
           : true,
       ),
     );
@@ -124,7 +125,7 @@ export const Combobox = ({
             disabled={disabled}
             placeholder={placeholder || ''}
             className="w-full bg-transparent px-3 py-2.5 outline-none placeholder:text-secondary"
-            {...getInputProps({ ref: refs.reference as any })}
+            {...getInputProps({ ref: refs.reference as RefObject<HTMLInputElement> })}
           />
           {!inputValue && itemRow && selectedItem && (
             <div className="pointer-events-none absolute left-3 top-2.5 flex items-center">
@@ -142,11 +143,10 @@ export const Combobox = ({
         </div>
       </div>
       <ul
-        className={`z-10 max-h-80 overflow-auto rounded bg-layer-3 ${
-          !isOpen && 'hidden'
-        }`}
+        className={`z-10 max-h-80 overflow-auto rounded bg-layer-3 ${!isOpen && 'hidden'
+          }`}
         {...getMenuProps(
-          { ref: refs.floating as any },
+          { ref: refs.floating as RefObject<HTMLUListElement> },
           { suppressRefError: true },
         )}
         style={{
@@ -160,9 +160,8 @@ export const Combobox = ({
           (displayedItems?.length > 0 ? (
             displayedItems.map((item, index) => (
               <li
-                className={`group flex cursor-pointer flex-col px-3 py-2 ${
-                  highlightedIndex === index ? 'bg-accent-primary-alpha' : ''
-                } ${selectedItem === item ? 'bg-accent-primary-alpha' : ''}`}
+                className={`group flex cursor-pointer flex-col px-3 py-2 ${highlightedIndex === index ? 'bg-accent-primary-alpha' : ''
+                  } ${selectedItem === item ? 'bg-accent-primary-alpha' : ''}`}
                 key={`${getItemValue(item)}${index}`}
                 {...getItemProps({ item, index })}
               >

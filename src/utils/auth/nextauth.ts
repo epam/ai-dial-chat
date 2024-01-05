@@ -34,6 +34,7 @@ export const tokenConfig: TokenEndpointHandler = {
  * `accessToken` and `accessTokenExpires`. If an error occurs,
  * returns the old token and an error property
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function refreshAccessToken(token: JWT & any) {
   const displayedTokenSub =
     process.env.SHOW_TOKEN_SUB === 'true' ? token.sub : '******';
@@ -107,6 +108,7 @@ async function refreshAccessToken(token: JWT & any) {
       token: returnToken,
     });
     return returnToken;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     logger.error(
       error,
@@ -125,6 +127,7 @@ export const callbacks: Partial<CallbacksOptions<Profile, Account>> = {
     if (options.account) {
       return {
         ...options.token,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         jobTitle: (options.profile as any)?.job_title,
         access_token: options.account.access_token,
         accessTokenExpires:
@@ -158,6 +161,7 @@ export const callbacks: Partial<CallbacksOptions<Profile, Account>> = {
   },
   session: async (options) => {
     if (options.token?.error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (options.session as any).error = options.token.error;
     }
     return options.session;

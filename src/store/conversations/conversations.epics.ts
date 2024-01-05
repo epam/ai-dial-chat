@@ -327,6 +327,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
       if (!conversation) {
         return of(
           ConversationsActions.rateMessageFail(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (i18n as any).t(
               'No conversation exists for rating with provided conversation id',
             ),
@@ -338,6 +339,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
       if (!message || !message.responseId) {
         return of(
           ConversationsActions.rateMessageFail(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (i18n as any).t('Message cannot be rated'),
           ),
         );

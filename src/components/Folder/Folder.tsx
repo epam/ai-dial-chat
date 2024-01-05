@@ -72,7 +72,7 @@ interface Props<T, P = unknown> {
   loadingFolderId?: string;
   displayCaretAlways?: boolean;
   additionalItemData?: Record<string, unknown>;
-  handleDrop?: (e: any, folder: FolderInterface) => void;
+  handleDrop?: (e: DragEvent, folder: FolderInterface) => void;
   onDropBetweenFolders?: (
     folder: FolderInterface,
     parentFolderId: string | undefined,
@@ -121,8 +121,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const renameInputRef = useRef<HTMLInputElement>(null);
   const [isRenaming, setIsRenaming] = useState(
     isInitialRenameEnabled &&
-      newAddedFolderId === currentFolder.id &&
-      !currentFolder.serverSynced,
+    newAddedFolderId === currentFolder.id &&
+    !currentFolder.serverSynced,
   );
   const [renameValue, setRenameValue] = useState(currentFolder.name);
   const [isSelected, setIsSelected] = useState(false);
@@ -239,7 +239,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   );
 
   const dropHandler = useCallback(
-    (e: any) => {
+    (e: DragEvent) => {
       if (!isDropAllowed || !handleDrop) {
         return;
       }
@@ -276,7 +276,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   );
 
   const allowDrop = useCallback(
-    (e: any) => {
+    (e: DragEvent) => {
       if (isDropAllowed) {
         e.preventDefault();
       }
@@ -306,15 +306,15 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   );
 
   const highlightDrop = useCallback(
-    (evt: any) => {
+    (evt: DragEvent) => {
       if (dragDropElement.current === evt.target) {
         setIsDraggingOver(true);
         return;
       }
 
       if (
-        dragDropElement.current?.contains(evt.target) &&
-        isParentFolder(dragDropElement.current, evt.target)
+        dragDropElement.current?.contains(evt.target as Node) &&
+        isParentFolder(dragDropElement.current, evt.target as Element)
       ) {
         dispatch(UIActions.openFolder({ id: currentFolder.id }));
         setIsDraggingOver(true);
@@ -324,13 +324,13 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   );
 
   const removeHighlight = useCallback(
-    (evt: any) => {
-      if (!dragDropElement.current?.contains(evt.relatedTarget)) {
+    (evt: DragEvent) => {
+      if (!dragDropElement.current?.contains(evt.relatedTarget as Node)) {
         setIsDraggingOver(false);
         return;
       }
 
-      if (!isParentFolder(dragDropElement.current, evt.relatedTarget)) {
+      if (!isParentFolder(dragDropElement.current, evt.relatedTarget as Element)) {
         setIsDraggingOver(false);
       }
     },
@@ -523,8 +523,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 `relative max-h-5 flex-1 truncate break-all text-left`,
                 isRenaming ? 'pr-10' : 'group-hover/button:pr-5',
                 !isRenaming &&
-                  highlightedFolders?.includes(currentFolder.id) &&
-                  'text-primary',
+                highlightedFolders?.includes(currentFolder.id) &&
+                'text-primary',
               )}
               data-qa="folder-name"
             >

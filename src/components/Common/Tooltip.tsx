@@ -135,6 +135,7 @@ export const TooltipTrigger = forwardRef<
   HTMLProps<HTMLElement> & { asChild?: boolean }
 >(function TooltipTrigger({ children, asChild = false, ...props }, propRef) {
   const context = useTooltipContext();
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
   const childrenRef = (children as any).ref;
   const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
 
@@ -182,9 +183,8 @@ export const TooltipContent = forwardRef<
           ...style,
         }}
         {...context.getFloatingProps(props)}
-        className={`z-50 rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow ${
-          context.getFloatingProps(props).className
-        }`}
+        className={`z-50 rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow ${context.getFloatingProps(props).className
+          }`}
         data-qa="tooltip"
       >
         {props.children}

@@ -1,3 +1,4 @@
+/*eslint-disable @next/next/no-img-element*/
 import { useSession } from 'next-auth/react';
 import { useCallback } from 'react';
 

@@ -40,7 +40,8 @@ const reducer = {
   overlay: overlaySlice.reducer,
   files: filesSlice.reducer,
 };
-const getMiddleware = (epicMiddleware: any) => {
+const getMiddleware = (epicMiddleware: unknown) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (getDefaultMiddleware: any) => {
     return getDefaultMiddleware({
       thunk: false,

@@ -121,6 +121,7 @@ export const OpenAIStream = async ({
   });
 
   if (res.status !== 200) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let result: any;
     try {
       result = await res.json();
@@ -196,6 +197,7 @@ export const OpenAIStream = async ({
 
       const parser = createParser(onParse);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       for await (const chunk of res.body as any) {
         if (isFinished) {
           return;

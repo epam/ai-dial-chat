@@ -15,28 +15,28 @@ import { Prompt } from '@/src/types/prompt';
 import { cleanConversationHistory } from './clean';
 import { triggerDownload } from './file';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isExportFormatV1(obj: any): obj is ExportFormatV1 {
   return Array.isArray(obj);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isExportFormatV2(obj: any): obj is ExportFormatV2 {
   return !('version' in obj) && 'folders' in obj && 'history' in obj;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isExportFormatV3(obj: any): obj is ExportFormatV3 {
   return obj.version === 3;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isExportFormatV4(obj: any): obj is ExportFormatV4 {
   return obj.version === 4;
 }
 
-export function isPromtsFormat(obj: any) {
-  return (
-    obj &&
-    typeof obj === 'object' &&
-    Object.prototype.hasOwnProperty.call(obj, 'prompts')
-  );
+export function isPromtsFormat(obj: PromptsHistory) {
+  return Object.prototype.hasOwnProperty.call(obj, 'prompts');
 }
 
 export const isLatestExportFormat = isExportFormatV4;

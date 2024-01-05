@@ -63,6 +63,7 @@ const errorHandler = ({
   msg,
   isStreamingError,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error: any;
   res: NextApiResponse;
   msg?: string;

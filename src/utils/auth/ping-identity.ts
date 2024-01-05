@@ -2,6 +2,7 @@ import { OAuthConfig, OAuthUserConfig } from 'next-auth/providers';
 
 // from https://github.com/nextauthjs/next-auth/pull/6614
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface PingProfile extends Record<string, any> {
   iss: string;
   sub: string;

@@ -56,6 +56,7 @@ const Promptbar = () => {
   const searchFilters = useAppSelector(PromptsSelectors.selectSearchFilters);
 
   const handleDrop = useCallback(
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
     (e: any) => {
       if (e.dataTransfer) {
         const prompt = JSON.parse(e.dataTransfer.getData('prompt'));

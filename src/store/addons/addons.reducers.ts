@@ -49,6 +49,7 @@ export const addonsSlice = createSlice({
         {} as Record<string, OpenAIEntityAddon>,
       );
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getAddonsFail: (state, { payload }: PayloadAction<{ error: any }>) => {
       state.isLoading = false;
       state.error = {

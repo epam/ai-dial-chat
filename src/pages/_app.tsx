@@ -18,6 +18,7 @@ const inter = Inter({
 
 function App({ Component, ...rest }: AppProps<SessionProviderProps>) {
   const store = createStore({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     settings: (rest.pageProps as any).initialState?.settings,
   });
 

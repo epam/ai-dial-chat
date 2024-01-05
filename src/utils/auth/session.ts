@@ -3,7 +3,9 @@ import { Session } from 'next-auth';
 
 import { errorsMessages } from '@/src/constants/errors';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isClientSessionValid(session: any | null) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return session && (session as any).data?.error !== 'RefreshAccessTokenError';
 }
 
@@ -15,6 +17,7 @@ export function isServerSessionValid(session: Session | null) {
     return true;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return !!session && (session as any).error !== 'RefreshAccessTokenError';
 }
 
