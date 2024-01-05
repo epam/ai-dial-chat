@@ -727,6 +727,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
               ConversationsActions.streamMessageFail({
                 conversation: payload.conversation,
                 message:
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   (error.cause as any).message ||
                   translate(errorsMessages.generalServer),
                 response:

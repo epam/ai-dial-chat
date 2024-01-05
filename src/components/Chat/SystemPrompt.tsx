@@ -133,16 +133,15 @@ export const SystemPrompt: FC<Props> = ({
     return () => {
       window.removeEventListener('click', handleOutsideClick);
     };
-  }, []);
+  }, [setShowPromptList]);
 
   useEffect(() => {
     if (textareaRef && textareaRef.current) {
       textareaRef.current.style.height = 'inherit'; // reset height
       const scrollHeight = textareaRef.current.scrollHeight; // then check scroll height
       textareaRef.current.style.height = `${scrollHeight}px`;
-      textareaRef.current.style.overflow = `${
-        scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden'
-      }`;
+      textareaRef.current.style.overflow = `${scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden'
+        }`;
     }
   }, [content, textareaRef]);
 
