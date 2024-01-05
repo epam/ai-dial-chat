@@ -106,9 +106,6 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
 
       if (!isVersionUnique(trimmedVersion)) return;
 
-      // eslint-disable-next-line no-console
-      console.log(trimmedName, trimmedPath, trimmedVersion); // TODO: send request
-
       dispatch(
         publishAction({
           id: entity.id,
