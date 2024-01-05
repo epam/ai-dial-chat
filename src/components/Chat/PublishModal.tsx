@@ -35,7 +35,7 @@ interface Props {
   onClose: () => void;
 }
 
-const getPrefix = (item: ShareEntity):string => {
+const getPrefix = (item: ShareEntity): string => {
   if ('messages' in item) {
     return 'Conversation';
   } else if ('description' in item) {
@@ -43,7 +43,7 @@ const getPrefix = (item: ShareEntity):string => {
   } else {
     return 'Collection';
   }
-}
+};
 
 export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
   const { t } = useTranslation(Translation.SideBar);
@@ -58,7 +58,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
     useState(false);
   const [version, setVersion] = useState<string>('');
 
-  const isVersionUnique = (version: string) => version.length >=0; // TODO: check if version is unique
+  const isVersionUnique = (version: string) => version.length >= 0; // TODO: check if version is unique
 
   const nameOnChangeHandler = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -110,16 +110,22 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
       console.log(trimmedName, trimmedPath, trimmedVersion); // TODO: send request
 
       dispatch(
-        publishAction({ id: entity.id, shareUniqueId: shareId.current, }),
+        publishAction({
+          id: entity.id,
+          shareUniqueId: shareId.current,
+          name: trimmedName,
+          path: trimmedPath,
+          version: trimmedVersion,
+        }),
       );
       onClose();
     },
     [dispatch, entity.id, name, onClose, path, publishAction, version],
   );
 
-  const handleBlur = useCallback(()=> {
+  const handleBlur = useCallback(() => {
     setSubmitted(true);
-  },[])
+  }, []);
 
   const inputClassName = classNames('input-form py-2', 'peer', {
     'input-invalid submitted': submitted,
@@ -202,7 +208,9 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
             <input
               ref={nameInputRef}
               name="requestVersion"
-              className={classNames(inputClassName, { '!border-error': !isVersionUnique(version) })}
+              className={classNames(inputClassName, {
+                '!border-error': !isVersionUnique(version),
+              })}
               placeholder={t('A version for your request.') || ''}
               value={version}
               required

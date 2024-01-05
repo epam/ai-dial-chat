@@ -7,6 +7,7 @@ import { PromptsHistory } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
+import { PublishRequest } from '@/src/types/share';
 
 import { resetShareEntity } from './../../constants/chat';
 
@@ -97,10 +98,7 @@ export const promptsSlice = createSlice({
         return folder;
       });
     },
-    publishPrompt: (
-      state,
-      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
-    ) => {
+    publishPrompt: (state, { payload }: PayloadAction<PublishRequest>) => {
       state.prompts = state.prompts.map((prompt) => {
         if (prompt.id === payload.id) {
           return {
@@ -113,10 +111,7 @@ export const promptsSlice = createSlice({
         return prompt;
       });
     },
-    publishFolder: (
-      state,
-      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
-    ) => {
+    publishFolder: (state, { payload }: PayloadAction<PublishRequest>) => {
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.id) {
           return {

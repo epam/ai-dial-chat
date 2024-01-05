@@ -13,3 +13,11 @@ export enum SharingType {
   Prompt = 'prompt',
   PromptFolder = 'prompts_folder',
 }
+
+export interface PublishRequest {
+  id: string;
+  shareUniqueId: string;
+  name: string;
+  path: string;
+  version: string;
+}

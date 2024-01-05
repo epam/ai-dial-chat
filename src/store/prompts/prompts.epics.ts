@@ -3,11 +3,13 @@ import { concat, filter, ignoreElements, map, of, switchMap, tap } from 'rxjs';
 import { combineEpics } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
+import { getFolderIdByPath } from '@/src/utils/app/folders';
 import {
   exportPrompt,
   exportPrompts,
   importPrompts,
 } from '@/src/utils/app/import-export';
+import { PublishedWithMeFilter } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 
 import { AppEpic } from '@/src/types/store';
@@ -351,22 +353,25 @@ const publishPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.publishPrompt.match),
     map(({ payload }) => ({
-      sharedPromptId: payload.id,
-      shareUniqueId: payload.shareUniqueId,
+      publishRequest: payload,
       prompts: PromptsSelectors.selectPrompts(state$.value),
+      folders: PromptsSelectors.selectFilteredFolders(
+        state$.value,
+        PublishedWithMeFilter,
+      ),
     })),
-    switchMap(({ sharedPromptId, shareUniqueId, prompts }) => {
+    switchMap(({ publishRequest, prompts, folders }) => {
       const sharedPrompts = prompts
-        .filter((prompt) => prompt.id === sharedPromptId)
+        .filter((prompt) => prompt.id === publishRequest.id)
         .map(({ folderId: _, ...prompt }) => ({
           ...prompt,
           ...resetShareEntity,
           id: uuidv4(),
           originalId: prompt.id,
-          folderId: undefined, // show on root level
+          folderId: getFolderIdByPath(publishRequest.path, folders),
           publishedWithMe: true,
-          shareUniqueId:
-            prompt.id === sharedPromptId ? shareUniqueId : undefined,
+          name: publishRequest.name,
+          shareUniqueId: publishRequest.shareUniqueId,
         }));
 
       return concat(

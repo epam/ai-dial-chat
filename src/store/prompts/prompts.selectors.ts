@@ -27,7 +27,7 @@ export const selectFilteredPrompts = createSelector(
   [
     selectPrompts,
     (_state, filters: EntityFilters) => filters,
-    (_state, _filters, searchTerm?: string) => searchTerm,
+    (_state, _filters: EntityFilters, searchTerm?: string) => searchTerm,
   ],
   (prompts, filters, searchTerm?) => {
     return prompts.filter(
