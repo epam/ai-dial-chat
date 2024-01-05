@@ -340,7 +340,7 @@ export const FileManagerModal = ({
 
         <ErrorMessage error={errorMessage} />
 
-        {!showSpinner ? (
+        {showSpinner ? (
           <div className="flex min-h-[300px] items-center justify-center">
             <Spinner />
           </div>
