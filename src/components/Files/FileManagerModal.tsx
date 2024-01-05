@@ -312,8 +312,9 @@ export const FileManagerModal = ({
       portalId="theme-main"
       isOpen={isOpen}
       onClose={() => onClose(false)}
-      dataQa="file-manager-mpdal"
-      containerClassName="relative flex max-h-full flex-col gap-4 rounded bg-layer-3 md:w-[525px]"
+      dataQa="file-manager-modal"
+      containerClassName="flex flex-col gap-4 md:w-[525px]"
+      dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       <div className="flex flex-col gap-2 overflow-auto p-6">
         <div className="flex justify-between">

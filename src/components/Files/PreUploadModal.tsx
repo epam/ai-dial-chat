@@ -293,10 +293,11 @@ export const PreUploadDialog = ({
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="relative flex max-h-full flex-col gap-4 rounded bg-layer-3 p-6 md:min-w-[425px] md:max-w-[500px]"
+      containerClassName="flex flex-col gap-4 p-6 md:min-w-[425px] md:max-w-[500px]"
       dataQa="pre-upload-modal"
       isOpen={isOpen}
       onClose={() => onClose(false)}
+      dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       <div className="flex flex-col gap-2 overflow-auto">
         <div className="flex justify-between">

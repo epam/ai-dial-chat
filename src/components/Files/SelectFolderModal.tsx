@@ -177,7 +177,8 @@ export const SelectFolderModal = ({
       isOpen={isOpen}
       onClose={() => onClose(false)}
       dataQa="select-folder-modal"
-      containerClassName="relative flex max-h-full min-w-full flex-col gap-4 rounded bg-layer-3 md:min-w-[425px] md:max-w-full"
+      containerClassName="flex min-w-full flex-col gap-4 md:min-w-[425px] md:max-w-full"
+      dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       <div className="flex flex-col gap-2 overflow-auto">
         <div className="flex justify-between px-6 pt-4">

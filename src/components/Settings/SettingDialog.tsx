@@ -67,11 +67,12 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="relative inline-block max-h-full w-[500px] overflow-y-auto rounded bg-layer-3 p-4 text-left align-bottom transition-all md:max-h-[400px]"
+      containerClassName="inline-block w-[500px] overflow-y-auto p-4 align-bottom transition-all md:max-h-[400px]"
       dataQa="settings-modal"
       isOpen={open}
       onClose={onClose}
       initialFocus={saveBtnRef}
+      dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       <button
         className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"

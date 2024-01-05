@@ -30,7 +30,8 @@ export const ConfirmDialog = ({
       isOpen={isOpen}
       onClose={() => onClose(false)}
       dataQa="confirmation-dialog"
-      containerClassName="z-50 flex min-w-[90%] flex-col items-center gap-4 rounded bg-layer-3 p-6 text-center md:min-w-[300px] md:max-w-[500px]"
+      containerClassName="z-50 flex min-w-[90%] flex-col items-center gap-4 p-6 text-center md:min-w-[300px] md:max-w-[500px]"
+      dismissProps={{ outsidePressEvent: 'mousedown' }}
       hideClose
     >
       <div className="flex flex-col gap-2">
