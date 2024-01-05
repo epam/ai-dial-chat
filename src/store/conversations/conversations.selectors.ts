@@ -116,6 +116,27 @@ export const selectFilteredFolders = createSelector(
   },
 );
 
+export const selectSectionFolders = createSelector(
+  [
+    (state) => state,
+    selectFolders,
+    (_state, filters: EntityFilters) => filters,
+  ],
+  (state, folders, filters) => {
+    const folderIds = folders // direct parent folders
+      .filter((folder) => filters.sectionFilter(folder))
+      .map((folder) => folder.id);
+
+    const filteredFolderIds = new Set(
+      folderIds.flatMap((fid) =>
+        getChildAndCurrentFoldersIdsById(fid, folders),
+      ),
+    );
+
+    return folders.filter((folder) => filteredFolderIds.has(folder.id));
+  },
+);
+
 export const selectLastConversation = createSelector(
   [selectConversations],
   (state): Conversation | undefined => {

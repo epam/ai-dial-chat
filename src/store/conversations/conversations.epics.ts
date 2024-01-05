@@ -39,6 +39,7 @@ import {
   isSettingsChanged,
 } from '@/src/utils/app/conversation';
 import { DataService } from '@/src/utils/app/data/data-service';
+import { getFolderIdByPath } from '@/src/utils/app/folders';
 import {
   ImportConversationsResponse,
   exportConversation,
@@ -49,6 +50,7 @@ import {
   mergeMessages,
   parseStreamMessages,
 } from '@/src/utils/app/merge-streams';
+import { PublishedWithMeFilter } from '@/src/utils/app/search';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
 
@@ -1495,22 +1497,25 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.publishFolder.match),
     map(({ payload }) => ({
-      sharedFolderId: payload.id,
-      shareUniqueId: payload.shareUniqueId,
+      publishRequest: payload,
       conversations: ConversationsSelectors.selectConversations(state$.value),
       childFolders: ConversationsSelectors.selectChildAndCurrentFoldersIdsById(
         state$.value,
         payload.id,
       ),
       folders: ConversationsSelectors.selectFolders(state$.value),
+      publishedFolders: ConversationsSelectors.selectSectionFolders(
+        state$.value,
+        PublishedWithMeFilter,
+      ),
     })),
     switchMap(
       ({
-        sharedFolderId,
-        shareUniqueId,
+        publishRequest,
         conversations,
         childFolders,
         folders,
+        publishedFolders,
       }) => {
         const mapping = new Map();
         childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
@@ -1522,11 +1527,15 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
             id: mapping.get(folder.id),
             originalId: folder.id,
             folderId:
-              folder.id === sharedFolderId ? undefined : mapping.get(folderId), // show shared folder on root level
+              folder.id === publishRequest.id
+                ? getFolderIdByPath(publishRequest.path, publishedFolders)
+                : mapping.get(folderId),
             publishedWithMe:
-              folder.id === sharedFolderId || folder.sharedWithMe,
+              folder.id === publishRequest.id || folder.publishedWithMe,
             shareUniqueId:
-              folder.id === sharedFolderId ? shareUniqueId : undefined,
+              folder.id === publishRequest.id
+                ? publishRequest.shareUniqueId
+                : folder.shareUniqueId,
           }));
 
         const sharedConversations = conversations
@@ -1563,21 +1572,25 @@ const publishConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.publishConversation.match),
     map(({ payload }) => ({
-      sharedConversationId: payload.id,
-      shareUniqueId: payload.shareUniqueId,
+      publishRequest: payload,
       conversations: ConversationsSelectors.selectConversations(state$.value),
+      publishedFolders: ConversationsSelectors.selectSectionFolders(
+        state$.value,
+        PublishedWithMeFilter,
+      ),
     })),
-    switchMap(({ sharedConversationId, shareUniqueId, conversations }) => {
+    switchMap(({ publishRequest, conversations, publishedFolders }) => {
       const sharedConversations = conversations
-        .filter((conversation) => conversation.id === sharedConversationId)
+        .filter((conversation) => conversation.id === publishRequest.id)
         .map(({ folderId: _, ...conversation }) => ({
           ...conversation,
           ...resetShareEntity,
           id: uuidv4(),
           originalId: conversation.id,
-          folderId: undefined, // show on root level
+          folderId: getFolderIdByPath(publishRequest.path, publishedFolders),
           publishedWithMe: true,
-          shareUniqueId,
+          name: publishRequest.name,
+          shareUniqueId: publishRequest.shareUniqueId,
         }));
 
       return concat(
