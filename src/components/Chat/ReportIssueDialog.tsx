@@ -13,6 +13,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { checkValidity } from '@/src/utils/app/forms';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { ReportIssueBody } from '@/src/types/report-issue';
@@ -24,7 +25,6 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { errorsMessages } from '@/src/constants/errors';
 
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
-import { checkValidity } from '@/src/utils/app/forms';
 
 const reportIssue = async (fields: Omit<ReportIssueBody, 'email'>) => {
   const controller = new AbortController();
@@ -78,11 +78,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
       setSubmitted(true);
       const inputs = [titleInputRef, descriptionInputRef];
 
-      if (
-        checkValidity(
-          inputs
-        )
-      ) {
+      if (checkValidity(inputs)) {
         dispatch(
           UIActions.showToast({
             message: t('Reporting an issue in progress...'),

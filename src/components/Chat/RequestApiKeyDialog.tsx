@@ -13,6 +13,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { checkValidity } from '@/src/utils/app/forms';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { RequestAPIKeyBody } from '@/src/types/request-api-key';
@@ -24,7 +25,6 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { errorsMessages } from '@/src/constants/errors';
 
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
-import { checkValidity } from '@/src/utils/app/forms';
 
 const requestApiKey = async (
   fields: Omit<RequestAPIKeyBody, 'requester_email'>,
@@ -165,11 +165,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
         localAgreementInputRef,
         notClientProjectUsageAgreementInputRef,
       ];
-      if (
-        checkValidity(
-          inputs,
-        )
-      ) {
+      if (checkValidity(inputs)) {
         dispatch(
           UIActions.showToast({
             message: t('Requesting API key in progress...'),

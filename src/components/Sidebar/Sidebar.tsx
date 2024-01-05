@@ -1,4 +1,11 @@
-import { DragEvent, ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import {
+  DragEvent,
+  ReactNode,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -201,8 +208,9 @@ const Sidebar = <T,>({
           {filteredItems?.length > 0 ? (
             <div
               ref={dragDropElement}
-              className={`min-h-[100px] min-w-[42px] grow ${isDraggingOver ? 'bg-accent-primary-alpha' : ''
-                }`}
+              className={`min-h-[100px] min-w-[42px] grow ${
+                isDraggingOver ? 'bg-accent-primary-alpha' : ''
+              }`}
               onDrop={(e) => {
                 setIsDraggingOver(false);
                 handleDrop(e);

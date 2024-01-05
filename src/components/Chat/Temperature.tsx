@@ -1,4 +1,11 @@
-import { FC, KeyboardEventHandler, MouseEventHandler, ReactNode, TouchEventHandler, useState } from 'react';
+import {
+  FC,
+  KeyboardEventHandler,
+  MouseEventHandler,
+  ReactNode,
+  TouchEventHandler,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -16,11 +23,13 @@ interface TemperatureIndicatorProps extends HandleProps {
   onTouchStart: TouchEventHandler<HTMLDivElement>;
   children: ReactNode;
 }
-const TemperatureIndicator = ({ style,
+const TemperatureIndicator = ({
+  style,
   onKeyDown,
   onMouseDown,
   onTouchStart,
-  children }: TemperatureIndicatorProps) => {
+  children,
+}: TemperatureIndicatorProps) => {
   return (
     <div
       className="absolute top-[calc(50%-20px)] flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-layer-3 shadow"
