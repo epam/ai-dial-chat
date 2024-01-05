@@ -37,3 +37,5 @@ export * from './dropdownCheckboxMenu';
 export * from './filter';
 export * from './menu';
 export * from './search';
+export * from './accountSettings';
+export * from './banner';

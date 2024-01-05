@@ -1,4 +1,5 @@
 import { appContainer } from '@/e2e/src/ui/selectors';
+import { Banner } from '@/e2e/src/ui/webElements/banner';
 import { BaseElement } from '@/e2e/src/ui/webElements/baseElement';
 import { Chat } from '@/e2e/src/ui/webElements/chat';
 import { ChatBar } from '@/e2e/src/ui/webElements/chatBar';
@@ -13,6 +14,7 @@ export class AppContainer extends BaseElement {
   }
 
   private header!: Header;
+  private banner!: Banner;
   private chat!: Chat;
   private chatBar!: ChatBar;
   private promptBar!: PromptBar;
@@ -23,6 +25,13 @@ export class AppContainer extends BaseElement {
       this.header = new Header(this.page);
     }
     return this.header;
+  }
+
+  getBanner(): Banner {
+    if (!this.banner) {
+      this.banner = new Banner(this.page);
+    }
+    return this.banner;
   }
 
   getChat(): Chat {
