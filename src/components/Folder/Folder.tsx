@@ -20,8 +20,6 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import useOutsideAlerter from '@/src/hooks/useOutsideAlerter';
-
 import { getFoldersDepth } from '@/src/utils/app/folders';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 
@@ -421,8 +419,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       dispatch(UIActions.openFolder({ id: currentFolder.id }));
     }
   }, [currentFolder.id, dispatch, searchTerm]);
-
-  useOutsideAlerter(dragDropElement, setIsSelected);
 
   return (
     <div
