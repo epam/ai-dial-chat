@@ -14,7 +14,7 @@ export const ErrorMessage = ({ error }: Props) => {
       <span className="flex shrink-0 items-center">
         <IconExclamationCircle size={24} />
       </span>
-      <span className="whitespace-pre-wrap">{error}</span>
+      <span className="truncate whitespace-pre-wrap">{error}</span>
     </div>
   );
 };
