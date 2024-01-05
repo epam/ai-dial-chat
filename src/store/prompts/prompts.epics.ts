@@ -51,7 +51,8 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         PromptsActions.addFolders.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action) ||
-        PromptsActions.unpublishFolder.match(action),
+        PromptsActions.unpublishFolder.match(action) ||
+        PromptsActions.setFolders.match(action),
     ),
     map(() => ({
       promptsFolders: PromptsSelectors.selectFolders(state$.value),
@@ -76,7 +77,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     switchMap(({ prompts, childFolders, folders }) => {
       const removedPromptsIds = prompts
         .filter(
-          (prompt) => prompt.folderId && childFolders.includes(prompt.folderId),
+          (prompt) => prompt.folderId && childFolders.has(prompt.folderId),
         )
         .map(({ id }) => id);
 
@@ -88,9 +89,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         ),
         of(
           PromptsActions.setFolders({
-            folders: folders.filter(
-              (folder) => !childFolders.includes(folder.id),
-            ),
+            folders: folders.filter((folder) => !childFolders.has(folder.id)),
           }),
         ),
       );
@@ -212,7 +211,7 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
         const mapping = new Map();
         childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
         const newFolders = folders
-          .filter(({ id }) => childFolders.includes(id))
+          .filter(({ id }) => childFolders.has(id))
           .map(({ folderId, ...folder }) => ({
             ...folder,
             ...resetShareEntity,
@@ -227,8 +226,7 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
 
         const sharedPrompts = prompts
           .filter(
-            (prompt) =>
-              prompt.folderId && childFolders.includes(prompt.folderId),
+            (prompt) => prompt.folderId && childFolders.has(prompt.folderId),
           )
           .map(({ folderId, ...prompt }) => ({
             ...prompt,
@@ -306,7 +304,7 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
         const mapping = new Map();
         childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
         const newFolders = folders
-          .filter(({ id }) => childFolders.includes(id))
+          .filter(({ id }) => childFolders.has(id))
           .map(({ folderId, ...folder }) => ({
             ...folder,
             ...resetShareEntity,
@@ -322,8 +320,7 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
 
         const sharedPrompts = prompts
           .filter(
-            (prompt) =>
-              prompt.folderId && childFolders.includes(prompt.folderId),
+            (prompt) => prompt.folderId && childFolders.has(prompt.folderId),
           )
           .map(({ folderId, ...prompt }) => ({
             ...prompt,

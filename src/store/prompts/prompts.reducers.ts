@@ -168,6 +168,7 @@ export const promptsSlice = createSlice({
       const newPrompt: Prompt = {
         ...payload.prompt,
         ...resetShareEntity,
+        folderId: undefined,
         name: generateNextName(
           translate('Prompt'),
           payload.prompt.name,

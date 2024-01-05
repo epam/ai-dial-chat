@@ -4,6 +4,7 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
+import { IconX } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -20,7 +21,6 @@ import { useAppSelector } from '@/src/store/hooks';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
-import XMark from '../../../public/images/icons/xmark.svg';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
 
@@ -102,7 +102,7 @@ const SelectedAddon = ({
       <ModelIcon entity={addon} entityId={addon.id} size={15} />
       <span>{addon.name}</span>
       {!isPreselected && (
-        <XMark
+        <IconX
           height={12}
           width={12}
           className="text-secondary hover:text-accent-primary"
@@ -210,7 +210,7 @@ export const AddonsDialog: FC<Props> = ({
               className="text-secondary hover:text-accent-primary"
               data-qa="close-addons-dialog"
             >
-              <XMark height={24} width={24} />
+              <IconX height={24} width={24} />
             </button>
           </div>
 

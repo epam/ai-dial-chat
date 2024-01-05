@@ -10,6 +10,7 @@ import { Menu, MenuItem } from './DropdownMenu';
 import Tooltip from './Tooltip';
 
 function ContextMenuItemRenderer({
+  featureType,
   name,
   Icon,
   dataQa,
@@ -41,6 +42,7 @@ function ContextMenuItemRenderer({
     return (
       <ContextMenu
         menuItems={childMenuItems}
+        featureType={featureType}
         triggerIconClassName={classNames(
           className,
           'text-secondary',
@@ -109,6 +111,7 @@ export default function ContextMenu({
       isMenuOpen={isOpen}
       trigger={
         <div
+          data-qa="menu-trigger"
           className={classNames(
             'flex w-full items-center justify-center rounded text-secondary',
             triggerIconHighlight && 'hover:text-accent-primary',

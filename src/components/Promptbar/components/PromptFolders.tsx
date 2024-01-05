@@ -189,7 +189,7 @@ export const PromptSection = ({
     PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
   );
 
-  const rootfolders = useMemo(
+  const rootFolders = useMemo(
     () => folders.filter(({ folderId }) => !folderId),
     [folders],
   );
@@ -209,7 +209,7 @@ export const PromptSection = ({
 
   useEffect(() => {
     const shouldBeHighlighted =
-      rootfolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
+      rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
       (!!displayRootFiles &&
         rootPrompts.some(({ id }) => selectSelectedPromptId === id));
     if (isSectionHighlighted !== shouldBeHighlighted) {
@@ -217,7 +217,7 @@ export const PromptSection = ({
     }
   }, [
     displayRootFiles,
-    rootfolders,
+    rootFolders,
     isSectionHighlighted,
     selectSelectedPromptId,
     selectedFoldersIds,
@@ -226,8 +226,8 @@ export const PromptSection = ({
 
   if (
     hideIfEmpty &&
-    (!displayRootFiles || !prompts.length) &&
-    !folders.length
+    (!displayRootFiles || !rootPrompts.length) &&
+    !rootFolders.length
   ) {
     return null;
   }
@@ -240,7 +240,7 @@ export const PromptSection = ({
       isHighlighted={isSectionHighlighted}
     >
       <div>
-        {rootfolders.map((folder, index, arr) => (
+        {rootFolders.map((folder, index, arr) => (
           <PromptFolderTemplate
             key={folder.id}
             folder={folder}
@@ -251,12 +251,13 @@ export const PromptSection = ({
           />
         ))}
       </div>
-      <div>
-        {displayRootFiles &&
-          rootPrompts.map((item) => (
+      {displayRootFiles && (
+        <div className="flex flex-col gap-1">
+          {rootPrompts.map((item) => (
             <PromptComponent key={item.id} item={item} />
           ))}
-      </div>
+        </div>
+      )}
     </CollapsableSection>
   );
 };

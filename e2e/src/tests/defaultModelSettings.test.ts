@@ -35,6 +35,7 @@ test(
     entitySettings,
     temperatureSlider,
     addons,
+    apiHelper,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-933', 'EPMRTC-398', 'EPMRTC-376', 'EPMRTC-1030');
@@ -61,6 +62,7 @@ test(
     });
 
     await test.step('Verify default model is selected by default', async () => {
+      await recentEntities.waitForState();
       const modelBorderColors = await recentEntities
         .getRecentEntity(defaultModel.name)
         .getAllBorderColors();
@@ -68,7 +70,7 @@ test(
         borders.forEach((borderColor) => {
           expect
             .soft(borderColor, ExpectedMessages.defaultTalkToIsValid)
-            .toBe(Colors.highlightedEntity);
+            .toBe(Colors.controlsBackgroundAccent);
         });
       });
     });
@@ -114,8 +116,7 @@ test(
     });
 
     await test.step('Verify recent entities icons are displayed and valid', async () => {
-      const recentEntitiesIcons =
-        await recentEntities.getRecentEntitiesIconAttributes();
+      const recentEntitiesIcons = await recentEntities.getRecentEntitiesIcons();
       expect
         .soft(
           recentEntitiesIcons.length,
@@ -123,27 +124,23 @@ test(
         )
         .toBe(recentModelIds.length);
 
-      for (let i = 0; i < recentModelIds.length; i++) {
-        const expectedModel = allEntities.find(
-          (e) => e.id === recentModelIds[i],
+      for (const model of recentModelIds) {
+        const modelEntity = ModelsUtil.getModel(model)!;
+        const actualRecentModel = recentEntitiesIcons.find(
+          (e) => e.entityName === modelEntity.name,
         )!;
+        const expectedEntityIcon = await apiHelper.getEntityIcon(modelEntity);
         expect
           .soft(
-            recentEntitiesIcons[i].iconEntity,
-            ExpectedMessages.entityIconIsValid,
+            actualRecentModel.icon,
+            `${ExpectedMessages.entityIconIsValid} for ${modelEntity.name}`,
           )
-          .toBe(expectedModel.id);
-        expect
-          .soft(
-            recentEntitiesIcons[i].iconUrl,
-            ExpectedMessages.entityIconSourceIsValid,
-          )
-          .toBe(expectedModel.iconUrl);
+          .toBe(expectedEntityIcon);
       }
     });
 
     await test.step('Verify recent addon icons are displayed and valid', async () => {
-      const recentAddonsIcons = await addons.getRecentAddonsIconAttributes();
+      const recentAddonsIcons = await addons.getRecentAddonsIcons();
       expect
         .soft(
           recentAddonsIcons.length,
@@ -151,22 +148,18 @@ test(
         )
         .toBe(recentAddonIds.length);
 
-      for (let i = 0; i < recentAddonIds.length; i++) {
-        const expectedAddon = expectedAddons.find(
-          (a) => a.id === recentAddonIds[i],
+      for (const addon of recentAddonIds) {
+        const addonEntity = ModelsUtil.getAddon(addon)!;
+        const actualRecentAddon = recentAddonsIcons.find(
+          (a) => a.entityName === addonEntity.name,
         )!;
+        const expectedAddonIcon = await apiHelper.getEntityIcon(addonEntity);
         expect
           .soft(
-            recentAddonsIcons[i].iconEntity,
-            ExpectedMessages.addonIconIsValid,
+            actualRecentAddon.icon,
+            `${ExpectedMessages.addonIconIsValid} for ${addonEntity.name}`,
           )
-          .toBe(expectedAddon.id);
-        expect
-          .soft(
-            recentAddonsIcons[i].iconUrl,
-            ExpectedMessages.addonIconSourceIsValid,
-          )
-          .toBe(expectedAddon.iconUrl);
+          .toBe(expectedAddonIcon);
       }
     });
   },
@@ -271,7 +264,7 @@ test(
         borders.forEach((borderColor) => {
           expect
             .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
-            .toBe(Colors.highlightedEntity);
+            .toBe(Colors.backgroundAccentPrimary);
         });
       });
 
@@ -304,6 +297,7 @@ test('Settings on default screen are saved in local storage when temperature = 0
   await dialHomePage.reloadPage();
   await dialHomePage.waitForPageLoaded();
 
+  await recentEntities.waitForState();
   const modelBorderColors = await recentEntities
     .getRecentEntity(randomModel.name)
     .getAllBorderColors();
@@ -311,7 +305,7 @@ test('Settings on default screen are saved in local storage when temperature = 0
     borders.forEach((borderColor) => {
       expect
         .soft(borderColor, ExpectedMessages.defaultTalkToIsValid)
-        .toBe(Colors.highlightedEntity);
+        .toBe(Colors.backgroundAccentPrimary);
     });
   });
 
@@ -350,7 +344,7 @@ test('Recent "Talk to" list is updated', async ({
     borders.forEach((borderColor) => {
       expect
         .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
-        .toBe(Colors.highlightedEntity);
+        .toBe(Colors.backgroundAccentPrimary);
     });
   });
 

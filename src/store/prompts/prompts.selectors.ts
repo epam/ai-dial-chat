@@ -9,6 +9,7 @@ import {
   doesPromptContainSearchTerm,
   getMyItemsFilters,
 } from '@/src/utils/app/search';
+import { isEntityExternal } from '@/src/utils/app/share';
 
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
@@ -68,15 +69,15 @@ export const selectFilteredFolders = createSelector(
     selectFolders,
     selectEmptyFolderIds,
     (_state, filters: EntityFilters) => filters,
-    (_state, _filters?, searchTerm?: string) => searchTerm,
-    (_state, _filters?, _searchTerm?, includeEmptyFolders?: boolean) =>
+    (_state, _filters, searchTerm?: string) => searchTerm,
+    (_state, _filters, _searchTerm?, includeEmptyFolders?: boolean) =>
       includeEmptyFolders,
   ],
   (
     state,
     folders,
     emptyFolderIds,
-    filters?,
+    filters,
     searchTerm?,
     includeEmptyFolders?,
   ) => {
@@ -128,7 +129,7 @@ export const selectParentFoldersIds = createSelector(
 export const selectChildAndCurrentFoldersIdsById = createSelector(
   [selectFolders, (_state, folderId: string | undefined) => folderId],
   (folders, folderId) => {
-    return getChildAndCurrentFoldersIdsById(folderId, folders);
+    return new Set(getChildAndCurrentFoldersIdsById(folderId, folders));
   },
 );
 
@@ -191,5 +192,13 @@ export const selectSelectedPromptFoldersIds = createSelector(
     );
 
     return selectedFolders;
+  },
+);
+
+export const hasExternalParent = createSelector(
+  [selectFolders, (_state: RootState, folderId?: string) => folderId],
+  (folders, folderId?) => {
+    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
+    return parentFolders.some((folder) => isEntityExternal(folder));
   },
 );

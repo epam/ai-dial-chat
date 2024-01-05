@@ -1,3 +1,4 @@
+import { IconX } from '@tabler/icons-react';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -12,7 +13,6 @@ import { useAppSelector } from '@/src/store/hooks';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
-import XMark from '../../../public/images/icons/xmark.svg';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import Tooltip from '../Common/Tooltip';
 import { AddonsDialog } from './AddonsDialog';
@@ -54,7 +54,7 @@ const Addon = ({
       <ModelIcon entity={addonsMap[addonId]} entityId={addonId} size={15} />
       <span>{addonsMap[addonId]?.name || addonId}</span>
       {isSelected && !preselectedAddonsIds.includes(addonId) && (
-        <XMark height={12} width={12} className="text-secondary" />
+        <IconX height={12} width={12} className="text-secondary" />
       )}
     </button>
   );

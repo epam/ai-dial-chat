@@ -1,10 +1,11 @@
-import { ChatSelectors } from '../selectors';
+import { ChatSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Rate, Side } from '@/e2e/src/testData';
 import { Attributes, Tags } from '@/e2e/src/ui/domData';
 import { keys } from '@/e2e/src/ui/keyboard';
-import { Page } from '@playwright/test';
+import { IconSelectors } from '@/e2e/src/ui/selectors/iconSelectors';
+import { Locator, Page } from '@playwright/test';
 
 export class ChatMessages extends BaseElement {
   constructor(page: Page) {
@@ -54,10 +55,10 @@ export class ChatMessages extends BaseElement {
     return loadingCursorCount > 0;
   }
 
-  public getChatMessage(message: string, index?: number) {
-    return index
-      ? this.chatMessages.getElementLocatorByText(message).nth(index - 1)
-      : this.chatMessages.getElementLocatorByText(message).last();
+  public getChatMessage(message: string | number) {
+    return typeof message === 'string'
+      ? this.chatMessages.getElementLocatorByText(message).last()
+      : this.chatMessages.getNthElement(message);
   }
 
   public getChatMessageRate(message: string, rate: Rate) {
@@ -76,18 +77,20 @@ export class ChatMessages extends BaseElement {
 
   public async getIconAttributesForMessage(index?: number) {
     const messagesCount = await this.chatMessages.getElementsCount();
-    const messageIcon = await this.chatMessages
-      .getNthElement(index ?? messagesCount)
-      .locator(ChatSelectors.chatIcon);
-    return this.getElementIconAttributes(messageIcon);
+    const messageIcon = await this.chatMessages.getNthElement(
+      index ?? messagesCount,
+    );
+    return this.getElementIconHtml(messageIcon);
   }
 
   public async getMessageIconSize(index?: number) {
     const messagesCount = await this.chatMessages.getElementsCount();
-    const iconBounding = await this.chatMessages
+    const icon = await this.chatMessages
       .getNthElement(index ?? messagesCount)
-      .locator(ChatSelectors.chatIcon)
-      .boundingBox();
+      .locator(Tags.svg)
+      .first();
+    await icon.waitFor();
+    const iconBounding = await icon.boundingBox();
     return {
       width: Number(iconBounding!.width.toFixed(2)),
       height: Number(iconBounding!.height.toFixed(2)),
@@ -101,7 +104,8 @@ export class ChatMessages extends BaseElement {
       await this.getCompareRowMessage(comparedMessageSide);
     await compareRowMessage
       .locator(ChatSelectors.iconAnimation)
-      .locator(ChatSelectors.chatIcon)
+      .locator(Tags.svg)
+      .first()
       .waitFor({ state: 'detached' });
   }
 
@@ -110,7 +114,8 @@ export class ChatMessages extends BaseElement {
     return this.chatMessages
       .getNthElement(index ?? messagesCount)
       .locator(ChatSelectors.iconAnimation)
-      .locator(ChatSelectors.chatIcon);
+      .locator(Tags.svg)
+      .first();
   }
 
   public async getCompareMessageJumpingIcon(
@@ -123,7 +128,8 @@ export class ChatMessages extends BaseElement {
     );
     return compareRowMessage
       .locator(ChatSelectors.iconAnimation)
-      .locator(ChatSelectors.chatIcon);
+      .locator(Tags.svg)
+      .first();
   }
 
   public async getIconAttributesForCompareMessage(
@@ -134,8 +140,7 @@ export class ChatMessages extends BaseElement {
       comparedMessageSide,
       rowIndex,
     );
-    const messageIcon = await compareRowMessage.locator(ChatSelectors.chatIcon);
-    return this.getElementIconAttributes(messageIcon);
+    return this.getElementIconHtml(compareRowMessage);
   }
 
   public async getCompareMessagesCount() {
@@ -203,7 +208,7 @@ export class ChatMessages extends BaseElement {
     rowIndex?: number,
   ) {
     await this.invokeCompareRowMessageAction(
-      ChatSelectors.deleteIcon,
+      IconSelectors.deleteIcon,
       comparedMessageSide,
       rowIndex,
     );
@@ -214,7 +219,7 @@ export class ChatMessages extends BaseElement {
     rowIndex?: number,
   ) {
     await this.invokeCompareRowMessageAction(
-      ChatSelectors.editIcon,
+      IconSelectors.editIcon,
       comparedMessageSide,
       rowIndex,
     );
@@ -225,7 +230,7 @@ export class ChatMessages extends BaseElement {
     rowIndex?: number,
   ) {
     await this.invokeCompareRowMessageAction(
-      ChatSelectors.copyIcon,
+      IconSelectors.copyIcon,
       comparedMessageSide,
       rowIndex,
     );
@@ -281,8 +286,8 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(Tags.textarea);
   }
 
-  public messageEditIcon = (message: string) =>
-    this.getChatMessage(message).locator(ChatSelectors.editIcon);
+  public messageEditIcon = (messageLocator: Locator) =>
+    messageLocator.locator(IconSelectors.editIcon);
   public saveAndSubmit = new BaseElement(
     this.page,
     ChatSelectors.saveAndSubmit,
@@ -290,12 +295,12 @@ export class ChatMessages extends BaseElement {
   public cancel = new BaseElement(this.page, ChatSelectors.cancelEdit);
 
   public messageDeleteIcon = (message: string) =>
-    this.getChatMessage(message).locator(ChatSelectors.deleteIcon);
+    this.getChatMessage(message).locator(IconSelectors.deleteIcon);
 
-  public async openEditMessageMode(message: string) {
-    const chatMessage = await this.getChatMessage(message);
+  public async openEditMessageMode(message: string | number) {
+    const chatMessage = this.getChatMessage(message);
     await chatMessage.hover();
-    const editIcon = this.messageEditIcon(message);
+    const editIcon = this.messageEditIcon(chatMessage);
     await editIcon.waitFor();
     await editIcon.click();
   }
@@ -330,5 +335,14 @@ export class ChatMessages extends BaseElement {
     const chatMessage = await this.getChatMessage(message);
     await chatMessage.hover();
     await this.messageDeleteIcon(message).click();
+  }
+
+  public async isArrowIconVisibleForMessage(index?: number) {
+    const messagesCount = await this.chatMessages.getElementsCount();
+    return this.chatMessages
+      .getNthElement(index ?? messagesCount)
+      .locator(ChatSelectors.messageIcon)
+      .locator(SideBarSelectors.arrowAdditionalIcon)
+      .isVisible();
   }
 }

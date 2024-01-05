@@ -1,5 +1,6 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { IconFolder } from '@tabler/icons-react';
+import { IconX } from '@tabler/icons-react';
 import {
   DragEvent,
   FC,
@@ -42,7 +43,6 @@ import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
-import XmarkIcon from '../../../public/images/icons/xmark.svg';
 import PublishModal from '../Chat/PublishModal';
 import ShareModal from '../Chat/ShareModal';
 import UnpublishModal from '../Chat/UnpublishModal';
@@ -589,7 +589,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 setIsRenaming(false);
               }}
             >
-              <XmarkIcon
+              <IconX
                 width={18}
                 height={18}
                 size={18}

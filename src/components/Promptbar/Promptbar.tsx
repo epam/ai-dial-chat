@@ -34,7 +34,7 @@ const PromptActionsBlock = () => {
           dispatch(PromptsActions.resetSearch());
           dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
         }}
-        data-qa="new-prompt"
+        data-qa="new-entity"
       >
         <PlusIcon className="text-secondary" width={18} height={18} />
         {t('New prompt')}

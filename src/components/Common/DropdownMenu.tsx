@@ -209,7 +209,7 @@ export const MenuComponent = forwardRef<
         data-focus-inside={hasFocusInside ? '' : undefined}
         className={classNames(
           isNested ? menuItemClassNames : '',
-          isNested ? 'h-[42px] w-full px-3' : 'h-full px-0',
+          isNested ? 'h-[34px] w-full px-3' : 'h-full px-0',
           className,
         )}
         {...getReferenceProps(
@@ -300,7 +300,7 @@ export const MenuItem = forwardRef<
         role="menuitem"
         className={classNames(
           menuItemClassNames,
-          'h-[42px] w-full px-3',
+          'h-[34px] w-full px-3',
           className,
         )}
         tabIndex={isActive ? 0 : -1}

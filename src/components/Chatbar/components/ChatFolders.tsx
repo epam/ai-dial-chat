@@ -200,7 +200,7 @@ export const ChatSection = ({
     ),
   );
 
-  const rootfolders = useMemo(
+  const rootFolders = useMemo(
     () => folders.filter(({ folderId }) => !folderId),
     [folders],
   );
@@ -220,7 +220,7 @@ export const ChatSection = ({
 
   useEffect(() => {
     const shouldBeHighlighted =
-      rootfolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
+      rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
       (!!displayRootFiles &&
         rootConversations.some((chat) =>
           selectedConversationsIds.includes(chat.id),
@@ -230,7 +230,7 @@ export const ChatSection = ({
     }
   }, [
     displayRootFiles,
-    rootfolders,
+    rootFolders,
     isSectionHighlighted,
     selectedConversationsIds,
     selectedFoldersIds,
@@ -239,8 +239,8 @@ export const ChatSection = ({
 
   if (
     hideIfEmpty &&
-    (!displayRootFiles || !conversations.length) &&
-    !folders.length
+    (!displayRootFiles || !rootConversations.length) &&
+    !rootFolders.length
   ) {
     return null;
   }
@@ -253,7 +253,7 @@ export const ChatSection = ({
       isHighlighted={isSectionHighlighted}
     >
       <div>
-        {rootfolders.map((folder, index, arr) => {
+        {rootFolders.map((folder, index, arr) => {
           return (
             <ChatFolderTemplate
               key={folder.id}
@@ -266,12 +266,13 @@ export const ChatSection = ({
           );
         })}
       </div>
-      <div>
-        {displayRootFiles &&
-          rootConversations.map((item) => (
+      {displayRootFiles && (
+        <div className="flex flex-col gap-1">
+          {rootConversations.map((item) => (
             <ConversationComponent key={item.id} item={item} />
           ))}
-      </div>
+        </div>
+      )}
     </CollapsableSection>
   );
 };

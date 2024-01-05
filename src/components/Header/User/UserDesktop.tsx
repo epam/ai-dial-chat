@@ -62,7 +62,7 @@ export const UserDesktop = () => {
         }
       >
         <MenuItem
-          className={`hover:bg-accent-primary-alpha`}
+          className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex">
               <IconSettings size={18} className="text-secondary" />
@@ -74,7 +74,7 @@ export const UserDesktop = () => {
           }}
         />
         <MenuItem
-          className={`hover:bg-accent-primary-alpha`}
+          className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex gap-3">
               <LogOutIcon width={18} height={18} className="text-secondary" />

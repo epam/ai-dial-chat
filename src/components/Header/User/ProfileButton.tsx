@@ -1,4 +1,5 @@
 /*eslint-disable @next/next/no-img-element*/
+import { IconX } from '@tabler/icons-react';
 import { useSession } from 'next-auth/react';
 import { useCallback } from 'react';
 
@@ -10,7 +11,6 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import UserIcon from '../../../../public/images/icons/user.svg';
-import XmarkIcon from '../../../../public/images/icons/xmark.svg';
 
 export const ProfileButton = () => {
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
@@ -29,7 +29,7 @@ export const ProfileButton = () => {
       onClick={onClick}
     >
       {isProfileOpen ? (
-        <XmarkIcon className="text-secondary" width={24} height={24} />
+        <IconX className="text-secondary" width={24} height={24} />
       ) : session?.user?.image ? (
         <img
           className="rounded"

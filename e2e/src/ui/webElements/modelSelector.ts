@@ -1,6 +1,6 @@
-import { Attributes, Tags } from '@/e2e/src/ui/domData';
-import { ChatSelectors } from '@/e2e/src/ui/selectors';
-import { BaseElement, Icons } from '@/e2e/src/ui/webElements/baseElement';
+import { Attributes, Styles, Tags } from '@/e2e/src/ui/domData';
+import { ChatSelectors, SideBarSelectors } from '@/e2e/src/ui/selectors';
+import { BaseElement } from '@/e2e/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
 
 export class ModelSelector extends BaseElement {
@@ -9,9 +9,6 @@ export class ModelSelector extends BaseElement {
   }
 
   private modelInput = this.getChildElementBySelector(ChatSelectors.combobox);
-  private selectedModel = this.getChildElementBySelector(
-    `${ChatSelectors.combobox}~${Tags.div}`,
-  );
   public listbox = this.getChildElementBySelector(ChatSelectors.listbox);
   private listOptions = this.listbox.getChildElementBySelector(
     ChatSelectors.listOptions,
@@ -19,12 +16,14 @@ export class ModelSelector extends BaseElement {
   private listOption = (option: string) =>
     this.listOptions.getElementLocatorByText(option);
 
-  public async getSelectedModel() {
-    return this.selectedModel.getElementContent();
-  }
-
   public async getListOptions() {
     return this.listOptions.getElementsInnerContent();
+  }
+
+  public getOptionAdditionalIcon(option: string) {
+    return this.listOption(option).locator(
+      SideBarSelectors.arrowAdditionalIcon,
+    );
   }
 
   public async selectModel(name: string, isOpen = false) {
@@ -43,22 +42,13 @@ export class ModelSelector extends BaseElement {
     await this.modelInput.fillInInput(text);
   }
 
-  public async getOptionsIconAttributes() {
-    const allIcons: Icons[] = [];
-    const optionsCount = await this.listOptions.getElementsCount();
-    for (let i = 1; i <= optionsCount; i++) {
-      const option = await this.listOptions.getNthElement(i);
-      const customIconOption = await option.locator(ChatSelectors.chatIcon);
-      if (await customIconOption.isVisible()) {
-        const iconAttributes =
-          await this.getElementIconAttributes(customIconOption);
-        allIcons.push(iconAttributes);
-      } else {
-        const defaultIconAttributes =
-          await this.getElementDefaultIconAttributes(option);
-        allIcons.push(defaultIconAttributes);
-      }
-    }
-    return allIcons;
+  public async getOptionsIcons() {
+    return this.getElementIcons(this.listOptions, Tags.desc);
+  }
+
+  public getOptionArrowIconColor(option: string) {
+    return this.createElementFromLocator(
+      this.getOptionAdditionalIcon(option).locator(Tags.svg),
+    ).getComputedStyleProperty(Styles.color);
   }
 }

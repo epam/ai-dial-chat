@@ -1,3 +1,4 @@
+import { IconX } from '@tabler/icons-react';
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -17,7 +18,6 @@ import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
-import XMark from '../../../public/images/icons/xmark.svg';
 import { Addons } from './Addons';
 import { AssistantSubModelSelector } from './AssistantSubModelSelector';
 import { ConversationSettingsModel } from './ConversationSettingsModels';
@@ -206,7 +206,7 @@ export const ConversationSettings = ({
             className="absolute right-3 top-3 text-secondary hover:text-accent-primary"
             onClick={onClose}
           >
-            <XMark height={24} width={24} />
+            <IconX height={24} width={24} />
           </button>
         )}
       </div>

@@ -1,6 +1,7 @@
 import { Rate } from '@/e2e/src/testData';
 import { Attributes } from '@/e2e/src/ui/domData';
 
+export const appContainer = '#theme-main';
 export const ChatSelectors = {
   chat: '[data-qa="chat"]',
   spinner: '[data-qa="spinner"]',
@@ -29,10 +30,6 @@ export const ChatSelectors = {
   recentAddons: '[data-qa="recent-addons"]',
   seeAllSelectors: '[data-qa="see-all-addons"]',
   regenerate: '[data-qa="regenerate"]',
-  editIcon: '.tabler-icon-edit',
-  deleteIcon: '.tabler-icon-trash',
-  playbackIcon: '.tabler-icon-player-play',
-  copyIcon: '.tabler-icon-copy',
   saveAndSubmit: '[data-qa="save-and-submit"]',
   cancelEdit: '[data-qa="cancel"]',
   modelSelector: '[data-qa="model-selector"]',
@@ -50,8 +47,9 @@ export const ChatSelectors = {
   proceedGenerating: '[data-qa="proceed-reply"]',
   chatHeader: '[data-qa="chat-header"]',
   chatTitle: '[data-qa="chat-title"]',
-  chatIcon: '[data-qa="entity-icon"]',
+  worldAdditionalIcon: '[data-qa="world-icon"]',
   chatModel: '[data-qa="chat-model"]',
+  chatAddons: '[data-qa="chat-addons"]',
   conversationToCompare: '[data-qa="conversation-to-compare"]',
   compareMode: '[data-qa="compare-mode"]',
   playbackContainer: '[data-qa="playback"]',

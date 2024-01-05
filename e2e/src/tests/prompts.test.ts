@@ -24,16 +24,16 @@ test('Create new prompt', async ({
   await dialHomePage.openHomePage();
   await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
   await conversationSettings.waitForState();
-  await promptBar.hoverOverNewPrompt();
-  const newPromptCursor = await promptBar.getNewPromptCursor();
+  await promptBar.hoverOverNewEntity();
+  const newPromptCursor = await promptBar.getNewEntityCursor();
   expect
     .soft(newPromptCursor[0], ExpectedMessages.newPromptButtonCursorIsPointer)
     .toBe(Cursors.pointer);
 
-  const newPromptColor = await promptBar.getNewPromptBackgroundColor();
+  const newPromptColor = await promptBar.getNewEntityBackgroundColor();
   expect
     .soft(newPromptColor, ExpectedMessages.newPromptButtonIsHighlighted)
-    .toBe(Colors.highlightedNewPrompt);
+    .toBe(Colors.backgroundAccentTertiary);
 
   await promptBar.createNewPrompt();
   expect
@@ -306,7 +306,7 @@ test('Clear prompts. Cancel', async ({
   await folderConversations.expandCollapseFolder(
     conversationInFolder.folders.name,
   );
-  await promptBar.deleteAllPrompts();
+  await promptBar.deleteAllEntities();
   await confirmationDialog.cancelDialog();
 
   const isFolderConversationVisible =
@@ -406,7 +406,7 @@ test('Clear prompts. Clear', async ({
   await dialHomePage.waitForPageLoaded();
   await conversations.getConversationByName(singleConversation.name).waitFor();
 
-  await promptBar.deleteAllPrompts();
+  await promptBar.deleteAllEntities();
   await confirmationDialog.confirm();
 
   while (i > 0) {
@@ -472,7 +472,7 @@ test(`[UI] Delete all prompts button doesn't exist if not prompts are created`, 
   await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
 
   const isDeleteAllPromptVisible =
-    await promptBar.deleteAllPromptsButton.isVisible();
+    await promptBar.deleteEntitiesButton.isVisible();
   expect
     .soft(
       isDeleteAllPromptVisible,
@@ -596,6 +596,7 @@ test('Search prompt when no folders', async ({
   prompts,
   promptData,
   promptBar,
+  promptBarSearch,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-1173');
@@ -634,7 +635,7 @@ test('Search prompt when no folders', async ({
   await test.step('Type not matching search term and in "Search prompt.." field and verify no results found', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await promptBar.searchPrompt.fill(notMatchingSearchTerm);
+    await promptBarSearch.setSearchValue(notMatchingSearchTerm);
     const noResult = await promptBar.noResultFoundIcon.getElementInnerContent();
     expect
       .soft(noResult, ExpectedMessages.noResultsFound)
@@ -642,14 +643,14 @@ test('Search prompt when no folders', async ({
   });
 
   await test.step('Clear search field and verify all prompts displayed', async () => {
-    await promptBar.searchPrompt.fill('');
+    await promptBarSearch.setSearchValue('');
     const resultCount = await prompts.getPromptsCount();
     expect.soft(resultCount, ExpectedMessages.searchResultCountIsValid).toBe(5);
   });
 
   await test.step('Type search term in the field and verify all prompts displayed', async () => {
     for (const term of [searchTerm, searchTerm.toUpperCase()]) {
-      await promptBar.searchPrompt.fill(term);
+      await promptBarSearch.setSearchValue(term);
       const resultCount = await prompts.getPromptsCount();
       expect
         .soft(resultCount, ExpectedMessages.searchResultCountIsValid)
@@ -658,7 +659,7 @@ test('Search prompt when no folders', async ({
   });
 
   await test.step('Type search term in the field and verify all prompts displayed', async () => {
-    await promptBar.searchPrompt.fill(specialSymbolSearchTerm);
+    await promptBarSearch.setSearchValue(specialSymbolSearchTerm);
     const resultCount = await prompts.getPromptsCount();
     expect.soft(resultCount, ExpectedMessages.searchResultCountIsValid).toBe(1);
   });

@@ -1,6 +1,5 @@
 import { Conversation } from '@/src/types/chat';
 import { OpenAIEntityModel } from '@/src/types/openai';
-import { availableThemes } from '@/src/types/settings';
 
 import test from '@/e2e/src/core/fixtures';
 import {
@@ -8,6 +7,7 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   ModelIds,
+  Theme,
 } from '@/e2e/src/testData';
 import { Cursors, Styles } from '@/e2e/src/ui/domData';
 import { keys } from '@/e2e/src/ui/keyboard';
@@ -86,9 +86,7 @@ test(
   }) => {
     setTestIds('EPMRTC-477', 'EPMRTC-1463');
     await test.step('Set random application theme', async () => {
-      const theme = GeneratorUtil.randomArrayElement(
-        Object.keys(availableThemes),
-      );
+      const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
       await localStorageManager.setSettings(theme);
     });
 
@@ -359,12 +357,13 @@ test(
     page,
     tooltip,
     localStorageManager,
+    apiHelper,
   }) => {
     setTestIds('EPMRTC-478', 'EPMRTC-1480', 'EPMRTC-1309');
+    const expectedModelIcon = await apiHelper.getEntityIcon(gpt35Model);
+
     await test.step('Set random application theme', async () => {
-      const theme = GeneratorUtil.randomArrayElement(
-        Object.keys(availableThemes),
-      );
+      const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
       await localStorageManager.setSettings(theme);
     });
 
@@ -377,23 +376,16 @@ test(
     });
 
     await test.step('Verify no content received and model icon is visible', async () => {
+      await dialHomePage.unRouteResponse(API.chatHost);
       const receivedContent = await chatMessages.getLastMessageContent();
       expect
         .soft(receivedContent, ExpectedMessages.messageContentIsValid)
         .toBe('');
+
       const conversationIcon = await chatMessages.getIconAttributesForMessage();
       expect
-        .soft(
-          conversationIcon.iconEntity,
-          ExpectedMessages.chatBarIconEntityIsValid,
-        )
-        .toBe(gpt35Model.id);
-      expect
-        .soft(
-          conversationIcon.iconUrl,
-          ExpectedMessages.chatBarIconSourceIsValid,
-        )
-        .toBe(gpt35Model.iconUrl);
+        .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
+        .toBe(expectedModelIcon);
 
       const isRegenerateButtonVisible = await chat.regenerate.isVisible();
       expect
@@ -443,8 +435,7 @@ test(
     });
 
     await test.step('Send request and stop generation when partial content received', async () => {
-      await dialHomePage.unRouteResponse(API.chatHost);
-    await chat.regenerateResponse(false);
+      await chat.regenerateResponse(false);
       await chatMessages.waitForPartialMessageReceived(2);
       await chat.stopGenerating.click();
     });
@@ -456,17 +447,8 @@ test(
         .not.toBe('');
       const conversationIcon = await chatMessages.getIconAttributesForMessage();
       expect
-        .soft(
-          conversationIcon.iconEntity,
-          ExpectedMessages.chatBarIconEntityIsValid,
-        )
-        .toBe(gpt35Model.id);
-      expect
-        .soft(
-          conversationIcon.iconUrl,
-          ExpectedMessages.chatBarIconSourceIsValid,
-        )
-        .toBe(gpt35Model.iconUrl);
+        .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
+        .toBe(expectedModelIcon);
 
       const isRegenerateButtonVisible = await chat.regenerate.isVisible();
       expect
