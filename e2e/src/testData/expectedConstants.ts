@@ -75,6 +75,11 @@ export enum FilterMenuOptions {
   publishedByMe = 'Published by me',
 }
 
+export enum AccountMenuOptions {
+  settings = 'Settings',
+  logout = 'Log out',
+}
+
 export const Chronology = {
   today: 'Today',
   yesterday: 'Yesterday',

@@ -21,9 +21,11 @@ import { LocalStorageManager } from './localStorageManager';
 import { ConversationData } from '@/e2e/src/testData';
 import { ApiHelper } from '@/e2e/src/testData/api/apiHelper';
 import { PromptData } from '@/e2e/src/testData/prompts/promptData';
+import { AccountSettings } from '@/e2e/src/ui/webElements/accountSettings';
 import { Addons } from '@/e2e/src/ui/webElements/addons';
 import { AddonsDialog } from '@/e2e/src/ui/webElements/addonsDialog';
 import { AppContainer } from '@/e2e/src/ui/webElements/appContainer';
+import { Banner } from '@/e2e/src/ui/webElements/banner';
 import { ChatInfoTooltip } from '@/e2e/src/ui/webElements/chatInfoTooltip';
 import { Compare } from '@/e2e/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/e2e/src/ui/webElements/confirmationDialog';
@@ -62,6 +64,9 @@ const test = base.extend<
     appContainer: AppContainer;
     chatBar: ChatBar;
     header: Header;
+    accountSettings: AccountSettings;
+    accountDropdownMenu: DropdownMenu;
+    banner: Banner;
     promptBar: PromptBar;
     chat: Chat;
     chatMessages: ChatMessages;
@@ -154,6 +159,18 @@ const test = base.extend<
   header: async ({ appContainer }, use) => {
     const header = appContainer.getHeader();
     await use(header);
+  },
+  accountSettings: async ({ header }, use) => {
+    const accountSettings = header.getAccountSettings();
+    await use(accountSettings);
+  },
+  accountDropdownMenu: async ({ accountSettings }, use) => {
+    const accountDropdownMenu = accountSettings.getDropdownMenu();
+    await use(accountDropdownMenu);
+  },
+  banner: async ({ appContainer }, use) => {
+    const banner = appContainer.getBanner();
+    await use(banner);
   },
   promptBar: async ({ appContainer }, use) => {
     const promptBar = appContainer.getPromptBar();
