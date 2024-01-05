@@ -1,14 +1,5 @@
-import {
-  FloatingFocusManager,
-  FloatingOverlay,
-  FloatingPortal,
-  useDismiss,
-  useFloating,
-  useId,
-  useInteractions,
-  useRole,
-} from '@floating-ui/react';
-import { IconDownload, IconTrash, IconX } from '@tabler/icons-react';
+import { useId } from '@floating-ui/react';
+import { IconDownload, IconTrash } from '@tabler/icons-react';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -30,6 +21,7 @@ import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
+import Modal from '@/src/components/Common/Modal';
 import Folder from '@/src/components/Folder/Folder';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
@@ -61,13 +53,6 @@ export const FileManagerModal = ({
 
   const { t } = useTranslation(Translation.Chat);
 
-  const { refs, context } = useFloating({
-    open: isOpen,
-    onOpenChange: onClose,
-  });
-  const role = useRole(context);
-  const dismiss = useDismiss(context, { outsidePressEvent: 'mousedown' });
-  const { getFloatingProps } = useInteractions([role, dismiss]);
   const headingId = useId();
   const descriptionId = useId();
 
@@ -323,193 +308,178 @@ export const FileManagerModal = ({
   }, [dispatch, selectedFilesIds]);
 
   return (
-    <FloatingPortal id="theme-main">
-      {isOpen && (
-        <FloatingOverlay
-          lockScroll
-          className="z-50 flex items-center justify-center bg-blackout p-3"
-          data-floating-overlay
-        >
-          <FloatingFocusManager context={context}>
-            <div
-              className="relative flex max-h-full flex-col gap-4 rounded bg-layer-3 md:w-[525px]"
-              ref={refs.setFloating}
-              {...getFloatingProps()}
-            >
+    <Modal
+      portalId="theme-main"
+      isOpen={isOpen}
+      onClose={() => onClose(false)}
+      dataQa="file-manager-modal"
+      containerClassName="flex flex-col gap-4 md:w-[525px]"
+      dismissProps={{ outsidePressEvent: 'mousedown' }}
+    >
+      <div className="flex flex-col gap-2 overflow-auto p-6">
+        <div className="flex justify-between">
+          <h2 id={headingId} className="text-base font-semibold">
+            {isInConversation ? t('Attach files') : t('Manage attachments')}
+          </h2>
+        </div>
+        <p id={descriptionId}>
+          {t(
+            'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
+            {
+              allowedExtensions:
+                allowedExtensions.join(', ') || 'no available extensions',
+            },
+          )}
+          &nbsp;
+          {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
+            !!maximumAttachmentsAmount &&
+            t('Max selected files is {{maxAttachmentsAmount}}.', {
+              maxAttachmentsAmount: maximumAttachmentsAmount,
+            })}
+        </p>
+
+        <ErrorMessage error={errorMessage} />
+
+        {!showSpinner ? (
+          <div className="flex min-h-[300px] items-center justify-center">
+            <Spinner />
+          </div>
+        ) : (
+          <div className="group/modal flex flex-col gap-2 overflow-auto">
+            <input
+              name="titleInput"
+              placeholder={t('Search files') || ''}
+              type="text"
+              onChange={handleSearch}
+              className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+            ></input>
+            <div className="flex min-h-[350px] flex-col overflow-auto">
               <button
-                className="absolute right-2 top-2 text-secondary hover:text-accent-primary"
-                onClick={() => onClose(false)}
+                className="flex items-center gap-1 rounded py-1 text-xs text-secondary"
+                onClick={() => handleToggleFolder(undefined)}
               >
-                <IconX />
+                <CaretIconComponent isOpen={isAllFilesOpened} />
+                {t('All files')}
               </button>
-              <div className="flex flex-col gap-2 overflow-auto p-6">
-                <div className="flex justify-between">
-                  <h2 id={headingId} className="text-base font-semibold">
-                    {isInConversation
-                      ? t('Attach files')
-                      : t('Manage attachments')}
-                  </h2>
-                </div>
-                <p id={descriptionId}>
-                  {t(
-                    'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
-                    {
-                      allowedExtensions:
-                        allowedExtensions.join(', ') ||
-                        'no available extensions',
-                    },
-                  )}
-                  &nbsp;
-                  {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
-                    !!maximumAttachmentsAmount &&
-                    t('Max selected files is {{maxAttachmentsAmount}}.', {
-                      maxAttachmentsAmount: maximumAttachmentsAmount,
-                    })}
-                </p>
+              {isAllFilesOpened && (
+                <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">
+                  {(folders.length !== 0 || filteredFiles.length !== 0) && (
+                    <div className="flex flex-col gap-1 overflow-auto">
+                      {folders.map((folder) => {
+                        if (folder.folderId) {
+                          return null;
+                        }
 
-                <ErrorMessage error={errorMessage} />
+                        return (
+                          <div key={folder.id}>
+                            <Folder
+                              searchTerm={searchQuery}
+                              currentFolder={folder}
+                              allFolders={folders}
+                              highlightedFolders={[]}
+                              isInitialRenameEnabled
+                              newAddedFolderId={newFolderId}
+                              displayCaretAlways
+                              loadingFolderId={loadingFolderId}
+                              openedFoldersIds={openedFoldersIds}
+                              allItems={filteredFiles}
+                              additionalItemData={{
+                                selectedFilesIds,
+                              }}
+                              itemComponent={FileItem}
+                              onClickFolder={handleFolderSelect}
+                              onAddFolder={handleAddFolder}
+                              onFileUpload={handleUploadFile}
+                              onRenameFolder={handleRenameFolder}
+                              onItemEvent={handleItemCallback}
+                            />
+                          </div>
+                        );
+                      })}
+                      {filteredFiles.map((file) => {
+                        if (file.folderId) {
+                          return null;
+                        }
 
-                {showSpinner ? (
-                  <div className="flex min-h-[300px] items-center justify-center">
-                    <Spinner />
-                  </div>
-                ) : (
-                  <div className="group/modal flex flex-col gap-2 overflow-auto">
-                    <input
-                      name="titleInput"
-                      placeholder={t('Search files') || ''}
-                      type="text"
-                      onChange={handleSearch}
-                      className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
-                    ></input>
-                    <div className="flex min-h-[350px] flex-col overflow-auto">
-                      <button
-                        className="flex items-center gap-1 rounded py-1 text-xs text-secondary"
-                        onClick={() => handleToggleFolder(undefined)}
-                      >
-                        <CaretIconComponent isOpen={isAllFilesOpened} />
-                        {t('All files')}
-                      </button>
-                      {isAllFilesOpened && (
-                        <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">
-                          {(folders.length !== 0 ||
-                            filteredFiles.length !== 0) && (
-                            <div className="flex flex-col gap-1 overflow-auto">
-                              {folders.map((folder) => {
-                                if (folder.folderId) {
-                                  return null;
-                                }
-
-                                return (
-                                  <div key={folder.id}>
-                                    <Folder
-                                      searchTerm={searchQuery}
-                                      currentFolder={folder}
-                                      allFolders={folders}
-                                      highlightedFolders={[]}
-                                      isInitialRenameEnabled
-                                      newAddedFolderId={newFolderId}
-                                      displayCaretAlways
-                                      loadingFolderId={loadingFolderId}
-                                      openedFoldersIds={openedFoldersIds}
-                                      allItems={filteredFiles}
-                                      additionalItemData={{ selectedFilesIds }}
-                                      itemComponent={FileItem}
-                                      onClickFolder={handleFolderSelect}
-                                      onAddFolder={handleAddFolder}
-                                      onFileUpload={handleUploadFile}
-                                      onRenameFolder={handleRenameFolder}
-                                      onItemEvent={handleItemCallback}
-                                    />
-                                  </div>
-                                );
-                              })}
-                              {filteredFiles.map((file) => {
-                                if (file.folderId) {
-                                  return null;
-                                }
-
-                                return (
-                                  <div key={file.id}>
-                                    <FileItem
-                                      item={file}
-                                      level={0}
-                                      additionalItemData={{ selectedFilesIds }}
-                                      onEvent={handleItemCallback}
-                                    />
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                        return (
+                          <div key={file.id}>
+                            <FileItem
+                              item={file}
+                              level={0}
+                              additionalItemData={{
+                                selectedFilesIds,
+                              }}
+                              onEvent={handleItemCallback}
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center justify-between border-t border-primary px-6 py-4">
-                <div className="flex items-center justify-center gap-2">
-                  {selectedFilesIds.length > 0 ? (
-                    <>
-                      <button
-                        onClick={handleRemoveMultipleFiles}
-                        className="flex h-[34px] w-[34px] items-center justify-center rounded text-secondary  hover:bg-accent-primary-alpha hover:text-accent-primary"
-                      >
-                        <IconTrash size={24} />
-                      </button>
-                      <button
-                        onClick={handleDownloadMultipleFiles}
-                        className="flex h-[34px] w-[34px] items-center justify-center rounded text-secondary  hover:bg-accent-primary-alpha hover:text-accent-primary"
-                      >
-                        <IconDownload size={24} />
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={handleNewFolder}
-                      className="flex h-[34px] w-[34px] items-center justify-center rounded text-secondary  hover:bg-accent-primary-alpha hover:text-accent-primary"
-                    >
-                      <FolderPlus height={24} width={24} />
-                    </button>
                   )}
                 </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={handleStartUploadFiles}
-                    className={classNames(
-                      'button',
-                      isInConversation ? 'button-secondary' : 'button-primary',
-                    )}
-                  >
-                    {t('Upload from device')}
-                  </button>
-                  {isInConversation && (
-                    <button
-                      onClick={handleAttachFiles}
-                      className="button button-primary"
-                      disabled={selectedFilesIds.length === 0}
-                    >
-                      {t('Attach files')}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {isUploadFromDeviceOpened && (
-                <PreUploadDialog
-                  uploadFolderId={uploadFolderId}
-                  isOpen
-                  allowedTypes={allowedTypes}
-                  initialFilesSelect
-                  onUploadFiles={handleUploadFiles}
-                  onClose={() => setIsUploadFromDeviceOpened(false)}
-                />
               )}
             </div>
-          </FloatingFocusManager>
-        </FloatingOverlay>
+          </div>
+        )}
+      </div>
+      <div className="flex items-center justify-between border-t border-primary px-6 py-4">
+        <div className="flex items-center justify-center gap-2">
+          {selectedFilesIds.length > 0 ? (
+            <>
+              <button
+                onClick={handleRemoveMultipleFiles}
+                className="flex h-[34px] w-[34px] items-center justify-center rounded text-secondary  hover:bg-accent-primary-alpha hover:text-accent-primary"
+              >
+                <IconTrash size={24} />
+              </button>
+              <button
+                onClick={handleDownloadMultipleFiles}
+                className="flex h-[34px] w-[34px] items-center justify-center rounded text-secondary  hover:bg-accent-primary-alpha hover:text-accent-primary"
+              >
+                <IconDownload size={24} />
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleNewFolder}
+              className="flex h-[34px] w-[34px] items-center justify-center rounded text-secondary  hover:bg-accent-primary-alpha hover:text-accent-primary"
+            >
+              <FolderPlus height={24} width={24} />
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleStartUploadFiles}
+            className={classNames(
+              'button',
+              isInConversation ? 'button-secondary' : 'button-primary',
+            )}
+          >
+            {t('Upload from device')}
+          </button>
+          {isInConversation && (
+            <button
+              onClick={handleAttachFiles}
+              className="button button-primary"
+              disabled={selectedFilesIds.length === 0}
+            >
+              {t('Attach files')}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {isUploadFromDeviceOpened && (
+        <PreUploadDialog
+          uploadFolderId={uploadFolderId}
+          isOpen
+          allowedTypes={allowedTypes}
+          initialFilesSelect
+          onUploadFiles={handleUploadFiles}
+          onClose={() => setIsUploadFromDeviceOpened(false)}
+        />
       )}
-    </FloatingPortal>
+    </Modal>
   );
 };

@@ -32,7 +32,6 @@ interface Props extends FormHTMLAttributes<HTMLFormElement> {
   hideClose?: boolean;
   onKeyDownOverlay?: KeyboardEventHandler<HTMLDivElement>;
   dismissProps?: UseDismissProps;
-  applyRole?: boolean;
 }
 
 export default function Modal({
@@ -49,7 +48,6 @@ export default function Modal({
   hideClose = false,
   onKeyDownOverlay,
   dismissProps,
-  applyRole = false,
 }: Props) {
   const { refs, context } = useFloating({
     open: isOpen,
@@ -57,9 +55,7 @@ export default function Modal({
   });
   const role = useRole(context);
   const dismiss = useDismiss(context, dismissProps);
-  const { getFloatingProps } = useInteractions(
-    applyRole ? [role, dismiss] : [dismiss],
-  );
+  const { getFloatingProps } = useInteractions([role, dismiss]);
 
   const handleClose = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
@@ -85,6 +81,7 @@ export default function Modal({
         >
           <FloatingFocusManager context={context} initialFocus={initialFocus}>
             <form
+              onSubmit={(e) => e.preventDefault()}
               noValidate={noValidate}
               className={classNames(
                 'relative max-h-full rounded bg-layer-3 text-left',
