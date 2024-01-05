@@ -49,9 +49,9 @@ function App({ Component, ...rest }: AppProps<SessionProviderProps>) {
                         icon
                       )}
                     </span>
-                    <p className="mx-0.5 text-sm leading-[21px] text-error">
+                    <div className="mx-0.5 text-sm leading-[21px] text-error">
                       {message}
-                    </p>
+                    </div>
                     {t.type !== 'loading' && (
                       <button onClick={() => toast.dismiss(t.id)}>
                         <IconX
