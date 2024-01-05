@@ -51,7 +51,6 @@ import { PlaybackEmptyInfo } from './Playback/PlaybackEmptyInfo';
 const scrollThrottlingTimeout = 250;
 
 export const Chat = memo(() => {
-
   const dispatch = useAppDispatch();
   const appName = useAppSelector(SettingsSelectors.selectAppName);
   const models = useAppSelector(ModelsSelectors.selectModels);
@@ -147,22 +146,22 @@ export const Chat = memo(() => {
     const isNotAllowedModel = modelsIsLoading
       ? false
       : models.length === 0 ||
-      selectedConversations.some((conv) => {
-        if (
-          conv.replay.isReplay &&
-          conv.replay.replayAsIs &&
-          conv.replay.replayUserMessagesStack &&
-          conv.replay.replayUserMessagesStack[0].model
-        ) {
-          return conv.replay.replayUserMessagesStack.some(
-            (message) =>
-              message.role === Role.User &&
-              message.model?.id &&
-              !modelIds.includes(message.model.id),
-          );
-        }
-        return !modelIds.includes(conv.model.id);
-      });
+        selectedConversations.some((conv) => {
+          if (
+            conv.replay.isReplay &&
+            conv.replay.replayAsIs &&
+            conv.replay.replayUserMessagesStack &&
+            conv.replay.replayUserMessagesStack[0].model
+          ) {
+            return conv.replay.replayUserMessagesStack.some(
+              (message) =>
+                message.role === Role.User &&
+                message.model?.id &&
+                !modelIds.includes(message.model.id),
+            );
+          }
+          return !modelIds.includes(conv.model.id);
+        });
     if (isNotAllowedModel) {
       setNotAllowedType(EntityType.Model);
     } else if (
@@ -311,13 +310,13 @@ export const Chat = memo(() => {
       const updatedReplay: Replay = !conversation.replay.isReplay
         ? conversation.replay
         : {
-          ...conversation.replay,
-          replayAsIs: false,
-        };
+            ...conversation.replay,
+            replayAsIs: false,
+          };
       const updatedAddons =
         conversation.replay.isReplay &&
-          conversation.replay.replayAsIs &&
-          !updatedReplay.replayAsIs
+        conversation.replay.replayAsIs &&
+        !updatedReplay.replayAsIs
           ? conversation.selectedAddons.filter((addonId) => addonsMap[addonId])
           : conversation.selectedAddons;
 
@@ -538,21 +537,24 @@ export const Chat = memo(() => {
       ) : (
         <>
           <div
-            className={`flex h-full w-full ${isCompareMode ? 'landscape:hidden' : 'hidden'
-              }`}
+            className={`flex h-full w-full ${
+              isCompareMode ? 'landscape:hidden' : 'hidden'
+            }`}
           >
             <ChatCompareRotate />
           </div>
           <div
-            className={`h-full w-full ${isCompareMode ? 'portrait:hidden' : ''
-              }`}
+            className={`h-full w-full ${
+              isCompareMode ? 'portrait:hidden' : ''
+            }`}
           >
             <div className="flex h-full">
               <div
-                className={`flex h-full flex-col ${isCompareMode && selectedConversations.length < 2
-                  ? 'w-[50%]'
-                  : 'w-full'
-                  }`}
+                className={`flex h-full flex-col ${
+                  isCompareMode && selectedConversations.length < 2
+                    ? 'w-[50%]'
+                    : 'w-full'
+                }`}
                 data-qa={isCompareMode ? 'compare-mode' : 'chat-mode'}
               >
                 <div className="flex max-h-full w-full">
@@ -562,10 +564,11 @@ export const Chat = memo(() => {
                       (!conv.playback?.isPlayback ? (
                         <div
                           key={conv.id}
-                          className={`flex h-full flex-col justify-between ${selectedConversations.length > 1
-                            ? 'w-[50%]'
-                            : 'w-full'
-                            }`}
+                          className={`flex h-full flex-col justify-between ${
+                            selectedConversations.length > 1
+                              ? 'w-[50%]'
+                              : 'w-full'
+                          }`}
                         >
                           <div
                             className="shrink-0"
@@ -611,10 +614,11 @@ export const Chat = memo(() => {
                       ) : (
                         <div
                           key={conv.id}
-                          className={`flex h-full flex-col justify-between overflow-auto ${selectedConversations.length > 1
-                            ? 'w-[50%]'
-                            : 'w-full'
-                            }`}
+                          className={`flex h-full flex-col justify-between overflow-auto ${
+                            selectedConversations.length > 1
+                              ? 'w-[50%]'
+                              : 'w-full'
+                          }`}
                         >
                           <div
                             className="shrink-0"
@@ -635,10 +639,11 @@ export const Chat = memo(() => {
                   {selectedConversations.map((conv) => (
                     <div
                       key={conv.id}
-                      className={`${isCompareMode && selectedConversations.length > 1
-                        ? 'w-[50%]'
-                        : 'w-full'
-                        }`}
+                      className={`${
+                        isCompareMode && selectedConversations.length > 1
+                          ? 'w-[50%]'
+                          : 'w-full'
+                      }`}
                     >
                       {conv.messages.length !== 0 &&
                         enabledFeatures.has(Feature.TopSettings) && (
@@ -717,11 +722,12 @@ export const Chat = memo(() => {
                             ]) => (
                               <div
                                 key={conv.id}
-                                className={`${isCompareMode &&
+                                className={`${
+                                  isCompareMode &&
                                   selectedConversations.length > 1
-                                  ? 'w-[50%]'
-                                  : 'w-full'
-                                  }`}
+                                    ? 'w-[50%]'
+                                    : 'w-full'
+                                }`}
                               >
                                 <div className="h-full w-full">
                                   <MemoizedChatMessage
@@ -756,10 +762,11 @@ export const Chat = memo(() => {
               </div>
               {isShowChatSettings && (
                 <div
-                  className={`absolute left-0 top-0 grid h-full w-full ${selectedConversations.length === 1
-                    ? 'grid-cols-1'
-                    : 'grid-cols-2'
-                    }`}
+                  className={`absolute left-0 top-0 grid h-full w-full ${
+                    selectedConversations.length === 1
+                      ? 'grid-cols-1'
+                      : 'grid-cols-2'
+                  }`}
                 >
                   {selectedConversations.map((conv) => (
                     <div className="relative h-full" key={conv.id}>

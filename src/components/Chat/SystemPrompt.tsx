@@ -140,8 +140,9 @@ export const SystemPrompt: FC<Props> = ({
       textareaRef.current.style.height = 'inherit'; // reset height
       const scrollHeight = textareaRef.current.scrollHeight; // then check scroll height
       textareaRef.current.style.height = `${scrollHeight}px`;
-      textareaRef.current.style.overflow = `${scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden'
-        }`;
+      textareaRef.current.style.overflow = `${
+        scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden'
+      }`;
     }
   }, [content, textareaRef]);
 
