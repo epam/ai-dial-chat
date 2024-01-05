@@ -209,7 +209,7 @@ export const MenuComponent = forwardRef<
         data-focus-inside={hasFocusInside ? '' : undefined}
         className={classNames(
           isNested ? menuItemClassNames : '',
-          isNested ? 'h-[42px] w-full px-3' : 'h-full px-0',
+          isNested ? 'h-[34px] w-full px-3' : 'h-full px-0',
           className,
         )}
         {...getReferenceProps(
