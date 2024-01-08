@@ -49,8 +49,14 @@ export const addonsSlice = createSlice({
         {} as Record<string, OpenAIEntityAddon>,
       );
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getAddonsFail: (state, { payload }: PayloadAction<{ error: any }>) => {
+    getAddonsFail: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        error: { status?: number; statusText?: string };
+      }>,
+    ) => {
       state.isLoading = false;
       state.error = {
         title: translate('Error fetching addons.'),

@@ -11,8 +11,8 @@ export const checkValidity = (
     if (!current) return false;
 
     const isEmpty =
-      //eslint-disable-next-line @typescript-eslint/no-explicit-any
-      !current.value || (current.value === 'on' && !(current as any).checked);
+      !current.value ||
+      (current.value === 'on' && !(current as HTMLInputElement).checked);
 
     if (current.required && isEmpty) {
       current.focus();

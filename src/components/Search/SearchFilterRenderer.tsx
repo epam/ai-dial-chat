@@ -11,7 +11,7 @@ export default function SearchFilterRenderer({
   dataQa,
   ...props
 }: CustomTriggerMenuRendererProps) {
-  const [checked, setChecked] = useState(isSelected);
+  const [checked, setChecked] = useState<boolean>(isSelected as boolean);
   const handleCheck = useCallback(() => {
     setChecked((check: boolean) => !check);
     onClick && onClick(!checked);

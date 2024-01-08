@@ -1,7 +1,5 @@
 import toast from 'react-hot-toast';
 
-import { i18n } from 'next-i18next';
-
 import {
   EMPTY,
   Observable,
@@ -324,22 +322,20 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
       );
       if (!conversation) {
         return of(
-          ConversationsActions.rateMessageFail(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (i18n as any).t(
+          ConversationsActions.rateMessageFail({
+            error: translate(
               'No conversation exists for rating with provided conversation id',
             ),
-          ),
+          }),
         );
       }
       const message = conversation.messages[payload.messageIndex];
 
       if (!message || !message.responseId) {
         return of(
-          ConversationsActions.rateMessageFail(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (i18n as any).t('Message cannot be rated'),
-          ),
+          ConversationsActions.rateMessageFail({
+            error: translate('Message cannot be rated'),
+          }),
         );
       }
 
@@ -727,8 +723,8 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
               ConversationsActions.streamMessageFail({
                 conversation: payload.conversation,
                 message:
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  (error.cause as any).message ||
+                  (!!error.cause &&
+                    (error.cause as { message?: string }).message) ||
                   translate(errorsMessages.generalServer),
                 response:
                   error.cause instanceof Response ? error.cause : undefined,

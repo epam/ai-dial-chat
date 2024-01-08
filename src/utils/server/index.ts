@@ -36,6 +36,10 @@ export class OpenAIError extends Error {
   }
 }
 
+interface OpenAIErrorResponse extends Response {
+  error?: OpenAIError;
+}
+
 function getUrl(
   modelId: string,
   modelType: EntityType,
@@ -121,10 +125,9 @@ export const OpenAIStream = async ({
   });
 
   if (res.status !== 200) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let result: any;
+    let result: OpenAIErrorResponse;
     try {
-      result = await res.json();
+      result = (await res.json()) as OpenAIErrorResponse;
     } catch (e) {
       throw new OpenAIError(
         `Server error: ${res.statusText}`,
@@ -135,9 +138,9 @@ export const OpenAIStream = async ({
     }
     if (result.error) {
       throw new OpenAIError(
-        result.error.message,
-        result.error.type,
-        result.error.param,
+        result.error.message ?? '',
+        result.error.type ?? '',
+        result.error.param ?? '',
         result.error.code ?? res.status.toString(10),
       );
     } else {

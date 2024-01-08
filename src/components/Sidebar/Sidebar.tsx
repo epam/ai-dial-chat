@@ -41,7 +41,7 @@ interface Props<T> {
   handleSearchTerm: (searchTerm: string) => void;
   handleSearchFilters: (searchFilters: SearchFilters) => void;
   toggleOpen?: () => void;
-  handleDrop: (e: DragEvent) => void;
+  handleDrop: (e: DragEvent<HTMLDivElement>) => void;
 }
 
 const Sidebar = <T,>({

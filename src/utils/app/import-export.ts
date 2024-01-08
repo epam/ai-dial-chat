@@ -27,12 +27,12 @@ export function isExportFormatV2(obj: any): obj is ExportFormatV2 {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isExportFormatV3(obj: any): obj is ExportFormatV3 {
-  return obj.version === 3;
+  return 'version' in obj && obj.version === 3;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isExportFormatV4(obj: any): obj is ExportFormatV4 {
-  return obj.version === 4;
+  return 'version' in obj && obj.version === 4;
 }
 
 export function isPromtsFormat(obj: PromptsHistory) {

@@ -63,8 +63,7 @@ const errorHandler = ({
   msg,
   isStreamingError,
 }: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  error: any;
+  error: OpenAIError | unknown;
   res: NextApiResponse;
   msg?: string;
   isStreamingError?: boolean;

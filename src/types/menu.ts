@@ -16,8 +16,7 @@ export interface DisplayMenuItemProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onClick?: (props?: any) => void | MouseEventHandler<unknown>;
   CustomTriggerRenderer?: FC<CustomTriggerMenuRendererProps>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  customTriggerData?: any;
+  customTriggerData?: unknown;
   className?: string;
   childMenuItems?: DisplayMenuItemProps[];
 }

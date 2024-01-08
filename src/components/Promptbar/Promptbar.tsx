@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { DragEvent, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -56,8 +56,7 @@ const Promptbar = () => {
   const searchFilters = useAppSelector(PromptsSelectors.selectSearchFilters);
 
   const handleDrop = useCallback(
-    //eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (e: any) => {
+    (e: DragEvent<HTMLDivElement>) => {
       if (e.dataTransfer) {
         const prompt = JSON.parse(e.dataTransfer.getData('prompt'));
 
@@ -65,7 +64,7 @@ const Promptbar = () => {
           PromptsActions.updatePrompt({
             promptId: prompt.id,
             values: {
-              folderId: e.target.dataset.folderId,
+              folderId: e.currentTarget.dataset.folderId,
             },
           }),
         );

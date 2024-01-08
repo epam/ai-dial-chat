@@ -122,13 +122,14 @@ async function refreshAccessToken(token: JWT & any) {
   }
 }
 
-export const callbacks: Partial<CallbacksOptions<Profile, Account>> = {
+export const callbacks: Partial<
+  CallbacksOptions<Profile & { job_title?: string }, Account>
+> = {
   jwt: async (options) => {
     if (options.account) {
       return {
         ...options.token,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        jobTitle: (options.profile as any)?.job_title,
+        jobTitle: options.profile?.job_title,
         access_token: options.account.access_token,
         accessTokenExpires:
           typeof options.account.expires_in === 'number'
@@ -161,7 +162,6 @@ export const callbacks: Partial<CallbacksOptions<Profile, Account>> = {
   },
   session: async (options) => {
     if (options.token?.error) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (options.session as any).error = options.token.error;
     }
     return options.session;

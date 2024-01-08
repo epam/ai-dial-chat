@@ -3,13 +3,15 @@ import { Session } from 'next-auth';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isClientSessionValid(session: any | null) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return session && (session as any).data?.error !== 'RefreshAccessTokenError';
+export function isClientSessionValid(
+  session: (Session & { data?: { error?: string } }) | null,
+) {
+  return session && session.data?.error !== 'RefreshAccessTokenError';
 }
 
-export function isServerSessionValid(session: Session | null) {
+export function isServerSessionValid(
+  session: (Session & { error?: string }) | null,
+) {
   if (
     process.env.AUTH_DISABLED === 'true' ||
     process.env.IS_IFRAME === 'true'
@@ -17,8 +19,7 @@ export function isServerSessionValid(session: Session | null) {
     return true;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return !!session && (session as any).error !== 'RefreshAccessTokenError';
+  return !!session && session.error !== 'RefreshAccessTokenError';
 }
 
 export function validateServerSession(
