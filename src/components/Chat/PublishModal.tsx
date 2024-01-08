@@ -12,14 +12,17 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { constructPath } from '@/src/utils/app/file';
-import { getPublishActionByType } from '@/src/utils/app/share';
+import {
+  getPublishActionByType,
+  isPublishVersionUnique,
+} from '@/src/utils/app/share';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { ShareEntity } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import CollapsableSection from '../Common/CollapsableSection';
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
@@ -58,7 +61,9 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
     useState(false);
   const [version, setVersion] = useState<string>('');
 
-  const isVersionUnique = (version: string) => version.length >= 0; // TODO: check if version is unique
+  const isVersionUnique = useAppSelector((state) =>
+    isPublishVersionUnique(type)(state, entity.id, version.trim()),
+  );
 
   const nameOnChangeHandler = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -104,7 +109,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
         return;
       }
 
-      if (!isVersionUnique(trimmedVersion)) return;
+      if (!isVersionUnique) return;
 
       dispatch(
         publishAction({
@@ -206,7 +211,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
               ref={nameInputRef}
               name="requestVersion"
               className={classNames(inputClassName, {
-                '!border-error': !isVersionUnique(version),
+                '!border-error': !isVersionUnique && submitted,
               })}
               placeholder={t('A version for your request.') || ''}
               value={version}
@@ -216,10 +221,10 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
               onBlur={handleBlur}
               onChange={versionOnChangeHandler}
             />
-            {submitted && (!isVersionUnique(version) || !version.trim()) && (
+            {submitted && (!isVersionUnique || !version.trim()) && (
               <div className="mb-4 text-xxs text-error">
                 {t(
-                  !isVersionUnique(version)
+                  !isVersionUnique
                     ? 'Please provide unique version'
                     : 'Please fill in all required fields',
                 )}

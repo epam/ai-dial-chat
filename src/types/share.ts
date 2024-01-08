@@ -5,6 +5,7 @@ export interface ShareInterface {
   publishedWithMe?: boolean;
   shareUniqueId?: string;
   originalId?: string;
+  publishVersion?: string;
 }
 
 export enum SharingType {

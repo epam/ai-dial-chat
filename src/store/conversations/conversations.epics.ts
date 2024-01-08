@@ -1536,6 +1536,10 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
               folder.id === publishRequest.id
                 ? publishRequest.shareUniqueId
                 : folder.shareUniqueId,
+            publishVersion:
+              folder.id === publishRequest.id
+                ? publishRequest.version
+                : folder.publishVersion,
           }));
 
         const sharedConversations = conversations
@@ -1591,6 +1595,7 @@ const publishConversationEpic: AppEpic = (action$, state$) =>
           publishedWithMe: true,
           name: publishRequest.name,
           shareUniqueId: publishRequest.shareUniqueId,
+          publishVersion: publishRequest.version,
         }));
 
       return concat(

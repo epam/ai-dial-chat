@@ -335,6 +335,10 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
               folder.id === publishRequest.id
                 ? publishRequest.shareUniqueId
                 : folder.shareUniqueId,
+            publishVersion:
+              folder.id === publishRequest.id
+                ? publishRequest.version
+                : folder.publishVersion,
           }));
 
         const sharedPrompts = prompts
@@ -388,6 +392,7 @@ const publishPromptEpic: AppEpic = (action$, state$) =>
           folderId: getFolderIdByPath(publishRequest.path, publishedFolders),
           publishedWithMe: true,
           name: publishRequest.name,
+          publishVersion: publishRequest.version,
           shareUniqueId: publishRequest.shareUniqueId,
         }));
 

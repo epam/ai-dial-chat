@@ -223,3 +223,42 @@ export const hasExternalParent = createSelector(
     return parentFolders.some((folder) => isEntityExternal(folder));
   },
 );
+
+export const isPublishFolderVersionUnique = createSelector(
+  [
+    selectFolders,
+    (_state: RootState, folderId: string) => folderId,
+    (_state: RootState, _folderId: string, version: string) => version,
+  ],
+  (folders, folderId, version) => {
+    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
+    return parentFolders.some((folder) => folder.publishVersion === version);
+  },
+);
+
+export const isPublishPromptVersionUnique = createSelector(
+  [
+    (state) => state,
+    (_state: RootState, entityId: string) => entityId,
+    (_state: RootState, _entityId: string, version: string) => version,
+  ],
+  (state, entityId, version) => {
+    const prompt = selectPrompt(state, entityId);
+
+    if (!prompt || prompt?.publishVersion === version) return false;
+
+    const prompts = selectPrompts(state).filter(
+      (prmt) => prmt.originalId === entityId && prmt.publishVersion === version,
+    );
+
+    if (prompts.length) return false;
+
+    const folders = selectFolders(state);
+
+    const parentFolders = getParentAndCurrentFoldersById(
+      folders,
+      prompt.folderId,
+    );
+    return parentFolders.every((folder) => folder.publishVersion !== version);
+  },
+);
