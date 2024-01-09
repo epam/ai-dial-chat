@@ -1156,7 +1156,7 @@ test('Compare two chats located in different folders', async ({
   await test.step('Open compare mode from 1st chat dropdown menu and verify one chat is available for comparison', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await folderConversations.openFolderConversationDropdownMenu(
+    await folderConversations.openFolderEntityDropdownMenu(
       firstFolderConversation.folders.name,
       firstFolderConversation.conversations[0].name,
     );

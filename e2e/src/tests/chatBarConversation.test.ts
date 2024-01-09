@@ -352,7 +352,7 @@ test('Delete chat in the folder', async ({
   await folderConversations.expandCollapseFolder(
     conversationInFolder.folders.name,
   );
-  await folderConversations.openFolderConversationDropdownMenu(
+  await folderConversations.openFolderEntityDropdownMenu(
     conversationInFolder.folders.name,
     conversationInFolder.conversations[0].name,
   );
@@ -362,7 +362,7 @@ test('Delete chat in the folder', async ({
     .clickTickButton();
   expect
     .soft(
-      await folderConversations.isFolderConversationVisible(
+      await folderConversations.isFolderEntityVisible(
         conversationInFolder.folders.name,
         conversationInFolder.conversations[0].name,
       ),
@@ -521,7 +521,7 @@ test('Chat is moved from the folder via drag&drop', async ({
     iconsToBeLoaded: [gpt35Model.iconUrl],
   });
   await dialHomePage.waitForPageLoaded();
-  await folderConversations.drugConversationFromFolder(
+  await folderConversations.drugEntityFromFolder(
     conversationInFolder.folders.name,
     conversationInFolder.conversations[0].name,
   );
@@ -533,7 +533,7 @@ test('Chat is moved from the folder via drag&drop', async ({
 
   expect
     .soft(
-      await folderConversations.isFolderConversationVisible(
+      await folderConversations.isFolderEntityVisible(
         conversationInFolder.folders.name,
         conversationInFolder.conversations[0].name,
       ),
@@ -581,7 +581,7 @@ test('Chat is moved to folder created from Move to', async ({
     ExpectedConstants.newFolderTitle,
   );
   const isFolderConversationVisible =
-    await folderConversations.isFolderConversationVisible(
+    await folderConversations.isFolderEntityVisible(
       ExpectedConstants.newFolderTitle,
       conversation.name,
     );
@@ -645,7 +645,7 @@ test(
     await test.step('Select folder name from menu and conversation is moved into folder', async () => {
       await conversationDropdownMenu.selectMenuOption(folderName);
       const isFolderConversationVisible =
-        await folderConversations.isFolderConversationVisible(
+        await folderConversations.isFolderEntityVisible(
           folderName,
           conversation.name,
         );
@@ -694,7 +694,7 @@ test('Delete all conversations. Cancel', async ({
   await confirmationDialog.cancelDialog();
 
   const isFolderConversationVisible =
-    await folderConversations.isFolderConversationVisible(
+    await folderConversations.isFolderEntityVisible(
       conversationInFolder.folders.name,
       conversationInFolder.conversations[0].name,
     );
@@ -775,7 +775,7 @@ test('Delete all conversations. Clear', async ({
   let i = 2;
   while (i > 0) {
     const isFolderConversationVisible =
-      await folderConversations.isFolderConversationVisible(
+      await folderConversations.isFolderEntityVisible(
         conversationInFolder.folders.name,
         conversationInFolder.conversations[0].name,
       );
@@ -811,7 +811,7 @@ test('Delete all conversations. Clear', async ({
       .soft(isNewConversationVisible, ExpectedMessages.newConversationCreated)
       .toBeTruthy();
 
-    const isFolderPromptVisible = await folderPrompts.isFolderPromptVisible(
+    const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(
       promptInFolder.folders.name,
       promptInFolder.prompts[0].name,
     );
@@ -1065,12 +1065,12 @@ test('Search conversation located in folders', async ({
 
   await test.step('Search by search term and verify search results are correct, empty folder is not shown', async () => {
     await chatBarSearch.setSearchValue(secondSearchTerm);
-    let results = await folderConversations
-      .getFolderConversations(firstFolder.name)
-      .count();
-    results += await folderConversations
-      .getFolderConversations(secondFolder.name)
-      .count();
+    let results = await folderConversations.getFolderEntitiesCount(
+      firstFolder.name,
+    );
+    results += await folderConversations.getFolderEntitiesCount(
+      secondFolder.name,
+    );
     expect.soft(results, ExpectedMessages.searchResultCountIsValid).toBe(3);
 
     const isEmptyFolderVisible = await folderConversations
