@@ -40,6 +40,7 @@ interface FolderContextMenuProps {
   onPublishUpdate?: MouseEventHandler<unknown>;
   onUpload?: MouseEventHandler<unknown>;
 }
+
 export const FolderContextMenu = ({
   folder,
   featureType,
@@ -124,7 +125,7 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Add new folder'),
-        display: !!onAddFolder && !isExternal,
+        display: !!onAddFolder,
         dataQa: 'new-folder',
         Icon: IconFolderPlus,
         onClick: onAddFolder as onClickMenuItemHandler,

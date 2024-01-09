@@ -24,6 +24,8 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
+import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
+
 import CollapsableSection from '../Common/CollapsableSection';
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
 import Modal from '../Common/Modal';
@@ -283,15 +285,15 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
           </button>
         </div>
       </div>
-      <SelectFolderModal
+      <ChangePathDialog
         isOpen={isChangeFolderModalOpened}
-        selectedFolderName={path}
         onClose={(folderId) => {
           if (typeof folderId === 'string') {
             setPath(folderId);
           }
           setIsChangeFolderModalOpened(false);
         }}
+        type={type}
       />
     </Modal>
   );

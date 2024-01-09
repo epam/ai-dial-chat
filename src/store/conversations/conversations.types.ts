@@ -6,6 +6,7 @@ export interface ConversationsState {
   conversations: Conversation[];
   selectedConversationsIds: string[];
   folders: FolderInterface[];
+  temporaryFolders: FolderInterface[];
   searchTerm: string;
   searchFilters: SearchFilters;
   conversationSignal: AbortController;

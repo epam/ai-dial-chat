@@ -1,6 +1,11 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
+import { constructPath } from '@/src/utils/app/file';
+import {
+  generateNextName,
+  getAvailableNameOnSameFolderLevel,
+  getNextDefaultName,
+} from '@/src/utils/app/folders';
 import { translate } from '@/src/utils/app/translation';
 
 import { PromptsHistory } from '@/src/types/export';
@@ -9,7 +14,7 @@ import { Prompt } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
 
-import { resetShareEntity } from './../../constants/chat';
+import { resetShareEntity } from '@/src/constants/chat';
 
 import { PromptsState } from './prompts.types';
 
@@ -20,6 +25,7 @@ export * as PromptsSelectors from './prompts.selectors';
 const initialState: PromptsState = {
   prompts: [],
   folders: [],
+  temporaryFolders: [],
   searchTerm: '',
   searchFilters: SearchFilters.None,
   selectedPromptId: undefined,
@@ -219,8 +225,41 @@ export const promptsSlice = createSlice({
 
       state.folders = state.folders.concat(newFolder);
     },
+    createTemporaryFolder: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        relativePath?: string;
+      }>,
+    ) => {
+      const folderName = getAvailableNameOnSameFolderLevel(
+        [
+          ...state.temporaryFolders,
+          ...state.folders.filter((folder) => folder.publishedWithMe),
+        ],
+        'New folder',
+        payload.relativePath,
+      );
+
+      state.temporaryFolders.push({
+        id: uuidv4(),
+        name: folderName,
+        type: FolderType.File,
+        folderId: payload.relativePath,
+        temporary: true,
+      });
+    },
     deleteFolder: (state, { payload }: PayloadAction<{ folderId: string }>) => {
       state.folders = state.folders.filter(({ id }) => id !== payload.folderId);
+    },
+    deleteTemporaryFolder: (
+      state,
+      { payload }: PayloadAction<{ folderId: string }>,
+    ) => {
+      state.temporaryFolders = state.temporaryFolders.filter(
+        ({ id }) => id !== payload.folderId,
+      );
     },
     renameFolder: (
       state,
@@ -239,6 +278,32 @@ export const promptsSlice = createSlice({
         }
 
         return folder;
+      });
+    },
+    renameTemporaryFolder: (
+      state,
+      { payload }: PayloadAction<{ folderId: string; name: string }>,
+    ) => {
+      const name = payload.name.trim();
+      if (name === '') {
+        return;
+      }
+
+      state.temporaryFolders = state.temporaryFolders.map((folder) => {
+        if (folder.id !== payload.folderId) {
+          return folder;
+        }
+
+        const slashIndex = folder.id.lastIndexOf('/');
+        const oldFolderIdPath = folder.id.slice(
+          0,
+          slashIndex === -1 ? 0 : slashIndex,
+        );
+        return {
+          ...folder,
+          name: payload.name.trim(),
+          id: constructPath(oldFolderIdPath, payload.name),
+        };
       });
     },
     moveFolder: (

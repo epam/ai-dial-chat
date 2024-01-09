@@ -432,6 +432,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       className={classNames(
         'transition-colors duration-200',
         isDraggingOver && isDropAllowed && 'bg-accent-primary-alpha',
+        currentFolder.temporary && 'text-primary',
       )}
       onDrop={dropHandler}
       onDragOver={allowDrop}
@@ -522,10 +523,11 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             )}
             <div
               className={classNames(
-                `relative max-h-5 flex-1 truncate break-all text-left`,
+                'relative max-h-5 flex-1 truncate break-all text-left',
                 isRenaming ? 'pr-10' : 'group-hover/button:pr-5',
                 !isRenaming &&
                   highlightedFolders?.includes(currentFolder.id) &&
+                  currentFolder.temporary &&
                   'text-primary',
               )}
               data-qa="folder-name"
@@ -540,7 +542,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                   {...getFloatingProps()}
                   className={classNames(
                     'invisible absolute right-3 z-50 flex justify-end md:group-hover/button:visible',
-                    isSelected || isContextMenu ? 'max-md:visible' : '',
+                    (isSelected || isContextMenu) && 'max-md:visible',
                   )}
                 >
                   <FolderContextMenu

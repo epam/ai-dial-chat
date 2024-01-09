@@ -5,11 +5,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import {
-  notAllowedSymbols,
-  notAllowedSymbolsRegex,
-} from '@/src/utils/app/file';
-import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
+import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 
 import { Translation } from '@/src/types/translation';
 
@@ -17,13 +13,13 @@ import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
+import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import Modal from '@/src/components/Common/Modal';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
+import { Spinner } from '@/src/components/Common/Spinner';
 import Folder from '@/src/components/Folder/Folder';
 
-import FolderPlus from '../../../public/images/icons/folder-plus.svg';
-import { ErrorMessage } from '../Common/ErrorMessage';
-import { Spinner } from '../Common/Spinner';
+import FolderPlus from '@/public/images/icons/folder-plus.svg';
 
 interface Props {
   isOpen: boolean;
@@ -59,6 +55,20 @@ export const SelectFolderModal = ({
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
     selectedFolderName,
   );
+
+  const {
+    handleRenameFolder,
+    handleAddFolder,
+    handleToggleFolder,
+    handleNewFolder,
+  } = useHandleFileFolders(
+    filteredFolders,
+    setErrorMessage,
+    openedFoldersIds,
+    setOpenedFoldersIds,
+    setIsAllFilesOpened,
+  );
+
   const highlightedFolders = useMemo(() => {
     return [selectedFolderId].filter(Boolean) as string[];
   }, [selectedFolderId]);
@@ -90,85 +100,12 @@ export const SelectFolderModal = ({
     [dispatch],
   );
 
-  const handleNewFolder = useCallback(() => {
-    dispatch(FilesActions.addNewFolder({}));
-    setIsAllFilesOpened(true);
-  }, [dispatch]);
-
-  const handleToggleFolder = useCallback(
-    (folderId: string | undefined) => {
-      if (!folderId) {
-        setIsAllFilesOpened((value) => !value);
-        setOpenedFoldersIds([]);
-        setSelectedFolderId(folderId);
-        return;
-      }
-
-      if (openedFoldersIds.includes(folderId)) {
-        const childFolders = getChildAndCurrentFoldersIdsById(
-          folderId,
-          folders,
-        );
-        setOpenedFoldersIds(
-          openedFoldersIds.filter((id) => !childFolders.includes(id)),
-        );
-      } else {
-        setOpenedFoldersIds(openedFoldersIds.concat(folderId));
-        dispatch(FilesActions.getFolders({ path: folderId }));
-      }
-    },
-    [dispatch, folders, openedFoldersIds],
-  );
-
   const handleFolderSelect = useCallback(
     (folderId: string) => {
       setSelectedFolderId(folderId);
-
       handleToggleFolder(folderId);
     },
     [handleToggleFolder],
-  );
-
-  const handleAddFolder = useCallback(
-    (parentFolderId: string) => {
-      dispatch(FilesActions.addNewFolder({ relativePath: parentFolderId }));
-
-      if (!openedFoldersIds.includes(parentFolderId)) {
-        setOpenedFoldersIds(openedFoldersIds.concat(parentFolderId));
-        dispatch(FilesActions.getFolders({ path: parentFolderId }));
-      }
-    },
-    [dispatch, openedFoldersIds],
-  );
-  const handleRenameFolder = useCallback(
-    (newName: string, folderId: string) => {
-      const renamingFolder = folders.find((folder) => folder.id === folderId);
-      const folderWithSameName = folders.find(
-        (folder) =>
-          folder.name === newName.trim() &&
-          folderId !== folder.id &&
-          folder.folderId === renamingFolder?.folderId,
-      );
-
-      if (folderWithSameName) {
-        setErrorMessage(
-          t(`Not allowed to have folders with same names`) as string,
-        );
-        return;
-      }
-      if (newName.match(notAllowedSymbolsRegex)) {
-        setErrorMessage(
-          t(
-            `The symbols ${notAllowedSymbols.join(
-              '',
-            )} are not allowed in folder name`,
-          ) as string,
-        );
-        return;
-      }
-      dispatch(FilesActions.renameFolder({ folderId, newName }));
-    },
-    [dispatch, folders, t],
   );
 
   return (
