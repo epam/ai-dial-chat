@@ -5,6 +5,7 @@ export interface ShareInterface {
   publishedWithMe?: boolean;
   shareUniqueId?: string;
   originalId?: string;
+  publishVersion?: string;
 }
 
 export enum SharingType {
@@ -12,4 +13,12 @@ export enum SharingType {
   ConversationFolder = 'conversations_folder',
   Prompt = 'prompt',
   PromptFolder = 'prompts_folder',
+}
+
+export interface PublishRequest {
+  id: string;
+  shareUniqueId: string;
+  name: string;
+  path: string;
+  version: string;
 }

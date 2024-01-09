@@ -13,6 +13,7 @@ interface CollapsableSectionProps {
   children: ReactNode | ReactNode[];
   dataQa?: string;
   onToggle?: (isOpen: boolean) => void;
+  className?: string;
 }
 
 export default function CollapsableSection({
@@ -24,6 +25,7 @@ export default function CollapsableSection({
   carentIconHidden,
   dataQa,
   onToggle,
+  className,
 }: CollapsableSectionProps) {
   const [isOpened, setIsOpened] = useState(openByDefault);
   const handleClick = useCallback(() => {
@@ -32,7 +34,9 @@ export default function CollapsableSection({
   }, [isOpened, onToggle]);
 
   return (
-    <div className="flex w-full flex-col py-1 pl-2 pr-0.5">
+    <div
+      className={classNames('flex w-full flex-col py-1 pl-2 pr-0.5', className)}
+    >
       <div
         className={classNames(
           'flex cursor-pointer items-center gap-1 py-1 text-xs',

@@ -8,6 +8,7 @@ import {
 import {
   doesConversationContainSearchTerm,
   getMyItemsFilters,
+  searchSectionFolders,
 } from '@/src/utils/app/search';
 import { isEntityExternal } from '@/src/utils/app/share';
 
@@ -114,6 +115,11 @@ export const selectFilteredFolders = createSelector(
         filteredFolderIds.has(folder.id),
     );
   },
+);
+
+export const selectSectionFolders = createSelector(
+  [selectFolders, (_state, filters: EntityFilters) => filters],
+  (folders, filters) => searchSectionFolders(folders, filters),
 );
 
 export const selectLastConversation = createSelector(
@@ -389,5 +395,44 @@ export const hasExternalParent = createSelector(
   (folders, folderId?) => {
     const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
     return parentFolders.some((folder) => isEntityExternal(folder));
+  },
+);
+
+export const isPublishFolderVersionUnique = createSelector(
+  [
+    selectFolders,
+    (_state: RootState, folderId: string) => folderId,
+    (_state: RootState, _folderId: string, version: string) => version,
+  ],
+  (folders, folderId, version) => {
+    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
+    return parentFolders.every((folder) => folder.publishVersion !== version);
+  },
+);
+
+export const isPublishConversationVersionUnique = createSelector(
+  [
+    (state) => state,
+    (_state: RootState, entityId: string) => entityId,
+    (_state: RootState, _entityId: string, version: string) => version,
+  ],
+  (state, entityId, version) => {
+    const conversation = selectConversation(state, entityId);
+
+    if (!conversation || conversation?.publishVersion === version) return false;
+
+    const conversations = selectConversations(state).filter(
+      (conv) => conv.originalId === entityId && conv.publishVersion === version,
+    );
+
+    if (conversations.length) return false;
+
+    const folders = selectFolders(state);
+
+    const parentFolders = getParentAndCurrentFoldersById(
+      folders,
+      conversation.folderId,
+    );
+    return parentFolders.every((folder) => folder.publishVersion !== version);
   },
 );
