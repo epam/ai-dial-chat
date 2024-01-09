@@ -8,6 +8,7 @@ import {
 import {
   doesPromptContainSearchTerm,
   getMyItemsFilters,
+  searchSectionFolders,
 } from '@/src/utils/app/search';
 import { isEntityExternal } from '@/src/utils/app/share';
 
@@ -113,24 +114,8 @@ export const selectFilteredFolders = createSelector(
 );
 
 export const selectSectionFolders = createSelector(
-  [
-    (state) => state,
-    selectFolders,
-    (_state, filters: EntityFilters) => filters,
-  ],
-  (state, folders, filters) => {
-    const folderIds = folders // direct parent folders
-      .filter((folder) => filters.sectionFilter(folder))
-      .map((folder) => folder.id);
-
-    const filteredFolderIds = new Set(
-      folderIds.flatMap((fid) =>
-        getChildAndCurrentFoldersIdsById(fid, folders),
-      ),
-    );
-
-    return folders.filter((folder) => filteredFolderIds.has(folder.id));
-  },
+  [selectFolders, (_state, filters: EntityFilters) => filters],
+  (folders, filters) => searchSectionFolders(folders, filters),
 );
 
 export const selectParentFolders = createSelector(
