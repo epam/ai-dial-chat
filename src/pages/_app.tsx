@@ -7,6 +7,8 @@ import { appWithTranslation } from 'next-i18next';
 import type { AppProps } from 'next/app';
 import { Inter } from 'next/font/google';
 
+import { HomeProps } from '.';
+
 import { createStore } from '@/src/store';
 import '@/src/styles/globals.css';
 
@@ -16,9 +18,12 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
-function App({ Component, ...rest }: AppProps<SessionProviderProps>) {
+function App({
+  Component,
+  ...rest
+}: AppProps<SessionProviderProps & HomeProps>) {
   const store = createStore({
-    settings: (rest.pageProps as any).initialState?.settings,
+    settings: rest.pageProps.initialState?.settings,
   });
 
   return (

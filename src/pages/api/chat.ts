@@ -63,7 +63,7 @@ const errorHandler = ({
   msg,
   isStreamingError,
 }: {
-  error: any;
+  error: OpenAIError | unknown;
   res: NextApiResponse;
   msg?: string;
   isStreamingError?: boolean;

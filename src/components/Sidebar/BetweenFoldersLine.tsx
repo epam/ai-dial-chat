@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { DragEvent, useCallback, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -27,7 +27,7 @@ export const BetweenFoldersLine = ({
   const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   const dropHandler = useCallback(
-    (e: any) => {
+    (e: DragEvent) => {
       if (!e.dataTransfer) {
         return;
       }
@@ -46,7 +46,7 @@ export const BetweenFoldersLine = ({
     [index, onDrop, parentFolderId],
   );
 
-  const allowDrop = useCallback((e: any) => {
+  const allowDrop = useCallback((e: DragEvent) => {
     e.preventDefault();
   }, []);
 

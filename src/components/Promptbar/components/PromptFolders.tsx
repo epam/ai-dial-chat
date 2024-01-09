@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -62,7 +62,7 @@ const PromptFolderTemplate = ({
   const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
 
   const handleDrop = useCallback(
-    (e: any, folder: FolderInterface) => {
+    (e: DragEvent, folder: FolderInterface) => {
       if (e.dataTransfer) {
         const promptData = e.dataTransfer.getData('prompt');
         const folderData = e.dataTransfer.getData('folder');

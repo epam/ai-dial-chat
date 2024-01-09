@@ -76,10 +76,10 @@ async function handlePutRequest(
     body: readable,
   });
 
-  const json: any = await proxyRes.json();
+  const json: unknown = await proxyRes.json();
   if (!proxyRes.ok) {
     throw new OpenAIError(
-      json || proxyRes.statusText,
+      (typeof json === 'string' && json) || proxyRes.statusText,
       '',
       '',
       proxyRes.status + '',
@@ -144,9 +144,9 @@ async function handleDeleteRequest(
   });
 
   if (!proxyRes.ok) {
-    const json: any = await proxyRes.json();
+    const json: unknown = await proxyRes.json();
     throw new OpenAIError(
-      json || proxyRes.statusText,
+      (typeof json === 'string' && json) || proxyRes.statusText,
       '',
       '',
       proxyRes.status + '',

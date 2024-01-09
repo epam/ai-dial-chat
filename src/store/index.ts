@@ -1,6 +1,11 @@
-import { Store, configureStore } from '@reduxjs/toolkit';
+import { Action, Store, configureStore } from '@reduxjs/toolkit';
 
-import { Epic, combineEpics, createEpicMiddleware } from 'redux-observable';
+import {
+  Epic,
+  EpicMiddleware,
+  combineEpics,
+  createEpicMiddleware,
+} from 'redux-observable';
 
 import { AddonsEpics } from './addons/addons.epics';
 import { addonsSlice } from './addons/addons.reducers';
@@ -40,7 +45,9 @@ const reducer = {
   overlay: overlaySlice.reducer,
   files: filesSlice.reducer,
 };
-const getMiddleware = (epicMiddleware: any) => {
+const getMiddleware = (
+  epicMiddleware: EpicMiddleware<Action<any>, Action<any>, void, any>,
+) => {
   return (getDefaultMiddleware: any) => {
     return getDefaultMiddleware({
       thunk: false,

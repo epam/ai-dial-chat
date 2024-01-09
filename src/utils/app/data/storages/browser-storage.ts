@@ -101,6 +101,7 @@ export class BrowserStorage implements DialStorage {
           ? defaultValue
           : JSON.parse(value),
       );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       console.error(e);
       if (e.name === 'QuotaExceededError') {
@@ -117,6 +118,7 @@ export class BrowserStorage implements DialStorage {
     try {
       this.storage!.setItem(key, JSON.stringify(value));
       return of(undefined);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       console.error(e);
       if (e.name === 'QuotaExceededError') {

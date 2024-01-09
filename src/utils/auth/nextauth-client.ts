@@ -2,9 +2,11 @@ import { Client } from 'openid-client';
 
 export interface RefreshToken {
   isRefreshing: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   token: any | undefined;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const globalObj = globalThis as unknown as any;
 
 class NextClient {

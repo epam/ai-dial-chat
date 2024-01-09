@@ -27,7 +27,9 @@ export class ApiStorage implements DialStorage {
     url: string | URL;
     method: string;
     async: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     body: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }): Observable<{ percent?: number; result?: any }> {
     return new Observable((observer) => {
       const xhr = new XMLHttpRequest();
