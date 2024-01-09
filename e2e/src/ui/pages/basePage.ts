@@ -94,6 +94,10 @@ export class BasePage {
     await this.page.waitForLoadState('domcontentloaded');
   }
 
+  async bringPageToFront() {
+    await this.page.bringToFront();
+  }
+
   async getNewPage<T>(method: () => Promise<T>) {
     let newBrowserTab;
     try {
@@ -102,6 +106,7 @@ export class BasePage {
         method(),
       ]);
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.log('Browser page is not loaded: ' + (e as Error).message);
     }
     await newBrowserTab?.bringToFront();
@@ -110,10 +115,6 @@ export class BasePage {
 
   async acceptBrowserDialog(message: string) {
     await this.page.once('dialog', (dialog) => dialog.accept(message));
-  }
-
-  async dismissBrowserDialog() {
-    await this.page.once('dialog', (dialog) => dialog.dismiss());
   }
 
   async downloadData<T>(

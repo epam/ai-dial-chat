@@ -264,7 +264,7 @@ test(
         borders.forEach((borderColor) => {
           expect
             .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
-            .toBe(Colors.backgroundAccentPrimary);
+            .toBe(Colors.controlsBackgroundAccent);
         });
       });
 
@@ -305,7 +305,7 @@ test('Settings on default screen are saved in local storage when temperature = 0
     borders.forEach((borderColor) => {
       expect
         .soft(borderColor, ExpectedMessages.defaultTalkToIsValid)
-        .toBe(Colors.backgroundAccentPrimary);
+        .toBe(Colors.controlsBackgroundAccent);
     });
   });
 
@@ -344,7 +344,7 @@ test('Recent "Talk to" list is updated', async ({
     borders.forEach((borderColor) => {
       expect
         .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
-        .toBe(Colors.backgroundAccentPrimary);
+        .toBe(Colors.controlsBackgroundAccent);
     });
   });
 

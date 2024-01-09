@@ -181,4 +181,8 @@ export enum ExpectedMessages {
   dotsMenuIsHidden = 'Three dots menu is hidden',
   iconColorIsValid = 'Icon color is valid',
   iconIsHidden = 'Icon is hidden',
+  bannerMessageIsValid = 'Announcement banner message is valid',
+  bannerWidthIsValid = 'Announcement banner width is valid',
+  bannerIsClosed = 'Announcement banner is closed',
+  newPageIsOpened = 'New browser page is opened',
 }
