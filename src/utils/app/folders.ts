@@ -3,8 +3,6 @@ import { FolderInterface } from '@/src/types/folder';
 import { EntityFilters } from '@/src/types/search';
 
 import { selectFilteredConversations } from '@/src/store/conversations/conversations.selectors';
-import { ConversationsState } from '@/src/store/conversations/conversations.types';
-import { PromptsState } from '@/src/store/prompts/prompts.types';
 
 import { RootState } from '@/src/store';
 

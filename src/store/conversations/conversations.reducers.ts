@@ -1,6 +1,5 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { constructPath } from '@/src/utils/app/file';
 import {
   generateNextName,
   getAvailableNameOnSameFolderLevel,
@@ -17,8 +16,8 @@ import {
 } from '@/src/types/chat';
 import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
-import { PublishRequest } from '@/src/types/share';
 import { SearchFilters } from '@/src/types/search';
+import { PublishRequest } from '@/src/types/share';
 
 import { resetShareEntity } from '@/src/constants/chat';
 import {
@@ -467,20 +466,7 @@ export const conversationsSlice = createSlice({
       }
 
       state.temporaryFolders = state.temporaryFolders.map((folder) => {
-        if (folder.id !== payload.folderId) {
-          return folder;
-        }
-
-        const slashIndex = folder.id.lastIndexOf('/');
-        const oldFolderIdPath = folder.id.slice(
-          0,
-          slashIndex === -1 ? 0 : slashIndex,
-        );
-        return {
-          ...folder,
-          name: payload.name.trim(),
-          id: constructPath(oldFolderIdPath, payload.name),
-        };
+        return folder.id !== payload.folderId ? folder : { ...folder, name };
       });
     },
     moveFolder: (
