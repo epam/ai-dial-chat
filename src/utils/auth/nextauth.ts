@@ -5,6 +5,8 @@ import { TokenEndpointHandler } from 'next-auth/providers';
 import { logger } from '../server/logger';
 import NextClient, { RefreshToken } from './nextauth-client';
 
+import { TokenSet } from 'openid-client';
+
 // Need to be set for all providers
 export const tokenConfig: TokenEndpointHandler = {
   request: async (context) => {
@@ -34,8 +36,13 @@ export const tokenConfig: TokenEndpointHandler = {
  * `accessToken` and `accessTokenExpires`. If an error occurs,
  * returns the old token and an error property
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function refreshAccessToken(token: JWT & any) {
+async function refreshAccessToken(tokenJWT: JWT & unknown) {
+  const token = tokenJWT as JWT & {
+    providerId?: string;
+    userId: string;
+    refreshTokens: string | TokenSet;
+  };
+
   const displayedTokenSub =
     process.env.SHOW_TOKEN_SUB === 'true' ? token.sub : '******';
   try {
@@ -75,7 +82,9 @@ async function refreshAccessToken(token: JWT & any) {
       }
     }
 
-    const refreshedTokens = await client.refresh(token.refreshToken);
+    const refreshedTokens = await client.refresh(
+      token.refreshToken as string | TokenSet,
+    );
 
     if (
       !refreshedTokens ||
@@ -108,11 +117,12 @@ async function refreshAccessToken(token: JWT & any) {
       token: returnToken,
     });
     return returnToken;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error(
       error,
-      `Error when refreshing token: ${error.message}. Sub: ${displayedTokenSub}`,
+      `Error when refreshing token: ${
+        (error as Error).message
+      }. Sub: ${displayedTokenSub}`,
     );
 
     return {
@@ -162,7 +172,7 @@ export const callbacks: Partial<
   },
   session: async (options) => {
     if (options.token?.error) {
-      (options.session as any).error = options.token.error;
+      options.session.error = options.token.error;
     }
     return options.session;
   },

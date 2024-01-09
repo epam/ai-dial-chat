@@ -199,13 +199,13 @@ export const OpenAIStream = async ({
       };
 
       const parser = createParser(onParse);
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      for await (const chunk of res.body as any) {
-        if (isFinished) {
-          return;
+      if (res.body) {
+        for await (const chunk of res.body) {
+          if (isFinished) {
+            return;
+          }
+          parser.feed(decoder.decode(chunk as Buffer));
         }
-        parser.feed(decoder.decode(chunk));
       }
     },
   });

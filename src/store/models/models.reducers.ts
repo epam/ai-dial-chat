@@ -51,8 +51,12 @@ export const modelsSlice = createSlice({
         {} as Record<string, OpenAIEntityModel>,
       );
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getModelsFail: (state, { payload }: PayloadAction<{ error: any }>) => {
+    getModelsFail: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{ error: { status?: string; statusText?: string } }>,
+    ) => {
       state.isLoading = false;
       state.error = {
         title: translate('Error fetching models.'),
