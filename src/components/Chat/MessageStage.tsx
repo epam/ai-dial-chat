@@ -4,6 +4,12 @@ import { useEffect, useState } from 'react';
 import classNames from 'classnames';
 
 import { Stage } from '@/src/types/chat';
+import { OpenAIEntityAddon } from '@/src/types/openai';
+
+import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
+import { useAppSelector } from '@/src/store/hooks';
+
+import { ModelIcon } from '@/src/components/Chatbar/components/ModelIcon';
 
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import CircleCheck from '../../../public/images/icons/circle-check.svg';
@@ -17,6 +23,17 @@ interface StageTitleProps {
 }
 
 const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
+  const [addon, setAddon] = useState<OpenAIEntityAddon | undefined>();
+  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
+
+  const match = stage.name?.match(/^[^(]*/);
+
+  useEffect(() => {
+    if (match) {
+      setAddon(addonsMap[match[0]]);
+    }
+  }, [addonsMap, match]);
+
   return (
     <div className="grid min-w-0 grid-flow-col items-center gap-3 overflow-hidden">
       {stage.status == null ? (
@@ -38,6 +55,7 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
           className="shrink-0 grow-0 basis-auto text-secondary"
         />
       )}
+      {!!addon && <ModelIcon entity={addon} entityId={addon.id} size={18} />}
       <span
         className={classNames(
           'block text-start',
