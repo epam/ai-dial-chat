@@ -13,6 +13,8 @@ import {
 
 import classNames from 'classnames';
 
+import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
+
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
@@ -333,6 +335,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   );
 
   const handleContextMenuOpen = (e: MouseEvent) => {
+    if (hasParentWithFloatingOverlay(e.target as Element)) {
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     setIsContextMenu(true);

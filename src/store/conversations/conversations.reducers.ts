@@ -13,6 +13,7 @@ import {
 } from '@/src/types/chat';
 import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
+import { PublishRequest } from '@/src/types/share';
 
 import { resetShareEntity } from './../../constants/chat';
 import {
@@ -153,7 +154,7 @@ export const conversationsSlice = createSlice({
     },
     publishConversation: (
       state,
-      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
+      { payload }: PayloadAction<PublishRequest>,
     ) => {
       state.conversations = state.conversations.map((conv) => {
         if (conv.id === payload.id) {
@@ -167,10 +168,7 @@ export const conversationsSlice = createSlice({
         return conv;
       });
     },
-    publishFolder: (
-      state,
-      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
-    ) => {
+    publishFolder: (state, { payload }: PayloadAction<PublishRequest>) => {
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.id) {
           return {

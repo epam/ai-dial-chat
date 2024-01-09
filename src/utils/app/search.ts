@@ -1,9 +1,12 @@
 import { Conversation } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
+import { FolderInterface } from '@/src/types/folder';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { ShareInterface } from '@/src/types/share';
+
+import { getChildAndCurrentFoldersIdsById } from './folders';
 
 export const doesConversationContainSearchTerm = (
   conversation: Conversation,
@@ -119,3 +122,18 @@ export const getMyItemsFilters = (
   sectionFilter: MyItemFilter,
   searchFilter: getMyItemsFilter(searchFilters),
 });
+
+export const searchSectionFolders = (
+  folders: FolderInterface[],
+  filters: EntityFilters,
+) => {
+  const folderIds = folders // direct parent folders
+    .filter((folder) => filters.sectionFilter(folder))
+    .map((folder) => folder.id);
+
+  const filteredFolderIds = new Set(
+    folderIds.flatMap((fid) => getChildAndCurrentFoldersIdsById(fid, folders)),
+  );
+
+  return folders.filter((folder) => filteredFolderIds.has(folder.id));
+};
