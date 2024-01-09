@@ -29,7 +29,6 @@ import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
 import CollapsableSection from '../Common/CollapsableSection';
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
 import Modal from '../Common/Modal';
-import { SelectFolderModal } from '../Files/SelectFolderModal';
 
 import { v4 as uuidv4 } from 'uuid';
 
