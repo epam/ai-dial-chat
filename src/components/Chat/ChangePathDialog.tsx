@@ -223,7 +223,7 @@ export const ChangePathDialog = ({ isOpen, onClose, type }: Props) => {
                           className={classNames(
                             'relative',
                             folder.temporary
-                              ? 'rounded-[3px] text-primary'
+                              ? 'text-primary'
                               : 'text-secondary',
                           )}
                           key={folder.id}
