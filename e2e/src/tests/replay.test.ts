@@ -849,7 +849,7 @@ test(
 
       const newModels = [ModelIds.BISON_001, ModelIds.GPT_4];
       for (let i = 1; i <= newModels.length; i++) {
-        await chatHeader.openConversationSettings.click();
+        await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectModel(
           ModelsUtil.getModel(newModels[i - 1])!.name,
         );

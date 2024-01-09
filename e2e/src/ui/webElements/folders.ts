@@ -1,6 +1,7 @@
 import { SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import { ExpectedConstants } from '@/e2e/src/testData';
 import { Attributes, Styles, Tags } from '@/e2e/src/ui/domData';
 import { keys } from '@/e2e/src/ui/keyboard';
 import { DropdownMenu } from '@/e2e/src/ui/webElements/dropdownMenu';
@@ -58,6 +59,14 @@ export class Folders extends BaseElement {
       .getAttribute(Attributes.class);
   }
 
+  public foldersGroup = (parentFolderName: string) => {
+    return this.createElementFromLocator(
+      this.getChildElementBySelector(
+        SideBarSelectors.folderGroup,
+      ).getElementLocatorByText(parentFolderName),
+    );
+  };
+
   public async getFoldersCount() {
     return this.getChildElementBySelector(
       SideBarSelectors.folder,
@@ -96,6 +105,17 @@ export class Folders extends BaseElement {
       this.getFolderByName(name, index).getByText(name),
     );
     return folder.getComputedStyleProperty(Styles.color);
+  }
+
+  public async getFolderGroupBackgroundColor(parentFolderName: string) {
+    const backgroundColor = await this.foldersGroup(
+      parentFolderName,
+    ).getComputedStyleProperty(Styles.backgroundColor);
+    backgroundColor[0] = backgroundColor[0].replace(
+      ExpectedConstants.backgroundColorPattern,
+      '$1)',
+    );
+    return backgroundColor[0];
   }
 
   public getFolderEntities(name: string, index?: number) {
@@ -142,17 +162,5 @@ export class Folders extends BaseElement {
     await folderEntity.hover();
     await this.folderEntityDotsMenu(folderName, entityName).click();
     await this.getDropdownMenu().waitForState();
-  }
-
-  public async drugEntityFromFolder(folderName: string, entityName: string) {
-    const folderEntity = await this.getFolderEntity(folderName, entityName);
-    await folderEntity.waitFor();
-    await folderEntity.hover();
-    await this.page.mouse.down();
-    const foldersBounding = await this.getElementBoundingBox();
-    await this.page.mouse.move(
-      foldersBounding!.x,
-      foldersBounding!.y + 1.5 * foldersBounding!.height,
-    );
   }
 }

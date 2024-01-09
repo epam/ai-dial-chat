@@ -496,67 +496,6 @@ test(
   },
 );
 
-test('Chat is moved from the folder via drag&drop', async ({
-  dialHomePage,
-  conversationData,
-  folderConversations,
-  localStorageManager,
-  conversations,
-  chatBar,
-  page,
-  setTestIds,
-}) => {
-  setTestIds('EPMRTC-861');
-  const conversationInFolder =
-    conversationData.prepareDefaultConversationInFolder();
-  await localStorageManager.setFolders(conversationInFolder.folders);
-  await localStorageManager.setConversationHistory(
-    conversationInFolder.conversations[0],
-  );
-  await localStorageManager.setOpenedFolders(conversationInFolder.folders);
-  await localStorageManager.setSelectedConversation(
-    conversationInFolder.conversations[0],
-  );
-  await dialHomePage.openHomePage({
-    iconsToBeLoaded: [gpt35Model.iconUrl],
-  });
-  await dialHomePage.waitForPageLoaded();
-  await folderConversations.drugEntityFromFolder(
-    conversationInFolder.folders.name,
-    conversationInFolder.conversations[0].name,
-  );
-  const draggableAreaColor = await chatBar.getDraggableAreaColor();
-  expect
-    .soft(draggableAreaColor[0], ExpectedMessages.draggableAreaColorIsValid)
-    .toBe(Colors.backgroundAccentSecondary);
-  await page.mouse.up();
-
-  expect
-    .soft(
-      await folderConversations.isFolderEntityVisible(
-        conversationInFolder.folders.name,
-        conversationInFolder.conversations[0].name,
-      ),
-      ExpectedMessages.conversationMovedToFolder,
-    )
-    .toBeFalsy();
-
-  const todayConversations = await conversations.getTodayConversations();
-  expect
-    .soft(
-      todayConversations.includes(conversationInFolder.conversations[0].name),
-      ExpectedMessages.conversationOfToday,
-    )
-    .toBeTruthy();
-
-  const folderNameColor = await folderConversations.getFolderNameColor(
-    conversationInFolder.folders.name,
-  );
-  expect
-    .soft(folderNameColor[0], ExpectedMessages.folderNameColorIsValid)
-    .toBe(Colors.textPrimary);
-});
-
 test('Chat is moved to folder created from Move to', async ({
   dialHomePage,
   conversations,

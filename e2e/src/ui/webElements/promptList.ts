@@ -27,9 +27,7 @@ export class PromptList extends BaseElement {
       await this.page.keyboard.press(keys.arrowDown);
       promptOption = this.getPromptByName(name);
       const classValue = await promptOption.getAttribute(Attributes.class);
-      if (
-        classValue!.includes(ExpectedConstants.selectedPromptOptionAttribute)
-      ) {
+      if (classValue!.includes(ExpectedConstants.backgroundAccentAttribute)) {
         await this.page.keyboard.press(keys.enter);
         return;
       }

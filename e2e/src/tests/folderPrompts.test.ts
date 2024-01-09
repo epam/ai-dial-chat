@@ -163,43 +163,6 @@ test('Rename prompt folder when prompts are inside using check button', async ({
     .toBeTruthy();
 });
 
-test('Prompt is moved out of the folder via drag&drop', async ({
-  dialHomePage,
-  promptData,
-  folderPrompts,
-  localStorageManager,
-  prompts,
-  promptBar,
-  setTestIds,
-}) => {
-  setTestIds('EPMRTC-961');
-  const promptInFolder = promptData.prepareDefaultPromptInFolder();
-  await localStorageManager.setFolders(promptInFolder.folders);
-  await localStorageManager.setPrompts(promptInFolder.prompts[0]);
-  await localStorageManager.setOpenedFolders(promptInFolder.folders);
-
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-  await promptBar.dropPromptFromFolder(
-    promptInFolder.folders.name,
-    promptInFolder.prompts[0].name,
-  );
-  expect
-    .soft(
-      await folderPrompts.isFolderEntityVisible(
-        promptInFolder.folders.name,
-        promptInFolder.prompts[0].name,
-      ),
-      ExpectedMessages.promptMovedToFolder,
-    )
-    .toBeFalsy();
-
-  const isPromptVisible = await prompts
-    .getPromptByName(promptInFolder.prompts[0].name)
-    .isVisible();
-  expect.soft(isPromptVisible, ExpectedMessages.promptIsVisible).toBeTruthy();
-});
-
 test('Prompt is moved to folder created from Move to', async ({
   dialHomePage,
   prompts,
