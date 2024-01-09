@@ -21,15 +21,19 @@ import { LocalStorageManager } from './localStorageManager';
 import { ConversationData } from '@/e2e/src/testData';
 import { ApiHelper } from '@/e2e/src/testData/api/apiHelper';
 import { PromptData } from '@/e2e/src/testData/prompts/promptData';
+import { AccountSettings } from '@/e2e/src/ui/webElements/accountSettings';
 import { Addons } from '@/e2e/src/ui/webElements/addons';
 import { AddonsDialog } from '@/e2e/src/ui/webElements/addonsDialog';
 import { AppContainer } from '@/e2e/src/ui/webElements/appContainer';
+import { Banner } from '@/e2e/src/ui/webElements/banner';
 import { ChatInfoTooltip } from '@/e2e/src/ui/webElements/chatInfoTooltip';
 import { Compare } from '@/e2e/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/e2e/src/ui/webElements/confirmationDialog';
+import { DropdownCheckboxMenu } from '@/e2e/src/ui/webElements/dropdownCheckboxMenu';
 import { DropdownMenu } from '@/e2e/src/ui/webElements/dropdownMenu';
 import { EntitySettings } from '@/e2e/src/ui/webElements/entitySettings';
 import { ErrorPopup } from '@/e2e/src/ui/webElements/errorPopup';
+import { Filter } from '@/e2e/src/ui/webElements/filter';
 import { FolderConversations } from '@/e2e/src/ui/webElements/folderConversations';
 import { FolderPrompts } from '@/e2e/src/ui/webElements/folderPrompts';
 import { Header } from '@/e2e/src/ui/webElements/header';
@@ -39,6 +43,7 @@ import { PlaybackControl } from '@/e2e/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/e2e/src/ui/webElements/promptModalDialog';
 import { Prompts } from '@/e2e/src/ui/webElements/prompts';
 import { ReplayAsIs } from '@/e2e/src/ui/webElements/replayAsIs';
+import { Search } from '@/e2e/src/ui/webElements/search';
 import { ShareModal } from '@/e2e/src/ui/webElements/shareModal';
 import { TemperatureSlider } from '@/e2e/src/ui/webElements/temperatureSlider';
 import { Tooltip } from '@/e2e/src/ui/webElements/tooltip';
@@ -59,6 +64,9 @@ const test = base.extend<
     appContainer: AppContainer;
     chatBar: ChatBar;
     header: Header;
+    accountSettings: AccountSettings;
+    accountDropdownMenu: DropdownMenu;
+    banner: Banner;
     promptBar: PromptBar;
     chat: Chat;
     chatMessages: ChatMessages;
@@ -100,6 +108,12 @@ const test = base.extend<
     playback: Playback;
     playbackControl: PlaybackControl;
     shareModal: ShareModal;
+    chatBarSearch: Search;
+    promptBarSearch: Search;
+    chatFilter: Filter;
+    promptFilter: Filter;
+    chatFilterDropdownMenu: DropdownCheckboxMenu;
+    promptFilterDropdownMenu: DropdownCheckboxMenu;
     apiHelper: ApiHelper;
   }
 >({
@@ -146,9 +160,25 @@ const test = base.extend<
     const header = appContainer.getHeader();
     await use(header);
   },
+  accountSettings: async ({ header }, use) => {
+    const accountSettings = header.getAccountSettings();
+    await use(accountSettings);
+  },
+  accountDropdownMenu: async ({ accountSettings }, use) => {
+    const accountDropdownMenu = accountSettings.getDropdownMenu();
+    await use(accountDropdownMenu);
+  },
+  banner: async ({ appContainer }, use) => {
+    const banner = appContainer.getBanner();
+    await use(banner);
+  },
   promptBar: async ({ appContainer }, use) => {
     const promptBar = appContainer.getPromptBar();
     await use(promptBar);
+  },
+  promptBarSearch: async ({ promptBar }, use) => {
+    const promptBarSearch = promptBar.getSearch();
+    await use(promptBarSearch);
   },
   chat: async ({ appContainer }, use) => {
     const chat = appContainer.getChat();
@@ -173,6 +203,26 @@ const test = base.extend<
   folderConversations: async ({ chatBar }, use) => {
     const folderConversations = chatBar.getFolderConversations();
     await use(folderConversations);
+  },
+  chatBarSearch: async ({ chatBar }, use) => {
+    const chatBarSearch = chatBar.getSearch();
+    await use(chatBarSearch);
+  },
+  chatFilter: async ({ chatBarSearch }, use) => {
+    const chatFilter = chatBarSearch.getFilter();
+    await use(chatFilter);
+  },
+  promptFilter: async ({ promptBarSearch }, use) => {
+    const promptFilter = promptBarSearch.getFilter();
+    await use(promptFilter);
+  },
+  chatFilterDropdownMenu: async ({ chatFilter }, use) => {
+    const chatFilterDropdownMenu = chatFilter.getFilterDropdownMenu();
+    await use(chatFilterDropdownMenu);
+  },
+  promptFilterDropdownMenu: async ({ promptFilter }, use) => {
+    const promptFilterDropdownMenu = promptFilter.getFilterDropdownMenu();
+    await use(promptFilterDropdownMenu);
   },
   folderPrompts: async ({ promptBar }, use) => {
     const folderPrompts = promptBar.getFolderPrompts();

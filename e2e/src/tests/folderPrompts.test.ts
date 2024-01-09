@@ -461,8 +461,8 @@ test('Search prompt located in folders', async ({
   dialHomePage,
   localStorageManager,
   promptData,
-  promptBar,
   folderPrompts,
+  promptBarSearch,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-1174');
@@ -494,13 +494,13 @@ test('Search prompt located in folders', async ({
   await test.step('Type search term in the field and verify all prompts displayed', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await promptBar.searchPrompt.fill(searchTerm);
+    await promptBarSearch.setSearchValue(searchTerm);
     const resultCount = await folderPrompts.getFolderPromptsCount();
     expect.soft(resultCount, ExpectedMessages.searchResultCountIsValid).toBe(3);
   });
 
   await test.step('Clear search field and verify all prompts displayed', async () => {
-    await promptBar.searchPrompt.fill('');
+    await promptBarSearch.setSearchValue('');
     const resultCount = await folderPrompts.getFolderPromptsCount();
     expect.soft(resultCount, ExpectedMessages.searchResultCountIsValid).toBe(4);
   });

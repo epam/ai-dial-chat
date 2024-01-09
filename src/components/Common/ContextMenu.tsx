@@ -111,6 +111,7 @@ export default function ContextMenu({
       isMenuOpen={isOpen}
       trigger={
         <div
+          data-qa="menu-trigger"
           className={classNames(
             'flex w-full items-center justify-center rounded text-secondary',
             triggerIconHighlight && 'hover:text-accent-primary',

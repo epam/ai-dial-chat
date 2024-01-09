@@ -9,7 +9,7 @@ export enum ExpectedMessages {
   contextMenuOptionsValid = 'Context menu options are valid',
   conversationIsVisible = 'Conversation is visible in chat bar',
   conversationIsNotVisible = 'Conversation is not visible in chat bar',
-  conversationsCountIsValid = 'Conversation4s count is valid',
+  conversationsCountIsValid = 'Conversations count is valid',
   folderIsNotVisible = 'Folder is not visible in chat bar',
   newFolderCreated = 'New folder is created',
   folderCollapsed = 'Folder is collapsed',
@@ -181,4 +181,8 @@ export enum ExpectedMessages {
   dotsMenuIsHidden = 'Three dots menu is hidden',
   iconColorIsValid = 'Icon color is valid',
   iconIsHidden = 'Icon is hidden',
+  bannerMessageIsValid = 'Announcement banner message is valid',
+  bannerWidthIsValid = 'Announcement banner width is valid',
+  bannerIsClosed = 'Announcement banner is closed',
+  newPageIsOpened = 'New browser page is opened',
 }

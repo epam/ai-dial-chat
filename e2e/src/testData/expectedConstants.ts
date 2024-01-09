@@ -70,6 +70,16 @@ export enum MenuOptions {
   newFolder = 'New folder',
 }
 
+export enum FilterMenuOptions {
+  sharedByMe = 'Shared by me',
+  publishedByMe = 'Published by me',
+}
+
+export enum AccountMenuOptions {
+  settings = 'Settings',
+  logout = 'Log out',
+}
+
 export const Chronology = {
   today: 'Today',
   yesterday: 'Yesterday',

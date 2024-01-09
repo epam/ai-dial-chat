@@ -21,6 +21,8 @@ export const SideBarSelectors = {
   resizeIcon: '[data-qa="resize-icon"]',
   bottomPanel: '[data-qa="bottom-panel"]',
   arrowAdditionalIcon: '[data-qa="arrow-icon"]',
+  search: '[data-qa="search"]',
+  filterMenuTrigger: '[data-qa="menu-trigger"]',
 };
 
 export const ChatBarSelectors = {

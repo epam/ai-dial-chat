@@ -1,5 +1,4 @@
 export enum Colors {
-  backgroundAccentPrimary = 'rgb(90, 140, 233)',
   backgroundAccentSecondary = 'rgba(55, 186, 188, 0.15)',
   textPrimary = 'rgb(243, 244, 246)',
   textAccentSecondary = 'rgb(55, 186, 188)',
