@@ -60,7 +60,9 @@ export const addonsSlice = createSlice({
       state.isLoading = false;
       state.error = {
         title: translate('Error fetching addons.'),
-        code: payload.error.status || 'unknown',
+        code:
+          (payload.error.status && payload.error.status.toString()) ||
+          'unknown',
         messageLines: payload.error.statusText
           ? [payload.error.statusText]
           : [translate(errorsMessages.generalServer, { ns: 'common' })],
