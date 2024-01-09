@@ -2,7 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import {
   getChildAndCurrentFoldersIdsById,
-  getParentAndCurrentFolderIdsById,
+  getFilteredFolders,
   getParentAndCurrentFoldersById,
 } from '@/src/utils/app/folders';
 import {
@@ -81,40 +81,15 @@ export const selectFilteredFolders = createSelector(
     filters,
     searchTerm?,
     includeEmptyFolders?,
-  ) => {
-    const filteredConversations = selectFilteredConversations(
+  ) =>
+    getFilteredFolders(
       state,
+      folders,
+      emptyFolderIds,
       filters,
       searchTerm,
-    );
-    const folderIds = filteredConversations // direct parent folders
-      .map((c) => c.folderId)
-      .filter((fid) => fid);
-
-    if (!searchTerm?.trim().length) {
-      const markedFolderIds = folders
-        .filter((folder) => filters?.searchFilter(folder))
-        .map((f) => f.id);
-      folderIds.push(...markedFolderIds);
-
-      if (includeEmptyFolders && !searchTerm?.length) {
-        // include empty folders only if not search
-        folderIds.push(...emptyFolderIds);
-      }
-    }
-
-    const filteredFolderIds = new Set(
-      folderIds.flatMap((fid) =>
-        getParentAndCurrentFolderIdsById(folders, fid),
-      ),
-    );
-
-    return folders.filter(
-      (folder) =>
-        (folder.folderId || filters.sectionFilter(folder)) &&
-        filteredFolderIds.has(folder.id),
-    );
-  },
+      includeEmptyFolders,
+    ),
 );
 
 export const selectSectionFolders = createSelector(
@@ -434,5 +409,18 @@ export const isPublishConversationVersionUnique = createSelector(
       conversation.folderId,
     );
     return parentFolders.every((folder) => folder.publishVersion !== version);
+  },
+);
+export const selectTemporaryFolders = createSelector(
+  [rootSelector],
+  (state: ConversationsState) => {
+    return state.temporaryFolders;
+  },
+);
+
+export const selectTemporaryAndFilteredFolders = createSelector(
+  [selectFilteredFolders, selectTemporaryFolders],
+  (filteredFolders, temporaryFolders) => {
+    return [...filteredFolders, ...temporaryFolders];
   },
 );

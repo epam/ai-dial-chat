@@ -6,13 +6,12 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
+
 import {
   getDialFilesWithInvalidFileType,
   getExtensionsListForMimeTypes,
-  notAllowedSymbols,
-  notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
-import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
 
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
@@ -73,6 +72,20 @@ export const FileManagerModal = ({
   const [selectedFilesIds, setSelectedFilesIds] = useState(
     initialSelectedFilesIds,
   );
+
+  const {
+    handleRenameFolder,
+    handleAddFolder,
+    handleToggleFolder,
+    handleNewFolder,
+  } = useHandleFileFolders(
+    folders,
+    setErrorMessage,
+    openedFoldersIds,
+    setOpenedFoldersIds,
+    setIsAllFilesOpened,
+  );
+
   const filteredFiles = useMemo(() => {
     return files.filter(({ name }) =>
       name.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -98,52 +111,11 @@ export const FileManagerModal = ({
     setSearchQuery(e.target.value);
   }, []);
 
-  const handleNewFolder = useCallback(() => {
-    dispatch(FilesActions.addNewFolder({}));
-    setIsAllFilesOpened(true);
-  }, [dispatch]);
-
-  const handleToggleFolder = useCallback(
-    (folderId: string | undefined) => {
-      if (!folderId) {
-        setIsAllFilesOpened((value) => !value);
-        setOpenedFoldersIds([]);
-        return;
-      }
-
-      if (openedFoldersIds.includes(folderId)) {
-        const childFolders = getChildAndCurrentFoldersIdsById(
-          folderId,
-          folders,
-        );
-        setOpenedFoldersIds(
-          openedFoldersIds.filter((id) => !childFolders.includes(id)),
-        );
-      } else {
-        setOpenedFoldersIds(openedFoldersIds.concat(folderId));
-        dispatch(FilesActions.getFilesWithFolders({ path: folderId }));
-      }
-    },
-    [dispatch, folders, openedFoldersIds],
-  );
-
   const handleFolderSelect = useCallback(
     (folderId: string) => {
       handleToggleFolder(folderId);
     },
     [handleToggleFolder],
-  );
-
-  const handleAddFolder = useCallback(
-    (relativePath: string) => {
-      dispatch(FilesActions.addNewFolder({ relativePath }));
-
-      if (!openedFoldersIds.includes(relativePath)) {
-        setOpenedFoldersIds(openedFoldersIds.concat(relativePath));
-        dispatch(FilesActions.getFolders({ path: relativePath }));
-      }
-    },
-    [dispatch, openedFoldersIds],
   );
 
   const handleUploadFile = useCallback(
@@ -157,37 +129,6 @@ export const FileManagerModal = ({
       }
     },
     [dispatch, openedFoldersIds],
-  );
-  const handleRenameFolder = useCallback(
-    (newName: string, folderId: string) => {
-      const renamingFolder = folders.find((folder) => folder.id === folderId);
-      const folderWithSameName = folders.find(
-        (folder) =>
-          folder.name === newName.trim() &&
-          folderId !== folder.id &&
-          folder.folderId === renamingFolder?.folderId,
-      );
-
-      if (folderWithSameName) {
-        setErrorMessage(
-          t(`Not allowed to have folders with same names`) as string,
-        );
-        return;
-      }
-
-      if (newName.match(notAllowedSymbolsRegex)) {
-        setErrorMessage(
-          t(
-            `The symbols ${notAllowedSymbols.join(
-              '',
-            )} are not allowed in folder name`,
-          ) as string,
-        );
-        return;
-      }
-      dispatch(FilesActions.renameFolder({ folderId, newName }));
-    },
-    [dispatch, folders, t],
   );
 
   const handleItemCallback = useCallback(

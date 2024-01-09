@@ -1,10 +1,14 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
+import { constructPath } from '@/src/utils/app/file';
+import {
+  generateNextName,
+  getAvailableNameOnSameFolderLevel,
+  getNextDefaultName,
+} from '@/src/utils/app/folders';
 import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import { SearchFilters } from './../../types/search';
 import {
   Conversation,
   ConversationEntityModel,
@@ -14,8 +18,9 @@ import {
 import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { PublishRequest } from '@/src/types/share';
+import { SearchFilters } from '@/src/types/search';
 
-import { resetShareEntity } from './../../constants/chat';
+import { resetShareEntity } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
@@ -34,6 +39,7 @@ const initialState: ConversationsState = {
   conversations: [],
   selectedConversationsIds: [],
   folders: [],
+  temporaryFolders: [],
   searchTerm: '',
   searchFilters: SearchFilters.None,
   conversationSignal: new AbortController(),
@@ -396,8 +402,41 @@ export const conversationsSlice = createSlice({
 
       state.folders = state.folders.concat(newFolder);
     },
+    createTemporaryFolder: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        relativePath?: string;
+      }>,
+    ) => {
+      const folderName = getAvailableNameOnSameFolderLevel(
+        [
+          ...state.temporaryFolders,
+          ...state.folders.filter((folder) => folder.publishedWithMe),
+        ],
+        'New folder',
+        payload.relativePath,
+      );
+
+      state.temporaryFolders.push({
+        id: uuidv4(),
+        name: folderName,
+        type: FolderType.File,
+        folderId: payload.relativePath,
+        temporary: true,
+      });
+    },
     deleteFolder: (state, { payload }: PayloadAction<{ folderId: string }>) => {
       state.folders = state.folders.filter(({ id }) => id !== payload.folderId);
+    },
+    deleteTemporaryFolder: (
+      state,
+      { payload }: PayloadAction<{ folderId: string }>,
+    ) => {
+      state.temporaryFolders = state.temporaryFolders.filter(
+        ({ id }) => id !== payload.folderId,
+      );
     },
     renameFolder: (
       state,
@@ -416,6 +455,32 @@ export const conversationsSlice = createSlice({
         }
 
         return folder;
+      });
+    },
+    renameTemporaryFolder: (
+      state,
+      { payload }: PayloadAction<{ folderId: string; name: string }>,
+    ) => {
+      const name = payload.name.trim();
+      if (name === '') {
+        return;
+      }
+
+      state.temporaryFolders = state.temporaryFolders.map((folder) => {
+        if (folder.id !== payload.folderId) {
+          return folder;
+        }
+
+        const slashIndex = folder.id.lastIndexOf('/');
+        const oldFolderIdPath = folder.id.slice(
+          0,
+          slashIndex === -1 ? 0 : slashIndex,
+        );
+        return {
+          ...folder,
+          name: payload.name.trim(),
+          id: constructPath(oldFolderIdPath, payload.name),
+        };
       });
     },
     moveFolder: (

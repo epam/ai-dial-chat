@@ -1,5 +1,12 @@
 import { ShareEntity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
+import { EntityFilters } from '@/src/types/search';
+
+import { selectFilteredConversations } from '@/src/store/conversations/conversations.selectors';
+import { ConversationsState } from '@/src/store/conversations/conversations.types';
+import { PromptsState } from '@/src/store/prompts/prompts.types';
+
+import { RootState } from '@/src/store';
 
 export const getFoldersDepth = (
   childFolder: FolderInterface,
@@ -158,4 +165,65 @@ export const getFolderIdByPath = (path: string, folders: FolderInterface[]) => {
   }
 
   return undefined;
+};
+export const getPathToFolderById = (
+  folders: FolderInterface[],
+  starterId: string | undefined,
+) => {
+  let path = '';
+  const createPath = (folderId: string) => {
+    const folder = folders.find((folder) => folder.id === folderId);
+
+    const newFolderId = folder?.folderId;
+    path = `${folder?.name}/${path}`;
+    if (newFolderId) {
+      createPath(newFolderId);
+    }
+  };
+
+  if (starterId) {
+    createPath(starterId);
+    path = path.slice(0, -1);
+  }
+
+  return path;
+};
+
+export const getFilteredFolders = (
+  state: RootState,
+  folders: FolderInterface[],
+  emptyFolderIds: string[],
+  filters: EntityFilters,
+  searchTerm?: string,
+  includeEmptyFolders?: boolean,
+) => {
+  const filteredConversations = selectFilteredConversations(
+    state,
+    filters,
+    searchTerm,
+  );
+  const folderIds = filteredConversations
+    .map((c) => c.folderId)
+    .filter((fid) => fid);
+
+  if (!searchTerm?.trim().length) {
+    const markedFolderIds = folders
+      .filter((folder) => filters?.searchFilter(folder))
+      .map((f) => f.id);
+    folderIds.push(...markedFolderIds);
+
+    if (includeEmptyFolders && !searchTerm?.length) {
+      folderIds.push(...emptyFolderIds);
+    }
+  }
+
+  const filteredFolderIds = new Set(
+    folderIds.flatMap((fid) => getParentAndCurrentFolderIdsById(folders, fid)),
+  );
+
+  return folders.filter(
+    (folder) =>
+      (folder.folderId || filters.sectionFilter(folder)) &&
+      filteredFolderIds.has(folder.id),
+  );
 };
