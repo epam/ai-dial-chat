@@ -1,4 +1,4 @@
-import { Account, CallbacksOptions, Profile } from 'next-auth';
+import { Account, CallbacksOptions, Profile, Session } from 'next-auth';
 import { JWT } from 'next-auth/jwt';
 import { TokenEndpointHandler } from 'next-auth/providers';
 
@@ -172,7 +172,8 @@ export const callbacks: Partial<
   },
   session: async (options) => {
     if (options.token?.error) {
-      options.session.error = options.token.error;
+      (options.session as Session & { error?: unknown }).error =
+        options.token.error;
     }
     return options.session;
   },

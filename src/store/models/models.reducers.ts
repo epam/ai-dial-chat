@@ -55,7 +55,9 @@ export const modelsSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ error: { status?: string; statusText?: string } }>,
+      }: PayloadAction<{
+        error: { status?: string | number; statusText?: string };
+      }>,
     ) => {
       state.isLoading = false;
       state.error = {

@@ -54,7 +54,7 @@ export const addonsSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        error: { status?: number; statusText?: string };
+        error: { status?: string | number; statusText?: string };
       }>,
     ) => {
       state.isLoading = false;
