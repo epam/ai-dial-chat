@@ -80,8 +80,8 @@ export const FileManagerModal = ({
     handleNewFolder,
   } = useHandleFileFolders(
     folders,
-    setErrorMessage,
     openedFoldersIds,
+    setErrorMessage,
     setOpenedFoldersIds,
     setIsAllFilesOpened,
   );

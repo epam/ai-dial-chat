@@ -1,6 +1,5 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { constructPath } from '@/src/utils/app/file';
 import {
   generateNextName,
   getAvailableNameOnSameFolderLevel,
@@ -294,16 +293,7 @@ export const promptsSlice = createSlice({
           return folder;
         }
 
-        const slashIndex = folder.id.lastIndexOf('/');
-        const oldFolderIdPath = folder.id.slice(
-          0,
-          slashIndex === -1 ? 0 : slashIndex,
-        );
-        return {
-          ...folder,
-          name: payload.name.trim(),
-          id: constructPath(oldFolderIdPath, payload.name),
-        };
+        return folder.id !== payload.folderId ? folder : { ...folder, name };
       });
     },
     moveFolder: (

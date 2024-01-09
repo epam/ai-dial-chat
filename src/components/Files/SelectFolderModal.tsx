@@ -63,8 +63,8 @@ export const SelectFolderModal = ({
     handleNewFolder,
   } = useHandleFileFolders(
     filteredFolders,
-    setErrorMessage,
     openedFoldersIds,
+    setErrorMessage,
     setOpenedFoldersIds,
     setIsAllFilesOpened,
   );
