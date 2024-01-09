@@ -3,15 +3,15 @@ import { Session } from 'next-auth';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-export function isClientSessionValid(
-  session: (Session & { data?: { error?: string } }) | null,
-) {
-  return session && session.data?.error !== 'RefreshAccessTokenError';
+export function isClientSessionValid(session: unknown | null) {
+  return (
+    session &&
+    (session as { data?: { error?: string } }).data?.error !==
+      'RefreshAccessTokenError'
+  );
 }
 
-export function isServerSessionValid(
-  session: (Session & { error?: string }) | null,
-) {
+export function isServerSessionValid(session: Session | null) {
   if (
     process.env.AUTH_DISABLED === 'true' ||
     process.env.IS_IFRAME === 'true'
@@ -19,7 +19,10 @@ export function isServerSessionValid(
     return true;
   }
 
-  return !!session && session.error !== 'RefreshAccessTokenError';
+  return (
+    !!session &&
+    (session as { error?: string }).error !== 'RefreshAccessTokenError'
+  );
 }
 
 export function validateServerSession(
