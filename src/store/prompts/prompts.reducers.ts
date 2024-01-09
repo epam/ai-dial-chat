@@ -288,13 +288,9 @@ export const promptsSlice = createSlice({
         return;
       }
 
-      state.temporaryFolders = state.temporaryFolders.map((folder) => {
-        if (folder.id !== payload.folderId) {
-          return folder;
-        }
-
-        return folder.id !== payload.folderId ? folder : { ...folder, name };
-      });
+      state.temporaryFolders = state.temporaryFolders.map((folder) =>
+        folder.id !== payload.folderId ? folder : { ...folder, name },
+      );
     },
     moveFolder: (
       state,
