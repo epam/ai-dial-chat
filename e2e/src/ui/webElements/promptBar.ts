@@ -33,7 +33,7 @@ export class PromptBar extends SideBar {
   }
 
   public async dropPromptFromFolder(folderName: string, promptName: string) {
-    const folderPrompt = await this.getFolderPrompts().getFolderPrompt(
+    const folderPrompt = await this.getFolderPrompts().getFolderEntity(
       folderName,
       promptName,
     );
