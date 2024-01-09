@@ -259,7 +259,7 @@ test(
           await dialHomePage.waitForPageLoaded();
         }
         const isFirstConversationVisible =
-          await folderConversations.isFolderConversationVisible(
+          await folderConversations.isFolderEntityVisible(
             firstConversationInFolder.folders.name,
             firstConversationInFolder.conversations[0].name,
           );
@@ -268,7 +268,7 @@ test(
           .toBeTruthy();
 
         const isSecondConversationVisible =
-          await folderConversations.isFolderConversationVisible(
+          await folderConversations.isFolderEntityVisible(
             secondConversationInFolder.folders.name,
             secondConversationInFolder.conversations[0].name,
           );
@@ -442,10 +442,7 @@ test('Delete nested folder with chat', async ({
       expect
         .soft(
           await folderConversations
-            .getFolderConversation(
-              nestedFolders[i].name,
-              nestedConversations[i].name,
-            )
+            .getFolderEntity(nestedFolders[i].name, nestedConversations[i].name)
             .isVisible(),
           ExpectedMessages.conversationNotDeleted,
         )

@@ -310,7 +310,7 @@ test('Clear prompts. Cancel', async ({
   await confirmationDialog.cancelDialog();
 
   const isFolderConversationVisible =
-    await folderConversations.isFolderConversationVisible(
+    await folderConversations.isFolderEntityVisible(
       conversationInFolder.folders.name,
       conversationInFolder.conversations[0].name,
     );
@@ -332,7 +332,7 @@ test('Clear prompts. Cancel', async ({
     .soft(isPromptFolderVisible, ExpectedMessages.folderNotDeleted)
     .toBeTruthy();
 
-  const isFolderPromptVisible = await folderPrompts.isFolderPromptVisible(
+  const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(
     promptInFolder.folders.name,
     promptInFolder.prompts[0].name,
   );
@@ -414,7 +414,7 @@ test('Clear prompts. Clear', async ({
       .getFolderByName(emptyConversationFolder.name)
       .waitFor();
     await folderConversations
-      .getFolderConversation(
+      .getFolderEntity(
         conversationInFolder.folders.name,
         conversationInFolder.conversations[0].name,
       )
@@ -430,7 +430,7 @@ test('Clear prompts. Clear', async ({
       .soft(isPromptFolderVisible, ExpectedMessages.folderDeleted)
       .toBeFalsy();
 
-    const isFolderPromptVisible = await folderPrompts.isFolderPromptVisible(
+    const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(
       promptInFolder.folders.name,
       promptInFolder.prompts[0].name,
     );

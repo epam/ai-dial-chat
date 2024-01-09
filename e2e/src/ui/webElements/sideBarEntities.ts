@@ -1,6 +1,7 @@
 import { SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import { ExpectedConstants } from '@/e2e/src/testData';
 import { Styles, Tags } from '@/e2e/src/ui/domData';
 import { keys } from '@/e2e/src/ui/keyboard';
 import { DropdownMenu } from '@/e2e/src/ui/webElements/dropdownMenu';
@@ -126,5 +127,20 @@ export class SideBarEntities extends BaseElement {
   ) {
     const entity = this.getEntityByName(selector, name, index);
     return this.getElementIconHtml(entity);
+  }
+
+  public async getEntityBackgroundColor(
+    selector: string,
+    name: string,
+    index?: number,
+  ) {
+    const backgroundColor = await this.createElementFromLocator(
+      this.getEntityByName(selector, name, index),
+    ).getComputedStyleProperty(Styles.backgroundColor);
+    backgroundColor[0] = backgroundColor[0].replace(
+      ExpectedConstants.backgroundColorPattern,
+      '$1)',
+    );
+    return backgroundColor[0];
   }
 }

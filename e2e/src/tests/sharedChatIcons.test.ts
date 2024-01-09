@@ -258,7 +258,7 @@ test(
     });
 
     await test.step('Change chat model, send a new request and verify share icon is preserved on chat bar', async () => {
-      await chatHeader.openConversationSettings.click();
+      await chatHeader.openConversationSettingsPopup();
       await talkToSelector.waitForState();
       await talkToSelector.selectModel(
         ModelsUtil.getModel(ModelIds.GPT_4)!.name,

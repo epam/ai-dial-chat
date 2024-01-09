@@ -1,6 +1,7 @@
 import { ChatSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import { API } from '@/e2e/src/testData';
 import { Tags } from '@/e2e/src/ui/domData';
 import { Page } from '@playwright/test';
 
@@ -47,5 +48,13 @@ export class ChatHeader extends BaseElement {
 
   async getHeaderAddonsIcons() {
     return this.getElementIcons(this.chatAddonIcons, Tags.desc);
+  }
+
+  async openConversationSettingsPopup() {
+    const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
+    const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
+    await this.openConversationSettings.click();
+    await modelsResponsePromise;
+    await addonsResponsePromise;
   }
 }

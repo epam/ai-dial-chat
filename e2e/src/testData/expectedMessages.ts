@@ -185,4 +185,6 @@ export enum ExpectedMessages {
   bannerWidthIsValid = 'Announcement banner width is valid',
   bannerIsClosed = 'Announcement banner is closed',
   newPageIsOpened = 'New browser page is opened',
+  conversationIsSelected = 'Conversation is selected',
+  folderIsHighlighted = 'Folder is highlighted',
 }

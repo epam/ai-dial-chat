@@ -662,7 +662,7 @@ test('Apply changes with new settings for both chats in compare mode and check c
   await test.step('Open chat settings and update them for both models', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await leftChatHeader.openConversationSettings.click();
+    await leftChatHeader.openConversationSettingsPopup();
     await leftConversationSettings
       .getTalkToSelector()
       .selectModel(firstUpdatedRandomModel.name);
@@ -1156,7 +1156,7 @@ test('Compare two chats located in different folders', async ({
   await test.step('Open compare mode from 1st chat dropdown menu and verify one chat is available for comparison', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await folderConversations.openFolderConversationDropdownMenu(
+    await folderConversations.openFolderEntityDropdownMenu(
       firstFolderConversation.folders.name,
       firstFolderConversation.conversations[0].name,
     );
