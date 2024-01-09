@@ -1,4 +1,4 @@
-export function hasParentWithFloatingOverlay(
+export function hasParentWithAttribute(
   element: Element | null,
   attributeName: string,
 ): boolean {
@@ -6,7 +6,11 @@ export function hasParentWithFloatingOverlay(
   if (element.hasAttribute(attributeName)) {
     return true;
   }
-  return hasParentWithFloatingOverlay(element.parentElement, attributeName);
+  return hasParentWithAttribute(element.parentElement, attributeName);
+}
+
+export function hasParentWithFloatingOverlay(element: Element | null): boolean {
+  return hasParentWithAttribute(element, 'data-floating-overlay');
 }
 
 export const getPromptLimitDescription = (

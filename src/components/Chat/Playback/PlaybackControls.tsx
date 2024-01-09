@@ -108,13 +108,7 @@ export const PlaybackControls = ({
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (
-        !isPlayback ||
-        hasParentWithFloatingOverlay(
-          e.target as Element,
-          'data-floating-overlay',
-        )
-      ) {
+      if (!isPlayback || hasParentWithFloatingOverlay(e.target as Element)) {
         return;
       }
 

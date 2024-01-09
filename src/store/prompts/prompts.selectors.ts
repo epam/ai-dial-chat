@@ -8,6 +8,7 @@ import {
 import {
   doesPromptContainSearchTerm,
   getMyItemsFilters,
+  searchSectionFolders,
 } from '@/src/utils/app/search';
 import { isEntityExternal } from '@/src/utils/app/share';
 
@@ -27,7 +28,7 @@ export const selectFilteredPrompts = createSelector(
   [
     selectPrompts,
     (_state, filters: EntityFilters) => filters,
-    (_state, _filters, searchTerm?: string) => searchTerm,
+    (_state, _filters: EntityFilters, searchTerm?: string) => searchTerm,
   ],
   (prompts, filters, searchTerm?) => {
     return prompts.filter(
@@ -110,6 +111,11 @@ export const selectFilteredFolders = createSelector(
         filteredFolderIds.has(folder.id),
     );
   },
+);
+
+export const selectSectionFolders = createSelector(
+  [selectFolders, (_state, filters: EntityFilters) => filters],
+  (folders, filters) => searchSectionFolders(folders, filters),
 );
 
 export const selectParentFolders = createSelector(
@@ -200,5 +206,44 @@ export const hasExternalParent = createSelector(
   (folders, folderId?) => {
     const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
     return parentFolders.some((folder) => isEntityExternal(folder));
+  },
+);
+
+export const isPublishFolderVersionUnique = createSelector(
+  [
+    selectFolders,
+    (_state: RootState, folderId: string) => folderId,
+    (_state: RootState, _folderId: string, version: string) => version,
+  ],
+  (folders, folderId, version) => {
+    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
+    return parentFolders.some((folder) => folder.publishVersion === version);
+  },
+);
+
+export const isPublishPromptVersionUnique = createSelector(
+  [
+    (state) => state,
+    (_state: RootState, entityId: string) => entityId,
+    (_state: RootState, _entityId: string, version: string) => version,
+  ],
+  (state, entityId, version) => {
+    const prompt = selectPrompt(state, entityId);
+
+    if (!prompt || prompt?.publishVersion === version) return false;
+
+    const prompts = selectPrompts(state).filter(
+      (prmt) => prmt.originalId === entityId && prmt.publishVersion === version,
+    );
+
+    if (prompts.length) return false;
+
+    const folders = selectFolders(state);
+
+    const parentFolders = getParentAndCurrentFoldersById(
+      folders,
+      prompt.folderId,
+    );
+    return parentFolders.every((folder) => folder.publishVersion !== version);
   },
 );

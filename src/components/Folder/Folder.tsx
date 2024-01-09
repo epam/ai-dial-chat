@@ -21,6 +21,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { getFoldersDepth } from '@/src/utils/app/folders';
+import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
@@ -403,6 +404,9 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   }, []);
 
   const handleContextMenuOpen = (e: MouseEvent) => {
+    if (hasParentWithFloatingOverlay(e.target as Element)) {
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     setIsContextMenu(true);
