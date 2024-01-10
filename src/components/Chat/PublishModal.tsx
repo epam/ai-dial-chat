@@ -146,137 +146,148 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block h-[747px] min-w-[550px] max-w-[1100px] p-6 group/modal"
+      containerClassName="inline-block h-[747px] min-w-[550px] max-w-[1100px] group/modal"
       dataQa="publish-modal"
       isOpen={isOpen}
       onClose={onClose}
       initialFocus={nameInputRef}
+      hideClose
     >
-      <div className="flex h-full flex-col gap-2">
-        <h4 className=" max-h-[50px] text-base font-semibold">
+      <div className="flex h-full flex-col">
+        <h4 className=" min-h-[50px] border-b border-tertiary p-4 text-base font-semibold">
           <span className="line-clamp-2 break-words">
             {`${t('Publication request for')}: ${entity.name.trim()}`}
           </span>
         </h4>
-        <div className="flex grow flex-col overflow-y-auto overflow-x-hidden px-1">
-          <section className="flex grow flex-col gap-3">
-            <h2>{t('General Info')}</h2>
+        <div className='flex grow columns-2 overflow-y-auto'>
+          <div className="flex w-full flex-col gap-3 p-4">
+            <section className="flex flex-col gap-3">
+              <h2>{t('General Info')}</h2>
+              <p className="text-secondary">
+                {t(
+                  'Your conversation will be visible to organization only after verification by the administrator',
+                )}
+              </p>
+
+              <div>
+                <label
+                  className="mb-1 flex text-xs text-secondary"
+                  htmlFor="requestName"
+                >
+                  {t(`${getPrefix(entity)} name`)}
+                  <span className="ml-1 inline text-accent-primary">*</span>
+                </label>
+                <input
+                  ref={nameInputRef}
+                  name="requestName"
+                  className={inputClassName}
+                  placeholder={t('A name for your request.') || ''}
+                  value={name}
+                  required
+                  type="text"
+                  onBlur={onBlur}
+                  onChange={nameOnChangeHandler}
+                  data-qa="request-name"
+                />
+                <EmptyRequiredInputMessage useDisplay className="!mb-0" />
+              </div>
+
+              <div>
+                <label
+                  className="mb-1 flex text-xs text-secondary"
+                  htmlFor="requestPath"
+                >
+                  {t('Path')}
+                  <span className="ml-1 inline text-accent-primary">*</span>
+                </label>
+                <button
+                  className="input-form flex grow items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
+                  onClick={handleFolderChange}
+                >
+                  <span className="truncate">
+                    {constructPath(t('Organization'), path)}
+                  </span>
+                  <span className="text-accent-primary">{t('Change')}</span>
+                </button>
+              </div>
+
+              <div>
+                <label
+                  className="mb-1 flex text-xs text-secondary"
+                  htmlFor="requestVersion"
+                >
+                  {t('Version')}
+                  <span className="ml-1 inline text-accent-primary">*</span>
+                </label>
+                <input
+                  ref={nameInputRef}
+                  name="requestVersion"
+                  className={classNames(inputClassName, {
+                    '!border-error': !isVersionUnique && submitted,
+                  })}
+                  placeholder={t('A version for your request.') || ''}
+                  value={version}
+                  required
+                  type="text"
+                  data-qa="request-version"
+                  onBlur={handleBlur}
+                  onChange={versionOnChangeHandler}
+                />
+                {submitted && (!isVersionUnique || !version.trim()) && (
+                  <div className="mb-4 text-xxs text-error">
+                    {t(
+                      !isVersionUnique
+                        ? 'Please provide unique version'
+                        : 'Please fill in all required fields',
+                    )}
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section className="flex flex-col">
+              <h2>{t('Target Audience Filters')}</h2>
+
+              {[
+                'UserGroup',
+                'JobTitle',
+                'AssignedProjects',
+                'UserGroup',
+                'JobTitle',
+                'AssignedProjects',
+              ].map((v, idx) => (
+                <CollapsableSection
+                  name={v}
+                  dataQa={`filter-${v}`}
+                  key={`filter-${v}-${idx}`}
+                  openByDefault={false}
+                  className="!pl-0"
+                >
+                  TBD
+                </CollapsableSection>
+              ))}
+            </section>
+          </div>
+          {!!dispatch && <div className="flex w-full flex-col gap-3 border-l border-tertiary p-4">
+            <h2>{t('Files contained in the collection')}</h2>
             <p className="text-secondary">
-              {t(
-                'Your conversation will be visible to organization only after verification by the administrator',
-              )}
-            </p>
-
-            <div>
-              <label
-                className="mb-1 flex text-xs text-secondary"
-                htmlFor="requestName"
-              >
-                {t(`${getPrefix(entity)} name`)}
-                <span className="ml-1 inline text-accent-primary">*</span>
-              </label>
-              <input
-                ref={nameInputRef}
-                name="requestName"
-                className={inputClassName}
-                placeholder={t('A name for your request.') || ''}
-                value={name}
-                required
-                type="text"
-                onBlur={onBlur}
-                onChange={nameOnChangeHandler}
-                data-qa="request-name"
-              />
-              <EmptyRequiredInputMessage useDisplay className="!mb-0" />
-            </div>
-
-            <div>
-              <label
-                className="mb-1 flex text-xs text-secondary"
-                htmlFor="requestPath"
-              >
-                {t('Path')}
-                <span className="ml-1 inline text-accent-primary">*</span>
-              </label>
-              <button
-                className="input-form flex grow items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
-                onClick={handleFolderChange}
-              >
-                <span className="truncate">
-                  {constructPath(t('Organization'), path)}
-                </span>
-                <span className="text-accent-primary">{t('Change')}</span>
-              </button>
-            </div>
-
-            <div>
-              <label
-                className="mb-1 flex text-xs text-secondary"
-                htmlFor="requestVersion"
-              >
-                {t('Version')}
-                <span className="ml-1 inline text-accent-primary">*</span>
-              </label>
-              <input
-                ref={nameInputRef}
-                name="requestVersion"
-                className={classNames(inputClassName, {
-                  '!border-error': !isVersionUnique && submitted,
-                })}
-                placeholder={t('A version for your request.') || ''}
-                value={version}
-                required
-                type="text"
-                data-qa="request-version"
-                onBlur={handleBlur}
-                onChange={versionOnChangeHandler}
-              />
-              {submitted && (!isVersionUnique || !version.trim()) && (
-                <div className="mb-4 text-xxs text-error">
-                  {t(
-                    !isVersionUnique
-                      ? 'Please provide unique version'
-                      : 'Please fill in all required fields',
-                  )}
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className="flex grow flex-col gap-3">
-            <h2>{t('Target Audience Filters')}</h2>
-
-            {[
-              'UserGroup',
-              'JobTitle',
-              'AssignedProjects',
-              'UserGroup',
-              'JobTitle',
-              'AssignedProjects',
-            ].map((v, idx) => (
-              <CollapsableSection
-                name={v}
-                dataQa={`filter-${v}`}
-                key={`filter-${v}-${idx}`}
-                openByDefault={false}
-                className="pl-0"
-              >
-                TBD
-              </CollapsableSection>
-            ))}
-          </section>
+                {t(
+                  'No files',
+                )}
+              </p>
+          </div>}
         </div>
 
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-3 border-t border-tertiary p-4">
           <button
-            className="button button-secondary"
+            className="button button-secondary py-2"
             onClick={handleClose}
             data-qa="cancel"
           >
             {t('Cancel')}
           </button>
           <button
-            className="button button-primary"
+            className="button button-primary py-2"
             onClick={handlePublish}
             data-qa="publish"
             autoFocus
