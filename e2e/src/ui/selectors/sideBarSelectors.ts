@@ -5,6 +5,7 @@ export const SideBarSelectors = {
   promptBar: '[data-qa="promptbar"]',
   newEntity: '[data-qa="new-entity"]',
   folder: '[data-qa="folder"]',
+  folderGroup: '#folder',
   folderName: '[data-qa="folder-name"]',
   dotsMenu: '[aria-haspopup="menu"]',
   renameInput: (value: string) =>

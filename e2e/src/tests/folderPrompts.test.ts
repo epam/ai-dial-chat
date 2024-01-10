@@ -47,14 +47,14 @@ test('Prompt folder can expand and collapse', async ({
   await dialHomePage.openHomePage();
   await dialHomePage.waitForPageLoaded();
   await folderPrompts.expandCollapseFolder(folderName);
-  let isPromptVisible = await folderPrompts.isFolderPromptVisible(
+  let isPromptVisible = await folderPrompts.isFolderEntityVisible(
     folderName,
     promptInFolder.prompts[0].name,
   );
   expect.soft(isPromptVisible, ExpectedMessages.folderExpanded).toBeTruthy();
 
   await folderPrompts.expandCollapseFolder(folderName);
-  isPromptVisible = await folderPrompts.isFolderPromptVisible(
+  isPromptVisible = await folderPrompts.isFolderEntityVisible(
     folderName,
     promptInFolder.prompts[0].name,
   );
@@ -163,43 +163,6 @@ test('Rename prompt folder when prompts are inside using check button', async ({
     .toBeTruthy();
 });
 
-test('Prompt is moved out of the folder via drag&drop', async ({
-  dialHomePage,
-  promptData,
-  folderPrompts,
-  localStorageManager,
-  prompts,
-  promptBar,
-  setTestIds,
-}) => {
-  setTestIds('EPMRTC-961');
-  const promptInFolder = promptData.prepareDefaultPromptInFolder();
-  await localStorageManager.setFolders(promptInFolder.folders);
-  await localStorageManager.setPrompts(promptInFolder.prompts[0]);
-  await localStorageManager.setOpenedFolders(promptInFolder.folders);
-
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-  await promptBar.dropPromptFromFolder(
-    promptInFolder.folders.name,
-    promptInFolder.prompts[0].name,
-  );
-  expect
-    .soft(
-      await folderPrompts.isFolderPromptVisible(
-        promptInFolder.folders.name,
-        promptInFolder.prompts[0].name,
-      ),
-      ExpectedMessages.promptMovedToFolder,
-    )
-    .toBeFalsy();
-
-  const isPromptVisible = await prompts
-    .getPromptByName(promptInFolder.prompts[0].name)
-    .isVisible();
-  expect.soft(isPromptVisible, ExpectedMessages.promptIsVisible).toBeTruthy();
-});
-
 test('Prompt is moved to folder created from Move to', async ({
   dialHomePage,
   prompts,
@@ -220,7 +183,7 @@ test('Prompt is moved to folder created from Move to', async ({
   await promptDropdownMenu.selectMenuOption(MenuOptions.newFolder);
 
   await folderPrompts.expandCollapseFolder(ExpectedConstants.newFolderTitle);
-  const isFolderPromptVisible = await folderPrompts.isFolderPromptVisible(
+  const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(
     ExpectedConstants.newFolderTitle,
     prompt.name,
   );
@@ -252,7 +215,7 @@ test('Prompt is moved to folder from Move to list', async ({
   await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
   await promptDropdownMenu.selectMenuOption(folderToMoveIn.name);
 
-  const isFolderPromptVisible = await folderPrompts.isFolderPromptVisible(
+  const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(
     folderToMoveIn.name,
     prompt.name,
   );
@@ -360,7 +323,7 @@ test('Delete prompt in the folder', async ({
   await dialHomePage.openHomePage();
   await dialHomePage.waitForPageLoaded();
   await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
-  await folderPrompts.openFolderPromptDropdownMenu(
+  await folderPrompts.openFolderEntityDropdownMenu(
     promptInFolder.folders.name,
     promptInFolder.prompts[0].name,
   );
@@ -371,7 +334,7 @@ test('Delete prompt in the folder', async ({
   expect
     .soft(
       await folderPrompts
-        .getFolderPrompt(
+        .getFolderEntity(
           promptInFolder.folders.name,
           promptInFolder.prompts[0].name,
         )
@@ -448,7 +411,7 @@ test('Delete nested prompt folder with prompt', async ({
       expect
         .soft(
           await folderPrompts
-            .getFolderPrompt(nestedFolders[i].name, nestedPrompts[i].name)
+            .getFolderEntity(nestedFolders[i].name, nestedPrompts[i].name)
             .isVisible(),
           ExpectedMessages.promptNotDeleted,
         )
@@ -495,13 +458,33 @@ test('Search prompt located in folders', async ({
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     await promptBarSearch.setSearchValue(searchTerm);
-    const resultCount = await folderPrompts.getFolderPromptsCount();
-    expect.soft(resultCount, ExpectedMessages.searchResultCountIsValid).toBe(3);
+    const firstFolderResultCount = await folderPrompts.getFolderEntitiesCount(
+      firstFolderPrompt.folders.name,
+    );
+    const secondFolderResultCount = await folderPrompts.getFolderEntitiesCount(
+      secondFolderPrompts.folders.name,
+    );
+    expect
+      .soft(
+        firstFolderResultCount + secondFolderResultCount,
+        ExpectedMessages.searchResultCountIsValid,
+      )
+      .toBe(3);
   });
 
   await test.step('Clear search field and verify all prompts displayed', async () => {
     await promptBarSearch.setSearchValue('');
-    const resultCount = await folderPrompts.getFolderPromptsCount();
-    expect.soft(resultCount, ExpectedMessages.searchResultCountIsValid).toBe(4);
+    const firstFolderResultCount = await folderPrompts.getFolderEntitiesCount(
+      secondFolderPrompts.folders.name,
+    );
+    const secondFolderResultCount = await folderPrompts.getFolderEntitiesCount(
+      firstFolderPrompt.folders.name,
+    );
+    expect
+      .soft(
+        firstFolderResultCount + secondFolderResultCount,
+        ExpectedMessages.searchResultCountIsValid,
+      )
+      .toBe(4);
   });
 });

@@ -236,7 +236,9 @@ export class ConversationData extends FolderData {
     return nestedConversations;
   }
 
-  public prepareFolderWithConversations(conversationsCount: number) {
+  public prepareFolderWithConversations(
+    conversationsCount: number,
+  ): FolderConversation {
     const folder = this.prepareFolder();
     const conversations: Conversation[] = [];
     for (let i = 1; i <= conversationsCount; i++) {

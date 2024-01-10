@@ -4,7 +4,7 @@ import { BaseElement } from './baseElement';
 import { ExpectedConstants } from '@/e2e/src/testData';
 import { Styles } from '@/e2e/src/ui/domData';
 import { Search } from '@/e2e/src/ui/webElements/search';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class SideBar extends BaseElement {
   constructor(page: Page, selector: string) {
@@ -74,7 +74,14 @@ export class SideBar extends BaseElement {
   }
 
   public async getDraggableAreaColor() {
-    return this.draggableArea.getComputedStyleProperty(Styles.backgroundColor);
+    const backgroundColor = await this.draggableArea.getComputedStyleProperty(
+      Styles.backgroundColor,
+    );
+    backgroundColor[0] = backgroundColor[0].replace(
+      ExpectedConstants.backgroundColorPattern,
+      '$1)',
+    );
+    return backgroundColor[0];
   }
 
   public async resizePanelWidth(xOffset: number) {
@@ -85,6 +92,42 @@ export class SideBar extends BaseElement {
     );
     await this.page.mouse.down();
     await this.page.mouse.move(xOffset, resizeIconBounding!.height / 2);
+    await this.page.mouse.up();
+  }
+
+  public async dragEntityFromFolder(entityLocator: Locator) {
+    await entityLocator.hover();
+    await this.page.mouse.down();
+    const draggableBounding = await this.draggableArea.getElementBoundingBox();
+    await this.page.mouse.move(
+      draggableBounding!.x + draggableBounding!.width / 2,
+      draggableBounding!.y + draggableBounding!.height / 2,
+    );
+  }
+
+  public async dragEntityToFolder(
+    entityLocator: Locator,
+    folderLocator: Locator,
+  ) {
+    await entityLocator.hover();
+    await this.page.mouse.down();
+    const folderBounding = await folderLocator.boundingBox();
+    await this.page.mouse.move(
+      folderBounding!.x + folderBounding!.width / 2,
+      folderBounding!.y + folderBounding!.height / 2,
+    );
+  }
+
+  public async dragAndDropEntityFromFolder(entityLocator: Locator) {
+    await this.dragEntityFromFolder(entityLocator);
+    await this.page.mouse.up();
+  }
+
+  public async dragAndDropEntityToFolder(
+    entityLocator: Locator,
+    folderLocator: Locator,
+  ) {
+    await this.dragEntityToFolder(entityLocator, folderLocator);
     await this.page.mouse.up();
   }
 }

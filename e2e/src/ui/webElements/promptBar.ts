@@ -32,18 +32,33 @@ export class PromptBar extends SideBar {
     await this.newEntityButton.click();
   }
 
-  public async dropPromptFromFolder(folderName: string, promptName: string) {
-    const folderPrompt = await this.getFolderPrompts().getFolderPrompt(
+  public async dragAndDropPromptFromFolder(
+    folderName: string,
+    promptName: string,
+  ) {
+    const folderPrompt = await this.getFolderPrompts().getFolderEntity(
       folderName,
       promptName,
     );
-    await folderPrompt.hover();
-    await this.page.mouse.down();
-    const draggableBounding = await this.draggableArea.getElementBoundingBox();
-    await this.page.mouse.move(
-      draggableBounding!.x + draggableBounding!.width / 2,
-      draggableBounding!.y + draggableBounding!.height / 2,
+    await this.dragAndDropEntityFromFolder(folderPrompt);
+  }
+
+  public async drugPromptToFolder(folderName: string, promptName: string) {
+    const folder = this.getFolderPrompts().getFolderByName(folderName);
+    const prompt = this.getPrompts().getPromptByName(promptName);
+    await this.dragEntityToFolder(prompt, folder);
+  }
+
+  public async drugAndDropPromptToFolderPrompt(
+    folderName: string,
+    folderPromptName: string,
+    promptName: string,
+  ) {
+    const folderPrompt = this.getFolderPrompts().getFolderEntity(
+      folderName,
+      folderPromptName,
     );
-    await this.page.mouse.up();
+    const prompt = this.getPrompts().getPromptByName(promptName);
+    await this.dragAndDropEntityToFolder(prompt, folderPrompt);
   }
 }

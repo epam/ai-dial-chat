@@ -101,7 +101,7 @@ test(
       for (let i = 0; i < nestedFolders.length; i++) {
         const nestedFolder = nestedFolders[i];
         await folderPrompts.getFolderByName(nestedFolder.name).waitFor();
-        await folderPrompts.getFolderPrompt(
+        await folderPrompts.getFolderEntity(
           nestedFolder.name,
           nestedPrompts[i].name,
         );
@@ -112,7 +112,7 @@ test(
       for (const prompt of promptsInsideFolder.prompts) {
         expect
           .soft(
-            await folderPrompts.isFolderPromptVisible(
+            await folderPrompts.isFolderEntityVisible(
               promptsInsideFolder.folders.name,
               prompt.name,
             ),
@@ -173,7 +173,7 @@ test(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
       await folderPrompts.expandCollapseFolder(promptInsideFolder.folders.name);
-      await folderPrompts.openFolderPromptDropdownMenu(
+      await folderPrompts.openFolderEntityDropdownMenu(
         promptInsideFolder.folders.name,
         promptInsideFolder.prompts[0].name,
       );
@@ -183,7 +183,7 @@ test(
     });
 
     await test.step('Delete exported prompt, re-import again and verify it is displayed inside folder', async () => {
-      await folderPrompts.openFolderPromptDropdownMenu(
+      await folderPrompts.openFolderEntityDropdownMenu(
         promptInsideFolder.folders.name,
         promptInsideFolder.prompts[0].name,
       );
@@ -196,7 +196,7 @@ test(
       );
 
       await folderPrompts
-        .getFolderPrompt(
+        .getFolderEntity(
           promptInsideFolder.folders.name,
           promptInsideFolder.prompts[0].name,
         )
@@ -217,7 +217,7 @@ test(
         .getFolderByName(promptInsideFolder.folders.name)
         .waitFor();
       await folderPrompts
-        .getFolderPrompt(
+        .getFolderEntity(
           promptInsideFolder.folders.name,
           promptInsideFolder.prompts[0].name,
         )
@@ -356,14 +356,14 @@ test('Existed prompts stay after import', async ({
     );
     await folderPrompts.expandCollapseFolder(promptsInsideFolder.folders.name);
     await folderPrompts
-      .getFolderPrompt(
+      .getFolderEntity(
         promptsInsideFolder.folders.name,
         importedFolderPrompt.name,
       )
       .waitFor();
     for (const existingPrompts of promptsInsideFolder.prompts) {
       await folderPrompts
-        .getFolderPrompt(promptsInsideFolder.folders.name, existingPrompts.name)
+        .getFolderEntity(promptsInsideFolder.folders.name, existingPrompts.name)
         .waitFor();
     }
   });
@@ -383,7 +383,7 @@ test('Existed prompts stay after import', async ({
     await folderPrompts
       .getFolderByName(importedNewFolderPrompt.folders.name)
       .waitFor();
-    const newFolderPrompt = folderPrompts.getFolderPrompt(
+    const newFolderPrompt = folderPrompts.getFolderEntity(
       importedNewFolderPrompt.folders.name,
       importedNewFolderPrompt.prompts[0].name,
     );
@@ -417,7 +417,7 @@ test('Import file from 1.4 version to prompts and continue working with it', asy
 
     await folderPrompts.expandCollapseFolder(Import.oldVersionAppFolderName);
     await folderPrompts
-      .getFolderPrompt(
+      .getFolderEntity(
         Import.oldVersionAppFolderName,
         Import.v14AppFolderPromptName,
       )
@@ -425,14 +425,14 @@ test('Import file from 1.4 version to prompts and continue working with it', asy
   });
 
   await test.step('Edit imported prompt', async () => {
-    await folderPrompts.openFolderPromptDropdownMenu(
+    await folderPrompts.openFolderEntityDropdownMenu(
       Import.oldVersionAppFolderName,
       Import.v14AppFolderPromptName,
     );
     await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
     await promptModalDialog.updatePromptDetails(newName, newDescr, newValue);
     await folderPrompts
-      .getFolderPrompt(Import.oldVersionAppFolderName, newName)
+      .getFolderEntity(Import.oldVersionAppFolderName, newName)
       .waitFor();
   });
 
@@ -490,7 +490,7 @@ test(
     await test.step('Export prompt from 3rd level folder', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-      await folderPrompts.openFolderPromptDropdownMenu(
+      await folderPrompts.openFolderEntityDropdownMenu(
         nestedFolders[levelsCount].name,
         nestedPrompts[levelsCount].name,
       );
@@ -511,7 +511,7 @@ test(
       }
 
       await folderPrompts
-        .getFolderPrompt(
+        .getFolderEntity(
           nestedFolders[levelsCount].name,
           nestedPrompts[levelsCount].name,
         )
@@ -519,7 +519,9 @@ test(
 
       expect
         .soft(
-          await folderPrompts.getFolderPromptsCount(),
+          await folderPrompts.getFolderEntitiesCount(
+            nestedFolders[levelsCount].name,
+          ),
           ExpectedMessages.promptsCountIsValid,
         )
         .toBe(1);
@@ -537,7 +539,7 @@ test(
       );
 
       await folderPrompts
-        .getFolderPrompt(
+        .getFolderEntity(
           nestedFolders[levelsCount].name,
           nestedPrompts[levelsCount].name,
         )
@@ -556,7 +558,7 @@ test(
       );
 
       await folderPrompts
-        .getFolderPrompt(
+        .getFolderEntity(
           nestedFolders[levelsCount].name,
           nestedPrompts[levelsCount].name,
         )
@@ -568,7 +570,9 @@ test(
 
       expect
         .soft(
-          await folderPrompts.getFolderPromptsCount(),
+          await folderPrompts.getFolderEntitiesCount(
+            nestedFolders[levelsCount].name,
+          ),
           ExpectedMessages.promptsCountIsValid,
         )
         .toBe(1);
@@ -604,7 +608,7 @@ test('Import a prompt in nested folder', async ({
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
 
     for (let i = 1; i <= 3; i = i + 2) {
-      await folderPrompts.openFolderPromptDropdownMenu(
+      await folderPrompts.openFolderEntityDropdownMenu(
         nestedFolders[i].name,
         nestedPrompts[i].name,
       );
@@ -645,7 +649,7 @@ test('Import a prompt in nested folder', async ({
     for (let i = 0; i < levelsCount; i++) {
       expect
         .soft(
-          await folderPrompts.isFolderPromptVisible(
+          await folderPrompts.isFolderEntityVisible(
             nestedFolders[i].name,
             nestedPrompts[i].name,
           ),
@@ -655,7 +659,7 @@ test('Import a prompt in nested folder', async ({
       if (i === 1) {
         expect
           .soft(
-            await folderPrompts.isFolderPromptVisible(
+            await folderPrompts.isFolderEntityVisible(
               nestedFolders[i].name,
               updatedPromptNames[0],
             ),
@@ -665,7 +669,7 @@ test('Import a prompt in nested folder', async ({
       } else if (i === 3) {
         expect
           .soft(
-            await folderPrompts.isFolderPromptVisible(
+            await folderPrompts.isFolderEntityVisible(
               nestedFolders[i].name,
               updatedPromptNames[1],
             ),
@@ -704,7 +708,7 @@ test('Import a prompt from nested folder which was moved to another place', asyn
   await test.step('Export 3rd level folder prompt', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await folderPrompts.openFolderPromptDropdownMenu(
+    await folderPrompts.openFolderEntityDropdownMenu(
       nestedFolders[levelsCount].name,
       thirdLevelFolderPrompt.name,
     );
@@ -725,14 +729,14 @@ test('Import a prompt from nested folder which was moved to another place', asyn
 
   await test.step('Verify imported prompt is in 3rd level folder on the 1st level', async () => {
     await folderPrompts
-      .getFolderPrompt(
+      .getFolderEntity(
         nestedFolders[levelsCount].name,
         thirdLevelFolderPrompt.name,
       )
       .waitFor();
 
     const thirdLevelFolderPromptsCount = await folderPrompts
-      .getFolderPrompt(nestedFolders[2].name, thirdLevelFolderPrompt.name)
+      .getFolderEntity(nestedFolders[2].name, thirdLevelFolderPrompt.name)
       .count();
     expect
       .soft(thirdLevelFolderPromptsCount, ExpectedMessages.promptsCountIsValid)
@@ -743,13 +747,14 @@ test('Import a prompt from nested folder which was moved to another place', asyn
       .soft(foldersCount, ExpectedMessages.foldersCountIsValid)
       .toBe(levelsCount + 1);
 
-    const promptsCount = await folderPrompts.getFolderPromptsCount();
+    const promptsCount = await folderPrompts.getFolderEntitiesCount(
+      nestedFolders[3].name,
+    );
     expect.soft(promptsCount, ExpectedMessages.promptsCountIsValid).toBe(1);
   });
 });
 
 test.afterAll(async () => {
-  FileUtil.removeExportFolder();
   const importFilesToDelete: UploadDownloadData[] = [
     folderPromptData,
     rootPromptData,

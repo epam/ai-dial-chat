@@ -78,7 +78,7 @@ test(
       await folderConversations.expandCollapseFolder(
         conversationInFolder.folders.name,
       );
-      await folderConversations.openFolderConversationDropdownMenu(
+      await folderConversations.openFolderEntityDropdownMenu(
         conversationInFolder.folders.name,
         conversationInFolder.conversations[0].name,
       );
@@ -88,7 +88,7 @@ test(
     });
 
     await test.step('Delete conversation inside folder, re-import it again and verify it displayed inside folder', async () => {
-      await folderConversations.openFolderConversationDropdownMenu(
+      await folderConversations.openFolderEntityDropdownMenu(
         conversationInFolder.folders.name,
         conversationInFolder.conversations[0].name,
       );
@@ -101,7 +101,7 @@ test(
       );
 
       await folderConversations
-        .getFolderConversation(
+        .getFolderEntity(
           conversationInFolder.folders.name,
           conversationInFolder.conversations[0].name,
         )
@@ -120,7 +120,7 @@ test(
       );
 
       await folderConversations
-        .getFolderConversation(
+        .getFolderEntity(
           conversationInFolder.folders.name,
           conversationInFolder.conversations[0].name,
         )
@@ -189,10 +189,7 @@ test('Export and import chat structure with all conversations', async ({
 
     for (let i = 0; i <= levelsCount; i++) {
       await folderConversations
-        .getFolderConversation(
-          nestedFolders[i].name,
-          nestedConversations[i].name,
-        )
+        .getFolderEntity(nestedFolders[i].name, nestedConversations[i].name)
         .waitFor();
     }
   });
@@ -268,7 +265,7 @@ test('Existed chats stay after import', async ({
       .toBe(importedFolderConversation.name);
     expect
       .soft(
-        await folderConversations.isFolderConversationVisible(
+        await folderConversations.isFolderEntityVisible(
           conversationsInFolder.folders.name,
           conversationsInFolder.conversations[0].name,
         ),
@@ -277,7 +274,7 @@ test('Existed chats stay after import', async ({
       .toBeTruthy();
     expect
       .soft(
-        await folderConversations.isFolderConversationVisible(
+        await folderConversations.isFolderEntityVisible(
           conversationsInFolder.folders.name,
           conversationsInFolder.conversations[1].name,
         ),
@@ -408,7 +405,7 @@ test(
       );
       expect
         .soft(
-          await folderConversations.isFolderConversationVisible(
+          await folderConversations.isFolderEntityVisible(
             Import.oldVersionAppFolderName,
             Import.oldVersionAppFolderChatName,
           ),
@@ -416,7 +413,7 @@ test(
         )
         .toBeTruthy();
 
-      await folderConversations.selectFolderConversation(
+      await folderConversations.selectFolderEntity(
         Import.oldVersionAppFolderName,
         Import.oldVersionAppFolderChatName,
       );
@@ -525,7 +522,7 @@ test(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
 
-      await folderConversations.openFolderConversationDropdownMenu(
+      await folderConversations.openFolderEntityDropdownMenu(
         nestedFolders[levelsCount].name,
         nestedConversations[levelsCount].name,
       );
@@ -542,7 +539,7 @@ test(
       );
 
       await folderConversations
-        .getFolderConversation(
+        .getFolderEntity(
           nestedFolders[levelsCount].name,
           nestedConversations[levelsCount].name,
         )
@@ -557,7 +554,7 @@ test(
       for (let i = 0; i < levelsCount; i++) {
         expect
           .soft(
-            await folderConversations.isFolderConversationVisible(
+            await folderConversations.isFolderEntityVisible(
               nestedFolders[i].name,
               nestedConversations[i].name,
             ),
@@ -579,7 +576,7 @@ test(
       );
 
       await folderConversations
-        .getFolderConversation(
+        .getFolderEntity(
           nestedFolders[levelsCount].name,
           nestedConversations[levelsCount].name,
         )
@@ -598,7 +595,7 @@ test(
       );
 
       await folderConversations
-        .getFolderConversation(
+        .getFolderEntity(
           nestedFolders[levelsCount].name,
           nestedConversations[levelsCount].name,
         )
@@ -643,7 +640,7 @@ test('Import a chat in nested folder', async ({
     await dialHomePage.waitForPageLoaded();
 
     for (let i = 0; i <= 2; i = i + 2) {
-      await folderConversations.openFolderConversationDropdownMenu(
+      await folderConversations.openFolderEntityDropdownMenu(
         nestedFolders[i].name,
         nestedConversations[i].name,
       );
@@ -683,7 +680,7 @@ test('Import a chat in nested folder', async ({
     for (let i = 0; i < levelsCount; i++) {
       expect
         .soft(
-          await folderConversations.isFolderConversationVisible(
+          await folderConversations.isFolderEntityVisible(
             nestedFolders[i].name,
             nestedConversations[i].name,
           ),
@@ -693,7 +690,7 @@ test('Import a chat in nested folder', async ({
       if (i === 0) {
         expect
           .soft(
-            await folderConversations.isFolderConversationVisible(
+            await folderConversations.isFolderEntityVisible(
               nestedFolders[i].name,
               updatedConversationNames[0],
             ),
@@ -703,7 +700,7 @@ test('Import a chat in nested folder', async ({
       } else if (i === 2) {
         expect
           .soft(
-            await folderConversations.isFolderConversationVisible(
+            await folderConversations.isFolderEntityVisible(
               nestedFolders[i].name,
               updatedConversationNames[1],
             ),
@@ -749,7 +746,7 @@ test('Import a chat from nested folder which was moved to another place', async 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
 
-    await folderConversations.openFolderConversationDropdownMenu(
+    await folderConversations.openFolderEntityDropdownMenu(
       nestedFolders[levelsCount].name,
       thirdLevelFolderConversation.name,
     );
@@ -770,7 +767,7 @@ test('Import a chat from nested folder which was moved to another place', async 
 
   await test.step('Verify imported conversations is in 3rd level folder on the root level', async () => {
     await folderConversations
-      .getFolderConversation(
+      .getFolderEntity(
         nestedFolders[levelsCount].name,
         thirdLevelFolderConversation.name,
       )
@@ -781,9 +778,9 @@ test('Import a chat from nested folder which was moved to another place', async 
       .soft(foldersCount, ExpectedMessages.foldersCountIsValid)
       .toBe(levelsCount + 1);
 
-    const conversationsCount = await folderConversations
-      .getFolderConversations(nestedFolders[0].name)
-      .count();
+    const conversationsCount = await folderConversations.getFolderEntitiesCount(
+      nestedFolders[0].name,
+    );
     expect
       .soft(conversationsCount, ExpectedMessages.conversationsCountIsValid)
       .toBe(0);
@@ -791,7 +788,6 @@ test('Import a chat from nested folder which was moved to another place', async 
 });
 
 test.afterAll(async () => {
-  FileUtil.removeExportFolder();
   const importFilesToDelete: UploadDownloadData[] = [
     folderConversationData,
     rootConversationData,

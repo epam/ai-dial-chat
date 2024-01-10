@@ -132,4 +132,8 @@ export class Conversations extends SideBarEntities {
     );
     return playBackIcon.isVisible();
   }
+
+  public async getConversationBackgroundColor(name: string, index?: number) {
+    return this.getEntityBackgroundColor(this.entitySelector, name, index);
+  }
 }
