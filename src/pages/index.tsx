@@ -60,6 +60,10 @@ export default function Home({ initialState }: Props) {
     SettingsSelectors.selectEnabledFeatures,
   );
 
+  const shouldLogin =
+    !authDisabled &&
+    (session.status !== 'authenticated' || !isClientSessionValid(session));
+
   // EFFECTS  --------------------------------------------
   useEffect(() => {
     if (!isIframe && !authDisabled && !isClientSessionValid(session)) {
@@ -80,8 +84,8 @@ export default function Home({ initialState }: Props) {
     handleSetProperVHPoints();
     window.addEventListener('resize', handleSetProperVHPoints);
 
-    dispatch(SettingsActions.initApp());
-  }, [dispatch, initialState]);
+    dispatch(SettingsActions.initApp({ shouldLogin }));
+  }, [dispatch, initialState, shouldLogin]);
 
   const handleIframeAuth = async () => {
     const timeout = 30 * 1000;
@@ -115,10 +119,7 @@ export default function Home({ initialState }: Props) {
     ]);
   };
 
-  const shouldIframeLogin =
-    isIframe &&
-    !authDisabled &&
-    (session.status !== 'authenticated' || !isClientSessionValid(session));
+  const shouldIframeLogin = isIframe && shouldLogin;
 
   return (
     <>
