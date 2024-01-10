@@ -106,15 +106,15 @@ const createNewConversationEpic: AppEpic = (action$, state$) =>
 
           if (!model) {
             return EMPTY;
-          } else {
-            return of(
-              ConversationsActions.createNewConversationsSuccess({
-                names,
-                temperature: lastConversation?.temperature,
-                model,
-              }),
-            );
           }
+
+          return of(
+            ConversationsActions.createNewConversationsSuccess({
+              names,
+              temperature: lastConversation?.temperature,
+              model,
+            }),
+          );
         }),
       );
     }),
@@ -298,7 +298,6 @@ const initConversationsEpic: AppEpic = (action$) =>
           }),
         ),
       );
-
       if (!conversations.length || !selectedConversationsIds.length) {
         actions.push(
           of(
