@@ -28,7 +28,7 @@ const initEpic: AppEpic = (action$, state$) =>
         of(ConversationsActions.init()),
         of(PromptsActions.init()),
         of(UIActions.init()),
-        !payload.isLoggedin ? EMPTY : of(FilesActions.init()),
+        payload.shouldLogin ? EMPTY : of(FilesActions.init()),
       ),
     ),
   );

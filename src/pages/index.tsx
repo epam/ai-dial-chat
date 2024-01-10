@@ -60,9 +60,9 @@ export default function Home({ initialState }: Props) {
     SettingsSelectors.selectEnabledFeatures,
   );
 
-  const isLoggedin =
-    authDisabled &&
-    (session.status === 'authenticated' || isClientSessionValid(session));
+  const shouldLogin =
+    !authDisabled &&
+    (session.status !== 'authenticated' || !isClientSessionValid(session));
 
   // EFFECTS  --------------------------------------------
   useEffect(() => {
@@ -84,8 +84,8 @@ export default function Home({ initialState }: Props) {
     handleSetProperVHPoints();
     window.addEventListener('resize', handleSetProperVHPoints);
 
-    dispatch(SettingsActions.initApp({ isLoggedin }));
-  }, [dispatch, initialState, isLoggedin]);
+    dispatch(SettingsActions.initApp({ shouldLogin }));
+  }, [dispatch, initialState, shouldLogin]);
 
   const handleIframeAuth = async () => {
     const timeout = 30 * 1000;
@@ -119,7 +119,7 @@ export default function Home({ initialState }: Props) {
     ]);
   };
 
-  const shouldIframeLogin = isIframe && isLoggedin;
+  const shouldIframeLogin = isIframe && shouldLogin;
 
   return (
     <>
