@@ -115,11 +115,42 @@ export enum Side {
 }
 
 export enum ModelIds {
-  GPT_3_5_AZ = 'gpt-35-turbo',
+  GPT_3_5_TURBO = 'gpt-35-turbo',
+  GPT_3_5_TURBO_0301 = 'gpt-35-turbo-0301',
+  GPT_3_5_TURBO_0613 = 'gpt-35-turbo-0613',
+  GPT_3_5_TURBO_1106 = 'gpt-35-turbo-1106',
+  GPT_3_5_TURBO_16K = 'gpt-35-turbo-16k',
   GPT_4 = 'gpt-4',
-  GPT_4_32K = 'gpt-4-32k',
+  GPT_4_0314 = 'gpt-4-0314',
+  GPT_4_0613 = 'gpt-4-0613',
+  GPT_4_TURBO_1106 = 'gpt-4-turbo-1106',
+  GPT_4_32K_0314 = 'gpt-4-32k-0314',
+  GPT_4_32K_0613 = 'gpt-4-32k-0613',
+  GPT_4_VISION_PREVIEW = 'gpt-4-vision-preview',
   BISON_001 = 'chat-bison@001',
+  BISON_32k_002 = 'chat-bison-32k@002',
+  CODE_BISON_001 = 'codechat-bison@001',
+  CODE_BISON_32K_002 = 'codechat-bison-32k@002',
+  DALLE = 'dalle3',
   AWS_TITAN = 'amazon.titan-tg1-large',
+  AI21_GRANDE = 'ai21.j2-grande-instruct',
+  AI21_JUMBO = 'ai21.j2-jumbo-instruct',
+  ANTHROPIC_CLAUDE_INSTANT_V1 = 'anthropic.claude-instant-v1',
+  ANTHROPIC_CLAUDE_V1 = 'anthropic.claude-v1',
+  ANTHROPIC_CLAUDE_V2 = 'anthropic.claude-v2',
+  ANTHROPIC_CLAUDE_V21 = 'anthropic.claude-v2-1',
+  STABLE_DIFFUSION = 'stability.stable-diffusion-xl',
+  IMAGE_GENERATION_005 = 'imagegeneration@005',
+  GEMINI_PRO_VISION = 'gemini-pro-vision',
+  GEMINI_PRO = 'gemini-pro',
+}
+
+export enum AssistantIds {
+  ASSISTANT_10K = 'assistant-10k',
+}
+
+export enum AddonIds {
+  WOLFRAM = 'addon-wolfram',
 }
 
 export enum Rate {

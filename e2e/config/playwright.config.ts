@@ -50,8 +50,13 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'setup',
+      name: 'auth',
       testMatch: /desktopAuth\.ts/,
+    },
+    {
+      name: 'api listing',
+      testMatch: /listing\.test\.ts/,
+      dependencies: ['auth'],
     },
     {
       name: 'chromium',
@@ -60,7 +65,7 @@ export default defineConfig({
         storageState: STORAGE_STATE,
         viewport: { width: 1536, height: 864 },
       },
-      dependencies: ['setup'],
+      dependencies: ['api listing'],
     },
   ],
 });
