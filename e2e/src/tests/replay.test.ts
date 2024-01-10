@@ -174,7 +174,7 @@ test('[Replay]chat is created in the same folder where its parent is located', a
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
 
     for (let i = 0; i < nestedLevels; i = i + 2) {
-      await folderConversations.openFolderConversationDropdownMenu(
+      await folderConversations.openFolderEntityDropdownMenu(
         nestedFolders[i + 1].name,
         nestedConversations[i + 1].name,
       );
@@ -184,7 +184,7 @@ test('[Replay]chat is created in the same folder where its parent is located', a
 
   await test.step('Verify new Replay conversations are created inside 1st and 3rd level folders', async () => {
     for (let i = 0; i < nestedLevels; i = i + 2) {
-      await folderConversations.getFolderConversation(
+      await folderConversations.getFolderEntity(
         nestedFolders[i + 1].name,
         `${ExpectedConstants.replayConversation}${
           nestedConversations[i + 1].name
@@ -842,14 +842,14 @@ test(
       await folderConversations.expandCollapseFolder(
         Import.oldVersionAppFolderName,
       );
-      await folderConversations.selectFolderConversation(
+      await folderConversations.selectFolderEntity(
         Import.oldVersionAppFolderName,
         Import.oldVersionAppFolderChatName,
       );
 
       const newModels = [ModelIds.BISON_001, ModelIds.GPT_4];
       for (let i = 1; i <= newModels.length; i++) {
-        await chatHeader.openConversationSettings.click();
+        await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectModel(
           ModelsUtil.getModel(newModels[i - 1])!.name,
         );
@@ -861,7 +861,7 @@ test(
     });
 
     await test.step('Create replay conversation based on imported and verify warning message is displayed under "Replay as is" icon', async () => {
-      await folderConversations.openFolderConversationDropdownMenu(
+      await folderConversations.openFolderEntityDropdownMenu(
         Import.oldVersionAppFolderName,
         Import.oldVersionAppFolderChatName,
       );

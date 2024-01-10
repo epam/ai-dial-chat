@@ -76,9 +76,8 @@ test('Filter "Shared by me" shows only shared chats', async ({
     await chatFilter.openFilterDropdownMenu();
     await chatFilterDropdownMenu.selectMenuOption(FilterMenuOptions.sharedByMe);
 
-    const actualFilteredFolderConversations = await folderConversations
-      .getFolderConversations(nestedFolders[0].name)
-      .count();
+    const actualFilteredFolderConversations =
+      await folderConversations.getFolderEntitiesCount(nestedFolders[0].name);
     const actualFilteredConversations =
       await conversations.getTodayConversations();
     expect
@@ -98,12 +97,12 @@ test('Filter "Shared by me" shows only shared chats', async ({
   await test.step('Uncheck "Shared by me" option and verify all conversations and folders are shown', async () => {
     await chatFilterDropdownMenu.selectMenuOption(FilterMenuOptions.sharedByMe);
 
-    let actualFolderConversationsCount = await folderConversations
-      .getFolderConversations(nestedFolders[0].name)
-      .count();
-    actualFolderConversationsCount += await folderConversations
-      .getFolderConversations(folderConversation.folders.name)
-      .count();
+    let actualFolderConversationsCount =
+      await folderConversations.getFolderEntitiesCount(nestedFolders[0].name);
+    actualFolderConversationsCount +=
+      await folderConversations.getFolderEntitiesCount(
+        folderConversation.folders.name,
+      );
     const actualConversations = await conversations.getTodayConversations();
     expect
       .soft(
@@ -228,12 +227,16 @@ test('Filter "Shared by me" shows only shared prompts', async ({
       FilterMenuOptions.sharedByMe,
     );
 
-    const actualFilteredFolderPromptsCount =
-      await folderPrompts.getFolderPromptsCount();
+    const actualFilteredNestedFolderPromptsCount =
+      await folderPrompts.getFolderEntitiesCount(nestedFolders[0].name);
+    const actualFilteredSingleFolderPromptsCount =
+      await folderPrompts.getFolderEntitiesCount(folderPrompt.folders.name);
     const actualFilteredPromptsCount = await prompts.getPromptsCount();
     expect
       .soft(
-        actualFilteredFolderPromptsCount + actualFilteredPromptsCount,
+        actualFilteredNestedFolderPromptsCount +
+          actualFilteredSingleFolderPromptsCount +
+          actualFilteredPromptsCount,
         ExpectedMessages.promptsCountIsValid,
       )
       .toBe(nestedSharedPrompts.length + 1);
@@ -248,12 +251,16 @@ test('Filter "Shared by me" shows only shared prompts', async ({
     await promptFilterDropdownMenu.selectMenuOption(
       FilterMenuOptions.sharedByMe,
     );
-    const actualFolderPromptsCount =
-      await folderPrompts.getFolderPromptsCount();
+    const actualFilteredNestedFolderPromptsCount =
+      await folderPrompts.getFolderEntitiesCount(nestedFolders[0].name);
+    const actualFilteredSingleFolderPromptsCount =
+      await folderPrompts.getFolderEntitiesCount(folderPrompt.folders.name);
     const actualPromptsCount = await prompts.getPromptsCount();
     expect
       .soft(
-        actualFolderPromptsCount + actualPromptsCount,
+        actualFilteredNestedFolderPromptsCount +
+          actualFilteredSingleFolderPromptsCount +
+          actualPromptsCount,
         ExpectedMessages.promptsCountIsValid,
       )
       .toBe(nestedPrompts.length + nestedSharedPrompts.length + 3);

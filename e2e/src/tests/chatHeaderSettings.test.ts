@@ -39,7 +39,7 @@ test('Model settings opened in chat are the same as on New chat defaults', async
   await test.step('Open conversation settings and change model', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await chatHeader.openConversationSettings.click();
+    await chatHeader.openConversationSettingsPopup();
     await talkToSelector.selectModel(randomModel.name);
   });
 
