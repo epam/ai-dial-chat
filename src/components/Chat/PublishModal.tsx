@@ -274,7 +274,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
           </div>
           {!!files.length && (
             <div className="flex w-full flex-col gap-3 border-l border-tertiary p-4 md:max-w-[550px]">
-              <h2>{t('Files contained in the collection')}</h2>
+              <h2>{t(`Files contained in the ${getPrefix(entity).toLowerCase()}`)}</h2>
               <p className="text-secondary">{t('No files')}</p>
             </div>
           )}
