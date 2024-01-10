@@ -41,9 +41,15 @@ interface Props {
   type: SharingType;
   isOpen: boolean;
   onClose: (path: string | undefined) => void;
+  initiallySelectedFolderId: string;
 }
 
-export const ChangePathDialog = ({ isOpen, onClose, type }: Props) => {
+export const ChangePathDialog = ({
+  isOpen,
+  onClose,
+  type,
+  initiallySelectedFolderId,
+}: Props) => {
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Chat);
@@ -214,7 +220,10 @@ export const ChangePathDialog = ({ isOpen, onClose, type }: Props) => {
                 {filteredFolders.length ? (
                   <div className="flex flex-col gap-1 overflow-auto">
                     {filteredFolders.map((folder) => {
-                      if (folder.folderId) {
+                      if (
+                        folder.folderId ||
+                        folder.originalId === initiallySelectedFolderId
+                      ) {
                         return null;
                       }
 

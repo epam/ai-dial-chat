@@ -276,6 +276,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
         </div>
       </div>
       <ChangePathDialog
+        initiallySelectedFolderId={entity.id}
         isOpen={isChangeFolderModalOpened}
         onClose={(folderId) => {
           if (typeof folderId === 'string') {
