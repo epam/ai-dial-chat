@@ -122,7 +122,16 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
       );
       onClose();
     },
-    [dispatch, entity.id, name, onClose, path, publishAction, version],
+    [
+      dispatch,
+      entity.id,
+      isVersionUnique,
+      name,
+      onClose,
+      path,
+      publishAction,
+      version,
+    ],
   );
 
   const handleBlur = useCallback(() => {

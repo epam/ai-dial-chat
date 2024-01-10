@@ -658,7 +658,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           observer();
           return observable;
         }),
-        // TODO: get rid of this https://gitlab.deltixhub.com/Deltix/openai-apps/chatbot-ui/-/issues/301
+        // TODO: get rid of this https://github.com/epam/ai-dial-chat/issues/115
         timeout(120000),
         mergeMap((resp) =>
           iif(
