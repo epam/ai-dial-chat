@@ -24,10 +24,11 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
+import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
+
 import CollapsableSection from '../Common/CollapsableSection';
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
 import Modal from '../Common/Modal';
-import { SelectFolderModal } from '../Files/SelectFolderModal';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -283,15 +284,16 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
           </button>
         </div>
       </div>
-      <SelectFolderModal
+      <ChangePathDialog
+        initiallySelectedFolderId={entity.id}
         isOpen={isChangeFolderModalOpened}
-        selectedFolderName={path}
         onClose={(folderId) => {
           if (typeof folderId === 'string') {
             setPath(folderId);
           }
           setIsChangeFolderModalOpened(false);
         }}
+        type={type}
       />
     </Modal>
   );
