@@ -62,7 +62,7 @@ export default function Home({ initialState }: Props) {
 
   const isLoggedin =
     authDisabled &&
-    (session.status !== 'authenticated' || !isClientSessionValid(session));
+    (session.status === 'authenticated' || isClientSessionValid(session));
 
   // EFFECTS  --------------------------------------------
   useEffect(() => {
