@@ -788,7 +788,6 @@ test('Import a chat from nested folder which was moved to another place', async 
 });
 
 test.afterAll(async () => {
-  FileUtil.removeExportFolder();
   const importFilesToDelete: UploadDownloadData[] = [
     folderConversationData,
     rootConversationData,

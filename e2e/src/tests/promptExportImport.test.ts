@@ -755,7 +755,6 @@ test('Import a prompt from nested folder which was moved to another place', asyn
 });
 
 test.afterAll(async () => {
-  FileUtil.removeExportFolder();
   const importFilesToDelete: UploadDownloadData[] = [
     folderPromptData,
     rootPromptData,
