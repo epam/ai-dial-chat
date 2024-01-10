@@ -158,7 +158,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
             {`${t('Publication request for')}: ${entity.name.trim()}`}
           </span>
         </h4>
-        <div className="flex grow flex-col overflow-y-auto overflow-x-hidden">
+        <div className="flex grow flex-col overflow-y-auto overflow-x-hidden px-1">
           <section className="flex grow flex-col gap-3">
             <h2>{t('General Info')}</h2>
             <p className="text-secondary">
