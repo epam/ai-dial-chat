@@ -1,6 +1,7 @@
 import { SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import { ExpectedConstants } from '@/e2e/src/testData';
 import { Attributes, Styles, Tags } from '@/e2e/src/ui/domData';
 import { keys } from '@/e2e/src/ui/keyboard';
 import { DropdownMenu } from '@/e2e/src/ui/webElements/dropdownMenu';
@@ -8,8 +9,11 @@ import { Input } from '@/e2e/src/ui/webElements/input';
 import { Page } from '@playwright/test';
 
 export class Folders extends BaseElement {
-  constructor(page: Page, selector: string) {
-    super(page, selector);
+  private readonly entitySelector: string;
+
+  constructor(page: Page, folderSelector: string, entitySelector: string) {
+    super(page, folderSelector);
+    this.entitySelector = entitySelector;
   }
 
   private folderInput!: Input;
@@ -55,6 +59,14 @@ export class Folders extends BaseElement {
       .getAttribute(Attributes.class);
   }
 
+  public foldersGroup = (parentFolderName: string) => {
+    return this.createElementFromLocator(
+      this.getChildElementBySelector(
+        SideBarSelectors.folderGroup,
+      ).getElementLocatorByText(parentFolderName),
+    );
+  };
+
   public async getFoldersCount() {
     return this.getChildElementBySelector(
       SideBarSelectors.folder,
@@ -93,5 +105,62 @@ export class Folders extends BaseElement {
       this.getFolderByName(name, index).getByText(name),
     );
     return folder.getComputedStyleProperty(Styles.color);
+  }
+
+  public async getFolderGroupBackgroundColor(parentFolderName: string) {
+    const backgroundColor = await this.foldersGroup(
+      parentFolderName,
+    ).getComputedStyleProperty(Styles.backgroundColor);
+    backgroundColor[0] = backgroundColor[0].replace(
+      ExpectedConstants.backgroundColorPattern,
+      '$1)',
+    );
+    return backgroundColor[0];
+  }
+
+  public getFolderEntities(name: string, index?: number) {
+    return this.getFolderByName(name, index).locator(
+      `~${Tags.div} ${this.entitySelector}`,
+    );
+  }
+
+  public getFolderEntity(folderName: string, entityName: string) {
+    return this.getFolderEntities(folderName).filter({
+      hasText: entityName,
+    });
+  }
+
+  public folderEntityDotsMenu = (folderName: string, entityName: string) => {
+    return this.getFolderEntity(folderName, entityName).locator(
+      SideBarSelectors.dotsMenu,
+    );
+  };
+
+  public getFolderEntitiesCount(folderName: string) {
+    return this.getFolderEntities(folderName).count();
+  }
+
+  public async isFolderEntityVisible(folderName: string, entityName: string) {
+    return this.getFolderEntity(folderName, entityName).isVisible();
+  }
+
+  public async selectFolderEntity(
+    folderName: string,
+    conversationName: string,
+  ) {
+    await this.getFolderEntity(folderName, conversationName).click();
+  }
+
+  public async openFolderEntityDropdownMenu(
+    folderName: string,
+    entityName: string,
+  ) {
+    const folderEntity = await this.getFolderEntity(folderName, entityName);
+    await folderEntity.waitFor({
+      state: 'attached',
+    });
+    await folderEntity.hover();
+    await this.folderEntityDotsMenu(folderName, entityName).click();
+    await this.getDropdownMenu().waitForState();
   }
 }

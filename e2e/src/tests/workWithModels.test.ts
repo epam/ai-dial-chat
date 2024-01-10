@@ -329,7 +329,7 @@ test('System prompt is applied in Model', async ({
 }) => {
   setTestIds('EPMRTC-1085');
   await test.step('Set system prompt for model and send request', async () => {
-    await dialHomePage.openHomePage();
+    await dialHomePage.openHomePage({ iconsToBeLoaded: [gpt4Model.iconUrl] });
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     await talkToSelector.selectModel(gpt4Model.name);
     await entitySettings.setSystemPrompt(sysPrompt);

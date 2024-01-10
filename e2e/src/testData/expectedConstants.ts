@@ -31,7 +31,7 @@ export const ExpectedConstants = {
   proceedReplayTooltip: 'Please continue replay to continue working with chat',
   waitForAssistantAnswerTooltip:
     'Please wait for full assistant answer to continue working with chat',
-  selectedPromptOptionAttribute: 'bg-accent-primary-alpha',
+  backgroundAccentAttribute: 'bg-accent-primary-alpha',
   noResults: 'No results found',
   notAllowedModelError:
     'Not allowed model selected. Please, change the model to proceed',
