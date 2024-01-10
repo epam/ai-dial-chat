@@ -41,7 +41,7 @@ export const settingsSlice = createSlice({
   name: 'settings',
   initialState,
   reducers: {
-    initApp: (state) => state,
+    initApp: (state, _action: PayloadAction<{ isLoggedin: boolean }>) => state,
     setAppName: (
       state,
       { payload }: PayloadAction<SettingsState['appName']>,
