@@ -58,7 +58,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
   const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState<string>(entity.name);
   const [path, setPath] = useState<string>('');
-  const [files] = useState([]);
+  const [files] = useState([1]);
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
   const [version, setVersion] = useState<string>('');
@@ -147,7 +147,10 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block h-[747px] min-w-[550px] max-w-[1100px] group/modal"
+      containerClassName={classNames(
+        "group/modal inline-block h-[747px] min-w-full max-w-[1100px] md:min-w-[550px]",
+        { 'w-full': files.length}
+        )}
       dataQa="publish-modal"
       isOpen={isOpen}
       onClose={onClose}
@@ -160,8 +163,8 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
             {`${t('Publication request for')}: ${entity.name.trim()}`}
           </span>
         </h4>
-        <div className="flex grow columns-2 overflow-y-auto">
-          <div className="flex w-full flex-col gap-3 p-4">
+        <div className="flex grow flex-col overflow-y-auto md:flex-row">
+          <div className="flex w-full flex-col gap-3 p-4 md:max-w-[550px]">
             <section className="flex flex-col gap-3">
               <h2>{t('General Info')}</h2>
               <p className="text-secondary">
@@ -270,7 +273,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
             </section>
           </div>
           {!!files.length && (
-            <div className="flex w-full flex-col gap-3 border-l border-tertiary p-4">
+            <div className="flex w-full flex-col gap-3 border-l border-tertiary p-4 md:max-w-[550px]">
               <h2>{t('Files contained in the collection')}</h2>
               <p className="text-secondary">{t('No files')}</p>
             </div>
