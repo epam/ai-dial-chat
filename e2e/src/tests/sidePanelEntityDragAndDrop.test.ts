@@ -124,6 +124,9 @@ test(
         nestedFolders[0].name,
         conversationToDrop.name,
       );
+      await folderConversations.waitForFolderGroupIsHighlighted(
+        nestedFolders[0].name,
+      );
       for (const folder of nestedFolders) {
         await folderConversations.getFolderByName(folder.name).waitFor();
       }
@@ -271,6 +274,7 @@ test('Prompt is moved using drag&drop to collapsed folder', async ({
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     await promptBar.drugPromptToFolder(folders[0].name, prompt.name);
     await folderPrompts.getFolderByName(folders[1].name).waitFor();
+    await folderPrompts.waitForFolderGroupIsHighlighted(folders[0].name);
 
     const folderBackgroundColor =
       await folderPrompts.getFolderGroupBackgroundColor(folders[0].name);
