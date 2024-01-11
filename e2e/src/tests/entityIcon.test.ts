@@ -119,7 +119,7 @@ test('"Talk to" item icon is jumping while generating an answer', async ({
   chatMessages,
 }) => {
   setTestIds('EPMRTC-386');
-  const model = ModelsUtil.getModel(ModelIds.GPT_4_32K_0314)!;
+  const model = ModelsUtil.getModel(ModelIds.GPT_4_32K)!;
 
   await test.step('Create a new conversation based on default model and send a request', async () => {
     await dialHomePage.openHomePage();

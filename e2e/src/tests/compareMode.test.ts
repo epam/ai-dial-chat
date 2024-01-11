@@ -525,7 +525,7 @@ test(
       conversationData.resetData();
       secondConversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          ModelsUtil.getModel(ModelIds.GPT_4_32K_0314)!,
+          ModelsUtil.getModel(ModelIds.GPT_4_32K)!,
           request,
         );
       await localStorageManager.setConversationHistory(
