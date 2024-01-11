@@ -13,8 +13,7 @@ export interface DisplayMenuItemProps {
   disabled?: boolean;
   Icon?: (props: TablerIconsProps) => JSX.Element;
   dataQa: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onClick?: (props?: any) => void | MouseEventHandler<unknown>;
+  onClick?: (props?: unknown) => void | MouseEventHandler<unknown>;
   CustomTriggerRenderer?: FC<CustomTriggerMenuRendererProps>;
   customTriggerData?: unknown;
   className?: string;
