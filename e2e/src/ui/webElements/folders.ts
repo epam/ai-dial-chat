@@ -67,6 +67,14 @@ export class Folders extends BaseElement {
     );
   };
 
+  public async waitForFolderGroupIsHighlighted(parentFolderName: string) {
+    await this.getChildElementBySelector(
+      `${SideBarSelectors.folderGroup}.${ExpectedConstants.backgroundAccentAttribute}`,
+    )
+      .getElementLocatorByText(parentFolderName)
+      .waitFor();
+  }
+
   public async getFoldersCount() {
     return this.getChildElementBySelector(
       SideBarSelectors.folder,

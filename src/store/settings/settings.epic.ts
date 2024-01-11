@@ -1,4 +1,4 @@
-import { concat, filter, of, switchMap, tap } from 'rxjs';
+import { EMPTY, concat, delay, filter, of, switchMap, tap } from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
@@ -16,19 +16,24 @@ import { SettingsActions, SettingsSelectors } from './settings.reducers';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter((action) => SettingsActions.initApp.match(action)),
+    filter(SettingsActions.initApp.match),
     tap(() => {
       const storageType = SettingsSelectors.selectStorageType(state$.value);
       DataService.init(storageType);
     }),
-    switchMap(() =>
+    delay(100),
+    switchMap(({ payload }) =>
       concat(
-        of(ModelsActions.init()),
-        of(AddonsActions.init()),
         of(ConversationsActions.init()),
         of(PromptsActions.init()),
         of(UIActions.init()),
-        of(FilesActions.init()),
+        payload.shouldLogin
+          ? EMPTY
+          : concat(
+              of(ModelsActions.init()),
+              of(AddonsActions.init()),
+              of(FilesActions.init()),
+            ),
       ),
     ),
   );

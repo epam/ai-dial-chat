@@ -298,7 +298,6 @@ const initConversationsEpic: AppEpic = (action$) =>
           }),
         ),
       );
-
       if (!conversations.length || !selectedConversationsIds.length) {
         actions.push(
           of(
