@@ -396,7 +396,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
       onAddFolder(currentFolder.id);
     },
-    [allFolders, currentFolder, dispatch, level, maxDepth, onAddFolder, t],
+    [currentFolder, dispatch, level, maxDepth, onAddFolder, t],
   );
 
   const onUpload: MouseEventHandler = useCallback(
