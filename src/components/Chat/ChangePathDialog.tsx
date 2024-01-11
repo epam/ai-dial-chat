@@ -1,5 +1,5 @@
 import { useId } from '@floating-ui/react';
-import { ChangeEvent, useCallback, useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -10,12 +10,12 @@ import {
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
 import {
+  filterFoldersWithSearchTerm,
   getChildAndCurrentFoldersIdsById,
   getPathToFolderById,
 } from '@/src/utils/app/folders';
 import { PublishedWithMeFilter } from '@/src/utils/app/search';
 
-import { FolderInterface } from '@/src/types/folder';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -28,6 +28,9 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
+
+import { MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
@@ -42,6 +45,7 @@ interface Props {
   isOpen: boolean;
   onClose: (path: string | undefined) => void;
   initiallySelectedFolderId: string;
+  depth?: number;
 }
 
 export const ChangePathDialog = ({
@@ -49,6 +53,7 @@ export const ChangePathDialog = ({
   onClose,
   type,
   initiallySelectedFolderId,
+  depth,
 }: Props) => {
   const dispatch = useAppDispatch();
 
@@ -57,39 +62,51 @@ export const ChangePathDialog = ({
   const headingId = useId();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
+  const [isAllFoldersOpened, setIsAllFoldersOpened] = useState(true);
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
     '',
   );
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
-  const highlightedFolders = useMemo(() => {
-    return [selectedFolderId].filter(Boolean) as string[];
-  }, [selectedFolderId]);
-
   const { selectors, actions } =
     type === SharingType.Conversation || type === SharingType.ConversationFolder
       ? { selectors: ConversationsSelectors, actions: ConversationsActions }
       : { selectors: PromptsSelectors, actions: PromptsActions };
 
+  const newFolderId = useAppSelector(selectors.selectNewAddedFolderId);
   const folders = useAppSelector((state) =>
     selectors.selectTemporaryAndFilteredFolders(state, PublishedWithMeFilter),
   );
-  const filteredFolders: FolderInterface[] = useMemo(() => {
-    return folders.filter(({ name }) =>
-      name.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-  }, [folders, searchQuery]);
 
-  const handleSearch = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  }, []);
+  const filteredFolders = useMemo(
+    () => filterFoldersWithSearchTerm(folders, searchQuery),
+    [folders, searchQuery],
+  );
+
+  const highlightedFolders = useMemo(() => {
+    return [selectedFolderId].filter(Boolean) as string[];
+  }, [selectedFolderId]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchQuery('');
+      dispatch(actions.resetNewFolderId());
+    }
+  }, [actions, dispatch, isOpen]);
+
+  const handleSearch = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+      dispatch(actions.resetNewFolderId());
+    },
+    [actions, dispatch],
+  );
 
   const handleToggleFolder = useCallback(
     (folderId?: string) => {
       if (!folderId) {
-        setIsAllFilesOpened((value) => !value);
+        setIsAllFoldersOpened((value) => !value);
         setOpenedFoldersIds([]);
         setSelectedFolderId(folderId);
         return;
@@ -177,6 +194,23 @@ export const ChangePathDialog = ({
     [actions, dispatch],
   );
 
+  const getPath = () => {
+    const path = getPathToFolderById(filteredFolders, selectedFolderId);
+    const pathDepth = path.split('/').length - 1;
+
+    if (pathDepth + (depth ? depth : 0) > MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH) {
+      dispatch(
+        UIActions.showToast({
+          message: t("It's not allowed to have more nested folders"),
+          type: 'error',
+        }),
+      );
+      return;
+    }
+
+    return onClose(path);
+  };
+
   return (
     <Modal
       portalId="theme-main"
@@ -212,10 +246,10 @@ export const ChangePathDialog = ({
               )}
               onClick={() => handleToggleFolder()}
             >
-              <CaretIconComponent isOpen={isAllFilesOpened} />
+              <CaretIconComponent isOpen={isAllFoldersOpened} />
               {t('Organization')}
             </button>
-            {isAllFilesOpened && (
+            {isAllFoldersOpened && (
               <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">
                 {filteredFolders.length ? (
                   <div className="flex flex-col gap-1 overflow-auto">
@@ -238,6 +272,7 @@ export const ChangePathDialog = ({
                           key={folder.id}
                         >
                           <Folder
+                            maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
                             searchTerm={searchQuery}
                             currentFolder={folder}
                             allFolders={filteredFolders}
@@ -248,6 +283,7 @@ export const ChangePathDialog = ({
                             onRenameFolder={handleRenameFolder}
                             onDeleteFolder={handleDeleteFolder}
                             onAddFolder={handleAddFolder}
+                            newAddedFolderId={newFolderId}
                           />
                         </div>
                       );
@@ -276,12 +312,7 @@ export const ChangePathDialog = ({
             </button>
           </div>
           <div>
-            <button
-              onClick={() =>
-                onClose(getPathToFolderById(filteredFolders, selectedFolderId))
-              }
-              className="button button-primary"
-            >
+            <button onClick={getPath} className="button button-primary">
               {t('Select folder')}
             </button>
           </div>

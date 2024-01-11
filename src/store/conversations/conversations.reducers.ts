@@ -44,6 +44,7 @@ const initialState: ConversationsState = {
   conversationSignal: new AbortController(),
   isReplayPaused: true,
   isPlaybackPaused: true,
+  newAddedFolderId: undefined,
 };
 
 export const conversationsSlice = createSlice({
@@ -389,10 +390,13 @@ export const conversationsSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ name?: string; folderId?: string } | undefined>,
+      }: PayloadAction<
+        { name?: string; folderId?: string; parentId?: string } | undefined
+      >,
     ) => {
       const newFolder: FolderInterface = {
         id: payload?.folderId || uuidv4(),
+        folderId: payload?.parentId || undefined,
         name:
           payload?.name ?? // custom name
           getNextDefaultName(translate('New folder'), state.folders), // default name with counter
@@ -418,13 +422,16 @@ export const conversationsSlice = createSlice({
         payload.relativePath,
       );
 
+      const id = uuidv4();
+
       state.temporaryFolders.push({
-        id: uuidv4(),
+        id,
         name: folderName,
-        type: FolderType.File,
+        type: FolderType.Chat,
         folderId: payload.relativePath,
         temporary: true,
       });
+      state.newAddedFolderId = id;
     },
     deleteFolder: (state, { payload }: PayloadAction<{ folderId: string }>) => {
       state.folders = state.folders.filter(({ id }) => id !== payload.folderId);
@@ -436,6 +443,9 @@ export const conversationsSlice = createSlice({
       state.temporaryFolders = state.temporaryFolders.filter(
         ({ id }) => id !== payload.folderId,
       );
+    },
+    deleteAllTemporaryFolders: (state) => {
+      state.temporaryFolders = [];
     },
     renameFolder: (
       state,
@@ -460,6 +470,7 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folderId: string; name: string }>,
     ) => {
+      state.newAddedFolderId = undefined;
       const name = payload.name.trim();
       if (name === '') {
         return;
@@ -468,6 +479,9 @@ export const conversationsSlice = createSlice({
       state.temporaryFolders = state.temporaryFolders.map((folder) =>
         folder.id !== payload.folderId ? folder : { ...folder, name },
       );
+    },
+    resetNewFolderId: (state) => {
+      state.newAddedFolderId = undefined;
     },
     moveFolder: (
       state,

@@ -21,6 +21,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+
 import Folder from '@/src/components/Folder/Folder';
 
 import CollapsableSection from '../../Common/CollapsableSection';
@@ -136,6 +138,7 @@ const ChatFolderTemplate = ({
         parentFolderId={folder.folderId}
       />
       <Folder
+        maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
         readonly={readonly}
         searchTerm={searchTerm}
         currentFolder={folder}

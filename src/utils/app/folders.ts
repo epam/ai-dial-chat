@@ -225,3 +225,49 @@ export const getFilteredFolders = (
       filteredFolderIds.has(folder.id),
   );
 };
+
+export const filterFoldersWithSearchTerm = (
+  folders: FolderInterface[],
+  searchQuery: string,
+) => {
+  if (!searchQuery) {
+    return folders;
+  }
+
+  const filtered = folders.filter(({ name }) =>
+    name.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  const folderIds = filtered.map(({ id }) => id);
+
+  const setFolders = new Set(
+    folderIds
+      .map((folderId) => getParentAndCurrentFoldersById(folders, folderId))
+      .flat(),
+  );
+
+  return Array.from(setFolders);
+};
+
+export const getTemporaryFoldersToPublish = (
+  folders: FolderInterface[],
+  folderId: string | undefined,
+) => {
+  if (!folderId) {
+    return [];
+  }
+
+  const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
+
+  return parentFolders
+    .filter((folder) => folder.temporary)
+    .map(({ temporary: _, ...folder }) => {
+      return {
+        ...folder,
+        isPublished: false,
+        isShared: false,
+        publishVersion: '1',
+        publishedWithMe: true,
+      };
+    });
+};

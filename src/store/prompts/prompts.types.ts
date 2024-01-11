@@ -10,4 +10,5 @@ export interface PromptsState {
   searchFilters: SearchFilters;
   selectedPromptId: string | undefined;
   isEditModalOpen: boolean;
+  newAddedFolderId?: string;
 }
