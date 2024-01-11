@@ -30,15 +30,15 @@ interface FolderContextMenuProps {
   folder: FolderInterface;
   featureType?: FeatureType;
   isOpen?: boolean;
-  onDelete?: MouseEventHandler<unknown>;
-  onRename?: MouseEventHandler<unknown>;
-  onAddFolder?: MouseEventHandler;
+  onDelete?: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onRename?: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onAddFolder?: (props?: unknown) => void | MouseEventHandler;
   onOpenChange?: (isOpen: boolean) => void;
-  onShare?: MouseEventHandler<unknown>;
-  onPublish?: MouseEventHandler<unknown>;
-  onUnpublish?: MouseEventHandler<unknown>;
-  onPublishUpdate?: MouseEventHandler<unknown>;
-  onUpload?: MouseEventHandler<unknown>;
+  onShare?: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onPublish?: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onUnpublish?: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onPublishUpdate?: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onUpload?: (props?: unknown) => void | MouseEventHandler<unknown>;
 }
 export const FolderContextMenu = ({
   folder,
