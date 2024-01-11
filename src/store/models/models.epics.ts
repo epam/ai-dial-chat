@@ -46,28 +46,43 @@ const initRecentModelsEpic: AppEpic = (action$, state$) =>
           models: models,
           recentModelsIds,
           defaultModelId: SettingsSelectors.selectDefaultModelId(state$.value),
+          defaultRecentModelsIds:
+            SettingsSelectors.selectDefaultRecentModelsIds(state$.value),
         })),
-        switchMap(({ models, recentModelsIds, defaultModelId }) => {
-          const model = models[0];
-          if (!model) {
-            return EMPTY;
-          }
-          const isDefaultModelAviable =
-            !!defaultModelId && models.some(({ id }) => id === defaultModelId);
-          const filteredRecentModels = recentModelsIds.filter((resentModelId) =>
-            models.some(({ id }) => resentModelId === id),
-          );
-          return of(
-            ModelsActions.initRecentModels({
-              defaultRecentModelsIds:
-                SettingsSelectors.selectDefaultRecentModelsIds(state$.value),
-              localStorageRecentModelsIds: filteredRecentModels,
-              defaultModelId: isDefaultModelAviable
-                ? defaultModelId
-                : undefined,
-            }),
-          );
-        }),
+        switchMap(
+          ({
+            models,
+            recentModelsIds,
+            defaultModelId,
+            defaultRecentModelsIds,
+          }) => {
+            const model = models[0];
+            if (!model) {
+              return EMPTY;
+            }
+            const isDefaultModelAviable =
+              !!defaultModelId &&
+              models.some(({ id }) => id === defaultModelId);
+
+            const filteredRecentModels = recentModelsIds.filter(
+              (resentModelId) => models.some(({ id }) => resentModelId === id),
+            );
+            const filteredDefaultRecentModelsIds =
+              defaultRecentModelsIds.filter((resentModelId) =>
+                models.some(({ id }) => resentModelId === id),
+              );
+
+            return of(
+              ModelsActions.initRecentModels({
+                defaultRecentModelsIds: filteredDefaultRecentModelsIds,
+                localStorageRecentModelsIds: filteredRecentModels,
+                defaultModelId: isDefaultModelAviable
+                  ? defaultModelId
+                  : model.id,
+              }),
+            );
+          },
+        ),
       );
     }),
   );
