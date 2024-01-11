@@ -121,6 +121,10 @@ pre:has(div.codeblock) {
   .checkbox {
     @apply relative m-0 mr-2 inline h-4 w-4 shrink-0 appearance-none rounded-sm border border-primary text-accent-primary checked:border-accent-primary hover:border-accent-primary focus-visible:outline-none;
   }
+
+  .gradient {
+    @apply absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-layer-1 via-40% to-layer-1 pt-6 md:pt-2
+  }
 }
 
 @layer components {
