@@ -189,6 +189,5 @@ export enum ExpectedMessages {
   folderIsHighlighted = 'Folder is highlighted',
   entitiesCountIsValid = 'Number of entities returned in API response is valid',
   modelIsAvailable = 'Model is returned in API response',
-  assistantIsAvailable = 'Assistant is returned in API response',
   addonIsAvailable = 'Addon is returned in API response',
 }

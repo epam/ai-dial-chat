@@ -145,10 +145,6 @@ export enum ModelIds {
   GEMINI_PRO = 'gemini-pro',
 }
 
-export enum AssistantIds {
-  ASSISTANT_10K = 'assistant-10k',
-}
-
 export enum AddonIds {
   WOLFRAM = 'addon-wolfram',
 }
