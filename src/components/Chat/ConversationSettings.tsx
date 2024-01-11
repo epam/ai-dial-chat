@@ -127,7 +127,7 @@ export const ConversationSettings = ({
         className={classNames(
           'relative h-full w-full gap-[1px] overflow-auto',
           {
-            'grid grid-cols-2': width >= 450,
+            'grid grid-cols-2 grid-rows-1': width >= 450,
           },
         )}
         data-qa="conversation-settings"

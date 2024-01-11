@@ -549,7 +549,7 @@ export const Chat = memo(() => {
             <ChatCompareRotate />
           </div>
           <div
-            className={`h-full w-full ${
+            className={`relative h-full w-full ${
               isCompareMode ? 'portrait:hidden' : ''
             }`}
           >
