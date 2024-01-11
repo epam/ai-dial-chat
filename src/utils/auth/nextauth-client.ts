@@ -1,9 +1,10 @@
+import { Token } from '@/src/types/auth';
+
 import { Client } from 'openid-client';
 
 export interface RefreshToken {
   isRefreshing: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  token: any | undefined;
+  token: Token | undefined;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

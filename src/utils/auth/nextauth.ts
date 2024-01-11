@@ -1,6 +1,7 @@
 import { Account, CallbacksOptions, Profile, Session } from 'next-auth';
-import { JWT } from 'next-auth/jwt';
 import { TokenEndpointHandler } from 'next-auth/providers';
+
+import { Token } from '@/src/types/auth';
 
 import { logger } from '../server/logger';
 import NextClient, { RefreshToken } from './nextauth-client';
@@ -36,13 +37,7 @@ export const tokenConfig: TokenEndpointHandler = {
  * `accessToken` and `accessTokenExpires`. If an error occurs,
  * returns the old token and an error property
  */
-async function refreshAccessToken(tokenJWT: JWT & unknown) {
-  const token = tokenJWT as JWT & {
-    providerId?: string;
-    userId: string;
-    refreshTokens: string | TokenSet;
-  };
-
+async function refreshAccessToken(token: Token) {
   const displayedTokenSub =
     process.env.SHOW_TOKEN_SUB === 'true' ? token.sub : '******';
   try {
@@ -64,7 +59,7 @@ async function refreshAccessToken(tokenJWT: JWT & unknown) {
           token,
         };
         if (
-          typeof localToken.token.accessTokenExpires === 'number' &&
+          typeof localToken.token?.accessTokenExpires === 'number' &&
           Date.now() < localToken.token.accessTokenExpires
         ) {
           return localToken.token;
@@ -159,9 +154,9 @@ export const callbacks: Partial<
     ) {
       return options.token;
     }
-
+    const typedToken = options.token as Token;
     // Access token has expired, try to update it
-    return refreshAccessToken(options.token);
+    return refreshAccessToken(typedToken);
   },
   signIn: async (options) => {
     if (!options.account?.access_token) {
