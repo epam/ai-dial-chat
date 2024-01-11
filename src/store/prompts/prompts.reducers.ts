@@ -29,6 +29,7 @@ const initialState: PromptsState = {
   searchFilters: SearchFilters.None,
   selectedPromptId: undefined,
   isEditModalOpen: false,
+  newAddedFolderId: undefined,
 };
 
 export const promptsSlice = createSlice({
@@ -241,13 +242,16 @@ export const promptsSlice = createSlice({
         payload.relativePath,
       );
 
+      const id = uuidv4();
+
       state.temporaryFolders.push({
-        id: uuidv4(),
+        id,
         name: folderName,
-        type: FolderType.File,
+        type: FolderType.Prompt,
         folderId: payload.relativePath,
         temporary: true,
       });
+      state.newAddedFolderId = id;
     },
     deleteFolder: (state, { payload }: PayloadAction<{ folderId: string }>) => {
       state.folders = state.folders.filter(({ id }) => id !== payload.folderId);
@@ -259,6 +263,9 @@ export const promptsSlice = createSlice({
       state.temporaryFolders = state.temporaryFolders.filter(
         ({ id }) => id !== payload.folderId,
       );
+    },
+    deleteAllTemporaryFolders: (state) => {
+      state.temporaryFolders = [];
     },
     renameFolder: (
       state,
@@ -283,6 +290,7 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folderId: string; name: string }>,
     ) => {
+      state.newAddedFolderId = undefined;
       const name = payload.name.trim();
       if (name === '') {
         return;
@@ -291,6 +299,9 @@ export const promptsSlice = createSlice({
       state.temporaryFolders = state.temporaryFolders.map((folder) =>
         folder.id !== payload.folderId ? folder : { ...folder, name },
       );
+    },
+    resetNewFolderId: (state) => {
+      state.newAddedFolderId = undefined;
     },
     moveFolder: (
       state,

@@ -424,3 +424,10 @@ export const selectTemporaryAndFilteredFolders = createSelector(
     return [...filteredFolders, ...temporaryFolders];
   },
 );
+
+export const selectNewAddedFolderId = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.newAddedFolderId;
+  },
+);

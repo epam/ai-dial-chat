@@ -85,6 +85,7 @@ interface Props<T, P = unknown> {
   onItemEvent?: (eventId: string, data: unknown) => void;
   readonly?: boolean;
   onFileUpload?: (parentFolderId: string) => void;
+  maxDepth?: number;
 }
 
 const Folder = <T extends Conversation | Prompt | DialFile>({
@@ -111,6 +112,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   onItemEvent,
   featureType,
   readonly = false,
+  maxDepth,
 }: Props<T>) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -198,6 +200,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       ) || []
     );
   }, [allItems, currentFolder.id, searchTerm]);
+
   const hasChildElements = useMemo(() => {
     return filteredChildFolders.length > 0 || filteredChildItems.length > 0;
   }, [filteredChildFolders.length, filteredChildItems.length]);
@@ -258,7 +261,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             allFolders,
           );
 
-          if (level + foldersDepth > 3) {
+          if (maxDepth && level + foldersDepth > maxDepth) {
             dispatch(
               UIActions.showToast({
                 message: t("It's not allowed to have more nested folders"),
@@ -271,7 +274,16 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         handleDrop(e, currentFolder);
       }
     },
-    [isDropAllowed, handleDrop, dispatch, currentFolder, allFolders, level, t],
+    [
+      isDropAllowed,
+      handleDrop,
+      dispatch,
+      currentFolder,
+      allFolders,
+      maxDepth,
+      level,
+      t,
+    ],
   );
 
   const allowDrop = useCallback(
@@ -369,9 +381,20 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       }
 
       e.stopPropagation();
+
+      if (maxDepth && level + 1 > maxDepth) {
+        dispatch(
+          UIActions.showToast({
+            message: t("It's not allowed to have more nested folders"),
+            type: 'error',
+          }),
+        );
+        return;
+      }
+
       onAddFolder(currentFolder.id);
     },
-    [currentFolder.id, onAddFolder],
+    [allFolders, currentFolder, dispatch, level, maxDepth, onAddFolder, t],
   );
 
   const onUpload: MouseEventHandler = useCallback(
@@ -644,6 +667,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       onClickFolder={onClickFolder}
                       onItemEvent={onItemEvent}
                       featureType={featureType}
+                      maxDepth={maxDepth}
                     />
                     {onDropBetweenFolders && index === arr.length - 1 && (
                       <BetweenFoldersLine
@@ -716,6 +740,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
           }
           isOpen
           onClose={handleClosePublishModal}
+          depth={getFoldersDepth(currentFolder, allFolders)}
         />
       )}
       {isUnpublishing && isPublishingEnabled && (
