@@ -19,7 +19,7 @@ import { PromptBar } from '../ui/webElements';
 import { LocalStorageManager } from './localStorageManager';
 
 import { ConversationData } from '@/e2e/src/testData';
-import { ApiHelper } from '@/e2e/src/testData/api/apiHelper';
+import { IconApiHelper } from '@/e2e/src/testData/api/iconApiHelper';
 import { PromptData } from '@/e2e/src/testData/prompts/promptData';
 import { AccountSettings } from '@/e2e/src/ui/webElements/accountSettings';
 import { Addons } from '@/e2e/src/ui/webElements/addons';
@@ -114,7 +114,7 @@ const test = base.extend<
     promptFilter: Filter;
     chatFilterDropdownMenu: DropdownCheckboxMenu;
     promptFilterDropdownMenu: DropdownCheckboxMenu;
-    apiHelper: ApiHelper;
+    iconApiHelper: IconApiHelper;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -364,8 +364,8 @@ const test = base.extend<
     const shareModal = new ShareModal(page);
     await use(shareModal);
   },
-  apiHelper: async ({ request }, use) => {
-    const apiHelper = new ApiHelper(request);
+  iconApiHelper: async ({ request }, use) => {
+    const apiHelper = new IconApiHelper(request);
     await use(apiHelper);
   },
 });

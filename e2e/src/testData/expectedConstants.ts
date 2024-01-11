@@ -95,6 +95,7 @@ export const API = {
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
   defaultIconHost: '/api/themes/image?name=default-model',
+  bucketHost: '/api/files/bucket',
 };
 
 export const Import = {
