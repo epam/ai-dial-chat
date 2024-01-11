@@ -170,8 +170,8 @@ export default function PublishModal({
             {`${t('Publication request for')}: ${entity.name.trim()}`}
           </span>
         </h4>
-        <div className="flex min-h-0 grow flex-col divide-x divide-tertiary overflow-y-auto md:flex-row">
-          <div className="flex max-h-full w-full shrink grow flex-col gap-3 divide-y divide-tertiary md:max-w-[550px] md:overflow-y-auto">
+        <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
+          <div className="flex w-full shrink grow flex-col gap-3 divide-y divide-tertiary md:max-w-[550px] md:overflow-y-auto">
             <section className="flex flex-col gap-3 p-4">
               <h2>{t('General Info')}</h2>
               <p className="text-secondary">
