@@ -42,18 +42,18 @@ interface ItemContextMenuProps {
   isOpen?: boolean;
   onOpenMoveToModal: () => void;
   onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
-  onDelete: MouseEventHandler<unknown>;
-  onRename: MouseEventHandler<unknown>;
-  onExport: MouseEventHandler<unknown>;
-  onReplay?: MouseEventHandler<unknown>;
-  onCompare?: MouseEventHandler<unknown>;
-  onPlayback?: MouseEventHandler<unknown>;
-  onShare?: MouseEventHandler<unknown>;
-  onPublish?: MouseEventHandler<unknown>;
-  onUnpublish?: MouseEventHandler<unknown>;
-  onPublishUpdate?: MouseEventHandler<unknown>;
+  onDelete: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onRename: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onExport: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onReplay?: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onCompare?: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onPlayback?: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onShare?: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onPublish?: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onUnpublish?: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onPublishUpdate?: (props?: unknown) => void | MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
-  onDuplicate?: MouseEventHandler<unknown>;
+  onDuplicate?: (props?: unknown) => void | MouseEventHandler<unknown>;
 }
 
 export default function ItemContextMenu({
