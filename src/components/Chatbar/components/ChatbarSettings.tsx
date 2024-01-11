@@ -10,6 +10,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { FeatureType } from '@/src/types/common';
+import { SupportedExportFormats } from '@/src/types/export';
 import { Feature } from '@/src/types/features';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -70,7 +71,9 @@ export const ChatbarSettings = () => {
         name: t('Import conversations'),
         onClick: (importJSON) => {
           dispatch(
-            ConversationsActions.importConversations({ data: importJSON }),
+            ConversationsActions.importConversations({
+              data: importJSON as SupportedExportFormats,
+            }),
           );
         },
         Icon: IconFileArrowLeft,

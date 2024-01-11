@@ -1,4 +1,5 @@
 import { Action, Store, configureStore } from '@reduxjs/toolkit';
+import { CurriedGetDefaultMiddleware } from '@reduxjs/toolkit/dist/getDefaultMiddleware';
 
 import {
   Epic,
@@ -46,9 +47,10 @@ const reducer = {
   files: filesSlice.reducer,
 };
 const getMiddleware = (
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
   epicMiddleware: EpicMiddleware<Action<any>, Action<any>, void, any>,
 ) => {
-  return (getDefaultMiddleware: any) => {
+  return (getDefaultMiddleware: CurriedGetDefaultMiddleware) => {
     return getDefaultMiddleware({
       thunk: false,
       serializableCheck: false,
