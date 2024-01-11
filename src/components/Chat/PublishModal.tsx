@@ -155,7 +155,7 @@ export default function PublishModal({
     <Modal
       portalId="theme-main"
       containerClassName={classNames(
-        "group/modal inline-block h-[747px] min-w-full max-w-[1100px] md:min-w-[550px]",
+        "group/modal inline-block h-[747px] min-w-full max-w-[1100px] !bg-layer-2 md:min-w-[550px]",
         { 'w-full': files.length}
         )}
       dataQa="publish-modal"
@@ -164,15 +164,15 @@ export default function PublishModal({
       initialFocus={nameInputRef}
       hideClose
     >
-      <div className="flex h-full flex-col">
-        <h4 className=" min-h-[50px] border-b border-tertiary p-4 text-base font-semibold">
+      <div className="flex h-full flex-col divide-y divide-tertiary">
+        <h4 className=" min-h-[50px] p-4 text-base font-semibold">
           <span className="line-clamp-2 break-words">
             {`${t('Publication request for')}: ${entity.name.trim()}`}
           </span>
         </h4>
-        <div className="flex grow flex-col overflow-y-auto md:flex-row">
-          <div className="flex w-full flex-col gap-3 p-4 md:max-w-[550px]">
-            <section className="flex flex-col gap-3">
+        <div className="flex min-h-0 grow flex-col divide-x divide-tertiary overflow-y-auto md:flex-row">
+          <div className="flex max-h-full w-full shrink grow flex-col gap-3 divide-y divide-tertiary md:max-w-[550px] md:overflow-y-auto">
+            <section className="flex flex-col gap-3 p-4">
               <h2>{t('General Info')}</h2>
               <p className="text-secondary">
                 {t(
@@ -256,7 +256,7 @@ export default function PublishModal({
               </div>
             </section>
 
-            <section className="flex flex-col">
+            <section className="flex flex-col p-4">
               <h2>{t('Target Audience Filters')}</h2>
 
               {[
@@ -280,14 +280,14 @@ export default function PublishModal({
             </section>
           </div>
           {!!files.length && (
-            <div className="flex w-full flex-col gap-3 border-l border-tertiary p-4 md:max-w-[550px]">
+            <div className="flex w-full flex-col gap-3 p-4 md:max-w-[550px]">
               <h2>{t(`Files contained in the ${getPrefix(entity).toLowerCase()}`)}</h2>
               <p className="text-secondary">{t('No files')}</p>
             </div>
           )}
         </div>
 
-        <div className="flex justify-end gap-3 border-t border-tertiary p-4">
+        <div className="flex justify-end gap-3 p-4">
           <button
             className="button button-secondary py-2"
             onClick={handleClose}
