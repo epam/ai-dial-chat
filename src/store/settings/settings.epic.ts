@@ -24,14 +24,14 @@ const initEpic: AppEpic = (action$, state$) =>
     delay(100),
     switchMap(({ payload }) =>
       concat(
-        of(ConversationsActions.init()),
-        of(PromptsActions.init()),
         of(UIActions.init()),
         payload.shouldLogin
           ? EMPTY
           : concat(
               of(ModelsActions.init()),
               of(AddonsActions.init()),
+              of(ConversationsActions.init()),
+              of(PromptsActions.init()),
               of(FilesActions.init()),
             ),
       ),

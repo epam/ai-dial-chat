@@ -1,12 +1,14 @@
 import {
+  EMPTY,
   catchError,
-  concat,
   filter,
   from,
   ignoreElements,
   map,
   of,
+  startWith,
   switchMap,
+  take,
   takeUntil,
   tap,
   throwError,
@@ -24,25 +26,50 @@ import { AppEpic } from '@/src/types/store';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { ModelsActions, ModelsSelectors } from './models.reducers';
 
-const initEpic: AppEpic = (action$, state$) =>
+const initEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ModelsActions.init.match),
+    switchMap(() => of(ModelsActions.getModels())),
+  );
+
+const initRecentModelsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ModelsActions.init.match),
     switchMap(() => DataService.getRecentModelsIds()),
-    switchMap((modelsIds) =>
-      concat(
-        of(
-          ModelsActions.initRecentModels({
-            defaultRecentModelsIds:
-              SettingsSelectors.selectDefaultRecentModelsIds(state$.value),
-            localStorageRecentModelsIds: modelsIds,
-            defaultModelId: SettingsSelectors.selectDefaultModelId(
-              state$.value,
-            ),
-          }),
-        ),
-        of(ModelsActions.getModels()),
-      ),
-    ),
+    switchMap((recentModelsIds) => {
+      return state$.pipe(
+        startWith(state$.value),
+        map((state) => ModelsSelectors.selectModels(state)),
+        filter((models) => models && models.length > 0),
+        take(1),
+        map((models) => ({
+          models: models,
+          recentModelsIds,
+          defaultModelId: SettingsSelectors.selectDefaultModelId(state$.value),
+        })),
+        switchMap(({ models, recentModelsIds, defaultModelId }) => {
+          const model = models[0];
+          if (!model) {
+            return EMPTY;
+          }
+          const isDefaultModelAviable =
+            !!defaultModelId && models.some(({ id }) => id === defaultModelId);
+          const filteredRecentModels = recentModelsIds.filter((resentModelId) =>
+            models.some(({ id }) => resentModelId === id),
+          );
+          return of(
+            ModelsActions.initRecentModels({
+              defaultRecentModelsIds:
+                SettingsSelectors.selectDefaultRecentModelsIds(state$.value),
+              localStorageRecentModelsIds: filteredRecentModels,
+              defaultModelId: isDefaultModelAviable
+                ? defaultModelId
+                : undefined,
+            }),
+          );
+        }),
+      );
+    }),
   );
 
 const getModelsEpic: AppEpic = (action$, state$) =>
@@ -103,4 +130,5 @@ export const ModelsEpics = combineEpics(
   getModelsEpic,
   updateRecentModelsEpic,
   getModelsFailEpic,
+  initRecentModelsEpic,
 );
