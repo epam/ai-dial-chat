@@ -45,13 +45,18 @@ const getBucketEpic: AppEpic = (action$) =>
         map(({ bucket }) => {
           return FilesActions.setBucket({ bucket });
         }),
-        catchError(() => {
-          return of(
-            UIActions.showToast({
-              message: errorsMessages.errorGettingUserFileBucket,
-              type: 'error',
-            }),
-          );
+        catchError((error) => {
+          if (error.status === 401) {
+            window.location.assign('api/auth/signin');
+            return EMPTY;
+          } else {
+            return of(
+              UIActions.showToast({
+                message: errorsMessages.errorGettingUserFileBucket,
+                type: 'error',
+              }),
+            );
+          }
         }),
       );
     }),
