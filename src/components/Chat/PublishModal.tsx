@@ -3,6 +3,7 @@ import {
   ClipboardEvent,
   MouseEvent,
   useCallback,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -11,8 +12,9 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { constructPath } from '@/src/utils/app/file';
+import { constructPath, getDialFilesFromAttachments } from '@/src/utils/app/file';
 import {
+  getAttachments,
   getPublishActionByType,
   isPublishVersionUnique,
 } from '@/src/utils/app/share';
@@ -31,6 +33,7 @@ import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
 import Modal from '../Common/Modal';
 
 import { v4 as uuidv4 } from 'uuid';
+import { PublishAttachment } from './PublishAttachment';
 
 interface Props {
   entity: ShareEntity;
@@ -57,7 +60,7 @@ export default function PublishModal({
   type,
   depth,
 }: Props) {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
   const publishAction = getPublishActionByType(type);
   const shareId = useRef(uuidv4());
@@ -65,7 +68,7 @@ export default function PublishModal({
   const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState<string>(entity.name);
   const [path, setPath] = useState<string>('');
-  const [files] = useState([1]);
+
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
   const [version, setVersion] = useState<string>('');
@@ -73,6 +76,9 @@ export default function PublishModal({
   const isVersionUnique = useAppSelector((state) =>
     isPublishVersionUnique(type)(state, entity.id, version.trim()),
   );
+
+  const attachments = useAppSelector(state => getAttachments(type)(state, entity.id));
+  const files = useMemo(() => getDialFilesFromAttachments(attachments), [attachments])
 
   const nameOnChangeHandler = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -279,10 +285,11 @@ export default function PublishModal({
               ))}
             </section>
           </div>
-          {!!files.length && (
+          {(type === SharingType.Conversation || type === SharingType.ConversationFolder) && (
             <div className="flex w-full flex-col gap-3 p-4 md:max-w-[550px]">
               <h2>{t(`Files contained in the ${getPrefix(entity).toLowerCase()}`)}</h2>
-              <p className="text-secondary">{t('No files')}</p>
+              {!files.length && (<p className="text-secondary">{t('No files')}</p>) }
+              { files.map(f=> <PublishAttachment key={f?.absolutePath || f?.name} item={f}/>) }
             </div>
           )}
         </div>

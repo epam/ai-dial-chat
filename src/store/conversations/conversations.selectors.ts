@@ -1,15 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import {
-  getChildAndCurrentFoldersIdsById,
-  getFilteredFolders,
-  getParentAndCurrentFoldersById,
-} from '@/src/utils/app/folders';
-import {
-  doesConversationContainSearchTerm,
-  getMyItemsFilters,
-  searchSectionFolders,
-} from '@/src/utils/app/search';
+import { getChildAndCurrentFoldersIdsById, getFilteredFolders, getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
+import { doesConversationContainSearchTerm, getMyItemsFilters, searchSectionFolders } from '@/src/utils/app/search';
 import { isEntityExternal } from '@/src/utils/app/share';
 
 import { Conversation, Role } from '@/src/types/chat';
@@ -429,5 +421,31 @@ export const selectNewAddedFolderId = createSelector(
   [rootSelector],
   (state) => {
     return state.newAddedFolderId;
+  },
+);
+
+export const getConversationAttachments = createSelector(
+  [
+    (state) => state,
+    (state: RootState, entityId: string) => selectConversation(state, entityId),
+  ],
+  (state, conversation) => {
+    return (
+      conversation?.messages.flatMap(
+        (m) => m.custom_content?.attachments || [],
+      ) || []
+    );
+  },
+);
+
+export const getFolderAttachments = createSelector(
+  [
+    (state) => state,
+    (state: RootState, entityId: string) => selectConversation(state, entityId),
+  ],
+  (state, conversation) => {
+    return (
+      conversation?.messages.flatMap((m) => m.custom_content?.attachments || []) || []
+    );
   },
 );
