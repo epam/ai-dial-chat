@@ -12,4 +12,5 @@ export interface ConversationsState {
   conversationSignal: AbortController;
   isReplayPaused: boolean;
   isPlaybackPaused: boolean;
+  newAddedFolderId?: string;
 }

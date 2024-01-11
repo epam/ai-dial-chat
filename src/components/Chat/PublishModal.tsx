@@ -37,6 +37,7 @@ interface Props {
   type: SharingType;
   isOpen: boolean;
   onClose: () => void;
+  depth?: number;
 }
 
 const getPrefix = (item: ShareEntity): string => {
@@ -49,7 +50,13 @@ const getPrefix = (item: ShareEntity): string => {
   }
 };
 
-export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
+export default function PublishModal({
+  entity,
+  isOpen,
+  onClose,
+  type,
+  depth,
+}: Props) {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
   const publishAction = getPublishActionByType(type);
@@ -153,7 +160,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
       initialFocus={nameInputRef}
     >
       <div className="flex h-full flex-col gap-2">
-        <h4 className=" max-h-[50px] text-base font-semibold">
+        <h4 className="max-h-[50px] text-base font-semibold">
           <span className="line-clamp-2 break-words">
             {`${t('Publication request for')}: ${entity.name.trim()}`}
           </span>
@@ -294,6 +301,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
           setIsChangeFolderModalOpened(false);
         }}
         type={type}
+        depth={depth}
       />
     </Modal>
   );

@@ -196,7 +196,7 @@ export const isPublishFolderVersionUnique = createSelector(
   ],
   (folders, folderId, version) => {
     const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
-    return parentFolders.some((folder) => folder.publishVersion === version);
+    return parentFolders.every((folder) => folder.publishVersion !== version);
   },
 );
 
@@ -237,5 +237,12 @@ export const selectTemporaryAndFilteredFolders = createSelector(
   [selectFilteredFolders, selectTemporaryFolders],
   (filteredFolders, temporaryFolders) => {
     return [...filteredFolders, ...temporaryFolders];
+  },
+);
+
+export const selectNewAddedFolderId = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.newAddedFolderId;
   },
 );

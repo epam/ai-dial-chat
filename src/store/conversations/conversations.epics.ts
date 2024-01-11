@@ -37,7 +37,10 @@ import {
   isSettingsChanged,
 } from '@/src/utils/app/conversation';
 import { DataService } from '@/src/utils/app/data/data-service';
-import { getFolderIdByPath } from '@/src/utils/app/folders';
+import {
+  getFolderIdByPath,
+  getTemporaryFoldersToPublish,
+} from '@/src/utils/app/folders';
 import {
   ImportConversationsResponse,
   exportConversation,
@@ -64,7 +67,7 @@ import {
 import { EntityType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
-import { resetShareEntity } from './../../constants/chat';
+import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -1502,10 +1505,11 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
         payload.id,
       ),
       folders: ConversationsSelectors.selectFolders(state$.value),
-      publishedFolders: ConversationsSelectors.selectSectionFolders(
-        state$.value,
-        PublishedWithMeFilter,
-      ),
+      publishedAndTemporaryFolders:
+        ConversationsSelectors.selectTemporaryAndFilteredFolders(
+          state$.value,
+          PublishedWithMeFilter,
+        ),
     })),
     switchMap(
       ({
@@ -1513,7 +1517,7 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
         conversations,
         childFolders,
         folders,
-        publishedFolders,
+        publishedAndTemporaryFolders,
       }) => {
         const mapping = new Map();
         childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
@@ -1526,8 +1530,15 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
             originalId: folder.id,
             folderId:
               folder.id === publishRequest.id
-                ? getFolderIdByPath(publishRequest.path, publishedFolders)
+                ? getFolderIdByPath(
+                    publishRequest.path,
+                    publishedAndTemporaryFolders,
+                  )
                 : mapping.get(folderId),
+            name:
+              folder.id === publishRequest.id
+                ? publishRequest.name
+                : folder.name,
             publishedWithMe:
               folder.id === publishRequest.id || folder.publishedWithMe,
             shareUniqueId:
@@ -1539,6 +1550,11 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
                 ? publishRequest.version
                 : folder.publishVersion,
           }));
+
+        const temporaryFolders = getTemporaryFoldersToPublish(
+          publishedAndTemporaryFolders,
+          newFolders[newFolders.length - 1].folderId,
+        );
 
         const sharedConversations = conversations
           .filter(
@@ -1561,9 +1577,10 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
           ),
           of(
             ConversationsActions.addFolders({
-              folders: newFolders,
+              folders: [...temporaryFolders, ...newFolders],
             }),
           ),
+          of(ConversationsActions.deleteAllTemporaryFolders()),
         );
       },
     ),
@@ -1576,34 +1593,47 @@ const publishConversationEpic: AppEpic = (action$, state$) =>
     map(({ payload }) => ({
       publishRequest: payload,
       conversations: ConversationsSelectors.selectConversations(state$.value),
-      publishedFolders: ConversationsSelectors.selectSectionFolders(
-        state$.value,
-        PublishedWithMeFilter,
-      ),
-    })),
-    switchMap(({ publishRequest, conversations, publishedFolders }) => {
-      const sharedConversations = conversations
-        .filter((conversation) => conversation.id === publishRequest.id)
-        .map(({ folderId: _, ...conversation }) => ({
-          ...conversation,
-          ...resetShareEntity,
-          id: uuidv4(),
-          originalId: conversation.id,
-          folderId: getFolderIdByPath(publishRequest.path, publishedFolders),
-          publishedWithMe: true,
-          name: publishRequest.name,
-          shareUniqueId: publishRequest.shareUniqueId,
-          publishVersion: publishRequest.version,
-        }));
-
-      return concat(
-        of(
-          ConversationsActions.addConversations({
-            conversations: sharedConversations,
-          }),
+      publishedAndTemporaryFolders:
+        ConversationsSelectors.selectTemporaryAndFilteredFolders(
+          state$.value,
+          PublishedWithMeFilter,
         ),
-      );
-    }),
+    })),
+    switchMap(
+      ({ publishRequest, conversations, publishedAndTemporaryFolders }) => {
+        const sharedConversations = conversations
+          .filter((conversation) => conversation.id === publishRequest.id)
+          .map(({ folderId: _, ...conversation }) => ({
+            ...conversation,
+            ...resetShareEntity,
+            id: uuidv4(),
+            originalId: conversation.id,
+            folderId: getFolderIdByPath(
+              publishRequest.path,
+              publishedAndTemporaryFolders,
+            ),
+            publishedWithMe: true,
+            name: publishRequest.name,
+            shareUniqueId: publishRequest.shareUniqueId,
+            publishVersion: publishRequest.version,
+          }));
+
+        const temporaryFolders = getTemporaryFoldersToPublish(
+          publishedAndTemporaryFolders,
+          sharedConversations[sharedConversations.length - 1].folderId,
+        );
+
+        return concat(
+          of(ConversationsActions.addFolders({ folders: temporaryFolders })),
+          of(ConversationsActions.deleteAllTemporaryFolders()),
+          of(
+            ConversationsActions.addConversations({
+              conversations: sharedConversations,
+            }),
+          ),
+        );
+      },
+    ),
   );
 
 export const ConversationsEpics = combineEpics(

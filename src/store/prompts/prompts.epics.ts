@@ -3,7 +3,10 @@ import { concat, filter, ignoreElements, map, of, switchMap, tap } from 'rxjs';
 import { combineEpics } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
-import { getFolderIdByPath } from '@/src/utils/app/folders';
+import {
+  getFolderIdByPath,
+  getTemporaryFoldersToPublish,
+} from '@/src/utils/app/folders';
 import {
   exportPrompt,
   exportPrompts,
@@ -14,7 +17,7 @@ import { translate } from '@/src/utils/app/translation';
 
 import { AppEpic } from '@/src/types/store';
 
-import { resetShareEntity } from './../../constants/chat';
+import { resetShareEntity } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { UIActions } from '../ui/ui.reducers';
@@ -299,10 +302,11 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
         payload.id,
       ),
       folders: PromptsSelectors.selectFolders(state$.value),
-      publishedFolders: PromptsSelectors.selectSectionFolders(
-        state$.value,
-        PublishedWithMeFilter,
-      ),
+      publishedAndTemporaryFolders:
+        PromptsSelectors.selectTemporaryAndFilteredFolders(
+          state$.value,
+          PublishedWithMeFilter,
+        ),
     })),
     switchMap(
       ({
@@ -310,7 +314,7 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
         prompts,
         childFolders,
         folders,
-        publishedFolders,
+        publishedAndTemporaryFolders,
       }) => {
         const mapping = new Map();
         childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
@@ -323,7 +327,10 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
             originalId: folder.id,
             folderId:
               folder.id === publishRequest.id
-                ? getFolderIdByPath(publishRequest.path, publishedFolders)
+                ? getFolderIdByPath(
+                    publishRequest.path,
+                    publishedAndTemporaryFolders,
+                  )
                 : mapping.get(folderId),
             publishedWithMe:
               folder.id === publishRequest.id || folder.publishedWithMe,
@@ -340,6 +347,11 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
                 ? publishRequest.version
                 : folder.publishVersion,
           }));
+
+        const temporaryFolders = getTemporaryFoldersToPublish(
+          publishedAndTemporaryFolders,
+          newFolders[newFolders.length - 1].folderId,
+        );
 
         const sharedPrompts = prompts
           .filter(
@@ -361,9 +373,10 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
           ),
           of(
             PromptsActions.addFolders({
-              folders: newFolders,
+              folders: [...temporaryFolders, ...newFolders],
             }),
           ),
+          of(PromptsActions.deleteAllTemporaryFolders()),
         );
       },
     ),
@@ -376,12 +389,13 @@ const publishPromptEpic: AppEpic = (action$, state$) =>
     map(({ payload }) => ({
       publishRequest: payload,
       prompts: PromptsSelectors.selectPrompts(state$.value),
-      publishedFolders: PromptsSelectors.selectSectionFolders(
-        state$.value,
-        PublishedWithMeFilter,
-      ),
+      publishedAndTemporaryFolders:
+        PromptsSelectors.selectTemporaryAndFilteredFolders(
+          state$.value,
+          PublishedWithMeFilter,
+        ),
     })),
-    switchMap(({ publishRequest, prompts, publishedFolders }) => {
+    switchMap(({ publishRequest, prompts, publishedAndTemporaryFolders }) => {
       const sharedPrompts = prompts
         .filter((prompt) => prompt.id === publishRequest.id)
         .map(({ folderId: _, ...prompt }) => ({
@@ -389,14 +403,24 @@ const publishPromptEpic: AppEpic = (action$, state$) =>
           ...resetShareEntity,
           id: uuidv4(),
           originalId: prompt.id,
-          folderId: getFolderIdByPath(publishRequest.path, publishedFolders),
+          folderId: getFolderIdByPath(
+            publishRequest.path,
+            publishedAndTemporaryFolders,
+          ),
           publishedWithMe: true,
           name: publishRequest.name,
           publishVersion: publishRequest.version,
           shareUniqueId: publishRequest.shareUniqueId,
         }));
 
+      const temporaryFolders = getTemporaryFoldersToPublish(
+        publishedAndTemporaryFolders,
+        sharedPrompts[sharedPrompts.length - 1].folderId,
+      );
+
       return concat(
+        of(PromptsActions.addFolders({ folders: temporaryFolders })),
+        of(PromptsActions.deleteAllTemporaryFolders()),
         of(
           PromptsActions.addPrompts({
             prompts: sharedPrompts,

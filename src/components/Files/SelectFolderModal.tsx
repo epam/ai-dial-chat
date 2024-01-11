@@ -7,6 +7,8 @@ import classNames from 'classnames';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 
+import { filterFoldersWithSearchTerm } from '@/src/utils/app/folders';
+
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
@@ -42,11 +44,12 @@ export const SelectFolderModal = ({
   const folders = useAppSelector(FilesSelectors.selectFolders);
   const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
   const [searchQuery, setSearchQuery] = useState('');
-  const filteredFolders = useMemo(() => {
-    return folders.filter(({ name }) =>
-      name.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-  }, [folders, searchQuery]);
+
+  const filteredFolders = useMemo(
+    () => filterFoldersWithSearchTerm(folders, searchQuery),
+    [folders, searchQuery],
+  );
+
   const foldersStatus = useAppSelector(FilesSelectors.selectFoldersStatus);
   const loadingFolderId = useAppSelector(FilesSelectors.selectLoadingFolderId);
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
@@ -138,7 +141,7 @@ export const SelectFolderModal = ({
               onChange={handleSearch}
               className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
               value={searchQuery}
-            ></input>
+            />
             <div className="flex min-h-[350px] flex-col overflow-auto">
               <button
                 className={classNames(
