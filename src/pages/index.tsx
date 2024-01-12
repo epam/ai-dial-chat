@@ -1,5 +1,5 @@
 import { signIn, useSession } from 'next-auth/react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
@@ -60,9 +60,12 @@ export default function Home({ initialState }: Props) {
     SettingsSelectors.selectEnabledFeatures,
   );
 
-  const shouldLogin =
-    !authDisabled &&
-    (session.status !== 'authenticated' || !isClientSessionValid(session));
+  const shouldLogin = useMemo(
+    () =>
+      !authDisabled &&
+      (session.status !== 'authenticated' || !isClientSessionValid(session)),
+    [authDisabled, session],
+  );
 
   // EFFECTS  --------------------------------------------
   useEffect(() => {
