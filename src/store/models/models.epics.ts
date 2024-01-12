@@ -1,12 +1,13 @@
 import {
   catchError,
-  concat,
   filter,
   from,
   ignoreElements,
   map,
   of,
+  startWith,
   switchMap,
+  take,
   takeUntil,
   tap,
   throwError,
@@ -21,28 +22,54 @@ import { DataService } from '@/src/utils/app/data/data-service';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { AppEpic } from '@/src/types/store';
 
+import { errorsMessages } from '@/src/constants/errors';
+
 import { SettingsSelectors } from '../settings/settings.reducers';
+import { UIActions } from '../ui/ui.reducers';
 import { ModelsActions, ModelsSelectors } from './models.reducers';
 
-const initEpic: AppEpic = (action$, state$) =>
+const initEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ModelsActions.init.match),
+    switchMap(() => of(ModelsActions.getModels())),
+  );
+
+const initRecentModelsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ModelsActions.init.match),
     switchMap(() => DataService.getRecentModelsIds()),
-    switchMap((modelsIds) =>
-      concat(
-        of(
-          ModelsActions.initRecentModels({
-            defaultRecentModelsIds:
-              SettingsSelectors.selectDefaultRecentModelsIds(state$.value),
-            localStorageRecentModelsIds: modelsIds,
-            defaultModelId: SettingsSelectors.selectDefaultModelId(
-              state$.value,
-            ),
-          }),
-        ),
-        of(ModelsActions.getModels()),
-      ),
-    ),
+    switchMap((recentModelsIds) => {
+      return state$.pipe(
+        startWith(state$.value),
+        map((state) => ModelsSelectors.selectModels(state)),
+        filter((models) => models && models.length > 0),
+        take(1),
+        map((models) => ({
+          models: models,
+          recentModelsIds,
+          defaultRecentModelsIds:
+            SettingsSelectors.selectDefaultRecentModelsIds(state$.value),
+        })),
+        switchMap(({ models, recentModelsIds, defaultRecentModelsIds }) => {
+          const filteredRecentModels = recentModelsIds.filter((resentModelId) =>
+            models.some(({ id }) => resentModelId === id),
+          );
+          const filteredDefaultRecentModelsIds = defaultRecentModelsIds.filter(
+            (resentModelId) => models.some(({ id }) => resentModelId === id),
+          );
+
+          return of(
+            ModelsActions.initRecentModels({
+              defaultRecentModelsIds: filteredDefaultRecentModelsIds,
+              localStorageRecentModelsIds: filteredRecentModels,
+              defaultModelId: SettingsSelectors.selectDefaultModelId(
+                state$.value,
+              ),
+            }),
+          );
+        }),
+      );
+    }),
   );
 
 const getModelsEpic: AppEpic = (action$, state$) =>
@@ -61,9 +88,16 @@ const getModelsEpic: AppEpic = (action$, state$) =>
           }
           return from(resp.json());
         }),
-        map((response: OpenAIEntityModel[]) =>
-          ModelsActions.getModelsSuccess({ models: response }),
-        ),
+        map((response: OpenAIEntityModel[]) => {
+          if (response.length > 0) {
+            return ModelsActions.getModelsSuccess({ models: response });
+          } else {
+            return UIActions.showToast({
+              message: errorsMessages.noModelsAvailable,
+              type: 'error',
+            });
+          }
+        }),
         catchError((err) => {
           return of(ModelsActions.getModelsFail({ error: err }));
         }),
@@ -103,4 +137,5 @@ export const ModelsEpics = combineEpics(
   getModelsEpic,
   updateRecentModelsEpic,
   getModelsFailEpic,
+  initRecentModelsEpic,
 );
