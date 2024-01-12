@@ -3,7 +3,6 @@ import {
   ClipboardEvent,
   MouseEvent,
   useCallback,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -12,7 +11,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { constructPath, getDialFilesFromAttachments } from '@/src/utils/app/file';
+import { constructPath } from '@/src/utils/app/file';
 import {
   getAttachments,
   getPublishActionByType,
@@ -26,14 +25,16 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
+import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
+
 import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
 
 import CollapsableSection from '../Common/CollapsableSection';
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
 import Modal from '../Common/Modal';
+import { PublishAttachment } from './PublishAttachment';
 
 import { v4 as uuidv4 } from 'uuid';
-import { PublishAttachment } from './PublishAttachment';
 
 interface Props {
   entity: ShareEntity;
@@ -77,8 +78,9 @@ export default function PublishModal({
     isPublishVersionUnique(type)(state, entity.id, version.trim()),
   );
 
-  const attachments = useAppSelector(state => getAttachments(type)(state, entity.id));
-  const files = useMemo(() => getDialFilesFromAttachments(attachments), [attachments])
+  const files = useAppSelector((state) =>
+    getAttachments(type)(state, entity.id),
+  );
 
   const nameOnChangeHandler = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -161,9 +163,9 @@ export default function PublishModal({
     <Modal
       portalId="theme-main"
       containerClassName={classNames(
-        "group/modal inline-block h-[747px] min-w-full max-w-[1100px] !bg-layer-2 md:min-w-[550px]",
-        { 'w-full': files.length}
-        )}
+        'group/modal inline-block h-[747px] min-w-full max-w-[1100px] !bg-layer-2 md:min-w-[550px]',
+        { 'w-full': files.length },
+      )}
       dataQa="publish-modal"
       isOpen={isOpen}
       onClose={onClose}
@@ -222,7 +224,7 @@ export default function PublishModal({
                   onClick={handleFolderChange}
                 >
                   <span className="truncate">
-                    {constructPath(t('Organization'), path)}
+                    {constructPath(t(PUBLISHING_FOLDER_NAME), path)}
                   </span>
                   <span className="text-accent-primary">{t('Change')}</span>
                 </button>
@@ -285,11 +287,18 @@ export default function PublishModal({
               ))}
             </section>
           </div>
-          {(type === SharingType.Conversation || type === SharingType.ConversationFolder) && (
+          {(type === SharingType.Conversation ||
+            type === SharingType.ConversationFolder) && (
             <div className="flex w-full flex-col gap-3 p-4 md:max-w-[550px]">
-              <h2>{t(`Files contained in the ${getPrefix(entity).toLowerCase()}`)}</h2>
-              {!files.length && (<p className="text-secondary">{t('No files')}</p>) }
-              { files.map(f=> <PublishAttachment key={f?.absolutePath || f?.name} item={f}/>) }
+              <h2>
+                {t(`Files contained in the ${getPrefix(entity).toLowerCase()}`)}
+              </h2>
+              {!files.length && (
+                <p className="text-secondary">{t('No files')}</p>
+              )}
+              {files.map((f) => (
+                <PublishAttachment key={f?.path || f?.title} item={f} />
+              ))}
             </div>
           )}
         </div>

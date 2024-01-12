@@ -1,4 +1,3 @@
-import { Attachment } from '@/src/types/chat';
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
@@ -91,9 +90,8 @@ export const isPublishVersionUnique = (type: SharingType) => {
 export const getAttachments = (type: SharingType) => {
   switch (type) {
     case SharingType.Conversation:
-      return ConversationsSelectors.getConversationAttachments;
     case SharingType.ConversationFolder:
-      return ConversationsSelectors.getFolderAttachments;
+      return ConversationsSelectors.getAttachments;
     case SharingType.Prompt:
     case SharingType.PromptFolder:
       return () => [];

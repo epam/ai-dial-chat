@@ -21,7 +21,10 @@ import {
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import {
+  MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH,
+  PUBLISHING_FOLDER_NAME,
+} from '@/src/constants/folders';
 
 import Folder from '@/src/components/Folder/Folder';
 
@@ -287,7 +290,7 @@ export function PromptFolders() {
       [
         {
           hidden: !isPublishingEnabled || !isFilterEmpty,
-          name: t('Organization'),
+          name: t(PUBLISHING_FOLDER_NAME),
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'published-with-me',

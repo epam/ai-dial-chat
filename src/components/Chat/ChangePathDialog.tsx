@@ -30,7 +30,10 @@ import {
 } from '@/src/store/prompts/prompts.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import {
+  MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH,
+  PUBLISHING_FOLDER_NAME,
+} from '@/src/constants/folders';
 
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
@@ -156,9 +159,7 @@ export const ChangePathDialog = ({
       if (newName.match(notAllowedSymbolsRegex)) {
         setErrorMessage(
           t(
-            `The symbols ${notAllowedSymbols.join(
-              '',
-            )} are not allowed in folder name`,
+            `The symbols ${notAllowedSymbols} are not allowed in folder name`,
           ) as string,
         );
         return;
@@ -247,7 +248,7 @@ export const ChangePathDialog = ({
               onClick={() => handleToggleFolder()}
             >
               <CaretIconComponent isOpen={isAllFoldersOpened} />
-              {t('Organization')}
+              {t(PUBLISHING_FOLDER_NAME)}
             </button>
             {isAllFoldersOpened && (
               <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">

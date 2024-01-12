@@ -178,7 +178,7 @@ export const PreUploadDialog = ({
         t(
           `The symbols {{notAllowedSymbols}} are not allowed in file name. Please rename or remove them from uploading files list: {{fileNames}}`,
           {
-            notAllowedSymbols: notAllowedSymbols.join(''),
+            notAllowedSymbols,
             fileNames: incorrectFileNames.join(', '),
           },
         ) as string,

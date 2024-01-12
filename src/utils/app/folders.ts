@@ -3,6 +3,7 @@ import { ShareEntity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
+import { PublishAttachmentInfo } from '@/src/types/share';
 
 import { selectFilteredConversations } from '@/src/store/conversations/conversations.selectors';
 
@@ -282,4 +283,18 @@ export const findRootFromItems = (
     if (!item.folderId) return true;
     return !parentIds.has(item.folderId);
   });
+};
+
+export const getConversationAttachmentWithPath = (
+  conversation: Conversation,
+  folders: FolderInterface[],
+): PublishAttachmentInfo[] => {
+  const path = getPathToFolderById(folders, conversation.folderId);
+  return (
+    conversation?.messages.flatMap(
+      (m) =>
+        m.custom_content?.attachments?.map(({ title }) => ({ title, path })) ||
+        [],
+    ) || []
+  );
 };

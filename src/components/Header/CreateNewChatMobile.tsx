@@ -26,7 +26,11 @@ export const CreateNewChatMobile = () => {
           );
         }}
       >
-        <CirclePlusIcon className="cursor-pointer text-secondary" width={24} height={24} />
+        <CirclePlusIcon
+          className="cursor-pointer text-secondary"
+          width={24}
+          height={24}
+        />
       </div>
     </Tooltip>
   );

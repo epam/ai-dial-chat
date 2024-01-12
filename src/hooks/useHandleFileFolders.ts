@@ -61,9 +61,7 @@ export const useHandleFileFolders = (
       if (newName.match(notAllowedSymbolsRegex)) {
         setErrorMessage(
           t(
-            `The symbols ${notAllowedSymbols.join(
-              '',
-            )} are not allowed in folder name`,
+            `The symbols ${notAllowedSymbols} are not allowed in folder name`,
           ) as string,
         );
         return;

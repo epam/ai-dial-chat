@@ -22,3 +22,8 @@ export interface PublishRequest {
   path: string;
   version: string;
 }
+
+export interface PublishAttachmentInfo {
+  title: string;
+  path: string;
+}

@@ -1,7 +1,16 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { getChildAndCurrentFoldersIdsById, getFilteredFolders, getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
-import { doesConversationContainSearchTerm, getMyItemsFilters, searchSectionFolders } from '@/src/utils/app/search';
+import {
+  getChildAndCurrentFoldersIdsById,
+  getConversationAttachmentWithPath,
+  getFilteredFolders,
+  getParentAndCurrentFoldersById,
+} from '@/src/utils/app/folders';
+import {
+  doesConversationContainSearchTerm,
+  getMyItemsFilters,
+  searchSectionFolders,
+} from '@/src/utils/app/search';
 import { isEntityExternal } from '@/src/utils/app/share';
 
 import { Conversation, Role } from '@/src/types/chat';
@@ -424,28 +433,27 @@ export const selectNewAddedFolderId = createSelector(
   },
 );
 
-export const getConversationAttachments = createSelector(
-  [
-    (state) => state,
-    (state: RootState, entityId: string) => selectConversation(state, entityId),
-  ],
-  (state, conversation) => {
-    return (
-      conversation?.messages.flatMap(
-        (m) => m.custom_content?.attachments || [],
-      ) || []
-    );
-  },
-);
+export const getAttachments = createSelector(
+  [(state) => state, (_state: RootState, entityId: string) => entityId],
+  (state, entityId) => {
+    const folders = selectFolders(state);
+    const conversation = selectConversation(state, entityId);
+    if (conversation) {
+      return getConversationAttachmentWithPath(conversation, folders);
+    } else {
+      const folderIds = new Set(
+        getChildAndCurrentFoldersIdsById(entityId, folders),
+      );
 
-export const getFolderAttachments = createSelector(
-  [
-    (state) => state,
-    (state: RootState, entityId: string) => selectConversation(state, entityId),
-  ],
-  (state, conversation) => {
-    return (
-      conversation?.messages.flatMap((m) => m.custom_content?.attachments || []) || []
-    );
+      if (!folderIds.size) return [];
+
+      const conversations = selectConversations(state).filter(
+        (conv) => conv.folderId && folderIds.has(conv.folderId),
+      );
+
+      return conversations.flatMap((conv) =>
+        getConversationAttachmentWithPath(conv, folders),
+      );
+    }
   },
 );
