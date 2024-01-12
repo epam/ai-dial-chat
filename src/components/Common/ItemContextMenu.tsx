@@ -23,7 +23,7 @@ import { hasExternalParent, isEntityExternal } from '@/src/utils/app/share';
 
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
-import { DisplayMenuItemProps } from '@/src/types/menu';
+import { DisplayMenuItemProps, onClickMenuItemHandler } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -42,18 +42,18 @@ interface ItemContextMenuProps {
   isOpen?: boolean;
   onOpenMoveToModal: () => void;
   onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
-  onDelete: (props?: unknown) => void | MouseEventHandler<unknown>;
-  onRename: (props?: unknown) => void | MouseEventHandler<unknown>;
-  onExport: (props?: unknown) => void | MouseEventHandler<unknown>;
-  onReplay?: (props?: unknown) => void | MouseEventHandler<unknown>;
-  onCompare?: (props?: unknown) => void | MouseEventHandler<unknown>;
-  onPlayback?: (props?: unknown) => void | MouseEventHandler<unknown>;
-  onShare?: (props?: unknown) => void | MouseEventHandler<unknown>;
-  onPublish?: (props?: unknown) => void | MouseEventHandler<unknown>;
-  onUnpublish?: (props?: unknown) => void | MouseEventHandler<unknown>;
-  onPublishUpdate?: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onDelete: MouseEventHandler<unknown>;
+  onRename: MouseEventHandler<unknown>;
+  onExport: MouseEventHandler<unknown>;
+  onReplay?: MouseEventHandler<unknown>;
+  onCompare?: MouseEventHandler<unknown>;
+  onPlayback?: MouseEventHandler<unknown>;
+  onShare?: MouseEventHandler<unknown>;
+  onPublish?: MouseEventHandler<unknown>;
+  onUnpublish?: MouseEventHandler<unknown>;
+  onPublishUpdate?: MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
-  onDuplicate?: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onDuplicate?: MouseEventHandler<unknown>;
 }
 
 export default function ItemContextMenu({
@@ -97,48 +97,48 @@ export default function ItemContextMenu({
         display: !isExternal,
         dataQa: 'rename',
         Icon: IconPencilMinus,
-        onClick: onRename,
+        onClick: onRename as onClickMenuItemHandler,
       },
       {
         name: t('Compare'),
         display: !!onCompare,
         dataQa: 'compare',
         Icon: IconScale,
-        onClick: onCompare,
+        onClick: onCompare as onClickMenuItemHandler,
       },
       {
         name: t('Duplicate'),
         display: !!onDuplicate && isExternal,
         dataQa: 'duplicate',
         Icon: IconCopy,
-        onClick: onDuplicate,
+        onClick: onDuplicate as onClickMenuItemHandler,
       },
       {
         name: t('Replay'),
         display: !isEmptyConversation && !!onReplay,
         dataQa: 'replay',
         Icon: IconRefreshDot,
-        onClick: onReplay,
+        onClick: onReplay as onClickMenuItemHandler,
       },
       {
         name: t('Playback'),
         display: !isEmptyConversation && !!onPlayback && !isExternal,
         dataQa: 'playback',
         Icon: IconPlayerPlay,
-        onClick: onPlayback,
+        onClick: onPlayback as onClickMenuItemHandler,
       },
       {
         name: t('Export'),
         dataQa: 'export',
         Icon: IconFileArrowRight,
-        onClick: onExport,
+        onClick: onExport as onClickMenuItemHandler,
       },
       {
         name: t('Move to'),
         display: !isExternal,
         dataQa: 'move-to-mobile',
         Icon: IconFolderShare,
-        onClick: onOpenMoveToModal,
+        onClick: onOpenMoveToModal as onClickMenuItemHandler,
         className: 'md:hidden',
       },
       {
@@ -173,7 +173,7 @@ export default function ItemContextMenu({
         dataQa: 'share',
         display: isSharingEnabled && !!onShare && !isExternal,
         Icon: IconUserShare,
-        onClick: onShare,
+        onClick: onShare as onClickMenuItemHandler,
       },
       {
         name: t('Publish'),
@@ -184,7 +184,7 @@ export default function ItemContextMenu({
           !!onPublish &&
           !isExternal,
         Icon: IconWorldShare,
-        onClick: onPublish,
+        onClick: onPublish as onClickMenuItemHandler,
       },
       {
         name: t('Update'),
@@ -192,20 +192,20 @@ export default function ItemContextMenu({
         display:
           isPublishingEnabled && !!entity.isPublished && !!onPublishUpdate,
         Icon: IconClockShare,
-        onClick: onPublishUpdate,
+        onClick: onPublishUpdate as onClickMenuItemHandler,
       },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
         display: isPublishingEnabled && !!entity.isPublished && !!onUnpublish,
         Icon: UnpublishIcon,
-        onClick: onUnpublish,
+        onClick: onUnpublish as onClickMenuItemHandler,
       },
       {
         name: t('Delete'),
         dataQa: 'delete',
         Icon: IconTrashX,
-        onClick: onDelete,
+        onClick: onDelete as onClickMenuItemHandler,
       },
     ],
     [
