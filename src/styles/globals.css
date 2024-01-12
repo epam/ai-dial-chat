@@ -122,11 +122,11 @@ pre:has(div.codeblock) {
     @apply relative m-0 mr-2 inline h-4 w-4 shrink-0 appearance-none rounded-sm border border-primary text-accent-primary checked:border-accent-primary hover:border-accent-primary focus-visible:outline-none;
   }
 
-  .gradient {
+  .gradient-top-bottom {
     @apply border-transparent bg-gradient-to-b from-transparent via-layer-1 via-40% to-layer-1;
   }
 
-  .gradient.gradient-bottom {
+  .gradient-absolute-bottom {
     @apply absolute bottom-0 left-0 w-full pt-6 md:pt-2;
   }
 }
