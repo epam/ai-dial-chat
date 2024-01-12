@@ -135,7 +135,7 @@ test('Filter "Shared by me" stays checked if to search chats', async ({
   await test.step('Prepare 3 conversations with common name and share two of them', async () => {
     for (let i = 1; i <= 3; i++) {
       const conversation = conversationData.prepareDefaultConversation(
-        ModelIds.GPT_3_5_AZ,
+        ModelIds.GPT_3_5_TURBO,
         `${searchTerm}${i}`,
       );
       if (i !== 3) {

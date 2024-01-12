@@ -187,4 +187,7 @@ export enum ExpectedMessages {
   newPageIsOpened = 'New browser page is opened',
   conversationIsSelected = 'Conversation is selected',
   folderIsHighlighted = 'Folder is highlighted',
+  entitiesCountIsValid = 'Number of entities returned in API response is valid',
+  modelIsAvailable = 'Model is returned in API response',
+  addonIsAvailable = 'Addon is returned in API response',
 }
