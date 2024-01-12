@@ -493,8 +493,10 @@ test(
         .toBeTruthy();
 
       await conversations.selectConversation(firstConversation.name);
-      const lastMessage = await chatMessages.getLastMessageContent();
-      await chatMessages.getChatMessageRate(lastMessage, rate).waitFor();
+
+      await chatMessages
+        .getChatMessageRate(firstConversation.messages.length + 2, rate)
+        .waitFor();
     });
   },
 );

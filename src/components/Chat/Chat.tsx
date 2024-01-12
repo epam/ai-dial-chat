@@ -205,7 +205,6 @@ export const Chat = memo(() => {
         setAutoScroll();
         chatContainerRef.current?.scrollTo({
           top: chatContainerRef.current.scrollHeight,
-          behavior: 'smooth',
         });
       }
     },

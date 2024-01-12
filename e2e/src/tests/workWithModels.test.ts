@@ -23,7 +23,7 @@ let gpt35Model: OpenAIEntityModel;
 let gpt4Model: OpenAIEntityModel;
 
 test.beforeAll(async () => {
-  gpt35Model = ModelsUtil.getModel(ModelIds.GPT_3_5_AZ)!;
+  gpt35Model = ModelsUtil.getModel(ModelIds.GPT_3_5_TURBO)!;
   gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
 });
 
