@@ -16,7 +16,7 @@ import { hasExternalParent, isEntityExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
-import { DisplayMenuItemProps } from '@/src/types/menu';
+import { DisplayMenuItemProps, onClickMenuItemHandler } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -30,15 +30,15 @@ interface FolderContextMenuProps {
   folder: FolderInterface;
   featureType?: FeatureType;
   isOpen?: boolean;
-  onDelete?: (props?: unknown) => void | MouseEventHandler<unknown>;
-  onRename?: (props?: unknown) => void | MouseEventHandler<unknown>;
-  onAddFolder?: (props?: unknown) => void | MouseEventHandler;
+  onDelete?: MouseEventHandler<unknown>;
+  onRename?: MouseEventHandler<unknown>;
+  onAddFolder?: MouseEventHandler;
   onOpenChange?: (isOpen: boolean) => void;
-  onShare?: (props?: unknown) => void | MouseEventHandler<unknown>;
-  onPublish?: (props?: unknown) => void | MouseEventHandler<unknown>;
-  onUnpublish?: (props?: unknown) => void | MouseEventHandler<unknown>;
-  onPublishUpdate?: (props?: unknown) => void | MouseEventHandler<unknown>;
-  onUpload?: (props?: unknown) => void | MouseEventHandler<unknown>;
+  onShare?: MouseEventHandler<unknown>;
+  onPublish?: MouseEventHandler<unknown>;
+  onUnpublish?: MouseEventHandler<unknown>;
+  onPublishUpdate?: MouseEventHandler<unknown>;
+  onUpload?: MouseEventHandler<unknown>;
 }
 export const FolderContextMenu = ({
   folder,
@@ -73,21 +73,21 @@ export const FolderContextMenu = ({
         display: !!onUpload && !isExternal,
         dataQa: 'upload',
         Icon: IconUpload,
-        onClick: onUpload,
+        onClick: onUpload as onClickMenuItemHandler,
       },
       {
         name: t('Rename'),
         display: !!onRename && !isExternal,
         dataQa: 'rename',
         Icon: IconPencilMinus,
-        onClick: onRename,
+        onClick: onRename as onClickMenuItemHandler,
       },
       {
         name: t('Share'),
         display: isSharingEnabled && !!onShare && !isExternal,
         dataQa: 'share',
         Icon: IconUserShare,
-        onClick: onShare,
+        onClick: onShare as onClickMenuItemHandler,
       },
       {
         name: t('Publish'),
@@ -98,7 +98,7 @@ export const FolderContextMenu = ({
           !!onPublish &&
           !isExternal,
         Icon: IconWorldShare,
-        onClick: onPublish,
+        onClick: onPublish as onClickMenuItemHandler,
       },
       {
         name: t('Update'),
@@ -106,28 +106,28 @@ export const FolderContextMenu = ({
         display:
           isPublishingEnabled && !!folder.isPublished && !!onPublishUpdate,
         Icon: IconClockShare,
-        onClick: onPublishUpdate,
+        onClick: onPublishUpdate as onClickMenuItemHandler,
       },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
         display: isPublishingEnabled && !!folder.isPublished && !!onUnpublish,
         Icon: UnpublishIcon,
-        onClick: onUnpublish,
+        onClick: onUnpublish as onClickMenuItemHandler,
       },
       {
         name: t('Delete'),
         display: !!onDelete,
         dataQa: 'delete',
         Icon: IconTrashX,
-        onClick: onDelete,
+        onClick: onDelete as onClickMenuItemHandler,
       },
       {
         name: t('Add new folder'),
         display: !!onAddFolder && !isExternal,
         dataQa: 'new-folder',
         Icon: IconFolderPlus,
-        onClick: onAddFolder,
+        onClick: onAddFolder as onClickMenuItemHandler,
       },
     ],
     [
