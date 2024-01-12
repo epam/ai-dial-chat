@@ -93,7 +93,7 @@ const getModelsEpic: AppEpic = (action$, state$) =>
             return ModelsActions.getModelsSuccess({ models: response });
           } else {
             return UIActions.showToast({
-              message: errorsMessages.noModelsAviable,
+              message: errorsMessages.noModelsAvailable,
               type: 'error',
             });
           }

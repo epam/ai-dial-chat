@@ -71,14 +71,14 @@ export const modelsSlice = createSlice({
         defaultModelId: string | undefined;
       }>,
     ) => {
-      const isDefaultModelAviable = state.models.some(
+      const isDefaultModelAvailable = state.models.some(
         ({ id }) => id === payload.defaultModelId,
       );
       if (payload.localStorageRecentModelsIds.length !== 0) {
         state.recentModelsIds = payload.localStorageRecentModelsIds;
       } else if (payload.defaultRecentModelsIds.length !== 0) {
         state.recentModelsIds = payload.defaultRecentModelsIds;
-      } else if (payload.defaultModelId && isDefaultModelAviable) {
+      } else if (payload.defaultModelId && isDefaultModelAvailable) {
         state.recentModelsIds = [payload.defaultModelId];
       } else {
         state.recentModelsIds = [state.models[0].id];

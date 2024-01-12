@@ -20,6 +20,6 @@ export const errorsMessages = {
     'Error happened during file request. Please try again later.',
   errorGettingUserFileBucket:
     'Error happened during getting file user bucket. Please reload the page to being able to load files.',
-  noModelsAviable:
+  noModelsAvailable:
     'You do not have any available models. Please contact your administrator or try to reload the page.',
 };
