@@ -70,7 +70,7 @@ export const ChatInput = ({
   return (
     <div
       ref={inputRef}
-      className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-layer-1 to-layer-1 pt-6 md:pt-2"
+      className="gradient-top-bottom absolute bottom-0 left-0 w-full pt-6 md:pt-2"
     >
       <div className="relative">
         {messageIsStreaming && (
