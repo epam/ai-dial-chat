@@ -13,7 +13,6 @@ import {
   exportPrompts,
   importPrompts,
 } from '@/src/utils/app/import-export';
-import { PublishedWithMeFilter } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 
 import { AppEpic } from '@/src/types/store';

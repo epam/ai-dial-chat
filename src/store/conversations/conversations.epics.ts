@@ -52,7 +52,6 @@ import {
   mergeMessages,
   parseStreamMessages,
 } from '@/src/utils/app/merge-streams';
-import { PublishedWithMeFilter } from '@/src/utils/app/search';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
 
