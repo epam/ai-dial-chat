@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth/next';
 
 import { getApiHeaders } from '../../utils/server/get-headers';
 import { validateServerSession } from '@/src/utils/auth/session';
+import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 import { logger } from '@/src/utils/server/logger';
 
 import { RateBody } from '../../types/chat';
@@ -15,7 +16,6 @@ import { authOptions } from './auth/[...nextauth]';
 
 import fetch from 'node-fetch';
 import { validate } from 'uuid';
-import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
@@ -34,7 +34,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const token = await getToken({ req });
 
     const entities = await getSortedEntities(token);
-    if (!entities.some(entity => entity.id === modelId)) {
+    if (!entities.some((entity) => entity.id === modelId)) {
       throw new Error(`Rated model not exists - ${modelId}`);
     }
 
