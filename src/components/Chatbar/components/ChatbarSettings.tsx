@@ -69,7 +69,7 @@ export const ChatbarSettings = () => {
       },
       {
         name: t('Import conversations'),
-        onClick: (importJSON) => {
+        onClick: (importJSON: unknown) => {
           dispatch(
             ConversationsActions.importConversations({
               data: importJSON as SupportedExportFormats,

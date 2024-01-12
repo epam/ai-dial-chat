@@ -296,8 +296,11 @@ export default function PublishModal({
               {!files.length && (
                 <p className="text-secondary">{t('No files')}</p>
               )}
-              {files.map((f) => (
-                <PublishAttachment key={f?.path || f?.title} item={f} />
+              {files.map((file) => (
+                <PublishAttachment
+                  key={constructPath(file?.path, file?.name)}
+                  file={file}
+                />
               ))}
             </div>
           )}

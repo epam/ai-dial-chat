@@ -7,6 +7,8 @@ import { PublishAttachmentInfo } from '@/src/types/share';
 
 import { selectFilteredConversations } from '@/src/store/conversations/conversations.selectors';
 
+import { getDialFilesFromAttachments } from './file';
+
 import { RootState } from '@/src/store';
 
 export const getFoldersDepth = (
@@ -290,11 +292,9 @@ export const getConversationAttachmentWithPath = (
   folders: FolderInterface[],
 ): PublishAttachmentInfo[] => {
   const path = getPathToFolderById(folders, conversation.folderId);
-  return (
+  return getDialFilesFromAttachments(
     conversation?.messages.flatMap(
-      (m) =>
-        m.custom_content?.attachments?.map(({ title }) => ({ title, path })) ||
-        [],
-    ) || []
-  );
+      (message) => message.custom_content?.attachments || [],
+    ) || [],
+  ).map((file) => ({ ...file, path }));
 };
