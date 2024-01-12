@@ -123,7 +123,11 @@ pre:has(div.codeblock) {
   }
 
   .gradient {
-    @apply absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-layer-1 via-40% to-layer-1 pt-6 md:pt-2;
+    @apply border-transparent bg-gradient-to-b from-transparent via-layer-1 via-40% to-layer-1;
+  }
+
+  .gradient.gradient-bottom {
+    @apply absolute bottom-0 left-0 w-full pt-6 md:pt-2;
   }
 }
 

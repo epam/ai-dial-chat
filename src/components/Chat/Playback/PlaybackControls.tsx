@@ -166,7 +166,7 @@ export const PlaybackControls = ({
   }, [controlsContainerRef, onResize]);
 
   return (
-    <div ref={controlsContainerRef} className="gradient">
+    <div ref={controlsContainerRef} className="gradient gradient-bottom">
       <div
         className={classNames(
           'relative mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-6',

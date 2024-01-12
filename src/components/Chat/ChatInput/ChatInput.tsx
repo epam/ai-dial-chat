@@ -68,7 +68,7 @@ export const ChatInput = ({
   }, [inputRef, onResize]);
 
   return (
-    <div ref={inputRef} className="gradient">
+    <div ref={inputRef} className="gradient gradient-bottom">
       <div className="relative">
         {messageIsStreaming && (
           <button
