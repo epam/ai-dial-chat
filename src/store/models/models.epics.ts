@@ -1,5 +1,4 @@
 import {
-  EMPTY,
   catchError,
   filter,
   from,
@@ -23,7 +22,10 @@ import { DataService } from '@/src/utils/app/data/data-service';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { AppEpic } from '@/src/types/store';
 
+import { errorsMessages } from '@/src/constants/errors';
+
 import { SettingsSelectors } from '../settings/settings.reducers';
+import { UIActions } from '../ui/ui.reducers';
 import { ModelsActions, ModelsSelectors } from './models.reducers';
 
 const initEpic: AppEpic = (action$) =>
@@ -45,44 +47,27 @@ const initRecentModelsEpic: AppEpic = (action$, state$) =>
         map((models) => ({
           models: models,
           recentModelsIds,
-          defaultModelId: SettingsSelectors.selectDefaultModelId(state$.value),
           defaultRecentModelsIds:
             SettingsSelectors.selectDefaultRecentModelsIds(state$.value),
         })),
-        switchMap(
-          ({
-            models,
-            recentModelsIds,
-            defaultModelId,
-            defaultRecentModelsIds,
-          }) => {
-            const model = models[0];
-            if (!model) {
-              return EMPTY;
-            }
-            const isDefaultModelAviable =
-              !!defaultModelId &&
-              models.some(({ id }) => id === defaultModelId);
+        switchMap(({ models, recentModelsIds, defaultRecentModelsIds }) => {
+          const filteredRecentModels = recentModelsIds.filter((resentModelId) =>
+            models.some(({ id }) => resentModelId === id),
+          );
+          const filteredDefaultRecentModelsIds = defaultRecentModelsIds.filter(
+            (resentModelId) => models.some(({ id }) => resentModelId === id),
+          );
 
-            const filteredRecentModels = recentModelsIds.filter(
-              (resentModelId) => models.some(({ id }) => resentModelId === id),
-            );
-            const filteredDefaultRecentModelsIds =
-              defaultRecentModelsIds.filter((resentModelId) =>
-                models.some(({ id }) => resentModelId === id),
-              );
-
-            return of(
-              ModelsActions.initRecentModels({
-                defaultRecentModelsIds: filteredDefaultRecentModelsIds,
-                localStorageRecentModelsIds: filteredRecentModels,
-                defaultModelId: isDefaultModelAviable
-                  ? defaultModelId
-                  : model.id,
-              }),
-            );
-          },
-        ),
+          return of(
+            ModelsActions.initRecentModels({
+              defaultRecentModelsIds: filteredDefaultRecentModelsIds,
+              localStorageRecentModelsIds: filteredRecentModels,
+              defaultModelId: SettingsSelectors.selectDefaultModelId(
+                state$.value,
+              ),
+            }),
+          );
+        }),
       );
     }),
   );
@@ -103,9 +88,16 @@ const getModelsEpic: AppEpic = (action$, state$) =>
           }
           return from(resp.json());
         }),
-        map((response: OpenAIEntityModel[]) =>
-          ModelsActions.getModelsSuccess({ models: response }),
-        ),
+        map((response: OpenAIEntityModel[]) => {
+          if (response.length > 0) {
+            return ModelsActions.getModelsSuccess({ models: response });
+          } else {
+            return UIActions.showToast({
+              message: errorsMessages.noModelsAviable,
+              type: 'error',
+            });
+          }
+        }),
         catchError((err) => {
           return of(ModelsActions.getModelsFail({ error: err }));
         }),
