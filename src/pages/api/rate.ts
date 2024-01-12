@@ -15,6 +15,7 @@ import { authOptions } from './auth/[...nextauth]';
 
 import fetch from 'node-fetch';
 import { validate } from 'uuid';
+import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
@@ -30,8 +31,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(400).send(errorsMessages[400]);
     }
 
-    const url = `${DIAL_API_HOST}/v1/${modelId}/rate`;
     const token = await getToken({ req });
+
+    const entities = await getSortedEntities(token);
+    if (!entities.some(entity => entity.id === modelId)) {
+      throw new Error(`Rated model not exists - ${modelId}`);
+    }
+
+    const url = `${DIAL_API_HOST}/v1/${modelId}/rate`;
 
     await fetch(url, {
       headers: getApiHeaders({
