@@ -72,9 +72,6 @@ const InputComponent = () => {
                         ref={checkboxRef}
                         required />
                 </label>
-
-
-
                 <button type='submit'>Submit</button>
             </form>
 
@@ -119,7 +116,6 @@ describe('Forms utils', () => {
             const validationMessageElement = queryByText(formValid);
 
             expect(validationMessageElement).not.toBeInTheDocument();
-
 
         });
     })
