@@ -71,9 +71,9 @@ export default function SearchFiltersView({
         .filter(({ display }) => display)
         .map(({ filterValue, ...props }) => ({
           ...props,
-          onClick: (selected: boolean) => {
+          onClick: (selected: unknown) => {
             onSearchFiltersChanged(
-              getNewSearchFiltersValue(searchFilters, filterValue, selected),
+              getNewSearchFiltersValue(searchFilters, filterValue, !!selected),
             );
           },
           CustomTriggerRenderer: SearchFilterRenderer,

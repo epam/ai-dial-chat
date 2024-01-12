@@ -51,11 +51,18 @@ export const modelsSlice = createSlice({
         {} as Record<string, OpenAIEntityModel>,
       );
     },
-    getModelsFail: (state, { payload }: PayloadAction<{ error: any }>) => {
+    getModelsFail: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        error: { status?: string | number; statusText?: string };
+      }>,
+    ) => {
       state.isLoading = false;
       state.error = {
         title: translate('Error fetching models.'),
-        code: payload.error.status || 'unknown',
+        code: payload.error.status?.toString() ?? 'unknown',
         messageLines: payload.error.statusText
           ? [payload.error.statusText]
           : [translate(errorsMessages.generalServer, { ns: 'common' })],
@@ -71,12 +78,17 @@ export const modelsSlice = createSlice({
         defaultModelId: string | undefined;
       }>,
     ) => {
+      const isDefaultModelAvailable = state.models.some(
+        ({ id }) => id === payload.defaultModelId,
+      );
       if (payload.localStorageRecentModelsIds.length !== 0) {
         state.recentModelsIds = payload.localStorageRecentModelsIds;
       } else if (payload.defaultRecentModelsIds.length !== 0) {
         state.recentModelsIds = payload.defaultRecentModelsIds;
-      } else if (payload.defaultModelId) {
+      } else if (payload.defaultModelId && isDefaultModelAvailable) {
         state.recentModelsIds = [payload.defaultModelId];
+      } else {
+        state.recentModelsIds = [state.models[0].id];
       }
     },
     updateRecentModels: (
