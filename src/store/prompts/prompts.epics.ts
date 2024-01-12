@@ -4,6 +4,7 @@ import { combineEpics } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
 import {
+  findRootFromItems,
   getFolderIdByPath,
   getTemporaryFoldersToPublish,
 } from '@/src/utils/app/folders';
@@ -348,9 +349,11 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
                 : folder.publishVersion,
           }));
 
+        const rootFolder = findRootFromItems(newFolders);
         const temporaryFolders = getTemporaryFoldersToPublish(
           publishedAndTemporaryFolders,
-          newFolders[newFolders.length - 1].folderId,
+          rootFolder?.folderId,
+          publishRequest.version,
         );
 
         const sharedPrompts = prompts
@@ -413,9 +416,11 @@ const publishPromptEpic: AppEpic = (action$, state$) =>
           shareUniqueId: publishRequest.shareUniqueId,
         }));
 
+      const rootItem = findRootFromItems(sharedPrompts);
       const temporaryFolders = getTemporaryFoldersToPublish(
         publishedAndTemporaryFolders,
-        sharedPrompts[sharedPrompts.length - 1].folderId,
+        rootItem?.folderId,
+        publishRequest.version,
       );
 
       return concat(
