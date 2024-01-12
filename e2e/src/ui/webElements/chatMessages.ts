@@ -61,7 +61,7 @@ export class ChatMessages extends BaseElement {
       : this.chatMessages.getNthElement(message);
   }
 
-  public getChatMessageRate(message: string, rate: Rate) {
+  public getChatMessageRate(message: string | number, rate: Rate) {
     return this.getChatMessage(message).locator(ChatSelectors.rate(rate));
   }
 

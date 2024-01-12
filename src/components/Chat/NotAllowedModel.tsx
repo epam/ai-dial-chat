@@ -19,13 +19,13 @@ export const NotAllowedModel = ({ type = EntityType.Model }) => {
   return (
     <div
       className={classNames(
-        'absolute bottom-0 left-0 flex w-full flex-col items-center justify-center border-transparent bg-gradient-to-b from-transparent via-layer-1 to-layer-1 pt-6 md:pt-2',
+        'gradient-top-bottom absolute bottom-0 left-0 flex w-full flex-col items-center justify-center pt-6 md:pt-2',
         { 'lg:pl-20 lg:pr-[84px]': isChatFullWidth },
       )}
     >
       <div
         className={classNames(
-          'mt-4 flex w-full items-center gap-2 rounded bg-error p-4 text-base text-error',
+          'flex w-full items-center gap-2 rounded bg-error p-4 text-base text-error',
           { 'lg:max-w-3xl': !isChatFullWidth },
         )}
         data-qa="not-allowed-model-error"
