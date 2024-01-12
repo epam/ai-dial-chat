@@ -38,6 +38,7 @@ import {
 } from '@/src/utils/app/conversation';
 import { DataService } from '@/src/utils/app/data/data-service';
 import {
+  findRootFromItems,
   getFolderIdByPath,
   getTemporaryFoldersToPublish,
 } from '@/src/utils/app/folders';
@@ -1551,9 +1552,11 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
                 : folder.publishVersion,
           }));
 
+        const rootFolder = findRootFromItems(newFolders);
         const temporaryFolders = getTemporaryFoldersToPublish(
           publishedAndTemporaryFolders,
-          newFolders[newFolders.length - 1].folderId,
+          rootFolder?.folderId,
+          publishRequest.version,
         );
 
         const sharedConversations = conversations
@@ -1618,9 +1621,11 @@ const publishConversationEpic: AppEpic = (action$, state$) =>
             publishVersion: publishRequest.version,
           }));
 
+        const rootItem = findRootFromItems(sharedConversations);
         const temporaryFolders = getTemporaryFoldersToPublish(
           publishedAndTemporaryFolders,
-          sharedConversations[sharedConversations.length - 1].folderId,
+          rootItem?.folderId,
+          publishRequest.version,
         );
 
         return concat(

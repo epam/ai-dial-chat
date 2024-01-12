@@ -1,5 +1,7 @@
+import { Conversation } from '@/src/types/chat';
 import { ShareEntity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
+import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
 import { selectFilteredConversations } from '@/src/store/conversations/conversations.selectors';
@@ -66,11 +68,9 @@ export const getChildAndCurrentFoldersIdsById = (
   );
 
   const childFoldersIds: string[] = childFolders.length
-    ? childFolders
-        .map((childFolder) =>
-          getChildAndCurrentFoldersIdsById(childFolder.id, allFolders),
-        )
-        .flat()
+    ? childFolders.flatMap((childFolder) =>
+        getChildAndCurrentFoldersIdsById(childFolder.id, allFolders),
+      )
     : [];
 
   return [folderId].concat(childFoldersIds);
@@ -241,9 +241,9 @@ export const filterFoldersWithSearchTerm = (
   const folderIds = filtered.map(({ id }) => id);
 
   const setFolders = new Set(
-    folderIds
-      .map((folderId) => getParentAndCurrentFoldersById(folders, folderId))
-      .flat(),
+    folderIds.flatMap((folderId) =>
+      getParentAndCurrentFoldersById(folders, folderId),
+    ),
   );
 
   return Array.from(setFolders);
@@ -252,6 +252,7 @@ export const filterFoldersWithSearchTerm = (
 export const getTemporaryFoldersToPublish = (
   folders: FolderInterface[],
   folderId: string | undefined,
+  publishVersion: string,
 ) => {
   if (!folderId) {
     return [];
@@ -266,8 +267,19 @@ export const getTemporaryFoldersToPublish = (
         ...folder,
         isPublished: false,
         isShared: false,
-        publishVersion: '1',
+        publishVersion,
         publishedWithMe: true,
       };
     });
+};
+
+export const findRootFromItems = (
+  items: (FolderInterface | Conversation | Prompt)[],
+) => {
+  const parentIds = new Set(items.map((item) => item.id));
+
+  return items.find((item) => {
+    if (!item.folderId) return true;
+    return !parentIds.has(item.folderId);
+  });
 };
