@@ -1507,10 +1507,7 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
       ),
       folders: ConversationsSelectors.selectFolders(state$.value),
       publishedAndTemporaryFolders:
-        ConversationsSelectors.selectTemporaryAndFilteredFolders(
-          state$.value,
-          PublishedWithMeFilter,
-        ),
+        ConversationsSelectors.selectTemporaryAndFilteredFolders(state$.value),
     })),
     switchMap(
       ({
@@ -1540,8 +1537,7 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
               folder.id === publishRequest.id
                 ? publishRequest.name
                 : folder.name,
-            publishedWithMe:
-              folder.id === publishRequest.id || folder.publishedWithMe,
+            publishedWithMe: true,
             shareUniqueId:
               folder.id === publishRequest.id
                 ? publishRequest.shareUniqueId
@@ -1597,10 +1593,7 @@ const publishConversationEpic: AppEpic = (action$, state$) =>
       publishRequest: payload,
       conversations: ConversationsSelectors.selectConversations(state$.value),
       publishedAndTemporaryFolders:
-        ConversationsSelectors.selectTemporaryAndFilteredFolders(
-          state$.value,
-          PublishedWithMeFilter,
-        ),
+        ConversationsSelectors.selectTemporaryAndFilteredFolders(state$.value),
     })),
     switchMap(
       ({ publishRequest, conversations, publishedAndTemporaryFolders }) => {

@@ -1,3 +1,9 @@
+import {
+  constructPath,
+  notAllowedSymbols,
+  notAllowedSymbolsRegex,
+} from '@/src/utils/app/file';
+
 import { Conversation } from '@/src/types/chat';
 import { ShareEntity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -55,7 +61,7 @@ export const getParentAndCurrentFolderIdsById = (
 ) =>
   getParentAndCurrentFoldersById(folders, folderId).map((folder) => folder.id);
 
-export const getChildAndCurrentFoldersIdsById = (
+export const getChildAndCurrentFoldersById = (
   folderId: string | undefined,
   allFolders: FolderInterface[],
 ) => {
@@ -63,18 +69,27 @@ export const getChildAndCurrentFoldersIdsById = (
     return [];
   }
 
+  const currentFolder = allFolders.find((folder) => folder.id === folderId);
   const childFolders = allFolders.filter(
     (folder) => folder.folderId === folderId,
   );
 
-  const childFoldersIds: string[] = childFolders.length
-    ? childFolders.flatMap((childFolder) =>
-        getChildAndCurrentFoldersIdsById(childFolder.id, allFolders),
-      )
-    : [];
+  const childFoldersArray: FolderInterface[] = childFolders.flatMap(
+    (childFolder) => getChildAndCurrentFoldersById(childFolder.id, allFolders),
+  );
 
-  return [folderId].concat(childFoldersIds);
+  return currentFolder
+    ? [currentFolder].concat(childFoldersArray)
+    : childFoldersArray;
 };
+
+export const getChildAndCurrentFoldersIdsById = (
+  folderId: string | undefined,
+  allFolders: FolderInterface[],
+) =>
+  getChildAndCurrentFoldersById(folderId, allFolders).map(
+    (folder) => folder.id,
+  );
 
 export const getAvailableNameOnSameFolderLevel = (
   items: { name: string; folderId?: string }[],
@@ -168,23 +183,23 @@ export const getPathToFolderById = (
   folders: FolderInterface[],
   starterId: string | undefined,
 ) => {
-  let path = '';
+  const path: string[] = [];
   const createPath = (folderId: string) => {
     const folder = folders.find((folder) => folder.id === folderId);
+    if (!folder) return;
 
-    const newFolderId = folder?.folderId;
-    path = `${folder?.name}/${path}`;
-    if (newFolderId) {
-      createPath(newFolderId);
+    path.unshift(folder.name);
+
+    if (folder.folderId) {
+      createPath(folder.folderId);
     }
   };
 
   if (starterId) {
     createPath(starterId);
-    path = path.slice(0, -1);
   }
 
-  return path;
+  return { path: constructPath(...path), pathDepth: path.length - 1 };
 };
 
 export const getFilteredFolders = (
@@ -226,24 +241,17 @@ export const getFilteredFolders = (
   );
 };
 
-export const filterFoldersWithSearchTerm = (
+export const getParentAndChildFolders = (
+  allFolders: FolderInterface[],
   folders: FolderInterface[],
-  searchQuery: string,
 ) => {
-  if (!searchQuery) {
-    return folders;
-  }
-
-  const filtered = folders.filter(({ name }) =>
-    name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
-  const folderIds = filtered.map(({ id }) => id);
+  const folderIds = folders.map(({ id }) => id);
 
   const setFolders = new Set(
-    folderIds.flatMap((folderId) =>
-      getParentAndCurrentFoldersById(folders, folderId),
-    ),
+    folderIds.flatMap((folderId) => [
+      ...getParentAndCurrentFoldersById(allFolders, folderId),
+      ...getChildAndCurrentFoldersById(folderId, allFolders),
+    ]),
   );
 
   return Array.from(setFolders);
@@ -282,4 +290,27 @@ export const findRootFromItems = (
     if (!item.folderId) return true;
     return !parentIds.has(item.folderId);
   });
+};
+
+export const validateFolderRenaming = (
+  folders: FolderInterface[],
+  newName: string,
+  folderId: string,
+) => {
+  const renamingFolder = folders.find((folder) => folder.id === folderId);
+  const folderWithSameName = folders.find(
+    (folder) =>
+      folder.name === newName.trim() &&
+      folderId !== folder.id &&
+      folder.folderId === renamingFolder?.folderId,
+  );
+
+  if (folderWithSameName) {
+    return 'Not allowed to have folders with same names';
+  }
+  if (newName.match(notAllowedSymbolsRegex)) {
+    return `The symbols ${notAllowedSymbols.join(
+      '',
+    )} are not allowed in folder name`;
+  }
 };

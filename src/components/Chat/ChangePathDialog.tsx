@@ -6,15 +6,10 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
-  notAllowedSymbols,
-  notAllowedSymbolsRegex,
-} from '@/src/utils/app/file';
-import {
-  filterFoldersWithSearchTerm,
   getChildAndCurrentFoldersIdsById,
   getPathToFolderById,
+  validateFolderRenaming,
 } from '@/src/utils/app/folders';
-import { PublishedWithMeFilter } from '@/src/utils/app/search';
 
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -76,12 +71,7 @@ export const ChangePathDialog = ({
 
   const newFolderId = useAppSelector(selectors.selectNewAddedFolderId);
   const folders = useAppSelector((state) =>
-    selectors.selectTemporaryAndFilteredFolders(state, PublishedWithMeFilter),
-  );
-
-  const filteredFolders = useMemo(
-    () => filterFoldersWithSearchTerm(folders, searchQuery),
-    [folders, searchQuery],
+    selectors.selectTemporaryAndFilteredFolders(state, searchQuery),
   );
 
   const highlightedFolders = useMemo(() => {
@@ -113,18 +103,18 @@ export const ChangePathDialog = ({
       }
 
       if (openedFoldersIds.includes(folderId)) {
-        const childFolders = getChildAndCurrentFoldersIdsById(
+        const childFoldersIds = getChildAndCurrentFoldersIdsById(
           folderId,
-          filteredFolders,
+          folders,
         );
         setOpenedFoldersIds(
-          openedFoldersIds.filter((id) => !childFolders.includes(id)),
+          openedFoldersIds.filter((id) => !childFoldersIds.includes(id)),
         );
       } else {
         setOpenedFoldersIds(openedFoldersIds.concat(folderId));
       }
     },
-    [filteredFolders, openedFoldersIds],
+    [folders, openedFoldersIds],
   );
 
   const handleFolderSelect = useCallback(
@@ -137,36 +127,15 @@ export const ChangePathDialog = ({
 
   const handleRenameFolder = useCallback(
     (newName: string, folderId: string) => {
-      const renamingFolder = filteredFolders.find(
-        (folder) => folder.id === folderId,
-      );
-      const folderWithSameName = filteredFolders.find(
-        (folder) =>
-          folder.name === newName.trim() &&
-          folderId !== folder.id &&
-          folder.folderId === renamingFolder?.folderId,
-      );
+      const error = validateFolderRenaming(folders, newName, folderId);
 
-      if (folderWithSameName) {
-        setErrorMessage(
-          t('Not allowed to have folders with same names') as string,
-        );
-        return;
-      }
-      if (newName.match(notAllowedSymbolsRegex)) {
-        setErrorMessage(
-          t(
-            `The symbols ${notAllowedSymbols.join(
-              '',
-            )} are not allowed in folder name`,
-          ) as string,
-        );
-        return;
+      if (error) {
+        setErrorMessage(t(error) as string);
       }
 
       dispatch(actions.renameTemporaryFolder({ folderId, name: newName }));
     },
-    [actions, dispatch, filteredFolders, t],
+    [actions, dispatch, folders, t],
   );
 
   const handleAddFolder = useCallback(
@@ -195,8 +164,7 @@ export const ChangePathDialog = ({
   );
 
   const getPath = () => {
-    const path = getPathToFolderById(filteredFolders, selectedFolderId);
-    const pathDepth = path.split('/').length - 1;
+    const { path, pathDepth } = getPathToFolderById(folders, selectedFolderId);
 
     if (pathDepth + (depth ? depth : 0) > MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH) {
       dispatch(
@@ -251,9 +219,9 @@ export const ChangePathDialog = ({
             </button>
             {isAllFoldersOpened && (
               <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">
-                {filteredFolders.length ? (
+                {folders.length ? (
                   <div className="flex flex-col gap-1 overflow-auto">
-                    {filteredFolders.map((folder) => {
+                    {folders.map((folder) => {
                       if (
                         folder.folderId ||
                         folder.originalId === initiallySelectedFolderId
@@ -275,7 +243,7 @@ export const ChangePathDialog = ({
                             maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
                             searchTerm={searchQuery}
                             currentFolder={folder}
-                            allFolders={filteredFolders}
+                            allFolders={folders}
                             highlightedFolders={highlightedFolders}
                             isInitialRenameEnabled
                             openedFoldersIds={openedFoldersIds}
