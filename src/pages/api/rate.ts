@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth/next';
 
 import { getApiHeaders } from '../../utils/server/get-headers';
 import { validateServerSession } from '@/src/utils/auth/session';
+import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 import { logger } from '@/src/utils/server/logger';
 
 import { RateBody } from '../../types/chat';
@@ -30,8 +31,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(400).send(errorsMessages[400]);
     }
 
-    const url = `${DIAL_API_HOST}/v1/${modelId}/rate`;
     const token = await getToken({ req });
+
+    const entities = await getSortedEntities(token);
+    if (!entities.some((entity) => entity.id === modelId)) {
+      throw new Error(`Rated model not exists - ${modelId}`);
+    }
+
+    const url = `${DIAL_API_HOST}/v1/${modelId}/rate`;
 
     await fetch(url, {
       headers: getApiHeaders({
