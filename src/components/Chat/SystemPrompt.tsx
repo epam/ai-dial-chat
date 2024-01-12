@@ -133,7 +133,7 @@ export const SystemPrompt: FC<Props> = ({
     return () => {
       window.removeEventListener('click', handleOutsideClick);
     };
-  }, []);
+  }, [setShowPromptList]);
 
   useEffect(() => {
     if (textareaRef && textareaRef.current) {

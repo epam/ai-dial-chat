@@ -51,11 +51,18 @@ export const modelsSlice = createSlice({
         {} as Record<string, OpenAIEntityModel>,
       );
     },
-    getModelsFail: (state, { payload }: PayloadAction<{ error: any }>) => {
+    getModelsFail: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        error: { status?: string | number; statusText?: string };
+      }>,
+    ) => {
       state.isLoading = false;
       state.error = {
         title: translate('Error fetching models.'),
-        code: payload.error.status || 'unknown',
+        code: payload.error.status?.toString() ?? 'unknown',
         messageLines: payload.error.statusText
           ? [payload.error.statusText]
           : [translate(errorsMessages.generalServer, { ns: 'common' })],

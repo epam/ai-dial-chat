@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -73,7 +73,7 @@ const ChatFolderTemplate = ({
   const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
 
   const handleDrop = useCallback(
-    (e: any, folder: FolderInterface) => {
+    (e: DragEvent, folder: FolderInterface) => {
       if (e.dataTransfer) {
         const conversationData = e.dataTransfer.getData('conversation');
         const folderData = e.dataTransfer.getData('folder');

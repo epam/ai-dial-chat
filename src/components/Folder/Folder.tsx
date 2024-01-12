@@ -71,7 +71,7 @@ interface Props<T, P = unknown> {
   loadingFolderId?: string;
   displayCaretAlways?: boolean;
   additionalItemData?: Record<string, unknown>;
-  handleDrop?: (e: any, folder: FolderInterface) => void;
+  handleDrop?: (e: DragEvent, folder: FolderInterface) => void;
   onDropBetweenFolders?: (
     folder: FolderInterface,
     parentFolderId: string | undefined,
@@ -241,7 +241,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   );
 
   const dropHandler = useCallback(
-    (e: any) => {
+    (e: DragEvent) => {
       if (!isDropAllowed || !handleDrop) {
         return;
       }
@@ -287,7 +287,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   );
 
   const allowDrop = useCallback(
-    (e: any) => {
+    (e: DragEvent) => {
       if (isDropAllowed) {
         e.preventDefault();
       }
@@ -317,15 +317,15 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   );
 
   const highlightDrop = useCallback(
-    (evt: any) => {
+    (evt: DragEvent) => {
       if (dragDropElement.current === evt.target) {
         setIsDraggingOver(true);
         return;
       }
 
       if (
-        dragDropElement.current?.contains(evt.target) &&
-        isParentFolder(dragDropElement.current, evt.target)
+        dragDropElement.current?.contains(evt.target as Node) &&
+        isParentFolder(dragDropElement.current, evt.target as Element)
       ) {
         dispatch(UIActions.openFolder({ id: currentFolder.id }));
         setIsDraggingOver(true);
@@ -335,13 +335,15 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   );
 
   const removeHighlight = useCallback(
-    (evt: any) => {
-      if (!dragDropElement.current?.contains(evt.relatedTarget)) {
+    (evt: DragEvent) => {
+      if (!dragDropElement.current?.contains(evt.relatedTarget as Node)) {
         setIsDraggingOver(false);
         return;
       }
 
-      if (!isParentFolder(dragDropElement.current, evt.relatedTarget)) {
+      if (
+        !isParentFolder(dragDropElement.current, evt.relatedTarget as Element)
+      ) {
         setIsDraggingOver(false);
       }
     },

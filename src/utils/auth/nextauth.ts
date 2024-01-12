@@ -1,9 +1,12 @@
-import { Account, CallbacksOptions, Profile } from 'next-auth';
-import { JWT } from 'next-auth/jwt';
+import { Account, CallbacksOptions, Profile, Session } from 'next-auth';
 import { TokenEndpointHandler } from 'next-auth/providers';
+
+import { Token } from '@/src/types/auth';
 
 import { logger } from '../server/logger';
 import NextClient, { RefreshToken } from './nextauth-client';
+
+import { TokenSet } from 'openid-client';
 
 // Need to be set for all providers
 export const tokenConfig: TokenEndpointHandler = {
@@ -34,7 +37,7 @@ export const tokenConfig: TokenEndpointHandler = {
  * `accessToken` and `accessTokenExpires`. If an error occurs,
  * returns the old token and an error property
  */
-async function refreshAccessToken(token: JWT & any) {
+async function refreshAccessToken(token: Token) {
   const displayedTokenSub =
     process.env.SHOW_TOKEN_SUB === 'true' ? token.sub : '******';
   try {
@@ -56,7 +59,7 @@ async function refreshAccessToken(token: JWT & any) {
           token,
         };
         if (
-          typeof localToken.token.accessTokenExpires === 'number' &&
+          typeof localToken.token?.accessTokenExpires === 'number' &&
           Date.now() < localToken.token.accessTokenExpires
         ) {
           return localToken.token;
@@ -74,7 +77,9 @@ async function refreshAccessToken(token: JWT & any) {
       }
     }
 
-    const refreshedTokens = await client.refresh(token.refreshToken);
+    const refreshedTokens = await client.refresh(
+      token.refreshToken as string | TokenSet,
+    );
 
     if (
       !refreshedTokens ||
@@ -107,10 +112,12 @@ async function refreshAccessToken(token: JWT & any) {
       token: returnToken,
     });
     return returnToken;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error(
       error,
-      `Error when refreshing token: ${error.message}. Sub: ${displayedTokenSub}`,
+      `Error when refreshing token: ${
+        (error as Error).message
+      }. Sub: ${displayedTokenSub}`,
     );
 
     return {
@@ -120,12 +127,14 @@ async function refreshAccessToken(token: JWT & any) {
   }
 }
 
-export const callbacks: Partial<CallbacksOptions<Profile, Account>> = {
+export const callbacks: Partial<
+  CallbacksOptions<Profile & { job_title?: string }, Account>
+> = {
   jwt: async (options) => {
     if (options.account) {
       return {
         ...options.token,
-        jobTitle: (options.profile as any)?.job_title,
+        jobTitle: options.profile?.job_title,
         access_token: options.account.access_token,
         accessTokenExpires:
           typeof options.account.expires_in === 'number'
@@ -145,9 +154,9 @@ export const callbacks: Partial<CallbacksOptions<Profile, Account>> = {
     ) {
       return options.token;
     }
-
+    const typedToken = options.token as Token;
     // Access token has expired, try to update it
-    return refreshAccessToken(options.token);
+    return refreshAccessToken(typedToken);
   },
   signIn: async (options) => {
     if (!options.account?.access_token) {
@@ -158,7 +167,8 @@ export const callbacks: Partial<CallbacksOptions<Profile, Account>> = {
   },
   session: async (options) => {
     if (options.token?.error) {
-      (options.session as any).error = options.token.error;
+      (options.session as Session & { error?: unknown }).error =
+        options.token.error;
     }
     return options.session;
   },

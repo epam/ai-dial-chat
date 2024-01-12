@@ -1,5 +1,5 @@
 import { IconDots, IconDownload, IconTrashX } from '@tabler/icons-react';
-import { MouseEventHandler, useMemo } from 'react';
+import { MouseEvent, MouseEventHandler, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -15,7 +15,7 @@ import DownloadRenderer from './Download';
 interface ContextMenuProps {
   file: DialFile;
   className: string;
-  onDelete: MouseEventHandler<unknown>;
+  onDelete: (props?: unknown) => void | MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
 }
 
@@ -33,7 +33,7 @@ export function FileItemContextMenu({
         display: file.status !== 'UPLOADING' && file.status !== 'FAILED',
         dataQa: 'download',
         Icon: IconDownload,
-        onClick: stopBubbling,
+        onClick: (e) => stopBubbling(e as MouseEvent),
         className: 'flex gap-3',
         customTriggerData: file,
         CustomTriggerRenderer: DownloadRenderer,
