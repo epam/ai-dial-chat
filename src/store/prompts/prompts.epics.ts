@@ -13,7 +13,6 @@ import {
   exportPrompts,
   importPrompts,
 } from '@/src/utils/app/import-export';
-import { PublishedWithMeFilter } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 
 import { AppEpic } from '@/src/types/store';
@@ -304,10 +303,7 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
       ),
       folders: PromptsSelectors.selectFolders(state$.value),
       publishedAndTemporaryFolders:
-        PromptsSelectors.selectTemporaryAndFilteredFolders(
-          state$.value,
-          PublishedWithMeFilter,
-        ),
+        PromptsSelectors.selectTemporaryAndFilteredFolders(state$.value),
     })),
     switchMap(
       ({
@@ -333,8 +329,7 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
                     publishedAndTemporaryFolders,
                   )
                 : mapping.get(folderId),
-            publishedWithMe:
-              folder.id === publishRequest.id || folder.publishedWithMe,
+            publishedWithMe: true,
             name:
               folder.id === publishRequest.id
                 ? publishRequest.name
@@ -393,10 +388,7 @@ const publishPromptEpic: AppEpic = (action$, state$) =>
       publishRequest: payload,
       prompts: PromptsSelectors.selectPrompts(state$.value),
       publishedAndTemporaryFolders:
-        PromptsSelectors.selectTemporaryAndFilteredFolders(
-          state$.value,
-          PublishedWithMeFilter,
-        ),
+        PromptsSelectors.selectTemporaryAndFilteredFolders(state$.value),
     })),
     switchMap(({ publishRequest, prompts, publishedAndTemporaryFolders }) => {
       const sharedPrompts = prompts

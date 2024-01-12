@@ -3,10 +3,9 @@ import { Dispatch, SetStateAction, useCallback } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import {
-  notAllowedSymbols,
-  notAllowedSymbolsRegex,
-} from '@/src/utils/app/file';
-import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
+  getChildAndCurrentFoldersIdsById,
+  validateFolderRenaming,
+} from '@/src/utils/app/folders';
 
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
@@ -43,29 +42,12 @@ export const useHandleFileFolders = (
    */
   const handleRenameFolder = useCallback(
     (newName: string, folderId: string) => {
-      const renamingFolder = folders.find((folder) => folder.id === folderId);
-      const folderWithSameName = folders.find(
-        (folder) =>
-          folder.name === newName.trim() &&
-          folderId !== folder.id &&
-          folder.folderId === renamingFolder?.folderId,
-      );
+      const error = validateFolderRenaming(folders, newName, folderId);
 
-      if (folderWithSameName) {
-        setErrorMessage(
-          t('Not allowed to have folders with same names') as string,
-        );
-        return;
+      if (error) {
+        setErrorMessage(t(error) as string);
       }
 
-      if (newName.match(notAllowedSymbolsRegex)) {
-        setErrorMessage(
-          t(
-            `The symbols ${notAllowedSymbols} are not allowed in folder name`,
-          ) as string,
-        );
-        return;
-      }
       dispatch(FilesActions.renameFolder({ folderId, newName }));
     },
     [dispatch, folders, setErrorMessage, t],
@@ -102,12 +84,12 @@ export const useHandleFileFolders = (
       }
 
       if (openedFoldersIds.includes(folderId)) {
-        const childFolders = getChildAndCurrentFoldersIdsById(
+        const childFoldersIds = getChildAndCurrentFoldersIdsById(
           folderId,
           folders,
         );
         setOpenedFoldersIds(
-          openedFoldersIds.filter((id) => !childFolders.includes(id)),
+          openedFoldersIds.filter((id) => !childFoldersIds.includes(id)),
         );
       } else {
         setOpenedFoldersIds(openedFoldersIds.concat(folderId));

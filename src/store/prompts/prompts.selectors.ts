@@ -3,9 +3,11 @@ import { createSelector } from '@reduxjs/toolkit';
 import {
   getChildAndCurrentFoldersIdsById,
   getFilteredFolders,
+  getParentAndChildFolders,
   getParentAndCurrentFoldersById,
 } from '@/src/utils/app/folders';
 import {
+  PublishedWithMeFilter,
   doesPromptContainSearchTerm,
   getMyItemsFilters,
   searchSectionFolders,
@@ -232,11 +234,28 @@ export const selectTemporaryFolders = createSelector(
     return state.temporaryFolders;
   },
 );
+export const selectPublishedWithMeFolders = createSelector(
+  [selectFolders],
+  (folders) => {
+    return folders.filter((folder) =>
+      PublishedWithMeFilter.sectionFilter(folder),
+    );
+  },
+);
 
 export const selectTemporaryAndFilteredFolders = createSelector(
-  [selectFilteredFolders, selectTemporaryFolders],
-  (filteredFolders, temporaryFolders) => {
-    return [...filteredFolders, ...temporaryFolders];
+  [
+    selectFolders,
+    selectPublishedWithMeFolders,
+    selectTemporaryFolders,
+    (_state, searchTerm?: string) => searchTerm,
+  ],
+  (allFolders, filteredFolders, temporaryFolders, searchTerm = '') => {
+    const filtered = [...filteredFolders, ...temporaryFolders].filter(
+      (folder) => folder.name.includes(searchTerm.toLowerCase()),
+    );
+
+    return getParentAndChildFolders(allFolders, filtered);
   },
 );
 

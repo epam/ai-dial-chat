@@ -7,8 +7,6 @@ import classNames from 'classnames';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 
-import { filterFoldersWithSearchTerm } from '@/src/utils/app/folders';
-
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
@@ -41,17 +39,7 @@ export const SelectFolderModal = ({
 
   const headingId = useId();
 
-  const folders = useAppSelector(FilesSelectors.selectFolders);
-  const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
   const [searchQuery, setSearchQuery] = useState('');
-
-  const filteredFolders = useMemo(
-    () => filterFoldersWithSearchTerm(folders, searchQuery),
-    [folders, searchQuery],
-  );
-
-  const foldersStatus = useAppSelector(FilesSelectors.selectFoldersStatus);
-  const loadingFolderId = useAppSelector(FilesSelectors.selectLoadingFolderId);
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
@@ -59,13 +47,20 @@ export const SelectFolderModal = ({
     selectedFolderName,
   );
 
+  const folders = useAppSelector((state) =>
+    FilesSelectors.selectFoldersWithSearchTerm(state, searchQuery),
+  );
+  const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
+  const foldersStatus = useAppSelector(FilesSelectors.selectFoldersStatus);
+  const loadingFolderId = useAppSelector(FilesSelectors.selectLoadingFolderId);
+
   const {
     handleRenameFolder,
     handleAddFolder,
     handleToggleFolder,
     handleNewFolder,
   } = useHandleFileFolders(
-    filteredFolders,
+    folders,
     openedFoldersIds,
     setErrorMessage,
     setOpenedFoldersIds,
@@ -157,9 +152,9 @@ export const SelectFolderModal = ({
               </button>
               {isAllFilesOpened && (
                 <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">
-                  {filteredFolders.length !== 0 ? (
+                  {folders.length !== 0 ? (
                     <div className="flex flex-col gap-1 overflow-auto">
-                      {filteredFolders.map((folder) => {
+                      {folders.map((folder) => {
                         if (folder.folderId) {
                           return null;
                         }

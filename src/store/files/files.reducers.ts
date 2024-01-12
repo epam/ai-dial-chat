@@ -1,7 +1,10 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { constructPath } from '@/src/utils/app/file';
-import { getAvailableNameOnSameFolderLevel } from '@/src/utils/app/folders';
+import {
+  getAvailableNameOnSameFolderLevel,
+  getParentAndChildFolders,
+} from '@/src/utils/app/folders';
 
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
@@ -353,6 +356,16 @@ const selectNewAddedFolderId = createSelector([rootSelector], (state) => {
 const selectBucket = createSelector([rootSelector], (state) => {
   return state.bucket;
 });
+const selectFoldersWithSearchTerm = createSelector(
+  [selectFolders, (_state, searchTerm: string) => searchTerm],
+  (folders, searchTerm) => {
+    const filtered = folders.filter((folder) =>
+      folder.name.includes(searchTerm.toLowerCase()),
+    );
+
+    return getParentAndChildFolders(folders, filtered);
+  },
+);
 
 export const FilesSelectors = {
   selectFiles,
@@ -365,6 +378,7 @@ export const FilesSelectors = {
   selectNewAddedFolderId,
   selectFilesByIds,
   selectBucket,
+  selectFoldersWithSearchTerm,
 };
 
 export const FilesActions = filesSlice.actions;
