@@ -225,7 +225,7 @@ export class DataService {
           result,
         }: {
           percent?: number;
-          result?: BackendFile;
+          result?: unknown;
         }): { percent?: number; result?: DialFile } => {
           if (percent) {
             return { percent };
@@ -235,17 +235,18 @@ export class DataService {
             return {};
           }
 
-          const relativePath = result.parentPath || undefined;
+          const typedResult = result as BackendFile;
+          const relativePath = typedResult.parentPath || undefined;
 
           return {
             result: {
-              id: constructPath(relativePath, result.name),
-              name: result.name,
-              absolutePath: constructPath(result.bucket, relativePath),
+              id: constructPath(relativePath, typedResult.name),
+              name: typedResult.name,
+              absolutePath: constructPath(typedResult.bucket, relativePath),
               relativePath: relativePath,
               folderId: relativePath,
-              contentLength: result.contentLength,
-              contentType: result.contentType,
+              contentLength: typedResult.contentLength,
+              contentType: typedResult.contentType,
               serverSynced: true,
             },
           };

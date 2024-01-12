@@ -49,11 +49,18 @@ export const addonsSlice = createSlice({
         {} as Record<string, OpenAIEntityAddon>,
       );
     },
-    getAddonsFail: (state, { payload }: PayloadAction<{ error: any }>) => {
+    getAddonsFail: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        error: { status?: string | number; statusText?: string };
+      }>,
+    ) => {
       state.isLoading = false;
       state.error = {
         title: translate('Error fetching addons.'),
-        code: payload.error.status || 'unknown',
+        code: payload.error.status?.toString() ?? 'unknown',
         messageLines: payload.error.statusText
           ? [payload.error.statusText]
           : [translate(errorsMessages.generalServer, { ns: 'common' })],

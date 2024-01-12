@@ -7,15 +7,19 @@ export interface CustomTriggerMenuRendererProps extends MenuItemRendererProps {
   Renderer: (props: MenuItemRendererProps) => JSX.Element;
 }
 
+export type onClickMenuItemHandler = (
+  props?: unknown,
+) => void | MouseEventHandler<unknown>;
+
 export interface DisplayMenuItemProps {
   display?: boolean;
   name: string;
   disabled?: boolean;
   Icon?: (props: TablerIconsProps) => JSX.Element;
   dataQa: string;
-  onClick?: (props?: any) => void | MouseEventHandler<unknown>;
+  onClick?: onClickMenuItemHandler;
   CustomTriggerRenderer?: FC<CustomTriggerMenuRendererProps>;
-  customTriggerData?: any;
+  customTriggerData?: unknown;
   className?: string;
   childMenuItems?: DisplayMenuItemProps[];
 }

@@ -3,7 +3,6 @@ import {
   ChangeEvent,
   FC,
   FormEvent,
-  MutableRefObject,
   useCallback,
   useEffect,
   useRef,
@@ -14,6 +13,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { checkValidity } from '@/src/utils/app/forms';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { ReportIssueBody } from '@/src/types/report-issue';
@@ -25,36 +25,6 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { errorsMessages } from '@/src/constants/errors';
 
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
-
-const checkValidity = (
-  inputsRefs: MutableRefObject<HTMLInputElement | HTMLTextAreaElement>[],
-) => {
-  let isValid = true;
-  let focusableElement: HTMLInputElement | HTMLTextAreaElement | null = null;
-
-  inputsRefs.forEach(({ current }) => {
-    if (
-      current.required &&
-      (!current.value ||
-        (current.value === 'on' && !(current as any).checked) ||
-        !current.validity.valid)
-    ) {
-      isValid = false;
-      current.focus();
-      current.blur();
-
-      if (!focusableElement) {
-        focusableElement = current;
-      }
-    }
-  });
-
-  if (focusableElement) {
-    (focusableElement as HTMLInputElement | HTMLTextAreaElement).focus();
-  }
-
-  return isValid;
-};
 
 const reportIssue = async (fields: Omit<ReportIssueBody, 'email'>) => {
   const controller = new AbortController();
@@ -108,13 +78,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
       setSubmitted(true);
       const inputs = [titleInputRef, descriptionInputRef];
 
-      if (
-        checkValidity(
-          inputs as unknown as MutableRefObject<
-            HTMLInputElement | HTMLTextAreaElement
-          >[],
-        )
-      ) {
+      if (checkValidity(inputs)) {
         dispatch(
           UIActions.showToast({
             message: t('Reporting an issue in progress...'),
