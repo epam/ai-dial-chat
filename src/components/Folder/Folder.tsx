@@ -51,7 +51,7 @@ import ShareIcon from '../Common/ShareIcon';
 import { Spinner } from '../Common/Spinner';
 import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
 
-interface Props<T, P = unknown> {
+export interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;
   itemComponent?: FC<{
     item: T;
@@ -113,7 +113,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   featureType,
   readonly = false,
   maxDepth,
-}: Props<T>) => {
+}: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
