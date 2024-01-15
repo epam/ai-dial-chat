@@ -3,6 +3,7 @@ import pkg from '../package.json';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
+import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
 import { Resource } from '@opentelemetry/resources';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { SpanExporter } from '@opentelemetry/sdk-trace-base';
@@ -32,7 +33,7 @@ const sdk = new NodeSDK({
       [SemanticResourceAttributes.SERVICE_VERSION]: pkg.version,
     }),
   ),
-  instrumentations: [new HttpInstrumentation()],
+  instrumentations: [new HttpInstrumentation(), new PinoInstrumentation()],
   spanProcessor,
 });
 sdk.start();
