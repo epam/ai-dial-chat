@@ -310,7 +310,7 @@ export const ChatMessage: FC<Props> = memo(
     return (
       <div
         className={classNames(
-          'group h-full min-h-[78px] border-b border-primary md:px-4 xl:px-8',
+          'group h-full min-h-[78px] border-b border-secondary md:px-4 xl:px-8',
           isAssistant && 'bg-layer-2',
         )}
         style={{ overflowWrap: 'anywhere' }}
