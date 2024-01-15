@@ -20,7 +20,7 @@ export interface ModelsState {
 }
 
 const initialState: ModelsState = {
-  isLoading: false,
+  isLoading: true,
   error: undefined,
   models: [],
   modelsMap: {},
