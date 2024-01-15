@@ -13,6 +13,7 @@ import {
   FormHTMLAttributes,
   KeyboardEventHandler,
   MouseEvent,
+  MutableRefObject,
   ReactNode,
   useCallback,
 } from 'react';
@@ -25,7 +26,7 @@ interface Props extends FormHTMLAttributes<HTMLFormElement> {
   onClose: () => void;
   children: ReactNode | ReactNode[];
   dataQa: string;
-  initialFocus?: number | React.MutableRefObject<HTMLElement | null>;
+  initialFocus?: number | MutableRefObject<HTMLElement | null>;
   overlayClassName?: string;
   containerClassName: string;
   lockScroll?: boolean;
@@ -44,7 +45,6 @@ export default function Modal({
   overlayClassName,
   containerClassName,
   lockScroll = true,
-  noValidate = true,
   hideClose = false,
   onKeyDownOverlay,
   dismissProps,
@@ -80,9 +80,7 @@ export default function Modal({
           onKeyDown={onKeyDownOverlay}
         >
           <FloatingFocusManager context={context} initialFocus={initialFocus}>
-            <form
-              onSubmit={(e) => e.preventDefault()}
-              noValidate={noValidate}
+            <div
               className={classNames(
                 'relative max-h-full rounded bg-layer-3 text-left',
                 containerClassName,
@@ -104,7 +102,7 @@ export default function Modal({
               )}
 
               {children}
-            </form>
+            </div>
           </FloatingFocusManager>
         </FloatingOverlay>
       )}

@@ -1,4 +1,11 @@
-import { ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import {
+  DragEvent,
+  ReactNode,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -34,7 +41,7 @@ interface Props<T> {
   handleSearchTerm: (searchTerm: string) => void;
   handleSearchFilters: (searchFilters: SearchFilters) => void;
   toggleOpen?: () => void;
-  handleDrop: (e: any) => void;
+  handleDrop: (e: DragEvent<HTMLDivElement>) => void;
 }
 
 const Sidebar = <T,>({
@@ -85,24 +92,24 @@ const Sidebar = <T,>({
   );
   const SIDEBAR_HEIGHT = 'auto';
 
-  const allowDrop = useCallback((e: any) => {
+  const allowDrop = useCallback((e: DragEvent) => {
     e.preventDefault();
   }, []);
 
-  const highlightDrop = useCallback((e: any) => {
+  const highlightDrop = useCallback((e: DragEvent) => {
     if (
-      dragDropElement.current?.contains(e.target) ||
+      dragDropElement.current?.contains(e.target as Node) ||
       dragDropElement.current === e.target
     ) {
       setIsDraggingOver(true);
     }
   }, []);
 
-  const removeHighlight = useCallback((e: any) => {
+  const removeHighlight = useCallback((e: DragEvent) => {
     if (
       (e.target === dragDropElement.current ||
-        dragDropElement.current?.contains(e.target)) &&
-      !dragDropElement.current?.contains(e.relatedTarget)
+        dragDropElement.current?.contains(e.target as Node)) &&
+      !dragDropElement.current?.contains(e.relatedTarget as Node)
     ) {
       setIsDraggingOver(false);
     }

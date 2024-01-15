@@ -148,6 +148,7 @@ export enum ModelIds {
 
 export enum AddonIds {
   WOLFRAM = 'addon-wolfram',
+  XWEATHER = 'addon-xweather',
 }
 
 export enum Rate {

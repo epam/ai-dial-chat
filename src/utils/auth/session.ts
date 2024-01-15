@@ -5,8 +5,12 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { isAuthDisabled } from './auth-providers';
 
-export function isClientSessionValid(session: any | null) {
-  return session && (session as any).data?.error !== 'RefreshAccessTokenError';
+export function isClientSessionValid(session: unknown | null) {
+  return (
+    session &&
+    (session as { data?: { error?: string } }).data?.error !==
+      'RefreshAccessTokenError'
+  );
 }
 
 export function isServerSessionValid(session: Session | null) {
@@ -14,7 +18,10 @@ export function isServerSessionValid(session: Session | null) {
     return true;
   }
 
-  return !!session && (session as any).error !== 'RefreshAccessTokenError';
+  return (
+    !!session &&
+    (session as { error?: string }).error !== 'RefreshAccessTokenError'
+  );
 }
 
 export function validateServerSession(

@@ -101,9 +101,9 @@ export class BrowserStorage implements DialStorage {
           ? defaultValue
           : JSON.parse(value),
       );
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      if (e.name === 'QuotaExceededError') {
+      if ((e as Error).name === 'QuotaExceededError') {
         toast.error(errorsMessages.localStorageQuotaExceeded);
       }
       return of(defaultValue);
@@ -117,9 +117,9 @@ export class BrowserStorage implements DialStorage {
     try {
       this.storage!.setItem(key, JSON.stringify(value));
       return of(undefined);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      if (e.name === 'QuotaExceededError') {
+      if ((e as Error).name === 'QuotaExceededError') {
         toast.error(errorsMessages.localStorageQuotaExceeded);
         return of(undefined);
       } else {

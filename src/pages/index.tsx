@@ -37,13 +37,13 @@ import Promptbar from '@/src/components/Promptbar';
 
 import packageJSON from '@/package.json';
 
-interface Props {
+export interface HomeProps {
   initialState: {
     settings: SettingsState;
   };
 }
 
-export default function Home({ initialState }: Props) {
+export default function Home({ initialState }: HomeProps) {
   const session: SessionContextValue<boolean> = useSession();
 
   const { t } = useTranslation(Translation.Chat);
