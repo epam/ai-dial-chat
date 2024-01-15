@@ -21,7 +21,7 @@ let bison: OpenAIEntityModel;
 
 test.beforeAll(async () => {
   allModels = ModelsUtil.getModels().filter((m) => m.iconUrl != undefined);
-  gpt35Model = ModelsUtil.getModel(ModelIds.GPT_3_5_AZ)!;
+  gpt35Model = ModelsUtil.getModel(ModelIds.GPT_3_5_TURBO)!;
   gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
   bison = ModelsUtil.getModel(ModelIds.BISON_001)!;
 });

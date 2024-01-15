@@ -18,6 +18,7 @@ import {
 import {
   HTMLProps,
   ReactNode,
+  Ref,
   cloneElement,
   createContext,
   forwardRef,
@@ -135,7 +136,18 @@ export const TooltipTrigger = forwardRef<
   HTMLProps<HTMLElement> & { asChild?: boolean }
 >(function TooltipTrigger({ children, asChild = false, ...props }, propRef) {
   const context = useTooltipContext();
-  const childrenRef = (children as any).ref;
+
+  const typedChildren = children as ReactNode;
+
+  const isRefInChildren =
+    typedChildren &&
+    typeof typedChildren === 'object' &&
+    'ref' in typedChildren &&
+    typedChildren.ref !== undefined;
+
+  const childrenRef = isRefInChildren
+    ? (typedChildren.ref as Ref<unknown>)
+    : undefined;
   const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
 
   // `asChild` allows the user to pass any element as the anchor

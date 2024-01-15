@@ -1,4 +1,11 @@
-import { FC, useState } from 'react';
+import {
+  FC,
+  KeyboardEventHandler,
+  MouseEventHandler,
+  ReactNode,
+  TouchEventHandler,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -8,15 +15,28 @@ import { DEFAULT_TEMPERATURE } from '@/src/constants/default-settings';
 
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
+import { HandleProps } from 'rc-slider/lib/Handles/Handle';
 
-const TemperatureIndicator = ({ props, children }: any) => {
+interface TemperatureIndicatorProps extends HandleProps {
+  onKeyDown: KeyboardEventHandler<HTMLDivElement>;
+  onMouseDown: MouseEventHandler<HTMLDivElement>;
+  onTouchStart: TouchEventHandler<HTMLDivElement>;
+  children: ReactNode;
+}
+const TemperatureIndicator = ({
+  style,
+  onKeyDown,
+  onMouseDown,
+  onTouchStart,
+  children,
+}: TemperatureIndicatorProps) => {
   return (
     <div
       className="absolute top-[calc(50%-20px)] flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-layer-3 shadow"
-      style={props.style}
-      onKeyDown={props.onKeyDown}
-      onMouseDown={props.onMouseDown}
-      onTouchStart={props.onTouchStart}
+      style={style}
+      onKeyDown={onKeyDown}
+      onMouseDown={onMouseDown}
+      onTouchStart={onTouchStart}
     >
       {children}
     </div>
@@ -67,7 +87,7 @@ export const TemperatureSlider: FC<Props> = ({
           max={1}
           step={0.1}
           handleRender={({ props }) => (
-            <TemperatureIndicator props={props}>
+            <TemperatureIndicator {...(props as TemperatureIndicatorProps)}>
               {currentTemperature}
             </TemperatureIndicator>
           )}

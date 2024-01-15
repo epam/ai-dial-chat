@@ -1,4 +1,4 @@
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<P, T extends (...args: P[]) => void>(
   func: T,
   limit: number,
 ): T {

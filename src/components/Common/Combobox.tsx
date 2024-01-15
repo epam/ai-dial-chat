@@ -5,7 +5,14 @@ import {
   size,
   useFloating,
 } from '@floating-ui/react';
-import { FC, createElement, useEffect, useLayoutEffect, useState } from 'react';
+import {
+  FC,
+  RefObject,
+  createElement,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -15,7 +22,7 @@ import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 
 import { useCombobox } from 'downshift';
 
-interface Props<T = any> {
+interface Props<T> {
   items: T[];
   initialSelectedItem?: T;
   label?: string;
@@ -23,12 +30,12 @@ interface Props<T = any> {
   notFoundPlaceholder?: string;
   itemRow?: FC<{ item: T }>;
   disabled?: boolean;
-  getItemLabel: (item: T | undefined) => string;
-  getItemValue: (item: T | undefined) => string;
+  getItemLabel: (item: T) => string;
+  getItemValue: (item: T) => string;
   onSelectItem: (value: string) => void;
 }
 
-export const Combobox = ({
+export const Combobox = <T,>({
   items,
   initialSelectedItem,
   label,
@@ -39,7 +46,7 @@ export const Combobox = ({
   getItemLabel,
   getItemValue,
   onSelectItem,
-}: Props) => {
+}: Props<T>) => {
   const { t } = useTranslation(Translation.Common);
   const [displayedItems, setDisplayedItems] = useState(items);
   const [floatingWidth, setFloatingWidth] = useState(0);
@@ -84,8 +91,11 @@ export const Combobox = ({
     },
     items: displayedItems,
     defaultSelectedItem: initialSelectedItem,
-    itemToString: getItemLabel,
+    itemToString: (item: T | null) => (item ? getItemLabel(item) : 'null item'),
     onSelectedItemChange: ({ selectedItem: newSelectedItem }) => {
+      if (!newSelectedItem) {
+        return;
+      }
       onSelectItem(getItemValue(newSelectedItem));
       setInputValue('');
     },
@@ -124,9 +134,11 @@ export const Combobox = ({
             disabled={disabled}
             placeholder={placeholder || ''}
             className="w-full bg-transparent px-3 py-2.5 outline-none placeholder:text-secondary"
-            {...getInputProps({ ref: refs.reference as any })}
+            {...getInputProps({
+              ref: refs.reference as RefObject<HTMLInputElement>,
+            })}
           />
-          {!inputValue && itemRow && selectedItem && (
+          {!inputValue && itemRow && !!selectedItem && (
             <div className="pointer-events-none absolute left-3 top-2.5 flex items-center">
               {createElement(itemRow, { item: selectedItem })}
             </div>
@@ -146,7 +158,7 @@ export const Combobox = ({
           !isOpen && 'hidden'
         }`}
         {...getMenuProps(
-          { ref: refs.floating as any },
+          { ref: refs.floating as RefObject<HTMLUListElement> },
           { suppressRefError: true },
         )}
         style={{
@@ -168,7 +180,7 @@ export const Combobox = ({
               >
                 {itemRow
                   ? createElement(itemRow, { item })
-                  : getItemLabel(item) || item.toString()}
+                  : getItemLabel(item)}
               </li>
             ))
           ) : (

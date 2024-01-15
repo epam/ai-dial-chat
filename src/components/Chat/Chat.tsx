@@ -1,7 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import { throttle } from '@/src/utils/data/throttle';
 
@@ -16,7 +14,6 @@ import {
 } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { Feature } from '@/src/types/features';
-import { Translation } from '@/src/types/translation';
 
 import {
   AddonsActions,
@@ -54,8 +51,6 @@ import { PlaybackEmptyInfo } from './Playback/PlaybackEmptyInfo';
 const scrollThrottlingTimeout = 250;
 
 export const Chat = memo(() => {
-  const { t } = useTranslation(Translation.Chat);
-
   const dispatch = useAppDispatch();
   const appName = useAppSelector(SettingsSelectors.selectAppName);
   const models = useAppSelector(ModelsSelectors.selectModels);
@@ -205,7 +200,6 @@ export const Chat = memo(() => {
         setAutoScroll();
         chatContainerRef.current?.scrollTo({
           top: chatContainerRef.current.scrollHeight,
-          behavior: 'smooth',
         });
       }
     },
@@ -217,7 +211,10 @@ export const Chat = memo(() => {
     textareaRef.current?.focus();
   }, [scrollDown]);
 
-  const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
+  const throttledScrollDown = throttle<boolean, typeof scrollDown>(
+    scrollDown,
+    scrollThrottlingTimeout,
+  );
 
   useEffect(() => {
     throttledScrollDown();
@@ -285,7 +282,7 @@ export const Chat = memo(() => {
         );
       }
     },
-    [dispatch, t],
+    [dispatch],
   );
 
   const handleReplayStart = useCallback(() => {
@@ -549,7 +546,7 @@ export const Chat = memo(() => {
             <ChatCompareRotate />
           </div>
           <div
-            className={`h-full w-full ${
+            className={`relative h-full w-full ${
               isCompareMode ? 'portrait:hidden' : ''
             }`}
           >

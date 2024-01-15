@@ -3,7 +3,6 @@ import {
   ChangeEvent,
   FC,
   FormEvent,
-  MutableRefObject,
   useCallback,
   useEffect,
   useRef,
@@ -14,6 +13,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { checkValidity } from '@/src/utils/app/forms';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { RequestAPIKeyBody } from '@/src/types/request-api-key';
@@ -25,34 +25,6 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { errorsMessages } from '@/src/constants/errors';
 
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
-
-const checkValidity = (
-  inputsRefs: MutableRefObject<HTMLInputElement | HTMLTextAreaElement>[],
-) => {
-  let isValid = true;
-  let focusableElement: HTMLInputElement | HTMLTextAreaElement | null = null;
-
-  inputsRefs.forEach(({ current }) => {
-    if (
-      current.required &&
-      (!current.value || (current.value === 'on' && !(current as any).checked))
-    ) {
-      isValid = false;
-      current.focus();
-      current.blur();
-
-      if (!focusableElement) {
-        focusableElement = current;
-      }
-    }
-  });
-
-  if (focusableElement) {
-    (focusableElement as HTMLInputElement | HTMLTextAreaElement).focus();
-  }
-
-  return isValid;
-};
 
 const requestApiKey = async (
   fields: Omit<RequestAPIKeyBody, 'requester_email'>,
@@ -193,13 +165,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
         localAgreementInputRef,
         notClientProjectUsageAgreementInputRef,
       ];
-      if (
-        checkValidity(
-          inputs as unknown as MutableRefObject<
-            HTMLInputElement | HTMLTextAreaElement
-          >[],
-        )
-      ) {
+      if (checkValidity(inputs)) {
         dispatch(
           UIActions.showToast({
             message: t('Requesting API key in progress...'),
@@ -315,21 +281,22 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
         <div>
           <label
-            className="mb-1 flex text-xs text-secondary"
+            className="mb-3 flex text-xs text-secondary"
             htmlFor="formDescription"
           >
             <span className="ml-1">
               {t(
                 'We are glad to provide API access for PoC, research, accelerators development purposes, and internal projects. It is also possible to use this as a very short-term solution for early development stages while you are spinning up your dedicated environment. Any kind of client external must use their own dedicated infrastructure, not this API - you can install DIAL there, see instructions at ',
               )}
+              <a
+                href="https://github.com/epam/ai-dial"
+                className="underline"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                https://github.com/epam/ai-dial
+              </a>
             </span>
-            <a
-              href="https://github.com/epam/ai-dial"
-              className="underline"
-              rel="noopener noreferrer"
-            >
-              https://github.com/epam/ai-dial
-            </a>
           </label>
         </div>
 
@@ -506,6 +473,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               href="https://platform.openai.com/tokenizer"
               className="underline"
               rel="noopener noreferrer"
+              target="_blank"
             >
               https://platform.openai.com/tokenizer
             </a>
@@ -514,6 +482,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               href="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/"
               className="underline"
               rel="noopener noreferrer"
+              target="_blank"
             >
               https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/
             </a>
@@ -555,8 +524,9 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
             </span>
             <a
               href="https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct"
-              className="underline"
+              className="ml-1 underline"
               rel="noopener noreferrer"
+              target="_blank"
             >
               (https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct)
             </a>
