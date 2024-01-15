@@ -191,7 +191,7 @@ export const ChatInputMessage = ({
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      if (showPromptList) {
+      if (showPromptList && filteredPrompts.length > 0) {
         handleKeyDownIfShown(e);
       } else if (e.key === 'Enter' && !isTyping && !isMobile() && !e.shiftKey) {
         e.preventDefault();
@@ -211,6 +211,7 @@ export const ChatInputMessage = ({
       isTyping,
       showPluginSelect,
       showPromptList,
+      filteredPrompts,
     ],
   );
 

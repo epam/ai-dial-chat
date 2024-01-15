@@ -96,11 +96,11 @@ export const SystemPrompt: FC<Props> = ({
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      if (showPromptList) {
+      if (showPromptList && filteredPrompts.length > 0) {
         handleKeyDownIfShown(e);
       }
     },
-    [handleKeyDownIfShown, showPromptList],
+    [handleKeyDownIfShown, showPromptList, filteredPrompts],
   );
 
   useEffect(() => {

@@ -93,9 +93,12 @@ export const usePromptSelection = (maxLength: number) => {
    * Checks if the selected prompt content is within the maximum length and updates the content state.
    */
   const handleInitModal = useCallback(() => {
-    const selectedPrompt = filteredPrompts[activePromptIndex];
+    const selectedPrompt = filteredPrompts[activePromptIndex]
+      ? filteredPrompts[activePromptIndex]
+      : undefined;
 
-    if (!selectedPrompt.content) {
+    if (!selectedPrompt?.content) {
+      setShowPromptList(false);
       return;
     }
     if (selectedPrompt.content.length > maxLength) {
