@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -194,6 +194,7 @@ export const ChangePathDialog = ({
           handleToggleFolder={handleToggleFolder}
           isAllEntitiesOpened={isAllFoldersOpened}
           initiallySelectedFolderId={initiallySelectedFolderId}
+          selectedFolderId={selectedFolderId}
           highlightTemporaryFolders
         />
       </SelectFolderHeader>
