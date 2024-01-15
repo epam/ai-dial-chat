@@ -281,21 +281,21 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
         <div>
           <label
-            className="mb-1 flex text-xs text-secondary"
+            className="mb-3 flex text-xs text-secondary"
             htmlFor="formDescription"
           >
             <span className="ml-1">
               {t(
                 'We are glad to provide API access for PoC, research, accelerators development purposes, and internal projects. It is also possible to use this as a very short-term solution for early development stages while you are spinning up your dedicated environment. Any kind of client external must use their own dedicated infrastructure, not this API - you can install DIAL there, see instructions at ',
               )}
+              <a
+                href="https://github.com/epam/ai-dial"
+                className="underline"
+                rel="noopener noreferrer"
+              >
+                https://github.com/epam/ai-dial
+              </a>
             </span>
-            <a
-              href="https://github.com/epam/ai-dial"
-              className="underline"
-              rel="noopener noreferrer"
-            >
-              https://github.com/epam/ai-dial
-            </a>
           </label>
         </div>
 
