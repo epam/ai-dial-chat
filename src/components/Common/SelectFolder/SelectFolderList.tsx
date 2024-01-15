@@ -9,7 +9,10 @@ import { DialFile } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import {
+  MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH,
+  PUBLISHING_FOLDER_NAME,
+} from '@/src/constants/folders';
 
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
@@ -50,7 +53,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
         onClick={() => handleToggleFolder()}
       >
         <CaretIconComponent isOpen={isAllEntitiesOpened} />
-        {t('Organization')}
+        {t(PUBLISHING_FOLDER_NAME)}
       </button>
       {isAllEntitiesOpened && (
         <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">
