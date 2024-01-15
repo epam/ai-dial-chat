@@ -1,5 +1,5 @@
-import { signIn, useSession } from 'next-auth/react';
-import { useEffect, useMemo } from 'react';
+import { SessionContextValue, signIn, useSession } from 'next-auth/react';
+import { useEffect } from 'react';
 
 import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
@@ -7,18 +7,17 @@ import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import Head from 'next/head';
 
+import { isAuthDisabled } from '../utils/auth/auth-providers';
 import { AuthWindowLocationLike } from '@/src/utils/auth/auth-window-location-like';
 import { delay } from '@/src/utils/auth/delay';
-import {
-  isClientSessionValid,
-  isServerSessionValid,
-} from '@/src/utils/auth/session';
+import { isServerSessionValid } from '@/src/utils/auth/session';
 import { timeoutAsync } from '@/src/utils/auth/timeout-async';
 
 import { Translation } from '../types/translation';
 import { Feature } from '@/src/types/features';
 import { fallbackModelID } from '@/src/types/openai';
 
+import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   SettingsActions,
@@ -45,7 +44,7 @@ interface Props {
 }
 
 export default function Home({ initialState }: Props) {
-  const session = useSession();
+  const session: SessionContextValue<boolean> = useSession();
 
   const { t } = useTranslation(Translation.Chat);
 
@@ -54,25 +53,25 @@ export default function Home({ initialState }: Props) {
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
 
   const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
-  const authDisabled = useAppSelector(SettingsSelectors.selectIsAuthDisabled);
 
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
 
-  const shouldLogin = useMemo(
-    () =>
-      !authDisabled &&
-      (session.status !== 'authenticated' || !isClientSessionValid(session)),
-    [authDisabled, session],
-  );
+  const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
+  const authStatus = useAppSelector(AuthSelectors.selectStatus);
+  const shouldIframeLogin = isIframe && shouldLogin;
 
   // EFFECTS  --------------------------------------------
   useEffect(() => {
-    if (!isIframe && !authDisabled && !isClientSessionValid(session)) {
+    if (!isIframe && shouldLogin) {
       signIn();
     }
-  }, [isIframe, authDisabled, session]);
+  }, [isIframe, shouldLogin]);
+
+  useEffect(() => {
+    dispatch(AuthActions.setSession(session));
+  }, [dispatch, session]);
 
   // ON LOAD --------------------------------------------
 
@@ -87,8 +86,8 @@ export default function Home({ initialState }: Props) {
     handleSetProperVHPoints();
     window.addEventListener('resize', handleSetProperVHPoints);
 
-    dispatch(SettingsActions.initApp({ shouldLogin }));
-  }, [dispatch, initialState, shouldLogin]);
+    dispatch(SettingsActions.initApp());
+  }, [dispatch, initialState]);
 
   const handleIframeAuth = async () => {
     const timeout = 30 * 1000;
@@ -122,8 +121,6 @@ export default function Home({ initialState }: Props) {
     ]);
   };
 
-  const shouldIframeLogin = isIframe && shouldLogin;
-
   return (
     <>
       <Head>
@@ -140,7 +137,7 @@ export default function Home({ initialState }: Props) {
           <button
             onClick={handleIframeAuth}
             className="button button-secondary"
-            disabled={session.status === 'loading'}
+            disabled={authStatus === 'loading'}
           >
             {t('Login')}
           </button>
@@ -212,7 +209,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       '%%VERSION%%',
       packageJSON.version,
     ),
-    isAuthDisabled: process.env.AUTH_DISABLED === 'true',
+    isAuthDisabled,
     storageType: process.env.STORAGE_TYPE || 'browserStorage',
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,

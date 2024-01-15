@@ -15,14 +15,12 @@ Need to disable authentication and allow iframe origin
 e.g.
 
 ```
-AUTH_DISABLED=true
 ALLOWED_IFRAME_ORIGINS=*
 ```
 
 or
 
 ```
-AUTH_DISABLED=true
 ALLOWED_IFRAME_ORIGINS=http://127.0.0.1:8000
 ```
 

@@ -30,6 +30,7 @@ import { AppEpic } from '@/src/types/store';
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 import { overlayAppName } from '@/src/constants/overlay';
 
+import { AuthSelectors } from '../auth/auth.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -241,9 +242,20 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           if (currentConversation) {
             const models = ModelsSelectors.selectModels(state$.value);
 
-            const newAiEntity = models.find(
-              ({ id }) => id === modelId,
-            ) as OpenAIEntityModel;
+            const newAiEntity = models.find(({ id }) => id === modelId) as
+              | OpenAIEntityModel
+              | undefined;
+
+            actions.push(
+              of(
+                ConversationsActions.updateConversation({
+                  id: currentConversation.id,
+                  values: {
+                    model: { id: modelId },
+                  },
+                }),
+              ),
+            );
 
             if (newAiEntity) {
               actions.push(
@@ -251,7 +263,6 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
                   ConversationsActions.updateConversation({
                     id: currentConversation.id,
                     values: {
-                      model: newAiEntity,
                       assistantModelId:
                         newAiEntity.type === EntityType.Assistant
                           ? DEFAULT_ASSISTANT_SUBMODEL.id
@@ -359,9 +370,18 @@ const notifyHostGPTMessageStatus: AppEpic = (_, state$) =>
   );
 
 // models are loading after conversations, if models loaded that means that we can work with application. Maybe there is better condition.
-const notifyHostAboutReadyEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(ModelsActions.getModelsSuccess.match),
+const notifyHostAboutReadyEpic: AppEpic = (_action$, state$) =>
+  state$.pipe(
+    filter((state) => {
+      const isAuthDisabled = SettingsSelectors.selectIsAuthDisabled(state);
+      const isShouldLogin = AuthSelectors.selectIsShouldLogin(state);
+      const authStatus = AuthSelectors.selectStatus(state);
+      if (isAuthDisabled || (authStatus !== 'loading' && isShouldLogin)) {
+        return true;
+      }
+
+      return ModelsSelectors.selectIsModelsLoaded(state);
+    }),
     first(),
     tap(() => {
       // broadcast about ready, after ready emitted, overlay should send initial settings (incl. hostDomain, theme, etc.)

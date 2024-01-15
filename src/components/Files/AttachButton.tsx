@@ -37,7 +37,7 @@ export const AttachButton = ({
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
-  const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const isModelLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
   const availableAttachmentsTypes = useAppSelector(
     ConversationsSelectors.selectAvailableAttachmentsTypes,
   );
@@ -80,7 +80,7 @@ export const AttachButton = ({
         TriggerIcon={IconPaperclip}
         triggerIconSize={24}
         triggerTooltip={t('Attach files') || ''}
-        disabled={messageIsStreaming || isModelsLoading}
+        disabled={messageIsStreaming || !isModelLoaded}
         triggerIconHighlight
       />
       {isSelectFilesDialogOpened && (

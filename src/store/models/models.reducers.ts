@@ -4,7 +4,7 @@ import { translate } from '@/src/utils/app/translation';
 
 import { EntityType } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
-import { ModelsMap } from '@/src/types/models';
+import { ModelsListingStatuses, ModelsMap } from '@/src/types/models';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -12,7 +12,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { RootState } from '../index';
 
 export interface ModelsState {
-  isLoading: boolean;
+  status: ModelsListingStatuses;
   error: ErrorMessage | undefined;
   models: OpenAIEntityModel[];
   modelsMap: ModelsMap;
@@ -20,7 +20,7 @@ export interface ModelsState {
 }
 
 const initialState: ModelsState = {
-  isLoading: false,
+  status: ModelsListingStatuses.UNINITIALIZED,
   error: undefined,
   models: [],
   modelsMap: {},
@@ -33,13 +33,13 @@ export const modelsSlice = createSlice({
   reducers: {
     init: (state) => state,
     getModels: (state) => {
-      state.isLoading = true;
+      state.status = ModelsListingStatuses.LOADING;
     },
     getModelsSuccess: (
       state,
       { payload }: PayloadAction<{ models: OpenAIEntityModel[] }>,
     ) => {
-      state.isLoading = false;
+      state.status = ModelsListingStatuses.LOADED;
       state.error = undefined;
       state.models = payload.models;
       state.modelsMap = (payload.models as OpenAIEntityModel[]).reduce(
@@ -52,7 +52,7 @@ export const modelsSlice = createSlice({
       );
     },
     getModelsFail: (state, { payload }: PayloadAction<{ error: any }>) => {
-      state.isLoading = false;
+      state.status = ModelsListingStatuses.LOADED;
       state.error = {
         title: translate('Error fetching models.'),
         code: payload.error.status || 'unknown',
@@ -101,7 +101,11 @@ export const modelsSlice = createSlice({
 const rootSelector = (state: RootState): ModelsState => state.models;
 
 const selectModelsIsLoading = createSelector([rootSelector], (state) => {
-  return state.isLoading;
+  return state.status === ModelsListingStatuses.LOADING;
+});
+
+const selectIsModelsLoaded = createSelector([rootSelector], (state) => {
+  return state.status === ModelsListingStatuses.LOADED;
 });
 
 const selectModelsError = createSelector([rootSelector], (state) => {
@@ -137,6 +141,7 @@ const selectModelsOnly = createSelector([selectModels], (models) => {
 });
 
 export const ModelsSelectors = {
+  selectIsModelsLoaded,
   selectModelsIsLoading,
   selectModelsError,
   selectModels,

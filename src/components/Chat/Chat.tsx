@@ -61,7 +61,7 @@ export const Chat = memo(() => {
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
-  const modelsIsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
   const defaultModelId = useAppSelector(SettingsSelectors.selectDefaultModelId);
   const addons = useAppSelector(AddonsSelectors.selectAddons);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
@@ -148,9 +148,9 @@ export const Chat = memo(() => {
 
   useEffect(() => {
     const modelIds = models.map((model) => model.id);
-    const isNotAllowedModel = modelsIsLoading
-      ? false
-      : models.length === 0 ||
+    const isNotAllowedModel =
+      isModelsLoaded &&
+      (models.length === 0 ||
         selectedConversations.some((conv) => {
           if (
             conv.replay.isReplay &&
@@ -166,7 +166,7 @@ export const Chat = memo(() => {
             );
           }
           return !modelIds.includes(conv.model.id);
-        });
+        }));
     if (isNotAllowedModel) {
       setNotAllowedType(EntityType.Model);
     } else if (
@@ -178,7 +178,7 @@ export const Chat = memo(() => {
     } else {
       setNotAllowedType(null);
     }
-  }, [selectedConversations, models, modelsIsLoading, addonsMap]);
+  }, [selectedConversations, models, isModelsLoaded, addonsMap]);
 
   const onLikeHandler = useCallback(
     (index: number, conversation: Conversation) => (rate: number) => {

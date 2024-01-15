@@ -36,7 +36,6 @@ declare global {
       STORAGE_TYPE?: string;
       TRACES_URL?: string;
 
-      AUTH_DISABLED?: string;
       NEXTAUTH_URL?: string;
       NEXTAUTH_SECRET?: string;
       AUTH_TEST_TOKEN?: string;
