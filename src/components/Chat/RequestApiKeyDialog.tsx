@@ -292,6 +292,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
                 href="https://github.com/epam/ai-dial"
                 className="underline"
                 rel="noopener noreferrer"
+                target="_blank"
               >
                 https://github.com/epam/ai-dial
               </a>
@@ -472,6 +473,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               href="https://platform.openai.com/tokenizer"
               className="underline"
               rel="noopener noreferrer"
+              target="_blank"
             >
               https://platform.openai.com/tokenizer
             </a>
@@ -480,6 +482,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
               href="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/"
               className="underline"
               rel="noopener noreferrer"
+              target="_blank"
             >
               https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/
             </a>
@@ -517,12 +520,13 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
           <label className="inline-block text-xs" htmlFor="azureAgreementInput">
             <span>1.</span>
             <span className="ml-1">
-              {t('Azure cognitive service terms and conditions')}
+              {t('Azure cognitive service terms and conditions')}{' '}
             </span>
             <a
               href="https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct"
               className="underline"
               rel="noopener noreferrer"
+              target="_blank"
             >
               (https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct)
             </a>
