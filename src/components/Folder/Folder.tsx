@@ -522,11 +522,10 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             )}
             <div
               className={classNames(
-                `relative max-h-5 flex-1 truncate break-all text-left`,
-                isRenaming ? 'pr-10' : 'group-hover/button:pr-5',
-                !isRenaming &&
-                  highlightedFolders?.includes(currentFolder.id) &&
-                  'text-primary',
+                'relative max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5',
+                highlightedFolders?.includes(currentFolder.id)
+                  ? 'text-accent-secondary'
+                  : 'text-primary',
               )}
               data-qa="folder-name"
             >
