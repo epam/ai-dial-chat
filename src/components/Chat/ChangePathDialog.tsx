@@ -1,9 +1,6 @@
-import { useId } from '@floating-ui/react';
-import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
-
-import classNames from 'classnames';
 
 import {
   getChildAndCurrentFoldersIdsById,
@@ -25,18 +22,12 @@ import {
 } from '@/src/store/prompts/prompts.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import {
-  MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH,
-  PUBLISHING_FOLDER_NAME,
-} from '@/src/constants/folders';
+import { MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 
-import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
-import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
-import Modal from '@/src/components/Common/Modal';
-import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
-import Folder from '@/src/components/Folder/Folder';
-
-import FolderPlus from '@/public/images/icons/folder-plus.svg';
+import { SelectFolder } from '@/src/components/Common/SelectFolder/SelectFolder';
+import { SelectFolderFooter } from '@/src/components/Common/SelectFolder/SelectFolderFooter';
+import { SelectFolderHeader } from '@/src/components/Common/SelectFolder/SelectFolderHeader';
+import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFolderList';
 
 interface Props {
   type: SharingType;
@@ -57,8 +48,6 @@ export const ChangePathDialog = ({
 
   const { t } = useTranslation(Translation.Chat);
 
-  const headingId = useId();
-
   const [searchQuery, setSearchQuery] = useState('');
   const [isAllFoldersOpened, setIsAllFoldersOpened] = useState(true);
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
@@ -76,10 +65,6 @@ export const ChangePathDialog = ({
   const folders = useAppSelector((state) =>
     selectors.selectTemporaryAndFilteredFolders(state, searchQuery),
   );
-
-  const highlightedFolders = useMemo(() => {
-    return [selectedFolderId].filter(Boolean) as string[];
-  }, [selectedFolderId]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -183,112 +168,39 @@ export const ChangePathDialog = ({
   };
 
   return (
-    <Modal
-      portalId="theme-main"
+    <SelectFolder
       isOpen={isOpen}
+      modalDataQa="change-path-dialog"
       onClose={() => onClose(undefined)}
-      dataQa="change-path-dialog"
-      containerClassName="flex min-w-full flex-col gap-4 md:min-w-[425px] md:max-w-full"
-      dismissProps={{ outsidePressEvent: 'mousedown' }}
+      title="Change path"
     >
-      <div className="flex flex-col gap-2 overflow-auto">
-        <div className="flex justify-between px-6 pt-4">
-          <h2 id={headingId} className="text-base font-semibold">
-            {t('Change path')}
-          </h2>
-        </div>
-        <div className="group/modal flex flex-col gap-2 overflow-auto px-6 pb-4">
-          <ErrorMessage error={errorMessage} />
-          <input
-            name="titleInput"
-            placeholder={t('Search folders') || ''}
-            type="text"
-            onChange={handleSearch}
-            className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
-            value={searchQuery}
-          />
-          <div className="flex min-h-[350px] flex-col overflow-auto">
-            <button
-              className={classNames(
-                'mb-0.5 flex items-center gap-1 rounded border-l-2 py-1 text-xs text-secondary',
-                !selectedFolderId
-                  ? 'border-accent-primary bg-accent-primary-alpha'
-                  : 'border-transparent',
-              )}
-              onClick={() => handleToggleFolder()}
-            >
-              <CaretIconComponent isOpen={isAllFoldersOpened} />
-              {t(PUBLISHING_FOLDER_NAME)}
-            </button>
-            {isAllFoldersOpened && (
-              <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">
-                {folders.length ? (
-                  <div className="flex flex-col gap-1 overflow-auto">
-                    {folders.map((folder) => {
-                      if (
-                        folder.folderId ||
-                        folder.originalId === initiallySelectedFolderId
-                      ) {
-                        return null;
-                      }
-
-                      return (
-                        <div
-                          className={classNames(
-                            'relative',
-                            folder.temporary
-                              ? 'text-primary'
-                              : 'text-secondary',
-                          )}
-                          key={folder.id}
-                        >
-                          <Folder
-                            maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
-                            searchTerm={searchQuery}
-                            currentFolder={folder}
-                            allFolders={folders}
-                            highlightedFolders={highlightedFolders}
-                            isInitialRenameEnabled
-                            openedFoldersIds={openedFoldersIds}
-                            onClickFolder={handleFolderSelect}
-                            onRenameFolder={handleRenameFolder}
-                            onDeleteFolder={handleDeleteFolder}
-                            onAddFolder={handleAddFolder}
-                            newAddedFolderId={newFolderId}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="flex grow items-center justify-center">
-                    <NoResultsFound />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center justify-between border-t border-primary px-6 py-4">
-          <div className="flex items-center justify-center">
-            <button
-              onClick={() => handleAddFolder()}
-              className="flex h-[34px] w-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
-            >
-              <FolderPlus
-                height={24}
-                width={24}
-                className="text-secondary hover:text-accent-primary"
-              />
-            </button>
-          </div>
-          <div>
-            <button onClick={getPath} className="button button-primary">
-              {t('Select folder')}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Modal>
+      <SelectFolderHeader
+        handleSearch={handleSearch}
+        searchQuery={searchQuery}
+        errorMessage={errorMessage}
+      >
+        <SelectFolderList
+          folderProps={{
+            searchTerm: searchQuery,
+            allFolders: folders,
+            isInitialRenameEnabled: true,
+            openedFoldersIds,
+            onClickFolder: handleFolderSelect,
+            onRenameFolder: handleRenameFolder,
+            onDeleteFolder: handleDeleteFolder,
+            onAddFolder: handleAddFolder,
+            newAddedFolderId: newFolderId,
+          }}
+          handleToggleFolder={handleToggleFolder}
+          isAllEntitiesOpened={isAllFoldersOpened}
+          initiallySelectedFolderId={initiallySelectedFolderId}
+          highlightTemporaryFolders
+        />
+      </SelectFolderHeader>
+      <SelectFolderFooter
+        handleNewFolder={() => handleAddFolder()}
+        onSelectFolderClick={getPath}
+      />
+    </SelectFolder>
   );
 };

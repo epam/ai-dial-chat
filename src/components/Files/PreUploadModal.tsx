@@ -397,7 +397,7 @@ export const PreUploadDialog = ({
         isOpen={isChangeFolderModalOpened}
         selectedFolderName={selectedFolderId}
         onClose={(folderId) => {
-          if (typeof folderId !== 'boolean') {
+          if (folderId) {
             setSelectedFolderId(folderId);
           }
           setIsChangeFolderModalOpened(false);
