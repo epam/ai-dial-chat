@@ -520,11 +520,11 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
           <label className="inline-block text-xs" htmlFor="azureAgreementInput">
             <span>1.</span>
             <span className="ml-1">
-              {t('Azure cognitive service terms and conditions')}{' '}
+              {t('Azure cognitive service terms and conditions')}
             </span>
             <a
               href="https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct"
-              className="underline"
+              className="ml-1 underline"
               rel="noopener noreferrer"
               target="_blank"
             >
