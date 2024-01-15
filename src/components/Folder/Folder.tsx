@@ -524,7 +524,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
               className={classNames(
                 'relative max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5',
                 highlightedFolders?.includes(currentFolder.id)
-                  ? 'text-accent-primary'
+                  ? 'text-accent-secondary'
                   : 'text-primary',
               )}
               data-qa="folder-name"
