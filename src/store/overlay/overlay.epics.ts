@@ -384,10 +384,9 @@ const notifyHostGPTMessageStatus: AppEpic = (_, state$) =>
 const notifyHostAboutReadyEpic: AppEpic = (_action$, state$) =>
   state$.pipe(
     filter((state) => {
-      const isAuthDisabled = SettingsSelectors.selectIsAuthDisabled(state);
       const isShouldLogin = AuthSelectors.selectIsShouldLogin(state);
       const authStatus = AuthSelectors.selectStatus(state);
-      if (isAuthDisabled || (authStatus !== 'loading' && isShouldLogin)) {
+      if (authStatus !== 'loading' && isShouldLogin) {
         return true;
       }
 
