@@ -46,6 +46,7 @@ export const useHandleFileFolders = (
 
       if (error) {
         setErrorMessage(t(error) as string);
+        return;
       }
 
       dispatch(FilesActions.renameFolder({ folderId, newName }));

@@ -86,7 +86,25 @@ export interface FolderProps<T, P = unknown> {
   readonly?: boolean;
   onFileUpload?: (parentFolderId: string) => void;
   maxDepth?: number;
+  highlightTemporaryFolders?: boolean;
 }
+
+const getClassForFolderName = (
+  highlightTemporaryFolders: boolean | undefined,
+  currentFolder: FolderInterface,
+  highlightedFolders: string[] | undefined,
+) => {
+  if (highlightTemporaryFolders && !currentFolder.temporary) {
+    return 'text-secondary';
+  }
+  if (highlightTemporaryFolders && currentFolder.temporary) {
+    return 'text-primary';
+  }
+
+  return highlightedFolders?.includes(currentFolder.id)
+    ? 'text-accent-primary'
+    : 'text-primary';
+};
 
 const Folder = <T extends Conversation | Prompt | DialFile>({
   currentFolder,
@@ -113,6 +131,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   featureType,
   readonly = false,
   maxDepth,
+  highlightTemporaryFolders,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -511,9 +530,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
           </div>
         ) : (
           <div
-            className={classNames(
-              `group/button flex h-full w-full cursor-pointer items-center gap-1 py-2 pr-3`,
-            )}
+            className="group/button flex h-full w-full cursor-pointer items-center gap-1 py-2 pr-3"
             style={{
               paddingLeft: `${level * 24}px`,
             }}
@@ -546,12 +563,12 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             )}
             <div
               className={classNames(
-                'relative max-h-5 flex-1 truncate break-all text-left',
-                isRenaming ? 'pr-10' : 'group-hover/button:pr-5',
-                !isRenaming &&
-                  highlightedFolders?.includes(currentFolder.id) &&
-                  currentFolder.temporary &&
-                  'text-primary',
+                'relative max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5',
+                getClassForFolderName(
+                  highlightTemporaryFolders,
+                  currentFolder,
+                  highlightedFolders,
+                ),
               )}
               data-qa="folder-name"
             >
@@ -670,6 +687,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       onItemEvent={onItemEvent}
                       featureType={featureType}
                       maxDepth={maxDepth}
+                      highlightTemporaryFolders={highlightTemporaryFolders}
                     />
                     {onDropBetweenFolders && index === arr.length - 1 && (
                       <BetweenFoldersLine

@@ -1,10 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import {
-  generateNextName,
-  getAvailableNameOnSameFolderLevel,
-  getNextDefaultName,
-} from '@/src/utils/app/folders';
+import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
 import { translate } from '@/src/utils/app/translation';
 
 import { PromptsHistory } from '@/src/types/export';
@@ -233,15 +229,16 @@ export const promptsSlice = createSlice({
         relativePath?: string;
       }>,
     ) => {
-      const folderName = getAvailableNameOnSameFolderLevel(
+      const folderName = getNextDefaultName(
+        translate('New folder'),
         [
           ...state.temporaryFolders,
           ...state.folders.filter((folder) => folder.publishedWithMe),
         ],
-        'New folder',
-        payload.relativePath,
+        0,
+        false,
+        true,
       );
-
       const id = uuidv4();
 
       state.temporaryFolders.push({

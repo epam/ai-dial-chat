@@ -115,10 +115,11 @@ export const ChangePathDialog = ({
 
   const handleRenameFolder = useCallback(
     (newName: string, folderId: string) => {
-      const error = validateFolderRenaming(folders, newName, folderId);
+      const error = validateFolderRenaming(folders, newName, folderId, false);
 
       if (error) {
         setErrorMessage(t(error) as string);
+        return;
       }
 
       dispatch(actions.renameTemporaryFolder({ folderId, name: newName }));
