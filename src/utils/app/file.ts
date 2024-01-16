@@ -113,8 +113,9 @@ export const getFilesWithInvalidFileSize = (
 };
 
 const parseAttachmentUrl = (url: string) => {
-  const lastIndexSlash = url.lastIndexOf('/');
   const decodedUrl = decodeURI(url);
+  const lastIndexSlash = decodedUrl.lastIndexOf('/');
+
   return {
     absolutePath: decodedUrl.slice(0, lastIndexSlash),
     name: decodedUrl.slice(lastIndexSlash + 1),
@@ -145,7 +146,7 @@ export const getDialFilesFromAttachments = (
         id: constructPath(relativePath, name),
         name,
         contentType: attachment.type,
-        absolutePath: absolutePath,
+        absolutePath,
       };
     })
     .filter(Boolean) as Omit<DialFile, 'contentLength'>[];
