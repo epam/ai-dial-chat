@@ -97,7 +97,7 @@ export const ChatInputMessage = ({
   const notModelConversations = useAppSelector(
     ConversationsSelectors.selectNotModelConversations,
   );
-  const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
   const isError =
@@ -140,7 +140,7 @@ export const ChatInputMessage = ({
     isReplay ||
     isError ||
     isInputEmpty ||
-    isModelsLoading ||
+    !isModelsLoaded ||
     isUploadingFilePresent;
 
   const handleChange = useCallback(
@@ -191,7 +191,7 @@ export const ChatInputMessage = ({
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      if (showPromptList) {
+      if (showPromptList && filteredPrompts.length > 0) {
         handleKeyDownIfShown(e);
       } else if (e.key === 'Enter' && !isTyping && !isMobile() && !e.shiftKey) {
         e.preventDefault();
@@ -211,6 +211,7 @@ export const ChatInputMessage = ({
       isTyping,
       showPluginSelect,
       showPromptList,
+      filteredPrompts,
     ],
   );
 
@@ -300,7 +301,7 @@ export const ChatInputMessage = ({
         'Please wait for full assistant answer to continue working with chat',
       );
     }
-    if (isModelsLoading) {
+    if (!isModelsLoaded) {
       return t(
         'Please wait for models will be loaded to continue working with chat',
       );

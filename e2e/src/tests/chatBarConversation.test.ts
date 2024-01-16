@@ -536,7 +536,7 @@ test('Chat is moved to folder created from Move to', async ({
   );
   expect
     .soft(folderNameColor[0], ExpectedMessages.folderNameColorIsValid)
-    .toBe(Colors.textPrimary);
+    .toBe(Colors.textAccentSecondary);
 });
 
 test(

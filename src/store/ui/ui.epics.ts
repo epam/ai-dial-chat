@@ -34,7 +34,7 @@ const initEpic: AppEpic = (action$, state$) =>
         theme: DataService.getTheme(),
         availableThemes: isThemesDefined
           ? DataService.getAvailableThemes()
-          : [],
+          : of([]),
         showChatbar: DataService.getShowChatbar(),
         showPromptbar: DataService.getShowPromptbar(),
         openedFoldersIds: DataService.getOpenedFolderIds(),
@@ -60,7 +60,7 @@ const initEpic: AppEpic = (action$, state$) =>
 
         if (theme) {
           actions.push(UIActions.setTheme(theme));
-        } else {
+        } else if (typeof availableThemes[0] !== 'undefined') {
           actions.push(UIActions.setTheme(availableThemes[0]?.id));
         }
         actions.push(UIActions.setAvailableThemes(availableThemes));

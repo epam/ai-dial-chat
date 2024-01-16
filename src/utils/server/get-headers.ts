@@ -1,3 +1,5 @@
+import { isAuthDisabled } from '../auth/auth-providers';
+
 export const getApiHeaders = ({
   chatId,
   jwt,
@@ -16,7 +18,7 @@ export const getApiHeaders = ({
 
   if (jwt) {
     headers['authorization'] = 'Bearer ' + jwt;
-  } else if (process.env.AUTH_DISABLED === 'true') {
+  } else if (isAuthDisabled) {
     headers['Api-Key'] = process.env.DIAL_API_KEY;
   }
 
