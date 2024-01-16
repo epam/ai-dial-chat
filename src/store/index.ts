@@ -10,6 +10,7 @@ import {
 
 import { AddonsEpics } from './addons/addons.epics';
 import { addonsSlice } from './addons/addons.reducers';
+import { authSlice } from './auth/auth.reducers';
 import { ConversationsEpics } from './conversations/conversations.epics';
 import { conversationsSlice } from './conversations/conversations.reducers';
 import { FilesEpics } from './files/files.epics';
@@ -45,6 +46,7 @@ const reducer = {
   settings: settingsSlice.reducer,
   overlay: overlaySlice.reducer,
   files: filesSlice.reducer,
+  auth: authSlice.reducer,
 };
 const getMiddleware = (
   //eslint-disable-next-line @typescript-eslint/no-explicit-any

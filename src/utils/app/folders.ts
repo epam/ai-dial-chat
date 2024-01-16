@@ -117,6 +117,7 @@ export const getNextDefaultName = (
   entities: ShareEntity[],
   index = 0,
   startWithEmptyPostfix = false,
+  includingPublishedWithMe = false,
 ) => {
   const prefix = `${defaultName} `;
   const regex = new RegExp(`^${prefix}(\\d+)$`);
@@ -130,7 +131,7 @@ export const getNextDefaultName = (
       .filter(
         (entity) =>
           !entity.sharedWithMe &&
-          !entity.publishedWithMe &&
+          (!entity.publishedWithMe || includingPublishedWithMe) &&
           (entity.name === defaultName || entity.name.match(regex)),
       )
       .map((entity) => parseInt(entity.name.replace(prefix, ''), 10) || 1),
@@ -299,18 +300,22 @@ export const validateFolderRenaming = (
   folders: FolderInterface[],
   newName: string,
   folderId: string,
+  mustBeUnique = true,
 ) => {
   const renamingFolder = folders.find((folder) => folder.id === folderId);
-  const folderWithSameName = folders.find(
-    (folder) =>
-      folder.name === newName.trim() &&
-      folderId !== folder.id &&
-      folder.folderId === renamingFolder?.folderId,
-  );
+  if (mustBeUnique) {
+    const folderWithSameName = folders.find(
+      (folder) =>
+        folder.name === newName.trim() &&
+        folderId !== folder.id &&
+        folder.folderId === renamingFolder?.folderId,
+    );
 
-  if (folderWithSameName) {
-    return 'Not allowed to have folders with same names';
+    if (folderWithSameName) {
+      return 'Not allowed to have folders with same names';
+    }
   }
+
   if (newName.match(notAllowedSymbolsRegex)) {
     return `The symbols ${notAllowedSymbols} are not allowed in folder name`;
   }

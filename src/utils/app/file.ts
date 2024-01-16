@@ -92,7 +92,7 @@ export const getFilesWithInvalidFileType = (
 ): File[] => {
   return allowedFileTypes.includes('*/*')
     ? []
-    : files.filter((file) => !allowedFileTypes.includes(file.type));
+    : files.filter((file) => !isAllowedMimeType(allowedFileTypes, file.type));
 };
 export const notAllowedSymbols = ':;,=/';
 export const notAllowedSymbolsRegex = new RegExp(`[${notAllowedSymbols}]`, 'g');

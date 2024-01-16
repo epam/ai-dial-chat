@@ -115,6 +115,7 @@ export const SelectFolderModal = ({
           }}
           handleToggleFolder={handleToggleFolder}
           isAllEntitiesOpened={isAllFilesOpened}
+          selectedFolderId={selectedFolderId}
         />
       </SelectFolderHeader>
       <SelectFolderFooter

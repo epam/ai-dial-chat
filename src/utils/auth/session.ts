@@ -3,6 +3,8 @@ import { Session } from 'next-auth';
 
 import { errorsMessages } from '@/src/constants/errors';
 
+import { isAuthDisabled } from './auth-providers';
+
 export function isClientSessionValid(session: unknown | null) {
   return (
     session &&
@@ -12,10 +14,7 @@ export function isClientSessionValid(session: unknown | null) {
 }
 
 export function isServerSessionValid(session: Session | null) {
-  if (
-    process.env.AUTH_DISABLED === 'true' ||
-    process.env.IS_IFRAME === 'true'
-  ) {
+  if (isAuthDisabled || process.env.IS_IFRAME === 'true') {
     return true;
   }
 

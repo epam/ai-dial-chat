@@ -1,10 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import {
-  generateNextName,
-  getAvailableNameOnSameFolderLevel,
-  getNextDefaultName,
-} from '@/src/utils/app/folders';
+import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
 import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
@@ -413,15 +409,16 @@ export const conversationsSlice = createSlice({
         relativePath?: string;
       }>,
     ) => {
-      const folderName = getAvailableNameOnSameFolderLevel(
+      const folderName = getNextDefaultName(
+        translate('New folder'),
         [
           ...state.temporaryFolders,
           ...state.folders.filter((folder) => folder.publishedWithMe),
         ],
-        'New folder',
-        payload.relativePath,
+        0,
+        false,
+        true,
       );
-
       const id = uuidv4();
 
       state.temporaryFolders.push({

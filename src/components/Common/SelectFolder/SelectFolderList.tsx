@@ -69,19 +69,13 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
                 }
 
                 return (
-                  <div
-                    className={classNames(
-                      'relative',
-                      highlightTemporaryFolders &&
-                        (folder.temporary ? 'text-primary' : 'text-secondary'),
-                    )}
-                    key={folder.id}
-                  >
+                  <div className="relative" key={folder.id}>
                     <Folder
                       {...folderProps}
                       maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
                       currentFolder={folder}
                       highlightedFolders={highlightedFolders}
+                      highlightTemporaryFolders={highlightTemporaryFolders}
                     />
                   </div>
                 );
