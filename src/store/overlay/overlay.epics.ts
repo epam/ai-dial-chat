@@ -231,18 +231,29 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           }
         }
 
-        if (modelId) {
-          actions.push(of(ModelsActions.updateRecentModels({ modelId })));
+        const defaultModelId = SettingsSelectors.selectDefaultModelId(
+          state$.value,
+        );
+        const finalModelId = modelId || defaultModelId;
+
+        if (finalModelId) {
+          actions.push(
+            of(ModelsActions.updateRecentModels({ modelId: finalModelId })),
+          );
 
           actions.push(
-            of(SettingsActions.setDefaultModelId({ defaultModelId: modelId })),
+            of(
+              SettingsActions.setDefaultModelId({
+                defaultModelId: finalModelId,
+              }),
+            ),
           );
 
           // if there is active conversation -> should update model for this conversation
           if (currentConversation) {
             const models = ModelsSelectors.selectModels(state$.value);
 
-            const newAiEntity = models.find(({ id }) => id === modelId) as
+            const newAiEntity = models.find(({ id }) => id === finalModelId) as
               | OpenAIEntityModel
               | undefined;
 
@@ -251,7 +262,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
                 ConversationsActions.updateConversation({
                   id: currentConversation.id,
                   values: {
-                    model: { id: modelId },
+                    model: { id: finalModelId },
                   },
                 }),
               ),
