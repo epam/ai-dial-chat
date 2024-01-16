@@ -242,6 +242,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
   return (
     <Modal
+      initialFocus={projectNameInputRef}
       portalId="theme-main"
       isOpen={isOpen}
       onClose={handleClose}
@@ -299,7 +300,6 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
           onBlur={onBlur}
           onChange={projectNameOnChangeHandler}
           className={inputClassName}
-          autoFocus
         ></input>
         <EmptyRequiredInputMessage />
       </div>

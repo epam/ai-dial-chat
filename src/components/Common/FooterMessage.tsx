@@ -32,8 +32,7 @@ export const FooterMessage = () => {
       if (hash === requestApiKeyHash) {
         setIsReportIssueDialogOpen(false);
         setIsRequestAPIDialogOpen(true);
-      }
-      if (hash === reportAnIssueHash) {
+      } else if (hash === reportAnIssueHash) {
         setIsRequestAPIDialogOpen(false);
         setIsReportIssueDialogOpen(true);
       }

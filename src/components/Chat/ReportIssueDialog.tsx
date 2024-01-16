@@ -128,6 +128,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
   // Render the dialog.
   return (
     <Modal
+      initialFocus={titleInputRef}
       portalId="theme-main"
       isOpen={isOpen}
       onClose={handleClose}
@@ -161,7 +162,6 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
           onBlur={onBlur}
           onChange={onChangeTitle}
           className={inputClassName}
-          autoFocus
         ></input>
         <EmptyRequiredInputMessage />
       </div>
