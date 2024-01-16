@@ -60,7 +60,7 @@ export const FooterMessage = () => {
             setIsRequestAPIDialogOpen(false);
             router.replace(router.basePath);
           }}
-        ></RequestAPIKeyDialog>
+        />
       )}
 
       {enabledFeatures.has(Feature.ReportAnIssue) && (
@@ -70,7 +70,7 @@ export const FooterMessage = () => {
             setIsReportIssueDialogOpen(false);
             router.replace(router.basePath);
           }}
-        ></ReportIssueDialog>
+        />
       )}
     </div>
   ) : null;

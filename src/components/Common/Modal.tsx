@@ -10,6 +10,7 @@ import {
 } from '@floating-ui/react';
 import { IconX } from '@tabler/icons-react';
 import {
+  FormEvent,
   FormHTMLAttributes,
   KeyboardEventHandler,
   MouseEvent,
@@ -33,6 +34,10 @@ interface Props extends FormHTMLAttributes<HTMLFormElement> {
   hideClose?: boolean;
   onKeyDownOverlay?: KeyboardEventHandler<HTMLDivElement>;
   dismissProps?: UseDismissProps;
+  form?: {
+    noValidate: boolean;
+    onSubmit: (e: FormEvent) => void;
+  };
 }
 
 export default function Modal({
@@ -48,6 +53,7 @@ export default function Modal({
   hideClose = false,
   onKeyDownOverlay,
   dismissProps,
+  form,
 }: Props) {
   const { refs, context } = useFloating({
     open: isOpen,
@@ -67,6 +73,8 @@ export default function Modal({
     [onClose],
   );
 
+  const Tag = form ? 'form' : 'div';
+
   return (
     <FloatingPortal id={portalId}>
       {isOpen && (
@@ -80,7 +88,7 @@ export default function Modal({
           onKeyDown={onKeyDownOverlay}
         >
           <FloatingFocusManager context={context} initialFocus={initialFocus}>
-            <div
+            <Tag
               className={classNames(
                 'relative max-h-full rounded bg-layer-3 text-left',
                 containerClassName,
@@ -89,6 +97,7 @@ export default function Modal({
               ref={refs.setFloating}
               {...getFloatingProps()}
               data-qa={dataQa}
+              {...(form && { ...form })}
             >
               {!hideClose && (
                 <button
@@ -102,7 +111,7 @@ export default function Modal({
               )}
 
               {children}
-            </div>
+            </Tag>
           </FloatingFocusManager>
         </FloatingOverlay>
       )}
