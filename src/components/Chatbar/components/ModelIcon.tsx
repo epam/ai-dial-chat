@@ -32,6 +32,7 @@ const ModelIconTemplate = memo(
         style={{ height: `${size}px`, width: `${size}px` }}
       >
         <SVG
+          key={entityId}
           src={entity?.iconUrl ? `${entity.iconUrl}?v2` : ''}
           className={classNames(!entity?.iconUrl && 'hidden')}
           width={size}
