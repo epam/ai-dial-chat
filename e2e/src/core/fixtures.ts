@@ -19,7 +19,8 @@ import { PromptBar } from '../ui/webElements';
 import { LocalStorageManager } from './localStorageManager';
 
 import { ConversationData } from '@/e2e/src/testData';
-import { ApiHelper } from '@/e2e/src/testData/api/apiHelper';
+import { ChatApiHelper } from '@/e2e/src/testData/api/chatApiHelper';
+import { IconApiHelper } from '@/e2e/src/testData/api/iconApiHelper';
 import { PromptData } from '@/e2e/src/testData/prompts/promptData';
 import { AccountSettings } from '@/e2e/src/ui/webElements/accountSettings';
 import { Addons } from '@/e2e/src/ui/webElements/addons';
@@ -114,7 +115,8 @@ const test = base.extend<
     promptFilter: Filter;
     chatFilterDropdownMenu: DropdownCheckboxMenu;
     promptFilterDropdownMenu: DropdownCheckboxMenu;
-    apiHelper: ApiHelper;
+    iconApiHelper: IconApiHelper;
+    chatApiHelper: ChatApiHelper;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -364,9 +366,13 @@ const test = base.extend<
     const shareModal = new ShareModal(page);
     await use(shareModal);
   },
-  apiHelper: async ({ request }, use) => {
-    const apiHelper = new ApiHelper(request);
-    await use(apiHelper);
+  iconApiHelper: async ({ request }, use) => {
+    const iconApiHelper = new IconApiHelper(request);
+    await use(iconApiHelper);
+  },
+  chatApiHelper: async ({ request }, use) => {
+    const chatApiHelper = new ChatApiHelper(request);
+    await use(chatApiHelper);
   },
 });
 

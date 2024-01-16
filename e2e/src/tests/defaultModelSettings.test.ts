@@ -35,7 +35,7 @@ test(
     entitySettings,
     temperatureSlider,
     addons,
-    apiHelper,
+    iconApiHelper,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-933', 'EPMRTC-398', 'EPMRTC-376', 'EPMRTC-1030');
@@ -129,7 +129,7 @@ test(
         const actualRecentModel = recentEntitiesIcons.find(
           (e) => e.entityName === modelEntity.name,
         )!;
-        const expectedEntityIcon = await apiHelper.getEntityIcon(modelEntity);
+        const expectedEntityIcon = await iconApiHelper.getEntityIcon(modelEntity);
         expect
           .soft(
             actualRecentModel.icon,
@@ -153,7 +153,7 @@ test(
         const actualRecentAddon = recentAddonsIcons.find(
           (a) => a.entityName === addonEntity.name,
         )!;
-        const expectedAddonIcon = await apiHelper.getEntityIcon(addonEntity);
+        const expectedAddonIcon = await iconApiHelper.getEntityIcon(addonEntity);
         expect
           .soft(
             actualRecentAddon.icon,

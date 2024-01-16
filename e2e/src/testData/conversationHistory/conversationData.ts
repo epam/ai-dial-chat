@@ -60,7 +60,7 @@ export class ConversationData extends FolderData {
     temp: number,
     sysPrompt: string,
     addons: string[],
-    model?: OpenAIEntityModel,
+    model?: OpenAIEntityModel | string,
   ) {
     const basicConversation = this.prepareDefaultConversation(model);
     this.conversationBuilder.setConversation(basicConversation);
@@ -72,7 +72,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareModelConversationBasedOnRequests(
-    model: OpenAIEntityModel,
+    model: OpenAIEntityModel | string,
     requests: string[],
     name?: string,
   ) {
@@ -111,7 +111,10 @@ export class ConversationData extends FolderData {
     return this.conversationBuilder.build();
   }
 
-  public prepareEmptyConversation(model?: OpenAIEntityModel, name?: string) {
+  public prepareEmptyConversation(
+    model?: OpenAIEntityModel | string,
+    name?: string,
+  ) {
     const conversation = this.prepareDefaultConversation(model, name);
     conversation.messages = [];
     return conversation;
