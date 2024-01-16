@@ -299,6 +299,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
           onBlur={onBlur}
           onChange={projectNameOnChangeHandler}
           className={inputClassName}
+          autoFocus
         ></input>
         <EmptyRequiredInputMessage />
       </div>

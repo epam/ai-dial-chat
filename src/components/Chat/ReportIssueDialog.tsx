@@ -161,6 +161,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
           onBlur={onBlur}
           onChange={onChangeTitle}
           className={inputClassName}
+          autoFocus
         ></input>
         <EmptyRequiredInputMessage />
       </div>
