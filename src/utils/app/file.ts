@@ -173,3 +173,9 @@ export const getExtensionsListForMimeTypes = (mimeTypes: string[]) => {
     .flat()
     .map((type) => `.${type}`);
 };
+
+export const getFileNameWithoutExtension = (filename: string) =>
+  filename.slice(0, filename.lastIndexOf('.'));
+
+export const getFileNameExtension = (filename: string) =>
+  filename.slice(filename.lastIndexOf('.'));

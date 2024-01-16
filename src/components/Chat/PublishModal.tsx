@@ -20,7 +20,7 @@ import {
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { ShareEntity } from '@/src/types/common';
-import { SharingType } from '@/src/types/share';
+import { PublishAttachmentInfo, SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -69,6 +69,21 @@ export default function PublishModal({
   const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState<string>(entity.name);
   const [path, setPath] = useState<string>('');
+  const [renamingFile, setRenamingFile] = useState<PublishAttachmentInfo>();
+  const newNames = useRef(new Map());
+
+  const handleStartRename = useCallback((file: PublishAttachmentInfo) => {
+    setRenamingFile(file);
+  }, []);
+
+  const handleRename = useCallback(
+    (file: PublishAttachmentInfo, name: string) => {
+      newNames.current.set(constructPath(file.path, file.name), name);
+      file.name = name;
+      setRenamingFile(undefined);
+    },
+    [],
+  );
 
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
@@ -299,7 +314,10 @@ export default function PublishModal({
               {files.map((file) => (
                 <PublishAttachment
                   key={constructPath(file?.path, file?.name)}
+                  isRenaming={file === renamingFile}
                   file={file}
+                  onRename={handleRename}
+                  onStartRename={handleStartRename}
                 />
               ))}
             </div>
