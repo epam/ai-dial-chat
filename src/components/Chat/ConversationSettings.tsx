@@ -194,7 +194,7 @@ export const ConversationSettings = ({
               )}
             </div>
           ) : (
-            <div className="flex justify-center p-3">
+            <div className="flex bg-layer-2 p-4">
               {t('No settings available')}
             </div>
           )

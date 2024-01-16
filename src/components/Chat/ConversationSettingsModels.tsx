@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { Replay } from '@/src/types/chat';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
@@ -54,11 +56,12 @@ export const ConversationSettingsModel = ({
           )}
           {mappedEntities.map((entity) => (
             <button
-              className={`flex items-center gap-3 rounded border p-3 text-left text-xs ${
+              className={classNames(
+                'flex items-center gap-3 rounded border p-3 text-left text-xs',
                 modelId === entity.id && !replay.replayAsIs
                   ? 'border-accent-primary'
-                  : 'border-primary hover:border-hover'
-              }`}
+                  : 'border-primary hover:border-hover',
+              )}
               key={entity.id}
               onClick={() => onModelSelect(entity.id)}
             >
