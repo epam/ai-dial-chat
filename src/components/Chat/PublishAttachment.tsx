@@ -19,6 +19,8 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import {
   constructPath,
   getFileNameExtension,
@@ -64,7 +66,10 @@ export const PublishAttachment = ({
 
   useEffect(() => {
     if (isRenaming) {
-      setTimeout(() => inputRef.current?.focus()); // set auto-focus
+      setTimeout(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }); // set auto-focus
     }
   }, [isRenaming]);
 
@@ -123,21 +128,34 @@ export const PublishAttachment = ({
   const fullPath = constructPath(t(PUBLISHING_FOLDER_NAME), file.path);
 
   return (
-    <div className="group flex w-full max-w-full items-center">
+    <div
+      className={classNames(
+        'group relative flex w-full max-w-full items-center rounded p-2 hover:bg-accent-primary-alpha',
+        !isRenaming && 'hover:pr-6',
+      )}
+    >
       <IconFile className="mr-2 shrink-0 text-secondary" size={18} />
       <div className="flex min-w-0 shrink grow flex-col">
         {!isRenaming ? (
-          <Tooltip
-            tooltip={fileName}
-            triggerClassName="block max-w-full truncate"
-          >
-            {fileName}
-          </Tooltip>
+          <>
+            <Tooltip
+              tooltip={fileName}
+              triggerClassName="block max-w-full truncate"
+            >
+              {fileName}
+            </Tooltip>
+            <Tooltip
+              tooltip={fullPath}
+              triggerClassName="block max-w-full truncate text-secondary"
+            >
+              {fullPath}
+            </Tooltip>
+          </>
         ) : (
           <>
             <div className="relative flex grow items-center">
               <input
-                className="mr-14 grow text-ellipsis rounded border border-primary bg-transparent p-2 pr-12 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
+                className="mr-14 grow text-ellipsis rounded bg-transparent p-2 pr-12 placeholder:text-secondary focus:outline-none"
                 type="text"
                 value={nameWithoutExtension}
                 onChange={(e) => setName(e.target.value)}
@@ -161,12 +179,6 @@ export const PublishAttachment = ({
             </div>
           </>
         )}
-        <Tooltip
-          tooltip={fullPath}
-          triggerClassName="block max-w-full truncate text-secondary"
-        >
-          {fullPath}
-        </Tooltip>
       </div>
       {!isRenaming && (
         <ContextMenu
@@ -174,7 +186,7 @@ export const PublishAttachment = ({
           TriggerIcon={IconDots}
           triggerIconHighlight
           triggerIconSize={18}
-          triggerIconClassName="ml-2 group-hover:block"
+          triggerIconClassName="absolute right-1 group-hover:visible invisible"
         />
       )}
     </div>

@@ -304,8 +304,8 @@ export default function PublishModal({
           </div>
           {(type === SharingType.Conversation ||
             type === SharingType.ConversationFolder) && (
-            <div className="flex w-full flex-col gap-3 p-4 md:max-w-[550px]">
-              <h2>
+            <div className="flex w-full flex-col p-4 md:max-w-[550px]">
+              <h2 className="mb-2">
                 {t(`Files contained in the ${getPrefix(entity).toLowerCase()}`)}
               </h2>
               {!files.length && (
