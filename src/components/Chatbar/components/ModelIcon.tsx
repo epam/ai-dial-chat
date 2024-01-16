@@ -39,7 +39,6 @@ const ModelIconTemplate = memo(
           height={size}
           description={entity?.name || entityId}
           cacheRequests={false}
-          uniquifyIDs
         />
         {!entity?.iconUrl && (
           <SVG
