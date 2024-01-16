@@ -73,6 +73,12 @@ export const PublishAttachment = ({
     }
   }, [isRenaming]);
 
+  useEffect(() => {
+    if (!isRenaming) {
+      setName(getFileNameWithoutExtension(file.name));
+    }
+  }, [file.name, isRenaming]);
+
   const handleCancel: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       e.stopPropagation();
@@ -131,7 +137,7 @@ export const PublishAttachment = ({
     <div
       className={classNames(
         'group relative flex w-full max-w-full items-center rounded p-2 hover:bg-accent-primary-alpha',
-        !isRenaming && 'hover:pr-6',
+        !isRenaming ? 'hover:pr-6' : 'bg-accent-primary-alpha',
       )}
     >
       <IconFile className="mr-2 shrink-0 text-secondary" size={18} />
