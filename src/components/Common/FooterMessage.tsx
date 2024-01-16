@@ -17,10 +17,10 @@ export const FooterMessage = () => {
   const footerHtmlMessage = useAppSelector(
     SettingsSelectors.selectFooterHtmlMessage,
   );
-
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
+
   const [isRequestAPIDialogOpen, setIsRequestAPIDialogOpen] = useState(false);
   const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
   const router = useRouter();
@@ -30,9 +30,11 @@ export const FooterMessage = () => {
       const hash = window.location.hash;
 
       if (hash === requestApiKeyHash) {
+        setIsReportIssueDialogOpen(false);
         setIsRequestAPIDialogOpen(true);
       }
       if (hash === reportAnIssueHash) {
+        setIsRequestAPIDialogOpen(false);
         setIsReportIssueDialogOpen(true);
       }
     };
