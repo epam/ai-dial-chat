@@ -254,7 +254,7 @@ export const FileManagerModal = ({
       isOpen={isOpen}
       onClose={() => onClose(false)}
       dataQa="file-manager-modal"
-      containerClassName="flex flex-col gap-4 md:w-[525px] overflow-y-auto"
+      containerClassName="flex flex-col gap-4 sm:w-[525px] w-full"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       <div className="flex flex-col gap-2 overflow-auto p-6">
