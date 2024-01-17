@@ -65,7 +65,6 @@ async function handlePutRequest(
     throw new OpenAIError('No file path provided', '', '', '400');
   }
   const url = `${process.env.DIAL_API_HOST}/v1/${encodeURI(slugs.join('/'))}`;
-  console.log(url);
   const proxyRes = await fetch(url, {
     method: 'PUT',
     headers: {
