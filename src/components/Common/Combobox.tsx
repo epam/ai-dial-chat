@@ -16,6 +16,8 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { Translation } from '@/src/types/translation';
 
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
@@ -145,7 +147,10 @@ export const Combobox = <T,>({
           )}
           <button
             aria-label="toggle menu"
-            className={`px-2 transition-all ${isOpen ? 'rotate-180' : ''}`}
+            className={classNames(
+              'px-2 transition-all',
+              isOpen && 'rotate-180',
+            )}
             type="button"
             {...getToggleButtonProps()}
           >
@@ -154,9 +159,10 @@ export const Combobox = <T,>({
         </div>
       </div>
       <ul
-        className={`z-10 max-h-80 overflow-auto rounded bg-layer-3 ${
-          !isOpen && 'hidden'
-        }`}
+        className={classNames(
+          'z-10 max-h-80 overflow-auto rounded bg-layer-3',
+          !isOpen && 'hidden',
+        )}
         {...getMenuProps(
           { ref: refs.floating as RefObject<HTMLUListElement> },
           { suppressRefError: true },
@@ -172,9 +178,11 @@ export const Combobox = <T,>({
           (displayedItems?.length > 0 ? (
             displayedItems.map((item, index) => (
               <li
-                className={`group flex cursor-pointer flex-col px-3 py-2 ${
-                  highlightedIndex === index ? 'bg-accent-primary-alpha' : ''
-                } ${selectedItem === item ? 'bg-accent-primary-alpha' : ''}`}
+                className={classNames(
+                  'group flex h-[34px] cursor-pointer flex-col justify-center px-3',
+                  highlightedIndex === index && 'bg-accent-primary-alpha',
+                  selectedItem === item && 'bg-accent-primary-alpha',
+                )}
                 key={`${getItemValue(item)}${index}`}
                 {...getItemProps({ item, index })}
               >

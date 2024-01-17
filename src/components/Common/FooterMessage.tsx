@@ -17,10 +17,10 @@ export const FooterMessage = () => {
   const footerHtmlMessage = useAppSelector(
     SettingsSelectors.selectFooterHtmlMessage,
   );
-
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
+
   const [isRequestAPIDialogOpen, setIsRequestAPIDialogOpen] = useState(false);
   const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
   const router = useRouter();
@@ -30,9 +30,10 @@ export const FooterMessage = () => {
       const hash = window.location.hash;
 
       if (hash === requestApiKeyHash) {
+        setIsReportIssueDialogOpen(false);
         setIsRequestAPIDialogOpen(true);
-      }
-      if (hash === reportAnIssueHash) {
+      } else if (hash === reportAnIssueHash) {
+        setIsRequestAPIDialogOpen(false);
         setIsReportIssueDialogOpen(true);
       }
     };
@@ -60,7 +61,7 @@ export const FooterMessage = () => {
             setIsRequestAPIDialogOpen(false);
             router.replace(router.basePath);
           }}
-        ></RequestAPIKeyDialog>
+        />
       )}
 
       {enabledFeatures.has(Feature.ReportAnIssue) && (
@@ -70,7 +71,7 @@ export const FooterMessage = () => {
             setIsReportIssueDialogOpen(false);
             router.replace(router.basePath);
           }}
-        ></ReportIssueDialog>
+        />
       )}
     </div>
   ) : null;

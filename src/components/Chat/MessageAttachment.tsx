@@ -130,11 +130,13 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
 
   return (
     <div
-      className={`rounded px-1 py-2 ${
-        isExpanded ? 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3' : ''
-      } ${isInner ? 'bg-layer-3' : 'border border-secondary bg-layer-1'}`}
+      className={classNames(
+        'rounded bg-layer-3 px-1 py-2',
+        isExpanded && 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3',
+        !isInner && 'border border-secondary',
+      )}
     >
-      <div className={`flex items-center gap-3 px-2`}>
+      <div className="flex items-center gap-3 px-2">
         <div className="flex items-center">
           {mappedAttachmentReferenceUrl ? (
             <a
@@ -163,9 +165,10 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           className="flex grow items-center justify-between overflow-hidden"
         >
           <span
-            className={`shrink text-left text-sm ${
-              isExpanded ? 'max-w-full' : 'max-w-[calc(100%-30px)] truncate'
-            }`}
+            className={classNames(
+              'shrink text-left text-sm',
+              isExpanded ? 'max-w-full' : 'max-w-[calc(100%-30px)] truncate',
+            )}
             title={attachment.title}
           >
             {attachment.title || t('Attachment')}
@@ -204,9 +207,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
         </button>
       </div>
       {isOpenable && isOpened && (
-        <div
-          className={`relative mt-2 h-auto w-full overflow-hidden p-3 pt-4 text-sm duration-200`}
-        >
+        <div className="relative mt-2 h-auto w-full overflow-hidden p-3 pt-4 text-sm duration-200">
           {attachment.data && (
             <AttachmentDataRenderer attachment={attachment} isInner={isInner} />
           )}

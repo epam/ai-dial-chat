@@ -1,10 +1,8 @@
-import { IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
   FormEvent,
   useCallback,
-  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -23,6 +21,8 @@ import { useAppDispatch } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { errorsMessages } from '@/src/constants/errors';
+
+import Modal from '@/src/components/Common/Modal';
 
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
 
@@ -45,7 +45,6 @@ interface Props {
 
 export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
   const { t } = useTranslation(Translation.Settings);
-  const modalRef = useRef<HTMLFormElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -116,25 +115,6 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
     [description, dispatch, handleClose, t, title],
   );
 
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        window.addEventListener('mouseup', handleMouseUp);
-      }
-    };
-
-    const handleMouseUp = () => {
-      window.removeEventListener('mouseup', handleMouseUp);
-      handleClose();
-    };
-
-    window.addEventListener('mousedown', handleMouseDown);
-
-    return () => {
-      window.removeEventListener('mousedown', handleMouseDown);
-    };
-  }, [handleClose]);
-
   // Render nothing if the dialog is not open.
   if (!isOpen) {
     return <></>;
@@ -147,74 +127,71 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
 
   // Render the dialog.
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-blackout p-3 md:p-5">
-      <form
-        ref={modalRef}
-        noValidate
-        className="relative inline-block max-h-full w-full overflow-y-auto rounded bg-layer-3 px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
-        role="dialog"
-        onSubmit={handleSubmit}
-      >
-        <button
-          className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-          onClick={handleClose}
+    <Modal
+      initialFocus={titleInputRef}
+      portalId="theme-main"
+      isOpen={isOpen}
+      onClose={handleClose}
+      dataQa="request-api-key-dialog"
+      overlayClassName="fixed inset-0"
+      containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
+      form={{
+        noValidate: true,
+        onSubmit: handleSubmit,
+      }}
+    >
+      <div className="flex justify-between pb-4 text-base font-bold">
+        {t('Report an issue')}
+      </div>
+
+      <div className="mb-4">
+        <label
+          className="mb-1 flex text-xs text-secondary"
+          htmlFor="projectNameInput"
         >
-          <IconX height={24} width={24} />
-        </button>
+          {t('Title')}
+          <span className="ml-1 inline text-accent-primary">*</span>
+        </label>
+        <input
+          ref={titleInputRef}
+          name="titleInput"
+          value={title}
+          required
+          title=""
+          type="text"
+          onBlur={onBlur}
+          onChange={onChangeTitle}
+          className={inputClassName}
+        ></input>
+        <EmptyRequiredInputMessage />
+      </div>
 
-        <div className="flex justify-between pb-4 text-base font-bold">
+      <div className="mb-5">
+        <label
+          className="mb-1 flex text-xs text-secondary"
+          htmlFor="businessJustificationInput"
+        >
+          {t('Description')}
+          <span className="ml-1 inline text-accent-primary">*</span>
+        </label>
+        <textarea
+          ref={descriptionInputRef}
+          name="descriptionInput"
+          value={description}
+          required
+          title=""
+          rows={10}
+          onBlur={onBlur}
+          onChange={onChangeDescription}
+          className={inputClassName}
+        ></textarea>
+        <EmptyRequiredInputMessage />
+      </div>
+      <div className="flex  justify-end">
+        <button type="submit" className="button button-primary">
           {t('Report an issue')}
-        </div>
-
-        <div className="mb-4">
-          <label
-            className="mb-1 flex text-xs text-secondary"
-            htmlFor="projectNameInput"
-          >
-            {t('Title')}
-            <span className="ml-1 inline text-accent-primary">*</span>
-          </label>
-          <input
-            ref={titleInputRef}
-            name="titleInput"
-            value={title}
-            required
-            title=""
-            type="text"
-            onBlur={onBlur}
-            onChange={onChangeTitle}
-            className={inputClassName}
-          ></input>
-          <EmptyRequiredInputMessage />
-        </div>
-
-        <div className="mb-5">
-          <label
-            className="mb-1 flex text-xs text-secondary"
-            htmlFor="businessJustificationInput"
-          >
-            {t('Description')}
-            <span className="ml-1 inline text-accent-primary">*</span>
-          </label>
-          <textarea
-            ref={descriptionInputRef}
-            name="descriptionInput"
-            value={description}
-            required
-            title=""
-            rows={10}
-            onBlur={onBlur}
-            onChange={onChangeDescription}
-            className={inputClassName}
-          ></textarea>
-          <EmptyRequiredInputMessage />
-        </div>
-        <div className="flex  justify-end">
-          <button type="submit" className="button button-primary">
-            {t('Report an issue')}
-          </button>
-        </div>
-      </form>
-    </div>
+        </button>
+      </div>
+    </Modal>
   );
 };
