@@ -3,5 +3,5 @@ export const isMobile = () => {
     typeof window.navigator === 'undefined' ? '' : navigator.userAgent;
   const mobileRegex =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i;
-  return mobileRegex.test(userAgent);
+  return mobileRegex.test(userAgent) || window.innerWidth < 768;
 };
