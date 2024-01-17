@@ -53,7 +53,7 @@ export class BasePage {
       for (const iconHost of options.iconsToBeLoaded) {
         const resp = this.page.waitForResponse(
           (response) =>
-            response.url() === iconHost && response.status() === 200,
+            response.url().includes(iconHost!) && response.status() === 200,
           { timeout: apiTimeout },
         );
         responses.push(resp);
