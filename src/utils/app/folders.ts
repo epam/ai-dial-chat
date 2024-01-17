@@ -105,6 +105,10 @@ export const getAvailableNameOnSameFolderLevel = (
   return itemName;
 };
 
+const escapeRegExp = (text: string) => {
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+};
+
 export const getNextDefaultName = (
   defaultName: string,
   entities: ShareEntity[],
@@ -113,7 +117,7 @@ export const getNextDefaultName = (
   includingPublishedWithMe = false,
 ) => {
   const prefix = `${defaultName} `;
-  const regex = new RegExp(`^${prefix}(\\d+)$`);
+  const regex = new RegExp(`^${escapeRegExp(prefix)}(\\d+)$`);
 
   if (!entities.length) {
     return `${prefix}${1 + index}`;
