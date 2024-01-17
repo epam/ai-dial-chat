@@ -178,7 +178,7 @@ export default function PublishModal({
     <Modal
       portalId="theme-main"
       containerClassName={classNames(
-        'group/modal inline-block h-[747px] min-w-full max-w-[1100px] !bg-layer-2 md:min-w-[550px]',
+        'group/modal inline-block h-[747px] max-h-full min-w-full max-w-[1100px] !bg-layer-2 md:min-w-[550px]',
         { 'w-full': files.length },
       )}
       dataQa="publish-modal"
@@ -188,7 +188,7 @@ export default function PublishModal({
       hideClose
     >
       <div className="flex h-full flex-col divide-y divide-tertiary">
-        <h4 className=" min-h-[50px] p-4 text-base font-semibold">
+        <h4 className="p-4 text-base font-semibold">
           <span className="line-clamp-2 break-words">
             {`${t('Publication request for')}: ${entity.name.trim()}`}
           </span>
@@ -304,7 +304,7 @@ export default function PublishModal({
           </div>
           {(type === SharingType.Conversation ||
             type === SharingType.ConversationFolder) && (
-            <div className="flex w-full flex-col p-4 md:max-w-[550px]">
+            <div className="flex w-full flex-col gap-[2px] p-4 md:max-w-[550px]">
               <h2 className="mb-2">
                 {t(`Files contained in the ${getPrefix(entity).toLowerCase()}`)}
               </h2>

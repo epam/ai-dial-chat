@@ -38,6 +38,8 @@ import SidebarActionButton from '../Buttons/SidebarActionButton';
 import ContextMenu from '../Common/ContextMenu';
 import Tooltip from '../Common/Tooltip';
 import DownloadRenderer from '../Files/Download';
+import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
+import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 
 interface Props {
   file: PublishAttachmentInfo;
@@ -63,6 +65,14 @@ export const PublishAttachment = ({
   );
   const fileExtension = getFileNameExtension(file.name);
   const fileName = `${nameWithoutExtension}${fileExtension}`;
+  const [isContextMenu, setIsContextMenu] = useState(false);
+
+  const { refs, context } = useFloating({
+    open: isContextMenu,
+    onOpenChange: setIsContextMenu,
+  });
+  const dismiss = useDismiss(context);
+  const { getFloatingProps } = useInteractions([dismiss]);
 
   useEffect(() => {
     if (isRenaming) {
@@ -133,26 +143,39 @@ export const PublishAttachment = ({
 
   const fullPath = constructPath(t(PUBLISHING_FOLDER_NAME), file.path);
 
+  const handleContextMenuOpen = (e: MouseEvent) => {
+    if (isRenaming) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    setIsContextMenu(true);
+  };
+
   return (
     <div
       className={classNames(
         'group relative flex w-full max-w-full items-center rounded p-2 hover:bg-accent-primary-alpha',
         !isRenaming ? 'hover:pr-6' : 'bg-accent-primary-alpha',
       )}
+      onContextMenu={handleContextMenuOpen}
     >
       <IconFile className="mr-2 shrink-0 text-secondary" size={18} />
       <div className="flex min-w-0 shrink grow flex-col">
         {!isRenaming ? (
           <>
             <Tooltip
+              isTriggerClickable
               tooltip={fileName}
               triggerClassName="block max-w-full truncate"
+              hideTooltip={isContextMenu}
             >
               {fileName}
             </Tooltip>
             <Tooltip
               tooltip={fullPath}
               triggerClassName="block max-w-full truncate text-secondary"
+              hideTooltip={isContextMenu}
             >
               {fullPath}
             </Tooltip>
@@ -186,13 +209,19 @@ export const PublishAttachment = ({
         )}
       </div>
       {!isRenaming && (
-        <ContextMenu
-          menuItems={menuItems}
-          TriggerIcon={IconDots}
-          triggerIconHighlight
-          triggerIconSize={18}
-          triggerIconClassName="absolute right-1 group-hover:visible invisible"
-        />
+        <div
+          ref={refs.setFloating}
+          {...getFloatingProps()}
+          className="invisible absolute right-1 group-hover:visible"
+        >
+          <ContextMenu
+            menuItems={menuItems}
+            TriggerIcon={IconDots}
+            triggerIconHighlight
+            triggerIconSize={18}
+            isOpen={isContextMenu}
+          />
+        </div>
       )}
     </div>
   );
