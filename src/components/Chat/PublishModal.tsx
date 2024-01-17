@@ -11,7 +11,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { constructPath } from '@/src/utils/app/file';
+import { constructPath, validatePublishingFileRenaming } from '@/src/utils/app/file';
 import {
   getAttachments,
   getPublishActionByType,
@@ -35,6 +35,7 @@ import Modal from '../Common/Modal';
 import { PublishAttachment } from './PublishAttachment';
 
 import { v4 as uuidv4 } from 'uuid';
+import { ErrorMessage } from '../Common/ErrorMessage';
 
 interface Props {
   entity: ShareEntity;
@@ -71,27 +72,7 @@ export default function PublishModal({
   const [path, setPath] = useState<string>('');
   const [renamingFile, setRenamingFile] = useState<PublishAttachmentInfo>();
   const newFileNames = useRef(new Map());
-
-  const handleStartRename = useCallback((file: PublishAttachmentInfo) => {
-    setRenamingFile(file);
-  }, []);
-
-  const handleRename = useCallback(
-    (file: PublishAttachmentInfo, name: string) => {
-      const nameMap = newFileNames.current;
-      let oldPath = constructPath(file.path, file.name);
-      const newPath = constructPath(file.path, name);
-      if(nameMap.has(oldPath)) {
-        const originalPath = nameMap.get(oldPath);
-        nameMap.delete(oldPath);
-        oldPath = originalPath;
-      }
-      newFileNames.current.set(newPath, oldPath);
-      file.name = name;
-      setRenamingFile(undefined);
-    },
-    [],
-  );
+  const [errorMessage, setErrorMessage] = useState('');
 
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
@@ -115,6 +96,33 @@ export default function PublishModal({
   const versionOnChangeHandler = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       setVersion(e.target.value);
+    },
+    [],
+  );
+
+  const handleStartFileRename = useCallback((file: PublishAttachmentInfo) => {
+    setRenamingFile(file);
+  }, []);
+
+  const handleFileRename = useCallback(
+    (file: PublishAttachmentInfo, name: string) => {
+      const error = validatePublishingFileRenaming(files, name, file);
+      if (error) {
+        setErrorMessage(t(error) as string);
+        return;
+      } else setErrorMessage('');
+
+      const nameMap = newFileNames.current;
+      let oldPath = constructPath(file.path, file.name);
+      const newPath = constructPath(file.path, name);
+      if(nameMap.has(oldPath)) {
+        const originalPath = nameMap.get(oldPath);
+        nameMap.delete(oldPath);
+        oldPath = originalPath;
+      }
+      newFileNames.current.set(newPath, oldPath);
+      file.name = name;
+      setRenamingFile(undefined);
     },
     [],
   );
@@ -316,6 +324,7 @@ export default function PublishModal({
               <h2 className="mb-2">
                 {t(`Files contained in the ${getPrefix(entity).toLowerCase()}`)}
               </h2>
+              <ErrorMessage error={errorMessage} />
               {!files.length && (
                 <p className="text-secondary">{t('No files')}</p>
               )}
@@ -324,8 +333,8 @@ export default function PublishModal({
                   key={constructPath(file?.path, file?.name)}
                   isRenaming={file === renamingFile}
                   file={file}
-                  onRename={handleRename}
-                  onStartRename={handleStartRename}
+                  onRename={handleFileRename}
+                  onStartRename={handleStartFileRename}
                 />
               ))}
             </div>
