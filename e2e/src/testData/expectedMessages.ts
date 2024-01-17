@@ -192,5 +192,5 @@ export enum ExpectedMessages {
   addonIsAvailable = 'Addon is returned in API response',
   responseCodeIsValid = 'Response code is valid for model: ',
   responseTextIsValid = 'Response text is valid for model: ',
-  imageUrlReturnedInResponse = 'Image url returned is the response for model: ',
+  imageUrlReturnedInResponse = 'Image url is returned in the response for model: ',
 }
