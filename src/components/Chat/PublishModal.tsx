@@ -70,7 +70,7 @@ export default function PublishModal({
   const [name, setName] = useState<string>(entity.name);
   const [path, setPath] = useState<string>('');
   const [renamingFile, setRenamingFile] = useState<PublishAttachmentInfo>();
-  const newNames = useRef(new Map());
+  const newFileNames = useRef(new Map());
 
   const handleStartRename = useCallback((file: PublishAttachmentInfo) => {
     setRenamingFile(file);
@@ -78,7 +78,15 @@ export default function PublishModal({
 
   const handleRename = useCallback(
     (file: PublishAttachmentInfo, name: string) => {
-      newNames.current.set(constructPath(file.path, file.name), name);
+      const nameMap = newFileNames.current;
+      let oldPath = constructPath(file.path, file.name);
+      const newPath = constructPath(file.path, name);
+      if(nameMap.has(oldPath)) {
+        const originalPath = nameMap.get(oldPath);
+        nameMap.delete(oldPath);
+        oldPath = originalPath;
+      }
+      newFileNames.current.set(newPath, oldPath);
       file.name = name;
       setRenamingFile(undefined);
     },
