@@ -527,10 +527,7 @@ test(
     await test.step('Send new request with preselected "Replay as is" option and verify message icons correspond models', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await chat.startReplayForDifferentModels([
-        conversation.messages[0].content,
-        conversation.messages[2].content,
-      ]);
+      await chat.startReplayForDifferentModels();
 
       const expectedFirstModelIcon = await apiHelper.getEntityIcon(firstModel);
       const expectedSecondModelIcon =
@@ -827,7 +824,6 @@ test(
     replayAsIs,
   }) => {
     setTestIds('EPMRTC-1330', 'EPMRTC-1332');
-    const newMessages: string[] = [];
     const filename = GeneratorUtil.randomArrayElement([
       Import.v14AppImportedFilename,
       Import.v19AppImportedFilename,
@@ -855,7 +851,6 @@ test(
         );
         await chat.applyChanges().click();
         const newMessage = `${i}*2=`;
-        newMessages.push(newMessage);
         await chat.sendRequestWithButton(newMessage);
       }
     });
@@ -892,10 +887,7 @@ test(
     });
 
     await test.step('Start replaying and verify old requests are replayed using gpt-4 model', async () => {
-      const requests = await chat.startReplayForDifferentModels([
-        Import.oldVersionAppGpt35Message,
-        ...newMessages,
-      ]);
+      const requests = await chat.startReplayForDifferentModels();
       for (let i = 0; i < requests.length; i++) {
         const modelId = i === 1 ? ModelIds.BISON_001 : ModelIds.GPT_4;
         expect
