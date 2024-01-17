@@ -115,7 +115,7 @@ export const getNextDefaultName = (
   includingPublishedWithMe = false,
 ) => {
   const prefix = `${defaultName} `;
-  const regex = new RegExp(`^${escapeStringRegexp(prefix)}(\\d+)$`);
+  const regex = new RegExp(`^${escapeStringRegexp(prefix)}(\\d{1,3})$`);
 
   if (!entities.length) {
     return `${prefix}${1 + index}`;
