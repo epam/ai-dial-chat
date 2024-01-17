@@ -160,13 +160,18 @@ export const PublishAttachment = ({
       onContextMenu={handleContextMenuOpen}
     >
       <IconFile className="mr-2 shrink-0 text-secondary" size={18} />
-      <div className="flex min-w-0 shrink grow flex-col">
+      <div
+        className={classNames(
+          'flex min-w-0 shrink grow flex-col',
+          !isRenaming && 'items-start',
+        )}
+      >
         {!isRenaming ? (
           <>
             <Tooltip
               isTriggerClickable
               tooltip={fileName}
-              triggerClassName="block max-w-full truncate"
+              triggerClassName="block truncate max-w-full"
               hideTooltip={isContextMenu}
             >
               {fileName}
