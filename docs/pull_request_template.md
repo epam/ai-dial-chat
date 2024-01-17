@@ -15,6 +15,7 @@ List of related pull requests:
 ### Checklist
 
 - [ ] the pull request name complies with [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+- [ ] the pull request name starts with `fix:`, `feat:`, `feature:`, `chore:`, `hotfix:` or `e2e:`
 - [ ] the pull request name ends with `(Issue #<TICKET_ID>)` (comma-separated list of issues)
 - [ ] unit-tests passed
 - [ ] deployed on Review environment before Code review (`deploy-review` comment)
