@@ -9,25 +9,29 @@ export type MIMEType =
   | ImageMIMEType
   | string;
 
-export interface BackendFile {
+export type BackendDataNodeType = 'ITEM' | 'FOLDER';
+
+interface BackendDataEntity {
   name: string;
-  type: 'FILE';
+  nodeType: BackendDataNodeType;
+  resourceType: 'FILE'; // only 1 type for now
   bucket: string;
-  parentPath: string | null;
+  parentPath: string | null | undefined;
+}
+
+export interface BackendFile extends BackendDataEntity {
+  nodeType: 'ITEM';
   contentLength: number;
   contentType: MIMEType;
 }
-export interface BackendFileFolder {
-  name: string;
-  type: 'FOLDER';
-  bucket: string;
-  parentPath: string | undefined;
-  files: (BackendFile | BackendFileFolder)[];
+export interface BackendFileFolder extends BackendDataEntity {
+  nodeType: 'FOLDER';
+  items: (BackendFile | BackendFileFolder)[];
 }
 
 export type DialFile = Omit<
   BackendFile,
-  'path' | 'type' | 'bucket' | 'parentPath'
+  'path' | 'nodeType' | 'resourceType' | 'bucket' | 'parentPath'
 > & {
   // Combination of relative path and name
   id: string;
