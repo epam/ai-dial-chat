@@ -1,5 +1,5 @@
 import { IconCircleFilled, IconFilter } from '@tabler/icons-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -39,6 +39,7 @@ export default function SearchFiltersView({
       ? Translation.SideBar
       : Translation.PromptBar,
   );
+  const [isOpen, setIsOpen] = useState(false);
 
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
@@ -87,8 +88,9 @@ export default function SearchFiltersView({
       menuItems={filterItems}
       featureType={featureType}
       triggerIconClassName="absolute right-4 cursor-pointer max-h-[18px]"
+      onOpenChange={(open) => setIsOpen(open)}
       TriggerCustomRenderer={
-        <Tooltip tooltip={t('Search filter')}>
+        <Tooltip tooltip={t('Search filter')} hideTooltip={isOpen}>
           <IconFilter
             size={18}
             className={classNames('text-secondary hover:text-accent-primary')}
