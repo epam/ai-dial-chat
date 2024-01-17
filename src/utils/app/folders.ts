@@ -10,6 +10,8 @@ import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
+import escapeStringRegexp from 'escape-string-regexp';
+
 export const getFoldersDepth = (
   childFolder: FolderInterface,
   allFolders: FolderInterface[],
@@ -105,10 +107,6 @@ export const getAvailableNameOnSameFolderLevel = (
   return itemName;
 };
 
-const escapeRegExp = (text: string) => {
-  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
-};
-
 export const getNextDefaultName = (
   defaultName: string,
   entities: ShareEntity[],
@@ -117,7 +115,7 @@ export const getNextDefaultName = (
   includingPublishedWithMe = false,
 ) => {
   const prefix = `${defaultName} `;
-  const regex = new RegExp(`^${escapeRegExp(prefix)}(\\d+)$`);
+  const regex = new RegExp(`^${escapeStringRegexp(prefix)}(\\d+)$`);
 
   if (!entities.length) {
     return `${prefix}${1 + index}`;
