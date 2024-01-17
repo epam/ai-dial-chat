@@ -4,7 +4,7 @@ import { API } from '@/e2e/src/testData';
 import { BaseApiHelper } from '@/e2e/src/testData/api/baseApiHelper';
 
 export class ChatApiHelper extends BaseApiHelper {
-  public async postModel(conversation: Conversation) {
+  public async postRequest(conversation: Conversation) {
     const requestData = {
       modelId: conversation.model.id,
       messages: [conversation.messages[0]],
@@ -16,6 +16,7 @@ export class ChatApiHelper extends BaseApiHelper {
     };
     return this.request.post(API.chatHost, {
       data: requestData,
+      timeout: 60000,
     });
   }
 }

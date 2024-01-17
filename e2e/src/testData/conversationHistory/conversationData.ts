@@ -11,6 +11,7 @@ import {
   MenuOptions,
   ModelIds,
 } from '@/e2e/src/testData';
+import { FileApiHelper } from '@/e2e/src/testData/api/fileApiHelper';
 import { FolderData } from '@/e2e/src/testData/folders/folderData';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -319,6 +320,32 @@ export class ConversationData extends FolderData {
     const conversation = this.prepareDefaultConversation();
     conversation.isShared = true;
     return conversation;
+  }
+
+  public prepareConversationWithAttachment(
+    attachmentUrl: string,
+    model: OpenAIEntityModel | string,
+    hasRequest?: boolean,
+  ) {
+    const filename = attachmentUrl.split('/')[1];
+    const modelToUse = { id: typeof model === 'string' ? model : model.id };
+    const userMessage: Message = {
+      role: Role.User,
+      content: hasRequest ? 'what is on picture?' : '',
+      custom_content: {
+        attachments: [
+          {
+            type: FileApiHelper.getContentTypeForFile(filename)!,
+            title: filename,
+            url: attachmentUrl,
+          },
+        ],
+      },
+    };
+    return this.conversationBuilder
+      .withMessage(userMessage)
+      .withModel(modelToUse)
+      .build();
   }
 
   private fillReplayData(

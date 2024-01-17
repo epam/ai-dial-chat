@@ -1,7 +1,12 @@
 import { BucketUtil } from '@/e2e/src/utils/bucketUtil';
 
 import test from '@/e2e/src/core/fixtures';
-import { ModelIds } from '@/e2e/src/testData';
+import {
+  Attachment,
+  ExpectedConstants,
+  ExpectedMessages,
+  ModelIds,
+} from '@/e2e/src/testData';
 import { expect } from '@playwright/test';
 
 const modelsForArithmeticRequest: {
@@ -36,11 +41,24 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.GEMINI_PRO, isSysPromptAllowed: true },
 );
 
-const modelsForImageRequest = Array.of(
+const modelsForImageGeneration = Array.of(
   ModelIds.STABLE_DIFFUSION,
   ModelIds.DALLE,
   ModelIds.IMAGE_GENERATION_005,
 );
+
+const modelsForRequestWithAttachment: {
+  modelId: string;
+  isTextRequestRequired: boolean;
+}[] = Array.of(
+  { modelId: ModelIds.GPT_4_VISION_PREVIEW, isTextRequestRequired: true },
+  { modelId: ModelIds.GEMINI_PRO_VISION, isTextRequestRequired: true },
+);
+
+let imageUrl: string;
+test.beforeAll(async ({ fileApiHelper }) => {
+  imageUrl = await fileApiHelper.putFile(Attachment.sunImageName);
+});
 
 for (const modelToUse of modelsForArithmeticRequest) {
   test(`Generate arithmetic response for model: ${modelToUse.modelId}`, async ({
@@ -57,22 +75,28 @@ for (const modelToUse of modelsForArithmeticRequest) {
     );
     conversation.messages[0].content = '1+2=';
 
-    const response = await chatApiHelper.postModel(conversation);
+    const response = await chatApiHelper.postRequest(conversation);
     const status = response.status();
     expect
-      .soft(status, `Response code is valid for model: ${modelToUse.modelId}`)
+      .soft(
+        status,
+        `${ExpectedMessages.responseCodeIsValid}${modelToUse.modelId}`,
+      )
       .toBe(200);
 
     const respBody = await response.text();
-    const results = respBody.match(/(?<=\{"content":")[^"^\\$]+/g);
+    const results = respBody.match(ExpectedConstants.responseContentPattern);
     const result = results?.join('');
     expect
-      .soft(result, `Response text is valid for model: ${modelToUse.modelId}`)
+      .soft(
+        result,
+        `${ExpectedMessages.responseTextIsValid}${modelToUse.modelId}`,
+      )
       .toMatch(/\s?3\.?/);
   });
 }
 
-for (const modelToUse of modelsForImageRequest) {
+for (const modelToUse of modelsForImageGeneration) {
   test(`Generate image for model: ${modelToUse}`, async ({
     conversationData,
     chatApiHelper,
@@ -82,27 +106,59 @@ for (const modelToUse of modelsForImageRequest) {
         'draw smiling emoticon',
       ]);
 
-    const response = await chatApiHelper.postModel(conversation);
+    const response = await chatApiHelper.postRequest(conversation);
     const status = response.status();
     expect
-      .soft(status, `Response code is valid for model: ${modelToUse}`)
+      .soft(status, `${ExpectedMessages.responseCodeIsValid}${modelToUse}`)
       .toBe(200);
 
     const respBody = await response.text();
-    const result = respBody.match(/(?<="url":")[^"$]+/g);
+    const result = respBody.match(ExpectedConstants.responseFileUrlPattern);
     expect
       .soft(
         result ? result[0] : undefined,
-        `Image url returned in the response for model: ${modelToUse}`,
+        `${ExpectedMessages.imageUrlReturnedInResponse}${modelToUse}`,
       )
       .toMatch(
-        new RegExp(
-          BucketUtil.getBucket() +
-            '/appdata/' +
-            modelToUse +
-            '/images/.*\\.png',
-          'g',
+        ExpectedConstants.responseFileUrlContentPattern(
+          BucketUtil.getBucket(),
+          modelToUse,
         ),
       );
   });
 }
+
+for (const modelToUse of modelsForRequestWithAttachment) {
+  test(`Generate response on request with attachment for model: ${modelToUse.modelId}`, async ({
+    conversationData,
+    chatApiHelper,
+  }) => {
+    const conversation = conversationData.prepareConversationWithAttachment(
+      imageUrl,
+      modelToUse.modelId,
+      modelToUse.isTextRequestRequired,
+    );
+    const modelResponse = await chatApiHelper.postRequest(conversation);
+    const status = modelResponse.status();
+    expect
+      .soft(
+        status,
+        `${ExpectedMessages.responseCodeIsValid}${modelToUse.modelId}`,
+      )
+      .toBe(200);
+
+    const respBody = await modelResponse.text();
+    const results = respBody.match(ExpectedConstants.responseContentPattern);
+    const result = results?.join('');
+    expect
+      .soft(
+        result,
+        `${ExpectedMessages.responseTextIsValid}${modelToUse.modelId}`,
+      )
+      .toMatch(new RegExp('.*sun.*', 'i'));
+  });
+}
+
+test.afterAll(async ({ fileApiHelper }) => {
+  await fileApiHelper.deleteFile(Attachment.sunImageName);
+});

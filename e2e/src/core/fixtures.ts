@@ -20,6 +20,7 @@ import { LocalStorageManager } from './localStorageManager';
 
 import { ConversationData } from '@/e2e/src/testData';
 import { ChatApiHelper } from '@/e2e/src/testData/api/chatApiHelper';
+import { FileApiHelper } from '@/e2e/src/testData/api/fileApiHelper';
 import { IconApiHelper } from '@/e2e/src/testData/api/iconApiHelper';
 import { PromptData } from '@/e2e/src/testData/prompts/promptData';
 import { AccountSettings } from '@/e2e/src/ui/webElements/accountSettings';
@@ -117,6 +118,7 @@ const test = base.extend<
     promptFilterDropdownMenu: DropdownCheckboxMenu;
     iconApiHelper: IconApiHelper;
     chatApiHelper: ChatApiHelper;
+    fileApiHelper: FileApiHelper;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -373,6 +375,10 @@ const test = base.extend<
   chatApiHelper: async ({ request }, use) => {
     const chatApiHelper = new ChatApiHelper(request);
     await use(chatApiHelper);
+  },
+  fileApiHelper: async ({ request }, use) => {
+    const fileApiHelper = new FileApiHelper(request);
+    await use(fileApiHelper);
   },
 });
 

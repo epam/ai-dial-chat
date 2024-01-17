@@ -190,4 +190,7 @@ export enum ExpectedMessages {
   entitiesCountIsValid = 'Number of entities returned in API response is valid',
   modelIsAvailable = 'Model is returned in API response',
   addonIsAvailable = 'Addon is returned in API response',
+  responseCodeIsValid = 'Response code is valid for model: ',
+  responseTextIsValid = 'Response text is valid for model: ',
+  imageUrlReturnedInResponse = 'Image url returned is the response for model: ',
 }

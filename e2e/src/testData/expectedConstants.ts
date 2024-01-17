@@ -46,6 +46,10 @@ export const ExpectedConstants = {
   maxSidePanelWidthPercentage: 0.45,
   minSidePanelWidthPx: 260,
   attachments: 'Attachments',
+  responseContentPattern: /(?<=\{"content":")[^"^\\$]+/g,
+  responseFileUrlPattern: /(?<="url":")[^"$]+/g,
+  responseFileUrlContentPattern: (bucket: string, model: string) =>
+    new RegExp(bucket + '/appdata/' + model + '/images/.*\\.png', 'g'),
 };
 
 export enum Groups {
@@ -96,6 +100,7 @@ export const API = {
   sessionHost: '/api/auth/session',
   defaultIconHost: '/api/themes/image?name=default-model',
   bucketHost: '/api/files/bucket',
+  fileHost: '/api/files/file',
 };
 
 export const Import = {
@@ -108,6 +113,11 @@ export const Import = {
   v19AppImportedFilename: 'chatbot_ui_history_1-9_version.json',
   v14AppFolderPromptName: 'Version 1.4 A*B',
   oldVersionAppGpt35Message: '11 * 12 =',
+};
+
+export const Attachment = {
+  attachmentPath: path.resolve(__dirname, 'attachments'),
+  sunImageName: 'sun.png',
 };
 
 export enum Side {
