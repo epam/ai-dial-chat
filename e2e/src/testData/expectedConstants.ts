@@ -48,8 +48,8 @@ export const ExpectedConstants = {
   attachments: 'Attachments',
   responseContentPattern: /(?<=\{"content":")[^"^\\$]+/g,
   responseFileUrlPattern: /(?<="url":")[^"$]+/g,
-  responseFileUrlContentPattern: (bucket: string, model: string) =>
-    new RegExp(bucket + '/appdata/' + model + '/images/.*\\.png', 'g'),
+  responseFileUrlContentPattern: (model: string) =>
+    new RegExp('/appdata/' + model + '/images/.*\\.png', 'g'),
 };
 
 export enum Groups {

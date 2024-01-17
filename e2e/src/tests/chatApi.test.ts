@@ -1,5 +1,3 @@
-import { BucketUtil } from '@/e2e/src/utils/bucketUtil';
-
 import test from '@/e2e/src/core/fixtures';
 import {
   Attachment,
@@ -119,12 +117,7 @@ for (const modelToUse of modelsForImageGeneration) {
         result ? result[0] : undefined,
         `${ExpectedMessages.imageUrlReturnedInResponse}${modelToUse}`,
       )
-      .toMatch(
-        ExpectedConstants.responseFileUrlContentPattern(
-          BucketUtil.getBucket(),
-          modelToUse,
-        ),
-      );
+      .toMatch(ExpectedConstants.responseFileUrlContentPattern(modelToUse));
   });
 }
 
