@@ -1,3 +1,4 @@
+import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import {
   IconCheck,
   IconDots,
@@ -38,8 +39,6 @@ import SidebarActionButton from '../Buttons/SidebarActionButton';
 import ContextMenu from '../Common/ContextMenu';
 import Tooltip from '../Common/Tooltip';
 import DownloadRenderer from '../Files/Download';
-import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
-import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 
 interface Props {
   file: PublishAttachmentInfo;
