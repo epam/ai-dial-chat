@@ -1,4 +1,10 @@
-### Description
+---
+name: PR template
+title: 'PR name in Conventional Commits format (Issue #<Number>)'
+assignees: @me
+---
+
+**Description:**
 
 <SHORT_DESCRIPTION>
 
@@ -6,13 +12,13 @@ Issues:
 
 - Issue #<TICKET_ID>
 
-### Related
+**Related:**
 
 List of related pull requests:
 
 - none
 
-### Checklist
+**Checklist:**
 
 - [ ] the pull request name complies with [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 - [ ] the pull request name starts with `fix:`, `feat:`, `feature:`, `chore:`, `hotfix:` or `e2e:`
