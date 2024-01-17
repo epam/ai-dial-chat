@@ -10,10 +10,6 @@ import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
-import { selectFilteredConversations } from '@/src/store/conversations/conversations.selectors';
-
-import { RootState } from '@/src/store';
-
 export const getFoldersDepth = (
   childFolder: FolderInterface,
   allFolders: FolderInterface[],
@@ -204,21 +200,14 @@ export const getPathToFolderById = (
 };
 
 export const getFilteredFolders = (
-  state: RootState,
   folders: FolderInterface[],
   emptyFolderIds: string[],
   filters: EntityFilters,
+  entities: Conversation[] | Prompt[],
   searchTerm?: string,
   includeEmptyFolders?: boolean,
 ) => {
-  const filteredConversations = selectFilteredConversations(
-    state,
-    filters,
-    searchTerm,
-  );
-  const folderIds = filteredConversations
-    .map((c) => c.folderId)
-    .filter((fid) => fid);
+  const folderIds = entities.map((c) => c.folderId).filter((fid) => fid);
 
   if (!searchTerm?.trim().length) {
     const markedFolderIds = folders
