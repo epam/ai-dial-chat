@@ -3,6 +3,7 @@ import { EntityFilters } from './search';
 
 export interface FolderInterface extends ShareEntity {
   type: FolderType;
+  temporary?: boolean;
   serverSynced?: boolean;
 }
 

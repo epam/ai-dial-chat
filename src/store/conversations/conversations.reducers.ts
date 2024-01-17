@@ -4,7 +4,6 @@ import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
 import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import { SearchFilters } from './../../types/search';
 import {
   Conversation,
   ConversationEntityModel,
@@ -13,9 +12,10 @@ import {
 } from '@/src/types/chat';
 import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
+import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
 
-import { resetShareEntity } from './../../constants/chat';
+import { resetShareEntity } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
@@ -34,11 +34,13 @@ const initialState: ConversationsState = {
   conversations: [],
   selectedConversationsIds: [],
   folders: [],
+  temporaryFolders: [],
   searchTerm: '',
   searchFilters: SearchFilters.None,
   conversationSignal: new AbortController(),
   isReplayPaused: true,
   isPlaybackPaused: true,
+  newAddedFolderId: undefined,
 };
 
 export const conversationsSlice = createSlice({
@@ -384,10 +386,13 @@ export const conversationsSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ name?: string; folderId?: string } | undefined>,
+      }: PayloadAction<
+        { name?: string; folderId?: string; parentId?: string } | undefined
+      >,
     ) => {
       const newFolder: FolderInterface = {
         id: payload?.folderId || uuidv4(),
+        folderId: payload?.parentId || undefined,
         name:
           payload?.name ?? // custom name
           getNextDefaultName(translate('New folder'), state.folders), // default name with counter
@@ -396,8 +401,48 @@ export const conversationsSlice = createSlice({
 
       state.folders = state.folders.concat(newFolder);
     },
+    createTemporaryFolder: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        relativePath?: string;
+      }>,
+    ) => {
+      const folderName = getNextDefaultName(
+        translate('New folder'),
+        [
+          ...state.temporaryFolders,
+          ...state.folders.filter((folder) => folder.publishedWithMe),
+        ],
+        0,
+        false,
+        true,
+      );
+      const id = uuidv4();
+
+      state.temporaryFolders.push({
+        id,
+        name: folderName,
+        type: FolderType.Chat,
+        folderId: payload.relativePath,
+        temporary: true,
+      });
+      state.newAddedFolderId = id;
+    },
     deleteFolder: (state, { payload }: PayloadAction<{ folderId: string }>) => {
       state.folders = state.folders.filter(({ id }) => id !== payload.folderId);
+    },
+    deleteTemporaryFolder: (
+      state,
+      { payload }: PayloadAction<{ folderId: string }>,
+    ) => {
+      state.temporaryFolders = state.temporaryFolders.filter(
+        ({ id }) => id !== payload.folderId,
+      );
+    },
+    deleteAllTemporaryFolders: (state) => {
+      state.temporaryFolders = [];
     },
     renameFolder: (
       state,
@@ -417,6 +462,23 @@ export const conversationsSlice = createSlice({
 
         return folder;
       });
+    },
+    renameTemporaryFolder: (
+      state,
+      { payload }: PayloadAction<{ folderId: string; name: string }>,
+    ) => {
+      state.newAddedFolderId = undefined;
+      const name = payload.name.trim();
+      if (name === '') {
+        return;
+      }
+
+      state.temporaryFolders = state.temporaryFolders.map((folder) =>
+        folder.id !== payload.folderId ? folder : { ...folder, name },
+      );
+    },
+    resetNewFolderId: (state) => {
+      state.newAddedFolderId = undefined;
     },
     moveFolder: (
       state,
