@@ -12,6 +12,8 @@ import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 import { PublishAttachmentInfo } from '@/src/types/share';
 
+import escapeStringRegexp from 'escape-string-regexp';
+
 export const getFoldersDepth = (
   childFolder: FolderInterface,
   allFolders: FolderInterface[],
@@ -115,7 +117,7 @@ export const getNextDefaultName = (
   includingPublishedWithMe = false,
 ) => {
   const prefix = `${defaultName} `;
-  const regex = new RegExp(`^${prefix}(\\d+)$`);
+  const regex = new RegExp(`^${escapeStringRegexp(prefix)}(\\d{1,3})$`);
 
   if (!entities.length) {
     return `${prefix}${1 + index}`;
