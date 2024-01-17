@@ -85,10 +85,10 @@ export const selectFilteredFolders = createSelector(
     includeEmptyFolders?,
   ) =>
     getFilteredFolders(
-      state,
       folders,
       emptyFolderIds,
       filters,
+      selectFilteredPrompts(state, filters, searchTerm),
       searchTerm,
       includeEmptyFolders,
     ),
