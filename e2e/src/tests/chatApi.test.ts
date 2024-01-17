@@ -120,9 +120,12 @@ for (const modelToUse of modelsForImageGeneration) {
         `${ExpectedMessages.imageUrlReturnedInResponse}${modelToUse}`,
       )
       .toMatch(
-        ExpectedConstants.responseFileUrlContentPattern(
-          BucketUtil.getBucket(),
-          modelToUse,
+        new RegExp(
+          BucketUtil.getBucket() +
+            '/appdata/' +
+            modelToUse +
+            '/images/.*\\.png',
+          'g',
         ),
       );
   });
