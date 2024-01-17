@@ -6,9 +6,11 @@ export interface ConversationsState {
   conversations: Conversation[];
   selectedConversationsIds: string[];
   folders: FolderInterface[];
+  temporaryFolders: FolderInterface[];
   searchTerm: string;
   searchFilters: SearchFilters;
   conversationSignal: AbortController;
   isReplayPaused: boolean;
   isPlaybackPaused: boolean;
+  newAddedFolderId?: string;
 }

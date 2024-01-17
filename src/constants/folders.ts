@@ -1,0 +1,1 @@
+export const MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH = 3;

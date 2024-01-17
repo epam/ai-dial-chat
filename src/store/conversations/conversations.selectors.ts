@@ -2,10 +2,12 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import {
   getChildAndCurrentFoldersIdsById,
-  getParentAndCurrentFolderIdsById,
+  getFilteredFolders,
+  getParentAndChildFolders,
   getParentAndCurrentFoldersById,
 } from '@/src/utils/app/folders';
 import {
+  PublishedWithMeFilter,
   doesConversationContainSearchTerm,
   getMyItemsFilters,
   searchSectionFolders,
@@ -81,40 +83,15 @@ export const selectFilteredFolders = createSelector(
     filters,
     searchTerm?,
     includeEmptyFolders?,
-  ) => {
-    const filteredConversations = selectFilteredConversations(
+  ) =>
+    getFilteredFolders(
       state,
+      folders,
+      emptyFolderIds,
       filters,
       searchTerm,
-    );
-    const folderIds = filteredConversations // direct parent folders
-      .map((c) => c.folderId)
-      .filter((fid) => fid);
-
-    if (!searchTerm?.trim().length) {
-      const markedFolderIds = folders
-        .filter((folder) => filters?.searchFilter(folder))
-        .map((f) => f.id);
-      folderIds.push(...markedFolderIds);
-
-      if (includeEmptyFolders && !searchTerm?.length) {
-        // include empty folders only if not search
-        folderIds.push(...emptyFolderIds);
-      }
-    }
-
-    const filteredFolderIds = new Set(
-      folderIds.flatMap((fid) =>
-        getParentAndCurrentFolderIdsById(folders, fid),
-      ),
-    );
-
-    return folders.filter(
-      (folder) =>
-        (folder.folderId || filters.sectionFilter(folder)) &&
-        filteredFolderIds.has(folder.id),
-    );
-  },
+      includeEmptyFolders,
+    ),
 );
 
 export const selectSectionFolders = createSelector(
@@ -434,5 +411,46 @@ export const isPublishConversationVersionUnique = createSelector(
       conversation.folderId,
     );
     return parentFolders.every((folder) => folder.publishVersion !== version);
+  },
+);
+export const selectTemporaryFolders = createSelector(
+  [rootSelector],
+  (state: ConversationsState) => {
+    return state.temporaryFolders;
+  },
+);
+
+export const selectPublishedWithMeFolders = createSelector(
+  [selectFolders],
+  (folders) => {
+    return folders.filter((folder) =>
+      PublishedWithMeFilter.sectionFilter(folder),
+    );
+  },
+);
+
+export const selectTemporaryAndFilteredFolders = createSelector(
+  [
+    selectFolders,
+    selectPublishedWithMeFolders,
+    selectTemporaryFolders,
+    (_state, searchTerm?: string) => searchTerm,
+  ],
+  (allFolders, filteredFolders, temporaryFolders, searchTerm = '') => {
+    const filtered = [...filteredFolders, ...temporaryFolders].filter(
+      (folder) => folder.name.includes(searchTerm.toLowerCase()),
+    );
+
+    return getParentAndChildFolders(
+      [...allFolders, ...temporaryFolders],
+      filtered,
+    );
+  },
+);
+
+export const selectNewAddedFolderId = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.newAddedFolderId;
   },
 );

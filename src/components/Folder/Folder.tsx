@@ -51,7 +51,7 @@ import ShareIcon from '../Common/ShareIcon';
 import { Spinner } from '../Common/Spinner';
 import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
 
-interface Props<T, P = unknown> {
+export interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;
   itemComponent?: FC<{
     item: T;
@@ -85,7 +85,26 @@ interface Props<T, P = unknown> {
   onItemEvent?: (eventId: string, data: unknown) => void;
   readonly?: boolean;
   onFileUpload?: (parentFolderId: string) => void;
+  maxDepth?: number;
+  highlightTemporaryFolders?: boolean;
 }
+
+const getClassForFolderName = (
+  highlightTemporaryFolders: boolean | undefined,
+  currentFolder: FolderInterface,
+  highlightedFolders: string[] | undefined,
+) => {
+  if (highlightTemporaryFolders && !currentFolder.temporary) {
+    return 'text-secondary';
+  }
+  if (highlightTemporaryFolders && currentFolder.temporary) {
+    return 'text-primary';
+  }
+
+  return highlightedFolders?.includes(currentFolder.id)
+    ? 'text-accent-primary'
+    : 'text-primary';
+};
 
 const Folder = <T extends Conversation | Prompt | DialFile>({
   currentFolder,
@@ -111,7 +130,9 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   onItemEvent,
   featureType,
   readonly = false,
-}: Props<T>) => {
+  maxDepth,
+  highlightTemporaryFolders,
+}: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
@@ -198,6 +219,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       ) || []
     );
   }, [allItems, currentFolder.id, searchTerm]);
+
   const hasChildElements = useMemo(() => {
     return filteredChildFolders.length > 0 || filteredChildItems.length > 0;
   }, [filteredChildFolders.length, filteredChildItems.length]);
@@ -258,7 +280,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             allFolders,
           );
 
-          if (level + foldersDepth > 3) {
+          if (maxDepth && level + foldersDepth > maxDepth) {
             dispatch(
               UIActions.showToast({
                 message: t("It's not allowed to have more nested folders"),
@@ -271,7 +293,16 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         handleDrop(e, currentFolder);
       }
     },
-    [isDropAllowed, handleDrop, dispatch, currentFolder, allFolders, level, t],
+    [
+      isDropAllowed,
+      handleDrop,
+      dispatch,
+      currentFolder,
+      allFolders,
+      maxDepth,
+      level,
+      t,
+    ],
   );
 
   const allowDrop = useCallback(
@@ -371,9 +402,20 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       }
 
       e.stopPropagation();
+
+      if (maxDepth && level + 1 > maxDepth) {
+        dispatch(
+          UIActions.showToast({
+            message: t("It's not allowed to have more nested folders"),
+            type: 'error',
+          }),
+        );
+        return;
+      }
+
       onAddFolder(currentFolder.id);
     },
-    [currentFolder.id, onAddFolder],
+    [currentFolder, dispatch, level, maxDepth, onAddFolder, t],
   );
 
   const onUpload: MouseEventHandler = useCallback(
@@ -432,6 +474,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       className={classNames(
         'transition-colors duration-200',
         isDraggingOver && isDropAllowed && 'bg-accent-primary-alpha',
+        currentFolder.temporary && 'text-primary',
       )}
       onDrop={dropHandler}
       onDragOver={allowDrop}
@@ -487,9 +530,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
           </div>
         ) : (
           <div
-            className={classNames(
-              `group/button flex h-full w-full cursor-pointer items-center gap-1 py-2 pr-3`,
-            )}
+            className="group/button flex h-full w-full cursor-pointer items-center gap-1 py-2 pr-3"
             style={{
               paddingLeft: `${level * 24}px`,
             }}
@@ -523,9 +564,11 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             <div
               className={classNames(
                 'relative max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5',
-                highlightedFolders?.includes(currentFolder.id)
-                  ? 'text-accent-primary'
-                  : 'text-primary',
+                getClassForFolderName(
+                  highlightTemporaryFolders,
+                  currentFolder,
+                  highlightedFolders,
+                ),
               )}
               data-qa="folder-name"
             >
@@ -539,7 +582,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                   {...getFloatingProps()}
                   className={classNames(
                     'invisible absolute right-3 z-50 flex justify-end md:group-hover/button:visible',
-                    isSelected || isContextMenu ? 'max-md:visible' : '',
+                    (isSelected || isContextMenu) && 'max-md:visible',
                   )}
                 >
                   <FolderContextMenu
@@ -643,6 +686,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       onClickFolder={onClickFolder}
                       onItemEvent={onItemEvent}
                       featureType={featureType}
+                      maxDepth={maxDepth}
+                      highlightTemporaryFolders={highlightTemporaryFolders}
                     />
                     {onDropBetweenFolders && index === arr.length - 1 && (
                       <BetweenFoldersLine
@@ -715,6 +760,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
           }
           isOpen
           onClose={handleClosePublishModal}
+          depth={getFoldersDepth(currentFolder, allFolders)}
         />
       )}
       {isUnpublishing && isPublishingEnabled && (

@@ -9,7 +9,7 @@ import { Prompt } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
 
-import { resetShareEntity } from './../../constants/chat';
+import { resetShareEntity } from '@/src/constants/chat';
 
 import { PromptsState } from './prompts.types';
 
@@ -20,10 +20,12 @@ export * as PromptsSelectors from './prompts.selectors';
 const initialState: PromptsState = {
   prompts: [],
   folders: [],
+  temporaryFolders: [],
   searchTerm: '',
   searchFilters: SearchFilters.None,
   selectedPromptId: undefined,
   isEditModalOpen: false,
+  newAddedFolderId: undefined,
 };
 
 export const promptsSlice = createSlice({
@@ -219,8 +221,48 @@ export const promptsSlice = createSlice({
 
       state.folders = state.folders.concat(newFolder);
     },
+    createTemporaryFolder: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        relativePath?: string;
+      }>,
+    ) => {
+      const folderName = getNextDefaultName(
+        translate('New folder'),
+        [
+          ...state.temporaryFolders,
+          ...state.folders.filter((folder) => folder.publishedWithMe),
+        ],
+        0,
+        false,
+        true,
+      );
+      const id = uuidv4();
+
+      state.temporaryFolders.push({
+        id,
+        name: folderName,
+        type: FolderType.Prompt,
+        folderId: payload.relativePath,
+        temporary: true,
+      });
+      state.newAddedFolderId = id;
+    },
     deleteFolder: (state, { payload }: PayloadAction<{ folderId: string }>) => {
       state.folders = state.folders.filter(({ id }) => id !== payload.folderId);
+    },
+    deleteTemporaryFolder: (
+      state,
+      { payload }: PayloadAction<{ folderId: string }>,
+    ) => {
+      state.temporaryFolders = state.temporaryFolders.filter(
+        ({ id }) => id !== payload.folderId,
+      );
+    },
+    deleteAllTemporaryFolders: (state) => {
+      state.temporaryFolders = [];
     },
     renameFolder: (
       state,
@@ -240,6 +282,23 @@ export const promptsSlice = createSlice({
 
         return folder;
       });
+    },
+    renameTemporaryFolder: (
+      state,
+      { payload }: PayloadAction<{ folderId: string; name: string }>,
+    ) => {
+      state.newAddedFolderId = undefined;
+      const name = payload.name.trim();
+      if (name === '') {
+        return;
+      }
+
+      state.temporaryFolders = state.temporaryFolders.map((folder) =>
+        folder.id !== payload.folderId ? folder : { ...folder, name },
+      );
+    },
+    resetNewFolderId: (state) => {
+      state.newAddedFolderId = undefined;
     },
     moveFolder: (
       state,
