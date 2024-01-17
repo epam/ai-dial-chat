@@ -144,10 +144,10 @@ export default function Home({ initialState }: HomeProps) {
         </div>
       ) : (
         <main
-          className={`h-screen w-screen flex-col bg-layer-1 text-sm text-primary`}
+          className="h-screen w-screen flex-col bg-layer-1 text-sm text-primary"
           id="theme-main"
         >
-          <div className={`flex h-full w-full flex-col sm:pt-0`}>
+          <div className="flex h-full w-full flex-col sm:pt-0">
             {enabledFeatures.has(Feature.Header) && <Header />}
             <div className="flex w-full grow overflow-auto">
               {enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}

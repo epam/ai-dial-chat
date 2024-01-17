@@ -1,10 +1,9 @@
-import { IconCheck, IconX } from '@tabler/icons-react';
+import { IconCheck } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
   FormEvent,
   useCallback,
-  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -23,6 +22,8 @@ import { useAppDispatch } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { errorsMessages } from '@/src/constants/errors';
+
+import Modal from '@/src/components/Common/Modal';
 
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
 
@@ -59,7 +60,6 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
   const dispatch = useAppDispatch();
 
-  const modalRef = useRef<HTMLFormElement>(null);
   const projectNameInputRef = useRef<HTMLInputElement>(null);
   const streamNameInputRef = useRef<HTMLInputElement>(null);
   const techLeadEmailInputRef = useRef<HTMLInputElement>(null);
@@ -225,25 +225,6 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
     ],
   );
 
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        window.addEventListener('mouseup', handleMouseUp);
-      }
-    };
-
-    const handleMouseUp = () => {
-      window.removeEventListener('mouseup', handleMouseUp);
-      handleClose();
-    };
-
-    window.addEventListener('mousedown', handleMouseDown);
-
-    return () => {
-      window.removeEventListener('mousedown', handleMouseDown);
-    };
-  }, [handleClose]);
-
   // Render nothing if the dialog is not open.
   if (!isOpen) {
     return <></>;
@@ -260,370 +241,364 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-blackout p-3 md:p-5">
-      <form
-        ref={modalRef}
-        noValidate
-        className="relative inline-block h-full overflow-y-auto rounded bg-layer-3 px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
-        role="dialog"
-        onSubmit={handleSubmit}
-      >
-        <button
-          className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-          onClick={handleClose}
+    <Modal
+      initialFocus={projectNameInputRef}
+      portalId="theme-main"
+      isOpen={isOpen}
+      onClose={handleClose}
+      dataQa="request-api-key-dialog"
+      overlayClassName="fixed inset-0"
+      containerClassName="inline-block h-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
+      form={{
+        noValidate: true,
+        onSubmit: handleSubmit,
+      }}
+    >
+      <div className="flex justify-between pb-4 text-base font-bold">
+        {t('Request API Key')}
+      </div>
+
+      <div>
+        <label
+          className="mb-3 flex text-xs text-secondary"
+          htmlFor="formDescription"
         >
-          <IconX height={24} width={24} />
-        </button>
-
-        <div className="flex justify-between pb-4 text-base font-bold">
-          {t('Request API Key')}
-        </div>
-
-        <div>
-          <label
-            className="mb-3 flex text-xs text-secondary"
-            htmlFor="formDescription"
-          >
-            <span className="ml-1">
-              {t(
-                'We are glad to provide API access for PoC, research, accelerators development purposes, and internal projects. It is also possible to use this as a very short-term solution for early development stages while you are spinning up your dedicated environment. Any kind of client external must use their own dedicated infrastructure, not this API - you can install DIAL there, see instructions at ',
-              )}
-              <a
-                href="https://github.com/epam/ai-dial"
-                className="underline"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                https://github.com/epam/ai-dial
-              </a>
-            </span>
-          </label>
-        </div>
-
-        <div>
-          <label
-            className="mb-1 flex text-xs text-secondary"
-            htmlFor="projectNameInput"
-          >
-            <span>1.</span>
-            <span className="ml-1">
-              {t('Project name (use one from Delivery Central)')}
-            </span>
-            <span className="ml-1 inline text-accent-primary">*</span>
-          </label>
-          <input
-            ref={projectNameInputRef}
-            name="projectNameInput"
-            value={projectName}
-            required
-            title=""
-            type="text"
-            onBlur={onBlur}
-            onChange={projectNameOnChangeHandler}
-            className={inputClassName}
-          ></input>
-          <EmptyRequiredInputMessage />
-        </div>
-
-        <div>
-          <label
-            className="flex text-xs text-secondary"
-            htmlFor="streamNameInput"
-          >
-            <span>2.</span>
-            <span className="ml-1">
-              {t(
-                'Stream Name (use one from Delivery Central). Must be unique per key request.',
-              )}
-            </span>
-            <span className="ml-1 inline text-accent-primary">*</span>
-          </label>
-          <input
-            ref={streamNameInputRef}
-            name="streamNameInput"
-            value={streamName}
-            required
-            title=""
-            type="text"
-            onBlur={onBlur}
-            onChange={streamNameOnChangeHandler}
-            className={inputClassName}
-          ></input>
-          <EmptyRequiredInputMessage />
-        </div>
-
-        <div>
-          <label
-            className="mb-1 flex flex-col text-xs text-secondary md:flex-row"
-            htmlFor="techLeadEmailInput"
-          >
-            <span>
-              <span>3.</span>
-              <span className="ml-1">
-                {t('Project Tech Lead responsible for API token usage.')}
-              </span>
-            </span>
-            <span className="ml-1">
-              {t('Please provide email')}
-              <span className="ml-1 inline text-accent-primary">*</span>
-            </span>
-          </label>
-          <input
-            ref={techLeadEmailInputRef}
-            name="techLeadEmailInput"
-            value={techLeadEmail}
-            required
-            title=""
-            type="email"
-            onBlur={onBlur}
-            onChange={techLeadEmailOnChangeHandler}
-            className={inputClassName}
-          ></input>
-          <EmptyRequiredInputMessage />
-        </div>
-
-        <div>
-          <label
-            className="mb-1 flex text-xs text-secondary"
-            htmlFor="businessJustificationInput"
-          >
-            <span>4.</span>
-            <span className="ml-1">{t('Business justification')}</span>
-            <span className="ml-1 inline text-accent-primary">*</span>
-          </label>
-          <textarea
-            ref={businessJustificationInputRef}
-            name="businessJustificationInput"
-            value={businessJustification}
-            required
-            title=""
-            onBlur={onBlur}
-            onChange={businessJustificationOnChangeHandler}
-            className={inputClassName}
-          ></textarea>
-          <EmptyRequiredInputMessage />
-        </div>
-
-        <div>
-          <label
-            className="mb-1 flex text-xs text-secondary"
-            htmlFor="projectEndDateInput"
-          >
-            <span>5.</span>
-            <span className="ml-1">
-              {t('End date of the project (YYYY-MM-DD)')}
-            </span>
-            <span className="ml-1 inline text-accent-primary">*</span>
-          </label>
-          <input
-            ref={projectEndDateInputRef}
-            name="projectEndDateInput"
-            value={projectEndDate}
-            required
-            title=""
-            type="date"
-            min={minDate}
-            onBlur={onBlur}
-            onChange={projectEndDateOnChangeHandler}
-            className={inputClassName}
-          ></input>
-          <EmptyRequiredInputMessage />
-        </div>
-
-        <div>
-          <label
-            className="mb-1 text-xs text-secondary"
-            htmlFor="scenarioInput"
-          >
-            <span>6.</span>
-            <span className="ml-1">
-              {t(
-                'By default, access to the model is available from EPAM VPN only. If you want to deploy your solution anywhere beyond your personal laptop, please describe your scenario.',
-              )}
-            </span>
-            <span className="ml-1 inline text-accent-primary">*</span>
-          </label>
-          <textarea
-            ref={scenarioInputRef}
-            name="scenarioInput"
-            value={scenario}
-            required
-            title=""
-            onBlur={onBlur}
-            onChange={scenarioOnChangeHandler}
-            className={inputClassName}
-          ></textarea>
-          <EmptyRequiredInputMessage />
-        </div>
-
-        <div>
-          <label
-            className="mb-1 flex flex-wrap text-xs text-secondary xl:inline-block"
-            htmlFor="costInput"
-          >
-            <span>
-              <span>7.</span>
-              <span className="ml-1">
-                {t(
-                  'We need to understand, how much cost your solution will generate monthly, and your workload pattern in terms of requests quantity and tokens usage during standard and peak workloads. Please describe this. Ensure you provided "max X USD/month" metric. More information is available at ',
-                )}
-              </span>
-            </span>
+          <span className="ml-1">
+            {t(
+              'We are glad to provide API access for PoC, research, accelerators development purposes, and internal projects. It is also possible to use this as a very short-term solution for early development stages while you are spinning up your dedicated environment. Any kind of client external must use their own dedicated infrastructure, not this API - you can install DIAL there, see instructions at ',
+            )}
             <a
-              href="https://platform.openai.com/tokenizer"
+              href="https://github.com/epam/ai-dial"
               className="underline"
               rel="noopener noreferrer"
               target="_blank"
             >
-              https://platform.openai.com/tokenizer
+              https://github.com/epam/ai-dial
             </a>
-            <span className="mr-1">,</span>
-            <a
-              href="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/"
-              className="underline"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/
-            </a>
-            <span className="ml-1 inline text-accent-primary">*</span>
-          </label>
-          <textarea
-            ref={costInputRef}
-            name="costInput"
-            value={cost}
-            required
-            title=""
-            onBlur={onBlur}
-            onChange={costOnChangeHandler}
-            className={inputClassName}
-          ></textarea>
-          <EmptyRequiredInputMessage />
-        </div>
+          </span>
+        </label>
+      </div>
 
-        <div className="mb-4 mt-1 font-bold">
-          {t('Also please acknowledge that your API usage should comply with:')}
-        </div>
+      <div>
+        <label
+          className="mb-1 flex text-xs text-secondary"
+          htmlFor="projectNameInput"
+        >
+          <span>1.</span>
+          <span className="ml-1">
+            {t('Project name (use one from Delivery Central)')}
+          </span>
+          <span className="ml-1 inline text-accent-primary">*</span>
+        </label>
+        <input
+          ref={projectNameInputRef}
+          name="projectNameInput"
+          value={projectName}
+          required
+          title=""
+          type="text"
+          onBlur={onBlur}
+          onChange={projectNameOnChangeHandler}
+          className={inputClassName}
+        ></input>
+        <EmptyRequiredInputMessage />
+      </div>
 
-        <div className="peer mb-4  flex text-sm">
-          <input
-            ref={azureAgreementInputRef}
-            name="azureAgreementInput"
-            checked={azureAgreement}
-            onChange={azureAgreementOnChangeHandler}
-            onBlur={onBlur}
-            required
-            title=""
-            type="checkbox"
-            className={checkboxClassName}
-          ></input>
-          <label className="inline-block text-xs" htmlFor="azureAgreementInput">
-            <span>1.</span>
-            <span className="ml-1">
-              {t('Azure cognitive service terms and conditions')}
-            </span>
-            <a
-              href="https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct"
-              className="ml-1 underline"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              (https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct)
-            </a>
-            <span className="ml-1 inline text-accent-primary">*</span>
-          </label>
-          <IconCheck
-            width={16}
-            height={16}
-            size={16}
-            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
-          />
-        </div>
+      <div>
+        <label
+          className="flex text-xs text-secondary"
+          htmlFor="streamNameInput"
+        >
+          <span>2.</span>
+          <span className="ml-1">
+            {t(
+              'Stream Name (use one from Delivery Central). Must be unique per key request.',
+            )}
+          </span>
+          <span className="ml-1 inline text-accent-primary">*</span>
+        </label>
+        <input
+          ref={streamNameInputRef}
+          name="streamNameInput"
+          value={streamName}
+          required
+          title=""
+          type="text"
+          onBlur={onBlur}
+          onChange={streamNameOnChangeHandler}
+          className={inputClassName}
+        ></input>
+        <EmptyRequiredInputMessage />
+      </div>
 
-        <div className="mb-4 flex text-xs">
-          <input
-            ref={EPAMAgreementInputRef}
-            name="EPAMAgreementInput"
-            checked={EPAMAgreement}
-            onChange={EPAMAgreementOnChangeHandler}
-            onBlur={onBlur}
-            required
-            type="checkbox"
-            className={checkboxClassName}
-          ></input>
-          <label className="inline-block text-xs " htmlFor="EPAMAgreementInput">
-            <span>2.</span>
-            <span className="ml-1">
-              {t('Usage is complaint to EPAM company policies')}
-            </span>
-            <span className="ml-1 inline text-accent-primary">*</span>
-          </label>
-          <IconCheck
-            width={16}
-            height={16}
-            size={16}
-            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
-          />
-        </div>
-
-        <div className="mb-4 flex text-xs">
-          <input
-            ref={notClientProjectUsageAgreementInputRef}
-            name="notClientProjectUsageAgreementInput"
-            checked={notClientProjectUsageAgreement}
-            onChange={notClientProjectUsageAgreementOnChangeHandler}
-            onBlur={onBlur}
-            required
-            type="checkbox"
-            className={checkboxClassName}
-          ></input>
-          <label className="inline-block" htmlFor="EPAMAgreementInput">
+      <div>
+        <label
+          className="mb-1 flex flex-col text-xs text-secondary md:flex-row"
+          htmlFor="techLeadEmailInput"
+        >
+          <span>
             <span>3.</span>
             <span className="ml-1">
+              {t('Project Tech Lead responsible for API token usage.')}
+            </span>
+          </span>
+          <span className="ml-1">
+            {t('Please provide email')}
+            <span className="ml-1 inline text-accent-primary">*</span>
+          </span>
+        </label>
+        <input
+          ref={techLeadEmailInputRef}
+          name="techLeadEmailInput"
+          value={techLeadEmail}
+          required
+          title=""
+          type="email"
+          onBlur={onBlur}
+          onChange={techLeadEmailOnChangeHandler}
+          className={inputClassName}
+        ></input>
+        <EmptyRequiredInputMessage />
+      </div>
+
+      <div>
+        <label
+          className="mb-1 flex text-xs text-secondary"
+          htmlFor="businessJustificationInput"
+        >
+          <span>4.</span>
+          <span className="ml-1">{t('Business justification')}</span>
+          <span className="ml-1 inline text-accent-primary">*</span>
+        </label>
+        <textarea
+          ref={businessJustificationInputRef}
+          name="businessJustificationInput"
+          value={businessJustification}
+          required
+          title=""
+          onBlur={onBlur}
+          onChange={businessJustificationOnChangeHandler}
+          className={inputClassName}
+        ></textarea>
+        <EmptyRequiredInputMessage />
+      </div>
+
+      <div>
+        <label
+          className="mb-1 flex text-xs text-secondary"
+          htmlFor="projectEndDateInput"
+        >
+          <span>5.</span>
+          <span className="ml-1">
+            {t('End date of the project (YYYY-MM-DD)')}
+          </span>
+          <span className="ml-1 inline text-accent-primary">*</span>
+        </label>
+        <input
+          ref={projectEndDateInputRef}
+          name="projectEndDateInput"
+          value={projectEndDate}
+          required
+          title=""
+          type="date"
+          min={minDate}
+          onBlur={onBlur}
+          onChange={projectEndDateOnChangeHandler}
+          className={inputClassName}
+        ></input>
+        <EmptyRequiredInputMessage />
+      </div>
+
+      <div>
+        <label className="mb-1 text-xs text-secondary" htmlFor="scenarioInput">
+          <span>6.</span>
+          <span className="ml-1">
+            {t(
+              'By default, access to the model is available from EPAM VPN only. If you want to deploy your solution anywhere beyond your personal laptop, please describe your scenario.',
+            )}
+          </span>
+          <span className="ml-1 inline text-accent-primary">*</span>
+        </label>
+        <textarea
+          ref={scenarioInputRef}
+          name="scenarioInput"
+          value={scenario}
+          required
+          title=""
+          onBlur={onBlur}
+          onChange={scenarioOnChangeHandler}
+          className={inputClassName}
+        ></textarea>
+        <EmptyRequiredInputMessage />
+      </div>
+
+      <div>
+        <label
+          className="mb-1 flex flex-wrap text-xs text-secondary xl:inline-block"
+          htmlFor="costInput"
+        >
+          <span>
+            <span>7.</span>
+            <span className="ml-1">
               {t(
-                'Confirm that this key will not be used for client project production load.',
+                'We need to understand, how much cost your solution will generate monthly, and your workload pattern in terms of requests quantity and tokens usage during standard and peak workloads. Please describe this. Ensure you provided "max X USD/month" metric. More information is available at ',
               )}
             </span>
-            <span className="ml-1 inline text-accent-primary">*</span>
-          </label>
-          <IconCheck
-            width={16}
-            height={16}
-            size={16}
-            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
-          />
-        </div>
+          </span>
+          <a
+            href="https://platform.openai.com/tokenizer"
+            className="underline"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            https://platform.openai.com/tokenizer
+          </a>
+          <span className="mr-1">,</span>
+          <a
+            href="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/"
+            className="underline"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/
+          </a>
+          <span className="ml-1 inline text-accent-primary">*</span>
+        </label>
+        <textarea
+          ref={costInputRef}
+          name="costInput"
+          value={cost}
+          required
+          title=""
+          onBlur={onBlur}
+          onChange={costOnChangeHandler}
+          className={inputClassName}
+        ></textarea>
+        <EmptyRequiredInputMessage />
+      </div>
 
-        <div className="mb-5 flex text-xs">
-          <input
-            ref={localAgreementInputRef}
-            name="localAgreementInput"
-            checked={localAgreement}
-            onChange={localAgreementOnChangeHandler}
-            onBlur={onBlur}
-            required
-            type="checkbox"
-            className={checkboxClassName}
-          ></input>
-          <label className="inline-block" htmlFor="localAgreementInput">
-            <span>4.</span>
-            <span className="ml-1">{t('Local law regulations (if some)')}</span>
-            <span className="ml-1 inline text-accent-primary">*</span>
-          </label>
-          <IconCheck
-            width={16}
-            height={16}
-            size={16}
-            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
-          />
-        </div>
+      <div className="mb-4 mt-1 font-bold">
+        {t('Also please acknowledge that your API usage should comply with:')}
+      </div>
 
-        <div className="flex justify-end">
-          <button type="submit" className="button button-primary">
-            {t('Send request')}
-          </button>
-        </div>
-      </form>
-    </div>
+      <div className="peer mb-4  flex text-sm">
+        <input
+          ref={azureAgreementInputRef}
+          name="azureAgreementInput"
+          checked={azureAgreement}
+          onChange={azureAgreementOnChangeHandler}
+          onBlur={onBlur}
+          required
+          title=""
+          type="checkbox"
+          className={checkboxClassName}
+        ></input>
+        <label className="inline-block text-xs" htmlFor="azureAgreementInput">
+          <span>1.</span>
+          <span className="ml-1">
+            {t('Azure cognitive service terms and conditions')}
+          </span>
+          <a
+            href="https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct"
+            className="ml-1 underline"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            (https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct)
+          </a>
+          <span className="ml-1 inline text-accent-primary">*</span>
+        </label>
+        <IconCheck
+          width={16}
+          height={16}
+          size={16}
+          className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+        />
+      </div>
+
+      <div className="mb-4 flex text-xs">
+        <input
+          ref={EPAMAgreementInputRef}
+          name="EPAMAgreementInput"
+          checked={EPAMAgreement}
+          onChange={EPAMAgreementOnChangeHandler}
+          onBlur={onBlur}
+          required
+          type="checkbox"
+          className={checkboxClassName}
+        ></input>
+        <label className="inline-block text-xs " htmlFor="EPAMAgreementInput">
+          <span>2.</span>
+          <span className="ml-1">
+            {t('Usage is complaint to EPAM company policies')}
+          </span>
+          <span className="ml-1 inline text-accent-primary">*</span>
+        </label>
+        <IconCheck
+          width={16}
+          height={16}
+          size={16}
+          className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+        />
+      </div>
+
+      <div className="mb-4 flex text-xs">
+        <input
+          ref={notClientProjectUsageAgreementInputRef}
+          name="notClientProjectUsageAgreementInput"
+          checked={notClientProjectUsageAgreement}
+          onChange={notClientProjectUsageAgreementOnChangeHandler}
+          onBlur={onBlur}
+          required
+          type="checkbox"
+          className={checkboxClassName}
+        ></input>
+        <label className="inline-block" htmlFor="EPAMAgreementInput">
+          <span>3.</span>
+          <span className="ml-1">
+            {t(
+              'Confirm that this key will not be used for client project production load.',
+            )}
+          </span>
+          <span className="ml-1 inline text-accent-primary">*</span>
+        </label>
+        <IconCheck
+          width={16}
+          height={16}
+          size={16}
+          className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+        />
+      </div>
+
+      <div className="mb-5 flex text-xs">
+        <input
+          ref={localAgreementInputRef}
+          name="localAgreementInput"
+          checked={localAgreement}
+          onChange={localAgreementOnChangeHandler}
+          onBlur={onBlur}
+          required
+          type="checkbox"
+          className={checkboxClassName}
+        ></input>
+        <label className="inline-block" htmlFor="localAgreementInput">
+          <span>4.</span>
+          <span className="ml-1">{t('Local law regulations (if some)')}</span>
+          <span className="ml-1 inline text-accent-primary">*</span>
+        </label>
+        <IconCheck
+          width={16}
+          height={16}
+          size={16}
+          className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+        />
+      </div>
+
+      <div className="flex justify-end">
+        <button type="submit" className="button button-primary">
+          {t('Send request')}
+        </button>
+      </div>
+    </Modal>
   );
 };
