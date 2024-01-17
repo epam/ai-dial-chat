@@ -11,7 +11,10 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { constructPath, validatePublishingFileRenaming } from '@/src/utils/app/file';
+import {
+  constructPath,
+  validatePublishingFileRenaming,
+} from '@/src/utils/app/file';
 import {
   getAttachments,
   getPublishActionByType,
@@ -31,11 +34,11 @@ import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
 
 import CollapsableSection from '../Common/CollapsableSection';
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
+import { ErrorMessage } from '../Common/ErrorMessage';
 import Modal from '../Common/Modal';
 import { PublishAttachment } from './PublishAttachment';
 
 import { v4 as uuidv4 } from 'uuid';
-import { ErrorMessage } from '../Common/ErrorMessage';
 
 interface Props {
   entity: ShareEntity;
@@ -115,7 +118,7 @@ export default function PublishModal({
       const nameMap = newFileNames.current;
       let oldPath = constructPath(file.path, file.name);
       const newPath = constructPath(file.path, name);
-      if(nameMap.has(oldPath)) {
+      if (nameMap.has(oldPath)) {
         const originalPath = nameMap.get(oldPath);
         nameMap.delete(oldPath);
         oldPath = originalPath;
@@ -166,6 +169,7 @@ export default function PublishModal({
           name: trimmedName,
           path: trimmedPath,
           version: trimmedVersion,
+          fileNameMapping: newFileNames.current,
         }),
       );
       onClose();

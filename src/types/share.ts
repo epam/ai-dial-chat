@@ -23,6 +23,7 @@ export interface PublishRequest {
   name: string;
   path: string;
   version: string;
+  fileNameMapping: Map<string, string>;
 }
 
 export interface PublishAttachmentInfo extends Omit<DialFile, 'contentLength'> {
