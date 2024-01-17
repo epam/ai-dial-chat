@@ -114,22 +114,17 @@ export class Chat extends BaseElement {
     return request.postDataJSON();
   }
 
-  public async startReplayForDifferentModels(userRequests: string[]) {
+  public async startReplayForDifferentModels() {
     await this.replay.waitForState();
-    const requestPromises = [];
-    for (const req of userRequests) {
-      const requestPromise = this.waitForRequestSent(req);
-      requestPromises.push(requestPromise);
-    }
+    const requests: string[] = [];
+    this.page.on('request', (data) => {
+      if (data.url().includes(API.chatHost)) {
+        requests.push(data.postData()!);
+      }
+    });
     await this.replay.click();
-
-    const requests = [];
-    for (const req of requestPromises) {
-      const request = await req;
-      requests.push(request);
-    }
     await this.waitForResponse(true);
-    return requests.map((r) => r.postDataJSON());
+    return requests.map((r) => JSON.parse(r));
   }
 
   public async sendRequestInCompareMode(
