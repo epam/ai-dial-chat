@@ -1,5 +1,6 @@
 import {
   constructPath,
+  getDialFilesFromAttachments,
   notAllowedSymbols,
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
@@ -10,12 +11,6 @@ import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 import { PublishAttachmentInfo } from '@/src/types/share';
-
-import { selectFilteredConversations } from '@/src/store/conversations/conversations.selectors';
-
-import { getDialFilesFromAttachments } from './file';
-
-import { RootState } from '@/src/store';
 
 export const getFoldersDepth = (
   childFolder: FolderInterface,
@@ -207,21 +202,14 @@ export const getPathToFolderById = (
 };
 
 export const getFilteredFolders = (
-  state: RootState,
   folders: FolderInterface[],
   emptyFolderIds: string[],
   filters: EntityFilters,
+  entities: Conversation[] | Prompt[],
   searchTerm?: string,
   includeEmptyFolders?: boolean,
 ) => {
-  const filteredConversations = selectFilteredConversations(
-    state,
-    filters,
-    searchTerm,
-  );
-  const folderIds = filteredConversations
-    .map((c) => c.folderId)
-    .filter((fid) => fid);
+  const folderIds = entities.map((c) => c.folderId).filter((fid) => fid);
 
   if (!searchTerm?.trim().length) {
     const markedFolderIds = folders
