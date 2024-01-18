@@ -7,7 +7,11 @@ import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIError } from '@/src/utils/server';
 import { logger } from '@/src/utils/server/logger';
 
-import { BackendFile, BackendFileFolder } from '@/src/types/files';
+import {
+  BackendDataNodeType,
+  BackendFile,
+  BackendFileFolder,
+} from '@/src/types/files';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -29,13 +33,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       bucket,
     } = req.query as {
       path: string;
-      filter: string;
+      filter: BackendDataNodeType;
       bucket: string;
     };
 
     const token = await getToken({ req });
 
-    const url = `${process.env.DIAL_API_HOST}/v1/files/metadata/${bucket}${
+    const url = `${process.env.DIAL_API_HOST}/v1/metadata/files/${bucket}${
       path && `/${encodeURI(path)}`
     }/`;
 
@@ -51,7 +55,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const json = (await response.json()) as BackendFileFolder;
     let result: (BackendFileFolder | BackendFile)[] = [];
     if (filter) {
-      result = (json.files || []).filter((item) => item.type === filter);
+      result = (json.items || []).filter((item) => item.nodeType === filter);
     }
 
     return res.status(200).send(result);
