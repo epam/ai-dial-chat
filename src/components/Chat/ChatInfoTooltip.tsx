@@ -2,6 +2,8 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { ConversationEntityModel } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
@@ -28,24 +30,22 @@ const DEFAULT_SM_LINE_CLAMP = 'line-clamp-[28]';
 const getModelTemplate = (
   model: OpenAIEntityModel | ConversationEntityModel,
   label: string,
-) => {
-  return (
-    <>
-      <span className="text-secondary">{label}:</span>
-      <div
-        className="flex items-center gap-2"
-        data-qa={label.toLowerCase().concat('-info')}
-      >
-        <ModelIcon
-          entityId={model.id}
-          entity={'type' in model ? model : undefined}
-          size={18}
-        />
-        {'name' in model ? model.name : model.id}
-      </div>
-    </>
-  );
-};
+) => (
+  <>
+    <span className="text-secondary">{label}:</span>
+    <div
+      className="flex items-center gap-2"
+      data-qa={label.toLowerCase().concat('-info')}
+    >
+      <ModelIcon
+        entityId={model.id}
+        entity={model as OpenAIEntityModel}
+        size={18}
+      />
+      {(model as OpenAIEntityModel).name ?? model.id}
+    </div>
+  </>
+);
 
 export const ChatInfoTooltip = ({
   model,
@@ -61,7 +61,7 @@ export const ChatInfoTooltip = ({
 
   const { t } = useTranslation(Translation.Chat);
   const getModelLabel = useCallback(
-    (type?: string) => {
+    (type?: EntityType) => {
       switch (type) {
         case EntityType.Application:
           return t('Application');
@@ -82,14 +82,14 @@ export const ChatInfoTooltip = ({
       {model &&
         getModelTemplate(
           model,
-          getModelLabel('type' in model ? model.type : undefined),
+          getModelLabel((model as OpenAIEntityModel).type),
         )}
       {subModel != null && getModelTemplate(subModel, t('Assistant model'))}
       {prompt && (
         <>
           <span className="text-secondary">{t('System prompt')}:</span>
           <div
-            className={`whitespace-pre-wrap ${lineClampClass}`}
+            className={classNames('whitespace-pre-wrap', lineClampClass)}
             data-qa="prompt-info"
           >
             {prompt}
