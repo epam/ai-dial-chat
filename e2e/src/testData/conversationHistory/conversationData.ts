@@ -327,7 +327,7 @@ export class ConversationData extends FolderData {
     model: OpenAIEntityModel | string,
     hasRequest?: boolean,
   ) {
-    const filename = attachmentUrl.split('/')[1];
+    const filename = attachmentUrl.split('/')[2];
     const modelToUse = { id: typeof model === 'string' ? model : model.id };
     const userMessage: Message = {
       role: Role.User,

@@ -49,7 +49,7 @@ const modelsForRequestWithAttachment: {
   modelId: string;
   isTextRequestRequired: boolean;
 }[] = Array.of(
-  { modelId: ModelIds.GPT_4_VISION_PREVIEW, isTextRequestRequired: true },
+  { modelId: ModelIds.GPT_4_VISION_PREVIEW, isTextRequestRequired: false },
   { modelId: ModelIds.GEMINI_PRO_VISION, isTextRequestRequired: true },
 );
 
