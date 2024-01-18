@@ -5,3 +5,5 @@ export const isMobile = () => {
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i;
   return mobileRegex.test(userAgent);
 };
+
+export const isSmallScreen = () => window.innerWidth < 768 || isMobile();
