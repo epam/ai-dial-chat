@@ -17,7 +17,7 @@ import {
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
+import { OpenAIEntityModel } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
