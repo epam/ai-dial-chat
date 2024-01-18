@@ -28,8 +28,8 @@ import {
   getFileNameWithoutExtension,
 } from '@/src/utils/app/file';
 
+import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
-import { PublishAttachmentInfo } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { stopBubbling } from '@/src/constants/chat';
@@ -41,14 +41,10 @@ import Tooltip from '../Common/Tooltip';
 import DownloadRenderer from '../Files/Download';
 
 interface Props {
-  file: PublishAttachmentInfo;
+  file: DialFile;
   isRenaming: boolean;
-  onRename: (
-    file: PublishAttachmentInfo,
-    newName: string,
-    cancel?: boolean,
-  ) => void;
-  onStartRename: (file: PublishAttachmentInfo) => void;
+  onRename: (file: DialFile, newName: string, cancel?: boolean) => void;
+  onStartRename: (file: DialFile) => void;
 }
 
 export const PublishAttachment = ({
@@ -140,7 +136,7 @@ export const PublishAttachment = ({
 
   if (!file) return null;
 
-  const fullPath = constructPath(t(PUBLISHING_FOLDER_NAME), file.path);
+  const fullPath = constructPath(t(PUBLISHING_FOLDER_NAME), file.relativePath);
 
   const handleContextMenuOpen = (e: MouseEvent) => {
     if (isRenaming) {

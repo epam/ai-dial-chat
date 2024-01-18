@@ -1,7 +1,6 @@
 import { Attachment, Conversation } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
-import { PublishAttachmentInfo } from '@/src/types/share';
 
 import { getPathToFolderById } from './folders';
 
@@ -192,23 +191,23 @@ export const getFileNameExtension = (filename: string) =>
   filename.slice(filename.lastIndexOf('.'));
 
 export const validatePublishingFileRenaming = (
-  files: PublishAttachmentInfo[],
+  files: DialFile[],
   newName: string,
-  renamingFile: PublishAttachmentInfo,
+  renamingFile: DialFile,
 ) => {
   const fileWithSameName = files.find(
     (file) =>
       file.name === newName.trim() &&
       file !== renamingFile &&
-      file.path === renamingFile?.path,
+      file.relativePath === renamingFile?.relativePath,
   );
 
   if (fileWithSameName) {
-    return 'Not allowed to have folders with same names';
+    return 'Not allowed to have files with same names in one folder';
   }
 
   if (newName.match(notAllowedSymbolsRegex)) {
-    return `The symbols ${notAllowedSymbols} are not allowed in folder name`;
+    return `The symbols ${notAllowedSymbols} are not allowed in file name`;
   }
 };
 

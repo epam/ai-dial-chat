@@ -7,10 +7,10 @@ import {
 
 import { Conversation } from '@/src/types/chat';
 import { ShareEntity } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
-import { PublishAttachmentInfo } from '@/src/types/share';
 
 import escapeStringRegexp from 'escape-string-regexp';
 
@@ -314,11 +314,11 @@ export const validateFolderRenaming = (
 export const getConversationAttachmentWithPath = (
   conversation: Conversation,
   folders: FolderInterface[],
-): PublishAttachmentInfo[] => {
+): DialFile[] => {
   const { path } = getPathToFolderById(folders, conversation.folderId);
   return getDialFilesFromAttachments(
     conversation?.messages.flatMap(
       (message) => message.custom_content?.attachments || [],
     ) || [],
-  ).map((file) => ({ ...file, path }));
+  ).map((file) => ({ ...file, relativePath: path, contentLength: 0 }));
 };

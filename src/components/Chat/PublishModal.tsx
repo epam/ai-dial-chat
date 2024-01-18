@@ -23,7 +23,8 @@ import {
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { ShareEntity } from '@/src/types/common';
-import { PublishAttachmentInfo, SharingType } from '@/src/types/share';
+import { DialFile } from '@/src/types/files';
+import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -73,7 +74,7 @@ export default function PublishModal({
   const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState<string>(entity.name);
   const [path, setPath] = useState<string>('');
-  const [renamingFile, setRenamingFile] = useState<PublishAttachmentInfo>();
+  const [renamingFile, setRenamingFile] = useState<DialFile>();
   const newFileNames = useRef(new Map());
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -103,12 +104,12 @@ export default function PublishModal({
     [],
   );
 
-  const handleStartFileRename = useCallback((file: PublishAttachmentInfo) => {
+  const handleStartFileRename = useCallback((file: DialFile) => {
     setRenamingFile(file);
   }, []);
 
   const handleFileRename = useCallback(
-    (file: PublishAttachmentInfo, name: string) => {
+    (file: DialFile, name: string) => {
       const error = validatePublishingFileRenaming(files, name, file);
       if (error) {
         setErrorMessage(t(error) as string);
@@ -116,8 +117,8 @@ export default function PublishModal({
       } else setErrorMessage('');
 
       const nameMap = newFileNames.current;
-      let oldPath = constructPath(file.path, file.name);
-      const newPath = constructPath(file.path, name);
+      let oldPath = constructPath(file.relativePath, file.name);
+      const newPath = constructPath(file.relativePath, name);
       if (nameMap.has(oldPath)) {
         const originalPath = nameMap.get(oldPath);
         nameMap.delete(oldPath);
@@ -336,7 +337,7 @@ export default function PublishModal({
               )}
               {files.map((file) => (
                 <PublishAttachment
-                  key={constructPath(file?.path, file?.name)}
+                  key={constructPath(file?.relativePath, file?.name)}
                   isRenaming={file === renamingFile}
                   file={file}
                   onRename={handleFileRename}

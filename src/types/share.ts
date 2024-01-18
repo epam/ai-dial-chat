@@ -1,5 +1,3 @@
-import { DialFile } from './files';
-
 export interface ShareInterface {
   isShared?: boolean;
   sharedWithMe?: boolean;
@@ -24,8 +22,4 @@ export interface PublishRequest {
   path: string;
   version: string;
   fileNameMapping: Map<string, string>;
-}
-
-export interface PublishAttachmentInfo extends Omit<DialFile, 'contentLength'> {
-  path: string;
 }
