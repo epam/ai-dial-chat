@@ -15,10 +15,19 @@ export enum SharingType {
   PromptFolder = 'prompts_folder',
 }
 
+export interface UserGoup {
+  id: string;
+  name: string;
+}
+
+export type TargetAudienceFilters = Record<string, string[]>;
+
 export interface PublishRequest {
   id: string;
   shareUniqueId: string;
   name: string;
   path: string;
   version: string;
+  userGroups?: UserGoup[];
+  targetAudienceFilters?: TargetAudienceFilters;
 }

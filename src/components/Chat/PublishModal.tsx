@@ -19,7 +19,7 @@ import {
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { ShareEntity } from '@/src/types/common';
-import { SharingType } from '@/src/types/share';
+import { SharingType, UserGoup } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -28,6 +28,7 @@ import CollapsableSection from '../Common/CollapsableSection';
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
 import Modal from '../Common/Modal';
 import { SelectFolderModal } from '../Files/SelectFolderModal';
+import { PublishModalUserGroupFilter } from './PublishModalUserGroupFilter';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -60,10 +61,10 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
   const [version, setVersion] = useState<string>('');
-
   const isVersionUnique = useAppSelector((state) =>
     isPublishVersionUnique(type)(state, entity.id, version.trim()),
   );
+  const [userGroups, setUserGroups] = useState<UserGoup[]>([]);
 
   const nameOnChangeHandler = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -118,6 +119,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
           name: trimmedName,
           path: trimmedPath,
           version: trimmedVersion,
+          userGroups,
         }),
       );
       onClose();
@@ -131,6 +133,7 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
       publishAction,
       version,
       isVersionUnique,
+      userGroups,
     ],
   );
 
@@ -245,8 +248,16 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
         <section className="flex grow flex-col gap-3">
           <h2>{t('Target Audience Filters')}</h2>
 
+          <CollapsableSection
+            name={'UserGroup'}
+            dataQa={`filter-${'UserGroup'}`}
+            openByDefault={false}
+            className="pl-0"
+          >
+            <PublishModalUserGroupFilter onChangeUserGoups={setUserGroups} />
+          </CollapsableSection>
+
           {[
-            'UserGroup',
             'JobTitle',
             'AssignedProjects',
             'UserGroup',
