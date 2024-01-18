@@ -181,31 +181,29 @@ export const PublishAttachment = ({
             </Tooltip>
           </>
         ) : (
-          <>
-            <div className="relative flex grow items-center">
-              <input
-                className="mr-14 grow text-ellipsis rounded bg-transparent p-2 placeholder:text-secondary focus:outline-none"
-                type="text"
-                value={nameWithoutExtension}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={handleEnterDown}
-                autoFocus
-                ref={inputRef}
-              />
-              <div className="absolute right-0 z-10 flex">
-                <SidebarActionButton handleClick={handleConfirm}>
-                  <IconCheck size={18} className="hover:text-accent-primary" />
-                </SidebarActionButton>
-                <SidebarActionButton handleClick={handleCancel}>
-                  <IconX
-                    size={18}
-                    strokeWidth="2"
-                    className="hover:text-accent-primary"
-                  />
-                </SidebarActionButton>
-              </div>
+          <div className="relative flex grow items-center">
+            <input
+              className="mr-14 grow text-ellipsis rounded bg-transparent p-2 placeholder:text-secondary focus:outline-none"
+              type="text"
+              value={nameWithoutExtension}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={handleEnterDown}
+              autoFocus
+              ref={inputRef}
+            />
+            <div className="absolute right-0 z-10 flex">
+              <SidebarActionButton handleClick={handleConfirm}>
+                <IconCheck size={18} className="hover:text-accent-primary" />
+              </SidebarActionButton>
+              <SidebarActionButton handleClick={handleCancel}>
+                <IconX
+                  size={18}
+                  strokeWidth="2"
+                  className="hover:text-accent-primary"
+                />
+              </SidebarActionButton>
             </div>
-          </>
+          </div>
         )}
       </div>
       {!isRenaming && (
