@@ -1,5 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getConversationAttachmentWithPath,
@@ -17,6 +18,7 @@ import { isEntityExternal } from '@/src/utils/app/share';
 
 import { Conversation, Role } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
 import { RootState } from '../index';
@@ -456,13 +458,23 @@ export const selectNewAddedFolderId = createSelector(
   },
 );
 
+const getUniqueAttachments = (attachments: DialFile[]): DialFile[] => {
+  const map = new Map<string, DialFile>();
+  attachments.forEach((file) =>
+    map.set(constructPath(file.relativePath, file.name), file),
+  );
+  return Array.from(map.values());
+};
+
 export const getAttachments = createSelector(
   [(state) => state, (_state: RootState, entityId: string) => entityId],
   (state, entityId) => {
     const folders = selectFolders(state);
     const conversation = selectConversation(state, entityId);
     if (conversation) {
-      return getConversationAttachmentWithPath(conversation, folders);
+      return getUniqueAttachments(
+        getConversationAttachmentWithPath(conversation, folders),
+      );
     } else {
       const folderIds = new Set(
         getChildAndCurrentFoldersIdsById(entityId, folders),
@@ -474,8 +486,10 @@ export const getAttachments = createSelector(
         (conv) => conv.folderId && folderIds.has(conv.folderId),
       );
 
-      return conversations.flatMap((conv) =>
-        getConversationAttachmentWithPath(conv, folders),
+      return getUniqueAttachments(
+        conversations.flatMap((conv) =>
+          getConversationAttachmentWithPath(conv, folders),
+        ),
       );
     }
   },

@@ -199,7 +199,7 @@ export const validatePublishingFileRenaming = (
     (file) =>
       file.name === newName.trim() &&
       file !== renamingFile &&
-      file.relativePath === renamingFile?.relativePath,
+      file.relativePath === renamingFile.relativePath,
   );
 
   if (fileWithSameName) {

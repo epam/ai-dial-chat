@@ -109,26 +109,32 @@ export default function PublishModal({
   }, []);
 
   const handleFileRename = useCallback(
-    (file: DialFile, name: string) => {
-      const error = validatePublishingFileRenaming(files, name, file);
+    (name: string, cancel?: boolean) => {
+      if (cancel || !renamingFile) {
+        setErrorMessage('');
+        setRenamingFile(undefined);
+        return;
+      }
+
+      const error = validatePublishingFileRenaming(files, name, renamingFile);
       if (error) {
         setErrorMessage(t(error) as string);
         return;
       } else setErrorMessage('');
 
       const nameMap = newFileNames.current;
-      let oldPath = constructPath(file.relativePath, file.name);
-      const newPath = constructPath(file.relativePath, name);
+      let oldPath = constructPath(renamingFile.relativePath, renamingFile.name);
+      const newPath = constructPath(renamingFile.relativePath, name);
       if (nameMap.has(oldPath)) {
         const originalPath = nameMap.get(oldPath);
         nameMap.delete(oldPath);
         oldPath = originalPath;
       }
       newFileNames.current.set(newPath, oldPath);
-      file.name = name;
+      renamingFile.name = name;
       setRenamingFile(undefined);
     },
-    [files, t],
+    [files, renamingFile, t],
   );
 
   const handleFolderChange = useCallback(() => {
@@ -182,7 +188,7 @@ export default function PublishModal({
     setSubmitted(true);
   }, []);
 
-  const inputClassName = classNames('input-form py-2', 'peer', {
+  const inputClassName = classNames('input-form mx-0 py-2', 'peer', {
     'input-invalid submitted': submitted,
   });
 
@@ -206,7 +212,7 @@ export default function PublishModal({
         </h4>
         <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
           <div className="flex w-full shrink grow flex-col divide-y divide-tertiary md:max-w-[550px] md:overflow-y-auto">
-            <section className="flex flex-col gap-3 p-4">
+            <section className="flex flex-col gap-3 px-5 py-4">
               <h2>{t('General Info')}</h2>
               <p className="text-secondary">
                 {t(
@@ -246,7 +252,7 @@ export default function PublishModal({
                   <span className="ml-1 inline text-accent-primary">*</span>
                 </label>
                 <button
-                  className="input-form flex grow items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
+                  className="input-form mx-0 flex grow items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
                   onClick={handleFolderChange}
                 >
                   <span className="truncate">
@@ -290,7 +296,7 @@ export default function PublishModal({
               </div>
             </section>
 
-            <section className="flex flex-col p-4">
+            <section className="flex flex-col px-5 py-4">
               <h2>{t('Target Audience Filters')}</h2>
 
               {[
@@ -315,7 +321,7 @@ export default function PublishModal({
           </div>
           {(type === SharingType.Conversation ||
             type === SharingType.ConversationFolder) && (
-            <div className="flex w-full flex-col gap-[2px] p-4 md:max-w-[550px]">
+            <div className="flex w-full flex-col gap-[2px] px-5 py-4 md:max-w-[550px]">
               <h2 className="mb-2">
                 {t(`Files contained in the ${getPrefix(entity).toLowerCase()}`)}
               </h2>

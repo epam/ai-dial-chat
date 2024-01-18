@@ -43,7 +43,7 @@ import DownloadRenderer from '../Files/Download';
 interface Props {
   file: DialFile;
   isRenaming: boolean;
-  onRename: (file: DialFile, newName: string, cancel?: boolean) => void;
+  onRename: (newName: string, cancel?: boolean) => void;
   onStartRename: (file: DialFile) => void;
 }
 
@@ -87,7 +87,7 @@ export const PublishAttachment = ({
   const handleCancel: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       e.stopPropagation();
-      onRename(file, file.name, true);
+      onRename(file.name, true);
       setName(getFileNameWithoutExtension(file.name));
     },
     [file, onRename],
@@ -98,18 +98,18 @@ export const PublishAttachment = ({
       e.stopPropagation();
       if (e.key === 'Enter') {
         e.preventDefault();
-        onRename(file, fileName);
+        onRename(fileName);
       }
     },
-    [file, fileName, onRename],
+    [fileName, onRename],
   );
 
   const handleConfirm: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       e.stopPropagation();
-      onRename(file, fileName);
+      onRename(fileName);
     },
-    [file, fileName, onRename],
+    [fileName, onRename],
   );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
@@ -150,8 +150,8 @@ export const PublishAttachment = ({
   return (
     <div
       className={classNames(
-        'group relative flex w-full max-w-full items-center rounded p-2 hover:bg-accent-primary-alpha',
-        !isRenaming ? 'hover:pr-6' : 'bg-accent-primary-alpha',
+        'group relative flex h-[56px] w-full max-w-full items-center rounded px-3 py-2 hover:bg-accent-primary-alpha',
+        !isRenaming ? 'hover:pr-10' : 'bg-accent-primary-alpha',
       )}
       onContextMenu={handleContextMenuOpen}
     >
@@ -210,7 +210,7 @@ export const PublishAttachment = ({
         <div
           ref={refs.setFloating}
           {...getFloatingProps()}
-          className="invisible absolute right-1 group-hover:visible"
+          className="invisible absolute right-4 h-[18px] group-hover:visible"
         >
           <ContextMenu
             menuItems={menuItems}
