@@ -5,7 +5,6 @@ import { PublishAttachmentInfo } from '@/src/types/share';
 
 import { getPathToFolderById } from './folders';
 
-import cloneDeep from 'lodash-es/cloneDeep';
 import { extensions } from 'mime-types';
 
 export function triggerDownload(url: string, name: string): void {
@@ -225,17 +224,21 @@ export const renameAttachments = (
 
   const { path } = getPathToFolderById(folders, folderId);
 
-  const copy = cloneDeep(conversation);
-
-  copy.messages.forEach((message) => {
-    message.custom_content?.attachments?.forEach(
-      (attachment) =>
-        (attachment.title =
-          getFileName(
-            filenameMapping.get(constructPath(path, attachment.title)),
-          ) ?? attachment.title),
-    );
-  });
-
-  return copy;
+  return {
+    ...conversation,
+    messages: conversation.messages.map((message) => ({
+      ...message,
+      custom_content: message.custom_content && {
+        ...message.custom_content,
+        attachments: message.custom_content.attachments?.map(
+          ({ title, ...attachment }) => ({
+            ...attachment,
+            title:
+              getFileName(filenameMapping.get(constructPath(path, title))) ??
+              title,
+          }),
+        ),
+      },
+    })),
+  };
 };

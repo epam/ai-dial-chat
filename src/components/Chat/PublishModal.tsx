@@ -127,7 +127,7 @@ export default function PublishModal({
       file.name = name;
       setRenamingFile(undefined);
     },
-    [],
+    [files, t],
   );
 
   const handleFolderChange = useCallback(() => {
