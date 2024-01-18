@@ -59,13 +59,21 @@ export default defineConfig({
       dependencies: ['auth'],
     },
     {
+      name: 'chat api',
+      testMatch: /chatApi\.test\.ts/,
+      dependencies: ['api listing'],
+      use: {
+        storageState: STORAGE_STATE,
+      }
+    },
+    {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
         storageState: STORAGE_STATE,
         viewport: { width: 1536, height: 864 },
       },
-      dependencies: ['api listing'],
+      dependencies: ['chat api'],
     },
   ],
 });
