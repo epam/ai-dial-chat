@@ -10,7 +10,10 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getSelectedAddons } from '@/src/utils/app/conversation';
+import {
+  getSelectedAddons,
+  getValidAddonsFromIds,
+} from '@/src/utils/app/conversation';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -117,51 +120,70 @@ export const ChatHeader = ({
           </Tooltip>
         )}
         <div className="flex lg:[&>*:first-child]:border-l-[1px] lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-primary [&>*]:pl-2">
-          {isShowChatInfo &&
-            (model ? (
-              <>
-                <span className="flex items-center" data-qa="chat-model">
-                  <Tooltip
-                    tooltip={
-                      <ChatInfoTooltip
-                        model={model}
-                        selectedAddons={selectedAddons}
-                        subModel={
-                          conversation.assistantModelId &&
-                          model.type === EntityType.Assistant
+          {isShowChatInfo && (
+            <>
+              <span className="flex items-center" data-qa="chat-model">
+                <Tooltip
+                  tooltip={
+                    <ChatInfoTooltip
+                      model={model ? model : conversation.model}
+                      selectedAddons={
+                        model
+                          ? selectedAddons
+                          : getValidAddonsFromIds(
+                              conversation.selectedAddons,
+                              addonsMap,
+                            )
+                      }
+                      subModel={
+                        model
+                          ? conversation.assistantModelId &&
+                            model.type === EntityType.Assistant
                             ? modelsMap[conversation.assistantModelId]
                             : null
-                        }
-                        prompt={
-                          model.type === EntityType.Model
-                            ? conversation.prompt
-                            : null
-                        }
-                        temperature={
-                          model.type !== EntityType.Application
-                            ? conversation.temperature
-                            : null
-                        }
-                      />
-                    }
-                  >
-                    <ModelIcon
-                      entityId={conversation.model.id}
-                      entity={model}
-                      size={18}
-                      isCustomTooltip
+                          : undefined
+                      }
+                      prompt={
+                        !model || model.type === EntityType.Model
+                          ? conversation.prompt
+                          : null
+                      }
+                      temperature={
+                        !model || model.type !== EntityType.Application
+                          ? conversation.temperature
+                          : null
+                      }
                     />
-                  </Tooltip>
-                </span>
-                {model.type !== EntityType.Application &&
-                  (conversation.selectedAddons.length > 0 ||
-                    (model.selectedAddons &&
-                      model.selectedAddons.length > 0)) && (
-                    <span
-                      className="flex items-center gap-2"
-                      data-qa="chat-addons"
-                    >
-                      {model.selectedAddons?.map((addon) => (
+                  }
+                >
+                  <ModelIcon
+                    entityId={conversation.model.id}
+                    entity={model}
+                    size={18}
+                    isCustomTooltip
+                  />
+                </Tooltip>
+              </span>
+              {model ? (
+                model.type !== EntityType.Application &&
+                (conversation.selectedAddons.length > 0 ||
+                  (model.selectedAddons &&
+                    model.selectedAddons.length > 0)) && (
+                  <span
+                    className="flex items-center gap-2"
+                    data-qa="chat-addons"
+                  >
+                    {model.selectedAddons?.map((addon) => (
+                      <ModelIcon
+                        key={addon}
+                        entityId={addon}
+                        size={18}
+                        entity={addonsMap[addon]}
+                      />
+                    ))}
+                    {conversation.selectedAddons
+                      ?.filter((id) => !model.selectedAddons?.includes(id))
+                      .map((addon) => (
                         <ModelIcon
                           key={addon}
                           entityId={addon}
@@ -169,65 +191,29 @@ export const ChatHeader = ({
                           entity={addonsMap[addon]}
                         />
                       ))}
-                      {conversation.selectedAddons
-                        ?.filter((id) => !model.selectedAddons?.includes(id))
-                        .map((addon) => (
-                          <ModelIcon
-                            key={addon}
-                            entityId={addon}
-                            size={18}
-                            entity={addonsMap[addon]}
-                          />
-                        ))}
+                  </span>
+                )
+              ) : (
+                <>
+                  {conversation.selectedAddons.length > 0 && (
+                    <span
+                      className="flex items-center gap-2"
+                      data-qa="chat-addons"
+                    >
+                      {conversation.selectedAddons.map((addon) => (
+                        <ModelIcon
+                          key={addon}
+                          entityId={addon}
+                          size={18}
+                          entity={addonsMap[addon]}
+                        />
+                      ))}
                     </span>
                   )}
-              </>
-            ) : (
-              <>
-                <span className="flex items-center" data-qa="chat-model">
-                  <Tooltip
-                    tooltip={
-                      <ChatInfoTooltip
-                        model={conversation.model}
-                        selectedAddons={
-                          conversation.selectedAddons
-                            .map((addon) => addonsMap[addon])
-                            .filter(Boolean) as OpenAIEntityAddon[]
-                        }
-                        prompt={conversation.prompt}
-                        temperature={conversation.temperature}
-                      />
-                    }
-                  >
-                    <ModelIcon
-                      entityId={conversation.model.id}
-                      entity={model}
-                      size={18}
-                      isCustomTooltip
-                    />
-                  </Tooltip>
-                </span>
-                {conversation.selectedAddons.length > 0 && (
-                  <span
-                    className="flex items-center gap-2"
-                    data-qa="chat-addons"
-                  >
-                    {(
-                      conversation.selectedAddons
-                        .map((addon) => addonsMap[addon])
-                        .filter(Boolean) as OpenAIEntityAddon[]
-                    ).map((addon) => (
-                      <ModelIcon
-                        key={addon.id}
-                        entityId={addon.id}
-                        size={18}
-                        entity={addonsMap[addon.id]}
-                      />
-                    ))}
-                  </span>
-                )}
-              </>
-            ))}
+                </>
+              )}
+            </>
+          )}
           <div className="flex items-center gap-2">
             {isShowModelSelect && (
               <Tooltip isTriggerClickable tooltip={t('Conversation settings')}>
