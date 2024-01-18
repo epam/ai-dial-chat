@@ -201,7 +201,7 @@ export default function PublishModal({
     <Modal
       portalId="theme-main"
       containerClassName={classNames(
-        'group/modal inline-block h-[747px] max-h-full min-w-full max-w-[1100px] !bg-layer-2 md:min-w-[550px]',
+        'group/modal inline-block h-[747px] min-w-full max-w-[1100px] !bg-layer-2 md:min-w-[550px]',
         { 'w-full': files.length },
       )}
       dataQa="publish-modal"
