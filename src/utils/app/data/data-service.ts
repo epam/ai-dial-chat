@@ -1,10 +1,11 @@
 /* eslint-disable no-restricted-globals */
 import { Observable, map } from 'rxjs';
 
-import { isMobile } from '@/src/utils/app/mobile';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
 import {
+  BackendDataNodeType,
   BackendFile,
   BackendFileFolder,
   DialFile,
@@ -153,7 +154,7 @@ export class DataService {
   }
 
   public static getShowChatbar(): Observable<boolean> {
-    return BrowserStorage.getData(UIStorageKeys.ShowChatbar, !isMobile());
+    return BrowserStorage.getData(UIStorageKeys.ShowChatbar, !isSmallScreen());
   }
 
   public static setShowChatbar(showChatbar: boolean): Observable<void> {
@@ -161,7 +162,10 @@ export class DataService {
   }
 
   public static getShowPromptbar(): Observable<boolean> {
-    return BrowserStorage.getData(UIStorageKeys.ShowPromptbar, !isMobile());
+    return BrowserStorage.getData(
+      UIStorageKeys.ShowPromptbar,
+      !isSmallScreen(),
+    );
   }
 
   public static setShowPromptbar(showPromptbar: boolean): Observable<void> {
@@ -210,7 +214,7 @@ export class DataService {
     fileName: string,
   ): Observable<{ percent?: number; result?: DialFile }> {
     const resultPath = encodeURI(
-      `${bucket}/${relativePath ? `${relativePath}/` : ''}${fileName}`,
+      `files/${bucket}/${relativePath ? `${relativePath}/` : ''}${fileName}`,
     );
 
     return ApiStorage.requestOld({
@@ -242,7 +246,11 @@ export class DataService {
             result: {
               id: constructPath(relativePath, typedResult.name),
               name: typedResult.name,
-              absolutePath: constructPath(typedResult.bucket, relativePath),
+              absolutePath: constructPath(
+                'files',
+                typedResult.bucket,
+                relativePath,
+              ),
               relativePath: relativePath,
               folderId: relativePath,
               contentLength: typedResult.contentLength,
@@ -259,8 +267,10 @@ export class DataService {
     bucket: string,
     parentPath?: string,
   ): Observable<FileFolderInterface[]> {
+    const filter = BackendDataNodeType.FOLDER;
+
     const query = new URLSearchParams({
-      filter: 'FOLDER',
+      filter,
       bucket,
       ...(parentPath && { path: parentPath }),
     });
@@ -275,7 +285,7 @@ export class DataService {
             id: constructPath(relativePath, folder.name),
             name: folder.name,
             type: FolderType.File,
-            absolutePath: constructPath(bucket, relativePath),
+            absolutePath: constructPath('files', bucket, relativePath),
             relativePath: relativePath,
             folderId: relativePath,
             serverSynced: true,
@@ -286,7 +296,7 @@ export class DataService {
   }
 
   public static removeFile(bucket: string, filePath: string): Observable<void> {
-    const resultPath = encodeURI(constructPath(bucket, filePath));
+    const resultPath = encodeURI(constructPath('files', bucket, filePath));
 
     return ApiStorage.request(`api/files/file/${resultPath}`, {
       method: 'DELETE',
@@ -300,8 +310,10 @@ export class DataService {
     bucket: string,
     parentPath?: string,
   ): Observable<DialFile[]> {
+    const filter = BackendDataNodeType.ITEM;
+
     const query = new URLSearchParams({
-      filter: 'FILE',
+      filter,
       bucket,
       ...(parentPath && { path: parentPath }),
     });
@@ -315,7 +327,7 @@ export class DataService {
           return {
             id: constructPath(relativePath, file.name),
             name: file.name,
-            absolutePath: constructPath(file.bucket, relativePath),
+            absolutePath: constructPath('files', file.bucket, relativePath),
             relativePath: relativePath,
             folderId: relativePath,
             contentLength: file.contentLength,
