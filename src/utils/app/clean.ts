@@ -21,7 +21,12 @@ import { v4 } from 'uuid';
 
 const migrateAttachmentUrls = (attachment: Attachment): Attachment => {
   const getNewAttachmentUrl = (url: string | undefined): string | undefined =>
-    url && !url.startsWith('files') ? constructPath('files', url) : url;
+    url &&
+    !url.startsWith('files') &&
+    !url.startsWith('http') &&
+    !url.startsWith('//')
+      ? constructPath('files', url)
+      : url;
 
   return {
     ...attachment,

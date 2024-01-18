@@ -9,7 +9,10 @@ export type MIMEType =
   | ImageMIMEType
   | string;
 
-export type BackendDataNodeType = 'ITEM' | 'FOLDER';
+export enum BackendDataNodeType {
+  ITEM = 'ITEM',
+  FOLDER = 'FOLDER',
+}
 
 interface BackendDataEntity {
   name: string;
@@ -20,12 +23,12 @@ interface BackendDataEntity {
 }
 
 export interface BackendFile extends BackendDataEntity {
-  nodeType: 'ITEM';
+  nodeType: BackendDataNodeType.ITEM;
   contentLength: number;
   contentType: MIMEType;
 }
 export interface BackendFileFolder extends BackendDataEntity {
-  nodeType: 'FOLDER';
+  nodeType: BackendDataNodeType.FOLDER;
   items: (BackendFile | BackendFileFolder)[];
 }
 
