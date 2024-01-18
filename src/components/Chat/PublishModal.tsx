@@ -135,17 +135,6 @@ export default function PublishModal({
     setIsChangeFolderModalOpened(true);
   }, []);
 
-  const handleClose = useCallback(
-    (e: MouseEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      setSubmitted(false);
-      onClose();
-    },
-    [onClose],
-  );
-
   const handlePublish = useCallback(
     (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
       e.preventDefault();
@@ -208,10 +197,9 @@ export default function PublishModal({
       isOpen={isOpen}
       onClose={onClose}
       initialFocus={nameInputRef}
-      hideClose
     >
       <div className="flex h-full flex-col divide-y divide-tertiary">
-        <h4 className="p-4 text-base font-semibold">
+        <h4 className="p-4 pr-10 text-base font-semibold">
           <span className="line-clamp-2 break-words">
             {`${t('Publication request for')}: ${entity.name.trim()}`}
           </span>
@@ -349,13 +337,6 @@ export default function PublishModal({
         </div>
 
         <div className="flex justify-end gap-3 p-4">
-          <button
-            className="button button-secondary py-2"
-            onClick={handleClose}
-            data-qa="cancel"
-          >
-            {t('Cancel')}
-          </button>
           <button
             className="button button-primary py-2"
             onClick={handlePublish}
