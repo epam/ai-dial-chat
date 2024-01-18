@@ -146,65 +146,35 @@ export const ConversationSettings = ({
           data-qa="entity-settings"
         >
           {!replay.replayAsIs ? (
-            model ? (
-              <>
-                {model.type === EntityType.Application && (
-                  <SettingContainer>
-                    <ModelDescription model={model} />
-                  </SettingContainer>
-                )}
-                {model.type === EntityType.Assistant && (
-                  <SettingContainer>
-                    <AssistantSubModelSelector
-                      assistantModelId={
-                        assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id
-                      }
-                      onSelectAssistantSubModel={onSelectAssistantSubModel}
-                    />
-                  </SettingContainer>
-                )}
-                {model.type === EntityType.Model && (
-                  <SettingContainer>
-                    <SystemPrompt
-                      maxLength={model.maxLength}
-                      prompt={prompt}
-                      prompts={prompts}
-                      onChangePrompt={onChangePrompt}
-                    />
-                  </SettingContainer>
-                )}
-
-                {model.type !== EntityType.Application && (
-                  <SettingContainer>
-                    <TemperatureSlider
-                      label={t('Temperature')}
-                      onChangeTemperature={onChangeTemperature}
-                      temperature={temperature}
-                    />
-                  </SettingContainer>
-                )}
-
-                {model.type !== EntityType.Application && (
-                  <SettingContainer>
-                    <Addons
-                      preselectedAddonsIds={model.selectedAddons || []}
-                      selectedAddonsIds={selectedAddons}
-                      onChangeAddon={onChangeAddon}
-                      onApplyAddons={onApplyAddons}
-                    />
-                  </SettingContainer>
-                )}
-              </>
-            ) : (
-              <>
+            <>
+              {model && model.type === EntityType.Application && (
+                <SettingContainer>
+                  <ModelDescription model={model} />
+                </SettingContainer>
+              )}
+              {model && model.type === EntityType.Assistant && (
+                <SettingContainer>
+                  <AssistantSubModelSelector
+                    assistantModelId={
+                      assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id
+                    }
+                    onSelectAssistantSubModel={onSelectAssistantSubModel}
+                  />
+                </SettingContainer>
+              )}
+              {(!model || model.type === EntityType.Model) && (
                 <SettingContainer>
                   <SystemPrompt
-                    maxLength={Number.MAX_SAFE_INTEGER}
+                    maxLength={
+                      model ? model.maxLength : Number.MAX_SAFE_INTEGER
+                    }
                     prompt={prompt}
                     prompts={prompts}
                     onChangePrompt={onChangePrompt}
                   />
                 </SettingContainer>
+              )}
+              {(!model || model.type !== EntityType.Application) && (
                 <SettingContainer>
                   <TemperatureSlider
                     label={t('Temperature')}
@@ -212,16 +182,18 @@ export const ConversationSettings = ({
                     temperature={temperature}
                   />
                 </SettingContainer>
+              )}
+              {(!model || model.type !== EntityType.Application) && (
                 <SettingContainer>
                   <Addons
-                    preselectedAddonsIds={[]}
+                    preselectedAddonsIds={model?.selectedAddons || []}
                     selectedAddonsIds={selectedAddons}
                     onChangeAddon={onChangeAddon}
                     onApplyAddons={onApplyAddons}
                   />
                 </SettingContainer>
-              </>
-            )
+              )}
+            </>
           ) : (
             <ReplayAsIsDescription
               isModelInMessages={isNoModelInUserMessages}
