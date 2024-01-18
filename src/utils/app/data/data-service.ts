@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-globals */
 import { Observable, map } from 'rxjs';
 
-import { isMobile } from '@/src/utils/app/mobile';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
 import {
@@ -154,7 +154,7 @@ export class DataService {
   }
 
   public static getShowChatbar(): Observable<boolean> {
-    return BrowserStorage.getData(UIStorageKeys.ShowChatbar, !isMobile());
+    return BrowserStorage.getData(UIStorageKeys.ShowChatbar, !isSmallScreen());
   }
 
   public static setShowChatbar(showChatbar: boolean): Observable<void> {
@@ -162,7 +162,10 @@ export class DataService {
   }
 
   public static getShowPromptbar(): Observable<boolean> {
-    return BrowserStorage.getData(UIStorageKeys.ShowPromptbar, !isMobile());
+    return BrowserStorage.getData(
+      UIStorageKeys.ShowPromptbar,
+      !isSmallScreen(),
+    );
   }
 
   public static setShowPromptbar(showPromptbar: boolean): Observable<void> {
