@@ -169,7 +169,9 @@ export default function PublishModal({
           name: trimmedName,
           path: trimmedPath,
           version: trimmedVersion,
-          fileNameMapping: newFileNames.current,
+          fileNameMapping: new Map( // invert mapping
+            Array.from(newFileNames.current, (entry) => [entry[1], entry[0]]),
+          ),
         }),
       );
       onClose();

@@ -37,6 +37,7 @@ import {
   isSettingsChanged,
 } from '@/src/utils/app/conversation';
 import { DataService } from '@/src/utils/app/data/data-service';
+import { renameAttachments } from '@/src/utils/app/file';
 import {
   findRootFromItems,
   getFolderIdByPath,
@@ -1560,7 +1561,12 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
               conversation.folderId && childFolders.has(conversation.folderId),
           )
           .map(({ folderId, ...conversation }) => ({
-            ...conversation,
+            ...renameAttachments(
+              conversation,
+              folderId,
+              folders,
+              publishRequest.fileNameMapping,
+            ),
             ...resetShareEntity,
             id: uuidv4(),
             originalId: conversation.id,
@@ -1593,13 +1599,24 @@ const publishConversationEpic: AppEpic = (action$, state$) =>
       conversations: ConversationsSelectors.selectConversations(state$.value),
       publishedAndTemporaryFolders:
         ConversationsSelectors.selectTemporaryAndFilteredFolders(state$.value),
+      folders: ConversationsSelectors.selectFolders(state$.value),
     })),
     switchMap(
-      ({ publishRequest, conversations, publishedAndTemporaryFolders }) => {
+      ({
+        publishRequest,
+        conversations,
+        publishedAndTemporaryFolders,
+        folders,
+      }) => {
         const sharedConversations = conversations
           .filter((conversation) => conversation.id === publishRequest.id)
-          .map(({ folderId: _, ...conversation }) => ({
-            ...conversation,
+          .map(({ folderId, ...conversation }) => ({
+            ...renameAttachments(
+              conversation,
+              folderId,
+              folders,
+              publishRequest.fileNameMapping,
+            ),
             ...resetShareEntity,
             id: uuidv4(),
             originalId: conversation.id,

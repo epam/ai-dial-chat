@@ -1,7 +1,11 @@
-import { Attachment } from '@/src/types/chat';
+import { Attachment, Conversation } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
+import { FolderInterface } from '@/src/types/folder';
 import { PublishAttachmentInfo } from '@/src/types/share';
 
+import { getPathToFolderById } from './folders';
+
+import cloneDeep from 'lodash-es/cloneDeep';
 import { extensions } from 'mime-types';
 
 export function triggerDownload(url: string, name: string): void {
@@ -26,6 +30,12 @@ export const getRelativePath = (
 ): string | undefined => {
   // 'HASH/files/folder-1/folder-2' -> folder-1/folder-2
   return absolutePath?.split('/').toSpliced(0, 2).join('/') || undefined;
+};
+
+export const getFileName = (
+  absolutePath: string | undefined,
+): string | undefined => {
+  return absolutePath?.split('/').slice(-1)?.[0] || undefined;
 };
 
 export const getUserCustomContent = (
@@ -201,4 +211,31 @@ export const validatePublishingFileRenaming = (
   if (newName.match(notAllowedSymbolsRegex)) {
     return `The symbols ${notAllowedSymbols} are not allowed in folder name`;
   }
+};
+
+export const renameAttachments = (
+  conversation: Conversation,
+  folderId: string | undefined,
+  folders: FolderInterface[],
+  filenameMapping: Map<string, string>,
+): Conversation => {
+  if (!filenameMapping.size) {
+    return conversation;
+  }
+
+  const { path } = getPathToFolderById(folders, folderId);
+
+  const copy = cloneDeep(conversation);
+
+  copy.messages.forEach((message) => {
+    message.custom_content?.attachments?.forEach(
+      (attachment) =>
+        (attachment.title =
+          getFileName(
+            filenameMapping.get(constructPath(path, attachment.title)),
+          ) ?? attachment.title),
+    );
+  });
+
+  return copy;
 };
