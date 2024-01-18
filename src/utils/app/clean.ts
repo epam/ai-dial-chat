@@ -1,4 +1,10 @@
-import { Conversation, ConversationEntityModel } from '@/src/types/chat';
+import {
+  Attachment,
+  Conversation,
+  ConversationEntityModel,
+  Message,
+  Stage,
+} from '@/src/types/chat';
 import { OpenAIEntityModelID } from '@/src/types/openai';
 
 import {
@@ -9,7 +15,39 @@ import {
 } from '../../constants/default-settings';
 import { defaultReplay } from '@/src/constants/replay';
 
+import { constructPath } from './file';
+
 import { v4 } from 'uuid';
+
+const migrateAttachmentUrls = (attachment: Attachment): Attachment => {
+  const getNewAttachmentUrl = (url: string | undefined): string | undefined =>
+    url && !url.startsWith('files') ? constructPath('files', url) : url;
+
+  return {
+    ...attachment,
+    url: getNewAttachmentUrl(attachment.url),
+    reference_url: getNewAttachmentUrl(attachment.reference_url),
+  };
+};
+const migrateStagesAttachmentUrls = (stage: Stage): Stage => {
+  return {
+    ...stage,
+    attachments: stage.attachments?.map(migrateAttachmentUrls),
+  };
+};
+
+const migrateMessageAttachmentUrls = (message: Message): Message => {
+  return {
+    ...message,
+    custom_content: message.custom_content && {
+      ...message.custom_content,
+      attachments: message.custom_content.attachments?.map(
+        migrateAttachmentUrls,
+      ),
+      stages: message.custom_content.stages?.map(migrateStagesAttachmentUrls),
+    },
+  };
+};
 
 export const cleanConversationHistory = (
   history: Conversation[] | unknown,
@@ -46,7 +84,8 @@ export const cleanConversationHistory = (
           prompt: conversation.prompt || DEFAULT_SYSTEM_PROMPT,
           temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
           folderId: conversation.folderId || undefined,
-          messages: conversation.messages || [],
+          messages:
+            conversation.messages?.map(migrateMessageAttachmentUrls) || [],
           replay: conversation.replay || defaultReplay,
           selectedAddons: conversation.selectedAddons ?? [],
           assistantModelId,
