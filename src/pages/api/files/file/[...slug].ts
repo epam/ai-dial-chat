@@ -64,9 +64,7 @@ async function handlePutRequest(
   if (!slugs || slugs.length === 0) {
     throw new OpenAIError('No file path provided', '', '', '400');
   }
-  const url = `${process.env.DIAL_API_HOST}/v1/files/${encodeURI(
-    slugs.join('/'),
-  )}`;
+  const url = `${process.env.DIAL_API_HOST}/v1/${encodeURI(slugs.join('/'))}`;
   const proxyRes = await fetch(url, {
     method: 'PUT',
     headers: {
@@ -101,9 +99,7 @@ async function handleGetRequest(
   if (!slugs || slugs.length === 0) {
     throw new OpenAIError('No file path provided', '', '', '400');
   }
-  const url = `${process.env.DIAL_API_HOST}/v1/files/${encodeURI(
-    slugs.join('/'),
-  )}`;
+  const url = `${process.env.DIAL_API_HOST}/v1/${encodeURI(slugs.join('/'))}`;
   const proxyRes = await fetch(url, {
     headers: getApiHeaders({ jwt: token?.access_token as string }),
   });
@@ -134,9 +130,7 @@ async function handleDeleteRequest(
   if (!slugs || slugs.length === 0) {
     throw new OpenAIError('No file path provided', '', '', '400');
   }
-  const url = `${process.env.DIAL_API_HOST}/v1/files/${encodeURI(
-    slugs.join('/'),
-  )}`;
+  const url = `${process.env.DIAL_API_HOST}/v1/${encodeURI(slugs.join('/'))}`;
 
   const proxyRes = await fetch(url, {
     method: 'DELETE',
