@@ -153,7 +153,7 @@ export default function PublishModal({
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block h-[747px] min-w-[550px] max-w-[1100px] p-6 group/modal"
+      containerClassName="inline-block h-[747px] md:min-w-[550px] md:max-w-[1100px] p-6 group/modal"
       dataQa="publish-modal"
       isOpen={isOpen}
       onClose={onClose}

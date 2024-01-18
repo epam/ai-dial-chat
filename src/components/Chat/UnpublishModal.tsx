@@ -58,7 +58,7 @@ export default function UnpublishModal({
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block h-[434px] w-[424px] p-6"
+      containerClassName="inline-block h-[434px] sm:w-[424px] p-6 w-full"
       dataQa="unpublish-modal"
       isOpen={isOpen}
       onClose={onClose}
