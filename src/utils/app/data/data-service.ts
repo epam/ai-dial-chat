@@ -264,7 +264,7 @@ export class DataService {
     bucket: string,
     parentPath?: string,
   ): Observable<FileFolderInterface[]> {
-    const filter: BackendDataNodeType = 'FOLDER';
+    const filter: BackendDataNodeType = BackendDataNodeType.FOLDER;
 
     const query = new URLSearchParams({
       filter,
@@ -307,7 +307,7 @@ export class DataService {
     bucket: string,
     parentPath?: string,
   ): Observable<DialFile[]> {
-    const filter: BackendDataNodeType = 'ITEM';
+    const filter: BackendDataNodeType = BackendDataNodeType.ITEM;
 
     const query = new URLSearchParams({
       filter,
