@@ -649,7 +649,7 @@ export const Chat = memo(() => {
                     >
                       {conv.messages.length !== 0 &&
                         enabledFeatures.has(Feature.TopSettings) && (
-                          <div className={`z-10 flex flex-col `}>
+                          <div className="z-10 flex flex-col">
                             <ChatHeader
                               conversation={conv}
                               isCompareMode={isCompareMode}

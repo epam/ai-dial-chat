@@ -137,42 +137,74 @@ export const ConversationSettings = ({
             conversationId={conversationId}
             replay={replay}
             modelId={model?.id}
+            unavailableModelId={!model?.id ? modelId : undefined}
             onModelSelect={onSelectModel}
           />
         </div>
-        {!replay.replayAsIs ? (
-          model ? (
-            <div
-              className="flex max-h-full shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
-              data-qa="entity-settings"
-            >
-              {model.type === EntityType.Application && (
-                <SettingContainer>
-                  <ModelDescription model={model} />
-                </SettingContainer>
-              )}
-              {model.type === EntityType.Assistant && (
-                <SettingContainer>
-                  <AssistantSubModelSelector
-                    assistantModelId={
-                      assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id
-                    }
-                    onSelectAssistantSubModel={onSelectAssistantSubModel}
-                  />
-                </SettingContainer>
-              )}
-              {model.type === EntityType.Model && (
+        <div
+          className="flex max-h-full shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
+          data-qa="entity-settings"
+        >
+          {!replay.replayAsIs ? (
+            model ? (
+              <>
+                {model.type === EntityType.Application && (
+                  <SettingContainer>
+                    <ModelDescription model={model} />
+                  </SettingContainer>
+                )}
+                {model.type === EntityType.Assistant && (
+                  <SettingContainer>
+                    <AssistantSubModelSelector
+                      assistantModelId={
+                        assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id
+                      }
+                      onSelectAssistantSubModel={onSelectAssistantSubModel}
+                    />
+                  </SettingContainer>
+                )}
+                {model.type === EntityType.Model && (
+                  <SettingContainer>
+                    <SystemPrompt
+                      maxLength={model.maxLength}
+                      prompt={prompt}
+                      prompts={prompts}
+                      onChangePrompt={onChangePrompt}
+                    />
+                  </SettingContainer>
+                )}
+
+                {model.type !== EntityType.Application && (
+                  <SettingContainer>
+                    <TemperatureSlider
+                      label={t('Temperature')}
+                      onChangeTemperature={onChangeTemperature}
+                      temperature={temperature}
+                    />
+                  </SettingContainer>
+                )}
+
+                {model.type !== EntityType.Application && (
+                  <SettingContainer>
+                    <Addons
+                      preselectedAddonsIds={model.selectedAddons || []}
+                      selectedAddonsIds={selectedAddons}
+                      onChangeAddon={onChangeAddon}
+                      onApplyAddons={onApplyAddons}
+                    />
+                  </SettingContainer>
+                )}
+              </>
+            ) : (
+              <>
                 <SettingContainer>
                   <SystemPrompt
-                    maxLength={model.maxLength}
+                    maxLength={Number.MAX_SAFE_INTEGER}
                     prompt={prompt}
                     prompts={prompts}
                     onChangePrompt={onChangePrompt}
                   />
                 </SettingContainer>
-              )}
-
-              {model.type !== EntityType.Application && (
                 <SettingContainer>
                   <TemperatureSlider
                     label={t('Temperature')}
@@ -180,27 +212,22 @@ export const ConversationSettings = ({
                     temperature={temperature}
                   />
                 </SettingContainer>
-              )}
-
-              {model.type !== EntityType.Application && (
                 <SettingContainer>
                   <Addons
-                    preselectedAddonsIds={model.selectedAddons || []}
+                    preselectedAddonsIds={[]}
                     selectedAddonsIds={selectedAddons}
                     onChangeAddon={onChangeAddon}
                     onApplyAddons={onApplyAddons}
                   />
                 </SettingContainer>
-              )}
-            </div>
+              </>
+            )
           ) : (
-            <div className="flex bg-layer-2 p-4">
-              {t('No settings available')}
-            </div>
-          )
-        ) : (
-          <ReplayAsIsDescription isModelInMessages={isNoModelInUserMessages} />
-        )}
+            <ReplayAsIsDescription
+              isModelInMessages={isNoModelInUserMessages}
+            />
+          )}
+        </div>
         {isCloseEnabled && (
           <button
             className="absolute right-3 top-3 text-secondary hover:text-accent-primary"
