@@ -183,7 +183,7 @@ export const PublishAttachment = ({
         ) : (
           <div className="relative flex grow items-center">
             <input
-              className="mr-14 grow text-ellipsis rounded bg-transparent p-2 placeholder:text-secondary focus:outline-none"
+              className="mr-14 grow text-ellipsis rounded bg-transparent p-2 pl-0 placeholder:text-secondary focus:outline-none"
               type="text"
               value={nameWithoutExtension}
               onChange={(e) => setName(e.target.value)}
