@@ -24,10 +24,11 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
+import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
+
 import CollapsableSection from '../Common/CollapsableSection';
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
 import Modal from '../Common/Modal';
-import { SelectFolderModal } from '../Files/SelectFolderModal';
 import { PublishModalUserGroupFilter } from './PublishModalUserGroupFilter';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -37,6 +38,7 @@ interface Props {
   type: SharingType;
   isOpen: boolean;
   onClose: () => void;
+  depth?: number;
 }
 
 const getPrefix = (item: ShareEntity): string => {
@@ -49,7 +51,13 @@ const getPrefix = (item: ShareEntity): string => {
   }
 };
 
-export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
+export default function PublishModal({
+  entity,
+  isOpen,
+  onClose,
+  type,
+  depth,
+}: Props) {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
   const publishAction = getPublishActionByType(type);
@@ -148,14 +156,14 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block h-[747px] min-w-[550px] max-w-[1100px] p-6 group/modal"
+      containerClassName="inline-block h-[747px] md:min-w-[550px] md:max-w-[1100px] p-6 group/modal"
       dataQa="publish-modal"
       isOpen={isOpen}
       onClose={onClose}
       initialFocus={nameInputRef}
     >
       <div className="flex h-full flex-col gap-2">
-        <h4 className=" max-h-[50px] text-base font-semibold">
+        <h4 className="max-h-[50px] text-base font-semibold">
           <span className="line-clamp-2 break-words">
             {`${t('Publication request for')}: ${entity.name.trim()}`}
           </span>
@@ -294,15 +302,17 @@ export default function PublishModal({ entity, isOpen, onClose, type }: Props) {
           </button>
         </div>
       </div>
-      <SelectFolderModal
+      <ChangePathDialog
+        initiallySelectedFolderId={entity.id}
         isOpen={isChangeFolderModalOpened}
-        selectedFolderName={path}
         onClose={(folderId) => {
           if (typeof folderId === 'string') {
             setPath(folderId);
           }
           setIsChangeFolderModalOpened(false);
         }}
+        type={type}
+        depth={depth}
       />
     </Modal>
   );
