@@ -310,7 +310,7 @@ export class DataService {
     bucket: string,
     parentPath?: string,
   ): Observable<DialFile[]> {
-    const filter: BackendDataNodeType = BackendDataNodeType.ITEM;
+    const filter = BackendDataNodeType.ITEM;
 
     const query = new URLSearchParams({
       filter,
