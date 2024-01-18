@@ -267,7 +267,7 @@ export class DataService {
     bucket: string,
     parentPath?: string,
   ): Observable<FileFolderInterface[]> {
-    const filter: BackendDataNodeType = BackendDataNodeType.FOLDER;
+    const filter = BackendDataNodeType.FOLDER;
 
     const query = new URLSearchParams({
       filter,
