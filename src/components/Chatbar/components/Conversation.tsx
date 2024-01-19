@@ -271,7 +271,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   useEffect(() => {
     if (isRenaming) {
       setIsDeleting(false);
-      setTimeout(() => inputRef.current?.focus()); // set auto-focus
+      setTimeout(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }); // set auto-focus
     } else if (isDeleting) {
       setIsRenaming(false);
     }

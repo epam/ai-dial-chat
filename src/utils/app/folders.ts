@@ -1,11 +1,13 @@
 import {
   constructPath,
+  getDialFilesFromAttachments,
   notAllowedSymbols,
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
 
 import { Conversation } from '@/src/types/chat';
 import { ShareEntity } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
@@ -305,8 +307,18 @@ export const validateFolderRenaming = (
   }
 
   if (newName.match(notAllowedSymbolsRegex)) {
-    return `The symbols ${notAllowedSymbols.join(
-      '',
-    )} are not allowed in folder name`;
+    return `The symbols ${notAllowedSymbols} are not allowed in folder name`;
   }
+};
+
+export const getConversationAttachmentWithPath = (
+  conversation: Conversation,
+  folders: FolderInterface[],
+): DialFile[] => {
+  const { path } = getPathToFolderById(folders, conversation.folderId);
+  return getDialFilesFromAttachments(
+    conversation?.messages.flatMap(
+      (message) => message.custom_content?.attachments || [],
+    ) || [],
+  ).map((file) => ({ ...file, relativePath: path, contentLength: 0 }));
 };
