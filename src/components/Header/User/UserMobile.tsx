@@ -37,7 +37,10 @@ const UserSettings = () => {
   }, [dispatch]);
 
   return (
-    <div className="flex h-[42px] items-center gap-2 px-2" onClick={onClick}>
+    <div
+      className="flex h-[42px] cursor-pointer items-center gap-2 px-2"
+      onClick={onClick}
+    >
       <IconSettings className="text-secondary" size={18} />
       <span>{t('Settings')}</span>
     </div>
@@ -58,7 +61,7 @@ const Logout = () => {
   return (
     <>
       <div
-        className="flex h-[42px] items-center gap-2 px-2"
+        className="flex h-[42px] cursor-pointer items-center gap-2 px-2"
         onClick={() => {
           if (!session) {
             handleLogout();

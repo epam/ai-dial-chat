@@ -174,6 +174,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     if (isRenaming) {
       // focus manually because `autoFocus` doesn't work well with several items and rerender
       renameInputRef.current?.focus();
+      renameInputRef.current?.select();
     }
   }, [isRenaming]);
 
