@@ -118,7 +118,7 @@ export const Import = {
 
 export const Attachment = {
   attachmentPath: path.resolve(__dirname, 'attachments'),
-  sunImageName: 'sun.png',
+  sunImageName: 'sun.jpg',
 };
 
 export enum Side {

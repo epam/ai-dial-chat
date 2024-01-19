@@ -49,6 +49,8 @@ export class FileApiHelper extends BaseApiHelper {
     switch (extension![0]) {
       case 'png':
         return 'image/png';
+      case 'jpg':
+        return 'image/jpeg';
     }
   }
 }
