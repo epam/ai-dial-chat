@@ -1,6 +1,5 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconFolder } from '@tabler/icons-react';
-import { IconX } from '@tabler/icons-react';
+import { IconFolder, IconX } from '@tabler/icons-react';
 import {
   DragEvent,
   FC,
@@ -87,24 +86,8 @@ export interface FolderProps<T, P = unknown> {
   onFileUpload?: (parentFolderId: string) => void;
   maxDepth?: number;
   highlightTemporaryFolders?: boolean;
+  withBorderHighlight?: boolean;
 }
-
-const getClassForFolderName = (
-  highlightTemporaryFolders: boolean | undefined,
-  currentFolder: FolderInterface,
-  highlightedFolders: string[] | undefined,
-) => {
-  if (highlightTemporaryFolders && !currentFolder.temporary) {
-    return 'text-secondary';
-  }
-  if (highlightTemporaryFolders && currentFolder.temporary) {
-    return 'text-primary';
-  }
-
-  return highlightedFolders?.includes(currentFolder.id)
-    ? 'text-accent-primary'
-    : 'text-primary';
-};
 
 const Folder = <T extends Conversation | Prompt | DialFile>({
   currentFolder,
@@ -132,6 +115,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   readonly = false,
   maxDepth,
   highlightTemporaryFolders,
+  withBorderHighlight = true,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -469,6 +453,11 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     }
   }, [currentFolder.id, dispatch, searchTerm]);
 
+  const isHighlighted =
+    isRenaming ||
+    isContextMenu ||
+    (allItems === undefined && highlightedFolders?.includes(currentFolder.id));
+
   return (
     <div
       id="folder"
@@ -487,18 +476,15 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       <div
         className={classNames(
           'group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
-          isRenaming ||
-            isContextMenu ||
-            (allItems === undefined &&
-              highlightedFolders?.includes(currentFolder.id))
-            ? 'border-accent-primary bg-accent-primary-alpha'
-            : 'border-transparent',
+          !withBorderHighlight && 'border-transparent',
+          isHighlighted ? 'bg-accent-primary-alpha' : 'border-transparent',
+          isHighlighted && withBorderHighlight && 'border-accent-primary',
         )}
         data-qa="folder"
       >
         {isRenaming ? (
           <div
-            className={classNames('flex w-full items-center gap-1 py-2 pr-3')}
+            className="flex w-full items-center gap-1 py-2 pr-3"
             style={{
               paddingLeft: `${level * 1.5}rem`,
             }}
@@ -565,11 +551,11 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             <div
               className={classNames(
                 'relative max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5',
-                getClassForFolderName(
-                  highlightTemporaryFolders,
-                  currentFolder,
-                  highlightedFolders,
-                ),
+                highlightTemporaryFolders &&
+                  (currentFolder.temporary ? 'text-primary' : 'text-secondary'),
+                highlightedFolders?.includes(currentFolder.id) && featureType
+                  ? 'text-accent-primary'
+                  : 'text-primary',
               )}
               data-qa="folder-name"
             >
@@ -625,7 +611,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 width={18}
                 height={18}
                 size={18}
-                className="hover:text-primary"
+                className="hover:text-accent-primary"
               />
             </SidebarActionButton>
             <SidebarActionButton
@@ -638,7 +624,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 width={18}
                 height={18}
                 size={18}
-                className="hover:text-primary"
+                className="hover:text-accent-primary"
                 strokeWidth="2"
               />
             </SidebarActionButton>
@@ -646,8 +632,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         )}
       </div>
       {isFolderOpened ? (
-        <div className={classNames('flex flex-col gap-1')}>
-          <div className={classNames('flex flex-col')}>
+        <div className="flex flex-col gap-1">
+          <div className="flex flex-col">
             {allFolders.map((item, index, arr) => {
               if (item.folderId === currentFolder.id) {
                 return (
@@ -689,6 +675,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       featureType={featureType}
                       maxDepth={maxDepth}
                       highlightTemporaryFolders={highlightTemporaryFolders}
+                      withBorderHighlight={withBorderHighlight}
                     />
                     {onDropBetweenFolders && index === arr.length - 1 && (
                       <BetweenFoldersLine
