@@ -14,6 +14,8 @@ import { useTranslation } from 'next-i18next';
 import {
   constructPath,
   getExtensionsListForMimeTypes,
+  getFileNameExtension,
+  getFileNameWithoutExtension,
   getFilesWithInvalidFileName,
   getFilesWithInvalidFileSize,
   getFilesWithInvalidFileType,
@@ -178,7 +180,7 @@ export const PreUploadDialog = ({
         t(
           `The symbols {{notAllowedSymbols}} are not allowed in file name. Please rename or remove them from uploading files list: {{fileNames}}`,
           {
-            notAllowedSymbols: notAllowedSymbols.join(''),
+            notAllowedSymbols,
             fileNames: incorrectFileNames.join(', '),
           },
         ) as string,
@@ -349,12 +351,12 @@ export const PreUploadDialog = ({
                     />
                     <input
                       type="text"
-                      value={file.name.slice(0, file.name.lastIndexOf('.'))}
+                      value={getFileNameWithoutExtension(file.name)}
                       className="grow text-ellipsis rounded border border-primary bg-transparent py-2 pl-8 pr-12 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
                       onChange={handleRenameFile(index)}
                     />
                     <span className="absolute right-2">
-                      {file.name.slice(file.name.lastIndexOf('.'))}
+                      {getFileNameExtension(file.name)}
                     </span>
                   </div>
 

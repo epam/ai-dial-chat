@@ -21,4 +21,5 @@ export interface PublishRequest {
   name: string;
   path: string;
   version: string;
+  fileNameMapping: Map<string, string>;
 }
