@@ -89,12 +89,6 @@ export interface FolderProps<T, P = unknown> {
   withBorderHighlight?: boolean;
 }
 
-const hoverIconClasses = {
-  [FeatureType.Chat]: 'hover:text-accent-secondary',
-  [FeatureType.Prompt]: 'hover:text-accent-tertiary',
-  default: 'hover:text-accent-primary',
-};
-
 const Folder = <T extends Conversation | Prompt | DialFile>({
   currentFolder,
   searchTerm,
@@ -617,7 +611,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 width={18}
                 height={18}
                 size={18}
-                className={hoverIconClasses[featureType || 'default']}
+                className="hover:text-accent-primary"
               />
             </SidebarActionButton>
             <SidebarActionButton
@@ -630,7 +624,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 width={18}
                 height={18}
                 size={18}
-                className={hoverIconClasses[featureType || 'default']}
+                className="hover:text-accent-primary"
                 strokeWidth="2"
               />
             </SidebarActionButton>
