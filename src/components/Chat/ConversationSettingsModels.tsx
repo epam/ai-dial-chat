@@ -4,6 +4,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getValidEntitiesFromIds } from '@/src/utils/app/conversation';
+
 import { Replay } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityModel } from '@/src/types/openai';
@@ -42,10 +44,9 @@ export const ConversationSettingsModel = ({
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
   useEffect(() => {
-    const mappedEntities = (
-      Array.from(recentModelsIds)
-        .map((id) => modelsMap[id])
-        .filter(Boolean) as OpenAIEntityModel[]
+    const mappedEntities = getValidEntitiesFromIds(
+      recentModelsIds,
+      modelsMap,
     ).slice(
       0,
       unavailableModelId ? RECENT_MODELS_COUNT - 1 : RECENT_MODELS_COUNT,

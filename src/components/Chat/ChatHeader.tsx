@@ -12,7 +12,7 @@ import classNames from 'classnames';
 
 import {
   getSelectedAddons,
-  getValidAddonsFromIds,
+  getValidEntitiesFromIds,
 } from '@/src/utils/app/conversation';
 
 import { Conversation } from '@/src/types/chat';
@@ -130,7 +130,7 @@ export const ChatHeader = ({
                       selectedAddons={
                         model
                           ? selectedAddons
-                          : getValidAddonsFromIds(
+                          : getValidEntitiesFromIds(
                               conversation.selectedAddons,
                               addonsMap,
                             )

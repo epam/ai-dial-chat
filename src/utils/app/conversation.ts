@@ -12,13 +12,10 @@ export const getAssitantModelId = (
     : undefined;
 };
 
-export const getValidAddonsFromIds = (
-  addonIds: string[],
-  addonsMap: Partial<Record<string, OpenAIEntityAddon>>,
-) =>
-  addonIds
-    .map((addonId) => addonsMap[addonId])
-    .filter(Boolean) as OpenAIEntityAddon[];
+export const getValidEntitiesFromIds = <T>(
+  entitiesIds: string[],
+  addonsMap: Partial<Record<string, T>>,
+) => entitiesIds.map((entityId) => addonsMap[entityId]).filter(Boolean) as T[];
 
 export const getSelectedAddons = (
   selectedAddons: string[],
@@ -29,7 +26,7 @@ export const getSelectedAddons = (
     const preselectedAddons = model.selectedAddons ?? [];
     const addonsSet = new Set([...preselectedAddons, ...selectedAddons]);
 
-    return getValidAddonsFromIds(Array.from(addonsSet), addonsMap);
+    return getValidEntitiesFromIds(Array.from(addonsSet), addonsMap);
   }
 
   return null;
