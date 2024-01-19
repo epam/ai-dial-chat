@@ -30,6 +30,14 @@ export class FileApiHelper extends BaseApiHelper {
     return body.url;
   }
 
+  public async getFiles() {
+    const response = await this.request.get(API.filesListingHost, {
+      params: { filter: 'ITEM', bucket: BucketUtil.getBucket() },
+    });
+    const responseText = await response.text();
+    console.log('Get files: ' + responseText);
+  }
+
   public async deleteFile(filename: string) {
     const url = `${API.fileHost}/${BucketUtil.getBucket()}/${filename}`;
     await this.request.delete(url);
