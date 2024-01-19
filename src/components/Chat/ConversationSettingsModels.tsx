@@ -26,6 +26,8 @@ interface Props {
   unavailableModelId?: string;
 }
 
+const RECENT_MODELS_COUNT = 5;
+
 export const ConversationSettingsModel = ({
   modelId,
   replay,
@@ -44,7 +46,10 @@ export const ConversationSettingsModel = ({
       Array.from(recentModelsIds)
         .map((id) => modelsMap[id])
         .filter(Boolean) as OpenAIEntityModel[]
-    ).slice(0, unavailableModelId ? 4 : 5);
+    ).slice(
+      0,
+      unavailableModelId ? RECENT_MODELS_COUNT - 1 : RECENT_MODELS_COUNT,
+    );
     setMappedEntities(mappedEntities);
   }, [recentModelsIds, modelsMap, unavailableModelId]);
 
