@@ -38,7 +38,7 @@ export default defineConfig({
     baseURL: process.env.E2E_HOST ?? 'http://localhost:3000',
     video: 'off',
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on',
+    trace: 'off',
     screenshot: 'only-on-failure',
     permissions: ['clipboard-read', 'clipboard-write'],
   },
@@ -66,14 +66,14 @@ export default defineConfig({
         storageState: STORAGE_STATE,
       },
     },
-    // {
-    //   name: 'chromium',
-    //   use: {
-    //     ...devices['Desktop Chrome'],
-    //     storageState: STORAGE_STATE,
-    //     viewport: { width: 1536, height: 864 },
-    //   },
-    //   dependencies: ['chat api'],
-    // },
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: STORAGE_STATE,
+        viewport: { width: 1536, height: 864 },
+      },
+      dependencies: ['chat api'],
+    },
   ],
 });

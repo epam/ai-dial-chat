@@ -39,7 +39,7 @@ const modelsForArithmeticRequest: {
 );
 
 for (const modelToUse of modelsForArithmeticRequest) {
-  test.skip(`Generate arithmetic response for model: ${modelToUse.modelId}`, async ({
+  test(`Generate arithmetic response for model: ${modelToUse.modelId}`, async ({
     conversationData,
     chatApiHelper,
   }) => {

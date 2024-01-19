@@ -5,7 +5,7 @@ import { expect } from '@playwright/test';
 
 const skipReason = 'Execute test on CI env only';
 
-test.skip('Models API listing', async () => {
+test('Models API listing', async () => {
   test.skip(process.env.E2E_HOST === undefined, skipReason);
   const models = ModelsUtil.getModels();
   const expectedModels = Object.values(ModelIds);
@@ -22,7 +22,7 @@ test.skip('Models API listing', async () => {
   });
 });
 
-test.skip('Addons API listing', async () => {
+test('Addons API listing', async () => {
   test.skip(process.env.E2E_HOST === undefined, skipReason);
   const addons = ModelsUtil.getAddons();
   const expectedAddons = Object.values(AddonIds);

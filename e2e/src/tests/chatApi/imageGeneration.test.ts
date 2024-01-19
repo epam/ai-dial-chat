@@ -13,7 +13,7 @@ const modelsForImageGeneration = Array.of(
 );
 
 for (const modelToUse of modelsForImageGeneration) {
-  test.skip(`Generate image for model: ${modelToUse}`, async ({
+  test(`Generate image for model: ${modelToUse}`, async ({
     conversationData,
     chatApiHelper,
   }) => {

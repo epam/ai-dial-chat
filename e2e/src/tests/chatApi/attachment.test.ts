@@ -40,7 +40,6 @@ for (const modelToUse of modelsForRequestWithAttachment) {
       .toBe(200);
 
     const respBody = await modelResponse.text();
-    console.log('Modell response: ' + respBody);
     const results = respBody.match(ExpectedConstants.responseContentPattern);
     const result = results?.join('');
     expect
