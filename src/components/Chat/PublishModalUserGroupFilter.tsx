@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 
+import { getFilteredItems } from '@/src/utils/app/multiple-combobox';
+
 import { UserGroup } from '@/src/types/share';
 
 import { MultipleComboBox } from '../Common/MultipleComboBox';
@@ -14,27 +16,6 @@ const userGroupsMock: UserGroup[] = [
   { id: 'users-6', name: 'Users 6' },
   { id: 'users-7', name: 'Users 7' },
 ];
-
-//TODO remove from the file
-
-function getFilteredItems<T>(
-  items: T[],
-  inputValue: string | undefined,
-  getItemLabel: (item: T) => string,
-  selectedItems?: T[],
-) {
-  if (!selectedItems) {
-    return items;
-  } else {
-    const lowerCasedInputValue = inputValue ? inputValue.toLowerCase() : '';
-    return items.filter(
-      (item) =>
-        !selectedItems.includes(item) &&
-        getItemLabel(item).toLowerCase().includes(lowerCasedInputValue),
-    );
-  }
-}
-// End of remove from file
 
 interface Props {
   onChangeUserGroups: (userGroups: UserGroup[]) => void;
