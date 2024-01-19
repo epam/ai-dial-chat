@@ -84,6 +84,7 @@ export interface Conversation extends ShareEntity {
   isMessageStreaming: boolean;
   isNameChanged?: boolean;
 }
+
 export interface Replay {
   replayAsIs?: boolean;
   isReplay: boolean;
