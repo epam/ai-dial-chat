@@ -2,6 +2,9 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
+import { ConversationEntityModel } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
@@ -9,11 +12,11 @@ import { Translation } from '@/src/types/translation';
 import { ModelIcon } from '../Chatbar/components/ModelIcon';
 
 interface Props {
-  model: OpenAIEntityModel;
+  model: OpenAIEntityModel | ConversationEntityModel;
   selectedAddons: OpenAIEntityAddon[] | null;
-  subModel: OpenAIEntityModel | undefined | null;
   prompt: string | null;
   temperature: number | null;
+  subModel?: OpenAIEntityModel | null;
 }
 
 const SM_HEIGHT_THRESHOLDS = [
@@ -24,20 +27,25 @@ const SM_HEIGHT_THRESHOLDS = [
 ];
 const DEFAULT_SM_LINE_CLAMP = 'line-clamp-[28]';
 
-const getModelTemplate = (model: OpenAIEntityModel, label: string) => {
-  return (
-    <>
-      <span className="text-secondary">{label}:</span>
-      <div
-        className="flex items-center gap-2"
-        data-qa={label.toLowerCase().concat('-info')}
-      >
-        <ModelIcon entityId={model.id} entity={model} size={18} />
-        {model.name}
-      </div>
-    </>
-  );
-};
+const getModelTemplate = (
+  model: OpenAIEntityModel | ConversationEntityModel,
+  label: string,
+) => (
+  <>
+    <span className="text-secondary">{label}:</span>
+    <div
+      className="flex items-center gap-2"
+      data-qa={label.toLowerCase().concat('-info')}
+    >
+      <ModelIcon
+        entityId={model.id}
+        entity={model as OpenAIEntityModel}
+        size={18}
+      />
+      {(model as OpenAIEntityModel).name ?? model.id}
+    </div>
+  </>
+);
 
 export const ChatInfoTooltip = ({
   model,
@@ -52,29 +60,36 @@ export const ChatInfoTooltip = ({
     )?.class || DEFAULT_SM_LINE_CLAMP;
 
   const { t } = useTranslation(Translation.Chat);
-  const getModelLabel = useCallback(() => {
-    switch (model.type) {
-      case EntityType.Application:
-        return t('Application');
-      case EntityType.Assistant:
-        return t('Assistant');
-      default:
-        return t('Model');
-    }
-  }, [model.type, t]);
+  const getModelLabel = useCallback(
+    (type?: EntityType) => {
+      switch (type) {
+        case EntityType.Application:
+          return t('Application');
+        case EntityType.Assistant:
+          return t('Assistant');
+        default:
+          return t('Model');
+      }
+    },
+    [t],
+  );
 
   return (
     <div
       className="grid max-w-[880px] grid-cols-[max-content_1fr] gap-4 px-2 py-3"
       data-qa="chat-info-tooltip"
     >
-      {model && getModelTemplate(model, getModelLabel())}
+      {model &&
+        getModelTemplate(
+          model,
+          getModelLabel((model as OpenAIEntityModel).type),
+        )}
       {subModel != null && getModelTemplate(subModel, t('Assistant model'))}
       {prompt && (
         <>
           <span className="text-secondary">{t('System prompt')}:</span>
           <div
-            className={`whitespace-pre-wrap ${lineClampClass}`}
+            className={classNames('whitespace-pre-wrap', lineClampClass)}
             data-qa="prompt-info"
           >
             {prompt}
