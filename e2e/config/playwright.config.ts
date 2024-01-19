@@ -60,11 +60,11 @@ export default defineConfig({
     },
     {
       name: 'chat api',
-      testMatch: /chatApi\.test\.ts/,
+      testMatch: /\/chatApi\/.*\.test\.ts/,
       dependencies: ['api listing'],
       use: {
         storageState: STORAGE_STATE,
-      }
+      },
     },
     {
       name: 'chromium',
