@@ -28,7 +28,6 @@ COPY --from=build /app/startup.sh ./startup.sh
 
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
-ENV KEEP_ALIVE_TIMEOUT=5000
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
