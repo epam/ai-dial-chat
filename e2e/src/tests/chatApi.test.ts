@@ -122,7 +122,7 @@ for (const modelToUse of modelsForImageGeneration) {
 }
 
 for (const modelToUse of modelsForRequestWithAttachment) {
-  test.only(`Generate response on request with attachment for model: ${modelToUse.modelId}`, async ({
+  test(`Generate response on request with attachment for model: ${modelToUse.modelId}`, async ({
     conversationData,
     chatApiHelper,
   }) => {

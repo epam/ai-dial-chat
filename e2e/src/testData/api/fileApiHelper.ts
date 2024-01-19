@@ -25,7 +25,6 @@ export class FileApiHelper extends BaseApiHelper {
       },
     });
     const responseText = await response.text();
-    console.log('Response: ' + responseText);
     const body = JSON.parse(responseText) as BackendFile & { url: string };
     return body.url;
   }
