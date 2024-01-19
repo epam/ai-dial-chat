@@ -14,6 +14,7 @@ export class ChatApiHelper extends BaseApiHelper {
       assistantModelId: conversation.assistantModelId,
       selectedAddons: conversation.selectedAddons,
     };
+    console.log('Request body: ' + JSON.stringify(requestData));
     return this.request.post(API.chatHost, {
       data: requestData,
       timeout: 60000,
