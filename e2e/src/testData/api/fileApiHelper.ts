@@ -25,6 +25,7 @@ export class FileApiHelper extends BaseApiHelper {
       },
     });
     const responseText = await response.text();
+    console.log('Upload response: ' + responseText);
     const body = JSON.parse(responseText) as BackendFile & { url: string };
     return body.url;
   }
@@ -32,6 +33,7 @@ export class FileApiHelper extends BaseApiHelper {
   public async deleteFile(filename: string) {
     const url = `${API.fileHost}/${BucketUtil.getBucket()}/${filename}`;
     await this.request.delete(url);
+    console.log('Delete file!');
   }
 
   public static getContentTypeForFile(filename: string) {
