@@ -126,7 +126,7 @@ export const ChatHeader = ({
                 <Tooltip
                   tooltip={
                     <ChatInfoTooltip
-                      model={model ? model : conversation.model}
+                      model={model ?? conversation.model}
                       selectedAddons={
                         model
                           ? selectedAddons
