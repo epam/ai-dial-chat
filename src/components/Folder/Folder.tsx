@@ -459,6 +459,11 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     }
   }, [currentFolder.id, dispatch, searchTerm]);
 
+  const isHighlighted =
+    isRenaming ||
+    isContextMenu ||
+    (allItems === undefined && highlightedFolders?.includes(currentFolder.id));
+
   return (
     <div
       id="folder"
@@ -478,14 +483,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         className={classNames(
           'group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
           !withBorderHighlight && 'border-transparent',
-          isRenaming ||
-            isContextMenu ||
-            (allItems === undefined &&
-              highlightedFolders?.includes(currentFolder.id))
-            ? `${
-                withBorderHighlight && 'border-accent-primary'
-              } bg-accent-primary-alpha`
-            : 'border-transparent',
+          isHighlighted ? 'bg-accent-primary-alpha' : 'border-transparent',
+          isHighlighted && withBorderHighlight && 'border-accent-primary',
         )}
         data-qa="folder"
       >
