@@ -206,7 +206,9 @@ export class BaseElement {
         .replaceAll(/><\/path>/g, Tags.closingTag)
         .replaceAll(/><\/rect>/g, Tags.closingTag)
         .replaceAll(/><\/polygon>/g, Tags.closingTag)
-        .replaceAll(/><\/circle>/g, Tags.closingTag),
+        .replaceAll(/><\/circle>/g, Tags.closingTag)
+        .replaceAll(/><\/use>/g, Tags.closingTag)
+        .replaceAll(/><\/image>/g, Tags.closingTag),
     );
   }
 }
