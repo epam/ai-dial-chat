@@ -24,16 +24,12 @@ for (const modelToUse of modelsForRequestWithAttachment) {
   test(`Generate response on request with attachment for model: ${modelToUse.modelId}`, async ({
     conversationData,
     chatApiHelper,
-    fileApiHelper,
   }) => {
     const conversation = conversationData.prepareConversationWithAttachment(
       imageUrl,
       modelToUse.modelId,
       modelToUse.isTextRequestRequired,
     );
-
-    await fileApiHelper.getFiles();
-
     const modelResponse = await chatApiHelper.postRequest(conversation);
     const status = modelResponse.status();
     expect
