@@ -122,7 +122,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('Playback'),
-        display: !isEmptyConversation && !!onPlayback && !isExternal,
+        display: !isEmptyConversation && !!onPlayback,
         dataQa: 'playback',
         Icon: IconPlayerPlay,
         onClick: onPlayback,
