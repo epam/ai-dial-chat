@@ -38,8 +38,5 @@ USER nextjs
 # Expose the port the app will run on
 EXPOSE 3000 9464
 
-# Provide necessary permissions for the script to execute
-RUN chmod +x /app/startup.sh
-
 # Start the application
 CMD ["/app/startup.sh"]
