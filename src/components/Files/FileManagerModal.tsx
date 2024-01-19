@@ -333,6 +333,7 @@ export const FileManagerModal = ({
                               onFileUpload={handleUploadFile}
                               onRenameFolder={handleRenameFolder}
                               onItemEvent={handleItemCallback}
+                              withBorderHighlight={false}
                             />
                           </div>
                         );
