@@ -32,9 +32,10 @@ interface Props<T> {
   itemRow?: FC<{ item: T }>;
   selectedItemRow?: FC<{ item: T }>;
   disabled?: boolean;
+  isHideDropdown?: boolean;
   getItemLabel: (item: T) => string;
   getItemValue: (item: T) => string;
-  getFilteredItems: (
+  getFilteredItems?: (
     items: T[],
     inputValue: string | undefined,
     getItemLabel: (item: T) => string,
@@ -52,6 +53,7 @@ export function MultipleComboBox<T>({
   itemRow,
   selectedItemRow,
   disabled,
+  isHideDropdown,
   getItemLabel,
   getItemValue,
   onChangeSelectedItems,
@@ -103,7 +105,10 @@ export function MultipleComboBox<T>({
   });
 
   const displayedItems = useMemo(
-    () => getFilteredItems(items, inputValue, getItemLabel, selectedItems),
+    () =>
+      getFilteredItems
+        ? getFilteredItems(items, inputValue, getItemLabel, selectedItems)
+        : [inputValue as T],
     [selectedItems, inputValue, items, getFilteredItems, getItemLabel],
   );
 
@@ -172,20 +177,22 @@ export function MultipleComboBox<T>({
 
   return (
     <>
-      <div className="relative" data-qa="model-selector">
+      <div className="relative w-full" data-qa="multiple-combobox">
         <div className="flex w-full flex-col gap-1">
           {label && (
             <label className="w-fit" {...getLabelProps()}>
               {label}
             </label>
           )}
-          <div className="relative flex gap-1 rounded border border-primary p-1 focus-within:border-accent-primary">
+          <div className="relative flex flex-wrap gap-1 rounded border border-primary p-1 focus-within:border-accent-primary">
             {selectedItems &&
               selectedItems.map((selectedItemForRender, index) => {
                 return (
                   <span
                     className="flex items-center rounded bg-accent-primary-alpha px-3 py-1.5 text-xs"
-                    key={`selected-item-${getItemLabel(selectedItemForRender)}`}
+                    key={`selected-item-${getItemLabel(
+                      selectedItemForRender,
+                    )}-${index}`}
                     {...getSelectedItemProps({
                       selectedItem: selectedItemForRender,
                       index,
@@ -242,6 +249,7 @@ export function MultipleComboBox<T>({
             }}
           >
             {isOpen &&
+              !isHideDropdown &&
               (displayedItems?.length > 0 ? (
                 displayedItems.map((item, index) => (
                   <li

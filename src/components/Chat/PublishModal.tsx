@@ -19,7 +19,7 @@ import {
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { ShareEntity } from '@/src/types/common';
-import { SharingType, UserGoup } from '@/src/types/share';
+import { SharingType, UserGroup } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -72,7 +72,7 @@ export default function PublishModal({
   const isVersionUnique = useAppSelector((state) =>
     isPublishVersionUnique(type)(state, entity.id, version.trim()),
   );
-  const [userGroups, setUserGroups] = useState<UserGoup[]>([]);
+  const [userGroups, setUserGroups] = useState<UserGroup[]>([]);
 
   const nameOnChangeHandler = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -258,11 +258,11 @@ export default function PublishModal({
 
           <CollapsableSection
             name={'UserGroup'}
-            dataQa={`filter-${'UserGroup'}`}
+            dataQa="filter-user-group"
             openByDefault={false}
             className="pl-0"
           >
-            <PublishModalUserGroupFilter onChangeUserGoups={setUserGroups} />
+            <PublishModalUserGroupFilter onChangeUserGroups={setUserGroups} />
           </CollapsableSection>
 
           {[

@@ -15,7 +15,7 @@ export enum SharingType {
   PromptFolder = 'prompts_folder',
 }
 
-export interface UserGoup {
+export interface UserGroup {
   id: string;
   name: string;
 }
@@ -28,6 +28,13 @@ export interface PublishRequest {
   name: string;
   path: string;
   version: string;
-  userGroups?: UserGoup[];
+  userGroups?: UserGroup[];
   targetAudienceFilters?: TargetAudienceFilters;
+}
+
+export enum FiltersTypes {
+  Contains = 'Contains',
+  NotContains = 'Not contains',
+  Equals = 'Equals',
+  Regex = 'Regex',
 }

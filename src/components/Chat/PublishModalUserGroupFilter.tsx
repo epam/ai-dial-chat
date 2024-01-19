@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
 
-import { UserGoup } from '@/src/types/share';
+import { UserGroup } from '@/src/types/share';
 
 import { MultipleComboBox } from '../Common/MultipleComboBox';
 
 //TODO change to the real API call
-const userGroupsMock: UserGoup[] = [
+const userGroupsMock: UserGroup[] = [
   { id: 'users-1', name: 'Users 1' },
   { id: 'users-2', name: 'Users 2' },
   { id: 'users-3', name: 'Users 3' },
@@ -17,7 +17,7 @@ const userGroupsMock: UserGoup[] = [
 
 //TODO remove from the file
 
-function getFilteredUserGroups<T>(
+function getFilteredItems<T>(
   items: T[],
   inputValue: string | undefined,
   getItemLabel: (item: T) => string,
@@ -37,18 +37,18 @@ function getFilteredUserGroups<T>(
 // End of remove from file
 
 interface Props {
-  onChangeUserGoups: (userGroups: UserGoup[]) => void;
+  onChangeUserGroups: (userGroups: UserGroup[]) => void;
 }
 
-const getItemValue = (item: UserGoup): string => item.id;
-const getItemLabel = (item: UserGoup): string => item.name;
+const getItemValue = (item: UserGroup): string => item.id;
+const getItemLabel = (item: UserGroup): string => item.name;
 
-export function PublishModalUserGroupFilter({ onChangeUserGoups }: Props) {
+export function PublishModalUserGroupFilter({ onChangeUserGroups }: Props) {
   const handleOnUserGroupsChange = useCallback(
-    (newSelectedItems: UserGoup[]) => {
-      onChangeUserGoups(newSelectedItems);
+    (newSelectedItems: UserGroup[]) => {
+      onChangeUserGroups(newSelectedItems);
     },
-    [onChangeUserGoups],
+    [onChangeUserGroups],
   );
 
   return (
@@ -56,7 +56,7 @@ export function PublishModalUserGroupFilter({ onChangeUserGoups }: Props) {
       items={userGroupsMock}
       getItemLabel={getItemLabel}
       getItemValue={getItemValue}
-      getFilteredItems={getFilteredUserGroups<UserGoup>}
+      getFilteredItems={getFilteredItems<UserGroup>}
       onChangeSelectedItems={handleOnUserGroupsChange}
     />
   );
