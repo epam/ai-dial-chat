@@ -32,7 +32,7 @@ test.beforeAll(async () => {
   bisonModel = ModelsUtil.getModel(ModelIds.BISON_001)!;
 });
 
-test.only(
+test(
   'Chat name equals to the first message\n' +
     'Chat sorting. Today for newly created chat',
   async ({ dialHomePage, conversations, chat, setTestIds }) => {

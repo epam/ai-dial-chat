@@ -21,7 +21,7 @@ test.beforeAll(async ({ fileApiHelper }) => {
 });
 
 for (const modelToUse of modelsForRequestWithAttachment) {
-  test.only(`Generate response on request with attachment for model: ${modelToUse.modelId}`, async ({
+  test(`Generate response on request with attachment for model: ${modelToUse.modelId}`, async ({
     conversationData,
     chatApiHelper,
   }) => {
@@ -40,7 +40,6 @@ for (const modelToUse of modelsForRequestWithAttachment) {
       .toBe(200);
 
     const respBody = await modelResponse.text();
-    console.log('Modell response: ' + respBody);
     const results = respBody.match(ExpectedConstants.responseContentPattern);
     const result = results?.join('');
     expect
