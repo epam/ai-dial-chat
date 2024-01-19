@@ -257,7 +257,7 @@ export default function PublishModal({
           <h2>{t('Target Audience Filters')}</h2>
 
           <CollapsableSection
-            name={'UserGroup'}
+            name={t('User Group')}
             dataQa="filter-user-group"
             openByDefault={false}
             className="pl-0"
