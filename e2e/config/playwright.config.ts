@@ -56,11 +56,13 @@ export default defineConfig({
     {
       name: 'api listing',
       testMatch: /listing\.test\.ts/,
+      fullyParallel: true,
       dependencies: ['auth'],
     },
     {
       name: 'chat api',
       testMatch: /\/chatApi\/.*\.test\.ts/,
+      fullyParallel: true,
       dependencies: ['api listing'],
       use: {
         storageState: STORAGE_STATE,
