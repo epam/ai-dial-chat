@@ -1,13 +1,15 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+
 import { MultipleComboBox } from '../MultipleComboBox';
 
+import userEvent from '@testing-library/user-event';
+
 describe('MultipleComboBox', () => {
-interface TestItem{
+  interface TestItem {
     id: number;
     label: string;
-}
+  }
   const items: TestItem[] = [
     { id: 1, label: 'Item 1' },
     { id: 2, label: 'Item 2' },
@@ -15,29 +17,16 @@ interface TestItem{
   ];
 
   const filterLabel = 'Filter';
-const placeholder = 'placeholder';
+  const placeholder = 'placeholder';
 
-  const getItemLabel = (item:TestItem) => item.label;
-  const getItemValue = (item:TestItem) => item.id.toString();
-  const getFilteredItems = vi.fn((items: TestItem[], inputValue: string | undefined,getItemLabel: (item: TestItem) => string, selectedItems?: TestItem[]) =>{
-    if (!selectedItems) {
-        return items;
-      } else {
-        const lowerCasedInputValue = inputValue ? inputValue.toLowerCase() : '';
-    
-        return items.filter(function filterTestItems(item) {
-          return (
-            !selectedItems.includes(item) &&
-            getItemLabel(item)
-              .toLowerCase()
-              .includes(lowerCasedInputValue)
-          );
-        });
-      }
-  }
-);
+  const getItemLabel = vi.fn((item: TestItem) => item.label);
+  const getItemValue = vi.fn((item: TestItem) => item.id.toString());
 
   const onChangeSelectedItems = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders without crashing', () => {
     render(
@@ -47,9 +36,8 @@ const placeholder = 'placeholder';
         placeholder={placeholder}
         getItemLabel={getItemLabel}
         getItemValue={getItemValue}
-        getFilteredItems={getFilteredItems}
         onChangeSelectedItems={onChangeSelectedItems}
-      />
+      />,
     );
 
     expect(screen.getByText(filterLabel)).toBeInTheDocument();
@@ -63,10 +51,9 @@ const placeholder = 'placeholder';
         items={items}
         getItemLabel={getItemLabel}
         getItemValue={getItemValue}
-        getFilteredItems={getFilteredItems}
         onChangeSelectedItems={onChangeSelectedItems}
         initialSelectedItems={selectedItems}
-      />
+      />,
     );
 
     selectedItems.forEach((selectedItem) => {
@@ -82,83 +69,79 @@ const placeholder = 'placeholder';
         items={items}
         getItemLabel={getItemLabel}
         getItemValue={getItemValue}
-        getFilteredItems={getFilteredItems}
         onChangeSelectedItems={onChangeSelectedItems}
         initialSelectedItems={selectedItems}
-      />
+      />,
     );
 
-    await userEvent.click(screen.getByRole("combobox"));
-
-    expect(getFilteredItems).toHaveBeenCalledWith(
-      items,
-      '',
-      getItemLabel,
-      selectedItems
-    );
-
+    await userEvent.click(screen.getByRole('combobox'));
     filteredItems.forEach((filteredItem) => {
-      expect(
-        screen.queryByText(getItemLabel(filteredItem))
-      ).toBeInTheDocument();
+      expect(screen.getByText(getItemLabel(filteredItem))).toBeInTheDocument();
     });
   });
 
-  it('adds selected item when an item is clicked', () => {
+  it('adds selected item when an item is clicked', async () => {
     render(
       <MultipleComboBox
         items={items}
         label={filterLabel}
         getItemLabel={getItemLabel}
         getItemValue={getItemValue}
-        getFilteredItems={getFilteredItems}
         onChangeSelectedItems={onChangeSelectedItems}
-      />
+      />,
     );
 
-    fireEvent.click(screen.getByText(filterLabel));
-
-    fireEvent.click(screen.getByText(getItemLabel(items[0])));
-
+    await userEvent.click(screen.getByRole('combobox'));
+    await userEvent.click(screen.getByText(getItemLabel(items[0])));
     expect(onChangeSelectedItems).toHaveBeenCalledWith([items[0]]);
   });
 
-  it('removes selected item when close button is clicked', () => {
+  it('adds item from the input when no items passed', async () => {
+    const getItemLabel = vi.fn((item: TestItem) => item.label);
+    render(
+      <MultipleComboBox
+        label={filterLabel}
+        getItemLabel={getItemLabel}
+        getItemValue={getItemLabel}
+        onChangeSelectedItems={onChangeSelectedItems}
+      />,
+    );
+
+    await userEvent.type(screen.getByRole('combobox'), 'ba{enter}');
+    expect(onChangeSelectedItems).toHaveBeenCalledWith(['ba']);
+  });
+
+  it('removes selected item when close button is clicked', async () => {
     const selectedItems = [items[0], items[1]];
     render(
       <MultipleComboBox
         items={items}
         getItemLabel={getItemLabel}
         getItemValue={getItemValue}
-        getFilteredItems={getFilteredItems}
         onChangeSelectedItems={onChangeSelectedItems}
         initialSelectedItems={selectedItems}
-      />
+      />,
     );
 
-      userEvent.click(screen.getByTestId(`unselect-item-${selectedItems[0].id}`));
-      expect(onChangeSelectedItems).toHaveBeenCalledTimes(1)
-      expect(onChangeSelectedItems).toHaveBeenCalledWith([selectedItems[0]]);
-    
+    await userEvent.click(
+      screen.getByTestId(`unselect-item-${selectedItems[0].id}`),
+    );
+    expect(onChangeSelectedItems).toHaveBeenCalledTimes(1);
+    expect(onChangeSelectedItems).toHaveBeenCalledWith([selectedItems[1]]);
   });
 
-  it('displays not found placeholder when no available items', () => {
-    getFilteredItems.mockReturnValue([]);
+  it('displays not found placeholder when no available items', async () => {
     render(
       <MultipleComboBox
         items={items}
         label={filterLabel}
         getItemLabel={getItemLabel}
         getItemValue={getItemValue}
-        getFilteredItems={getFilteredItems}
         onChangeSelectedItems={onChangeSelectedItems}
-      />
+      />,
     );
 
-    fireEvent.click(screen.getByText(filterLabel));
-
-    expect(
-      screen.getByText('No available items')
-    ).toBeInTheDocument();
+    await userEvent.type(screen.getByRole('combobox'), 'test');
+    expect(screen.getByText('No available items')).toBeInTheDocument();
   });
 });

@@ -23,8 +23,32 @@ import { Translation } from '@/src/types/translation';
 
 import { useCombobox, useMultipleSelection } from 'downshift';
 
+function getFilteredItems<T>(
+  inputValue: string | undefined,
+  getItemLabel: (item: T) => string,
+  items?: T[],
+  selectedItems?: T[],
+) {
+  if (!items) {
+    return !inputValue ||
+      selectedItems?.some((item) => getItemLabel(item) === inputValue)
+      ? []
+      : [inputValue as T];
+  }
+  if (!selectedItems) {
+    return items;
+  } else {
+    const lowerCasedInputValue = inputValue ? inputValue.toLowerCase() : '';
+    return items.filter(
+      (item) =>
+        !selectedItems.includes(item) &&
+        getItemLabel(item).toLowerCase().includes(lowerCasedInputValue),
+    );
+  }
+}
+
 interface Props<T> {
-  items: T[];
+  items?: T[];
   initialSelectedItems?: T[];
   label?: string;
   placeholder?: string;
@@ -32,15 +56,8 @@ interface Props<T> {
   itemRow?: FC<{ item: T }>;
   selectedItemRow?: FC<{ item: T }>;
   disabled?: boolean;
-  isHideDropdown?: boolean;
   getItemLabel: (item: T) => string;
   getItemValue: (item: T) => string;
-  getFilteredItems?: (
-    items: T[],
-    inputValue: string | undefined,
-    getItemLabel: (item: T) => string,
-    selectedItems?: T[],
-  ) => T[];
   onChangeSelectedItems: (value: T[]) => void;
 }
 
@@ -53,11 +70,9 @@ export function MultipleComboBox<T>({
   itemRow,
   selectedItemRow,
   disabled,
-  isHideDropdown,
   getItemLabel,
   getItemValue,
   onChangeSelectedItems,
-  getFilteredItems,
 }: Props<T>) {
   const { t } = useTranslation(Translation.Common);
   const [inputValue, setInputValue] = useState<string | undefined>('');
@@ -70,7 +85,7 @@ export function MultipleComboBox<T>({
     middleware: [
       size({
         apply({ rects }) {
-          setFloatingWidth(rects.reference.width + 35);
+          setFloatingWidth(rects.reference.width);
         },
       }),
       offset(4),
@@ -105,11 +120,8 @@ export function MultipleComboBox<T>({
   });
 
   const displayedItems = useMemo(
-    () =>
-      getFilteredItems
-        ? getFilteredItems(items, inputValue, getItemLabel, selectedItems)
-        : [inputValue as T],
-    [selectedItems, inputValue, items, getFilteredItems, getItemLabel],
+    () => getFilteredItems(inputValue, getItemLabel, items, selectedItems),
+    [selectedItems, inputValue, items, getItemLabel],
   );
 
   const {
@@ -179,17 +191,13 @@ export function MultipleComboBox<T>({
     <>
       <div className="relative w-full" data-qa="multiple-combobox">
         <div className="flex w-full flex-col gap-1">
-          {label && (
-            <label className="w-fit" {...getLabelProps()}>
-              {label}
-            </label>
-          )}
-          <div className="relative flex flex-wrap gap-1 rounded border border-primary p-1 focus-within:border-accent-primary">
+          {label && <label {...getLabelProps()}>{label}</label>}
+          <div className="relative flex w-full flex-wrap gap-1 rounded border border-primary p-1 focus-within:border-accent-primary">
             {selectedItems &&
               selectedItems.map((selectedItemForRender, index) => {
                 return (
                   <span
-                    className="flex items-center rounded bg-accent-primary-alpha px-3 py-1.5 text-xs"
+                    className="flex items-center rounded bg-accent-primary-alpha px-3 py-1.5"
                     key={`selected-item-${getItemLabel(
                       selectedItemForRender,
                     )}-${index}`}
@@ -198,11 +206,15 @@ export function MultipleComboBox<T>({
                       index,
                     })}
                   >
-                    {selectedItemRow
-                      ? createElement(selectedItemRow, {
-                          item: selectedItemForRender,
-                        })
-                      : getItemLabel(selectedItemForRender)}
+                    {selectedItemRow ? (
+                      createElement(selectedItemRow, {
+                        item: selectedItemForRender,
+                      })
+                    ) : (
+                      <span className="max-w-[150px] truncate break-all text-xs">
+                        {getItemLabel(selectedItemForRender)}
+                      </span>
+                    )}
                     <span
                       data-qa={`unselect-item-${getItemValue(
                         selectedItemForRender,
@@ -249,12 +261,11 @@ export function MultipleComboBox<T>({
             }}
           >
             {isOpen &&
-              !isHideDropdown &&
               (displayedItems?.length > 0 ? (
                 displayedItems.map((item, index) => (
                   <li
                     className={classNames(
-                      'group flex h-[34px] cursor-pointer flex-col justify-center px-3',
+                      'group flex h-[34px] w-[70%] cursor-pointer flex-col justify-center px-3',
                       highlightedIndex === index && 'bg-accent-primary-alpha',
                       selectedItem === item && 'bg-accent-primary-alpha',
                     )}

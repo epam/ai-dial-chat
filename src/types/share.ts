@@ -20,7 +20,15 @@ export interface UserGroup {
   name: string;
 }
 
-export type TargetAudienceFilters = Record<string, string[]>;
+export interface TargetAudienceFilterItem {
+  id: string;
+  name: string;
+}
+
+export interface TargetAudienceFilter extends TargetAudienceFilterItem {
+  filterType: FiltersTypes;
+  filterParams: string[];
+}
 
 export interface PublishRequest {
   id: string;
@@ -28,8 +36,10 @@ export interface PublishRequest {
   name: string;
   path: string;
   version: string;
-  userGroups?: UserGroup[];
-  targetAudienceFilters?: TargetAudienceFilters;
+  targetAudienceFilters?: {
+    userGroups?: UserGroup[];
+    other: TargetAudienceFilter[];
+  };
 }
 
 export enum FiltersTypes {

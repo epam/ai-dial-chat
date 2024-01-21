@@ -12,4 +12,3 @@ dist
 
 .github
 helm
-__tests__

@@ -1,3 +1,4 @@
+import { IconHelpCircle } from '@tabler/icons-react';
 import {
   ChangeEvent,
   ClipboardEvent,
@@ -19,7 +20,11 @@ import {
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { ShareEntity } from '@/src/types/common';
-import { SharingType, UserGroup } from '@/src/types/share';
+import {
+  SharingType,
+  TargetAudienceFilter,
+  UserGroup,
+} from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -29,6 +34,8 @@ import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
 import CollapsableSection from '../Common/CollapsableSection';
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
 import Modal from '../Common/Modal';
+import Tooltip from '../Common/Tooltip';
+import { PublishModalTargetAudienceFilter } from './PublishModalTargetAudienceFilter';
 import { PublishModalUserGroupFilter } from './PublishModalUserGroupFilter';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -73,6 +80,9 @@ export default function PublishModal({
     isPublishVersionUnique(type)(state, entity.id, version.trim()),
   );
   const [userGroups, setUserGroups] = useState<UserGroup[]>([]);
+  const [otherTargetAudienceFilters, setOtherTargetAudienceFilters] = useState<
+    TargetAudienceFilter[]
+  >([]);
 
   const nameOnChangeHandler = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -91,6 +101,15 @@ export default function PublishModal({
   const handleFolderChange = useCallback(() => {
     setIsChangeFolderModalOpened(true);
   }, []);
+
+  const handleOnChangeFilters = (targetFilter: TargetAudienceFilter) => {
+    setOtherTargetAudienceFilters((prev) => {
+      const filters = prev
+        .filter(({ id }) => id !== targetFilter.id)
+        .concat(targetFilter);
+      return filters;
+    });
+  };
 
   const handleClose = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
@@ -127,7 +146,10 @@ export default function PublishModal({
           name: trimmedName,
           path: trimmedPath,
           version: trimmedVersion,
-          userGroups,
+          targetAudienceFilters: {
+            userGroups,
+            other: otherTargetAudienceFilters,
+          },
         }),
       );
       onClose();
@@ -142,6 +164,7 @@ export default function PublishModal({
       version,
       isVersionUnique,
       userGroups,
+      otherTargetAudienceFilters,
     ],
   );
 
@@ -254,7 +277,18 @@ export default function PublishModal({
         </section>
 
         <section className="flex grow flex-col gap-3">
-          <h2>{t('Target Audience Filters')}</h2>
+          <h2 className="flex flex-row gap-2">
+            {t('Target Audience Filters')}
+
+            <Tooltip
+              placement="top"
+              tooltip={t(
+                'Filters to select target audience for your publication',
+              )}
+            >
+              <IconHelpCircle size={18} />
+            </Tooltip>
+          </h2>
 
           <CollapsableSection
             name={t('User Group')}
@@ -266,20 +300,24 @@ export default function PublishModal({
           </CollapsableSection>
 
           {[
-            'JobTitle',
-            'AssignedProjects',
-            'UserGroup',
-            'JobTitle',
-            'AssignedProjects',
+            { id: 'JobTitle', name: 'Job Title' },
+            { id: 'AssignedProjects', name: 'Assigned Projects' },
+            { id: 'filter4', name: 'Filter 4' },
+            { id: 'filter5', name: 'Filter 5' },
+            { id: 'filter6', name: 'Filter 6' },
           ].map((v, idx) => (
             <CollapsableSection
-              name={v}
-              dataQa={`filter-${v}`}
-              key={`filter-${v}-${idx}`}
+              name={v.name}
+              dataQa={`filter-${v.id}`}
+              key={`filter-${v.id}-${idx}`}
               openByDefault={false}
               className="pl-0"
             >
-              TBD
+              <PublishModalTargetAudienceFilter
+                name={v.name}
+                id={v.id}
+                onChangeFilter={handleOnChangeFilters}
+              />
             </CollapsableSection>
           ))}
         </section>

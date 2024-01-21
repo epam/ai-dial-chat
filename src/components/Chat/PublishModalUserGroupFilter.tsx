@@ -1,7 +1,5 @@
 import { useCallback } from 'react';
 
-import { getFilteredItems } from '@/src/utils/app/multiple-combobox';
-
 import { UserGroup } from '@/src/types/share';
 
 import { MultipleComboBox } from '../Common/MultipleComboBox';
@@ -37,7 +35,6 @@ export function PublishModalUserGroupFilter({ onChangeUserGroups }: Props) {
       items={userGroupsMock}
       getItemLabel={getItemLabel}
       getItemValue={getItemValue}
-      getFilteredItems={getFilteredItems<UserGroup>}
       onChangeSelectedItems={handleOnUserGroupsChange}
     />
   );
