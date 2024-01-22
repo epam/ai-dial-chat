@@ -161,17 +161,6 @@ export default function PublishModal({
     });
   };
 
-  const handleClose = useCallback(
-    (e: MouseEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      setSubmitted(false);
-      onClose();
-    },
-    [onClose],
-  );
-
   const handlePublish = useCallback(
     (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
       e.preventDefault();
