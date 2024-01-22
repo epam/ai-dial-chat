@@ -209,7 +209,7 @@ export const ChatMessage: FC<Props> = memo(
               content: messageContent,
               custom_content: message.custom_content?.attachments
                 ? { attachments: [] }
-                : getUserCustomContent(newEditableAttachments)?.custom_content,
+                : getUserCustomContent(newEditableAttachments),
             },
             messageIndex,
           );
