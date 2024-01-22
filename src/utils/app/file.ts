@@ -40,25 +40,17 @@ export const getUserCustomContent = (
   files: Pick<DialFile, 'contentType' | 'absolutePath' | 'name' | 'status'>[],
 ) => {
   if (files.length === 0) {
-    return {
-      custom_content: {
-        attachments: [],
-      },
-    };
+    return undefined;
   }
 
   return {
-    custom_content: {
-      attachments: files
-        .filter(
-          (file) => file.status !== 'FAILED' && file.status !== 'UPLOADING',
-        )
-        .map((file) => ({
-          type: file.contentType,
-          title: file.name,
-          url: encodeURI(`${file.absolutePath}/${file.name}`),
-        })),
-    },
+    attachments: files
+      .filter((file) => file.status !== 'FAILED' && file.status !== 'UPLOADING')
+      .map((file) => ({
+        type: file.contentType,
+        title: file.name,
+        url: encodeURI(`${file.absolutePath}/${file.name}`),
+      })),
   };
 };
 
