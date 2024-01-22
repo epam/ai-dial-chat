@@ -121,6 +121,7 @@ export const Chat = memo(() => {
     setIsShowChatSettings(false);
 
     if (selectedConversations.length > 0) {
+      handleScroll();
       const mergedMessages: MergedMessages[] = [];
       for (let i = 0; i < selectedConversations[0].messages.length; i++) {
         if (selectedConversations[0].messages[i].role === Role.System) continue;
