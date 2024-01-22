@@ -171,7 +171,7 @@ export const ChatInputMessage = ({
     onSend({
       role: Role.User,
       content,
-      ...getUserCustomContent(selectedFiles),
+      custom_content: getUserCustomContent(selectedFiles),
     });
     dispatch(FilesActions.resetSelectedFiles());
     setContent('');

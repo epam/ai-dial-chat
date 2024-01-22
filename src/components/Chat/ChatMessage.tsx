@@ -207,7 +207,9 @@ export const ChatMessage: FC<Props> = memo(
             {
               ...message,
               content: messageContent,
-              ...getUserCustomContent(newEditableAttachments),
+              custom_content: message.custom_content?.attachments
+                ? { attachments: [] }
+                : getUserCustomContent(newEditableAttachments),
             },
             messageIndex,
           );
