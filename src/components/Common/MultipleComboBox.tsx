@@ -38,7 +38,7 @@ function getFilteredItems<T>(
   if (!selectedItems) {
     return items;
   } else {
-    const lowerCasedInputValue = inputValue ? inputValue.toLowerCase() : '';
+    const lowerCasedInputValue = inputValue?.toLowerCase() || '';
     return items.filter(
       (item) =>
         !selectedItems.includes(item) &&
@@ -230,19 +230,18 @@ export function MultipleComboBox<T>({
                   </span>
                 );
               })}
-            <div className="flex grow">
-              <input
-                disabled={disabled}
-                placeholder={placeholder || ''}
-                className="w-full bg-transparent px-3 py-1 outline-none placeholder:text-secondary"
-                {...getInputProps(
-                  getDropdownProps({
-                    preventKeyAction: isOpen,
-                    ref: refs.reference as RefObject<HTMLInputElement>,
-                  }),
-                )}
-              />
-            </div>
+
+            <input
+              disabled={disabled}
+              placeholder={placeholder || ''}
+              className="bg-transparent px-3 py-1 outline-none placeholder:text-secondary"
+              {...getInputProps(
+                getDropdownProps({
+                  preventKeyAction: isOpen,
+                  ref: refs.reference as RefObject<HTMLInputElement>,
+                }),
+              )}
+            />
           </div>
           <ul
             className={classNames(

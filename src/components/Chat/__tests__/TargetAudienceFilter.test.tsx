@@ -2,11 +2,11 @@ import { render, screen } from '@testing-library/react';
 
 import { FiltersTypes } from '@/src/types/share';
 
-import { PublishModalTargetAudienceFilter } from '../PublishModal/TargetAudienceFilter';
+import { TargetAudienceFilterComponent } from '../PublishModal/TargetAudienceFilter';
 
 import userEvent from '@testing-library/user-event';
 
-describe('PublishModalTargetAudienceFilter', () => {
+describe('TargetAudienceFilterComponent', () => {
   const testFilter = {
     id: 'testFilter',
     name: 'Test filter',
@@ -29,7 +29,7 @@ describe('PublishModalTargetAudienceFilter', () => {
 
   it('renders all filter options and placeholder correctly', async () => {
     render(
-      <PublishModalTargetAudienceFilter
+      <TargetAudienceFilterComponent
         id={testFilter.id}
         name={testFilter.name}
         onChangeFilter={onChangeFilter}
@@ -52,7 +52,7 @@ describe('PublishModalTargetAudienceFilter', () => {
   it('selects an filter option on click', async () => {
     const selectedVlaue = filterValues[1];
     render(
-      <PublishModalTargetAudienceFilter
+      <TargetAudienceFilterComponent
         id={testFilter.id}
         name={testFilter.name}
         onChangeFilter={onChangeFilter}
@@ -67,10 +67,10 @@ describe('PublishModalTargetAudienceFilter', () => {
     expect(screen.getByText(selectedVlaue)).toBeInTheDocument();
   });
 
-  it('fires onChangeFilter event on filter option selection', async () => {
+  it('fires onChangeFilter method on filter option selection', async () => {
     const selectedVlaue = filterValues[1];
     render(
-      <PublishModalTargetAudienceFilter
+      <TargetAudienceFilterComponent
         id={testFilter.id}
         name={testFilter.name}
         onChangeFilter={onChangeFilter}
@@ -91,21 +91,56 @@ describe('PublishModalTargetAudienceFilter', () => {
     });
   });
 
-  it('does not fire onChange event when disabled', async () => {
+  it('fires onChangeFilter method on "Enter"', async () => {
     render(
-      <PublishModalTargetAudienceFilter
+      <TargetAudienceFilterComponent
         id={testFilter.id}
         name={testFilter.name}
         onChangeFilter={onChangeFilter}
       />,
     );
 
-    await userEvent.type(screen.getByRole('combobox'), 'QA{enter}');
+    const combobox = screen.getByRole('combobox');
+    await userEvent.type(combobox, 'QA{enter}');
     expect(onChangeFilter).toHaveBeenCalledWith({
       id: testFilter.id,
       name: testFilter.name,
       filterType: defaultFilterOption,
       filterParams: ['QA'],
+    });
+    await userEvent.type(combobox, 'BA{enter}');
+    expect(onChangeFilter).toHaveBeenCalledTimes(2);
+    expect(onChangeFilter).toHaveBeenCalledWith({
+      id: testFilter.id,
+      name: testFilter.name,
+      filterType: defaultFilterOption,
+      filterParams: ['QA', 'BA'],
+    });
+  });
+
+  it('fires onChangeFilter method on changing input when Regex selected', async () => {
+    const selectedVlaue = FiltersTypes.Regex;
+    const regEx = '/testd?/i';
+    render(
+      <TargetAudienceFilterComponent
+        id={testFilter.id}
+        name={testFilter.name}
+        onChangeFilter={onChangeFilter}
+      />,
+    );
+    await userEvent.click(screen.getByText(defaultFilterOption));
+
+    const selectedFilterOption = screen.getByText(selectedVlaue);
+
+    await userEvent.click(selectedFilterOption);
+
+    const regExInput = screen.getByPlaceholderText('Enter regular expression');
+    await userEvent.type(regExInput, regEx);
+    expect(onChangeFilter).toHaveBeenCalledWith({
+      id: testFilter.id,
+      name: testFilter.name,
+      filterType: FiltersTypes.Regex,
+      filterParams: [regEx],
     });
   });
 });

@@ -6,8 +6,8 @@ import { FiltersTypes, TargetAudienceFilter } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { MultipleComboBox } from '../../Common/MultipleComboBox';
+import { FilterTypeSelect } from './FilterTypeSelect';
 import { RegexParamInput } from './RegexParamInput';
-import { FilterTypeSelect } from './TargetAudienceFilterTypeSelect';
 
 interface Props {
   id: string;
@@ -25,7 +25,7 @@ const filterTypeValues = [
 
 const getItemLabel = (item: string) => item;
 
-export function PublishModalTargetAudienceFilter({
+export function TargetAudienceFilterComponent({
   id,
   name,
   initialSelectedFilter,
@@ -38,9 +38,9 @@ export function PublishModalTargetAudienceFilter({
   );
   const [filterParams, setFilteParams] = useState<string[]>([]);
   const [filterRegexParam, setfilterRegexParam] = useState<string>(
-    initialSelectedFilter?.filterType === FiltersTypes.Regex
-      ? initialSelectedFilter.filterParams[0]
-      : '',
+    (initialSelectedFilter?.filterType === FiltersTypes.Regex &&
+      initialSelectedFilter.filterParams[0]) ||
+      '',
   );
 
   const onChangeFilterType = useCallback(

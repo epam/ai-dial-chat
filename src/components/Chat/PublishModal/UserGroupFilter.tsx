@@ -23,7 +23,7 @@ interface Props {
 const getItemValue = (item: UserGroup): string => item.id;
 const getItemLabel = (item: UserGroup): string => item.name;
 
-export function PublishModalUserGroupFilter({
+export function UserGroupFilter({
   initialSelectedUserGroups,
   onChangeUserGroups,
 }: Props) {

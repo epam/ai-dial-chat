@@ -44,8 +44,8 @@ import { ErrorMessage } from '../../Common/ErrorMessage';
 import Modal from '../../Common/Modal';
 import Tooltip from '../../Common/Tooltip';
 import { PublishAttachment } from './PublishAttachment';
-import { PublishModalTargetAudienceFilter } from './TargetAudienceFilter';
-import { PublishModalUserGroupFilter } from './UserGroupFilter';
+import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
+import { UserGroupFilter } from './UserGroupFilter';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -342,7 +342,7 @@ export default function PublishModal({
                 openByDefault={false}
                 className="!pl-0"
               >
-                <PublishModalUserGroupFilter
+                <UserGroupFilter
                   onChangeUserGroups={setUserGroups}
                   initialSelectedUserGroups={userGroups}
                 />
@@ -366,7 +366,7 @@ export default function PublishModal({
                     openByDefault={false}
                     className="!pl-0"
                   >
-                    <PublishModalTargetAudienceFilter
+                    <TargetAudienceFilterComponent
                       name={v.name}
                       id={v.id}
                       initialSelectedFilter={initialSelectedFilter}
