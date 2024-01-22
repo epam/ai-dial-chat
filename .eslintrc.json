@@ -8,7 +8,7 @@
     "next/core-web-vitals"
   ],
   "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint", "tailwindcss"],
+  "plugins": ["@typescript-eslint", "tailwindcss", "@nx"],
   "root": true,
   "settings": {
     "tailwindcss": {
@@ -40,7 +40,20 @@
         "message": "Use DataService instead."
       }
     ],
-    "no-multiple-empty-lines": ["warn", { "max": 1, "maxBOF": 0 }]
+    "no-multiple-empty-lines": ["warn", { "max": 1, "maxBOF": 0 }],
+    "@nx/enforce-module-boundaries": [
+      "error",
+      {
+        "enforceBuildableLibDependency": true,
+        "allow": [],
+        "depConstraints": [
+          {
+            "sourceTag": "*",
+            "onlyDependOnLibsWithTags": ["*"]
+          }
+        ]
+      }
+    ]
   },
   "overrides": [
     {

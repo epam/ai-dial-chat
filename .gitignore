@@ -10,7 +10,7 @@
 /test-results
 
 # next.js
-/.next/
+/.next
 /out/
 /dist
 
@@ -54,3 +54,6 @@ pnpm-lock.yaml
 
 # coverage
 */coverage
+
+# NX
+.nx/cache

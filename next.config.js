@@ -1,3 +1,4 @@
+const { withNx } = require('@nx/next');
 const { i18n } = require('./next-i18next.config');
 
 class BasePathResolver {
@@ -41,7 +42,7 @@ class BasePathResolver {
 }
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig = withNx({
   i18n,
   poweredByHeader: false,
   reactStrictMode: true,
@@ -138,6 +139,6 @@ const nextConfig = {
       },
     ];
   },
-};
+});
 
 module.exports = nextConfig;

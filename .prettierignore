@@ -12,4 +12,8 @@ dist
 
 .github
 helm
+
+/coverage
 __tests__
+
+/.nx/cache
