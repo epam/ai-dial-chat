@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import { UserGroup } from '@/src/types/share';
 
-import { MultipleComboBox } from '../Common/MultipleComboBox';
+import { MultipleComboBox } from '../../Common/MultipleComboBox';
 
 //TODO change to the real API call
 const userGroupsMock: UserGroup[] = [
@@ -16,13 +16,17 @@ const userGroupsMock: UserGroup[] = [
 ];
 
 interface Props {
+  initialSelectedUserGroups: UserGroup[];
   onChangeUserGroups: (userGroups: UserGroup[]) => void;
 }
 
 const getItemValue = (item: UserGroup): string => item.id;
 const getItemLabel = (item: UserGroup): string => item.name;
 
-export function PublishModalUserGroupFilter({ onChangeUserGroups }: Props) {
+export function PublishModalUserGroupFilter({
+  initialSelectedUserGroups,
+  onChangeUserGroups,
+}: Props) {
   const handleOnUserGroupsChange = useCallback(
     (newSelectedItems: UserGroup[]) => {
       onChangeUserGroups(newSelectedItems);
@@ -33,6 +37,7 @@ export function PublishModalUserGroupFilter({ onChangeUserGroups }: Props) {
   return (
     <MultipleComboBox
       items={userGroupsMock}
+      initialSelectedItems={initialSelectedUserGroups}
       getItemLabel={getItemLabel}
       getItemValue={getItemValue}
       onChangeSelectedItems={handleOnUserGroupsChange}

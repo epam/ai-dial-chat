@@ -37,7 +37,7 @@ import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 import ShareIcon from '@/src/components/Common/ShareIcon';
 
-import PublishModal from '../../Chat/PublishModal';
+import PublishModal from '../../Chat/PublishModal/PublishModal';
 import UnpublishModal from '../../Chat/UnpublishModal';
 import { ModelIcon } from './ModelIcon';
 

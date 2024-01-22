@@ -38,14 +38,14 @@ import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
 
 import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
 
-import CollapsableSection from '../Common/CollapsableSection';
-import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
-import { ErrorMessage } from '../Common/ErrorMessage';
-import Modal from '../Common/Modal';
-import Tooltip from '../Common/Tooltip';
+import CollapsableSection from '../../Common/CollapsableSection';
+import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
+import { ErrorMessage } from '../../Common/ErrorMessage';
+import Modal from '../../Common/Modal';
+import Tooltip from '../../Common/Tooltip';
 import { PublishAttachment } from './PublishAttachment';
-import { PublishModalTargetAudienceFilter } from './PublishModalTargetAudienceFilter';
-import { PublishModalUserGroupFilter } from './PublishModalUserGroupFilter';
+import { PublishModalTargetAudienceFilter } from './TargetAudienceFilter';
+import { PublishModalUserGroupFilter } from './UserGroupFilter';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -340,10 +340,11 @@ export default function PublishModal({
                 name={t('User Group')}
                 dataQa="filter-user-group"
                 openByDefault={false}
-                className="pl-0"
+                className="!pl-0"
               >
                 <PublishModalUserGroupFilter
                   onChangeUserGroups={setUserGroups}
+                  initialSelectedUserGroups={userGroups}
                 />
               </CollapsableSection>
 
@@ -353,21 +354,27 @@ export default function PublishModal({
                 { id: 'filter4', name: 'Filter 4' },
                 { id: 'filter5', name: 'Filter 5' },
                 { id: 'filter6', name: 'Filter 6' },
-              ].map((v, idx) => (
-                <CollapsableSection
-                  name={v.name}
-                  dataQa={`filter-${v.id}`}
-                  key={`filter-${v.id}-${idx}`}
-                  openByDefault={false}
-                  className="!pl-0"
-                >
-                  <PublishModalTargetAudienceFilter
+              ].map((v, idx) => {
+                const initialSelectedFilter = otherTargetAudienceFilters.find(
+                  ({ id }) => id === v.id,
+                );
+                return (
+                  <CollapsableSection
                     name={v.name}
-                    id={v.id}
-                    onChangeFilter={handleOnChangeFilters}
-                  />
-                </CollapsableSection>
-              ))}
+                    dataQa={`filter-${v.id}`}
+                    key={`filter-${v.id}-${idx}`}
+                    openByDefault={false}
+                    className="!pl-0"
+                  >
+                    <PublishModalTargetAudienceFilter
+                      name={v.name}
+                      id={v.id}
+                      initialSelectedFilter={initialSelectedFilter}
+                      onChangeFilter={handleOnChangeFilters}
+                    />
+                  </CollapsableSection>
+                );
+              })}
             </section>
           </div>
           {(type === SharingType.Conversation ||

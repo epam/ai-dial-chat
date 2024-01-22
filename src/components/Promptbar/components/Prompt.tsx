@@ -28,7 +28,7 @@ import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
-import PublishModal from '../../Chat/PublishModal';
+import PublishModal from '../../Chat/PublishModal/PublishModal';
 import ShareModal from '../../Chat/ShareModal';
 import UnpublishModal from '../../Chat/UnpublishModal';
 import ShareIcon from '../../Common/ShareIcon';
