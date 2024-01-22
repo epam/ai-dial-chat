@@ -40,11 +40,7 @@ export const getUserCustomContent = (
   files: Pick<DialFile, 'contentType' | 'absolutePath' | 'name' | 'status'>[],
 ) => {
   if (files.length === 0) {
-    return {
-      custom_content: {
-        attachments: [],
-      },
-    };
+    return undefined;
   }
 
   return {
