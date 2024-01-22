@@ -16,7 +16,7 @@ import { hasExternalParent, isEntityExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
-import { DisplayMenuItemProps, onClickMenuItemHandler } from '@/src/types/menu';
+import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -74,21 +74,21 @@ export const FolderContextMenu = ({
         display: !!onUpload && !isExternal,
         dataQa: 'upload',
         Icon: IconUpload,
-        onClick: onUpload as onClickMenuItemHandler,
+        onClick: onUpload,
       },
       {
         name: t('Rename'),
         display: !!onRename && !isExternal,
         dataQa: 'rename',
         Icon: IconPencilMinus,
-        onClick: onRename as onClickMenuItemHandler,
+        onClick: onRename,
       },
       {
         name: t('Share'),
         display: isSharingEnabled && !!onShare && !isExternal,
         dataQa: 'share',
         Icon: IconUserShare,
-        onClick: onShare as onClickMenuItemHandler,
+        onClick: onShare,
       },
       {
         name: t('Publish'),
@@ -99,7 +99,7 @@ export const FolderContextMenu = ({
           !!onPublish &&
           !isExternal,
         Icon: IconWorldShare,
-        onClick: onPublish as onClickMenuItemHandler,
+        onClick: onPublish,
       },
       {
         name: t('Update'),
@@ -107,28 +107,28 @@ export const FolderContextMenu = ({
         display:
           isPublishingEnabled && !!folder.isPublished && !!onPublishUpdate,
         Icon: IconClockShare,
-        onClick: onPublishUpdate as onClickMenuItemHandler,
+        onClick: onPublishUpdate,
       },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
         display: isPublishingEnabled && !!folder.isPublished && !!onUnpublish,
         Icon: UnpublishIcon,
-        onClick: onUnpublish as onClickMenuItemHandler,
+        onClick: onUnpublish,
       },
       {
         name: t('Delete'),
         display: !!onDelete,
         dataQa: 'delete',
         Icon: IconTrashX,
-        onClick: onDelete as onClickMenuItemHandler,
+        onClick: onDelete,
       },
       {
         name: t('Add new folder'),
         display: !!onAddFolder,
         dataQa: 'new-folder',
         Icon: IconFolderPlus,
-        onClick: onAddFolder as onClickMenuItemHandler,
+        onClick: onAddFolder,
       },
     ],
     [

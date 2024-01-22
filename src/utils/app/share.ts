@@ -86,3 +86,16 @@ export const isPublishVersionUnique = (type: SharingType) => {
       throw new Error('unknown type');
   }
 };
+
+export const getAttachments = (type: SharingType) => {
+  switch (type) {
+    case SharingType.Conversation:
+    case SharingType.ConversationFolder:
+      return ConversationsSelectors.getAttachments;
+    case SharingType.Prompt:
+    case SharingType.PromptFolder:
+      return () => [];
+    default:
+      throw new Error('unknown type');
+  }
+};

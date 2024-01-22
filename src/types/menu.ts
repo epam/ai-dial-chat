@@ -7,9 +7,9 @@ export interface CustomTriggerMenuRendererProps extends MenuItemRendererProps {
   Renderer: (props: MenuItemRendererProps) => JSX.Element;
 }
 
-export type onClickMenuItemHandler = (
-  props?: unknown,
-) => void | MouseEventHandler<unknown>;
+export type onClickMenuItemHandler =
+  | MouseEventHandler<unknown>
+  | ((props?: unknown) => void);
 
 export interface DisplayMenuItemProps {
   display?: boolean;

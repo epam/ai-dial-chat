@@ -1,4 +1,11 @@
-import { FC, KeyboardEvent, useCallback, useEffect, useRef } from 'react';
+import {
+  ChangeEvent,
+  FC,
+  KeyboardEvent,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -55,10 +62,10 @@ export const SystemPrompt: FC<Props> = ({
   } = usePromptSelection(maxLength);
 
   const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    (e: ChangeEvent<HTMLTextAreaElement>) => {
       const value = e.target.value;
 
-      if (value.length > maxLength) {
+      if (value.length > maxLength && value.length >= content.length) {
         setIsPromptLimitModalOpen(true);
         return;
       }
@@ -69,6 +76,7 @@ export const SystemPrompt: FC<Props> = ({
       onChangePrompt(value);
     },
     [
+      content.length,
       maxLength,
       onChangePrompt,
       setContent,

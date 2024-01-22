@@ -242,6 +242,12 @@ export const conversationsSlice = createSlice({
       const newConversation: Conversation = {
         ...payload.conversation,
         ...resetShareEntity,
+        folderId: hasExternalParent(
+          { conversations: state },
+          payload.conversation.folderId,
+        )
+          ? undefined
+          : payload.conversation.folderId,
         id: uuidv4(),
         name: newConversationName,
         messages: [],
@@ -272,6 +278,12 @@ export const conversationsSlice = createSlice({
       const newConversation: Conversation = {
         ...payload.conversation,
         ...resetShareEntity,
+        folderId: hasExternalParent(
+          { conversations: state },
+          payload.conversation.folderId,
+        )
+          ? undefined
+          : payload.conversation.folderId,
         id: uuidv4(),
         name: newConversationName,
         messages: [],

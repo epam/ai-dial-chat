@@ -37,6 +37,7 @@ import {
   isSettingsChanged,
 } from '@/src/utils/app/conversation';
 import { DataService } from '@/src/utils/app/data/data-service';
+import { renameAttachments } from '@/src/utils/app/file';
 import {
   findRootFromItems,
   getFolderIdByPath,
@@ -658,7 +659,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           observer();
           return observable;
         }),
-        // TODO: get rid of this https://gitlab.deltixhub.com/Deltix/openai-apps/chatbot-ui/-/issues/301
+        // TODO: get rid of this https://github.com/epam/ai-dial-chat/issues/115
         timeout(120000),
         mergeMap((resp) =>
           iif(
@@ -1560,7 +1561,12 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
               conversation.folderId && childFolders.has(conversation.folderId),
           )
           .map(({ folderId, ...conversation }) => ({
-            ...conversation,
+            ...renameAttachments(
+              conversation,
+              folderId,
+              folders,
+              publishRequest.fileNameMapping,
+            ),
             ...resetShareEntity,
             id: uuidv4(),
             originalId: conversation.id,
@@ -1593,13 +1599,24 @@ const publishConversationEpic: AppEpic = (action$, state$) =>
       conversations: ConversationsSelectors.selectConversations(state$.value),
       publishedAndTemporaryFolders:
         ConversationsSelectors.selectTemporaryAndFilteredFolders(state$.value),
+      folders: ConversationsSelectors.selectFolders(state$.value),
     })),
     switchMap(
-      ({ publishRequest, conversations, publishedAndTemporaryFolders }) => {
+      ({
+        publishRequest,
+        conversations,
+        publishedAndTemporaryFolders,
+        folders,
+      }) => {
         const sharedConversations = conversations
           .filter((conversation) => conversation.id === publishRequest.id)
-          .map(({ folderId: _, ...conversation }) => ({
-            ...conversation,
+          .map(({ folderId, ...conversation }) => ({
+            ...renameAttachments(
+              conversation,
+              folderId,
+              folders,
+              publishRequest.fileNameMapping,
+            ),
             ...resetShareEntity,
             id: uuidv4(),
             originalId: conversation.id,

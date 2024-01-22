@@ -33,7 +33,7 @@ export function FileItemContextMenu({
         display: file.status !== 'UPLOADING' && file.status !== 'FAILED',
         dataQa: 'download',
         Icon: IconDownload,
-        onClick: (e) => stopBubbling(e as MouseEvent),
+        onClick: (e: MouseEvent) => stopBubbling(e),
         className: 'flex gap-3',
         customTriggerData: file,
         CustomTriggerRenderer: DownloadRenderer,

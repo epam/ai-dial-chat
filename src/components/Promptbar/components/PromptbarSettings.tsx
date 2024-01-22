@@ -45,7 +45,7 @@ export function PromptbarSettings() {
       },
       {
         name: t('Import prompts'),
-        onClick: (promptsJSON) => {
+        onClick: (promptsJSON: unknown) => {
           dispatch(
             PromptsActions.importPrompts({
               promptsHistory: promptsJSON as PromptsHistory,

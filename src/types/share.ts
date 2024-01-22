@@ -25,6 +25,13 @@ export interface TargetAudienceFilterItem {
   name: string;
 }
 
+export enum FiltersTypes {
+  Contains = 'Contains',
+  NotContains = 'Not contains',
+  Equals = 'Equals',
+  Regex = 'Regex',
+}
+
 export interface TargetAudienceFilter extends TargetAudienceFilterItem {
   filterType: FiltersTypes;
   filterParams: string[];
@@ -36,15 +43,9 @@ export interface PublishRequest {
   name: string;
   path: string;
   version: string;
+  fileNameMapping: Map<string, string>;
   targetAudienceFilters?: {
     userGroups?: UserGroup[];
     other: TargetAudienceFilter[];
   };
-}
-
-export enum FiltersTypes {
-  Contains = 'Contains',
-  NotContains = 'Not contains',
-  Equals = 'Equals',
-  Regex = 'Regex',
 }

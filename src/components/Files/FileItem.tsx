@@ -126,6 +126,8 @@ export const FileItem = ({
           className={classNames(
             'block max-w-full truncate',
             item.status === 'FAILED' && 'text-error',
+            (isSelected || item.status === 'UPLOADING') &&
+              'text-accent-primary',
           )}
         >
           {item.name}
