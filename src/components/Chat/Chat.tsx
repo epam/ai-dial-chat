@@ -118,31 +118,6 @@ export const Chat = memo(() => {
   );
 
   useEffect(() => {
-    setIsShowChatSettings(false);
-
-    if (selectedConversations.length > 0) {
-      handleScroll();
-      const mergedMessages: MergedMessages[] = [];
-      for (let i = 0; i < selectedConversations[0].messages.length; i++) {
-        if (selectedConversations[0].messages[i].role === Role.System) continue;
-
-        mergedMessages.push(
-          selectedConversations.map((conv) => [
-            conv,
-            conv.messages[i] || { role: Role.Assistant, content: '' },
-            i,
-          ]),
-        );
-      }
-      setMergedMessages([...mergedMessages]);
-    }
-
-    if (selectedConversations.some((conv) => conv.messages.length === 0)) {
-      setShowScrollDownButton(false);
-    }
-  }, [selectedConversations]);
-
-  useEffect(() => {
     const modelIds = models.map((model) => model.id);
     const isNotAllowedModel =
       isModelsLoaded &&
@@ -265,6 +240,31 @@ export const Chat = memo(() => {
       }
     };
   }, [messagesEndRef]);
+
+  useEffect(() => {
+    setIsShowChatSettings(false);
+
+    if (selectedConversations.length > 0) {
+      handleScroll();
+      const mergedMessages: MergedMessages[] = [];
+      for (let i = 0; i < selectedConversations[0].messages.length; i++) {
+        if (selectedConversations[0].messages[i].role === Role.System) continue;
+
+        mergedMessages.push(
+          selectedConversations.map((conv) => [
+            conv,
+            conv.messages[i] || { role: Role.Assistant, content: '' },
+            i,
+          ]),
+        );
+      }
+      setMergedMessages([...mergedMessages]);
+    }
+
+    if (selectedConversations.some((conv) => conv.messages.length === 0)) {
+      setShowScrollDownButton(false);
+    }
+  }, [handleScroll, selectedConversations]);
 
   const handleClearConversation = useCallback(
     (conversation: Conversation) => {
