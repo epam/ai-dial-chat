@@ -203,11 +203,16 @@ export const ChatMessage: FC<Props> = memo(
 
       if (message.content != messageContent || !isFinalAttachmentIdsSame) {
         if (conversation && onEdit) {
+          const attachments = getUserCustomContent(newEditableAttachments);
+
           onEdit(
             {
               ...message,
               content: messageContent,
-              ...getUserCustomContent(newEditableAttachments),
+              custom_content:
+                message.custom_content?.attachments && !attachments
+                  ? { attachments: [] }
+                  : attachments,
             },
             messageIndex,
           );
