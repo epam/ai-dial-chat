@@ -81,20 +81,20 @@ export const selectFilteredFolders = createSelector(
   ],
   (
     state,
-    folders,
+    allFolders,
     emptyFolderIds,
     filters,
     searchTerm?,
     includeEmptyFolders?,
   ) =>
-    getFilteredFolders(
-      folders,
+    getFilteredFolders({
+      allFolders,
       emptyFolderIds,
       filters,
-      selectFilteredConversations(state, filters, searchTerm),
+      entities: selectFilteredConversations(state, filters, searchTerm),
       searchTerm,
       includeEmptyFolders,
-    ),
+    }),
 );
 
 export const selectSectionFolders = createSelector(

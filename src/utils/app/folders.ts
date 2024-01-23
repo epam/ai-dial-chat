@@ -203,14 +203,23 @@ export const getPathToFolderById = (
   return { path: constructPath(...path), pathDepth: path.length - 1 };
 };
 
-export const getFilteredFolders = (
-  allFolders: FolderInterface[],
-  emptyFolderIds: string[],
-  filters: EntityFilters,
-  entities: Conversation[] | Prompt[],
-  searchTerm?: string,
-  includeEmptyFolders?: boolean,
-) => {
+interface GetFilteredFoldersProps {
+  allFolders: FolderInterface[];
+  emptyFolderIds: string[];
+  filters: EntityFilters;
+  entities: Conversation[] | Prompt[];
+  searchTerm?: string;
+  includeEmptyFolders?: boolean;
+}
+
+export const getFilteredFolders = ({
+  allFolders,
+  emptyFolderIds,
+  filters,
+  entities,
+  searchTerm,
+  includeEmptyFolders,
+}: GetFilteredFoldersProps) => {
   const rootFolders = allFolders.filter(
     (folder) => !folder.folderId && filters.sectionFilter(folder),
   );

@@ -78,20 +78,20 @@ export const selectFilteredFolders = createSelector(
   ],
   (
     state,
-    folders,
+    allFolders,
     emptyFolderIds,
     filters,
     searchTerm?,
     includeEmptyFolders?,
   ) =>
-    getFilteredFolders(
-      folders,
+    getFilteredFolders({
+      allFolders,
       emptyFolderIds,
       filters,
-      selectFilteredPrompts(state, filters, searchTerm),
+      entities: selectFilteredPrompts(state, filters, searchTerm),
       searchTerm,
       includeEmptyFolders,
-    ),
+    }),
 );
 
 export const selectSectionFolders = createSelector(
