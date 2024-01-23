@@ -23,12 +23,19 @@ import { Translation } from '@/src/types/translation';
 
 import { useCombobox, useMultipleSelection } from 'downshift';
 
-function getFilteredItems<T>(
-  inputValue: string | undefined,
-  getItemLabel: (item: T) => string,
-  items?: T[],
-  selectedItems?: T[],
-) {
+interface getFilteredItemsArgs<T> {
+  inputValue: string | undefined;
+  getItemLabel: (item: T) => string;
+  items?: T[];
+  selectedItems?: T[];
+}
+
+function getFilteredItems<T>({
+  inputValue,
+  getItemLabel,
+  items,
+  selectedItems,
+}: getFilteredItemsArgs<T>) {
   if (!items) {
     return !inputValue ||
       selectedItems?.some((item) => getItemLabel(item) === inputValue)
@@ -120,7 +127,7 @@ export function MultipleComboBox<T>({
   });
 
   const displayedItems = useMemo(
-    () => getFilteredItems(inputValue, getItemLabel, items, selectedItems),
+    () => getFilteredItems({ inputValue, getItemLabel, items, selectedItems }),
     [selectedItems, inputValue, items, getItemLabel],
   );
 
