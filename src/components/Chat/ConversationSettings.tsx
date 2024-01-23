@@ -121,7 +121,7 @@ export const ConversationSettings = ({
   return (
     <div
       ref={ref}
-      className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t"
+      className="w-full rounded-b bg-layer-1 [&:first-child]:rounded-t"
     >
       <div
         className={classNames(
