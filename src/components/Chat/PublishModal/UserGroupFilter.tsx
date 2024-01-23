@@ -1,6 +1,9 @@
 import { useCallback } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { UserGroup } from '@/src/types/share';
+import { Translation } from '@/src/types/translation';
 
 import { MultipleComboBox } from '../../Common/MultipleComboBox';
 
@@ -27,6 +30,8 @@ export function UserGroupFilter({
   initialSelectedUserGroups,
   onChangeUserGroups,
 }: Props) {
+  const { t } = useTranslation(Translation.SideBar);
+
   const handleOnUserGroupsChange = useCallback(
     (newSelectedItems: UserGroup[]) => {
       onChangeUserGroups(newSelectedItems);
@@ -41,6 +46,7 @@ export function UserGroupFilter({
       getItemLabel={getItemLabel}
       getItemValue={getItemValue}
       onChangeSelectedItems={handleOnUserGroupsChange}
+      placeholder={t('Enter one or more options...') as string}
     />
   );
 }

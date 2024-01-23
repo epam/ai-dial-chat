@@ -46,9 +46,18 @@ export function TargetAudienceFilterComponent({
   const onChangeFilterType = useCallback(
     (filterType: FiltersTypes) => {
       setFilterType(filterType);
+      if (filterType === FiltersTypes.Regex) {
+        onChangeFilter({
+          id,
+          name,
+          filterType,
+          filterParams: [filterRegexParam],
+        });
+        return;
+      }
       onChangeFilter({ id, name, filterType, filterParams });
     },
-    [filterParams, id, name, onChangeFilter],
+    [filterParams, id, name, onChangeFilter, filterRegexParam],
   );
   const onChangeFilterParams = useCallback(
     (filterParams: string[]) => {
@@ -73,7 +82,7 @@ export function TargetAudienceFilterComponent({
 
   return (
     <div
-      className="flex flex-col sm:flex-row"
+      className="flex flex-col gap-1 sm:flex-row"
       data-qa={`publish-audience-filter-${id}`}
     >
       <FilterTypeSelect
@@ -93,8 +102,8 @@ export function TargetAudienceFilterComponent({
           getItemLabel={getItemLabel}
           getItemValue={getItemLabel}
           onChangeSelectedItems={onChangeFilterParams}
-          placeholder={t(`Enter ${name.toLowerCase()}`) as string}
-          notFoundPlaceholder={t(`Enter ${name.toLowerCase()}`) as string}
+          placeholder={t('Enter one or more options...') as string}
+          notFoundPlaceholder={t('Enter regular expression...') as string}
         />
       )}
     </div>

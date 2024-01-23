@@ -14,6 +14,7 @@ interface CollapsableSectionProps {
   dataQa?: string;
   onToggle?: (isOpen: boolean) => void;
   className?: string;
+  showOnHoverOnly?: boolean;
 }
 
 export default function CollapsableSection({
@@ -26,6 +27,7 @@ export default function CollapsableSection({
   dataQa,
   onToggle,
   className,
+  showOnHoverOnly,
 }: CollapsableSectionProps) {
   const [isOpened, setIsOpened] = useState(openByDefault);
   const handleClick = useCallback(() => {
@@ -51,6 +53,7 @@ export default function CollapsableSection({
           isOpen={isOpened}
           size={carentIconSize}
           hidden={carentIconHidden}
+          showOnHoverOnly={showOnHoverOnly}
         />
         {name}
       </div>

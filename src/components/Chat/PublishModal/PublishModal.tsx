@@ -328,9 +328,13 @@ export default function PublishModal({
 
                 <Tooltip
                   placement="top"
-                  tooltip={t(
-                    'Filters to select target audience for your publication',
-                  )}
+                  tooltip={
+                    <div className="max-w-[230px] break-words">
+                      {t(
+                        'The collection will be published for all users who meet AT LEAST ONE option from every',
+                      )}
+                    </div>
+                  }
                 >
                   <IconHelpCircle size={18} />
                 </Tooltip>

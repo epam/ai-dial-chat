@@ -204,7 +204,7 @@ export function MultipleComboBox<T>({
               selectedItems.map((selectedItemForRender, index) => {
                 return (
                   <span
-                    className="flex items-center rounded bg-accent-primary-alpha px-3 py-1.5"
+                    className="flex items-center gap-2 rounded bg-accent-primary-alpha px-3 py-1.5"
                     key={`selected-item-${getItemLabel(
                       selectedItemForRender,
                     )}-${index}`}
@@ -226,13 +226,13 @@ export function MultipleComboBox<T>({
                       data-qa={`unselect-item-${getItemValue(
                         selectedItemForRender,
                       )}`}
-                      className="cursor-pointer px-1"
+                      className="cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
                         removeSelectedItem(selectedItemForRender);
                       }}
                     >
-                      <IconX height={12} width={12} />
+                      <IconX size={14} className="text-secondary" />
                     </span>
                   </span>
                 );
@@ -241,7 +241,10 @@ export function MultipleComboBox<T>({
             <input
               disabled={disabled}
               placeholder={placeholder || ''}
-              className="bg-transparent px-3 py-1 outline-none placeholder:text-secondary"
+              className={classNames(
+                'max-w-[100%] bg-transparent py-1 outline-none placeholder:text-secondary',
+                selectedItems.length ? 'pl-1' : 'pl-3',
+              )}
               {...getInputProps(
                 getDropdownProps({
                   preventKeyAction: isOpen,
@@ -250,9 +253,10 @@ export function MultipleComboBox<T>({
               )}
             />
           </div>
+
           <ul
             className={classNames(
-              'z-10 max-h-80 overflow-auto rounded bg-layer-0',
+              'z-10 max-h-80 overflow-auto rounded bg-layer-3',
               !isOpen && 'hidden',
             )}
             {...getMenuProps(
@@ -267,27 +271,27 @@ export function MultipleComboBox<T>({
             }}
           >
             {isOpen &&
-              (displayedItems?.length > 0 ? (
-                displayedItems.map((item, index) => (
-                  <li
-                    className={classNames(
-                      'group flex h-[34px] cursor-pointer flex-col justify-center px-3',
-                      highlightedIndex === index && 'bg-accent-primary-alpha',
-                      selectedItem === item && 'bg-accent-primary-alpha',
-                    )}
-                    key={`${getItemValue(item)}${index}`}
-                    {...getItemProps({ item, index })}
-                  >
-                    {itemRow
-                      ? createElement(itemRow, { item })
-                      : getItemLabel(item)}
-                  </li>
-                ))
-              ) : (
-                <li className="px-3 py-2">
-                  {notFoundPlaceholder || t('No available items')}
-                </li>
-              ))}
+              (displayedItems?.length > 0
+                ? displayedItems.map((item, index) => (
+                    <li
+                      className={classNames(
+                        'group flex min-h-[34px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3',
+                        highlightedIndex === index && 'bg-accent-primary-alpha',
+                        selectedItem === item && 'bg-accent-primary-alpha',
+                      )}
+                      key={`${getItemValue(item)}${index}`}
+                      {...getItemProps({ item, index })}
+                    >
+                      {itemRow
+                        ? createElement(itemRow, { item })
+                        : getItemLabel(item)}
+                    </li>
+                  ))
+                : !!inputValue?.length && (
+                    <li className="px-3 py-2">
+                      {notFoundPlaceholder || t('No available items')}
+                    </li>
+                  ))}
           </ul>
         </div>
       </div>
