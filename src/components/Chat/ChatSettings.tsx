@@ -113,33 +113,35 @@ export const ChatSettings = ({
 
   return (
     <div className="absolute z-30 flex h-full w-full grow items-start justify-center bg-blackout md:top-0 md:p-5">
-      <div className="flex h-full flex-col gap-[1px] overflow-auto bg-layer-0 xl:max-w-[720px] 2xl:max-w-[1000px]">
-        <ConversationSettings
-          conversationId={conversation.id}
-          replay={conversation.replay}
-          isCloseEnabled
-          modelId={currentModelId}
-          prompts={prompts}
-          assistantModelId={currentAssistentModelId}
-          prompt={currentPrompt}
-          selectedAddons={currentSelectedAddonsIds}
-          temperature={currentTemperature}
-          onSelectModel={handleOnSelectModel}
-          onChangePrompt={handleOnChangePrompt}
-          onChangeTemperature={handleOnChangeTemperature}
-          onSelectAssistantSubModel={handleOnSelectAssistantSubModel}
-          onChangeAddon={handleOnChangeAddon}
-          onApplyAddons={handleOnApplyAddons}
-          onClose={onClose}
-        />
-        <div className="flex w-full items-center justify-end bg-layer-2 px-3 py-4 md:px-5">
-          <button
-            className="button button-primary"
-            data-qa="apply-changes"
-            onClick={handleOnApplySettings}
-          >
-            {t('Apply changes')}
-          </button>
+      <div className="max-h-full overflow-auto xl:max-w-[720px] 2xl:max-w-[1000px]">
+        <div className="flex flex-col gap-[1px] bg-layer-0">
+          <ConversationSettings
+            conversationId={conversation.id}
+            replay={conversation.replay}
+            isCloseEnabled
+            modelId={currentModelId}
+            prompts={prompts}
+            assistantModelId={currentAssistentModelId}
+            prompt={currentPrompt}
+            selectedAddons={currentSelectedAddonsIds}
+            temperature={currentTemperature}
+            onSelectModel={handleOnSelectModel}
+            onChangePrompt={handleOnChangePrompt}
+            onChangeTemperature={handleOnChangeTemperature}
+            onSelectAssistantSubModel={handleOnSelectAssistantSubModel}
+            onChangeAddon={handleOnChangeAddon}
+            onApplyAddons={handleOnApplyAddons}
+            onClose={onClose}
+          />
+          <div className="flex w-full items-center justify-end overflow-hidden bg-layer-2 px-3 py-4 md:px-5">
+            <button
+              className="button button-primary"
+              data-qa="apply-changes"
+              onClick={handleOnApplySettings}
+            >
+              {t('Apply changes')}
+            </button>
+          </div>
         </div>
       </div>
     </div>
