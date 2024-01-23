@@ -123,6 +123,8 @@ export const getMyItemsFilters = (
   searchFilter: getMyItemsFilter(searchFilters),
 });
 
+export const defaultMyItemsFilters = getMyItemsFilters();
+
 export const searchSectionFolders = (
   folders: FolderInterface[],
   filters: EntityFilters,
