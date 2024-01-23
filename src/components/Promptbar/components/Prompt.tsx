@@ -11,6 +11,7 @@ import {
 import classNames from 'classnames';
 
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
+import { defaultMyItemsFilters } from '@/src/utils/app/search';
 
 import { FeatureType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
@@ -49,7 +50,14 @@ export interface PromptMoveToFolderProps {
 export const PromptComponent = ({ item: prompt, level }: Props) => {
   const dispatch = useAppDispatch();
 
-  const folders = useAppSelector(PromptsSelectors.selectFolders);
+  const folders = useAppSelector((state) =>
+    PromptsSelectors.selectFilteredFolders(
+      state,
+      defaultMyItemsFilters,
+      '',
+      true,
+    ),
+  );
   const selectedPromptId = useAppSelector(
     PromptsSelectors.selectSelectedPromptId,
   );
