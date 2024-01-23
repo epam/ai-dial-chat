@@ -73,7 +73,7 @@ export function TargetAudienceFilterComponent({
 
   return (
     <div
-      className="flex flex-col md:flex-row"
+      className="flex flex-col sm:flex-row"
       data-qa={`publish-audience-filter-${id}`}
     >
       <FilterTypeSelect
