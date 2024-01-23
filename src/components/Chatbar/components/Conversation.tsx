@@ -14,6 +14,7 @@ import {
 import classNames from 'classnames';
 
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
+import { getMyItemsFilters } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -108,7 +109,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
-  const folders = useAppSelector(ConversationsSelectors.selectFolders);
+  const folders = useAppSelector((state) =>
+    ConversationsSelectors.selectFilteredFolders(
+      state,
+      getMyItemsFilters(),
+      '',
+      true,
+    ),
+  );
 
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,

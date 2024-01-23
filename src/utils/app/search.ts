@@ -117,7 +117,7 @@ export const getMyItemsFilter = (
 };
 
 export const getMyItemsFilters = (
-  searchFilters: SearchFilters,
+  searchFilters: SearchFilters = SearchFilters.None,
 ): EntityFilters => ({
   sectionFilter: MyItemFilter,
   searchFilter: getMyItemsFilter(searchFilters),
