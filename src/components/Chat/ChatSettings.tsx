@@ -113,7 +113,7 @@ export const ChatSettings = ({
 
   return (
     <div className="absolute z-30 flex h-full w-full grow items-start justify-center bg-blackout md:top-0 md:p-5">
-      <div className="max-h-full w-full overflow-auto xl:max-w-[720px] 2xl:max-w-[1000px]">
+      <div className="h-full overflow-auto xl:max-w-[720px] 2xl:max-w-[1000px]">
         <div className="flex flex-col gap-[1px] bg-layer-0">
           <ConversationSettings
             conversationId={conversation.id}
