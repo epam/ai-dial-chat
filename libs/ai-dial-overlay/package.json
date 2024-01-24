@@ -1,0 +1,7 @@
+{
+  "name": "ai-dial-overlay",
+  "version": "0.0.1",
+  "dependencies": {},
+  "type": "module",
+  "main": "./index.js"
+}

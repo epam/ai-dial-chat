@@ -1,4 +1,4 @@
-import { ChatOverlay } from '../overlay';
+import { ChatOverlay } from '../libs/ai-dial-overlay/src';
 
 export const chatOverlayFlow = () => {
   const container = document.createElement('div');

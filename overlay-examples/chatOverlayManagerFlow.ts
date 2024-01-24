@@ -1,4 +1,4 @@
-import { ChatOverlayManager } from '../overlay';
+import { ChatOverlayManager } from '../libs/ai-dial-overlay/src';
 
 export const chatOverlayManagerFlow = () => {
   const manager = new ChatOverlayManager();

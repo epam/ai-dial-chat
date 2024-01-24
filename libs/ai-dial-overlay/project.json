@@ -1,0 +1,48 @@
+{
+  "name": "ai-dial-overlay",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/ai-dial-overlay/src",
+  "projectType": "library",
+  "targets": {
+    "build:ts": {
+      "executor": "nx:run-commands",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/ai-dial-overlay",
+        "commands": ["tsc -p libs/ai-dial-overlay/tsconfig.d.json"]
+      }
+    },
+    "build:bundle": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/ai-dial-overlay",
+        "main": "libs/ai-dial-overlay/src/index.ts",
+        "tsConfig": "libs/ai-dial-overlay/tsconfig.lib.json",
+        "assets": ["libs/ai-dial-overlay/*.md"],
+        "format": ["esm", "cjs"]
+      }
+    },
+    "build": {
+      "executor": "nx:noop",
+      "outputs": ["{options.outputPath}"],
+      "dependsOn": ["build:ts", "build:bundle"],
+      "options": {
+        "outputPath": "dist/libs/ai-dial-overlay"
+      }
+    },
+
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "../../coverage/libs/ai-dial-overlay"
+      }
+    }
+  },
+  "tags": []
+}
