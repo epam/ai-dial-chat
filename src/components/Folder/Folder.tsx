@@ -22,6 +22,7 @@ import classNames from 'classnames';
 import { getFoldersDepth } from '@/src/utils/app/folders';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -144,6 +145,9 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );
+  const isExternal = useAppSelector((state) =>
+    isEntityOrParentsExternal(state, currentFolder, FeatureType.Chat),
+  );
 
   useEffect(() => {
     // only if search term was changed after first render
@@ -246,7 +250,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const dropHandler = useCallback(
     (e: DragEvent) => {
-      if (!isDropAllowed || !handleDrop) {
+      if (!isDropAllowed || !handleDrop || isExternal) {
         return;
       }
 
@@ -281,6 +285,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     [
       isDropAllowed,
       handleDrop,
+      isExternal,
       dispatch,
       currentFolder,
       allFolders,
@@ -322,6 +327,10 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const highlightDrop = useCallback(
     (evt: DragEvent) => {
+      if (isExternal) {
+        return;
+      }
+
       if (dragDropElement.current === evt.target) {
         setIsDraggingOver(true);
         return;
@@ -335,7 +344,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         setIsDraggingOver(true);
       }
     },
-    [currentFolder.id, dispatch, isParentFolder],
+    [currentFolder.id, dispatch, isExternal, isParentFolder],
   );
 
   const removeHighlight = useCallback(
@@ -526,7 +535,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
               setIsSelected(true);
             }}
-            draggable={!!handleDrop}
+            draggable={!!handleDrop && !isExternal}
             onDragStart={(e) => handleDragStart(e, currentFolder)}
             onDragOver={(e) => {
               e.preventDefault();
@@ -645,6 +654,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                         onDraggingOver={onDraggingBetweenFolders}
                         index={index}
                         parentFolderId={item.folderId}
+                        denyDrop={isExternal}
                       />
                     ) : (
                       <div className="h-1"></div>
@@ -684,6 +694,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                         onDraggingOver={onDraggingBetweenFolders}
                         index={index + 1}
                         parentFolderId={item.folderId}
+                        denyDrop={isExternal}
                       />
                     )}
                   </Fragment>

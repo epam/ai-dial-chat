@@ -14,6 +14,7 @@ interface BetweenFoldersLineProps {
     index: number,
   ) => void;
   onDraggingOver?: (isDraggingOver: boolean) => void;
+  denyDrop?: boolean;
 }
 
 export const BetweenFoldersLine = ({
@@ -22,13 +23,14 @@ export const BetweenFoldersLine = ({
   parentFolderId,
   onDrop,
   onDraggingOver,
+  denyDrop,
 }: BetweenFoldersLineProps) => {
   const dragDropElement = useRef<HTMLDivElement>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   const dropHandler = useCallback(
     (e: DragEvent) => {
-      if (!e.dataTransfer) {
+      if (!e.dataTransfer || denyDrop) {
         return;
       }
 
@@ -43,7 +45,7 @@ export const BetweenFoldersLine = ({
         onDrop(JSON.parse(folderData), parentFolderId, index);
       }
     },
-    [index, onDrop, parentFolderId],
+    [denyDrop, index, onDrop, parentFolderId],
   );
 
   const allowDrop = useCallback((e: DragEvent) => {
@@ -51,14 +53,20 @@ export const BetweenFoldersLine = ({
   }, []);
 
   const highlightDrop = useCallback(() => {
+    if (denyDrop) {
+      return;
+    }
     setIsDraggingOver(true);
     onDraggingOver?.(true);
-  }, [onDraggingOver]);
+  }, [denyDrop, onDraggingOver]);
 
   const removeHighlight = useCallback(() => {
+    if (denyDrop) {
+      return;
+    }
     setIsDraggingOver(false);
     onDraggingOver?.(false);
-  }, [onDraggingOver]);
+  }, [denyDrop, onDraggingOver]);
 
   return (
     <div
