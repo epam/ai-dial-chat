@@ -2,6 +2,7 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilter,
@@ -9,11 +10,7 @@ import {
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
-import {
-  FolderInterface,
-  FolderSectionProps,
-  MoveType,
-} from '@/src/types/folder';
+import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';

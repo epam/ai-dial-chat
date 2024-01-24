@@ -14,12 +14,12 @@ import {
 import classNames from 'classnames';
 
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
+import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
-import { MoveType } from '@/src/types/folder';
 import { SharingType } from '@/src/types/share';
 
 import {
@@ -29,8 +29,6 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
-
-import { emptyImage } from '@/src/constants/drag-and-drop';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
@@ -130,7 +128,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const dragImageRef = useRef<HTMLImageElement | null>();
   const [isSharing, setIsSharing] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
@@ -147,11 +144,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
-
-  useEffect(() => {
-    dragImageRef.current = document.createElement('img');
-    dragImageRef.current.src = emptyImage;
-  }, []);
 
   const isEmptyConversation = conversation.messages.length === 0;
 
@@ -188,15 +180,15 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLButtonElement>, conversation: Conversation) => {
-      if (e.dataTransfer) {
-        e.dataTransfer.setDragImage(dragImageRef.current || new Image(), 0, 0);
+      if (e.dataTransfer && !isExternal) {
+        e.dataTransfer.setDragImage(getDragImage(), 0, 0);
         e.dataTransfer.setData(
           MoveType.Conversation,
           JSON.stringify(conversation),
         );
       }
     },
-    [],
+    [isExternal],
   );
 
   const handleConfirm: MouseEventHandler<HTMLButtonElement> = useCallback(

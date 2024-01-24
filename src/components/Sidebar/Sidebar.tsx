@@ -11,7 +11,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { hasDragEventEntityData } from '@/src/utils/app/folders';
+import { hasDragEventEntityData } from '@/src/utils/app/move';
 
 import { FeatureType } from '@/src/types/common';
 import { SearchFilters } from '@/src/types/search';

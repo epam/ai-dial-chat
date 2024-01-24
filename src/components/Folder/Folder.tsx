@@ -19,12 +19,13 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import {
-  getFolderMoveType,
-  getFoldersDepth,
-  hasDragEventAnyData,
-} from '@/src/utils/app/folders';
+import { getFoldersDepth } from '@/src/utils/app/folders';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
+import {
+  getDragImage,
+  getFolderMoveType,
+  hasDragEventAnyData,
+} from '@/src/utils/app/move';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
@@ -39,8 +40,6 @@ import { Translation } from '@/src/types/translation';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
-
-import { emptyImage } from '@/src/constants/drag-and-drop';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
@@ -216,7 +215,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const hasChildElements = useMemo(() => {
     return filteredChildFolders.length > 0 || filteredChildItems.length > 0;
   }, [filteredChildFolders.length, filteredChildItems.length]);
-  const dragImageRef = useRef<HTMLImageElement | null>();
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -225,11 +223,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
-
-  useEffect(() => {
-    dragImageRef.current = document.createElement('img');
-    dragImageRef.current.src = emptyImage;
-  }, []);
 
   const handleRename = useCallback(() => {
     if (!onRenameFolder) {
@@ -433,8 +426,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLDivElement>, folder: FolderInterface) => {
-      if (e.dataTransfer) {
-        e.dataTransfer.setDragImage(dragImageRef.current || new Image(), 0, 0);
+      if (e.dataTransfer && !isExternal) {
+        e.dataTransfer.setDragImage(getDragImage(), 0, 0);
         e.dataTransfer.setData(
           getFolderMoveType(featureType),
           JSON.stringify(folder),
@@ -442,7 +435,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         dispatch(UIActions.closeFolder({ id: currentFolder.id }));
       }
     },
-    [currentFolder.id, dispatch, featureType],
+    [currentFolder.id, dispatch, featureType, isExternal],
   );
 
   const onDraggingBetweenFolders = useCallback((isDraggingOver: boolean) => {

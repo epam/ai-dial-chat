@@ -2,9 +2,10 @@ import { DragEvent, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { MoveType } from '@/src/utils/app/move';
+
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
-import { MoveType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 

@@ -1,5 +1,3 @@
-import { DragEvent } from 'react';
-
 import {
   constructPath,
   getDialFilesFromAttachments,
@@ -8,9 +6,9 @@ import {
 } from '@/src/utils/app/file';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType, ShareEntity } from '@/src/types/common';
+import { ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderInterface, MoveType } from '@/src/types/folder';
+import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
@@ -343,50 +341,4 @@ export const getConversationAttachmentWithPath = (
       (message) => message.custom_content?.attachments || [],
     ) || [],
   ).map((file) => ({ ...file, relativePath: path, contentLength: 0 }));
-};
-
-export const getFolderMoveType = (featureType?: FeatureType): MoveType => {
-  switch (featureType) {
-    case FeatureType.Chat:
-      return MoveType.ConversationFolder;
-    case FeatureType.Prompt:
-      return MoveType.PromptFolder;
-    default:
-      return MoveType.FileFolder;
-  }
-};
-
-export const getEntityMoveType = (featureType?: FeatureType): MoveType => {
-  switch (featureType) {
-    case FeatureType.Chat:
-      return MoveType.Conversation;
-    case FeatureType.Prompt:
-      return MoveType.Prompt;
-    default:
-      return MoveType.File;
-  }
-};
-
-export const hasDragEventEntityData = (
-  event: DragEvent,
-  featureType?: FeatureType,
-): boolean => {
-  return event.dataTransfer?.types.includes(getEntityMoveType(featureType));
-};
-
-const hasDragEventFolderData = (
-  event: DragEvent,
-  featureType?: FeatureType,
-): boolean => {
-  return event.dataTransfer?.types.includes(getFolderMoveType(featureType));
-};
-
-export const hasDragEventAnyData = (
-  event: DragEvent,
-  featureType?: FeatureType,
-): boolean => {
-  return (
-    hasDragEventEntityData(event, featureType) ||
-    hasDragEventFolderData(event, featureType)
-  );
 };

@@ -11,11 +11,11 @@ import {
 import classNames from 'classnames';
 
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
+import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
-import { MoveType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 
@@ -157,11 +157,12 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLDivElement>, prompt: Prompt) => {
-      if (e.dataTransfer) {
+      if (e.dataTransfer && !isExternal) {
+        e.dataTransfer.setDragImage(getDragImage(), 0, 0);
         e.dataTransfer.setData(MoveType.Prompt, JSON.stringify(prompt));
       }
     },
-    [],
+    [isExternal],
   );
 
   const handleOpenEditModal: MouseEventHandler = useCallback(
