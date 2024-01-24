@@ -6,6 +6,7 @@ import {
   PublishedWithMeFilter,
   SharedWithMeFilter,
 } from '@/src/utils/app/search';
+import { isExternalEntity } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -71,6 +72,10 @@ const ChatFolderTemplate = ({
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
   );
   const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
+
+  const isExternal = useAppSelector((state) =>
+    isExternalEntity(state, folder, FeatureType.Chat),
+  );
 
   const handleDrop = useCallback(
     (e: DragEvent, folder: FolderInterface) => {
@@ -139,6 +144,7 @@ const ChatFolderTemplate = ({
         onDrop={onDropBetweenFolders}
         index={index}
         parentFolderId={folder.folderId}
+        denyDrop={isExternal}
       />
       <Folder
         maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
@@ -172,6 +178,7 @@ const ChatFolderTemplate = ({
           onDrop={onDropBetweenFolders}
           index={index + 1}
           parentFolderId={folder.folderId}
+          denyDrop={isExternal}
         />
       )}
     </>

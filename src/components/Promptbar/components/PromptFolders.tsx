@@ -6,6 +6,7 @@ import {
   PublishedWithMeFilter,
   SharedWithMeFilter,
 } from '@/src/utils/app/search';
+import { isExternalEntity } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
@@ -65,6 +66,10 @@ const PromptFolderTemplate = ({
     ),
   );
   const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
+
+  const isExternal = useAppSelector((state) =>
+    isExternalEntity(state, folder, FeatureType.Prompt),
+  );
 
   const handleDrop = useCallback(
     (e: DragEvent, folder: FolderInterface) => {
@@ -133,6 +138,7 @@ const PromptFolderTemplate = ({
         onDrop={onDropBetweenFolders}
         index={index}
         parentFolderId={folder.folderId}
+        denyDrop={isExternal}
       />
       <Folder
         maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
@@ -165,6 +171,7 @@ const PromptFolderTemplate = ({
           onDrop={onDropBetweenFolders}
           index={index + 1}
           parentFolderId={folder.folderId}
+          denyDrop={isExternal}
         />
       )}
     </>

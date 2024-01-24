@@ -250,7 +250,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const dropHandler = useCallback(
     (e: DragEvent) => {
-      if (!isDropAllowed || !handleDrop) {
+      if (!isDropAllowed || !handleDrop || isExternal) {
         return;
       }
 
@@ -285,6 +285,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     [
       isDropAllowed,
       handleDrop,
+      isExternal,
       dispatch,
       currentFolder,
       allFolders,
@@ -326,6 +327,10 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const highlightDrop = useCallback(
     (evt: DragEvent) => {
+      if (isExternal) {
+        return;
+      }
+
       if (dragDropElement.current === evt.target) {
         setIsDraggingOver(true);
         return;
@@ -339,7 +344,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         setIsDraggingOver(true);
       }
     },
-    [currentFolder.id, dispatch, isParentFolder],
+    [currentFolder.id, dispatch, isExternal, isParentFolder],
   );
 
   const removeHighlight = useCallback(
@@ -649,6 +654,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                         onDraggingOver={onDraggingBetweenFolders}
                         index={index}
                         parentFolderId={item.folderId}
+                        denyDrop={isExternal}
                       />
                     ) : (
                       <div className="h-1"></div>
@@ -688,6 +694,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                         onDraggingOver={onDraggingBetweenFolders}
                         index={index + 1}
                         parentFolderId={item.folderId}
+                        denyDrop={isExternal}
                       />
                     )}
                   </Fragment>
