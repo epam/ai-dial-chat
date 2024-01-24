@@ -6,7 +6,7 @@ import {
   PublishedWithMeFilter,
   SharedWithMeFilter,
 } from '@/src/utils/app/search';
-import { isExternalEntity } from '@/src/utils/app/share';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
@@ -68,7 +68,7 @@ const PromptFolderTemplate = ({
   const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
 
   const isExternal = useAppSelector((state) =>
-    isExternalEntity(state, folder, FeatureType.Prompt),
+    isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
   );
 
   const handleDrop = useCallback(

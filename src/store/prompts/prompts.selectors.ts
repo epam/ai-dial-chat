@@ -1,18 +1,10 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import {
-  getChildAndCurrentFoldersIdsById,
-  getFilteredFolders,
-  getParentAndChildFolders,
-  getParentAndCurrentFoldersById,
-} from '@/src/utils/app/folders';
-import {
-  PublishedWithMeFilter,
-  doesPromptContainSearchTerm,
-  getMyItemsFilters,
-  searchSectionFolders,
-} from '@/src/utils/app/search';
-import { isThisEntityExternal } from '@/src/utils/app/share';
+
+
+import { getChildAndCurrentFoldersIdsById, getFilteredFolders, getParentAndChildFolders, getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
+import { PublishedWithMeFilter, doesPromptContainSearchTerm, getMyItemsFilters, searchSectionFolders } from '@/src/utils/app/search';
+import { isEntityExternal } from '@/src/utils/app/share';
 
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
@@ -186,7 +178,7 @@ export const hasExternalParent = createSelector(
   [selectFolders, (_state: RootState, folderId?: string) => folderId],
   (folders, folderId?) => {
     const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
-    return parentFolders.some((folder) => isThisEntityExternal(folder));
+    return parentFolders.some((folder) => isEntityExternal(folder));
   },
 );
 

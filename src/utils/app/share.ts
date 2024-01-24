@@ -1,6 +1,8 @@
 import { Entity, FeatureType, ShareEntity } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
+
+
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -57,7 +59,7 @@ export const getUnpublishActionByType = (type: SharingType) => {
   }
 };
 
-export const isThisEntityExternal = (entity: ShareEntity) =>
+export const isEntityExternal = (entity: ShareEntity) =>
   !!(entity.sharedWithMe || entity.publishedWithMe);
 
 export const hasExternalParent = (
@@ -72,13 +74,13 @@ export const hasExternalParent = (
     : PromptsSelectors.hasExternalParent(state, folderId);
 };
 
-export const isExternalEntity = (
+export const isEntityOrParentsExternal = (
   state: RootState,
   entity: Entity,
   featureType?: FeatureType,
 ) => {
   return (
-    isThisEntityExternal(entity) ||
+    isEntityExternal(entity) ||
     hasExternalParent(state, entity.folderId, featureType)
   );
 };

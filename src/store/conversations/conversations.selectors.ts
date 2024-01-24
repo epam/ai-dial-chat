@@ -1,5 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+
+
 import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
@@ -14,7 +16,10 @@ import {
   getMyItemsFilters,
   searchSectionFolders,
 } from '@/src/utils/app/search';
-import { isExternalEntity, isThisEntityExternal } from '@/src/utils/app/share';
+import {
+  isEntityExternal,
+  isEntityOrParentsExternal,
+} from '@/src/utils/app/share';
 
 import { Conversation, Role } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
@@ -234,7 +239,7 @@ export const selectAreSelectedConversationsExternal = createSelector(
   [(state: RootState) => state, selectSelectedConversations],
   (state, conversations) => {
     return conversations.some((conv) =>
-      isExternalEntity(state, conv, FeatureType.Chat),
+      isEntityOrParentsExternal(state, conv, FeatureType.Chat),
     );
   },
 );
@@ -373,7 +378,7 @@ export const hasExternalParent = createSelector(
   [selectFolders, (_state: RootState, folderId?: string) => folderId],
   (folders, folderId?) => {
     const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
-    return parentFolders.some((folder) => isThisEntityExternal(folder));
+    return parentFolders.some((folder) => isEntityExternal(folder));
   },
 );
 

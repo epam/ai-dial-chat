@@ -15,7 +15,7 @@ import classNames from 'classnames';
 
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
-import { isExternalEntity } from '@/src/utils/app/share';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -136,7 +136,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const [isContextMenu, setIsContextMenu] = useState(false);
   const isSelected = selectedConversationIds.includes(conversation.id);
   const isExternal = useAppSelector((state) =>
-    isExternalEntity(state, conversation, FeatureType.Chat),
+    isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
   );
 
   const { refs, context } = useFloating({

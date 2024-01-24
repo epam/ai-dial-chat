@@ -6,7 +6,7 @@ import {
   PublishedWithMeFilter,
   SharedWithMeFilter,
 } from '@/src/utils/app/search';
-import { isExternalEntity } from '@/src/utils/app/share';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -74,7 +74,7 @@ const ChatFolderTemplate = ({
   const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
 
   const isExternal = useAppSelector((state) =>
-    isExternalEntity(state, folder, FeatureType.Chat),
+    isEntityOrParentsExternal(state, folder, FeatureType.Chat),
   );
 
   const handleDrop = useCallback(

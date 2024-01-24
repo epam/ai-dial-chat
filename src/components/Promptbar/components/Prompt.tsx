@@ -12,7 +12,7 @@ import classNames from 'classnames';
 
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
-import { isExternalEntity } from '@/src/utils/app/share';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
@@ -74,7 +74,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const isExternal = useAppSelector((state) =>
-    isExternalEntity(state, prompt, FeatureType.Prompt),
+    isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
   );
 
   const { refs, context } = useFloating({

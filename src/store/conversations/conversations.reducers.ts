@@ -1,7 +1,9 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+
+
 import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
-import { isExternalEntity } from '@/src/utils/app/share';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import {
@@ -334,7 +336,7 @@ export const conversationsSlice = createSlice({
         const conversation = state.conversations.find((conv) => conv.id === id);
         if (
           conversation &&
-          isExternalEntity(
+          isEntityOrParentsExternal(
             { conversations: state },
             conversation,
             FeatureType.Chat,
