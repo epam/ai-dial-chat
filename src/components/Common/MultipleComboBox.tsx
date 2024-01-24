@@ -83,7 +83,6 @@ export function MultipleComboBox<T>({
 }: Props<T>) {
   const { t } = useTranslation(Translation.Common);
   const [inputValue, setInputValue] = useState<string | undefined>('');
-
   const [floatingWidth, setFloatingWidth] = useState(0);
 
   const { x, y, refs, strategy, update } = useFloating({
@@ -204,8 +203,12 @@ export function MultipleComboBox<T>({
             </label>
           )}
           <div
+            ref={refs.reference as RefObject<HTMLDivElement>}
             onClick={() => {
-              (refs.reference.current as HTMLInputElement).focus();
+              (
+                (refs.reference.current as HTMLDivElement)
+                  .lastElementChild as HTMLInputElement
+              ).focus();
             }}
             className="relative flex w-full flex-wrap gap-1 rounded border border-primary p-1 focus-within:border-accent-primary"
           >
@@ -252,13 +255,12 @@ export function MultipleComboBox<T>({
               disabled={disabled}
               placeholder={selectedItems.length ? '' : placeholder || ''}
               className={classNames(
-                'w-full bg-transparent py-1 outline-none placeholder:text-secondary',
+                'min-w-[10px] bg-transparent py-1 outline-none placeholder:text-secondary',
                 selectedItems.length ? 'pl-1' : 'pl-2',
               )}
               {...getInputProps(
                 getDropdownProps({
                   preventKeyAction: isOpen,
-                  ref: refs.reference as RefObject<HTMLInputElement>,
                 }),
               )}
             />
@@ -280,7 +282,7 @@ export function MultipleComboBox<T>({
               width: `${floatingWidth}px`,
             }}
           >
-            {isOpen &&
+            {true &&
               (displayedItems?.length > 0
                 ? displayedItems.map((item, index) => (
                     <li

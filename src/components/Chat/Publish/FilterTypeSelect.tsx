@@ -55,15 +55,17 @@ export function FilterTypeSelect({
           </div>
         }
       >
-        {filterTypes.map((filterType) => (
-          <MenuItem
-            key={filterType}
-            className="max-w-[350px] hover:bg-accent-primary-alpha"
-            item={t(filterType)}
-            value={filterType}
-            onClick={onChangeHandler}
-          />
-        ))}
+        <div className="bg-layer-3">
+          {filterTypes.map((filterType) => (
+            <MenuItem
+              key={filterType}
+              className="max-w-[350px] hover:bg-accent-primary-alpha"
+              item={t(filterType)}
+              value={filterType}
+              onClick={onChangeHandler}
+            />
+          ))}
+        </div>
       </Menu>
     </div>
   );
