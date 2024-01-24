@@ -426,9 +426,11 @@ export const ChatMessage: FC<Props> = memo(
                       <div
                         className={classNames(
                           'prose flex-1 whitespace-pre-wrap',
-                          { 'max-w-none': isChatFullWidth },
-                          { 'text-sm': isIframe },
-                          { 'leading-[150%]': isOnlySmallScreen() || isIframe },
+                          {
+                            'max-w-none': isChatFullWidth,
+                            'text-sm': isIframe,
+                            'leading-[150%]': isOnlySmallScreen() || isIframe,
+                          },
                         )}
                       >
                         {message.content}

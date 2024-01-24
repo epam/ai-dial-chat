@@ -112,9 +112,11 @@ const ChatMDComponent = ({
 
   const mdClassNames = classnames(
     'prose dark:prose-invert prose-a:text-accent-primary prose-a:no-underline hover:prose-a:underline',
-    { 'max-w-none': isChatFullWidth },
-    { 'text-sm/[150%]': isIframe },
-    { 'leading-[150%]': isOnlySmallScreen() },
+    {
+      'max-w-none': isChatFullWidth,
+      'text-sm': isIframe,
+      'leading-[150%]': isOnlySmallScreen() || isIframe,
+    },
   );
 
   return (
