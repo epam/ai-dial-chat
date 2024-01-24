@@ -35,7 +35,7 @@ export function FilterTypeSelect({
   return (
     <div
       data-qa={`filter-selector-${id}`}
-      className="h-[38px] w-full max-w-[125px] grow rounded border border-primary text-xs focus-within:border-accent-primary focus:border-accent-primary"
+      className="h-[38px] w-full max-w-[140px] grow rounded border border-primary focus-within:border-accent-primary focus:border-accent-primary"
     >
       <Menu
         className="w-full px-3"
@@ -58,7 +58,7 @@ export function FilterTypeSelect({
         {filterTypes.map((filterType) => (
           <MenuItem
             key={filterType}
-            className="max-w-[350px] text-xs hover:bg-accent-primary-alpha"
+            className="max-w-[350px] hover:bg-accent-primary-alpha"
             item={t(filterType)}
             value={filterType}
             onClick={onChangeHandler}

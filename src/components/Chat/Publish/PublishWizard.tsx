@@ -222,7 +222,7 @@ export default function PublishWizard({
     <Modal
       portalId="theme-main"
       containerClassName={classNames(
-        'group/modal inline-block h-[747px] min-w-full max-w-[1100px] !bg-layer-2 md:min-w-[550px] lg:min-w-[1000px]',
+        'group/modal  inline-block h-[747px] min-w-full max-w-[1100px] !bg-layer-2 md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
         { 'w-full': files.length },
       )}
       dataQa="publish-modal"
@@ -329,7 +329,7 @@ export default function PublishWizard({
                 <Tooltip
                   placement="top"
                   tooltip={
-                    <div className="max-w-[230px] break-words">
+                    <div className="max-w-[230px] break-words text-xs">
                       {t(
                         'The collection will be published for all users who meet AT LEAST ONE option from every',
                       )}
@@ -338,7 +338,7 @@ export default function PublishWizard({
                 >
                   <IconHelpCircle
                     size={18}
-                    className="hover:text-accent-primary"
+                    className="text-secondary  hover:text-accent-primary"
                   />
                 </Tooltip>
               </h2>

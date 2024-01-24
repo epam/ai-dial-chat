@@ -198,8 +198,17 @@ export function MultipleComboBox<T>({
     <>
       <div className="relative w-full" data-qa="multiple-combobox">
         <div className="flex w-full flex-col gap-1">
-          {label && <label {...getLabelProps()}>{label}</label>}
-          <div className="relative flex w-full flex-wrap gap-1 rounded border border-primary p-1 focus-within:border-accent-primary">
+          {label && (
+            <label htmlFor="option-input" {...getLabelProps()}>
+              {label}
+            </label>
+          )}
+          <div
+            onClick={() => {
+              (refs.reference.current as HTMLInputElement).focus();
+            }}
+            className="relative flex w-full flex-wrap gap-1 rounded border border-primary p-1 focus-within:border-accent-primary"
+          >
             {selectedItems &&
               selectedItems.map((selectedItemForRender, index) => {
                 return (
@@ -239,11 +248,12 @@ export function MultipleComboBox<T>({
               })}
 
             <input
+              name="option-input"
               disabled={disabled}
-              placeholder={placeholder || ''}
+              placeholder={selectedItems.length ? '' : placeholder || ''}
               className={classNames(
-                'max-w-[100%] bg-transparent py-1 outline-none placeholder:text-secondary',
-                selectedItems.length ? 'pl-1' : 'pl-3',
+                'w-full bg-transparent py-1 outline-none placeholder:text-secondary',
+                selectedItems.length ? 'pl-1' : 'pl-2',
               )}
               {...getInputProps(
                 getDropdownProps({
