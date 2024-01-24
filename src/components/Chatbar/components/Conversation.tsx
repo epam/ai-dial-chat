@@ -438,9 +438,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           disabled={messageIsStreaming}
           draggable={!isExternal}
           onDragStart={(e) => handleDragStart(e, conversation)}
-          onDragOver={(e) => {
-            e.preventDefault();
-          }}
           ref={buttonRef}
         >
           <ConversationView

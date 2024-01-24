@@ -54,7 +54,9 @@ export const BetweenFoldersLine = ({
   );
 
   const allowDrop = useCallback((e: DragEvent) => {
-    e.preventDefault();
+    if (!denyDrop) {
+      e.preventDefault();
+    }
   }, []);
 
   const highlightDrop = useCallback(() => {

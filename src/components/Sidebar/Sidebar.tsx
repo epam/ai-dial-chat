@@ -94,20 +94,33 @@ const Sidebar = <T,>({
   );
   const SIDEBAR_HEIGHT = 'auto';
 
-  const allowDrop = useCallback((e: DragEvent) => {
-    e.preventDefault();
-  }, []);
+  const allowDrop = useCallback(
+    (e: DragEvent) => {
+      const hasData = e.dataTransfer?.types.includes(
+        getEntityMoveType(featureType),
+      );
+      if (hasData) {
+        e.preventDefault();
+      }
+    },
+    [featureType],
+  );
 
-  const highlightDrop = useCallback((e: DragEvent) => {
-    const data = e.dataTransfer.getData(getEntityMoveType(featureType));
-    if (
-      data &&
-      (dragDropElement.current?.contains(e.target as Node) ||
-        dragDropElement.current === e.target)
-    ) {
-      setIsDraggingOver(true);
-    }
-  }, []);
+  const highlightDrop = useCallback(
+    (e: DragEvent) => {
+      const hasData = e.dataTransfer?.types.includes(
+        getEntityMoveType(featureType),
+      );
+      if (
+        hasData &&
+        (dragDropElement.current?.contains(e.target as Node) ||
+          dragDropElement.current === e.target)
+      ) {
+        setIsDraggingOver(true);
+      }
+    },
+    [featureType],
+  );
 
   const removeHighlight = useCallback((e: DragEvent) => {
     if (

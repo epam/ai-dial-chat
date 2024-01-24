@@ -290,6 +290,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       isExternal,
       dispatch,
       currentFolder,
+      featureType,
       allFolders,
       maxDepth,
       level,
@@ -299,11 +300,11 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const allowDrop = useCallback(
     (e: DragEvent) => {
-      if (isDropAllowed) {
+      if (isDropAllowed && !isExternal) {
         e.preventDefault();
       }
     },
-    [isDropAllowed],
+    [isDropAllowed, isExternal],
   );
 
   const isParentFolder = useCallback(
@@ -543,7 +544,9 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             draggable={!!handleDrop && !isExternal}
             onDragStart={(e) => handleDragStart(e, currentFolder)}
             onDragOver={(e) => {
-              e.preventDefault();
+              if (!isExternal) {
+                e.preventDefault();
+              }
             }}
           >
             <CaretIconComponent
