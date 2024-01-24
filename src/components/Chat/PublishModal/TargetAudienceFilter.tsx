@@ -103,7 +103,6 @@ export function TargetAudienceFilterComponent({
           getItemValue={getItemLabel}
           onChangeSelectedItems={onChangeFilterParams}
           placeholder={t('Enter one or more options...') as string}
-          notFoundPlaceholder={t('Enter regular expression...') as string}
         />
       )}
     </div>

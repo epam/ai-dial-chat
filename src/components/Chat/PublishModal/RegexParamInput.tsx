@@ -21,7 +21,7 @@ export function RegexParamInput({
       <input
         className="w-full bg-transparent px-3 py-1 outline-none placeholder:text-secondary"
         type="text"
-        placeholder={'Enter regular expression'}
+        placeholder={'Enter regular expression...'}
         value={regEx}
         onChange={handleRegExChange}
       />

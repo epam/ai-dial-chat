@@ -45,7 +45,7 @@ describe('TargetAudienceFilterComponent', () => {
       }
     }
     expect(
-      screen.getByPlaceholderText(`Enter ${testFilter.name.toLowerCase()}`),
+      screen.getByPlaceholderText('Enter one or more options...'),
     );
   });
 
@@ -134,7 +134,7 @@ describe('TargetAudienceFilterComponent', () => {
 
     await userEvent.click(selectedFilterOption);
 
-    const regExInput = screen.getByPlaceholderText('Enter regular expression');
+    const regExInput = screen.getByPlaceholderText('Enter regular expression...');
     await userEvent.type(regExInput, regEx);
     expect(onChangeFilter).toHaveBeenCalledWith({
       id: testFilter.id,

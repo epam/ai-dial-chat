@@ -47,6 +47,7 @@ export function UserGroupFilter({
       getItemValue={getItemValue}
       onChangeSelectedItems={handleOnUserGroupsChange}
       placeholder={t('Enter one or more options...') as string}
+      notFoundPlaceholder={t('No user group available') as string}
     />
   );
 }
