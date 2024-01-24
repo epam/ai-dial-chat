@@ -334,7 +334,9 @@ export const ChatInputMessage = ({
           className={classNames(
             'm-0 min-h-[38px] w-full grow resize-none bg-transparent pr-10 outline-none placeholder:text-secondary',
             displayAttachFunctionality ? 'pl-12' : 'pl-4',
-            isIframe ? 'py-[7px] text-sm/[150%]' : 'py-2.5 text-base/[150%] md:py-3',
+            isIframe
+              ? 'py-[7px] text-sm/[150%]'
+              : 'py-2.5 text-base/[150%] md:py-3',
           )}
           style={{ maxHeight: `${MAX_HEIGHT}px` }}
           placeholder={

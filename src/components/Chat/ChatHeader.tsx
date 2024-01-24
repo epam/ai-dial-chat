@@ -122,7 +122,8 @@ export const ChatHeader = ({
             <span
               ref={titleRef}
               className={classNames('truncate text-center', {
-                'block w-full max-w-[200px] md:max-w-[330px] lg:max-w-[425px]': !isChatFullWidth,
+                'block w-full max-w-[200px] md:max-w-[330px] lg:max-w-[425px]':
+                  !isChatFullWidth,
               })}
               data-qa="chat-title"
             >
