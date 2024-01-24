@@ -19,6 +19,7 @@ import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
+import { MoveType } from '@/src/types/folder';
 import { SharingType } from '@/src/types/share';
 
 import {
@@ -189,7 +190,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     (e: DragEvent<HTMLButtonElement>, conversation: Conversation) => {
       if (e.dataTransfer) {
         e.dataTransfer.setDragImage(dragImageRef.current || new Image(), 0, 0);
-        e.dataTransfer.setData('conversation', JSON.stringify(conversation));
+        e.dataTransfer.setData(
+          MoveType.Conversation,
+          JSON.stringify(conversation),
+        );
       }
     },
     [],

@@ -23,3 +23,12 @@ export interface FolderSectionProps {
   showEmptyFolders?: boolean;
   openByDefault?: boolean;
 }
+
+export enum MoveType {
+  Conversation = 'conversation',
+  ConversationFolder = 'conversations_folder',
+  Prompt = 'prompt',
+  PromptFolder = 'prompts_folder',
+  File = 'file',
+  FileFolder = 'files_folder',
+}

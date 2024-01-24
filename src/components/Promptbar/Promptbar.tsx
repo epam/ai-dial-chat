@@ -3,6 +3,7 @@ import { DragEvent, useCallback } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { FeatureType } from '@/src/types/common';
+import { MoveType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -58,16 +59,19 @@ const Promptbar = () => {
   const handleDrop = useCallback(
     (e: DragEvent<HTMLDivElement>) => {
       if (e.dataTransfer) {
-        const prompt = JSON.parse(e.dataTransfer.getData('prompt'));
+        const promptData = e.dataTransfer.getData(MoveType.Prompt);
+        if (promptData) {
+          const prompt = JSON.parse(promptData);
 
-        dispatch(
-          PromptsActions.updatePrompt({
-            promptId: prompt.id,
-            values: {
-              folderId: e.currentTarget.dataset.folderId,
-            },
-          }),
-        );
+          dispatch(
+            PromptsActions.updatePrompt({
+              promptId: prompt.id,
+              values: {
+                folderId: e.currentTarget.dataset.folderId,
+              },
+            }),
+          );
+        }
       }
     },
     [dispatch],

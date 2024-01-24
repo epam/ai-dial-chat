@@ -19,7 +19,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getFoldersDepth } from '@/src/utils/app/folders';
+import { getFolderMoveType, getFoldersDepth } from '@/src/utils/app/folders';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
@@ -261,7 +261,9 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         dispatch(UIActions.openFolder({ id: currentFolder.id }));
         setIsDraggingOver(false);
 
-        const folderData = e.dataTransfer.getData('folder');
+        const folderData = e.dataTransfer.getData(
+          getFolderMoveType(featureType),
+        );
 
         if (folderData) {
           const foldersDepth = getFoldersDepth(
@@ -428,11 +430,14 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     (e: DragEvent<HTMLDivElement>, folder: FolderInterface) => {
       if (e.dataTransfer) {
         e.dataTransfer.setDragImage(dragImageRef.current || new Image(), 0, 0);
-        e.dataTransfer.setData('folder', JSON.stringify(folder));
+        e.dataTransfer.setData(
+          getFolderMoveType(featureType),
+          JSON.stringify(folder),
+        );
         dispatch(UIActions.closeFolder({ id: currentFolder.id }));
       }
     },
-    [currentFolder.id, dispatch],
+    [currentFolder.id, dispatch, featureType],
   );
 
   const onDraggingBetweenFolders = useCallback((isDraggingOver: boolean) => {
@@ -654,6 +659,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                         onDraggingOver={onDraggingBetweenFolders}
                         index={index}
                         parentFolderId={item.folderId}
+                        featureType={featureType}
                         denyDrop={isExternal}
                       />
                     ) : (
@@ -694,6 +700,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                         onDraggingOver={onDraggingBetweenFolders}
                         index={index + 1}
                         parentFolderId={item.folderId}
+                        featureType={featureType}
                         denyDrop={isExternal}
                       />
                     )}

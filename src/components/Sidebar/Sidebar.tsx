@@ -11,6 +11,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getEntityMoveType } from '@/src/utils/app/folders';
+
 import { FeatureType } from '@/src/types/common';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -97,9 +99,11 @@ const Sidebar = <T,>({
   }, []);
 
   const highlightDrop = useCallback((e: DragEvent) => {
+    const data = e.dataTransfer.getData(getEntityMoveType(featureType));
     if (
-      dragDropElement.current?.contains(e.target as Node) ||
-      dragDropElement.current === e.target
+      data &&
+      (dragDropElement.current?.contains(e.target as Node) ||
+        dragDropElement.current === e.target)
     ) {
       setIsDraggingOver(true);
     }

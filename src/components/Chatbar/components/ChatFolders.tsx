@@ -10,7 +10,11 @@ import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
-import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
+import {
+  FolderInterface,
+  FolderSectionProps,
+  MoveType,
+} from '@/src/types/folder';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -80,8 +84,8 @@ const ChatFolderTemplate = ({
   const handleDrop = useCallback(
     (e: DragEvent, folder: FolderInterface) => {
       if (e.dataTransfer) {
-        const conversationData = e.dataTransfer.getData('conversation');
-        const folderData = e.dataTransfer.getData('folder');
+        const conversationData = e.dataTransfer.getData(MoveType.Conversation);
+        const folderData = e.dataTransfer.getData(MoveType.ConversationFolder);
 
         if (conversationData) {
           const conversation: Conversation = JSON.parse(conversationData);
@@ -144,6 +148,7 @@ const ChatFolderTemplate = ({
         onDrop={onDropBetweenFolders}
         index={index}
         parentFolderId={folder.folderId}
+        featureType={FeatureType.Chat}
         denyDrop={isExternal}
       />
       <Folder
@@ -178,6 +183,7 @@ const ChatFolderTemplate = ({
           onDrop={onDropBetweenFolders}
           index={index + 1}
           parentFolderId={folder.folderId}
+          featureType={FeatureType.Chat}
           denyDrop={isExternal}
         />
       )}

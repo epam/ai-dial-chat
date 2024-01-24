@@ -6,9 +6,9 @@ import {
 } from '@/src/utils/app/file';
 
 import { Conversation } from '@/src/types/chat';
-import { ShareEntity } from '@/src/types/common';
+import { FeatureType, ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, MoveType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
@@ -341,4 +341,26 @@ export const getConversationAttachmentWithPath = (
       (message) => message.custom_content?.attachments || [],
     ) || [],
   ).map((file) => ({ ...file, relativePath: path, contentLength: 0 }));
+};
+
+export const getFolderMoveType = (featureType?: FeatureType): MoveType => {
+  switch (featureType) {
+    case FeatureType.Chat:
+      return MoveType.ConversationFolder;
+    case FeatureType.Prompt:
+      return MoveType.PromptFolder;
+    default:
+      return MoveType.FileFolder;
+  }
+};
+
+export const getEntityMoveType = (featureType?: FeatureType): MoveType => {
+  switch (featureType) {
+    case FeatureType.Chat:
+      return MoveType.Conversation;
+    case FeatureType.Prompt:
+      return MoveType.Prompt;
+    default:
+      return MoveType.File;
+  }
 };

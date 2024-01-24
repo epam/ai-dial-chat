@@ -2,6 +2,9 @@ import { DragEvent, useCallback, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { getFolderMoveType } from '@/src/utils/app/folders';
+
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 
 interface BetweenFoldersLineProps {
@@ -14,6 +17,7 @@ interface BetweenFoldersLineProps {
     index: number,
   ) => void;
   onDraggingOver?: (isDraggingOver: boolean) => void;
+  featureType?: FeatureType;
   denyDrop?: boolean;
 }
 
@@ -23,6 +27,7 @@ export const BetweenFoldersLine = ({
   parentFolderId,
   onDrop,
   onDraggingOver,
+  featureType,
   denyDrop,
 }: BetweenFoldersLineProps) => {
   const dragDropElement = useRef<HTMLDivElement>(null);
@@ -39,13 +44,13 @@ export const BetweenFoldersLine = ({
 
       setIsDraggingOver(false);
 
-      const folderData = e.dataTransfer.getData('folder');
+      const folderData = e.dataTransfer.getData(getFolderMoveType(featureType));
 
       if (folderData) {
         onDrop(JSON.parse(folderData), parentFolderId, index);
       }
     },
-    [denyDrop, index, onDrop, parentFolderId],
+    [denyDrop, featureType, index, onDrop, parentFolderId],
   );
 
   const allowDrop = useCallback((e: DragEvent) => {

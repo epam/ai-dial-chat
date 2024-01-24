@@ -15,6 +15,7 @@ import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
+import { MoveType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 
@@ -157,7 +158,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLDivElement>, prompt: Prompt) => {
       if (e.dataTransfer) {
-        e.dataTransfer.setData('prompt', JSON.stringify(prompt));
+        e.dataTransfer.setData(MoveType.Prompt, JSON.stringify(prompt));
       }
     },
     [],

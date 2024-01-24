@@ -9,7 +9,11 @@ import {
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
-import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
+import {
+  FolderInterface,
+  FolderSectionProps,
+  MoveType,
+} from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -74,8 +78,8 @@ const PromptFolderTemplate = ({
   const handleDrop = useCallback(
     (e: DragEvent, folder: FolderInterface) => {
       if (e.dataTransfer) {
-        const promptData = e.dataTransfer.getData('prompt');
-        const folderData = e.dataTransfer.getData('folder');
+        const promptData = e.dataTransfer.getData(MoveType.Prompt);
+        const folderData = e.dataTransfer.getData(MoveType.PromptFolder);
 
         if (promptData) {
           const prompt: Prompt = JSON.parse(promptData);
@@ -138,6 +142,7 @@ const PromptFolderTemplate = ({
         onDrop={onDropBetweenFolders}
         index={index}
         parentFolderId={folder.folderId}
+        featureType={FeatureType.Prompt}
         denyDrop={isExternal}
       />
       <Folder
@@ -171,6 +176,7 @@ const PromptFolderTemplate = ({
           onDrop={onDropBetweenFolders}
           index={index + 1}
           parentFolderId={folder.folderId}
+          featureType={FeatureType.Prompt}
           denyDrop={isExternal}
         />
       )}

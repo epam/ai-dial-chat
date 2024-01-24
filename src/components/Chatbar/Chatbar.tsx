@@ -4,6 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
+import { MoveType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -75,14 +76,17 @@ export const Chatbar = () => {
   const handleDrop = useCallback(
     (e: DragEvent) => {
       if (e.dataTransfer) {
-        const conversation = JSON.parse(e.dataTransfer.getData('conversation'));
-        dispatch(
-          ConversationsActions.updateConversation({
-            id: conversation.id,
-            values: { folderId: undefined },
-          }),
-        );
-        dispatch(ConversationsActions.resetSearch());
+        const conversationData = e.dataTransfer.getData(MoveType.Conversation);
+        if (conversationData) {
+          const conversation = JSON.parse(conversationData);
+          dispatch(
+            ConversationsActions.updateConversation({
+              id: conversation.id,
+              values: { folderId: undefined },
+            }),
+          );
+          dispatch(ConversationsActions.resetSearch());
+        }
       }
     },
     [dispatch],
