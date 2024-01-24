@@ -2,6 +2,8 @@ import { Components } from 'react-markdown';
 
 import classnames from 'classnames';
 
+import { isOnlySmallScreen } from '@/src/utils/app/mobile';
+
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
@@ -109,9 +111,10 @@ const ChatMDComponent = ({
   const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
 
   const mdClassNames = classnames(
-    'prose dark:prose-invert prose-a:text-accent-primary prose-a:no-underline hover:prose-a:underline md:leading-[150%]',
+    'prose dark:prose-invert prose-a:text-accent-primary prose-a:no-underline hover:prose-a:underline',
     { 'max-w-none': isChatFullWidth },
     { 'text-sm/[150%]': isIframe },
+    { 'leading-[150%]': isOnlySmallScreen() },
   );
 
   return (

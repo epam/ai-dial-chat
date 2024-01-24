@@ -7,3 +7,4 @@ export const isMobile = () => {
 };
 
 export const isSmallScreen = () => window.innerWidth < 768 || isMobile();
+export const isOnlySmallScreen = () => window.innerWidth < 768;

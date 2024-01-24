@@ -26,7 +26,7 @@ import {
   getDialFilesFromAttachments,
   getUserCustomContent,
 } from '@/src/utils/app/file';
-import { isSmallScreen } from '@/src/utils/app/mobile';
+import { isOnlySmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation, Message, Role } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
@@ -339,10 +339,10 @@ export const ChatMessage: FC<Props> = memo(
                     undefined
                   }
                   animate={isShowResponseLoader}
-                  size={isIframe ? 18 : isSmallScreen() ? 20 : 28}
+                  size={isIframe ? 18 : isOnlySmallScreen() ? 20 : 28}
                 />
               ) : (
-                <IconUser size={isIframe ? 18 : isSmallScreen() ? 20 : 28} />
+                <IconUser size={isIframe ? 18 : isOnlySmallScreen() ? 20 : 28} />
               )}
             </div>
           </div>
@@ -422,9 +422,10 @@ export const ChatMessage: FC<Props> = memo(
                     {message.content && (
                       <div
                         className={classNames(
-                          'prose flex-1 whitespace-pre-wrap md:leading-[150%]',
+                          'prose flex-1 whitespace-pre-wrap',
                           { 'max-w-none': isChatFullWidth },
                           { 'text-sm/[150%]': isIframe },
+                          { 'leading-[150%]': isOnlySmallScreen() },
                         )}
                       >
                         {message.content}
