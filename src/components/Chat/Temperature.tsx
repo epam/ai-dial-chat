@@ -1,3 +1,4 @@
+import { IconHelp } from '@tabler/icons-react';
 import {
   FC,
   KeyboardEventHandler,
@@ -13,6 +14,9 @@ import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-settings';
 
+import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
+import Tooltip from '@/src/components/Common/Tooltip';
+
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import { HandleProps } from 'rc-slider/lib/Handles/Handle';
@@ -23,6 +27,7 @@ interface TemperatureIndicatorProps extends HandleProps {
   onTouchStart: TouchEventHandler<HTMLDivElement>;
   children: ReactNode;
 }
+
 const TemperatureIndicator = ({
   style,
   onKeyDown,
@@ -65,19 +70,23 @@ export const TemperatureSlider: FC<Props> = ({
   };
 
   return (
-    <div className="flex flex-col gap-3" data-qa="temp-slider">
-      <label className="text-left">{label}</label>
-      <span className="text-sm text-secondary">
-        {t(
-          'Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
-        )}
-      </span>
-      <div className="grid h-4 w-full grid-cols-3 text-xs">
-        <span className="">{t('Precise')}</span>
-        <span className="text-center">{t('Neutral')}</span>
-        <span className="text-right">{t('Creative')}</span>
+    <div className="flex flex-col gap-2" data-qa="temp-slider">
+      <div className="flex items-center gap-2">
+        <label className="text-left">{label}</label>
+        <Tooltip
+          contentClassName="max-w-[220px]"
+          triggerClassName="text-secondary"
+          tooltip={
+            <EntityMarkdownDescription>
+              {t(
+                'Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
+              )}
+            </EntityMarkdownDescription>
+          }
+        >
+          <IconHelp size={18} />
+        </Tooltip>
       </div>
-
       <div className="px-5">
         <Slider
           className="temperature-slider !h-10"
@@ -92,6 +101,11 @@ export const TemperatureSlider: FC<Props> = ({
             </TemperatureIndicator>
           )}
         />
+      </div>
+      <div className="grid h-4 w-full grid-cols-3 text-xs">
+        <span className="">{t('Precise')}</span>
+        <span className="text-center">{t('Neutral')}</span>
+        <span className="text-right">{t('Creative')}</span>
       </div>
     </div>
   );
