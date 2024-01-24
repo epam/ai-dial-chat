@@ -14,7 +14,7 @@ import classNames from 'classnames';
 import { usePromptSelection } from '@/src/hooks/usePromptSelection';
 
 import { getUserCustomContent } from '@/src/utils/app/file';
-import { isMobile } from '@/src/utils/app/mobile';
+import { isMobile, isOnlySmallScreen } from '@/src/utils/app/mobile';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
 import { Message, Role } from '@/src/types/chat';
@@ -332,11 +332,13 @@ export const ChatInputMessage = ({
         <textarea
           ref={textareaRef}
           className={classNames(
-            'm-0 min-h-[38px] w-full grow resize-none bg-transparent pr-10 outline-none placeholder:text-secondary',
-            displayAttachFunctionality ? 'pl-12' : 'pl-4',
-            isIframe
-              ? 'py-[7px] text-sm/[150%]'
-              : 'py-2.5 text-base/[150%] md:py-3',
+            'm-0 min-h-[38px] w-full grow resize-none bg-transparent outline-none placeholder:text-secondary',
+            displayAttachFunctionality && isIframe ? 'pl-11 pr-9' : 'pl-3 pr-9',
+            displayAttachFunctionality && !isIframe
+              ? 'pl-12 pr-10'
+              : 'pl-4 pr-10',
+            isIframe ? 'py-[7px] text-sm' : 'py-2.5 text-base md:py-3',
+            (isIframe || isOnlySmallScreen()) && 'leading-[150%]',
           )}
           style={{ maxHeight: `${MAX_HEIGHT}px` }}
           placeholder={
