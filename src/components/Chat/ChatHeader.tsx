@@ -76,9 +76,6 @@ export const ChatHeader = ({
   });
   const [isClearConversationModalOpen, setIsClearConversationModalOpen] =
     useState(false);
-  const [isClamped, setIsClamped] = useState(false);
-
-  const titleRef = useRef<HTMLSpanElement>(null);
 
   const selectedAddons = useMemo(
     () => getSelectedAddons(conversation.selectedAddons, addonsMap, model),
@@ -92,12 +89,6 @@ export const ChatHeader = ({
   const onCancelPlaybackMode = useCallback(() => {
     dispatch(ConversationsActions.playbackCancel());
   }, [dispatch]);
-
-  useEffect(() => {
-    if (titleRef.current) {
-      setIsClamped(titleRef.current.clientWidth < 200);
-    }
-  }, []);
 
   return (
     <>
@@ -120,7 +111,6 @@ export const ChatHeader = ({
             }
           >
             <span
-              ref={titleRef}
               className={classNames('truncate text-center', {
                 'block w-full max-w-[200px] md:max-w-[330px] lg:max-w-[425px]':
                   !isChatFullWidth,
