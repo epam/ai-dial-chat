@@ -325,8 +325,9 @@ export const ChatMessage: FC<Props> = memo(
       >
         <div
           className={classNames(
-            'relative m-auto flex h-full p-4 md:gap-6 md:py-6 lg:px-0',
-            { 'md:max-w-2xl xl:max-w-3xl': !isChatFullWidth },
+            'relative m-auto flex h-full md:gap-6 md:py-6 lg:px-0',
+            !isChatFullWidth && 'md:max-w-2xl xl:max-w-3xl',
+            isOnlySmallScreen() || isIframe ? 'px-4 py-3' : 'p-4',
           )}
         >
           <div className="min-w-[40px] font-bold" data-qa="message-icon">
@@ -342,7 +343,9 @@ export const ChatMessage: FC<Props> = memo(
                   size={isIframe ? 18 : isOnlySmallScreen() ? 20 : 28}
                 />
               ) : (
-                <IconUser size={isIframe ? 18 : isOnlySmallScreen() ? 20 : 28} />
+                <IconUser
+                  size={isIframe ? 18 : isOnlySmallScreen() ? 20 : 28}
+                />
               )}
             </div>
           </div>
