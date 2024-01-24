@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { FiltersTypes } from '@/src/types/share';
 
-import { TargetAudienceFilterComponent } from '../PublishModal/TargetAudienceFilter';
+import { TargetAudienceFilterComponent } from '../Publish/TargetAudienceFilter';
 
 import userEvent from '@testing-library/user-event';
 

@@ -67,7 +67,7 @@ const getPrefix = (item: ShareEntity): string => {
   }
 };
 
-export default function PublishModal({
+export default function PublishWizard({
   entity,
   isOpen,
   onClose,
