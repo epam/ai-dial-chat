@@ -1,0 +1,70 @@
+{
+  "name": "ai-dial-chat",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/ai-dial-chat",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/next:build",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/ai-dial-chat"
+      },
+      "configurations": {
+        "development": {
+          "outputPath": "apps/ai-dial-chat"
+        },
+        "production": {}
+      }
+    },
+    "serve": {
+      "executor": "@nx/next:server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "ai-dial-chat:build",
+        "dev": true
+      },
+      "inputs": ["default"],
+      "configurations": {
+        "development": {
+          "buildTarget": "ai-dial-chat:build:development",
+          "dev": true,
+          "port": 3000
+        },
+        "production": {
+          "buildTarget": "ai-dial-chat:build:production",
+          "dev": false
+        }
+      }
+    },
+    "lint": {
+      "cache": true,
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "eslint apps/ai-dial-chat/src",
+          "prettier --check apps/ai-dial-chat/src"
+        ],
+        "parallel": false
+      }
+    },
+    "lint-fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "eslint apps/ai-dial-chat/src --fix",
+          "prettier --write apps/ai-dial-chat/src"
+        ],
+        "parallel": false
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "options": {
+        "watch": true
+      }
+    }
+  },
+  "tags": []
+}

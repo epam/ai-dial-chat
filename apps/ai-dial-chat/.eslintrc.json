@@ -1,0 +1,69 @@
+{
+  "extends": [
+    "../../.eslintrc.json",
+    "plugin:@nx/react-typescript",
+    "plugin:tailwindcss/recommended",
+    "next",
+    "next/core-web-vitals"
+  ],
+  "ignorePatterns": ["!**/*", ".next/**/*"],
+  "plugins": ["tailwindcss", "@nx", "@typescript-eslint"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": ["./apps/ai-dial-chat/tsconfig(.*)?.json"]
+  },
+  "settings": {
+    "tailwindcss": {
+      "config": "./apps/ai-dial-chat/tailwind.config.js",
+      "callees": ["classnames", "classNames"]
+    }
+  },
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+      "rules": {
+        "@next/next/no-html-link-for-pages": [
+          "error",
+          "./apps/ai-dial-chat/src/pages"
+        ],
+        "react/jsx-boolean-value": ["error", "never"],
+        "tailwindcss/no-custom-classname": "error",
+        "tailwindcss/no-contradicting-classname": "error",
+        "no-restricted-imports": ["error", { "paths": ["react-i18next"] }],
+        "no-restricted-globals": [
+          "error",
+          {
+            "name": "localStorage",
+            "message": "Use DataService instead."
+          },
+          {
+            "name": "sessionStorage",
+            "message": "Use DataService instead."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["*.ts", "*.tsx"],
+      "rules": {}
+    },
+    {
+      "files": ["*.js", "*.jsx"],
+      "rules": {}
+    },
+    {
+      "plugins": ["testing-library"],
+      "files": [
+        "**/__tests__/**/*.[jt]s?(x)",
+        "**/?(*.)+(spec|test).[jt]s?(x)"
+      ],
+      "extends": ["plugin:testing-library/react"],
+      "rules": {
+        "testing-library/await-async-queries": "error",
+        "testing-library/no-await-sync-queries": "error",
+        "testing-library/no-debugging-utils": "warn",
+        "testing-library/no-dom-import": "off"
+      }
+    }
+  ]
+}

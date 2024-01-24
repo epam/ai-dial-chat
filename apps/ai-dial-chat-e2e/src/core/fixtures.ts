@@ -1,0 +1,372 @@
+import { Auth0Page } from '@/src/ui/pages/auth0Page';
+
+import { DialHomePage, LoginPage } from '../ui/pages';
+import {
+  Chat,
+  ChatBar,
+  ChatHeader,
+  ChatMessages,
+  ConversationSettings,
+  Conversations,
+  EntitySelector,
+  ModelsDialog,
+  MoreInfo,
+  PromptBar,
+  RecentEntities,
+  SendMessage,
+} from '../ui/webElements';
+import { LocalStorageManager } from './localStorageManager';
+
+import { ConversationData } from '@/src/testData';
+import { ApiHelper } from '@/src/testData/api/apiHelper';
+import { PromptData } from '@/src/testData/prompts/promptData';
+import { AccountSettings } from '@/src/ui/webElements/accountSettings';
+import { Addons } from '@/src/ui/webElements/addons';
+import { AddonsDialog } from '@/src/ui/webElements/addonsDialog';
+import { AppContainer } from '@/src/ui/webElements/appContainer';
+import { Banner } from '@/src/ui/webElements/banner';
+import { ChatInfoTooltip } from '@/src/ui/webElements/chatInfoTooltip';
+import { Compare } from '@/src/ui/webElements/compare';
+import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
+import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu';
+import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
+import { EntitySettings } from '@/src/ui/webElements/entitySettings';
+import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
+import { Filter } from '@/src/ui/webElements/filter';
+import { FolderConversations } from '@/src/ui/webElements/folderConversations';
+import { FolderPrompts } from '@/src/ui/webElements/folderPrompts';
+import { Header } from '@/src/ui/webElements/header';
+import { ModelSelector } from '@/src/ui/webElements/modelSelector';
+import { Playback } from '@/src/ui/webElements/playback';
+import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
+import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
+import { Prompts } from '@/src/ui/webElements/prompts';
+import { ReplayAsIs } from '@/src/ui/webElements/replayAsIs';
+import { Search } from '@/src/ui/webElements/search';
+import { ShareModal } from '@/src/ui/webElements/shareModal';
+import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
+import { Tooltip } from '@/src/ui/webElements/tooltip';
+import { VariableModalDialog } from '@/src/ui/webElements/variableModalDialog';
+import { test as base } from '@playwright/test';
+import { allure } from 'allure-playwright';
+
+interface ReportAttributes {
+  setTestIds: (...testId: string[]) => void;
+  setIssueIds: (...issueIds: string[]) => void;
+}
+
+const test = base.extend<
+  ReportAttributes & {
+    dialHomePage: DialHomePage;
+    loginPage: LoginPage;
+    auth0Page: Auth0Page;
+    appContainer: AppContainer;
+    chatBar: ChatBar;
+    header: Header;
+    accountSettings: AccountSettings;
+    accountDropdownMenu: DropdownMenu;
+    banner: Banner;
+    promptBar: PromptBar;
+    chat: Chat;
+    chatMessages: ChatMessages;
+    sendMessage: SendMessage;
+    conversations: Conversations;
+    prompts: Prompts;
+    folderConversations: FolderConversations;
+    folderPrompts: FolderPrompts;
+    conversationSettings: ConversationSettings;
+    talkToSelector: EntitySelector;
+    recentEntities: RecentEntities;
+    entitySettings: EntitySettings;
+    modelSelector: ModelSelector;
+    temperatureSlider: TemperatureSlider;
+    addons: Addons;
+    addonsDialog: AddonsDialog;
+    conversationData: ConversationData;
+    promptData: PromptData;
+    localStorageManager: LocalStorageManager;
+    conversationDropdownMenu: DropdownMenu;
+    folderDropdownMenu: DropdownMenu;
+    promptDropdownMenu: DropdownMenu;
+    confirmationDialog: ConfirmationDialog;
+    promptModalDialog: PromptModalDialog;
+    variableModalDialog: VariableModalDialog;
+    modelsDialog: ModelsDialog;
+    chatHeader: ChatHeader;
+    moreInfo: MoreInfo;
+    chatInfoTooltip: ChatInfoTooltip;
+    compare: Compare;
+    compareConversationSelector: ModelSelector;
+    rightConversationSettings: ConversationSettings;
+    leftConversationSettings: ConversationSettings;
+    rightChatHeader: ChatHeader;
+    leftChatHeader: ChatHeader;
+    tooltip: Tooltip;
+    errorPopup: ErrorPopup;
+    replayAsIs: ReplayAsIs;
+    playback: Playback;
+    playbackControl: PlaybackControl;
+    shareModal: ShareModal;
+    chatBarSearch: Search;
+    promptBarSearch: Search;
+    chatFilter: Filter;
+    promptFilter: Filter;
+    chatFilterDropdownMenu: DropdownCheckboxMenu;
+    promptFilterDropdownMenu: DropdownCheckboxMenu;
+    apiHelper: ApiHelper;
+  }
+>({
+  // eslint-disable-next-line no-empty-pattern
+  setTestIds: async ({}, use) => {
+    const callback = (...testIds: string[]) => {
+      for (const testId of testIds) {
+        allure.tms(testId, `${process.env.TMS_URL}/${testId}`);
+      }
+    };
+    await use(callback);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  setIssueIds: async ({}, use) => {
+    const callback = (...issueIds: string[]) => {
+      for (const issueId of issueIds) {
+        allure.issue(issueId, `${process.env.ISSUE_URL}/${issueId}`);
+        test.skip();
+      }
+    };
+    await use(callback);
+  },
+  dialHomePage: async ({ page }, use) => {
+    const dialHomePage = new DialHomePage(page);
+    await use(dialHomePage);
+  },
+  loginPage: async ({ page }, use) => {
+    const loginPage = new LoginPage(page);
+    await use(loginPage);
+  },
+  auth0Page: async ({ page }, use) => {
+    const auth0Page = new Auth0Page(page);
+    await use(auth0Page);
+  },
+  appContainer: async ({ dialHomePage }, use) => {
+    const appContainer = dialHomePage.getAppContainer();
+    await use(appContainer);
+  },
+  chatBar: async ({ appContainer }, use) => {
+    const chatBar = appContainer.getChatBar();
+    await use(chatBar);
+  },
+  header: async ({ appContainer }, use) => {
+    const header = appContainer.getHeader();
+    await use(header);
+  },
+  accountSettings: async ({ header }, use) => {
+    const accountSettings = header.getAccountSettings();
+    await use(accountSettings);
+  },
+  accountDropdownMenu: async ({ accountSettings }, use) => {
+    const accountDropdownMenu = accountSettings.getDropdownMenu();
+    await use(accountDropdownMenu);
+  },
+  banner: async ({ appContainer }, use) => {
+    const banner = appContainer.getBanner();
+    await use(banner);
+  },
+  promptBar: async ({ appContainer }, use) => {
+    const promptBar = appContainer.getPromptBar();
+    await use(promptBar);
+  },
+  promptBarSearch: async ({ promptBar }, use) => {
+    const promptBarSearch = promptBar.getSearch();
+    await use(promptBarSearch);
+  },
+  chat: async ({ appContainer }, use) => {
+    const chat = appContainer.getChat();
+    await use(chat);
+  },
+  chatMessages: async ({ chat }, use) => {
+    const chatMessages = chat.getChatMessages();
+    await use(chatMessages);
+  },
+  sendMessage: async ({ chat }, use) => {
+    const sendMessage = chat.getSendMessage();
+    await use(sendMessage);
+  },
+  conversations: async ({ chatBar }, use) => {
+    const conversations = chatBar.getConversations();
+    await use(conversations);
+  },
+  prompts: async ({ promptBar }, use) => {
+    const prompts = promptBar.getPrompts();
+    await use(prompts);
+  },
+  folderConversations: async ({ chatBar }, use) => {
+    const folderConversations = chatBar.getFolderConversations();
+    await use(folderConversations);
+  },
+  chatBarSearch: async ({ chatBar }, use) => {
+    const chatBarSearch = chatBar.getSearch();
+    await use(chatBarSearch);
+  },
+  chatFilter: async ({ chatBarSearch }, use) => {
+    const chatFilter = chatBarSearch.getFilter();
+    await use(chatFilter);
+  },
+  promptFilter: async ({ promptBarSearch }, use) => {
+    const promptFilter = promptBarSearch.getFilter();
+    await use(promptFilter);
+  },
+  chatFilterDropdownMenu: async ({ chatFilter }, use) => {
+    const chatFilterDropdownMenu = chatFilter.getFilterDropdownMenu();
+    await use(chatFilterDropdownMenu);
+  },
+  promptFilterDropdownMenu: async ({ promptFilter }, use) => {
+    const promptFilterDropdownMenu = promptFilter.getFilterDropdownMenu();
+    await use(promptFilterDropdownMenu);
+  },
+  folderPrompts: async ({ promptBar }, use) => {
+    const folderPrompts = promptBar.getFolderPrompts();
+    await use(folderPrompts);
+  },
+  conversationSettings: async ({ chat }, use) => {
+    const conversationSettings = chat.getConversationSettings();
+    await use(conversationSettings);
+  },
+  talkToSelector: async ({ conversationSettings }, use) => {
+    const talkToSelector = conversationSettings.getTalkToSelector();
+    await use(talkToSelector);
+  },
+  recentEntities: async ({ talkToSelector }, use) => {
+    const recentEntities = talkToSelector.getRecentEntities();
+    await use(recentEntities);
+  },
+  entitySettings: async ({ conversationSettings }, use) => {
+    const entitySettings = conversationSettings.getEntitySettings();
+    await use(entitySettings);
+  },
+  temperatureSlider: async ({ entitySettings }, use) => {
+    const temperatureSlider = entitySettings.getTemperatureSlider();
+    await use(temperatureSlider);
+  },
+  addons: async ({ entitySettings }, use) => {
+    const addons = entitySettings.getAddons();
+    await use(addons);
+  },
+  addonsDialog: async ({ addons }, use) => {
+    const addonsDialog = addons.getAddonsDialog();
+    await use(addonsDialog);
+  },
+  modelSelector: async ({ entitySettings }, use) => {
+    const modelSelector = entitySettings.getModelSelector();
+    await use(modelSelector);
+  },
+  conversationDropdownMenu: async ({ conversations }, use) => {
+    const conversationDropdownMenu = conversations.getDropdownMenu();
+    await use(conversationDropdownMenu);
+  },
+  folderDropdownMenu: async ({ folderConversations }, use) => {
+    const folderDropdownMenu = folderConversations.getDropdownMenu();
+    await use(folderDropdownMenu);
+  },
+  promptDropdownMenu: async ({ prompts }, use) => {
+    const promptDropdownMenu = prompts.getDropdownMenu();
+    await use(promptDropdownMenu);
+  },
+  confirmationDialog: async ({ page }, use) => {
+    const confirmationDialog = new ConfirmationDialog(page);
+    await use(confirmationDialog);
+  },
+  promptModalDialog: async ({ page }, use) => {
+    const promptModalDialog = new PromptModalDialog(page);
+    await use(promptModalDialog);
+  },
+  variableModalDialog: async ({ page }, use) => {
+    const variableModalDialog = new VariableModalDialog(page);
+    await use(variableModalDialog);
+  },
+  modelsDialog: async ({ page }, use) => {
+    const modelsDialog = new ModelsDialog(page);
+    await use(modelsDialog);
+  },
+  moreInfo: async ({ entitySettings }, use) => {
+    const moreInfo = entitySettings.getMoreInfo();
+    await use(moreInfo);
+  },
+  chatHeader: async ({ chat }, use) => {
+    const chatHeader = chat.getChatHeader();
+    await use(chatHeader);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  conversationData: async ({}, use) => {
+    const conversationData = new ConversationData();
+    await use(conversationData);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  promptData: async ({}, use) => {
+    const promptData = new PromptData();
+    await use(promptData);
+  },
+  localStorageManager: async ({ page }, use) => {
+    const localStorageManager = new LocalStorageManager(page);
+    await use(localStorageManager);
+  },
+  chatInfoTooltip: async ({ page }, use) => {
+    const chatInfoTooltip = new ChatInfoTooltip(page);
+    await use(chatInfoTooltip);
+  },
+  compare: async ({ chat }, use) => {
+    const compare = chat.getCompare();
+    await use(compare);
+  },
+  compareConversationSelector: async ({ compare }, use) => {
+    const compareConversationSelector = compare
+      .getConversationToCompare()
+      .getConversationSelector();
+    await use(compareConversationSelector);
+  },
+  rightConversationSettings: async ({ compare }, use) => {
+    const rightConversationSettings = compare.getRightConversationSettings();
+    await use(rightConversationSettings);
+  },
+  leftConversationSettings: async ({ compare }, use) => {
+    const leftConversationSettings = compare.getLeftConversationSettings();
+    await use(leftConversationSettings);
+  },
+  rightChatHeader: async ({ compare }, use) => {
+    const rightChatHeader = compare.getRightChatHeader();
+    await use(rightChatHeader);
+  },
+  leftChatHeader: async ({ compare }, use) => {
+    const leftChatHeader = compare.getLeftChatHeader();
+    await use(leftChatHeader);
+  },
+  tooltip: async ({ page }, use) => {
+    const tooltip = new Tooltip(page);
+    await use(tooltip);
+  },
+  errorPopup: async ({ page }, use) => {
+    const errorPopup = new ErrorPopup(page);
+    await use(errorPopup);
+  },
+  replayAsIs: async ({ page }, use) => {
+    const replayAsIs = new ReplayAsIs(page);
+    await use(replayAsIs);
+  },
+  playback: async ({ chat }, use) => {
+    const playback = chat.getPlayBack();
+    await use(playback);
+  },
+  playbackControl: async ({ chat }, use) => {
+    const playbackControl = chat.getPlaybackControl();
+    await use(playbackControl);
+  },
+  shareModal: async ({ page }, use) => {
+    const shareModal = new ShareModal(page);
+    await use(shareModal);
+  },
+  apiHelper: async ({ request }, use) => {
+    const apiHelper = new ApiHelper(request);
+    await use(apiHelper);
+  },
+});
+
+export default test;

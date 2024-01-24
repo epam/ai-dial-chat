@@ -57,3 +57,6 @@ pnpm-lock.yaml
 
 # NX
 .nx/cache
+
+# Next.js
+.next
