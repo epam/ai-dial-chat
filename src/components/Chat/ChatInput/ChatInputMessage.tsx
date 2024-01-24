@@ -326,20 +326,21 @@ export const ChatInputMessage = ({
       )}
     >
       <div
-        className="relative m-0 flex max-h-[400px] min-h-[40px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary"
+        className="relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary"
         data-qa="message"
       >
         <textarea
           ref={textareaRef}
           className={classNames(
-            'm-0 min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none placeholder:text-secondary',
+            'm-0 min-h-[38px] w-full grow resize-none bg-transparent pr-10 outline-none placeholder:text-secondary',
             displayAttachFunctionality ? 'pl-12' : 'pl-4',
+            isIframe ? 'py-[7px] text-sm/[150%]' : 'py-2.5 text-base/[150%] md:py-3',
           )}
           style={{ maxHeight: `${MAX_HEIGHT}px` }}
           placeholder={
             isIframe
               ? t('Type a message') || ''
-              : t('Type a message or type "/" to select a prompt...') || ''
+              : t('Type a text or «/» to use a prompt...') || ''
           }
           value={content}
           rows={1}

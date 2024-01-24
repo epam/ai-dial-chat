@@ -3,6 +3,7 @@ import { Components } from 'react-markdown';
 import classnames from 'classnames';
 
 import { useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
@@ -105,10 +106,12 @@ const ChatMDComponent = ({
   isInner = false,
 }: ChatMDComponentProps) => {
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+  const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
 
   const mdClassNames = classnames(
-    'prose dark:prose-invert prose-a:text-accent-primary prose-a:no-underline hover:prose-a:underline',
+    'prose dark:prose-invert prose-a:text-accent-primary prose-a:no-underline hover:prose-a:underline md:leading-[150%]',
     { 'max-w-none': isChatFullWidth },
+    { 'text-sm/[150%]': isIframe },
   );
 
   return (

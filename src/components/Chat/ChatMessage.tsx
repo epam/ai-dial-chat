@@ -26,6 +26,7 @@ import {
   getDialFilesFromAttachments,
   getUserCustomContent,
 } from '@/src/utils/app/file';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation, Message, Role } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
@@ -103,6 +104,7 @@ export const ChatMessage: FC<Props> = memo(
     const isExternal = useAppSelector(
       ConversationsSelectors.selectAreSelectedConversationsExternal,
     );
+    const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
 
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [isTyping, setIsTyping] = useState<boolean>(false);
@@ -337,16 +339,16 @@ export const ChatMessage: FC<Props> = memo(
                     undefined
                   }
                   animate={isShowResponseLoader}
-                  size={28}
+                  size={isIframe ? 18 : isSmallScreen() ? 20 : 28}
                 />
               ) : (
-                <IconUser size={30} />
+                <IconUser size={isIframe ? 18 : isSmallScreen() ? 20 : 28} />
               )}
             </div>
           </div>
 
           <div
-            className="mt-[-2px] w-full min-w-0 shrink"
+            className="mt-[-2px] w-full min-w-0 shrink leading-[150%]"
             data-qa="message-content"
           >
             {isUser ? (
@@ -420,8 +422,9 @@ export const ChatMessage: FC<Props> = memo(
                     {message.content && (
                       <div
                         className={classNames(
-                          'prose flex-1 whitespace-pre-wrap',
+                          'prose flex-1 whitespace-pre-wrap md:leading-[150%]',
                           { 'max-w-none': isChatFullWidth },
+                          { 'text-sm/[150%]': isIframe },
                         )}
                       >
                         {message.content}

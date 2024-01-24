@@ -4,9 +4,12 @@ import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -99,10 +102,14 @@ const UserMenu = () => {
 };
 
 export const UserMobile = () => {
+  const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
+
   return (
     <div
-      className="fixed right-0 top-12 z-40 flex w-[260px] flex-col overflow-y-auto border-tertiary bg-layer-3 md:hidden"
-      style={{ height: 'calc(100% - 48px)' }}
+      className={classNames(
+        'fixed right-0 z-40 flex w-[260px] flex-col overflow-y-auto border-tertiary bg-layer-3 md:hidden',
+        isIframe ? 'top-9 !h-[calc(100%-36px)]' : 'top-12 !h-[calc(100%-48px)]',
+      )}
     >
       <UserInfo />
       <UserMenu />
