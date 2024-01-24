@@ -351,7 +351,7 @@ export const ChatMessage: FC<Props> = memo(
           </div>
 
           <div
-            className="mt-[-2px] w-full min-w-0 shrink leading-[150%]"
+            className="mt-[-2px] w-full min-w-0 shrink"
             data-qa="message-content"
           >
             {isUser ? (
@@ -427,8 +427,8 @@ export const ChatMessage: FC<Props> = memo(
                         className={classNames(
                           'prose flex-1 whitespace-pre-wrap',
                           { 'max-w-none': isChatFullWidth },
-                          { 'text-sm/[150%]': isIframe },
-                          { 'leading-[150%]': isOnlySmallScreen() },
+                          { 'text-sm': isIframe },
+                          { 'leading-[150%]': isOnlySmallScreen() || isIframe },
                         )}
                       >
                         {message.content}
