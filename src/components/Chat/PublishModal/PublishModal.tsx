@@ -336,7 +336,10 @@ export default function PublishModal({
                     </div>
                   }
                 >
-                  <IconHelpCircle size={18} />
+                  <IconHelpCircle
+                    size={18}
+                    className="hover:text-accent-primary"
+                  />
                 </Tooltip>
               </h2>
 
