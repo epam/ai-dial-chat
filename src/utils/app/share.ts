@@ -1,8 +1,6 @@
 import { Entity, FeatureType, ShareEntity } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
-
-
 import {
   ConversationsActions,
   ConversationsSelectors,

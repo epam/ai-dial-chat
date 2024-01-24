@@ -1,7 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-
-
 import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
