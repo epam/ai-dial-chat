@@ -1,7 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
-import { isEntityExternal } from '@/src/utils/app/share';
+import { isExternalEntity } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import {
@@ -10,6 +10,7 @@ import {
   Message,
   Role,
 } from '@/src/types/chat';
+import { FeatureType } from '@/src/types/common';
 import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
@@ -333,8 +334,11 @@ export const conversationsSlice = createSlice({
         const conversation = state.conversations.find((conv) => conv.id === id);
         if (
           conversation &&
-          (isEntityExternal(conversation) ||
-            hasExternalParent({ conversations: state }, conversation.folderId))
+          isExternalEntity(
+            { conversations: state },
+            conversation,
+            FeatureType.Chat,
+          )
         ) {
           const newConversation: Conversation = {
             ...conversation,

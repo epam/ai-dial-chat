@@ -22,6 +22,7 @@ import classNames from 'classnames';
 import { getFoldersDepth } from '@/src/utils/app/folders';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
+import { isExternalEntity } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -143,6 +144,9 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
+  );
+  const isExternal = useAppSelector((state) =>
+    isExternalEntity(state, currentFolder, FeatureType.Chat),
   );
 
   useEffect(() => {
@@ -526,7 +530,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
               setIsSelected(true);
             }}
-            draggable={!!handleDrop}
+            draggable={!!handleDrop && !isExternal}
             onDragStart={(e) => handleDragStart(e, currentFolder)}
             onDragOver={(e) => {
               e.preventDefault();
