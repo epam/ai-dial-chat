@@ -332,7 +332,7 @@ export const ChatInputMessage = ({
         <textarea
           ref={textareaRef}
           className={classNames(
-            'm-0 min-h-[38px] w-full grow resize-none bg-transparent outline-none placeholder:text-secondary',
+            'm-0 min-h-[38px] w-full grow resize-none bg-transparent leading-[150%] outline-none placeholder:text-secondary',
             displayAttachFunctionality
               ? isIframe
                 ? 'pl-11 pr-9'
@@ -341,7 +341,6 @@ export const ChatInputMessage = ({
               ? 'pl-3 pr-9'
               : 'pl-4 pr-10',
             isIframe ? 'py-[7px] text-sm' : 'py-2.5 text-base md:py-3',
-            !isIframe && 'leading-[150%]',
           )}
           style={{ maxHeight: `${MAX_HEIGHT}px` }}
           placeholder={
