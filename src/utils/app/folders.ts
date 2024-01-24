@@ -1,3 +1,5 @@
+import { DragEvent } from 'react';
+
 import {
   constructPath,
   getDialFilesFromAttachments,
@@ -363,4 +365,28 @@ export const getEntityMoveType = (featureType?: FeatureType): MoveType => {
     default:
       return MoveType.File;
   }
+};
+
+export const hasDragEventEntityData = (
+  event: DragEvent,
+  featureType?: FeatureType,
+): boolean => {
+  return event.dataTransfer?.types.includes(getEntityMoveType(featureType));
+};
+
+const hasDragEventFolderData = (
+  event: DragEvent,
+  featureType?: FeatureType,
+): boolean => {
+  return event.dataTransfer?.types.includes(getFolderMoveType(featureType));
+};
+
+export const hasDragEventAnyData = (
+  event: DragEvent,
+  featureType?: FeatureType,
+): boolean => {
+  return (
+    hasDragEventEntityData(event, featureType) ||
+    hasDragEventFolderData(event, featureType)
+  );
 };

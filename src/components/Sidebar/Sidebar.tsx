@@ -11,7 +11,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getEntityMoveType } from '@/src/utils/app/folders';
+import { hasDragEventEntityData } from '@/src/utils/app/folders';
 
 import { FeatureType } from '@/src/types/common';
 import { SearchFilters } from '@/src/types/search';
@@ -96,10 +96,7 @@ const Sidebar = <T,>({
 
   const allowDrop = useCallback(
     (e: DragEvent) => {
-      const hasData = e.dataTransfer?.types.includes(
-        getEntityMoveType(featureType),
-      );
-      if (hasData) {
+      if (hasDragEventEntityData(e, featureType)) {
         e.preventDefault();
       }
     },
@@ -108,11 +105,8 @@ const Sidebar = <T,>({
 
   const highlightDrop = useCallback(
     (e: DragEvent) => {
-      const hasData = e.dataTransfer?.types.includes(
-        getEntityMoveType(featureType),
-      );
       if (
-        hasData &&
+        hasDragEventEntityData(e, featureType) &&
         (dragDropElement.current?.contains(e.target as Node) ||
           dragDropElement.current === e.target)
       ) {

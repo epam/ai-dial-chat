@@ -19,7 +19,11 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getFolderMoveType, getFoldersDepth } from '@/src/utils/app/folders';
+import {
+  getFolderMoveType,
+  getFoldersDepth,
+  hasDragEventAnyData,
+} from '@/src/utils/app/folders';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
@@ -300,11 +304,11 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const allowDrop = useCallback(
     (e: DragEvent) => {
-      if (isDropAllowed && !isExternal) {
+      if (isDropAllowed && !isExternal && hasDragEventAnyData(e, featureType)) {
         e.preventDefault();
       }
     },
-    [isDropAllowed, isExternal],
+    [featureType, isDropAllowed, isExternal],
   );
 
   const isParentFolder = useCallback(
@@ -330,7 +334,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const highlightDrop = useCallback(
     (evt: DragEvent) => {
-      if (isExternal) {
+      if (isExternal || !hasDragEventAnyData(evt, featureType)) {
         return;
       }
 
@@ -347,7 +351,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         setIsDraggingOver(true);
       }
     },
-    [currentFolder.id, dispatch, isExternal, isParentFolder],
+    [currentFolder.id, dispatch, featureType, isExternal, isParentFolder],
   );
 
   const removeHighlight = useCallback(
@@ -544,7 +548,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             draggable={!!handleDrop && !isExternal}
             onDragStart={(e) => handleDragStart(e, currentFolder)}
             onDragOver={(e) => {
-              if (!isExternal) {
+              if (!isExternal && hasDragEventAnyData(e, featureType)) {
                 e.preventDefault();
               }
             }}
