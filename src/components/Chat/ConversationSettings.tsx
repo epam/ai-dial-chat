@@ -104,7 +104,7 @@ export const ConversationSettings = ({
         className="relative h-full w-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1"
         data-qa="conversation-settings"
       >
-        <div className="max-w-full shrink overflow-auto bg-layer-2 px-3 py-4 md:px-5">
+        <div className="shrink overflow-auto bg-layer-2 px-3 py-4 md:px-5">
           <ConversationSettingsModel
             conversationId={conversationId}
             replay={replay}
@@ -114,7 +114,7 @@ export const ConversationSettings = ({
           />
         </div>
         <div
-          className="flex max-h-full max-w-full shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
+          className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
           data-qa="entity-settings"
         >
           {!replay.replayAsIs ? (
