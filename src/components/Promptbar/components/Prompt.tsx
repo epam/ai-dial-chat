@@ -12,6 +12,7 @@ import classNames from 'classnames';
 
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
@@ -72,6 +73,9 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
+  const isExternal = useAppSelector((state) =>
+    isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
+  );
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -260,7 +264,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               'pr-6 xl:pr-0': !isDeleting && !isRenaming && isSelected,
             },
           )}
-          draggable="true"
+          draggable={!isExternal}
           onDragStart={(e) => handleDragStart(e, prompt)}
         >
           <ShareIcon

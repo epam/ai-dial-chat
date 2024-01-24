@@ -14,10 +14,13 @@ import {
   getMyItemsFilters,
   searchSectionFolders,
 } from '@/src/utils/app/search';
-import { isEntityExternal } from '@/src/utils/app/share';
+import {
+  isEntityExternal,
+  isEntityOrParentsExternal,
+} from '@/src/utils/app/share';
 
 import { Conversation, Role } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
+import { EntityType, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
@@ -233,9 +236,8 @@ export const selectIsPlaybackSelectedConversations = createSelector(
 export const selectAreSelectedConversationsExternal = createSelector(
   [(state: RootState) => state, selectSelectedConversations],
   (state, conversations) => {
-    return conversations.some(
-      (conv) =>
-        isEntityExternal(conv) || hasExternalParent(state, conv.folderId),
+    return conversations.some((conv) =>
+      isEntityOrParentsExternal(state, conv, FeatureType.Chat),
     );
   },
 );
