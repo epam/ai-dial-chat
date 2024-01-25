@@ -262,18 +262,17 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
           getFolderMoveType(featureType),
         );
 
-        const draggedFolder = JSON.parse(folderData);
-
         if (folderData) {
-          const foldersDepth = getFoldersDepth(
-            draggedFolder,
-            allFolders,
-          );
+          const draggedFolder = JSON.parse(folderData);
 
-          if(draggedFolder.id === currentFolder.folderId) {
+          const foldersDepth = getFoldersDepth(draggedFolder, allFolders);
+
+          if (draggedFolder.id === currentFolder.folderId) {
             dispatch(
               UIActions.showToast({
-                message: t("It's not allowed to move parent folder in child folder"),
+                message: t(
+                  "It's not allowed to move parent folder in child folder",
+                ),
                 type: 'error',
               }),
             );
