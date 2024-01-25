@@ -19,7 +19,10 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getFoldersDepth } from '@/src/utils/app/folders';
+import {
+  getChildAndCurrentFoldersIdsById,
+  getFoldersDepth,
+} from '@/src/utils/app/folders';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import {
   getDragImage,
@@ -263,10 +266,29 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         );
 
         if (folderData) {
-          const foldersDepth = getFoldersDepth(
-            JSON.parse(folderData),
-            allFolders,
+          const draggedFolder = JSON.parse(folderData);
+
+          if (draggedFolder.id === currentFolder.id) {
+            return;
+          }
+
+          const childIds = new Set(
+            getChildAndCurrentFoldersIdsById(draggedFolder.id, allFolders),
           );
+
+          if (childIds.has(currentFolder.id)) {
+            dispatch(
+              UIActions.showToast({
+                message: t(
+                  "It's not allowed to move parent folder in child folder",
+                ),
+                type: 'error',
+              }),
+            );
+            return;
+          }
+
+          const foldersDepth = getFoldersDepth(draggedFolder, allFolders);
 
           if (maxDepth && level + foldersDepth > maxDepth) {
             dispatch(
