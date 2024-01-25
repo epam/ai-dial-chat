@@ -81,8 +81,6 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
   );
 };
 
-const OVERLAY_ICON_SIZE = 18;
-const MOBILE_ICON_SIZE = 20;
 const DEFAULT_ICON_SIZE = 20;
 
 export const ChatMessage: FC<Props> = memo(
@@ -319,9 +317,9 @@ export const ChatMessage: FC<Props> = memo(
     }, [isEditing, messageContent]);
 
     const chatIconSize = isOverlay
-      ? OVERLAY_ICON_SIZE
+      ? 18
       : isOnlySmallScreen()
-      ? MOBILE_ICON_SIZE
+      ? 20
       : DEFAULT_ICON_SIZE;
 
     return (
