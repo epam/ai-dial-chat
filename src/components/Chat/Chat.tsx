@@ -270,7 +270,7 @@ export const Chat = memo(() => {
     if (selectedConversations.some((conv) => conv.messages.length === 0)) {
       setShowScrollDownButton(false);
     }
-  }, [handleScroll, selectedConversations]);
+  }, [handleScroll, isSended, selectedConversations]);
 
   const handleClearConversation = useCallback(
     (conversation: Conversation) => {
