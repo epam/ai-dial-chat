@@ -2,6 +2,7 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilter,
@@ -80,8 +81,8 @@ const ChatFolderTemplate = ({
   const handleDrop = useCallback(
     (e: DragEvent, folder: FolderInterface) => {
       if (e.dataTransfer) {
-        const conversationData = e.dataTransfer.getData('conversation');
-        const folderData = e.dataTransfer.getData('folder');
+        const conversationData = e.dataTransfer.getData(MoveType.Conversation);
+        const folderData = e.dataTransfer.getData(MoveType.ConversationFolder);
 
         if (conversationData) {
           const conversation: Conversation = JSON.parse(conversationData);
@@ -144,6 +145,7 @@ const ChatFolderTemplate = ({
         onDrop={onDropBetweenFolders}
         index={index}
         parentFolderId={folder.folderId}
+        featureType={FeatureType.Chat}
         denyDrop={isExternal}
       />
       <Folder
@@ -178,6 +180,7 @@ const ChatFolderTemplate = ({
           onDrop={onDropBetweenFolders}
           index={index + 1}
           parentFolderId={folder.folderId}
+          featureType={FeatureType.Chat}
           denyDrop={isExternal}
         />
       )}
