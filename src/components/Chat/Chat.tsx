@@ -107,6 +107,7 @@ export const Chat = memo(() => {
   const nextMessageBoxRef = useRef<HTMLDivElement | null>(null);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
+  const [isSended, setIsSended] = useState(false);
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const showReplayControls = useMemo(() => {
@@ -230,6 +231,7 @@ export const Chat = memo(() => {
         threshold: 0.1,
       },
     );
+
     const messagesEndElement = messagesEndRef.current;
     if (messagesEndElement) {
       observer.observe(messagesEndElement);
@@ -245,7 +247,11 @@ export const Chat = memo(() => {
     setIsShowChatSettings(false);
 
     if (selectedConversations.length > 0) {
-      handleScroll();
+      if (isSended) {
+        handleScroll();
+        setIsSended(false);
+      }
+
       const mergedMessages: MergedMessages[] = [];
       for (let i = 0; i < selectedConversations[0].messages.length; i++) {
         if (selectedConversations[0].messages[i].role === Role.System) continue;
@@ -437,6 +443,7 @@ export const Chat = memo(() => {
           activeReplayIndex: 0,
         }),
       );
+      setIsSended(true);
     },
     [dispatch, selectedConversations],
   );
@@ -454,6 +461,7 @@ export const Chat = memo(() => {
         activeReplayIndex: 0,
       }),
     );
+    setIsSended(true);
   }, [dispatch, selectedConversations]);
 
   const onEditMessage = useCallback(
@@ -467,6 +475,7 @@ export const Chat = memo(() => {
           activeReplayIndex: 0,
         }),
       );
+      setIsSended(true);
     },
     [dispatch, selectedConversations],
   );
