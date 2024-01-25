@@ -108,9 +108,7 @@ export const UserMobile = () => {
     <div
       className={classNames(
         'fixed right-0 z-40 flex w-[260px] flex-col overflow-y-auto border-tertiary bg-layer-3 md:hidden',
-        isOverlay
-          ? 'top-9 !h-[calc(100%-36px)]'
-          : 'top-12 !h-[calc(100%-48px)]',
+        isOverlay ? 'top-9 h-[calc(100%-36px)]' : 'top-12 h-[calc(100%-48px)]',
       )}
     >
       <UserInfo />
