@@ -21,7 +21,13 @@ import classNames from 'classnames';
 
 import { getFoldersDepth } from '@/src/utils/app/folders';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
+import {
+  getDragImage,
+  getFolderMoveType,
+  hasDragEventAnyData,
+} from '@/src/utils/app/move';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -35,13 +41,11 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { emptyImage } from '@/src/constants/drag-and-drop';
-
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
-import PublishModal from '../Chat/PublishModal';
+import PublishModal from '../Chat/Publish/PublishWizard';
 import ShareModal from '../Chat/ShareModal';
 import UnpublishModal from '../Chat/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
@@ -144,6 +148,9 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );
+  const isExternal = useAppSelector((state) =>
+    isEntityOrParentsExternal(state, currentFolder, FeatureType.Chat),
+  );
 
   useEffect(() => {
     // only if search term was changed after first render
@@ -208,7 +215,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const hasChildElements = useMemo(() => {
     return filteredChildFolders.length > 0 || filteredChildItems.length > 0;
   }, [filteredChildFolders.length, filteredChildItems.length]);
-  const dragImageRef = useRef<HTMLImageElement | null>();
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -217,11 +223,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
-
-  useEffect(() => {
-    dragImageRef.current = document.createElement('img');
-    dragImageRef.current.src = emptyImage;
-  }, []);
 
   const handleRename = useCallback(() => {
     if (!onRenameFolder) {
@@ -246,7 +247,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const dropHandler = useCallback(
     (e: DragEvent) => {
-      if (!isDropAllowed || !handleDrop) {
+      if (!isDropAllowed || !handleDrop || isExternal) {
         return;
       }
 
@@ -257,7 +258,9 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         dispatch(UIActions.openFolder({ id: currentFolder.id }));
         setIsDraggingOver(false);
 
-        const folderData = e.dataTransfer.getData('folder');
+        const folderData = e.dataTransfer.getData(
+          getFolderMoveType(featureType),
+        );
 
         if (folderData) {
           const foldersDepth = getFoldersDepth(
@@ -281,8 +284,10 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     [
       isDropAllowed,
       handleDrop,
+      isExternal,
       dispatch,
       currentFolder,
+      featureType,
       allFolders,
       maxDepth,
       level,
@@ -292,11 +297,11 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const allowDrop = useCallback(
     (e: DragEvent) => {
-      if (isDropAllowed) {
+      if (isDropAllowed && !isExternal && hasDragEventAnyData(e, featureType)) {
         e.preventDefault();
       }
     },
-    [isDropAllowed],
+    [featureType, isDropAllowed, isExternal],
   );
 
   const isParentFolder = useCallback(
@@ -322,6 +327,10 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const highlightDrop = useCallback(
     (evt: DragEvent) => {
+      if (isExternal || !hasDragEventAnyData(evt, featureType)) {
+        return;
+      }
+
       if (dragDropElement.current === evt.target) {
         setIsDraggingOver(true);
         return;
@@ -335,7 +344,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         setIsDraggingOver(true);
       }
     },
-    [currentFolder.id, dispatch, isParentFolder],
+    [currentFolder.id, dispatch, featureType, isExternal, isParentFolder],
   );
 
   const removeHighlight = useCallback(
@@ -417,13 +426,16 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLDivElement>, folder: FolderInterface) => {
-      if (e.dataTransfer) {
-        e.dataTransfer.setDragImage(dragImageRef.current || new Image(), 0, 0);
-        e.dataTransfer.setData('folder', JSON.stringify(folder));
+      if (e.dataTransfer && !isExternal) {
+        e.dataTransfer.setDragImage(getDragImage(), 0, 0);
+        e.dataTransfer.setData(
+          getFolderMoveType(featureType),
+          JSON.stringify(folder),
+        );
         dispatch(UIActions.closeFolder({ id: currentFolder.id }));
       }
     },
-    [currentFolder.id, dispatch],
+    [currentFolder.id, dispatch, featureType, isExternal],
   );
 
   const onDraggingBetweenFolders = useCallback((isDraggingOver: boolean) => {
@@ -526,10 +538,12 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
               setIsSelected(true);
             }}
-            draggable={!!handleDrop}
+            draggable={!!handleDrop && !isExternal}
             onDragStart={(e) => handleDragStart(e, currentFolder)}
             onDragOver={(e) => {
-              e.preventDefault();
+              if (!isExternal && hasDragEventAnyData(e, featureType)) {
+                e.preventDefault();
+              }
             }}
           >
             <CaretIconComponent
@@ -645,6 +659,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                         onDraggingOver={onDraggingBetweenFolders}
                         index={index}
                         parentFolderId={item.folderId}
+                        featureType={featureType}
+                        denyDrop={isExternal}
                       />
                     ) : (
                       <div className="h-1"></div>
@@ -684,6 +700,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                         onDraggingOver={onDraggingBetweenFolders}
                         index={index + 1}
                         parentFolderId={item.folderId}
+                        featureType={featureType}
+                        denyDrop={isExternal}
                       />
                     )}
                   </Fragment>
