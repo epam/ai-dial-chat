@@ -199,7 +199,7 @@ export class DataService {
   }
 
   public static getFilesBucket(): Observable<{ bucket: string }> {
-    return ApiStorage.request(`api/files/bucket`, {
+    return ApiStorage.request(`api/bucket`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
