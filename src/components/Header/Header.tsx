@@ -21,7 +21,7 @@ import { CreateNewChatMobile } from './CreateNewChatMobile';
 import { User } from './User/User';
 
 const DEFAULT_HEADER_ICON_SIZE = 24;
-const IFRAME_HEADER_ICON_SIZE = 18;
+const OVERLAY_HEADER_ICON_SIZE = 18;
 
 const Header = () => {
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
@@ -29,7 +29,7 @@ const Header = () => {
   const isUserSettingsOpen = useAppSelector(
     UISelectors.selectIsUserSettingsOpen,
   );
-  const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const dispatch = useAppDispatch();
 
@@ -54,15 +54,15 @@ const Header = () => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
   };
 
-  const headerIconSize = isIframe
-    ? IFRAME_HEADER_ICON_SIZE
+  const headerIconSize = isOverlay
+    ? OVERLAY_HEADER_ICON_SIZE
     : DEFAULT_HEADER_ICON_SIZE;
 
   return (
     <div
       className={classNames(
         'z-40 flex w-full border-b border-tertiary bg-layer-3',
-        isIframe ? 'h-[36px]' : 'h-[48px]',
+        isOverlay ? 'h-[36px]' : 'h-[48px]',
       )}
       data-qa="header"
     >

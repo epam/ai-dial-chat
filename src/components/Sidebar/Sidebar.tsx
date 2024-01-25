@@ -68,7 +68,7 @@ const Sidebar = <T,>({
   const dispatch = useAppDispatch();
   const chatbarWidth = useAppSelector(UISelectors.selectChatbarWidth);
   const promptbarWidth = useAppSelector(UISelectors.selectPromptbarWidth);
-  const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const isLeftSidebar = side === 'left';
   const isRightSidebar = side === 'right';
@@ -183,7 +183,7 @@ const Sidebar = <T,>({
     isLeftSidebar
       ? 'sidebar-left left-0 border-r'
       : 'sidebar-right right-0 border-l',
-    isIframe ? 'top-9 !h-[calc(100%-36px)]' : 'top-12 !h-[calc(100%-48px)]',
+    isOverlay ? 'top-9 !h-[calc(100%-36px)]' : 'top-12 !h-[calc(100%-48px)]',
   );
 
   return isOpen ? (

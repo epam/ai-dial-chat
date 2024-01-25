@@ -104,7 +104,7 @@ export const ChatMessage: FC<Props> = memo(
     const isExternal = useAppSelector(
       ConversationsSelectors.selectAreSelectedConversationsExternal,
     );
-    const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
+    const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [isTyping, setIsTyping] = useState<boolean>(false);
@@ -327,7 +327,7 @@ export const ChatMessage: FC<Props> = memo(
           className={classNames(
             'relative m-auto flex h-full md:gap-6 md:py-6 lg:px-0',
             !isChatFullWidth && 'md:max-w-2xl xl:max-w-3xl',
-            isOnlySmallScreen() || isIframe ? 'px-4 py-3' : 'p-4',
+            isOnlySmallScreen() || isOverlay ? 'px-4 py-3' : 'p-4',
           )}
         >
           <div className="min-w-[40px] font-bold" data-qa="message-icon">
@@ -340,11 +340,11 @@ export const ChatMessage: FC<Props> = memo(
                     undefined
                   }
                   animate={isShowResponseLoader}
-                  size={isIframe ? 18 : isOnlySmallScreen() ? 20 : 28}
+                  size={isOverlay ? 18 : isOnlySmallScreen() ? 20 : 28}
                 />
               ) : (
                 <IconUser
-                  size={isIframe ? 18 : isOnlySmallScreen() ? 20 : 28}
+                  size={isOverlay ? 18 : isOnlySmallScreen() ? 20 : 28}
                 />
               )}
             </div>
@@ -428,8 +428,8 @@ export const ChatMessage: FC<Props> = memo(
                           'prose flex-1 whitespace-pre-wrap',
                           {
                             'max-w-none': isChatFullWidth,
-                            'text-sm': isIframe,
-                            'leading-[150%]': isOnlySmallScreen() || isIframe,
+                            'text-sm': isOverlay,
+                            'leading-[150%]': isOnlySmallScreen() || isOverlay,
                           },
                         )}
                       >

@@ -23,7 +23,7 @@ export const SendMessageButton = ({
   tooltip,
 }: Props) => {
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
-  const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
@@ -33,7 +33,7 @@ export const SendMessageButton = ({
     <button
       className={classNames(
         'absolute top-[calc(50%_-_12px)] rounded hover:text-accent-primary disabled:cursor-not-allowed disabled:text-secondary',
-        isIframe ? 'right-3' : 'right-4',
+        isOverlay ? 'right-3' : 'right-4',
       )}
       onClick={handleSend}
       disabled={isDisabled}

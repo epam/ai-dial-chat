@@ -60,7 +60,7 @@ export const ChatInputMessage = ({
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [showPluginSelect, setShowPluginSelect] = useState(false);
 
-  const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -334,17 +334,17 @@ export const ChatInputMessage = ({
           className={classNames(
             'm-0 min-h-[38px] w-full grow resize-none bg-transparent leading-[150%] outline-none placeholder:text-secondary',
             displayAttachFunctionality
-              ? isIframe
+              ? isOverlay
                 ? 'pl-11 pr-9'
                 : 'pl-12 pr-10'
-              : isIframe
+              : isOverlay
               ? 'pl-3 pr-9'
               : 'pl-4 pr-10',
-            isIframe ? 'py-[7px] text-sm' : 'py-2.5 text-base md:py-3',
+            isOverlay ? 'py-[7px] text-sm' : 'py-2.5 text-base md:py-3',
           )}
           style={{ maxHeight: `${MAX_HEIGHT}px` }}
           placeholder={
-            isIframe
+            isOverlay
               ? t('Type a message') || ''
               : t('Type a text or «/» to use a prompt...') || ''
           }

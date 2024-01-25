@@ -108,14 +108,14 @@ const ChatMDComponent = ({
   isInner = false,
 }: ChatMDComponentProps) => {
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
-  const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const mdClassNames = classnames(
     'prose dark:prose-invert prose-a:text-accent-primary prose-a:no-underline hover:prose-a:underline',
     {
       'max-w-none': isChatFullWidth,
-      'text-sm': isIframe,
-      'leading-[150%]': isOnlySmallScreen() || isIframe,
+      'text-sm': isOverlay,
+      'leading-[150%]': isOnlySmallScreen() || isOverlay,
     },
   );
 
