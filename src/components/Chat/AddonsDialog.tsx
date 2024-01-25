@@ -102,11 +102,7 @@ const SelectedAddon = ({
       <ModelIcon entity={addon} entityId={addon.id} size={15} />
       <span>{addon.name}</span>
       {!isPreselected && (
-        <IconX
-          height={12}
-          width={12}
-          className="text-secondary hover:text-accent-primary"
-        />
+        <IconX size={14} className="text-secondary hover:text-accent-primary" />
       )}
     </button>
   );

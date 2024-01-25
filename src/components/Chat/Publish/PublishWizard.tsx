@@ -1,3 +1,4 @@
+import { IconHelpCircle } from '@tabler/icons-react';
 import {
   ChangeEvent,
   ClipboardEvent,
@@ -24,7 +25,11 @@ import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { SharingType } from '@/src/types/share';
+import {
+  SharingType,
+  TargetAudienceFilter,
+  UserGroup,
+} from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -33,11 +38,14 @@ import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
 
 import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
 
-import CollapsableSection from '../Common/CollapsableSection';
-import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
-import { ErrorMessage } from '../Common/ErrorMessage';
-import Modal from '../Common/Modal';
+import CollapsableSection from '../../Common/CollapsableSection';
+import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
+import { ErrorMessage } from '../../Common/ErrorMessage';
+import Modal from '../../Common/Modal';
+import Tooltip from '../../Common/Tooltip';
 import { PublishAttachment } from './PublishAttachment';
+import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
+import { UserGroupFilter } from './UserGroupFilter';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -59,7 +67,7 @@ const getPrefix = (item: ShareEntity): string => {
   }
 };
 
-export default function PublishModal({
+export default function PublishWizard({
   entity,
   isOpen,
   onClose,
@@ -81,7 +89,6 @@ export default function PublishModal({
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
   const [version, setVersion] = useState<string>('');
-
   const isVersionUnique = useAppSelector((state) =>
     isPublishVersionUnique(type)(state, entity.id, version.trim()),
   );
@@ -89,6 +96,10 @@ export default function PublishModal({
   const files = useAppSelector((state) =>
     getAttachments(type)(state, entity.id),
   );
+  const [userGroups, setUserGroups] = useState<UserGroup[]>([]);
+  const [otherTargetAudienceFilters, setOtherTargetAudienceFilters] = useState<
+    TargetAudienceFilter[]
+  >([]);
 
   const nameOnChangeHandler = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -141,6 +152,15 @@ export default function PublishModal({
     setIsChangeFolderModalOpened(true);
   }, []);
 
+  const handleOnChangeFilters = (targetFilter: TargetAudienceFilter) => {
+    setOtherTargetAudienceFilters((prev) => {
+      const filters = prev
+        .filter(({ id }) => id !== targetFilter.id)
+        .concat(targetFilter);
+      return filters;
+    });
+  };
+
   const handlePublish = useCallback(
     (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
       e.preventDefault();
@@ -168,6 +188,10 @@ export default function PublishModal({
           fileNameMapping: new Map( // invert mapping
             Array.from(newFileNames.current, (entry) => [entry[1], entry[0]]),
           ),
+          targetAudienceFilters: {
+            userGroups,
+            other: otherTargetAudienceFilters,
+          },
         }),
       );
       onClose();
@@ -181,6 +205,8 @@ export default function PublishModal({
       path,
       publishAction,
       version,
+      userGroups,
+      otherTargetAudienceFilters,
     ],
   );
 
@@ -196,7 +222,7 @@ export default function PublishModal({
     <Modal
       portalId="theme-main"
       containerClassName={classNames(
-        'group/modal inline-block h-[747px] min-w-full max-w-[1100px] !bg-layer-2 md:min-w-[550px]',
+        'group/modal  inline-block h-[747px] min-w-full max-w-[1100px] !bg-layer-2 md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
         { 'w-full': files.length },
       )}
       dataQa="publish-modal"
@@ -297,26 +323,65 @@ export default function PublishModal({
             </section>
 
             <section className="flex flex-col px-5 py-4">
-              <h2>{t('Target Audience Filters')}</h2>
+              <h2 className="flex flex-row gap-2">
+                {t('Target Audience Filters')}
+
+                <Tooltip
+                  placement="top"
+                  tooltip={
+                    <div className="max-w-[230px] break-words text-xs">
+                      {t(
+                        'The collection will be published for all users who meet AT LEAST ONE option from every',
+                      )}
+                    </div>
+                  }
+                >
+                  <IconHelpCircle
+                    size={18}
+                    className="text-secondary  hover:text-accent-primary"
+                  />
+                </Tooltip>
+              </h2>
+
+              <CollapsableSection
+                name={t('User Group')}
+                dataQa="filter-user-group"
+                openByDefault={false}
+                className="!pl-0"
+              >
+                <UserGroupFilter
+                  onChangeUserGroups={setUserGroups}
+                  initialSelectedUserGroups={userGroups}
+                />
+              </CollapsableSection>
 
               {[
-                'UserGroup',
-                'JobTitle',
-                'AssignedProjects',
-                'UserGroup',
-                'JobTitle',
-                'AssignedProjects',
-              ].map((v, idx) => (
-                <CollapsableSection
-                  name={v}
-                  dataQa={`filter-${v}`}
-                  key={`filter-${v}-${idx}`}
-                  openByDefault={false}
-                  className="!pl-0"
-                >
-                  TBD
-                </CollapsableSection>
-              ))}
+                { id: 'JobTitle', name: 'Job Title' },
+                { id: 'AssignedProjects', name: 'Assigned Projects' },
+                { id: 'filter4', name: 'Filter 4' },
+                { id: 'filter5', name: 'Filter 5' },
+                { id: 'filter6', name: 'Filter 6' },
+              ].map((v, idx) => {
+                const initialSelectedFilter = otherTargetAudienceFilters.find(
+                  ({ id }) => id === v.id,
+                );
+                return (
+                  <CollapsableSection
+                    name={v.name}
+                    dataQa={`filter-${v.id}`}
+                    key={`filter-${v.id}-${idx}`}
+                    openByDefault={false}
+                    className="!pl-0"
+                  >
+                    <TargetAudienceFilterComponent
+                      name={v.name}
+                      id={v.id}
+                      initialSelectedFilter={initialSelectedFilter}
+                      onChangeFilter={handleOnChangeFilters}
+                    />
+                  </CollapsableSection>
+                );
+              })}
             </section>
           </div>
           {(type === SharingType.Conversation ||

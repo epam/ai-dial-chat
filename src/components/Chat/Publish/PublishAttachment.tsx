@@ -35,10 +35,10 @@ import { Translation } from '@/src/types/translation';
 import { stopBubbling } from '@/src/constants/chat';
 import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
 
-import SidebarActionButton from '../Buttons/SidebarActionButton';
-import ContextMenu from '../Common/ContextMenu';
-import Tooltip from '../Common/Tooltip';
-import DownloadRenderer from '../Files/Download';
+import SidebarActionButton from '../../Buttons/SidebarActionButton';
+import ContextMenu from '../../Common/ContextMenu';
+import Tooltip from '../../Common/Tooltip';
+import DownloadRenderer from '../../Files/Download';
 
 interface Props {
   file: DialFile;

@@ -45,7 +45,7 @@ import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
-import PublishModal from '../Chat/PublishModal';
+import PublishModal from '../Chat/Publish/PublishWizard';
 import ShareModal from '../Chat/ShareModal';
 import UnpublishModal from '../Chat/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
