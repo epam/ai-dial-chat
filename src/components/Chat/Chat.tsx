@@ -107,7 +107,7 @@ export const Chat = memo(() => {
   const nextMessageBoxRef = useRef<HTMLDivElement | null>(null);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
-  const [isSended, setIsSended] = useState(false);
+  const isSentRef = useRef(false);
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const showReplayControls = useMemo(() => {
@@ -247,9 +247,9 @@ export const Chat = memo(() => {
     setIsShowChatSettings(false);
 
     if (selectedConversations.length > 0) {
-      if (isSended) {
+      if (isSentRef.current) {
         handleScroll();
-        setIsSended(false);
+        isSentRef.current = false;
       }
 
       const mergedMessages: MergedMessages[] = [];
@@ -270,7 +270,7 @@ export const Chat = memo(() => {
     if (selectedConversations.some((conv) => conv.messages.length === 0)) {
       setShowScrollDownButton(false);
     }
-  }, [handleScroll, isSended, selectedConversations]);
+  }, [handleScroll, selectedConversations]);
 
   const handleClearConversation = useCallback(
     (conversation: Conversation) => {
@@ -443,7 +443,7 @@ export const Chat = memo(() => {
           activeReplayIndex: 0,
         }),
       );
-      setIsSended(true);
+      isSentRef.current = true;
     },
     [dispatch, selectedConversations],
   );
@@ -461,7 +461,7 @@ export const Chat = memo(() => {
         activeReplayIndex: 0,
       }),
     );
-    setIsSended(true);
+    isSentRef.current = true;
   }, [dispatch, selectedConversations]);
 
   const onEditMessage = useCallback(
@@ -475,7 +475,7 @@ export const Chat = memo(() => {
           activeReplayIndex: 0,
         }),
       );
-      setIsSended(true);
+      isSentRef.current = true;
     },
     [dispatch, selectedConversations],
   );
