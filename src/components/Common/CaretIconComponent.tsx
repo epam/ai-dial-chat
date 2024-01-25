@@ -6,19 +6,24 @@ interface CaretIconComponentProps {
   hidden?: boolean;
   isOpen: boolean;
   size?: number;
+  showOnHoverOnly?: boolean;
 }
 
 export default function CaretIconComponent({
   isOpen,
   size = 10,
   hidden,
+  showOnHoverOnly,
 }: CaretIconComponentProps) {
   return (
     <span className={classNames(hidden ? 'invisible' : 'visible')}>
       <IconCaretRightFilled
         className={classNames(
-          'invisible text-secondary transition-all group-hover/modal:[visibility:inherit] group-hover/sidebar:[visibility:inherit]',
+          'text-secondary transition-all',
           isOpen && 'rotate-90',
+          showOnHoverOnly
+            ? 'invisible group-hover/modal:[visibility:inherit] group-hover/sidebar:[visibility:inherit]'
+            : 'visible',
         )}
         size={size}
       />

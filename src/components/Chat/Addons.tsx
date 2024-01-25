@@ -54,7 +54,7 @@ const Addon = ({
       <ModelIcon entity={addonsMap[addonId]} entityId={addonId} size={15} />
       <span>{addonsMap[addonId]?.name || addonId}</span>
       {isSelected && !preselectedAddonsIds.includes(addonId) && (
-        <IconX height={12} width={12} className="text-secondary" />
+        <IconX size={14} className="text-secondary" />
       )}
     </button>
   );
