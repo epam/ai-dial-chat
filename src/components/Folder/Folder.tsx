@@ -265,8 +265,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         if (folderData) {
           const draggedFolder = JSON.parse(folderData);
 
-          const foldersDepth = getFoldersDepth(draggedFolder, allFolders);
-
           if (draggedFolder.id === currentFolder.folderId) {
             dispatch(
               UIActions.showToast({
@@ -278,6 +276,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             );
             return;
           }
+
+          const foldersDepth = getFoldersDepth(draggedFolder, allFolders);
 
           if (maxDepth && level + foldersDepth > maxDepth) {
             dispatch(
