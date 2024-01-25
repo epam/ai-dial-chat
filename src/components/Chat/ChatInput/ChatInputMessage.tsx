@@ -335,12 +335,14 @@ export const ChatInputMessage = ({
             'm-0 min-h-[38px] w-full grow resize-none bg-transparent leading-[150%] outline-none placeholder:text-secondary',
             displayAttachFunctionality
               ? isOverlay
-                ? 'pl-11 pr-9'
-                : 'pl-12 pr-10'
+                ? 'pl-11'
+                : 'pl-12'
               : isOverlay
-              ? 'pl-3 pr-9'
-              : 'pl-4 pr-10',
-            isOverlay ? 'py-[7px] text-sm' : 'py-2.5 text-base md:py-3',
+              ? 'pl-3'
+              : 'pl-4',
+            isOverlay
+              ? 'py-[7px] pr-9 text-sm'
+              : 'py-2.5 pr-10 text-base md:py-3',
           )}
           style={{ maxHeight: `${MAX_HEIGHT}px` }}
           placeholder={
