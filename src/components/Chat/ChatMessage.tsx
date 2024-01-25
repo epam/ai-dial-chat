@@ -81,7 +81,7 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
   );
 };
 
-const DEFAULT_ICON_SIZE = 20;
+const DEFAULT_ICON_SIZE = 28;
 
 export const ChatMessage: FC<Props> = memo(
   ({
