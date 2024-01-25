@@ -11,6 +11,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { hasDragEventEntityData } from '@/src/utils/app/move';
+
 import { FeatureType } from '@/src/types/common';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -94,18 +96,27 @@ const Sidebar = <T,>({
   );
   const SIDEBAR_HEIGHT = 'auto';
 
-  const allowDrop = useCallback((e: DragEvent) => {
-    e.preventDefault();
-  }, []);
+  const allowDrop = useCallback(
+    (e: DragEvent) => {
+      if (hasDragEventEntityData(e, featureType)) {
+        e.preventDefault();
+      }
+    },
+    [featureType],
+  );
 
-  const highlightDrop = useCallback((e: DragEvent) => {
-    if (
-      dragDropElement.current?.contains(e.target as Node) ||
-      dragDropElement.current === e.target
-    ) {
-      setIsDraggingOver(true);
-    }
-  }, []);
+  const highlightDrop = useCallback(
+    (e: DragEvent) => {
+      if (
+        hasDragEventEntityData(e, featureType) &&
+        (dragDropElement.current?.contains(e.target as Node) ||
+          dragDropElement.current === e.target)
+      ) {
+        setIsDraggingOver(true);
+      }
+    },
+    [featureType],
+  );
 
   const removeHighlight = useCallback((e: DragEvent) => {
     if (
