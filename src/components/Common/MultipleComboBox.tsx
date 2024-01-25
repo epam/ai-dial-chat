@@ -12,6 +12,7 @@ import {
   createElement,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -84,6 +85,8 @@ export function MultipleComboBox<T>({
   const { t } = useTranslation(Translation.Common);
   const [inputValue, setInputValue] = useState<string | undefined>('');
   const [floatingWidth, setFloatingWidth] = useState(0);
+
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const { x, y, refs, strategy, update } = useFloating({
     placement: 'bottom-start',
@@ -205,10 +208,10 @@ export function MultipleComboBox<T>({
           <div
             ref={refs.reference as RefObject<HTMLDivElement>}
             onClick={() => {
-              (
-                (refs.reference.current as HTMLDivElement)
-                  .lastElementChild as HTMLInputElement
-              ).focus();
+              if (!inputRef.current) {
+                return;
+              }
+              inputRef.current.focus();
             }}
             className="relative flex w-full flex-wrap gap-1 rounded border border-primary p-1 focus-within:border-accent-primary"
           >
@@ -255,14 +258,15 @@ export function MultipleComboBox<T>({
               disabled={disabled}
               placeholder={selectedItems.length ? '' : placeholder || ''}
               className={classNames(
-                'min-w-[10px] bg-transparent py-1 outline-none placeholder:text-secondary',
+                'w-max min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent py-1 outline-none placeholder:text-secondary',
                 selectedItems.length ? 'pl-1' : 'pl-2',
               )}
-              {...getInputProps(
-                getDropdownProps({
+              {...getInputProps({
+                ...getDropdownProps({
                   preventKeyAction: isOpen,
                 }),
-              )}
+                ref: inputRef,
+              })}
             />
           </div>
 
