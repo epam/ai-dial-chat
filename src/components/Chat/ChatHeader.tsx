@@ -107,7 +107,7 @@ export const ChatHeader = ({
             triggerClassName={
               isChatFullWidth
                 ? 'flex h-full max-w-full lg:max-w-[90%] items-center justify-center'
-                : 'w-full max-w-[200px] md:max-w-[330px] lg:max-w-[425px]'
+                : ''
             }
           >
             <span
