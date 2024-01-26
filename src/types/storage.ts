@@ -4,7 +4,10 @@ import { Conversation } from './chat';
 import { FolderInterface } from './folder';
 import { Prompt } from './prompt';
 
-export type StorageType = 'browserStorage' | 'api' | 'apiMock';
+export enum StorageType {
+  BrowserStorage = 'browserStorage',
+  API = 'api',
+}
 
 export enum UIStorageKeys {
   Prompts = 'prompts',

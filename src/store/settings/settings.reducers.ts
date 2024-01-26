@@ -18,7 +18,7 @@ export interface SettingsState {
   defaultModelId: string | undefined;
   defaultRecentModelsIds: string[];
   defaultRecentAddonsIds: string[];
-  storageType: StorageType | string;
+  storageType: StorageType;
   themesHostDefined: boolean;
 }
 
@@ -33,7 +33,7 @@ const initialState: SettingsState = {
   defaultModelId: undefined,
   defaultRecentModelsIds: [],
   defaultRecentAddonsIds: [],
-  storageType: 'browserStorage',
+  storageType: StorageType.BrowserStorage,
   themesHostDefined: false,
 };
 

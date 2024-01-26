@@ -14,13 +14,12 @@ import {
 } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
-import { DialStorage, UIStorageKeys } from '@/src/types/storage';
+import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
 import { Theme } from '@/src/types/themes';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
 import { constructPath } from '../file';
-import { ApiMockStorage } from './storages/api-mock-storage';
 import { ApiStorage } from './storages/api-storage';
 import { BrowserStorage } from './storages/browser-storage';
 
@@ -357,13 +356,10 @@ export class DataService {
 
   private static setDataStorage(dataStorageType?: string): void {
     switch (dataStorageType) {
-      case 'api':
+      case StorageType.API:
         this.dataStorage = new ApiStorage();
         break;
-      case 'apiMock':
-        this.dataStorage = new ApiMockStorage();
-        break;
-      case 'browserStorage':
+      case StorageType.BrowserStorage:
       default:
         this.dataStorage = new BrowserStorage();
     }
