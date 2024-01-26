@@ -1,5 +1,8 @@
 import { NextApiRequest } from 'next';
 
+import { Conversation } from '@/src/types/chat';
+import { Prompt } from '@/src/types/prompt';
+
 import { OpenAIError } from './types';
 
 export enum ApiKeys {
@@ -30,4 +33,16 @@ export const getEntityUrlFromSlugs = (
   }
 
   return `${dialApiHost}/v1/${encodeURI(slugs.join('/'))}`;
+};
+
+const pathKeySeparator = '__';
+
+export const getConversationKey = (conversation: Conversation) => {
+  return [conversation.id, conversation.model.id, conversation.name].join(
+    pathKeySeparator,
+  );
+};
+
+export const getPromptKey = (prompt: Prompt) => {
+  return [prompt.id, prompt.name].join(pathKeySeparator);
 };
