@@ -9,7 +9,7 @@ import { RootState } from '..';
 
 export interface SettingsState {
   appName: string;
-  isIframe: boolean;
+  isOverlay: boolean;
   isAuthDisabled: boolean;
   footerHtmlMessage: string;
   enabledFeatures: Feature[];
@@ -24,7 +24,7 @@ export interface SettingsState {
 
 const initialState: SettingsState = {
   appName: 'AI Dial',
-  isIframe: false,
+  isOverlay: false,
   isAuthDisabled: false,
   footerHtmlMessage: '',
   enabledFeatures: [],
@@ -48,11 +48,11 @@ export const settingsSlice = createSlice({
     ) => {
       state.appName = payload;
     },
-    setIsIframe: (
+    setIsOverlay: (
       state,
-      { payload }: PayloadAction<SettingsState['isIframe']>,
+      { payload }: PayloadAction<SettingsState['isOverlay']>,
     ) => {
-      state.isIframe = payload;
+      state.isOverlay = payload;
     },
     setAuthDisabled: (
       state,
@@ -117,8 +117,8 @@ const selectAppName = createSelector([rootSelector], (state) => {
   return state.appName;
 });
 
-const selectIsIframe = createSelector([rootSelector], (state) => {
-  return state.isIframe;
+const selectIsOverlay = createSelector([rootSelector], (state) => {
+  return state.isOverlay;
 });
 
 const selectFooterHtmlMessage = createSelector([rootSelector], (state) => {
@@ -193,7 +193,7 @@ const selectThemeHostDefined = createSelector([rootSelector], (state) => {
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
-  selectIsIframe,
+  selectIsOverlay,
   selectFooterHtmlMessage,
   selectEnabledFeatures,
   isFeatureEnabled,

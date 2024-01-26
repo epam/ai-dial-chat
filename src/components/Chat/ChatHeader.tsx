@@ -67,7 +67,6 @@ export const ChatHeader = ({
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
-
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
@@ -96,7 +95,9 @@ export const ChatHeader = ({
       <div
         className={classNames(
           'sticky top-0 z-10 flex w-full min-w-0 flex-wrap items-center justify-center gap-2 bg-layer-2 py-2 text-sm lg:flex-row',
-          { 'px-3 md:px-5 lg:flex-nowrap': isChatFullWidth },
+          {
+            'px-3 md:px-5 lg:flex-nowrap': isChatFullWidth,
+          },
         )}
         data-qa="chat-header"
       >
@@ -106,12 +107,13 @@ export const ChatHeader = ({
             triggerClassName={
               isChatFullWidth
                 ? 'flex h-full max-w-full lg:max-w-[90%] items-center justify-center'
-                : ''
+                : 'w-full max-w-[200px] md:max-w-[330px] lg:max-w-[425px]'
             }
           >
             <span
               className={classNames('truncate text-center', {
-                'block max-w-[330px] lg:max-w-[425px]': !isChatFullWidth,
+                'block w-full max-w-[200px] md:max-w-[330px] lg:max-w-[425px]':
+                  !isChatFullWidth,
               })}
               data-qa="chat-title"
             >

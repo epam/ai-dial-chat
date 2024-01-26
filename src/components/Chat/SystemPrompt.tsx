@@ -160,9 +160,7 @@ export const SystemPrompt: FC<Props> = ({
       <textarea
         ref={textareaRef}
         className="w-full resize-none overflow-y-auto rounded border border-primary bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-within:border-accent-primary"
-        placeholder={
-          t(`Enter a prompt or type "/" to select a prompt...`) || ''
-        }
+        placeholder={t('Type a text or «/» to use a prompt...') || ''}
         style={{ maxHeight: `${MAX_HEIGHT}px` }}
         value={content}
         rows={1}

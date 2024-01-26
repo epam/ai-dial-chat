@@ -18,6 +18,7 @@ import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
@@ -69,6 +70,7 @@ const Sidebar = <T,>({
   const dispatch = useAppDispatch();
   const chatbarWidth = useAppSelector(UISelectors.selectChatbarWidth);
   const promptbarWidth = useAppSelector(UISelectors.selectPromptbarWidth);
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const isLeftSidebar = side === 'left';
   const isRightSidebar = side === 'right';
@@ -188,10 +190,11 @@ const Sidebar = <T,>({
   ]);
 
   const resizableWrapperClassName = classNames(
-    `!fixed top-12 z-40 flex !h-[calc(100%-48px)] min-w-[260px] border-tertiary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full`,
+    '!fixed z-40 flex min-w-[260px] border-tertiary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full',
     isLeftSidebar
       ? 'sidebar-left left-0 border-r'
       : 'sidebar-right right-0 border-l',
+    isOverlay ? 'top-9 !h-[calc(100%-36px)]' : 'top-12 !h-[calc(100%-48px)]',
   );
 
   return isOpen ? (
@@ -219,9 +222,10 @@ const Sidebar = <T,>({
           {filteredItems?.length > 0 ? (
             <div
               ref={dragDropElement}
-              className={`min-h-[100px] min-w-[42px] grow ${
-                isDraggingOver ? 'bg-accent-primary-alpha' : ''
-              }`}
+              className={classNames(
+                'min-h-[100px] min-w-[42px] grow',
+                isDraggingOver && 'bg-accent-primary-alpha',
+              )}
               onDrop={(e) => {
                 setIsDraggingOver(false);
                 handleDrop(e);

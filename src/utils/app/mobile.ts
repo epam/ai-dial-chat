@@ -6,4 +6,5 @@ export const isMobile = () => {
   return mobileRegex.test(userAgent);
 };
 
-export const isSmallScreen = () => window.innerWidth < 768 || isMobile();
+export const isOnlySmallScreen = () => window.innerWidth < 768;
+export const isSmallScreen = () => isOnlySmallScreen() || isMobile();
