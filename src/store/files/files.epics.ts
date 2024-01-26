@@ -17,6 +17,7 @@ import { combineEpics } from 'redux-observable';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { triggerDownload } from '@/src/utils/app/file';
 import { translate } from '@/src/utils/app/translation';
+import { ApiKeys } from '@/src/utils/server/api';
 
 import { AppEpic } from '@/src/types/store';
 
@@ -278,7 +279,9 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
     tap(({ files }) => {
       files.forEach((file) =>
         triggerDownload(
-          `api/files/file/${encodeURI(`${file.absolutePath}/${file.name}`)}`,
+          `api/entities/${ApiKeys.Files}/file/${encodeURI(
+            `${file.absolutePath}/${file.name}`,
+          )}`,
           file.name,
         ),
       );

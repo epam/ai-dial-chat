@@ -1,4 +1,5 @@
 import { constructPath } from '@/src/utils/app/file';
+import { ApiKeys } from '@/src/utils/server/api';
 
 import { DialFile } from '@/src/types/files';
 import { CustomTriggerMenuRendererProps } from '@/src/types/menu';
@@ -14,7 +15,10 @@ export default function DownloadRenderer({
   return (
     <a
       download={file.name}
-      href={`api/files/file/${constructPath(file.absolutePath, file.name)}`}
+      href={`api/entities/${ApiKeys.Files}/file/${constructPath(
+        file.absolutePath,
+        file.name,
+      )}`}
       onClick={onClick}
       className={className}
     >

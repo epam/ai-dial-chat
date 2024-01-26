@@ -18,6 +18,7 @@ import { Theme } from '@/src/types/themes';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
+import { ApiKeys } from '../../server/api';
 import { constructPath } from '../file';
 import { ApiMockStorage } from './storages/api-mock-storage';
 import { ApiStorage } from './storages/api-storage';
@@ -218,7 +219,7 @@ export class DataService {
     );
 
     return ApiStorage.requestOld({
-      url: `api/files/file/${resultPath}`,
+      url: `api/entities/${ApiKeys.Files}/file/${resultPath}`,
       method: 'PUT',
       async: true,
       body: formData,
@@ -276,7 +277,9 @@ export class DataService {
     });
     const resultQuery = query.toString();
 
-    return ApiStorage.request(`api/files/listing?${resultQuery}`).pipe(
+    return ApiStorage.request(
+      `api/entities/${ApiKeys.Files}/listing?${resultQuery}`,
+    ).pipe(
       map((folders: BackendFileFolder[]) => {
         return folders.map((folder): FileFolderInterface => {
           const relativePath = folder.parentPath || undefined;
@@ -285,7 +288,7 @@ export class DataService {
             id: constructPath(relativePath, folder.name),
             name: folder.name,
             type: FolderType.File,
-            absolutePath: constructPath('files', bucket, relativePath),
+            absolutePath: constructPath(ApiKeys.Files, bucket, relativePath),
             relativePath: relativePath,
             folderId: relativePath,
             serverSynced: true,
@@ -298,12 +301,15 @@ export class DataService {
   public static removeFile(bucket: string, filePath: string): Observable<void> {
     const resultPath = encodeURI(constructPath('files', bucket, filePath));
 
-    return ApiStorage.request(`api/files/file/${resultPath}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
+    return ApiStorage.request(
+      `api/entities/${ApiKeys.Files}/file/${resultPath}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       },
-    });
+    );
   }
 
   public static getFiles(
@@ -319,7 +325,9 @@ export class DataService {
     });
     const resultQuery = query.toString();
 
-    return ApiStorage.request(`api/files/listing?${resultQuery}`).pipe(
+    return ApiStorage.request(
+      `api/entities/${ApiKeys.Files}/listing?${resultQuery}`,
+    ).pipe(
       map((files: BackendFile[]) => {
         return files.map((file): DialFile => {
           const relativePath = file.parentPath || undefined;
@@ -327,7 +335,11 @@ export class DataService {
           return {
             id: constructPath(relativePath, file.name),
             name: file.name,
-            absolutePath: constructPath('files', file.bucket, relativePath),
+            absolutePath: constructPath(
+              ApiKeys.Files,
+              file.bucket,
+              relativePath,
+            ),
             relativePath: relativePath,
             folderId: relativePath,
             contentLength: file.contentLength,

@@ -2,9 +2,10 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
-import { getApiHeaders } from '../../../utils/server/get-headers';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIError } from '@/src/utils/server';
+import { isValidEntityApiType } from '@/src/utils/server/api';
+import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
 import {
@@ -15,11 +16,16 @@ import {
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import { authOptions } from '../auth/[...nextauth]';
+import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import fetch from 'node-fetch';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  const entityType = Array.isArray(req.query.type) ? '' : req.query.type;
+  if (!entityType || !isValidEntityApiType(entityType)) {
+    return res.status(500).json(errorsMessages.generalServer);
+  }
+
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
   if (!isSessionValid) {
@@ -39,9 +45,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const token = await getToken({ req });
 
-    const url = `${process.env.DIAL_API_HOST}/v1/metadata/files/${bucket}${
-      path && `/${encodeURI(path)}`
-    }/`;
+    const url = `${
+      process.env.DIAL_API_HOST
+    }/v1/metadata/${entityType}/${bucket}${path && `/${encodeURI(path)}`}/`;
 
     const response = await fetch(url, {
       headers: getApiHeaders({ jwt: token?.access_token as string }),
