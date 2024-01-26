@@ -5,8 +5,8 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
+import { BackendDataNodeType } from '@/src/types/common';
 import {
-  BackendDataNodeType,
   BackendFile,
   BackendFileFolder,
   DialFile,
