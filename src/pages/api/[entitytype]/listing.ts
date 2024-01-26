@@ -2,9 +2,12 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
+
+
 import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIError } from '@/src/utils/server';
 import {
+  ApiKeys,
   getEntityTypeFromPath,
   isValidEntityApiType,
 } from '@/src/utils/server/api';
@@ -62,9 +65,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     const json = (await response.json()) as BackendFileFolder;
-    let result: (BackendFileFolder | BackendFile)[] = [];
-    if (filter) {
-      result = (json.items || []).filter((item) => item.nodeType === filter);
+    let result: (BackendFileFolder | BackendFile)[] = json.items || [];
+    if (filter && entityType === ApiKeys.Files) {
+      result = result.filter((item) => item.nodeType === filter);
     }
 
     return res.status(200).send(result);
