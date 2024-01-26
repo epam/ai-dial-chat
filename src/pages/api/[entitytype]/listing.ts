@@ -14,9 +14,10 @@ import { logger } from '@/src/utils/server/logger';
 
 import {
   BackendDataNodeType,
-  BackendFile,
-  BackendFileFolder,
-} from '@/src/types/files';
+  BackendEntity,
+  BackendEntityFolder,
+} from '@/src/types/common';
+import { BackendFile, BackendFileFolder } from '@/src/types/files';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -64,9 +65,18 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       throw new OpenAIError(serverErrorMessage, '', '', response.status + '');
     }
 
-    const json = (await response.json()) as BackendFileFolder;
-    let result: (BackendFileFolder | BackendFile)[] = json.items || [];
-    if (filter && entityType === ApiKeys.Files) {
+    const json = (await response.json()) as
+      | BackendFileFolder
+      | BackendEntityFolder;
+    let result: (
+      | BackendFile
+      | BackendEntityFolder
+      | BackendEntity
+      | BackendFileFolder
+    )[] = json.items || [];
+
+    const filterableEntityTypes: string[] = Object.values(ApiKeys);
+    if (filter && filterableEntityTypes.includes(entityType)) {
       result = result.filter((item) => item.nodeType === filter);
     }
 

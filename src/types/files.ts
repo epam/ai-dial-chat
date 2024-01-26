@@ -1,3 +1,9 @@
+import {
+  BackendDataEntity,
+  BackendDataNodeType,
+  BackendFolder,
+} from '@/src/types/common';
+
 import { FolderInterface } from './folder';
 
 export type ImageMIMEType = 'image/jpeg' | 'image/png' | string;
@@ -9,28 +15,13 @@ export type MIMEType =
   | ImageMIMEType
   | string;
 
-export enum BackendDataNodeType {
-  ITEM = 'ITEM',
-  FOLDER = 'FOLDER',
-}
-
-interface BackendDataEntity {
-  name: string;
-  nodeType: BackendDataNodeType;
-  resourceType: 'FILE'; // only 1 type for now
-  bucket: string;
-  parentPath: string | null | undefined;
-}
-
 export interface BackendFile extends BackendDataEntity {
   nodeType: BackendDataNodeType.ITEM;
   contentLength: number;
   contentType: MIMEType;
 }
-export interface BackendFileFolder extends BackendDataEntity {
-  nodeType: BackendDataNodeType.FOLDER;
-  items: (BackendFile | BackendFileFolder)[];
-}
+
+export type BackendFileFolder = BackendFolder<BackendFile | BackendFileFolder>;
 
 export type DialFile = Omit<
   BackendFile,
