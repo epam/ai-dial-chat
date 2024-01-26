@@ -74,7 +74,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       | BackendEntity
       | BackendFileFolder
     )[] = json.items || [];
-    if (filter && entityType === ApiKeys.Files) {
+
+    const filterableEntityTypes: string[] = Object.values(ApiKeys);
+    if (filter && filterableEntityTypes.includes(entityType)) {
       result = result.filter((item) => item.nodeType === filter);
     }
 
