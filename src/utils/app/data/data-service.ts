@@ -219,7 +219,7 @@ export class DataService {
     );
 
     return ApiStorage.requestOld({
-      url: `api/${ApiKeys.Files}/file/${resultPath}`,
+      url: `api/${ApiKeys.Files}/${resultPath}`,
       method: 'PUT',
       async: true,
       body: formData,
@@ -301,7 +301,7 @@ export class DataService {
   public static removeFile(bucket: string, filePath: string): Observable<void> {
     const resultPath = encodeURI(constructPath('files', bucket, filePath));
 
-    return ApiStorage.request(`api/${ApiKeys.Files}/file/${resultPath}`, {
+    return ApiStorage.request(`api/${ApiKeys.Files}/${resultPath}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

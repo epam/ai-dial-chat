@@ -279,7 +279,7 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
     tap(({ files }) => {
       files.forEach((file) =>
         triggerDownload(
-          `api/${ApiKeys.Files}/file/${encodeURI(
+          `api/${ApiKeys.Files}/${encodeURI(
             `${file.absolutePath}/${file.name}`,
           )}`,
           file.name,

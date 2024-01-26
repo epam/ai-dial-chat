@@ -15,7 +15,7 @@ export default function DownloadRenderer({
   return (
     <a
       download={file.name}
-      href={`api/${ApiKeys.Files}/file/${constructPath(
+      href={`api/${ApiKeys.Files}/${constructPath(
         file.absolutePath,
         file.name,
       )}`}

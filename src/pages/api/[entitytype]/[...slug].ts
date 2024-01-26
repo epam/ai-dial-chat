@@ -24,7 +24,7 @@ const getUrlFromSlugs = (req: NextApiRequest) => {
   }
 
   return `${process.env.DIAL_API_HOST}/v1/${encodeURI(slugs.join('/'))}`;
-}
+};
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
