@@ -34,7 +34,7 @@ export interface BackendDataEntity {
 }
 
 export interface BackendEntity extends BackendDataEntity {
-  updateAt: number;
+  updatedAt: number;
   nodeType: BackendDataNodeType.ITEM;
   url: string;
 }
