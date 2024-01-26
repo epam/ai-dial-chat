@@ -219,7 +219,7 @@ export class DataService {
     );
 
     return ApiStorage.requestOld({
-      url: `api/entities/${ApiKeys.Files}/file/${resultPath}`,
+      url: `api/${ApiKeys.Files}/file/${resultPath}`,
       method: 'PUT',
       async: true,
       body: formData,
@@ -278,7 +278,7 @@ export class DataService {
     const resultQuery = query.toString();
 
     return ApiStorage.request(
-      `api/entities/${ApiKeys.Files}/listing?${resultQuery}`,
+      `api/${ApiKeys.Files}/listing?${resultQuery}`,
     ).pipe(
       map((folders: BackendFileFolder[]) => {
         return folders.map((folder): FileFolderInterface => {
@@ -301,15 +301,12 @@ export class DataService {
   public static removeFile(bucket: string, filePath: string): Observable<void> {
     const resultPath = encodeURI(constructPath('files', bucket, filePath));
 
-    return ApiStorage.request(
-      `api/entities/${ApiKeys.Files}/file/${resultPath}`,
-      {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+    return ApiStorage.request(`api/${ApiKeys.Files}/file/${resultPath}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    );
+    });
   }
 
   public static getFiles(
@@ -326,7 +323,7 @@ export class DataService {
     const resultQuery = query.toString();
 
     return ApiStorage.request(
-      `api/entities/${ApiKeys.Files}/listing?${resultQuery}`,
+      `api/${ApiKeys.Files}/listing?${resultQuery}`,
     ).pipe(
       map((files: BackendFile[]) => {
         return files.map((file): DialFile => {

@@ -21,7 +21,9 @@ import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 import fetch from 'node-fetch';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  const entityType = Array.isArray(req.query.type) ? '' : req.query.type;
+  const entityType = Array.isArray(req.query.entitytype)
+    ? ''
+    : req.query.entitytype;
   if (!entityType || !isValidEntityApiType(entityType)) {
     return res.status(500).json(errorsMessages.generalServer);
   }

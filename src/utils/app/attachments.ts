@@ -8,7 +8,7 @@ export const getMappedAttachmentUrl = (url: string | undefined) => {
   }
   return url.startsWith('//') || url.startsWith('http')
     ? url
-    : `api/entities/${ApiKeys.Files}/file/${url}`;
+    : `api/${ApiKeys.Files}/file/${url}`;
 };
 
 export const getMappedAttachment = (attachment: Attachment): Attachment => {
