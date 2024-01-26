@@ -2,6 +2,7 @@
 import { Observable, map } from 'rxjs';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import {
@@ -18,7 +19,6 @@ import { Theme } from '@/src/types/themes';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
-import { ApiKeys } from '../../server/api';
 import { constructPath } from '../file';
 import { ApiMockStorage } from './storages/api-mock-storage';
 import { ApiStorage } from './storages/api-storage';

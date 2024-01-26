@@ -1,6 +1,6 @@
-import { Attachment } from '@/src/types/chat';
+import { ApiKeys } from '@/src/utils/server/api';
 
-import { ApiKeys } from '../server/api';
+import { Attachment } from '@/src/types/chat';
 
 export const getMappedAttachmentUrl = (url: string | undefined) => {
   if (!url) {
