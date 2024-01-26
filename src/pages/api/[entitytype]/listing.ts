@@ -4,7 +4,10 @@ import { getServerSession } from 'next-auth/next';
 
 import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIError } from '@/src/utils/server';
-import { isValidEntityApiType } from '@/src/utils/server/api';
+import {
+  getEntityTypeFromPath,
+  isValidEntityApiType,
+} from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
@@ -21,9 +24,7 @@ import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 import fetch from 'node-fetch';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  const entityType = Array.isArray(req.query.entitytype)
-    ? ''
-    : req.query.entitytype;
+  const entityType = getEntityTypeFromPath(req);
   if (!entityType || !isValidEntityApiType(entityType)) {
     return res.status(500).json(errorsMessages.generalServer);
   }

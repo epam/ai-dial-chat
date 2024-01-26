@@ -4,6 +4,11 @@ import { JWT, getToken } from 'next-auth/jwt';
 
 import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIError } from '@/src/utils/server';
+import {
+  getEntityTypeFromPath,
+  getEntityUrlFromSlugs,
+  isValidEntityApiType,
+} from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
@@ -14,19 +19,12 @@ import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 import fetch from 'node-fetch';
 import { Readable } from 'stream';
 
-const getUrlFromSlugs = (req: NextApiRequest) => {
-  const slugs = Array.isArray(req.query.slug)
-    ? req.query.slug
-    : [req.query.slug];
-
-  if (!slugs || slugs.length === 0) {
-    throw new OpenAIError('No file path provided', '', '', '400');
+const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  const entityType = getEntityTypeFromPath(req);
+  if (!entityType || !isValidEntityApiType(entityType)) {
+    return res.status(500).json(errorsMessages.generalServer);
   }
 
-  return `${process.env.DIAL_API_HOST}/v1/${encodeURI(slugs.join('/'))}`;
-};
-
-const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
   const token = await getToken({ req });
@@ -69,7 +67,7 @@ async function handlePutRequest(
   res: NextApiResponse,
 ) {
   const readable = Readable.from(req);
-  const url = getUrlFromSlugs(req);
+  const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   const proxyRes = await fetch(url, {
     method: 'PUT',
     headers: {
@@ -97,7 +95,7 @@ async function handleGetRequest(
   token: JWT | null,
   res: NextApiResponse,
 ) {
-  const url = getUrlFromSlugs(req);
+  const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   const proxyRes = await fetch(url, {
     headers: getApiHeaders({ jwt: token?.access_token as string }),
   });
@@ -121,7 +119,7 @@ async function handleDeleteRequest(
   token: JWT | null,
   res: NextApiResponse,
 ) {
-  const url = getUrlFromSlugs(req);
+  const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   const proxyRes = await fetch(url, {
     method: 'DELETE',
     headers: getApiHeaders({ jwt: token?.access_token as string }),
