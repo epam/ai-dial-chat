@@ -10,10 +10,10 @@
         "config": "apps/overlay-sandbox-e2e/playwright.config.ts"
       }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
-    }
+    "lint": {},
+    "lint:fix": {},
+    "format": {},
+    "format:fix": {}
   },
   "implicitDependencies": ["overlay-sandbox"]
 }

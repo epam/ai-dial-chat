@@ -1,5 +1,4 @@
 import { FolderType } from '@/ai-dial-chat/types/folder';
-
 import { FolderBuilder } from '@/src/testData/conversationHistory/folderBuilder';
 import { GeneratorUtil } from '@/src/utils';
 

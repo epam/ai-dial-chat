@@ -1,5 +1,4 @@
 import { Conversation } from '@/ai-dial-chat/types/chat';
-
 import test from '@/src/core/fixtures';
 import { AccountMenuOptions, ExpectedMessages } from '@/src/testData';
 import { expect } from '@playwright/test';

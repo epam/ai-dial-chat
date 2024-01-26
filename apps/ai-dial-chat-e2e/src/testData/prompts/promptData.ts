@@ -1,10 +1,8 @@
-import { GeneratorUtil } from '@/src/utils/generatorUtil';
-
 import { FolderInterface, FolderType } from '@/ai-dial-chat/types/folder';
 import { Prompt } from '@/ai-dial-chat/types/prompt';
-
 import { FolderData } from '@/src/testData/folders/folderData';
 import { PromptBuilder } from '@/src/testData/prompts/promptBuilder';
+import { GeneratorUtil } from '@/src/utils/generatorUtil';
 
 export interface FolderPrompt {
   prompts: Prompt[];

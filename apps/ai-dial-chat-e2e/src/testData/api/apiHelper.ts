@@ -1,5 +1,4 @@
 import { OpenAIEntityModel } from '@/ai-dial-chat/types/openai';
-
 import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
 import { APIRequestContext } from '@playwright/test';

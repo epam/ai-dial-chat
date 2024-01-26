@@ -16,10 +16,10 @@
         }
       }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
-    }
+    "lint": { "executor": "nx:noop" },
+    "lint:fix": { "executor": "nx:noop" },
+    "format": {},
+    "format:fix": {}
   },
   "implicitDependencies": ["ai-dial-chat"]
 }

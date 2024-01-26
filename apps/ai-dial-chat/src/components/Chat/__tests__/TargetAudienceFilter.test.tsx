@@ -1,10 +1,9 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { FiltersTypes } from '@/src/types/share';
 
-import { TargetAudienceFilterComponent } from '../../../../../../src/components/Chat/Publish/TargetAudienceFilter';
-
-import userEvent from '@testing-library/user-event';
+import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilter';
 
 describe('TargetAudienceFilterComponent', () => {
   const testFilter = {
@@ -44,9 +43,7 @@ describe('TargetAudienceFilterComponent', () => {
         expect(screen.getByText(option)).toBeInTheDocument();
       }
     }
-    expect(
-      screen.getByPlaceholderText('Enter one or more options...'),
-    );
+    expect(screen.getByPlaceholderText('Enter one or more options...'));
   });
 
   it('selects an filter option on click', async () => {
@@ -134,7 +131,9 @@ describe('TargetAudienceFilterComponent', () => {
 
     await userEvent.click(selectedFilterOption);
 
-    const regExInput = screen.getByPlaceholderText('Enter regular expression...');
+    const regExInput = screen.getByPlaceholderText(
+      'Enter regular expression...',
+    );
     await userEvent.type(regExInput, regEx);
     expect(onChangeFilter).toHaveBeenCalledWith({
       id: testFilter.id,

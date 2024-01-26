@@ -1,13 +1,11 @@
+const prettierDefault = require('../../prettier.config');
+
 module.exports = {
-  trailingComma: 'all',
-  singleQuote: true,
-  plugins: [
-    '@trivago/prettier-plugin-sort-imports',
-    'prettier-plugin-tailwindcss',
-  ],
-  tailwindConfig: './tailwind.config.js',
-  tailwindFunctions: ['classnames', 'classNames'],
+  ...prettierDefault,
   importOrder: [
+    '<THIRD_PARTY_MODULES>',
+    '^vitest*', // React
+    'testing-library*',
     'react', // React
     '^react-.*$', // React-related imports
     '^next', // Next-related imports
@@ -18,6 +16,7 @@ module.exports = {
     '^@reduxjs/.*$', // rxjs imports
     '^redux-observable$', // rxjs imports
     '^classnames$',
+    '^shared$',
     '^.*/hooks/.*$', // Hooks
     '^.*/services/.*$', // Services
     '^.*/utils/.*$', // Utils
@@ -29,6 +28,4 @@ module.exports = {
     '^[./]', // Other imports
     '.*', // Any uncaught imports
   ],
-  importOrderSeparation: true,
-  importOrderSortSpecifiers: true,
 };

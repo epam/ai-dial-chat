@@ -15,12 +15,24 @@ export default defineConfig({
   test: {
     globals: true,
     cache: { dir: '../../node_modules/.vitest' },
-    environment: 'node',
+    environment: 'jsdom',
+    environmentOptions: {
+      jsdom: {
+        pretendToBeVisual: true,
+        resources: 'usable',
+      },
+    },
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     coverage: {
       reportsDirectory: '../../coverage/libs/overlay',
       provider: 'v8',
+      thresholds: {
+        statements: 80,
+        lines: 80,
+        branches: 80,
+        functions: 80,
+      },
     },
   },
 });

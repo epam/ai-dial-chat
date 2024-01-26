@@ -1,6 +1,5 @@
-import { setStyles } from './utils/styleUtils';
-
 import { ChatOverlay, ChatOverlayOptions } from './ChatOverlay';
+import { setStyles } from './utils/styleUtils';
 
 export type OverlayPosition =
   | 'left-bottom'

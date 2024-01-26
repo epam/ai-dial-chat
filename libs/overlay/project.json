@@ -20,22 +20,26 @@
       "dependsOn": ["build"]
     },
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [
-          "libs/my-lib/**/*.{ts,tsx,js,jsx}",
-          "libs/my-lib/package.json"
+          "libs/overlay/**/*.{ts,tsx,js,jsx}",
+          "libs/overlay/package.json"
+        ]
+      }
+    },
+    "lint:fix": {
+      "options": {
+        "lintFilePatterns": [
+          "libs/overlay/**/*.{ts,tsx,js,jsx}",
+          "libs/overlay/package.json"
         ]
       }
     },
     "test": {
-      "executor": "@nx/vite:test",
-      "outputs": ["{options.reportsDirectory}"],
-      "options": {
-        "reportsDirectory": "../../coverage/libs/overlay"
-      }
-    }
+      "executor": "nx:noop"
+    },
+    "format": {},
+    "format:fix": {}
   },
   "tags": []
 }

@@ -1,10 +1,6 @@
-import { DateUtil } from '@/src/utils/dateUtil';
-import { GeneratorUtil } from '@/src/utils/generatorUtil';
-
 import { Conversation, Message, Role, Stage } from '@/ai-dial-chat/types/chat';
 import { FolderInterface, FolderType } from '@/ai-dial-chat/types/folder';
 import { OpenAIEntityModel } from '@/ai-dial-chat/types/openai';
-
 import {
   ConversationBuilder,
   ExpectedConstants,
@@ -12,6 +8,8 @@ import {
   ModelIds,
 } from '@/src/testData';
 import { FolderData } from '@/src/testData/folders/folderData';
+import { DateUtil } from '@/src/utils/dateUtil';
+import { GeneratorUtil } from '@/src/utils/generatorUtil';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface FolderConversation {

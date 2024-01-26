@@ -1,5 +1,4 @@
 import { Prompt } from '@/ai-dial-chat/types/prompt';
-
 import test from '@/src/core/fixtures';
 import { ExpectedMessages, MenuOptions } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';

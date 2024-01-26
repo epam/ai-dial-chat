@@ -1,10 +1,11 @@
 /// <reference types='vitest' />
+import { configDefaults } from 'vitest/config';
+
 import react from '@vitejs/plugin-react';
 
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import path from 'path';
 import { defineConfig } from 'vite';
-import { configDefaults } from 'vitest/config';
 
 export default defineConfig({
   root: __dirname,

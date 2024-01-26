@@ -323,8 +323,8 @@ export const ChatInputMessage = ({
       ? 'pl-11'
       : 'pl-12'
     : isOverlay
-    ? 'pl-3'
-    : 'pl-4';
+      ? 'pl-3'
+      : 'pl-4';
   const overlayPaddingAndTextStyleClass = isOverlay
     ? 'py-[7px] pr-9 text-sm'
     : 'py-2.5 pr-10 text-base md:py-3';

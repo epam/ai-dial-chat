@@ -1,10 +1,8 @@
-import { FileUtil } from '@/src/utils/fileUtil';
-
 import { Conversation } from '@/ai-dial-chat/types/chat';
 import { LatestExportFormat } from '@/ai-dial-chat/types/export';
-
 import { FolderConversation } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
+import { FileUtil } from '@/src/utils/fileUtil';
 
 export class ImportConversation {
   public static prepareConversationFile(

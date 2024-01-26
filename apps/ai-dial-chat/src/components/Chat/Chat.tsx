@@ -1,5 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { Feature } from 'shared';
+
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import { throttle } from '@/src/utils/data/throttle';
 
@@ -13,7 +15,6 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { Feature } from '@/src/types/features';
 
 import {
   AddonsActions,

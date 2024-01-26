@@ -1,9 +1,8 @@
-import { OpenAIEntityModel } from '@/ai-dial-chat/types/openai';
-
 import test from '../core/fixtures';
 import { ExpectedConstants, ExpectedMessages, ModelIds } from '../testData';
 import { Colors, Cursors, Styles } from '../ui/domData';
 
+import { OpenAIEntityModel } from '@/ai-dial-chat/types/openai';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';

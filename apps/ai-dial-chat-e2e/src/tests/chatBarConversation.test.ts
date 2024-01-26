@@ -1,9 +1,6 @@
-import { ModelsUtil } from '@/src/utils/modelsUtil';
-
 import { Conversation } from '@/ai-dial-chat/types/chat';
 import { FolderInterface } from '@/ai-dial-chat/types/folder';
 import { OpenAIEntityModel } from '@/ai-dial-chat/types/openai';
-
 import test from '@/src/core/fixtures';
 import {
   Chronology,
@@ -14,6 +11,7 @@ import {
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
+import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { expect } from '@playwright/test';
 
 let gpt35Model: OpenAIEntityModel;

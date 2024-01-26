@@ -1,13 +1,24 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "affected": { "defaultBase": "development" },
   "targetDefaults": {
     "build": {
       "cache": true,
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
     },
+    "e2e": {
+      "cache": true,
+      "inputs": ["default", "^production"]
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{options.reportsDirectory}"]
+    },
     "lint": {
       "cache": true,
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
       "inputs": [
         "default",
         "{workspaceRoot}/.eslintrc.json",
@@ -15,13 +26,31 @@
         "{workspaceRoot}/eslint.config.js"
       ]
     },
-    "e2e": {
-      "cache": true,
-      "inputs": ["default", "^production"]
+    "lint:fix": {
+      "cache": false,
+      "executor": "@nx/eslint:lint",
+      "inputs": [
+        "default",
+        "{workspaceRoot}/.eslintrc.json",
+        "{workspaceRoot}/.eslintignore",
+        "{workspaceRoot}/eslint.config.js"
+      ],
+      "options": {
+        "fix": true
+      }
     },
-    "@nx/vite:test": {
+    "format": {
       "cache": true,
-      "inputs": ["default", "^production"]
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["prettier --check {projectRoot}"]
+      }
+    },
+    "format:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["prettier --write {projectRoot}"]
+      }
     }
   },
   "namedInputs": {

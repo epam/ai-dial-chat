@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-
 import { ChatOverlay, ChatOverlayOptions } from '@epam/ai-dial-overlay';
+import { useEffect, useRef } from 'react';
 
 const overlayOptions: Omit<ChatOverlayOptions, 'hostDomain'> = {
   domain: 'http://localhost:3000',

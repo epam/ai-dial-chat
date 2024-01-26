@@ -1,10 +1,8 @@
-import { ImportPromtsResponse } from '@/ai-dial-chat/utils/app/import-export';
-import { FileUtil } from '@/src/utils/fileUtil';
-
 import { Prompt } from '@/ai-dial-chat/types/prompt';
-
+import { ImportPromtsResponse } from '@/ai-dial-chat/utils/app/import-export';
 import { FolderPrompt } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
+import { FileUtil } from '@/src/utils/fileUtil';
 
 export class ImportPrompt {
   public static preparePromptFile(

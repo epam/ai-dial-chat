@@ -1,10 +1,6 @@
-import { FileUtil } from '@/src/utils/fileUtil';
-import { ModelsUtil } from '@/src/utils/modelsUtil';
-
 import { Conversation } from '@/ai-dial-chat/types/chat';
 import { FolderInterface } from '@/ai-dial-chat/types/folder';
 import { OpenAIEntityModel } from '@/ai-dial-chat/types/openai';
-
 import test from '@/src/core/fixtures';
 import {
   ExpectedConstants,
@@ -17,6 +13,8 @@ import {
 import { ImportConversation } from '@/src/testData/conversationHistory/importConversation';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { GeneratorUtil } from '@/src/utils';
+import { FileUtil } from '@/src/utils/fileUtil';
+import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { expect } from '@playwright/test';
 import { v4 as uuidv4 } from 'uuid';
 

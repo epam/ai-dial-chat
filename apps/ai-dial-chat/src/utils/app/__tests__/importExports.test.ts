@@ -1,5 +1,5 @@
-import { DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/src/constants/default-settings';
-import { defaultReplay } from '@/src/constants/replay';
+import { describe, expect, it } from 'vitest';
+
 import { getAssitantModelId } from '@/src/utils/app/conversation';
 import {
   cleanData,
@@ -8,24 +8,28 @@ import {
   isExportFormatV3,
   isExportFormatV4,
   isLatestExportFormat,
-  isPromtsFormat
+  isPromtsFormat,
 } from '@/src/utils/app/import-export';
 
+import { Conversation, Message, Role } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 import {
   ExportFormatV1,
   ExportFormatV2,
   ExportFormatV4,
-  PromptsHistory
+  PromptsHistory,
 } from '@/src/types/export';
+import { FolderType } from '@/src/types/folder';
 import { OpenAIEntityModelID } from '@/src/types/openai';
 
-import { Conversation, Message, Role } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
-import { describe, expect, it } from 'vitest';
+import {
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+} from '@/src/constants/default-settings';
+import { defaultReplay } from '@/src/constants/replay';
 
 describe('Export Format Functions', () => {
-   describe('isExportFormatV1', () => {
+  describe('isExportFormatV1', () => {
     it('should return true for v1 format', () => {
       const obj = [{ id: 1 }];
       expect(isExportFormatV1(obj)).toBe(true);
@@ -75,9 +79,9 @@ describe('Export Format Functions', () => {
 });
 
 describe('cleanData Functions', () => {
-  const expectedModel = {id: OpenAIEntityModelID.GPT_3_5_AZ};
+  const expectedModel = { id: OpenAIEntityModelID.GPT_3_5_AZ };
 
-  const messages:Message[] = [
+  const messages: Message[] = [
     {
       role: Role.User,
       content: "what's up ?",
@@ -86,39 +90,38 @@ describe('cleanData Functions', () => {
       role: Role.Assistant,
       content: 'Hi',
     },
-  ]
+  ];
 
-const conversationV2 = {
-  id: '1',
-  name: 'conversation 1',
-  messages,
-}
+  const conversationV2 = {
+    id: '1',
+    name: 'conversation 1',
+    messages,
+  };
 
-const expectedConversation: Conversation = {
-  id: '1',
-  name: conversationV2.name,
-  messages,
-  model: expectedModel,
-  prompt: DEFAULT_SYSTEM_PROMPT,
-  temperature: DEFAULT_TEMPERATURE,
-  replay: defaultReplay,
-  selectedAddons: [],
-  assistantModelId: "gpt-4",
-  isMessageStreaming: false,
-  folderId: undefined,
-  lastActivityDate: undefined,
-}
-
+  const expectedConversation: Conversation = {
+    id: '1',
+    name: conversationV2.name,
+    messages,
+    model: expectedModel,
+    prompt: DEFAULT_SYSTEM_PROMPT,
+    temperature: DEFAULT_TEMPERATURE,
+    replay: defaultReplay,
+    selectedAddons: [],
+    assistantModelId: 'gpt-4',
+    isMessageStreaming: false,
+    folderId: undefined,
+    lastActivityDate: undefined,
+  };
 
   describe('cleaning v1 data', () => {
     it('should return the latest format', () => {
-      const dataV1 = [{...conversationV2, id: 1}] as ExportFormatV1;
+      const dataV1 = [{ ...conversationV2, id: 1 }] as ExportFormatV1;
 
       const obj = cleanData(dataV1);
       expect(isLatestExportFormat(obj)).toBe(true);
       expect(obj).toEqual({
         version: 4,
-        history: [{...expectedConversation, id:1}],
+        history: [{ ...expectedConversation, id: 1 }],
         folders: [],
         prompts: [],
         isError: false,
@@ -145,9 +148,7 @@ const expectedConversation: Conversation = {
       expect(isLatestExportFormat(obj)).toBe(true);
       expect(obj).toEqual({
         version: 4,
-        history: [
-          expectedConversation
-        ],
+        history: [expectedConversation],
         folders: [
           {
             id: '1',
@@ -195,9 +196,7 @@ const expectedConversation: Conversation = {
       expect(isLatestExportFormat(obj)).toBe(true);
       expect(obj).toEqual({
         version: 4,
-        history: [
-          expectedConversation
-        ],
+        history: [expectedConversation],
         folders: [
           {
             id: '1',

@@ -1,6 +1,5 @@
-import { GeneratorUtil } from '@/src/utils/generatorUtil';
-
 import { Import } from '@/src/testData';
+import { GeneratorUtil } from '@/src/utils/generatorUtil';
 import * as fs from 'fs';
 import path from 'path';
 

@@ -1,7 +1,6 @@
 import { ChatBody, Conversation } from '@/ai-dial-chat/types/chat';
 import { FolderInterface } from '@/ai-dial-chat/types/folder';
 import { OpenAIEntityModel } from '@/ai-dial-chat/types/openai';
-
 import test from '@/src/core/fixtures';
 import {
   ExpectedConstants,

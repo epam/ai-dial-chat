@@ -38,33 +38,15 @@
         }
       }
     },
-    "lint": {
-      "cache": true,
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "eslint apps/ai-dial-chat/src",
-          "prettier --check apps/ai-dial-chat/src"
-        ],
-        "parallel": false
-      }
-    },
-    "lint-fix": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "eslint apps/ai-dial-chat/src --fix",
-          "prettier --write apps/ai-dial-chat/src"
-        ],
-        "parallel": false
-      }
-    },
+    "lint": {},
+    "lint:fix": {},
     "test": {
-      "executor": "@nx/vite:test",
       "options": {
-        "watch": true
+        "reportsDirectory": "../../coverage/libs/shared"
       }
-    }
+    },
+    "format": {},
+    "format:fix": {}
   },
   "tags": []
 }

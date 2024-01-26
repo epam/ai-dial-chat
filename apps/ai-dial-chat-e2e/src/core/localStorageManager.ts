@@ -2,7 +2,6 @@ import { Conversation } from '@/ai-dial-chat/types/chat';
 import { FolderInterface } from '@/ai-dial-chat/types/folder';
 import { Prompt } from '@/ai-dial-chat/types/prompt';
 import { Settings } from '@/ai-dial-chat/types/settings';
-
 import { Page } from '@playwright/test';
 
 export class LocalStorageManager {

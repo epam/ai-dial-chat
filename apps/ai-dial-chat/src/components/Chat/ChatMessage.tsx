@@ -321,8 +321,8 @@ export const ChatMessage: FC<Props> = memo(
     const chatIconSize = isOverlay
       ? OVERLAY_ICON_SIZE
       : isOnlySmallScreen()
-      ? MOBILE_ICON_SIZE
-      : DEFAULT_ICON_SIZE;
+        ? MOBILE_ICON_SIZE
+        : DEFAULT_ICON_SIZE;
 
     return (
       <div

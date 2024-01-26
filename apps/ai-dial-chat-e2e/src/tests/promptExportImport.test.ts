@@ -1,6 +1,5 @@
 import { FolderInterface } from '@/ai-dial-chat/types/folder';
 import { Prompt } from '@/ai-dial-chat/types/prompt';
-
 import test from '@/src/core/fixtures';
 import {
   ExpectedMessages,

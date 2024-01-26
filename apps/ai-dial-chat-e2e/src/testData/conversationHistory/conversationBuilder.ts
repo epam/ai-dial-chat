@@ -1,17 +1,15 @@
 import {
-  Conversation,
-  ConversationEntityModel,
-  Message,
-  Replay,
-} from '@/ai-dial-chat/types/chat';
-
-import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
 } from '@/ai-dial-chat/constants/default-settings';
 import { defaultReplay } from '@/ai-dial-chat/constants/replay';
-
+import {
+  Conversation,
+  ConversationEntityModel,
+  Message,
+  Replay,
+} from '@/ai-dial-chat/types/chat';
 import { ModelsUtil } from '@/src/utils';
 import { v4 as uuidv4 } from 'uuid';
 

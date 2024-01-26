@@ -1,5 +1,3 @@
-import { Auth0Page } from '@/src/ui/pages/auth0Page';
-
 import { DialHomePage, LoginPage } from '../ui/pages';
 import {
   Chat,
@@ -20,6 +18,7 @@ import { LocalStorageManager } from './localStorageManager';
 import { ConversationData } from '@/src/testData';
 import { ApiHelper } from '@/src/testData/api/apiHelper';
 import { PromptData } from '@/src/testData/prompts/promptData';
+import { Auth0Page } from '@/src/ui/pages/auth0Page';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { Addons } from '@/src/ui/webElements/addons';
 import { AddonsDialog } from '@/src/ui/webElements/addonsDialog';

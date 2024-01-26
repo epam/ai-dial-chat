@@ -1,5 +1,4 @@
 import { Prompt } from '@/ai-dial-chat/types/prompt';
-
 import { ExpectedConstants } from '@/src/testData';
 import { v4 as uuidv4 } from 'uuid';
 

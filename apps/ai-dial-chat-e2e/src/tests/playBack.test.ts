@@ -1,6 +1,5 @@
 import { Conversation } from '@/ai-dial-chat/types/chat';
 import { OpenAIEntityModel } from '@/ai-dial-chat/types/openai';
-
 import test from '@/src/core/fixtures';
 import { ExpectedMessages, MenuOptions, ModelIds, Theme } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';

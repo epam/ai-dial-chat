@@ -53,16 +53,10 @@
         "readyWhen": "Ready"
       }
     },
-    "export": {
-      "executor": "@nx/next:export",
-      "options": {
-        "buildTarget": "overlay-sandbox:build:production"
-      }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
-    }
+    "lint": {},
+    "lint:fix": {},
+    "format": {},
+    "format:fix": {}
   },
   "tags": [],
   "implicitDependencies": ["ai-dial-chat"]

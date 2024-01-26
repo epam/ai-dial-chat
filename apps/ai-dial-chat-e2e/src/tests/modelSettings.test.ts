@@ -1,5 +1,4 @@
 import { OpenAIEntityModel } from '@/ai-dial-chat/types/openai';
-
 import test from '@/src/core/fixtures';
 import { ExpectedMessages } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
