@@ -16,8 +16,8 @@ export const errorsMessages = {
     'Server is taking to long to respond due to either poor internet connection or excessive load. Please check your internet connection and try again. You also may try different model.',
   customThemesConfigNotProvided:
     'The custom config host url not provided. Please recheck application settings',
-  errorDuringFileRequest:
-    'Error happened during file request. Please try again later.',
+  errorDuringEntityRequest: (entityType: string) =>
+    `Error happened during ${entityType} request. Please try again later.`,
   errorGettingUserFileBucket:
     'Error happened during getting file user bucket. Please reload the page to being able to load files.',
   noModelsAvailable:

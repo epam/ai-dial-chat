@@ -48,7 +48,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         .status(parseInt(error.code, 10) || 500)
         .send(error.message || errorsMessages.generalServer);
     }
-    return res.status(500).send(errorsMessages.errorDuringFileRequest);
+    return res
+      .status(500)
+      .send(errorsMessages.errorDuringEntityRequest(entityType));
   }
 };
 
