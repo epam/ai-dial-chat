@@ -17,6 +17,12 @@ export enum BackendDataNodeType {
   FOLDER = 'FOLDER',
 }
 
+export enum BackendResourceType {
+  FILE = 'FILE',
+  PROMPT = 'PROMPT',
+  CONVERSATION = 'CONVERSATION',
+}
+
 export interface Entity {
   id: string;
   name: string;
@@ -27,16 +33,18 @@ export interface ShareEntity extends Entity, ShareInterface {}
 
 export interface BackendDataEntity {
   name: string;
-  nodeType: BackendDataNodeType;
-  resourceType: 'FILE' | 'PROMPTS' | 'CONVERSATIONS';
+  resourceType: BackendResourceType;
   bucket: string;
-  parentPath: string | null | undefined;
+  parentPath?: string | null;
+  url: string;
 }
 
 export interface BackendEntity extends BackendDataEntity {
-  updatedAt: number;
   nodeType: BackendDataNodeType.ITEM;
-  url: string;
+}
+
+export interface BackendChatEntity extends BackendEntity {
+  updatedAt: number;
 }
 
 export interface BackendFolder<ItemType> extends BackendDataEntity {
@@ -44,6 +52,6 @@ export interface BackendFolder<ItemType> extends BackendDataEntity {
   items: ItemType[];
 }
 
-export type BackendEntityFolder = BackendFolder<
-  BackendEntity | BackendEntityFolder
+export type BackendChatFolder = BackendFolder<
+  BackendChatEntity | BackendChatFolder
 >;

@@ -13,9 +13,9 @@ import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
 import {
+  BackendChatEntity,
+  BackendChatFolder,
   BackendDataNodeType,
-  BackendEntity,
-  BackendEntityFolder,
 } from '@/src/types/common';
 import { BackendFile, BackendFileFolder } from '@/src/types/files';
 
@@ -27,6 +27,8 @@ import fetch from 'node-fetch';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const entityType = getEntityTypeFromPath(req);
+  // eslint-disable-next-line no-console
+  console.log('------------------------>', entityType);
   if (!entityType || !isValidEntityApiType(entityType)) {
     return res.status(500).json(errorsMessages.generalServer);
   }
@@ -58,6 +60,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       headers: getApiHeaders({ jwt: token?.access_token as string }),
     });
 
+    // eslint-disable-next-line no-console
+    console.log(
+      '------------------------>',
+      url,
+      '\r\n------->',
+      token?.access_token,
+    );
+
+    // eslint-disable-next-line no-console
+    console.log('------------------------>', response.status);
+
     if (response.status === 404) {
       return res.status(200).send([]);
     } else if (!response.ok) {
@@ -67,12 +80,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const json = (await response.json()) as
       | BackendFileFolder
-      | BackendEntityFolder;
+      | BackendChatFolder;
     let result: (
       | BackendFile
-      | BackendEntityFolder
-      | BackendEntity
       | BackendFileFolder
+      | BackendChatEntity
+      | BackendChatFolder
     )[] = json.items || [];
 
     const filterableEntityTypes: string[] = Object.values(ApiKeys);

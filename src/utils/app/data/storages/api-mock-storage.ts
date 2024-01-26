@@ -7,6 +7,9 @@ import { Prompt } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
 
 export class ApiMockStorage implements DialStorage {
+  setBucket(_bucket: string): void {
+    return;
+  }
   setConversationsFolders(_folders: FolderInterface[]): Observable<void> {
     return of(undefined);
   }

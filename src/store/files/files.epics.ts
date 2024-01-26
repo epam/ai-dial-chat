@@ -42,7 +42,7 @@ const getBucketEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(FilesActions.getBucket.match),
     switchMap(() => {
-      return DataService.getFilesBucket().pipe(
+      return DataService.getBucket().pipe(
         map(({ bucket }) => {
           DataService.setBucket(bucket);
           return FilesActions.setBucket({ bucket });
