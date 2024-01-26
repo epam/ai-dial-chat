@@ -52,7 +52,7 @@ export default function Home({ initialState }: HomeProps) {
 
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
 
-  const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
@@ -60,14 +60,14 @@ export default function Home({ initialState }: HomeProps) {
 
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
-  const shouldIframeLogin = isIframe && shouldLogin;
+  const shouldOverlayLogin = isOverlay && shouldLogin;
 
   // EFFECTS  --------------------------------------------
   useEffect(() => {
-    if (!isIframe && shouldLogin) {
+    if (!isOverlay && shouldLogin) {
       signIn();
     }
-  }, [isIframe, shouldLogin]);
+  }, [isOverlay, shouldLogin]);
 
   useEffect(() => {
     dispatch(AuthActions.setSession(session));
@@ -89,7 +89,7 @@ export default function Home({ initialState }: HomeProps) {
     dispatch(SettingsActions.initApp());
   }, [dispatch, initialState]);
 
-  const handleIframeAuth = async () => {
+  const handleOverlayAuth = async () => {
     const timeout = 30 * 1000;
     let complete = false;
     await Promise.race([
@@ -132,10 +132,10 @@ export default function Home({ initialState }: HomeProps) {
         />
       </Head>
 
-      {shouldIframeLogin ? (
+      {shouldOverlayLogin ? (
         <div className="grid h-full min-h-[100px] w-full place-items-center bg-layer-1 text-sm text-primary ">
           <button
-            onClick={handleIframeAuth}
+            onClick={handleOverlayAuth}
             className="button button-secondary"
             disabled={authStatus === 'loading'}
           >
@@ -204,7 +204,7 @@ export const getServerSideProps: GetServerSideProps = async ({
     enabledFeatures: (process.env.ENABLED_FEATURES || '').split(
       ',',
     ) as Feature[],
-    isIframe: process.env.IS_IFRAME === 'true' || false,
+    isOverlay: process.env.IS_IFRAME === 'true' || false,
     footerHtmlMessage: (process.env.FOOTER_HTML_MESSAGE ?? '').replace(
       '%%VERSION%%',
       packageJSON.version,

@@ -26,6 +26,7 @@ import {
   getDialFilesFromAttachments,
   getUserCustomContent,
 } from '@/src/utils/app/file';
+import { isOnlySmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation, Message, Role } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
@@ -80,6 +81,10 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
   );
 };
 
+const OVERLAY_ICON_SIZE = 18;
+const MOBILE_ICON_SIZE = 20;
+const DEFAULT_ICON_SIZE = 28;
+
 export const ChatMessage: FC<Props> = memo(
   ({
     message,
@@ -103,6 +108,7 @@ export const ChatMessage: FC<Props> = memo(
     const isExternal = useAppSelector(
       ConversationsSelectors.selectAreSelectedConversationsExternal,
     );
+    const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [isTyping, setIsTyping] = useState<boolean>(false);
@@ -312,6 +318,12 @@ export const ChatMessage: FC<Props> = memo(
       }
     }, [isEditing, messageContent]);
 
+    const chatIconSize = isOverlay
+      ? OVERLAY_ICON_SIZE
+      : isOnlySmallScreen()
+      ? MOBILE_ICON_SIZE
+      : DEFAULT_ICON_SIZE;
+
     return (
       <div
         className={classNames(
@@ -323,8 +335,9 @@ export const ChatMessage: FC<Props> = memo(
       >
         <div
           className={classNames(
-            'relative m-auto flex h-full p-4 md:gap-6 md:py-6 lg:px-0',
-            { 'md:max-w-2xl xl:max-w-3xl': !isChatFullWidth },
+            'relative m-auto flex h-full md:gap-6 md:py-6 lg:px-0',
+            !isChatFullWidth && 'md:max-w-2xl xl:max-w-3xl',
+            isOnlySmallScreen() || isOverlay ? 'px-4 py-3' : 'p-4',
           )}
         >
           <div className="min-w-[40px] font-bold" data-qa="message-icon">
@@ -337,10 +350,10 @@ export const ChatMessage: FC<Props> = memo(
                     undefined
                   }
                   animate={isShowResponseLoader}
-                  size={28}
+                  size={chatIconSize}
                 />
               ) : (
-                <IconUser size={30} />
+                <IconUser size={chatIconSize} />
               )}
             </div>
           </div>
@@ -421,7 +434,11 @@ export const ChatMessage: FC<Props> = memo(
                       <div
                         className={classNames(
                           'prose flex-1 whitespace-pre-wrap',
-                          { 'max-w-none': isChatFullWidth },
+                          {
+                            'max-w-none': isChatFullWidth,
+                            'text-sm': isOverlay,
+                            'leading-[150%]': isOnlySmallScreen() || isOverlay,
+                          },
                         )}
                       >
                         {message.content}
