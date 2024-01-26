@@ -1,0 +1,41 @@
+{
+  "name": "overlay",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/overlay/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "outputPath": "dist/libs/overlay",
+        "main": "libs/overlay/src/index.ts",
+        "tsConfig": "libs/overlay/tsconfig.lib.json",
+        "assets": ["libs/overlay/*.md"],
+        "clean": false,
+        "external": "all"
+      }
+    },
+    "publish": {
+      "command": "node tools/publish-lib.mjs overlay {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "libs/my-lib/**/*.{ts,tsx,js,jsx}",
+          "libs/my-lib/package.json"
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "../../coverage/libs/overlay"
+      }
+    }
+  },
+  "tags": []
+}

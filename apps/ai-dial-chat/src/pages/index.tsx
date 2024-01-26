@@ -14,7 +14,7 @@ import { isServerSessionValid } from '@/src/utils/auth/session';
 import { timeoutAsync } from '@/src/utils/auth/timeout-async';
 
 import { Translation } from '../types/translation';
-import { Feature } from '@/src/types/features';
+import { Feature } from 'shared';
 import { fallbackModelID } from '@/src/types/openai';
 
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';

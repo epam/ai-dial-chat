@@ -1,9 +1,11 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "declaration": true,
-    "declarationDir": "../../dist/libs/ai-dial-overlay",
-    "types": ["node"]
+    "outDir": "../../dist/out-tsc",
+    "types": ["node"],
+    "paths": {
+      "@/*": ["./*"]
+    }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["vite.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]

@@ -23,7 +23,11 @@
     "outDir": "../../dist/out-tsc",
     "declaration": true,
     "emitDeclarationOnly": true,
-    "declarationDir": "../../dist/libs/ai-dial-overlay"
+    "declarationDir": "../../dist/libs/overlay",
+    "paths": {
+      "shared": ["../shared/src/index.ts"]
+    },
+    "declarationMap": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "src/**/*.spec.ts", "src/**/*.test.ts"]

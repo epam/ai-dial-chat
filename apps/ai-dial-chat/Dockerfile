@@ -19,7 +19,7 @@ FROM node:20-alpine AS production
 RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
 WORKDIR /app
 COPY --from=dependencies /app/node_modules ./node_modules
-COPY --from=build /app/.next ./.next
+COPY --from=build /app/dist/apps/chat/.next ./dist/apps/chat/.next
 COPY --from=build /app/public ./public
 COPY --from=build /app/package*.json ./
 COPY --from=build /app/next.config.js ./next.config.js

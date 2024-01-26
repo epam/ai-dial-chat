@@ -11,11 +11,11 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
     "jsx": "preserve",
     "incremental": true,
     "paths": {
-      "@epam/ai-dial-overlay": ["./libs/ai-dial-overlay/src/index.ts"],
+      "@epam/ai-dial-overlay": ["./libs/overlay/src/index.ts"],
+      "shared": ["./libs/shared/src/index.ts"],
     },
   },
   "exclude": ["node_modules", "src/**/*.spec.ts", "src/**/*.test.ts"],

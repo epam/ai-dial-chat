@@ -1,4 +1,4 @@
-import { availableFeatures } from '@/src/types/features';
+import { availableFeatures } from '../types/features';
 
 export const validateFeature = (feature: string) => {
   return feature in availableFeatures;

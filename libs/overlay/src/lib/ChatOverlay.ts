@@ -1,7 +1,9 @@
 import { DeferredRequest } from './utils/DeferredRequest';
+import { Task } from './utils/Task';
 import { Styles, setStyles } from './utils/styleUtils';
 
-import { Task } from './utils/Task';
+// eslint-disable-next-line @nx/enforce-module-boundaries
+import { Feature } from 'shared';
 
 export interface ChatOverlayOptions {
   domain: string;
@@ -10,7 +12,7 @@ export interface ChatOverlayOptions {
   theme?: string;
   modelId?: string;
 
-  enabledFeatures?: string;
+  enabledFeatures?: Feature;
 
   requestTimeout?: number;
 

@@ -18,6 +18,7 @@
     ],
     "paths": {
       "@/*": ["./*"],
+      "shared": ["../../libs/shared/src/index.ts"],
     },
     "baseUrl": ".",
     "types": [
@@ -36,6 +37,8 @@
     "**/*.jsx",
     "next-env.d.ts",
     "postcss.config.js",
+    "../../libs/shared/src/utils/features.ts",
+    "../../libs/shared/src/types/features.ts",
   ],
   "exclude": ["node_modules"],
 }

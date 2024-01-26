@@ -13,11 +13,11 @@
     "incremental": true,
     "plugins": [
       {
-        "name": "next"
-      }
+        "name": "next",
+      },
     ],
     "paths": {
-      "@epam/ai-dial-overlay": ["../../libs/ai-dial-overlay/src/index.ts"],
+      "@epam/ai-dial-overlay": ["../../libs/overlay/src/index.ts"],
     },
   },
   "include": [
@@ -28,12 +28,12 @@
     "../../apps/overlay-sandbox/.next/types/**/*.ts",
     "../../dist/apps/overlay-sandbox/.next/types/**/*.ts",
     "next-env.d.ts",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
   ],
   "exclude": [
     "node_modules",
     "jest.config.ts",
     "src/**/*.spec.ts",
-    "src/**/*.test.ts"
-  ]
+    "src/**/*.test.ts",
+  ],
 }
