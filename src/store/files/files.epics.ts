@@ -44,6 +44,7 @@ const getBucketEpic: AppEpic = (action$) =>
     switchMap(() => {
       return DataService.getFilesBucket().pipe(
         map(({ bucket }) => {
+          DataService.setBucket(bucket);
           return FilesActions.setBucket({ bucket });
         }),
         catchError((error) => {

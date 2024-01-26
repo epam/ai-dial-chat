@@ -26,6 +26,8 @@ export enum UIStorageKeys {
   TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
 }
 export interface DialStorage {
+  setBucket(bucket: string): void;
+
   getConversationsFolders(): Observable<FolderInterface[]>;
   setConversationsFolders(folders: FolderInterface[]): Observable<void>;
   getPromptsFolders(): Observable<FolderInterface[]>;

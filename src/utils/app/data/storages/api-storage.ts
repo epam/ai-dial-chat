@@ -7,6 +7,10 @@ import { Prompt } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
 
 export class ApiStorage implements DialStorage {
+  private bucket: string | undefined;
+  setBucket(bucket: string): void {
+    this.bucket = bucket;
+  }
   static request(url: string, options?: RequestInit) {
     return fromFetch(url, options).pipe(
       switchMap((response) => {

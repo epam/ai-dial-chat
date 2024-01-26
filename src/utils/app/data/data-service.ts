@@ -364,4 +364,8 @@ export class DataService {
         this.dataStorage = new BrowserStorage();
     }
   }
+
+  public static setBucket(bucket: string): void {
+    this.dataStorage.setBucket(bucket);
+  }
 }
