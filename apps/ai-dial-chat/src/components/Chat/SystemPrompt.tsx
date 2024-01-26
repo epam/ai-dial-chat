@@ -1,4 +1,11 @@
-import { FC, KeyboardEvent, useCallback, useEffect, useRef } from 'react';
+import {
+  ChangeEvent,
+  FC,
+  KeyboardEvent,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -55,10 +62,10 @@ export const SystemPrompt: FC<Props> = ({
   } = usePromptSelection(maxLength);
 
   const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    (e: ChangeEvent<HTMLTextAreaElement>) => {
       const value = e.target.value;
 
-      if (value.length > maxLength) {
+      if (value.length > maxLength && value.length >= content.length) {
         setIsPromptLimitModalOpen(true);
         return;
       }
@@ -69,6 +76,7 @@ export const SystemPrompt: FC<Props> = ({
       onChangePrompt(value);
     },
     [
+      content.length,
       maxLength,
       onChangePrompt,
       setContent,
@@ -152,9 +160,7 @@ export const SystemPrompt: FC<Props> = ({
       <textarea
         ref={textareaRef}
         className="w-full resize-none overflow-y-auto rounded border border-primary bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-within:border-accent-primary"
-        placeholder={
-          t(`Enter a prompt or type "/" to select a prompt...`) || ''
-        }
+        placeholder={t('Type a text or «/» to use a prompt...') || ''}
         style={{ maxHeight: `${MAX_HEIGHT}px` }}
         value={content}
         rows={1}

@@ -102,11 +102,7 @@ const SelectedAddon = ({
       <ModelIcon entity={addon} entityId={addon.id} size={15} />
       <span>{addon.name}</span>
       {!isPreselected && (
-        <IconX
-          height={12}
-          width={12}
-          className="text-secondary hover:text-accent-primary"
-        />
+        <IconX size={14} className="text-secondary hover:text-accent-primary" />
       )}
     </button>
   );
@@ -195,57 +191,68 @@ export const AddonsDialog: FC<Props> = ({
     <FloatingPortal id="chat">
       <div className="fixed inset-0 top-[48px] z-30 flex items-center justify-center bg-blackout p-3 md:p-5">
         <div
-          className="m-auto flex size-full grow flex-col gap-4 overflow-y-auto rounded bg-layer-3 py-4 text-left md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
+          className="m-auto flex size-full grow flex-col gap-4 divide-tertiary overflow-y-auto rounded bg-layer-3 py-4 text-left md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
           role="dialog"
           ref={refs.setFloating}
           {...getFloatingProps()}
           data-qa="addons-dialog"
         >
-          <div className="flex justify-between px-3 md:px-5">
-            {t('Addons (max 10)')}
-            <button
-              onClick={() => {
-                onClose();
-              }}
-              className="text-secondary hover:text-accent-primary"
-              data-qa="close-addons-dialog"
+          <div className="flex grow flex-col justify-between gap-4">
+            <div className="flex justify-between px-3 md:px-5">
+              {t('Addons (max 10)')}
+              <button
+                onClick={onClose}
+                className="text-secondary hover:text-accent-primary"
+                data-qa="close-addons-dialog"
+              >
+                <IconX height={24} width={24} />
+              </button>
+            </div>
+
+            <div className="px-3 md:px-5">
+              <input
+                name="titleInput"
+                placeholder={t('Search for addons') || ''}
+                type="text"
+                onChange={(e) => {
+                  handleSearch(e.target.value);
+                }}
+                className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+              ></input>
+            </div>
+            <div
+              className="flex grow flex-col gap-4 px-3 text-xs md:px-5"
+              data-qa="addon-search-results"
             >
-              <IconX height={24} width={24} />
-            </button>
-          </div>
+              {(selectedAddons?.filter((addon) => addonsMap[addon.id]).length >
+                0 ||
+                preselectedAddonsIds?.length > 0) && (
+                <div className="flex flex-col gap-3">
+                  <span className="text-secondary">{t('Selected')}</span>
 
-          <div className="px-3 md:px-5">
-            <input
-              name="titleInput"
-              placeholder={t('Search for addons') || ''}
-              type="text"
-              onChange={(e) => {
-                handleSearch(e.target.value);
-              }}
-              className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
-            ></input>
-          </div>
-          <div
-            className="flex flex-col gap-4 px-3 text-xs md:px-5"
-            data-qa="addon-search-results"
-          >
-            {(selectedAddons?.filter((addon) => addonsMap[addon.id]).length >
-              0 ||
-              preselectedAddonsIds?.length > 0) && (
-              <div className="flex flex-col gap-3">
-                <span className="text-secondary">{t('Selected')}</span>
+                  <div className="flex flex-wrap gap-1">
+                    {preselectedAddonsIds.map((addonID) => {
+                      const addon = addonsMap[addonID];
+                      if (
+                        !addon ||
+                        selectedAddons
+                          .map((addon) => addon.id)
+                          .includes(addonID)
+                      ) {
+                        return null;
+                      }
 
-                <div className="flex flex-wrap gap-1">
-                  {preselectedAddonsIds.map((addonID) => {
-                    const addon = addonsMap[addonID];
-                    if (
-                      !addon ||
-                      selectedAddons.map((addon) => addon.id).includes(addonID)
-                    ) {
-                      return null;
-                    }
-
-                    return (
+                      return (
+                        <SelectedAddon
+                          key={addon.id}
+                          addon={addon}
+                          preselectedAddonsIds={preselectedAddonsIds}
+                          selectedAddons={selectedAddons}
+                          onSelectAddons={handleSelectAddon}
+                        />
+                      );
+                    })}
+                    {selectedAddons.map((addon) => (
                       <SelectedAddon
                         key={addon.id}
                         addon={addon}
@@ -253,59 +260,46 @@ export const AddonsDialog: FC<Props> = ({
                         selectedAddons={selectedAddons}
                         onSelectAddons={handleSelectAddon}
                       />
-                    );
-                  })}
-                  {selectedAddons.map((addon) => (
-                    <SelectedAddon
-                      key={addon.id}
-                      addon={addon}
-                      preselectedAddonsIds={preselectedAddonsIds}
-                      selectedAddons={selectedAddons}
-                      onSelectAddons={handleSelectAddon}
-                    />
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-            {displayedAddons?.length > 0 ? (
-              <div className="flex shrink grow flex-col gap-3 overflow-auto">
-                <span className="text-secondary">{t('Search results')}</span>
+              )}
+              {displayedAddons?.length > 0 ? (
+                <div className="flex shrink grow flex-col gap-3 overflow-auto">
+                  <span className="text-secondary">{t('Search results')}</span>
 
-                <div className="grid grid-cols-2 flex-wrap gap-3 md:grid-cols-3">
-                  {displayedAddons.map((addon) => (
-                    <Addon
-                      key={addon.id}
-                      addon={addon}
-                      preselectedAddonsIds={preselectedAddonsIds}
-                      selectedAddons={selectedAddons}
-                      onSelectAddons={handleSelectAddon}
-                    />
-                  ))}
+                  <div className="grid grid-cols-2 flex-wrap gap-3 md:grid-cols-3">
+                    {displayedAddons.map((addon) => (
+                      <Addon
+                        key={addon.id}
+                        addon={addon}
+                        preselectedAddonsIds={preselectedAddonsIds}
+                        selectedAddons={selectedAddons}
+                        onSelectAddons={handleSelectAddon}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="flex min-h-[200px] grow items-center justify-center">
-                <NoResultsFound />
-              </div>
-            )}
-
-            <div className="h-[40px] shrink-0"></div>
-          </div>
-          <div className="relative h-0 grow">
-            <div className="absolute bottom-0 flex h-[80px] w-full items-end justify-center bg-gradient-to-b from-transparent via-layer-3 to-layer-3 px-3 md:px-5">
-              <button
-                className="button button-primary"
-                onClick={() => {
-                  onClose();
-                  onAddonsSelected(selectedAddons.map(({ id }) => id));
-                }}
-                disabled={
-                  selectedAddons.length + preselectedAddonsIds.length > 10
-                }
-              >
-                {t('Apply addons')}
-              </button>
+              ) : (
+                <div className="flex min-h-[200px] grow items-center justify-center">
+                  <NoResultsFound />
+                </div>
+              )}
             </div>
+          </div>
+          <div className="flex items-center justify-end border-t-[1px] px-3 pt-4 md:px-5">
+            <button
+              className="button button-primary"
+              onClick={() => {
+                onClose();
+                onAddonsSelected(selectedAddons.map(({ id }) => id));
+              }}
+              disabled={
+                selectedAddons.length + preselectedAddonsIds.length > 10
+              }
+            >
+              {t('Apply addons')}
+            </button>
           </div>
         </div>
       </div>

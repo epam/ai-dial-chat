@@ -2,10 +2,12 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilter,
 } from '@/src/utils/app/search';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
@@ -21,7 +23,10 @@ import {
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import {
+  MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH,
+  PUBLISHING_FOLDER_NAME,
+} from '@/src/constants/folders';
 
 import Folder from '@/src/components/Folder/Folder';
 
@@ -63,11 +68,15 @@ const PromptFolderTemplate = ({
   );
   const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
 
+  const isExternal = useAppSelector((state) =>
+    isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
+  );
+
   const handleDrop = useCallback(
     (e: DragEvent, folder: FolderInterface) => {
       if (e.dataTransfer) {
-        const promptData = e.dataTransfer.getData('prompt');
-        const folderData = e.dataTransfer.getData('folder');
+        const promptData = e.dataTransfer.getData(MoveType.Prompt);
+        const folderData = e.dataTransfer.getData(MoveType.PromptFolder);
 
         if (promptData) {
           const prompt: Prompt = JSON.parse(promptData);
@@ -130,6 +139,8 @@ const PromptFolderTemplate = ({
         onDrop={onDropBetweenFolders}
         index={index}
         parentFolderId={folder.folderId}
+        featureType={FeatureType.Prompt}
+        denyDrop={isExternal}
       />
       <Folder
         maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
@@ -162,6 +173,8 @@ const PromptFolderTemplate = ({
           onDrop={onDropBetweenFolders}
           index={index + 1}
           parentFolderId={folder.folderId}
+          featureType={FeatureType.Prompt}
+          denyDrop={isExternal}
         />
       )}
     </>
@@ -287,7 +300,7 @@ export function PromptFolders() {
       [
         {
           hidden: !isPublishingEnabled || !isFilterEmpty,
-          name: t('Organization'),
+          name: t(PUBLISHING_FOLDER_NAME),
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'published-with-me',

@@ -12,6 +12,11 @@ export const getAssitantModelId = (
     : undefined;
 };
 
+export const getValidEntitiesFromIds = <T>(
+  entitiesIds: string[],
+  addonsMap: Partial<Record<string, T>>,
+) => entitiesIds.map((entityId) => addonsMap[entityId]).filter(Boolean) as T[];
+
 export const getSelectedAddons = (
   selectedAddons: string[],
   addonsMap: Partial<Record<string, OpenAIEntityAddon>>,
@@ -20,11 +25,10 @@ export const getSelectedAddons = (
   if (model && model.type !== EntityType.Application) {
     const preselectedAddons = model.selectedAddons ?? [];
     const addonsSet = new Set([...preselectedAddons, ...selectedAddons]);
-    const mergedSelectedAddons = Array.from(addonsSet)
-      .map((addon) => addonsMap[addon])
-      .filter(Boolean) as OpenAIEntityAddon[];
-    return mergedSelectedAddons;
+
+    return getValidEntitiesFromIds(Array.from(addonsSet), addonsMap);
   }
+
   return null;
 };
 

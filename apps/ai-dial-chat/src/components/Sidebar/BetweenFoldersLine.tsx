@@ -2,6 +2,9 @@ import { DragEvent, useCallback, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { getFolderMoveType, hasDragEventAnyData } from '@/src/utils/app/move';
+
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 
 interface BetweenFoldersLineProps {
@@ -14,6 +17,8 @@ interface BetweenFoldersLineProps {
     index: number,
   ) => void;
   onDraggingOver?: (isDraggingOver: boolean) => void;
+  featureType?: FeatureType;
+  denyDrop?: boolean;
 }
 
 export const BetweenFoldersLine = ({
@@ -22,13 +27,15 @@ export const BetweenFoldersLine = ({
   parentFolderId,
   onDrop,
   onDraggingOver,
+  featureType,
+  denyDrop,
 }: BetweenFoldersLineProps) => {
   const dragDropElement = useRef<HTMLDivElement>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   const dropHandler = useCallback(
     (e: DragEvent) => {
-      if (!e.dataTransfer) {
+      if (!e.dataTransfer || denyDrop) {
         return;
       }
 
@@ -37,28 +44,42 @@ export const BetweenFoldersLine = ({
 
       setIsDraggingOver(false);
 
-      const folderData = e.dataTransfer.getData('folder');
+      const folderData = e.dataTransfer.getData(getFolderMoveType(featureType));
 
       if (folderData) {
         onDrop(JSON.parse(folderData), parentFolderId, index);
       }
     },
-    [index, onDrop, parentFolderId],
+    [denyDrop, featureType, index, onDrop, parentFolderId],
   );
 
-  const allowDrop = useCallback((e: DragEvent) => {
-    e.preventDefault();
-  }, []);
+  const allowDrop = useCallback(
+    (e: DragEvent) => {
+      if (!denyDrop && hasDragEventAnyData(e, featureType)) {
+        e.preventDefault();
+      }
+    },
+    [denyDrop, featureType],
+  );
 
-  const highlightDrop = useCallback(() => {
-    setIsDraggingOver(true);
-    onDraggingOver?.(true);
-  }, [onDraggingOver]);
+  const highlightDrop = useCallback(
+    (e: DragEvent) => {
+      if (denyDrop || !hasDragEventAnyData(e, featureType)) {
+        return;
+      }
+      setIsDraggingOver(true);
+      onDraggingOver?.(true);
+    },
+    [denyDrop, featureType, onDraggingOver],
+  );
 
   const removeHighlight = useCallback(() => {
+    if (denyDrop) {
+      return;
+    }
     setIsDraggingOver(false);
     onDraggingOver?.(false);
-  }, [onDraggingOver]);
+  }, [denyDrop, onDraggingOver]);
 
   return (
     <div

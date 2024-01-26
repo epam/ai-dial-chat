@@ -19,11 +19,11 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { hasExternalParent, isEntityExternal } from '@/src/utils/app/share';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
-import { DisplayMenuItemProps, onClickMenuItemHandler } from '@/src/types/menu';
+import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -85,11 +85,9 @@ export default function ItemContextMenu({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
-  const isExternalEntity = isEntityExternal(entity);
-  const _hasExternalParent = useAppSelector((state) =>
-    hasExternalParent(state, entity.folderId, featureType),
+  const isExternal = useAppSelector((state) =>
+    isEntityOrParentsExternal(state, entity, featureType),
   );
-  const isExternal = isExternalEntity || _hasExternalParent;
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -97,48 +95,48 @@ export default function ItemContextMenu({
         display: !isExternal,
         dataQa: 'rename',
         Icon: IconPencilMinus,
-        onClick: onRename as onClickMenuItemHandler,
+        onClick: onRename,
       },
       {
         name: t('Compare'),
         display: !!onCompare,
         dataQa: 'compare',
         Icon: IconScale,
-        onClick: onCompare as onClickMenuItemHandler,
+        onClick: onCompare,
       },
       {
         name: t('Duplicate'),
         display: !!onDuplicate && isExternal,
         dataQa: 'duplicate',
         Icon: IconCopy,
-        onClick: onDuplicate as onClickMenuItemHandler,
+        onClick: onDuplicate,
       },
       {
         name: t('Replay'),
         display: !isEmptyConversation && !!onReplay,
         dataQa: 'replay',
         Icon: IconRefreshDot,
-        onClick: onReplay as onClickMenuItemHandler,
+        onClick: onReplay,
       },
       {
         name: t('Playback'),
-        display: !isEmptyConversation && !!onPlayback && !isExternal,
+        display: !isEmptyConversation && !!onPlayback,
         dataQa: 'playback',
         Icon: IconPlayerPlay,
-        onClick: onPlayback as onClickMenuItemHandler,
+        onClick: onPlayback,
       },
       {
         name: t('Export'),
         dataQa: 'export',
         Icon: IconFileArrowRight,
-        onClick: onExport as onClickMenuItemHandler,
+        onClick: onExport,
       },
       {
         name: t('Move to'),
         display: !isExternal,
         dataQa: 'move-to-mobile',
         Icon: IconFolderShare,
-        onClick: onOpenMoveToModal as onClickMenuItemHandler,
+        onClick: onOpenMoveToModal,
         className: 'md:hidden',
       },
       {
@@ -173,7 +171,7 @@ export default function ItemContextMenu({
         dataQa: 'share',
         display: isSharingEnabled && !!onShare && !isExternal,
         Icon: IconUserShare,
-        onClick: onShare as onClickMenuItemHandler,
+        onClick: onShare,
       },
       {
         name: t('Publish'),
@@ -184,7 +182,7 @@ export default function ItemContextMenu({
           !!onPublish &&
           !isExternal,
         Icon: IconWorldShare,
-        onClick: onPublish as onClickMenuItemHandler,
+        onClick: onPublish,
       },
       {
         name: t('Update'),
@@ -192,20 +190,20 @@ export default function ItemContextMenu({
         display:
           isPublishingEnabled && !!entity.isPublished && !!onPublishUpdate,
         Icon: IconClockShare,
-        onClick: onPublishUpdate as onClickMenuItemHandler,
+        onClick: onPublishUpdate,
       },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
         display: isPublishingEnabled && !!entity.isPublished && !!onUnpublish,
         Icon: UnpublishIcon,
-        onClick: onUnpublish as onClickMenuItemHandler,
+        onClick: onUnpublish,
       },
       {
         name: t('Delete'),
         dataQa: 'delete',
         Icon: IconTrashX,
-        onClick: onDelete as onClickMenuItemHandler,
+        onClick: onDelete,
       },
     ],
     [

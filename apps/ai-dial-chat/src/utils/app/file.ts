@@ -1,5 +1,8 @@
-import { Attachment } from '@/src/types/chat';
+import { Attachment, Conversation } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
+import { FolderInterface } from '@/src/types/folder';
+
+import { getPathToFolderById } from './folders';
 
 import { extensions } from 'mime-types';
 
@@ -27,6 +30,12 @@ export const getRelativePath = (
   return absolutePath?.split('/').toSpliced(0, 2).join('/') || undefined;
 };
 
+export const getFileName = (
+  absolutePath: string | undefined,
+): string | undefined => {
+  return absolutePath?.split('/').slice(-1)?.[0] || undefined;
+};
+
 export const getUserCustomContent = (
   files: Pick<DialFile, 'contentType' | 'absolutePath' | 'name' | 'status'>[],
 ) => {
@@ -35,17 +44,13 @@ export const getUserCustomContent = (
   }
 
   return {
-    custom_content: {
-      attachments: files
-        .filter(
-          (file) => file.status !== 'FAILED' && file.status !== 'UPLOADING',
-        )
-        .map((file) => ({
-          type: file.contentType,
-          title: file.name,
-          url: encodeURI(`${file.absolutePath}/${file.name}`),
-        })),
-    },
+    attachments: files
+      .filter((file) => file.status !== 'FAILED' && file.status !== 'UPLOADING')
+      .map((file) => ({
+        type: file.contentType,
+        title: file.name,
+        url: encodeURI(`${file.absolutePath}/${file.name}`),
+      })),
   };
 };
 
@@ -94,11 +99,8 @@ export const getFilesWithInvalidFileType = (
     ? []
     : files.filter((file) => !isAllowedMimeType(allowedFileTypes, file.type));
 };
-export const notAllowedSymbols = [':', ';', ',', '=', '/'];
-export const notAllowedSymbolsRegex = new RegExp(
-  `[${notAllowedSymbols.join()}]`,
-  'g',
-);
+export const notAllowedSymbols = ':;,=/';
+export const notAllowedSymbolsRegex = new RegExp(`[${notAllowedSymbols}]`, 'g');
 export const getFilesWithInvalidFileName = <T extends { name: string }>(
   files: T[],
 ): T[] => {
@@ -176,4 +178,62 @@ export const getExtensionsListForMimeTypes = (mimeTypes: string[]) => {
     .map((mimeType) => getExtensionsListForMimeType(mimeType))
     .flat()
     .map((type) => `.${type}`);
+};
+
+export const getFileNameWithoutExtension = (filename: string) =>
+  filename.slice(0, filename.lastIndexOf('.'));
+
+export const getFileNameExtension = (filename: string) =>
+  filename.slice(filename.lastIndexOf('.'));
+
+export const validatePublishingFileRenaming = (
+  files: DialFile[],
+  newName: string,
+  renamingFile: DialFile,
+) => {
+  const fileWithSameName = files.find(
+    (file) =>
+      file.name === newName.trim() &&
+      file !== renamingFile &&
+      file.relativePath === renamingFile.relativePath,
+  );
+
+  if (fileWithSameName) {
+    return 'Not allowed to have files with same names in one folder';
+  }
+
+  if (newName.match(notAllowedSymbolsRegex)) {
+    return `The symbols ${notAllowedSymbols} are not allowed in file name`;
+  }
+};
+
+export const renameAttachments = (
+  conversation: Conversation,
+  folderId: string | undefined,
+  folders: FolderInterface[],
+  filenameMapping: Map<string, string>,
+): Conversation => {
+  if (!filenameMapping.size) {
+    return conversation;
+  }
+
+  const { path } = getPathToFolderById(folders, folderId);
+
+  return {
+    ...conversation,
+    messages: conversation.messages.map((message) => ({
+      ...message,
+      custom_content: message.custom_content && {
+        ...message.custom_content,
+        attachments: message.custom_content.attachments?.map(
+          ({ title, ...attachment }) => ({
+            ...attachment,
+            title:
+              getFileName(filenameMapping.get(constructPath(path, title))) ??
+              title,
+          }),
+        ),
+      },
+    })),
+  };
 };

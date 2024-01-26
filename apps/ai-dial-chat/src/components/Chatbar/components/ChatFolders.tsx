@@ -2,10 +2,12 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilter,
 } from '@/src/utils/app/search';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -21,7 +23,10 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import {
+  MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH,
+  PUBLISHING_FOLDER_NAME,
+} from '@/src/constants/folders';
 
 import Folder from '@/src/components/Folder/Folder';
 
@@ -69,11 +74,15 @@ const ChatFolderTemplate = ({
   );
   const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
 
+  const isExternal = useAppSelector((state) =>
+    isEntityOrParentsExternal(state, folder, FeatureType.Chat),
+  );
+
   const handleDrop = useCallback(
     (e: DragEvent, folder: FolderInterface) => {
       if (e.dataTransfer) {
-        const conversationData = e.dataTransfer.getData('conversation');
-        const folderData = e.dataTransfer.getData('folder');
+        const conversationData = e.dataTransfer.getData(MoveType.Conversation);
+        const folderData = e.dataTransfer.getData(MoveType.ConversationFolder);
 
         if (conversationData) {
           const conversation: Conversation = JSON.parse(conversationData);
@@ -136,6 +145,8 @@ const ChatFolderTemplate = ({
         onDrop={onDropBetweenFolders}
         index={index}
         parentFolderId={folder.folderId}
+        featureType={FeatureType.Chat}
+        denyDrop={isExternal}
       />
       <Folder
         maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
@@ -169,6 +180,8 @@ const ChatFolderTemplate = ({
           onDrop={onDropBetweenFolders}
           index={index + 1}
           parentFolderId={folder.folderId}
+          featureType={FeatureType.Chat}
+          denyDrop={isExternal}
         />
       )}
     </>
@@ -303,7 +316,7 @@ export function ChatFolders() {
       [
         {
           hidden: !isPublishingEnabled || !isFilterEmpty,
-          name: t('Organization'),
+          name: t(PUBLISHING_FOLDER_NAME),
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'published-with-me',

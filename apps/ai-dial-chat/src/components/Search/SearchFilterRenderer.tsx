@@ -14,7 +14,8 @@ export default function SearchFilterRenderer({
   const [checked, setChecked] = useState<boolean>(!!isSelected);
   const handleCheck = useCallback(() => {
     setChecked((check: boolean) => !check);
-    onClick && onClick(!checked);
+    const clickHandler = onClick as (props: boolean) => void;
+    clickHandler && clickHandler(!checked);
   }, [onClick, checked]);
 
   return (

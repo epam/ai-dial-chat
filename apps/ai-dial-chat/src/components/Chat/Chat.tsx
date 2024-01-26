@@ -107,6 +107,7 @@ export const Chat = memo(() => {
   const nextMessageBoxRef = useRef<HTMLDivElement | null>(null);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
+  const isSentRef = useRef(false);
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const showReplayControls = useMemo(() => {
@@ -116,30 +117,6 @@ export const Chat = memo(() => {
   const isNotEmptyConversations = selectedConversations.some(
     (conv) => conv.messages.length > 0,
   );
-
-  useEffect(() => {
-    setIsShowChatSettings(false);
-
-    if (selectedConversations.length > 0) {
-      const mergedMessages: MergedMessages[] = [];
-      for (let i = 0; i < selectedConversations[0].messages.length; i++) {
-        if (selectedConversations[0].messages[i].role === Role.System) continue;
-
-        mergedMessages.push(
-          selectedConversations.map((conv) => [
-            conv,
-            conv.messages[i] || { role: Role.Assistant, content: '' },
-            i,
-          ]),
-        );
-      }
-      setMergedMessages([...mergedMessages]);
-    }
-
-    if (selectedConversations.some((conv) => conv.messages.length === 0)) {
-      setShowScrollDownButton(false);
-    }
-  }, [selectedConversations]);
 
   useEffect(() => {
     const modelIds = models.map((model) => model.id);
@@ -254,6 +231,7 @@ export const Chat = memo(() => {
         threshold: 0.1,
       },
     );
+
     const messagesEndElement = messagesEndRef.current;
     if (messagesEndElement) {
       observer.observe(messagesEndElement);
@@ -264,6 +242,35 @@ export const Chat = memo(() => {
       }
     };
   }, [messagesEndRef]);
+
+  useEffect(() => {
+    setIsShowChatSettings(false);
+
+    if (selectedConversations.length > 0) {
+      if (isSentRef.current) {
+        handleScroll();
+        isSentRef.current = false;
+      }
+
+      const mergedMessages: MergedMessages[] = [];
+      for (let i = 0; i < selectedConversations[0].messages.length; i++) {
+        if (selectedConversations[0].messages[i].role === Role.System) continue;
+
+        mergedMessages.push(
+          selectedConversations.map((conv) => [
+            conv,
+            conv.messages[i] || { role: Role.Assistant, content: '' },
+            i,
+          ]),
+        );
+      }
+      setMergedMessages([...mergedMessages]);
+    }
+
+    if (selectedConversations.some((conv) => conv.messages.length === 0)) {
+      setShowScrollDownButton(false);
+    }
+  }, [handleScroll, selectedConversations]);
 
   const handleClearConversation = useCallback(
     (conversation: Conversation) => {
@@ -436,6 +443,7 @@ export const Chat = memo(() => {
           activeReplayIndex: 0,
         }),
       );
+      isSentRef.current = true;
     },
     [dispatch, selectedConversations],
   );
@@ -453,6 +461,7 @@ export const Chat = memo(() => {
         activeReplayIndex: 0,
       }),
     );
+    isSentRef.current = true;
   }, [dispatch, selectedConversations]);
 
   const onEditMessage = useCallback(
@@ -466,6 +475,7 @@ export const Chat = memo(() => {
           activeReplayIndex: 0,
         }),
       );
+      isSentRef.current = true;
     },
     [dispatch, selectedConversations],
   );
@@ -649,7 +659,7 @@ export const Chat = memo(() => {
                     >
                       {conv.messages.length !== 0 &&
                         enabledFeatures.has(Feature.TopSettings) && (
-                          <div className={`z-10 flex flex-col `}>
+                          <div className="z-10 flex flex-col">
                             <ChatHeader
                               conversation={conv}
                               isCompareMode={isCompareMode}

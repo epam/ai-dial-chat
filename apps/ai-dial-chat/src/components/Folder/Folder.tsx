@@ -1,6 +1,5 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconFolder } from '@tabler/icons-react';
-import { IconX } from '@tabler/icons-react';
+import { IconFolder, IconX } from '@tabler/icons-react';
 import {
   DragEvent,
   FC,
@@ -20,9 +19,18 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getFoldersDepth } from '@/src/utils/app/folders';
+import {
+  getChildAndCurrentFoldersIdsById,
+  getFoldersDepth,
+} from '@/src/utils/app/folders';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
+import {
+  getDragImage,
+  getFolderMoveType,
+  hasDragEventAnyData,
+} from '@/src/utils/app/move';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -36,13 +44,11 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { emptyImage } from '@/src/constants/drag-and-drop';
-
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
-import PublishModal from '../Chat/PublishModal';
+import PublishModal from '../Chat/Publish/PublishWizard';
 import ShareModal from '../Chat/ShareModal';
 import UnpublishModal from '../Chat/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
@@ -87,24 +93,8 @@ export interface FolderProps<T, P = unknown> {
   onFileUpload?: (parentFolderId: string) => void;
   maxDepth?: number;
   highlightTemporaryFolders?: boolean;
+  withBorderHighlight?: boolean;
 }
-
-const getClassForFolderName = (
-  highlightTemporaryFolders: boolean | undefined,
-  currentFolder: FolderInterface,
-  highlightedFolders: string[] | undefined,
-) => {
-  if (highlightTemporaryFolders && !currentFolder.temporary) {
-    return 'text-secondary';
-  }
-  if (highlightTemporaryFolders && currentFolder.temporary) {
-    return 'text-primary';
-  }
-
-  return highlightedFolders?.includes(currentFolder.id)
-    ? 'text-accent-primary'
-    : 'text-primary';
-};
 
 const Folder = <T extends Conversation | Prompt | DialFile>({
   currentFolder,
@@ -132,6 +122,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   readonly = false,
   maxDepth,
   highlightTemporaryFolders,
+  withBorderHighlight = true,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -160,6 +151,9 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );
+  const isExternal = useAppSelector((state) =>
+    isEntityOrParentsExternal(state, currentFolder, FeatureType.Chat),
+  );
 
   useEffect(() => {
     // only if search term was changed after first render
@@ -174,6 +168,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     if (isRenaming) {
       // focus manually because `autoFocus` doesn't work well with several items and rerender
       renameInputRef.current?.focus();
+      renameInputRef.current?.select();
     }
   }, [isRenaming]);
 
@@ -223,7 +218,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const hasChildElements = useMemo(() => {
     return filteredChildFolders.length > 0 || filteredChildItems.length > 0;
   }, [filteredChildFolders.length, filteredChildItems.length]);
-  const dragImageRef = useRef<HTMLImageElement | null>();
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -232,11 +226,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
-
-  useEffect(() => {
-    dragImageRef.current = document.createElement('img');
-    dragImageRef.current.src = emptyImage;
-  }, []);
 
   const handleRename = useCallback(() => {
     if (!onRenameFolder) {
@@ -261,7 +250,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const dropHandler = useCallback(
     (e: DragEvent) => {
-      if (!isDropAllowed || !handleDrop) {
+      if (!isDropAllowed || !handleDrop || isExternal) {
         return;
       }
 
@@ -272,13 +261,34 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         dispatch(UIActions.openFolder({ id: currentFolder.id }));
         setIsDraggingOver(false);
 
-        const folderData = e.dataTransfer.getData('folder');
+        const folderData = e.dataTransfer.getData(
+          getFolderMoveType(featureType),
+        );
 
         if (folderData) {
-          const foldersDepth = getFoldersDepth(
-            JSON.parse(folderData),
-            allFolders,
+          const draggedFolder = JSON.parse(folderData);
+
+          if (draggedFolder.id === currentFolder.id) {
+            return;
+          }
+
+          const childIds = new Set(
+            getChildAndCurrentFoldersIdsById(draggedFolder.id, allFolders),
           );
+
+          if (childIds.has(currentFolder.id)) {
+            dispatch(
+              UIActions.showToast({
+                message: t(
+                  "It's not allowed to move parent folder in child folder",
+                ),
+                type: 'error',
+              }),
+            );
+            return;
+          }
+
+          const foldersDepth = getFoldersDepth(draggedFolder, allFolders);
 
           if (maxDepth && level + foldersDepth > maxDepth) {
             dispatch(
@@ -296,8 +306,10 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     [
       isDropAllowed,
       handleDrop,
+      isExternal,
       dispatch,
       currentFolder,
+      featureType,
       allFolders,
       maxDepth,
       level,
@@ -307,11 +319,11 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const allowDrop = useCallback(
     (e: DragEvent) => {
-      if (isDropAllowed) {
+      if (isDropAllowed && !isExternal && hasDragEventAnyData(e, featureType)) {
         e.preventDefault();
       }
     },
-    [isDropAllowed],
+    [featureType, isDropAllowed, isExternal],
   );
 
   const isParentFolder = useCallback(
@@ -337,6 +349,10 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const highlightDrop = useCallback(
     (evt: DragEvent) => {
+      if (isExternal || !hasDragEventAnyData(evt, featureType)) {
+        return;
+      }
+
       if (dragDropElement.current === evt.target) {
         setIsDraggingOver(true);
         return;
@@ -350,7 +366,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         setIsDraggingOver(true);
       }
     },
-    [currentFolder.id, dispatch, isParentFolder],
+    [currentFolder.id, dispatch, featureType, isExternal, isParentFolder],
   );
 
   const removeHighlight = useCallback(
@@ -432,13 +448,16 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLDivElement>, folder: FolderInterface) => {
-      if (e.dataTransfer) {
-        e.dataTransfer.setDragImage(dragImageRef.current || new Image(), 0, 0);
-        e.dataTransfer.setData('folder', JSON.stringify(folder));
+      if (e.dataTransfer && !isExternal) {
+        e.dataTransfer.setDragImage(getDragImage(), 0, 0);
+        e.dataTransfer.setData(
+          getFolderMoveType(featureType),
+          JSON.stringify(folder),
+        );
         dispatch(UIActions.closeFolder({ id: currentFolder.id }));
       }
     },
-    [currentFolder.id, dispatch],
+    [currentFolder.id, dispatch, featureType, isExternal],
   );
 
   const onDraggingBetweenFolders = useCallback((isDraggingOver: boolean) => {
@@ -468,6 +487,11 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     }
   }, [currentFolder.id, dispatch, searchTerm]);
 
+  const isHighlighted =
+    isRenaming ||
+    isContextMenu ||
+    (allItems === undefined && highlightedFolders?.includes(currentFolder.id));
+
   return (
     <div
       id="folder"
@@ -486,18 +510,15 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       <div
         className={classNames(
           'group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
-          isRenaming ||
-            isContextMenu ||
-            (allItems === undefined &&
-              highlightedFolders?.includes(currentFolder.id))
-            ? 'border-accent-primary bg-accent-primary-alpha'
-            : 'border-transparent',
+          !withBorderHighlight && 'border-transparent',
+          isHighlighted ? 'bg-accent-primary-alpha' : 'border-transparent',
+          isHighlighted && withBorderHighlight && 'border-accent-primary',
         )}
         data-qa="folder"
       >
         {isRenaming ? (
           <div
-            className={classNames('flex w-full items-center gap-1 py-2 pr-3')}
+            className="flex w-full items-center gap-1 py-2 pr-3"
             style={{
               paddingLeft: `${level * 1.5}rem`,
             }}
@@ -539,10 +560,12 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
               setIsSelected(true);
             }}
-            draggable={!!handleDrop}
+            draggable={!!handleDrop && !isExternal}
             onDragStart={(e) => handleDragStart(e, currentFolder)}
             onDragOver={(e) => {
-              e.preventDefault();
+              if (!isExternal && hasDragEventAnyData(e, featureType)) {
+                e.preventDefault();
+              }
             }}
           >
             <CaretIconComponent
@@ -564,11 +587,11 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
             <div
               className={classNames(
                 'relative max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5',
-                getClassForFolderName(
-                  highlightTemporaryFolders,
-                  currentFolder,
-                  highlightedFolders,
-                ),
+                highlightTemporaryFolders &&
+                  (currentFolder.temporary ? 'text-primary' : 'text-secondary'),
+                highlightedFolders?.includes(currentFolder.id) && featureType
+                  ? 'text-accent-primary'
+                  : 'text-primary',
               )}
               data-qa="folder-name"
             >
@@ -624,7 +647,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 width={18}
                 height={18}
                 size={18}
-                className="hover:text-primary"
+                className="hover:text-accent-primary"
               />
             </SidebarActionButton>
             <SidebarActionButton
@@ -637,7 +660,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                 width={18}
                 height={18}
                 size={18}
-                className="hover:text-primary"
+                className="hover:text-accent-primary"
                 strokeWidth="2"
               />
             </SidebarActionButton>
@@ -645,8 +668,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         )}
       </div>
       {isFolderOpened ? (
-        <div className={classNames('flex flex-col gap-1')}>
-          <div className={classNames('flex flex-col')}>
+        <div className="flex flex-col gap-1">
+          <div className="flex flex-col">
             {allFolders.map((item, index, arr) => {
               if (item.folderId === currentFolder.id) {
                 return (
@@ -658,6 +681,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                         onDraggingOver={onDraggingBetweenFolders}
                         index={index}
                         parentFolderId={item.folderId}
+                        featureType={featureType}
+                        denyDrop={isExternal}
                       />
                     ) : (
                       <div className="h-1"></div>
@@ -688,6 +713,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       featureType={featureType}
                       maxDepth={maxDepth}
                       highlightTemporaryFolders={highlightTemporaryFolders}
+                      withBorderHighlight={withBorderHighlight}
                     />
                     {onDropBetweenFolders && index === arr.length - 1 && (
                       <BetweenFoldersLine
@@ -696,6 +722,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                         onDraggingOver={onDraggingBetweenFolders}
                         index={index + 1}
                         parentFolderId={item.folderId}
+                        featureType={featureType}
+                        denyDrop={isExternal}
                       />
                     )}
                   </Fragment>

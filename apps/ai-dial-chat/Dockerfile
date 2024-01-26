@@ -24,6 +24,7 @@ COPY --from=build /app/public ./public
 COPY --from=build /app/package*.json ./
 COPY --from=build /app/next.config.js ./next.config.js
 COPY --from=build /app/next-i18next.config.js ./next-i18next.config.js
+COPY --from=build /app/startup.sh ./startup.sh
 
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
@@ -37,4 +38,4 @@ USER nextjs
 EXPOSE 3000 9464
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["/app/startup.sh"]

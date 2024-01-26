@@ -1,9 +1,7 @@
 import { IconX } from '@tabler/icons-react';
-import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { ReactNode, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
-
-import classNames from 'classnames';
 
 import { Replay } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -92,9 +90,6 @@ export const ConversationSettings = ({
     [modelId, modelsMap],
   );
 
-  const [width, setWidth] = useState(0);
-  const ref = useRef<HTMLDivElement | null>(null);
-
   const isNoModelInUserMessages = useMemo(() => {
     return (
       replay.isReplay &&
@@ -103,30 +98,10 @@ export const ConversationSettings = ({
     );
   }, [replay]);
 
-  useEffect(() => {
-    if (!ref) {
-      return;
-    }
-
-    const resizeObserver = new ResizeObserver(() => {
-      ref.current?.clientWidth && setWidth(ref.current.clientWidth);
-    });
-    ref.current && resizeObserver.observe(ref.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [ref]);
-
   return (
-    <div
-      ref={ref}
-      className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t"
-    >
+    <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
       <div
-        className={classNames('relative size-full gap-[1px] overflow-auto', {
-          'grid grid-cols-2 grid-rows-1': width >= 450,
-        })}
+        className="relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1"
         data-qa="conversation-settings"
       >
         <div className="shrink overflow-auto bg-layer-2 px-3 py-4 md:px-5">
@@ -134,21 +109,22 @@ export const ConversationSettings = ({
             conversationId={conversationId}
             replay={replay}
             modelId={model?.id}
+            unavailableModelId={!model?.id ? modelId : undefined}
             onModelSelect={onSelectModel}
           />
         </div>
-        {!replay.replayAsIs ? (
-          model ? (
-            <div
-              className="flex max-h-full shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
-              data-qa="entity-settings"
-            >
-              {model.type === EntityType.Application && (
+        <div
+          className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
+          data-qa="entity-settings"
+        >
+          {!replay.replayAsIs ? (
+            <>
+              {model && model.type === EntityType.Application && (
                 <SettingContainer>
                   <ModelDescription model={model} />
                 </SettingContainer>
               )}
-              {model.type === EntityType.Assistant && (
+              {model && model.type === EntityType.Assistant && (
                 <SettingContainer>
                   <AssistantSubModelSelector
                     assistantModelId={
@@ -158,18 +134,19 @@ export const ConversationSettings = ({
                   />
                 </SettingContainer>
               )}
-              {model.type === EntityType.Model && (
+              {(!model || model.type === EntityType.Model) && (
                 <SettingContainer>
                   <SystemPrompt
-                    maxLength={model.maxLength}
+                    maxLength={
+                      model ? model.maxLength : Number.MAX_SAFE_INTEGER
+                    }
                     prompt={prompt}
                     prompts={prompts}
                     onChangePrompt={onChangePrompt}
                   />
                 </SettingContainer>
               )}
-
-              {model.type !== EntityType.Application && (
+              {(!model || model.type !== EntityType.Application) && (
                 <SettingContainer>
                   <TemperatureSlider
                     label={t('Temperature')}
@@ -178,26 +155,23 @@ export const ConversationSettings = ({
                   />
                 </SettingContainer>
               )}
-
-              {model.type !== EntityType.Application && (
+              {(!model || model.type !== EntityType.Application) && (
                 <SettingContainer>
                   <Addons
-                    preselectedAddonsIds={model.selectedAddons || []}
+                    preselectedAddonsIds={model?.selectedAddons || []}
                     selectedAddonsIds={selectedAddons}
                     onChangeAddon={onChangeAddon}
                     onApplyAddons={onApplyAddons}
                   />
                 </SettingContainer>
               )}
-            </div>
+            </>
           ) : (
-            <div className="flex justify-center p-3">
-              {t('No settings available')}
-            </div>
-          )
-        ) : (
-          <ReplayAsIsDescription isModelInMessages={isNoModelInUserMessages} />
-        )}
+            <ReplayAsIsDescription
+              isModelInMessages={isNoModelInUserMessages}
+            />
+          )}
+        </div>
         {isCloseEnabled && (
           <button
             className="absolute right-3 top-3 text-secondary hover:text-accent-primary"

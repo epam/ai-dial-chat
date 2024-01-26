@@ -1,8 +1,11 @@
 import { IconSend } from '@tabler/icons-react';
 
+import classNames from 'classnames';
+
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import Tooltip from '@/src/components/Common/Tooltip';
 
@@ -20,6 +23,7 @@ export const SendMessageButton = ({
   tooltip,
 }: Props) => {
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
@@ -27,7 +31,10 @@ export const SendMessageButton = ({
 
   return (
     <button
-      className="absolute right-4 top-[calc(50%_-_12px)] rounded hover:text-accent-primary disabled:cursor-not-allowed disabled:text-secondary"
+      className={classNames(
+        'absolute top-[calc(50%_-_12px)] rounded hover:text-accent-primary disabled:cursor-not-allowed disabled:text-secondary',
+        isOverlay ? 'right-3' : 'right-4',
+      )}
       onClick={handleSend}
       disabled={isDisabled}
       data-qa="send"

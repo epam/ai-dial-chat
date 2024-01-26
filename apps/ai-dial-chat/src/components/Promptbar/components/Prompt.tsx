@@ -11,6 +11,9 @@ import {
 import classNames from 'classnames';
 
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
+import { MoveType, getDragImage } from '@/src/utils/app/move';
+import { defaultMyItemsFilters } from '@/src/utils/app/search';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
@@ -28,7 +31,7 @@ import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
-import PublishModal from '../../Chat/PublishModal';
+import PublishModal from '../../Chat/Publish/PublishWizard';
 import ShareModal from '../../Chat/ShareModal';
 import UnpublishModal from '../../Chat/UnpublishModal';
 import ShareIcon from '../../Common/ShareIcon';
@@ -49,7 +52,14 @@ export interface PromptMoveToFolderProps {
 export const PromptComponent = ({ item: prompt, level }: Props) => {
   const dispatch = useAppDispatch();
 
-  const folders = useAppSelector(PromptsSelectors.selectFolders);
+  const folders = useAppSelector((state) =>
+    PromptsSelectors.selectFilteredFolders(
+      state,
+      defaultMyItemsFilters,
+      '',
+      true,
+    ),
+  );
   const selectedPromptId = useAppSelector(
     PromptsSelectors.selectSelectedPromptId,
   );
@@ -64,6 +74,9 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
+  const isExternal = useAppSelector((state) =>
+    isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
+  );
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -144,11 +157,12 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLDivElement>, prompt: Prompt) => {
-      if (e.dataTransfer) {
-        e.dataTransfer.setData('prompt', JSON.stringify(prompt));
+      if (e.dataTransfer && !isExternal) {
+        e.dataTransfer.setDragImage(getDragImage(), 0, 0);
+        e.dataTransfer.setData(MoveType.Prompt, JSON.stringify(prompt));
       }
     },
-    [],
+    [isExternal],
   );
 
   const handleOpenEditModal: MouseEventHandler = useCallback(
@@ -252,7 +266,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               'pr-6 xl:pr-0': !isDeleting && !isRenaming && isSelected,
             },
           )}
-          draggable="true"
+          draggable={!isExternal}
           onDragStart={(e) => handleDragStart(e, prompt)}
         >
           <ShareIcon

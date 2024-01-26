@@ -15,10 +15,37 @@ export enum SharingType {
   PromptFolder = 'prompts_folder',
 }
 
+export interface UserGroup {
+  id: string;
+  name: string;
+}
+
+export interface TargetAudienceFilterItem {
+  id: string;
+  name: string;
+}
+
+export enum FiltersTypes {
+  Contains = 'Contains',
+  NotContains = 'Not contains',
+  Equals = 'Equals',
+  Regex = 'Regex',
+}
+
+export interface TargetAudienceFilter extends TargetAudienceFilterItem {
+  filterType: FiltersTypes;
+  filterParams: string[];
+}
+
 export interface PublishRequest {
   id: string;
   shareUniqueId: string;
   name: string;
   path: string;
   version: string;
+  fileNameMapping: Map<string, string>;
+  targetAudienceFilters?: {
+    userGroups?: UserGroup[];
+    other: TargetAudienceFilter[];
+  };
 }
