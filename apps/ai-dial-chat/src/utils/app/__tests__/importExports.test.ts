@@ -222,7 +222,7 @@ const expectedConversation: Conversation = {
 describe('Export helpers functions', () => {
   it('Should return false for non-prompts data', () => {
     const testData = [{ id: 1 }];
-    expect(isPromtsFormat(testData)).toBeFalsy();
+    expect(isPromtsFormat(testData as any)).toBeFalsy();
   });
 
   it('Should return true for prompts data', () => {

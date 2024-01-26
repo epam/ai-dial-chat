@@ -6,11 +6,12 @@
     "e2e": {
       "executor": "@nx/playwright:playwright",
       "outputs": ["{workspaceRoot}/dist/.playwright/apps/ai-dial-chat-e2e"],
+      "defaultConfiguration": "development",
       "configurations": {
-        "local": {
+        "development": {
           "config": "apps/ai-dial-chat-e2e/config/local.playwright.config.ts"
         },
-        "ci": {
+        "production": {
           "config": "apps/ai-dial-chat-e2e/config/playwright.config.ts"
         }
       }
