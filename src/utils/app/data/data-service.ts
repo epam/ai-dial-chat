@@ -1,8 +1,6 @@
 /* eslint-disable no-restricted-globals */
 import { Observable, map } from 'rxjs';
 
-
-
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
