@@ -539,14 +539,14 @@ export const Chat = memo(() => {
       ) : (
         <>
           <div
-            className={`flex size-full${
+            className={`flex size-full ${
               isCompareMode ? 'landscape:hidden' : 'hidden'
             }`}
           >
             <ChatCompareRotate />
           </div>
           <div
-            className={`relative size-full${
+            className={`relative size-full ${
               isCompareMode ? 'portrait:hidden' : ''
             }`}
           >
@@ -764,7 +764,7 @@ export const Chat = memo(() => {
               </div>
               {isShowChatSettings && (
                 <div
-                  className={`absolute left-0 top-0 grid size-full${
+                  className={`absolute left-0 top-0 grid size-full ${
                     selectedConversations.length === 1
                       ? 'grid-cols-1'
                       : 'grid-cols-2'

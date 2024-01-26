@@ -145,7 +145,8 @@ export default function Home({ initialState }: HomeProps) {
         </div>
       ) : (
         <main
-          className="size-full flex-col bg-layer-1 text-sm text-primary"
+          // eslint-disable-next-line tailwindcss/enforces-shorthand
+          className="h-screen w-screen flex-col bg-layer-1 text-sm text-primary"
           id="theme-main"
         >
           <div className="flex size-full flex-col sm:pt-0">

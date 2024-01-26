@@ -1,5 +1,6 @@
+import { setStyles } from './utils/styleUtils';
+
 import { ChatOverlay, ChatOverlayOptions } from './ChatOverlay';
-import { setStyles } from './styleUtils';
 
 export type OverlayPosition =
   | 'left-bottom'
@@ -81,7 +82,7 @@ const overlayToggleIconOptions = {
   iconSvg: getDefaultSVG(60, 60),
 };
 
-type ChatOverlayFullOptions = ChatOverlayOptions & {
+export type ChatOverlayManagerOptions = ChatOverlayOptions & {
   id: string;
 
   position?: OverlayPosition;
@@ -100,7 +101,7 @@ type ChatOverlayFullOptions = ChatOverlayOptions & {
 };
 
 const defaultOverlayPlacementOptions: Pick<
-  ChatOverlayFullOptions,
+  ChatOverlayManagerOptions,
   'width' | 'height' | 'zIndex'
 > = {
   width: '540px',
@@ -114,7 +115,7 @@ interface Overlay {
 
   overlay: ChatOverlay;
 
-  options: ChatOverlayFullOptions;
+  options: ChatOverlayManagerOptions;
   isHidden: boolean;
 
   position: Position;
@@ -157,9 +158,9 @@ export class ChatOverlayManager {
   /**
    * Creates HTML Container and put ChatOverlay to it, saves to this.overlays
    * Received same options as ChatOverlay, but contains 'id' and settings how to place this overlay
-   * @param options {ChatOverlayFullOptions} ChatOverlayOptions with `id` and settings how to place this overlay
+   * @param options {ChatOverlayManagerOptions} ChatOverlayOptions with `id` and settings how to place this overlay
    */
-  public createOverlay(options: ChatOverlayFullOptions) {
+  public createOverlay(options: ChatOverlayManagerOptions) {
     const container = document.createElement('div');
 
     const overlayContainer = document.createElement('div');
@@ -225,7 +226,7 @@ export class ChatOverlayManager {
    */
   public createOverlayToggle(
     position: Position,
-    options: ChatOverlayFullOptions,
+    options: ChatOverlayManagerOptions,
   ): HTMLButtonElement {
     const button = document.createElement('button');
 

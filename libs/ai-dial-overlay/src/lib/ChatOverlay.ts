@@ -1,6 +1,7 @@
-import { DeferredRequest } from './DeferredRequest';
-import { Task } from './Task';
-import { Styles, setStyles } from './styleUtils';
+import { DeferredRequest } from './utils/DeferredRequest';
+import { Styles, setStyles } from './utils/styleUtils';
+
+import { Task } from './utils/Task';
 
 export interface ChatOverlayOptions {
   domain: string;

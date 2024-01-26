@@ -5,6 +5,7 @@
   "projectType": "library",
   "targets": {
     "build:ts": {
+      "cache": true,
       "executor": "nx:run-commands",
       "outputs": ["{options.outputPath}"],
       "options": {
@@ -13,6 +14,7 @@
       }
     },
     "build:bundle": {
+      "cache": true,
       "executor": "@nx/esbuild:esbuild",
       "outputs": ["{options.outputPath}"],
       "options": {
@@ -31,7 +33,10 @@
         "outputPath": "dist/libs/ai-dial-overlay"
       }
     },
-
+    "publish": {
+      "command": "node tools/publish-lib.mjs ai-dial-overlay {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]

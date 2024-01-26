@@ -3,6 +3,9 @@
   "plugins": ["@nx"],
   "root": true,
   "parser": "@typescript-eslint/parser",
+  "env": {
+    "node": true
+  },
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
@@ -21,7 +24,7 @@
           }
         ],
         "no-empty": "warn",
-        "no-console": ["error", { "allow": ["warn", "error"] }],
+        "no-console": ["error", { "allow": ["warn", "error", "info"] }],
         "no-constant-condition": "off",
         "no-multiple-empty-lines": ["warn", { "max": 1, "maxBOF": 0 }]
       }

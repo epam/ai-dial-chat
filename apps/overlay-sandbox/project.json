@@ -1,0 +1,69 @@
+{
+  "name": "overlay-sandbox",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/overlay-sandbox",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/next:build",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/overlay-sandbox"
+      },
+      "configurations": {
+        "development": {
+          "outputPath": "apps/overlay-sandbox"
+        },
+        "production": {}
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx run ai-dial-chat:serve",
+          "nx run overlay-sandbox:serve:sandbox"
+        ],
+        "parallel": true
+      }
+    },
+    "serve:sandbox": {
+      "executor": "@nx/next:server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "overlay-sandbox:build",
+        "dev": true
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "overlay-sandbox:build:development",
+          "dev": true
+        },
+        "production": {
+          "buildTarget": "overlay-sandbox:build:production",
+          "dev": false
+        }
+      }
+    },
+    "serve-chat": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["nx run ai-dial-chat:serve"],
+        "readyWhen": "Ready"
+      }
+    },
+    "export": {
+      "executor": "@nx/next:export",
+      "options": {
+        "buildTarget": "overlay-sandbox:build:production"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    }
+  },
+  "tags": [],
+  "implicitDependencies": ["ai-dial-chat"]
+}
