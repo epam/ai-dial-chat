@@ -1,3 +1,6 @@
+// eslint-disable-next-line @nx/enforce-module-boundaries
+import { OverlayRequest } from 'shared';
+
 const defaultRequestTimeout = 10000;
 
 interface RequestParams {
@@ -50,7 +53,7 @@ export class DeferredRequest {
     this.resolve(payload);
   }
 
-  toPostMessage() {
+  toPostMessage(): OverlayRequest {
     return {
       type: this.type,
       payload: this.params?.payload,

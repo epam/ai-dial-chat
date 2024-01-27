@@ -12,4 +12,4 @@ dist
 
 .github
 helm
-apps/ai-dial-chat-e2e/html-report
+apps/chat-e2e/html-report

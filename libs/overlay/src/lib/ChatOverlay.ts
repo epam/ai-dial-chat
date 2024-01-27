@@ -3,7 +3,7 @@ import { Task } from './utils/Task';
 import { Styles, setStyles } from './utils/styleUtils';
 
 // eslint-disable-next-line @nx/enforce-module-boundaries
-import { Feature } from 'shared';
+import { Feature, OverlayRequest } from 'shared';
 
 export interface ChatOverlayOptions {
   domain: string;
@@ -12,7 +12,7 @@ export interface ChatOverlayOptions {
   theme?: string;
   modelId?: string;
 
-  enabledFeatures?: Feature;
+  enabledFeatures?: Feature[];
 
   requestTimeout?: number;
 
@@ -195,7 +195,7 @@ export class ChatOverlay {
    * If event.data.type === '@DIAL_OVERLAY/READY' means that DIAL ready to receive message -> this.iframeInteraction.complete()
    * @param event {MessageEvent} post message event
    */
-  protected process = (event: MessageEvent): void => {
+  protected process = (event: MessageEvent<OverlayRequest>): void => {
     if (event.data.type === '@DIAL_OVERLAY/READY') {
       this.iframeInteraction.complete();
       return;

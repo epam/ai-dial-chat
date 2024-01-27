@@ -22,7 +22,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "nx run ai-dial-chat:serve",
+          "nx run chat:serve",
           "nx run overlay-sandbox:serve:sandbox"
         ],
         "parallel": true
@@ -49,7 +49,7 @@
     "serve-chat": {
       "executor": "nx:run-commands",
       "options": {
-        "commands": ["nx run ai-dial-chat:serve"],
+        "commands": ["nx run chat:serve"],
         "readyWhen": "Ready"
       }
     },
@@ -59,5 +59,5 @@
     "format:fix": {}
   },
   "tags": [],
-  "implicitDependencies": ["ai-dial-chat"]
+  "implicitDependencies": ["chat"]
 }

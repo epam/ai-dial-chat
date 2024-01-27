@@ -11,6 +11,11 @@
         "reportsDirectory": "../../coverage/libs/shared"
       }
     },
+    "test:coverage": {
+      "options": {
+        "reportsDirectory": "../../coverage/libs/shared"
+      }
+    },
     "format": {},
     "format:fix": {}
   },

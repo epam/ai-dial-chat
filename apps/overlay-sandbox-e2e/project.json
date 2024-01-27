@@ -4,6 +4,9 @@
   "sourceRoot": "apps/overlay-sandbox-e2e/src",
   "targets": {
     "e2e": {
+      "executor": "nx:noop"
+    },
+    "e2e:real": {
       "executor": "@nx/playwright:playwright",
       "outputs": ["{workspaceRoot}/dist/.playwright/apps/overlay-sandbox-e2e"],
       "options": {

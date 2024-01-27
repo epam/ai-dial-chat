@@ -15,6 +15,13 @@
       "executor": "@nx/vite:test",
       "outputs": ["{options.reportsDirectory}"]
     },
+    "test:coverage": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "coverage": true
+      }
+    },
     "lint": {
       "cache": true,
       "executor": "@nx/eslint:lint",

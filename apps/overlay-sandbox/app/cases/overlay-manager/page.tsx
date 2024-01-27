@@ -5,14 +5,27 @@ import {
   ChatOverlayManagerOptions,
 } from '@epam/ai-dial-overlay';
 import { useEffect, useRef } from 'react';
+import { Feature } from 'shared';
 
 const overlayOptions: Omit<ChatOverlayManagerOptions, 'hostDomain'> = {
   id: 'test',
   domain: 'http://localhost:3000',
   theme: 'light',
   modelId: 'gpt-4',
-  enabledFeatures:
-    'conversations-section,prompts-section,top-settings,top-clear-conversation,top-chat-info,top-chat-model-settings,empty-chat-settings,header,footer,request-api-key,report-an-issue,likes',
+  enabledFeatures: [
+    Feature.ConversationsSection,
+    Feature.PromptsSection,
+    Feature.TopSettings,
+    Feature.TopClearConversation,
+    Feature.TopChatInfo,
+    Feature.TopChatModelSettings,
+    Feature.EmptyChatSettings,
+    Feature.Header,
+    Feature.Footer,
+    Feature.RequestApiKey,
+    Feature.ReportAnIssue,
+    Feature.Likes,
+  ],
   requestTimeout: 20000,
   loaderStyles: {
     background: 'white',

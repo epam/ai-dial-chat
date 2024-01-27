@@ -35,9 +35,6 @@
         ]
       }
     },
-    "test": {
-      "executor": "nx:noop"
-    },
     "format": {},
     "format:fix": {}
   },
