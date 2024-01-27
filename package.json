@@ -13,7 +13,6 @@
     "lint:fix": "nx run-many -t lint:fix",
     "format": "nx run-many -t format",
     "format:fix": "nx run-many -t format:fix",
-    "_________________": "",
     "affected:graph": "nx graph --affected",
     "affected:build": "nx affected -t build",
     "affected:test": "nx affected -t test",
@@ -31,7 +30,7 @@
   },
   "dependencies": {
     "@dqbd/tiktoken": "^1.0.7",
-    "@floating-ui/react": "^0.25.0",
+    "@floating-ui/react": "^0.26.7",
     "@nx/next": "17.2.8",
     "@opentelemetry/exporter-prometheus": "^0.47.0",
     "@opentelemetry/exporter-trace-otlp-proto": "^0.47.0",
