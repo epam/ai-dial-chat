@@ -148,6 +148,7 @@ test(
     talkToSelector,
     chat,
     tooltip,
+    conversationSettings,
     setTestIds,
   }) => {
     setTestIds(
@@ -263,6 +264,7 @@ test(
       await talkToSelector.waitForState();
       await talkToSelector.selectModel(updatedModel.name);
       await chat.applyNewEntity(updatedModel.iconUrl);
+      await conversationSettings.waitForState({ state: 'hidden' });
       await chat.sendRequestWithButton('1+2=', false);
       await conversations.getConversationArrowIcon(conversation.name).waitFor();
     });
