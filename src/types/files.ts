@@ -27,7 +27,6 @@ export type DialFile = Omit<
   'path' | 'nodeType' | 'resourceType' | 'bucket' | 'parentPath' | 'url'
 > &
   BaseDialEntity & {
-    status?: 'UPLOADING' | 'FAILED';
     percent?: number;
     fileContent?: File;
   };
