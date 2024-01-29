@@ -203,15 +203,35 @@ export const getPathToFolderById = (
   return { path: constructPath(...path), pathDepth: path.length - 1 };
 };
 
-export const getFilteredFolders = (
-  folders: FolderInterface[],
-  emptyFolderIds: string[],
-  filters: EntityFilters,
-  entities: Conversation[] | Prompt[],
-  searchTerm?: string,
-  includeEmptyFolders?: boolean,
-) => {
-  const folderIds = entities.map((c) => c.folderId).filter((fid) => fid);
+interface GetFilteredFoldersProps {
+  allFolders: FolderInterface[];
+  emptyFolderIds: string[];
+  filters: EntityFilters;
+  entities: Conversation[] | Prompt[];
+  searchTerm?: string;
+  includeEmptyFolders?: boolean;
+}
+
+export const getFilteredFolders = ({
+  allFolders,
+  emptyFolderIds,
+  filters,
+  entities,
+  searchTerm,
+  includeEmptyFolders,
+}: GetFilteredFoldersProps) => {
+  const rootFolders = allFolders.filter(
+    (folder) => !folder.folderId && filters.sectionFilter(folder),
+  );
+  const filteredIds = new Set(
+    rootFolders.flatMap((folder) =>
+      getChildAndCurrentFoldersIdsById(folder.id, allFolders),
+    ),
+  );
+  const folders = allFolders.filter((folder) => filteredIds.has(folder.id));
+  const folderIds = entities
+    .map((c) => c.folderId)
+    .filter((fid) => fid && filteredIds.has(fid));
 
   if (!searchTerm?.trim().length) {
     const markedFolderIds = folders
@@ -225,13 +245,13 @@ export const getFilteredFolders = (
   }
 
   const filteredFolderIds = new Set(
-    folderIds.flatMap((fid) => getParentAndCurrentFolderIdsById(folders, fid)),
+    folderIds
+      .filter((fid) => fid && filteredIds.has(fid))
+      .flatMap((fid) => getParentAndCurrentFolderIdsById(folders, fid)),
   );
 
   return folders.filter(
-    (folder) =>
-      (folder.folderId || filters.sectionFilter(folder)) &&
-      filteredFolderIds.has(folder.id),
+    (folder) => filteredIds.has(folder.id) && filteredFolderIds.has(folder.id),
   );
 };
 

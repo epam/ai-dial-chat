@@ -1,9 +1,7 @@
 import { IconX } from '@tabler/icons-react';
-import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { ReactNode, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
-
-import classNames from 'classnames';
 
 import { Replay } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -92,9 +90,6 @@ export const ConversationSettings = ({
     [modelId, modelsMap],
   );
 
-  const [width, setWidth] = useState(0);
-  const ref = useRef<HTMLDivElement | null>(null);
-
   const isNoModelInUserMessages = useMemo(() => {
     return (
       replay.isReplay &&
@@ -103,33 +98,10 @@ export const ConversationSettings = ({
     );
   }, [replay]);
 
-  useEffect(() => {
-    if (!ref) {
-      return;
-    }
-
-    const resizeObserver = new ResizeObserver(() => {
-      ref.current?.clientWidth && setWidth(ref.current.clientWidth);
-    });
-    ref.current && resizeObserver.observe(ref.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [ref]);
-
   return (
-    <div
-      ref={ref}
-      className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t"
-    >
+    <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
       <div
-        className={classNames(
-          'relative h-full w-full gap-[1px] overflow-auto',
-          {
-            'grid grid-cols-2 grid-rows-1': width >= 450,
-          },
-        )}
+        className="relative h-full w-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1"
         data-qa="conversation-settings"
       >
         <div className="shrink overflow-auto bg-layer-2 px-3 py-4 md:px-5">
@@ -142,7 +114,7 @@ export const ConversationSettings = ({
           />
         </div>
         <div
-          className="flex max-h-full shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
+          className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
           data-qa="entity-settings"
         >
           {!replay.replayAsIs ? (

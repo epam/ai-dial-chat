@@ -357,8 +357,8 @@ const setSystemPromptEpic: AppEpic = (action$, state$) =>
 
 const notifyHostGPTMessageStatus: AppEpic = (_, state$) =>
   state$.pipe(
-    // we shouldn't proceed if we are not iframe
-    filter((state) => SettingsSelectors.selectIsIframe(state)),
+    // we shouldn't proceed if we are not overlay
+    filter((state) => SettingsSelectors.selectIsOverlay(state)),
     map((state) =>
       ConversationsSelectors.selectIsConversationsStreaming(state),
     ),

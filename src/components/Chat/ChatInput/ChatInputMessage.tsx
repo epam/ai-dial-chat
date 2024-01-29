@@ -60,7 +60,7 @@ export const ChatInputMessage = ({
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [showPluginSelect, setShowPluginSelect] = useState(false);
 
-  const isIframe = useAppSelector(SettingsSelectors.selectIsIframe);
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -171,7 +171,7 @@ export const ChatInputMessage = ({
     onSend({
       role: Role.User,
       content,
-      ...getUserCustomContent(selectedFiles),
+      custom_content: getUserCustomContent(selectedFiles),
     });
     dispatch(FilesActions.resetSelectedFiles());
     setContent('');
@@ -318,6 +318,17 @@ export const ChatInputMessage = ({
     return t('Please type a message');
   };
 
+  const paddingLeftClass = displayAttachFunctionality
+    ? isOverlay
+      ? 'pl-11'
+      : 'pl-12'
+    : isOverlay
+    ? 'pl-3'
+    : 'pl-4';
+  const overlayPaddingAndTextStyleClass = isOverlay
+    ? 'py-[7px] pr-9 text-sm'
+    : 'py-2.5 pr-10 text-base md:py-3';
+
   return (
     <div
       className={classNames(
@@ -326,20 +337,21 @@ export const ChatInputMessage = ({
       )}
     >
       <div
-        className="relative m-0 flex max-h-[400px] min-h-[40px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary"
+        className="relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary"
         data-qa="message"
       >
         <textarea
           ref={textareaRef}
           className={classNames(
-            'm-0 min-h-[40px] w-full grow resize-none bg-transparent py-3 pr-10 outline-none placeholder:text-secondary',
-            displayAttachFunctionality ? 'pl-12' : 'pl-4',
+            'm-0 min-h-[38px] w-full grow resize-none bg-transparent leading-[150%] outline-none placeholder:text-secondary',
+            overlayPaddingAndTextStyleClass,
+            paddingLeftClass,
           )}
           style={{ maxHeight: `${MAX_HEIGHT}px` }}
           placeholder={
-            isIframe
+            isOverlay
               ? t('Type a message') || ''
-              : t('Type a message or type "/" to select a prompt...') || ''
+              : t('Type a text or «/» to use a prompt...') || ''
           }
           value={content}
           rows={1}

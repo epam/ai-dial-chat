@@ -44,17 +44,13 @@ export const getUserCustomContent = (
   }
 
   return {
-    custom_content: {
-      attachments: files
-        .filter(
-          (file) => file.status !== 'FAILED' && file.status !== 'UPLOADING',
-        )
-        .map((file) => ({
-          type: file.contentType,
-          title: file.name,
-          url: encodeURI(`${file.absolutePath}/${file.name}`),
-        })),
-    },
+    attachments: files
+      .filter((file) => file.status !== 'FAILED' && file.status !== 'UPLOADING')
+      .map((file) => ({
+        type: file.contentType,
+        title: file.name,
+        url: encodeURI(`${file.absolutePath}/${file.name}`),
+      })),
   };
 };
 
