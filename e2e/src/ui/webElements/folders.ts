@@ -115,17 +115,6 @@ export class Folders extends BaseElement {
     return folder.getComputedStyleProperty(Styles.color);
   }
 
-  public async getFolderGroupBackgroundColor(parentFolderName: string) {
-    const backgroundColor = await this.foldersGroup(
-      parentFolderName,
-    ).getComputedStyleProperty(Styles.backgroundColor);
-    backgroundColor[0] = backgroundColor[0].replace(
-      ExpectedConstants.backgroundColorPattern,
-      '$1)',
-    );
-    return backgroundColor[0];
-  }
-
   public getFolderEntities(name: string, index?: number) {
     return this.getFolderByName(name, index).locator(
       `~${Tags.div} ${this.entitySelector}`,

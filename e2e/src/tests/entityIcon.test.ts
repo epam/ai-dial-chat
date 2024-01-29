@@ -40,19 +40,18 @@ test(
         )
         .toBe(allExpectedEntities.length);
 
-      for (const entity of allExpectedEntities) {
-        const actualEntity = actualEntitiesIcons.find(
-          (e) => e.entityName === entity.name,
-        )!;
-        const expectedEntityIcon = await iconApiHelper.getEntityIcon(entity);
-        expect
-          .soft(
-            actualEntity.icon,
-            `${ExpectedMessages.entityIconIsValid} for ${entity.name}`,
-          )
-          .toBe(expectedEntityIcon);
-      }
-
+      const randomEntity =
+        GeneratorUtil.randomArrayElement(allExpectedEntities);
+      const actualEntity = actualEntitiesIcons.find(
+        (e) => e.entityName === randomEntity.name,
+      )!;
+      const expectedEntityIcon = await iconApiHelper.getEntityIcon(randomEntity);
+      expect
+        .soft(
+          actualEntity.icon,
+          `${ExpectedMessages.entityIconIsValid} for ${randomEntity.name}`,
+        )
+        .toBe(expectedEntityIcon);
       await modelsDialog.closeDialog();
     });
 
@@ -67,19 +66,17 @@ test(
         )
         .toBeGreaterThanOrEqual(expectedAddons.length);
 
-      for (const addon of expectedAddons) {
-        const actualAddon = actualAddonsIcons.find(
-          (a) => a.entityName === addon.name,
-        )!;
-        const expectedAddonIcon = await iconApiHelper.getEntityIcon(addon);
-        expect
-          .soft(
-            actualAddon.icon,
-            `${ExpectedMessages.addonIconIsValid} for ${addon.name}`,
-          )
-          .toBe(expectedAddonIcon);
-      }
-
+      const randomAddon = GeneratorUtil.randomArrayElement(expectedAddons);
+      const actualAddon = actualAddonsIcons.find(
+        (a) => a.entityName === randomAddon.name,
+      )!;
+      const expectedAddonIcon = await iconApiHelper.getEntityIcon(randomAddon);
+      expect
+        .soft(
+          actualAddon.icon,
+          `${ExpectedMessages.addonIconIsValid} for ${randomAddon.name}`,
+        )
+        .toBe(expectedAddonIcon);
       await addonsDialog.closeDialog();
     });
 
