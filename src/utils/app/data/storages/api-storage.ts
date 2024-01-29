@@ -6,13 +6,13 @@ import {
   of,
   switchMap,
   throwError,
-  toArray,
 } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
+import { ConversationApiStorage } from '@/src/utils/app/data/storages/conversation-api-storage';
+import { PromptApiStorage } from '@/src/utils/app/data/storages/prompt-api-storage';
 import {
   ApiKeys,
-  getConversationApiKeyFromConversation,
   getConversationApiKeyFromConversationInfo,
   getPromptApiKey,
   parseConversationApiKey,
@@ -20,11 +20,7 @@ import {
 } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import {
-  BackendChatEntity,
-  BackendDataNodeType,
-  DialChatEntity,
-} from '@/src/types/common';
+import { BackendChatEntity, BackendDataNodeType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
@@ -33,6 +29,9 @@ import { constructPath } from '../../file';
 import { DataService } from '../data-service';
 
 export class ApiStorage implements DialStorage {
+  private _conversationApiStorage = new ConversationApiStorage();
+  private _promptApiStorage = new PromptApiStorage();
+
   static request(url: string, options?: RequestInit) {
     return fromFetch(url, options).pipe(
       switchMap((response) => {
@@ -91,51 +90,6 @@ export class ApiStorage implements DialStorage {
         xhr.abort();
       };
     });
-  }
-
-  static setData(
-    entity: Conversation | Prompt,
-    entityType: ApiKeys,
-    relativePath: string | undefined,
-    entityId: string,
-  ): Observable<{ result?: DialChatEntity }> {
-    const resultPath = encodeURI(
-      `${entityType}/${DataService.getBucket()}/${
-        relativePath ? `${relativePath}/` : ''
-      }${entityId}`,
-    );
-
-    return ApiStorage.requestOld({
-      url: `api/${entityType}/${resultPath}`,
-      method: 'PUT',
-      async: true,
-      body: JSON.stringify(entity),
-    }).pipe(
-      map(({ result }: { result?: unknown }): { result?: DialChatEntity } => {
-        if (!result) {
-          return {};
-        }
-
-        const typedResult = result as BackendChatEntity;
-        const relativePath = typedResult.parentPath || undefined;
-
-        return {
-          result: {
-            id: constructPath(relativePath, typedResult.name),
-            name: typedResult.name,
-            absolutePath: constructPath(
-              entityType,
-              typedResult.bucket,
-              relativePath,
-            ),
-            relativePath: relativePath,
-            folderId: relativePath,
-            updatedAt: typedResult.updatedAt,
-            serverSynced: true,
-          },
-        };
-      }),
-    );
   }
 
   getConversationsFolders(): Observable<FolderInterface[]> {
@@ -215,19 +169,11 @@ export class ApiStorage implements DialStorage {
     );
   }
 
-  setConversations(
-    _conversations: Conversation[],
-  ): Observable<{ result?: DialChatEntity | undefined }[]> {
+  setConversations(_conversations: Conversation[]): Observable<void> {
     return from(_conversations).pipe(
       mergeMap((conversation) =>
-        ApiStorage.setData(
-          conversation,
-          ApiKeys.Conversations,
-          undefined, // TODO: define relative path
-          getConversationApiKeyFromConversation(conversation),
-        ),
+        this._conversationApiStorage.createEntity(conversation),
       ),
-      toArray(),
     );
   }
 
@@ -273,19 +219,9 @@ export class ApiStorage implements DialStorage {
     );
   }
 
-  setPrompts(
-    _prompts: Prompt[],
-  ): Observable<{ result?: DialChatEntity | undefined }[]> {
+  setPrompts(_prompts: Prompt[]): Observable<void> {
     return from(_prompts).pipe(
-      mergeMap((prompt) =>
-        ApiStorage.setData(
-          prompt,
-          ApiKeys.Prompts,
-          undefined, // TODO: define relative path
-          prompt.name,
-        ),
-      ),
-      toArray(),
+      mergeMap((prompt) => this._promptApiStorage.createEntity(prompt)),
     );
   }
 }
