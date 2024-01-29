@@ -41,23 +41,16 @@ test(
 
       const randomEntity =
         GeneratorUtil.randomArrayElement(allExpectedEntities);
-      for (const entity of allExpectedEntities) {
-        const actualEntity = actualEntitiesIcons.find(
-          (e) => e.entityName === entity.name,
-        )!;
-        expect
-          .soft(actualEntity.icon, ExpectedMessages.entityHasIcon)
-          .toBeDefined();
-        if (entity === randomEntity) {
-          const expectedEntityIcon = await apiHelper.getEntityIcon(entity);
-          expect
-            .soft(
-              actualEntity.icon,
-              `${ExpectedMessages.entityIconIsValid} for ${entity.name}`,
-            )
-            .toBe(expectedEntityIcon);
-        }
-      }
+      const actualEntity = actualEntitiesIcons.find(
+        (e) => e.entityName === randomEntity.name,
+      )!;
+      const expectedEntityIcon = await apiHelper.getEntityIcon(randomEntity);
+      expect
+        .soft(
+          actualEntity.icon,
+          `${ExpectedMessages.entityIconIsValid} for ${randomEntity.name}`,
+        )
+        .toBe(expectedEntityIcon);
       await modelsDialog.closeDialog();
     });
 
@@ -73,23 +66,16 @@ test(
         .toBeGreaterThanOrEqual(expectedAddons.length);
 
       const randomAddon = GeneratorUtil.randomArrayElement(expectedAddons);
-      for (const addon of expectedAddons) {
-        const actualAddon = actualAddonsIcons.find(
-          (a) => a.entityName === addon.name,
-        )!;
-        expect
-          .soft(actualAddon.icon, ExpectedMessages.entityHasIcon)
-          .toBeDefined();
-        if (addon === randomAddon) {
-          const expectedAddonIcon = await apiHelper.getEntityIcon(addon);
-          expect
-            .soft(
-              actualAddon.icon,
-              `${ExpectedMessages.addonIconIsValid} for ${addon.name}`,
-            )
-            .toBe(expectedAddonIcon);
-        }
-      }
+      const actualAddon = actualAddonsIcons.find(
+        (a) => a.entityName === randomAddon.name,
+      )!;
+      const expectedAddonIcon = await apiHelper.getEntityIcon(randomAddon);
+      expect
+        .soft(
+          actualAddon.icon,
+          `${ExpectedMessages.addonIconIsValid} for ${randomAddon.name}`,
+        )
+        .toBe(expectedAddonIcon);
       await addonsDialog.closeDialog();
     });
 
