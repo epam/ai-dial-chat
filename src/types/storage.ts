@@ -1,15 +1,10 @@
 import { Observable } from 'rxjs';
 
-
-
 import { Conversation } from '@/src/types/chat';
-
-
 
 import { ConversationInfo } from './chat';
 import { FolderInterface } from './folder';
 import { Prompt, PromptInfo } from './prompt';
-
 
 export enum StorageType {
   BrowserStorage = 'browserStorage',
@@ -34,7 +29,7 @@ export enum UIStorageKeys {
 }
 
 export interface EntityStorage<EntityInfo, Entity> {
-  getEntities(path: string): Observable<EntityInfo[]>;
+  getEntities(path?: string): Observable<EntityInfo[]>; // listing with short information
 
   getEntity(info: EntityInfo): Observable<Entity>;
 
@@ -44,9 +39,11 @@ export interface EntityStorage<EntityInfo, Entity> {
 
   deleteEntity(info: EntityInfo): Observable<void>;
 
-  getKey(info: EntityInfo): string;
+  getEntityKey(info: EntityInfo): string;
 
-  parseKey(key: string): EntityInfo;
+  parseEntityKey(key: string): EntityInfo;
+
+  getStorageKey(): string; // e.g. ApiKeys or `conversationHistory`/`prompts` in case of localStorage
 }
 
 export interface DialStorage {
