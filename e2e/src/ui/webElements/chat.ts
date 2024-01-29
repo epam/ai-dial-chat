@@ -236,4 +236,19 @@ export class Chat extends BaseElement {
     );
     await this.getPlaybackControl().playbackPreviousButton.click();
   }
+
+  public async applyNewEntity(...iconsHosts: (string | undefined)[]) {
+    const responses = [];
+    for (const iconHost of iconsHosts) {
+      const resp = this.page.waitForResponse(
+        (response) =>
+          response.url().includes(iconHost!) && response.status() === 200,
+      );
+      responses.push(resp);
+    }
+    await this.applyChanges().click();
+    for (const resp of responses) {
+      await resp;
+    }
+  }
 }
