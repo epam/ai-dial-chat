@@ -844,11 +844,10 @@ test(
 
       const newModels = [ModelIds.BISON_001, ModelIds.GPT_4];
       for (let i = 1; i <= newModels.length; i++) {
+        const newModel = ModelsUtil.getModel(newModels[i - 1])!;
         await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectModel(
-          ModelsUtil.getModel(newModels[i - 1])!.name,
-        );
-        await chat.applyChanges().click();
+        await talkToSelector.selectModel(newModel.name);
+        await chat.applyNewEntity(newModel.iconUrl);
         const newMessage = `${i}*2=`;
         await chat.sendRequestWithButton(newMessage);
       }

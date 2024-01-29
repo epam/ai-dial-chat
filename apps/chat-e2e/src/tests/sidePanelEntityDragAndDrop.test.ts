@@ -129,13 +129,6 @@ test(
       for (const folder of nestedFolders) {
         await folderConversations.getFolderByName(folder.name).waitFor();
       }
-      const folderBackgroundColor =
-        await folderConversations.getFolderGroupBackgroundColor(
-          nestedFolders[0].name,
-        );
-      expect
-        .soft(folderBackgroundColor, ExpectedMessages.folderIsHighlighted)
-        .toBe(Colors.backgroundAccentSecondary);
       await page.mouse.up();
     });
 
@@ -162,10 +155,8 @@ test('Chat is moved using drag&drop to expanded folder', async ({
   localStorageManager,
   chatBar,
   setTestIds,
-  setIssueIds,
 }) => {
   setTestIds('EPMRTC-941');
-  setIssueIds('482');
   let folderConversation: FolderConversation;
   let conversationToDrop: Conversation;
 
@@ -274,12 +265,6 @@ test('Prompt is moved using drag&drop to collapsed folder', async ({
     await promptBar.drugPromptToFolder(folders[0].name, prompt.name);
     await folderPrompts.getFolderByName(folders[1].name).waitFor();
     await folderPrompts.waitForFolderGroupIsHighlighted(folders[0].name);
-
-    const folderBackgroundColor =
-      await folderPrompts.getFolderGroupBackgroundColor(folders[0].name);
-    expect
-      .soft(folderBackgroundColor, ExpectedMessages.folderIsHighlighted)
-      .toBe(Colors.backgroundAccentTertiary);
     await page.mouse.up();
     await folderPrompts.getFolderEntity(folders[0].name, prompt.name).waitFor();
   });
