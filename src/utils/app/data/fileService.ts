@@ -11,9 +11,8 @@ import {
 } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
 
-import { ApiKeys } from '../../server/api';
+import { ApiKeys, ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
-import { ApiStorage } from './storages/api-storage';
 
 export class FileService {
   public static sendFile(
@@ -27,7 +26,7 @@ export class FileService {
       }${fileName}`,
     );
 
-    return ApiStorage.requestOld({
+    return ApiUtils.requestOld({
       url: `api/${ApiKeys.Files}/${resultPath}`,
       method: 'PUT',
       async: true,
@@ -85,9 +84,7 @@ export class FileService {
     });
     const resultQuery = query.toString();
 
-    return ApiStorage.request(
-      `api/${ApiKeys.Files}/listing?${resultQuery}`,
-    ).pipe(
+    return ApiUtils.request(`api/${ApiKeys.Files}/listing?${resultQuery}`).pipe(
       map((folders: BackendFileFolder[]) => {
         return folders.map((folder): FileFolderInterface => {
           const relativePath = folder.parentPath || undefined;
@@ -115,7 +112,7 @@ export class FileService {
       constructPath('files', DataService.getBucket(), filePath),
     );
 
-    return ApiStorage.request(`api/${ApiKeys.Files}/${resultPath}`, {
+    return ApiUtils.request(`api/${ApiKeys.Files}/${resultPath}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -133,9 +130,7 @@ export class FileService {
     });
     const resultQuery = query.toString();
 
-    return ApiStorage.request(
-      `api/${ApiKeys.Files}/listing?${resultQuery}`,
-    ).pipe(
+    return ApiUtils.request(`api/${ApiKeys.Files}/listing?${resultQuery}`).pipe(
       map((files: BackendFile[]) => {
         return files.map((file): DialFile => {
           const relativePath = file.parentPath || undefined;

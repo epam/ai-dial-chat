@@ -3,14 +3,15 @@ import { Observable, map } from 'rxjs';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
-import { Conversation } from '@/src/types/chat';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FolderInterface } from '@/src/types/folder';
-import { Prompt } from '@/src/types/prompt';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
 import { Theme } from '@/src/types/themes';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
+import { ApiUtils } from '../../server/api';
 import { FileService } from './fileService';
 import { ApiStorage } from './storages/api-storage';
 import { BrowserStorage } from './storages/browser-storage';
@@ -46,7 +47,7 @@ export class DataService extends FileService {
     return this.getDataStorage().setPromptsFolders(folders);
   }
 
-  public static getPrompts(): Observable<Prompt[]> {
+  public static getPrompts(): Observable<PromptInfo[]> {
     return this.getDataStorage().getPrompts();
   }
 
@@ -54,7 +55,7 @@ export class DataService extends FileService {
     return this.getDataStorage().setPrompts(prompts);
   }
 
-  public static getConversations(): Observable<Conversation[]> {
+  public static getConversations(): Observable<ConversationInfo[]> {
     return this.getDataStorage().getConversations();
   }
 
@@ -114,7 +115,7 @@ export class DataService extends FileService {
   }
 
   public static getAvailableThemes(): Observable<Theme[]> {
-    return ApiStorage.request('api/themes/listing');
+    return ApiUtils.request('api/themes/listing');
   }
 
   public static getChatbarWidth(): Observable<number> {
@@ -196,7 +197,7 @@ export class DataService extends FileService {
   }
 
   public static requestBucket(): Observable<{ bucket: string }> {
-    return ApiStorage.request(`api/bucket`, {
+    return ApiUtils.request(`api/bucket`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
