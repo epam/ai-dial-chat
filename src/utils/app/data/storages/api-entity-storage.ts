@@ -1,16 +1,18 @@
 import { Observable, map } from 'rxjs';
 
-import { ApiUtils } from '@/src/utils/server/api';
+import { ApiUtils, getParentPath } from '@/src/utils/server/api';
 
 import { BackendChatEntity, BackendDataNodeType } from '@/src/types/common';
 import { EntityStorage } from '@/src/types/storage';
 
 import { DataService } from '../data-service';
 
-export abstract class ApiEntityStorage<EntityInfo, Entity extends EntityInfo>
-  implements EntityStorage<EntityInfo, Entity>
+export abstract class ApiEntityStorage<
+  EntityInfo extends { folderId?: string },
+  Entity extends EntityInfo,
+> implements EntityStorage<EntityInfo, Entity>
 {
-  getEntities(path?: string | undefined): Observable<EntityInfo[]> {
+  getEntities(path?: string): Observable<EntityInfo[]> {
     const filter = BackendDataNodeType.ITEM;
 
     const query = new URLSearchParams({
@@ -39,7 +41,9 @@ export abstract class ApiEntityStorage<EntityInfo, Entity extends EntityInfo>
   getEntity(info: EntityInfo): Observable<Entity> {
     const key = this.getEntityKey(info);
     return ApiUtils.request(
-      `api/${this.getStorageKey()}/${DataService.getBucket()}/${key}`,
+      `api/${this.getStorageKey()}/${DataService.getBucket()}${getParentPath(
+        info.folderId,
+      )}/${key}`,
     ).pipe(
       map((entity: Entity) => {
         return {
@@ -53,7 +57,9 @@ export abstract class ApiEntityStorage<EntityInfo, Entity extends EntityInfo>
   createEntity(entity: Entity): Observable<void> {
     const key = this.getEntityKey(entity);
     return ApiUtils.request(
-      `api/${this.getStorageKey()}/${DataService.getBucket()}/${key}`,
+      `api/${this.getStorageKey()}/${DataService.getBucket()}${getParentPath(
+        entity.folderId,
+      )}/${key}`,
       {
         method: 'PUT',
         headers: {
@@ -69,7 +75,9 @@ export abstract class ApiEntityStorage<EntityInfo, Entity extends EntityInfo>
   deleteEntity(info: EntityInfo): Observable<void> {
     const key = this.getEntityKey(info);
     return ApiUtils.request(
-      `api/${this.getStorageKey()}/${DataService.getBucket()}/${key}`,
+      `api/${this.getStorageKey()}/${DataService.getBucket()}${getParentPath(
+        info.folderId,
+      )}/${key}`,
       {
         method: 'DELETE',
         headers: {

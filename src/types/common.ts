@@ -1,5 +1,3 @@
-import { BackendFile } from '@/src/types/files';
-
 import { ShareInterface } from './share';
 
 export enum EntityType {
@@ -69,7 +67,7 @@ export interface BaseDialEntity {
   folderId?: string;
   serverSynced?: boolean;
   status?: 'UPLOADING' | 'FAILED';
-};
+}
 
 export type DialChatEntity = Omit<
   BackendChatEntity,

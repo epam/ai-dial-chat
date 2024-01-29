@@ -5,6 +5,4 @@ export interface Prompt extends ShareEntity, PromptInfo {
   content?: string;
 }
 
-export interface PromptInfo extends Entity {
-  uploaded?: boolean;
-}
+export type PromptInfo = Entity;

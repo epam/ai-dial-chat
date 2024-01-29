@@ -1,97 +1,21 @@
-import {
-  Observable,
-  from,
-  map,
-  mergeMap,
-  of,
-  switchMap,
-  throwError,
-  toArray,
-} from 'rxjs';
-import { fromFetch } from 'rxjs/fetch';
+import { Observable, from, map, mergeMap, of } from 'rxjs';
 
-import {
-  ApiKeys,
-  getConversationApiKeyFromConversation,
-  getConversationApiKeyFromConversationInfo,
-  getPromptApiKey,
-  parseConversationApiKey,
-  parsePromptApiKey,
-} from '@/src/utils/server/api';
+import { ApiKeys, ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import {
-  BackendChatEntity,
-  BackendDataNodeType,
-  DialChatEntity,
-} from '@/src/types/common';
+import { BackendChatEntity, DialChatEntity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
 
 import { constructPath } from '../../file';
 import { DataService } from '../data-service';
+import { ConversationApiStorage } from './conversation-api-storage';
+import { PromptApiStorage } from './prompt-api-storage';
 
 export class ApiStorage implements DialStorage {
-  static request(url: string, options?: RequestInit) {
-    return fromFetch(url, options).pipe(
-      switchMap((response) => {
-        if (!response.ok) {
-          return throwError(() => new Error(response.statusText));
-        }
-
-        return from(response.json());
-      }),
-    );
-  }
-
-  static requestOld({
-    url,
-    method,
-    async,
-    body,
-  }: {
-    url: string | URL;
-    method: string;
-    async: boolean;
-    body: XMLHttpRequestBodyInit | Document | null | undefined;
-  }): Observable<{ percent?: number; result?: unknown }> {
-    return new Observable((observer) => {
-      const xhr = new XMLHttpRequest();
-
-      xhr.open(method, url, async);
-      xhr.responseType = 'json';
-
-      // Track upload progress
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const percentComplete = (event.loaded / event.total) * 100;
-          observer.next({ percent: Math.round(percentComplete) });
-        }
-      };
-
-      // Handle response
-      xhr.onload = () => {
-        if (xhr.status === 200) {
-          observer.next({ result: xhr.response });
-          observer.complete();
-        } else {
-          observer.error('Request failed');
-        }
-      };
-
-      xhr.onerror = () => {
-        observer.error('Request failed');
-      };
-
-      xhr.send(body);
-
-      // Return cleanup function
-      return () => {
-        xhr.abort();
-      };
-    });
-  }
+  private conversationStorage = new ConversationApiStorage();
+  private promptStorage = new PromptApiStorage();
 
   static setData(
     entity: Conversation | Prompt,
@@ -105,7 +29,7 @@ export class ApiStorage implements DialStorage {
       }${entityId}`,
     );
 
-    return ApiStorage.requestOld({
+    return ApiUtils.requestOld({
       url: `api/${entityType}/${resultPath}`,
       method: 'PUT',
       async: true,
@@ -143,27 +67,11 @@ export class ApiStorage implements DialStorage {
   }
 
   setConversationsFolders(_folders: FolderInterface[]): Observable<void> {
-    const resultPath = encodeURI(constructPath(DataService.getBucket(), ''));
-
-    const response = ApiStorage.request(
-      `api/${ApiKeys.Conversations}/${resultPath}`,
-    );
-
-    // eslint-disable-next-line no-console
-    console.log(response);
-
-    return response;
+    return of(); //TODO
   }
 
   getPromptsFolders(): Observable<FolderInterface[]> {
-    const resultPath = encodeURI(constructPath(DataService.getBucket(), ''));
-
-    const response = ApiStorage.request(`api/${ApiKeys.Prompts}/${resultPath}`);
-
-    // eslint-disable-next-line no-console
-    console.log(response);
-
-    return response;
+    return of(); //TODO
   }
 
   setPromptsFolders(_folders: FolderInterface[]): Observable<void> {
@@ -171,121 +79,32 @@ export class ApiStorage implements DialStorage {
   }
 
   getConversations(path?: string): Observable<ConversationInfo[]> {
-    const filter = BackendDataNodeType.ITEM;
-
-    const query = new URLSearchParams({
-      filter,
-      bucket: DataService.getBucket(),
-      ...(path && { path }),
-    });
-    const resultQuery = query.toString();
-
-    return ApiStorage.request(
-      `api/${ApiKeys.Conversations}/listing?${resultQuery}`,
-    ).pipe(
-      map((conversations: BackendChatEntity[]) => {
-        return conversations.map((conversation): ConversationInfo => {
-          const relativePath = conversation.parentPath || undefined;
-          const conversationInfo = parseConversationApiKey(conversation.name);
-
-          return {
-            ...conversationInfo,
-            folderId: relativePath,
-          };
-        });
-      }),
-    );
+    return this.conversationStorage.getEntities(path);
   }
 
-  getConversation(
-    info: ConversationInfo,
-    _path?: string | undefined,
-  ): Observable<Conversation> {
-    const key = getConversationApiKeyFromConversationInfo(info);
-    return ApiStorage.request(
-      `api/${ApiKeys.Conversations}/${DataService.getBucket()}/${key}`,
-    ).pipe(
-      map((conversation: Conversation) => {
-        return {
-          ...info,
-          ...conversation,
-          uploaded: true,
-        };
-      }),
-    );
+  getConversation(info: ConversationInfo): Observable<Conversation> {
+    return this.conversationStorage.getEntity(info);
   }
 
-  setConversations(
-    _conversations: Conversation[],
-  ): Observable<{ result?: DialChatEntity | undefined }[]> {
+  setConversations(_conversations: Conversation[]): Observable<void> {
     return from(_conversations).pipe(
       mergeMap((conversation) =>
-        ApiStorage.setData(
-          conversation,
-          ApiKeys.Conversations,
-          undefined, // TODO: define relative path
-          getConversationApiKeyFromConversation(conversation),
-        ),
+        this.conversationStorage.createEntity(conversation),
       ),
-      toArray(),
     );
   }
 
   getPrompts(path?: string): Observable<Prompt[]> {
-    const filter = BackendDataNodeType.ITEM;
-
-    const query = new URLSearchParams({
-      filter,
-      bucket: DataService.getBucket(),
-      ...(path && { path }),
-    });
-    const resultQuery = query.toString();
-
-    return ApiStorage.request(
-      `api/${ApiKeys.Prompts}/listing?${resultQuery}`,
-    ).pipe(
-      map((prompts: BackendChatEntity[]) => {
-        return prompts.map((prompt): PromptInfo => {
-          const relativePath = prompt.parentPath || undefined;
-          const promptInfo = parsePromptApiKey(prompt.name);
-
-          return {
-            ...promptInfo,
-            folderId: relativePath,
-          };
-        });
-      }),
-    );
+    return this.promptStorage.getEntities(path);
   }
 
-  getPrompt(info: PromptInfo, _path?: string | undefined): Observable<Prompt> {
-    const key = getPromptApiKey(info);
-    return ApiStorage.request(
-      `api/${ApiKeys.Prompts}/${DataService.getBucket()}/${key}`,
-    ).pipe(
-      map((prompt: Prompt) => {
-        return {
-          ...info,
-          ...prompt,
-          uploaded: true,
-        };
-      }),
-    );
+  getPrompt(info: PromptInfo): Observable<Prompt> {
+    return this.promptStorage.getEntity(info);
   }
 
-  setPrompts(
-    _prompts: Prompt[],
-  ): Observable<{ result?: DialChatEntity | undefined }[]> {
+  setPrompts(_prompts: Prompt[]): Observable<void> {
     return from(_prompts).pipe(
-      mergeMap((prompt) =>
-        ApiStorage.setData(
-          prompt,
-          ApiKeys.Prompts,
-          undefined, // TODO: define relative path
-          prompt.name,
-        ),
-      ),
-      toArray(),
+      mergeMap((prompt) => this.promptStorage.createEntity(prompt)),
     );
   }
 }

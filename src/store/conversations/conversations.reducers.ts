@@ -7,6 +7,7 @@ import { translate } from '@/src/utils/app/translation';
 import {
   Conversation,
   ConversationEntityModel,
+  ConversationInfo,
   Message,
   Role,
 } from '@/src/types/chat';
@@ -105,7 +106,7 @@ export const conversationsSlice = createSlice({
           };
         },
       );
-      state.conversations = state.conversations.concat(newConversations);
+      state.conversations = state.conversations.concat(newConversations); // TODO: save in API
       state.selectedConversationsIds = newConversations.map(({ id }) => id);
     },
     updateConversation: (
@@ -267,7 +268,7 @@ export const conversationsSlice = createSlice({
           messagesStack: [],
         },
       };
-      state.conversations = state.conversations.concat(newConversation);
+      state.conversations = state.conversations.concat(newConversation); // TODO: save in API
       state.selectedConversationsIds = [newConversation.id];
     },
     createNewPlaybackConversation: (
@@ -303,7 +304,7 @@ export const conversationsSlice = createSlice({
           replayAsIs: false,
         },
       };
-      state.conversations = state.conversations.concat(newConversation);
+      state.conversations = state.conversations.concat(newConversation); // TODO: save in API
       state.selectedConversationsIds = [newConversation.id];
     },
     duplicateConversation: (
@@ -323,7 +324,7 @@ export const conversationsSlice = createSlice({
         id: uuidv4(),
         lastActivityDate: Date.now(),
       };
-      state.conversations = state.conversations.concat(newConversation);
+      state.conversations = state.conversations.concat(newConversation); //TODO: save in API
       state.selectedConversationsIds = [newConversation.id];
     },
     duplicateSelectedConversations: (state) => {
@@ -340,7 +341,7 @@ export const conversationsSlice = createSlice({
             FeatureType.Chat,
           )
         ) {
-          const newConversation: Conversation = {
+          const newConversation: ConversationInfo = {
             ...conversation,
             ...resetShareEntity,
             folderId: undefined,
@@ -359,7 +360,7 @@ export const conversationsSlice = createSlice({
           newSelectedIds.push(id);
         }
       });
-      state.conversations = state.conversations.concat(newConversations);
+      state.conversations = state.conversations.concat(newConversations); // TODO: save in API
       state.selectedConversationsIds = newSelectedIds;
     },
     exportConversations: (state) => state,
@@ -372,7 +373,7 @@ export const conversationsSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        conversations: Conversation[];
+        conversations: ConversationInfo[];
         folders: FolderInterface[];
       }>,
     ) => {
@@ -384,7 +385,7 @@ export const conversationsSlice = createSlice({
     },
     updateConversations: (
       state,
-      { payload }: PayloadAction<{ conversations: Conversation[] }>,
+      { payload }: PayloadAction<{ conversations: ConversationInfo[] }>,
     ) => {
       state.conversations = payload.conversations;
     },

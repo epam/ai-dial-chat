@@ -78,7 +78,6 @@ export interface Conversation extends ShareEntity, ConversationInfo {
   // Addons selected by user clicks
   selectedAddons: string[];
   assistantModelId?: string;
-  lastActivityDate?: number;
 
   isMessageStreaming: boolean;
   isNameChanged?: boolean;
@@ -114,8 +113,7 @@ export interface ConversationEntityModel {
 
 export interface ConversationInfo extends Entity {
   model: ConversationEntityModel;
+  lastActivityDate?: number;
   isPlayback?: boolean;
   isReplay?: boolean;
-
-  uploaded?: boolean;
 }

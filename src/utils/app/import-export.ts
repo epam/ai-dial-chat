@@ -1,4 +1,4 @@
-import { Conversation } from '@/src/types/chat';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
 import {
   ExportConversationsFormatV4,
   ExportFormatV1,
@@ -48,7 +48,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV1(data)) {
     const cleanHistoryData: LatestExportFormat = {
       version: 4,
-      history: cleanConversationHistory(data),
+      history: cleanConversationHistory(data as unknown as Conversation[]),
       folders: [],
       prompts: [],
     };
@@ -190,7 +190,7 @@ export const exportPrompt = (prompt: Prompt, folders: FolderInterface[]) => {
 };
 
 export interface ImportConversationsResponse {
-  history: Conversation[];
+  history: ConversationInfo[];
   folders: FolderInterface[];
   isError: boolean;
 }
@@ -200,13 +200,13 @@ export const importConversations = (
     currentConversations,
     currentFolders,
   }: {
-    currentConversations: Conversation[];
+    currentConversations: ConversationInfo[];
     currentFolders: FolderInterface[];
   },
 ): ImportConversationsResponse => {
   const { history, folders, isError } = cleanData(importedData);
 
-  const newHistory: Conversation[] = [
+  const newHistory: ConversationInfo[] = [
     ...currentConversations,
     ...history,
   ].filter(

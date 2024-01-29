@@ -28,7 +28,10 @@ export enum UIStorageKeys {
   TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
 }
 
-export interface EntityStorage<EntityInfo, Entity extends EntityInfo> {
+export interface EntityStorage<
+  EntityInfo extends { folderId?: string },
+  Entity extends EntityInfo,
+> {
   getEntities(path?: string): Observable<EntityInfo[]>; // listing with short information
 
   getEntity(info: EntityInfo): Observable<Entity>;
@@ -57,16 +60,13 @@ export interface DialStorage {
 
   getConversations(path?: string): Observable<ConversationInfo[]>;
 
-  getConversation(
-    info: ConversationInfo,
-    path?: string,
-  ): Observable<Conversation>;
+  getConversation(info: ConversationInfo): Observable<Conversation | null>;
 
   setConversations(conversations: Conversation[]): Observable<void>;
 
   getPrompts(path?: string): Observable<PromptInfo[]>;
 
-  getPrompt(info: PromptInfo, path?: string): Observable<Prompt>;
+  getPrompt(info: PromptInfo): Observable<Prompt | null>;
 
   setPrompts(prompts: Prompt[]): Observable<void>;
 }

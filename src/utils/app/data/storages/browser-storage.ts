@@ -14,15 +14,6 @@ import { cleanConversationHistory } from '../../clean';
 import { isLocalStorageEnabled } from '../storage';
 
 export class BrowserStorage implements DialStorage {
-  getConversation(
-    _info: ConversationInfo,
-    _path?: string | undefined,
-  ): Observable<Conversation> {
-    throw new Error('Method not implemented.');
-  }
-  getPrompt(_info: PromptInfo, _path?: string | undefined): Observable<Prompt> {
-    throw new Error('Method not implemented.');
-  }
   private static storage: globalThis.Storage | undefined;
 
   public static init() {
@@ -39,6 +30,17 @@ export class BrowserStorage implements DialStorage {
     );
   }
 
+  getConversation(info: ConversationInfo): Observable<Conversation | null> {
+    return BrowserStorage.getData(UIStorageKeys.ConversationHistory, []).pipe(
+      map((conversations) => {
+        const conv = conversations.find(
+          (conv: Conversation) => conv.id === info.id,
+        );
+        return conv ? cleanConversationHistory([conv])[0] : null;
+      }),
+    );
+  }
+
   setConversations(conversations: Conversation[]): Observable<void> {
     return BrowserStorage.setData(
       UIStorageKeys.ConversationHistory,
@@ -48,6 +50,15 @@ export class BrowserStorage implements DialStorage {
 
   getPrompts(): Observable<Prompt[]> {
     return BrowserStorage.getData(UIStorageKeys.Prompts, []);
+  }
+
+  getPrompt(info: PromptInfo): Observable<Prompt | null> {
+    return BrowserStorage.getData(UIStorageKeys.Prompts, []).pipe(
+      map(
+        (prompts: Prompt[]) =>
+          prompts.find((prompt) => prompt.id === info.id) || null,
+      ),
+    );
   }
 
   setPrompts(prompts: Prompt[]): Observable<void> {

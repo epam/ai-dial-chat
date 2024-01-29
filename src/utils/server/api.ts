@@ -46,29 +46,21 @@ enum PseudoModel {
 }
 
 const getModelApiIdFromConversation = (conversation: Conversation) => {
-  if (conversation.replay.isReplay) return PseudoModel.Replay;
-  if (conversation.playback?.isPlayback) return PseudoModel.Playback;
+  if (conversation.replay?.isReplay || conversation.isReplay)
+    return PseudoModel.Replay;
+  if (conversation.playback?.isPlayback || conversation.isPlayback)
+    return PseudoModel.Playback;
   return conversation.model.id;
 };
 
 // Format key: {id:guid}__{modelId}__{name:base64}
-export const getConversationApiKeyFromConversation = (
-  conversation: Conversation,
-) => {
+export const getConversationApiKey = (conversation: ConversationInfo) => {
   return [
     conversation.id,
-    getModelApiIdFromConversation(conversation),
+    getModelApiIdFromConversation(conversation as Conversation),
+    conversation.lastActivityDate,
     btoa(conversation.name),
   ].join(pathKeySeparator);
-};
-
-// Format key: {id:guid}__{modelId}__{name:base64}
-export const getConversationApiKeyFromConversationInfo = (
-  conversation: ConversationInfo,
-) => {
-  return [conversation.id, conversation.model.id, btoa(conversation.name)].join(
-    pathKeySeparator,
-  );
 };
 
 // Format key: {id:guid}__{modelId}__{name:base64}
@@ -170,3 +162,6 @@ export class ApiUtils {
     });
   }
 }
+
+export const getParentPath = (parentPath?: string | null) =>
+  parentPath ? `/${parentPath}` : '';

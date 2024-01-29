@@ -55,7 +55,7 @@ const migrateMessageAttachmentUrls = (message: Message): Message => {
 };
 
 export const cleanConversationHistory = (
-  history: Conversation[] | unknown,
+  history: Conversation[],
 ): Conversation[] => {
   // added model for each conversation (3/20/23)
   // added system prompt for each conversation (3/21/23)

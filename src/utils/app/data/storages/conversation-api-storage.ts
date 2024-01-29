@@ -1,6 +1,6 @@
 import {
   ApiKeys,
-  getConversationApiKeyFromConversationInfo,
+  getConversationApiKey,
   parseConversationApiKey,
 } from '@/src/utils/server/api';
 
@@ -13,7 +13,7 @@ export class ConversationApiStorage extends ApiEntityStorage<
   Conversation
 > {
   getEntityKey(info: ConversationInfo): string {
-    return getConversationApiKeyFromConversationInfo(info);
+    return getConversationApiKey(info);
   }
   parseEntityKey(key: string): ConversationInfo {
     return parseConversationApiKey(key);
