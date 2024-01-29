@@ -28,14 +28,14 @@ export enum UIStorageKeys {
   TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
 }
 
-export interface EntityStorage<EntityInfo, Entity> {
+export interface EntityStorage<EntityInfo, Entity extends EntityInfo> {
   getEntities(path?: string): Observable<EntityInfo[]>; // listing with short information
 
   getEntity(info: EntityInfo): Observable<Entity>;
 
-  createEntity(info: EntityInfo): Observable<void>;
+  createEntity(entity: Entity): Observable<void>;
 
-  updateEntity(info: EntityInfo): Observable<void>;
+  updateEntity(entity: Entity): Observable<void>;
 
   deleteEntity(info: EntityInfo): Observable<void>;
 
