@@ -1,10 +1,22 @@
-import { Observable, from, switchMap, throwError } from 'rxjs';
+import { Observable, from, map, of, switchMap, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
-import { Conversation } from '@/src/types/chat';
+import {
+  ApiKeys,
+  getConversationApiKeyFromConversationInfo,
+  getPromptApiKey,
+  parseConversationApiKey,
+  parsePromptApiKey,
+} from '@/src/utils/server/api';
+
+import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { BackendChatEntity, BackendDataNodeType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
-import { Prompt } from '@/src/types/prompt';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
+
+import { constructPath } from '../../file';
+import { DataService } from '../data-service';
 
 export class ApiStorage implements DialStorage {
   static request(url: string, options?: RequestInit) {
@@ -18,7 +30,6 @@ export class ApiStorage implements DialStorage {
       }),
     );
   }
-
   static requestOld({
     url,
     method,
@@ -66,36 +77,121 @@ export class ApiStorage implements DialStorage {
       };
     });
   }
-
   getConversationsFolders(): Observable<FolderInterface[]> {
-    throw new Error('Method not implemented.');
+    return of(); //TODO
   }
-
   setConversationsFolders(_folders: FolderInterface[]): Observable<void> {
-    throw new Error('Method not implemented.');
-  }
+    const resultPath = encodeURI(constructPath(DataService.getBucket(), ''));
 
+    const response = ApiStorage.request(
+      `api/${ApiKeys.Conversations}/${resultPath}`,
+    );
+
+    // eslint-disable-next-line no-console
+    console.log(response);
+
+    return response;
+  }
   getPromptsFolders(): Observable<FolderInterface[]> {
-    throw new Error('Method not implemented.');
-  }
+    const resultPath = encodeURI(constructPath(DataService.getBucket(), ''));
 
+    const response = ApiStorage.request(`api/${ApiKeys.Prompts}/${resultPath}`);
+
+    // eslint-disable-next-line no-console
+    console.log(response);
+
+    return response;
+  }
   setPromptsFolders(_folders: FolderInterface[]): Observable<void> {
-    throw new Error('Method not implemented.');
+    return of(); //TODO
   }
+  getConversations(path?: string): Observable<ConversationInfo[]> {
+    const filter = BackendDataNodeType.ITEM;
 
-  getConversations(): Observable<Conversation[]> {
-    throw new Error('Method not implemented.');
+    const query = new URLSearchParams({
+      filter,
+      bucket: DataService.getBucket(),
+      ...(path && { path }),
+    });
+    const resultQuery = query.toString();
+
+    return ApiStorage.request(
+      `api/${ApiKeys.Conversations}/listing?${resultQuery}`,
+    ).pipe(
+      map((conversations: BackendChatEntity[]) => {
+        return conversations.map((conversation): ConversationInfo => {
+          const relativePath = conversation.parentPath || undefined;
+          const conversationInfo = parseConversationApiKey(conversation.name);
+
+          return {
+            ...conversationInfo,
+            folderId: relativePath,
+          };
+        });
+      }),
+    );
   }
-
+  getConversation(
+    info: ConversationInfo,
+    path?: string | undefined,
+  ): Observable<Conversation> {
+    const key = getConversationApiKeyFromConversationInfo(info);
+    return ApiStorage.request(
+      `api/${ApiKeys.Conversations}/${DataService.getBucket()}/${key}`,
+    ).pipe(
+      map((conversation: Conversation) => {
+        return {
+          ...info,
+          ...conversation,
+          uploaded: true,
+        };
+      }),
+    );
+  }
   setConversations(_conversations: Conversation[]): Observable<void> {
-    throw new Error('Method not implemented.');
+    return of(); //TODO
   }
+  getPrompts(path?: string): Observable<Prompt[]> {
+    const filter = BackendDataNodeType.ITEM;
 
-  getPrompts(): Observable<Prompt[]> {
-    throw new Error('Method not implemented.');
+    const query = new URLSearchParams({
+      filter,
+      bucket: DataService.getBucket(),
+      ...(path && { path }),
+    });
+    const resultQuery = query.toString();
+
+    return ApiStorage.request(
+      `api/${ApiKeys.Prompts}/listing?${resultQuery}`,
+    ).pipe(
+      map((prompts: BackendChatEntity[]) => {
+        return prompts.map((prompt): PromptInfo => {
+          const relativePath = prompt.parentPath || undefined;
+          const promptInfo = parsePromptApiKey(prompt.name);
+
+          return {
+            ...promptInfo,
+            folderId: relativePath,
+          };
+        });
+      }),
+    );
   }
-
+  getPrompt(info: PromptInfo, path?: string | undefined): Observable<Prompt> {
+    const key = getPromptApiKey(info);
+    return ApiStorage.request(
+      `api/${ApiKeys.Prompts}/${DataService.getBucket()}/${key}`,
+    ).pipe(
+      map((prompt: Prompt) => {
+        return {
+          ...info,
+          ...prompt,
+          uploaded: true,
+        };
+      }),
+    );
+  }
   setPrompts(_prompts: Prompt[]): Observable<void> {
-    throw new Error('Method not implemented.');
+    return of(); //TODO
   }
 }

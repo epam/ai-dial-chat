@@ -1,11 +1,15 @@
 /* eslint-disable no-restricted-globals */
 import toast from 'react-hot-toast';
 
+
+
 import { Observable, map, of, switchMap, throwError } from 'rxjs';
 
-import { Conversation } from '@/src/types/chat';
+
+
+import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FolderInterface, FolderType } from '@/src/types/folder';
-import { Prompt } from '@/src/types/prompt';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage, UIStorageKeys } from '@/src/types/storage';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -14,6 +18,15 @@ import { cleanConversationHistory } from '../../clean';
 import { isLocalStorageEnabled } from '../storage';
 
 export class BrowserStorage implements DialStorage {
+  getConversation(
+    _info: ConversationInfo,
+    _path?: string | undefined,
+  ): Observable<Conversation> {
+    throw new Error('Method not implemented.');
+  }
+  getPrompt(_info: PromptInfo, _path?: string | undefined): Observable<Prompt> {
+    throw new Error('Method not implemented.');
+  }
   private static storage: globalThis.Storage | undefined;
 
   public static init() {
@@ -100,7 +113,7 @@ export class BrowserStorage implements DialStorage {
       return of(
         value === null || value === undefined
           ? defaultValue
-          : JSON.parse(value),
+          : { ...JSON.parse(value), uploaded: true },
       );
     } catch (e: unknown) {
       console.error(e);

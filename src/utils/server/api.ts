@@ -1,9 +1,14 @@
 import { NextApiRequest } from 'next';
 
+
+
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 
+
+
 import { OpenAIError } from './types';
+
 
 export enum ApiKeys {
   Files = 'files',
@@ -86,7 +91,7 @@ export const parseConversationApiKey = (apiKey: string): ConversationInfo => {
 };
 
 // Format key: {id:guid}__{name:base64}
-export const getPromptApiKey = (prompt: Prompt | PromptInfo) => {
+export const getPromptApiKey = (prompt: PromptInfo) => {
   return [prompt.id, btoa(prompt.name)].join(pathKeySeparator);
 };
 
