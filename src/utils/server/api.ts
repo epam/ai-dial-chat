@@ -1,14 +1,9 @@
 import { NextApiRequest } from 'next';
 
-
-
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { Prompt, PromptInfo } from '@/src/types/prompt';
-
-
+import { PromptInfo } from '@/src/types/prompt';
 
 import { OpenAIError } from './types';
-
 
 export enum ApiKeys {
   Files = 'files',
@@ -68,7 +63,7 @@ export const getConversationApiKeyFromConversation = (
 export const getConversationApiKeyFromConversationInfo = (
   conversation: ConversationInfo,
 ) => {
-  return [conversation.id, conversation.modelId, btoa(conversation.name)].join(
+  return [conversation.id, conversation.model.id, btoa(conversation.name)].join(
     pathKeySeparator,
   );
 };
@@ -83,7 +78,7 @@ export const parseConversationApiKey = (apiKey: string): ConversationInfo => {
 
   return {
     id,
-    modelId,
+    model: { id: modelId },
     name: atob(encodedName),
     isPlayback: modelId === PseudoModel.Playback,
     isReplay: modelId === PseudoModel.Replay,

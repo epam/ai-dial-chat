@@ -1,11 +1,7 @@
 /* eslint-disable no-restricted-globals */
 import toast from 'react-hot-toast';
 
-
-
 import { Observable, map, of, switchMap, throwError } from 'rxjs';
-
-
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FolderInterface, FolderType } from '@/src/types/folder';

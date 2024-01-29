@@ -133,7 +133,7 @@ export class ApiStorage implements DialStorage {
   }
   getConversation(
     info: ConversationInfo,
-    path?: string | undefined,
+    _path?: string | undefined,
   ): Observable<Conversation> {
     const key = getConversationApiKeyFromConversationInfo(info);
     return ApiStorage.request(
@@ -177,7 +177,7 @@ export class ApiStorage implements DialStorage {
       }),
     );
   }
-  getPrompt(info: PromptInfo, path?: string | undefined): Observable<Prompt> {
+  getPrompt(info: PromptInfo, _path?: string | undefined): Observable<Prompt> {
     const key = getPromptApiKey(info);
     return ApiStorage.request(
       `api/${ApiKeys.Prompts}/${DataService.getBucket()}/${key}`,

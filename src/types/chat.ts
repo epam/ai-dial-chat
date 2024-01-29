@@ -1,7 +1,6 @@
 import { Entity, ShareEntity } from './common';
 import { MIMEType } from './files';
 
-
 export interface Attachment {
   index?: number;
   type: MIMEType;
@@ -71,7 +70,6 @@ export interface RateBody {
 
 export interface Conversation extends ShareEntity, ConversationInfo {
   messages: Message[];
-  model: ConversationEntityModel;
   prompt: string;
   temperature: number;
   replay: Replay;
@@ -115,7 +113,7 @@ export interface ConversationEntityModel {
 }
 
 export interface ConversationInfo extends Entity {
-  modelId: string;
+  model: ConversationEntityModel;
   isPlayback?: boolean;
   isReplay?: boolean;
 
