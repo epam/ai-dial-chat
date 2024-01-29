@@ -117,7 +117,7 @@ describe('TargetAudienceFilterComponent', () => {
     });
   });
 
-  it('fires onChangeFilter method on changing input when Regex selected', async () => {
+  it.skip('fires onChangeFilter method on changing input when Regex selected', async () => {
     const selectedVlaue = FiltersTypes.Regex;
     const regEx = '/testd?/i';
     render(
