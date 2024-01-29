@@ -41,6 +41,8 @@ export class FileApiHelper extends BaseApiHelper {
         return 'image/png';
       case 'jpg':
         return 'image/jpeg';
+      default:
+        return 'text/plain';
     }
   }
 }
