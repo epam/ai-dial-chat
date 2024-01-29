@@ -3,5 +3,14 @@
   "version": "0.0.1",
   "dependencies": {},
   "type": "module",
-  "main": "./index.js"
+  "main": "./index.js",
+  "bugs": {
+    "url": "https://github.com/epam/ai-dial-chat/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/epam/ai-dial-chat.git",
+    "directory": "libs/overlay"
+  }
 }

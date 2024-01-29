@@ -10,7 +10,7 @@ When run tests on CI, `E2E_USERNAME` and `E2E_PASSWORD` CI variable should be se
 
 ## Run tests locally
 
-Run `npm run test:e2e` to execute the tests locally.
+Run `nx e2e chat-e2e` to execute the tests locally.
 Installation of default browsers may be required, when run for the 1st time: `npx playwright install`.
 
 Local version of application is automatically started before execution the tests on `http://localhost:3000`.
@@ -18,11 +18,7 @@ Config file used for local run is `local.playwright.config.ts`.
 
 After tests execution finished, 2 kind of reports are generated: html, allure.
 
-To open html report, run `npm run test:e2e:html`.
-
 Before generating Allure report, install it on your local machine following the guide: https://docs.qameta.io/allure/#_get_started.
-
-To generate Allure report, run `npm allure:serve`.
 
 Every test inside local report contains video recording and trace attached.
 
@@ -36,7 +32,7 @@ docker run --rm --network host -v "$(pwd)":/test/ -w /test/ -it mcr.microsoft.co
 docker run --rm --network host -v ${pwd}:/test/ -w /test/ -it mcr.microsoft.com/playwright:v1.36.0-jammy /bin/bash
 
 npm i
-npm run test:e2e
+nx e2e chat-e2e
 ```
 
 Image version should correspond Playwright version.
@@ -45,7 +41,7 @@ Image version should correspond Playwright version.
 
 Config file used for CI pipeline: `playwright.config.ts`.
 
-`npm test:e2e-ci` command is used to trigger tests on CI.
+`nx e2e chat-e2e --configuration=production` command is used to trigger tests on CI.
 
 Generated Allure report is attached as a job artifact.
 To view CI Allure report:
@@ -54,3 +50,14 @@ To view CI Allure report:
 - for FireFox: open `about:config` in browser and set `security.fileuri.strict_origin_policy` to false.
 
 CI report includes screenshots for failed tests.
+
+## Environment variables
+
+| Variable       | Required | Description                          | Available Values | Default values |
+| -------------- | -------- | ------------------------------------ | ---------------- | -------------- |
+| `E2E_HOST`     | No       | The host URL for end-to-end testing. | Any string       |                |
+| `E2E_USERNAME` | No       | A username for e2e authentification  | Any string       |                |
+| `E2E_PASSWORD` | No       | A password for e2e authentification  | Any string       |                |
+| `TRACES_URL`   | No       | Traces URL                           | Any string       |                |
+| `TMS_URL`      | No       | TMS URL                              | Any string       |                |
+| `ISSUE_URL`    | No       | Issue URL                            | Any string       |                |

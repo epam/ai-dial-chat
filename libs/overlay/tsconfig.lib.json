@@ -4,7 +4,6 @@
     "types": ["node"],
     "declaration": true,
     "sourceMap": true,
-    "declarationMap": true,
     "paths": {
       "shared": ["../shared/src/index.ts"]
     }

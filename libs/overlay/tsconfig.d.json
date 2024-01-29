@@ -13,7 +13,7 @@
     "jsx": "preserve",
     "incremental": true,
 
-    "module": "CommonJS",
+    "module": "ESNext",
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
@@ -26,8 +26,7 @@
     "declarationDir": "../../dist/libs/overlay",
     "paths": {
       "shared": ["../shared/src/index.ts"]
-    },
-    "declarationMap": true
+    }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "src/**/*.spec.ts", "src/**/*.test.ts"]
