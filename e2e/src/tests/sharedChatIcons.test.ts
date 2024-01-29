@@ -148,6 +148,7 @@ test(
     talkToSelector,
     chat,
     tooltip,
+    conversationSettings,
     setTestIds,
   }) => {
     setTestIds(
@@ -258,12 +259,12 @@ test(
     });
 
     await test.step('Change chat model, send a new request and verify share icon is preserved on chat bar', async () => {
+      const updatedModel = ModelsUtil.getModel(ModelIds.GPT_4)!;
       await chatHeader.openConversationSettingsPopup();
       await talkToSelector.waitForState();
-      await talkToSelector.selectModel(
-        ModelsUtil.getModel(ModelIds.GPT_4)!.name,
-      );
-      await chat.applyChanges().click();
+      await talkToSelector.selectModel(updatedModel.name);
+      await chat.applyNewEntity(updatedModel.iconUrl);
+      await conversationSettings.waitForState({ state: 'hidden' });
       await chat.sendRequestWithButton('1+2=', false);
       await conversations.getConversationArrowIcon(conversation.name).waitFor();
     });

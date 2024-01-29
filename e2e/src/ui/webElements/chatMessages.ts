@@ -299,6 +299,7 @@ export class ChatMessages extends BaseElement {
 
   public async openEditMessageMode(message: string | number) {
     const chatMessage = this.getChatMessage(message);
+    await chatMessage.scrollIntoViewIfNeeded();
     await chatMessage.hover();
     const editIcon = this.messageEditIcon(chatMessage);
     await editIcon.waitFor();
