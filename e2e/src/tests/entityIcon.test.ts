@@ -45,7 +45,8 @@ test(
       const actualEntity = actualEntitiesIcons.find(
         (e) => e.entityName === randomEntity.name,
       )!;
-      const expectedEntityIcon = await iconApiHelper.getEntityIcon(randomEntity);
+      const expectedEntityIcon =
+        await iconApiHelper.getEntityIcon(randomEntity);
       expect
         .soft(
           actualEntity.icon,
