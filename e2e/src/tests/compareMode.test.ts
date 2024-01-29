@@ -619,8 +619,8 @@ test('Apply changes with new settings for both chats in compare mode and check c
   errorPopup,
   apiHelper,
 }) => {
+  test.slow();
   setTestIds('EPMRTC-1021');
-
   let firstConversation: Conversation;
   let secondConversation: Conversation;
   const models = ModelsUtil.getModels();
