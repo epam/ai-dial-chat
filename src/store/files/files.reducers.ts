@@ -15,7 +15,6 @@ type Status = undefined | 'LOADING' | 'LOADED' | 'FAILED';
 
 export interface FilesState {
   files: DialFile[];
-  bucket: string;
   selectedFilesIds: string[];
   filesStatus: Status;
 
@@ -27,7 +26,6 @@ export interface FilesState {
 
 const initialState: FilesState = {
   files: [],
-  bucket: '',
   filesStatus: undefined,
   selectedFilesIds: [],
 
@@ -41,18 +39,6 @@ export const filesSlice = createSlice({
   name: 'files',
   initialState,
   reducers: {
-    init: (state) => state,
-    getBucket: (state) => state,
-    setBucket: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        bucket: string;
-      }>,
-    ) => {
-      state.bucket = payload.bucket;
-    },
     uploadFile: (
       state,
       {
@@ -353,9 +339,6 @@ const selectLoadingFolderId = createSelector([rootSelector], (state) => {
 const selectNewAddedFolderId = createSelector([rootSelector], (state) => {
   return state.newAddedFolderId;
 });
-const selectBucket = createSelector([rootSelector], (state) => {
-  return state.bucket;
-});
 const selectFoldersWithSearchTerm = createSelector(
   [selectFolders, (_state, searchTerm: string) => searchTerm],
   (folders, searchTerm) => {
@@ -377,7 +360,6 @@ export const FilesSelectors = {
   selectLoadingFolderId,
   selectNewAddedFolderId,
   selectFilesByIds,
-  selectBucket,
   selectFoldersWithSearchTerm,
 };
 

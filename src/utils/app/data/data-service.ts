@@ -17,10 +17,15 @@ import { BrowserStorage } from './storages/browser-storage';
 
 export class DataService extends FileService {
   private static dataStorage: DialStorage;
+  private static bucket: string;
 
   public static init(storageType?: string) {
     BrowserStorage.init();
     this.setDataStorage(storageType);
+  }
+
+  public static setBucket(bucket: string): void {
+    this.bucket = bucket;
   }
 
   public static getConversationsFolders(): Observable<FolderInterface[]> {
@@ -190,13 +195,17 @@ export class DataService extends FileService {
     );
   }
 
-  public static getBucket(): Observable<{ bucket: string }> {
+  public static requestBucket(): Observable<{ bucket: string }> {
     return ApiStorage.request(`api/bucket`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
     });
+  }
+
+  public static getBucket(): string {
+    return this.bucket;
   }
 
   private static getDataStorage(): DialStorage {
@@ -215,9 +224,5 @@ export class DataService extends FileService {
       default:
         this.dataStorage = new BrowserStorage();
     }
-  }
-
-  public static setBucket(bucket: string): void {
-    this.dataStorage.setBucket(bucket);
   }
 }

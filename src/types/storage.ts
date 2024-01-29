@@ -25,16 +25,21 @@ export enum UIStorageKeys {
   OpenedFoldersIds = 'openedFoldersIds',
   TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
 }
-export interface DialStorage {
-  setBucket(bucket: string): void;
 
+export interface DialStorage {
   getConversationsFolders(): Observable<FolderInterface[]>;
+
   setConversationsFolders(folders: FolderInterface[]): Observable<void>;
+
   getPromptsFolders(): Observable<FolderInterface[]>;
+
   setPromptsFolders(folders: FolderInterface[]): Observable<void>;
 
   getConversations(): Observable<Conversation[]>;
+
   setConversations(conversations: Conversation[]): Observable<void>;
+
   getPrompts(): Observable<Prompt[]>;
+
   setPrompts(prompts: Prompt[]): Observable<void>;
 }

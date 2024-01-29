@@ -14,9 +14,6 @@ import { cleanConversationHistory } from '../../clean';
 import { isLocalStorageEnabled } from '../storage';
 
 export class BrowserStorage implements DialStorage {
-  setBucket(_bucket: string): void {
-    return;
-  }
   private static storage: globalThis.Storage | undefined;
 
   public static init() {
@@ -79,6 +76,7 @@ export class BrowserStorage implements DialStorage {
       ),
     );
   }
+
   setPromptsFolders(promptsFolders: FolderInterface[]): Observable<void> {
     return BrowserStorage.getData(UIStorageKeys.Folders, []).pipe(
       map((items: FolderInterface[]) =>

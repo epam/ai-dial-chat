@@ -1,5 +1,7 @@
 import { Observable, map } from 'rxjs';
 
+import { DataService } from '@/src/utils/app/data/data-service';
+
 import { BackendDataNodeType } from '@/src/types/common';
 import {
   BackendFile,
@@ -16,12 +18,13 @@ import { ApiStorage } from './storages/api-storage';
 export class FileService {
   public static sendFile(
     formData: FormData,
-    bucket: string,
     relativePath: string | undefined,
     fileName: string,
   ): Observable<{ percent?: number; result?: DialFile }> {
     const resultPath = encodeURI(
-      `files/${bucket}/${relativePath ? `${relativePath}/` : ''}${fileName}`,
+      `files/${DataService.getBucket()}/${
+        relativePath ? `${relativePath}/` : ''
+      }${fileName}`,
     );
 
     return ApiStorage.requestOld({
@@ -71,14 +74,13 @@ export class FileService {
   }
 
   public static getFileFolders(
-    bucket: string,
     parentPath?: string,
   ): Observable<FileFolderInterface[]> {
     const filter = BackendDataNodeType.FOLDER;
 
     const query = new URLSearchParams({
       filter,
-      bucket,
+      bucket: DataService.getBucket(),
       ...(parentPath && { path: parentPath }),
     });
     const resultQuery = query.toString();
@@ -94,7 +96,11 @@ export class FileService {
             id: constructPath(relativePath, folder.name),
             name: folder.name,
             type: FolderType.File,
-            absolutePath: constructPath(ApiKeys.Files, bucket, relativePath),
+            absolutePath: constructPath(
+              ApiKeys.Files,
+              DataService.getBucket(),
+              relativePath,
+            ),
             relativePath: relativePath,
             folderId: relativePath,
             serverSynced: true,
@@ -104,8 +110,10 @@ export class FileService {
     );
   }
 
-  public static removeFile(bucket: string, filePath: string): Observable<void> {
-    const resultPath = encodeURI(constructPath('files', bucket, filePath));
+  public static removeFile(filePath: string): Observable<void> {
+    const resultPath = encodeURI(
+      constructPath('files', DataService.getBucket(), filePath),
+    );
 
     return ApiStorage.request(`api/${ApiKeys.Files}/${resultPath}`, {
       method: 'DELETE',
@@ -115,15 +123,12 @@ export class FileService {
     });
   }
 
-  public static getFiles(
-    bucket: string,
-    parentPath?: string,
-  ): Observable<DialFile[]> {
+  public static getFiles(parentPath?: string): Observable<DialFile[]> {
     const filter = BackendDataNodeType.ITEM;
 
     const query = new URLSearchParams({
       filter,
-      bucket,
+      bucket: DataService.getBucket(),
       ...(parentPath && { path: parentPath }),
     });
     const resultQuery = query.toString();

@@ -1,4 +1,14 @@
-import { concat, filter, first, of, switchMap, tap } from 'rxjs';
+import {
+  EMPTY,
+  catchError,
+  concat,
+  filter,
+  first,
+  map,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
@@ -6,10 +16,11 @@ import { DataService } from '@/src/utils/app/data/data-service';
 
 import { AppEpic } from '@/src/types/store';
 
+import { errorsMessages } from '@/src/constants/errors';
+
 import { AddonsActions } from '../addons/addons.reducers';
 import { AuthSelectors } from '../auth/auth.reducers';
 import { ConversationsActions } from '../conversations/conversations.reducers';
-import { FilesActions } from '../files/files.reducers';
 import { ModelsActions } from '../models/models.reducers';
 import { PromptsActions } from '../prompts/prompts.reducers';
 import { UIActions } from '../ui/ui.reducers';
@@ -32,13 +43,30 @@ const initEpic: AppEpic = (action$, state$) =>
         }),
         first(),
         switchMap(() =>
+          DataService.requestBucket().pipe(
+            map(({ bucket }) => DataService.setBucket(bucket)),
+            catchError((error) => {
+              if (error.status === 401) {
+                window.location.assign('api/auth/signin');
+                return EMPTY;
+              } else {
+                return of(
+                  UIActions.showToast({
+                    message: errorsMessages.errorGettingUserFileBucket,
+                    type: 'error',
+                  }),
+                );
+              }
+            }),
+          ),
+        ),
+        switchMap(() =>
           concat(
             of(UIActions.init()),
             of(ModelsActions.init()),
             of(AddonsActions.init()),
             of(ConversationsActions.init()),
             of(PromptsActions.init()),
-            of(FilesActions.init()),
           ),
         ),
       );
