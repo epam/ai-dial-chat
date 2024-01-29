@@ -138,6 +138,7 @@ export enum ExpectedMessages {
   replayAsOptionNotVisible = 'Replay As Is option is not visible',
   entitiesIconsCountIsValid = 'Entities icons number is valid',
   entityIconIsValid = 'Entity icon is valid',
+  entityHasIcon = 'Entity has icon',
   addonsIconsCountIsValid = 'Addons icons number is valid',
   addonIconIsValid = 'Addon icon is valid',
   draggableAreaColorIsValid = 'Draggable area background color is valid',
