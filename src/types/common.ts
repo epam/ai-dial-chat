@@ -1,3 +1,5 @@
+import { BackendFile } from '@/src/types/files';
+
 import { ShareInterface } from './share';
 
 export enum EntityType {
@@ -55,3 +57,22 @@ export interface BackendFolder<ItemType> extends BackendDataEntity {
 export type BackendChatFolder = BackendFolder<
   BackendChatEntity | BackendChatFolder
 >;
+
+export interface BaseDialEntity {
+  // Combination of relative path and name
+  id: string;
+  // Only for files fetched uploaded to backend
+  // Same as relative path but has some absolute prefix like <HASH>
+  absolutePath?: string;
+  relativePath?: string;
+  // Same as relative path, but needed for simplicity and backward compatibility
+  folderId?: string;
+  serverSynced?: boolean;
+  status?: 'UPLOADING' | 'FAILED';
+};
+
+export type DialChatEntity = Omit<
+  BackendChatEntity,
+  'path' | 'nodeType' | 'resourceType' | 'bucket' | 'parentPath' | 'url'
+> &
+  BaseDialEntity;

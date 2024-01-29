@@ -1,48 +1,291 @@
-import { Observable, of } from 'rxjs';
+import {
+  Observable,
+  from,
+  map,
+  mergeMap,
+  of,
+  switchMap,
+  throwError,
+  toArray,
+} from 'rxjs';
+import { fromFetch } from 'rxjs/fetch';
+
+import {
+  ApiKeys,
+  getConversationApiKeyFromConversation,
+  getConversationApiKeyFromConversationInfo,
+  getPromptApiKey,
+  parseConversationApiKey,
+  parsePromptApiKey,
+} from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
+import {
+  BackendChatEntity,
+  BackendDataNodeType,
+  DialChatEntity,
+} from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
 
-import { ConversationApiStorage } from './conversation-api-storage';
-import { PromptApiStorage } from './prompt-api-storage';
+import { constructPath } from '../../file';
+import { DataService } from '../data-service';
 
 export class ApiStorage implements DialStorage {
-  private conversationStorage = new ConversationApiStorage();
-  private promptStorage = new PromptApiStorage();
+  static request(url: string, options?: RequestInit) {
+    return fromFetch(url, options).pipe(
+      switchMap((response) => {
+        if (!response.ok) {
+          return throwError(() => new Error(response.statusText));
+        }
+
+        return from(response.json());
+      }),
+    );
+  }
+
+  static requestOld({
+    url,
+    method,
+    async,
+    body,
+  }: {
+    url: string | URL;
+    method: string;
+    async: boolean;
+    body: XMLHttpRequestBodyInit | Document | null | undefined;
+  }): Observable<{ percent?: number; result?: unknown }> {
+    return new Observable((observer) => {
+      const xhr = new XMLHttpRequest();
+
+      xhr.open(method, url, async);
+      xhr.responseType = 'json';
+
+      // Track upload progress
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          observer.next({ percent: Math.round(percentComplete) });
+        }
+      };
+
+      // Handle response
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          observer.next({ result: xhr.response });
+          observer.complete();
+        } else {
+          observer.error('Request failed');
+        }
+      };
+
+      xhr.onerror = () => {
+        observer.error('Request failed');
+      };
+
+      xhr.send(body);
+
+      // Return cleanup function
+      return () => {
+        xhr.abort();
+      };
+    });
+  }
+
+  static setData(
+    entity: Conversation | Prompt,
+    entityType: ApiKeys,
+    relativePath: string | undefined,
+    entityId: string,
+  ): Observable<{ result?: DialChatEntity }> {
+    const resultPath = encodeURI(
+      `${entityType}/${DataService.getBucket()}/${
+        relativePath ? `${relativePath}/` : ''
+      }${entityId}`,
+    );
+
+    return ApiStorage.requestOld({
+      url: `api/${entityType}/${resultPath}`,
+      method: 'PUT',
+      async: true,
+      body: JSON.stringify(entity),
+    }).pipe(
+      map(({ result }: { result?: unknown }): { result?: DialChatEntity } => {
+        if (!result) {
+          return {};
+        }
+
+        const typedResult = result as BackendChatEntity;
+        const relativePath = typedResult.parentPath || undefined;
+
+        return {
+          result: {
+            id: constructPath(relativePath, typedResult.name),
+            name: typedResult.name,
+            absolutePath: constructPath(
+              entityType,
+              typedResult.bucket,
+              relativePath,
+            ),
+            relativePath: relativePath,
+            folderId: relativePath,
+            updatedAt: typedResult.updatedAt,
+            serverSynced: true,
+          },
+        };
+      }),
+    );
+  }
 
   getConversationsFolders(): Observable<FolderInterface[]> {
     return of(); //TODO
   }
+
   setConversationsFolders(_folders: FolderInterface[]): Observable<void> {
-    return of(); //TODO
+    const resultPath = encodeURI(constructPath(DataService.getBucket(), ''));
+
+    const response = ApiStorage.request(
+      `api/${ApiKeys.Conversations}/${resultPath}`,
+    );
+
+    // eslint-disable-next-line no-console
+    console.log(response);
+
+    return response;
   }
+
   getPromptsFolders(): Observable<FolderInterface[]> {
-    return of(); //TODO
+    const resultPath = encodeURI(constructPath(DataService.getBucket(), ''));
+
+    const response = ApiStorage.request(`api/${ApiKeys.Prompts}/${resultPath}`);
+
+    // eslint-disable-next-line no-console
+    console.log(response);
+
+    return response;
   }
+
   setPromptsFolders(_folders: FolderInterface[]): Observable<void> {
     return of(); //TODO
   }
+
   getConversations(path?: string): Observable<ConversationInfo[]> {
-    return this.conversationStorage.getEntities(path);
+    const filter = BackendDataNodeType.ITEM;
+
+    const query = new URLSearchParams({
+      filter,
+      bucket: DataService.getBucket(),
+      ...(path && { path }),
+    });
+    const resultQuery = query.toString();
+
+    return ApiStorage.request(
+      `api/${ApiKeys.Conversations}/listing?${resultQuery}`,
+    ).pipe(
+      map((conversations: BackendChatEntity[]) => {
+        return conversations.map((conversation): ConversationInfo => {
+          const relativePath = conversation.parentPath || undefined;
+          const conversationInfo = parseConversationApiKey(conversation.name);
+
+          return {
+            ...conversationInfo,
+            folderId: relativePath,
+          };
+        });
+      }),
+    );
   }
+
   getConversation(
     info: ConversationInfo,
     _path?: string | undefined,
   ): Observable<Conversation> {
-    return this.conversationStorage.getEntity(info);
+    const key = getConversationApiKeyFromConversationInfo(info);
+    return ApiStorage.request(
+      `api/${ApiKeys.Conversations}/${DataService.getBucket()}/${key}`,
+    ).pipe(
+      map((conversation: Conversation) => {
+        return {
+          ...info,
+          ...conversation,
+          uploaded: true,
+        };
+      }),
+    );
   }
-  setConversations(_conversations: Conversation[]): Observable<void> {
-    return of(); //TODO
+
+  setConversations(
+    _conversations: Conversation[],
+  ): Observable<{ result?: DialChatEntity | undefined }[]> {
+    return from(_conversations).pipe(
+      mergeMap((conversation) =>
+        ApiStorage.setData(
+          conversation,
+          ApiKeys.Conversations,
+          undefined, // TODO: define relative path
+          getConversationApiKeyFromConversation(conversation),
+        ),
+      ),
+      toArray(),
+    );
   }
+
   getPrompts(path?: string): Observable<Prompt[]> {
-    return this.promptStorage.getEntities(path);
+    const filter = BackendDataNodeType.ITEM;
+
+    const query = new URLSearchParams({
+      filter,
+      bucket: DataService.getBucket(),
+      ...(path && { path }),
+    });
+    const resultQuery = query.toString();
+
+    return ApiStorage.request(
+      `api/${ApiKeys.Prompts}/listing?${resultQuery}`,
+    ).pipe(
+      map((prompts: BackendChatEntity[]) => {
+        return prompts.map((prompt): PromptInfo => {
+          const relativePath = prompt.parentPath || undefined;
+          const promptInfo = parsePromptApiKey(prompt.name);
+
+          return {
+            ...promptInfo,
+            folderId: relativePath,
+          };
+        });
+      }),
+    );
   }
+
   getPrompt(info: PromptInfo, _path?: string | undefined): Observable<Prompt> {
-    return this.promptStorage.getEntity(info);
+    const key = getPromptApiKey(info);
+    return ApiStorage.request(
+      `api/${ApiKeys.Prompts}/${DataService.getBucket()}/${key}`,
+    ).pipe(
+      map((prompt: Prompt) => {
+        return {
+          ...info,
+          ...prompt,
+          uploaded: true,
+        };
+      }),
+    );
   }
-  setPrompts(_prompts: Prompt[]): Observable<void> {
-    return of(); //TODO
+
+  setPrompts(
+    _prompts: Prompt[],
+  ): Observable<{ result?: DialChatEntity | undefined }[]> {
+    return from(_prompts).pipe(
+      mergeMap((prompt) =>
+        ApiStorage.setData(
+          prompt,
+          ApiKeys.Prompts,
+          undefined, // TODO: define relative path
+          prompt.name,
+        ),
+      ),
+      toArray(),
+    );
   }
 }

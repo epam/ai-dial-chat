@@ -1,4 +1,8 @@
-import { BackendEntity, BackendFolder } from '@/src/types/common';
+import {
+  BackendEntity,
+  BackendFolder,
+  BaseDialEntity,
+} from '@/src/types/common';
 
 import { FolderInterface } from './folder';
 
@@ -21,21 +25,12 @@ export type BackendFileFolder = BackendFolder<BackendFile | BackendFileFolder>;
 export type DialFile = Omit<
   BackendFile,
   'path' | 'nodeType' | 'resourceType' | 'bucket' | 'parentPath' | 'url'
-> & {
-  // Combination of relative path and name
-  id: string;
-  // Only for files fetched uploaded to backend
-  // Same as relative path but has some absolute prefix like <HASH>
-  absolutePath?: string;
-  relativePath?: string;
-  // Same as relative path, but needed for simplicity and backward compatibility
-  folderId?: string;
-
-  status?: 'UPLOADING' | 'FAILED';
-  percent?: number;
-  fileContent?: File;
-  serverSynced?: boolean;
-};
+> &
+  BaseDialEntity & {
+    status?: 'UPLOADING' | 'FAILED';
+    percent?: number;
+    fileContent?: File;
+  };
 
 // For file folders folderId is relative path and id is relative path + '/' + name
 export type FileFolderInterface = FolderInterface & {
