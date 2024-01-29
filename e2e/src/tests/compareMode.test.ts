@@ -619,17 +619,17 @@ test('Apply changes with new settings for both chats in compare mode and check c
   errorPopup,
   apiHelper,
 }) => {
+  test.slow();
   setTestIds('EPMRTC-1021');
-
   let firstConversation: Conversation;
   let secondConversation: Conversation;
   const models = ModelsUtil.getModels();
-  const modelsWithIcons = models.filter((m) => m.iconUrl);
   const initRandomModel = GeneratorUtil.randomArrayElement(models);
+  const modelsForUpdate = models.filter((m) => m !== initRandomModel);
   const firstUpdatedRandomModel =
-    GeneratorUtil.randomArrayElement(modelsWithIcons);
+    GeneratorUtil.randomArrayElement(modelsForUpdate);
   const secondUpdatedRandomModel =
-    GeneratorUtil.randomArrayElement(modelsWithIcons);
+    GeneratorUtil.randomArrayElement(modelsForUpdate);
   const firstUpdatedPrompt = 'first prompt';
   const secondUpdatedPrompt = 'second prompt';
   const firstUpdatedTemp = 0.5;
@@ -682,7 +682,10 @@ test('Apply changes with new settings for both chats in compare mode and check c
     await rightEntitySettings
       .getTemperatureSlider()
       .setTemperature(secondUpdatedTemp);
-    await chat.applyChanges().click();
+    await chat.applyNewEntity(
+      firstUpdatedRandomModel.iconUrl,
+      secondUpdatedRandomModel.iconUrl,
+    );
   });
 
   await test.step('Verify chat icons are updated with new model and addons in the header and chat bar', async () => {
