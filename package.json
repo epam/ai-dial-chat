@@ -137,6 +137,10 @@
     "vite": "^5.0.0",
     "vitest": "^1.2.1"
   },
+  "overrides": {
+    "js-yaml": "4.1.0",
+    "argparse": "2.0.1"
+  },
   "optionalDependencies": {
     "@playwright/test": "^1.38.0",
     "allure-playwright": "^2.6.0"
