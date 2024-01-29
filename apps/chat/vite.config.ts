@@ -9,7 +9,6 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   root: __dirname,
-  cacheDir: '../../node_modules/.vite/chat',
   plugins: [nxViteTsPaths(), react()],
   resolve: {
     alias: {
@@ -23,11 +22,9 @@ export default defineConfig({
   // },
 
   test: {
+    cache: false,
     globals: true,
     environment: 'jsdom',
-    cache: {
-      dir: '../../node_modules/.vitest',
-    },
     setupFiles: ['./tests/setupTests.ts'],
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: [...configDefaults.exclude],

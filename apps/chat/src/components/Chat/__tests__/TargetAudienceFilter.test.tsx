@@ -20,9 +20,11 @@ describe('TargetAudienceFilterComponent', () => {
 
   const defaultFilterOption = FiltersTypes.Contains;
 
-  const onChangeFilter = vi.fn();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let onChangeFilter: any;
 
   beforeEach(() => {
+    onChangeFilter = vi.fn();
     vi.clearAllMocks();
   });
 
