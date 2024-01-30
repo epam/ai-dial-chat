@@ -35,7 +35,7 @@ export const getEntityUrlFromSlugs = (
     throw new OpenAIError(`No ${entityType} path provided`, '', '', '400');
   }
 
-  return `${dialApiHost}/v1/${encodeURI(slugs.join('/'))}`;
+  return `${dialApiHost}/v1/${entityType}/${encodeURI(slugs.join('/'))}`;
 };
 
 const pathKeySeparator = '__';
