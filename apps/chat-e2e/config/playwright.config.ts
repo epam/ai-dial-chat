@@ -22,7 +22,10 @@ export default defineConfig({
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['list'],
-    ['allure-playwright', { detail: true, outputFolder: 'e2e/allure-results' }],
+    [
+      'allure-playwright',
+      { detail: true, outputFolder: 'apps/chat-e2e/allure-results' },
+    ],
   ],
   outputDir: '../test-results',
   timeout: 60000,
