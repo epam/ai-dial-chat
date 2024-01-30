@@ -1,6 +1,6 @@
-import { STORAGE_STATE } from '../../config/playwright.config';
 import test from '../core/fixtures';
 
+import { STORAGE_STATE } from '@/config/playwright.config';
 import { API } from '@/src/testData';
 
 test('Authenticate', async ({
