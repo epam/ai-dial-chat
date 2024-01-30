@@ -4,6 +4,9 @@ on:
   pull_request:
     branches: [ development, release-* ]
 
+env:
+  ORT_CONFIG_DIR: '.'
+
 jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/test_yarn_docker.yml@1.1.0
