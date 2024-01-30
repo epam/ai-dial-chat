@@ -1,7 +1,0 @@
----
-curations:
-  packages:
-  - id: "NPM::union:0.4.0"
-    curations:
-      comment: "This package is licensed under MIT License: https://github.com/flatiron/union/blob/main/LICENSE"
-      concluded_license: "MIT"
