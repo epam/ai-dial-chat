@@ -18,8 +18,7 @@ RUN npm run build
 FROM node:20-alpine AS production
 RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
 WORKDIR /app
-COPY --from=build /app ./dist/apps/chat
-COPY --from=build /app/package.json ./dist/apps/chat/package.json
+COPY --from=build /app/dist/apps/chat ./
 COPY --from=build /app/startup.sh ./startup.sh
 COPY --from=dependencies /app/node_modules ./node_modules
 
