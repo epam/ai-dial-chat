@@ -1,3 +1,5 @@
+import { signOut } from 'next-auth/react';
+
 import {
   catchError,
   filter,
@@ -22,10 +24,7 @@ import { DataService } from '@/src/utils/app/data/data-service';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { AppEpic } from '@/src/types/store';
 
-import { errorsMessages } from '@/src/constants/errors';
-
 import { SettingsSelectors } from '../settings/settings.reducers';
-import { UIActions } from '../ui/ui.reducers';
 import { ModelsActions, ModelsSelectors } from './models.reducers';
 
 const initEpic: AppEpic = (action$) =>
@@ -89,14 +88,10 @@ const getModelsEpic: AppEpic = (action$, state$) =>
           return from(resp.json());
         }),
         map((response: OpenAIEntityModel[]) => {
-          if (response.length > 0) {
-            return ModelsActions.getModelsSuccess({ models: response });
-          } else {
-            return UIActions.showToast({
-              message: errorsMessages.noModelsAvailable,
-              type: 'error',
-            });
+          if (response.length === 0) {
+            signOut();
           }
+          return ModelsActions.getModelsSuccess({ models: response });
         }),
         catchError((err) => {
           return of(ModelsActions.getModelsFail({ error: err }));
