@@ -6,9 +6,15 @@ interface Props {
   size?: number;
   className?: string;
   slow?: boolean;
+  dataQa?: string;
 }
 
-export const Spinner = ({ size = 16, className = '', slow = false }: Props) => {
+export const Spinner = ({
+  size = 16,
+  className = '',
+  slow = false,
+  dataQa = 'message-input-spinner',
+}: Props) => {
   return (
     <IconLoader
       size={size}
@@ -17,7 +23,7 @@ export const Spinner = ({ size = 16, className = '', slow = false }: Props) => {
         slow ? 'animate-spin-slow' : 'animate-spin',
         className,
       )}
-      data-qa="message-input-spinner"
+      data-qa={dataQa}
     />
   );
 };

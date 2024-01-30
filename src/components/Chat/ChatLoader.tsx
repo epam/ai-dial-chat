@@ -7,6 +7,7 @@ interface Props {
   slow?: boolean;
   containerClassName?: string;
   loaderClassName?: string;
+  dataQa?: string;
 }
 
 export default function ChatLoader({
@@ -14,6 +15,7 @@ export default function ChatLoader({
   slow = true,
   containerClassName,
   loaderClassName,
+  dataQa,
 }: Props) {
   return (
     <div
@@ -22,7 +24,12 @@ export default function ChatLoader({
         containerClassName,
       )}
     >
-      <Spinner size={size} slow={slow} className={loaderClassName} />
+      <Spinner
+        size={size}
+        slow={slow}
+        className={loaderClassName}
+        dataQa={dataQa}
+      />
     </div>
   );
 }
