@@ -265,3 +265,11 @@ export const selectNewAddedFolderId = createSelector(
     return state.newAddedFolderId;
   },
 );
+
+export const arePromptsUploaded = createSelector([rootSelector], (state) => {
+  return state.promptsLoaded;
+});
+
+export const isPromptLoading = createSelector([rootSelector], (state) => {
+  return state.isPromptLoading;
+});

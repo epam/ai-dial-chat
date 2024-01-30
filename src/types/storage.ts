@@ -32,6 +32,8 @@ export interface EntityStorage<
   EntityInfo extends { folderId?: string },
   Entity extends EntityInfo,
 > {
+  getFolders(path?: string): Observable<FolderInterface[]>; // listing with short information
+
   getEntities(path?: string): Observable<EntityInfo[]>; // listing with short information
 
   getEntity(info: EntityInfo): Observable<Entity>;

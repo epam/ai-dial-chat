@@ -50,6 +50,9 @@ const Promptbar = () => {
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const myItemsFilters = useAppSelector(PromptsSelectors.selectMyItemsFilters);
+  const areEntitiesUploaded = useAppSelector(
+    PromptsSelectors.arePromptsUploaded,
+  );
 
   const filteredPrompts = useAppSelector((state) =>
     PromptsSelectors.selectFilteredPrompts(state, myItemsFilters, searchTerm),
@@ -97,6 +100,7 @@ const Promptbar = () => {
       }
       handleDrop={handleDrop}
       footerComponent={<PromptbarSettings />}
+      areEntitiesUploaded={areEntitiesUploaded}
     />
   );
 };

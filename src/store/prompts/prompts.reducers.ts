@@ -26,6 +26,8 @@ const initialState: PromptsState = {
   selectedPromptId: undefined,
   isEditModalOpen: false,
   newAddedFolderId: undefined,
+  promptsLoaded: false,
+  isPromptLoading: false,
 };
 
 export const promptsSlice = createSlice({
@@ -181,6 +183,7 @@ export const promptsSlice = createSlice({
       { payload }: PayloadAction<{ prompts: Prompt[] }>,
     ) => {
       state.prompts = payload.prompts;
+      state.promptsLoaded = true;
     },
     addPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
       state.prompts = state.prompts.concat(payload.prompts);
@@ -366,6 +369,7 @@ export const promptsSlice = createSlice({
       { payload }: PayloadAction<{ promptId: string | undefined }>,
     ) => {
       state.selectedPromptId = payload.promptId;
+      state.isPromptLoading = !!payload.promptId;
     },
   },
 });

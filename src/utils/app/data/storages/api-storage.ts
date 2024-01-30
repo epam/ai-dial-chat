@@ -13,16 +13,16 @@ export class ApiStorage implements DialStorage {
   private _conversationApiStorage = new ConversationApiStorage();
   private _promptApiStorage = new PromptApiStorage();
 
-  getConversationsFolders(): Observable<FolderInterface[]> {
-    return of([]); //TODO
+  getConversationsFolders(path?: string): Observable<FolderInterface[]> {
+    return this._conversationApiStorage.getFolders(path);
   }
 
   setConversationsFolders(_folders: FolderInterface[]): Observable<void> {
     return of(); //TODO
   }
 
-  getPromptsFolders(): Observable<FolderInterface[]> {
-    return of([]); //TODO
+  getPromptsFolders(path?: string): Observable<FolderInterface[]> {
+    return this._promptApiStorage.getFolders(path);
   }
 
   setPromptsFolders(_folders: FolderInterface[]): Observable<void> {
@@ -47,8 +47,8 @@ export class ApiStorage implements DialStorage {
     return this._conversationApiStorage.deleteEntity(info);
   }
 
-  setConversations(_conversations: Conversation[]): Observable<void> {
-    return from(_conversations).pipe(
+  setConversations(conversations: Conversation[]): Observable<void> {
+    return from(conversations).pipe(
       mergeMap((conversation) =>
         this._conversationApiStorage.createEntity(conversation),
       ),
@@ -73,8 +73,8 @@ export class ApiStorage implements DialStorage {
     return this._promptApiStorage.deleteEntity(info);
   }
 
-  setPrompts(_prompts: Prompt[]): Observable<void> {
-    return from(_prompts).pipe(
+  setPrompts(prompts: Prompt[]): Observable<void> {
+    return from(prompts).pipe(
       mergeMap((prompt) => this._promptApiStorage.createEntity(prompt)),
     );
   }

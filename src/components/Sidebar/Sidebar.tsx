@@ -46,6 +46,7 @@ interface Props<T> {
   handleSearchFilters: (searchFilters: SearchFilters) => void;
   toggleOpen?: () => void;
   handleDrop: (e: DragEvent<HTMLDivElement>) => void;
+  areEntitiesUploaded: boolean;
 }
 
 const Sidebar = <T,>({
@@ -62,6 +63,7 @@ const Sidebar = <T,>({
   handleSearchTerm,
   handleSearchFilters,
   handleDrop,
+  areEntitiesUploaded,
 }: Props<T>) => {
   const { t } = useTranslation(Translation.PromptBar);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
@@ -198,8 +200,6 @@ const Sidebar = <T,>({
     isOverlay ? 'top-9 !h-[calc(100%-36px)]' : 'top-12 !h-[calc(100%-48px)]',
   );
 
-  const uploaded = true;
-
   return isOpen ? (
     <Resizable
       ref={sideBarElementRef}
@@ -208,7 +208,7 @@ const Sidebar = <T,>({
       data-qa={dataQa}
     >
       <div className="group/sidebar flex h-full w-full flex-none shrink-0 flex-col divide-y divide-tertiary bg-layer-3 transition-all">
-        {uploaded ? (
+        {areEntitiesUploaded ? (
           <>
             <Search
               placeholder={t('Search {{name}}...', { name: featureType })}

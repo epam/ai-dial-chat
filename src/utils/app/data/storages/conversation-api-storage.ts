@@ -18,7 +18,7 @@ export class ConversationApiStorage extends ApiEntityStorage<
   parseEntityKey(key: string): ConversationInfo {
     return parseConversationApiKey(key);
   }
-  getStorageKey(): string {
+  getStorageKey(): ApiKeys {
     return ApiKeys.Conversations;
   }
 }

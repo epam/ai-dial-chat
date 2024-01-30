@@ -220,7 +220,7 @@ export const selectIsSendMessageAborted = createSelector(
 export const selectIsReplaySelectedConversations = createSelector(
   [selectSelectedConversations],
   (conversations) => {
-    return conversations.some((conv) => conv.replay.isReplay);
+    return conversations.some((conv) => conv.replay?.isReplay);
   },
 );
 
@@ -505,3 +505,14 @@ export const getAttachments = createSelector(
     }
   },
 );
+
+export const areConversationsUploaded = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.conversationsLoaded;
+  },
+);
+
+export const isConversationLoading = createSelector([rootSelector], (state) => {
+  return state.isConversationLoading;
+});

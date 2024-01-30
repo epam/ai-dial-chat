@@ -174,7 +174,7 @@ const initFoldersEpic: AppEpic = (action$) =>
 
 const initPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.init.match),
+    filter(PromptsActions.initPrompts.match),
     switchMap(() =>
       DataService.getPrompts().pipe(
         map((prompts) => {

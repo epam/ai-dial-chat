@@ -59,6 +59,9 @@ export const Chatbar = () => {
 
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
+  const areEntitiesUploaded = useAppSelector(
+    ConversationsSelectors.areConversationsUploaded,
+  );
   const searchFilters = useAppSelector(
     ConversationsSelectors.selectSearchFilters,
   );
@@ -112,6 +115,7 @@ export const Chatbar = () => {
       }
       handleDrop={handleDrop}
       footerComponent={<ChatbarSettings />}
+      areEntitiesUploaded={areEntitiesUploaded}
     />
   );
 };

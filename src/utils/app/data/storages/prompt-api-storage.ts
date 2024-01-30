@@ -15,7 +15,7 @@ export class PromptApiStorage extends ApiEntityStorage<PromptInfo, Prompt> {
   parseEntityKey(key: string): PromptInfo {
     return parsePromptApiKey(key);
   }
-  getStorageKey(): string {
+  getStorageKey(): ApiKeys {
     return ApiKeys.Prompts;
   }
 }

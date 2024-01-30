@@ -1,8 +1,19 @@
 import { Observable, map } from 'rxjs';
 
-import { ApiUtils, combineApiKey, getParentPath } from '@/src/utils/server/api';
+import {
+  ApiKeys,
+  ApiUtils,
+  combineApiKey,
+  getFolderTypeByApiKey,
+  getParentPath,
+} from '@/src/utils/server/api';
 
-import { BackendChatEntity, BackendDataNodeType } from '@/src/types/common';
+import {
+  BackendChatEntity,
+  BackendChatFolder,
+  BackendDataNodeType,
+} from '@/src/types/common';
+import { FolderInterface } from '@/src/types/folder';
 import { EntityStorage } from '@/src/types/storage';
 
 import { DataService } from '../data-service';
@@ -12,6 +23,33 @@ export abstract class ApiEntityStorage<
   Entity extends EntityInfo,
 > implements EntityStorage<EntityInfo, Entity>
 {
+  getFolders(path?: string | undefined): Observable<FolderInterface[]> {
+    const filter = BackendDataNodeType.FOLDER;
+
+    const query = new URLSearchParams({
+      filter,
+      bucket: DataService.getBucket(),
+      ...(path && { path }),
+    });
+    const resultQuery = query.toString();
+
+    return ApiUtils.request(
+      `api/${this.getStorageKey()}/listing?${resultQuery}`,
+    ).pipe(
+      map((folders: BackendChatFolder[]) => {
+        return folders.map((folder): FolderInterface => {
+          const relativePath = folder.parentPath || undefined;
+
+          return {
+            id: folder.name,
+            name: folder.name,
+            folderId: relativePath,
+            type: getFolderTypeByApiKey(this.getStorageKey()),
+          };
+        });
+      }),
+    );
+  }
   getEntities(path?: string): Observable<EntityInfo[]> {
     const filter = BackendDataNodeType.ITEM;
 
@@ -25,11 +63,11 @@ export abstract class ApiEntityStorage<
     return ApiUtils.request(
       `api/${this.getStorageKey()}/listing?${resultQuery}`,
     ).pipe(
-      map((conversations: BackendChatEntity[]) => {
-        return conversations.map((conversation): EntityInfo => {
-          const relativePath = conversation.parentPath || undefined;
+      map((entities: BackendChatEntity[]) => {
+        return entities.map((entity): EntityInfo => {
+          const relativePath = entity.parentPath || undefined;
           const info = this.parseEntityKey(
-            combineApiKey(conversation.updatedAt, conversation.name),
+            combineApiKey(entity.updatedAt, entity.name),
           );
 
           return {
@@ -90,5 +128,5 @@ export abstract class ApiEntityStorage<
   }
   abstract getEntityKey(info: EntityInfo): string;
   abstract parseEntityKey(key: string): EntityInfo;
-  abstract getStorageKey(): string;
+  abstract getStorageKey(): ApiKeys;
 }

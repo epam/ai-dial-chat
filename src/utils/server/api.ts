@@ -4,6 +4,7 @@ import { Observable, from, switchMap, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 
 import { OpenAIError } from './types';
@@ -13,6 +14,18 @@ export enum ApiKeys {
   Conversations = 'conversations',
   Prompts = 'prompts',
 }
+
+export const getFolderTypeByApiKey = (key: ApiKeys): FolderType => {
+  switch (key) {
+    case ApiKeys.Conversations:
+      return FolderType.Chat;
+    case ApiKeys.Prompts:
+      return FolderType.Prompt;
+    case ApiKeys.Files:
+    default:
+      return FolderType.File;
+  }
+};
 
 export const isValidEntityApiType = (apiKey: string) => {
   return Object.values(ApiKeys).includes(apiKey as ApiKeys);

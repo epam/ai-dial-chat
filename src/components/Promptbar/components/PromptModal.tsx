@@ -18,6 +18,9 @@ import { onBlur } from '@/src/utils/app/style-helpers';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
+
 import ChatLoader from '../../Chat/ChatLoader';
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 import Modal from '../../Common/Modal';
@@ -45,6 +48,7 @@ export const PromptModal: FC<Props> = ({
   const nameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const contentInputRef = useRef<HTMLTextAreaElement>(null);
+  const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
 
   const handleClose = useCallback(() => {
     setSubmitted(false);
@@ -116,8 +120,6 @@ export const PromptModal: FC<Props> = ({
     setName(prompt.name);
   }, [prompt.name]);
 
-  const uploaded = true;
-
   return (
     <Modal
       portalId="theme-main"
@@ -132,7 +134,7 @@ export const PromptModal: FC<Props> = ({
         {t('Edit prompt')}
       </div>
 
-      {uploaded ? (
+      {!isLoading ? (
         <>
           <div className="mb-4">
             <label

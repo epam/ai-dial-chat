@@ -41,6 +41,8 @@ const initialState: ConversationsState = {
   isReplayPaused: true,
   isPlaybackPaused: true,
   newAddedFolderId: undefined,
+  conversationsLoaded: false,
+  isConversationLoading: true,
 };
 
 export const conversationsSlice = createSlice({
@@ -312,6 +314,7 @@ export const conversationsSlice = createSlice({
       { payload }: PayloadAction<{ conversations: ConversationInfo[] }>,
     ) => {
       state.conversations = payload.conversations;
+      state.conversationsLoaded = true;
     },
     addConversations: (
       state,

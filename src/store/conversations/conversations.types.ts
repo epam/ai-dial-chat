@@ -13,4 +13,6 @@ export interface ConversationsState {
   isReplayPaused: boolean;
   isPlaybackPaused: boolean;
   newAddedFolderId?: string;
+  conversationsLoaded: boolean;
+  isConversationLoading: boolean;
 }

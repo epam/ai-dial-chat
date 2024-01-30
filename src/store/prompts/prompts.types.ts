@@ -11,4 +11,6 @@ export interface PromptsState {
   selectedPromptId: string | undefined;
   isEditModalOpen: boolean;
   newAddedFolderId?: string;
+  promptsLoaded: boolean;
+  isPromptLoading: boolean;
 }

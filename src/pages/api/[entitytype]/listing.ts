@@ -27,8 +27,6 @@ import fetch from 'node-fetch';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const entityType = getEntityTypeFromPath(req);
-  // eslint-disable-next-line no-console
-  console.log('------------------------>', entityType);
   if (!entityType || !isValidEntityApiType(entityType)) {
     return res.status(500).json(errorsMessages.generalServer);
   }
@@ -62,14 +60,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     // eslint-disable-next-line no-console
     console.log(
-      '------------------------>',
-      url,
-      '\r\n------->',
+      '------------->bucket:',
+      bucket,
+      '\r\n------->token:',
       token?.access_token,
     );
-
-    // eslint-disable-next-line no-console
-    console.log('------------------------>', response.status);
 
     if (response.status === 404) {
       return res.status(200).send([]);
