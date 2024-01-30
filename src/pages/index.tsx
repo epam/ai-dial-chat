@@ -29,6 +29,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+import ChatLoader from '../components/Chat/ChatLoader';
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
@@ -122,6 +123,8 @@ export default function Home({ initialState }: HomeProps) {
     ]);
   };
 
+  const uploaded = false;
+
   return (
     <>
       <Head>
@@ -155,7 +158,7 @@ export default function Home({ initialState }: HomeProps) {
 
               <div className="flex min-w-0 grow flex-col">
                 <AnnouncementsBanner />
-                <Chat />
+                {uploaded ? <Chat /> : <ChatLoader />}
               </div>
 
               {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}

@@ -23,6 +23,7 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
+import ChatLoader from '../Chat/ChatLoader';
 import { NoData } from '../Common/NoData';
 import { NoResultsFound } from '../Common/NoResultsFound';
 import Search from '../Search';
@@ -197,6 +198,8 @@ const Sidebar = <T,>({
     isOverlay ? 'top-9 !h-[calc(100%-36px)]' : 'top-12 !h-[calc(100%-48px)]',
   );
 
+  const uploaded = true;
+
   return isOpen ? (
     <Resizable
       ref={sideBarElementRef}
@@ -205,49 +208,55 @@ const Sidebar = <T,>({
       data-qa={dataQa}
     >
       <div className="group/sidebar flex h-full w-full flex-none shrink-0 flex-col divide-y divide-tertiary bg-layer-3 transition-all">
-        <Search
-          placeholder={t('Search {{name}}...', { name: featureType })}
-          searchTerm={searchTerm}
-          searchFilters={searchFilters}
-          onSearch={handleSearchTerm}
-          onSearchFiltersChanged={handleSearchFilters}
-          featureType={featureType}
-        />
+        {uploaded ? (
+          <>
+            <Search
+              placeholder={t('Search {{name}}...', { name: featureType })}
+              searchTerm={searchTerm}
+              searchFilters={searchFilters}
+              onSearch={handleSearchTerm}
+              onSearchFiltersChanged={handleSearchFilters}
+              featureType={featureType}
+            />
 
-        {actionButtons}
+            {actionButtons}
 
-        <div className="flex grow flex-col gap-px divide-y divide-tertiary overflow-y-auto">
-          {folderComponent}
+            <div className="flex grow flex-col gap-px divide-y divide-tertiary overflow-y-auto">
+              {folderComponent}
 
-          {filteredItems?.length > 0 ? (
-            <div
-              ref={dragDropElement}
-              className={classNames(
-                'min-h-[100px] min-w-[42px] grow',
-                isDraggingOver && 'bg-accent-primary-alpha',
+              {filteredItems?.length > 0 ? (
+                <div
+                  ref={dragDropElement}
+                  className={classNames(
+                    'min-h-[100px] min-w-[42px] grow',
+                    isDraggingOver && 'bg-accent-primary-alpha',
+                  )}
+                  onDrop={(e) => {
+                    setIsDraggingOver(false);
+                    handleDrop(e);
+                  }}
+                  onDragOver={allowDrop}
+                  onDragEnter={highlightDrop}
+                  onDragLeave={removeHighlight}
+                  data-qa="draggable-area"
+                >
+                  {itemComponent}
+                </div>
+              ) : searchTerm.length ? (
+                <div className="flex grow content-center justify-center">
+                  <NoResultsFound />
+                </div>
+              ) : (
+                <div className="flex grow content-center justify-center">
+                  <NoData />
+                </div>
               )}
-              onDrop={(e) => {
-                setIsDraggingOver(false);
-                handleDrop(e);
-              }}
-              onDragOver={allowDrop}
-              onDragEnter={highlightDrop}
-              onDragLeave={removeHighlight}
-              data-qa="draggable-area"
-            >
-              {itemComponent}
             </div>
-          ) : searchTerm.length ? (
-            <div className="flex grow content-center justify-center">
-              <NoResultsFound />
-            </div>
-          ) : (
-            <div className="flex grow content-center justify-center">
-              <NoData />
-            </div>
-          )}
-        </div>
-        {footerComponent}
+            {footerComponent}
+          </>
+        ) : (
+          <ChatLoader />
+        )}
       </div>
     </Resizable>
   ) : null;

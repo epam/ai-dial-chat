@@ -18,6 +18,7 @@ import { onBlur } from '@/src/utils/app/style-helpers';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import ChatLoader from '../../Chat/ChatLoader';
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 import Modal from '../../Common/Modal';
 
@@ -115,6 +116,8 @@ export const PromptModal: FC<Props> = ({
     setName(prompt.name);
   }, [prompt.name]);
 
+  const uploaded = true;
+
   return (
     <Modal
       portalId="theme-main"
@@ -129,78 +132,87 @@ export const PromptModal: FC<Props> = ({
         {t('Edit prompt')}
       </div>
 
-      <div className="mb-4">
-        <label
-          className="mb-1 flex text-xs text-secondary"
-          htmlFor="promptName"
-        >
-          {t('Name')}
-          <span className="ml-1 inline text-accent-primary">*</span>
-        </label>
-        <input
-          ref={nameInputRef}
-          name="promptName"
-          className={inputClassName}
-          placeholder={t('A name for your prompt.') || ''}
-          value={name}
-          required
-          type="text"
-          onBlur={onBlur}
-          onChange={nameOnChangeHandler}
-          data-qa="prompt-name"
-        />
-        <EmptyRequiredInputMessage />
-      </div>
+      {uploaded ? (
+        <>
+          <div className="mb-4">
+            <label
+              className="mb-1 flex text-xs text-secondary"
+              htmlFor="promptName"
+            >
+              {t('Name')}
+              <span className="ml-1 inline text-accent-primary">*</span>
+            </label>
+            <input
+              ref={nameInputRef}
+              name="promptName"
+              className={inputClassName}
+              placeholder={t('A name for your prompt.') || ''}
+              value={name}
+              required
+              type="text"
+              onBlur={onBlur}
+              onChange={nameOnChangeHandler}
+              data-qa="prompt-name"
+            />
+            <EmptyRequiredInputMessage />
+          </div>
 
-      <div className="mb-4">
-        <label
-          className="mb-1 flex text-xs text-secondary"
-          htmlFor="description"
-        >
-          {t('Description')}
-        </label>
-        <textarea
-          ref={descriptionInputRef}
-          name="description"
-          className={inputClassName}
-          style={{ resize: 'none' }}
-          placeholder={t('A description for your prompt.') || ''}
-          value={description}
-          onChange={descriptionOnChangeHandler}
-          rows={3}
-          data-qa="prompt-descr"
-        />
-      </div>
-      <div className="mb-5">
-        <label className="mb-1 flex text-xs text-secondary" htmlFor="content">
-          {t('Prompt')}
-        </label>
-        <textarea
-          ref={contentInputRef}
-          name="content"
-          className={inputClassName}
-          style={{ resize: 'none' }}
-          placeholder={
-            t(
-              'Prompt content. Use {{}} to denote a variable. Ex: {{name}} is a {{adjective}} {{noun}}',
-            ) || ''
-          }
-          value={content}
-          onChange={contentOnChangeHandler}
-          rows={10}
-          data-qa="prompt-value"
-        />
-      </div>
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          className="button button-primary"
-          data-qa="save-prompt"
-          onClick={handleSubmit}
-        >
-          {t('Save')}
-        </button>
-      </div>
+          <div className="mb-4">
+            <label
+              className="mb-1 flex text-xs text-secondary"
+              htmlFor="description"
+            >
+              {t('Description')}
+            </label>
+            <textarea
+              ref={descriptionInputRef}
+              name="description"
+              className={inputClassName}
+              style={{ resize: 'none' }}
+              placeholder={t('A description for your prompt.') || ''}
+              value={description}
+              onChange={descriptionOnChangeHandler}
+              rows={3}
+              data-qa="prompt-descr"
+            />
+          </div>
+          <div className="mb-5">
+            <label
+              className="mb-1 flex text-xs text-secondary"
+              htmlFor="content"
+            >
+              {t('Prompt')}
+            </label>
+            <textarea
+              ref={contentInputRef}
+              name="content"
+              className={inputClassName}
+              style={{ resize: 'none' }}
+              placeholder={
+                t(
+                  'Prompt content. Use {{}} to denote a variable. Ex: {{name}} is a {{adjective}} {{noun}}',
+                ) || ''
+              }
+              value={content}
+              onChange={contentOnChangeHandler}
+              rows={10}
+              data-qa="prompt-value"
+            />
+          </div>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="button button-primary"
+              data-qa="save-prompt"
+              onClick={handleSubmit}
+            >
+              {t('Save')}
+            </button>
+          </div>
+        </>
+      ) : (
+        <ChatLoader containerClassName="h-[540px] max-h-full" />
+      )}
     </Modal>
   );
 };

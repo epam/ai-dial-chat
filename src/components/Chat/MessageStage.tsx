@@ -13,7 +13,7 @@ import { ModelIcon } from '@/src/components/Chatbar/components/ModelIcon';
 
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import CircleCheck from '../../../public/images/icons/circle-check.svg';
-import Loader from '../../../public/images/icons/loader.svg';
+import { Spinner } from '../Common/Spinner';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachments } from './MessageAttachments';
 
@@ -37,11 +37,7 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
   return (
     <div className="grid min-w-0 grid-flow-col items-center gap-3 overflow-hidden">
       {stage.status == null ? (
-        <Loader
-          height={20}
-          width={20}
-          className="shrink-0 grow-0 basis-auto animate-spin text-secondary"
-        />
+        <Spinner size={20} />
       ) : stage.status === 'completed' ? (
         <CircleCheck
           height={20}
