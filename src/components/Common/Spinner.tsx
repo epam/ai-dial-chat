@@ -17,6 +17,7 @@ export const Spinner = ({ size = 16, className = '', slow = false }: Props) => {
         slow ? 'animate-spin-slow' : 'animate-spin',
         className,
       )}
+      data-qa="message-input-spinner"
     />
   );
 };
