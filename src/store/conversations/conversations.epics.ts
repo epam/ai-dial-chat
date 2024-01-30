@@ -1284,7 +1284,6 @@ const saveConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.deleteConversations.match(action) ||
         ConversationsActions.addConversations.match(action) ||
         ConversationsActions.unpublishConversation.match(action) ||
-        ConversationsActions.duplicateConversation.match(action) ||
         ConversationsActions.duplicateSelectedConversations.match(action),
     ),
     map(() => ConversationsSelectors.selectConversations(state$.value)),
