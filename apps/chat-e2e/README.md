@@ -11,7 +11,7 @@ When run tests on CI, `E2E_USERNAME` and `E2E_PASSWORD` CI variable should be se
 ## Run tests locally
 
 Run `nx e2e chat-e2e` to execute the tests locally.
-Installation of default browsers may be required, when run for the 1st time: `npx playwright install`.
+Installation of default browsers may be required, when run for the 1st time.
 
 Local version of application is automatically started before execution the tests on `http://localhost:3000`.
 Config file used for local run is `local.playwright.config.ts`.
@@ -19,6 +19,10 @@ Config file used for local run is `local.playwright.config.ts`.
 After tests execution finished, 2 kind of reports are generated: html, allure.
 
 Before generating Allure report, install it on your local machine following the guide: https://docs.qameta.io/allure/#_get_started.
+
+To open html report, run the command `npx playwright show-report apps\chat-e2e\html-report`.
+
+Allure report is opened in default browser using `allure serve apps/chat-e2e/allure-results`.
 
 Every test inside local report contains video recording and trace attached.
 
@@ -53,11 +57,12 @@ CI report includes screenshots for failed tests.
 
 ## Environment variables
 
+The following variables should be placed inside `chat-e2e/.env.local` file in order to run tests locally
+
 | Variable       | Required | Description                          | Available Values | Default values |
 | -------------- | -------- | ------------------------------------ | ---------------- | -------------- |
 | `E2E_HOST`     | No       | The host URL for end-to-end testing. | Any string       |                |
 | `E2E_USERNAME` | No       | A username for e2e authentification  | Any string       |                |
 | `E2E_PASSWORD` | No       | A password for e2e authentification  | Any string       |                |
-| `TRACES_URL`   | No       | Traces URL                           | Any string       |                |
 | `TMS_URL`      | No       | TMS URL                              | Any string       |                |
 | `ISSUE_URL`    | No       | Issue URL                            | Any string       |                |
