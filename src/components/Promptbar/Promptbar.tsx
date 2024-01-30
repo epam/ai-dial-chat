@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { MoveType } from '@/src/utils/app/move';
 
 import { FeatureType } from '@/src/types/common';
-import { Prompt } from '@/src/types/prompt';
+import { PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -79,7 +79,7 @@ const Promptbar = () => {
   );
 
   return (
-    <Sidebar<Prompt>
+    <Sidebar<PromptInfo>
       featureType={FeatureType.Prompt}
       side="right"
       isOpen={showPromptbar}

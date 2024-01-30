@@ -1,12 +1,36 @@
 import { Observable, of } from 'rxjs';
 
-import { Conversation } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { Entity, EntityType } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
 
 export class ApiMockStorage implements DialStorage {
+  getConversation(_info: ConversationInfo): Observable<Conversation | null> {
+    throw new Error('Method not implemented.');
+  }
+  createConversation(_conversation: Conversation): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+  updateConversation(_conversation: Conversation): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+  deleteConversation(_info: ConversationInfo): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+  getPrompt(_info: Entity): Observable<Prompt | null> {
+    throw new Error('Method not implemented.');
+  }
+  createPrompt(_prompt: Prompt): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+  updatePrompt(_prompt: Prompt): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+  deletePrompt(_info: Entity): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
   setBucket(_bucket: string): void {
     return;
   }

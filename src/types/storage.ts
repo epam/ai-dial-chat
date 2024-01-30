@@ -62,11 +62,23 @@ export interface DialStorage {
 
   getConversation(info: ConversationInfo): Observable<Conversation | null>;
 
+  createConversation(conversation: Conversation): Observable<void>;
+
+  updateConversation(conversation: Conversation): Observable<void>;
+
+  deleteConversation(info: ConversationInfo): Observable<void>;
+
   setConversations(conversations: Conversation[]): Observable<void>;
 
   getPrompts(path?: string): Observable<PromptInfo[]>;
 
   getPrompt(info: PromptInfo): Observable<Prompt | null>;
+
+  createPrompt(prompt: Prompt): Observable<void>;
+
+  updatePrompt(prompt: Prompt): Observable<void>;
+
+  deletePrompt(info: PromptInfo): Observable<void>;
 
   setPrompts(prompts: Prompt[]): Observable<void>;
 }

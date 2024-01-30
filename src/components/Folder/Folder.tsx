@@ -32,11 +32,11 @@ import {
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { Conversation } from '@/src/types/chat';
+import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
-import { Prompt } from '@/src/types/prompt';
+import { PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -96,7 +96,7 @@ export interface FolderProps<T, P = unknown> {
   withBorderHighlight?: boolean;
 }
 
-const Folder = <T extends Conversation | Prompt | DialFile>({
+const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   currentFolder,
   searchTerm,
   itemComponent,

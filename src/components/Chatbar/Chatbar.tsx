@@ -4,7 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { MoveType } from '@/src/utils/app/move';
 
-import { Conversation } from '@/src/types/chat';
+import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -94,7 +94,7 @@ export const Chatbar = () => {
   );
 
   return (
-    <Sidebar<Conversation>
+    <Sidebar<ConversationInfo>
       featureType={FeatureType.Chat}
       side="left"
       actionButtons={<ChatActionsBlock />}

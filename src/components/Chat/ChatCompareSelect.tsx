@@ -4,7 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { isMobile } from '@/src/utils/app/mobile';
 
-import { Conversation, Role } from '@/src/types/chat';
+import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
@@ -47,7 +47,7 @@ const Option = ({ item }: OptionProps) => {
 };
 
 interface Props {
-  conversations: Conversation[];
+  conversations: ConversationInfo[];
   selectedConversations: Conversation[];
   onConversationSelect: (conversation: Conversation) => void;
 }
@@ -67,7 +67,7 @@ export const ChatCompareSelect = ({
     if (selectedConversations.length === 1) {
       const selectedConversation = selectedConversations[0];
 
-      const comparableConversations = conversations
+      const comparableConversations = (conversations as Conversation[]) // TODO: how to filter for comparison?
         .filter((conv) => !conv.replay.isReplay)
         .filter((conv) => {
           if (conv.id === selectedConversation.id) {

@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { Observable, map, of, switchMap, throwError } from 'rxjs';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { Entity } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage, UIStorageKeys } from '@/src/types/storage';
@@ -41,6 +42,39 @@ export class BrowserStorage implements DialStorage {
     );
   }
 
+  createConversation(conversation: Conversation): Observable<void> {
+    return BrowserStorage.getData(UIStorageKeys.ConversationHistory, []).pipe(
+      map((conversations: Conversation[]) => {
+        BrowserStorage.setData(UIStorageKeys.ConversationHistory, [
+          ...conversations,
+          conversation,
+        ]);
+      }),
+    );
+  }
+  updateConversation(conversation: Conversation): Observable<void> {
+    return BrowserStorage.getData(UIStorageKeys.ConversationHistory, []).pipe(
+      map((conversations: Conversation[]) => {
+        BrowserStorage.setData(
+          UIStorageKeys.ConversationHistory,
+          conversations.map((conv) =>
+            conv.id === conversation.id ? conversation : conv,
+          ),
+        );
+      }),
+    );
+  }
+  deleteConversation(info: ConversationInfo): Observable<void> {
+    return BrowserStorage.getData(UIStorageKeys.ConversationHistory, []).pipe(
+      map((conversations: Conversation[]) => {
+        BrowserStorage.setData(
+          UIStorageKeys.ConversationHistory,
+          conversations.filter((conv) => conv.id !== info.id),
+        );
+      }),
+    );
+  }
+
   setConversations(conversations: Conversation[]): Observable<void> {
     return BrowserStorage.setData(
       UIStorageKeys.ConversationHistory,
@@ -58,6 +92,34 @@ export class BrowserStorage implements DialStorage {
         (prompts: Prompt[]) =>
           prompts.find((prompt) => prompt.id === info.id) || null,
       ),
+    );
+  }
+
+  createPrompt(prompt: Prompt): Observable<void> {
+    return BrowserStorage.getData(UIStorageKeys.Prompts, []).pipe(
+      map((prompts: Prompt[]) => {
+        BrowserStorage.setData(UIStorageKeys.Prompts, [...prompts, prompt]);
+      }),
+    );
+  }
+  updatePrompt(prompt: Prompt): Observable<void> {
+    return BrowserStorage.getData(UIStorageKeys.Prompts, []).pipe(
+      map((prompts: Prompt[]) => {
+        BrowserStorage.setData(
+          UIStorageKeys.Prompts,
+          prompts.map((item) => (prompt.id === item.id ? prompt : item)),
+        );
+      }),
+    );
+  }
+  deletePrompt(info: Entity): Observable<void> {
+    return BrowserStorage.getData(UIStorageKeys.Prompts, []).pipe(
+      map((prompts: Prompt[]) => {
+        BrowserStorage.setData(
+          UIStorageKeys.Prompts,
+          prompts.filter((prompt) => prompt.id !== info.id),
+        );
+      }),
     );
   }
 

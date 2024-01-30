@@ -9,7 +9,6 @@ import {
   ConversationEntityModel,
   ConversationInfo,
   Message,
-  Role,
 } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { SupportedExportFormats } from '@/src/types/export';
@@ -25,7 +24,6 @@ import {
 } from '@/src/constants/default-settings';
 import { defaultReplay } from '@/src/constants/replay';
 
-import { hasExternalParent } from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -234,99 +232,25 @@ export const conversationsSlice = createSlice({
     },
     createNewReplayConversation: (
       state,
-      { payload }: PayloadAction<{ conversation: Conversation }>,
+      _action: PayloadAction<{ conversation: ConversationInfo }>,
+    ) => state,
+    createNewConversationSuccess: (
+      state,
+      {
+        payload: { newConversation },
+      }: PayloadAction<{ newConversation: Conversation }>,
     ) => {
-      const newConversationName = `[Replay] ${payload.conversation.name}`;
-
-      const userMessages = payload.conversation.messages.filter(
-        ({ role }) => role === Role.User,
-      );
-      const newConversation: Conversation = {
-        ...payload.conversation,
-        ...resetShareEntity,
-        folderId: hasExternalParent(
-          { conversations: state },
-          payload.conversation.folderId,
-        )
-          ? undefined
-          : payload.conversation.folderId,
-        id: uuidv4(),
-        name: newConversationName,
-        messages: [],
-        lastActivityDate: Date.now(),
-
-        replay: {
-          isReplay: true,
-          replayUserMessagesStack: userMessages,
-          activeReplayIndex: 0,
-          replayAsIs: true,
-        },
-
-        playback: {
-          isPlayback: false,
-          activePlaybackIndex: 0,
-          messagesStack: [],
-        },
-      };
-      state.conversations = state.conversations.concat(newConversation); // TODO: save in API
+      state.conversations.concat(newConversation);
       state.selectedConversationsIds = [newConversation.id];
     },
     createNewPlaybackConversation: (
       state,
-      { payload }: PayloadAction<{ conversation: Conversation }>,
-    ) => {
-      const newConversationName = `[Playback] ${payload.conversation.name}`;
-
-      const newConversation: Conversation = {
-        ...payload.conversation,
-        ...resetShareEntity,
-        folderId: hasExternalParent(
-          { conversations: state },
-          payload.conversation.folderId,
-        )
-          ? undefined
-          : payload.conversation.folderId,
-        id: uuidv4(),
-        name: newConversationName,
-        messages: [],
-        lastActivityDate: Date.now(),
-
-        playback: {
-          messagesStack: payload.conversation.messages,
-          activePlaybackIndex: 0,
-          isPlayback: true,
-        },
-
-        replay: {
-          isReplay: false,
-          replayUserMessagesStack: [],
-          activeReplayIndex: 0,
-          replayAsIs: false,
-        },
-      };
-      state.conversations = state.conversations.concat(newConversation); // TODO: save in API
-      state.selectedConversationsIds = [newConversation.id];
-    },
+      _action: PayloadAction<{ conversation: ConversationInfo }>,
+    ) => state,
     duplicateConversation: (
       state,
-      { payload }: PayloadAction<{ conversation: Conversation }>,
-    ) => {
-      const newConversation: Conversation = {
-        ...payload.conversation,
-        ...resetShareEntity,
-        folderId: undefined,
-        name: generateNextName(
-          DEFAULT_CONVERSATION_NAME,
-          payload.conversation.name,
-          state.conversations,
-          0,
-        ),
-        id: uuidv4(),
-        lastActivityDate: Date.now(),
-      };
-      state.conversations = state.conversations.concat(newConversation); //TODO: save in API
-      state.selectedConversationsIds = [newConversation.id];
-    },
+      _action: PayloadAction<{ conversation: ConversationInfo }>,
+    ) => state,
     duplicateSelectedConversations: (state) => {
       const selectedIds = new Set(state.selectedConversationsIds);
       const newSelectedIds: string[] = [];
@@ -341,8 +265,8 @@ export const conversationsSlice = createSlice({
             FeatureType.Chat,
           )
         ) {
-          const newConversation: ConversationInfo = {
-            ...conversation,
+          const newConversation: Conversation = {
+            ...(conversation as Conversation),
             ...resetShareEntity,
             folderId: undefined,
             name: generateNextName(

@@ -37,6 +37,7 @@ import {
   isSettingsChanged,
 } from '@/src/utils/app/conversation';
 import { DataService } from '@/src/utils/app/data/data-service';
+import { generateNextName } from '@/src/utils/app/folders';
 import {
   ImportConversationsResponse,
   exportConversation,
@@ -62,6 +63,7 @@ import {
 import { EntityType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
+import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -72,6 +74,9 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from './conversations.reducers';
+import { hasExternalParent } from './conversations.selectors';
+
+import { v4 as uuidv4 } from 'uuid';
 
 const createNewConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -108,6 +113,146 @@ const createNewConversationEpic: AppEpic = (action$, state$) =>
               model,
             }),
           );
+        }),
+      );
+    }),
+  );
+
+const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.createNewReplayConversation.match),
+    switchMap(({ payload }) =>
+      forkJoin({
+        conversation: DataService.getConversation(payload.conversation),
+      }),
+    ),
+    switchMap(({ conversation }) => {
+      if (!conversation) return EMPTY;
+
+      const newConversationName = `[Replay] ${conversation.name}`;
+
+      const userMessages = conversation.messages.filter(
+        ({ role }) => role === Role.User,
+      );
+      const newConversation: Conversation = {
+        ...conversation,
+        ...resetShareEntity,
+        folderId: hasExternalParent(
+          { conversations: state$.value },
+          conversation.folderId,
+        )
+          ? undefined
+          : conversation.folderId,
+        id: uuidv4(),
+        name: newConversationName,
+        messages: [],
+        lastActivityDate: Date.now(),
+
+        replay: {
+          isReplay: true,
+          replayUserMessagesStack: userMessages,
+          activeReplayIndex: 0,
+          replayAsIs: true,
+        },
+
+        playback: {
+          isPlayback: false,
+          activePlaybackIndex: 0,
+          messagesStack: [],
+        },
+      };
+
+      DataService.createConversation(newConversation);
+
+      return of(
+        ConversationsActions.createNewConversationSuccess({
+          newConversation,
+        }),
+      );
+    }),
+  );
+
+const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.createNewPlaybackConversation.match),
+    switchMap(({ payload }) =>
+      forkJoin({
+        conversation: DataService.getConversation(payload.conversation),
+      }),
+    ),
+    switchMap(({ conversation }) => {
+      if (!conversation) return EMPTY;
+
+      const newConversationName = `[Playback] ${conversation.name}`;
+
+      const newConversation: Conversation = {
+        ...conversation,
+        ...resetShareEntity,
+        folderId: hasExternalParent(
+          { conversations: state$.value },
+          conversation.folderId,
+        )
+          ? undefined
+          : conversation.folderId,
+        id: uuidv4(),
+        name: newConversationName,
+        messages: [],
+        lastActivityDate: Date.now(),
+
+        playback: {
+          messagesStack: conversation.messages,
+          activePlaybackIndex: 0,
+          isPlayback: true,
+        },
+
+        replay: {
+          isReplay: false,
+          replayUserMessagesStack: [],
+          activeReplayIndex: 0,
+          replayAsIs: false,
+        },
+      };
+
+      DataService.createConversation(newConversation);
+
+      return of(
+        ConversationsActions.createNewConversationSuccess({
+          newConversation,
+        }),
+      );
+    }),
+  );
+
+const duplicateConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.duplicateConversation.match),
+    switchMap(({ payload }) =>
+      forkJoin({
+        conversation: DataService.getConversation(payload.conversation),
+      }),
+    ),
+    switchMap(({ conversation }) => {
+      if (!conversation) return EMPTY;
+
+      const newConversation: Conversation = {
+        ...conversation,
+        ...resetShareEntity,
+        folderId: undefined,
+        name: generateNextName(
+          DEFAULT_CONVERSATION_NAME,
+          conversation.name,
+          state$.value.conversations,
+          0,
+        ),
+        id: uuidv4(),
+        lastActivityDate: Date.now(),
+      };
+
+      DataService.createConversation(newConversation);
+
+      return of(
+        ConversationsActions.createNewConversationSuccess({
+          newConversation,
         }),
       );
     }),
@@ -181,7 +326,7 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
       folders: ConversationsSelectors.selectFolders(state$.value),
     })),
     tap(({ conversations, folders }) => {
-      exportConversations(conversations, folders);
+      exportConversations(conversations as Conversation[], folders); // TODO: upload all conversations for export
     }),
     ignoreElements(),
   );
@@ -1103,9 +1248,8 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.selectConversations.match(action) ||
         ConversationsActions.unselectConversations.match(action) ||
         ConversationsActions.createNewConversationsSuccess.match(action) ||
-        ConversationsActions.createNewReplayConversation.match(action) ||
+        ConversationsActions.createNewConversationSuccess.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
-        ConversationsActions.createNewPlaybackConversation.match(action) ||
         ConversationsActions.deleteConversations.match(action) ||
         ConversationsActions.addConversations.match(action) ||
         ConversationsActions.duplicateConversation.match(action) ||
@@ -1134,12 +1278,10 @@ const saveConversationsEpic: AppEpic = (action$, state$) =>
     filter(
       (action) =>
         ConversationsActions.createNewConversationsSuccess.match(action) ||
-        ConversationsActions.createNewReplayConversation.match(action) ||
         ConversationsActions.updateConversation.match(action) ||
         ConversationsActions.updateConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversations.match(action) ||
-        ConversationsActions.createNewPlaybackConversation.match(action) ||
         ConversationsActions.addConversations.match(action) ||
         ConversationsActions.unpublishConversation.match(action) ||
         ConversationsActions.duplicateConversation.match(action) ||
@@ -1677,6 +1819,10 @@ export const ConversationsEpics = combineEpics(
   playbackNextMessageEndEpic,
   playbackPrevMessageEpic,
   playbackCalncelEpic,
+
+  createNewReplayConversationEpic,
+  createNewPlaybackConversationEpic,
+  duplicateConversationEpic,
 
   // shareFolderEpic,
   // shareConversationEpic,

@@ -2,24 +2,24 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { Conversation } from '@/src/types/chat';
+import { ConversationInfo } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsRenderer } from './ConversationsRenderer';
 
 interface Props {
-  conversations: Conversation[];
+  conversations: ConversationInfo[];
 }
 interface AllConversations {
-  today: Conversation[];
-  yesterday: Conversation[];
-  lastSevenDays: Conversation[];
-  lastThirtyDays: Conversation[];
-  older: Conversation[];
-  other: Conversation[];
+  today: ConversationInfo[];
+  yesterday: ConversationInfo[];
+  lastSevenDays: ConversationInfo[];
+  lastThirtyDays: ConversationInfo[];
+  older: ConversationInfo[];
+  other: ConversationInfo[];
 }
 interface SortedBlock {
-  conversations: Conversation[];
+  conversations: ConversationInfo[];
   name: string;
 }
 interface SortedConversations {
@@ -32,8 +32,8 @@ interface SortedConversations {
 }
 
 const sortingConversationsByDate = (
-  convA: Conversation,
-  convB: Conversation,
+  convA: ConversationInfo,
+  convB: ConversationInfo,
 ) => {
   if (convA.lastActivityDate && convB.lastActivityDate) {
     const dateA = convA.lastActivityDate;

@@ -18,7 +18,7 @@ import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { Conversation } from '@/src/types/chat';
+import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
@@ -45,7 +45,7 @@ import { ModelIcon } from './ModelIcon';
 import { v4 as uuidv4 } from 'uuid';
 
 interface ViewProps {
-  conversation: Conversation;
+  conversation: ConversationInfo;
   isHighlited: boolean;
 }
 
@@ -59,26 +59,25 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
         isHighlighted={!!isHighlited}
         featureType={FeatureType.Chat}
       >
-        {conversation.replay.replayAsIs && (
+        {conversation.isReplay && (
           <span className="flex shrink-0">
             <ReplayAsIsIcon size={18} />
           </span>
         )}
 
-        {conversation.playback && conversation.playback.isPlayback && (
+        {conversation.isPlayback && (
           <span className="flex shrink-0">
             <PlaybackIcon size={18} />
           </span>
         )}
 
-        {!conversation.replay.replayAsIs &&
-          !conversation.playback?.isPlayback && (
-            <ModelIcon
-              size={18}
-              entityId={conversation.model.id}
-              entity={modelsMap[conversation.model.id]}
-            />
-          )}
+        {!conversation.isReplay && !conversation.isPlayback && (
+          <ModelIcon
+            size={18}
+            entityId={conversation.model.id}
+            entity={modelsMap[conversation.model.id]}
+          />
+        )}
       </ShareIcon>
       <div
         className="relative max-h-5 flex-1 truncate break-all text-left"
@@ -91,7 +90,7 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
 }
 
 interface Props {
-  item: Conversation;
+  item: ConversationInfo;
   level?: number;
 }
 
@@ -145,10 +144,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
 
-  const isEmptyConversation = conversation.messages.length === 0;
+  const isEmptyConversation = false; //conversation.messages.length === 0; //TODO: how check if empty?
 
   const handleRename = useCallback(
-    (conversation: Conversation) => {
+    (conversation: ConversationInfo) => {
       if (renameValue.trim().length > 0) {
         dispatch(
           ConversationsActions.updateConversation({
@@ -179,7 +178,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   );
 
   const handleDragStart = useCallback(
-    (e: DragEvent<HTMLButtonElement>, conversation: Conversation) => {
+    (e: DragEvent<HTMLButtonElement>, conversation: ConversationInfo) => {
       if (e.dataTransfer && !isExternal) {
         e.dataTransfer.setDragImage(getDragImage(), 0, 0);
         e.dataTransfer.setData(
@@ -378,26 +377,25 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             isHighlighted={isHighlighted}
             featureType={FeatureType.Chat}
           >
-            {conversation.replay.replayAsIs && (
+            {conversation.isReplay && (
               <span className="flex shrink-0">
                 <ReplayAsIsIcon size={18} />
               </span>
             )}
 
-            {conversation.playback && conversation.playback.isPlayback && (
+            {conversation.isPlayback && (
               <span className="flex shrink-0">
                 <PlaybackIcon size={18} />
               </span>
             )}
 
-            {!conversation.replay.replayAsIs &&
-              !conversation.playback?.isPlayback && (
-                <ModelIcon
-                  size={18}
-                  entityId={conversation.model.id}
-                  entity={modelsMap[conversation.model.id]}
-                />
-              )}
+            {!conversation.isReplay && !conversation.isPlayback && (
+              <ModelIcon
+                size={18}
+                entityId={conversation.model.id}
+                entity={modelsMap[conversation.model.id]}
+              />
+            )}
           </ShareIcon>
           <input
             className="flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"

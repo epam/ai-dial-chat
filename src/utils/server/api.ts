@@ -56,9 +56,9 @@ const getModelApiIdFromConversation = (conversation: Conversation) => {
 // Format key: {id:guid}__{modelId}__{name:base64}
 export const getConversationApiKey = (conversation: ConversationInfo) => {
   return [
+    conversation.lastActivityDate,
     conversation.id,
     getModelApiIdFromConversation(conversation as Conversation),
-    conversation.lastActivityDate,
     btoa(conversation.name),
   ].join(pathKeySeparator);
 };
@@ -67,14 +67,15 @@ export const getConversationApiKey = (conversation: ConversationInfo) => {
 export const parseConversationApiKey = (apiKey: string): ConversationInfo => {
   const parts = apiKey.split(pathKeySeparator);
 
-  if (parts.length !== 3) throw new Error('Incorrect conversation key');
+  if (parts.length !== 4) throw new Error('Incorrect conversation key');
 
-  const [id, modelId, encodedName] = parts;
+  const [lastActivityDate, id, modelId, encodedName] = parts;
 
   return {
     id,
     model: { id: modelId },
     name: atob(encodedName),
+    lastActivityDate: parseInt(lastActivityDate),
     isPlayback: modelId === PseudoModel.Playback,
     isReplay: modelId === PseudoModel.Replay,
   };
@@ -89,7 +90,7 @@ export const getPromptApiKey = (prompt: PromptInfo) => {
 export const parsePromptApiKey = (apiKey: string): PromptInfo => {
   const parts = apiKey.split(pathKeySeparator);
 
-  if (parts.length !== 2) throw new Error('Incorrect conversation key');
+  if (parts.length !== 2) throw new Error('Incorrect prompt key');
 
   const [id, encodedName] = parts;
 

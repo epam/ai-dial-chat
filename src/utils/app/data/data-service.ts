@@ -47,16 +47,56 @@ export class DataService extends FileService {
     return this.getDataStorage().setPromptsFolders(folders);
   }
 
-  public static getPrompts(): Observable<PromptInfo[]> {
-    return this.getDataStorage().getPrompts();
+  public static getPrompts(path?: string): Observable<PromptInfo[]> {
+    return this.getDataStorage().getPrompts(path);
+  }
+
+  public static getPrompt(info: PromptInfo): Observable<Prompt | null> {
+    return this.getDataStorage().getPrompt(info);
+  }
+
+  public static createConversation(
+    conversation: Conversation,
+  ): Observable<void> {
+    return this.getDataStorage().createConversation(conversation);
+  }
+
+  public static updateConversation(
+    conversation: Conversation,
+  ): Observable<void> {
+    return this.getDataStorage().updateConversation(conversation);
+  }
+
+  public static deleteConversation(info: ConversationInfo): Observable<void> {
+    return this.getDataStorage().deleteConversation(info);
   }
 
   public static setPrompts(prompts: Prompt[]): Observable<void> {
     return this.getDataStorage().setPrompts(prompts);
   }
 
-  public static getConversations(): Observable<ConversationInfo[]> {
-    return this.getDataStorage().getConversations();
+  public static getConversations(
+    path?: string,
+  ): Observable<ConversationInfo[]> {
+    return this.getDataStorage().getConversations(path);
+  }
+
+  public static getConversation(
+    info: ConversationInfo,
+  ): Observable<Conversation | null> {
+    return this.getDataStorage().getConversation(info);
+  }
+
+  public static createPrompt(prompt: Prompt): Observable<void> {
+    return this.getDataStorage().createPrompt(prompt);
+  }
+
+  public static updatePrompt(prompt: Prompt): Observable<void> {
+    return this.getDataStorage().updatePrompt(prompt);
+  }
+
+  public static deletePrompt(info: PromptInfo): Observable<void> {
+    return this.getDataStorage().deletePrompt(info);
   }
 
   public static setConversations(
