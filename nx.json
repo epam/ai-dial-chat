@@ -26,6 +26,9 @@
       "cache": true,
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
+      "options": {
+        "maxWarnings": 10
+      },
       "inputs": [
         "default",
         "{workspaceRoot}/.eslintrc.json",
@@ -43,7 +46,8 @@
         "{workspaceRoot}/eslint.config.js"
       ],
       "options": {
-        "fix": true
+        "fix": true,
+        "maxWarnings": 10
       }
     },
     "format": {

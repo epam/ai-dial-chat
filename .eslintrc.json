@@ -3,6 +3,9 @@
   "plugins": ["@nx"],
   "root": true,
   "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": ["tsconfig.*?.json"]
+  },
   "env": {
     "node": true
   },
@@ -31,16 +34,12 @@
     },
     {
       "files": ["*.ts", "*.tsx"],
-      "parserOptions": {
-        "project": ["tsconfig.*?.json"]
-      },
       "extends": [
         "plugin:@nx/typescript",
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/stylistic"
       ],
       "rules": {
-        // TODO: Check all typescript rules work
         "@typescript-eslint/no-unused-vars": [
           "error",
           { "argsIgnorePattern": "^_" }

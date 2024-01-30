@@ -21,8 +21,9 @@
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+      "extends": ["../../.eslintrc.json"],
       "rules": {
-        "@next/next/no-html-link-for-pages": ["error", "./chat/src/pages"],
+        "@next/next/no-html-link-for-pages": ["error", "./apps/chat/src/pages"],
         "react/jsx-boolean-value": ["error", "never"],
         "tailwindcss/no-custom-classname": "error",
         "tailwindcss/no-contradicting-classname": "error",
@@ -39,14 +40,6 @@
           }
         ]
       }
-    },
-    {
-      "files": ["*.ts", "*.tsx"],
-      "rules": {}
-    },
-    {
-      "files": ["*.js", "*.jsx"],
-      "rules": {}
     },
     {
       "plugins": ["testing-library"],

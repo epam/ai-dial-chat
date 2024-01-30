@@ -9,20 +9,13 @@
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+      "extends": ["../../.eslintrc.json"],
       "rules": {
         "@next/next/no-html-link-for-pages": [
           "error",
           "apps/overlay-sandbox/pages"
         ]
       }
-    },
-    {
-      "files": ["*.ts", "*.tsx"],
-      "rules": {}
-    },
-    {
-      "files": ["*.js", "*.jsx"],
-      "rules": {}
     }
   ]
 }

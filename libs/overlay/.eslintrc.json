@@ -1,35 +1,26 @@
 {
   "extends": ["../../.eslintrc.json"],
   "ignorePatterns": ["!**/*"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": ["./tsconfig.*?.json"]
+  },
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+      "extends": ["../../.eslintrc.json"],
       "rules": {
         "@nx/enforce-module-boundaries": [
           "error",
           {
-            "enforceBuildableLibDependency": false,
-            "allow": [],
-            "depConstraints": [
-              {
-                "sourceTag": "*",
-                "onlyDependOnLibsWithTags": ["*"]
-              }
-            ]
+            "enforceBuildableLibDependency": false
           }
         ]
       }
     },
     {
-      "files": ["*.ts", "*.tsx"],
-      "rules": {}
-    },
-    {
-      "files": ["*.js", "*.jsx"],
-      "rules": {}
-    },
-    {
       "files": ["*.json"],
+      "extends": ["../../.eslintrc.json"],
       "parser": "jsonc-eslint-parser",
       "rules": {
         "@nx/dependency-checks": [
