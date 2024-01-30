@@ -47,17 +47,20 @@ export const doesEntityContainSearchItem = <
   item: T,
   searchTerm: string,
 ) => {
+  if (!searchTerm) {
+    return true;
+  }
   if ('messages' in item) {
     // Conversation
     return doesConversationContainSearchTerm(item, searchTerm);
-  } else if ('description' in item) {
+  } else if ('content' in item && 'description' in item) {
     // Prompt
     return doesPromptContainSearchTerm(item, searchTerm);
   } else if ('contentType' in item) {
     // DialFile
     return doesFileContainSearchTerm(item, searchTerm);
   }
-  throw new Error('unexpected entity');
+  return false;
 };
 
 export const TrueFilter: EntityFilter<ShareInterface> = () => true;
