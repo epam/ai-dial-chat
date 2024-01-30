@@ -15,7 +15,7 @@ export default function ChatLoader({
   slow = true,
   containerClassName,
   loaderClassName,
-  dataQa,
+  dataQa = 'chat-loader',
 }: Props) {
   return (
     <div
