@@ -56,7 +56,7 @@ export const doesEntityContainSearchItem = <
   item: T,
   searchTerm: string,
 ) => {
-  if(!searchTerm) {
+  if (!searchTerm) {
     return true;
   }
   if ('messages' in item) {
