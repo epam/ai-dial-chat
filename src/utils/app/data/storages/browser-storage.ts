@@ -182,7 +182,7 @@ export class BrowserStorage implements DialStorage {
       return of(
         value === null || value === undefined
           ? defaultValue
-          : { ...JSON.parse(value), uploaded: true },
+          : JSON.parse(value),
       );
     } catch (e: unknown) {
       console.error(e);
