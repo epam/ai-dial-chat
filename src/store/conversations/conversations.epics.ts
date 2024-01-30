@@ -1282,7 +1282,11 @@ const saveConversationsEpic: AppEpic = (action$, state$) =>
     ),
     map(() => ConversationsSelectors.selectConversations(state$.value)),
     switchMap((conversations) => {
-      return of(conversations); //DataService.setConversations(conversations); //TODO: fix saving conversations
+      return DataService.setConversations(
+        (conversations as Conversation[]).filter(
+          (conv: Conversation) => !!conv.replay, //TODO: fix saving conversations
+        ),
+      );
     }),
     ignoreElements(),
   );
