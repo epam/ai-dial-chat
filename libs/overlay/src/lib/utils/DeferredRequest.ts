@@ -1,4 +1,3 @@
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import { OverlayRequest } from 'shared';
 
 const defaultRequestTimeout = 10000;

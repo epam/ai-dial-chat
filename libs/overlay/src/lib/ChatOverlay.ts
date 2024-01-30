@@ -2,7 +2,6 @@ import { DeferredRequest } from './utils/DeferredRequest';
 import { Task } from './utils/Task';
 import { Styles, setStyles } from './utils/styleUtils';
 
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import { Feature, OverlayRequest } from 'shared';
 
 export interface ChatOverlayOptions {
