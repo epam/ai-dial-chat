@@ -1,9 +1,4 @@
 ---
-curations:
-  packages:
-  - id: "NPM::union:0.5.0"
-    curations:
-      concluded_license: "MIT"
 excludes:
   paths:
   - pattern: "package-lock.json"
