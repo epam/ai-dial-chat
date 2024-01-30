@@ -1,6 +1,6 @@
 import { Observable, map } from 'rxjs';
 
-import { ApiUtils, getParentPath } from '@/src/utils/server/api';
+import { ApiUtils, combineApiKey, getParentPath } from '@/src/utils/server/api';
 
 import { BackendChatEntity, BackendDataNodeType } from '@/src/types/common';
 import { EntityStorage } from '@/src/types/storage';
@@ -28,7 +28,9 @@ export abstract class ApiEntityStorage<
       map((conversations: BackendChatEntity[]) => {
         return conversations.map((conversation): EntityInfo => {
           const relativePath = conversation.parentPath || undefined;
-          const info = this.parseEntityKey(conversation.name);
+          const info = this.parseEntityKey(
+            combineApiKey(conversation.updatedAt, conversation.name),
+          );
 
           return {
             ...info,

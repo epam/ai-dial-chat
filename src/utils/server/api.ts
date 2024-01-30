@@ -40,6 +40,9 @@ export const getEntityUrlFromSlugs = (
 
 const pathKeySeparator = '__';
 
+export const combineApiKey = (...args: (string | number)[]) =>
+  args.join(pathKeySeparator);
+
 enum PseudoModel {
   Replay = 'replay',
   Playback = 'playback',
@@ -55,12 +58,12 @@ const getModelApiIdFromConversation = (conversation: Conversation) => {
 
 // Format key: {id:guid}__{modelId}__{name:base64}
 export const getConversationApiKey = (conversation: ConversationInfo) => {
-  return [
-    conversation.lastActivityDate,
+  return combineApiKey(
+    conversation.lastActivityDate?.toString() || '',
     conversation.id,
     getModelApiIdFromConversation(conversation as Conversation),
     btoa(conversation.name),
-  ].join(pathKeySeparator);
+  );
 };
 
 // Format key: {id:guid}__{modelId}__{name:base64}
@@ -69,13 +72,13 @@ export const parseConversationApiKey = (apiKey: string): ConversationInfo => {
 
   if (parts.length !== 4) throw new Error('Incorrect conversation key');
 
-  const [lastActivityDate, id, modelId, encodedName] = parts;
+  const [updatedAt, id, modelId, encodedName] = parts;
 
   return {
     id,
     model: { id: modelId },
     name: atob(encodedName),
-    lastActivityDate: parseInt(lastActivityDate),
+    lastActivityDate: parseInt(updatedAt),
     isPlayback: modelId === PseudoModel.Playback,
     isReplay: modelId === PseudoModel.Replay,
   };
@@ -83,16 +86,16 @@ export const parseConversationApiKey = (apiKey: string): ConversationInfo => {
 
 // Format key: {id:guid}__{name:base64}
 export const getPromptApiKey = (prompt: PromptInfo) => {
-  return [prompt.id, btoa(prompt.name)].join(pathKeySeparator);
+  return combineApiKey(prompt.id, btoa(prompt.name));
 };
 
 // Format key: {id:guid}__{name:base64}
 export const parsePromptApiKey = (apiKey: string): PromptInfo => {
   const parts = apiKey.split(pathKeySeparator);
 
-  if (parts.length !== 2) throw new Error('Incorrect prompt key');
+  if (parts.length !== 3) throw new Error('Incorrect prompt key');
 
-  const [id, encodedName] = parts;
+  const [__updatedAt, id, encodedName] = parts;
 
   return {
     id,

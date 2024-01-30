@@ -1288,7 +1288,7 @@ const saveConversationsEpic: AppEpic = (action$, state$) =>
     ),
     map(() => ConversationsSelectors.selectConversations(state$.value)),
     switchMap((conversations) => {
-      return DataService.setConversations(conversations);
+      return of(conversations); //DataService.setConversations(conversations);
     }),
     ignoreElements(),
   );
