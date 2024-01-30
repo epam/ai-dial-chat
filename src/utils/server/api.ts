@@ -59,7 +59,6 @@ const getModelApiIdFromConversation = (conversation: Conversation) => {
 // Format key: {id:guid}__{modelId}__{name:base64}
 export const getConversationApiKey = (conversation: ConversationInfo) => {
   return combineApiKey(
-    conversation.lastActivityDate?.toString() || '',
     conversation.id,
     getModelApiIdFromConversation(conversation as Conversation),
     btoa(conversation.name),
