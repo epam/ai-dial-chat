@@ -1,34 +1,25 @@
-import { Conversation } from '@/src/types/chat';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
-import { Prompt } from '@/src/types/prompt';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { ShareInterface } from '@/src/types/share';
 
 import { getChildAndCurrentFoldersIdsById } from './folders';
 
 export const doesConversationContainSearchTerm = (
-  conversation: Conversation,
+  conversation: ConversationInfo,
   searchTerm: string,
 ) => {
-  return [
-    conversation.name,
-    ...conversation.messages.map((message) => message.content),
-  ]
-    .join(' ')
-    .toLowerCase()
-    .includes(searchTerm.toLowerCase());
+  return conversation.name.toLowerCase().includes(searchTerm.toLowerCase());
 };
 
 export const doesPromptContainSearchTerm = (
-  prompt: Prompt,
+  prompt: PromptInfo,
   searchTerm: string,
 ) => {
-  return [prompt.name, prompt.description, prompt.content]
-    .join(' ')
-    .toLowerCase()
-    .includes(searchTerm.toLowerCase());
+  return prompt.name.toLowerCase().includes(searchTerm.toLowerCase());
 };
 
 export const doesFileContainSearchTerm = (

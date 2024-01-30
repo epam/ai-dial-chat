@@ -85,7 +85,7 @@ const createNewConversationEpic: AppEpic = (action$, state$) =>
       names: payload.names,
       lastConversation: ConversationsSelectors.selectLastConversation(
         state$.value,
-      ),
+      ) as Conversation, //TODO: need to upload last conversation?
     })),
     switchMap(({ names, lastConversation }) => {
       return state$.pipe(
@@ -93,13 +93,7 @@ const createNewConversationEpic: AppEpic = (action$, state$) =>
         map((state) => ModelsSelectors.selectRecentModels(state)),
         filter((models) => models && models.length > 0),
         take(1),
-        map((recentModels) => ({
-          lastConversation: ConversationsSelectors.selectLastConversation(
-            state$.value,
-          ),
-          recentModels: recentModels,
-        })),
-        switchMap(({ recentModels }) => {
+        switchMap((recentModels) => {
           const model = recentModels[0];
 
           if (!model) {
@@ -1288,7 +1282,7 @@ const saveConversationsEpic: AppEpic = (action$, state$) =>
     ),
     map(() => ConversationsSelectors.selectConversations(state$.value)),
     switchMap((conversations) => {
-      return of(conversations); //DataService.setConversations(conversations);
+      return of(conversations); //DataService.setConversations(conversations); //TODO: fix saving conversations
     }),
     ignoreElements(),
   );

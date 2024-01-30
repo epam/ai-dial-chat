@@ -19,7 +19,7 @@ import {
   isEntityOrParentsExternal,
 } from '@/src/utils/app/share';
 
-import { Conversation, Role } from '@/src/types/chat';
+import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
@@ -107,13 +107,13 @@ export const selectSectionFolders = createSelector(
 
 export const selectLastConversation = createSelector(
   [selectConversations],
-  (state): Conversation | undefined => {
+  (state): ConversationInfo | undefined => {
     return state[0];
   },
 );
 export const selectConversation = createSelector(
   [selectConversations, (_state, id: string) => id],
-  (conversations, id): Conversation | undefined => {
+  (conversations, id): ConversationInfo | undefined => {
     return conversations.find((conv) => conv.id === id);
   },
 );
@@ -399,13 +399,16 @@ export const isPublishConversationVersionUnique = createSelector(
     (_state: RootState, _entityId: string, version: string) => version,
   ],
   (state, entityId, version) => {
-    const conversation = selectConversation(state, entityId);
+    const conversation = selectConversation(state, entityId) as Conversation; // TODO: fix
 
     if (!conversation || conversation?.publishVersion === version) return false;
 
-    const conversations = selectConversations(state).filter(
-      (conv) => conv.originalId === entityId && conv.publishVersion === version,
-    );
+    const conversations = selectConversations(state)
+      .map((conv) => conv as Conversation) // TODO: fix
+      .filter(
+        (conv) =>
+          conv.originalId === entityId && conv.publishVersion === version,
+      );
 
     if (conversations.length) return false;
 
@@ -475,7 +478,10 @@ export const getAttachments = createSelector(
     const conversation = selectConversation(state, entityId);
     if (conversation) {
       return getUniqueAttachments(
-        getConversationAttachmentWithPath(conversation, folders),
+        getConversationAttachmentWithPath(
+          conversation as Conversation, //TODO: upload conversation
+          folders,
+        ),
       );
     } else {
       const folderIds = new Set(
@@ -490,7 +496,10 @@ export const getAttachments = createSelector(
 
       return getUniqueAttachments(
         conversations.flatMap((conv) =>
-          getConversationAttachmentWithPath(conv, folders),
+          getConversationAttachmentWithPath(
+            conv as Conversation, //TODO: upload conversation
+            folders,
+          ),
         ),
       );
     }
