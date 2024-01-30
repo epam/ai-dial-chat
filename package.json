@@ -8,7 +8,6 @@
     "build": "nx run-many -t build",
     "test": "nx run-many -t test",
     "test:coverage": "nx run-many -t test:coverage",
-    "chat:e2e": "nx run chat-e2e:e2e --configuration=development",
     "e2e": "nx run-many -t e2e",
     "e2e:ci": "nx run-many -t e2e --configuration=production",
     "lint": "nx run-many -t lint",
