@@ -40,10 +40,10 @@ npm run build
 
 ### Serve
 
-To run project it's better to use `nx serve` with project specified
+To run project it's better to use `npm run nx serve` with project specified
 
 ```bash
-nx serve project-name
+npm run nx serve project-name
 ```
 
 ### Tests

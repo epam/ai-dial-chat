@@ -3,6 +3,7 @@
   "version": "0.5.0-rc",
   "private": true,
   "scripts": {
+    "nx": "nx",
     "postinstall": "node tools/patch-nextjs.js",
     "graph": "nx graph",
     "build": "nx run-many -t build",
