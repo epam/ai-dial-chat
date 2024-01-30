@@ -1,9 +1,8 @@
 {
-  "name": "ai-dial-overlay",
+  "name": "@epam/ai-dial-overlay",
   "version": "0.0.1",
   "dependencies": {},
   "type": "module",
-  "main": "./index.js",
   "bugs": {
     "url": "https://github.com/epam/ai-dial-chat/issues"
   },
