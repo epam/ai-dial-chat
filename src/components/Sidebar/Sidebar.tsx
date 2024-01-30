@@ -190,7 +190,7 @@ const Sidebar = <T,>({
   ]);
 
   const resizableWrapperClassName = classNames(
-    '!fixed z-40 flex min-w-[260px] border-tertiary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full',
+    '!fixed z-40 flex min-w-[260px] border-tertiary md:max-w-[45%]',
     isLeftSidebar
       ? 'sidebar-left left-0 border-r'
       : 'sidebar-right right-0 border-l',
