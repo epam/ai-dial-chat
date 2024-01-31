@@ -21,6 +21,7 @@ import { combineEpics } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
 
+import { Feature } from '@/src/types/features';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { AppEpic } from '@/src/types/store';
 
@@ -88,7 +89,15 @@ const getModelsEpic: AppEpic = (action$, state$) =>
           return from(resp.json());
         }),
         map((response: OpenAIEntityModel[]) => {
-          if (response.length === 0) {
+          const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
+          const enabledFeatures = SettingsSelectors.selectEnabledFeatures(
+            state$.value,
+          );
+          if (
+            response.length === 0 &&
+            isOverlay &&
+            enabledFeatures.has(Feature.Header)
+          ) {
             signOut();
           }
           return ModelsActions.getModelsSuccess({ models: response });
