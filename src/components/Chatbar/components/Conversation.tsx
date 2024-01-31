@@ -347,10 +347,17 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     },
     [conversation.id, dispatch],
   );
+  const handleOpenExportModal = useCallback(() => {
+    setIsShowExportModal(true);
+  }, []);
+  const handleCloseExportModal = useCallback(() => {
+    setIsShowExportModal(false);
+  }, []);
 
   const handleExport = useCallback(
-    (args?: { withAttachments?: boolean }) => {
-      if (args?.withAttachments) {
+    (args?: unknown) => {
+      const typedArgs = args as { withAttachments?: boolean };
+      if (typedArgs?.withAttachments) {
         dispatch(
           ImportExportActions.exportConversation({
             conversationId: conversation.id,
@@ -364,16 +371,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           }),
         );
       }
+      handleCloseExportModal();
     },
-    [conversation.id, dispatch],
+    [conversation.id, dispatch, handleCloseExportModal],
   );
-
-  const handleOpenExportModal = useCallback(() => {
-    setIsShowExportModal(true);
-  }, []);
-  const handleCloseExportModal = useCallback(() => {
-    setIsShowExportModal(false);
-  }, []);
 
   const handleContextMenuOpen = (e: MouseEvent) => {
     if (hasParentWithFloatingOverlay(e.target as Element)) {
