@@ -13,6 +13,7 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 
 import { cleanConversationHistory } from './clean';
+import { combineEntities } from './common';
 import { triggerDownload } from './file';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -206,20 +207,15 @@ export const importConversations = (
 ): ImportConversationsResponse => {
   const { history, folders, isError } = cleanData(importedData);
 
-  const newHistory: ConversationInfo[] = [
-    ...currentConversations,
-    ...history,
-  ].filter(
-    (conversation, index, self) =>
-      index === self.findIndex((c) => c.id === conversation.id),
+  const newHistory: ConversationInfo[] = combineEntities(
+    currentConversations,
+    history,
   );
 
-  const newFolders: FolderInterface[] = [...currentFolders, ...folders]
-    .filter(
-      (folder, index, self) =>
-        index === self.findIndex((f) => f.id === folder.id),
-    )
-    .filter((folder) => folder.type === FolderType.Chat);
+  const newFolders: FolderInterface[] = combineEntities(
+    currentFolders,
+    folders,
+  ).filter((folder) => folder.type === FolderType.Chat);
 
   return {
     history: newHistory,
@@ -251,20 +247,15 @@ export const importPrompts = (
     };
   }
 
-  const newPrompts: Prompt[] = currentPrompts
-    .concat(importedData.prompts)
-    .filter(
-      (prompt, index, self) =>
-        index === self.findIndex((p) => p.id === prompt.id),
-    );
+  const newPrompts: Prompt[] = combineEntities(
+    currentPrompts,
+    importedData.prompts,
+  );
 
-  const newFolders: FolderInterface[] = currentFolders
-    .concat(importedData.folders)
-    .filter(
-      (folder, index, self) =>
-        index === self.findIndex((p) => p.id === folder.id),
-    )
-    .filter((folder) => folder.type === 'prompt');
+  const newFolders: FolderInterface[] = combineEntities(
+    currentFolders,
+    importedData.folders,
+  ).filter((folder) => folder.type === FolderType.Prompt);
 
   return { prompts: newPrompts, folders: newFolders, isError: false };
 };

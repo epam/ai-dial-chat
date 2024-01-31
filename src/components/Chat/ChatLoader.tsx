@@ -23,11 +23,7 @@ export default function ChatLoader({
         containerClassName || 'h-full',
       )}
     >
-      <Spinner
-        size={size}
-        className={loaderClassName}
-        dataQa={dataQa}
-      />
+      <Spinner size={size} className={loaderClassName} dataQa={dataQa} />
     </div>
   );
 }

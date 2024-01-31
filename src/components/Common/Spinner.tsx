@@ -1,6 +1,6 @@
-import LoaderIcon from '@/public/images/icons/loader.svg';
-
 import classNames from 'classnames';
+
+import LoaderIcon from '@/public/images/icons/loader.svg';
 
 interface Props {
   size?: number;
