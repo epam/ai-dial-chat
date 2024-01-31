@@ -89,7 +89,7 @@ const getModelsEpic: AppEpic = (action$, state$) =>
           return from(resp.json());
         }),
         map((response: OpenAIEntityModel[]) => {
-          const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
+          const isOverlay = SettingsSelectors.selectIsIframe(state$.value);
           const isHeaderFeatureEnabled = SettingsSelectors.isFeatureEnabled(
             state$.value,
             Feature.Header,
