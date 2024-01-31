@@ -78,9 +78,8 @@ export const usePromptSelection = (maxLength: number) => {
       if (parsedVariables.length > 0) {
         setIsModalVisible(true);
       } else {
-        setContent(
-          (prevContent) =>
-            prevContent?.replace(/\/\w*$/, prompt.content as string),
+        setContent((prevContent) =>
+          prevContent?.replace(/\/\w*$/, prompt.content as string),
         );
         updatePromptListVisibility(prompt.content);
       }
@@ -106,8 +105,8 @@ export const usePromptSelection = (maxLength: number) => {
       return;
     }
 
-    setContent(
-      (prevVal) => prevVal?.replace(/\/\w*$/, selectedPrompt.content!),
+    setContent((prevVal) =>
+      prevVal?.replace(/\/\w*$/, selectedPrompt.content!),
     );
     handlePromptSelect(selectedPrompt);
     setShowPromptList(false);
