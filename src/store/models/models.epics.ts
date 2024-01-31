@@ -94,7 +94,7 @@ const getModelsEpic: AppEpic = (action$, state$) =>
             state$.value,
             Feature.Header,
           );
-          if (response.length === 0 && isOverlay && isHeaderFeatureEnabled) {
+          if (response.length === 0 && isOverlay && !isHeaderFeatureEnabled) {
             signOut();
           }
           return ModelsActions.getModelsSuccess({ models: response });
