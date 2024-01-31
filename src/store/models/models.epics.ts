@@ -90,14 +90,11 @@ const getModelsEpic: AppEpic = (action$, state$) =>
         }),
         map((response: OpenAIEntityModel[]) => {
           const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
-          const enabledFeatures = SettingsSelectors.selectEnabledFeatures(
+          const isHeaderFeatureEnabled = SettingsSelectors.isFeatureEnabled(
             state$.value,
+            Feature.Header,
           );
-          if (
-            response.length === 0 &&
-            isOverlay &&
-            enabledFeatures.has(Feature.Header)
-          ) {
+          if (response.length === 0 && isOverlay && isHeaderFeatureEnabled) {
             signOut();
           }
           return ModelsActions.getModelsSuccess({ models: response });
