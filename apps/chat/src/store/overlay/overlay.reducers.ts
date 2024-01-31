@@ -1,8 +1,8 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import { Feature } from 'shared';
-
 import { RootState } from '../index';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 type WithRequestId<T> = T & { requestId: string };
 

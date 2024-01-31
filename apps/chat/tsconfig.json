@@ -17,10 +17,10 @@
       },
     ],
     "paths": {
-      "@/*": ["./*"],
-      "shared": ["../../libs/shared/src/index.ts"],
+      "@/*": ["apps/chat/*"],
+      "@epam/ai-dial-shared": ["libs/shared/src/index.ts"],
     },
-    "baseUrl": ".",
+    "baseUrl": "../../",
     "types": [
       "jsdom",
       "vitest/globals",

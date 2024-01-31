@@ -1,7 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { Feature } from 'shared';
-
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import { throttle } from '@/src/utils/data/throttle';
 
@@ -48,6 +46,8 @@ import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
 import { PlaybackEmptyInfo } from './Playback/PlaybackEmptyInfo';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 const scrollThrottlingTimeout = 250;
 

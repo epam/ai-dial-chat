@@ -4,6 +4,21 @@
   "sourceRoot": "libs/shared/src",
   "projectType": "library",
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "outputPath": "dist/libs/shared",
+        "main": "libs/shared/src/index.ts",
+        "tsConfig": "libs/shared/tsconfig.lib.json",
+        "assets": ["libs/shared/*.md"],
+        "clean": false,
+        "external": "all"
+      }
+    },
+    "publish": {
+      "command": "node tools/publish-lib.mjs shared {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
     "lint": {},
     "lint:fix": {},
     "test": {

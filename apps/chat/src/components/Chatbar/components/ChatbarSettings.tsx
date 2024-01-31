@@ -9,8 +9,6 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { Feature } from 'shared';
-
 import { FeatureType } from '@/src/types/common';
 import { SupportedExportFormats } from '@/src/types/export';
 import { DisplayMenuItemProps } from '@/src/types/menu';
@@ -31,6 +29,7 @@ import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
 import { Import } from '@/src/components/Settings/Import';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
+import { Feature } from '@epam/ai-dial-shared';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation(Translation.SideBar);

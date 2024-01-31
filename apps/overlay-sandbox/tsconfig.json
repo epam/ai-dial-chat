@@ -16,10 +16,6 @@
         "name": "next",
       },
     ],
-    "paths": {
-      "@epam/ai-dial-overlay": ["../../libs/overlay/src/index.ts"],
-      "shared": ["../../libs/shared/src/index.ts"],
-    },
   },
   "include": [
     "**/*.ts",

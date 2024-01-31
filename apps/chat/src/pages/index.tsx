@@ -7,8 +7,6 @@ import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import Head from 'next/head';
 
-import { Feature } from 'shared';
-
 import { isAuthDisabled } from '../utils/auth/auth-providers';
 import { AuthWindowLocationLike } from '@/src/utils/auth/auth-window-location-like';
 import { delay } from '@/src/utils/auth/delay';
@@ -38,6 +36,8 @@ import Promptbar from '@/src/components/Promptbar';
 
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import packageJSON from '../../../../package.json';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 export interface HomeProps {
   initialState: {

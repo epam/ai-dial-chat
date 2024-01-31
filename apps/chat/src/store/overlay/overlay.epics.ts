@@ -15,14 +15,6 @@ import {
 import { combineEpics } from 'redux-observable';
 
 import {
-  Feature,
-  OverlayEvents,
-  OverlayRequest,
-  OverlayRequests,
-  validateFeature,
-} from 'shared';
-
-import {
   isPostMessageOverlayRequest,
   sendPMEvent,
   sendPMResponse,
@@ -54,6 +46,14 @@ import {
   SendMessageOptions,
   SetSystemPromptOptions,
 } from './overlay.reducers';
+
+import {
+  Feature,
+  OverlayEvents,
+  OverlayRequest,
+  OverlayRequests,
+  validateFeature,
+} from '@epam/ai-dial-shared';
 
 export const postMessageMapperEpic: AppEpic = () =>
   typeof window === 'object'

@@ -11,8 +11,6 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { Feature } from 'shared';
-
 import { usePromptSelection } from '@/src/hooks/usePromptSelection';
 
 import { getUserCustomContent } from '@/src/utils/app/file';
@@ -39,6 +37,8 @@ import { ChatInputAttachments } from './ChatInputAttachments';
 import { PromptDialog } from './PromptDialog';
 import { PromptList } from './PromptList';
 import { SendMessageButton } from './SendMessageButton';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 interface Props {
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;

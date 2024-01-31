@@ -1,6 +1,6 @@
-import { OverlayEvents, OverlayRequests } from 'shared';
-
 import { overlayAppName } from '@/src/constants/overlay';
+
+import { OverlayEvents, OverlayRequests } from '@epam/ai-dial-shared';
 
 export const isPostMessageOverlayRequest = (event: MessageEvent): boolean =>
   event.data?.type && // has type

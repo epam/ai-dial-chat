@@ -2,7 +2,7 @@ import { DeferredRequest } from './utils/DeferredRequest';
 import { Task } from './utils/Task';
 import { Styles, setStyles } from './utils/styleUtils';
 
-import { Feature, OverlayRequest } from 'shared';
+import { Feature, OverlayRequest } from '@epam/ai-dial-shared';
 
 export interface ChatOverlayOptions {
   domain: string;

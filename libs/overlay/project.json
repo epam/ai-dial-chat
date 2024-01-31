@@ -6,6 +6,7 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
+      "dependsOn": ["^build"],
       "options": {
         "outputPath": "dist/libs/overlay",
         "main": "libs/overlay/src/index.ts",

@@ -1,4 +1,4 @@
-import { OverlayRequest } from 'shared';
+import { OverlayRequest } from '@epam/ai-dial-shared';
 
 const defaultRequestTimeout = 10000;
 

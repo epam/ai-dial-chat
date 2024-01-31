@@ -3,8 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
-import { Feature } from 'shared';
-
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import {
@@ -12,6 +10,8 @@ import {
   reportAnIssueHash,
   requestApiKeyHash,
 } from '@/src/components/Common/FooterMessage';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 const footerHtmlMessage = `<p data-qa="test">Some footer text.</p><a data-qa="reportAnIssue" href="${reportAnIssueHash}">reportAnIssue</a> and <a data-qa="requestApiKey" href="${requestApiKeyHash}">requestApiKey</a>`;
 const footerEnabledFeatures = new Set([

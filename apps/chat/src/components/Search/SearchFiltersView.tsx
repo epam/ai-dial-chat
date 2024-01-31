@@ -5,8 +5,6 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { Feature } from 'shared';
-
 import {
   getNewSearchFiltersValue,
   isSearchFilterSelected,
@@ -23,6 +21,8 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import ContextMenu from '../Common/ContextMenu';
 import Tooltip from '../Common/Tooltip';
 import SearchFilterRenderer from './SearchFilterRenderer';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 interface Props {
   onSearchFiltersChanged: (searchFilters: SearchFilters) => void;

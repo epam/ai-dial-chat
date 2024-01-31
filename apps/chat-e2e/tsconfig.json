@@ -16,10 +16,10 @@
       },
     ],
     "paths": {
-      "@/*": ["./*"],
-      "@/chat/*": ["../chat/src/*"],
+      "@/*": ["apps/chat-e2e/*"],
+      "@/chat/*": ["apps/chat/src/*"],
     },
-    "baseUrl": ".",
+    "baseUrl": "../../",
     "types": ["jsdom"],
   },
   "include": [

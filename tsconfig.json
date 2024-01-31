@@ -13,9 +13,10 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    "baseUrl": "./",
     "paths": {
-      "@epam/ai-dial-overlay": ["./libs/overlay/src/index.ts"],
-      "shared": ["./libs/shared/src/index.ts"],
+      "@epam/ai-dial-overlay": ["libs/overlay/src/index.ts"],
+      "@epam/ai-dial-shared": ["libs/shared/src/index.ts"],
     },
   },
   "exclude": ["node_modules", "src/**/*.spec.ts", "src/**/*.test.ts"],

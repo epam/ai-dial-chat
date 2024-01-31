@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import { Feature } from 'shared';
-
 import { FeatureType } from '@/src/types/common';
 import { StorageType } from '@/src/types/storage';
 
 import { RootState } from '..';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 export interface SettingsState {
   appName: string;
