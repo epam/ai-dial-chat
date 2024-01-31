@@ -11,7 +11,7 @@ import {
 } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
 
-import { ApiKeys, ApiUtils } from '../../server/api';
+import { ApiKeys, ApiUtils, getParentPath } from '../../server/api';
 import { constructPath } from '../file';
 
 export class FileService {
@@ -21,9 +21,7 @@ export class FileService {
     fileName: string,
   ): Observable<{ percent?: number; result?: DialFile }> {
     const resultPath = encodeURI(
-      `files/${DataService.getBucket()}/${
-        relativePath ? `${relativePath}/` : ''
-      }${fileName}`,
+      `${DataService.getBucket()}/${getParentPath(relativePath)}${fileName}`,
     );
 
     return ApiUtils.requestOld({
@@ -56,7 +54,7 @@ export class FileService {
               id: constructPath(relativePath, typedResult.name),
               name: typedResult.name,
               absolutePath: constructPath(
-                'files',
+                ApiKeys.Files,
                 typedResult.bucket,
                 relativePath,
               ),
@@ -109,7 +107,7 @@ export class FileService {
 
   public static removeFile(filePath: string): Observable<void> {
     const resultPath = encodeURI(
-      constructPath('files', DataService.getBucket(), filePath),
+      constructPath(DataService.getBucket(), filePath),
     );
 
     return ApiUtils.request(`api/${ApiKeys.Files}/${resultPath}`, {

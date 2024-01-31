@@ -1,14 +1,10 @@
-import { ApiKeys } from '@/src/utils/server/api';
-
 import { Attachment } from '@/src/types/chat';
 
 export const getMappedAttachmentUrl = (url: string | undefined) => {
   if (!url) {
     return undefined;
   }
-  return url.startsWith('//') || url.startsWith('http')
-    ? url
-    : `api/${ApiKeys.Files}/${url}`;
+  return url.startsWith('//') || url.startsWith('http') ? url : `api/${url}`;
 };
 
 export const getMappedAttachment = (attachment: Attachment): Attachment => {
