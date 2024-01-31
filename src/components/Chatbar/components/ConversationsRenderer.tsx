@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import { getConversationApiKey } from '@/src/utils/server/api';
+
 import { Conversation } from '@/src/types/chat';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
@@ -7,7 +9,6 @@ import { useAppSelector } from '@/src/store/hooks';
 
 import CollapsableSection from '../../Common/CollapsableSection';
 import { ConversationComponent } from './Conversation';
-import { getConversationApiKey } from '@/src/utils/server/api';
 
 interface ConversationsRendererProps {
   conversations: Conversation[];

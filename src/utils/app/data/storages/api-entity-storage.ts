@@ -3,7 +3,6 @@ import { Observable, map } from 'rxjs';
 import {
   ApiKeys,
   ApiUtils,
-  combineApiKey,
   getFolderTypeByApiKey,
   getParentPath,
 } from '@/src/utils/server/api';
@@ -66,12 +65,11 @@ export abstract class ApiEntityStorage<
       map((entities: BackendChatEntity[]) => {
         return entities.map((entity): EntityInfo => {
           const relativePath = entity.parentPath || undefined;
-          const info = this.parseEntityKey(
-            combineApiKey(entity.updatedAt, entity.name),
-          );
+          const info = this.parseEntityKey(entity.name);
 
           return {
             ...info,
+            lastActivityDate: entity.updatedAt,
             folderId: relativePath,
           };
         });
@@ -89,7 +87,6 @@ export abstract class ApiEntityStorage<
         return {
           ...entity,
           ...info,
-          uploaded: true,
         };
       }),
     );
