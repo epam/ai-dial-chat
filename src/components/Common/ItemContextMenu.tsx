@@ -41,7 +41,7 @@ interface ItemContextMenuProps {
   className?: string;
   isOpen?: boolean;
   onOpenMoveToModal: () => void;
-  onOpenExportModal: () => void;
+  onOpenExportModal?: () => void;
   onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
   onDelete: MouseEventHandler<unknown>;
   onRename: MouseEventHandler<unknown>;
