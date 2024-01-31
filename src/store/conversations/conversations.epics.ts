@@ -24,6 +24,7 @@ import {
   tap,
   throwError,
   timeout,
+  zip,
 } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
@@ -307,7 +308,7 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
         conversation.folderId,
       );
 
-      exportConversation(conversation, parentFolders);
+      exportConversation(conversation as Conversation, parentFolders); //TODO: upload conversations for export
     }),
     ignoreElements(),
   );
@@ -1062,7 +1063,7 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
       conversation: ConversationsSelectors.selectConversation(
         state$.value,
         payload.conversationId,
-      ),
+      ) as Conversation,
     })),
     filter(({ conversation }) => !!conversation),
     switchMap(({ payload, conversation }) => {
@@ -1146,10 +1147,7 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
             );
           }),
           switchMap(() => {
-            const convReplay = ConversationsSelectors.selectConversation(
-              state$.value,
-              conv.id,
-            )!.replay;
+            const convReplay = conversation!.replay;
 
             return concat(
               of(
@@ -1259,10 +1257,13 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
       }),
     ),
     switchMap(({ selectedConversationsIds }) =>
-      iif(
-        () => selectedConversationsIds.length > 1,
-        of(UIActions.setIsCompareMode(true)),
-        of(UIActions.setIsCompareMode(false)),
+      concat(
+        of(UIActions.setIsCompareMode(selectedConversationsIds.length > 1)),
+        of(
+          ConversationsActions.uploadConversations({
+            conversationIds: selectedConversationsIds,
+          }),
+        ),
       ),
     ),
   );
@@ -1366,7 +1367,7 @@ const playbackNextMessageEndEpic: AppEpic = (action$, state$) =>
       selectedConversation: ConversationsSelectors.selectConversation(
         state$.value,
         payload.conversationId,
-      ),
+      ) as Conversation,
     })),
     switchMap(({ selectedConversation }) => {
       if (!selectedConversation) {
@@ -1525,6 +1526,25 @@ const initEpic: AppEpic = (action$) =>
         of(ConversationsActions.initFolders()),
         of(ConversationsActions.initConversations()),
       ),
+    ),
+  );
+
+const uploadConversationsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter((action) => ConversationsActions.uploadConversations.match(action)),
+    switchMap(({ payload }) => {
+      const setIds = new Set(payload.conversationIds);
+      const conversationInfos = ConversationsSelectors.selectConversations(
+        state$.value,
+      ).filter((conv) => setIds.has(conv.id));
+      return zip(
+        conversationInfos.map((info) => DataService.getConversation(info)),
+      );
+    }),
+    map((conversations) =>
+      ConversationsActions.uploadConversationsSuccess({
+        conversations: conversations.filter(Boolean) as Conversation[],
+      }),
     ),
   );
 
@@ -1820,6 +1840,7 @@ export const ConversationsEpics = combineEpics(
   createNewReplayConversationEpic,
   createNewPlaybackConversationEpic,
   duplicateConversationEpic,
+  uploadConversationsEpic,
 
   // shareFolderEpic,
   // shareConversationEpic,

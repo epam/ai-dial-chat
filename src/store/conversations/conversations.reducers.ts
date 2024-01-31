@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { combineEntities } from '@/src/utils/app/common';
 import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
@@ -231,6 +232,22 @@ export const conversationsSlice = createSlice({
       state.selectedConversationsIds = state.selectedConversationsIds.filter(
         (id) => !payload.conversationIds.includes(id),
       );
+    },
+    uploadConversations: (
+      state,
+      _action: PayloadAction<{ conversationIds: string[] }>,
+    ) => {
+      state.isConversationLoading = true;
+    },
+    uploadConversationsSuccess: (
+      state,
+      { payload }: PayloadAction<{ conversations: Conversation[] }>,
+    ) => {
+      state.conversations = combineEntities(
+        payload.conversations,
+        state.conversations,
+      );
+      state.isConversationLoading = false;
     },
     createNewReplayConversation: (
       state,

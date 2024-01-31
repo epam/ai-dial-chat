@@ -19,6 +19,7 @@ import { Feature } from '@/src/types/features';
 import { fallbackModelID } from '@/src/types/openai';
 
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
+import { ConversationsSelectors } from '../store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   SettingsActions,
@@ -63,6 +64,9 @@ export default function Home({ initialState }: HomeProps) {
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
   const shouldOverlayLogin = isOverlay && shouldLogin;
+  const isConversationLoading = useAppSelector(
+    ConversationsSelectors.isConversationLoading,
+  );
 
   // EFFECTS  --------------------------------------------
   useEffect(() => {
@@ -123,8 +127,6 @@ export default function Home({ initialState }: HomeProps) {
     ]);
   };
 
-  const uploaded = false;
-
   return (
     <>
       <Head>
@@ -158,7 +160,7 @@ export default function Home({ initialState }: HomeProps) {
 
               <div className="flex min-w-0 grow flex-col">
                 <AnnouncementsBanner />
-                {uploaded ? <Chat /> : <ChatLoader />}
+                {!isConversationLoading ? <Chat /> : <ChatLoader />}
               </div>
 
               {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
