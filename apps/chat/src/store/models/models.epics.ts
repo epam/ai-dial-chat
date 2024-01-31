@@ -21,12 +21,13 @@ import { combineEpics } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
 
-import { Feature } from '@/src/types/features';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { ModelsActions, ModelsSelectors } from './models.reducers';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
