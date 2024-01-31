@@ -6,12 +6,10 @@ import {
   getParentAndChildFolders,
 } from '@/src/utils/app/folders';
 
-import { DialFile, FileFolderInterface } from '@/src/types/files';
+import { DialFile, FileFolderInterface, Status } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
 
 import { RootState } from '../index';
-
-type Status = undefined | 'LOADING' | 'LOADED' | 'FAILED';
 
 export interface FilesState {
   files: DialFile[];

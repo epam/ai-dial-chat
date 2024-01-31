@@ -56,3 +56,5 @@ export type FileFolderInterface = FolderInterface & {
   absolutePath?: string;
   relativePath?: string;
 };
+
+export type Status = undefined | 'LOADING' | 'LOADED' | 'FAILED';

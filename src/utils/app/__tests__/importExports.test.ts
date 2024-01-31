@@ -17,7 +17,7 @@ import {
   ExportFormatV4,
   PromptsHistory
 } from '@/src/types/export';
-import { OpenAIEntityModel, OpenAIEntityModelID, OpenAIEntityModels } from '@/src/types/openai';
+import { OpenAIEntityModelID } from '@/src/types/openai';
 
 import { describe, expect, it } from 'vitest';
 import { Conversation, Message, Role } from '@/src/types/chat';
@@ -222,6 +222,7 @@ const expectedConversation: Conversation = {
 describe('Export helpers functions', () => {
   it('Should return false for non-prompts data', () => {
     const testData = [{ id: 1 }];
+    //@ts-ignore
     expect(isPromtsFormat(testData)).toBeFalsy();
   });
 

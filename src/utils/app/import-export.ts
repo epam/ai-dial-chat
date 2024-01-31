@@ -155,6 +155,23 @@ export const exportConversation = (
   triggerDownloadConversation(data);
 };
 
+interface PrepareConversationsForExport {
+  conversations: Conversation[];
+  folders: FolderInterface[];
+}
+export const prepareConversationsForExport = ({
+  conversations,
+  folders,
+}: PrepareConversationsForExport) => {
+  const data = {
+    version: 4,
+    history: conversations || [],
+    folders: folders || [],
+  } as ExportConversationsFormatV4;
+
+  return data;
+};
+
 export const exportConversations = (
   conversations: Conversation[],
   folders: FolderInterface[],

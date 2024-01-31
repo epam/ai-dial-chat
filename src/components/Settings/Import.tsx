@@ -1,6 +1,9 @@
-import { FC, useRef } from 'react';
+import { FC, useCallback, useRef } from 'react';
 
 import { CustomTriggerMenuRendererProps } from '@/src/types/menu';
+
+import { useAppDispatch } from '@/src/store/hooks';
+import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 
 export const Import: FC<CustomTriggerMenuRendererProps> = ({
   Renderer,
@@ -8,6 +11,15 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
   ...rendererProps
 }) => {
   const ref = useRef<HTMLInputElement>(null);
+  const dispatch = useAppDispatch();
+  //TODO move to the onImport
+  const zipImportHandler = useCallback(
+    (zipFile: File) => {
+      dispatch(ImportExportActions.importZipConversations({ zipFile }));
+    },
+    [dispatch],
+  );
+
   return (
     <>
       <input
@@ -15,9 +27,13 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
         className="sr-only"
         tabIndex={-1}
         type="file"
-        accept=".json"
+        accept="application/json, application/x-zip-compressed"
         onChange={(e) => {
           if (!e.target.files?.length) return;
+          if (e.target.files[0].type === 'application/x-zip-compressed') {
+            zipImportHandler(e.target.files[0]);
+            return;
+          }
 
           const file = e.target.files[0];
           const reader = new FileReader();

@@ -20,6 +20,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
@@ -71,7 +72,7 @@ export const ChatbarSettings = () => {
         name: t('Import conversations'),
         onClick: (importJSON: unknown) => {
           dispatch(
-            ConversationsActions.importConversations({
+            ImportExportActions.importConversations({
               data: importJSON as SupportedExportFormats,
             }),
           );
@@ -85,7 +86,7 @@ export const ChatbarSettings = () => {
         dataQa: 'export',
         Icon: IconFileArrowRight,
         onClick: () => {
-          dispatch(ConversationsActions.exportConversations());
+          dispatch(ImportExportActions.exportConversations());
         },
       },
       {
