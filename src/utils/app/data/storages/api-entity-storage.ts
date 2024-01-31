@@ -16,6 +16,7 @@ import { FolderInterface } from '@/src/types/folder';
 import { EntityStorage } from '@/src/types/storage';
 
 import { DataService } from '../data-service';
+import { constructPath } from './../../file';
 
 export abstract class ApiEntityStorage<
   EntityInfo extends { folderId?: string },
@@ -40,7 +41,7 @@ export abstract class ApiEntityStorage<
           const relativePath = folder.parentPath || undefined;
 
           return {
-            id: folder.name,
+            id: constructPath(getParentPath(folder.parentPath), folder.name),
             name: folder.name,
             folderId: relativePath,
             type: getFolderTypeByApiKey(this.getStorageKey()),
@@ -69,6 +70,7 @@ export abstract class ApiEntityStorage<
 
           return {
             ...info,
+            id: constructPath(getParentPath(entity.parentPath), entity.name),
             lastActivityDate: entity.updatedAt,
             folderId: relativePath,
           };
@@ -76,7 +78,7 @@ export abstract class ApiEntityStorage<
       }),
     );
   }
-  getEntity(info: EntityInfo): Observable<Entity> {
+  getEntity(info: EntityInfo): Observable<Entity | null> {
     const key = this.getEntityKey(info);
     return ApiUtils.request(
       `api/${this.getStorageKey()}/${DataService.getBucket()}${getParentPath(

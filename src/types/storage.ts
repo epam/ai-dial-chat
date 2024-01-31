@@ -36,7 +36,7 @@ export interface EntityStorage<
 
   getEntities(path?: string): Observable<EntityInfo[]>; // listing with short information
 
-  getEntity(info: EntityInfo): Observable<Entity>;
+  getEntity(info: EntityInfo): Observable<Entity | null>;
 
   createEntity(entity: Entity): Observable<void>;
 

@@ -33,7 +33,7 @@ export class ApiStorage implements DialStorage {
     return this._conversationApiStorage.getEntities(path);
   }
 
-  getConversation(info: ConversationInfo): Observable<Conversation> {
+  getConversation(info: ConversationInfo): Observable<Conversation | null> {
     return this._conversationApiStorage.getEntity(info);
   }
 
@@ -59,7 +59,7 @@ export class ApiStorage implements DialStorage {
     return this._promptApiStorage.getEntities(path);
   }
 
-  getPrompt(info: PromptInfo): Observable<Prompt> {
+  getPrompt(info: PromptInfo): Observable<Prompt | null> {
     return this._promptApiStorage.getEntity(info);
   }
 
