@@ -11,3 +11,8 @@ license_choices:
   repository_license_choices:
     - given: 'GPL-2.0-only OR MIT'
       choice: 'MIT'
+resolutions:
+  rule_violations:
+    - message: '.*ERROR: NO_LICENSE_IN_DEPENDENCY - NPM::union:0\.5\.0.*'
+      reason: 'CANT_FIX_EXCEPTION'
+      comment: 'The dependency has MIT license in github repo'
