@@ -9,4 +9,5 @@ jobs:
     uses: epam/ai-dial-ci/.github/workflows/test_yarn_docker.yml@1.3.0
     secrets: inherit
     with:
-      bypass_checks: false
+      bypass_ort: true
+
