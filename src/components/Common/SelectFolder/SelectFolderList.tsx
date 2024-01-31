@@ -9,10 +9,7 @@ import { DialFile } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import {
-  MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH,
-  PUBLISHING_FOLDER_NAME,
-} from '@/src/constants/folders';
+import { MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
@@ -22,6 +19,7 @@ interface Props<T, P = unknown> {
   folderProps: Omit<FolderProps<T, P>, 'currentFolder'>;
   handleToggleFolder: (folderId?: string) => void;
   isAllEntitiesOpened: boolean;
+  rootFolderName: string;
   selectedFolderId?: string;
   initiallySelectedFolderId?: string;
   highlightTemporaryFolders?: boolean;
@@ -34,6 +32,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
   selectedFolderId,
   initiallySelectedFolderId,
   highlightTemporaryFolders,
+  rootFolderName,
 }: Props<T>) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -53,7 +52,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
         onClick={() => handleToggleFolder()}
       >
         <CaretIconComponent isOpen={isAllEntitiesOpened} />
-        {t(PUBLISHING_FOLDER_NAME)}
+        {t(rootFolderName)}
       </button>
       {isAllEntitiesOpened && (
         <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">

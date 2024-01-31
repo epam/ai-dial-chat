@@ -393,6 +393,7 @@ test(
     conversations,
     chat,
     apiHelper,
+    conversationSettings,
   }) => {
     setTestIds('EPMRTC-906', 'EPMRTC-779');
     await test.step('Import conversation from 1.4 app version and verify folder with Gpt-3.5 chat and its history is visible', async () => {
@@ -480,6 +481,7 @@ test(
         ExpectedConstants.newConversationTitle,
         2,
       );
+      await conversationSettings.waitForState();
       await chat.sendRequestWithButton('1+1=', false);
       const todayConversations = await conversations.getTodayConversations();
       expect

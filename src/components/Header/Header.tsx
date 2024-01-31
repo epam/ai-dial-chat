@@ -3,11 +3,14 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { isMediaQuery } from '@/src/utils/app/style-helpers';
 
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
@@ -17,12 +20,16 @@ import { SettingDialog } from '../Settings/SettingDialog';
 import { CreateNewChatMobile } from './CreateNewChatMobile';
 import { User } from './User/User';
 
+const DEFAULT_HEADER_ICON_SIZE = 24;
+const OVERLAY_HEADER_ICON_SIZE = 18;
+
 const Header = () => {
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
   const isUserSettingsOpen = useAppSelector(
     UISelectors.selectIsUserSettingsOpen,
   );
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const dispatch = useAppDispatch();
 
@@ -47,14 +54,21 @@ const Header = () => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
   };
 
+  const headerIconSize = isOverlay
+    ? OVERLAY_HEADER_ICON_SIZE
+    : DEFAULT_HEADER_ICON_SIZE;
+
   return (
     <div
-      className="z-40 flex h-[48px] w-full border-b border-tertiary bg-layer-3"
+      className={classNames(
+        'z-40 flex w-full border-b border-tertiary bg-layer-3',
+        isOverlay ? 'min-h-[36px]' : 'min-h-[48px]',
+      )}
       data-qa="header"
     >
       <Tooltip isTriggerClickable tooltip={t('Conversation list')}>
         <div
-          className="flex-none cursor-pointer border-r border-tertiary p-3 md:px-5"
+          className="flex h-full cursor-pointer items-center justify-center border-r border-tertiary px-3 md:px-5"
           onClick={handleToggleChatbar}
           data-qa="chat-panel-toggle"
         >
@@ -62,26 +76,26 @@ const Header = () => {
             <>
               <IconX
                 className="text-secondary md:hidden"
-                width={24}
-                height={24}
+                width={headerIconSize}
+                height={headerIconSize}
               />
 
               <MoveLeftIcon
                 className="text-secondary hover:text-accent-secondary max-md:hidden"
-                width={24}
-                height={24}
+                width={headerIconSize}
+                height={headerIconSize}
               />
             </>
           ) : (
             <MoveRightIcon
               className="text-secondary hover:text-accent-secondary"
-              width={24}
-              height={24}
+              width={headerIconSize}
+              height={headerIconSize}
             />
           )}
         </div>
       </Tooltip>
-      <CreateNewChatMobile />
+      <CreateNewChatMobile iconSize={headerIconSize} />
       <div className="flex grow justify-between">
         <span
           className="min-w-[110px] grow bg-center bg-no-repeat md:ml-5 md:grow-0 lg:bg-left"
@@ -96,7 +110,7 @@ const Header = () => {
 
       <Tooltip isTriggerClickable tooltip={t('Prompt list')}>
         <div
-          className="flex-none cursor-pointer border-l border-tertiary p-3 md:px-5"
+          className="flex h-full cursor-pointer items-center justify-center border-l border-tertiary px-3 md:px-5"
           onClick={handleTogglePromtbar}
           data-qa="prompts-panel-toggle"
         >
@@ -104,21 +118,21 @@ const Header = () => {
             <>
               <IconX
                 className="text-secondary md:hidden"
-                width={24}
-                height={24}
+                width={headerIconSize}
+                height={headerIconSize}
               />
 
               <MoveRightIcon
                 className="text-secondary hover:text-accent-tertiary max-md:hidden"
-                width={24}
-                height={24}
+                width={headerIconSize}
+                height={headerIconSize}
               />
             </>
           ) : (
             <MoveLeftIcon
               className="text-secondary hover:text-accent-tertiary"
-              width={24}
-              height={24}
+              width={headerIconSize}
+              height={headerIconSize}
             />
           )}
         </div>
