@@ -26,6 +26,7 @@ import {
   importConversations,
 } from '@/src/utils/app/import-export';
 import {
+  downloadExportZip,
   getUnZipAttachments,
   getZippedFile,
   importZippedHistory,
@@ -59,32 +60,43 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
       ),
       withAttachments: payload.withAttachments,
     })),
+    switchMap(({ conversation, withAttachments }) => {
+      const downloadConversation = async () => {
+        if (!conversation) {
+          return;
+        }
+        const parentFolders = ConversationsSelectors.selectParentFolders(
+          state$.value,
+          conversation.folderId,
+        );
+        if (!withAttachments) {
+          exportConversation(conversation, parentFolders);
+          return;
+        }
 
-    tap(async ({ conversation, withAttachments }) => {
-      if (!conversation) {
-        return;
-      }
-      const parentFolders = ConversationsSelectors.selectParentFolders(
-        state$.value,
-        conversation.folderId,
+        const attachments = ConversationsSelectors.getAttachments(
+          state$.value,
+          conversation.id,
+        );
+
+        const content = await getZippedFile({
+          files: attachments,
+          conversations: [conversation],
+          folders: parentFolders,
+        });
+        return content;
+      };
+      return from(downloadConversation()).pipe(
+        switchMap((content) => {
+          if (!content) {
+            return of(ImportExportActions.exportFail());
+          }
+          downloadExportZip(content);
+          return of(ImportExportActions.exportConversationSuccess());
+        }),
+        takeUntil(action$.pipe(filter(ImportExportActions.exportCancel.match))),
       );
-      if (!withAttachments) {
-        exportConversation(conversation, parentFolders);
-        return;
-      }
-
-      const attachments = ConversationsSelectors.getAttachments(
-        state$.value,
-        conversation.id,
-      );
-
-      await getZippedFile({
-        files: attachments,
-        conversations: [conversation],
-        folders: parentFolders,
-      });
     }),
-    ignoreElements(),
   );
 
 const exportConversationsEpic: AppEpic = (action$, state$) =>
@@ -195,23 +207,26 @@ const importZipEpic: AppEpic = (action$, state$) =>
         }),
       );
     }),
+    takeUntil(action$.pipe(filter(ImportExportActions.importStop.match))),
   );
 
 const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.uploadConversationAttachments.match),
     switchMap(({ payload }) => {
-      const { attachmentsToUpload } = payload;
+      const { attachmentsToUpload, completeHistory } = payload;
 
       const bucket = FilesSelectors.selectBucket(state$.value);
+      const conversation = completeHistory.history[0];
 
       const actions = attachmentsToUpload.map((attachment) => {
         const formData = new FormData();
         formData.append('attachment', attachment.fileContent, attachment.name);
+        const relativePath = `imports/${conversation.id}/${attachment.relativePath}`;
         return DataService.sendFile(
           formData,
           bucket,
-          attachment.relativePath,
+          relativePath,
           attachment.name,
         ).pipe(
           filter(
@@ -239,9 +254,7 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
               percent: percent!,
             });
           }),
-          takeUntil(
-            action$.pipe(filter(ImportExportActions.importCancel.match)),
-          ),
+          takeUntil(action$.pipe(filter(ImportExportActions.importStop.match))),
           catchError(() => {
             return of(
               ImportExportActions.uploadSingleFileFail({
@@ -256,7 +269,7 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-export const uploadAllAttachmentsSuccessEpic: AppEpic = (action$, state$) =>
+const uploadAllAttachmentsSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.uploadSingleAttachmentSuccess.match),
     map(() => ({
@@ -347,6 +360,19 @@ export const uploadAllAttachmentsSuccessEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const resetStateEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        ImportExportActions.exportCancel.match(action) ||
+        ImportExportActions.exportConversationSuccess.match(action) ||
+        ImportExportActions.exportFail.match(action),
+    ),
+    switchMap(() => {
+      return of(ImportExportActions.resetState());
+    }),
+  );
+
 export const ImportExportEpics = combineEpics(
   exportConversationEpic,
   exportConversationsEpic,
@@ -354,4 +380,5 @@ export const ImportExportEpics = combineEpics(
   importZipEpic,
   uploadConversationAttachmentsEpic,
   uploadAllAttachmentsSuccessEpic,
+  resetStateEpic,
 );

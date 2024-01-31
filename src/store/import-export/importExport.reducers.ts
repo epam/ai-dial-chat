@@ -32,17 +32,18 @@ interface ImportExportState {
   uploadedAttachments: UploadedAttachment[];
   importedHistory: LatestExportFormat;
   attachmentsErrors: string[];
-  importStatus?: Status;
+  status?: Status;
 }
+const defaultImportedHistory: LatestExportFormat = {
+  version: 4,
+  history: [],
+  folders: [],
+  prompts: [],
+};
 const initialState: ImportExportState = {
   attachmentsIdsToUpload: [],
   uploadedAttachments: [],
-  importedHistory: {
-    version: 4,
-    history: [],
-    folders: [],
-    prompts: [],
-  },
+  importedHistory: defaultImportedHistory,
   attachmentsErrors: [],
 };
 
@@ -50,14 +51,28 @@ export const importExportSlice = createSlice({
   name: 'importExport',
   initialState,
   reducers: {
+    resetState: (state) => {
+      state.status = undefined;
+      state.attachmentsIdsToUpload = [];
+      state.uploadedAttachments = [];
+      state.importedHistory = defaultImportedHistory;
+      state.attachmentsErrors = [];
+    },
     exportConversation: (
       state,
       _action: PayloadAction<{
         conversationId: string;
         withAttachments?: boolean;
       }>,
-    ) => state,
+    ) => {
+      state.status = 'LOADING';
+    },
+    exportConversationSuccess: (state) => state,
     exportConversations: (state) => state,
+    exportCancel: (state) => state,
+    exportFail: (state) => {
+      state.status = undefined;
+    },
     importConversations: (
       state,
       _action: PayloadAction<{ data: SupportedExportFormats }>,
@@ -66,9 +81,12 @@ export const importExportSlice = createSlice({
       state,
       _action: PayloadAction<{ zipFile: File }>,
     ) => {
-      state.importStatus = 'LOADING';
+      state.status = 'LOADING';
     },
-    importZipCancel: (state) => state,
+    importStop: (state) => state,
+    importConversationsSuccess: (state) => {
+      state.status = undefined;
+    },
     uploadConversationAttachments: (
       state,
       {
@@ -120,7 +138,7 @@ export const importExportSlice = createSlice({
         attachmentsIDs: string[];
       }>,
     ) => {
-      state.importStatus = 'LOADED';
+      state.status = 'LOADED';
     },
     uploadAllAttachmentsFail: (
       state,
@@ -129,7 +147,6 @@ export const importExportSlice = createSlice({
         attachmentsIDs: string[];
       }>,
     ) => state,
-    importCancel: (state) => state,
   },
 });
 
@@ -152,7 +169,10 @@ const selectImportedHistory = createSelector([rootSelector], (state) => {
 });
 
 const selectImportStatus = createSelector([rootSelector], (state) => {
-  return state.importStatus;
+  return state.status;
+});
+const selectIsLoadingImportExport = createSelector([rootSelector], (state) => {
+  return state.status === 'LOADING';
 });
 
 export const ImportExportSelectors = {
@@ -161,6 +181,7 @@ export const ImportExportSelectors = {
   selectAttachmentsErrors,
   selectImportedHistory,
   selectImportStatus,
+  selectIsLoadingImportExport,
 };
 
 export const ImportExportActions = importExportSlice.actions;

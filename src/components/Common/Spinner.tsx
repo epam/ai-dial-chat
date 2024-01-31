@@ -1,19 +1,28 @@
 import classNames from 'classnames';
 
+import LoaderIcon from '@/public/images/icons/loader.svg';
+
 interface Props {
   size?: number;
   className?: string;
+  dataQa?: string;
 }
 
-export const Spinner = ({ size = 16, className = '' }: Props) => {
+export const Spinner = ({
+  size = 16,
+  className = '',
+  dataQa = 'message-input-spinner',
+}: Props) => {
   return (
-    <div
+    <LoaderIcon
+      size={size}
+      height={size}
+      width={size}
       className={classNames(
-        'animate-spin rounded-full border-t-2 border-primary',
+        'animate-spin-steps shrink-0 grow-0 basis-auto text-secondary',
         className,
       )}
-      data-qa="message-input-spinner"
-      style={{ height: size, width: size }}
-    ></div>
+      data-qa={dataQa}
+    />
   );
 };

@@ -129,14 +129,14 @@ export default function ItemContextMenu({
       },
       {
         name: t('Export'),
-        dataQa: 'export',
+        dataQa: 'export-prompt',
         display: featureType === FeatureType.Prompt,
         Icon: IconFileArrowRight,
         onClick: onExport,
       },
       {
         name: t('Export'),
-        dataQa: 'export',
+        dataQa: 'export-chat-mobile',
         display: featureType === FeatureType.Chat,
         Icon: IconFileArrowRight,
         onClick: onOpenExportModal,
@@ -145,7 +145,7 @@ export default function ItemContextMenu({
       {
         name: t('Export'),
         display: featureType === FeatureType.Chat,
-        dataQa: 'export',
+        dataQa: 'export-chat',
         Icon: IconFileArrowRight,
         className: 'max-md:hidden',
         childMenuItems: [

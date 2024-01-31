@@ -62,6 +62,9 @@ module.exports = {
     gradientColorStops: commonBgColors,
     /////////
     extend: {
+      animation: {
+        'spin-steps': 'spin 0.75s steps(8, end) infinite',
+      },
       colors: {
         transparent: 'transparent',
       },

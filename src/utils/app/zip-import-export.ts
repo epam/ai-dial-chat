@@ -34,8 +34,12 @@ export async function getZippedFile({
   zip.file(`conversations/conversations_history.json`, jsonHistory);
 
   const content = await zip.generateAsync({ type: 'base64' });
-  triggerDownload('data:application/zip;base64,' + content, 'aidial_chats.zip');
+  return content;
 }
+
+export const downloadExportZip = (content: string) => {
+  triggerDownload('data:application/zip;base64,' + content, 'aidial_chats.zip');
+};
 
 export interface PreUnZipedHistory {
   zip: JSZip;

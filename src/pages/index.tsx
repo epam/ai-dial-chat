@@ -18,6 +18,10 @@ import { Feature } from '@/src/types/features';
 import { fallbackModelID } from '@/src/types/openai';
 
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
+import {
+  ImportExportActions,
+  ImportExportSelectors,
+} from '../store/import-export/importExport.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   SettingsActions,
@@ -29,6 +33,8 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
+import Modal from '../components/Common/Modal';
+import { Spinner } from '../components/Common/Spinner';
 import { Chat } from '@/src/components/Chat/Chat';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import Header from '@/src/components/Header/Header';
@@ -60,6 +66,9 @@ export default function Home({ initialState }: HomeProps) {
 
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
+  const isImportingExporting = useAppSelector(
+    ImportExportSelectors.selectIsLoadingImportExport,
+  );
   const shouldOverlayLogin = isOverlay && shouldLogin;
 
   // EFFECTS  --------------------------------------------
@@ -155,6 +164,31 @@ export default function Home({ initialState }: HomeProps) {
               <div className="flex min-w-0 grow flex-col">
                 <AnnouncementsBanner />
                 <Chat />
+
+                {isImportingExporting && (
+                  <Modal
+                    isOpen
+                    onClose={() => {
+                      dispatch(ImportExportActions.resetState());
+                    }}
+                    hideClose
+                    dataQa="import-export-spinner"
+                    portalId="theme-main"
+                    containerClassName="bg-transparent items-center gap-4 flex flex-col"
+                  >
+                    <Spinner size={50} />
+
+                    <h4 className="text-xl font-normal leading-6">Exporting</h4>
+                    <button
+                      className="text-sm font-medium text-accent-primary"
+                      onClick={() => {
+                        dispatch(ImportExportActions.exportCancel());
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </Modal>
+                )}
               </div>
 
               {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
