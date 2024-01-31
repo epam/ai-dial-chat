@@ -19,8 +19,8 @@ export default function ChatLoader({
   return (
     <div
       className={classNames(
-        'flex h-full w-full items-center justify-center',
-        containerClassName,
+        'flex w-full items-center justify-center',
+        containerClassName || 'h-full',
       )}
     >
       <Spinner
