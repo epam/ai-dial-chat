@@ -61,6 +61,8 @@ export enum MenuOptions {
   replay = 'Replay',
   playback = 'Playback',
   export = 'Export',
+  withAttachments = 'With attachments',
+  withoutAttachments = 'Without attachments',
   moveTo = 'Move to',
   share = 'Share',
   publish = 'Publish',

@@ -82,8 +82,11 @@ test(
         conversationInFolder.folders.name,
         conversationInFolder.conversations[0].name,
       );
+      await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
       exportedData = await dialHomePage.downloadData(() =>
-        conversationDropdownMenu.selectMenuOption(MenuOptions.export),
+        conversationDropdownMenu.selectMenuOption(
+          MenuOptions.withoutAttachments,
+        ),
       );
     });
 
@@ -526,8 +529,11 @@ test(
         nestedFolders[levelsCount].name,
         nestedConversations[levelsCount].name,
       );
+      await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
       exportedData = await dialHomePage.downloadData(() =>
-        conversationDropdownMenu.selectMenuOption(MenuOptions.export),
+        conversationDropdownMenu.selectMenuOption(
+          MenuOptions.withoutAttachments,
+        ),
       );
     });
 
@@ -644,8 +650,12 @@ test('Import a chat in nested folder', async ({
         nestedFolders[i].name,
         nestedConversations[i].name,
       );
+      await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
       const exportedData = await dialHomePage.downloadData(
-        () => conversationDropdownMenu.selectMenuOption(MenuOptions.export),
+        () =>
+          conversationDropdownMenu.selectMenuOption(
+            MenuOptions.withoutAttachments,
+          ),
         `${i}.json`,
       );
       exportedConversations.push(exportedData);
@@ -750,8 +760,9 @@ test('Import a chat from nested folder which was moved to another place', async 
       nestedFolders[levelsCount].name,
       thirdLevelFolderConversation.name,
     );
+    await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
     exportedData = await dialHomePage.downloadData(() =>
-      conversationDropdownMenu.selectMenuOption(MenuOptions.export),
+      conversationDropdownMenu.selectMenuOption(MenuOptions.withoutAttachments),
     );
   });
 
