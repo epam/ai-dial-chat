@@ -7,6 +7,7 @@ import { useAppSelector } from '@/src/store/hooks';
 
 import CollapsableSection from '../../Common/CollapsableSection';
 import { ConversationComponent } from './Conversation';
+import { getConversationApiKey } from '@/src/utils/server/api';
 
 interface ConversationsRendererProps {
   conversations: Conversation[];
@@ -40,7 +41,7 @@ export const ConversationsRenderer = ({
           <div className="flex flex-col gap-1 py-1">
             {conversations.map((conversation) => (
               <ConversationComponent
-                key={conversation.id}
+                key={getConversationApiKey(conversation)} //TODO: remove temp solution
                 item={conversation}
               />
             ))}

@@ -87,8 +87,8 @@ export abstract class ApiEntityStorage<
     ).pipe(
       map((entity: Entity) => {
         return {
-          ...info,
           ...entity,
+          ...info,
           uploaded: true,
         };
       }),
