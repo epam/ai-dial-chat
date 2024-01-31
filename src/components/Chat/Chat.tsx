@@ -115,7 +115,7 @@ export const Chat = memo(() => {
   }, [isReplay, isReplayPaused, messageIsStreaming]);
 
   const isNotEmptyConversations = selectedConversations.some(
-    (conv) => conv.messages?.length > 0,
+    (conv) => conv.messages.length > 0,
   );
 
   useEffect(() => {
@@ -572,7 +572,7 @@ export const Chat = memo(() => {
                 <div className="flex max-h-full w-full">
                   {selectedConversations.map(
                     (conv) =>
-                      !conv.messages?.length &&
+                      conv.messages.length === 0 &&
                       (!conv.playback?.isPlayback ? (
                         <div
                           key={conv.id}
@@ -657,7 +657,7 @@ export const Chat = memo(() => {
                           : 'w-full'
                       }`}
                     >
-                      {!conv.messages?.length &&
+                      {conv.messages.length !== 0 &&
                         enabledFeatures.has(Feature.TopSettings) && (
                           <div className="z-10 flex flex-col">
                             <ChatHeader
