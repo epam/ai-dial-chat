@@ -12,7 +12,6 @@ interface Props {
 
 export default function ChatLoader({
   size = 45,
-  slow = true,
   containerClassName,
   loaderClassName,
   dataQa = 'chat-loader',
@@ -26,7 +25,6 @@ export default function ChatLoader({
     >
       <Spinner
         size={size}
-        slow={slow}
         className={loaderClassName}
         dataQa={dataQa}
       />

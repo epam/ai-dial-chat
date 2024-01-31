@@ -63,7 +63,7 @@ module.exports = {
     /////////
     extend: {
       animation: {
-        'spin-slow': 'spin 2s linear infinite',
+        'spin-steps': 'spin 0.75s steps(8, end) infinite',
       },
       colors: {
         transparent: 'transparent',
