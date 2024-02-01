@@ -20,10 +20,10 @@ export class ApiStorage implements DialStorage {
     entity: T,
     entities: T[],
     apiStorage: ApiEntityStorage<PromptInfo | ConversationInfo, T>,
-    retryCount?: number,
+    // retryCount?: number,
   ): Observable<void> {
     return apiStorage.createEntity(entity).pipe(
-      catchError((error) => {
+      catchError(() => {
         // TODO: check if name should be unique error and set retryCount but not in terms of unique names
         const updatedEntity = {
           ...entity,
