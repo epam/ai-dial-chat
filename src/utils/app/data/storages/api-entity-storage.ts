@@ -64,7 +64,7 @@ export abstract class ApiEntityStorage<
       `api/${this.getStorageKey()}/listing?${resultQuery}`,
     ).pipe(
       map((entities: BackendChatEntity[]) => {
-        return entities.map((entity): EntityInfo => {
+        return entities.map((entity, index): EntityInfo => {
           const relativePath = entity.parentPath || undefined;
           const info = this.parseEntityKey(entity.name);
 
