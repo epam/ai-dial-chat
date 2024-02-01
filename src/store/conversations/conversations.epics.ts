@@ -14,7 +14,6 @@ import {
   from,
   ignoreElements,
   iif,
-  last,
   map,
   merge,
   mergeMap,
@@ -47,7 +46,11 @@ import {
 import { DataService } from '@/src/utils/app/data/data-service';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
+import {
+  generateNextName,
+  getFoldersWithEntities,
+  getNextDefaultName,
+} from '@/src/utils/app/folders';
 import { getPathToFolderById } from '@/src/utils/app/folders';
 import {
   ImportConversationsResponse,
@@ -74,6 +77,8 @@ import {
 import { EntityType } from '@/src/types/common';
 import { StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
+
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { resetShareEntity } from '@/src/constants/chat';
 import {
@@ -454,7 +459,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const migrateConversationsEpic: AppEpic = (action$) => {
+const migrateConversationsEpic: AppEpic = (action$, state$) => {
   const browserStorage = new BrowserStorage();
 
   return action$.pipe(
@@ -470,7 +475,9 @@ const migrateConversationsEpic: AppEpic = (action$) => {
       }),
     ),
     switchMap(({ conversations, conversationsFolders }) => {
-      if (process.env.STORAGE_TYPE !== StorageType.API) {
+      if (
+        SettingsSelectors.selectStorageType(state$.value) !== StorageType.API
+      ) {
         return EMPTY;
       }
       if (!conversations.length) {
@@ -481,35 +488,43 @@ const migrateConversationsEpic: AppEpic = (action$) => {
 
       let migratedConversationsCount = 0;
 
-      const preparedConversations = getSameLevelEntitiesWithUniqueNames(
-        conversations,
-      )
-        .sort((a, b) => {
-          if (!a.lastActivityDate) return 1;
-          if (!b.lastActivityDate) return -1;
+      const sortedConversations = conversations.sort((a, b) => {
+        if (!a.lastActivityDate) return 1;
+        if (!b.lastActivityDate) return -1;
 
-          return a.lastActivityDate - b.lastActivityDate;
-        })
-        .map((conv) => {
+        return a.lastActivityDate - b.lastActivityDate;
+      });
+
+      const preparedConversations: Conversation[] =
+        getSameLevelEntitiesWithUniqueNames(sortedConversations).map((conv) => {
           const { path } = getPathToFolderById(
             conversationsFolders,
             conv.folderId,
           );
 
-          conv.folderId = path;
-          return conv;
+          return {
+            ...conv,
+            folderId: path,
+          };
         }); // to send conversation with proper parentPath
 
       return DataService.setConversations(preparedConversations).pipe(
         switchMap(() => {
           migratedConversationsCount++;
-          const localStorageConversations = preparedConversations.slice(
+          const newLocalStorageConversations = sortedConversations.slice(
             migratedConversationsCount,
+          );
+          const newLocalStorageFolders = getFoldersWithEntities(
+            conversationsFolders,
+            newLocalStorageConversations,
           );
 
           return concat(
             browserStorage
-              .setConversations(localStorageConversations)
+              .setConversations(newLocalStorageConversations)
+              .pipe(switchMap(() => EMPTY)),
+            browserStorage
+              .setConversationsFolders(newLocalStorageFolders)
               .pipe(switchMap(() => EMPTY)),
             of(
               ConversationsActions.migrateConversationSuccess({
@@ -519,12 +534,6 @@ const migrateConversationsEpic: AppEpic = (action$) => {
             ),
           );
         }),
-        last(),
-        switchMap(() =>
-          browserStorage
-            .setConversationsFolders([])
-            .pipe(switchMap(() => EMPTY)),
-        ),
       );
     }),
     catchError(() => {

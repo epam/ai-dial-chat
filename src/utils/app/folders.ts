@@ -349,3 +349,29 @@ export const generateFolderId = (folder: Omit<FolderInterface, 'id'>) => ({
   ...folder,
   id: constructPath(getParentPath(folder.folderId), folder.name),
 });
+
+export const getFoldersWithEntities = (
+  folders: FolderInterface[],
+  entities: Prompt[] | Conversation[],
+) => {
+  const entityFolderIds = new Set(
+    entities.map((entity) => entity.folderId).filter(Boolean),
+  );
+  const memoizedCheck = new Map<string, boolean>();
+
+  const folderContainsEntity = (folderId: string): boolean => {
+    if (entityFolderIds.has(folderId)) return true;
+    if (memoizedCheck.has(folderId)) {
+      return memoizedCheck.get(folderId) ?? false;
+    }
+
+    const subFoldersContainEntity = folders
+      .filter((folder) => folder.folderId === folderId)
+      .some((subFolder) => folderContainsEntity(subFolder.id));
+
+    memoizedCheck.set(folderId, subFoldersContainEntity);
+    return subFoldersContainEntity;
+  };
+
+  return folders.filter(({ id }) => folderContainsEntity(id));
+};
