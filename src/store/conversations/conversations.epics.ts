@@ -1281,7 +1281,7 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.selectConversations.match(action) ||
         ConversationsActions.unselectConversations.match(action) ||
         ConversationsActions.createNewConversationsSuccess.match(action) ||
-        ConversationsActions.createNewConversationSuccess.match(action) ||
+        //ConversationsActions.createNewConversationSuccess.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversations.match(action) ||
         ConversationsActions.addConversations.match(action) ||

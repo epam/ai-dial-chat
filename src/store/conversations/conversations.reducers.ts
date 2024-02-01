@@ -353,6 +353,7 @@ export const conversationsSlice = createSlice({
         state.selectedConversationsIds = payload.conversations.map(
           ({ id }) => id,
         );
+        state.isConversationLoading = false;
       }
     },
     clearConversations: (state) => {
