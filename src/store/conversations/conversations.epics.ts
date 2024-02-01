@@ -94,6 +94,13 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
       ) as Conversation, //TODO: need to upload last conversation?
       conversations: ConversationsSelectors.selectConversations(state$.value),
     })),
+    switchMap(({ names, lastConversation, conversations }) =>
+      forkJoin({
+        names: of(names),
+        lastConversation: DataService.getConversation(lastConversation),
+        conversations: of(conversations),
+      }),
+    ),
     switchMap(({ names, lastConversation, conversations }) => {
       return state$.pipe(
         startWith(state$.value),
@@ -1317,7 +1324,7 @@ const saveConversationsEpic: AppEpic = (action$, state$) =>
         //ConversationsActions.updateConversation.match(action) ||
         ConversationsActions.updateConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
-        ConversationsActions.deleteConversations.match(action) ||
+        //ConversationsActions.deleteConversations.match(action) ||
         ConversationsActions.addConversations.match(action) ||
         ConversationsActions.unpublishConversation.match(action) ||
         ConversationsActions.duplicateSelectedConversations.match(action),
