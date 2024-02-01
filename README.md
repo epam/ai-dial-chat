@@ -59,7 +59,7 @@ npm run test
 To run npm publish for all publishable libraries
 
 ```bash
-npm run publish -- --ver=*.*.*
+npm run publish -- --ver=*.*.* --tag=next
 ```
 
 It also supported to have run publish in 'dry' mode - nothing will be published, just displayed on screen
