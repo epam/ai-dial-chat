@@ -407,14 +407,23 @@ const importConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const clearConversationsEpic: AppEpic = (action$) =>
+const clearConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.clearConversations.match),
     switchMap(() => {
-      return of(
-        ConversationsActions.createNewConversations({
-          names: [translate(DEFAULT_CONVERSATION_NAME)],
-        }),
+      const conversations = ConversationsSelectors.selectConversations(
+        state$.value,
+      );
+      return concat(
+        of(
+          ConversationsActions.createNewConversations({
+            names: [translate(DEFAULT_CONVERSATION_NAME)],
+          }),
+        ),
+        of(ConversationsActions.clearConversationsSuccess()),
+        zip(
+          conversations.map((conv) => DataService.deleteConversation(conv)), //TODO: delete folders
+        ).pipe(switchMap(() => EMPTY)),
       );
     }),
   );

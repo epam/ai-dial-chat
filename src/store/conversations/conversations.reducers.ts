@@ -356,7 +356,8 @@ export const conversationsSlice = createSlice({
         state.isConversationLoading = false;
       }
     },
-    clearConversations: (state) => {
+    clearConversations: (state) => state,
+    clearConversationsSuccess: (state) => {
       state.conversations = [];
       state.folders = [];
     },
