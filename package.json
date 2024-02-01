@@ -86,6 +86,7 @@
     "@nx/jest": "17.2.8",
     "@nx/js": "^17.2.8",
     "@nx/react": "17.2.8",
+    "@nx/rollup": "^17.3.1",
     "@nx/vite": "^17.2.8",
     "@nx/workspace": "17.2.8",
     "@svgr/webpack": "^8.0.1",

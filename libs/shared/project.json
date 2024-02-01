@@ -5,19 +5,36 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
+      "executor": "@nx/rollup:rollup",
       "options": {
         "outputPath": "dist/libs/shared",
         "main": "libs/shared/src/index.ts",
         "tsConfig": "libs/shared/tsconfig.lib.json",
-        "assets": ["libs/shared/*.md", ".gitignore", "LICENSE"],
-        "clean": false,
-        "external": "all"
+        "project": "libs/shared/package.json",
+        "compiler": "tsc",
+        "format": ["esm"],
+        "assets": [
+          {
+            "glob": "libs/shared/README.md",
+            "input": ".",
+            "output": "."
+          },
+          {
+            "glob": ".gitignore",
+            "input": ".",
+            "output": "."
+          },
+          {
+            "glob": "LICENSE",
+            "input": ".",
+            "output": "."
+          }
+        ],
+        "buildableProjectDepsInPackageJsonType": true
       }
     },
     "publish": {
-      "command": "node tools/publish-lib.mjs shared --version={args.ver} --dry={args.dry} --tag={args.tag}",
-      "dependsOn": ["build"]
+      "command": "node tools/publish-lib.mjs shared --version={args.ver} --dry={args.dry} --tag={args.tag}"
     },
     "lint": {},
     "lint:fix": {},

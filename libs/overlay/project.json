@@ -5,20 +5,35 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
-      "dependsOn": ["^build"],
+      "executor": "@nx/rollup:rollup",
       "options": {
         "outputPath": "dist/libs/overlay",
         "main": "libs/overlay/src/index.ts",
         "tsConfig": "libs/overlay/tsconfig.lib.json",
-        "assets": ["libs/overlay/*.md", ".gitignore", "LICENSE"],
-        "clean": false,
-        "external": "all"
+        "project": "libs/overlay/package.json",
+        "compiler": "tsc",
+        "format": ["esm"],
+        "assets": [
+          {
+            "glob": "libs/overlay/README.md",
+            "input": ".",
+            "output": "."
+          },
+          {
+            "glob": ".gitignore",
+            "input": ".",
+            "output": "."
+          },
+          {
+            "glob": "LICENSE",
+            "input": ".",
+            "output": "."
+          }
+        ]
       }
     },
     "publish": {
-      "command": "node tools/publish-lib.mjs overlay --version={args.ver} --dry={args.dry} --tag={args.tag}",
-      "dependsOn": ["build"]
+      "command": "node tools/publish-lib.mjs overlay --version={args.ver} --dry={args.dry} --tag={args.tag}"
     },
     "lint": {
       "options": {
