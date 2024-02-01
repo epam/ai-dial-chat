@@ -37,7 +37,7 @@ import { combineEpics } from 'redux-observable';
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
   filterOnlyMyEntities,
-  getEntitiesWithUniqueNames,
+  getSameLevelEntitiesWithUniqueNames,
 } from '@/src/utils/app/common';
 import {
   generateConversationId,
@@ -477,7 +477,9 @@ const migrateConversationsEpic: AppEpic = (action$) => {
 
       let migratedConversationsCount = 0;
 
-      const preparedConversations = getEntitiesWithUniqueNames(conversations)
+      const preparedConversations = getSameLevelEntitiesWithUniqueNames(
+        conversations,
+      )
         .sort((a, b) => {
           if (!a.lastActivityDate) return 1;
           if (!b.lastActivityDate) return -1;

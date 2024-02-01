@@ -10,7 +10,7 @@ interface Props {
 export const Migration = ({ total, uploaded }: Props) => {
   return (
     <div className="flex h-full flex-col items-center justify-center">
-      <ChatLoader containerClassName="h-auto" disableDefaultClasses size={60} />
+      <ChatLoader containerClassName="h-auto" size={60} />
       <h1 className="mt-7 text-2xl font-semibold md:text-3xl">
         {uploaded} out of {total}
       </h1>

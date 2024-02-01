@@ -16,7 +16,7 @@ import { combineEpics } from 'redux-observable';
 
 import {
   filterOnlyMyEntities,
-  getEntitiesWithUniqueNames,
+  getSameLevelEntitiesWithUniqueNames,
 } from '@/src/utils/app/common';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
@@ -218,14 +218,14 @@ const migratePromptsEpic: AppEpic = (action$) => {
 
       let migratedPromptsCount = 0;
 
-      const preparedPrompts = getEntitiesWithUniqueNames(prompts).map(
+      const preparedPrompts = getSameLevelEntitiesWithUniqueNames(prompts).map(
         (prompt) => {
           const { path } = getPathToFolderById(promptsFolders, prompt.folderId);
 
           prompt.folderId = path;
           return prompt;
         },
-      ); // to send conversation with proper parentPath
+      ); // to send prompts with proper parentPath
 
       return DataService.setPrompts(preparedPrompts).pipe(
         switchMap(() => {
