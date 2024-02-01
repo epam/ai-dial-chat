@@ -1,6 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
+import { generateConversationId } from '@/src/utils/app/conversation';
 import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
@@ -84,8 +85,7 @@ export const conversationsSlice = createSlice({
     ) => {
       const newConversations: Conversation[] = payload.names.map(
         (name, index): Conversation => {
-          return {
-            id: uuidv4(),
+          return generateConversationId({
             name:
               name !== DEFAULT_CONVERSATION_NAME
                 ? name
@@ -104,7 +104,7 @@ export const conversationsSlice = createSlice({
             selectedAddons: [],
             lastActivityDate: Date.now(),
             isMessageStreaming: false,
-          };
+          });
         },
       );
       state.conversations = state.conversations.concat(newConversations); // TODO: save in API
@@ -112,13 +112,17 @@ export const conversationsSlice = createSlice({
     },
     updateConversation: (
       state,
-      { payload }: PayloadAction<{ id: string; values: Partial<Conversation> }>,
+      _action: PayloadAction<{ id: string; values: Partial<Conversation> }>,
+    ) => state,
+    updateConversationSuccess: (
+      state,
+      { payload }: PayloadAction<Conversation>,
     ) => {
       state.conversations = state.conversations.map((conv) => {
         if (conv.id === payload.id) {
           return {
             ...conv,
-            ...payload.values,
+            ...payload,
           };
         }
 
@@ -284,7 +288,7 @@ export const conversationsSlice = createSlice({
             FeatureType.Chat,
           )
         ) {
-          const newConversation: Conversation = {
+          const newConversation: Conversation = generateConversationId({
             ...(conversation as Conversation),
             ...resetShareEntity,
             folderId: undefined,
@@ -294,9 +298,8 @@ export const conversationsSlice = createSlice({
               state.conversations.concat(newConversations),
               0,
             ),
-            id: uuidv4(),
             lastActivityDate: Date.now(),
-          };
+          });
           newConversations.push(newConversation);
           newSelectedIds.push(newConversation.id);
         } else {

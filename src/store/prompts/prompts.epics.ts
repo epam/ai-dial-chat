@@ -13,6 +13,7 @@ import {
   exportPrompts,
   importPrompts,
 } from '@/src/utils/app/import-export';
+import { generatePromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
 import { AppEpic } from '@/src/types/store';
@@ -233,13 +234,14 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
           .filter(
             (prompt) => prompt.folderId && childFolders.has(prompt.folderId),
           )
-          .map(({ folderId, ...prompt }) => ({
-            ...prompt,
-            ...resetShareEntity,
-            id: uuidv4(),
-            originalId: prompt.id,
-            folderId: mapping.get(folderId),
-          }));
+          .map(({ folderId, ...prompt }) =>
+            generatePromptId({
+              ...prompt,
+              ...resetShareEntity,
+              originalId: prompt.id,
+              folderId: mapping.get(folderId),
+            }),
+          );
 
         return concat(
           of(
@@ -269,16 +271,17 @@ const sharePromptEpic: AppEpic = (action$, state$) =>
     switchMap(({ sharedPromptId, shareUniqueId, prompts }) => {
       const sharedPrompts = prompts
         .filter((prompt) => prompt.id === sharedPromptId)
-        .map(({ folderId: _, ...prompt }) => ({
-          ...prompt,
-          ...resetShareEntity,
-          id: uuidv4(),
-          originalId: prompt.id,
-          folderId: undefined, // show on root level
-          sharedWithMe: true,
-          shareUniqueId:
-            prompt.id === sharedPromptId ? shareUniqueId : undefined,
-        }));
+        .map(({ folderId: _, ...prompt }) =>
+          generatePromptId({
+            ...prompt,
+            ...resetShareEntity,
+            originalId: prompt.id,
+            folderId: undefined, // show on root level
+            sharedWithMe: true,
+            shareUniqueId:
+              prompt.id === sharedPromptId ? shareUniqueId : undefined,
+          }),
+        );
 
       return concat(
         of(
@@ -355,13 +358,14 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
           .filter(
             (prompt) => prompt.folderId && childFolders.has(prompt.folderId),
           )
-          .map(({ folderId, ...prompt }) => ({
-            ...prompt,
-            ...resetShareEntity,
-            id: uuidv4(),
-            originalId: prompt.id,
-            folderId: mapping.get(folderId),
-          }));
+          .map(({ folderId, ...prompt }) =>
+            generatePromptId({
+              ...prompt,
+              ...resetShareEntity,
+              originalId: prompt.id,
+              folderId: mapping.get(folderId),
+            }),
+          );
 
         return concat(
           of(
@@ -393,20 +397,21 @@ const publishPromptEpic: AppEpic = (action$, state$) =>
     switchMap(({ publishRequest, prompts, publishedAndTemporaryFolders }) => {
       const sharedPrompts = prompts
         .filter((prompt) => prompt.id === publishRequest.id)
-        .map(({ folderId: _, ...prompt }) => ({
-          ...prompt,
-          ...resetShareEntity,
-          id: uuidv4(),
-          originalId: prompt.id,
-          folderId: getFolderIdByPath(
-            publishRequest.path,
-            publishedAndTemporaryFolders,
-          ),
-          publishedWithMe: true,
-          name: publishRequest.name,
-          publishVersion: publishRequest.version,
-          shareUniqueId: publishRequest.shareUniqueId,
-        }));
+        .map(({ folderId: _, ...prompt }) =>
+          generatePromptId({
+            ...prompt,
+            ...resetShareEntity,
+            originalId: prompt.id,
+            folderId: getFolderIdByPath(
+              publishRequest.path,
+              publishedAndTemporaryFolders,
+            ),
+            publishedWithMe: true,
+            name: publishRequest.name,
+            publishVersion: publishRequest.version,
+            shareUniqueId: publishRequest.shareUniqueId,
+          }),
+        );
 
       const rootItem = findRootFromItems(sharedPrompts);
       const temporaryFolders = getTemporaryFoldersToPublish(

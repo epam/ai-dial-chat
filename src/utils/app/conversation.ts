@@ -2,6 +2,9 @@ import { Conversation, Message, MessageSettings } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 
+import { getConversationApiKey, getParentPath } from '../server/api';
+import { constructPath } from './file';
+
 export const getAssitantModelId = (
   modelType: EntityType,
   defaultAssistantModelId: string,
@@ -85,3 +88,13 @@ export const getNewConversationName = (
 
   return conversation.name;
 };
+
+export const generateConversationId = (
+  conversation: Omit<Conversation, 'id'>,
+) => ({
+  ...conversation,
+  id: constructPath(
+    getParentPath(conversation.folderId),
+    getConversationApiKey(conversation),
+  ),
+});

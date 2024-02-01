@@ -70,46 +70,40 @@ const getModelApiIdFromConversation = (conversation: Conversation) => {
 };
 
 // Format key: {id:guid}__{modelId}__{name:base64}
-export const getConversationApiKey = (conversation: ConversationInfo) => {
+export const getConversationApiKey = (
+  conversation: Omit<ConversationInfo, 'id'>,
+) => {
   return combineApiKey(
     getModelApiIdFromConversation(conversation as Conversation),
-    btoa(conversation.name),
+    conversation.name,
   );
 };
 
 // Format key: {id:guid}__{modelId}__{name:base64}
 export const parseConversationApiKey = (apiKey: string): ConversationInfo => {
-  const parts = apiKey.split(pathKeySeparator);
+  const [modelId, ...nameParts] = apiKey.split(pathKeySeparator);
 
-  if (parts.length !== 2) throw new Error('Incorrect conversation key');
-
-  const [modelId, encodedName] = parts;
+  const name = nameParts.join(pathKeySeparator);
 
   return {
-    id: atob(encodedName),
+    id: name,
     model: { id: modelId },
-    name: atob(encodedName),
+    name,
     isPlayback: modelId === PseudoModel.Playback,
     isReplay: modelId === PseudoModel.Replay,
   };
 };
 
 // Format key: {id:guid}__{name:base64}
-export const getPromptApiKey = (prompt: PromptInfo) => {
-  return combineApiKey(btoa(prompt.name));
+export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>) => {
+  return combineApiKey(prompt.name);
 };
 
 // Format key: {id:guid}__{name:base64}
-export const parsePromptApiKey = (apiKey: string): PromptInfo => {
-  const parts = apiKey.split(pathKeySeparator);
-
-  if (parts.length !== 1) throw new Error('Incorrect prompt key');
-
-  const [encodedName] = parts;
-
+export const parsePromptApiKey = (name: string): PromptInfo => {
   return {
-    id: atob(encodedName),
-    name: atob(encodedName),
+    id: name,
+    name,
   };
 };
 

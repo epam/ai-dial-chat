@@ -1,6 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
+import { generatePromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
 import { PromptsHistory } from '@/src/types/export';
@@ -38,12 +39,11 @@ export const promptsSlice = createSlice({
     initFolders: (state) => state,
     initPrompts: (state) => state,
     createNewPrompt: (state) => {
-      const newPrompt: Prompt = {
-        id: uuidv4(),
+      const newPrompt: Prompt = generatePromptId({
         name: getNextDefaultName(translate('Prompt'), state.prompts),
         description: '',
         content: '',
-      };
+      });
       state.prompts = state.prompts.concat(newPrompt);
       state.selectedPromptId = newPrompt.id;
     },
@@ -164,7 +164,7 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ prompt: Prompt }>,
     ) => {
-      const newPrompt: Prompt = {
+      const newPrompt: Prompt = generatePromptId({
         ...payload.prompt,
         ...resetShareEntity,
         folderId: undefined,
@@ -173,8 +173,7 @@ export const promptsSlice = createSlice({
           payload.prompt.name,
           state.prompts,
         ),
-        id: uuidv4(),
-      };
+      });
       state.prompts = state.prompts.concat(newPrompt);
       state.selectedPromptId = newPrompt.id;
     },
