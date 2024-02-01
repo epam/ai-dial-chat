@@ -44,14 +44,14 @@ import {
   isSettingsChanged,
 } from '@/src/utils/app/conversation';
 import { DataService } from '@/src/utils/app/data/data-service';
-import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
+import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   generateNextName,
   getFoldersWithEntities,
   getNextDefaultName,
+  getPathToFolderById,
 } from '@/src/utils/app/folders';
-import { getPathToFolderById } from '@/src/utils/app/folders';
 import {
   ImportConversationsResponse,
   exportConversation,
