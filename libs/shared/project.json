@@ -16,7 +16,7 @@
       }
     },
     "publish": {
-      "command": "node tools/publish-lib.mjs shared {args.ver} {args.dry} {args.tag}",
+      "command": "node tools/publish-lib.mjs shared --version={args.ver} --dry={args.dry} --tag={args.tag}",
       "dependsOn": ["build"]
     },
     "lint": {},

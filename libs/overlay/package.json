@@ -3,7 +3,7 @@
   "description": "Package for opening dial in overlay",
   "homepage": "https://epam-rail.com",
   "version": "0.4.3",
-  "optionalDependencies": {
+  "dependencies": {
     "@epam/ai-dial-shared": "0.4.3"
   },
   "type": "module",

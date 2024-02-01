@@ -10,7 +10,7 @@
     "test": "nx run-many -t test",
     "test:coverage": "nx run-many -t test:coverage",
     "publish": "nx run-many -t publish",
-    "publish:dry": "nx run-many -t publish --output-style=static --dry=true",
+    "publish:dry": "nx run-many -t publish --output-style=static --dry",
     "e2e": "nx run-many -t e2e",
     "e2e:ci": "nx run-many -t e2e --configuration=production",
     "lint": "nx run-many -t lint",
@@ -124,6 +124,7 @@
     "eslint-plugin-testing-library": "^6.1.2",
     "gpt-3-encoder": "^1.1.4",
     "jsdom": "^21.1.1",
+    "minimist": "^1.2.8",
     "nx": "17.2.8",
     "postcss": "^8.4.21",
     "prettier": "^3.0.3",
@@ -139,9 +140,9 @@
     "argparse": "2.0.1"
   },
   "optionalDependencies": {
+    "@nx/playwright": "17.2.8",
     "@playwright/test": "^1.38.0",
     "allure-playwright": "^2.6.0",
-    "@nx/playwright": "17.2.8",
     "eslint-plugin-playwright": "^0.15.3"
   },
   "engines": {

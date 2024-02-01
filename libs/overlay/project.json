@@ -17,7 +17,7 @@
       }
     },
     "publish": {
-      "command": "node tools/publish-lib.mjs overlay {args.ver} {args.dry} {args.tag}",
+      "command": "node tools/publish-lib.mjs overlay --version={args.ver} --dry={args.dry} --tag={args.tag}",
       "dependsOn": ["build"]
     },
     "lint": {
