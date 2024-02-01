@@ -5,6 +5,7 @@ import {
   filter,
   forkJoin,
   ignoreElements,
+  last,
   map,
   of,
   switchMap,
@@ -15,14 +16,13 @@ import { combineEpics } from 'redux-observable';
 
 import {
   filterOnlyMyEntities,
-  getSameLevelEntitiesWithUniqueNames,
+  getEntitiesWithUniqueNames,
 } from '@/src/utils/app/common';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import {
   findRootFromItems,
   getFolderIdByPath,
-  getFoldersWithEntities,
   getPathToFolderById,
   getTemporaryFoldersToPublish,
 } from '@/src/utils/app/folders';
@@ -34,11 +34,8 @@ import {
 import { generatePromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
-import { Prompt } from '@/src/types/prompt';
 import { StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
-
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { resetShareEntity } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
@@ -195,7 +192,7 @@ const initFoldersEpic: AppEpic = (action$) =>
     ),
   );
 
-const migratePromptsEpic: AppEpic = (action$, state$) => {
+const migratePromptsEpic: AppEpic = (action$) => {
   const browserStorage = new BrowserStorage();
 
   return action$.pipe(
@@ -209,9 +206,8 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
       }),
     ),
     switchMap(({ prompts, promptsFolders }) => {
-      if (
-        SettingsSelectors.selectStorageType(state$.value) !== StorageType.API
-      ) {
+      const browserStorage = new BrowserStorage();
+      if (process.env.STORAGE_TYPE !== StorageType.API) {
         return EMPTY;
       }
       if (!prompts.length) {
@@ -222,32 +218,23 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
 
       let migratedPromptsCount = 0;
 
-      const preparedPrompts: Prompt[] = getSameLevelEntitiesWithUniqueNames(
-        prompts,
-      ).map((prompt) => {
-        const { path } = getPathToFolderById(promptsFolders, prompt.folderId);
+      const preparedPrompts = getEntitiesWithUniqueNames(prompts).map(
+        (prompt) => {
+          const { path } = getPathToFolderById(promptsFolders, prompt.folderId);
 
-        return {
-          ...prompt,
-          folderId: path,
-        };
-      }); // to send prompts with proper parentPath
+          prompt.folderId = path;
+          return prompt;
+        },
+      ); // to send conversation with proper parentPath
 
       return DataService.setPrompts(preparedPrompts).pipe(
         switchMap(() => {
           migratedPromptsCount++;
-          const newLocalStoragePrompts = prompts.slice(migratedPromptsCount);
-          const newLocalStorageFolders = getFoldersWithEntities(
-            promptsFolders,
-            newLocalStoragePrompts,
-          );
+          const localStorePrompts = preparedPrompts.slice(migratedPromptsCount);
 
           return concat(
             browserStorage
-              .setPrompts(newLocalStoragePrompts)
-              .pipe(switchMap(() => EMPTY)),
-            browserStorage
-              .setPromptsFolders(newLocalStorageFolders)
+              .setPrompts(localStorePrompts)
               .pipe(switchMap(() => EMPTY)),
             of(
               PromptsActions.migratePromptSuccess({
@@ -257,6 +244,8 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
             ),
           );
         }),
+        last(),
+        switchMap(() => browserStorage.setPromptsFolders([]).pipe(() => EMPTY)),
       );
     }),
     catchError(() => {

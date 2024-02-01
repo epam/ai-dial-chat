@@ -23,9 +23,7 @@ export const combineEntities = <T extends Entity>(
     );
 };
 
-export const getSameLevelEntitiesWithUniqueNames = <
-  T extends Prompt | Conversation,
->(
+export const getEntitiesWithUniqueNames = <T extends Prompt | Conversation>(
   entities: T[],
 ) => {
   const folderGroups: Record<string, Record<string, number>> = {};
