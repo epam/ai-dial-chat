@@ -7,6 +7,7 @@ import {
   TimeoutError,
   catchError,
   concat,
+  debounceTime,
   delay,
   filter,
   forkJoin,
@@ -39,7 +40,7 @@ import {
   isSettingsChanged,
 } from '@/src/utils/app/conversation';
 import { DataService } from '@/src/utils/app/data/data-service';
-import { generateNextName } from '@/src/utils/app/folders';
+import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
 import {
   ImportConversationsResponse,
   exportConversation,
@@ -66,8 +67,13 @@ import { EntityType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
 import { resetShareEntity } from '@/src/constants/chat';
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+} from '@/src/constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
+import { defaultReplay } from '@/src/constants/replay';
 
 import { AddonsActions } from '../addons/addons.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
@@ -78,7 +84,7 @@ import {
 } from './conversations.reducers';
 import { hasExternalParent } from './conversations.selectors';
 
-const createNewConversationEpic: AppEpic = (action$, state$) =>
+const createNewConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.createNewConversations.match),
     map(({ payload }) => ({
@@ -86,8 +92,9 @@ const createNewConversationEpic: AppEpic = (action$, state$) =>
       lastConversation: ConversationsSelectors.selectLastConversation(
         state$.value,
       ) as Conversation, //TODO: need to upload last conversation?
+      conversations: ConversationsSelectors.selectConversations(state$.value),
     })),
-    switchMap(({ names, lastConversation }) => {
+    switchMap(({ names, lastConversation, conversations }) => {
       return state$.pipe(
         startWith(state$.value),
         map((state) => ModelsSelectors.selectRecentModels(state)),
@@ -100,12 +107,44 @@ const createNewConversationEpic: AppEpic = (action$, state$) =>
             return EMPTY;
           }
 
-          return of(
-            ConversationsActions.createNewConversationsSuccess({
-              names,
-              temperature: lastConversation?.temperature,
-              model,
-            }),
+          const newConversations: Conversation[] = names.map(
+            (name, index): Conversation => {
+              return generateConversationId({
+                name:
+                  name !== DEFAULT_CONVERSATION_NAME
+                    ? name
+                    : getNextDefaultName(
+                        DEFAULT_CONVERSATION_NAME,
+                        conversations,
+                        index,
+                      ),
+                messages: [],
+                model: {
+                  id: model.id,
+                },
+                prompt: DEFAULT_SYSTEM_PROMPT,
+                temperature:
+                  lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
+                replay: defaultReplay,
+                selectedAddons: [],
+                lastActivityDate: Date.now(),
+                isMessageStreaming: false,
+              });
+            },
+          );
+
+          return concat(
+            of(
+              ConversationsActions.addConversations({
+                conversations: newConversations,
+                selectAdded: true,
+              }),
+            ),
+            zip(
+              newConversations.map((info) =>
+                DataService.createConversation(info),
+              ),
+            ).pipe(switchMap(() => EMPTY)),
           );
         }),
       );
@@ -155,8 +194,6 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
         },
       });
 
-      DataService.createConversation(newConversation);
-
       return of(
         ConversationsActions.createNewConversationSuccess({
           newConversation,
@@ -205,8 +242,6 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
         },
       });
 
-      DataService.createConversation(newConversation);
-
       return of(
         ConversationsActions.createNewConversationSuccess({
           newConversation,
@@ -239,8 +274,6 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         lastActivityDate: Date.now(),
       });
 
-      DataService.createConversation(newConversation);
-
       return of(
         ConversationsActions.createNewConversationSuccess({
           newConversation,
@@ -249,11 +282,23 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const createNewConversationSuccessEpic: AppEpic = (action$) =>
+const createNewConversationsSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.createNewConversations.match),
     switchMap(() =>
       merge(of(ModelsActions.getModels()), of(AddonsActions.getAddons())),
+    ),
+  );
+
+const createNewConversationSuccessEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter((action) =>
+      ConversationsActions.createNewConversationSuccess.match(action),
+    ),
+    switchMap(({ payload }) =>
+      DataService.createConversation(payload.newConversation).pipe(
+        switchMap(() => EMPTY),
+      ),
     ),
   );
 
@@ -1269,7 +1314,7 @@ const saveConversationsEpic: AppEpic = (action$, state$) =>
     filter(
       (action) =>
         ConversationsActions.createNewConversationsSuccess.match(action) ||
-        ConversationsActions.updateConversation.match(action) ||
+        //ConversationsActions.updateConversation.match(action) ||
         ConversationsActions.updateConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversations.match(action) ||
@@ -1544,6 +1589,19 @@ const uploadConversationsEpic: AppEpic = (action$, state$) =>
     ),
   );
 
+const updateConversationDebounceEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter((action) =>
+      ConversationsActions.updateConversationDebounce.match(action),
+    ),
+    debounceTime(1000),
+    switchMap(({ payload: newConversation }) => {
+      return DataService.updateConversation(newConversation).pipe(
+        switchMap(() => EMPTY),
+      );
+    }),
+  );
+
 const updateConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter((action) => ConversationsActions.updateConversation.match(action)),
@@ -1553,23 +1611,23 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         state$.value,
         id,
       );
-      if (!conversation) return EMPTY;
       const newConversation: Conversation = {
         ...(conversation as Conversation),
         ...values,
       };
-      return (
+      return concat(
         iif(
           () =>
-            conversation.model.id !== newConversation.model.id ||
-            conversation.name !== newConversation.name,
+            !!conversation &&
+            (conversation.model.id !== newConversation.model.id ||
+              conversation.name !== newConversation.name),
           concat(
             DataService.createConversation(newConversation),
-            DataService.deleteConversation(conversation),
-          ),
-          DataService.updateConversation(newConversation),
+            DataService.deleteConversation(conversation!),
+          ).pipe(switchMap(() => EMPTY)),
+          of(ConversationsActions.updateConversationDebounce(newConversation)),
         ),
-        of(ConversationsActions.updateConversationSuccess(newConversation))
+        of(ConversationsActions.updateConversationSuccess(newConversation)),
       );
     }),
   );
@@ -1835,8 +1893,9 @@ export const ConversationsEpics = combineEpics(
   initFoldersEpic,
 
   selectConversationsEpic,
-  createNewConversationEpic,
+  createNewConversationsEpic,
   createNewConversationSuccessEpic,
+  createNewConversationsSuccessEpic,
   saveConversationsEpic,
   saveFoldersEpic,
   deleteFolderEpic,
@@ -1868,6 +1927,7 @@ export const ConversationsEpics = combineEpics(
   duplicateConversationEpic,
   uploadConversationsEpic,
   updateConversationEpic,
+  updateConversationDebounceEpic,
 
   // shareFolderEpic,
   // shareConversationEpic,

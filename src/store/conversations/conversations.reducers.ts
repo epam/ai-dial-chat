@@ -114,6 +114,8 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{ id: string; values: Partial<Conversation> }>,
     ) => state,
+    updateConversationDebounce: (state, _action: PayloadAction<Conversation>) =>
+      state,
     updateConversationSuccess: (
       state,
       { payload }: PayloadAction<Conversation>,
@@ -123,6 +125,7 @@ export const conversationsSlice = createSlice({
           return {
             ...conv,
             ...payload,
+            lastActivityDate: Date.now(),
           };
         }
 
@@ -338,9 +341,19 @@ export const conversationsSlice = createSlice({
     },
     addConversations: (
       state,
-      { payload }: PayloadAction<{ conversations: Conversation[] }>,
+      {
+        payload,
+      }: PayloadAction<{
+        conversations: Conversation[];
+        selectAdded?: boolean;
+      }>,
     ) => {
       state.conversations = state.conversations.concat(payload.conversations);
+      if (payload.selectAdded) {
+        state.selectedConversationsIds = payload.conversations.map(
+          ({ id }) => id,
+        );
+      }
     },
     clearConversations: (state) => {
       state.conversations = [];
