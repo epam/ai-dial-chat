@@ -40,6 +40,7 @@ import {
   isSettingsChanged,
 } from '@/src/utils/app/conversation';
 import { DataService } from '@/src/utils/app/data/data-service';
+import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
 import {
   ImportConversationsResponse,
@@ -91,13 +92,15 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
       names: payload.names,
       lastConversation: ConversationsSelectors.selectLastConversation(
         state$.value,
-      ) as Conversation, //TODO: need to upload last conversation?
+      ),
       conversations: ConversationsSelectors.selectConversations(state$.value),
     })),
     switchMap(({ names, lastConversation, conversations }) =>
       forkJoin({
         names: of(names),
-        lastConversation: DataService.getConversation(lastConversation),
+        lastConversation: lastConversation
+          ? DataService.getConversation(lastConversation)
+          : of(lastConversation),
         conversations: of(conversations),
       }),
     ),
@@ -140,18 +143,19 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             },
           );
 
-          return concat(
-            of(
-              ConversationsActions.addConversations({
-                conversations: newConversations,
-                selectAdded: true,
-              }),
+          return zip(
+            newConversations.map((info) =>
+              DataService.createConversation(info),
             ),
-            zip(
-              newConversations.map((info) =>
-                DataService.createConversation(info),
+          ).pipe(
+            switchMap(() =>
+              of(
+                ConversationsActions.addConversations({
+                  conversations: newConversations,
+                  selectAdded: true,
+                }),
               ),
-            ).pipe(switchMap(() => EMPTY)),
+            ),
           );
         }),
       );
@@ -670,7 +674,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         payload.conversation,
         payload.message,
         updatedMessages,
-      );
+      ).replaceAll(notAllowedSymbolsRegex, '');
 
       const updatedConversation: Conversation = {
         ...payload.conversation,
@@ -1287,7 +1291,7 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
       (action) =>
         ConversationsActions.selectConversations.match(action) ||
         ConversationsActions.unselectConversations.match(action) ||
-        ConversationsActions.createNewConversationsSuccess.match(action) ||
+        //ConversationsActions.createNewConversationsSuccess.match(action) ||
         //ConversationsActions.createNewConversationSuccess.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversations.match(action) ||
@@ -1320,9 +1324,9 @@ const saveConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>
-        ConversationsActions.createNewConversationsSuccess.match(action) ||
+        //ConversationsActions.createNewConversationsSuccess.match(action) ||
         //ConversationsActions.updateConversation.match(action) ||
-        ConversationsActions.updateConversations.match(action) ||
+        //ConversationsActions.updateConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         //ConversationsActions.deleteConversations.match(action) ||
         ConversationsActions.addConversations.match(action) ||
