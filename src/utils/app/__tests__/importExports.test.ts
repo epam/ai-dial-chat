@@ -16,7 +16,7 @@ import {
   ExportFormatV2,
   ExportFormatV4,
   PromptsHistory
-} from '@/src/types/export';
+} from '@/src/types/importExport';
 import { OpenAIEntityModelID } from '@/src/types/openai';
 
 import { describe, expect, it } from 'vitest';

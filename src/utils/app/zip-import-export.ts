@@ -121,3 +121,20 @@ export const getUnZipAttachments = async ({
 
   return attachmentsToUpload.filter(Boolean) as AttachmentToUpload[];
 };
+
+export const compressConversationInZip = async ({
+  attachments,
+  conversation,
+  parentFolders,
+}: {
+  attachments: DialFile[];
+  conversation: Conversation;
+  parentFolders: FolderInterface[];
+}) => {
+  const content = await getZippedFile({
+    files: attachments,
+    conversations: [conversation],
+    folders: parentFolders,
+  });
+  return content;
+};

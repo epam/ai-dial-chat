@@ -26,14 +26,14 @@ import {
   importConversations,
 } from '@/src/utils/app/import-export';
 import {
+  compressConversationInZip,
   downloadExportZip,
   getUnZipAttachments,
-  getZippedFile,
   importZippedHistory,
 } from '@/src/utils/app/zip-import-export';
 
 import { Conversation, Message } from '@/src/types/chat';
-import { LatestExportFormat } from '@/src/types/export';
+import { LatestExportFormat } from '@/src/types/importExport';
 import { AppEpic } from '@/src/types/store';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -59,34 +59,36 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
         payload.conversationId,
       ),
       withAttachments: payload.withAttachments,
+      bucket: FilesSelectors.selectBucket(state$.value),
     })),
-    switchMap(({ conversation, withAttachments }) => {
-      const downloadConversation = async () => {
-        if (!conversation) {
-          return;
-        }
-        const parentFolders = ConversationsSelectors.selectParentFolders(
-          state$.value,
-          conversation.folderId,
-        );
-        if (!withAttachments) {
-          exportConversation(conversation, parentFolders);
-          return;
-        }
+    switchMap(({ conversation, withAttachments, bucket }) => {
+      if (!conversation) {
+        return of(ImportExportActions.exportFail());
+      }
+      const parentFolders = ConversationsSelectors.selectParentFolders(
+        state$.value,
+        conversation.folderId,
+      );
+      if (!withAttachments) {
+        exportConversation(conversation, parentFolders);
+        return of(ImportExportActions.exportConversationSuccess());
+      }
 
-        const attachments = ConversationsSelectors.getAttachments(
-          state$.value,
-          conversation.id,
-        );
+      if (!bucket.length) {
+        return of(ImportExportActions.exportFail());
+      }
+      const attachments = ConversationsSelectors.getAttachments(
+        state$.value,
+        conversation.id,
+      );
 
-        const content = await getZippedFile({
-          files: attachments,
-          conversations: [conversation],
-          folders: parentFolders,
-        });
-        return content;
-      };
-      return from(downloadConversation()).pipe(
+      return from(
+        compressConversationInZip({
+          attachments,
+          conversation,
+          parentFolders,
+        }),
+      ).pipe(
         switchMap((content) => {
           if (!content) {
             return of(ImportExportActions.exportFail());
@@ -131,11 +133,14 @@ const importConversationsEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
-      return of(
-        ConversationsActions.importConversationsSuccess({
-          conversations: history,
-          folders,
-        }),
+      return concat(
+        of(ImportExportActions.importConversationsSuccess()),
+        of(
+          ConversationsActions.importConversationsSuccess({
+            conversations: history,
+            folders,
+          }),
+        ),
       );
     }),
   );
@@ -170,7 +175,7 @@ const importZipEpic: AppEpic = (action$, state$) =>
                   conversationId,
                 );
               if (conversationFromState) {
-                return EMPTY;
+                return of(ImportExportActions.resetState());
               }
               const foldersLocal = selectFolders(state$.value);
               const folders = Array.from(
@@ -217,6 +222,10 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
       const { attachmentsToUpload, completeHistory } = payload;
 
       const bucket = FilesSelectors.selectBucket(state$.value);
+
+      if (!bucket.length) {
+        return of(ImportExportActions.importFail());
+      }
       const conversation = completeHistory.history[0];
 
       const actions = attachmentsToUpload.map((attachment) => {
@@ -279,22 +288,11 @@ const uploadAllAttachmentsSuccessEpic: AppEpic = (action$, state$) =>
       loadedAttachments: ImportExportSelectors.selectUploadedAttachments(
         state$.value,
       ),
-      attachmentsErrors: ImportExportSelectors.selectAttachmentsErrors(
-        state$.value,
-      ),
+
       loadedHistory: ImportExportSelectors.selectImportedHistory(state$.value),
     })),
     switchMap((payload) => {
-      const {
-        attachmentsToUpload,
-        loadedAttachments,
-        attachmentsErrors,
-        loadedHistory,
-      } = payload;
-
-      if (attachmentsErrors.length) {
-        return of(ImportExportActions.uploadAllAttachmentsFail);
-      }
+      const { attachmentsToUpload, loadedAttachments, loadedHistory } = payload;
 
       if (!loadedAttachments.length) {
         return EMPTY;
@@ -360,13 +358,56 @@ const uploadAllAttachmentsSuccessEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const checkImportFailEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ImportExportActions.uploadSingleFileFail.match),
+    map(() => ({
+      attachmentsErrors: ImportExportSelectors.selectAttachmentsErrors(
+        state$.value,
+      ),
+      attachmentsToUpload: ImportExportSelectors.selectAttachmentsIdsToUpload(
+        state$.value,
+      ),
+    })),
+    switchMap(({ attachmentsErrors, attachmentsToUpload }) => {
+      if (
+        attachmentsErrors.length &&
+        attachmentsToUpload.length === attachmentsErrors.length
+      ) {
+        return of(ImportExportActions.importFail());
+      }
+      return EMPTY;
+    }),
+  );
+
+const importFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ImportExportActions.importFail.match),
+    tap(() => {
+      toast.error(errorsMessages.importFailed);
+    }),
+    ignoreElements(),
+  );
+
+const exportFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ImportExportActions.exportFail.match),
+    tap(() => {
+      toast.error(errorsMessages.exportFailed);
+    }),
+    ignoreElements(),
+  );
+
 const resetStateEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(
       (action) =>
         ImportExportActions.exportCancel.match(action) ||
         ImportExportActions.exportConversationSuccess.match(action) ||
-        ImportExportActions.exportFail.match(action),
+        ImportExportActions.exportFail.match(action) ||
+        ImportExportActions.importStop.match(action) ||
+        ImportExportActions.importConversationsSuccess.match(action) ||
+        ImportExportActions.importFail.match(action),
     ),
     switchMap(() => {
       return of(ImportExportActions.resetState());
@@ -381,4 +422,7 @@ export const ImportExportEpics = combineEpics(
   uploadConversationAttachmentsEpic,
   uploadAllAttachmentsSuccessEpic,
   resetStateEpic,
+  importFailEpic,
+  exportFailEpic,
+  checkImportFailEpic,
 );

@@ -1,9 +1,11 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import { Conversation } from '@/src/types/chat';
-import { LatestExportFormat, SupportedExportFormats } from '@/src/types/export';
 import { Status } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
+import {
+  LatestExportFormat,
+  Operation,
+  SupportedExportFormats,
+} from '@/src/types/importExport';
 
 import { RootState } from '..';
 
@@ -33,6 +35,7 @@ interface ImportExportState {
   importedHistory: LatestExportFormat;
   attachmentsErrors: string[];
   status?: Status;
+  operation?: Operation;
 }
 const defaultImportedHistory: LatestExportFormat = {
   version: 4,
@@ -57,6 +60,7 @@ export const importExportSlice = createSlice({
       state.uploadedAttachments = [];
       state.importedHistory = defaultImportedHistory;
       state.attachmentsErrors = [];
+      state.operation = undefined;
     },
     exportConversation: (
       state,
@@ -66,6 +70,7 @@ export const importExportSlice = createSlice({
       }>,
     ) => {
       state.status = 'LOADING';
+      state.operation = Operation.Exporting;
     },
     exportConversationSuccess: (state) => state,
     exportConversations: (state) => state,
@@ -76,17 +81,20 @@ export const importExportSlice = createSlice({
     importConversations: (
       state,
       _action: PayloadAction<{ data: SupportedExportFormats }>,
-    ) => state,
+    ) => {
+      state.status = 'LOADING';
+      state.operation = Operation.Importing;
+    },
     importZipConversations: (
       state,
       _action: PayloadAction<{ zipFile: File }>,
     ) => {
       state.status = 'LOADING';
+      state.operation = Operation.Importing;
     },
     importStop: (state) => state,
-    importConversationsSuccess: (state) => {
-      state.status = undefined;
-    },
+    importConversationsSuccess: (state) => state,
+    importFail: (state) => state,
     uploadConversationAttachments: (
       state,
       {
@@ -101,13 +109,6 @@ export const importExportSlice = createSlice({
       );
       state.importedHistory = payload.completeHistory;
     },
-    setUploadingAttachment: (
-      state,
-      _action: PayloadAction<{
-        attachmentId: string;
-      }>,
-    ) => state,
-
     uploadSingleAttachmentSuccess: (
       state,
       {
@@ -130,23 +131,6 @@ export const importExportSlice = createSlice({
     ) => {
       state.attachmentsErrors = state.attachmentsErrors.concat(payload.id);
     },
-    uploadAllAttachmentsSuccess: (
-      state,
-      _action: PayloadAction<{
-        conversation: Conversation;
-        folders: FolderInterface[];
-        attachmentsIDs: string[];
-      }>,
-    ) => {
-      state.status = 'LOADED';
-    },
-    uploadAllAttachmentsFail: (
-      state,
-      _action: PayloadAction<{
-        conversation: Conversation;
-        attachmentsIDs: string[];
-      }>,
-    ) => state,
   },
 });
 
@@ -171,6 +155,11 @@ const selectImportedHistory = createSelector([rootSelector], (state) => {
 const selectImportStatus = createSelector([rootSelector], (state) => {
   return state.status;
 });
+
+const selectOperationName = createSelector([rootSelector], (state) => {
+  return state.operation;
+});
+
 const selectIsLoadingImportExport = createSelector([rootSelector], (state) => {
   return state.status === 'LOADING';
 });
@@ -181,6 +170,7 @@ export const ImportExportSelectors = {
   selectAttachmentsErrors,
   selectImportedHistory,
   selectImportStatus,
+  selectOperationName,
   selectIsLoadingImportExport,
 };
 

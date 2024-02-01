@@ -1,4 +1,5 @@
 import { Conversation } from '@/src/types/chat';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import {
   ExportConversationsFormatV4,
   ExportFormatV1,
@@ -8,8 +9,7 @@ import {
   LatestExportFormat,
   PromptsHistory,
   SupportedExportFormats,
-} from '@/src/types/export';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+} from '@/src/types/importExport';
 import { Prompt } from '@/src/types/prompt';
 
 import { cleanConversationHistory } from './clean';

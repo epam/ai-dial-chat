@@ -17,13 +17,13 @@ export const ExportModal = ({ onExport, onClose, isOpen }: Props) => {
       onClose={onClose}
       isOpen={isOpen}
       portalId="theme-main"
-      containerClassName="inline-block w-full w-[336px] px-3 py-4"
+      containerClassName="inline-block max-w-[350px] w-full px-3 py-4 rounded"
     >
       <h4 className="mb-3 text-base font-semibold">{t('Export')}</h4>
-      <div className="flex flex-col items-start gap-3">
+      <div className="flex flex-col items-start">
         <button
           data-qa="with-attachments"
-          className="px-3"
+          className="h-[34px] w-full rounded px-3 text-left hover:bg-accent-secondary-alpha"
           onClick={() => {
             onExport({ withAttachments: true });
           }}
@@ -32,7 +32,7 @@ export const ExportModal = ({ onExport, onClose, isOpen }: Props) => {
         </button>
         <button
           data-qa="without-attachments"
-          className="px-3"
+          className="h-[34px] w-full rounded px-3 text-left hover:bg-accent-secondary-alpha"
           onClick={() => {
             onExport();
           }}
