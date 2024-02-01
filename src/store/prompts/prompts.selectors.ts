@@ -273,3 +273,13 @@ export const arePromptsUploaded = createSelector([rootSelector], (state) => {
 export const isPromptLoading = createSelector([rootSelector], (state) => {
   return state.isPromptLoading;
 });
+
+export const selectPromptsToMigrateAndMigratedCount = createSelector(
+  [rootSelector],
+  (state) => {
+    return {
+      promptsToMigrateCount: state.promptsToMigrateCount,
+      migratedPromptsCount: state.migratedPromptsCount,
+    };
+  },
+);

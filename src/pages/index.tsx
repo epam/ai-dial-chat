@@ -20,7 +20,9 @@ import { fallbackModelID } from '@/src/types/openai';
 
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
 import { ConversationsSelectors } from '../store/conversations/conversations.reducers';
+import { selectConversationsToMigrateAndMigratedCount } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { selectPromptsToMigrateAndMigratedCount } from '@/src/store/prompts/prompts.selectors';
 import {
   SettingsActions,
   SettingsSelectors,
@@ -30,9 +32,10 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
-import ChatLoader from '../components/Chat/ChatLoader';
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
+import ChatLoader from '@/src/components/Chat/ChatLoader';
+import { Migration } from '@/src/components/Chat/Migration';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import Header from '@/src/components/Header/Header';
 import { UserMobile } from '@/src/components/Header/User/UserMobile';
@@ -63,6 +66,12 @@ export default function Home({ initialState }: HomeProps) {
 
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
+  const { conversationsToMigrateCount, migratedConversationsCount } =
+    useAppSelector(selectConversationsToMigrateAndMigratedCount);
+  const { promptsToMigrateCount, migratedPromptsCount } = useAppSelector(
+    selectPromptsToMigrateAndMigratedCount,
+  );
+
   const shouldOverlayLogin = isOverlay && shouldLogin;
   const isConversationLoading = useAppSelector(
     ConversationsSelectors.isConversationLoading,
@@ -153,20 +162,28 @@ export default function Home({ initialState }: HomeProps) {
           className="h-screen w-screen flex-col bg-layer-1 text-sm text-primary"
           id="theme-main"
         >
-          <div className="flex h-full w-full flex-col sm:pt-0">
-            {enabledFeatures.has(Feature.Header) && <Header />}
-            <div className="flex w-full grow overflow-auto">
-              {enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
-
-              <div className="flex min-w-0 grow flex-col">
-                <AnnouncementsBanner />
-                {!isConversationLoading ? <Chat /> : <ChatLoader />}
+          {conversationsToMigrateCount + promptsToMigrateCount !==
+          migratedPromptsCount + migratedConversationsCount ? (
+            <Migration
+              total={conversationsToMigrateCount + promptsToMigrateCount}
+              uploaded={migratedPromptsCount + migratedConversationsCount}
+            />
+          ) : (
+            <div className="flex h-full w-full flex-col sm:pt-0">
+              {enabledFeatures.has(Feature.Header) && <Header />}
+              <div className="flex w-full grow overflow-auto">
+                {enabledFeatures.has(Feature.ConversationsSection) && (
+                  <Chatbar />
+                )}
+                <div className="flex min-w-0 grow flex-col">
+                  <AnnouncementsBanner />
+                  {!isConversationLoading ? <Chat /> : <ChatLoader />}
+                </div>
+                {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
+                {isProfileOpen && <UserMobile />}
               </div>
-
-              {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
-              {isProfileOpen && <UserMobile />}
             </div>
-          </div>
+          )}
         </main>
       )}
     </>

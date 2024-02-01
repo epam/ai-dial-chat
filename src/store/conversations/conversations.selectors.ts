@@ -516,3 +516,12 @@ export const areConversationsUploaded = createSelector(
 export const isConversationLoading = createSelector([rootSelector], (state) => {
   return state.isConversationLoading;
 });
+export const selectConversationsToMigrateAndMigratedCount = createSelector(
+  [rootSelector],
+  (state) => {
+    return {
+      conversationsToMigrateCount: state.conversationsToMigrateCount,
+      migratedConversationsCount: state.migratedConversationsCount,
+    };
+  },
+);

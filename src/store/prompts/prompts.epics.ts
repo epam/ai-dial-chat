@@ -1,11 +1,29 @@
-import { concat, filter, ignoreElements, map, of, switchMap, tap } from 'rxjs';
+import {
+  EMPTY,
+  catchError,
+  concat,
+  filter,
+  forkJoin,
+  ignoreElements,
+  last,
+  map,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
+import {
+  filterOnlyMyEntities,
+  getEntitiesWithUniqueNames,
+} from '@/src/utils/app/common';
 import { DataService } from '@/src/utils/app/data/data-service';
+import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import {
   findRootFromItems,
   getFolderIdByPath,
+  getPathToFolderById,
   getTemporaryFoldersToPublish,
 } from '@/src/utils/app/folders';
 import {
@@ -16,6 +34,7 @@ import {
 import { generatePromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
+import { StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
 import { resetShareEntity } from '@/src/constants/chat';
@@ -173,6 +192,68 @@ const initFoldersEpic: AppEpic = (action$) =>
     ),
   );
 
+const migratePromptsEpic: AppEpic = (action$) => {
+  const browserStorage = new BrowserStorage();
+
+  return action$.pipe(
+    filter(PromptsActions.migratePrompts.match),
+    switchMap(() =>
+      forkJoin({
+        prompts: browserStorage.getPrompts().pipe(map(filterOnlyMyEntities)),
+        promptsFolders: browserStorage
+          .getPromptsFolders()
+          .pipe(map(filterOnlyMyEntities)),
+      }),
+    ),
+    switchMap(({ prompts, promptsFolders }) => {
+      const browserStorage = new BrowserStorage();
+      if (process.env.STORAGE_TYPE !== StorageType.API) {
+        return EMPTY;
+      }
+      if (!prompts.length) {
+        return browserStorage
+          .setPromptsFolders([])
+          .pipe(switchMap(() => EMPTY));
+      }
+
+      let migratedPromptsCount = 0;
+
+      const preparedPrompts = getEntitiesWithUniqueNames(prompts).map(
+        (prompt) => {
+          const { path } = getPathToFolderById(promptsFolders, prompt.folderId);
+
+          prompt.folderId = path;
+          return prompt;
+        },
+      ); // to send conversation with proper parentPath
+
+      return DataService.setPrompts(preparedPrompts).pipe(
+        switchMap(() => {
+          migratedPromptsCount++;
+          const localStorePrompts = preparedPrompts.slice(migratedPromptsCount);
+
+          return concat(
+            browserStorage
+              .setPrompts(localStorePrompts)
+              .pipe(switchMap(() => EMPTY)),
+            of(
+              PromptsActions.migratePromptSuccess({
+                migratedPromptsCount,
+                promptsToMigrateCount: prompts.length,
+              }),
+            ),
+          );
+        }),
+        last(),
+        switchMap(() => browserStorage.setPromptsFolders([]).pipe(() => EMPTY)),
+      );
+    }),
+    catchError(() => {
+      return of(); // TODO: show toast?
+    }),
+  );
+};
+
 const initPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.initPrompts.match),
@@ -192,6 +273,7 @@ const initEpic: AppEpic = (action$) =>
     filter((action) => PromptsActions.init.match(action)),
     switchMap(() =>
       concat(
+        of(PromptsActions.migratePrompts()),
         of(PromptsActions.initFolders()),
         of(PromptsActions.initPrompts()),
       ),
@@ -436,6 +518,7 @@ export const PromptsEpics = combineEpics(
   initEpic,
   initPromptsEpic,
   initFoldersEpic,
+  migratePromptsEpic,
   savePromptsEpic,
   saveFoldersEpic,
   deleteFolderEpic,
