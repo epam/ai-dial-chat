@@ -2,11 +2,11 @@ name: Code checks - tests
 
 on:
   pull_request:
-    branches: [ development, release-* ]
+    branches: [development, release-*]
 
 jobs:
   run_tests:
-    uses: epam/ai-dial-ci/.github/workflows/test_yarn_docker.yml@1.1.0
+    uses: epam/ai-dial-ci/.github/workflows/test_yarn_docker.yml@1.3.1
     secrets: inherit
     with:
-      bypass_checks: false
+      bypass_ort: false

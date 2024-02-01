@@ -62,7 +62,7 @@ const Header = () => {
     <div
       className={classNames(
         'z-40 flex w-full border-b border-tertiary bg-layer-3',
-        isOverlay ? 'h-[36px]' : 'h-[48px]',
+        isOverlay ? 'min-h-[36px]' : 'min-h-[48px]',
       )}
       data-qa="header"
     >

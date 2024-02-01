@@ -22,7 +22,10 @@ import {
 } from '@/src/store/prompts/prompts.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import {
+  MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH,
+  PUBLISHING_FOLDER_NAME,
+} from '@/src/constants/folders';
 
 import { SelectFolder } from '@/src/components/Common/SelectFolder/SelectFolder';
 import { SelectFolderFooter } from '@/src/components/Common/SelectFolder/SelectFolderFooter';
@@ -197,6 +200,7 @@ export const ChangePathDialog = ({
           initiallySelectedFolderId={initiallySelectedFolderId}
           selectedFolderId={selectedFolderId}
           highlightTemporaryFolders
+          rootFolderName={PUBLISHING_FOLDER_NAME}
         />
       </SelectFolderHeader>
       <SelectFolderFooter
