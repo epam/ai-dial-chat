@@ -220,7 +220,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       process.env.STORAGE_TYPE as StorageType,
     )
       ? (process.env.STORAGE_TYPE as StorageType)
-      : StorageType.BrowserStorage, //TODO: set API as default
+      : StorageType.API,
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
   };
