@@ -128,7 +128,7 @@ export const Chat = memo(() => {
             conv.replay.isReplay &&
             conv.replay.replayAsIs &&
             conv.replay.replayUserMessagesStack &&
-            conv.replay.replayUserMessagesStack[0].model
+            conv.replay.replayUserMessagesStack?.[0]?.model
           ) {
             return conv.replay.replayUserMessagesStack.some(
               (message) =>
