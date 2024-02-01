@@ -19,6 +19,8 @@ import { v4 as uuidv4 } from 'uuid';
 export * as PromptsSelectors from './prompts.selectors';
 
 const initialState: PromptsState = {
+  promptsToMigrateCount: 0,
+  migratedPromptsCount: 0,
   prompts: [],
   folders: [],
   temporaryFolders: [],
@@ -38,6 +40,24 @@ export const promptsSlice = createSlice({
     init: (state) => state,
     initFolders: (state) => state,
     initPrompts: (state) => state,
+    migratePrompts: (state) => state,
+    migratePromptSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        promptsToMigrateCount?: number;
+        migratedPromptsCount?: number;
+      }>,
+    ) => {
+      return {
+        ...state,
+        promptsToMigrateCount:
+          payload.promptsToMigrateCount ?? state.promptsToMigrateCount,
+        migratedPromptsCount:
+          payload.migratedPromptsCount ?? state.migratedPromptsCount,
+      };
+    },
     createNewPrompt: (state) => {
       const newPrompt: Prompt = generatePromptId({
         name: getNextDefaultName(translate('Prompt'), state.prompts),

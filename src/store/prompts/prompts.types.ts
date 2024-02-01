@@ -3,6 +3,8 @@ import { Prompt } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 
 export interface PromptsState {
+  migratedPromptsCount: number;
+  promptsToMigrateCount: number;
   prompts: Prompt[];
   folders: FolderInterface[];
   temporaryFolders: FolderInterface[];

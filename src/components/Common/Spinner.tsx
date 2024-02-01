@@ -19,7 +19,7 @@ export const Spinner = ({
       height={size}
       width={size}
       className={classNames(
-        'shrink-0 grow-0 basis-auto animate-spin-steps text-secondary',
+        'animate-spin-steps shrink-0 grow-0 basis-auto text-secondary',
         className,
       )}
       data-qa={dataQa}

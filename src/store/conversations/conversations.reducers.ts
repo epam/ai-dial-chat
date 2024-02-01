@@ -23,6 +23,8 @@ import { v4 as uuidv4 } from 'uuid';
 export * as ConversationsSelectors from './conversations.selectors';
 
 const initialState: ConversationsState = {
+  conversationsToMigrateCount: 0,
+  migratedConversationsCount: 0,
   conversations: [],
   selectedConversationsIds: [],
   folders: [],
@@ -43,6 +45,26 @@ export const conversationsSlice = createSlice({
   reducers: {
     init: (state) => state,
     initConversations: (state) => state,
+    migrateConversations: (state) => state,
+    migrateConversationSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        migratedConversationsCount?: number;
+        conversationsToMigrateCount?: number;
+      }>,
+    ) => {
+      return {
+        ...state,
+        conversationsToMigrateCount:
+          payload.conversationsToMigrateCount ??
+          state.conversationsToMigrateCount,
+        migratedConversationsCount:
+          payload.migratedConversationsCount ??
+          state.migratedConversationsCount,
+      };
+    },
     selectConversations: (
       state,
       { payload }: PayloadAction<{ conversationIds: string[] }>,
