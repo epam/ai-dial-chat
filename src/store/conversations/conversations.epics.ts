@@ -422,27 +422,71 @@ const clearConversationsEpic: AppEpic = (action$) =>
 const deleteConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.deleteConversations.match),
-    map(() => ({
+    map(({ payload }) => ({
       conversations: ConversationsSelectors.selectConversations(state$.value),
       selectedConversationsIds:
         ConversationsSelectors.selectSelectedConversationsIds(state$.value),
+      deleteIds: new Set(payload.conversationIds),
     })),
-    switchMap(({ conversations, selectedConversationsIds }) => {
-      if (conversations.length === 0) {
-        return of(
-          ConversationsActions.createNewConversations({
-            names: [translate(DEFAULT_CONVERSATION_NAME)],
+    switchMap(({ conversations, selectedConversationsIds, deleteIds }) => {
+      const deleteConversations = conversations.filter((conv) =>
+        deleteIds.has(conv.id),
+      );
+
+      const otherConversations = conversations.filter(
+        (conv) => !deleteIds.has(conv.id),
+      );
+
+      const newSelectedConversationsIds = selectedConversationsIds.filter(
+        (id) => !deleteIds.has(id),
+      );
+
+      const actions: Observable<AnyAction>[] = [
+        of(
+          ConversationsActions.deleteConversationsSuccess({
+            deleteIds,
           }),
+        ),
+      ];
+
+      if (otherConversations.length === 0) {
+        actions.push(
+          of(
+            ConversationsActions.createNewConversations({
+              names: [translate(DEFAULT_CONVERSATION_NAME)],
+            }),
+          ),
         );
-      } else if (selectedConversationsIds.length === 0) {
-        return of(
-          ConversationsActions.selectConversations({
-            conversationIds: [conversations[conversations.length - 1].id],
-          }),
+      } else if (newSelectedConversationsIds.length === 0) {
+        actions.push(
+          of(
+            ConversationsActions.selectConversations({
+              conversationIds: [
+                otherConversations[otherConversations.length - 1].id,
+              ],
+            }),
+          ),
+        );
+      } else if (
+        newSelectedConversationsIds.length !== selectedConversationsIds.length
+      ) {
+        actions.push(
+          of(
+            ConversationsActions.selectConversations({
+              conversationIds: newSelectedConversationsIds,
+            }),
+          ),
         );
       }
 
-      return EMPTY;
+      return concat(
+        ...actions,
+        zip(
+          deleteConversations.map((conv) =>
+            DataService.deleteConversation(conv),
+          ),
+        ).pipe(switchMap(() => EMPTY)),
+      );
     }),
   );
 
@@ -1329,7 +1373,7 @@ const saveConversationsEpic: AppEpic = (action$, state$) =>
         //ConversationsActions.updateConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         //ConversationsActions.deleteConversations.match(action) ||
-        ConversationsActions.addConversations.match(action) ||
+        //ConversationsActions.addConversations.match(action) ||
         ConversationsActions.unpublishConversation.match(action) ||
         ConversationsActions.duplicateSelectedConversations.match(action),
     ),
@@ -1622,10 +1666,10 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         state$.value,
         id,
       );
-      const newConversation: Conversation = {
+      const newConversation: Conversation = generateConversationId({
         ...(conversation as Conversation),
         ...values,
-      };
+      });
       return concat(
         iif(
           () =>
@@ -1638,7 +1682,12 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
           ).pipe(switchMap(() => EMPTY)),
           of(ConversationsActions.updateConversationDebounce(newConversation)),
         ),
-        of(ConversationsActions.updateConversationSuccess(newConversation)),
+        of(
+          ConversationsActions.updateConversationSuccess({
+            id,
+            conversation: newConversation,
+          }),
+        ),
       );
     }),
   );
