@@ -52,5 +52,5 @@ for (const modelToUse of modelsForRequestWithAttachment) {
 }
 
 test.afterAll(async ({ fileApiHelper }) => {
-  await fileApiHelper.deleteFile(Attachment.sunImageName);
+  await fileApiHelper.deleteUploadedFile(Attachment.sunImageName);
 });

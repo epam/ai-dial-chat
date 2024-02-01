@@ -100,7 +100,8 @@ export const API = {
   sessionHost: '/api/auth/session',
   defaultIconHost: '/api/themes/image?name=default-model',
   bucketHost: '/api/files/bucket',
-  fileHost: '/api/files/file/files',
+  fileHost: '/api/files/file',
+  uploadedFileHost: () => `${API.fileHost} + '/files'`,
 };
 
 export const Import = {

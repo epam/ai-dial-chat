@@ -11,6 +11,7 @@ const modelsForImageGeneration = Array.of(
   ModelIds.DALLE,
   ModelIds.IMAGE_GENERATION_005,
 );
+let imageUrl: string | undefined;
 
 for (const modelToUse of modelsForImageGeneration) {
   test(`Generate image for model: ${modelToUse}`, async ({
@@ -30,11 +31,18 @@ for (const modelToUse of modelsForImageGeneration) {
 
     const respBody = await response.text();
     const result = respBody.match(ExpectedConstants.responseFileUrlPattern);
+    imageUrl = result ? result[0] : undefined;
     expect
       .soft(
-        result ? result[0] : undefined,
+        imageUrl,
         `${ExpectedMessages.imageUrlReturnedInResponse}${modelToUse}`,
       )
       .toMatch(ExpectedConstants.responseFileUrlContentPattern(modelToUse));
   });
 }
+
+test.afterEach(async ({ fileApiHelper }) => {
+  if (imageUrl) {
+    await fileApiHelper.deleteAppDataFile(imageUrl);
+  }
+});

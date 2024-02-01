@@ -10,7 +10,7 @@ export class FileApiHelper extends BaseApiHelper {
   public async putFile(filename: string) {
     const filePath = path.join(Attachment.attachmentPath, filename);
     const bufferedFile = fs.readFileSync(filePath);
-    const url = `${API.fileHost}/${BucketUtil.getBucket()}/${filename}`;
+    const url = `${API.uploadedFileHost()}/${BucketUtil.getBucket()}/${filename}`;
     const response = await this.request.put(url, {
       headers: {
         Accept: '*/*',
@@ -29,8 +29,13 @@ export class FileApiHelper extends BaseApiHelper {
     return body.url;
   }
 
-  public async deleteFile(filename: string) {
-    const url = `${API.fileHost}/${BucketUtil.getBucket()}/${filename}`;
+  public async deleteUploadedFile(filename: string) {
+    const url = `${API.uploadedFileHost()}/${BucketUtil.getBucket()}/${filename}`;
+    await this.request.delete(url);
+  }
+
+  public async deleteAppDataFile(filename: string) {
+    const url = `${API.fileHost}/${filename}`;
     await this.request.delete(url);
   }
 
