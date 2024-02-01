@@ -10,13 +10,13 @@
         "outputPath": "dist/libs/shared",
         "main": "libs/shared/src/index.ts",
         "tsConfig": "libs/shared/tsconfig.lib.json",
-        "assets": ["libs/shared/*.md"],
+        "assets": ["libs/shared/*.md", ".gitignore", "LICENSE"],
         "clean": false,
         "external": "all"
       }
     },
     "publish": {
-      "command": "node tools/publish-lib.mjs shared {args.ver} {args.tag}",
+      "command": "node tools/publish-lib.mjs shared {args.ver} {args.dry} {args.tag}",
       "dependsOn": ["build"]
     },
     "lint": {},

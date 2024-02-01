@@ -9,6 +9,8 @@
     "build": "nx run-many -t build",
     "test": "nx run-many -t test",
     "test:coverage": "nx run-many -t test:coverage",
+    "publish": "nx run-many -t publish",
+    "publish:dry": "nx run-many -t publish --output-style=static --dry=true",
     "e2e": "nx run-many -t e2e",
     "e2e:ci": "nx run-many -t e2e --configuration=production",
     "lint": "nx run-many -t lint",

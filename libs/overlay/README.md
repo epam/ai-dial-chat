@@ -4,9 +4,9 @@ Dial Overlay is a library for using AI DIAL Chat in overlay. You can configure a
 
 ## Public classes to use
 
-`ChatOverlay` - class which creates iframe with DIAL, allows to interact with it (send/receive messages).
+`ChatOverlay` - class which creates iframe with DIAL, allows to interact with it (send/receive messages). Types for configuration options is `ChatOverlayOptions`.
 
-`ChatOverlayManager` - class which provides overlay factory, different styles and animation for overlay (for example: opening animation, auto placement, fullscreen button, etc.)
+`ChatOverlayManager` - class which provides overlay factory, different styles and animation for overlay (for example: opening animation, auto placement, fullscreen button, etc.). Types for configuration options is `ChatOverlayManagerOptions`.
 
 If you need **only 1 iframe** and API to interact and nothing more - **use `ChatOverlay`**
 
@@ -30,10 +30,10 @@ ALLOWED_IFRAME_ORIGINS=http://localhost:8000
 npm i @epam/ai-dial-overlay
 ```
 
-2. Add file to serving folder in your application or just import it in code (bundled in esm format)
+2. Add file to serving folder in your application or just import it in code
 
 ```typescript
-import { ChatOverlay, ChatOverlayManager } from '@epam/ai-dial-overlay';
+import { ChatOverlay, ChatOverlayManager, ChatOverlayOptions } from '@epam/ai-dial-overlay';
 ```
 
 3. Create an instance of `ChatOverlay` (to just overlay and nothing more) or `ChatOverlayManager` (if you want create more than 1 ChatOverlay, or additional style options, like positions, animations, etc.)
@@ -45,7 +45,7 @@ const container = document.create('div');
 document.body.appendChild(container);
 
 const run = async () => {
-  const overlay = new ChatOverlay(container, {
+  const overlay: ChatOverlayOptions = new ChatOverlay(container, {
     // required, url of host application, needed for security reasons
     hostDomain: window.location.origin,
     // required, url of hosted DIAL application

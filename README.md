@@ -53,3 +53,17 @@ To run tests for full repo
 ```bash
 npm run test
 ```
+
+### Publish
+
+To run npm publish for all publishable libraries
+
+```bash
+npm run publish
+```
+
+It also supported to have run publish in 'dry' mode - nothing will be published, just displayed on screen
+
+```bash
+npm run publish:dry
+```

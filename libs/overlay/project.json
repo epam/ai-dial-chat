@@ -11,13 +11,13 @@
         "outputPath": "dist/libs/overlay",
         "main": "libs/overlay/src/index.ts",
         "tsConfig": "libs/overlay/tsconfig.lib.json",
-        "assets": ["libs/overlay/*.md"],
+        "assets": ["libs/overlay/*.md", ".gitignore", "LICENSE"],
         "clean": false,
         "external": "all"
       }
     },
     "publish": {
-      "command": "node tools/publish-lib.mjs overlay {args.ver} {args.tag}",
+      "command": "node tools/publish-lib.mjs overlay {args.ver} {args.dry} {args.tag}",
       "dependsOn": ["build"]
     },
     "lint": {
