@@ -179,10 +179,6 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           hostDomain,
         });
 
-        if (enabledFeatures) {
-          actions.push(of(SettingsActions.setEnabledFeatures(enabledFeatures)));
-        }
-
         if (theme) {
           if (availableThemes.some(({ id }) => id === theme)) {
             actions.push(of(UIActions.setTheme(theme)));
@@ -194,7 +190,12 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         }
 
         if (enabledFeatures) {
-          const features = enabledFeatures;
+          let features: string[] = [];
+          if (typeof enabledFeatures === 'string') {
+            features = enabledFeatures
+              .split(',')
+              .map((feature) => feature.trim());
+          }
 
           if (features.every(validateFeature)) {
             actions.push(

@@ -13,7 +13,7 @@ export interface OverlayOptions {
   theme?: string;
   modelId?: string;
 
-  enabledFeatures?: Feature[];
+  enabledFeatures?: Feature[] | string;
 }
 
 export interface SendMessageOptions {
