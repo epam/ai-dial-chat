@@ -71,7 +71,7 @@ export abstract class ApiEntityStorage<
           return {
             ...info,
             id: constructPath(getParentPath(entity.parentPath), entity.name),
-            lastActivityDate: entity.updatedAt,
+            lastActivityDate: entity.updatedAt + index, // TODO: for some reasons we have several entities with the same time and they changes places on UI
             folderId: relativePath,
           };
         });
