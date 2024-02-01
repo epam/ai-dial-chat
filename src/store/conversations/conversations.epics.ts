@@ -35,22 +35,13 @@ import { combineEpics } from 'redux-observable';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
-  filterOnlyMyEntities,
-  getSameLevelEntitiesWithUniqueNames,
-} from '@/src/utils/app/common';
-import {
   generateConversationId,
   getNewConversationName,
   isSettingsChanged,
 } from '@/src/utils/app/conversation';
 import { DataService } from '@/src/utils/app/data/data-service';
-import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import {
-  generateNextName,
-  getFoldersWithEntities,
-  getNextDefaultName,
-} from '@/src/utils/app/folders';
-import { getPathToFolderById } from '@/src/utils/app/folders';
+import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
 import {
   ImportConversationsResponse,
   exportConversation,
@@ -74,10 +65,7 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
-
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { resetShareEntity } from '@/src/constants/chat';
 import {
@@ -104,13 +92,15 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
       names: payload.names,
       lastConversation: ConversationsSelectors.selectLastConversation(
         state$.value,
-      ) as Conversation, //TODO: need to upload last conversation?
+      ),
       conversations: ConversationsSelectors.selectConversations(state$.value),
     })),
     switchMap(({ names, lastConversation, conversations }) =>
       forkJoin({
         names: of(names),
-        lastConversation: DataService.getConversation(lastConversation),
+        lastConversation: lastConversation
+          ? DataService.getConversation(lastConversation)
+          : of(lastConversation),
         conversations: of(conversations),
       }),
     ),
@@ -153,18 +143,19 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             },
           );
 
-          return concat(
-            of(
-              ConversationsActions.addConversations({
-                conversations: newConversations,
-                selectAdded: true,
-              }),
+          return zip(
+            newConversations.map((info) =>
+              DataService.createConversation(info),
             ),
-            zip(
-              newConversations.map((info) =>
-                DataService.createConversation(info),
+          ).pipe(
+            switchMap(() =>
+              of(
+                ConversationsActions.addConversations({
+                  conversations: newConversations,
+                  selectAdded: true,
+                }),
               ),
-            ).pipe(switchMap(() => EMPTY)),
+            ),
           );
         }),
       );
@@ -455,89 +446,6 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const migrateConversationsEpic: AppEpic = (action$, state$) => {
-  const browserStorage = new BrowserStorage();
-
-  return action$.pipe(
-    filter(ConversationsActions.migrateConversations.match),
-    switchMap(() =>
-      forkJoin({
-        conversations: browserStorage
-          .getConversations()
-          .pipe(map(filterOnlyMyEntities)),
-        conversationsFolders: browserStorage
-          .getConversationsFolders()
-          .pipe(map(filterOnlyMyEntities)),
-      }),
-    ),
-    switchMap(({ conversations, conversationsFolders }) => {
-      if (
-        SettingsSelectors.selectStorageType(state$.value) !== StorageType.API
-      ) {
-        return EMPTY;
-      }
-      if (!conversations.length) {
-        return browserStorage
-          .setConversationsFolders([])
-          .pipe(switchMap(() => EMPTY));
-      }
-
-      let migratedConversationsCount = 0;
-
-      const sortedConversations = conversations.sort((a, b) => {
-        if (!a.lastActivityDate) return 1;
-        if (!b.lastActivityDate) return -1;
-
-        return a.lastActivityDate - b.lastActivityDate;
-      });
-
-      const preparedConversations: Conversation[] =
-        getSameLevelEntitiesWithUniqueNames(sortedConversations).map((conv) => {
-          const { path } = getPathToFolderById(
-            conversationsFolders,
-            conv.folderId,
-          );
-
-          return {
-            ...conv,
-            folderId: path,
-          };
-        }); // to send conversation with proper parentPath
-
-      return DataService.setConversations(preparedConversations).pipe(
-        switchMap(() => {
-          migratedConversationsCount++;
-          const newLocalStorageConversations = sortedConversations.slice(
-            migratedConversationsCount,
-          );
-          const newLocalStorageFolders = getFoldersWithEntities(
-            conversationsFolders,
-            newLocalStorageConversations,
-          );
-
-          return concat(
-            browserStorage
-              .setConversations(newLocalStorageConversations)
-              .pipe(switchMap(() => EMPTY)),
-            browserStorage
-              .setConversationsFolders(newLocalStorageFolders)
-              .pipe(switchMap(() => EMPTY)),
-            of(
-              ConversationsActions.migrateConversationSuccess({
-                migratedConversationsCount,
-                conversationsToMigrateCount: conversations.length,
-              }),
-            ),
-          );
-        }),
-      );
-    }),
-    catchError(() => {
-      return of(); // TODO: show toast?
-    }),
-  );
-};
-
 const initConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.initConversations.match),
@@ -766,7 +674,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         payload.conversation,
         payload.message,
         updatedMessages,
-      );
+      ).replaceAll(notAllowedSymbolsRegex, '');
 
       const updatedConversation: Conversation = {
         ...payload.conversation,
@@ -1383,7 +1291,7 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
       (action) =>
         ConversationsActions.selectConversations.match(action) ||
         ConversationsActions.unselectConversations.match(action) ||
-        ConversationsActions.createNewConversationsSuccess.match(action) ||
+        //ConversationsActions.createNewConversationsSuccess.match(action) ||
         //ConversationsActions.createNewConversationSuccess.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversations.match(action) ||
@@ -1416,9 +1324,9 @@ const saveConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>
-        ConversationsActions.createNewConversationsSuccess.match(action) ||
+        //ConversationsActions.createNewConversationsSuccess.match(action) ||
         //ConversationsActions.updateConversation.match(action) ||
-        // ConversationsActions.updateConversations.match(action) ||
+        //ConversationsActions.updateConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         //ConversationsActions.deleteConversations.match(action) ||
         ConversationsActions.addConversations.match(action) ||
@@ -1667,7 +1575,6 @@ const initEpic: AppEpic = (action$) =>
     filter((action) => ConversationsActions.init.match(action)),
     switchMap(() =>
       concat(
-        of(ConversationsActions.migrateConversations()),
         of(ConversationsActions.initFolders()),
         of(ConversationsActions.initConversations()),
       ),
@@ -1994,7 +1901,6 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
 export const ConversationsEpics = combineEpics(
   initEpic,
   initConversationsEpic,
-  migrateConversationsEpic,
   initFoldersEpic,
 
   selectConversationsEpic,

@@ -6,12 +6,7 @@ import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import {
-  Conversation,
-  ConversationEntityModel,
-  ConversationInfo,
-  Message,
-} from '@/src/types/chat';
+import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
@@ -19,12 +14,7 @@ import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
 
 import { resetShareEntity } from '@/src/constants/chat';
-import {
-  DEFAULT_CONVERSATION_NAME,
-  DEFAULT_SYSTEM_PROMPT,
-  DEFAULT_TEMPERATURE,
-} from '@/src/constants/default-settings';
-import { defaultReplay } from '@/src/constants/replay';
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 
 import { ConversationsState } from './conversations.types';
 
@@ -95,43 +85,43 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{ names: string[] }>,
     ) => state,
-    createNewConversationsSuccess: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        names: string[];
-        temperature: number | undefined;
-        model: ConversationEntityModel;
-      }>,
-    ) => {
-      const newConversations: Conversation[] = payload.names.map(
-        (name, index): Conversation => {
-          return generateConversationId({
-            name:
-              name !== DEFAULT_CONVERSATION_NAME
-                ? name
-                : getNextDefaultName(
-                    DEFAULT_CONVERSATION_NAME,
-                    state.conversations,
-                    index,
-                  ),
-            messages: [],
-            model: {
-              id: payload.model.id,
-            },
-            prompt: DEFAULT_SYSTEM_PROMPT,
-            temperature: payload.temperature ?? DEFAULT_TEMPERATURE,
-            replay: defaultReplay,
-            selectedAddons: [],
-            lastActivityDate: Date.now(),
-            isMessageStreaming: false,
-          });
-        },
-      );
-      state.conversations = state.conversations.concat(newConversations); // TODO: save in API
-      state.selectedConversationsIds = newConversations.map(({ id }) => id);
-    },
+    // createNewConversationsSuccess: (
+    //   state,
+    //   {
+    //     payload,
+    //   }: PayloadAction<{
+    //     names: string[];
+    //     temperature: number | undefined;
+    //     model: ConversationEntityModel;
+    //   }>,
+    // ) => {
+    //   const newConversations: Conversation[] = payload.names.map(
+    //     (name, index): Conversation => {
+    //       return generateConversationId({
+    //         name:
+    //           name !== DEFAULT_CONVERSATION_NAME
+    //             ? name
+    //             : getNextDefaultName(
+    //                 DEFAULT_CONVERSATION_NAME,
+    //                 state.conversations,
+    //                 index,
+    //               ),
+    //         messages: [],
+    //         model: {
+    //           id: payload.model.id,
+    //         },
+    //         prompt: DEFAULT_SYSTEM_PROMPT,
+    //         temperature: payload.temperature ?? DEFAULT_TEMPERATURE,
+    //         replay: defaultReplay,
+    //         selectedAddons: [],
+    //         lastActivityDate: Date.now(),
+    //         isMessageStreaming: false,
+    //       });
+    //     },
+    //   );
+    //   state.conversations = state.conversations.concat(newConversations); // TODO: save in API
+    //   state.selectedConversationsIds = newConversations.map(({ id }) => id);
+    // },
     updateConversation: (
       state,
       _action: PayloadAction<{ id: string; values: Partial<Conversation> }>,
