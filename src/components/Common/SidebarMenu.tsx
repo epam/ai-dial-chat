@@ -110,12 +110,7 @@ export default function SidebarMenu({
         );
 
         return (
-          <Tooltip
-            key={props.name}
-            isTriggerClickable
-            tooltip={props.name}
-            contentClassName="max-w-[138px] text-xs"
-          >
+          <Tooltip key={props.name} isTriggerClickable tooltip={props.name}>
             {Trigger}
           </Tooltip>
         );

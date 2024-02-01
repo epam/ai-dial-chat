@@ -130,7 +130,7 @@ const importConversationsEpic: AppEpic = (action$, state$) =>
 
       if (isError) {
         toast.error(errorsMessages.unsupportedDataFormat);
-        return EMPTY;
+        return of(ImportExportActions.resetState());
       }
 
       return concat(

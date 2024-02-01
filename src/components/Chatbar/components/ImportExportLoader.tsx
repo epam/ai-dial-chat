@@ -23,10 +23,6 @@ export const ImportExportLoader = ({ isOpen }: Props) => {
     useAppSelector(ImportExportSelectors.selectOperationName) ?? '';
   const stopLabel = operationName === Operation.Importing ? 'Stop' : 'Cancel';
 
-  const handleOnClose = useCallback(() => {
-    dispatch(ImportExportActions.resetState());
-  }, [dispatch]);
-
   const handleCancelExport = useCallback(() => {
     dispatch(ImportExportActions.exportCancel());
   }, [dispatch]);
@@ -43,7 +39,9 @@ export const ImportExportLoader = ({ isOpen }: Props) => {
     <TransparentLoader
       loaderLabel={t(operationName)}
       isOpen={isOpen}
-      onClose={handleOnClose}
+      onClose={() => {
+        return;
+      }}
       onStop={onStop}
       stopLabel={t(stopLabel)}
     />
