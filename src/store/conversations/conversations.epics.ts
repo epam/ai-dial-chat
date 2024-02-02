@@ -167,13 +167,21 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.createNewReplayConversation.match),
     switchMap(({ payload }) =>
       forkJoin({
-        conversation: DataService.getConversation(payload.conversation),
+        conversation: DataService.getConversation(payload),
+        conversations: of(
+          ConversationsSelectors.selectConversations(state$.value),
+        ),
       }),
     ),
-    switchMap(({ conversation }) => {
+    switchMap(({ conversation, conversations }) => {
       if (!conversation) return EMPTY;
 
-      const newConversationName = `[Replay] ${conversation.name}`;
+      const newConversationName = getNextDefaultName(
+        `[Replay] ${conversation.name}`,
+        conversations,
+        0,
+        true,
+      );
 
       const userMessages = conversation.messages.filter(
         ({ role }) => role === Role.User,
@@ -218,13 +226,21 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.createNewPlaybackConversation.match),
     switchMap(({ payload }) =>
       forkJoin({
-        conversation: DataService.getConversation(payload.conversation),
+        conversation: DataService.getConversation(payload),
+        conversations: of(
+          ConversationsSelectors.selectConversations(state$.value),
+        ),
       }),
     ),
-    switchMap(({ conversation }) => {
+    switchMap(({ conversation, conversations }) => {
       if (!conversation) return EMPTY;
 
-      const newConversationName = `[Playback] ${conversation.name}`;
+      const newConversationName = getNextDefaultName(
+        `[Playback] ${conversation.name}`,
+        conversations,
+        0,
+        true,
+      );
 
       const newConversation: Conversation = generateConversationId({
         ...conversation,
@@ -266,7 +282,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.duplicateConversation.match),
     switchMap(({ payload }) =>
       forkJoin({
-        conversation: DataService.getConversation(payload.conversation),
+        conversation: DataService.getConversation(payload),
       }),
     ),
     switchMap(({ conversation }) => {

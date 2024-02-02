@@ -15,7 +15,6 @@ import { errorsMessages } from '@/src/constants/errors';
 import { authOptions } from './auth/[...nextauth]';
 
 import fetch from 'node-fetch';
-import { validate } from 'uuid';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
@@ -27,7 +26,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     const { responseId, modelId, value, id } = req.body as RateBody;
 
-    if (!id || !validate(id) || !responseId || !modelId) {
+    if (!id || !responseId || !modelId) {
       return res.status(400).send(errorsMessages[400]);
     }
 

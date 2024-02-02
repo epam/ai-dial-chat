@@ -236,9 +236,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     (e) => {
       e.stopPropagation();
       setIsContextMenu(false);
-      dispatch(
-        ConversationsActions.createNewReplayConversation({ conversation }),
-      );
+      dispatch(ConversationsActions.createNewReplayConversation(conversation));
     },
     [conversation, dispatch],
   );
@@ -246,7 +244,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const handleCreatePlayback: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
       dispatch(
-        ConversationsActions.createNewPlaybackConversation({ conversation }),
+        ConversationsActions.createNewPlaybackConversation(conversation),
       );
       setIsContextMenu(false);
     }, [conversation, dispatch]);
@@ -266,11 +264,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     (e) => {
       e.stopPropagation();
       setIsContextMenu(false);
-      dispatch(
-        ConversationsActions.duplicateConversation({
-          conversation,
-        }),
-      );
+      dispatch(ConversationsActions.duplicateConversation(conversation));
     },
     [conversation, dispatch],
   );

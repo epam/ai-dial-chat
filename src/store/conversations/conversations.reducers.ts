@@ -257,7 +257,7 @@ export const conversationsSlice = createSlice({
     },
     createNewReplayConversation: (
       state,
-      _action: PayloadAction<{ conversation: ConversationInfo }>,
+      _action: PayloadAction<ConversationInfo>,
     ) => state,
     createNewConversationSuccess: (
       state,
@@ -270,12 +270,10 @@ export const conversationsSlice = createSlice({
     },
     createNewPlaybackConversation: (
       state,
-      _action: PayloadAction<{ conversation: ConversationInfo }>,
+      _action: PayloadAction<ConversationInfo>,
     ) => state,
-    duplicateConversation: (
+    duplicateConversation: (state, _action: PayloadAction<ConversationInfo>) =>
       state,
-      _action: PayloadAction<{ conversation: ConversationInfo }>,
-    ) => state,
     duplicateSelectedConversations: (state) => {
       const selectedIds = new Set(state.selectedConversationsIds);
       const newSelectedIds: string[] = [];
