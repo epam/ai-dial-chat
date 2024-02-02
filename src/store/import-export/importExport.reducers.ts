@@ -1,6 +1,6 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import { Status } from '@/src/types/files';
+import { DialFile, Status } from '@/src/types/files';
 import {
   LatestExportFormat,
   Operation,
@@ -9,25 +9,9 @@ import {
 
 import { RootState } from '..';
 
-interface UploadedAttachment {
-  name: string;
-  id: string;
-  // Only for files fetched uploaded to backend
-  // Same as relative path but has some absolute prefix like <HASH>
-  absolutePath?: string;
-  relativePath?: string;
-  // Same as relative path, but needed for simplicity and backward compatibility
-  folderId?: string;
+type UploadedAttachment = Partial<DialFile>;
 
-  status?: 'UPLOADING' | 'FAILED';
-  percent?: number;
-}
-export interface AttachmentToUpload {
-  fileContent: Blob;
-  id: string;
-  relativePath: string;
-  name: string;
-}
+export type AttachmentToUpload = DialFile;
 
 interface ImportExportState {
   attachmentsIdsToUpload: string[];

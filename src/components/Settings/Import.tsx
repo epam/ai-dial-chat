@@ -1,6 +1,9 @@
 import { FC, MouseEvent, useRef } from 'react';
+import toast from 'react-hot-toast';
 
 import { CustomTriggerMenuRendererProps } from '@/src/types/menu';
+
+import { errorsMessages } from '@/src/constants/errors';
 
 export const Import: FC<CustomTriggerMenuRendererProps> = ({
   Renderer,
@@ -27,23 +30,31 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
         className="sr-only"
         tabIndex={-1}
         type="file"
-        accept="application/json, application/x-zip-compressed"
+        accept="application/json, application/x-zip-compressed, application/zip"
         onClick={onClickHandler}
         onChange={(e) => {
           if (!e.target.files?.length) return;
           const file = e.target.files[0];
 
-          if (file.type === 'application/x-zip-compressed') {
+          if (
+            file.type === 'application/zip' ||
+            file.type === 'application/x-zip-compressed'
+          ) {
             typedImportHandler?.({ content: file, zip: true });
             return;
           }
 
-          const reader = new FileReader();
-          reader.onload = (readerEvent) => {
-            const json = JSON.parse(readerEvent.target?.result as string);
-            typedImportHandler?.({ content: json });
-          };
-          reader.readAsText(file);
+          if (file.type === 'application/json') {
+            const reader = new FileReader();
+            reader.onload = (readerEvent) => {
+              const json = JSON.parse(readerEvent.target?.result as string);
+              typedImportHandler?.({ content: json });
+            };
+            reader.readAsText(file);
+            return;
+          }
+
+          toast.error(errorsMessages.unsupportedDataFormat);
         }}
       />
       <Renderer

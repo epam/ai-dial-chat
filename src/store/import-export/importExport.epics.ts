@@ -21,6 +21,7 @@ import { DataService } from '@/src/utils/app/data/data-service';
 import { getConversationAttachmentWithPath } from '@/src/utils/app/folders';
 import {
   ImportConversationsResponse,
+  cleanData,
   exportConversation,
   exportConversations,
   importConversations,
@@ -49,6 +50,8 @@ import {
   ImportExportActions,
   ImportExportSelectors,
 } from './importExport.reducers';
+
+const firstConversationIndex = 0;
 
 const exportConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -152,23 +155,46 @@ const importZipEpic: AppEpic = (action$, state$) =>
       return from(importZippedHistory(payload.zipFile)).pipe(
         switchMap((preUnzipedHistory) => {
           const { zip } = preUnzipedHistory;
-          const getHistory = async () => {
-            const file = await zip
-              .file(preUnzipedHistory.history.name)
-              ?.async('string');
-            if (!file) {
-              return;
-            }
-            const completeHistory = await JSON.parse(file);
+          if (!preUnzipedHistory.history || !preUnzipedHistory.history.name) {
+            toast.error(errorsMessages.unsupportedDataFormat);
+            return of(ImportExportActions.importFail());
+          }
+          const file = zip.file(preUnzipedHistory.history.name);
 
-            return completeHistory as LatestExportFormat;
-          };
-          return from(getHistory()).pipe(
-            switchMap((completeHistory) => {
-              if (!completeHistory) {
-                return EMPTY;
+          if (!file) {
+            toast.error(errorsMessages.unsupportedDataFormat);
+            return of(ImportExportActions.importFail());
+          }
+
+          return from(file.async('string')).pipe(
+            switchMap((completeHistoryJson) => {
+              const completeHistoryParsed = JSON.parse(completeHistoryJson);
+              if (!completeHistoryParsed) {
+                toast.error(errorsMessages.unsupportedDataFormat);
+                return of(ImportExportActions.importFail());
               }
-              const conversationId = completeHistory.history[0].id;
+
+              const {
+                history: cleanConversations,
+                folders: cleanFolders,
+                prompts,
+                version,
+                isError,
+              } = cleanData(completeHistoryParsed);
+
+              const cleanHistory: LatestExportFormat = {
+                version,
+                history: cleanConversations,
+                folders: cleanFolders,
+                prompts,
+              };
+
+              if (isError) {
+                toast.error(errorsMessages.unsupportedDataFormat);
+                return of(ImportExportActions.importFail());
+              }
+              const conversationId =
+                cleanConversations[firstConversationIndex].id;
               const conversationFromState =
                 ConversationsSelectors.selectConversation(
                   state$.value,
@@ -179,30 +205,35 @@ const importZipEpic: AppEpic = (action$, state$) =>
               }
               const foldersLocal = selectFolders(state$.value);
               const folders = Array.from(
-                new Set([...foldersLocal, ...completeHistory.folders]),
+                new Set([...foldersLocal, ...cleanFolders]),
               );
 
               const attachments = getUniqueAttachments(
                 getConversationAttachmentWithPath(
-                  completeHistory.history[0],
+                  cleanConversations[firstConversationIndex],
                   folders,
                 ),
               );
+
               if (!attachments.length) {
                 return of(
                   ImportExportActions.importConversations({
-                    data: completeHistory,
+                    data: cleanHistory,
                   }),
                 );
               }
+
               return from(
                 getUnZipAttachments({ attachments, preUnzipedHistory }),
               ).pipe(
                 switchMap((attachmentsToUpload) => {
+                  if (!attachmentsToUpload.length) {
+                    of(ImportExportActions.importFail());
+                  }
                   return of(
                     ImportExportActions.uploadConversationAttachments({
                       attachmentsToUpload,
-                      completeHistory,
+                      completeHistory: cleanHistory,
                     }),
                   );
                 }),
@@ -226,10 +257,17 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
       if (!bucket.length) {
         return of(ImportExportActions.importFail());
       }
-      const conversation = completeHistory.history[0];
+      const conversation = completeHistory.history[firstConversationIndex];
 
       const actions = attachmentsToUpload.map((attachment) => {
         const formData = new FormData();
+        if (!attachment.fileContent) {
+          return of(
+            ImportExportActions.uploadSingleFileFail({
+              id: attachment.id,
+            }),
+          );
+        }
         formData.append('attachment', attachment.fileContent, attachment.name);
         const relativePath = `imports/${conversation.id}/${attachment.relativePath}`;
         return DataService.sendFile(
@@ -244,8 +282,15 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
           ),
           map(({ percent, result }) => {
             if (result) {
-              const { id, name, absolutePath, relativePath, status, percent } =
-                result;
+              const {
+                id,
+                name,
+                absolutePath,
+                relativePath,
+                status,
+                percent,
+                contentType,
+              } = result;
               return ImportExportActions.uploadSingleAttachmentSuccess({
                 apiResult: {
                   id,
@@ -254,6 +299,7 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
                   relativePath,
                   status,
                   percent,
+                  contentType,
                 },
               });
             }
@@ -285,67 +331,103 @@ const uploadAllAttachmentsSuccessEpic: AppEpic = (action$, state$) =>
       attachmentsToUpload: ImportExportSelectors.selectAttachmentsIdsToUpload(
         state$.value,
       ),
-      loadedAttachments: ImportExportSelectors.selectUploadedAttachments(
+      uploadedAttachments: ImportExportSelectors.selectUploadedAttachments(
         state$.value,
       ),
-
       loadedHistory: ImportExportSelectors.selectImportedHistory(state$.value),
+      attachmentsErrors: ImportExportSelectors.selectAttachmentsErrors(
+        state$.value,
+      ),
     })),
     switchMap((payload) => {
-      const { attachmentsToUpload, loadedAttachments, loadedHistory } = payload;
+      const {
+        attachmentsToUpload,
+        uploadedAttachments,
+        loadedHistory,
+        attachmentsErrors,
+      } = payload;
 
-      if (!loadedAttachments.length) {
+      if (!uploadedAttachments.length) {
         return EMPTY;
+      }
+
+      const allUploadedAmount =
+        uploadedAttachments.length + attachmentsErrors.length;
+
+      if (
+        attachmentsToUpload.length &&
+        attachmentsToUpload.length !== uploadedAttachments.length &&
+        attachmentsToUpload.length === allUploadedAmount
+      ) {
+        return of(ImportExportActions.importFail());
       }
 
       if (
         attachmentsToUpload.length &&
-        attachmentsToUpload.length === loadedAttachments.length
+        attachmentsToUpload.length === uploadedAttachments.length
       ) {
-        const updatedMessages: Message[] =
-          loadedHistory.history[0].messages.map((message) => {
-            if (!message.custom_content?.attachments) {
-              return message;
-            }
+        const updatedMessages: Message[] = loadedHistory.history[
+          firstConversationIndex
+        ].messages.map((message) => {
+          if (!message.custom_content?.attachments) {
+            return message;
+          }
 
-            const newAttachments = message.custom_content.attachments.map(
-              (attachment) => {
-                if (!attachment.url) {
-                  return attachment;
-                }
+          const newAttachments = message.custom_content.attachments.map(
+            (oldAttachment) => {
+              if (!oldAttachment.url) {
+                return oldAttachment;
+              }
 
-                const regExp = /files\/\w*\//;
-                const attachmentId = decodeURI(attachment.url).split(regExp)[1];
+              const regExpForOldAttachmentId = /^files\/\w*\//;
+              const indexAfterSplit = 1;
+              const oldAttachmentId = decodeURI(oldAttachment.url).split(
+                regExpForOldAttachmentId,
+              )[indexAfterSplit];
 
-                const newAttachment = loadedAttachments.find(
-                  (attachment) => attachment.id === attachmentId,
-                );
+              const newAttachmentFile = uploadedAttachments.find(
+                (newAttachment) => {
+                  if (!newAttachment.id) {
+                    return;
+                  }
+                  const regExpForNewAttachmentId = /^imports\/[\w-]*\//;
+                  const newAttachmentId = newAttachment.id.split(
+                    regExpForNewAttachmentId,
+                  )[indexAfterSplit];
+                  return newAttachmentId === oldAttachmentId;
+                },
+              );
 
-                if (!newAttachment) {
-                  return attachment;
-                }
+              if (
+                !newAttachmentFile ||
+                !newAttachmentFile.contentType ||
+                !newAttachmentFile.name
+              ) {
+                return oldAttachment;
+              }
 
-                return {
-                  ...attachment,
-                  url: encodeURI(
-                    `${newAttachment.absolutePath}/${newAttachment.name}`,
-                  ),
-                };
-              },
-            );
+              return {
+                ...oldAttachment,
+                title: newAttachmentFile.name,
+                url: encodeURI(
+                  `${newAttachmentFile.absolutePath}/${newAttachmentFile.name}`,
+                ),
+              };
+            },
+          );
 
-            const newCustomContent: Message['custom_content'] = {
-              ...message.custom_content,
-              attachments: newAttachments,
-            };
-            return {
-              ...message,
-              custom_content: newCustomContent,
-            };
-          });
+          const newCustomContent: Message['custom_content'] = {
+            ...message.custom_content,
+            attachments: newAttachments,
+          };
+          return {
+            ...message,
+            custom_content: newCustomContent,
+          };
+        });
 
         const updatedConversation: Conversation = {
-          ...loadedHistory.history[0],
+          ...loadedHistory.history[firstConversationIndex],
           messages: updatedMessages,
         };
         return of(

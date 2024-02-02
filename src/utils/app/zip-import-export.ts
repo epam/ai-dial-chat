@@ -14,21 +14,26 @@ interface GetZippedFile {
   conversations: Conversation[];
   folders: FolderInterface[];
 }
+
+const getAttachmentFromApi = async (file: DialFile) => {
+  const fileResult = await fetch(
+    `api/files/file/${constructPath(file.absolutePath, file.name)}`,
+  );
+  return fileResult.blob();
+};
+
 export async function getZippedFile({
   files,
   conversations,
   folders,
 }: GetZippedFile) {
   const zip = new JSZip();
-  const filesPromises = files.map(async (file) => {
-    const fileResult = await fetch(
-      `api/files/file/${constructPath(file.absolutePath, file.name)}`,
-    );
+  files.forEach((file) => {
+    const fileBlob = getAttachmentFromApi(file);
 
-    zip.file(`res/${file.id}`, fileResult.blob());
+    zip.file(`res/${file.id}`, fileBlob);
   });
 
-  await Promise.all(filesPromises);
   const history = prepareConversationsForExport({ conversations, folders });
   const jsonHistory = JSON.stringify(history, null, 2);
   zip.file(`conversations/conversations_history.json`, jsonHistory);
@@ -38,7 +43,10 @@ export async function getZippedFile({
 }
 
 export const downloadExportZip = (content: string) => {
-  triggerDownload('data:application/zip;base64,' + content, 'ai_dial_chat.zip');
+  triggerDownload(
+    'data:application/zip;base64,' + content,
+    'ai_dial_chat_with_attachments.zip',
+  );
 };
 
 export interface PreUnZipedHistory {
@@ -50,12 +58,12 @@ export async function importZippedHistory(zipFile: File) {
   const zip = await JSZip.loadAsync(zipFile);
   const chatsLib = {} as PreUnZipedHistory;
   chatsLib.res = [];
+  const regExpConversationsFolder = 'conversations/*';
+  const regExpConversationsHistory = /\.json$/i;
+  const regExpResFolder = 'res/*';
+  const regExpRes = /^.+\..+$/;
 
   zip.forEach((relativePath, zipEntry) => {
-    const regExpConversationsFolder = 'conversations/*';
-    const regExpConversationsHistory = /\.json$/i;
-    const regExpResFolder = 'res/*';
-    const regExpRes = /^.+\..+$/;
     if (
       relativePath.match(regExpConversationsFolder) &&
       relativePath.match(regExpConversationsHistory)
@@ -72,6 +80,13 @@ export async function importZippedHistory(zipFile: File) {
   return chatsLib;
 }
 
+const searchSubstring = 'res/';
+const substringLength = searchSubstring.length;
+
+const getFirstSlashIndex = (relativePath: string) => {
+  return relativePath.indexOf('res/');
+};
+
 export const getUnZipAttachments = async ({
   attachments,
   preUnzipedHistory,
@@ -81,9 +96,10 @@ export const getUnZipAttachments = async ({
 }) => {
   const getAllAttachments = attachments.map(async (attachment) => {
     const fileToUpload = preUnzipedHistory.res.find(({ relativePath }) => {
-      const firstSlashIndex = relativePath.indexOf('/');
+      const fileId = relativePath.slice(
+        getFirstSlashIndex(relativePath) + substringLength,
+      );
 
-      const fileId = relativePath.slice(firstSlashIndex + 1);
       return fileId === attachment.id;
     });
 
@@ -93,24 +109,30 @@ export const getUnZipAttachments = async ({
 
     const { relativePath, zipEntry } = fileToUpload;
     const { zip } = preUnzipedHistory;
-    const fileContent = await zip.file(zipEntry.name)?.async('blob');
+    const file = zip.file(zipEntry.name);
+
+    if (!file) {
+      return;
+    }
+    const fileContent = await file.async('blob');
 
     if (!fileContent) {
       return;
     }
 
-    const firstSlashIndex = relativePath.indexOf('/');
+    const firstSlashIndex = getFirstSlashIndex(relativePath);
     const lastSlashIndex = zipEntry.name.lastIndexOf('/');
 
     const fileName = zipEntry.name.slice(lastSlashIndex + 1);
     const fileRelativePath = relativePath.slice(
-      firstSlashIndex + 1,
+      firstSlashIndex + substringLength,
       lastSlashIndex,
     );
+    const fileId = relativePath.slice(firstSlashIndex + substringLength);
 
     const attachmentToUpload = {
       fileContent,
-      id: relativePath,
+      id: fileId,
       relativePath: fileRelativePath,
       name: fileName,
     };
