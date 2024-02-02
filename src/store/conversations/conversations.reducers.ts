@@ -1,8 +1,12 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
-import { generateConversationId } from '@/src/utils/app/conversation';
-import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
+import { addGeneratedConversationId } from '@/src/utils/app/conversation';
+import {
+  addGeneratedFolderId,
+  generateNextName,
+  getNextDefaultName,
+} from '@/src/utils/app/folders';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
@@ -14,13 +18,17 @@ import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
 
 import { resetShareEntity } from '@/src/constants/chat';
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_FOLDER_NAME,
+} from '@/src/constants/default-settings';
 
+import * as ConversationsSelectors from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
 
 import { v4 as uuidv4 } from 'uuid';
 
-export * as ConversationsSelectors from './conversations.selectors';
+export { ConversationsSelectors };
 
 const initialState: ConversationsState = {
   conversationsToMigrateCount: 0,
@@ -272,7 +280,10 @@ export const conversationsSlice = createSlice({
       { payload }: PayloadAction<{ conversations: Conversation[] }>,
     ) => {
       state.conversations = combineEntities(
-        payload.conversations,
+        payload.conversations.map((conv) => ({
+          ...conv,
+          isMessageStreaming: false, // we shouldn't try to continue stream after upload
+        })),
         state.conversations,
       );
       state.isConversationLoading = false;
@@ -310,7 +321,7 @@ export const conversationsSlice = createSlice({
             FeatureType.Chat,
           )
         ) {
-          const newConversation: Conversation = generateConversationId({
+          const newConversation: Conversation = addGeneratedConversationId({
             ...(conversation as Conversation),
             ...resetShareEntity,
             folderId: undefined,
@@ -384,18 +395,17 @@ export const conversationsSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<
-        { name?: string; folderId?: string; parentId?: string } | undefined
-      >,
+      }: PayloadAction<{ name?: string; parentId?: string } | undefined>,
     ) => {
-      const newFolder: FolderInterface = {
-        id: payload?.folderId || uuidv4(),
-        folderId: payload?.parentId || undefined,
+      const newFolder: FolderInterface = addGeneratedFolderId({
+        folderId: payload?.parentId,
         name:
-          payload?.name ?? // custom name
-          getNextDefaultName(translate('New folder'), state.folders), // default name with counter
+          // custom name
+          payload?.name ??
+          // default name with counter
+          ConversationsSelectors.selectNewFolderName({ conversations: state }),
         type: FolderType.Chat,
-      };
+      });
 
       state.folders = state.folders.concat(newFolder);
     },
@@ -408,7 +418,7 @@ export const conversationsSlice = createSlice({
       }>,
     ) => {
       const folderName = getNextDefaultName(
-        translate('New folder'),
+        translate(DEFAULT_FOLDER_NAME),
         [
           ...state.temporaryFolders,
           ...state.folders.filter((folder) => folder.publishedWithMe),

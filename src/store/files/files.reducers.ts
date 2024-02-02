@@ -9,6 +9,8 @@ import {
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
 
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
+
 import { RootState } from '../index';
 
 type Status = undefined | 'LOADING' | 'LOADED' | 'FAILED';
@@ -214,7 +216,7 @@ export const filesSlice = createSlice({
     ) => {
       const folderName = getAvailableNameOnSameFolderLevel(
         state.folders,
-        'New folder',
+        DEFAULT_FOLDER_NAME,
         payload.relativePath,
       );
 

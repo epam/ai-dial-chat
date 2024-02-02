@@ -65,14 +65,14 @@ export abstract class ApiEntityStorage<
       `api/${this.getStorageKey()}/listing?${resultQuery}`,
     ).pipe(
       map((entities: BackendChatEntity[]) => {
-        return entities.map((entity, index): EntityInfo => {
+        return entities.map((entity): EntityInfo => {
           const relativePath = entity.parentPath || undefined;
           const info = this.parseEntityKey(entity.name);
 
           return {
             ...info,
             id: constructPath(getParentPath(entity.parentPath), entity.name),
-            lastActivityDate: entity.updatedAt + index, // TODO: for some reasons we have several entities with the same time and they changes places on UI
+            lastActivityDate: entity.updatedAt,
             folderId: relativePath,
           };
         });

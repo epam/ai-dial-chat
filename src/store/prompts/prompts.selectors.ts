@@ -3,6 +3,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import {
   getChildAndCurrentFoldersIdsById,
   getFilteredFolders,
+  getNextDefaultName,
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
 } from '@/src/utils/app/folders';
@@ -13,9 +14,12 @@ import {
   searchSectionFolders,
 } from '@/src/utils/app/search';
 import { isEntityExternal } from '@/src/utils/app/share';
+import { translate } from '@/src/utils/app/translation';
 
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
+
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import { RootState } from '../index';
 import { PromptsState } from './prompts.types';
@@ -281,5 +285,11 @@ export const selectPromptsToMigrateAndMigratedCount = createSelector(
       promptsToMigrateCount: state.promptsToMigrateCount,
       migratedPromptsCount: state.migratedPromptsCount,
     };
+
+// default name with counter
+export const selectNewFolderName = createSelector(
+  [selectFolders],
+  (folders) => {
+    return getNextDefaultName(translate(DEFAULT_FOLDER_NAME), folders);
   },
 );

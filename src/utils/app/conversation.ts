@@ -89,7 +89,7 @@ export const getNewConversationName = (
   return conversation.name;
 };
 
-export const generateConversationId = (
+export const addGeneratedConversationId = (
   conversation: Omit<Conversation, 'id'>,
 ) => ({
   ...conversation,

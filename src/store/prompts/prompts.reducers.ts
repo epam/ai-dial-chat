@@ -1,7 +1,11 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
-import { generatePromptId } from '@/src/utils/app/prompts';
+import {
+  addGeneratedFolderId,
+  generateNextName,
+  getNextDefaultName,
+} from '@/src/utils/app/folders';
+import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
 import { PromptsHistory } from '@/src/types/export';
@@ -11,12 +15,14 @@ import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
 
 import { resetShareEntity } from '@/src/constants/chat';
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
+import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
 
 import { v4 as uuidv4 } from 'uuid';
 
-export * as PromptsSelectors from './prompts.selectors';
+export { PromptsSelectors };
 
 const initialState: PromptsState = {
   promptsToMigrateCount: 0,
@@ -59,7 +65,7 @@ export const promptsSlice = createSlice({
       };
     },
     createNewPrompt: (state) => {
-      const newPrompt: Prompt = generatePromptId({
+      const newPrompt: Prompt = addGeneratedPromptId({
         name: getNextDefaultName(translate('Prompt'), state.prompts),
         description: '',
         content: '',
@@ -184,7 +190,7 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ prompt: Prompt }>,
     ) => {
-      const newPrompt: Prompt = generatePromptId({
+      const newPrompt: Prompt = addGeneratedPromptId({
         ...payload.prompt,
         ...resetShareEntity,
         folderId: undefined,
@@ -231,15 +237,17 @@ export const promptsSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ name?: string; folderId?: string } | undefined>,
+      }: PayloadAction<{ name?: string; parentId?: string } | undefined>,
     ) => {
-      const newFolder: FolderInterface = {
-        id: payload?.folderId || uuidv4(),
+      const newFolder: FolderInterface = addGeneratedFolderId({
+        folderId: payload?.parentId,
         name:
-          payload?.name ?? // custom name
-          getNextDefaultName(translate('New folder'), state.folders), // default name with counter
+          // custom name
+          payload?.name ??
+          // default name with counter
+          PromptsSelectors.selectNewFolderName({ prompts: state }),
         type: FolderType.Prompt,
-      };
+      });
 
       state.folders = state.folders.concat(newFolder);
     },
@@ -252,7 +260,7 @@ export const promptsSlice = createSlice({
       }>,
     ) => {
       const folderName = getNextDefaultName(
-        translate('New folder'),
+        translate(DEFAULT_FOLDER_NAME),
         [
           ...state.temporaryFolders,
           ...state.folders.filter((folder) => folder.publishedWithMe),

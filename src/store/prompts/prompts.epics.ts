@@ -32,7 +32,7 @@ import {
   exportPrompts,
   importPrompts,
 } from '@/src/utils/app/import-export';
-import { generatePromptId } from '@/src/utils/app/prompts';
+import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
 import { Prompt } from '@/src/types/prompt';
@@ -133,6 +133,7 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
       folders: PromptsSelectors.selectFolders(state$.value),
     })),
     tap(({ prompts, folders }) => {
+      //TODO: upload all prompts for export - will be implemented in https://github.com/epam/ai-dial-chat/issues/640
       exportPrompts(prompts, folders);
     }),
     ignoreElements(),
@@ -146,6 +147,7 @@ const exportPromptEpic: AppEpic = (action$, state$) =>
     ),
     filter(Boolean),
     tap((prompt) => {
+      //TODO: upload all prompts for export - will be implemented in https://github.com/epam/ai-dial-chat/issues/640
       exportPrompt(
         prompt,
         PromptsSelectors.selectParentFolders(state$.value, prompt.folderId),
@@ -160,7 +162,7 @@ const importPromptsEpic: AppEpic = (action$, state$) =>
     map(({ payload }) => {
       const prompts = PromptsSelectors.selectPrompts(state$.value);
       const folders = PromptsSelectors.selectFolders(state$.value);
-
+      //TODO: save in API - will be implemented in https://github.com/epam/ai-dial-chat/issues/640
       return importPrompts(payload.promptsHistory, {
         currentFolders: folders,
         currentPrompts: prompts,
@@ -343,7 +345,7 @@ const shareFolderEpic: AppEpic = (action$, state$) =>
             (prompt) => prompt.folderId && childFolders.has(prompt.folderId),
           )
           .map(({ folderId, ...prompt }) =>
-            generatePromptId({
+            addGeneratedPromptId({
               ...prompt,
               ...resetShareEntity,
               originalId: prompt.id,
@@ -380,7 +382,7 @@ const sharePromptEpic: AppEpic = (action$, state$) =>
       const sharedPrompts = prompts
         .filter((prompt) => prompt.id === sharedPromptId)
         .map(({ folderId: _, ...prompt }) =>
-          generatePromptId({
+          addGeneratedPromptId({
             ...prompt,
             ...resetShareEntity,
             originalId: prompt.id,
@@ -467,7 +469,7 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
             (prompt) => prompt.folderId && childFolders.has(prompt.folderId),
           )
           .map(({ folderId, ...prompt }) =>
-            generatePromptId({
+            addGeneratedPromptId({
               ...prompt,
               ...resetShareEntity,
               originalId: prompt.id,
@@ -506,7 +508,7 @@ const publishPromptEpic: AppEpic = (action$, state$) =>
       const sharedPrompts = prompts
         .filter((prompt) => prompt.id === publishRequest.id)
         .map(({ folderId: _, ...prompt }) =>
-          generatePromptId({
+          addGeneratedPromptId({
             ...prompt,
             ...resetShareEntity,
             originalId: prompt.id,

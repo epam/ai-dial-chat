@@ -150,8 +150,8 @@ export const generateNextName = (
   entities: ShareEntity[],
   index = 0,
 ) => {
-  const prefix = `${defaultName} `;
-  const regex = new RegExp(`^${prefix}(\\d{1, 3})$`);
+  const regex = new RegExp(`^${defaultName} (\\d{1,3})$`);
+
   return currentName.match(regex)
     ? getNextDefaultName(defaultName, entities, index)
     : getNextDefaultName(currentName, entities, index, true);
@@ -345,7 +345,7 @@ export const getConversationAttachmentWithPath = (
   ).map((file) => ({ ...file, relativePath: path, contentLength: 0 }));
 };
 
-export const generateFolderId = (folder: Omit<FolderInterface, 'id'>) => ({
+export const addGeneratedFolderId = (folder: Omit<FolderInterface, 'id'>) => ({
   ...folder,
   id: constructPath(getParentPath(folder.folderId), folder.name),
 });
