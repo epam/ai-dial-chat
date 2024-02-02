@@ -38,8 +38,6 @@ interface Props {
   onClose: (result: boolean | string[]) => void;
 }
 
-const loadingStatuses = new Set(['LOADING', undefined]);
-
 export const FileManagerModal = ({
   isOpen,
   allowedTypes = [],
@@ -58,7 +56,7 @@ export const FileManagerModal = ({
   const folders = useAppSelector(FilesSelectors.selectFolders);
   const files = useAppSelector(FilesSelectors.selectFiles);
   const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
-  const foldersStatus = useAppSelector(FilesSelectors.selectFoldersStatus);
+  const areFoldersLoading = useAppSelector(FilesSelectors.selectAreFoldersLoading);
   const loadingFolderId = useAppSelector(FilesSelectors.selectLoadingFolderId);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
@@ -98,7 +96,7 @@ export const FileManagerModal = ({
     return getExtensionsListForMimeTypes(allowedTypes);
   }, [allowedTypes, t]);
   const showSpinner =
-    folders.length === 0 && loadingStatuses.has(foldersStatus);
+    folders.length === 0 && areFoldersLoading;
 
   useEffect(() => {
     if (isOpen) {

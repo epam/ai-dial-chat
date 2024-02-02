@@ -1,5 +1,6 @@
 import { ShareInterface } from './share';
 
+
 export enum EntityType {
   Model = 'model',
   Application = 'application',
@@ -66,7 +67,7 @@ export interface BaseDialEntity {
   // Same as relative path, but needed for simplicity and backward compatibility
   folderId?: string;
   serverSynced?: boolean;
-  status?: 'UPLOADING' | 'FAILED';
+  status?: UploadStatus.LOADING | UploadStatus.FAILED;
 }
 
 export type DialChatEntity = Omit<
@@ -74,3 +75,10 @@ export type DialChatEntity = Omit<
   'path' | 'nodeType' | 'resourceType' | 'bucket' | 'parentPath' | 'url'
 > &
   BaseDialEntity;
+
+  export enum UploadStatus {
+    UNINITIALIZED = 'UNINITIALIZED',
+    LOADING = 'UPLOADING',
+    LOADED = 'LOADED',
+    FAILED = 'FAILED',
+  };

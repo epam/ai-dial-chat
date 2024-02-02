@@ -16,8 +16,6 @@ interface Props {
   onClose: (path: string | undefined) => void;
 }
 
-const loadingStatuses = new Set(['LOADING', undefined]);
-
 export const SelectFolderModal = ({
   isOpen,
   selectedFolderName,
@@ -37,7 +35,7 @@ export const SelectFolderModal = ({
     FilesSelectors.selectFoldersWithSearchTerm(state, searchQuery),
   );
   const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
-  const foldersStatus = useAppSelector(FilesSelectors.selectFoldersStatus);
+  const areFoldersLoading = useAppSelector(FilesSelectors.selectAreFoldersLoading);
   const loadingFolderId = useAppSelector(FilesSelectors.selectLoadingFolderId);
 
   const {
@@ -53,7 +51,7 @@ export const SelectFolderModal = ({
     setIsAllFilesOpened,
   );
   const showSpinner =
-    folders.length === 0 && loadingStatuses.has(foldersStatus);
+    folders.length === 0 && areFoldersLoading;
 
   useEffect(() => {
     if (isOpen) {

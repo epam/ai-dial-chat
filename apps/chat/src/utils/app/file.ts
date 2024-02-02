@@ -1,9 +1,11 @@
-import { Attachment, Conversation } from '@/src/types/chat';
-import { DialFile } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
-
 import { getPathToFolderById } from './folders';
 
+
+
+import { Attachment, Conversation } from '@/src/types/chat';
+import { UploadStatus } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
+import { FolderInterface } from '@/src/types/folder';
 import { extensions } from 'mime-types';
 
 export function triggerDownload(url: string, name: string): void {
@@ -45,7 +47,11 @@ export const getUserCustomContent = (
 
   return {
     attachments: files
-      .filter((file) => file.status !== 'FAILED' && file.status !== 'UPLOADING')
+      .filter(
+        (file) =>
+          file.status !== UploadStatus.FAILED &&
+          file.status !== UploadStatus.LOADING,
+      )
       .map((file) => ({
         type: file.contentType,
         title: file.name,

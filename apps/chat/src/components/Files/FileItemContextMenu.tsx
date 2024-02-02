@@ -11,6 +11,7 @@ import { stopBubbling } from '@/src/constants/chat';
 
 import ContextMenu from '../Common/ContextMenu';
 import DownloadRenderer from './Download';
+import { UploadStatus } from '@/src/types/common';
 
 interface ContextMenuProps {
   file: DialFile;
@@ -30,7 +31,7 @@ export function FileItemContextMenu({
     () => [
       {
         name: t('Download'),
-        display: file.status !== 'UPLOADING' && file.status !== 'FAILED',
+        display: file.status !== UploadStatus.LOADING && file.status !== UploadStatus.FAILED,
         dataQa: 'download',
         Icon: IconDownload,
         onClick: (e: MouseEvent) => stopBubbling(e),

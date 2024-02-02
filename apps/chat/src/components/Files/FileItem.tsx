@@ -16,6 +16,7 @@ import { Translation } from '@/src/types/translation';
 
 import Tooltip from '../Common/Tooltip';
 import { FileItemContextMenu } from './FileItemContextMenu';
+import { UploadStatus } from '@/src/types/common';
 
 export enum FileItemEventIds {
   Cancel = 'cancel',
@@ -32,7 +33,7 @@ interface Props {
   onEvent?: (eventId: FileItemEventIds, data: string) => void;
 }
 
-const cancelAllowedStatuses = new Set(['UPLOADING', 'FAILED']);
+const cancelAllowedStatuses = new Set([UploadStatus.LOADING, UploadStatus.FAILED]);
 
 export const FileItem = ({
   item,
@@ -82,15 +83,15 @@ export const FileItem = ({
     >
       <div className="flex items-center gap-2 overflow-hidden">
         <div className="text-secondary">
-          {!isSelected && item.status !== 'FAILED' ? (
+          {!isSelected && item.status !== UploadStatus.FAILED ? (
             <IconFile
               className={classNames(
-                item.status !== 'UPLOADING' && 'group-hover/file-item:hidden',
+                item.status !== UploadStatus.LOADING && 'group-hover/file-item:hidden',
               )}
               size={18}
             />
           ) : (
-            item.status === 'FAILED' && (
+            item.status === UploadStatus.FAILED && (
               <Tooltip
                 isTriggerClickable
                 tooltip={t('Uploading failed. Please, try again')}
@@ -102,7 +103,7 @@ export const FileItem = ({
               </Tooltip>
             )
           )}
-          {item.status !== 'UPLOADING' && item.status !== 'FAILED' && (
+          {item.status !== UploadStatus.LOADING && item.status !== UploadStatus.FAILED && (
             <div
               className={classNames(
                 'relative size-[18px] group-hover/file-item:flex',
@@ -125,8 +126,8 @@ export const FileItem = ({
         <span
           className={classNames(
             'block max-w-full truncate',
-            item.status === 'FAILED' && 'text-error',
-            (isSelected || item.status === 'UPLOADING') &&
+            item.status === UploadStatus.FAILED && 'text-error',
+            (isSelected || item.status === UploadStatus.LOADING) &&
               'text-accent-primary',
           )}
         >
@@ -135,7 +136,7 @@ export const FileItem = ({
       </div>
 
       <div className="flex items-center gap-2">
-        {item.status === 'UPLOADING' && (
+        {item.status === UploadStatus.LOADING && (
           <div className="h-[3px] w-[60px] overflow-hidden rounded-full bg-layer-3">
             <div
               className="h-full bg-controls-accent"
@@ -143,7 +144,7 @@ export const FileItem = ({
             ></div>
           </div>
         )}
-        {item.status === 'FAILED' && (
+        {item.status === UploadStatus.FAILED && (
           <button onClick={handleRetry}>
             <IconReload
               className="shrink-0 text-secondary hover:text-accent-primary"

@@ -8,6 +8,7 @@ import {
 import classNames from 'classnames';
 
 import { DialFile } from '@/src/types/files';
+import { UploadStatus } from '@/src/types/common';
 
 interface Props {
   file: Pick<DialFile, 'name' | 'id' | 'status' | 'percent'>;
@@ -26,7 +27,7 @@ export const ChatInputAttachment = ({
       key={file.id}
       className="flex gap-3 rounded border border-primary bg-layer-1 p-3"
     >
-      {file.status !== 'FAILED' ? (
+      {file.status !== UploadStatus.FAILED ? (
         <IconFile className="shrink-0 text-secondary" size={18} />
       ) : (
         <IconExclamationCircle className="shrink-0 text-error" size={18} />
@@ -37,12 +38,12 @@ export const ChatInputAttachment = ({
           <span
             className={classNames(
               'block max-w-full truncate',
-              file.status === 'FAILED' && 'text-error',
+              file.status === UploadStatus.FAILED && 'text-error',
             )}
           >
             {file.name}
           </span>
-          {file.status === 'UPLOADING' && (
+          {file.status === UploadStatus.LOADING && (
             <div className="h-[3px] w-full overflow-hidden rounded-full bg-layer-3">
               <div
                 className="h-full bg-controls-accent"
@@ -52,7 +53,7 @@ export const ChatInputAttachment = ({
           )}
         </div>
         <div className="flex gap-3">
-          {onRetryFile && file.status === 'FAILED' && (
+          {onRetryFile && file.status === UploadStatus.FAILED && (
             <button onClick={() => onRetryFile(file.id)}>
               <IconReload
                 className="shrink-0 text-secondary hover:text-accent-primary"

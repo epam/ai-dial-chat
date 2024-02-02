@@ -49,6 +49,7 @@ import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { ChatInputAttachments } from './ChatInput/ChatInputAttachments';
 import { MessageAttachments } from './MessageAttachments';
 import { MessageStages } from './MessageStages';
+import { UploadStatus } from '@/src/types/common';
 
 export interface Props {
   message: Message;
@@ -165,7 +166,7 @@ export const ChatMessage: FC<Props> = memo(
       const isContentEmptyAndNoAttachments =
         messageContent.trim().length <= 0 && newEditableAttachments.length <= 0;
       const isUploadingAttachmentPresent = newEditableAttachments.some(
-        (item) => item.status === 'UPLOADING',
+        (item) => item.status === UploadStatus.LOADING,
       );
 
       return isContentEmptyAndNoAttachments || isUploadingAttachmentPresent;

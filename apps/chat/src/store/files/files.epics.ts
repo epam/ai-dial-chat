@@ -1,3 +1,12 @@
+import { UIActions } from '../ui/ui.reducers';
+import { FilesActions, FilesSelectors } from './files.reducers';
+
+import { UploadStatus } from '@/src/types/common';
+import { AppEpic } from '@/src/types/store';
+import { DataService } from '@/src/utils/app/data/data-service';
+import { triggerDownload } from '@/src/utils/app/file';
+import { translate } from '@/src/utils/app/translation';
+import { combineEpics } from 'redux-observable';
 import {
   EMPTY,
   catchError,
@@ -11,17 +20,6 @@ import {
   takeUntil,
   tap,
 } from 'rxjs';
-
-import { combineEpics } from 'redux-observable';
-
-import { DataService } from '@/src/utils/app/data/data-service';
-import { triggerDownload } from '@/src/utils/app/file';
-import { translate } from '@/src/utils/app/translation';
-
-import { AppEpic } from '@/src/types/store';
-
-import { UIActions } from '../ui/ui.reducers';
-import { FilesActions, FilesSelectors } from './files.reducers';
 
 const uploadFileEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -211,7 +209,9 @@ const unselectFilesEpic: AppEpic = (action$, state$) =>
     switchMap(({ payload }) => {
       const files = FilesSelectors.selectFilesByIds(state$.value, payload.ids);
       const cancelFileActions = files
-        .filter((file) => !file.serverSynced && file.status === 'UPLOADING')
+        .filter(
+          (file) => !file.serverSynced && file.status === UploadStatus.LOADING,
+        )
         .map((file) => of(FilesActions.uploadFileCancel({ id: file.id })));
 
       return cancelFileActions.length ? concat(...cancelFileActions) : EMPTY;
