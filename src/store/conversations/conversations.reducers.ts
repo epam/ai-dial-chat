@@ -63,15 +63,11 @@ export const conversationsSlice = createSlice({
         conversationsToMigrateCount?: number;
       }>,
     ) => {
-      return {
-        ...state,
-        conversationsToMigrateCount:
-          payload.conversationsToMigrateCount ??
-          state.conversationsToMigrateCount,
-        migratedConversationsCount:
-          payload.migratedConversationsCount ??
-          state.migratedConversationsCount,
-      };
+      state.conversationsToMigrateCount =
+        payload.conversationsToMigrateCount ??
+        state.conversationsToMigrateCount;
+      state.migratedConversationsCount =
+        payload.migratedConversationsCount ?? state.migratedConversationsCount;
     },
     selectConversations: (
       state,

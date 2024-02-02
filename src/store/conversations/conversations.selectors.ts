@@ -523,11 +523,11 @@ export const isConversationLoading = createSelector([rootSelector], (state) => {
 
 export const selectConversationsToMigrateAndMigratedCount = createSelector(
   [rootSelector],
-  (state) => {
-    return {
-      conversationsToMigrateCount: state.conversationsToMigrateCount,
-      migratedConversationsCount: state.migratedConversationsCount,
-    };
+  (state) => ({
+    conversationsToMigrateCount: state.conversationsToMigrateCount,
+    migratedConversationsCount: state.migratedConversationsCount,
+  }),
+);
 
 // default name with counter
 export const selectNewFolderName = createSelector(

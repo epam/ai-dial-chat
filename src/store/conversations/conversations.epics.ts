@@ -40,7 +40,6 @@ import {
   filterOnlyMyEntities,
 } from '@/src/utils/app/common';
 import {
-  generateConversationId,
   addGeneratedConversationId,
   getNewConversationName,
   isSettingsChanged,
@@ -590,7 +589,7 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
               name: conv.name.replace(notAllowedSymbolsRegex, ''),
               folderId: path,
             };
-          }); // to send conversation with proper parentPath
+          }); // to send conversation with proper parentPath and lastActivityDate order
 
         let migratedConversationsCount = 0;
 

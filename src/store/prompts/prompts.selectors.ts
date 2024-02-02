@@ -280,11 +280,11 @@ export const isPromptLoading = createSelector([rootSelector], (state) => {
 
 export const selectPromptsToMigrateAndMigratedCount = createSelector(
   [rootSelector],
-  (state) => {
-    return {
-      promptsToMigrateCount: state.promptsToMigrateCount,
-      migratedPromptsCount: state.migratedPromptsCount,
-    };
+  (state) => ({
+    promptsToMigrateCount: state.promptsToMigrateCount,
+    migratedPromptsCount: state.migratedPromptsCount,
+  }),
+);
 
 // default name with counter
 export const selectNewFolderName = createSelector(
