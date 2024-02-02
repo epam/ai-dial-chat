@@ -16,8 +16,8 @@ RUN npm run build
 
 # ---- Only required dependencies ----
 FROM build AS run_ependencies
-WORKDIR /app/dist/app/chat
-RUN npm ci
+WORKDIR /app/dist/apps/chat
+RUN npm i
 
 # ---- Production ----
 FROM node:20-alpine AS production
