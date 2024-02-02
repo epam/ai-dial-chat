@@ -105,6 +105,7 @@ export const ChatbarSettings = () => {
       {
         name: t('Export conversations without attachments'),
         dataQa: 'export',
+        className: 'max-w-[158px]',
         Icon: IconFileArrowRight,
         onClick: () => {
           dispatch(ImportExportActions.exportConversations());
