@@ -22,7 +22,6 @@
     "affected:test": "nx affected -t test",
     "affected:test:coverage": "nx affected -t test",
     "affected:e2e": "nx affected -t e2e",
-    "affected:e2e:ci": "nx affected -t e2e --configuration=production",
     "affected:lint": "nx affected -t lint",
     "affected:lint:fix": "nx affected -t lint:fix",
     "affected:format": "nx affected -t format",

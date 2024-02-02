@@ -35,7 +35,10 @@ import { validate } from 'uuid';
 const wasm = readFileSync(
   path.resolve(
     __dirname,
-    '../../../../node_modules/@dqbd/tiktoken/lite/tiktoken_bg.wasm',
+    // node modules placed in different place with monorepo, but normal when deploy
+    process.env.NODE_ENV === 'development'
+      ? '../../../../../../node_modules/@dqbd/tiktoken/lite/tiktoken_bg.wasm'
+      : '../../../../node_modules/@dqbd/tiktoken/lite/tiktoken_bg.wasm',
   ),
 );
 
