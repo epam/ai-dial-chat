@@ -17,12 +17,12 @@ import { PublishRequest } from '@/src/types/share';
 import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
-import { selectNewFolderName } from './prompts.selectors';
+import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
 
 import { v4 as uuidv4 } from 'uuid';
 
-export * as PromptsSelectors from './prompts.selectors';
+export { PromptsSelectors };
 
 const initialState: PromptsState = {
   prompts: [],
@@ -225,7 +225,7 @@ export const promptsSlice = createSlice({
           // custom name
           payload?.name ??
           // default name with counter
-          selectNewFolderName(state),
+          PromptsSelectors.selectNewFolderName({ prompts: state }),
         type: FolderType.Prompt,
       });
 

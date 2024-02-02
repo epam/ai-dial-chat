@@ -23,12 +23,12 @@ import {
   DEFAULT_FOLDER_NAME,
 } from '@/src/constants/default-settings';
 
-import { selectNewFolderName } from './conversations.selectors';
+import * as ConversationsSelectors from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
 
 import { v4 as uuidv4 } from 'uuid';
 
-export * as ConversationsSelectors from './conversations.selectors';
+export { ConversationsSelectors };
 
 const initialState: ConversationsState = {
   conversations: [],
@@ -381,7 +381,7 @@ export const conversationsSlice = createSlice({
           // custom name
           payload?.name ??
           // default name with counter
-          selectNewFolderName(state),
+          ConversationsSelectors.selectNewFolderName({ conversations: state }),
         type: FolderType.Chat,
       });
 
