@@ -1,9 +1,4 @@
-import {
-  IconDoorExit,
-  IconEraser,
-  IconSettings,
-  IconX,
-} from '@tabler/icons-react';
+import { IconEraser, IconSettings, IconX } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
