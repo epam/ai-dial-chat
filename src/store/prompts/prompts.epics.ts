@@ -3,6 +3,7 @@ import {
   catchError,
   concat,
   filter,
+  finalize,
   forkJoin,
   ignoreElements,
   map,
@@ -257,6 +258,7 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
             ),
           );
         }),
+        finalize(() => window.location.reload()),
       );
     }),
     catchError(() => {

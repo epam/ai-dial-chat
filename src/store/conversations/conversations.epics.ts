@@ -10,6 +10,7 @@ import {
   debounceTime,
   delay,
   filter,
+  finalize,
   forkJoin,
   from,
   ignoreElements,
@@ -603,6 +604,7 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
             ),
           );
         }),
+        finalize(() => window.location.reload()),
       );
     }),
     catchError(() => {
