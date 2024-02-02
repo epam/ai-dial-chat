@@ -130,19 +130,24 @@ export const conversationsSlice = createSlice({
       state,
     updateConversationSuccess: (
       state,
-      { payload }: PayloadAction<Conversation>,
+      { payload }: PayloadAction<{ id: string; conversation: Conversation }>,
     ) => {
       state.conversations = state.conversations.map((conv) => {
         if (conv.id === payload.id) {
           return {
             ...conv,
-            ...payload,
+            ...payload.conversation,
             lastActivityDate: Date.now(),
           };
         }
 
         return conv;
       });
+      if (payload.id !== payload.conversation.id) {
+        state.selectedConversationsIds = state.selectedConversationsIds.map(
+          (cid) => (cid === payload.id ? payload.conversation.id : cid),
+        );
+      }
     },
     shareConversation: (
       state,
@@ -243,13 +248,17 @@ export const conversationsSlice = createSlice({
     ) => state,
     deleteConversations: (
       state,
-      { payload }: PayloadAction<{ conversationIds: string[] }>,
+      _action: PayloadAction<{ conversationIds: string[] }>,
+    ) => state,
+    deleteConversationsSuccess: (
+      state,
+      { payload }: PayloadAction<{ deleteIds: Set<string> }>,
     ) => {
       state.conversations = state.conversations.filter(
-        (conv) => !payload.conversationIds.includes(conv.id),
+        (conv) => !payload.deleteIds.has(conv.id),
       );
       state.selectedConversationsIds = state.selectedConversationsIds.filter(
-        (id) => !payload.conversationIds.includes(id),
+        (id) => !payload.deleteIds.has(id),
       );
     },
     uploadConversations: (
@@ -270,7 +279,7 @@ export const conversationsSlice = createSlice({
     },
     createNewReplayConversation: (
       state,
-      _action: PayloadAction<{ conversation: ConversationInfo }>,
+      _action: PayloadAction<ConversationInfo>,
     ) => state,
     createNewConversationSuccess: (
       state,
@@ -283,12 +292,10 @@ export const conversationsSlice = createSlice({
     },
     createNewPlaybackConversation: (
       state,
-      _action: PayloadAction<{ conversation: ConversationInfo }>,
+      _action: PayloadAction<ConversationInfo>,
     ) => state,
-    duplicateConversation: (
+    duplicateConversation: (state, _action: PayloadAction<ConversationInfo>) =>
       state,
-      _action: PayloadAction<{ conversation: ConversationInfo }>,
-    ) => state,
     duplicateSelectedConversations: (state) => {
       const selectedIds = new Set(state.selectedConversationsIds);
       const newSelectedIds: string[] = [];
@@ -368,7 +375,8 @@ export const conversationsSlice = createSlice({
         state.isConversationLoading = false;
       }
     },
-    clearConversations: (state) => {
+    clearConversations: (state) => state,
+    clearConversationsSuccess: (state) => {
       state.conversations = [];
       state.folders = [];
     },

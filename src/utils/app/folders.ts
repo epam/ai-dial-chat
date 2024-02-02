@@ -141,7 +141,7 @@ export const getNextDefaultName = (
     return defaultName;
   }
 
-  return `${prefix}${maxNumber + 1 + index}`;
+  return `${prefix}${maxNumber + (startWithEmptyPostfix ? 2 : 1) + index}`;
 };
 
 export const generateNextName = (
