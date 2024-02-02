@@ -44,7 +44,7 @@ To declare new theme you should create an object inside your themes property and
       "id": "light",            // Some kebab case id name
       "app-logo": "logo.svg",   // Url for website logo displayed
       "colors": {
-        // Semantic colors which commonly used across entire application. 
+        // Semantic colors which commonly used across entire application.
         // See default configuration to check available colors
       }
     },
@@ -54,7 +54,7 @@ To declare new theme you should create an object inside your themes property and
 
 You should specify hex value in colors (See [link](https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color)).
 
-*NOTE*: First theme in array will be used as default one for new users.
+_NOTE_: First theme in array will be used as default one for new users.
 
 ## 2. Default Configuration
 

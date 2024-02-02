@@ -1,0 +1,57 @@
+{
+  "name": "chat",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "chat",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/next:build",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/chat"
+      },
+      "configurations": {
+        "development": {
+          "outputPath": "chat"
+        },
+        "production": {}
+      }
+    },
+    "serve": {
+      "executor": "@nx/next:server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "chat:build",
+        "dev": true,
+        "port": 3000
+      },
+      "inputs": ["default"],
+      "configurations": {
+        "development": {
+          "buildTarget": "chat:build:development",
+          "dev": true
+        },
+        "production": {
+          "buildTarget": "chat:build:production",
+          "dev": false
+        }
+      }
+    },
+    "lint": {},
+    "lint:fix": {},
+    "test": {
+      "options": {
+        "reportsDirectory": "../../coverage/libs/shared"
+      }
+    },
+    "test:coverage": {
+      "options": {
+        "reportsDirectory": "../../coverage/libs/shared"
+      }
+    },
+    "format": {},
+    "format:fix": {}
+  },
+  "tags": []
+}

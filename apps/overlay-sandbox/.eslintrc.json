@@ -1,0 +1,21 @@
+{
+  "extends": [
+    "plugin:@nx/react-typescript",
+    "next",
+    "next/core-web-vitals",
+    "../../.eslintrc.json"
+  ],
+  "ignorePatterns": ["!**/*", ".next/**/*"],
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+      "extends": ["../../.eslintrc.json"],
+      "rules": {
+        "@next/next/no-html-link-for-pages": [
+          "error",
+          "apps/overlay-sandbox/pages"
+        ]
+      }
+    }
+  ]
+}

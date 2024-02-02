@@ -1,61 +1,56 @@
 {
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:@typescript-eslint/stylistic",
-    "prettier",
-    "plugin:tailwindcss/recommended",
-    "next/core-web-vitals"
-  ],
-  "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint", "tailwindcss"],
+  "extends": ["eslint:recommended", "prettier"],
+  "plugins": ["@nx"],
   "root": true,
-  "settings": {
-    "tailwindcss": {
-      "config": "./tailwind.config.js",
-      "callees": ["classnames", "classNames"]
-    }
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": ["tsconfig.*?.json"]
   },
-  "rules": {
-    "react/jsx-boolean-value": ["error", "never"],
-    "no-empty": "warn",
-    "@typescript-eslint/no-explicit-any": "warn",
-    "no-console": ["error", { "allow": ["warn", "error"] }],
-    "no-constant-condition": "off",
-    "@typescript-eslint/no-unused-vars": [
-      "error",
-      { "argsIgnorePattern": "^_" }
-    ],
-    "no-restricted-imports": ["error", { "paths": ["react-i18next"] }],
-    "tailwindcss/no-custom-classname": "error",
-    "tailwindcss/no-contradicting-classname": "error",
-    "no-restricted-globals": [
-      "error",
-      {
-        "name": "localStorage",
-        "message": "Use DataService instead."
-      },
-      {
-        "name": "sessionStorage",
-        "message": "Use DataService instead."
-      }
-    ],
-    "no-multiple-empty-lines": ["warn", { "max": 1, "maxBOF": 0 }]
+  "env": {
+    "node": true
   },
   "overrides": [
     {
-      "plugins": ["testing-library"],
-      "files": [
-        "**/__tests__/**/*.[jt]s?(x)",
-        "**/?(*.)+(spec|test).[jt]s?(x)"
-      ],
-      "extends": ["plugin:testing-library/react"],
+      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
       "rules": {
-        "testing-library/await-async-queries": "error",
-        "testing-library/no-await-sync-queries": "error",
-        "testing-library/no-debugging-utils": "warn",
-        "testing-library/no-dom-import": "off"
+        "@nx/enforce-module-boundaries": [
+          "error",
+          {
+            "enforceBuildableLibDependency": true,
+            "allow": [],
+            "depConstraints": [
+              {
+                "sourceTag": "*",
+                "onlyDependOnLibsWithTags": ["*"]
+              }
+            ]
+          }
+        ],
+        "no-empty": "warn",
+        "no-console": ["error", { "allow": ["warn", "error", "info"] }],
+        "no-constant-condition": "off",
+        "no-multiple-empty-lines": ["warn", { "max": 1, "maxBOF": 0 }]
       }
+    },
+    {
+      "files": ["*.ts", "*.tsx"],
+      "extends": [
+        "plugin:@nx/typescript",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/stylistic"
+      ],
+      "rules": {
+        "@typescript-eslint/no-unused-vars": [
+          "error",
+          { "argsIgnorePattern": "^_" }
+        ],
+        "@typescript-eslint/no-explicit-any": "warn"
+      }
+    },
+    {
+      "files": ["*.js", "*.jsx"],
+      "extends": ["plugin:@nx/javascript"],
+      "rules": {}
     }
   ]
 }
