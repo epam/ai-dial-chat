@@ -1,12 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-import { config } from 'dotenv';
 import * as path from 'path';
-
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-config({ path: './.env.local' });
 
 export const STORAGE_STATE = path.join(__dirname, '../auth/desktopUser.json');
 
