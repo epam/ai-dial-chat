@@ -119,14 +119,13 @@ export const conversationsSlice = createSlice({
           };
         }
 
-        if (payload.id !== payload.conversation.id) {
-          state.selectedConversationsIds = state.selectedConversationsIds.map(
-            (cid) => (cid === payload.id ? payload.conversation.id : cid),
-          );
-        }
-
         return conv;
       });
+      if (payload.id !== payload.conversation.id) {
+        state.selectedConversationsIds = state.selectedConversationsIds.map(
+          (cid) => (cid === payload.id ? payload.conversation.id : cid),
+        );
+      }
     },
     shareConversation: (
       state,
