@@ -122,7 +122,7 @@ function downloadChatPromptData(
   });
   const url = URL.createObjectURL(blob);
 
-  triggerDownload(url, `chatbot_ui_${exportType}_${currentDate()}.json`);
+  triggerDownload(url, `ai_dial_chat_${exportType}_${currentDate()}.json`);
 }
 
 const triggerDownloadConversation = (data: ExportConversationsFormatV4) => {

@@ -38,7 +38,7 @@ export async function getZippedFile({
 }
 
 export const downloadExportZip = (content: string) => {
-  triggerDownload('data:application/zip;base64,' + content, 'aidial_chats.zip');
+  triggerDownload('data:application/zip;base64,' + content, 'ai_dial_chat.zip');
 };
 
 export interface PreUnZipedHistory {
