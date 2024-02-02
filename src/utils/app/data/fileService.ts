@@ -21,7 +21,7 @@ export class FileService {
     fileName: string,
   ): Observable<{ percent?: number; result?: DialFile }> {
     const resultPath = encodeURI(
-      `${DataService.getBucket()}/${getParentPath(relativePath)}${fileName}`,
+      `${DataService.getBucket()}${getParentPath(relativePath)}/${fileName}`,
     );
 
     return ApiUtils.requestOld({
