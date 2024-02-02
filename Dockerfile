@@ -17,7 +17,9 @@ RUN npm run build
 # ---- Only required dependencies ----
 FROM build AS run_ependencies
 WORKDIR /app/dist/apps/chat
+COPY /app/tools /app/dist/apps/chat/tools
 RUN npm i
+RUN node tools/patch-nextjs.js
 
 # ---- Production ----
 FROM node:20-alpine AS production
