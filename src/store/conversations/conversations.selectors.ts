@@ -5,6 +5,7 @@ import {
   getChildAndCurrentFoldersIdsById,
   getConversationAttachmentWithPath,
   getFilteredFolders,
+  getNextDefaultName,
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
 } from '@/src/utils/app/folders';
@@ -18,11 +19,14 @@ import {
   isEntityExternal,
   isEntityOrParentsExternal,
 } from '@/src/utils/app/share';
+import { translate } from '@/src/utils/app/translation';
 
 import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
+
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import { RootState } from '../index';
 import { ModelsSelectors } from '../models/models.reducers';
@@ -516,3 +520,10 @@ export const areConversationsUploaded = createSelector(
 export const isConversationLoading = createSelector([rootSelector], (state) => {
   return state.isConversationLoading;
 });
+// default name with counter
+export const selectNewFolderName = createSelector(
+  [selectFolders],
+  (folders) => {
+    return getNextDefaultName(translate(DEFAULT_FOLDER_NAME), folders);
+  },
+);

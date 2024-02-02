@@ -35,7 +35,7 @@ import { combineEpics } from 'redux-observable';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
-  generateConversationId,
+  addGeneratedConversationId,
   getNewConversationName,
   isSettingsChanged,
 } from '@/src/utils/app/conversation';
@@ -119,7 +119,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
           const newConversations: Conversation[] = names.map(
             (name, index): Conversation => {
-              return generateConversationId({
+              return addGeneratedConversationId({
                 name:
                   name !== DEFAULT_CONVERSATION_NAME
                     ? name
@@ -186,7 +186,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
       const userMessages = conversation.messages.filter(
         ({ role }) => role === Role.User,
       );
-      const newConversation: Conversation = generateConversationId({
+      const newConversation: Conversation = addGeneratedConversationId({
         ...conversation,
         ...resetShareEntity,
         folderId: hasExternalParent(
@@ -242,7 +242,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
         true,
       );
 
-      const newConversation: Conversation = generateConversationId({
+      const newConversation: Conversation = addGeneratedConversationId({
         ...conversation,
         ...resetShareEntity,
         folderId: hasExternalParent(
@@ -288,7 +288,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
     switchMap(({ conversation }) => {
       if (!conversation) return EMPTY;
 
-      const newConversation: Conversation = generateConversationId({
+      const newConversation: Conversation = addGeneratedConversationId({
         ...conversation,
         ...resetShareEntity,
         folderId: undefined,
@@ -375,8 +375,8 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
         state$.value,
         conversation.folderId,
       );
-
-      exportConversation(conversation as Conversation, parentFolders); //TODO: upload conversations for export
+      //TODO: upload all conversations for export - will be implemented in https://github.com/epam/ai-dial-chat/issues/640
+      exportConversation(conversation as Conversation, parentFolders);
     }),
     ignoreElements(),
   );
@@ -389,7 +389,8 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
       folders: ConversationsSelectors.selectFolders(state$.value),
     })),
     tap(({ conversations, folders }) => {
-      exportConversations(conversations as Conversation[], folders); // TODO: upload all conversations for export
+      //TODO: upload all conversations for export - will be implemented in https://github.com/epam/ai-dial-chat/issues/640
+      exportConversations(conversations as Conversation[], folders);
     }),
     ignoreElements(),
   );
@@ -404,7 +405,7 @@ const importConversationsEpic: AppEpic = (action$, state$) =>
       const currentFolders = ConversationsSelectors.selectFolders(state$.value);
       const { history, folders, isError }: ImportConversationsResponse =
         importConversations(payload.data, {
-          //TODO: save in API
+          //TODO: save in API - will be implemented in https://github.com/epam/ai-dial-chat/issues/640
           currentConversations,
           currentFolders,
         });
@@ -745,7 +746,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         updatedMessages,
       ).replaceAll(notAllowedSymbolsRegex, '');
 
-      const updatedConversation: Conversation = generateConversationId({
+      const updatedConversation: Conversation = addGeneratedConversationId({
         ...payload.conversation,
         lastActivityDate: Date.now(),
         replay: {
@@ -1697,7 +1698,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         state$.value,
         id,
       );
-      const newConversation: Conversation = generateConversationId({
+      const newConversation: Conversation = addGeneratedConversationId({
         ...(conversation as Conversation),
         ...values,
       });

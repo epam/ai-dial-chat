@@ -10,6 +10,7 @@ export const DEFAULT_TEMPERATURE = parseFloat(
 );
 
 export const DEFAULT_CONVERSATION_NAME = 'New conversation';
+export const DEFAULT_FOLDER_NAME = 'New folder';
 
 export const DIAL_API_VERSION =
   process.env.DIAL_API_VERSION || '2023-03-15-preview';

@@ -37,8 +37,6 @@ import UnpublishModal from '../../Chat/UnpublishModal';
 import ShareIcon from '../../Common/ShareIcon';
 import { PromptModal } from './PromptModal';
 
-import { v4 as uuidv4 } from 'uuid';
-
 interface Props {
   item: Prompt;
   level?: number;
@@ -77,6 +75,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
   );
+  const newFolderName = useAppSelector(PromptsSelectors.selectNewFolderName);
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -193,24 +192,23 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const handleMoveToFolder = useCallback(
     ({ folderId, isNewFolder }: PromptMoveToFolderProps) => {
-      let localFolderId = folderId;
+      const folderPath = isNewFolder ? newFolderName : folderId;
       if (isNewFolder) {
-        localFolderId = uuidv4();
         dispatch(
           PromptsActions.createFolder({
-            folderId: localFolderId,
+            name: folderPath,
           }),
         );
       }
       dispatch(
         PromptsActions.updatePrompt({
           promptId: prompt.id,
-          values: { folderId: localFolderId },
+          values: { folderId: folderPath },
         }),
       );
       setIsContextMenu(false);
     },
-    [dispatch, prompt.id],
+    [dispatch, newFolderName, prompt.id],
   );
 
   const handleClose = useCallback(() => {

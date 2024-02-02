@@ -42,8 +42,6 @@ import PublishModal from '../../Chat/Publish/PublishWizard';
 import UnpublishModal from '../../Chat/UnpublishModal';
 import { ModelIcon } from './ModelIcon';
 
-import { v4 as uuidv4 } from 'uuid';
-
 interface ViewProps {
   conversation: ConversationInfo;
   isHighlited: boolean;
@@ -134,6 +132,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const isSelected = selectedConversationIds.includes(conversation.id);
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
+  );
+  const newFolderName = useAppSelector(
+    ConversationsSelectors.selectNewFolderName,
   );
 
   const { refs, context } = useFloating({
@@ -319,23 +320,22 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       folderId?: string;
       isNewFolder?: boolean;
     }) => {
-      let localFolderId = folderId;
+      const folderPath = isNewFolder ? newFolderName : folderId;
       if (isNewFolder) {
-        localFolderId = uuidv4();
         dispatch(
           ConversationsActions.createFolder({
-            folderId: localFolderId,
+            name: newFolderName,
           }),
         );
       }
       dispatch(
         ConversationsActions.updateConversation({
           id: conversation.id,
-          values: { folderId: localFolderId },
+          values: { folderId: folderPath },
         }),
       );
     },
-    [conversation.id, dispatch],
+    [conversation.id, dispatch, newFolderName],
   );
 
   const handleContextMenuOpen = (e: MouseEvent) => {

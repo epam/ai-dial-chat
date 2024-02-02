@@ -345,7 +345,7 @@ export const getConversationAttachmentWithPath = (
   ).map((file) => ({ ...file, relativePath: path, contentLength: 0 }));
 };
 
-export const generateFolderId = (folder: Omit<FolderInterface, 'id'>) => ({
+export const addGeneratedFolderId = (folder: Omit<FolderInterface, 'id'>) => ({
   ...folder,
   id: constructPath(getParentPath(folder.folderId), folder.name),
 });
