@@ -35,7 +35,7 @@ import { validate } from 'uuid';
 const wasm = readFileSync(
   path.resolve(
     __dirname,
-    '../../../../node_modules/@dqbd/tiktoken/lite/tiktoken_bg.wasm',
+    '../../../../../../node_modules/@dqbd/tiktoken/lite/tiktoken_bg.wasm',
   ),
 );
 
