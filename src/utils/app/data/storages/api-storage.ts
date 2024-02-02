@@ -1,13 +1,15 @@
 import { Observable, catchError, concatMap, from, of, throwError } from 'rxjs';
 
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api-entity-storage';
-import { getNextDefaultName } from '@/src/utils/app/folders';
+import { generateNextName } from '@/src/utils/app/folders';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { Entity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
+
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 
 import { ConversationApiStorage } from './conversation-api-storage';
 import { PromptApiStorage } from './prompt-api-storage';
@@ -26,7 +28,11 @@ export class ApiStorage implements DialStorage {
         if (err.message === 'Conflict') {
           const updatedEntity = {
             ...entity,
-            name: getNextDefaultName(entity.name, entities),
+            name: generateNextName(
+              DEFAULT_CONVERSATION_NAME,
+              entity.name,
+              entities,
+            ),
           };
 
           return this.tryCreateEntity(updatedEntity, entities, apiStorage);

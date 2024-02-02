@@ -36,8 +36,8 @@ import { combineEpics } from 'redux-observable';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
+  filterNotMigratedEntities,
   filterOnlyMyEntities,
-  getSameLevelEntitiesWithUniqueNames,
 } from '@/src/utils/app/common';
 import {
   generateConversationId,
@@ -49,7 +49,6 @@ import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   generateNextName,
-  getFoldersWithEntities,
   getNextDefaultName,
   getPathToFolderById,
 } from '@/src/utils/app/folders';
@@ -76,7 +75,7 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { StorageType } from '@/src/types/storage';
+import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -542,71 +541,90 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
         conversationsFolders: browserStorage
           .getConversationsFolders()
           .pipe(map(filterOnlyMyEntities)),
+        migratedConversationIds: DataService.getMigratedEntityIds(
+          MigrationStorageKeys.MigratedConversationIds,
+        ),
+        isConversationsMigrated: DataService.getIsEntitiesMigrated(
+          MigrationStorageKeys.IsConversationsMigrated,
+        ),
       }),
     ),
-    switchMap(({ conversations, conversationsFolders }) => {
-      if (
-        SettingsSelectors.selectStorageType(state$.value) !== StorageType.API
-      ) {
-        return EMPTY;
-      }
-      if (!conversations.length) {
-        return browserStorage
-          .setConversationsFolders([])
-          .pipe(switchMap(() => EMPTY));
-      }
+    switchMap(
+      ({
+        conversations,
+        conversationsFolders,
+        migratedConversationIds,
+        isConversationsMigrated,
+      }) => {
+        const notMigratedConversations = filterNotMigratedEntities(
+          conversations,
+          migratedConversationIds,
+        );
 
-      let migratedConversationsCount = 0;
+        if (
+          SettingsSelectors.selectStorageType(state$.value) !==
+            StorageType.API ||
+          isConversationsMigrated ||
+          !notMigratedConversations.length
+        ) {
+          return EMPTY;
+        }
 
-      const sortedConversations = conversations.sort((a, b) => {
-        if (!a.lastActivityDate) return 1;
-        if (!b.lastActivityDate) return -1;
+        const preparedConversations: Conversation[] = notMigratedConversations
+          .sort((a, b) => {
+            if (!a.lastActivityDate) return 1;
+            if (!b.lastActivityDate) return -1;
 
-        return a.lastActivityDate - b.lastActivityDate;
-      });
+            return a.lastActivityDate - b.lastActivityDate;
+          })
+          .map((conv) => {
+            const { path } = getPathToFolderById(
+              conversationsFolders,
+              conv.folderId,
+            );
 
-      const preparedConversations: Conversation[] =
-        getSameLevelEntitiesWithUniqueNames(sortedConversations).map((conv) => {
-          const { path } = getPathToFolderById(
-            conversationsFolders,
-            conv.folderId,
-          );
+            return {
+              ...conv,
+              name: conv.name.replace(notAllowedSymbolsRegex, ''),
+              folderId: path,
+            };
+          }); // to send conversation with proper parentPath
 
-          return {
-            ...conv,
-            folderId: path,
-          };
-        }); // to send conversation with proper parentPath
+        let migratedConversationsCount = 0;
 
-      return DataService.setConversations(preparedConversations).pipe(
-        switchMap(() => {
-          migratedConversationsCount++;
-          const newLocalStorageConversations = sortedConversations.slice(
-            migratedConversationsCount,
-          );
-          const newLocalStorageFolders = getFoldersWithEntities(
-            conversationsFolders,
-            newLocalStorageConversations,
-          );
+        return DataService.setConversations(preparedConversations).pipe(
+          switchMap(() => {
+            migratedConversationIds.push(
+              preparedConversations[migratedConversationsCount].id,
+            );
+            migratedConversationsCount++;
 
-          return concat(
-            browserStorage
-              .setConversations(newLocalStorageConversations)
-              .pipe(switchMap(() => EMPTY)),
-            browserStorage
-              .setConversationsFolders(newLocalStorageFolders)
-              .pipe(switchMap(() => EMPTY)),
-            of(
-              ConversationsActions.migrateConversationSuccess({
-                migratedConversationsCount,
-                conversationsToMigrateCount: conversations.length,
-              }),
-            ),
-          );
-        }),
-        finalize(() => window.location.reload()),
-      );
-    }),
+            return concat(
+              DataService.setMigratedEntitiesIds(
+                migratedConversationIds,
+                MigrationStorageKeys.MigratedConversationIds,
+              ).pipe(switchMap(() => EMPTY)),
+              of(
+                ConversationsActions.migrateConversationSuccess({
+                  migratedConversationsCount,
+                  conversationsToMigrateCount: conversations.length,
+                }),
+              ),
+            );
+          }),
+          finalize(() => {
+            if (migratedConversationIds.length === conversations.length) {
+              DataService.setIsEntitiesMigrated(
+                true,
+                MigrationStorageKeys.IsConversationsMigrated,
+              );
+            }
+
+            return window.location.reload();
+          }),
+        );
+      },
+    ),
     catchError(() => {
       return of(); // TODO: show toast?
     }),

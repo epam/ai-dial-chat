@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-globals */
 import { Observable, map } from 'rxjs';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
@@ -6,7 +5,12 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
-import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
+import {
+  DialStorage,
+  MigrationStorageKeys,
+  StorageType,
+  UIStorageKeys,
+} from '@/src/types/storage';
 import { Theme } from '@/src/types/themes';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
@@ -247,6 +251,40 @@ export class DataService extends FileService {
 
   public static getBucket(): string {
     return this.bucket;
+  }
+
+  public static getMigratedEntityIds(
+    key:
+      | MigrationStorageKeys.MigratedConversationIds
+      | MigrationStorageKeys.MigratedPromptIds,
+  ): Observable<string[]> {
+    return BrowserStorage.getData(key, []);
+  }
+
+  public static setMigratedEntitiesIds(
+    migratedEntityIds: string[],
+    key:
+      | MigrationStorageKeys.MigratedConversationIds
+      | MigrationStorageKeys.MigratedPromptIds,
+  ): Observable<void> {
+    return BrowserStorage.setData(key, migratedEntityIds);
+  }
+
+  public static getIsEntitiesMigrated(
+    key:
+      | MigrationStorageKeys.IsConversationsMigrated
+      | MigrationStorageKeys.IsPromptsMigrated,
+  ): Observable<boolean> {
+    return BrowserStorage.getData(key, false);
+  }
+
+  public static setIsEntitiesMigrated(
+    isEntitiesMigrated: boolean,
+    key:
+      | MigrationStorageKeys.IsConversationsMigrated
+      | MigrationStorageKeys.IsPromptsMigrated,
+  ): Observable<void> {
+    return BrowserStorage.setData(key, isEntitiesMigrated);
   }
 
   private static getDataStorage(): DialStorage {

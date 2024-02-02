@@ -151,7 +151,7 @@ export const generateNextName = (
   index = 0,
 ) => {
   const prefix = `${defaultName} `;
-  const regex = new RegExp(`^${prefix}(\\d+)$`);
+  const regex = new RegExp(`^${prefix}(\\d{1, 3})$`);
   return currentName.match(regex)
     ? getNextDefaultName(defaultName, entities, index)
     : getNextDefaultName(currentName, entities, index, true);

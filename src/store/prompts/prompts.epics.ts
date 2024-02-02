@@ -15,15 +15,15 @@ import {
 import { combineEpics } from 'redux-observable';
 
 import {
+  filterNotMigratedEntities,
   filterOnlyMyEntities,
-  getSameLevelEntitiesWithUniqueNames,
 } from '@/src/utils/app/common';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
+import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   findRootFromItems,
   getFolderIdByPath,
-  getFoldersWithEntities,
   getPathToFolderById,
   getTemporaryFoldersToPublish,
 } from '@/src/utils/app/folders';
@@ -36,7 +36,7 @@ import { generatePromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
 import { Prompt } from '@/src/types/prompt';
-import { StorageType } from '@/src/types/storage';
+import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -207,60 +207,73 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
         promptsFolders: browserStorage
           .getPromptsFolders()
           .pipe(map(filterOnlyMyEntities)),
+        migratedPromptIds: DataService.getMigratedEntityIds(
+          MigrationStorageKeys.MigratedPromptIds,
+        ),
+        isPromptsMigrated: DataService.getIsEntitiesMigrated(
+          MigrationStorageKeys.IsPromptsMigrated,
+        ),
       }),
     ),
-    switchMap(({ prompts, promptsFolders }) => {
-      if (
-        SettingsSelectors.selectStorageType(state$.value) !== StorageType.API
-      ) {
-        return EMPTY;
-      }
-      if (!prompts.length) {
-        return browserStorage
-          .setPromptsFolders([])
-          .pipe(switchMap(() => EMPTY));
-      }
+    switchMap(
+      ({ prompts, promptsFolders, migratedPromptIds, isPromptsMigrated }) => {
+        const notMigratedPrompts = filterNotMigratedEntities(
+          prompts,
+          migratedPromptIds,
+        );
 
-      let migratedPromptsCount = 0;
+        if (
+          SettingsSelectors.selectStorageType(state$.value) !==
+            StorageType.API ||
+          isPromptsMigrated ||
+          !notMigratedPrompts.length
+        ) {
+          return EMPTY;
+        }
 
-      const preparedPrompts: Prompt[] = getSameLevelEntitiesWithUniqueNames(
-        prompts,
-      ).map((prompt) => {
-        const { path } = getPathToFolderById(promptsFolders, prompt.folderId);
+        const preparedPrompts: Prompt[] = notMigratedPrompts.map((prompt) => {
+          const { path } = getPathToFolderById(promptsFolders, prompt.folderId);
 
-        return {
-          ...prompt,
-          folderId: path,
-        };
-      }); // to send prompts with proper parentPath
+          return {
+            ...prompt,
+            name: prompt.name.replace(notAllowedSymbolsRegex, ''),
+            folderId: path,
+          };
+        }); // to send prompts with proper parentPath
 
-      return DataService.setPrompts(preparedPrompts).pipe(
-        switchMap(() => {
-          migratedPromptsCount++;
-          const newLocalStoragePrompts = prompts.slice(migratedPromptsCount);
-          const newLocalStorageFolders = getFoldersWithEntities(
-            promptsFolders,
-            newLocalStoragePrompts,
-          );
+        let migratedPromptsCount = 0;
 
-          return concat(
-            browserStorage
-              .setPrompts(newLocalStoragePrompts)
-              .pipe(switchMap(() => EMPTY)),
-            browserStorage
-              .setPromptsFolders(newLocalStorageFolders)
-              .pipe(switchMap(() => EMPTY)),
-            of(
-              PromptsActions.migratePromptSuccess({
-                migratedPromptsCount,
-                promptsToMigrateCount: prompts.length,
-              }),
-            ),
-          );
-        }),
-        finalize(() => window.location.reload()),
-      );
-    }),
+        return DataService.setPrompts(preparedPrompts).pipe(
+          switchMap(() => {
+            migratedPromptIds.push(preparedPrompts[migratedPromptsCount].id);
+            migratedPromptsCount++;
+
+            return concat(
+              DataService.setMigratedEntitiesIds(
+                migratedPromptIds,
+                MigrationStorageKeys.MigratedConversationIds,
+              ).pipe(switchMap(() => EMPTY)),
+              of(
+                PromptsActions.migratePromptSuccess({
+                  migratedPromptsCount,
+                  promptsToMigrateCount: prompts.length,
+                }),
+              ),
+            );
+          }),
+          finalize(() => {
+            if (migratedPromptIds.length === prompts.length) {
+              DataService.setIsEntitiesMigrated(
+                true,
+                MigrationStorageKeys.IsConversationsMigrated,
+              );
+            }
+
+            return window.location.reload();
+          }),
+        );
+      },
+    ),
     catchError(() => {
       return of(); // TODO: show toast?
     }),
