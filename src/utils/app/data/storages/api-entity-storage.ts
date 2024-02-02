@@ -50,6 +50,7 @@ export abstract class ApiEntityStorage<
       }),
     );
   }
+
   getEntities(path?: string): Observable<EntityInfo[]> {
     const filter = BackendDataNodeType.ITEM;
 
@@ -78,6 +79,7 @@ export abstract class ApiEntityStorage<
       }),
     );
   }
+
   getEntity(info: EntityInfo): Observable<Entity | null> {
     const key = this.getEntityKey(info);
     return ApiUtils.request(
@@ -93,6 +95,7 @@ export abstract class ApiEntityStorage<
       }),
     );
   }
+
   createEntity(entity: Entity): Observable<void> {
     const key = this.getEntityKey(entity);
     return ApiUtils.request(
@@ -100,7 +103,7 @@ export abstract class ApiEntityStorage<
         entity.folderId,
       )}/${key}`,
       {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -108,9 +111,11 @@ export abstract class ApiEntityStorage<
       },
     );
   }
+
   updateEntity(entity: Entity): Observable<void> {
     return this.createEntity(entity);
   }
+
   deleteEntity(info: EntityInfo): Observable<void> {
     const key = this.getEntityKey(info);
     return ApiUtils.request(
@@ -125,7 +130,10 @@ export abstract class ApiEntityStorage<
       },
     );
   }
+
   abstract getEntityKey(info: EntityInfo): string;
+
   abstract parseEntityKey(key: string): EntityInfo;
+
   abstract getStorageKey(): ApiKeys;
 }

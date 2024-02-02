@@ -1,4 +1,4 @@
-import { Observable, catchError, concatMap, from, of } from 'rxjs';
+import { Observable, catchError, concatMap, from, of, throwError } from 'rxjs';
 
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api-entity-storage';
 import { getNextDefaultName } from '@/src/utils/app/folders';
@@ -20,16 +20,19 @@ export class ApiStorage implements DialStorage {
     entity: T,
     entities: T[],
     apiStorage: ApiEntityStorage<PromptInfo | ConversationInfo, T>,
-    // retryCount?: number,
   ): Observable<void> {
     return apiStorage.createEntity(entity).pipe(
-      catchError(() => {
-        // TODO: check if name should be unique error and set retryCount but not in terms of unique names
-        const updatedEntity = {
-          ...entity,
-          name: getNextDefaultName(entity.name, entities),
-        };
-        return this.tryCreateEntity(updatedEntity, entities, apiStorage);
+      catchError((err) => {
+        if (err.message === 'Conflict') {
+          const updatedEntity = {
+            ...entity,
+            name: getNextDefaultName(entity.name, entities),
+          };
+
+          return this.tryCreateEntity(updatedEntity, entities, apiStorage);
+        }
+
+        return throwError(() => err);
       }),
     );
   }
