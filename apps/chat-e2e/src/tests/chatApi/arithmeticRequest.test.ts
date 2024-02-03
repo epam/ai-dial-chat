@@ -13,7 +13,7 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.GPT_4_0314, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_0613, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4, isSysPromptAllowed: true },
-  { modelId: ModelIds.GPT_4_TURBO_1106, isSysPromptAllowed: true },
+  { modelId: ModelIds.GPT_4_1106_PREVIEW, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_32K_0314, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_32K_0613, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_32K, isSysPromptAllowed: true },
