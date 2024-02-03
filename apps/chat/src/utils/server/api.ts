@@ -1,5 +1,7 @@
 import { OpenAIError } from './types';
 
+
+
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
@@ -59,6 +61,8 @@ enum PseudoModel {
   Playback = 'playback',
 }
 
+const EMPTY_MODEL_ID = 'empty';
+
 const getModelApiIdFromConversation = (conversation: Conversation) => {
   if (conversation.replay?.isReplay || conversation.isReplay)
     return PseudoModel.Replay;
@@ -71,6 +75,9 @@ const getModelApiIdFromConversation = (conversation: Conversation) => {
 export const getConversationApiKey = (
   conversation: Omit<ConversationInfo, 'id'>,
 ) => {
+  if (conversation.model.id === EMPTY_MODEL_ID) {
+    return conversation.name;
+  }
   return combineApiKey(
     getModelApiIdFromConversation(conversation as Conversation),
     conversation.name,
@@ -83,7 +90,7 @@ export const parseConversationApiKey = (apiKey: string): ConversationInfo => {
 
   const [modelId, name] =
     parts.length < 2
-      ? ['empty', apiKey] // receive without postfix with model i.e. {name}
+      ? [EMPTY_MODEL_ID, apiKey] // receive without postfix with model i.e. {name}
       : [parts[0], parts.slice(1).join(pathKeySeparator)]; // receive correct format {modelId}__{name}
 
   return {
