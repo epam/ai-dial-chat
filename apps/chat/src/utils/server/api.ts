@@ -1,13 +1,11 @@
-import { NextApiRequest } from 'next';
-
-import { Observable, from, switchMap, throwError } from 'rxjs';
-import { fromFetch } from 'rxjs/fetch';
+import { OpenAIError } from './types';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
-
-import { OpenAIError } from './types';
+import { NextApiRequest } from 'next';
+import { Observable, from, switchMap, throwError } from 'rxjs';
+import { fromFetch } from 'rxjs/fetch';
 
 export enum ApiKeys {
   Files = 'files',
@@ -69,7 +67,7 @@ const getModelApiIdFromConversation = (conversation: Conversation) => {
   return conversation.model.id;
 };
 
-// Format key: {id:guid}__{modelId}__{name:base64}
+// Format key: {modelId}__{name}
 export const getConversationApiKey = (
   conversation: Omit<ConversationInfo, 'id'>,
 ) => {
@@ -79,11 +77,14 @@ export const getConversationApiKey = (
   );
 };
 
-// Format key: {id:guid}__{modelId}__{name:base64}
+// Format key: {modelId}__{name}
 export const parseConversationApiKey = (apiKey: string): ConversationInfo => {
-  const [modelId, ...nameParts] = apiKey.split(pathKeySeparator);
+  const parts = apiKey.split(pathKeySeparator);
 
-  const name = nameParts.join(pathKeySeparator);
+  const [modelId, name] =
+    parts.length < 2
+      ? ['empty', apiKey] // receive without postfix with model i.e. {name}
+      : [parts[0], parts.slice(1).join(pathKeySeparator)]; // receive correct format {modelId}__{name}
 
   return {
     id: name,
@@ -94,12 +95,12 @@ export const parseConversationApiKey = (apiKey: string): ConversationInfo => {
   };
 };
 
-// Format key: {id:guid}__{name:base64}
+// Format key: {name:base64}
 export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>) => {
   return combineApiKey(prompt.name);
 };
 
-// Format key: {id:guid}__{name:base64}
+// Format key: {name}
 export const parsePromptApiKey = (name: string): PromptInfo => {
   return {
     id: name,
