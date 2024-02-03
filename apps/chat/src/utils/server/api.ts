@@ -1,7 +1,6 @@
 import { OpenAIError } from './types';
 
-
-
+import { EMPTY_MODEL_ID } from '@/src/constants/default-settings';
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
@@ -60,8 +59,6 @@ enum PseudoModel {
   Replay = 'replay',
   Playback = 'playback',
 }
-
-const EMPTY_MODEL_ID = 'empty';
 
 const getModelApiIdFromConversation = (conversation: Conversation) => {
   if (conversation.replay?.isReplay || conversation.isReplay)

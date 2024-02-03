@@ -1,11 +1,5 @@
-import { Observable, map } from 'rxjs';
-
-import {
-  ApiKeys,
-  ApiUtils,
-  getFolderTypeByApiKey,
-  getParentPath,
-} from '@/src/utils/server/api';
+import { DataService } from '../data-service';
+import { constructPath } from './../../file';
 
 import {
   BackendChatEntity,
@@ -14,9 +8,8 @@ import {
 } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { EntityStorage } from '@/src/types/storage';
-
-import { DataService } from '../data-service';
-import { constructPath } from './../../file';
+import { ApiKeys, ApiUtils, getFolderTypeByApiKey, getParentPath } from '@/src/utils/server/api';
+import { Observable, map } from 'rxjs';
 
 export abstract class ApiEntityStorage<
   EntityInfo extends { folderId?: string },
