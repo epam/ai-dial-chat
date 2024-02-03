@@ -1,3 +1,4 @@
+import { ResultFolder } from '@/src/testData';
 import { defineConfig, devices } from '@playwright/test';
 import * as path from 'path';
 
@@ -17,10 +18,13 @@ export default defineConfig({
     ['list'],
     [
       'allure-playwright',
-      { detail: true, outputFolder: 'apps/chat-e2e/allure-results' },
+      {
+        detail: true,
+        outputFolder: `apps/chat-e2e/${ResultFolder.allureReport}`,
+      },
     ],
   ],
-  outputDir: '../test-results',
+  outputDir: `../${ResultFolder.testResults}`,
   timeout: 60000,
   retries: 1,
   maxFailures: 10,
@@ -41,6 +45,7 @@ export default defineConfig({
   expect: {
     timeout: 20000,
   },
+  globalSetup: require.resolve('../src/hooks/global-setup'),
   globalTeardown: require.resolve('../src/hooks/global-teardown'),
 
   /* Configure projects for major browsers */
@@ -49,21 +54,21 @@ export default defineConfig({
       name: 'auth',
       testMatch: /desktopAuth\.ts/,
     },
-    // {
-    //   name: 'api listing',
-    //   testMatch: /listing\.test\.ts/,
-    //   dependencies: ['auth'],
-    //   fullyParallel: true,
-    // },
-    // {
-    //   name: 'chat api',
-    //   testMatch: /\/chatApi\/.*\.test\.ts/,
-    //   dependencies: ['api listing'],
-    //   fullyParallel: true,
-    //   use: {
-    //     storageState: STORAGE_STATE,
-    //   },
-    // },
+    {
+      name: 'api listing',
+      testMatch: /listing\.test\.ts/,
+      dependencies: ['auth'],
+      fullyParallel: true,
+    },
+    {
+      name: 'chat api',
+      testMatch: /\/chatApi\/.*\.test\.ts/,
+      dependencies: ['api listing'],
+      fullyParallel: true,
+      use: {
+        storageState: STORAGE_STATE,
+      },
+    },
     {
       name: 'chromium',
       use: {

@@ -172,3 +172,9 @@ export enum Theme {
   light = 'light',
   dark = 'dark',
 }
+
+export enum ResultFolder {
+  allureReport = 'allure-results',
+  htmlReport = 'html-report',
+  testResults = 'test-results',
+}
