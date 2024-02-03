@@ -28,7 +28,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # local env files
-apps/chat/.env.local
+.env*.local
 
 # vercel
 .vercel
