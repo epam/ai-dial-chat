@@ -101,7 +101,7 @@ export const API = {
   defaultIconHost: '/api/themes/image?name=default-model',
   bucketHost: '/api/files/bucket',
   fileHost: '/api/files/file',
-  uploadedFileHost: () => `${API.fileHost} + '/files'`,
+  uploadedFileHost: () => `${API.fileHost}/files`,
 };
 
 export const Import = {
