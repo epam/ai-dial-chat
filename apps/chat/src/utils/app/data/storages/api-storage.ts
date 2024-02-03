@@ -1,13 +1,12 @@
-import { Observable, from, mergeMap, of } from 'rxjs';
+import { ConversationApiStorage } from './conversation-api-storage';
+import { PromptApiStorage } from './prompt-api-storage';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { Entity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
-
-import { ConversationApiStorage } from './conversation-api-storage';
-import { PromptApiStorage } from './prompt-api-storage';
+import { EMPTY, Observable, from, mergeMap } from 'rxjs';
 
 export class ApiStorage implements DialStorage {
   private _conversationApiStorage = new ConversationApiStorage();
@@ -18,7 +17,7 @@ export class ApiStorage implements DialStorage {
   }
 
   setConversationsFolders(_folders: FolderInterface[]): Observable<void> {
-    return of(); //TODO
+    return EMPTY; // don't need to save folders
   }
 
   getPromptsFolders(path?: string): Observable<FolderInterface[]> {
@@ -26,7 +25,7 @@ export class ApiStorage implements DialStorage {
   }
 
   setPromptsFolders(_folders: FolderInterface[]): Observable<void> {
-    return of(); //TODO
+    return EMPTY; // don't need to save folders
   }
 
   getConversations(path?: string): Observable<ConversationInfo[]> {

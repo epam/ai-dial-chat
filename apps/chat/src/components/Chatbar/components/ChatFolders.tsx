@@ -21,7 +21,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
   MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH,
@@ -78,6 +78,8 @@ const ChatFolderTemplate = ({
     isEntityOrParentsExternal(state, folder, FeatureType.Chat),
   );
 
+  const loadingFolderIds = useAppSelector(ConversationsSelectors.selectLoadingFolderIds)
+
   const handleDrop = useCallback(
     (e: DragEvent, folder: FolderInterface) => {
       if (e.dataTransfer) {
@@ -133,7 +135,7 @@ const ChatFolderTemplate = ({
 
   const handleFolderClick = useCallback(
     (folderId: string) => {
-      dispatch(UIActions.toggleFolder({ id: folderId }));
+      dispatch(ConversationsActions.toggleFolder({ folderId }));
     },
     [dispatch],
   );
@@ -173,6 +175,7 @@ const ChatFolderTemplate = ({
         onDropBetweenFolders={onDropBetweenFolders}
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Chat}
+        loadingFolderIds={loadingFolderIds}
       />
       {isLast && (
         <BetweenFoldersLine

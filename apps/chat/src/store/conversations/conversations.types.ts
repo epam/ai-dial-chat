@@ -1,4 +1,5 @@
 import { ConversationInfo } from '@/src/types/chat';
+import { UploadStatus } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 
@@ -15,4 +16,7 @@ export interface ConversationsState {
   newAddedFolderId?: string;
   conversationsLoaded: boolean;
   isConversationLoading: boolean;
+  conversationsStatus: UploadStatus;
+  foldersStatus: UploadStatus;
+  loadingFolderIds: string[];
 }

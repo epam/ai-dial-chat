@@ -1,10 +1,9 @@
-import { Observable, of } from 'rxjs';
-
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { Entity, EntityType } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
+import { Observable, of } from 'rxjs';
 
 export class ApiMockStorage implements DialStorage {
   getConversation(_info: ConversationInfo): Observable<Conversation | null> {

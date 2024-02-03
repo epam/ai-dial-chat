@@ -1,20 +1,17 @@
 /* eslint-disable no-restricted-globals */
-import { Observable, map } from 'rxjs';
+import { ApiUtils } from '../../server/api';
+import { FileService } from './fileService';
+import { ApiStorage } from './storages/api-storage';
+import { BrowserStorage } from './storages/browser-storage';
 
-import { isSmallScreen } from '@/src/utils/app/mobile';
-
+import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
 import { Theme } from '@/src/types/themes';
-
-import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
-
-import { ApiUtils } from '../../server/api';
-import { FileService } from './fileService';
-import { ApiStorage } from './storages/api-storage';
-import { BrowserStorage } from './storages/browser-storage';
+import { isSmallScreen } from '@/src/utils/app/mobile';
+import { Observable, map } from 'rxjs';
 
 export class DataService extends FileService {
   private static dataStorage: DialStorage;
@@ -29,8 +26,10 @@ export class DataService extends FileService {
     this.bucket = bucket;
   }
 
-  public static getConversationsFolders(): Observable<FolderInterface[]> {
-    return this.getDataStorage().getConversationsFolders();
+  public static getConversationsFolders(
+    path?: string,
+  ): Observable<FolderInterface[]> {
+    return this.getDataStorage().getConversationsFolders(path);
   }
 
   public static setConversationFolders(

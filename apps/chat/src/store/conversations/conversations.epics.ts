@@ -1,5 +1,55 @@
-import toast from 'react-hot-toast';
+import { AddonsActions } from '../addons/addons.reducers';
+import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
+import { UIActions, UISelectors } from '../ui/ui.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from './conversations.reducers';
+import { hasExternalParent } from './conversations.selectors';
 
+import { resetShareEntity } from '@/src/constants/chat';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+} from '@/src/constants/default-settings';
+import { errorsMessages } from '@/src/constants/errors';
+import { defaultReplay } from '@/src/constants/replay';
+import {
+  ChatBody,
+  Conversation,
+  Message,
+  MessageSettings,
+  Playback,
+  RateBody,
+  Role,
+} from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
+import { AppEpic } from '@/src/types/store';
+import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
+import {
+  addGeneratedConversationId,
+  getNewConversationName,
+  isSettingsChanged,
+} from '@/src/utils/app/conversation';
+import { DataService } from '@/src/utils/app/data/data-service';
+import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
+import {
+  ImportConversationsResponse,
+  exportConversation,
+  exportConversations,
+  importConversations,
+} from '@/src/utils/app/import-export';
+import {
+  mergeMessages,
+  parseStreamMessages,
+} from '@/src/utils/app/merge-streams';
+import { filterUnfinishedStages } from '@/src/utils/app/stages';
+import { translate } from '@/src/utils/app/translation';
+import { AnyAction } from '@reduxjs/toolkit';
+import toast from 'react-hot-toast';
+import { combineEpics } from 'redux-observable';
 import {
   EMPTY,
   Observable,
@@ -28,62 +78,6 @@ import {
   zip,
 } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
-
-import { AnyAction } from '@reduxjs/toolkit';
-
-import { combineEpics } from 'redux-observable';
-
-import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import {
-  addGeneratedConversationId,
-  getNewConversationName,
-  isSettingsChanged,
-} from '@/src/utils/app/conversation';
-import { DataService } from '@/src/utils/app/data/data-service';
-import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
-import {
-  ImportConversationsResponse,
-  exportConversation,
-  exportConversations,
-  importConversations,
-} from '@/src/utils/app/import-export';
-import {
-  mergeMessages,
-  parseStreamMessages,
-} from '@/src/utils/app/merge-streams';
-import { filterUnfinishedStages } from '@/src/utils/app/stages';
-import { translate } from '@/src/utils/app/translation';
-
-import {
-  ChatBody,
-  Conversation,
-  Message,
-  MessageSettings,
-  Playback,
-  RateBody,
-  Role,
-} from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
-import { AppEpic } from '@/src/types/store';
-
-import { resetShareEntity } from '@/src/constants/chat';
-import {
-  DEFAULT_CONVERSATION_NAME,
-  DEFAULT_SYSTEM_PROMPT,
-  DEFAULT_TEMPERATURE,
-} from '@/src/constants/default-settings';
-import { errorsMessages } from '@/src/constants/errors';
-import { defaultReplay } from '@/src/constants/replay';
-
-import { AddonsActions } from '../addons/addons.reducers';
-import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
-import { UIActions } from '../ui/ui.reducers';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from './conversations.reducers';
-import { hasExternalParent } from './conversations.selectors';
 
 const createNewConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -118,7 +112,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
           }
 
           const newConversations: Conversation[] = names.map(
-            (name, index): Conversation => {
+            (name: string, index): Conversation => {
               return addGeneratedConversationId({
                 name:
                   name !== DEFAULT_CONVERSATION_NAME
@@ -438,6 +432,7 @@ const clearConversationsEpic: AppEpic = (action$, state$) =>
           }),
         ),
         of(ConversationsActions.clearConversationsSuccess()),
+        of(ConversationsActions.deleteFolder({})),
         zip(
           conversations.map((conv) => DataService.deleteConversation(conv)), //TODO: delete folders
         ).pipe(switchMap(() => EMPTY)),
@@ -1388,7 +1383,7 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
       concat(
         of(UIActions.setIsCompareMode(selectedConversationsIds.length > 1)),
         of(
-          ConversationsActions.uploadConversations({
+          ConversationsActions.uploadConversationsByIds({
             conversationIds: selectedConversationsIds,
           }),
         ),
@@ -1637,13 +1632,44 @@ const initFoldersEpic: AppEpic = (action$) =>
     filter((action) => ConversationsActions.initFolders.match(action)),
     switchMap(() =>
       DataService.getConversationsFolders().pipe(
-        map((folders) => {
-          return ConversationsActions.setFolders({
-            folders,
-          });
+        switchMap((folders) => {
+          return concat(
+            of(
+              ConversationsActions.setFolders({
+                folders,
+              }),
+            ),
+            of(ConversationsActions.uploadOpenFolders({ paths: [undefined] })),
+          );
         }),
       ),
     ),
+  );
+
+const uploadOpenFoldersEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter((action) => ConversationsActions.uploadOpenFolders.match(action)),
+    switchMap(({ payload }) => {
+      const openFolderIds = new Set(
+        UISelectors.selectOpenedFoldersIds(state$.value),
+      );
+      const openFolders = ConversationsSelectors.selectFolders(
+        state$.value,
+      ).filter(
+        (folder) =>
+          openFolderIds.has(folder.id) &&
+          payload.paths.includes(folder.folderId),
+      );
+      if (!openFolders.length) {
+        return EMPTY;
+      }
+      return of(
+        ConversationsActions.uploadConversationsWithFolders({
+          paths: openFolders.map((folder) => folder.id),
+          withOpenChildren: true,
+        }),
+      );
+    }),
   );
 
 const initEpic: AppEpic = (action$) =>
@@ -1657,9 +1683,11 @@ const initEpic: AppEpic = (action$) =>
     ),
   );
 
-const uploadConversationsEpic: AppEpic = (action$, state$) =>
+const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter((action) => ConversationsActions.uploadConversations.match(action)),
+    filter((action) =>
+      ConversationsActions.uploadConversationsByIds.match(action),
+    ),
     switchMap(({ payload }) => {
       const setIds = new Set(payload.conversationIds);
       const conversationInfos = ConversationsSelectors.selectConversations(
@@ -1671,7 +1699,7 @@ const uploadConversationsEpic: AppEpic = (action$, state$) =>
       );
     }),
     map((conversations) =>
-      ConversationsActions.uploadConversationsSuccess({
+      ConversationsActions.uploadConversationsByIdsSuccess({
         conversations: conversations.filter(Boolean) as Conversation[],
       }),
     ),
@@ -1711,15 +1739,98 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
           }),
         ),
         iif(
-          () =>
-            !!conversation &&
-            (conversation.model.id !== newConversation.model.id ||
-              conversation.name !== newConversation.name),
+          () => !!conversation && conversation.id !== newConversation.id,
           concat(
             DataService.createConversation(newConversation),
             DataService.deleteConversation(conversation!),
           ).pipe(switchMap(() => EMPTY)),
           of(ConversationsActions.updateConversationDebounce(newConversation)),
+        ),
+      );
+    }),
+  );
+
+const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.uploadConversationsWithFolders.match),
+    switchMap(({ payload }) => {
+      return concat(
+        of(ConversationsActions.uploadFolders(payload)),
+        of(ConversationsActions.uploadConversations(payload)),
+      );
+    }),
+  );
+
+const uploadFoldersEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.uploadFolders.match),
+    switchMap(({ payload }) =>
+      zip(
+        payload.paths.map((path) => DataService.getConversationsFolders(path)),
+      ).pipe(
+        switchMap((folders) =>
+          concat(
+            of(
+              ConversationsActions.uploadFoldersSuccess({
+                paths: new Set(payload.paths),
+                folders: folders.flat(),
+              }),
+            ),
+            iif(
+              () => !!payload.withOpenChildren,
+              of(ConversationsActions.uploadOpenFolders(payload)),
+              EMPTY,
+            ),
+          ),
+        ),
+        catchError(() =>
+          of(
+            ConversationsActions.uploadFoldersFail({
+              paths: new Set(payload.paths),
+            }),
+          ),
+        ),
+      ),
+    ),
+  );
+
+const uploadConversationsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.uploadConversations.match),
+    switchMap(({ payload }) =>
+      zip(
+        payload.paths.map((path: string | undefined) =>
+          DataService.getConversations(path),
+        ),
+      ).pipe(
+        map((conversations) =>
+          ConversationsActions.uploadConversationsSuccess({
+            paths: new Set(payload.paths),
+            conversations: conversations.flat(),
+          }),
+        ),
+        catchError(() => of(ConversationsActions.uploadConversationsFail())),
+      ),
+    ),
+  );
+
+const toggleFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.toggleFolder.match),
+    switchMap(({ payload }) => {
+      const openedFoldersIds = UISelectors.selectOpenedFoldersIds(state$.value);
+      const isOpened = openedFoldersIds.includes(payload.folderId);
+      return concat(
+        of(UIActions.toggleFolder({ id: payload.folderId })),
+        iif(
+          () => !isOpened,
+          of(
+            ConversationsActions.uploadConversationsWithFolders({
+              paths: [payload.folderId],
+              withOpenChildren: true,
+            }),
+          ),
+          EMPTY,
         ),
       );
     }),
@@ -1763,7 +1874,12 @@ export const ConversationsEpics = combineEpics(
   createNewReplayConversationEpic,
   createNewPlaybackConversationEpic,
   duplicateConversationEpic,
-  uploadConversationsEpic,
+  uploadConversationsByIdsEpic,
   updateConversationEpic,
   updateConversationDebounceEpic,
+  uploadConversationsWithFoldersEpic,
+  uploadFoldersEpic,
+  uploadConversationsEpic,
+  uploadOpenFoldersEpic,
+  toggleFolderEpic,
 );

@@ -74,7 +74,7 @@ export interface FolderProps<T, P = unknown> {
   openedFoldersIds: string[];
   isInitialRenameEnabled?: boolean;
   newAddedFolderId?: string;
-  loadingFolderId?: string;
+  loadingFolderIds?: string[];
   displayCaretAlways?: boolean;
   additionalItemData?: Record<string, unknown>;
   handleDrop?: (e: DragEvent, folder: FolderInterface) => void;
@@ -107,7 +107,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   level = 0,
   isInitialRenameEnabled = false,
   newAddedFolderId,
-  loadingFolderId = '',
+  loadingFolderIds = [],
   displayCaretAlways = false,
   additionalItemData,
   handleDrop,
@@ -528,7 +528,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               hidden={!hasChildElements && !displayCaretAlways}
             />
 
-            {loadingFolderId === currentFolder.id ? (
+            {loadingFolderIds.includes(currentFolder.id) ? (
               <Spinner />
             ) : (
               <ShareIcon
@@ -573,7 +573,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               hidden={!hasChildElements && !displayCaretAlways}
             />
 
-            {loadingFolderId === currentFolder.id ? (
+            {loadingFolderIds.includes(currentFolder.id) ? (
               <Spinner className="mr-1" />
             ) : (
               <ShareIcon
@@ -697,7 +697,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       allFolders={allFolders}
                       highlightedFolders={highlightedFolders}
                       openedFoldersIds={openedFoldersIds}
-                      loadingFolderId={loadingFolderId}
+                      loadingFolderIds={loadingFolderIds}
                       displayCaretAlways={displayCaretAlways}
                       additionalItemData={additionalItemData}
                       isInitialRenameEnabled={isInitialRenameEnabled}

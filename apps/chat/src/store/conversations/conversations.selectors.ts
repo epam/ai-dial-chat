@@ -1,5 +1,12 @@
-import { createSelector } from '@reduxjs/toolkit';
+import { RootState } from '../index';
+import { ModelsSelectors } from '../models/models.reducers';
+import { ConversationsState } from './conversations.types';
 
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
+import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
+import { EntityType, FeatureType } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
+import { EntityFilters, SearchFilters } from '@/src/types/search';
 import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
@@ -20,17 +27,7 @@ import {
   isEntityOrParentsExternal,
 } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-
-import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
-import { EntityType, FeatureType } from '@/src/types/common';
-import { DialFile } from '@/src/types/files';
-import { EntityFilters, SearchFilters } from '@/src/types/search';
-
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
-
-import { RootState } from '../index';
-import { ModelsSelectors } from '../models/models.reducers';
-import { ConversationsState } from './conversations.types';
+import { createSelector } from '@reduxjs/toolkit';
 
 const rootSelector = (state: RootState): ConversationsState =>
   state.conversations;
@@ -525,5 +522,12 @@ export const selectNewFolderName = createSelector(
   [selectFolders],
   (folders) => {
     return getNextDefaultName(translate(DEFAULT_FOLDER_NAME), folders);
+  },
+);
+
+export const selectLoadingFolderIds = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.loadingFolderIds;
   },
 );

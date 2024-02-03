@@ -57,7 +57,7 @@ export const FileManagerModal = ({
   const files = useAppSelector(FilesSelectors.selectFiles);
   const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
   const areFoldersLoading = useAppSelector(FilesSelectors.selectAreFoldersLoading);
-  const loadingFolderId = useAppSelector(FilesSelectors.selectLoadingFolderId);
+  const loadingFolderIds = useAppSelector(FilesSelectors.selectLoadingFolderIds);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
@@ -319,7 +319,7 @@ export const FileManagerModal = ({
                               isInitialRenameEnabled
                               newAddedFolderId={newFolderId}
                               displayCaretAlways
-                              loadingFolderId={loadingFolderId}
+                              loadingFolderIds={loadingFolderIds}
                               openedFoldersIds={openedFoldersIds}
                               allItems={filteredFiles}
                               additionalItemData={{

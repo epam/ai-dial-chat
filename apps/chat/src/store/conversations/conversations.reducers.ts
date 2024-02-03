@@ -1,5 +1,17 @@
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import * as ConversationsSelectors from './conversations.selectors';
+import { ConversationsState } from './conversations.types';
 
+import { resetShareEntity } from '@/src/constants/chat';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_FOLDER_NAME,
+} from '@/src/constants/default-settings';
+import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
+import { FeatureType, UploadStatus } from '@/src/types/common';
+import { SupportedExportFormats } from '@/src/types/export';
+import { FolderInterface, FolderType } from '@/src/types/folder';
+import { SearchFilters } from '@/src/types/search';
+import { PublishRequest } from '@/src/types/share';
 import { combineEntities } from '@/src/utils/app/common';
 import { addGeneratedConversationId } from '@/src/utils/app/conversation';
 import {
@@ -9,23 +21,7 @@ import {
 } from '@/src/utils/app/folders';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-
-import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
-import { SupportedExportFormats } from '@/src/types/export';
-import { FolderInterface, FolderType } from '@/src/types/folder';
-import { SearchFilters } from '@/src/types/search';
-import { PublishRequest } from '@/src/types/share';
-
-import { resetShareEntity } from '@/src/constants/chat';
-import {
-  DEFAULT_CONVERSATION_NAME,
-  DEFAULT_FOLDER_NAME,
-} from '@/src/constants/default-settings';
-
-import * as ConversationsSelectors from './conversations.selectors';
-import { ConversationsState } from './conversations.types';
-
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
 
 export { ConversationsSelectors };
@@ -43,6 +39,9 @@ const initialState: ConversationsState = {
   newAddedFolderId: undefined,
   conversationsLoaded: false,
   isConversationLoading: true,
+  conversationsStatus: UploadStatus.UNINITIALIZED,
+  foldersStatus: UploadStatus.UNINITIALIZED,
+  loadingFolderIds: [],
 };
 
 export const conversationsSlice = createSlice({
@@ -247,13 +246,13 @@ export const conversationsSlice = createSlice({
         (id) => !payload.deleteIds.has(id),
       );
     },
-    uploadConversations: (
+    uploadConversationsByIds: (
       state,
       _action: PayloadAction<{ conversationIds: string[] }>,
     ) => {
       state.isConversationLoading = true;
     },
-    uploadConversationsSuccess: (
+    uploadConversationsByIdsSuccess: (
       state,
       { payload }: PayloadAction<{ conversations: Conversation[] }>,
     ) => {
@@ -416,9 +415,8 @@ export const conversationsSlice = createSlice({
       });
       state.newAddedFolderId = id;
     },
-    deleteFolder: (state, { payload }: PayloadAction<{ folderId: string }>) => {
-      state.folders = state.folders.filter(({ id }) => id !== payload.folderId);
-    },
+    deleteFolder: (state, _action: PayloadAction<{ folderId?: string }>) =>
+      state,
     deleteTemporaryFolder: (
       state,
       { payload }: PayloadAction<{ folderId: string }>,
@@ -639,6 +637,97 @@ export const conversationsSlice = createSlice({
     },
 
     initFolders: (state) => state,
+    uploadOpenFolders: (
+      state,
+      _action: PayloadAction<{
+        paths: (string | undefined)[];
+      }>,
+    ) => state,
+    uploadConversationsWithFolders: (
+      state,
+      _action: PayloadAction<{
+        paths: (string | undefined)[];
+        withOpenChildren?: boolean;
+      }>,
+    ) => state,
+
+    uploadFolders: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        paths: (string | undefined)[];
+        withOpenChildren?: boolean;
+      }>,
+    ) => {
+      state.foldersStatus = UploadStatus.LOADING;
+      state.loadingFolderIds = state.loadingFolderIds.concat(
+        payload.paths as string[],
+      );
+    },
+    uploadFoldersSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        paths: Set<string | undefined>;
+        folders: FolderInterface[];
+      }>,
+    ) => {
+      state.loadingFolderIds = state.loadingFolderIds.filter(
+        (id) => !payload.paths.has(id),
+      );
+      state.foldersStatus = UploadStatus.LOADED;
+      state.folders = payload.folders.concat(
+        state.folders.filter((folder) => !payload.paths.has(folder.folderId)),
+      );
+    },
+    uploadFoldersFail: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        paths: Set<string | undefined>;
+      }>,
+    ) => {
+      state.loadingFolderIds = state.loadingFolderIds.filter(
+        (id) => !payload.paths.has(id),
+      );
+      state.foldersStatus = UploadStatus.FAILED;
+    },
+
+    uploadConversations: (
+      state,
+      _action: PayloadAction<{
+        paths: (string | undefined)[];
+      }>,
+    ) => {
+      state.conversationsStatus = UploadStatus.LOADING;
+    },
+
+    uploadConversationsSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        paths: Set<string | undefined>;
+        conversations: ConversationInfo[];
+      }>,
+    ) => {
+      state.conversations = payload.conversations.concat(
+        state.conversations.filter((conv) => !payload.paths.has(conv.folderId)),
+      );
+      state.conversationsStatus = UploadStatus.LOADED;
+    },
+    uploadConversationsFail: (state) => {
+      state.conversationsStatus = UploadStatus.FAILED;
+    },
+    toggleFolder: (
+      state,
+      _action: PayloadAction<{
+        folderId: string;
+      }>,
+    ) => state,
   },
 });
 

@@ -36,7 +36,7 @@ export const SelectFolderModal = ({
   );
   const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
   const areFoldersLoading = useAppSelector(FilesSelectors.selectAreFoldersLoading);
-  const loadingFolderId = useAppSelector(FilesSelectors.selectLoadingFolderId);
+  const loadingFolderIds = useAppSelector(FilesSelectors.selectLoadingFolderIds);
 
   const {
     handleRenameFolder,
@@ -109,7 +109,7 @@ export const SelectFolderModal = ({
             onRenameFolder: handleRenameFolder,
             onAddFolder: handleAddFolder,
             newAddedFolderId: newFolderId,
-            loadingFolderId,
+            loadingFolderIds: loadingFolderIds,
           }}
           handleToggleFolder={handleToggleFolder}
           isAllEntitiesOpened={isAllFilesOpened}

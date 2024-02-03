@@ -1,11 +1,9 @@
-import { Observable } from 'rxjs';
-
-import { Conversation } from '@/src/types/chat';
-
 import { ConversationInfo } from './chat';
 import { FolderInterface } from './folder';
 import { Prompt, PromptInfo } from './prompt';
 
+import { Conversation } from '@/src/types/chat';
+import { Observable } from 'rxjs';
 export enum StorageType {
   BrowserStorage = 'browserStorage',
   API = 'api',
@@ -52,7 +50,7 @@ export interface EntityStorage<
 }
 
 export interface DialStorage {
-  getConversationsFolders(): Observable<FolderInterface[]>;
+  getConversationsFolders(path?: string): Observable<FolderInterface[]>;
 
   setConversationsFolders(folders: FolderInterface[]): Observable<void>;
 

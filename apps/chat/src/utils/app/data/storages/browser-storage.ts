@@ -1,18 +1,15 @@
 /* eslint-disable no-restricted-globals */
-import toast from 'react-hot-toast';
+import { cleanConversationHistory } from '../../clean';
+import { isLocalStorageEnabled } from '../storage';
 
-import { Observable, map, of, switchMap, throwError } from 'rxjs';
-
+import { errorsMessages } from '@/src/constants/errors';
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { Entity } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage, UIStorageKeys } from '@/src/types/storage';
-
-import { errorsMessages } from '@/src/constants/errors';
-
-import { cleanConversationHistory } from '../../clean';
-import { isLocalStorageEnabled } from '../storage';
+import toast from 'react-hot-toast';
+import { Observable, map, of, switchMap, throwError } from 'rxjs';
 
 export class BrowserStorage implements DialStorage {
   private static storage: globalThis.Storage | undefined;
@@ -127,18 +124,24 @@ export class BrowserStorage implements DialStorage {
     return BrowserStorage.setData(UIStorageKeys.Prompts, prompts);
   }
 
-  getConversationsFolders() {
+  getConversationsFolders(path?: string) {
     return BrowserStorage.getData(UIStorageKeys.Folders, []).pipe(
       map((folders: FolderInterface[]) => {
-        return folders.filter((folder) => folder.type === FolderType.Chat);
+        return folders.filter(
+          (folder) =>
+            folder.type === FolderType.Chat && folder.folderId === path,
+        );
       }),
     );
   }
 
-  getPromptsFolders() {
+  getPromptsFolders(path?: string) {
     return BrowserStorage.getData(UIStorageKeys.Folders, []).pipe(
       map((folders: FolderInterface[]) => {
-        return folders.filter((folder) => folder.type === FolderType.Prompt);
+        return folders.filter(
+          (folder) =>
+            folder.type === FolderType.Prompt && folder.folderId === path,
+        );
       }),
     );
   }

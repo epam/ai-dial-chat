@@ -1,5 +1,7 @@
 import { RootState } from '../index';
 
+
+
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 import { UploadStatus } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
@@ -330,8 +332,8 @@ const selectFolders = createSelector([rootSelector], (state) => {
 const selectAreFoldersLoading = createSelector([rootSelector], (state) => {
   return state.foldersStatus === UploadStatus.LOADING;
 });
-const selectLoadingFolderId = createSelector([rootSelector], (state) => {
-  return state.loadingFolder;
+const selectLoadingFolderIds = createSelector([rootSelector], (state) => {
+  return state.loadingFolder ? [state.loadingFolder] : [];
 });
 const selectNewAddedFolderId = createSelector([rootSelector], (state) => {
   return state.newAddedFolderId;
@@ -354,7 +356,7 @@ export const FilesSelectors = {
   selectIsUploadingFilePresent,
   selectFolders,
   selectAreFoldersLoading,
-  selectLoadingFolderId,
+  selectLoadingFolderIds,
   selectNewAddedFolderId,
   selectFilesByIds,
   selectFoldersWithSearchTerm,
