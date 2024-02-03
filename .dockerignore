@@ -1,5 +1,5 @@
 .env
-.env.local
+apps/chat/.env.local
 node_modules
 test-results
 e2e
