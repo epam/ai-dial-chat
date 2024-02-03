@@ -1,9 +1,4 @@
-import {
-  IconDoorExit,
-  IconEraser,
-  IconSettings,
-  IconX,
-} from '@tabler/icons-react';
+import { IconEraser, IconSettings, IconX } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -258,18 +253,13 @@ export const ChatHeader = ({
               </Tooltip>
             )}
             {isPlayback && (
-              <Tooltip
-                isTriggerClickable
-                tooltip={t('To edit the chat, leave Playback mode')}
+              <button
+                className="cursor-pointer text-accent-primary"
+                onClick={onCancelPlaybackMode}
+                data-qa="cancel-playback-mode"
               >
-                <button
-                  className="cursor-pointer text-secondary hover:text-accent-primary"
-                  onClick={onCancelPlaybackMode}
-                  data-qa="cancel-playback-mode"
-                >
-                  <IconDoorExit size={18} />
-                </button>
-              </Tooltip>
+                {t('Stop playback')}
+              </button>
             )}
           </div>
         </div>
