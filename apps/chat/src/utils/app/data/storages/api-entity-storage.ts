@@ -1,4 +1,4 @@
-import { DataService } from '../data-service';
+import { BucketService } from '../bucket-service';
 import { constructPath } from './../../file';
 
 import {
@@ -6,9 +6,14 @@ import {
   BackendChatFolder,
   BackendDataNodeType,
 } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { EntityStorage } from '@/src/types/storage';
-import { ApiKeys, ApiUtils, getFolderTypeByApiKey, getParentPath } from '@/src/utils/server/api';
+import {
+  ApiKeys,
+  ApiUtils,
+  getFolderTypeByApiKey,
+  getParentPath,
+} from '@/src/utils/server/api';
 import { Observable, map } from 'rxjs';
 
 export abstract class ApiEntityStorage<
@@ -16,12 +21,60 @@ export abstract class ApiEntityStorage<
   Entity extends EntityInfo,
 > implements EntityStorage<EntityInfo, Entity>
 {
+  private mapFolder(folder: BackendChatFolder): FolderInterface {
+    const relativePath = folder.parentPath || undefined;
+
+    return {
+      id: constructPath(getParentPath(folder.parentPath), folder.name),
+      name: folder.name,
+      folderId: relativePath,
+      type: getFolderTypeByApiKey(this.getStorageKey()),
+    };
+  }
+  private mapEntity(entity: BackendChatEntity) {
+    const relativePath = entity.parentPath || undefined;
+    const info = this.parseEntityKey(entity.name);
+
+    return {
+      ...info,
+      id: constructPath(getParentPath(entity.parentPath), entity.name),
+      lastActivityDate: entity.updatedAt,
+      folderId: relativePath,
+    };
+  }
+  getFoldersAndEntities(
+    path?: string | undefined,
+  ): Observable<FoldersAndEntities<EntityInfo>> {
+    const query = new URLSearchParams({
+      bucket: BucketService.getBucket(),
+      ...(path && { path }),
+    });
+    const resultQuery = query.toString();
+
+    return ApiUtils.request(
+      `api/${this.getStorageKey()}/listing?${resultQuery}`,
+    ).pipe(
+      map((items: (BackendChatFolder | BackendChatEntity)[]) => {
+        const folders = items.filter(
+          (item) => item.nodeType === BackendDataNodeType.FOLDER,
+        ) as BackendChatFolder[];
+        const entities = items.filter(
+          (item) => item.nodeType === BackendDataNodeType.ITEM,
+        ) as BackendChatEntity[];
+
+        return {
+          entities: entities.map((entity) => this.mapEntity(entity)),
+          folders: folders.map((folder) => this.mapFolder(folder)),
+        };
+      }),
+    );
+  }
   getFolders(path?: string | undefined): Observable<FolderInterface[]> {
     const filter = BackendDataNodeType.FOLDER;
 
     const query = new URLSearchParams({
       filter,
-      bucket: DataService.getBucket(),
+      bucket: BucketService.getBucket(),
       ...(path && { path }),
     });
     const resultQuery = query.toString();
@@ -30,16 +83,7 @@ export abstract class ApiEntityStorage<
       `api/${this.getStorageKey()}/listing?${resultQuery}`,
     ).pipe(
       map((folders: BackendChatFolder[]) => {
-        return folders.map((folder): FolderInterface => {
-          const relativePath = folder.parentPath || undefined;
-
-          return {
-            id: constructPath(getParentPath(folder.parentPath), folder.name),
-            name: folder.name,
-            folderId: relativePath,
-            type: getFolderTypeByApiKey(this.getStorageKey()),
-          };
-        });
+        return folders.map((folder) => this.mapFolder(folder));
       }),
     );
   }
@@ -48,7 +92,7 @@ export abstract class ApiEntityStorage<
 
     const query = new URLSearchParams({
       filter,
-      bucket: DataService.getBucket(),
+      bucket: BucketService.getBucket(),
       ...(path && { path }),
     });
     const resultQuery = query.toString();
@@ -57,24 +101,14 @@ export abstract class ApiEntityStorage<
       `api/${this.getStorageKey()}/listing?${resultQuery}`,
     ).pipe(
       map((entities: BackendChatEntity[]) => {
-        return entities.map((entity): EntityInfo => {
-          const relativePath = entity.parentPath || undefined;
-          const info = this.parseEntityKey(entity.name);
-
-          return {
-            ...info,
-            id: constructPath(getParentPath(entity.parentPath), entity.name),
-            lastActivityDate: entity.updatedAt,
-            folderId: relativePath,
-          };
-        });
+        return entities.map((entity) => this.mapEntity(entity));
       }),
     );
   }
   getEntity(info: EntityInfo): Observable<Entity | null> {
     const key = this.getEntityKey(info);
     return ApiUtils.request(
-      `api/${this.getStorageKey()}/${DataService.getBucket()}${getParentPath(
+      `api/${this.getStorageKey()}/${BucketService.getBucket()}${getParentPath(
         info.folderId,
       )}/${key}`,
     ).pipe(
@@ -89,7 +123,7 @@ export abstract class ApiEntityStorage<
   createEntity(entity: Entity): Observable<void> {
     const key = this.getEntityKey(entity);
     return ApiUtils.request(
-      `api/${this.getStorageKey()}/${DataService.getBucket()}${getParentPath(
+      `api/${this.getStorageKey()}/${BucketService.getBucket()}${getParentPath(
         entity.folderId,
       )}/${key}`,
       {
@@ -107,7 +141,7 @@ export abstract class ApiEntityStorage<
   deleteEntity(info: EntityInfo): Observable<void> {
     const key = this.getEntityKey(info);
     return ApiUtils.request(
-      `api/${this.getStorageKey()}/${DataService.getBucket()}${getParentPath(
+      `api/${this.getStorageKey()}/${BucketService.getBucket()}${getParentPath(
         info.folderId,
       )}/${key}`,
       {

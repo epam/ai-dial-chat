@@ -1,8 +1,11 @@
-import { concat, filter, ignoreElements, map, of, switchMap, tap } from 'rxjs';
+import { UIActions } from '../ui/ui.reducers';
+import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
-import { combineEpics } from 'redux-observable';
 
-import { DataService } from '@/src/utils/app/data/data-service';
+import { resetShareEntity } from '@/src/constants/chat';
+import { errorsMessages } from '@/src/constants/errors';
+import { AppEpic } from '@/src/types/store';
+import { PromptService } from '@/src/utils/app/data/prompt-service';
 import {
   findRootFromItems,
   getFolderIdByPath,
@@ -15,15 +18,8 @@ import {
 } from '@/src/utils/app/import-export';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
-
-import { AppEpic } from '@/src/types/store';
-
-import { resetShareEntity } from '@/src/constants/chat';
-import { errorsMessages } from '@/src/constants/errors';
-
-import { UIActions } from '../ui/ui.reducers';
-import { PromptsActions, PromptsSelectors } from './prompts.reducers';
-
+import { combineEpics } from 'redux-observable';
+import { concat, filter, ignoreElements, map, of, switchMap, tap } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 const savePromptsEpic: AppEpic = (action$, state$) =>
@@ -41,7 +37,7 @@ const savePromptsEpic: AppEpic = (action$, state$) =>
     ),
     map(() => PromptsSelectors.selectPrompts(state$.value)),
     switchMap((prompts) => {
-      return DataService.setPrompts(prompts);
+      return PromptService.setPrompts(prompts);
     }),
     ignoreElements(),
   );
@@ -64,7 +60,7 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       promptsFolders: PromptsSelectors.selectFolders(state$.value),
     })),
     switchMap(({ promptsFolders }) => {
-      return DataService.setPromptFolders(promptsFolders);
+      return PromptService.setPromptFolders(promptsFolders);
     }),
     ignoreElements(),
   );
@@ -165,7 +161,7 @@ const initFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
     filter((action) => PromptsActions.initFolders.match(action)),
     switchMap(() =>
-      DataService.getPromptsFolders().pipe(
+      PromptService.getPromptsFolders().pipe(
         map((folders) => {
           return PromptsActions.setFolders({
             folders,
@@ -179,7 +175,7 @@ const initPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.initPrompts.match),
     switchMap(() =>
-      DataService.getPrompts().pipe(
+      PromptService.getPrompts().pipe(
         map((prompts) => {
           return PromptsActions.updatePrompts({
             prompts,

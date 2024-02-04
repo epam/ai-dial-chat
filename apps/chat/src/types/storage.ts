@@ -1,9 +1,10 @@
 import { ConversationInfo } from './chat';
-import { FolderInterface } from './folder';
+import { FolderInterface, FoldersAndEntities } from './folder';
 import { Prompt, PromptInfo } from './prompt';
 
 import { Conversation } from '@/src/types/chat';
 import { Observable } from 'rxjs';
+
 export enum StorageType {
   BrowserStorage = 'browserStorage',
   API = 'api',
@@ -34,6 +35,10 @@ export interface EntityStorage<
 
   getEntities(path?: string): Observable<EntityInfo[]>; // listing with short information
 
+  getFoldersAndEntities(
+    path?: string,
+  ): Observable<FoldersAndEntities<EntityInfo>>;
+
   getEntity(info: EntityInfo): Observable<Entity | null>;
 
   createEntity(entity: Entity): Observable<void>;
@@ -58,6 +63,10 @@ export interface DialStorage {
 
   setPromptsFolders(folders: FolderInterface[]): Observable<void>;
 
+  getConversationsAndFolders(
+    path?: string,
+  ): Observable<FoldersAndEntities<ConversationInfo>>;
+
   getConversations(path?: string): Observable<ConversationInfo[]>;
 
   getConversation(info: ConversationInfo): Observable<Conversation | null>;
@@ -69,6 +78,10 @@ export interface DialStorage {
   deleteConversation(info: ConversationInfo): Observable<void>;
 
   setConversations(conversations: Conversation[]): Observable<void>;
+
+  getPromptsAndFolders(
+    path?: string,
+  ): Observable<FoldersAndEntities<PromptInfo>>;
 
   getPrompts(path?: string): Observable<PromptInfo[]>;
 

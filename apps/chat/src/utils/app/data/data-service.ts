@@ -1,122 +1,42 @@
 /* eslint-disable no-restricted-globals */
 import { ApiUtils } from '../../server/api';
-import { FileService } from './fileService';
 import { ApiStorage } from './storages/api-storage';
 import { BrowserStorage } from './storages/browser-storage';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
-import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { FolderInterface } from '@/src/types/folder';
-import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
 import { Theme } from '@/src/types/themes';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { Observable, map } from 'rxjs';
 
-export class DataService extends FileService {
+export class DataService {
+  // storage
   private static dataStorage: DialStorage;
-  private static bucket: string;
 
   public static init(storageType?: string) {
     BrowserStorage.init();
     this.setDataStorage(storageType);
   }
 
-  public static setBucket(bucket: string): void {
-    this.bucket = bucket;
+  public static getDataStorage(): DialStorage {
+    if (!this.dataStorage) {
+      this.setDataStorage();
+    }
+    return this.dataStorage;
   }
 
-  public static getConversationsFolders(
-    path?: string,
-  ): Observable<FolderInterface[]> {
-    return this.getDataStorage().getConversationsFolders(path);
+  private static setDataStorage(dataStorageType?: string): void {
+    switch (dataStorageType) {
+      case StorageType.API:
+        this.dataStorage = new ApiStorage();
+        break;
+      case StorageType.BrowserStorage:
+      default:
+        this.dataStorage = new BrowserStorage();
+    }
   }
 
-  public static setConversationFolders(
-    folders: FolderInterface[],
-  ): Observable<void> {
-    return this.getDataStorage().setConversationsFolders(folders);
-  }
-
-  public static getPromptsFolders(): Observable<FolderInterface[]> {
-    return this.getDataStorage().getPromptsFolders();
-  }
-
-  public static setPromptFolders(folders: FolderInterface[]): Observable<void> {
-    return this.getDataStorage().setPromptsFolders(folders);
-  }
-
-  public static getPrompts(path?: string): Observable<PromptInfo[]> {
-    return this.getDataStorage().getPrompts(path);
-  }
-
-  public static getPrompt(info: PromptInfo): Observable<Prompt | null> {
-    return this.getDataStorage().getPrompt(info);
-  }
-
-  public static createConversation(
-    conversation: Conversation,
-  ): Observable<void> {
-    return this.getDataStorage().createConversation(conversation);
-  }
-
-  public static updateConversation(
-    conversation: Conversation,
-  ): Observable<void> {
-    return this.getDataStorage().updateConversation(conversation);
-  }
-
-  public static deleteConversation(info: ConversationInfo): Observable<void> {
-    return this.getDataStorage().deleteConversation(info);
-  }
-
-  public static setPrompts(prompts: Prompt[]): Observable<void> {
-    return this.getDataStorage().setPrompts(prompts);
-  }
-
-  public static getConversations(
-    path?: string,
-  ): Observable<ConversationInfo[]> {
-    return this.getDataStorage().getConversations(path);
-  }
-
-  public static getConversation(
-    info: ConversationInfo,
-  ): Observable<Conversation | null> {
-    return this.getDataStorage().getConversation(info);
-  }
-
-  public static createPrompt(prompt: Prompt): Observable<void> {
-    return this.getDataStorage().createPrompt(prompt);
-  }
-
-  public static updatePrompt(prompt: Prompt): Observable<void> {
-    return this.getDataStorage().updatePrompt(prompt);
-  }
-
-  public static deletePrompt(info: PromptInfo): Observable<void> {
-    return this.getDataStorage().deletePrompt(info);
-  }
-
-  public static setConversations(
-    conversations: Conversation[],
-  ): Observable<void> {
-    return this.getDataStorage().setConversations(conversations);
-  }
-
-  public static getSelectedConversationsIds(): Observable<string[]> {
-    return BrowserStorage.getData(UIStorageKeys.SelectedConversationIds, []);
-  }
-
-  public static setSelectedConversationsIds(
-    selectedConversationsIds: string[],
-  ): Observable<void> {
-    return BrowserStorage.setData(
-      UIStorageKeys.SelectedConversationIds,
-      selectedConversationsIds,
-    );
-  }
-
+  // other methods
   public static getRecentModelsIds(): Observable<string[]> {
     return BrowserStorage.getData(UIStorageKeys.RecentModelsIds, []);
   }
@@ -233,36 +153,5 @@ export class DataService extends FileService {
       UIStorageKeys.TextOfClosedAnnouncement,
       closedAnnouncementText || '',
     );
-  }
-
-  public static requestBucket(): Observable<{ bucket: string }> {
-    return ApiUtils.request(`api/bucket`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-  }
-
-  public static getBucket(): string {
-    return this.bucket;
-  }
-
-  private static getDataStorage(): DialStorage {
-    if (!this.dataStorage) {
-      this.setDataStorage();
-    }
-    return this.dataStorage;
-  }
-
-  private static setDataStorage(dataStorageType?: string): void {
-    switch (dataStorageType) {
-      case StorageType.API:
-        this.dataStorage = new ApiStorage();
-        break;
-      case StorageType.BrowserStorage:
-      default:
-        this.dataStorage = new BrowserStorage();
-    }
   }
 }

@@ -1,10 +1,16 @@
 import { ShareEntity } from './common';
 import { EntityFilters } from './search';
 
+
 export interface FolderInterface extends ShareEntity {
   type: FolderType;
   temporary?: boolean;
   serverSynced?: boolean;
+}
+
+export interface FoldersAndEntities<T> {
+  folders: FolderInterface[];
+  entities: T[];
 }
 
 export enum FolderType {

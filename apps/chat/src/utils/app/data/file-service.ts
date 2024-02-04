@@ -1,6 +1,6 @@
-import { Observable, map } from 'rxjs';
-
-import { DataService } from '@/src/utils/app/data/data-service';
+import { ApiKeys, ApiUtils, getParentPath } from '../../server/api';
+import { constructPath } from '../file';
+import { BucketService } from './bucket-service';
 
 import { BackendDataNodeType } from '@/src/types/common';
 import {
@@ -10,9 +10,7 @@ import {
   FileFolderInterface,
 } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
-
-import { ApiKeys, ApiUtils, getParentPath } from '../../server/api';
-import { constructPath } from '../file';
+import { Observable, map } from 'rxjs';
 
 export class FileService {
   public static sendFile(
@@ -21,7 +19,7 @@ export class FileService {
     fileName: string,
   ): Observable<{ percent?: number; result?: DialFile }> {
     const resultPath = encodeURI(
-      `${DataService.getBucket()}${getParentPath(relativePath)}/${fileName}`,
+      `${BucketService.getBucket()}${getParentPath(relativePath)}/${fileName}`,
     );
 
     return ApiUtils.requestOld({
@@ -77,7 +75,7 @@ export class FileService {
 
     const query = new URLSearchParams({
       filter,
-      bucket: DataService.getBucket(),
+      bucket: BucketService.getBucket(),
       ...(parentPath && { path: parentPath }),
     });
     const resultQuery = query.toString();
@@ -93,7 +91,7 @@ export class FileService {
             type: FolderType.File,
             absolutePath: constructPath(
               ApiKeys.Files,
-              DataService.getBucket(),
+              BucketService.getBucket(),
               relativePath,
             ),
             relativePath: relativePath,
@@ -107,7 +105,7 @@ export class FileService {
 
   public static removeFile(filePath: string): Observable<void> {
     const resultPath = encodeURI(
-      constructPath(DataService.getBucket(), filePath),
+      constructPath(BucketService.getBucket(), filePath),
     );
 
     return ApiUtils.request(`api/${ApiKeys.Files}/${resultPath}`, {
@@ -123,7 +121,7 @@ export class FileService {
 
     const query = new URLSearchParams({
       filter,
-      bucket: DataService.getBucket(),
+      bucket: BucketService.getBucket(),
       ...(parentPath && { path: parentPath }),
     });
     const resultQuery = query.toString();

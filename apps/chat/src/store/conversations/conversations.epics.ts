@@ -32,7 +32,7 @@ import {
   getNewConversationName,
   isSettingsChanged,
 } from '@/src/utils/app/conversation';
-import { DataService } from '@/src/utils/app/data/data-service';
+import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
 import {
@@ -93,7 +93,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
       forkJoin({
         names: of(names),
         lastConversation: lastConversation
-          ? DataService.getConversation(lastConversation)
+          ? ConversationService.getConversation(lastConversation)
           : of(lastConversation),
         conversations: of(conversations),
       }),
@@ -139,7 +139,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
           return zip(
             newConversations.map((info) =>
-              DataService.createConversation(info),
+              ConversationService.createConversation(info),
             ),
           ).pipe(
             switchMap(() =>
@@ -161,7 +161,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.createNewReplayConversation.match),
     switchMap(({ payload }) =>
       forkJoin({
-        conversation: DataService.getConversation(payload),
+        conversation: ConversationService.getConversation(payload),
         conversations: of(
           ConversationsSelectors.selectConversations(state$.value),
         ),
@@ -220,7 +220,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.createNewPlaybackConversation.match),
     switchMap(({ payload }) =>
       forkJoin({
-        conversation: DataService.getConversation(payload),
+        conversation: ConversationService.getConversation(payload),
         conversations: of(
           ConversationsSelectors.selectConversations(state$.value),
         ),
@@ -276,7 +276,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.duplicateConversation.match),
     switchMap(({ payload }) =>
       forkJoin({
-        conversation: DataService.getConversation(payload),
+        conversation: ConversationService.getConversation(payload),
       }),
     ),
     switchMap(({ conversation }) => {
@@ -317,7 +317,7 @@ const createNewConversationSuccessEpic: AppEpic = (action$) =>
       ConversationsActions.createNewConversationSuccess.match(action),
     ),
     switchMap(({ payload }) =>
-      DataService.createConversation(payload.newConversation).pipe(
+      ConversationService.createConversation(payload.newConversation).pipe(
         switchMap(() => EMPTY),
       ),
     ),
@@ -434,7 +434,9 @@ const clearConversationsEpic: AppEpic = (action$, state$) =>
         of(ConversationsActions.clearConversationsSuccess()),
         of(ConversationsActions.deleteFolder({})),
         zip(
-          conversations.map((conv) => DataService.deleteConversation(conv)), //TODO: delete folders
+          conversations.map((conv) =>
+            ConversationService.deleteConversation(conv),
+          ), //TODO: delete folders
         ).pipe(switchMap(() => EMPTY)),
       );
     }),
@@ -504,7 +506,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
         ...actions,
         zip(
           deleteConversations.map((conv) =>
-            DataService.deleteConversation(conv),
+            ConversationService.deleteConversation(conv),
           ),
         ).pipe(switchMap(() => EMPTY)),
       );
@@ -516,8 +518,9 @@ const initConversationsEpic: AppEpic = (action$) =>
     filter(ConversationsActions.initConversations.match),
     switchMap(() =>
       forkJoin({
-        conversations: DataService.getConversations(),
-        selectedConversationsIds: DataService.getSelectedConversationsIds(),
+        conversations: ConversationService.getConversations(),
+        selectedConversationsIds:
+          ConversationService.getSelectedConversationsIds(),
       }),
     ),
     map(({ conversations, selectedConversationsIds }) => {
@@ -1351,7 +1354,7 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       conversationsFolders: ConversationsSelectors.selectFolders(state$.value),
     })),
     switchMap(({ conversationsFolders }) => {
-      return DataService.setConversationFolders(conversationsFolders);
+      return ConversationService.setConversationFolders(conversationsFolders);
     }),
     ignoreElements(),
   );
@@ -1376,7 +1379,9 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
     switchMap((selectedConversationsIds) =>
       forkJoin({
         selectedConversationsIds: of(selectedConversationsIds),
-        _: DataService.setSelectedConversationsIds(selectedConversationsIds),
+        _: ConversationService.setSelectedConversationsIds(
+          selectedConversationsIds,
+        ),
       }),
     ),
     switchMap(({ selectedConversationsIds }) =>
@@ -1406,7 +1411,7 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
 //     ),
 //     map(() => ConversationsSelectors.selectConversations(state$.value)),
 //     switchMap((conversations) => {
-//       return DataService.setConversations(
+//       return ConversationService.setConversations(
 //         (conversations as Conversation[]).filter(
 //           (conv: Conversation) => !!conv.replay, //TODO: fix saving conversations
 //         ),
@@ -1631,7 +1636,7 @@ const initFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
     filter((action) => ConversationsActions.initFolders.match(action)),
     switchMap(() =>
-      DataService.getConversationsFolders().pipe(
+      ConversationService.getConversationsFolders().pipe(
         switchMap((folders) => {
           return concat(
             of(
@@ -1695,7 +1700,9 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
       ).filter((conv) => setIds.has(conv.id));
       // && !(conv as Conversation).replay); // TODO: not upload twice
       return zip(
-        conversationInfos.map((info) => DataService.getConversation(info)),
+        conversationInfos.map((info) =>
+          ConversationService.getConversation(info),
+        ),
       );
     }),
     map((conversations) =>
@@ -1712,7 +1719,7 @@ const updateConversationDebounceEpic: AppEpic = (action$) =>
     ),
     debounceTime(1000),
     switchMap(({ payload: newConversation }) => {
-      return DataService.updateConversation(newConversation).pipe(
+      return ConversationService.updateConversation(newConversation).pipe(
         switchMap(() => EMPTY),
       );
     }),
@@ -1741,8 +1748,8 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         iif(
           () => !!conversation && conversation.id !== newConversation.id,
           concat(
-            DataService.createConversation(newConversation),
-            DataService.deleteConversation(conversation!),
+            ConversationService.createConversation(newConversation),
+            ConversationService.deleteConversation(conversation!),
           ).pipe(switchMap(() => EMPTY)),
           of(ConversationsActions.updateConversationDebounce(newConversation)),
         ),
@@ -1766,7 +1773,9 @@ const uploadFoldersEpic: AppEpic = (action$) =>
     filter(ConversationsActions.uploadFolders.match),
     switchMap(({ payload }) =>
       zip(
-        payload.paths.map((path) => DataService.getConversationsFolders(path)),
+        payload.paths.map((path) =>
+          ConversationService.getConversationsFolders(path),
+        ),
       ).pipe(
         switchMap((folders) =>
           concat(
@@ -1800,7 +1809,7 @@ const uploadConversationsEpic: AppEpic = (action$) =>
     switchMap(({ payload }) =>
       zip(
         payload.paths.map((path: string | undefined) =>
-          DataService.getConversations(path),
+          ConversationService.getConversations(path),
         ),
       ).pipe(
         map((conversations) =>

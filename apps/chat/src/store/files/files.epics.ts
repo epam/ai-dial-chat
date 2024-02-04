@@ -3,7 +3,7 @@ import { FilesActions, FilesSelectors } from './files.reducers';
 
 import { UploadStatus } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
-import { DataService } from '@/src/utils/app/data/data-service';
+import { FileService } from '@/src/utils/app/data/file-service';
 import { triggerDownload } from '@/src/utils/app/file';
 import { translate } from '@/src/utils/app/translation';
 import { combineEpics } from 'redux-observable';
@@ -28,7 +28,7 @@ const uploadFileEpic: AppEpic = (action$) =>
       const formData = new FormData();
       formData.append('attachment', payload.fileContent, payload.name);
 
-      return DataService.sendFile(
+      return FileService.sendFile(
         formData,
         payload.relativePath,
         payload.name,
@@ -88,7 +88,7 @@ const getFilesEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(FilesActions.getFiles.match),
     switchMap(({ payload }) =>
-      DataService.getFiles(payload.path).pipe(
+      FileService.getFiles(payload.path).pipe(
         map((files) =>
           FilesActions.getFilesSuccess({
             relativePath: payload.path,
@@ -104,7 +104,7 @@ const getFileFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(FilesActions.getFolders.match),
     switchMap(({ payload }) =>
-      DataService.getFileFolders(payload?.path).pipe(
+      FileService.getFileFolders(payload?.path).pipe(
         map((folders) =>
           FilesActions.getFoldersSuccess({
             folders,
@@ -161,7 +161,7 @@ const removeFileEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      return DataService.removeFile(payload.fileId).pipe(
+      return FileService.removeFile(payload.fileId).pipe(
         map(() => {
           return FilesActions.removeFileSuccess({
             fileId: payload.fileId,
