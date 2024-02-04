@@ -1,0 +1,167 @@
+{
+  "cookies": [
+    {
+      "name": "_csrf",
+      "value": "4BSomKiaWWNdXLyOXJgy1SpL",
+      "domain": "chatbot-ui-staging.eu.auth0.com",
+      "path": "/usernamepassword/login",
+      "expires": 1706868640.900956,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "next-auth.csrf-token",
+      "value": "631ec29f4449b29c9db99b6a7f8b14f26d9a1d71edef83be5dba77d318b91d0f%7Cddcfc73a56389ad4d0665cdfed62ea9d0bdc1c2e515175ef45677ffefca5f8af",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "next-auth.callback-url",
+      "value": "http%3A%2F%2Flocalhost%3A3000",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "did",
+      "value": "s%3Av0%3Aa97a3610-b9d7-11ee-ba79-cdb559edce2d.ig%2B%2FiXcyF17y0MC%2FpMDx36DBOI7%2BADW3XjeG38Y7%2BFg",
+      "domain": "chatbot-ui-staging.eu.auth0.com",
+      "path": "/",
+      "expires": 1737562240.73036,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "did_compat",
+      "value": "s%3Av0%3Aa97a3610-b9d7-11ee-ba79-cdb559edce2d.ig%2B%2FiXcyF17y0MC%2FpMDx36DBOI7%2BADW3XjeG38Y7%2BFg",
+      "domain": "chatbot-ui-staging.eu.auth0.com",
+      "path": "/",
+      "expires": 1737562240.733163,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "__cf_bm",
+      "value": "vBIQioVTxne7zuRFs7gW8nPj_U4TaDkJE..BNCF9ZTY-1706004640-1-ATUCm4wDZPjk2M5zFJzHHW2ZgetfkaSJa9b23im2p0Ml8+KL/1v3FsrpQr7TaS9/aApyYqTDdycBp1aScD1de2A=",
+      "domain": ".eu.auth0.com",
+      "path": "/",
+      "expires": 1706006440.733214,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "auth0",
+      "value": "s%3A4rhlGhFbFCnm478ItHM5Rwb5Suv2echn.J3Sh4jN%2F70mRiyZTv7DmQI1Fdgntr0Ja1viZp3R70dk",
+      "domain": "chatbot-ui-staging.eu.auth0.com",
+      "path": "/",
+      "expires": 1706263843.540138,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "auth0_compat",
+      "value": "s%3A4rhlGhFbFCnm478ItHM5Rwb5Suv2echn.J3Sh4jN%2F70mRiyZTv7DmQI1Fdgntr0Ja1viZp3R70dk",
+      "domain": "chatbot-ui-staging.eu.auth0.com",
+      "path": "/",
+      "expires": 1706263843.540181,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "AWSALBCORS",
+      "value": "8aZnnV/3z5K8+e6UMf230NJ9NdyVeqdadu5GGijRyrnmJgDAq99/t6krYmoH/LJgplRwANWJUrM0EXsN0jkA2xSiqtyTBNQDPIo/AiYPVmSA7lR/WDZR5qNfvlmt",
+      "domain": "dev-dial-chat-themes-epam.staging.deltixhub.io",
+      "path": "/",
+      "expires": 1706609445.898946,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "next-auth.session-token",
+      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..mzhu1tWowqkpFaiF.ijIdaH9B2YgV47r5tTQHlU87O36IgVsHLw7z9qqUwsvhvzC0DOdc6CBOvV-SXWRzGhvLCGvX7BtUQ9e2YzrJuJGiNcDtWAlqh23tdOLNmJxobp0URgM66M19XyiAykry6VAp5F9pTDPV0UB7lFwRLSosj9yhTG_T96d9s2RhQUkTABsjg0WgomszN1mUN7Z3QLPsbX32MrCdJiQqIVTScoC0GkVezYbaqpWJzdXnM2KW1pp76x1xql8aZwrXjpcGDDHpCj7ASie3_VtQD8IGbEDLZgV6vOZPh3HQ-uqzo6XqNQWUVSO0Y4s1Q5Qc0AMGP8TVePlIoLIrym1-I8l_NqHqLbZpp0-b_HYkPZtaVwfqInv3WJYb-jrr1rsc85rPk6NAMAcDoXkzbNslUa_-JCBCjDh6UHh8E3JslsSLUHsfYi-wiBOXu_sPMG5vlU4Q3WVP5upjgx9r9IyBvlkMpMh-9TQ_-8ymBo43rP99Y4YcATXSCH7MDIkAAC56HRGMaW5k51QN4A1Cl2yKfDOJMszGOVv_rRtwGLKnvJk7LI7Mt3P5rC1U8-Z6CgNp7KQbmI5It0rYs7Eb2jdlcM1fYrDvPJ8Tzet2H6d36PQL6wpIY_LnNwWSEvO6eH5j_Wp0NuJRHRMByXzoxgUxSvWnKDghzmOZbU2g4SEvu7f59neGDsK_RlCNV1wKx6eg-p-9MVUaSgRlPdu22k_ZmCWTBmy9hW4TRZdyJTR2tD7xH-hP6Ze5wRpbG0QKKQKuYRYysCbFhZb_ghRbViwR9eAzmzMJlgLM8nS4DbF7MFzsuOkZSdnhkfE_Xmjn1I7kQ2T2EfPLtWbDG09I0751Ce5B9PugQLFWGcTE3Xy-wLozEFXY7afqZz2G6Y_XwyFDlj5EYJi3KjdFQXXU9el44iNbUYcOv_8JK4E_c-4Enyc1a8PkZoFASZNzhVm00JpQeB5RzKl2r8Xr9Ujo61P92fHlaLCq391Hw6CiFUnvEs7_Xc6wtpPxo_0sjCpIH5YMQxLgN_I5UuiMXuLrrhFqSxGHgK7k4lH3T1x5ASV04fsgQDxfBJlOe5OIzXvArspDLmMidE8Qh5MCekXpqAkR2Zc50J3nOEzX0uz-SF1eQ-LuOK2U6A09TPoGnMa8hogvQPY0zB2jPCYl5rKIUC-ufniuFsuSFQB8SiP8u7lz7U2JWCEwOXy6wja6Bcdc9oDzFIfgzVqZAoz8oAVH5or1_-msUbeD7b-hsHdUcRsB0E9EKVKBIGF9O4k_YPE-2r_SauId0RiH-48F_4r6Ok2W02jUG6V0-BSdgq77hHiGHUYmdEItH7OCemL8nv5Dp4JJ_OUtFA06Ozd-2BzUDl0xvjNXVs7rY9fUKRzDnvHnGoGcd6RZ0La7v9jczsK0wENMZd1B5io7HVopcAeulBHMTKLpsYwV09KX-W3VWdoZNAr9ay0TrX7engPcd8VJeNmOibBD9gM7HfAhokCsQo7XKQLZOoKCdgX0m683tzFAVPuhc12ZpXzKfkoc0VtQdQebD0Tq2LXLCgrBalFTSJH3AetYEkmmL88AiwyyoIclrONVseAPBktlyvDf8re47fqpTOAgYSCwPNvSUAN2SqSWrmkSyVRH5kScOt20ZeDiEDmw9VMaRYVWUXrPX1ySCB57oTZJ7h8uOQPe-GJx0QTjiuBFZKADDJp5zEgG7qEUj236-baMLrfSb_sGwRb0qe9Onk1VoAzL43xJepngL53wo9KXvStgKxeakutDx84szq4-b35NQ1s.Png858EwNwFbDjU7O0uodw",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1708596645.009778,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "http://localhost:3000",
+      "localStorage": [
+        {
+          "name": "chatbarWidth",
+          "value": "260"
+        },
+        {
+          "name": "showChatbar",
+          "value": "true"
+        },
+        {
+          "name": "selectedConversationIds",
+          "value": "[\"641969d9-c28f-466e-9103-ebb6bf951c32\"]"
+        },
+        {
+          "name": "nextauth.message",
+          "value": "{\"event\":\"session\",\"data\":{\"trigger\":\"getSession\"},\"timestamp\":1706004645}"
+        },
+        {
+          "name": "isChatFullWidth",
+          "value": "false"
+        },
+        {
+          "name": "folders",
+          "value": "[]"
+        },
+        {
+          "name": "openedFoldersIds",
+          "value": "[]"
+        },
+        {
+          "name": "promptbarWidth",
+          "value": "260"
+        },
+        {
+          "name": "showPromptbar",
+          "value": "true"
+        },
+        {
+          "name": "settings",
+          "value": "{\"theme\":\"dark\"}"
+        },
+        {
+          "name": "recentModelsIds",
+          "value": "[\"gpt-35-turbo\",\"gpt-4\",\"epam10k-semantic-search\",\"gpt-world\",\"mirror\"]"
+        },
+        {
+          "name": "conversationHistory",
+          "value": "[{\"id\":\"641969d9-c28f-466e-9103-ebb6bf951c32\",\"name\":\"New conversation 1\",\"messages\":[],\"model\":{\"id\":\"gpt-35-turbo\"},\"prompt\":\"\",\"temperature\":1,\"replay\":{\"isReplay\":false,\"replayUserMessagesStack\":[],\"activeReplayIndex\":0},\"selectedAddons\":[],\"lastActivityDate\":1706004646012,\"isMessageStreaming\":false}]"
+        },
+        {
+          "name": "recentAddonsIds",
+          "value": "[\"addon-epam10k-golden-qna\",\"addon-epam10k-semantic-search\",\"addon-wolfram\"]"
+        },
+        {
+          "name": "textOfClosedAnnouncement",
+          "value": "\"\""
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+Browser page is not loaded: page.waitForEvent: Timeout 20000ms exceeded while waiting for event "popup"
+=========================== logs ===========================
+waiting for event "popup"
+============================================================
