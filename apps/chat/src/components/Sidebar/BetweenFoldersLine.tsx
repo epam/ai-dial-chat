@@ -2,7 +2,7 @@ import { DragEvent, useCallback, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { getFolderMoveType, hasDragEventAnyData } from '@/src/utils/app/move';
+import { getFolderMoveType, hasDragEventFolderData } from '@/src/utils/app/move';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -55,7 +55,7 @@ export const BetweenFoldersLine = ({
 
   const allowDrop = useCallback(
     (e: DragEvent) => {
-      if (!denyDrop && hasDragEventAnyData(e, featureType)) {
+      if (!denyDrop && hasDragEventFolderData(e, featureType)) {
         e.preventDefault();
       }
     },
@@ -64,7 +64,7 @@ export const BetweenFoldersLine = ({
 
   const highlightDrop = useCallback(
     (e: DragEvent) => {
-      if (denyDrop || !hasDragEventAnyData(e, featureType)) {
+      if (denyDrop || !hasDragEventFolderData(e, featureType)) {
         return;
       }
       setIsDraggingOver(true);
