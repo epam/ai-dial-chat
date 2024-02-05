@@ -57,16 +57,14 @@ export const promptsSlice = createSlice({
     ) => {
       state.promptsToMigrateCount = payload.promptsToMigrateCount;
     },
-    migratePromptSuccess: (
+    migratePromptFinish: (
       state,
       {
         payload,
       }: PayloadAction<{
-        promptsToMigrateCount: number;
         migratedPromptsCount: number;
       }>,
     ) => {
-      state.promptsToMigrateCount = payload.promptsToMigrateCount;
       state.migratedPromptsCount = payload.migratedPromptsCount;
     },
     createNewPrompt: (state) => {

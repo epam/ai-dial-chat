@@ -2,9 +2,11 @@ import {
   EMPTY,
   catchError,
   concat,
+  concatMap,
   filter,
   finalize,
   forkJoin,
+  from,
   ignoreElements,
   map,
   of,
@@ -242,29 +244,39 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
 
       return concat(
         of(
-          PromptsActions.migratePromptSuccess({
-            migratedPromptsCount,
+          PromptsActions.initPromptsMigration({
             promptsToMigrateCount: notMigratedPrompts.length,
           }),
         ),
-        PromptService.setPrompts(preparedPrompts).pipe(
-          switchMap(() => {
-            migratedPromptIds.push(preparedPrompts[migratedPromptsCount].id);
-            migratedPromptsCount++;
+        from(preparedPrompts).pipe(
+          concatMap((prompt) =>
+            PromptService.setPrompts([prompt]).pipe(
+              switchMap(() => {
+                migratedPromptIds.push(
+                  preparedPrompts[migratedPromptsCount].id,
+                );
 
-            return concat(
-              DataService.setMigratedEntitiesIds(
-                migratedPromptIds,
-                MigrationStorageKeys.MigratedConversationIds,
-              ).pipe(switchMap(() => EMPTY)),
-              of(
-                PromptsActions.migratePromptSuccess({
-                  migratedPromptsCount,
-                  promptsToMigrateCount: notMigratedPrompts.length,
-                }),
+                return concat(
+                  DataService.setMigratedEntitiesIds(
+                    migratedPromptIds,
+                    MigrationStorageKeys.MigratedConversationIds,
+                  ).pipe(switchMap(() => EMPTY)),
+                  of(
+                    PromptsActions.migratePromptFinish({
+                      migratedPromptsCount: ++migratedPromptsCount,
+                    }),
+                  ),
+                );
+              }),
+              catchError(() =>
+                of(
+                  PromptsActions.migratePromptFinish({
+                    migratedPromptsCount: ++migratedPromptsCount,
+                  }),
+                ),
               ),
-            );
-          }),
+            ),
+          ),
           finalize(() => window.location.reload()),
         ),
       );

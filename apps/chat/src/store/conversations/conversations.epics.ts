@@ -7,6 +7,7 @@ import {
   TimeoutError,
   catchError,
   concat,
+  concatMap,
   debounceTime,
   delay,
   filter,
@@ -593,27 +594,36 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
               conversationsToMigrateCount: notMigratedConversations.length,
             }),
           ),
-          ConversationService.setConversations(preparedConversations).pipe(
-            switchMap(() => {
-              migratedConversationIds.push(
-                preparedConversations[migratedConversationsCount].id,
-              );
-              migratedConversationsCount++;
+          from(preparedConversations).pipe(
+            concatMap((conversation) =>
+              ConversationService.setConversations([conversation]).pipe(
+                switchMap(() => {
+                  migratedConversationIds.push(
+                    preparedConversations[migratedConversationsCount].id,
+                  );
 
-              return concat(
-                DataService.setMigratedEntitiesIds(
-                  migratedConversationIds,
-                  MigrationStorageKeys.MigratedConversationIds,
-                ).pipe(switchMap(() => EMPTY)),
-                of(
-                  ConversationsActions.migrateConversationSuccess({
-                    migratedConversationsCount,
-                    conversationsToMigrateCount:
-                      notMigratedConversations.length,
-                  }),
+                  return concat(
+                    DataService.setMigratedEntitiesIds(
+                      migratedConversationIds,
+                      MigrationStorageKeys.MigratedConversationIds,
+                    ).pipe(switchMap(() => EMPTY)),
+                    of(
+                      ConversationsActions.migrateConversationFinish({
+                        migratedConversationsCount:
+                          ++migratedConversationsCount,
+                      }),
+                    ),
+                  );
+                }),
+                catchError(() =>
+                  of(
+                    ConversationsActions.migrateConversationFinish({
+                      migratedConversationsCount: ++migratedConversationsCount,
+                    }),
+                  ),
                 ),
-              );
-            }),
+              ),
+            ),
             finalize(() => window.location.reload()),
           ),
         );

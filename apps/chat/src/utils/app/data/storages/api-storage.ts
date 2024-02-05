@@ -21,6 +21,8 @@ import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 import { ConversationApiStorage } from './conversation-api-storage';
 import { PromptApiStorage } from './prompt-api-storage';
 
+const MAX_RETRIES_COUNT = 3;
+
 export class ApiStorage implements DialStorage {
   private _conversationApiStorage = new ConversationApiStorage();
   private _promptApiStorage = new PromptApiStorage();
@@ -31,8 +33,9 @@ export class ApiStorage implements DialStorage {
     apiStorage: ApiEntityStorage<PromptInfo | ConversationInfo, T>,
   ): Observable<void> {
     return this.getConversations(entity.folderId).pipe(
-      concatMap((conversations) => {
-        const apiConversations: ConversationInfo[] = conversations;
+      concatMap((receivedEntities) => {
+        const apiEntities: ConversationInfo[] = receivedEntities;
+        let retries = 0;
 
         const retry = (
           entity: T,
@@ -41,13 +44,14 @@ export class ApiStorage implements DialStorage {
         ): Observable<void> =>
           apiStorage.createEntity(entity).pipe(
             catchError((err) => {
-              if (err.message === 'Conflict') {
+              if (err.message === 'Conflict' && retries < MAX_RETRIES_COUNT) {
+                retries++;
                 const updatedEntity = {
                   ...entity,
                   name: generateNextName(
                     DEFAULT_CONVERSATION_NAME,
                     entity.name,
-                    [...entities, ...apiConversations],
+                    [...entities, ...apiEntities],
                   ),
                 };
 
