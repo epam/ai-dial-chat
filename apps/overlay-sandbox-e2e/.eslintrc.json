@@ -1,0 +1,4 @@
+{
+  "extends": ["plugin:playwright/recommended", "../../.eslintrc.json"],
+  "ignorePatterns": ["!**/*"]
+}

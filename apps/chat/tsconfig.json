@@ -1,0 +1,44 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "allowJs": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next",
+      },
+    ],
+    "paths": {
+      "@/*": ["apps/chat/*"],
+      "@epam/ai-dial-shared": ["libs/shared/src/index.ts"],
+    },
+    "baseUrl": "../../",
+    "types": [
+      "jsdom",
+      "vitest/globals",
+      "vitest/importMeta",
+      "vite/client",
+      "node",
+      "vitest",
+    ],
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx",
+    "next-env.d.ts",
+    "postcss.config.js",
+    "../../libs/shared/src/utils/features.ts",
+    "../../libs/shared/src/types/features.ts",
+  ],
+  "exclude": ["node_modules"],
+}

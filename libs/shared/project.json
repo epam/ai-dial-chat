@@ -1,0 +1,55 @@
+{
+  "name": "shared",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/rollup:rollup",
+      "options": {
+        "outputPath": "dist/libs/shared",
+        "main": "libs/shared/src/index.ts",
+        "tsConfig": "libs/shared/tsconfig.lib.json",
+        "project": "libs/shared/package.json",
+        "compiler": "tsc",
+        "format": ["esm"],
+        "assets": [
+          {
+            "glob": "libs/shared/README.md",
+            "input": ".",
+            "output": "."
+          },
+          {
+            "glob": ".gitignore",
+            "input": ".",
+            "output": "."
+          },
+          {
+            "glob": "LICENSE",
+            "input": ".",
+            "output": "."
+          }
+        ],
+        "buildableProjectDepsInPackageJsonType": true
+      }
+    },
+    "publish": {
+      "command": "node tools/publish-lib.mjs shared --version={args.ver} --dry={args.dry} --tag={args.tag}"
+    },
+    "lint": {},
+    "lint:fix": {},
+    "test": {
+      "options": {
+        "reportsDirectory": "../../coverage/libs/shared"
+      }
+    },
+    "test:coverage": {
+      "options": {
+        "reportsDirectory": "../../coverage/libs/shared"
+      }
+    },
+    "format": {},
+    "format:fix": {}
+  },
+  "tags": []
+}

@@ -1,0 +1,92 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "affected": { "defaultBase": "development" },
+  "targetDefaults": {
+    "build": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
+    },
+    "e2e": {
+      "cache": false,
+      "inputs": ["default", "^production"]
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{options.reportsDirectory}"]
+    },
+    "test:coverage": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "coverage": true
+      }
+    },
+    "lint": {
+      "cache": true,
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "maxWarnings": 10
+      },
+      "inputs": [
+        "default",
+        "{workspaceRoot}/.eslintrc.json",
+        "{workspaceRoot}/.eslintignore",
+        "{workspaceRoot}/eslint.config.js"
+      ]
+    },
+    "lint:fix": {
+      "cache": false,
+      "executor": "@nx/eslint:lint",
+      "inputs": [
+        "default",
+        "{workspaceRoot}/.eslintrc.json",
+        "{workspaceRoot}/.eslintignore",
+        "{workspaceRoot}/eslint.config.js"
+      ],
+      "options": {
+        "fix": true,
+        "maxWarnings": 10
+      }
+    },
+    "format": {
+      "cache": true,
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["prettier --check {projectRoot}"]
+      }
+    },
+    "format:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["prettier --write {projectRoot}"]
+      }
+    }
+  },
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "production": [
+      "default",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/vitest.config.mts",
+      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/eslint.config.js",
+      "!{projectRoot}/tsconfig.spec.json"
+    ],
+    "sharedGlobals": []
+  },
+  "generators": {
+    "@nx/react": {
+      "application": {
+        "babel": true
+      }
+    },
+    "@nx/next": {
+      "application": {
+        "style": "css",
+        "linter": "eslint"
+      }
+    }
+  }
+}
