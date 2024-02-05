@@ -62,6 +62,8 @@ const initEpic: AppEpic = (action$, state$) =>
         ),
         switchMap(() =>
           concat(
+            of(ConversationsActions.migrateConversations()),
+            of(PromptsActions.migratePrompts()),
             of(UIActions.init()),
             of(ModelsActions.init()),
             of(AddonsActions.init()),

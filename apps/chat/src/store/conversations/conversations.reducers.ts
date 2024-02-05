@@ -1,17 +1,5 @@
-import * as ConversationsSelectors from './conversations.selectors';
-import { ConversationsState } from './conversations.types';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { resetShareEntity } from '@/src/constants/chat';
-import {
-  DEFAULT_CONVERSATION_NAME,
-  DEFAULT_FOLDER_NAME,
-} from '@/src/constants/default-settings';
-import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
-import { FeatureType, UploadStatus } from '@/src/types/common';
-import { SupportedExportFormats } from '@/src/types/export';
-import { FolderInterface, FolderType } from '@/src/types/folder';
-import { SearchFilters } from '@/src/types/search';
-import { PublishRequest } from '@/src/types/share';
 import { combineEntities } from '@/src/utils/app/common';
 import { addGeneratedConversationId } from '@/src/utils/app/conversation';
 import {
@@ -21,7 +9,23 @@ import {
 } from '@/src/utils/app/folders';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+
+import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
+import { FeatureType, UploadStatus } from '@/src/types/common';
+import { SupportedExportFormats } from '@/src/types/export';
+import { FolderInterface, FolderType } from '@/src/types/folder';
+import { SearchFilters } from '@/src/types/search';
+import { PublishRequest } from '@/src/types/share';
+
+import { resetShareEntity } from '@/src/constants/chat';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_FOLDER_NAME,
+} from '@/src/constants/default-settings';
+
+import * as ConversationsSelectors from './conversations.selectors';
+import { ConversationsState } from './conversations.types';
+
 import { v4 as uuidv4 } from 'uuid';
 
 export { ConversationsSelectors };
@@ -53,20 +57,27 @@ export const conversationsSlice = createSlice({
     init: (state) => state,
     initConversations: (state) => state,
     migrateConversations: (state) => state,
+    initConversationsMigration: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        conversationsToMigrateCount: number;
+      }>,
+    ) => {
+      state.conversationsToMigrateCount = payload.conversationsToMigrateCount;
+    },
     migrateConversationSuccess: (
       state,
       {
         payload,
       }: PayloadAction<{
-        migratedConversationsCount?: number;
-        conversationsToMigrateCount?: number;
+        migratedConversationsCount: number;
+        conversationsToMigrateCount: number;
       }>,
     ) => {
-      state.conversationsToMigrateCount =
-        payload.conversationsToMigrateCount ??
-        state.conversationsToMigrateCount;
-      state.migratedConversationsCount =
-        payload.migratedConversationsCount ?? state.migratedConversationsCount;
+      state.conversationsToMigrateCount = payload.conversationsToMigrateCount;
+      state.migratedConversationsCount = payload.migratedConversationsCount;
     },
     selectConversations: (
       state,

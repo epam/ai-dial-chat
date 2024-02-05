@@ -585,27 +585,35 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
 
         let migratedConversationsCount = 0;
 
-        return DataService.setConversations(preparedConversations).pipe(
-          switchMap(() => {
-            migratedConversationIds.push(
-              preparedConversations[migratedConversationsCount].id,
-            );
-            migratedConversationsCount++;
+        return concat(
+          of(
+            ConversationsActions.initConversationsMigration({
+              conversationsToMigrateCount: notMigratedConversations.length,
+            }),
+          ),
+          DataService.setConversations(preparedConversations).pipe(
+            switchMap(() => {
+              migratedConversationIds.push(
+                preparedConversations[migratedConversationsCount].id,
+              );
+              migratedConversationsCount++;
 
-            return concat(
-              DataService.setMigratedEntitiesIds(
-                migratedConversationIds,
-                MigrationStorageKeys.MigratedConversationIds,
-              ).pipe(switchMap(() => EMPTY)),
-              of(
-                ConversationsActions.migrateConversationSuccess({
-                  migratedConversationsCount,
-                  conversationsToMigrateCount: conversations.length,
-                }),
-              ),
-            );
-          }),
-          finalize(() => window.location.reload()),
+              return concat(
+                DataService.setMigratedEntitiesIds(
+                  migratedConversationIds,
+                  MigrationStorageKeys.MigratedConversationIds,
+                ).pipe(switchMap(() => EMPTY)),
+                of(
+                  ConversationsActions.migrateConversationSuccess({
+                    migratedConversationsCount,
+                    conversationsToMigrateCount:
+                      notMigratedConversations.length,
+                  }),
+                ),
+              );
+            }),
+            finalize(() => window.location.reload()),
+          ),
         );
       },
     ),
@@ -1781,7 +1789,6 @@ const initEpic: AppEpic = (action$) =>
     filter((action) => ConversationsActions.init.match(action)),
     switchMap(() =>
       concat(
-        of(ConversationsActions.migrateConversations()),
         of(ConversationsActions.initFolders()),
         of(ConversationsActions.initConversations()),
       ),

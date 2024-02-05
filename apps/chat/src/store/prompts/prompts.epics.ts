@@ -239,25 +239,33 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
 
       let migratedPromptsCount = 0;
 
-      return DataService.setPrompts(preparedPrompts).pipe(
-        switchMap(() => {
-          migratedPromptIds.push(preparedPrompts[migratedPromptsCount].id);
-          migratedPromptsCount++;
+      return concat(
+        of(
+          PromptsActions.migratePromptSuccess({
+            migratedPromptsCount,
+            promptsToMigrateCount: notMigratedPrompts.length,
+          }),
+        ),
+        DataService.setPrompts(preparedPrompts).pipe(
+          switchMap(() => {
+            migratedPromptIds.push(preparedPrompts[migratedPromptsCount].id);
+            migratedPromptsCount++;
 
-          return concat(
-            DataService.setMigratedEntitiesIds(
-              migratedPromptIds,
-              MigrationStorageKeys.MigratedConversationIds,
-            ).pipe(switchMap(() => EMPTY)),
-            of(
-              PromptsActions.migratePromptSuccess({
-                migratedPromptsCount,
-                promptsToMigrateCount: prompts.length,
-              }),
-            ),
-          );
-        }),
-        finalize(() => window.location.reload()),
+            return concat(
+              DataService.setMigratedEntitiesIds(
+                migratedPromptIds,
+                MigrationStorageKeys.MigratedConversationIds,
+              ).pipe(switchMap(() => EMPTY)),
+              of(
+                PromptsActions.migratePromptSuccess({
+                  migratedPromptsCount,
+                  promptsToMigrateCount: notMigratedPrompts.length,
+                }),
+              ),
+            );
+          }),
+          finalize(() => window.location.reload()),
+        ),
       );
     }),
     catchError(() => {
@@ -285,7 +293,6 @@ const initEpic: AppEpic = (action$) =>
     filter((action) => PromptsActions.init.match(action)),
     switchMap(() =>
       concat(
-        of(PromptsActions.migratePrompts()),
         of(PromptsActions.initFolders()),
         of(PromptsActions.initPrompts()),
       ),

@@ -47,19 +47,27 @@ export const promptsSlice = createSlice({
     initFolders: (state) => state,
     initPrompts: (state) => state,
     migratePrompts: (state) => state,
+    initPromptsMigration: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        promptsToMigrateCount: number;
+      }>,
+    ) => {
+      state.promptsToMigrateCount = payload.promptsToMigrateCount;
+    },
     migratePromptSuccess: (
       state,
       {
         payload,
       }: PayloadAction<{
-        promptsToMigrateCount?: number;
-        migratedPromptsCount?: number;
+        promptsToMigrateCount: number;
+        migratedPromptsCount: number;
       }>,
     ) => {
-      state.promptsToMigrateCount =
-        payload.promptsToMigrateCount ?? state.promptsToMigrateCount;
-      state.migratedPromptsCount =
-        payload.migratedPromptsCount ?? state.migratedPromptsCount;
+      state.promptsToMigrateCount = payload.promptsToMigrateCount;
+      state.migratedPromptsCount = payload.migratedPromptsCount;
     },
     createNewPrompt: (state) => {
       const newPrompt: Prompt = addGeneratedPromptId({
