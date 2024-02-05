@@ -5,7 +5,10 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from 'react';
+
+import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
@@ -36,6 +39,7 @@ export const PlaybackControls = ({
   nextMessageBoxRef,
   showScrollDownButton,
 }: Props) => {
+  const { t } = useTranslation('playback');
   const dispatch = useAppDispatch();
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
@@ -55,6 +59,7 @@ export const PlaybackControls = ({
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
   const controlsContainerRef = useRef<HTMLDivElement | null>(null);
+  const [phase, setPhase] = useState<'EMPTY' | 'MESSAGE'>('EMPTY');
 
   const isActiveIndex = typeof activeIndex === 'number';
 
@@ -72,6 +77,7 @@ export const PlaybackControls = ({
     if (!isActiveIndex) {
       return;
     }
+
     const currentPlayback = selectedConversations[0]?.playback;
     const currentMessage = currentPlayback?.messagesStack[activeIndex];
 
@@ -94,17 +100,28 @@ export const PlaybackControls = ({
     activeMessage.custom_content.attachments &&
     activeMessage.custom_content.attachments.length;
 
-  const handlePlaynextMessage = useCallback(() => {
+  const handlePlayNextMessage = useCallback(() => {
     if (isMessageStreaming || !isNextMessageInStack) {
       return;
     }
+    if (phase === 'EMPTY') {
+      setPhase('MESSAGE');
+      return;
+    }
+    setPhase('EMPTY');
 
     dispatch(ConversationsActions.playbackNextMessageStart());
-  }, [dispatch, isMessageStreaming, isNextMessageInStack]);
+  }, [dispatch, isMessageStreaming, isNextMessageInStack, phase]);
 
   const handlePrevMessage = useCallback(() => {
+    if (phase === 'EMPTY') {
+      setPhase('MESSAGE');
+      return;
+    }
+    setPhase('EMPTY');
+
     dispatch(ConversationsActions.playbackPrevMessage());
-  }, [dispatch]);
+  }, [dispatch, phase]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -120,7 +137,7 @@ export const PlaybackControls = ({
           e.key == ' ')
       ) {
         e.preventDefault();
-        handlePlaynextMessage();
+        handlePlayNextMessage();
       } else if (
         activeIndex &&
         activeIndex > 0 &&
@@ -132,7 +149,7 @@ export const PlaybackControls = ({
     },
     [
       activeIndex,
-      handlePlaynextMessage,
+      handlePlayNextMessage,
       handlePrevMessage,
       isPlayback,
       isNextMessageInStack,
@@ -180,14 +197,14 @@ export const PlaybackControls = ({
         <button
           data-qa="playback-prev"
           onClick={handlePrevMessage}
-          disabled={activeIndex === 0}
+          disabled={activeIndex === 0 && phase !== 'MESSAGE'}
           className="absolute bottom-3 left-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
         >
           <IconPlayerPlay size={20} className="rotate-180" />
         </button>
         <div
           ref={nextMessageBoxRef}
-          className="m-0 max-h-[150px] min-h-[44px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-layer-3 px-12 py-3 text-left outline-none focus-visible:border-accent-primary"
+          className="m-0 max-h-[150px] min-h-[46px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-layer-3 px-12 py-3 text-left outline-none focus-visible:border-accent-primary"
           data-qa="playback-message"
         >
           {isMessageStreaming ? (
@@ -200,10 +217,15 @@ export const PlaybackControls = ({
               {activeMessage && (
                 <>
                   <span
-                    className="break-words"
+                    className={classNames(
+                      'break-words',
+                      phase === 'EMPTY' && 'text-secondary',
+                    )}
                     data-qa="playback-message-content"
                   >
-                    {activeMessage.content ?? ''}
+                    {phase === 'EMPTY'
+                      ? t('Type a message')
+                      : activeMessage.content ?? ''}
                   </span>
 
                   {hasAttachments && (
@@ -213,7 +235,7 @@ export const PlaybackControls = ({
                   )}
                   <button
                     data-qa="playback-next"
-                    onClick={handlePlaynextMessage}
+                    onClick={handlePlayNextMessage}
                     className="absolute bottom-3 right-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                     disabled={isMessageStreaming || !isNextMessageInStack}
                   >
