@@ -97,6 +97,34 @@ test(
         await playbackControl.playbackMessage.getElementContent();
       expect
         .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
+        .toBe('Type a message');
+    });
+
+    await test.step('Click on Next button and verify text content updated', async () => {
+      await chat.playNextChatMessage();
+
+      const isPlaybackNextBtnEnabled =
+        await playbackControl.playbackNextButton.isElementEnabled();
+      expect
+        .soft(
+          isPlaybackNextBtnEnabled,
+          ExpectedMessages.playbackNextButtonEnabled,
+        )
+        .toBeTruthy();
+
+      const isPlaybackPreviousBtnEnabled =
+        await playbackControl.playbackPreviousButton.isElementEnabled();
+      expect
+        .soft(
+          isPlaybackPreviousBtnEnabled,
+          ExpectedMessages.playbackPreviousButtonDisabled,
+        )
+        .toBeTruthy();
+
+      const playbackMessage =
+        await playbackControl.playbackMessage.getElementContent();
+      expect
+        .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
         .toBe(conversation.messages[0].content);
     });
 
@@ -159,7 +187,8 @@ test(
         .toBeTruthy();
     });
 
-    await test.step('Click on Next button again and verify chat header icon updated, history contains all messages and Next button disabled on bottom controls', async () => {
+    await test.step('Click on Next button again twice and verify chat header icon updated, history contains all messages and Next button disabled on bottom controls', async () => {
+      await chat.playNextChatMessage();
       await chat.playNextChatMessage();
       const messagesCount = await chatMessages.chatMessages.getElementsCount();
       expect
@@ -221,6 +250,33 @@ test(
 
     await test.step('Click on Back button and verify chat header icon updated, history contains first request/response, Next button is enabled on bottom controls', async () => {
       await chat.playPreviousChatMessage();
+      const isPlaybackNextBtnEnabled =
+        await playbackControl.playbackNextButton.isElementEnabled();
+      expect
+        .soft(
+          isPlaybackNextBtnEnabled,
+          ExpectedMessages.playbackNextButtonEnabled,
+        )
+        .toBeTruthy();
+
+      const isPlaybackPreviousBtnEnabled =
+        await playbackControl.playbackPreviousButton.isElementEnabled();
+      expect
+        .soft(
+          isPlaybackPreviousBtnEnabled,
+          ExpectedMessages.playbackPreviousButtonEnabled,
+        )
+        .toBeTruthy();
+
+      const playbackMessage =
+        await playbackControl.playbackMessage.getElementContent();
+      expect
+        .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
+        .toBe('Type a message');
+    });
+
+    await test.step('Click on Back button and verify chat header icon updated, history contains first request/response, Next button is enabled on bottom controls', async () => {
+      await chat.playPreviousChatMessage();
       const messagesCount = await chatMessages.chatMessages.getElementsCount();
       expect
         .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
@@ -278,7 +334,8 @@ test(
         .toBeTruthy();
     });
 
-    await test.step('Click on Back button again and verify chat header icon updated, history is empty and Back button is disabled on bottom controls', async () => {
+    await test.step('Click on Back button again twice and verify chat header icon updated, history is empty and Back button is disabled on bottom controls', async () => {
+      await chat.playPreviousChatMessage();
       await chat.playPreviousChatMessage();
       const messagesCount = await chatMessages.chatMessages.getElementsCount();
       expect
