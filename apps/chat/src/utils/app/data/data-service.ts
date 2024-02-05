@@ -135,28 +135,6 @@ export class DataService {
     return BrowserStorage.setData(UIStorageKeys.ShowPromptbar, showPromptbar);
   }
 
-  public static getOpenedFolderIds(): Observable<
-    Record<FeatureType, string[]>
-  > {
-    return BrowserStorage.getData(
-      UIStorageKeys.OpenedFoldersIds,
-      openFoldersInitialState,
-    );
-  }
-
-  public static setOpenedFolderIds(
-    openedFolderIds: Record<FeatureType, string[]>,
-  ): Observable<void> {
-    return BrowserStorage.setData(
-      UIStorageKeys.OpenedFoldersIds,
-      openedFolderIds &&
-        openedFolderIds[FeatureType.Chat] &&
-        openedFolderIds[FeatureType.Prompt]
-        ? openedFolderIds
-        : openFoldersInitialState,
-    );
-  }
-
   public static getClosedAnnouncement(): Observable<string | undefined> {
     return BrowserStorage.getData(UIStorageKeys.TextOfClosedAnnouncement, '');
   }

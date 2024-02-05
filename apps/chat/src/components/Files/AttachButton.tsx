@@ -7,6 +7,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -18,7 +19,6 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import ContextMenu from '../Common/ContextMenu';
 import { FileManagerModal } from './FileManagerModal';
 import { PreUploadDialog } from './PreUploadModal';
-import { FeatureType } from '@/src/types/common';
 
 interface Props {
   selectedFilesIds?: string[];
