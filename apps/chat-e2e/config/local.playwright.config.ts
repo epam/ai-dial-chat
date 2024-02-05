@@ -1,5 +1,6 @@
 import config from './playwright.config';
 
+import { ResultFolder } from '@/src/testData';
 import { workspaceRoot } from '@nx/devkit';
 import { ReporterDescription } from '@playwright/test';
 import dotenv from 'dotenv';
@@ -20,7 +21,7 @@ config.use!.video = 'on';
 config.use!.trace = 'on';
 (config.reporter as ReporterDescription[]).push([
   'html',
-  { outputFolder: '../html-report', open: 'never' },
+  { outputFolder: `../${ResultFolder.htmlReport}`, open: 'never' },
 ]);
 
 /* Run local dev server before starting the tests */
