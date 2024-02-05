@@ -51,6 +51,7 @@ pnpm-lock.yaml
 /apps/chat-e2e/auth/
 /apps/chat-e2e/html-report/
 /apps/chat-e2e/src/testData/export/
+/apps/chat-e2e/.env.local
 
 # coverage
 */coverage

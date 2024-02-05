@@ -16,7 +16,11 @@ import {
 import { LocalStorageManager } from './localStorageManager';
 
 import { ConversationData } from '@/src/testData';
-import { ApiHelper } from '@/src/testData/api/apiHelper';
+import {
+  ChatApiHelper,
+  FileApiHelper,
+  IconApiHelper,
+} from '@/src/testData/api';
 import { PromptData } from '@/src/testData/prompts/promptData';
 import { Auth0Page } from '@/src/ui/pages/auth0Page';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
@@ -112,7 +116,9 @@ const test = base.extend<
     promptFilter: Filter;
     chatFilterDropdownMenu: DropdownCheckboxMenu;
     promptFilterDropdownMenu: DropdownCheckboxMenu;
-    apiHelper: ApiHelper;
+    iconApiHelper: IconApiHelper;
+    chatApiHelper: ChatApiHelper;
+    fileApiHelper: FileApiHelper;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -362,9 +368,17 @@ const test = base.extend<
     const shareModal = new ShareModal(page);
     await use(shareModal);
   },
-  apiHelper: async ({ request }, use) => {
-    const apiHelper = new ApiHelper(request);
-    await use(apiHelper);
+  iconApiHelper: async ({ request }, use) => {
+    const iconApiHelper = new IconApiHelper(request);
+    await use(iconApiHelper);
+  },
+  chatApiHelper: async ({ request }, use) => {
+    const chatApiHelper = new ChatApiHelper(request);
+    await use(chatApiHelper);
+  },
+  fileApiHelper: async ({ request }, use) => {
+    const fileApiHelper = new FileApiHelper(request);
+    await use(fileApiHelper);
   },
 });
 

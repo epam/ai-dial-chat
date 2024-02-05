@@ -7,6 +7,7 @@ import {
   MenuOptions,
   ModelIds,
 } from '@/src/testData';
+import { FileApiHelper } from '@/src/testData/api';
 import { FolderData } from '@/src/testData/folders/folderData';
 import { DateUtil } from '@/src/utils/dateUtil';
 import { GeneratorUtil } from '@/src/utils/generatorUtil';
@@ -58,7 +59,7 @@ export class ConversationData extends FolderData {
     temp: number,
     sysPrompt: string,
     addons: string[],
-    model?: OpenAIEntityModel,
+    model?: OpenAIEntityModel | string,
   ) {
     const basicConversation = this.prepareDefaultConversation(model);
     this.conversationBuilder.setConversation(basicConversation);
@@ -70,7 +71,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareModelConversationBasedOnRequests(
-    model: OpenAIEntityModel,
+    model: OpenAIEntityModel | string,
     requests: string[],
     name?: string,
   ) {
@@ -109,7 +110,10 @@ export class ConversationData extends FolderData {
     return this.conversationBuilder.build();
   }
 
-  public prepareEmptyConversation(model?: OpenAIEntityModel, name?: string) {
+  public prepareEmptyConversation(
+    model?: OpenAIEntityModel | string,
+    name?: string,
+  ) {
     const conversation = this.prepareDefaultConversation(model, name);
     conversation.messages = [];
     return conversation;
@@ -314,6 +318,32 @@ export class ConversationData extends FolderData {
     const conversation = this.prepareDefaultConversation();
     conversation.isShared = true;
     return conversation;
+  }
+
+  public prepareConversationWithAttachment(
+    attachmentUrl: string,
+    model: OpenAIEntityModel | string,
+    hasRequest?: boolean,
+  ) {
+    const filename = attachmentUrl.split('/')[2];
+    const modelToUse = { id: typeof model === 'string' ? model : model.id };
+    const userMessage: Message = {
+      role: Role.User,
+      content: hasRequest ? 'what is on picture?' : '',
+      custom_content: {
+        attachments: [
+          {
+            type: FileApiHelper.getContentTypeForFile(filename)!,
+            title: filename,
+            url: attachmentUrl,
+          },
+        ],
+      },
+    };
+    return this.conversationBuilder
+      .withMessage(userMessage)
+      .withModel(modelToUse)
+      .build();
   }
 
   private fillReplayData(
