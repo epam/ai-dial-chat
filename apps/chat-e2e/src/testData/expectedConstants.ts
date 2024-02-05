@@ -46,6 +46,10 @@ export const ExpectedConstants = {
   maxSidePanelWidthPercentage: 0.45,
   minSidePanelWidthPx: 260,
   attachments: 'Attachments',
+  responseContentPattern: /(?<=\{"content":")[^"^\\$]+/g,
+  responseFileUrlPattern: /(?<="url":")[^"$]+/g,
+  responseFileUrlContentPattern: (model: string) =>
+    new RegExp('/appdata/' + model + '/images/.*\\.png', 'g'),
 };
 
 export enum Groups {
@@ -95,6 +99,9 @@ export const API = {
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
   defaultIconHost: '/api/themes/image?name=default-model',
+  bucketHost: '/api/files/bucket',
+  fileHost: '/api/files/file',
+  uploadedFileHost: () => `${API.fileHost}/files`,
 };
 
 export const Import = {
@@ -107,6 +114,11 @@ export const Import = {
   v19AppImportedFilename: 'chatbot_ui_history_1-9_version.json',
   v14AppFolderPromptName: 'Version 1.4 A*B',
   oldVersionAppGpt35Message: '11 * 12 =',
+};
+
+export const Attachment = {
+  attachmentPath: path.resolve(__dirname, 'attachments'),
+  sunImageName: 'sun.jpg',
 };
 
 export enum Side {
@@ -123,7 +135,7 @@ export enum ModelIds {
   GPT_4 = 'gpt-4',
   GPT_4_0314 = 'gpt-4-0314',
   GPT_4_0613 = 'gpt-4-0613',
-  GPT_4_TURBO_1106 = 'gpt-4-turbo-1106',
+  GPT_4_1106_PREVIEW = 'gpt-4-1106-preview',
   GPT_4_32K = 'gpt-4-32k',
   GPT_4_32K_0314 = 'gpt-4-32k-0314',
   GPT_4_32K_0613 = 'gpt-4-32k-0613',
@@ -159,4 +171,10 @@ export enum Rate {
 export enum Theme {
   light = 'light',
   dark = 'dark',
+}
+
+export enum ResultFolder {
+  allureReport = 'allure-results',
+  htmlReport = 'html-report',
+  testResults = 'test-results',
 }

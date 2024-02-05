@@ -356,10 +356,10 @@ test(
     page,
     tooltip,
     localStorageManager,
-    apiHelper,
+    iconApiHelper,
   }) => {
     setTestIds('EPMRTC-478', 'EPMRTC-1480', 'EPMRTC-1309');
-    const expectedModelIcon = await apiHelper.getEntityIcon(gpt35Model);
+    const expectedModelIcon = await iconApiHelper.getEntityIcon(gpt35Model);
 
     await test.step('Set random application theme', async () => {
       const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));

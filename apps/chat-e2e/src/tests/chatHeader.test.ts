@@ -27,13 +27,13 @@ test(
     chatHeader,
     chatInfoTooltip,
     errorPopup,
-    apiHelper,
+    iconApiHelper,
   }) => {
     setTestIds('EPMRTC-1115', 'EPMRTC-473');
     let conversation: Conversation;
     const temp = 0;
     const request = 'This is a test request';
-    const expectedModelIcon = await apiHelper.getEntityIcon(defaultModel);
+    const expectedModelIcon = await iconApiHelper.getEntityIcon(defaultModel);
 
     await test.step('Prepare model conversation with all available addons and temperature', async () => {
       conversation = conversationData.prepareModelConversation(
@@ -92,7 +92,7 @@ test(
             (a) => a.entityName === expectedAddon.name,
           )!;
           const expectedAddonIcon =
-            await apiHelper.getEntityIcon(expectedAddon);
+            await iconApiHelper.getEntityIcon(expectedAddon);
           expect
             .soft(
               actualAddon.icon,
@@ -135,7 +135,8 @@ test(
         const actualAddonInfoIcon = actualAddonsInfoIcons.find(
           (a) => a.entityName === expectedAddon.name,
         )!;
-        const expectedAddonIcon = await apiHelper.getEntityIcon(expectedAddon);
+        const expectedAddonIcon =
+          await iconApiHelper.getEntityIcon(expectedAddon);
         expect
           .soft(
             actualAddonInfoIcon.icon,

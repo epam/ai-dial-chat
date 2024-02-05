@@ -72,7 +72,7 @@ export class Folders extends BaseElement {
       `${SideBarSelectors.folderGroup}.${ExpectedConstants.backgroundAccentAttribute}`,
     )
       .getElementLocatorByText(parentFolderName)
-      .waitFor();
+      .waitFor({ state: 'attached' });
   }
 
   public async getFoldersCount() {
