@@ -587,8 +587,6 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
 
         let migratedConversationsCount = 0;
 
-        console.log(123);
-
         return concat(
           of(
             ConversationsActions.initConversationsMigration({
