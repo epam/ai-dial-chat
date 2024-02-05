@@ -138,7 +138,7 @@ const isFeatureEnabled = createSelector(
 );
 
 const isPublishingEnabled = createSelector(
-  [selectEnabledFeatures, (_, featureType?: FeatureType) => featureType],
+  [selectEnabledFeatures, (_, featureType: FeatureType) => featureType],
   (enabledFeatures, featureType) => {
     switch (featureType) {
       case FeatureType.Chat:
@@ -152,7 +152,7 @@ const isPublishingEnabled = createSelector(
 );
 
 const isSharingEnabled = createSelector(
-  [selectEnabledFeatures, (_, featureType?: FeatureType) => featureType],
+  [selectEnabledFeatures, (_, featureType: FeatureType) => featureType],
   (enabledFeatures, featureType) => {
     switch (featureType) {
       case FeatureType.Chat:

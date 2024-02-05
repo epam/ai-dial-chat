@@ -100,10 +100,8 @@ export default function ContextMenu({
     <Menu
       className={classNames(triggerIconClassName)}
       listClassName={classNames(
-        featureType &&
-          (featureType === FeatureType.Chat
-            ? 'context-menu-chat'
-            : 'context-menu-prompt'),
+        featureType === FeatureType.Chat && 'context-menu-chat',
+        featureType === FeatureType.Prompt && 'context-menu-prompt',
       )}
       disabled={disabled}
       type="contextMenu"

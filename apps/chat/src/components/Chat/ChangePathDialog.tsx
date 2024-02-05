@@ -8,6 +8,7 @@ import {
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
 
+import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -194,6 +195,7 @@ export const ChangePathDialog = ({
             onDeleteFolder: handleDeleteFolder,
             onAddFolder: handleAddFolder,
             newAddedFolderId: newFolderId,
+            featureType: FeatureType.File,
           }}
           handleToggleFolder={handleToggleFolder}
           isAllEntitiesOpened={isAllFoldersOpened}

@@ -28,7 +28,7 @@ import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 
 interface FolderContextMenuProps {
   folder: FolderInterface;
-  featureType?: FeatureType;
+  featureType: FeatureType;
   isOpen?: boolean;
   onDelete?: MouseEventHandler<unknown>;
   onRename?: MouseEventHandler<unknown>;

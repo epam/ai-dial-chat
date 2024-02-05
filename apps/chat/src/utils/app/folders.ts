@@ -12,8 +12,6 @@ import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
-import { getParentPath } from '../server/api';
-
 import escapeStringRegexp from 'escape-string-regexp';
 
 export const getFoldersDepth = (
@@ -347,7 +345,7 @@ export const getConversationAttachmentWithPath = (
 
 export const addGeneratedFolderId = (folder: Omit<FolderInterface, 'id'>) => ({
   ...folder,
-  id: constructPath(getParentPath(folder.folderId), folder.name),
+  id: constructPath(folder.folderId, folder.name),
 });
 
 export const getFoldersWithEntities = (

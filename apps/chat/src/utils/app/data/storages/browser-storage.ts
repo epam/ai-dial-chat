@@ -1,11 +1,15 @@
 /* eslint-disable no-restricted-globals */
 import toast from 'react-hot-toast';
 
-import { Observable, map, of, switchMap, throwError } from 'rxjs';
+import { Observable, forkJoin, map, of, switchMap, throwError } from 'rxjs';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { Entity } from '@/src/types/common';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import {
+  FolderInterface,
+  FolderType,
+  FoldersAndEntities,
+} from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import {
   DialStorage,
@@ -16,7 +20,26 @@ import {
 import { errorsMessages } from '@/src/constants/errors';
 
 import { cleanConversationHistory } from '../../clean';
-import { isLocalStorageEnabled } from '../storage';
+
+const isLocalStorageEnabled = () => {
+  const testData = 'test';
+  try {
+    localStorage.setItem(testData, testData);
+    localStorage.removeItem(testData);
+    return true;
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+      toast.error(errorsMessages.localStorageQuotaExceeded);
+      return true;
+    } else {
+      // eslint-disable-next-line no-console
+      console.info(
+        'Local storage is unavailable and session storage is used for data instead',
+      );
+      return false;
+    }
+  }
+};
 
 export class BrowserStorage implements DialStorage {
   private static storage: globalThis.Storage | undefined;
@@ -27,6 +50,13 @@ export class BrowserStorage implements DialStorage {
     } else {
       BrowserStorage.storage = sessionStorage;
     }
+  }
+
+  getConversationsAndFolders(): Observable<FoldersAndEntities<Conversation>> {
+    return forkJoin({
+      folders: this.getConversationsFolders(),
+      entities: this.getConversations(),
+    });
   }
 
   getConversations(): Observable<Conversation[]> {
@@ -86,6 +116,13 @@ export class BrowserStorage implements DialStorage {
       UIStorageKeys.ConversationHistory,
       conversations,
     );
+  }
+
+  getPromptsAndFolders(): Observable<FoldersAndEntities<Prompt>> {
+    return forkJoin({
+      folders: this.getConversationsFolders(),
+      entities: this.getPrompts(),
+    });
   }
 
   getPrompts(): Observable<Prompt[]> {

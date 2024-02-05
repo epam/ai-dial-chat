@@ -12,6 +12,7 @@ import {
 
 import { combineEpics } from 'redux-observable';
 
+import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 
 import { AppEpic } from '@/src/types/store';
@@ -43,8 +44,8 @@ const initEpic: AppEpic = (action$, state$) =>
         }),
         first(),
         switchMap(() =>
-          DataService.requestBucket().pipe(
-            map(({ bucket }) => DataService.setBucket(bucket)),
+          BucketService.requestBucket().pipe(
+            map(({ bucket }) => BucketService.setBucket(bucket)),
             catchError((error) => {
               if (error.status === 401) {
                 window.location.assign('api/auth/signin');

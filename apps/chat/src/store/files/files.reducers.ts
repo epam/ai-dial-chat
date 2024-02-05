@@ -1,17 +1,18 @@
-import { RootState } from '../index';
+import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-
-
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
-import { UploadStatus } from '@/src/types/common';
-import { DialFile, FileFolderInterface } from '@/src/types/files';
-import { FolderType } from '@/src/types/folder';
 import { constructPath } from '@/src/utils/app/file';
 import {
   getAvailableNameOnSameFolderLevel,
   getParentAndChildFolders,
 } from '@/src/utils/app/folders';
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+
+import { UploadStatus } from '@/src/types/common';
+import { DialFile, FileFolderInterface } from '@/src/types/files';
+import { FolderType } from '@/src/types/folder';
+
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
+
+import { RootState } from '../index';
 
 export interface FilesState {
   files: DialFile[];

@@ -29,6 +29,7 @@ import {
 import { isOnlySmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation, Message, Role } from '@/src/types/chat';
+import { UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
@@ -49,7 +50,6 @@ import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { ChatInputAttachments } from './ChatInput/ChatInputAttachments';
 import { MessageAttachments } from './MessageAttachments';
 import { MessageStages } from './MessageStages';
-import { UploadStatus } from '@/src/types/common';
 
 export interface Props {
   message: Message;

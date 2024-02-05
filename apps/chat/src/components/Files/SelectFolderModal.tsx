@@ -2,6 +2,8 @@ import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 
+import { FeatureType } from '@/src/types/common';
+
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
@@ -35,8 +37,12 @@ export const SelectFolderModal = ({
     FilesSelectors.selectFoldersWithSearchTerm(state, searchQuery),
   );
   const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
-  const areFoldersLoading = useAppSelector(FilesSelectors.selectAreFoldersLoading);
-  const loadingFolderIds = useAppSelector(FilesSelectors.selectLoadingFolderIds);
+  const areFoldersLoading = useAppSelector(
+    FilesSelectors.selectAreFoldersLoading,
+  );
+  const loadingFolderIds = useAppSelector(
+    FilesSelectors.selectLoadingFolderIds,
+  );
 
   const {
     handleRenameFolder,
@@ -50,8 +56,7 @@ export const SelectFolderModal = ({
     setOpenedFoldersIds,
     setIsAllFilesOpened,
   );
-  const showSpinner =
-    folders.length === 0 && areFoldersLoading;
+  const showSpinner = folders.length === 0 && areFoldersLoading;
 
   useEffect(() => {
     if (isOpen) {
@@ -110,6 +115,7 @@ export const SelectFolderModal = ({
             onAddFolder: handleAddFolder,
             newAddedFolderId: newFolderId,
             loadingFolderIds: loadingFolderIds,
+            featureType: FeatureType.File,
           }}
           handleToggleFolder={handleToggleFolder}
           isAllEntitiesOpened={isAllFilesOpened}

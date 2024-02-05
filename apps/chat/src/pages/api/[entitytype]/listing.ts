@@ -40,11 +40,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     const {
       path = '',
-      filter = '',
+      filter,
       bucket,
     } = req.query as {
       path: string;
-      filter: BackendDataNodeType;
+      filter?: BackendDataNodeType;
       bucket: string;
     };
 

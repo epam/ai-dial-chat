@@ -87,7 +87,7 @@ export interface FolderProps<T, P = unknown> {
   onDeleteFolder?: (folderId: string) => void;
   onAddFolder?: (parentFolderId: string) => void;
   onClickFolder: (folderId: string) => void;
-  featureType?: FeatureType;
+  featureType: FeatureType;
   onItemEvent?: (eventId: string, data: unknown) => void;
   readonly?: boolean;
   onFileUpload?: (parentFolderId: string) => void;
@@ -258,7 +258,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         e.preventDefault();
         e.stopPropagation();
 
-        dispatch(UIActions.openFolder({ id: currentFolder.id }));
+        dispatch(UIActions.openFolder({ id: currentFolder.id, featureType }));
         setIsDraggingOver(false);
 
         const folderData = e.dataTransfer.getData(
@@ -362,7 +362,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         dragDropElement.current?.contains(evt.target as Node) &&
         isParentFolder(dragDropElement.current, evt.target as Element)
       ) {
-        dispatch(UIActions.openFolder({ id: currentFolder.id }));
+        dispatch(UIActions.openFolder({ id: currentFolder.id, featureType }));
         setIsDraggingOver(true);
       }
     },
@@ -454,7 +454,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           getFolderMoveType(featureType),
           JSON.stringify(folder),
         );
-        dispatch(UIActions.closeFolder({ id: currentFolder.id }));
+        dispatch(UIActions.closeFolder({ id: currentFolder.id, featureType }));
       }
     },
     [currentFolder.id, dispatch, featureType, isExternal],
@@ -483,9 +483,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   useEffect(() => {
     if (searchTerm) {
-      dispatch(UIActions.openFolder({ id: currentFolder.id }));
+      dispatch(UIActions.openFolder({ id: currentFolder.id, featureType }));
     }
-  }, [currentFolder.id, dispatch, searchTerm]);
+  }, [currentFolder.id, dispatch, featureType, searchTerm]);
 
   const isHighlighted =
     isRenaming ||

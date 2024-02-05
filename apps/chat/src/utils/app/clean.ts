@@ -1,7 +1,7 @@
 import {
   Attachment,
   Conversation,
-  ConversationEntityModel, LocalStorageConversation,
+  ConversationEntityModel,
   Message,
   Stage,
 } from '@/src/types/chat';
@@ -55,7 +55,7 @@ const migrateMessageAttachmentUrls = (message: Message): Message => {
 };
 
 export const cleanConversationHistory = (
-  history: Conversation[] | LocalStorageConversation[],
+  history: Conversation[],
 ): Conversation[] => {
   // added model for each conversation (3/20/23)
   // added system prompt for each conversation (3/21/23)

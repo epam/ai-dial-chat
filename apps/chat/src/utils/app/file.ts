@@ -1,11 +1,10 @@
-import { getPathToFolderById } from './folders';
-
-
-
 import { Attachment, Conversation } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
+
+import { getPathToFolderById } from './folders';
+
 import { extensions } from 'mime-types';
 
 export function triggerDownload(url: string, name: string): void {

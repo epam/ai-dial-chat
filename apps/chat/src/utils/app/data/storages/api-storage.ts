@@ -12,7 +12,7 @@ import { generateNextName } from '@/src/utils/app/folders';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { Entity } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
 
@@ -79,6 +79,12 @@ export class ApiStorage implements DialStorage {
     return EMPTY; // don't need to save folders
   }
 
+  getConversationsAndFolders(
+    path?: string | undefined,
+  ): Observable<FoldersAndEntities<ConversationInfo>> {
+    return this._conversationApiStorage.getFoldersAndEntities(path);
+  }
+
   getConversations(path?: string): Observable<ConversationInfo[]> {
     return this._conversationApiStorage.getEntities(path);
   }
@@ -109,6 +115,12 @@ export class ApiStorage implements DialStorage {
         ),
       ),
     );
+  }
+
+  getPromptsAndFolders(
+    path?: string | undefined,
+  ): Observable<FoldersAndEntities<Entity>> {
+    return this._promptApiStorage.getFoldersAndEntities(path);
   }
 
   getPrompts(path?: string): Observable<Prompt[]> {

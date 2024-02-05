@@ -7,8 +7,8 @@ import {
 
 import classNames from 'classnames';
 
-import { DialFile } from '@/src/types/files';
 import { UploadStatus } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
 
 interface Props {
   file: Pick<DialFile, 'name' | 'id' | 'status' | 'percent'>;

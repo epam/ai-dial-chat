@@ -62,8 +62,8 @@ export const isEntityExternal = (entity: ShareEntity) =>
 
 export const hasExternalParent = (
   state: RootState,
-  folderId?: string,
-  featureType?: FeatureType,
+  folderId: string | undefined,
+  featureType: FeatureType,
 ) => {
   if (!featureType || !folderId) return false;
 
@@ -75,7 +75,7 @@ export const hasExternalParent = (
 export const isEntityOrParentsExternal = (
   state: RootState,
   entity: Entity,
-  featureType?: FeatureType,
+  featureType: FeatureType,
 ) => {
   return (
     isEntityExternal(entity) ||

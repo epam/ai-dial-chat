@@ -3,6 +3,7 @@ import { MouseEvent, MouseEventHandler, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -11,7 +12,6 @@ import { stopBubbling } from '@/src/constants/chat';
 
 import ContextMenu from '../Common/ContextMenu';
 import DownloadRenderer from './Download';
-import { UploadStatus } from '@/src/types/common';
 
 interface ContextMenuProps {
   file: DialFile;
@@ -31,7 +31,9 @@ export function FileItemContextMenu({
     () => [
       {
         name: t('Download'),
-        display: file.status !== UploadStatus.LOADING && file.status !== UploadStatus.FAILED,
+        display:
+          file.status !== UploadStatus.LOADING &&
+          file.status !== UploadStatus.FAILED,
         dataQa: 'download',
         Icon: IconDownload,
         onClick: (e: MouseEvent) => stopBubbling(e),
@@ -56,6 +58,7 @@ export function FileItemContextMenu({
       TriggerIcon={IconDots}
       triggerIconSize={18}
       className={className}
+      featureType={FeatureType.File}
     />
   );
 }

@@ -11,12 +11,12 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import Tooltip from '../Common/Tooltip';
 import { FileItemContextMenu } from './FileItemContextMenu';
-import { UploadStatus } from '@/src/types/common';
 
 export enum FileItemEventIds {
   Cancel = 'cancel',
@@ -33,7 +33,10 @@ interface Props {
   onEvent?: (eventId: FileItemEventIds, data: string) => void;
 }
 
-const cancelAllowedStatuses = new Set([UploadStatus.LOADING, UploadStatus.FAILED]);
+const cancelAllowedStatuses = new Set([
+  UploadStatus.LOADING,
+  UploadStatus.FAILED,
+]);
 
 export const FileItem = ({
   item,
@@ -86,7 +89,8 @@ export const FileItem = ({
           {!isSelected && item.status !== UploadStatus.FAILED ? (
             <IconFile
               className={classNames(
-                item.status !== UploadStatus.LOADING && 'group-hover/file-item:hidden',
+                item.status !== UploadStatus.LOADING &&
+                  'group-hover/file-item:hidden',
               )}
               size={18}
             />
@@ -103,25 +107,26 @@ export const FileItem = ({
               </Tooltip>
             )
           )}
-          {item.status !== UploadStatus.LOADING && item.status !== UploadStatus.FAILED && (
-            <div
-              className={classNames(
-                'relative size-[18px] group-hover/file-item:flex',
-                isSelected ? 'flex' : 'hidden',
-              )}
-            >
-              <input
-                className="checkbox peer size-[18px] bg-layer-3"
-                type="checkbox"
-                checked={isSelected}
-                onChange={handleToggleFile}
-              />
-              <IconCheck
-                size={18}
-                className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
-              />
-            </div>
-          )}
+          {item.status !== UploadStatus.LOADING &&
+            item.status !== UploadStatus.FAILED && (
+              <div
+                className={classNames(
+                  'relative size-[18px] group-hover/file-item:flex',
+                  isSelected ? 'flex' : 'hidden',
+                )}
+              >
+                <input
+                  className="checkbox peer size-[18px] bg-layer-3"
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={handleToggleFile}
+                />
+                <IconCheck
+                  size={18}
+                  className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+                />
+              </div>
+            )}
         </div>
         <span
           className={classNames(

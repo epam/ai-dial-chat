@@ -66,7 +66,9 @@ const PromptFolderTemplate = ({
       includeEmpty,
     ),
   );
-  const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
+  const openedFoldersIds = useAppSelector((state) =>
+    UISelectors.selectOpenedFoldersIds(state, FeatureType.Prompt),
+  );
 
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
@@ -127,7 +129,12 @@ const PromptFolderTemplate = ({
 
   const handleFolderClick = useCallback(
     (folderId: string) => {
-      dispatch(UIActions.toggleFolder({ id: folderId }));
+      dispatch(
+        UIActions.toggleFolder({
+          id: folderId,
+          featureType: FeatureType.Prompt,
+        }),
+      );
     },
     [dispatch],
   );

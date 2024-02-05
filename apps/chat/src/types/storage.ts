@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { Conversation } from '@/src/types/chat';
 
 import { ConversationInfo } from './chat';
-import { FolderInterface } from './folder';
+import { FolderInterface, FoldersAndEntities } from './folder';
 import { Prompt, PromptInfo } from './prompt';
 
 export enum StorageType {
@@ -25,6 +25,8 @@ export enum UIStorageKeys {
   PromptbarWidth = 'promptbarWidth',
   IsChatFullWidth = 'isChatFullWidth',
   OpenedFoldersIds = 'openedFoldersIds',
+  OpenedConversationFoldersIds = 'openedConversationFoldersIds',
+  OpenedPromptFoldersIds = 'openedPromptFoldersIds',
   TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
 }
 
@@ -40,6 +42,10 @@ export interface EntityStorage<
   getFolders(path?: string): Observable<FolderInterface[]>; // listing with short information
 
   getEntities(path?: string): Observable<EntityInfo[]>; // listing with short information
+
+  getFoldersAndEntities(
+    path?: string,
+  ): Observable<FoldersAndEntities<EntityInfo>>;
 
   getEntity(info: EntityInfo): Observable<Entity | null>;
 
@@ -65,6 +71,10 @@ export interface DialStorage {
 
   setPromptsFolders(folders: FolderInterface[]): Observable<void>;
 
+  getConversationsAndFolders(
+    path?: string,
+  ): Observable<FoldersAndEntities<ConversationInfo>>;
+
   getConversations(path?: string): Observable<ConversationInfo[]>;
 
   getConversation(info: ConversationInfo): Observable<Conversation | null>;
@@ -76,6 +86,10 @@ export interface DialStorage {
   deleteConversation(info: ConversationInfo): Observable<void>;
 
   setConversations(conversations: Conversation[]): Observable<void>;
+
+  getPromptsAndFolders(
+    path?: string,
+  ): Observable<FoldersAndEntities<PromptInfo>>;
 
   getPrompts(path?: string): Observable<PromptInfo[]>;
 

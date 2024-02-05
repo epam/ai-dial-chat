@@ -19,6 +19,7 @@ import {
   filterOnlyMyEntities,
 } from '@/src/utils/app/common';
 import { DataService } from '@/src/utils/app/data/data-service';
+import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
@@ -64,7 +65,7 @@ const savePromptsEpic: AppEpic = (action$, state$) =>
     ),
     map(() => PromptsSelectors.selectPrompts(state$.value)),
     switchMap((prompts) => {
-      return DataService.setPrompts(prompts);
+      return PromptService.setPrompts(prompts);
     }),
     ignoreElements(),
   );
@@ -87,7 +88,7 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       promptsFolders: PromptsSelectors.selectFolders(state$.value),
     })),
     switchMap(({ promptsFolders }) => {
-      return DataService.setPromptFolders(promptsFolders);
+      return PromptService.setPromptFolders(promptsFolders);
     }),
     ignoreElements(),
   );
@@ -188,7 +189,7 @@ const initFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
     filter((action) => PromptsActions.initFolders.match(action)),
     switchMap(() =>
-      DataService.getPromptsFolders().pipe(
+      PromptService.getPromptsFolders().pipe(
         map((folders) => {
           return PromptsActions.setFolders({
             folders,
@@ -246,7 +247,7 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
             promptsToMigrateCount: notMigratedPrompts.length,
           }),
         ),
-        DataService.setPrompts(preparedPrompts).pipe(
+        PromptService.setPrompts(preparedPrompts).pipe(
           switchMap(() => {
             migratedPromptIds.push(preparedPrompts[migratedPromptsCount].id);
             migratedPromptsCount++;
@@ -278,7 +279,7 @@ const initPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.initPrompts.match),
     switchMap(() =>
-      DataService.getPrompts().pipe(
+      PromptService.getPrompts().pipe(
         map((prompts) => {
           return PromptsActions.updatePrompts({
             prompts,
