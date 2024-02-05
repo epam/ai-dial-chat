@@ -18,6 +18,7 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import ContextMenu from '../Common/ContextMenu';
 import { FileManagerModal } from './FileManagerModal';
 import { PreUploadDialog } from './PreUploadModal';
+import { FeatureType } from '@/src/types/common';
 
 interface Props {
   selectedFilesIds?: string[];
@@ -82,6 +83,7 @@ export const AttachButton = ({
         triggerTooltip={t('Attach files') || ''}
         disabled={messageIsStreaming || !isModelLoaded}
         triggerIconHighlight
+        featureType={FeatureType.File}
       />
       {isSelectFilesDialogOpened && (
         <FileManagerModal
