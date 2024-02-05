@@ -18,7 +18,7 @@ export const Migration = ({ total, uploaded }: Props) => {
     <div className="flex h-full flex-col items-center justify-center">
       <ChatLoader containerClassName="h-auto" size={60} />
       <h1 className="mt-7 text-2xl font-semibold md:text-3xl">
-        {uploaded} out of {total}
+        {uploaded} {t('out of')} {total}
       </h1>
       <h3 className="mt-2 text-base md:text-xl">
         {t('conversations and prompts are loaded')}
