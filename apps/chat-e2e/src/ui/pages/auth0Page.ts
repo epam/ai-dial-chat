@@ -13,7 +13,7 @@ export class Auth0Page extends BasePage {
   }
 
   async loginToChatBot() {
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState();
     await this.page.waitForLoadState('domcontentloaded');
     const auth0Form = this.getAuth0();
     await auth0Form.setCredentials(

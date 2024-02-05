@@ -19,7 +19,7 @@ test(
     addons,
     addonsDialog,
     conversations,
-    apiHelper,
+    iconApiHelper,
     setTestIds,
   }) => {
     test.slow();
@@ -45,7 +45,8 @@ test(
       const actualEntity = actualEntitiesIcons.find(
         (e) => e.entityName === randomEntity.name,
       )!;
-      const expectedEntityIcon = await apiHelper.getEntityIcon(randomEntity);
+      const expectedEntityIcon =
+        await iconApiHelper.getEntityIcon(randomEntity);
       expect
         .soft(
           actualEntity.icon,
@@ -70,7 +71,7 @@ test(
       const actualAddon = actualAddonsIcons.find(
         (a) => a.entityName === randomAddon.name,
       )!;
-      const expectedAddonIcon = await apiHelper.getEntityIcon(randomAddon);
+      const expectedAddonIcon = await iconApiHelper.getEntityIcon(randomAddon);
       expect
         .soft(
           actualAddon.icon,
@@ -85,7 +86,8 @@ test(
         ExpectedConstants.newConversationTitle,
       );
       const defaultModel = ModelsUtil.getDefaultModel()!;
-      const expectedDefaultIcon = await apiHelper.getEntityIcon(defaultModel);
+      const expectedDefaultIcon =
+        await iconApiHelper.getEntityIcon(defaultModel);
       expect
         .soft(defaultConversationIcon, ExpectedMessages.entityIconIsValid)
         .toBe(expectedDefaultIcon);
@@ -100,7 +102,7 @@ test(
       const conversationIcon = await conversations.getConversationIcon(
         ExpectedConstants.newConversationTitle,
       );
-      const expectedIcon = await apiHelper.getEntityIcon(randomEntity);
+      const expectedIcon = await iconApiHelper.getEntityIcon(randomEntity);
 
       expect
         .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
