@@ -14,7 +14,6 @@ dotenv.config({ path: './.env.local' });
 /**
  * Config used for a local run
  */
-config.workers = 2;
 config.retries = 0;
 config.use!.headless = true;
 config.use!.video = 'on';

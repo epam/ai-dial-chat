@@ -1,4 +1,4 @@
-import test from '@/src/core/fixtures';
+import test, { stateFilePath } from '@/src/core/fixtures';
 import { ExpectedConstants, ExpectedMessages, ModelIds } from '@/src/testData';
 import { expect } from '@playwright/test';
 
@@ -34,38 +34,41 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.GEMINI_PRO, isSysPromptAllowed: true },
 );
 
-for (const modelToUse of modelsForArithmeticRequest) {
-  test(`Generate arithmetic response for model: ${modelToUse.modelId}`, async ({
-    conversationData,
-    chatApiHelper,
-  }) => {
-    const conversation = conversationData.prepareModelConversation(
-      0,
-      modelToUse.isSysPromptAllowed
-        ? 'Answer arithmetic question. The answer should be number, do not use natural language'
-        : '',
-      [],
-      modelToUse.modelId,
-    );
-    conversation.messages[0].content = '1+2=';
+test.describe('Chat API arithmetic request tests', () => {
+  test.use({ storageState: stateFilePath });
+  for (const modelToUse of modelsForArithmeticRequest) {
+    test(`Generate arithmetic response for model: ${modelToUse.modelId}`, async ({
+      conversationData,
+      chatApiHelper,
+    }) => {
+      const conversation = conversationData.prepareModelConversation(
+        0,
+        modelToUse.isSysPromptAllowed
+          ? 'Answer arithmetic question. The answer should be number, do not use natural language'
+          : '',
+        [],
+        modelToUse.modelId,
+      );
+      conversation.messages[0].content = '1+2=';
 
-    const response = await chatApiHelper.postRequest(conversation);
-    const status = response.status();
-    expect
-      .soft(
-        status,
-        `${ExpectedMessages.responseCodeIsValid}${modelToUse.modelId}`,
-      )
-      .toBe(200);
+      const response = await chatApiHelper.postRequest(conversation);
+      const status = response.status();
+      expect
+        .soft(
+          status,
+          `${ExpectedMessages.responseCodeIsValid}${modelToUse.modelId}`,
+        )
+        .toBe(200);
 
-    const respBody = await response.text();
-    const results = respBody.match(ExpectedConstants.responseContentPattern);
-    const result = results?.join('');
-    expect
-      .soft(
-        result,
-        `${ExpectedMessages.responseTextIsValid}${modelToUse.modelId}`,
-      )
-      .toMatch(/\s?3\.?/);
-  });
-}
+      const respBody = await response.text();
+      const results = respBody.match(ExpectedConstants.responseContentPattern);
+      const result = results?.join('');
+      expect
+        .soft(
+          result,
+          `${ExpectedMessages.responseTextIsValid}${modelToUse.modelId}`,
+        )
+        .toMatch(/\s?3\.?/);
+    });
+  }
+});
