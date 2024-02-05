@@ -11,7 +11,7 @@ import {
   ImportExportSelectors,
 } from '@/src/store/import-export/importExport.reducers';
 
-import { TransparentLoader } from '../../Common/TransparentLoader';
+import { FullPageLoader } from '../../Common/FullPageLoader';
 
 interface Props {
   isOpen: boolean;
@@ -36,7 +36,7 @@ export const ImportExportLoader = ({ isOpen }: Props) => {
       ? handleStopImport
       : handleCancelExport;
   return (
-    <TransparentLoader
+    <FullPageLoader
       loaderLabel={t(operationName)}
       isOpen={isOpen}
       onClose={() => {

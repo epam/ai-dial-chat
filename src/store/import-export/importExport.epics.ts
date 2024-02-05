@@ -348,7 +348,7 @@ const uploadAllAttachmentsSuccessEpic: AppEpic = (action$, state$) =>
       } = payload;
 
       if (!uploadedAttachments.length) {
-        return EMPTY;
+        return of(ImportExportActions.importFail());
       }
 
       const allUploadedAmount =

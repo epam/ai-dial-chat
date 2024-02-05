@@ -65,6 +65,7 @@ export default function Home({ initialState }: HomeProps) {
   const isImportingExporting = useAppSelector(
     ImportExportSelectors.selectIsLoadingImportExport,
   );
+
   const shouldOverlayLogin = isOverlay && shouldLogin;
 
   // EFFECTS  --------------------------------------------

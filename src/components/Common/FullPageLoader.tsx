@@ -12,7 +12,7 @@ interface Props {
   stopLabel: string;
   spinnerSize?: number;
 }
-export const TransparentLoader = ({
+export const FullPageLoader = ({
   onClose,
   isOpen,
   hideClose = true,
