@@ -14,6 +14,7 @@ test('Authenticate', async ({
   const retrievedResponses = await auth0Page.loginToChatBot();
   process.env.MODELS = retrievedResponses.get(API.modelsHost);
   process.env.ADDONS = retrievedResponses.get(API.addonsHost);
+  process.env.BUCKET = retrievedResponses.get(API.bucketHost);
   process.env.RECENT_ADDONS = await localStorageManager.getRecentAddons();
   process.env.RECENT_MODELS = await localStorageManager.getRecentModels();
   await page.context().storageState({ path: STORAGE_STATE });

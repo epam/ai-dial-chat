@@ -30,7 +30,7 @@ test(
     chatMessages,
     chatHeader,
     setTestIds,
-    apiHelper,
+    iconApiHelper,
   }) => {
     setTestIds('EPMRTC-1417', 'EPMRTC-1418', 'EPMRTC-1422');
     let conversation: Conversation;
@@ -38,8 +38,9 @@ test(
     let playbackConversationName: string;
 
     const expectedDefaultModelIcon =
-      await apiHelper.getEntityIcon(defaultModel);
-    const expectedSecondModelIcon = await apiHelper.getEntityIcon(gpt4Model);
+      await iconApiHelper.getEntityIcon(defaultModel);
+    const expectedSecondModelIcon =
+      await iconApiHelper.getEntityIcon(gpt4Model);
 
     await test.step('Prepare conversation to playback based on different models', async () => {
       conversation =
@@ -568,7 +569,7 @@ test('Playback: exit the mode at the end of playback', async ({
   chatMessages,
   sendMessage,
   chatHeader,
-  apiHelper,
+  iconApiHelper,
   setTestIds,
 }) => {
   setTestIds('EPMRTC-1425');
@@ -608,7 +609,7 @@ test('Playback: exit the mode at the end of playback', async ({
       .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
       .toBe(conversation.messages.length + 2);
 
-    const expectedModelIcon = await apiHelper.getEntityIcon(defaultModel);
+    const expectedModelIcon = await iconApiHelper.getEntityIcon(defaultModel);
     const sentMessageIcon = await chatMessages.getIconAttributesForMessage(
       conversation.messages.length + 2,
     );

@@ -1,3 +1,5 @@
+import config from '../../../config/playwright.config';
+
 import { API, Import } from '@/src/testData';
 import { Page } from '@playwright/test';
 import path from 'path';
@@ -41,7 +43,12 @@ export class BasePage {
   ) {
     const responses = [];
     const responseBodies = new Map<string, string>();
-    for (const host of [API.modelsHost, API.addonsHost, API.sessionHost]) {
+    for (const host of [
+      API.modelsHost,
+      API.addonsHost,
+      API.sessionHost,
+      API.bucketHost,
+    ]) {
       const resp = this.page.waitForResponse(
         (response) =>
           response.url().includes(host) && response.status() === 200,
@@ -65,11 +72,9 @@ export class BasePage {
       if (options?.setEntitiesEnvVars) {
         const body = await resolvedResp.text();
         const host = resolvedResp.url();
-        if (host.includes(API.modelsHost)) {
-          responseBodies.set(API.modelsHost, body);
-        } else if (host.includes(API.addonsHost)) {
-          responseBodies.set(API.addonsHost, body);
-        }
+        const baseURL = config.use?.baseURL;
+        const apiHost = host.replaceAll(baseURL!, '');
+        responseBodies.set(apiHost, body);
       }
     }
     return responseBodies;
@@ -90,7 +95,7 @@ export class BasePage {
 
   async reloadPage() {
     await this.page.reload();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState();
     await this.page.waitForLoadState('domcontentloaded');
   }
 

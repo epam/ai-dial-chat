@@ -1,6 +1,7 @@
 import { Import } from '@/src/testData';
 import { GeneratorUtil } from '@/src/utils/generatorUtil';
 import * as fs from 'fs';
+import { PathLike } from 'fs';
 import path from 'path';
 
 export class FileUtil {
@@ -21,7 +22,11 @@ export class FileUtil {
   }
 
   public static removeExportFolder() {
-    fs.rmSync(Import.exportPath, {
+    FileUtil.removeFolder(Import.exportPath);
+  }
+
+  public static removeFolder(path: PathLike) {
+    fs.rmSync(path, {
       recursive: true,
       force: true,
     });

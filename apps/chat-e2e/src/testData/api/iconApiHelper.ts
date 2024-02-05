@@ -1,15 +1,9 @@
 import { OpenAIEntityModel } from '@/chat/types/openai';
 import { API } from '@/src/testData';
+import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { Tags } from '@/src/ui/domData';
-import { APIRequestContext } from '@playwright/test';
 
-export class ApiHelper {
-  private request: APIRequestContext;
-
-  constructor(request: APIRequestContext) {
-    this.request = request;
-  }
-
+export class IconApiHelper extends BaseApiHelper {
   public async getDefaultEntityIcon() {
     const response = await this.request.get(API.defaultIconHost);
     return this.formatIconResponse(response.text());

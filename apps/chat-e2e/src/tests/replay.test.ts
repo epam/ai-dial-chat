@@ -205,7 +205,7 @@ test('Start replay with the new Model settings', async ({
   talkToSelector,
   chatInfoTooltip,
   errorPopup,
-  apiHelper,
+  iconApiHelper,
 }) => {
   setTestIds('EPMRTC-508');
   const replayTemp = 0;
@@ -251,7 +251,7 @@ test('Start replay with the new Model settings', async ({
 
   await test.step('Verify chat header icons are updated with new model and addon', async () => {
     const headerModelIcon = await chatHeader.getHeaderModelIcon();
-    const expectedModelIcon = await apiHelper.getEntityIcon(bison);
+    const expectedModelIcon = await iconApiHelper.getEntityIcon(bison);
     expect
       .soft(headerModelIcon, ExpectedMessages.entityIconIsValid)
       .toBe(expectedModelIcon);
@@ -265,7 +265,8 @@ test('Start replay with the new Model settings', async ({
       .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
       .toBe(bison.name);
 
-    const expectedReplayModelIcon = await apiHelper.getEntityIcon(replayModel);
+    const expectedReplayModelIcon =
+      await iconApiHelper.getEntityIcon(replayModel);
     const modelInfoIcon = await chatInfoTooltip.getModelIcon();
     expect
       .soft(modelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
@@ -411,13 +412,13 @@ test(
     chatHeader,
     chatInfoTooltip,
     errorPopup,
-    apiHelper,
+    iconApiHelper,
   }) => {
     setTestIds('EPMRTC-1323', 'EPMRTC-1324');
     const replayTemp = 0.8;
     const replayPrompt = 'reply the same text';
     let conversation: Conversation;
-    const expectedModelIcon = await apiHelper.getEntityIcon(gpt35Model);
+    const expectedModelIcon = await iconApiHelper.getEntityIcon(gpt35Model);
 
     await test.step('Prepare conversation to replay', async () => {
       conversation = conversationData.prepareModelConversation(
@@ -497,7 +498,7 @@ test(
     localStorageManager,
     chatMessages,
     conversations,
-    apiHelper,
+    iconApiHelper,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1322', 'EPMRTC-388');
@@ -528,9 +529,10 @@ test(
       await dialHomePage.waitForPageLoaded();
       await chat.startReplayForDifferentModels();
 
-      const expectedFirstModelIcon = await apiHelper.getEntityIcon(firstModel);
+      const expectedFirstModelIcon =
+        await iconApiHelper.getEntityIcon(firstModel);
       const expectedSecondModelIcon =
-        await apiHelper.getEntityIcon(secondModel);
+        await iconApiHelper.getEntityIcon(secondModel);
 
       const firstConversationIcon =
         await chatMessages.getIconAttributesForMessage(2);

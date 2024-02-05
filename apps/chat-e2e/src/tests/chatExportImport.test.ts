@@ -390,7 +390,7 @@ test(
     chatMessages,
     conversations,
     chat,
-    apiHelper,
+    iconApiHelper,
     conversationSettings,
   }) => {
     setTestIds('EPMRTC-906', 'EPMRTC-779');
@@ -430,7 +430,7 @@ test(
       await conversations
         .getConversationByName(ExpectedConstants.newConversationTitle, 2)
         .waitFor();
-      const expectedModelIcon = await apiHelper.getEntityIcon(gpt4Model);
+      const expectedModelIcon = await iconApiHelper.getEntityIcon(gpt4Model);
       const newGpt4ConversationIcon = await conversations.getConversationIcon(
         ExpectedConstants.newConversationTitle,
         2,
@@ -445,7 +445,7 @@ test(
         .getConversationByName(Import.v14AppBisonChatName)
         .waitFor();
 
-      const defaultIcon = await apiHelper.getDefaultEntityIcon();
+      const defaultIcon = await iconApiHelper.getDefaultEntityIcon();
       const bisonConversationIcon = await conversations.getConversationIcon(
         Import.v14AppBisonChatName,
       );

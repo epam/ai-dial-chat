@@ -67,7 +67,7 @@ test(
     localStorageManager,
     compare,
     compareConversationSelector,
-    apiHelper,
+    iconApiHelper,
   }) => {
     setTestIds('EPMRTC-546', 'EPMRTC-383');
     let firstModelConversation: Conversation;
@@ -152,7 +152,8 @@ test(
         const actualOptionIcon = compareOptionsIcons.find(
           (o) => o.entityName === expectedModel.name,
         )!;
-        const expectedModelIcon = await apiHelper.getEntityIcon(expectedModel);
+        const expectedModelIcon =
+          await iconApiHelper.getEntityIcon(expectedModel);
         expect
           .soft(actualOptionIcon.icon, ExpectedMessages.entityIconIsValid)
           .toBe(expectedModelIcon);
@@ -616,7 +617,7 @@ test('Apply changes with new settings for both chats in compare mode and check c
   conversations,
   chatInfoTooltip,
   errorPopup,
-  apiHelper,
+  iconApiHelper,
 }) => {
   test.slow();
   setTestIds('EPMRTC-1021');
@@ -633,10 +634,9 @@ test('Apply changes with new settings for both chats in compare mode and check c
   const secondUpdatedPrompt = 'second prompt';
   const firstUpdatedTemp = 0.5;
   const secondUpdatedTemp = 0;
-  const expectedSecondUpdatedRandomModelIcon = await apiHelper.getEntityIcon(
-    secondUpdatedRandomModel,
-  );
-  const expectedFirstUpdatedRandomModelIcon = await apiHelper.getEntityIcon(
+  const expectedSecondUpdatedRandomModelIcon =
+    await iconApiHelper.getEntityIcon(secondUpdatedRandomModel);
+  const expectedFirstUpdatedRandomModelIcon = await iconApiHelper.getEntityIcon(
     firstUpdatedRandomModel,
   );
 
@@ -777,7 +777,7 @@ test(
     conversationData,
     localStorageManager,
     compare,
-    apiHelper,
+    iconApiHelper,
   }) => {
     setTestIds('EPMRTC-556', 'EPMRTC-1134');
     let firstConversation: Conversation;
@@ -830,7 +830,7 @@ test(
         .soft(isStopButtonVisible, ExpectedMessages.responseLoadingStopped)
         .toBeFalsy();
 
-      const expectedModelIcon = await apiHelper.getEntityIcon(defaultModel);
+      const expectedModelIcon = await iconApiHelper.getEntityIcon(defaultModel);
       for (const side of sides) {
         const messageIcon =
           await chatMessages.getIconAttributesForCompareMessage(side);
