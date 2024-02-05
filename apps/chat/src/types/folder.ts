@@ -1,7 +1,6 @@
 import { ShareEntity } from './common';
 import { EntityFilters } from './search';
 
-
 export interface FolderInterface extends ShareEntity {
   type: FolderType;
   temporary?: boolean;

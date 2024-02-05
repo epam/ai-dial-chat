@@ -1,7 +1,8 @@
 /* eslint-disable no-restricted-globals */
-import { cleanConversationHistory } from '../../clean';
+import toast from 'react-hot-toast';
 
-import { errorsMessages } from '@/src/constants/errors';
+import { Observable, forkJoin, map, of, switchMap, throwError } from 'rxjs';
+
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { Entity } from '@/src/types/common';
 import {
@@ -11,8 +12,10 @@ import {
 } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage, UIStorageKeys } from '@/src/types/storage';
-import toast from 'react-hot-toast';
-import { Observable, forkJoin, map, of, switchMap, throwError } from 'rxjs';
+
+import { errorsMessages } from '@/src/constants/errors';
+
+import { cleanConversationHistory } from '../../clean';
 
 const isLocalStorageEnabled = () => {
   const testData = 'test';

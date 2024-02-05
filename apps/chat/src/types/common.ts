@@ -1,6 +1,5 @@
 import { ShareInterface } from './share';
 
-
 export enum EntityType {
   Model = 'model',
   Application = 'application',
@@ -77,9 +76,9 @@ export type DialChatEntity = Omit<
 > &
   BaseDialEntity;
 
-  export enum UploadStatus {
-    UNINITIALIZED = 'UNINITIALIZED',
-    LOADING = 'UPLOADING',
-    LOADED = 'LOADED',
-    FAILED = 'FAILED',
-  };
+export enum UploadStatus {
+  UNINITIALIZED = 'UNINITIALIZED',
+  LOADING = 'UPLOADING',
+  LOADED = 'LOADED',
+  FAILED = 'FAILED',
+}

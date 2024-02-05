@@ -1,6 +1,6 @@
-import { ApiUtils } from '../../server/api';
-
 import { Observable } from 'rxjs';
+
+import { ApiUtils } from '../../server/api';
 
 export class BucketService {
   private static bucket: string;

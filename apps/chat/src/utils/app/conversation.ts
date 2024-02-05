@@ -1,12 +1,9 @@
-import { getConversationApiKey, getParentPath } from '../server/api';
-import { constructPath } from './file';
-
-
-
 import { Conversation, Message, MessageSettings } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 
+import { getConversationApiKey, getParentPath } from '../server/api';
+import { constructPath } from './file';
 
 export const getAssitantModelId = (
   modelType: EntityType,

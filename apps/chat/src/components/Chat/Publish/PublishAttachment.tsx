@@ -28,6 +28,7 @@ import {
   getFileNameWithoutExtension,
 } from '@/src/utils/app/file';
 
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -39,7 +40,6 @@ import SidebarActionButton from '../../Buttons/SidebarActionButton';
 import ContextMenu from '../../Common/ContextMenu';
 import Tooltip from '../../Common/Tooltip';
 import DownloadRenderer from '../../Files/Download';
-import { UploadStatus } from '@/src/types/common';
 
 interface Props {
   file: DialFile;
@@ -125,7 +125,9 @@ export const PublishAttachment = ({
         name: t('Download'),
         dataQa: 'download',
         Icon: IconDownload,
-        display: file.status !== UploadStatus.LOADING && file.status !== UploadStatus.FAILED,
+        display:
+          file.status !== UploadStatus.LOADING &&
+          file.status !== UploadStatus.FAILED,
         onClick: (e: MouseEvent) => stopBubbling(e),
         className: 'flex gap-3',
         customTriggerData: file,
@@ -219,6 +221,7 @@ export const PublishAttachment = ({
             triggerIconHighlight
             triggerIconSize={18}
             isOpen={isContextMenu}
+            featureType={FeatureType.File}
           />
         </div>
       )}

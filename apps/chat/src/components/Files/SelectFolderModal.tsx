@@ -2,6 +2,8 @@ import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 
+import { FeatureType } from '@/src/types/common';
+
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
@@ -9,7 +11,6 @@ import { SelectFolder } from '@/src/components/Common/SelectFolder/SelectFolder'
 import { SelectFolderFooter } from '@/src/components/Common/SelectFolder/SelectFolderFooter';
 import { SelectFolderHeader } from '@/src/components/Common/SelectFolder/SelectFolderHeader';
 import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFolderList';
-import { FeatureType } from '@/src/types/common';
 
 interface Props {
   isOpen: boolean;
@@ -36,8 +37,12 @@ export const SelectFolderModal = ({
     FilesSelectors.selectFoldersWithSearchTerm(state, searchQuery),
   );
   const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
-  const areFoldersLoading = useAppSelector(FilesSelectors.selectAreFoldersLoading);
-  const loadingFolderIds = useAppSelector(FilesSelectors.selectLoadingFolderIds);
+  const areFoldersLoading = useAppSelector(
+    FilesSelectors.selectAreFoldersLoading,
+  );
+  const loadingFolderIds = useAppSelector(
+    FilesSelectors.selectLoadingFolderIds,
+  );
 
   const {
     handleRenameFolder,
@@ -51,8 +56,7 @@ export const SelectFolderModal = ({
     setOpenedFoldersIds,
     setIsAllFilesOpened,
   );
-  const showSpinner =
-    folders.length === 0 && areFoldersLoading;
+  const showSpinner = folders.length === 0 && areFoldersLoading;
 
   useEffect(() => {
     if (isOpen) {
@@ -111,7 +115,7 @@ export const SelectFolderModal = ({
             onAddFolder: handleAddFolder,
             newAddedFolderId: newFolderId,
             loadingFolderIds: loadingFolderIds,
-            featureType: FeatureType.File
+            featureType: FeatureType.File,
           }}
           handleToggleFolder={handleToggleFolder}
           isAllEntitiesOpened={isAllFilesOpened}

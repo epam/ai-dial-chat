@@ -1,14 +1,13 @@
-import { ConversationApiStorage } from './conversation-api-storage';
-import { PromptApiStorage } from './prompt-api-storage';
-
-
+import { EMPTY, Observable, from, mergeMap } from 'rxjs';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { Entity } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
-import { EMPTY, Observable, from, mergeMap } from 'rxjs';
+
+import { ConversationApiStorage } from './conversation-api-storage';
+import { PromptApiStorage } from './prompt-api-storage';
 
 export class ApiStorage implements DialStorage {
   private _conversationApiStorage = new ConversationApiStorage();

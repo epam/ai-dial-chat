@@ -1,11 +1,7 @@
-import { errorsMessages } from '@/src/constants/errors';
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
-import {
-  BackendChatEntity,
-  BackendChatFolder,
-  BackendDataNodeType,
-} from '@/src/types/common';
-import { BackendFile, BackendFileFolder } from '@/src/types/files';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getToken } from 'next-auth/jwt';
+import { getServerSession } from 'next-auth/next';
+
 import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIError } from '@/src/utils/server';
 import {
@@ -15,9 +11,18 @@ import {
 } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
-import { getServerSession } from 'next-auth/next';
+
+import {
+  BackendChatEntity,
+  BackendChatFolder,
+  BackendDataNodeType,
+} from '@/src/types/common';
+import { BackendFile, BackendFileFolder } from '@/src/types/files';
+
+import { errorsMessages } from '@/src/constants/errors';
+
+import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
+
 import fetch from 'node-fetch';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {

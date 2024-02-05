@@ -1,12 +1,15 @@
-import { RootState } from '../index';
+import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import { errorsMessages } from '@/src/constants/errors';
+import { translate } from '@/src/utils/app/translation';
+
 import { EntityType, UploadStatus } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import { ModelsMap } from '@/src/types/models';
 import { OpenAIEntityModel } from '@/src/types/openai';
-import { translate } from '@/src/utils/app/translation';
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+
+import { errorsMessages } from '@/src/constants/errors';
+
+import { RootState } from '../index';
 
 export interface ModelsState {
   status: UploadStatus;

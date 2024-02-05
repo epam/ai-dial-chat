@@ -8,6 +8,7 @@ import {
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
 
+import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -31,7 +32,6 @@ import { SelectFolder } from '@/src/components/Common/SelectFolder/SelectFolder'
 import { SelectFolderFooter } from '@/src/components/Common/SelectFolder/SelectFolderFooter';
 import { SelectFolderHeader } from '@/src/components/Common/SelectFolder/SelectFolderHeader';
 import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFolderList';
-import { FeatureType } from '@/src/types/common';
 
 interface Props {
   type: SharingType;
@@ -195,7 +195,7 @@ export const ChangePathDialog = ({
             onDeleteFolder: handleDeleteFolder,
             onAddFolder: handleAddFolder,
             newAddedFolderId: newFolderId,
-            featureType:FeatureType.File
+            featureType: FeatureType.File,
           }}
           handleToggleFolder={handleToggleFolder}
           isAllEntitiesOpened={isAllFoldersOpened}

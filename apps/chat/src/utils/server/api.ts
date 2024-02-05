@@ -1,12 +1,15 @@
-import { OpenAIError } from './types';
+import { NextApiRequest } from 'next';
 
-import { EMPTY_MODEL_ID } from '@/src/constants/default-settings';
+import { Observable, from, switchMap, throwError } from 'rxjs';
+import { fromFetch } from 'rxjs/fetch';
+
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
-import { NextApiRequest } from 'next';
-import { Observable, from, switchMap, throwError } from 'rxjs';
-import { fromFetch } from 'rxjs/fetch';
+
+import { EMPTY_MODEL_ID } from '@/src/constants/default-settings';
+
+import { OpenAIError } from './types';
 
 export enum ApiKeys {
   Files = 'files',

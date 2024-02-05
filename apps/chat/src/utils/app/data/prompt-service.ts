@@ -1,8 +1,9 @@
-import { DataService } from './data-service';
+import { Observable } from 'rxjs';
 
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
-import { Observable } from 'rxjs';
+
+import { DataService } from './data-service';
 
 export class PromptService {
   public static getPromptsFolders(): Observable<FolderInterface[]> {

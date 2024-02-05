@@ -72,13 +72,17 @@ const ChatFolderTemplate = ({
   const highlightedFolders = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
   );
-  const openedFoldersIds = useAppSelector(state => UISelectors.selectOpenedFoldersIds(state, FeatureType.Chat));
+  const openedFoldersIds = useAppSelector((state) =>
+    UISelectors.selectOpenedFoldersIds(state, FeatureType.Chat),
+  );
 
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, folder, FeatureType.Chat),
   );
 
-  const loadingFolderIds = useAppSelector(ConversationsSelectors.selectLoadingFolderIds)
+  const loadingFolderIds = useAppSelector(
+    ConversationsSelectors.selectLoadingFolderIds,
+  );
 
   const handleDrop = useCallback(
     (e: DragEvent, folder: FolderInterface) => {

@@ -2,7 +2,10 @@ import { DragEvent, useCallback, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { getFolderMoveType, hasDragEventFolderData } from '@/src/utils/app/move';
+import {
+  getFolderMoveType,
+  hasDragEventFolderData,
+} from '@/src/utils/app/move';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';

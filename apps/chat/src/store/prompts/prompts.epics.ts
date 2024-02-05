@@ -1,10 +1,7 @@
-import { UIActions } from '../ui/ui.reducers';
-import { PromptsActions, PromptsSelectors } from './prompts.reducers';
+import { concat, filter, ignoreElements, map, of, switchMap, tap } from 'rxjs';
 
+import { combineEpics } from 'redux-observable';
 
-import { resetShareEntity } from '@/src/constants/chat';
-import { errorsMessages } from '@/src/constants/errors';
-import { AppEpic } from '@/src/types/store';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import {
   findRootFromItems,
@@ -18,8 +15,15 @@ import {
 } from '@/src/utils/app/import-export';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
-import { combineEpics } from 'redux-observable';
-import { concat, filter, ignoreElements, map, of, switchMap, tap } from 'rxjs';
+
+import { AppEpic } from '@/src/types/store';
+
+import { resetShareEntity } from '@/src/constants/chat';
+import { errorsMessages } from '@/src/constants/errors';
+
+import { UIActions } from '../ui/ui.reducers';
+import { PromptsActions, PromptsSelectors } from './prompts.reducers';
+
 import { v4 as uuidv4 } from 'uuid';
 
 const savePromptsEpic: AppEpic = (action$, state$) =>

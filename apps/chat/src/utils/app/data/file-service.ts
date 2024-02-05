@@ -1,6 +1,4 @@
-import { ApiKeys, ApiUtils, getParentPath } from '../../server/api';
-import { constructPath } from '../file';
-import { BucketService } from './bucket-service';
+import { Observable, map } from 'rxjs';
 
 import { BackendDataNodeType } from '@/src/types/common';
 import {
@@ -10,7 +8,10 @@ import {
   FileFolderInterface,
 } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
-import { Observable, map } from 'rxjs';
+
+import { ApiKeys, ApiUtils, getParentPath } from '../../server/api';
+import { constructPath } from '../file';
+import { BucketService } from './bucket-service';
 
 export class FileService {
   public static sendFile(

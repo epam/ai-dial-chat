@@ -1,6 +1,9 @@
-import { constructPath, getDialFilesFromAttachments, notAllowedSymbols, notAllowedSymbolsRegex } from '@/src/utils/app/file';
-
-
+import {
+  constructPath,
+  getDialFilesFromAttachments,
+  notAllowedSymbols,
+  notAllowedSymbolsRegex,
+} from '@/src/utils/app/file';
 
 import { Conversation } from '@/src/types/chat';
 import { ShareEntity } from '@/src/types/common';
@@ -8,8 +11,6 @@ import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
-
-
 
 import escapeStringRegexp from 'escape-string-regexp';
 

@@ -1,10 +1,11 @@
-import { DataService } from './data-service';
-import { BrowserStorage } from './storages/browser-storage';
+import { Observable } from 'rxjs';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { UIStorageKeys } from '@/src/types/storage';
-import { Observable } from 'rxjs';
+
+import { DataService } from './data-service';
+import { BrowserStorage } from './storages/browser-storage';
 
 export class ConversationService {
   public static getConversationsFolders(
