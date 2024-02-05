@@ -273,23 +273,6 @@ export class DataService extends FileService {
     return BrowserStorage.setData(key, migratedEntityIds);
   }
 
-  public static getIsEntitiesMigrated(
-    key:
-      | MigrationStorageKeys.IsConversationsMigrated
-      | MigrationStorageKeys.IsPromptsMigrated,
-  ): Observable<boolean> {
-    return BrowserStorage.getData(key, false);
-  }
-
-  public static setIsEntitiesMigrated(
-    isEntitiesMigrated: boolean,
-    key:
-      | MigrationStorageKeys.IsConversationsMigrated
-      | MigrationStorageKeys.IsPromptsMigrated,
-  ): Observable<void> {
-    return BrowserStorage.setData(key, isEntitiesMigrated);
-  }
-
   private static getDataStorage(): DialStorage {
     if (!this.dataStorage) {
       this.setDataStorage();

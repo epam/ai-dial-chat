@@ -546,18 +546,10 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
         migratedConversationIds: DataService.getMigratedEntityIds(
           MigrationStorageKeys.MigratedConversationIds,
         ),
-        isConversationsMigrated: DataService.getIsEntitiesMigrated(
-          MigrationStorageKeys.IsConversationsMigrated,
-        ),
       }),
     ),
     switchMap(
-      ({
-        conversations,
-        conversationsFolders,
-        migratedConversationIds,
-        isConversationsMigrated,
-      }) => {
+      ({ conversations, conversationsFolders, migratedConversationIds }) => {
         const notMigratedConversations = filterNotMigratedEntities(
           conversations,
           migratedConversationIds,
@@ -566,7 +558,6 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
         if (
           SettingsSelectors.selectStorageType(state$.value) !==
             StorageType.API ||
-          isConversationsMigrated ||
           !notMigratedConversations.length
         ) {
           return EMPTY;
@@ -614,16 +605,7 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
               ),
             );
           }),
-          finalize(() => {
-            if (migratedConversationIds.length === conversations.length) {
-              DataService.setIsEntitiesMigrated(
-                true,
-                MigrationStorageKeys.IsConversationsMigrated,
-              );
-            }
-
-            return window.location.reload();
-          }),
+          finalize(() => window.location.reload()),
         );
       },
     ),

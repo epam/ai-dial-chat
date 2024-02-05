@@ -30,22 +30,35 @@ export class ApiStorage implements DialStorage {
     entities: T[],
     apiStorage: ApiEntityStorage<PromptInfo | ConversationInfo, T>,
   ): Observable<void> {
-    return apiStorage.createEntity(entity).pipe(
-      catchError((err) => {
-        if (err.message === 'Conflict') {
-          const updatedEntity = {
-            ...entity,
-            name: generateNextName(
-              DEFAULT_CONVERSATION_NAME,
-              entity.name,
-              entities,
-            ),
-          };
+    return this.getConversations(entity.folderId).pipe(
+      concatMap((conversations) => {
+        const apiConversations: ConversationInfo[] = conversations;
 
-          return this.tryCreateEntity(updatedEntity, entities, apiStorage);
-        }
+        const retry = (
+          entity: T,
+          entities: T[],
+          apiStorage: ApiEntityStorage<PromptInfo | ConversationInfo, T>,
+        ): Observable<void> =>
+          apiStorage.createEntity(entity).pipe(
+            catchError((err) => {
+              if (err.message === 'Conflict') {
+                const updatedEntity = {
+                  ...entity,
+                  name: generateNextName(
+                    DEFAULT_CONVERSATION_NAME,
+                    entity.name,
+                    [...entities, ...apiConversations],
+                  ),
+                };
 
-        return throwError(() => err);
+                return retry(updatedEntity, entities, apiStorage);
+              }
+
+              return throwError(() => err);
+            }),
+          );
+
+        return retry(entity, entities, apiStorage);
       }),
     );
   }
