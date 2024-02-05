@@ -408,7 +408,6 @@ const uploadAllAttachmentsSuccessEpic: AppEpic = (action$, state$) =>
 
               return {
                 ...oldAttachment,
-                title: newAttachmentFile.name,
                 url: encodeURI(
                   `${newAttachmentFile.absolutePath}/${newAttachmentFile.name}`,
                 ),
