@@ -582,7 +582,7 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
             return {
               ...conv,
               name: conv.name.replace(notAllowedSymbolsRegex, ''),
-              folderId: path,
+              folderId: path.replace(notAllowedSymbolsRegex, ''),
             };
           }); // to send conversation with proper parentPath and lastActivityDate order
 

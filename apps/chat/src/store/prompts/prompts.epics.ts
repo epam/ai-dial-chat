@@ -236,7 +236,7 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
         return {
           ...prompt,
           name: prompt.name.replace(notAllowedSymbolsRegex, ''),
-          folderId: path,
+          folderId: path.replace(notAllowedSymbolsRegex, ''),
         };
       }); // to send prompts with proper parentPath
 
