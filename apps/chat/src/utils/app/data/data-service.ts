@@ -1,13 +1,19 @@
 /* eslint-disable no-restricted-globals */
+import { Observable, map } from 'rxjs';
+
+import { isSmallScreen } from '@/src/utils/app/mobile';
+
+import { FeatureType } from '@/src/types/common';
+import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
+import { Theme } from '@/src/types/themes';
+
+import { openFoldersInitialState } from '@/src/store/ui/ui.reducers';
+
+import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
+
 import { ApiUtils } from '../../server/api';
 import { ApiStorage } from './storages/api-storage';
 import { BrowserStorage } from './storages/browser-storage';
-
-import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
-import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
-import { Theme } from '@/src/types/themes';
-import { isSmallScreen } from '@/src/utils/app/mobile';
-import { Observable, map } from 'rxjs';
 
 export class DataService {
   // storage
@@ -129,16 +135,25 @@ export class DataService {
     return BrowserStorage.setData(UIStorageKeys.ShowPromptbar, showPromptbar);
   }
 
-  public static getOpenedFolderIds(): Observable<string[]> {
-    return BrowserStorage.getData(UIStorageKeys.OpenedFoldersIds, []);
+  public static getOpenedFolderIds(): Observable<
+    Record<FeatureType, string[]>
+  > {
+    return BrowserStorage.getData(
+      UIStorageKeys.OpenedFoldersIds,
+      openFoldersInitialState,
+    );
   }
 
   public static setOpenedFolderIds(
-    openedFolderIds: string[],
+    openedFolderIds: Record<FeatureType, string[]>,
   ): Observable<void> {
     return BrowserStorage.setData(
       UIStorageKeys.OpenedFoldersIds,
-      openedFolderIds,
+      openedFolderIds &&
+        openedFolderIds[FeatureType.Chat] &&
+        openedFolderIds[FeatureType.Prompt]
+        ? openedFolderIds
+        : openFoldersInitialState,
     );
   }
 

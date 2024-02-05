@@ -165,7 +165,7 @@ const saveOpenedFoldersIdsEpic: AppEpic = (action$, state$) =>
         UIActions.closeFolder.match(action),
     ),
     map(() => {
-      return UISelectors.selectOpenedFoldersIds(state$.value);
+      return UISelectors.selectAllOpenedFoldersIds(state$.value);
     }),
     switchMap((openedFolderIds) =>
       DataService.setOpenedFolderIds(openedFolderIds),

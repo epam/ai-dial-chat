@@ -25,12 +25,12 @@ export interface DisplayMenuItemProps {
 }
 
 export type MenuItemRendererProps = DisplayMenuItemProps & {
-  featureType?: FeatureType;
+  featureType: FeatureType;
 };
 
 export interface MenuProps {
   menuItems: DisplayMenuItemProps[];
-  featureType?: FeatureType;
+  featureType: FeatureType;
   displayMenuItemCount?: number;
   className?: string;
   disabled?: boolean;

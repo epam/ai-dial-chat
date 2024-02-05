@@ -1,55 +1,5 @@
-import { AddonsActions } from '../addons/addons.reducers';
-import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
-import { UIActions, UISelectors } from '../ui/ui.reducers';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from './conversations.reducers';
-import { hasExternalParent } from './conversations.selectors';
-
-import { resetShareEntity } from '@/src/constants/chat';
-import {
-  DEFAULT_CONVERSATION_NAME,
-  DEFAULT_SYSTEM_PROMPT,
-  DEFAULT_TEMPERATURE,
-} from '@/src/constants/default-settings';
-import { errorsMessages } from '@/src/constants/errors';
-import { defaultReplay } from '@/src/constants/replay';
-import {
-  ChatBody,
-  Conversation,
-  Message,
-  MessageSettings,
-  Playback,
-  RateBody,
-  Role,
-} from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
-import { AppEpic } from '@/src/types/store';
-import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import {
-  addGeneratedConversationId,
-  getNewConversationName,
-  isSettingsChanged,
-} from '@/src/utils/app/conversation';
-import { ConversationService } from '@/src/utils/app/data/conversation-service';
-import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
-import {
-  ImportConversationsResponse,
-  exportConversation,
-  exportConversations,
-  importConversations,
-} from '@/src/utils/app/import-export';
-import {
-  mergeMessages,
-  parseStreamMessages,
-} from '@/src/utils/app/merge-streams';
-import { filterUnfinishedStages } from '@/src/utils/app/stages';
-import { translate } from '@/src/utils/app/translation';
-import { AnyAction } from '@reduxjs/toolkit';
 import toast from 'react-hot-toast';
-import { combineEpics } from 'redux-observable';
+
 import {
   EMPTY,
   Observable,
@@ -78,6 +28,61 @@ import {
   zip,
 } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
+
+import { AnyAction } from '@reduxjs/toolkit';
+
+import { combineEpics } from 'redux-observable';
+
+import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
+import {
+  addGeneratedConversationId,
+  getNewConversationName,
+  isSettingsChanged,
+} from '@/src/utils/app/conversation';
+import { ConversationService } from '@/src/utils/app/data/conversation-service';
+import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
+import {
+  ImportConversationsResponse,
+  exportConversation,
+  exportConversations,
+  importConversations,
+} from '@/src/utils/app/import-export';
+import {
+  mergeMessages,
+  parseStreamMessages,
+} from '@/src/utils/app/merge-streams';
+import { filterUnfinishedStages } from '@/src/utils/app/stages';
+import { translate } from '@/src/utils/app/translation';
+
+import {
+  ChatBody,
+  Conversation,
+  Message,
+  MessageSettings,
+  Playback,
+  RateBody,
+  Role,
+} from '@/src/types/chat';
+import { EntityType, FeatureType } from '@/src/types/common';
+import { AppEpic } from '@/src/types/store';
+
+import { resetShareEntity } from '@/src/constants/chat';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+} from '@/src/constants/default-settings';
+import { errorsMessages } from '@/src/constants/errors';
+import { defaultReplay } from '@/src/constants/replay';
+
+import { AddonsActions } from '../addons/addons.reducers';
+import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
+import { UIActions, UISelectors } from '../ui/ui.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from './conversations.reducers';
 
 const createNewConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -183,7 +188,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
       const newConversation: Conversation = addGeneratedConversationId({
         ...conversation,
         ...resetShareEntity,
-        folderId: hasExternalParent(
+        folderId: ConversationsSelectors.hasExternalParent(
           { conversations: state$.value },
           conversation.folderId,
         )
@@ -239,7 +244,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
       const newConversation: Conversation = addGeneratedConversationId({
         ...conversation,
         ...resetShareEntity,
-        folderId: hasExternalParent(
+        folderId: ConversationsSelectors.hasExternalParent(
           { conversations: state$.value },
           conversation.folderId,
         )
@@ -513,12 +518,14 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const initConversationsEpic: AppEpic = (action$) =>
+const initConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.initConversations.match),
     switchMap(() =>
       forkJoin({
-        conversations: ConversationService.getConversations(),
+        conversations: of(
+          ConversationsSelectors.selectConversations(state$.value),
+        ),
         selectedConversationsIds:
           ConversationService.getSelectedConversationsIds(),
       }),
@@ -542,9 +549,9 @@ const initConversationsEpic: AppEpic = (action$) =>
     }),
     switchMap(({ conversations, selectedConversationsIds }) => {
       const actions: Observable<AnyAction>[] = [];
-      actions.push(
-        of(ConversationsActions.updateConversations({ conversations })),
-      );
+      // actions.push(
+      //   of(ConversationsActions.updateConversations({ conversations })),
+      // );
       actions.push(
         of(
           ConversationsActions.selectConversations({
@@ -1632,18 +1639,26 @@ const playbackCalncelEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const initFoldersEpic: AppEpic = (action$) =>
+const initFoldersEndConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter((action) => ConversationsActions.initFolders.match(action)),
+    filter((action) =>
+      ConversationsActions.initFoldersEndConversations.match(action),
+    ),
     switchMap(() =>
-      ConversationService.getConversationsFolders().pipe(
-        switchMap((folders) => {
+      ConversationService.getConversationsAndFolders().pipe(
+        switchMap(({ folders, entities }) => {
           return concat(
             of(
               ConversationsActions.setFolders({
                 folders,
               }),
             ),
+            of(
+              ConversationsActions.updateConversations({
+                conversations: entities,
+              }),
+            ),
+            of(ConversationsActions.initConversations()),
             of(ConversationsActions.uploadOpenFolders({ paths: [undefined] })),
           );
         }),
@@ -1656,7 +1671,7 @@ const uploadOpenFoldersEpic: AppEpic = (action$, state$) =>
     filter((action) => ConversationsActions.uploadOpenFolders.match(action)),
     switchMap(({ payload }) => {
       const openFolderIds = new Set(
-        UISelectors.selectOpenedFoldersIds(state$.value),
+        UISelectors.selectOpenedFoldersIds(state$.value, FeatureType.Chat),
       );
       const openFolders = ConversationsSelectors.selectFolders(
         state$.value,
@@ -1680,12 +1695,7 @@ const uploadOpenFoldersEpic: AppEpic = (action$, state$) =>
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
     filter((action) => ConversationsActions.init.match(action)),
-    switchMap(() =>
-      concat(
-        of(ConversationsActions.initFolders()),
-        of(ConversationsActions.initConversations()),
-      ),
-    ),
+    switchMap(() => of(ConversationsActions.initFoldersEndConversations())),
   );
 
 const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
@@ -1827,10 +1837,18 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.toggleFolder.match),
     switchMap(({ payload }) => {
-      const openedFoldersIds = UISelectors.selectOpenedFoldersIds(state$.value);
+      const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
+        state$.value,
+        FeatureType.Chat,
+      );
       const isOpened = openedFoldersIds.includes(payload.folderId);
       return concat(
-        of(UIActions.toggleFolder({ id: payload.folderId })),
+        of(
+          UIActions.toggleFolder({
+            id: payload.folderId,
+            featureType: FeatureType.Chat,
+          }),
+        ),
         iif(
           () => !isOpened,
           of(
@@ -1848,7 +1866,7 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
 export const ConversationsEpics = combineEpics(
   initEpic,
   initConversationsEpic,
-  initFoldersEpic,
+  initFoldersEndConversationsEpic,
 
   selectConversationsEpic,
   createNewConversationsEpic,

@@ -13,23 +13,25 @@ export enum MoveType {
   FileFolder = 'files_folder',
 }
 
-export const getFolderMoveType = (featureType?: FeatureType): MoveType => {
+export const getFolderMoveType = (featureType: FeatureType): MoveType => {
   switch (featureType) {
     case FeatureType.Chat:
       return MoveType.ConversationFolder;
     case FeatureType.Prompt:
       return MoveType.PromptFolder;
+    case FeatureType.File:
     default:
       return MoveType.FileFolder;
   }
 };
 
-export const getEntityMoveType = (featureType?: FeatureType): MoveType => {
+export const getEntityMoveType = (featureType: FeatureType): MoveType => {
   switch (featureType) {
     case FeatureType.Chat:
       return MoveType.Conversation;
     case FeatureType.Prompt:
       return MoveType.Prompt;
+    case FeatureType.File:
     default:
       return MoveType.File;
   }
@@ -37,7 +39,7 @@ export const getEntityMoveType = (featureType?: FeatureType): MoveType => {
 
 export const hasDragEventEntityData = (
   event: DragEvent,
-  featureType?: FeatureType,
+  featureType: FeatureType,
 ): boolean => {
   return (
     event.dataTransfer?.types.includes(getEntityMoveType(featureType)) ?? false
@@ -46,7 +48,7 @@ export const hasDragEventEntityData = (
 
 export const hasDragEventFolderData = (
   event: DragEvent,
-  featureType?: FeatureType,
+  featureType: FeatureType,
 ): boolean => {
   return (
     event.dataTransfer?.types.includes(getFolderMoveType(featureType)) ?? false
@@ -55,7 +57,7 @@ export const hasDragEventFolderData = (
 
 export const hasDragEventAnyData = (
   event: DragEvent,
-  featureType?: FeatureType,
+  featureType: FeatureType,
 ): boolean => {
   return (
     hasDragEventEntityData(event, featureType) ||

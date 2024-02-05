@@ -1,9 +1,10 @@
+import { Observable } from 'rxjs';
+
+import { Conversation } from '@/src/types/chat';
+
 import { ConversationInfo } from './chat';
 import { FolderInterface, FoldersAndEntities } from './folder';
 import { Prompt, PromptInfo } from './prompt';
-
-import { Conversation } from '@/src/types/chat';
-import { Observable } from 'rxjs';
 
 export enum StorageType {
   BrowserStorage = 'browserStorage',
@@ -24,6 +25,8 @@ export enum UIStorageKeys {
   PromptbarWidth = 'promptbarWidth',
   IsChatFullWidth = 'isChatFullWidth',
   OpenedFoldersIds = 'openedFoldersIds',
+  OpenedConversationFoldersIds = 'openedConversationFoldersIds',
+  OpenedPromptFoldersIds = 'openedPromptFoldersIds',
   TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
 }
 

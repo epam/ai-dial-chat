@@ -11,6 +11,7 @@ export enum EntityType {
 export enum FeatureType {
   Chat = 'chat',
   Prompt = 'prompt',
+  File = 'file',
 }
 
 export enum BackendDataNodeType {

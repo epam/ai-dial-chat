@@ -2,10 +2,7 @@ import * as ConversationsSelectors from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
 
 import { resetShareEntity } from '@/src/constants/chat';
-import {
-  DEFAULT_CONVERSATION_NAME,
-  DEFAULT_FOLDER_NAME,
-} from '@/src/constants/default-settings';
+import { DEFAULT_CONVERSATION_NAME, DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { SupportedExportFormats } from '@/src/types/export';
@@ -14,11 +11,7 @@ import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
 import { combineEntities } from '@/src/utils/app/common';
 import { addGeneratedConversationId } from '@/src/utils/app/conversation';
-import {
-  addGeneratedFolderId,
-  generateNextName,
-  getNextDefaultName,
-} from '@/src/utils/app/folders';
+import { addGeneratedFolderId, generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
@@ -70,43 +63,6 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{ names: string[] }>,
     ) => state,
-    // createNewConversationsSuccess: (
-    //   state,
-    //   {
-    //     payload,
-    //   }: PayloadAction<{
-    //     names: string[];
-    //     temperature: number | undefined;
-    //     model: ConversationEntityModel;
-    //   }>,
-    // ) => {
-    //   const newConversations: Conversation[] = payload.names.map(
-    //     (name, index): Conversation => {
-    //       return generateConversationId({
-    //         name:
-    //           name !== DEFAULT_CONVERSATION_NAME
-    //             ? name
-    //             : getNextDefaultName(
-    //                 DEFAULT_CONVERSATION_NAME,
-    //                 state.conversations,
-    //                 index,
-    //               ),
-    //         messages: [],
-    //         model: {
-    //           id: payload.model.id,
-    //         },
-    //         prompt: DEFAULT_SYSTEM_PROMPT,
-    //         temperature: payload.temperature ?? DEFAULT_TEMPERATURE,
-    //         replay: defaultReplay,
-    //         selectedAddons: [],
-    //         lastActivityDate: Date.now(),
-    //         isMessageStreaming: false,
-    //       });
-    //     },
-    //   );
-    //   state.conversations = state.conversations.concat(newConversations); // TODO: save in API
-    //   state.selectedConversationsIds = newConversations.map(({ id }) => id);
-    // },
     updateConversation: (
       state,
       _action: PayloadAction<{ id: string; values: Partial<Conversation> }>,
@@ -477,10 +433,10 @@ export const conversationsSlice = createSlice({
       const folderIndex = state.folders.findIndex(
         (folder) => folder.id === payload.folderId,
       );
-      const updatedFolderContent = {
+      const updatedFolderContent = addGeneratedFolderId({
         ...state.folders[folderIndex],
         folderId: payload.newParentFolderId,
-      };
+      });
       state.folders = state.folders
         .toSpliced(folderIndex, 1)
         .toSpliced(
@@ -636,7 +592,7 @@ export const conversationsSlice = createSlice({
       state.isPlaybackPaused = true;
     },
 
-    initFolders: (state) => state,
+    initFoldersEndConversations: (state) => state,
     uploadOpenFolders: (
       state,
       _action: PayloadAction<{

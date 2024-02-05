@@ -72,7 +72,7 @@ const ChatFolderTemplate = ({
   const highlightedFolders = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
   );
-  const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
+  const openedFoldersIds = useAppSelector(state => UISelectors.selectOpenedFoldersIds(state, FeatureType.Chat));
 
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, folder, FeatureType.Chat),

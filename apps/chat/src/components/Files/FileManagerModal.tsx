@@ -28,6 +28,7 @@ import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
+import { FeatureType } from '@/src/types/common';
 
 interface Props {
   isOpen: boolean;
@@ -332,6 +333,7 @@ export const FileManagerModal = ({
                               onRenameFolder={handleRenameFolder}
                               onItemEvent={handleItemCallback}
                               withBorderHighlight={false}
+                              featureType={FeatureType.File}
                             />
                           </div>
                         );

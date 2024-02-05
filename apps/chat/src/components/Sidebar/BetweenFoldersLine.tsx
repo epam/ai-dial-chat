@@ -17,7 +17,7 @@ interface BetweenFoldersLineProps {
     index: number,
   ) => void;
   onDraggingOver?: (isDraggingOver: boolean) => void;
-  featureType?: FeatureType;
+  featureType: FeatureType;
   denyDrop?: boolean;
 }
 

@@ -9,6 +9,7 @@ import { SelectFolder } from '@/src/components/Common/SelectFolder/SelectFolder'
 import { SelectFolderFooter } from '@/src/components/Common/SelectFolder/SelectFolderFooter';
 import { SelectFolderHeader } from '@/src/components/Common/SelectFolder/SelectFolderHeader';
 import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFolderList';
+import { FeatureType } from '@/src/types/common';
 
 interface Props {
   isOpen: boolean;
@@ -110,6 +111,7 @@ export const SelectFolderModal = ({
             onAddFolder: handleAddFolder,
             newAddedFolderId: newFolderId,
             loadingFolderIds: loadingFolderIds,
+            featureType: FeatureType.File
           }}
           handleToggleFolder={handleToggleFolder}
           isAllEntitiesOpened={isAllFilesOpened}

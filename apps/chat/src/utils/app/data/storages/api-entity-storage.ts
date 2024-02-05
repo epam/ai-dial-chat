@@ -25,7 +25,7 @@ export abstract class ApiEntityStorage<
     const relativePath = folder.parentPath || undefined;
 
     return {
-      id: constructPath(getParentPath(folder.parentPath), folder.name),
+      id: constructPath(folder.parentPath, folder.name),
       name: folder.name,
       folderId: relativePath,
       type: getFolderTypeByApiKey(this.getStorageKey()),
@@ -37,7 +37,7 @@ export abstract class ApiEntityStorage<
 
     return {
       ...info,
-      id: constructPath(getParentPath(entity.parentPath), entity.name),
+      id: constructPath(entity.parentPath, entity.name),
       lastActivityDate: entity.updatedAt,
       folderId: relativePath,
     };
