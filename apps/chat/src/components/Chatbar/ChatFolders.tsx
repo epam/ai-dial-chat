@@ -29,7 +29,7 @@ import {
 
 import Folder from '@/src/components/Folder/Folder';
 
-import CollapsableSection from '../../Common/CollapsableSection';
+import CollapsableSection from '../Common/CollapsableSection';
 import { ConversationComponent } from './Conversation';
 
 interface ChatFolderProps {
@@ -220,7 +220,7 @@ export const ChatSection = ({
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >
-      <div className='flex flex-col gap-1'>
+      <div className="flex flex-col gap-1">
         {rootFolders.map((folder) => {
           return (
             <ChatFolderTemplate

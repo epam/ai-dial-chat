@@ -20,6 +20,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
+  compareEntitiesByName,
   getChildAndCurrentFoldersIdsById,
   getFoldersDepth,
 } from '@/src/utils/app/folders';
@@ -195,15 +196,19 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     return openedFoldersIds.includes(currentFolder.id);
   }, [currentFolder.id, openedFoldersIds]);
   const filteredChildFolders = useMemo(() => {
-    return allFolders.filter((folder) => folder.folderId === currentFolder.id);
+    return allFolders
+      .filter((folder) => folder.folderId === currentFolder.id)
+      .sort(compareEntitiesByName);
   }, [currentFolder, allFolders]);
   const filteredChildItems = useMemo(() => {
     return (
-      allItems?.filter(
-        (item) =>
-          item.folderId === currentFolder.id &&
-          doesEntityContainSearchItem(item, searchTerm),
-      ) || []
+      allItems
+        ?.filter(
+          (item) =>
+            item.folderId === currentFolder.id &&
+            (!searchTerm || doesEntityContainSearchItem(item, searchTerm)),
+        )
+        .sort(compareEntitiesByName) || []
     );
   }, [allItems, currentFolder.id, searchTerm]);
 

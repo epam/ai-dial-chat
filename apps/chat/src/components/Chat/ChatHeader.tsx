@@ -24,9 +24,9 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { ModelIcon } from '../Chatbar/components/ModelIcon';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
+import { ModelIcon } from '../Chatbar/ModelIcon';
 import Tooltip from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
 

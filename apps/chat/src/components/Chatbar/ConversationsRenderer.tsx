@@ -5,7 +5,7 @@ import { Conversation } from '@/src/types/chat';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
-import CollapsableSection from '../../Common/CollapsableSection';
+import CollapsableSection from '../Common/CollapsableSection';
 import { ConversationComponent } from './Conversation';
 
 interface ConversationsRendererProps {

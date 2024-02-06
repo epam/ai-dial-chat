@@ -11,6 +11,8 @@ license_choices:
   repository_license_choices:
     - given: 'GPL-2.0-only OR MIT'
       choice: 'MIT'
+    - given: 'GPL-3.0-or-later OR MIT'
+      choice: 'MIT'
 resolutions:
   rule_violations:
     - message: "No license information is available for dependency \
