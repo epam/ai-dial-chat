@@ -139,11 +139,12 @@ export class BasePage {
 
   public async uploadData<T>(
     uploadData: UploadDownloadData,
-    method: () => Promise<T>,
+    method?: () => Promise<T>,
   ) {
     const directory = uploadData.isDownloadedData ? '' : Import.importPath;
     const fileChooserPromise = this.page.waitForEvent('filechooser');
-    await method();
+    //TODO rewrite to use default 'method' only
+    method ? await method() : this.page.getByText('Open').click();
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(directory, uploadData.path));
   }

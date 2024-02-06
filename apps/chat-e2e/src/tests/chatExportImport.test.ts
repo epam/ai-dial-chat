@@ -399,7 +399,7 @@ test(
       await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
       await dialHomePage.uploadData(
         { path: Import.v14AppImportedFilename },
-        () => chatBar.importButton.click(),
+        // () => chatBar.importButton.click(),
       );
 
       await folderConversations.expandCollapseFolder(
