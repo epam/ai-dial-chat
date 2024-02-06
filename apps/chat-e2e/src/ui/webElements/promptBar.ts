@@ -31,4 +31,34 @@ export class PromptBar extends SideBar {
     await this.newEntityButton.waitForState();
     await this.newEntityButton.click();
   }
+
+  public async dragAndDropPromptFromFolder(
+    folderName: string,
+    promptName: string,
+  ) {
+    const folderPrompt = await this.getFolderPrompts().getFolderEntity(
+      folderName,
+      promptName,
+    );
+    await this.dragAndDropEntityFromFolder(folderPrompt);
+  }
+
+  public async drugPromptToFolder(folderName: string, promptName: string) {
+    const folder = this.getFolderPrompts().getFolderByName(folderName);
+    const prompt = this.getPrompts().getPromptByName(promptName);
+    await this.dragEntityToFolder(prompt, folder);
+  }
+
+  public async drugAndDropPromptToFolderPrompt(
+    folderName: string,
+    folderPromptName: string,
+    promptName: string,
+  ) {
+    const folderPrompt = this.getFolderPrompts().getFolderEntity(
+      folderName,
+      folderPromptName,
+    );
+    const prompt = this.getPrompts().getPromptByName(promptName);
+    await this.dragAndDropEntityToFolder(prompt, folderPrompt);
+  }
 }
