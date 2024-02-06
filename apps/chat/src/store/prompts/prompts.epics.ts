@@ -23,7 +23,7 @@ import {
 import { DataService } from '@/src/utils/app/data/data-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   findRootFromItems,
   getFolderIdByPath,
@@ -232,10 +232,12 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
 
       const preparedPrompts: Prompt[] = notMigratedPrompts.map((prompt) => {
         const { path } = getPathToFolderById(promptsFolders, prompt.folderId);
+        const newName = prompt.name.replace(notAllowedSymbolsRegex, '');
 
         return {
           ...prompt,
-          name: prompt.name.replace(notAllowedSymbolsRegex, ''),
+          id: constructPath(...[path, newName]),
+          name: newName,
           folderId: path.replace(notAllowedSymbolsRegex, ''),
         };
       }); // to send prompts with proper parentPath
@@ -280,9 +282,6 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
           finalize(() => window.location.reload()),
         ),
       );
-    }),
-    catchError(() => {
-      return of(); // TODO: show toast?
     }),
   );
 };

@@ -8,6 +8,7 @@ import {
 } from 'rxjs';
 
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api-entity-storage';
+import { constructPath } from '@/src/utils/app/file';
 import { generateNextName } from '@/src/utils/app/folders';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
@@ -46,13 +47,16 @@ export class ApiStorage implements DialStorage {
             catchError((err) => {
               if (err.message === 'Conflict' && retries < MAX_RETRIES_COUNT) {
                 retries++;
+
+                const newName = generateNextName(
+                  DEFAULT_CONVERSATION_NAME,
+                  entity.name,
+                  [...entities, ...apiEntities],
+                );
                 const updatedEntity = {
                   ...entity,
-                  name: generateNextName(
-                    DEFAULT_CONVERSATION_NAME,
-                    entity.name,
-                    [...entities, ...apiEntities],
-                  ),
+                  id: constructPath(entity.folderId, newName),
+                  name: newName,
                 };
 
                 return retry(updatedEntity, entities, apiStorage);

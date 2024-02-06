@@ -48,7 +48,7 @@ import {
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   generateNextName,
   getNextDefaultName,
@@ -578,10 +578,12 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
               conversationsFolders,
               conv.folderId,
             );
+            const newName = conv.name.replace(notAllowedSymbolsRegex, '');
 
             return {
               ...conv,
-              name: conv.name.replace(notAllowedSymbolsRegex, ''),
+              id: constructPath(...[path, newName]),
+              name: newName,
               folderId: path.replace(notAllowedSymbolsRegex, ''),
             };
           }); // to send conversation with proper parentPath and lastActivityDate order
@@ -629,9 +631,6 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
         );
       },
     ),
-    catchError(() => {
-      return of(); // TODO: show toast?
-    }),
   );
 };
 
