@@ -189,7 +189,6 @@ test(
 
 test(
   'Folders can expand and collapse.\n' +
-    'Expanded and collapsed chat folders are stored locally.\n' +
     '[UI] Expand/collapse icon near chat folder appears if there is any chat inside',
   async ({
     dialHomePage,
@@ -198,7 +197,7 @@ test(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-579', 'EPMRTC-1315', 'EPMRTC-1365');
+    setTestIds('EPMRTC-579', 'EPMRTC-1365');
     let firstConversationInFolder: FolderConversation;
     let secondConversationInFolder: FolderConversation;
     let emptyFolder: FolderInterface;
@@ -241,43 +240,6 @@ test(
       expect
         .soft(emptyFolderCaret, ExpectedMessages.folderCaretIsNotVisible)
         .toBe(Attributes.invisible);
-    });
-
-    await test.step('Expand one folder, collapse another and verify state is saved after browser refresh', async () => {
-      await folderConversations.expandCollapseFolder(
-        firstConversationInFolder.folders.name,
-      );
-      for (let i = 1; i <= 2; i++) {
-        await folderConversations.expandCollapseFolder(
-          secondConversationInFolder.folders.name,
-        );
-      }
-
-      let i = 2;
-      while (i > 0) {
-        if (i === 1) {
-          await dialHomePage.reloadPage();
-          await dialHomePage.waitForPageLoaded();
-        }
-        const isFirstConversationVisible =
-          await folderConversations.isFolderEntityVisible(
-            firstConversationInFolder.folders.name,
-            firstConversationInFolder.conversations[0].name,
-          );
-        expect
-          .soft(isFirstConversationVisible, ExpectedMessages.folderExpanded)
-          .toBeTruthy();
-
-        const isSecondConversationVisible =
-          await folderConversations.isFolderEntityVisible(
-            secondConversationInFolder.folders.name,
-            secondConversationInFolder.conversations[0].name,
-          );
-        expect
-          .soft(isSecondConversationVisible, ExpectedMessages.folderCollapsed)
-          .toBeFalsy();
-        i--;
-      }
     });
   },
 );
