@@ -1,22 +1,45 @@
 import toast from 'react-hot-toast';
 
-
-
-import { EMPTY, Observable, Subject, TimeoutError, catchError, concat, delay, filter, forkJoin, from, ignoreElements, iif, map, merge, mergeMap, of, startWith, switchMap, take, takeWhile, tap, throwError, timeout, zip } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  Subject,
+  TimeoutError,
+  catchError,
+  concat,
+  delay,
+  filter,
+  forkJoin,
+  from,
+  ignoreElements,
+  iif,
+  map,
+  merge,
+  mergeMap,
+  of,
+  startWith,
+  switchMap,
+  take,
+  takeWhile,
+  tap,
+  throwError,
+  timeout,
+  zip,
+} from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
-
-
 
 import { AnyAction } from '@reduxjs/toolkit';
 
-
-
 import { combineEpics } from 'redux-observable';
 
-
-
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import { addGeneratedConversationId, getNewConversationName, isSettingsChanged, parseConversationId } from '@/src/utils/app/conversation';
+import {
+  addGeneratedConversationId,
+  compareConversationsByDate,
+  getNewConversationName,
+  isSettingsChanged,
+  parseConversationId,
+} from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
@@ -71,7 +94,7 @@ const initEpic: AppEpic = (action$) =>
     filter((action) => ConversationsActions.init.match(action)),
     switchMap(() =>
       concat(
-        //of(ConversationsActions.initSelectedConversations()),
+        of(ConversationsActions.initSelectedConversations()),
         of(ConversationsActions.initFoldersEndConversations()),
       ),
     ),
@@ -169,7 +192,7 @@ const initFoldersEndConversationsEpic: AppEpic = (action$) =>
           const conversations = foldersAndEntities.flatMap((f) => f.entities);
           return concat(
             of(
-              ConversationsActions.addFolders({
+              ConversationsActions.setFolders({
                 folders,
               }),
             ),
@@ -178,7 +201,12 @@ const initFoldersEndConversationsEpic: AppEpic = (action$) =>
                 conversations,
               }),
             ),
-            //of(ConversationsActions.uploadOpenFolders({ paths: [undefined] })),
+            of(
+              UIActions.setOpenedFoldersIds({
+                openedFolderIds: paths,
+                featureType: FeatureType.Chat,
+              }),
+            ),
           );
         }),
       );
@@ -591,7 +619,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
           of(
             ConversationsActions.selectConversations({
               conversationIds: [
-                otherConversations[otherConversations.length - 1].id,
+                otherConversations.sort(compareConversationsByDate)[0].id,
               ],
             }),
           ),
@@ -1865,7 +1893,6 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
           of(
             ConversationsActions.uploadConversationsWithFolders({
               paths: [payload.folderId],
-              withOpenChildren: true,
             }),
           ),
           EMPTY,

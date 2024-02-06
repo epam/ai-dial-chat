@@ -5,11 +5,11 @@ import {
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
 
-import { Conversation } from '@/src/types/chat';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderInterface, FolderType } from '@/src/types/folder';
-import { Prompt } from '@/src/types/prompt';
+import { FolderInterface } from '@/src/types/folder';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
 import escapeStringRegexp from 'escape-string-regexp';
@@ -360,47 +360,32 @@ export const splitPath = (id: string) => {
   };
 };
 
-// export const getAllFoldersFromPath = (
-//   path: string,
-//   type: FolderType,
-// ): FolderInterface[] => {
-//   const parts = path.split('/');
-//   const folders = [];
-//   for (let i = 0; i < parts.length - 1; i++) {
-//     const id = constructPath(...parts.slice(0, i + 1));
-//     const parentPath = constructPath(...parts.slice(0, i)) || undefined;
-//     const folder: FolderInterface = {
-//       id,
-//       name: parts[i],
-//       folderId: parentPath,
-//       type,
-//     };
-//     folders.push(folder);
-//   }
-//   return folders;
-// };
-// export const getAllFoldersFromEntityId = (
-//   id: string,
-//   type: FolderType,
-// ): FolderInterface[] => {
-//   const { parentPath } = splitPath(id);
-//   return parentPath ? getAllFoldersFromPath(parentPath, type) : [];
-// };
-
 export const getAllPathsFromPath = (path: string): string[] => {
-  const { parentPath } = splitPath(path);
-  if (!parentPath) return [path];
-
-  const parts = parentPath.split('/');
+  const parts = path.split('/');
   const paths = [];
-  for (let i = 0; i < parts.length - 1; i++) {
-    const path = constructPath(...parts.slice(0, i + 1));
+  for (let i = 1; i <= parts.length; i++) {
+    const path = constructPath(...parts.slice(0, i));
     paths.push(path);
   }
-  return [path, ...paths];
+  return paths;
 };
 
 export const getAllPathsFromId = (id: string): string[] => {
   const { parentPath } = splitPath(id);
   return parentPath ? getAllPathsFromPath(parentPath) : [];
+};
+
+export const compareEntitiesByName = <
+  T extends ConversationInfo | PromptInfo | DialFile,
+>(
+  a: T,
+  b: T,
+) => {
+  if (a.name > b.name) {
+    return 1;
+  }
+  if (a.name < b.name) {
+    return -1;
+  }
+  return 0;
 };

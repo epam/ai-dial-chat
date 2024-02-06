@@ -3,6 +3,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { compareConversationsByDate } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import {
+  getAllPathsFromId,
   getChildAndCurrentFoldersIdsById,
   getConversationAttachmentWithPath,
   getFilteredFolders,
@@ -112,8 +113,9 @@ export const selectSectionFolders = createSelector(
 
 export const selectLastConversation = createSelector(
   [selectConversations],
-  (state): ConversationInfo | undefined => {
-    return state?.sort(compareConversationsByDate)?.[0];
+  (conversations): ConversationInfo | undefined => {
+    if (!conversations.length) return undefined;
+    return [...conversations].sort(compareConversationsByDate)[0];
   },
 );
 export const selectConversation = createSelector(
@@ -148,24 +150,10 @@ export const selectParentFolders = createSelector(
     return getParentAndCurrentFoldersById(folders, folderId);
   },
 );
-const selectParentFoldersIds = createSelector(
-  [selectParentFolders],
-  (folders) => {
-    return folders.map((folder) => folder.id);
-  },
-);
 export const selectSelectedConversationsFoldersIds = createSelector(
-  [(state) => state, selectSelectedConversations],
-  (state, conversations) => {
-    let selectedFolders: string[] = [];
-
-    conversations.forEach((conv) => {
-      selectedFolders = selectedFolders.concat(
-        selectParentFoldersIds(state, conv.folderId),
-      );
-    });
-
-    return selectedFolders;
+  [selectSelectedConversationsIds],
+  (selectedConversationsIds) => {
+    return selectedConversationsIds.flatMap((id) => getAllPathsFromId(id));
   },
 );
 export const selectChildAndCurrentFoldersIdsById = createSelector(

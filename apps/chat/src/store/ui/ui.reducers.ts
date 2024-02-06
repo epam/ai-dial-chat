@@ -106,12 +106,13 @@ export const uiSlice = createSlice({
     ) => state,
     setOpenedFoldersIds: (
       state,
-      { payload }: PayloadAction<UIState['openedFoldersIds']>,
+      {
+        payload,
+      }: PayloadAction<{ openedFolderIds: string[]; featureType: FeatureType }>,
     ) => {
       state.openedFoldersIds = {
-        [FeatureType.Chat]: Array.from(new Set(payload[FeatureType.Chat])),
-        [FeatureType.Prompt]: Array.from(new Set(payload[FeatureType.Prompt])),
-        [FeatureType.File]: Array.from(new Set(payload[FeatureType.File])),
+        ...state.openedFoldersIds,
+        [payload.featureType]: Array.from(new Set(payload.openedFolderIds)),
       };
     },
     toggleFolder: (

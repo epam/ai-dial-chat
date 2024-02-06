@@ -20,6 +20,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
+  compareEntitiesByName,
   getChildAndCurrentFoldersIdsById,
   getFoldersDepth,
 } from '@/src/utils/app/folders';
@@ -199,11 +200,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   }, [currentFolder, allFolders]);
   const filteredChildItems = useMemo(() => {
     return (
-      allItems?.filter(
-        (item) =>
-          item.folderId === currentFolder.id &&
-          doesEntityContainSearchItem(item, searchTerm),
-      ) || []
+      allItems
+        ?.filter(
+          (item) =>
+            item.folderId === currentFolder.id &&
+            (!searchTerm || doesEntityContainSearchItem(item, searchTerm)),
+        )
+        .sort(compareEntitiesByName) || []
     );
   }, [allItems, currentFolder.id, searchTerm]);
 
@@ -515,7 +518,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               hidden={!hasChildElements && !displayCaretAlways}
             />
 
-            {loadingFolderIds.includes(currentFolder.id) ? (
+            {loadingFolderIds.includes(currentFolder.id) &&
+            !hasChildElements ? (
               <Spinner />
             ) : (
               <ShareIcon
@@ -560,7 +564,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               hidden={!hasChildElements && !displayCaretAlways}
             />
 
-            {loadingFolderIds.includes(currentFolder.id) ? (
+            {loadingFolderIds.includes(currentFolder.id) &&
+            !hasChildElements ? (
               <Spinner className="mr-1" />
             ) : (
               <ShareIcon
