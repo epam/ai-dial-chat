@@ -13,6 +13,7 @@ import {
   parseConversationApiKey,
 } from '../server/api';
 import { constructPath } from './file';
+import { splitPath } from './folders';
 
 export const getAssitantModelId = (
   modelType: EntityType,
@@ -109,14 +110,9 @@ export const addGeneratedConversationId = (
 });
 
 export const parseConversationId = (id: string): ConversationInfo => {
-  const parts = id.split('/');
-  const key = parts[parts.length - 1];
-  const parentPath =
-    parts.length > 1
-      ? constructPath(...parts.slice(0, parts.length - 1))
-      : undefined;
+  const { name, parentPath } = splitPath(id);
   return {
-    ...parseConversationApiKey(key),
+    ...parseConversationApiKey(name),
     folderId: parentPath,
   };
 };

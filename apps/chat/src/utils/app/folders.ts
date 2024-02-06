@@ -8,7 +8,7 @@ import {
 import { Conversation } from '@/src/types/chat';
 import { ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
@@ -346,3 +346,61 @@ export const addGeneratedFolderId = (folder: Omit<FolderInterface, 'id'>) => ({
   ...folder,
   id: constructPath(folder.folderId, folder.name),
 });
+
+export const splitPath = (id: string) => {
+  const parts = id.split('/');
+  const name = parts[parts.length - 1];
+  const parentPath =
+    parts.length > 1
+      ? constructPath(...parts.slice(0, parts.length - 1))
+      : undefined;
+  return {
+    name,
+    parentPath,
+  };
+};
+
+// export const getAllFoldersFromPath = (
+//   path: string,
+//   type: FolderType,
+// ): FolderInterface[] => {
+//   const parts = path.split('/');
+//   const folders = [];
+//   for (let i = 0; i < parts.length - 1; i++) {
+//     const id = constructPath(...parts.slice(0, i + 1));
+//     const parentPath = constructPath(...parts.slice(0, i)) || undefined;
+//     const folder: FolderInterface = {
+//       id,
+//       name: parts[i],
+//       folderId: parentPath,
+//       type,
+//     };
+//     folders.push(folder);
+//   }
+//   return folders;
+// };
+// export const getAllFoldersFromEntityId = (
+//   id: string,
+//   type: FolderType,
+// ): FolderInterface[] => {
+//   const { parentPath } = splitPath(id);
+//   return parentPath ? getAllFoldersFromPath(parentPath, type) : [];
+// };
+
+export const getAllPathsFromPath = (path: string): string[] => {
+  const { parentPath } = splitPath(path);
+  if (!parentPath) return [path];
+
+  const parts = parentPath.split('/');
+  const paths = [];
+  for (let i = 0; i < parts.length - 1; i++) {
+    const path = constructPath(...parts.slice(0, i + 1));
+    paths.push(path);
+  }
+  return [path, ...paths];
+};
+
+export const getAllPathsFromId = (id: string): string[] => {
+  const { parentPath } = splitPath(id);
+  return parentPath ? getAllPathsFromPath(parentPath) : [];
+};

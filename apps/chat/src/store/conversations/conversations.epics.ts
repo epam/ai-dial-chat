@@ -1,47 +1,29 @@
 import toast from 'react-hot-toast';
 
-import {
-  EMPTY,
-  Observable,
-  Subject,
-  TimeoutError,
-  catchError,
-  concat,
-  delay,
-  filter,
-  forkJoin,
-  from,
-  ignoreElements,
-  iif,
-  map,
-  merge,
-  mergeMap,
-  of,
-  startWith,
-  switchMap,
-  take,
-  takeWhile,
-  tap,
-  throwError,
-  timeout,
-  zip,
-} from 'rxjs';
+
+
+import { EMPTY, Observable, Subject, TimeoutError, catchError, concat, delay, filter, forkJoin, from, ignoreElements, iif, map, merge, mergeMap, of, startWith, switchMap, take, takeWhile, tap, throwError, timeout, zip } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
+
+
 
 import { AnyAction } from '@reduxjs/toolkit';
 
+
+
 import { combineEpics } from 'redux-observable';
 
+
+
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import {
-  addGeneratedConversationId,
-  getNewConversationName,
-  isSettingsChanged,
-  parseConversationId,
-} from '@/src/utils/app/conversation';
+import { addGeneratedConversationId, getNewConversationName, isSettingsChanged, parseConversationId } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
+import {
+  generateNextName,
+  getAllPathsFromId,
+  getNextDefaultName,
+} from '@/src/utils/app/folders';
 import {
   ImportConversationsResponse,
   exportConversation,
@@ -89,7 +71,7 @@ const initEpic: AppEpic = (action$) =>
     filter((action) => ConversationsActions.init.match(action)),
     switchMap(() =>
       concat(
-        of(ConversationsActions.initSelectedConversations()),
+        //of(ConversationsActions.initSelectedConversations()),
         of(ConversationsActions.initFoldersEndConversations()),
       ),
     ),
@@ -173,9 +155,18 @@ const initFoldersEndConversationsEpic: AppEpic = (action$) =>
     filter((action) =>
       ConversationsActions.initFoldersEndConversations.match(action),
     ),
-    switchMap(() =>
-      ConversationService.getConversationsAndFolders().pipe(
-        switchMap(({ folders, entities }) => {
+    switchMap(() => ConversationService.getSelectedConversationsIds()),
+    switchMap((selectedIds) => {
+      const paths = selectedIds.flatMap((id) => getAllPathsFromId(id));
+      const uploadPaths = [undefined, ...paths];
+      return zip(
+        uploadPaths.map((path) =>
+          ConversationService.getConversationsAndFolders(path),
+        ),
+      ).pipe(
+        switchMap((foldersAndEntities) => {
+          const folders = foldersAndEntities.flatMap((f) => f.folders);
+          const conversations = foldersAndEntities.flatMap((f) => f.entities);
           return concat(
             of(
               ConversationsActions.addFolders({
@@ -184,14 +175,14 @@ const initFoldersEndConversationsEpic: AppEpic = (action$) =>
             ),
             of(
               ConversationsActions.updateConversations({
-                conversations: entities,
+                conversations,
               }),
             ),
             //of(ConversationsActions.uploadOpenFolders({ paths: [undefined] })),
           );
         }),
-      ),
-    ),
+      );
+    }),
   );
 
 const createNewConversationsEpic: AppEpic = (action$, state$) =>
@@ -1764,6 +1755,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
       const newConversation: Conversation = addGeneratedConversationId({
         ...(conversation as Conversation),
         ...values,
+        lastActivityDate: Date.now(),
       });
       return concat(
         of(
