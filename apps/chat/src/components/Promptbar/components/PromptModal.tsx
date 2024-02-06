@@ -147,7 +147,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
       </div>
 
       {!isLoading ? (
-        !selectedPrompt ? (
+        selectedPrompt ? (
           <>
             <div className="mb-4">
               <label
