@@ -8,7 +8,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import toast from 'react-hot-toast';
 
 import { useTranslation } from 'next-i18next';
 
@@ -113,12 +112,8 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
   }, []);
 
   useEffect(() => {
-    if (selectedPrompt) {
-      setDescription(selectedPrompt?.description || '');
-      setContent(selectedPrompt?.content || '');
-    } else {
-      toast('Prompt not found');
-    }
+    setDescription(selectedPrompt?.description || '');
+    setContent(selectedPrompt?.content || '');
   }, [selectedPrompt]);
 
   const inputClassName = classNames('input-form', 'peer', {

@@ -25,6 +25,7 @@ import {
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
 
 import { resetShareEntity } from '@/src/constants/chat';
@@ -455,18 +456,21 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.uploadPrompt.match),
     switchMap(({ payload }) => {
-      const prompt = PromptsSelectors.selectPrompt(
+      const originalPrompt = PromptsSelectors.selectPrompt(
         state$.value,
         payload.promptId,
+      ) as PromptInfo;
+
+      return PromptService.getPrompt(originalPrompt).pipe(
+        map((servicePrompt) => ({ originalPrompt, servicePrompt })),
       );
-
-      if (!prompt) {
-        return of(null);
-      }
-
-      return PromptService.getPrompt(prompt);
     }),
-    map((prompt) => PromptsActions.uploadPromptSuccess({ prompt })),
+    map(({ servicePrompt, originalPrompt }) => {
+      return PromptsActions.uploadPromptSuccess({
+        prompt: servicePrompt,
+        originalPromptId: originalPrompt.id,
+      });
+    }),
   );
 
 export const PromptsEpics = combineEpics(
