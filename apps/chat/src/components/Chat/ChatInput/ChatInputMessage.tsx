@@ -355,6 +355,7 @@ export const ChatInputMessage = ({
               ? t('Type a message') || ''
               : t('Type a text or «/» to use a prompt...') || ''
           }
+          disabled={isPromptLoading}
           value={content}
           rows={1}
           onCompositionStart={() => setIsTyping(true)}

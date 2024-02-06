@@ -165,6 +165,7 @@ export const SystemPrompt: FC<Props> = ({
         style={{ maxHeight: `${MAX_HEIGHT}px` }}
         value={content}
         rows={1}
+        disabled={isPromptLoading}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         data-qa="system-prompt"
