@@ -1328,7 +1328,7 @@ const playbackPrevMessageEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const playbackCalncelEpic: AppEpic = (action$, state$) =>
+const playbackCancelEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.playbackCancel.match),
     map(() => ({
@@ -1683,7 +1683,7 @@ export const ConversationsEpics = combineEpics(
   playbackNextMessageStartEpic,
   playbackNextMessageEndEpic,
   playbackPrevMessageEpic,
-  playbackCalncelEpic,
+  playbackCancelEpic,
 
   shareFolderEpic,
   shareConversationEpic,
