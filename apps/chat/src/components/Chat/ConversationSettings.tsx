@@ -14,8 +14,7 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 
-import { ModelIcon } from '../Chatbar/components/ModelIcon';
-
+import { ModelIcon } from '../Chatbar/ModelIcon';
 import { Addons } from './Addons';
 import { AssistantSubModelSelector } from './AssistantSubModelSelector';
 import { ConversationSettingsModel } from './ConversationSettingsModels';

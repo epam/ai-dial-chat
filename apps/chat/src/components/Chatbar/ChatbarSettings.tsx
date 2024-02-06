@@ -10,7 +10,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { FeatureType } from '@/src/types/common';
-import { SupportedExportFormats } from '@/src/types/export';
+import { SupportedExportFormats } from '@/src/types/importExport';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
@@ -19,6 +19,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
@@ -57,6 +58,24 @@ export const ChatbarSettings = () => {
     );
   }, [dispatch]);
 
+  const jsonImportHandler = useCallback(
+    (jsonContent: SupportedExportFormats) => {
+      dispatch(
+        ImportExportActions.importConversations({
+          data: jsonContent as SupportedExportFormats,
+        }),
+      );
+    },
+    [dispatch],
+  );
+
+  const zipImportHandler = useCallback(
+    (zipFile: File) => {
+      dispatch(ImportExportActions.importZipConversations({ zipFile }));
+    },
+    [dispatch],
+  );
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -69,23 +88,27 @@ export const ChatbarSettings = () => {
       },
       {
         name: t('Import conversations'),
-        onClick: (importJSON: unknown) => {
-          dispatch(
-            ConversationsActions.importConversations({
-              data: importJSON as SupportedExportFormats,
-            }),
-          );
+        onClick: (importArgs: unknown) => {
+          const typedArgs = importArgs as { content: unknown; zip?: boolean };
+
+          if (!typedArgs.zip) {
+            jsonImportHandler(typedArgs.content as SupportedExportFormats);
+          }
+          if (typedArgs.zip) {
+            zipImportHandler(typedArgs.content as File);
+          }
         },
         Icon: IconFileArrowLeft,
         dataQa: 'import',
         CustomTriggerRenderer: Import,
       },
       {
-        name: t('Export conversations'),
+        name: t('Export conversations without attachments'),
         dataQa: 'export',
+        className: 'max-w-[158px]',
         Icon: IconFileArrowRight,
         onClick: () => {
-          dispatch(ConversationsActions.exportConversations());
+          dispatch(ImportExportActions.exportConversations());
         },
       },
       {
@@ -116,7 +139,15 @@ export const ChatbarSettings = () => {
         },
       },
     ],
-    [dispatch, enabledFeatures, handleToggleCompare, isStreaming, t],
+    [
+      dispatch,
+      enabledFeatures,
+      handleToggleCompare,
+      isStreaming,
+      t,
+      jsonImportHandler,
+      zipImportHandler,
+    ],
   );
 
   return (

@@ -11,7 +11,7 @@ import { Translation } from '@/src/types/translation';
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
-import { ModelIcon } from '../Chatbar/components/ModelIcon';
+import { ModelIcon } from '../Chatbar/ModelIcon';
 
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import Tooltip from '../Common/Tooltip';
