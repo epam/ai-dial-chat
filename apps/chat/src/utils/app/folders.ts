@@ -6,7 +6,7 @@ import {
 } from '@/src/utils/app/file';
 
 import { Conversation } from '@/src/types/chat';
-import { ShareEntity } from '@/src/types/common';
+import { Entity, ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
@@ -341,4 +341,14 @@ export const getConversationAttachmentWithPath = (
       (message) => message.custom_content?.attachments || [],
     ) || [],
   ).map((file) => ({ ...file, relativePath: path, contentLength: 0 }));
+};
+
+export const compareEntitiesByName = <T extends Entity>(a: T, b: T) => {
+  if (a.name > b.name) {
+    return 1;
+  }
+  if (a.name < b.name) {
+    return -1;
+  }
+  return 0;
 };
