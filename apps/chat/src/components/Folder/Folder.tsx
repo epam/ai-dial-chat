@@ -196,7 +196,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     return openedFoldersIds.includes(currentFolder.id);
   }, [currentFolder.id, openedFoldersIds]);
   const filteredChildFolders = useMemo(() => {
-    return allFolders.filter((folder) => folder.folderId === currentFolder.id);
+    return allFolders
+      .filter((folder) => folder.folderId === currentFolder.id)
+      .sort(compareEntitiesByName);
   }, [currentFolder, allFolders]);
   const filteredChildItems = useMemo(() => {
     return (

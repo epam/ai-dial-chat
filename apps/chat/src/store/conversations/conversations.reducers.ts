@@ -442,25 +442,18 @@ export const conversationsSlice = createSlice({
       }: PayloadAction<{
         folderId: string;
         newParentFolderId: string | undefined;
-        newIndex: number;
       }>,
     ) => {
-      const folderIndex = state.folders.findIndex(
-        (folder) => folder.id === payload.folderId,
-      );
-      const updatedFolderContent = addGeneratedFolderId({
-        ...state.folders[folderIndex],
-        folderId: payload.newParentFolderId,
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.folderId) {
+          return {
+            ...folder,
+            folderId: payload.newParentFolderId,
+          };
+        }
+
+        return folder;
       });
-      state.folders = state.folders
-        .toSpliced(folderIndex, 1)
-        .toSpliced(
-          folderIndex < payload.newIndex
-            ? payload.newIndex - 1
-            : payload.newIndex,
-          0,
-          updatedFolderContent,
-        );
     },
     setFolders: (
       state,

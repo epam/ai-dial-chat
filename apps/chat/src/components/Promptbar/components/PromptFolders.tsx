@@ -2,11 +2,13 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { compareEntitiesByName } from '@/src/utils/app/folders';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilter,
 } from '@/src/utils/app/search';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
@@ -29,16 +31,19 @@ import {
 import Folder from '@/src/components/Folder/Folder';
 
 import CollapsableSection from '../../Common/CollapsableSection';
+import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { PromptComponent } from './Prompt';
 
 interface promptFolderProps {
   folder: FolderInterface;
+  isLast: boolean;
   filters: EntityFilters;
   includeEmpty: boolean;
 }
 
 const PromptFolderTemplate = ({
   folder,
+  isLast,
   filters,
   includeEmpty = false,
 }: promptFolderProps) => {
@@ -61,6 +66,10 @@ const PromptFolderTemplate = ({
   );
   const openedFoldersIds = useAppSelector((state) =>
     UISelectors.selectOpenedFoldersIds(state, FeatureType.Prompt),
+  );
+
+  const isExternal = useAppSelector((state) =>
+    isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
   );
 
   const handleDrop = useCallback(
@@ -89,12 +98,23 @@ const PromptFolderTemplate = ({
               PromptsActions.moveFolder({
                 folderId: movedFolder.id,
                 newParentFolderId: folder.id,
-                newIndex: 0,
               }),
             );
           }
         }
       }
+    },
+    [dispatch],
+  );
+
+  const onDropBetweenFolders = useCallback(
+    (folder: FolderInterface, parentFolderId: string | undefined) => {
+      dispatch(
+        PromptsActions.moveFolder({
+          folderId: folder.id,
+          newParentFolderId: parentFolderId,
+        }),
+      );
     },
     [dispatch],
   );
@@ -112,30 +132,48 @@ const PromptFolderTemplate = ({
   );
 
   return (
-    <Folder
-      maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
-      searchTerm={searchTerm}
-      currentFolder={folder}
-      itemComponent={PromptComponent}
-      allItems={prompts}
-      allFolders={promptFolders}
-      highlightedFolders={highlightedFolders}
-      openedFoldersIds={openedFoldersIds}
-      handleDrop={handleDrop}
-      onRenameFolder={(name, folderId) => {
-        dispatch(
-          PromptsActions.renameFolder({
-            folderId,
-            name,
-          }),
-        );
-      }}
-      onDeleteFolder={(folderId: string) =>
-        dispatch(PromptsActions.deleteFolder({ folderId }))
-      }
-      onClickFolder={handleFolderClick}
-      featureType={FeatureType.Prompt}
-    />
+    <>
+      <BetweenFoldersLine
+        level={0}
+        onDrop={onDropBetweenFolders}
+        parentFolderId={folder.folderId}
+        featureType={FeatureType.Prompt}
+        denyDrop={isExternal}
+      />
+      <Folder
+        maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
+        searchTerm={searchTerm}
+        currentFolder={folder}
+        itemComponent={PromptComponent}
+        allItems={prompts}
+        allFolders={promptFolders}
+        highlightedFolders={highlightedFolders}
+        openedFoldersIds={openedFoldersIds}
+        handleDrop={handleDrop}
+        onRenameFolder={(name, folderId) => {
+          dispatch(
+            PromptsActions.renameFolder({
+              folderId,
+              name,
+            }),
+          );
+        }}
+        onDeleteFolder={(folderId: string) =>
+          dispatch(PromptsActions.deleteFolder({ folderId }))
+        }
+        onClickFolder={handleFolderClick}
+        featureType={FeatureType.Prompt}
+      />
+      {isLast && (
+        <BetweenFoldersLine
+          level={0}
+          onDrop={onDropBetweenFolders}
+          parentFolderId={folder.folderId}
+          featureType={FeatureType.Prompt}
+          denyDrop={isExternal}
+        />
+      )}
+    </>
   );
 };
 
@@ -164,12 +202,14 @@ export const PromptSection = ({
   );
 
   const rootFolders = useMemo(
-    () => folders.filter(({ folderId }) => !folderId),
+    () =>
+      folders.filter(({ folderId }) => !folderId).sort(compareEntitiesByName),
     [folders],
   );
 
   const rootPrompts = useMemo(
-    () => prompts.filter(({ folderId }) => !folderId),
+    () =>
+      prompts.filter(({ folderId }) => !folderId).sort(compareEntitiesByName),
     [prompts],
   );
 
@@ -214,10 +254,11 @@ export const PromptSection = ({
       isHighlighted={isSectionHighlighted}
     >
       <div>
-        {rootFolders.map((folder) => (
+        {rootFolders.map((folder, index, arr) => (
           <PromptFolderTemplate
             key={folder.id}
             folder={folder}
+            isLast={index === arr.length - 1}
             filters={filters}
             includeEmpty={showEmptyFolders}
           />

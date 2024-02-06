@@ -54,11 +54,6 @@ test('Filter "Shared by me" shows only shared chats', async ({
       emptyFolder,
       folderConversation.folders,
     );
-    await localStorageManager.setOpenedFolders(
-      ...nestedFolders,
-      emptyFolder,
-      folderConversation.folders,
-    );
     await localStorageManager.setConversationHistory(
       ...nestedSharedConversations,
       ...nestedConversations,
@@ -72,6 +67,13 @@ test('Filter "Shared by me" shows only shared chats', async ({
   await test.step('Open chat panel filter, check "Shared by me" option and verify only shared conversations and parent folders are shown', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    for (const nestedFolder of nestedFolders) {
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }
+    await folderConversations.expandCollapseFolder(emptyFolder.name);
+    await folderConversations.expandCollapseFolder(
+      folderConversation.folders.name,
+    );
     await chatFilter.openFilterDropdownMenu();
     await chatFilterDropdownMenu.selectMenuOption(FilterMenuOptions.sharedByMe);
 
@@ -204,11 +206,6 @@ test('Filter "Shared by me" shows only shared prompts', async ({
       emptyFolder,
       folderPrompt.folders,
     );
-    await localStorageManager.setOpenedFolders(
-      ...nestedFolders,
-      emptyFolder,
-      folderPrompt.folders,
-    );
     await localStorageManager.setPrompts(
       ...nestedSharedPrompts,
       ...nestedPrompts,
@@ -221,6 +218,11 @@ test('Filter "Shared by me" shows only shared prompts', async ({
   await test.step('Open prompt panel filter, check "Shared by me" option and verify only shared prompts and parent folders are shown', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    for (const nestedFolder of nestedFolders) {
+      await folderPrompts.expandCollapseFolder(nestedFolder.name);
+    }
+    await folderPrompts.expandCollapseFolder(emptyFolder.name);
+    await folderPrompts.expandCollapseFolder(folderPrompt.folders.name);
     await promptFilter.openFilterDropdownMenu();
     await promptFilterDropdownMenu.selectMenuOption(
       FilterMenuOptions.sharedByMe,
