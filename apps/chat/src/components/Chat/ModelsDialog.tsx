@@ -23,8 +23,7 @@ import {
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 
-import { ModelIcon } from '../Chatbar/components/ModelIcon';
-
+import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
 

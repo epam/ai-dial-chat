@@ -18,6 +18,7 @@ import { Translation } from '../types/translation';
 import { fallbackModelID } from '@/src/types/openai';
 
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
+import { ImportExportSelectors } from '../store/import-export/importExport.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   SettingsActions,
@@ -28,6 +29,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
@@ -63,6 +65,10 @@ export default function Home({ initialState }: HomeProps) {
 
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
+  const isImportingExporting = useAppSelector(
+    ImportExportSelectors.selectIsLoadingImportExport,
+  );
+
   const shouldOverlayLogin = isOverlay && shouldLogin;
 
   // EFFECTS  --------------------------------------------
@@ -159,6 +165,10 @@ export default function Home({ initialState }: HomeProps) {
               <div className="flex min-w-0 grow flex-col">
                 <AnnouncementsBanner />
                 <Chat />
+
+                {isImportingExporting && (
+                  <ImportExportLoader isOpen={isImportingExporting} />
+                )}
               </div>
 
               {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}

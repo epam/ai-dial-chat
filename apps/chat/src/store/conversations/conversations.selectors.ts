@@ -456,7 +456,7 @@ export const selectNewAddedFolderId = createSelector(
   },
 );
 
-const getUniqueAttachments = (attachments: DialFile[]): DialFile[] => {
+export const getUniqueAttachments = (attachments: DialFile[]): DialFile[] => {
   const map = new Map<string, DialFile>();
   attachments.forEach((file) =>
     map.set(constructPath(file.relativePath, file.name), file),

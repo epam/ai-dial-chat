@@ -175,10 +175,11 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     [dispatch, prompt.id],
   );
 
-  const handleExportPrompt: MouseEventHandler = useCallback(
-    (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+  const handleExportPrompt = useCallback(
+    (e?: unknown) => {
+      const typedEvent = e as MouseEvent;
+      typedEvent.preventDefault();
+      typedEvent.stopPropagation();
 
       dispatch(
         PromptsActions.exportPrompt({

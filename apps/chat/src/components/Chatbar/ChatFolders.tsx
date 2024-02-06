@@ -29,7 +29,7 @@ import {
 
 import Folder from '@/src/components/Folder/Folder';
 
-import CollapsableSection from '../../Common/CollapsableSection';
+import CollapsableSection from '../Common/CollapsableSection';
 import { ConversationComponent } from './Conversation';
 
 interface ChatFolderProps {

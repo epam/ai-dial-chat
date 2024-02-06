@@ -12,7 +12,6 @@ import { translate } from '@/src/utils/app/translation';
 
 import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
-import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
@@ -199,10 +198,7 @@ export const conversationsSlice = createSlice({
         return folder;
       });
     },
-    exportConversation: (
-      state,
-      _action: PayloadAction<{ conversationId: string }>,
-    ) => state,
+
     deleteConversations: (
       state,
       _action: PayloadAction<{ conversationIds: string[] }>,
@@ -293,11 +289,6 @@ export const conversationsSlice = createSlice({
       state.conversations = state.conversations.concat(newConversations); // TODO: save in API
       state.selectedConversationsIds = newSelectedIds;
     },
-    exportConversations: (state) => state,
-    importConversations: (
-      state,
-      _action: PayloadAction<{ data: SupportedExportFormats }>,
-    ) => state,
     importConversationsSuccess: (
       state,
       {

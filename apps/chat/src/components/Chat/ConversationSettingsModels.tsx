@@ -14,8 +14,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import { ModelIcon } from '../Chatbar/components/ModelIcon';
-
+import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelsDialog } from './ModelsDialog';
 import { ReplayAsIsButton } from './ReplayAsIsButton';

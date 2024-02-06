@@ -1,93 +1,45 @@
-import toast from 'react-hot-toast';
-
-import {
-  EMPTY,
-  Observable,
-  Subject,
-  TimeoutError,
-  catchError,
-  concat,
-  delay,
-  filter,
-  forkJoin,
-  from,
-  ignoreElements,
-  iif,
-  map,
-  merge,
-  mergeMap,
-  of,
-  startWith,
-  switchMap,
-  take,
-  takeWhile,
-  tap,
-  throwError,
-  timeout,
-  zip,
-} from 'rxjs';
+import { EMPTY, Observable, Subject, TimeoutError, catchError, concat, delay, filter, forkJoin, from, ignoreElements, iif, map, merge, mergeMap, of, startWith, switchMap, take, takeWhile, tap, throwError, timeout, zip } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
+
+
 
 import { AnyAction } from '@reduxjs/toolkit';
 
+
+
 import { combineEpics } from 'redux-observable';
 
+
+
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import {
-  addGeneratedConversationId,
-  compareConversationsByDate,
-  getNewConversationName,
-  isSettingsChanged,
-  parseConversationId,
-} from '@/src/utils/app/conversation';
+import { addGeneratedConversationId, compareConversationsByDate, getNewConversationName, isSettingsChanged, parseConversationId } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import {
-  generateNextName,
-  getAllPathsFromId,
-  getNextDefaultName,
-} from '@/src/utils/app/folders';
-import {
-  ImportConversationsResponse,
-  exportConversation,
-  exportConversations,
-  importConversations,
-} from '@/src/utils/app/import-export';
-import {
-  mergeMessages,
-  parseStreamMessages,
-} from '@/src/utils/app/merge-streams';
+import { generateNextName, getAllPathsFromId, getNextDefaultName } from '@/src/utils/app/folders';
+import { mergeMessages, parseStreamMessages } from '@/src/utils/app/merge-streams';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
 
-import {
-  ChatBody,
-  Conversation,
-  Message,
-  MessageSettings,
-  Playback,
-  RateBody,
-  Role,
-} from '@/src/types/chat';
+
+
+import { ChatBody, Conversation, Message, MessageSettings, Playback, RateBody, Role } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
+
+
 import { resetShareEntity } from '@/src/constants/chat';
-import {
-  DEFAULT_CONVERSATION_NAME,
-  DEFAULT_SYSTEM_PROMPT,
-  DEFAULT_TEMPERATURE,
-} from '@/src/constants/default-settings';
+import { DEFAULT_CONVERSATION_NAME, DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/src/constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { defaultReplay } from '@/src/constants/replay';
+
+
 
 import { AddonsActions } from '../addons/addons.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from './conversations.reducers';
+import { ConversationsActions, ConversationsSelectors } from './conversations.reducers';
+
 
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -484,70 +436,6 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
             folders: folders.filter((folder) => !childFolders.has(folder.id)),
           }),
         ),
-      );
-    }),
-  );
-
-const exportConversationEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(ConversationsActions.exportConversation.match),
-    map(({ payload }) =>
-      ConversationsSelectors.selectConversation(
-        state$.value,
-        payload.conversationId,
-      ),
-    ),
-    filter(Boolean),
-    tap((conversation) => {
-      const parentFolders = ConversationsSelectors.selectParentFolders(
-        state$.value,
-        conversation.folderId,
-      );
-      //TODO: upload all conversations for export - will be implemented in https://github.com/epam/ai-dial-chat/issues/640
-      exportConversation(conversation as Conversation, parentFolders);
-    }),
-    ignoreElements(),
-  );
-
-const exportConversationsEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(ConversationsActions.exportConversations.match),
-    map(() => ({
-      conversations: ConversationsSelectors.selectConversations(state$.value),
-      folders: ConversationsSelectors.selectFolders(state$.value),
-    })),
-    tap(({ conversations, folders }) => {
-      //TODO: upload all conversations for export - will be implemented in https://github.com/epam/ai-dial-chat/issues/640
-      exportConversations(conversations as Conversation[], folders);
-    }),
-    ignoreElements(),
-  );
-
-const importConversationsEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(ConversationsActions.importConversations.match),
-    switchMap(({ payload }) => {
-      const currentConversations = ConversationsSelectors.selectConversations(
-        state$.value,
-      );
-      const currentFolders = ConversationsSelectors.selectFolders(state$.value);
-      const { history, folders, isError }: ImportConversationsResponse =
-        importConversations(payload.data, {
-          //TODO: save in API - will be implemented in https://github.com/epam/ai-dial-chat/issues/640
-          currentConversations,
-          currentFolders,
-        });
-
-      if (isError) {
-        toast.error(errorsMessages.unsupportedDataFormat);
-        return EMPTY;
-      }
-
-      return of(
-        ConversationsActions.importConversationsSuccess({
-          conversations: history,
-          folders,
-        }),
       );
     }),
   );
@@ -1921,9 +1809,6 @@ export const ConversationsEpics = combineEpics(
   createNewConversationsSuccessEpic,
   saveFoldersEpic,
   deleteFolderEpic,
-  exportConversationEpic,
-  exportConversationsEpic,
-  importConversationsEpic,
   clearConversationsEpic,
   deleteConversationsEpic,
   updateMessageEpic,

@@ -21,7 +21,7 @@ import {
 
 import classNames from 'classnames';
 
-interface Props extends FormHTMLAttributes<HTMLFormElement> {
+export interface Props extends FormHTMLAttributes<HTMLFormElement> {
   portalId: string;
   isOpen: boolean;
   onClose: () => void;

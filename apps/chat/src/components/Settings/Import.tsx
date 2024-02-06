@@ -1,6 +1,9 @@
-import { FC, useRef } from 'react';
+import { FC, MouseEvent, useRef } from 'react';
+import toast from 'react-hot-toast';
 
 import { CustomTriggerMenuRendererProps } from '@/src/types/menu';
+
+import { errorsMessages } from '@/src/constants/errors';
 
 export const Import: FC<CustomTriggerMenuRendererProps> = ({
   Renderer,
@@ -8,6 +11,18 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
   ...rendererProps
 }) => {
   const ref = useRef<HTMLInputElement>(null);
+
+  const typedImportHandler = onImport as ({
+    content,
+    zip,
+  }: {
+    content: File;
+    zip?: boolean;
+  }) => void | undefined;
+
+  const onClickHandler = (e: MouseEvent<HTMLInputElement>) => {
+    e.currentTarget.value = '';
+  };
   return (
     <>
       <input
@@ -15,18 +30,31 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
         className="sr-only"
         tabIndex={-1}
         type="file"
-        accept=".json"
+        accept="application/json, application/x-zip-compressed, application/zip"
+        onClick={onClickHandler}
         onChange={(e) => {
           if (!e.target.files?.length) return;
-
           const file = e.target.files[0];
-          const reader = new FileReader();
-          reader.onload = (readerEvent) => {
-            const json = JSON.parse(readerEvent.target?.result as string);
-            onImport?.(json);
-            (ref.current as unknown as HTMLInputElement).value = '';
-          };
-          reader.readAsText(file);
+
+          if (
+            file.type === 'application/zip' ||
+            file.type === 'application/x-zip-compressed'
+          ) {
+            typedImportHandler?.({ content: file, zip: true });
+            return;
+          }
+
+          if (file.type === 'application/json') {
+            const reader = new FileReader();
+            reader.onload = (readerEvent) => {
+              const json = JSON.parse(readerEvent.target?.result as string);
+              typedImportHandler?.({ content: json });
+            };
+            reader.readAsText(file);
+            return;
+          }
+
+          toast.error(errorsMessages.unsupportedDataFormat);
         }}
       />
       <Renderer
