@@ -30,8 +30,8 @@ import {
 
 import Folder from '@/src/components/Folder/Folder';
 
-import CollapsableSection from '../../Common/CollapsableSection';
-import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
+import CollapsableSection from '../Common/CollapsableSection';
+import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
 
 interface ChatFolderProps {

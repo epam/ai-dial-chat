@@ -9,7 +9,7 @@ import { EntityType } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
 
-import { ModelIcon } from '../Chatbar/components/ModelIcon';
+import { ModelIcon } from '../Chatbar/ModelIcon';
 
 interface Props {
   model: OpenAIEntityModel | ConversationEntityModel;

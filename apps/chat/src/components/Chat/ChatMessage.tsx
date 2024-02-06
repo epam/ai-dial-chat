@@ -39,9 +39,9 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { ModelIcon } from '../Chatbar/components/ModelIcon';
 import Tooltip from '@/src/components/Common/Tooltip';
 
+import { ModelIcon } from '../Chatbar/ModelIcon';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { AttachButton } from '../Files/AttachButton';
