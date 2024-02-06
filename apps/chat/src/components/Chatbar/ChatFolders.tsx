@@ -2,11 +2,13 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { compareEntitiesByName } from '@/src/utils/app/folders';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilter,
 } from '@/src/utils/app/search';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -30,10 +32,12 @@ import {
 import Folder from '@/src/components/Folder/Folder';
 
 import CollapsableSection from '../Common/CollapsableSection';
+import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
 
 interface ChatFolderProps {
   folder: FolderInterface;
+  isLast: boolean;
   readonly?: boolean;
   filters: EntityFilters;
   includeEmpty: boolean;
@@ -41,6 +45,7 @@ interface ChatFolderProps {
 
 const ChatFolderTemplate = ({
   folder,
+  isLast,
   readonly,
   filters,
   includeEmpty = false,
@@ -68,6 +73,10 @@ const ChatFolderTemplate = ({
   );
   const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
 
+  const isExternal = useAppSelector((state) =>
+    isEntityOrParentsExternal(state, folder, FeatureType.Chat),
+  );
+
   const handleDrop = useCallback(
     (e: DragEvent, folder: FolderInterface) => {
       if (e.dataTransfer) {
@@ -94,12 +103,23 @@ const ChatFolderTemplate = ({
               ConversationsActions.moveFolder({
                 folderId: movedFolder.id,
                 newParentFolderId: folder.id,
-                newIndex: 0,
               }),
             );
           }
         }
       }
+    },
+    [dispatch],
+  );
+
+  const onDropBetweenFolders = useCallback(
+    (folder: FolderInterface, parentFolderId: string | undefined) => {
+      dispatch(
+        ConversationsActions.moveFolder({
+          folderId: folder.id,
+          newParentFolderId: parentFolderId,
+        }),
+      );
     },
     [dispatch],
   );
@@ -112,31 +132,49 @@ const ChatFolderTemplate = ({
   );
 
   return (
-    <Folder
-      maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
-      readonly={readonly}
-      searchTerm={searchTerm}
-      currentFolder={folder}
-      itemComponent={ConversationComponent}
-      allItems={conversations}
-      allFolders={conversationFolders}
-      highlightedFolders={highlightedFolders}
-      openedFoldersIds={openedFoldersIds}
-      handleDrop={handleDrop}
-      onRenameFolder={(name, folderId) => {
-        dispatch(
-          ConversationsActions.renameFolder({
-            folderId,
-            name,
-          }),
-        );
-      }}
-      onDeleteFolder={(folderId: string) =>
-        dispatch(ConversationsActions.deleteFolder({ folderId }))
-      }
-      onClickFolder={handleFolderClick}
-      featureType={FeatureType.Chat}
-    />
+    <>
+      <BetweenFoldersLine
+        level={0}
+        onDrop={onDropBetweenFolders}
+        parentFolderId={folder.folderId}
+        featureType={FeatureType.Chat}
+        denyDrop={isExternal}
+      />
+      <Folder
+        maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
+        readonly={readonly}
+        searchTerm={searchTerm}
+        currentFolder={folder}
+        itemComponent={ConversationComponent}
+        allItems={conversations}
+        allFolders={conversationFolders}
+        highlightedFolders={highlightedFolders}
+        openedFoldersIds={openedFoldersIds}
+        handleDrop={handleDrop}
+        onRenameFolder={(name, folderId) => {
+          dispatch(
+            ConversationsActions.renameFolder({
+              folderId,
+              name,
+            }),
+          );
+        }}
+        onDeleteFolder={(folderId: string) =>
+          dispatch(ConversationsActions.deleteFolder({ folderId }))
+        }
+        onClickFolder={handleFolderClick}
+        featureType={FeatureType.Chat}
+      />
+      {isLast && (
+        <BetweenFoldersLine
+          level={0}
+          onDrop={onDropBetweenFolders}
+          parentFolderId={folder.folderId}
+          featureType={FeatureType.Chat}
+          denyDrop={isExternal}
+        />
+      )}
+    </>
   );
 };
 
@@ -169,12 +207,16 @@ export const ChatSection = ({
   );
 
   const rootFolders = useMemo(
-    () => folders.filter(({ folderId }) => !folderId),
+    () =>
+      folders.filter(({ folderId }) => !folderId).sort(compareEntitiesByName),
     [folders],
   );
 
   const rootConversations = useMemo(
-    () => conversations.filter(({ folderId }) => !folderId),
+    () =>
+      conversations
+        .filter(({ folderId }) => !folderId)
+        .sort(compareEntitiesByName),
     [conversations],
   );
 
@@ -220,12 +262,13 @@ export const ChatSection = ({
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >
-      <div className="flex flex-col gap-1">
-        {rootFolders.map((folder) => {
+      <div>
+        {rootFolders.map((folder, index, arr) => {
           return (
             <ChatFolderTemplate
               key={folder.id}
               folder={folder}
+              isLast={index === arr.length - 1}
               filters={filters}
               includeEmpty={showEmptyFolders}
             />
