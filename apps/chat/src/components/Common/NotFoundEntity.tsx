@@ -1,4 +1,4 @@
-import { IconReload } from '@tabler/icons-react';
+import { IconAlertTriangle } from '@tabler/icons-react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -27,9 +27,8 @@ export const NotFoundEntity = ({
       )}
       data-qa={dataQa}
     >
-      <IconReload stroke={1} className="text-secondary" size={60} />
+      <IconAlertTriangle stroke={1} className="text-secondary" size={60} />
       <p className="mt-3 text-center text-sm">{t(`${entity} not found.`)}</p>
-      <p className="mt-1 text-center text-sm">{t('Please reload the page.')}</p>
     </div>
   );
 };
