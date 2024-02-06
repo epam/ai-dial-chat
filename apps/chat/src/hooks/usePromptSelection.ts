@@ -1,9 +1,20 @@
-import { KeyboardEvent, useCallback, useMemo, useState } from 'react';
+import {
+  KeyboardEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { useDispatch } from 'react-redux';
 
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
+import {
+  PromptsActions,
+  PromptsSelectors,
+} from '@/src/store/prompts/prompts.reducers';
 
 /**
  * Custom hook for managing prompt selection in a chat interface.
@@ -13,12 +24,17 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 export const usePromptSelection = (maxLength: number) => {
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
 
-  const [promptInputValue, setPromptInputValue] = useState('');
+  const dispatch = useDispatch();
+
+  const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
+
   const [activePromptIndex, setActivePromptIndex] = useState(0);
+  const [promptInputValue, setPromptInputValue] = useState('');
   const [content, setContent] = useState<string>('');
   const [isPromptLimitModalOpen, setIsPromptLimitModalOpen] = useState(false);
   const [showPromptList, setShowPromptList] = useState(false);
   const [variables, setVariables] = useState<string[]>([]);
+  const [isRequestSent, setIsRequestSent] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const filteredPrompts = useMemo(
@@ -27,6 +43,10 @@ export const usePromptSelection = (maxLength: number) => {
         prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
       ),
     [prompts, promptInputValue],
+  );
+
+  const selectedPromptRef = useRef(
+    filteredPrompts[0] ? filteredPrompts[0] : undefined,
   );
 
   /**
@@ -92,14 +112,13 @@ export const usePromptSelection = (maxLength: number) => {
    * Checks if the selected prompt content is within the maximum length and updates the content state.
    */
   const handleInitModal = useCallback(() => {
-    const selectedPrompt = filteredPrompts[activePromptIndex]
-      ? filteredPrompts[activePromptIndex]
-      : undefined;
+    const selectedPrompt = selectedPromptRef.current as Prompt | undefined;
 
     if (!selectedPrompt?.content) {
       setShowPromptList(false);
       return;
     }
+
     if (selectedPrompt.content.length > maxLength) {
       setIsPromptLimitModalOpen(true);
       return;
@@ -110,7 +129,28 @@ export const usePromptSelection = (maxLength: number) => {
     );
     handlePromptSelect(selectedPrompt);
     setShowPromptList(false);
-  }, [activePromptIndex, filteredPrompts, handlePromptSelect, maxLength]);
+  }, [handlePromptSelect, maxLength]);
+
+  /**
+   * Resets the request sending state and update the currently selected prompt,
+   * then call the modal window initialization function.
+   */
+  useEffect(() => {
+    if (!isLoading && isRequestSent) {
+      setIsRequestSent(false);
+      selectedPromptRef.current = filteredPrompts[activePromptIndex]
+        ? filteredPrompts[activePromptIndex]
+        : undefined;
+
+      handleInitModal();
+    }
+  }, [
+    activePromptIndex,
+    filteredPrompts,
+    handleInitModal,
+    isLoading,
+    isRequestSent,
+  ]);
 
   /**
    * Handles key down events when the prompt list is shown.
@@ -136,7 +176,12 @@ export const usePromptSelection = (maxLength: number) => {
         );
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        handleInitModal();
+        setIsRequestSent(true);
+        dispatch(
+          PromptsActions.uploadPrompt({
+            promptId: filteredPrompts[activePromptIndex].id,
+          }),
+        );
       } else if (e.key === 'Escape') {
         e.preventDefault();
         setShowPromptList(false);
@@ -144,8 +189,20 @@ export const usePromptSelection = (maxLength: number) => {
         setActivePromptIndex(0);
       }
     },
-    [handleInitModal, prompts.length, setActivePromptIndex, setShowPromptList],
+    [activePromptIndex, dispatch, filteredPrompts, prompts.length],
   );
+
+  /**
+   * Initializes the prompt loads.
+   */
+  const getPrompt = () => {
+    setIsRequestSent(true);
+    dispatch(
+      PromptsActions.uploadPrompt({
+        promptId: filteredPrompts[activePromptIndex].id,
+      }),
+    );
+  };
 
   return {
     setActivePromptIndex,
@@ -159,9 +216,11 @@ export const usePromptSelection = (maxLength: number) => {
     isModalVisible,
     content,
     updatePromptListVisibility,
-    handleInitModal,
     filteredPrompts,
     variables,
     handleKeyDownIfShown,
+    isRequestSent,
+    getPrompt,
+    isPromptLoading: isLoading && isRequestSent,
   };
 };

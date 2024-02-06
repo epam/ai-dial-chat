@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import Tooltip from '@/src/components/Common/Tooltip';
@@ -15,12 +16,14 @@ interface Props {
   handleSend: () => void;
   isDisabled: boolean;
   tooltip?: string;
+  isPromptLoading?: boolean;
 }
 
 export const SendMessageButton = ({
   handleSend,
   isDisabled,
   tooltip,
+  isPromptLoading,
 }: Props) => {
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
@@ -40,7 +43,7 @@ export const SendMessageButton = ({
       data-qa="send"
     >
       <Tooltip hideTooltip={!isDisabled} tooltip={tooltip}>
-        {messageIsStreaming || isModelsLoading ? (
+        {messageIsStreaming || isModelsLoading || isPromptLoading ? (
           <Spinner size={20} />
         ) : (
           <IconSend size={24} stroke="1.5" />

@@ -33,6 +33,7 @@ export abstract class ApiEntityStorage<
       type: getFolderTypeByApiKey(this.getStorageKey()),
     };
   }
+
   private mapEntity(entity: BackendChatEntity) {
     const relativePath = entity.parentPath || undefined;
     const info = this.parseEntityKey(entity.name);
@@ -44,6 +45,7 @@ export abstract class ApiEntityStorage<
       folderId: relativePath,
     };
   }
+
   getFoldersAndEntities(
     path?: string | undefined,
   ): Observable<FoldersAndEntities<EntityInfo>> {
@@ -71,6 +73,7 @@ export abstract class ApiEntityStorage<
       }),
     );
   }
+
   getFolders(path?: string | undefined): Observable<FolderInterface[]> {
     const filter = BackendDataNodeType.FOLDER;
 
@@ -89,13 +92,15 @@ export abstract class ApiEntityStorage<
       }),
     );
   }
-  getEntities(path?: string): Observable<EntityInfo[]> {
+
+  getEntities(path?: string, recursive = false): Observable<EntityInfo[]> {
     const filter = BackendDataNodeType.ITEM;
 
     const query = new URLSearchParams({
       filter,
       bucket: BucketService.getBucket(),
       ...(path && { path }),
+      ...(recursive && { recursive: String(recursive) }),
     });
     const resultQuery = query.toString();
 
@@ -107,6 +112,7 @@ export abstract class ApiEntityStorage<
       }),
     );
   }
+
   getEntity(info: EntityInfo): Observable<Entity | null> {
     const key = this.getEntityKey(info);
     return ApiUtils.request(
@@ -123,6 +129,7 @@ export abstract class ApiEntityStorage<
       catchError(() => of(null)),
     );
   }
+
   createEntity(entity: Entity): Observable<void> {
     const key = this.getEntityKey(entity);
     return ApiUtils.request(
@@ -138,9 +145,11 @@ export abstract class ApiEntityStorage<
       },
     );
   }
+
   updateEntity(entity: Entity): Observable<void> {
     return this.createEntity(entity);
   }
+
   deleteEntity(info: EntityInfo): Observable<void> {
     const key = this.getEntityKey(info);
     return ApiUtils.request(
@@ -155,7 +164,10 @@ export abstract class ApiEntityStorage<
       },
     );
   }
+
   abstract getEntityKey(info: EntityInfo): string;
+
   abstract parseEntityKey(key: string): EntityInfo;
+
   abstract getStorageKey(): ApiKeys;
 }

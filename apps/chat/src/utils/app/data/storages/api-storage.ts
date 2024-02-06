@@ -67,8 +67,8 @@ export class ApiStorage implements DialStorage {
     return this._promptApiStorage.getFoldersAndEntities(path);
   }
 
-  getPrompts(path?: string): Observable<Prompt[]> {
-    return this._promptApiStorage.getEntities(path);
+  getPrompts(recursive = false, path?: string): Observable<Prompt[]> {
+    return this._promptApiStorage.getEntities(path, recursive);
   }
 
   getPrompt(info: PromptInfo): Observable<Prompt | null> {

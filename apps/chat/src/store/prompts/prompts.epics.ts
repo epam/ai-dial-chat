@@ -196,7 +196,7 @@ const initPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.initPrompts.match),
     switchMap(() =>
-      PromptService.getPrompts().pipe(
+      PromptService.getPrompts(true).pipe(
         map((prompts) => {
           return PromptsActions.updatePrompts({
             prompts,

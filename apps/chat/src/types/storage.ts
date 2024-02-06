@@ -86,7 +86,7 @@ export interface DialStorage {
     path?: string,
   ): Observable<FoldersAndEntities<PromptInfo>>;
 
-  getPrompts(path?: string): Observable<PromptInfo[]>;
+  getPrompts(recursive?: boolean, path?: string): Observable<PromptInfo[]>;
 
   getPrompt(info: PromptInfo): Observable<Prompt | null>;
 
