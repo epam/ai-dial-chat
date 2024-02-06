@@ -2,7 +2,7 @@ import { FC, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { Prompt } from '@/src/types/prompt';
+import { PromptInfo } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import CollapsableSection from '@/src/components/Common/CollapsableSection';
@@ -10,7 +10,7 @@ import CollapsableSection from '@/src/components/Common/CollapsableSection';
 import { PromptComponent } from './Prompt';
 
 interface Props {
-  prompts: Prompt[];
+  prompts: PromptInfo[];
 }
 
 export const Prompts: FC<Props> = ({ prompts }) => {

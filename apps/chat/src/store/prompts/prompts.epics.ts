@@ -1,4 +1,13 @@
-import { concat, filter, ignoreElements, map, of, switchMap, tap } from 'rxjs';
+import {
+  EMPTY,
+  concat,
+  filter,
+  ignoreElements,
+  map,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
@@ -33,7 +42,7 @@ const savePromptsEpic: AppEpic = (action$, state$) =>
         PromptsActions.createNewPrompt.match(action) ||
         PromptsActions.deletePrompts.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
-        PromptsActions.updatePrompt.match(action) ||
+        // PromptsActions.updatePrompt.match(action) ||
         PromptsActions.addPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action) ||
         PromptsActions.unpublishPrompt.match(action) ||
@@ -67,6 +76,14 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       return PromptService.setPromptFolders(promptsFolders);
     }),
     ignoreElements(),
+  );
+
+const updatePromptEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.updatePrompt.match),
+    switchMap(({ payload }) =>
+      PromptService.setPrompts([payload.prompt]).pipe(switchMap(() => EMPTY)),
+    ),
   );
 
 const deleteFolderEpic: AppEpic = (action$, state$) =>
@@ -434,6 +451,24 @@ const publishPromptEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+export const uploadPromptEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.uploadPrompt.match),
+    switchMap(({ payload }) => {
+      const prompt = PromptsSelectors.selectPrompt(
+        state$.value,
+        payload.promptId,
+      );
+
+      if (!prompt) {
+        return of(null);
+      }
+
+      return PromptService.getPrompt(prompt);
+    }),
+    map((prompt) => PromptsActions.uploadPromptSuccess({ prompt })),
+  );
+
 export const PromptsEpics = combineEpics(
   initEpic,
   initPromptsEpic,
@@ -444,9 +479,12 @@ export const PromptsEpics = combineEpics(
   exportPromptsEpic,
   exportPromptEpic,
   importPromptsEpic,
+  updatePromptEpic,
 
   shareFolderEpic,
   sharePromptEpic,
   publishFolderEpic,
   publishPromptEpic,
+
+  uploadPromptEpic,
 );

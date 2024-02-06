@@ -169,7 +169,8 @@ export const selectSelectedPrompt = createSelector(
     if (!selectedPromptId) {
       return undefined;
     }
-    return prompts.find((prompt) => prompt.id === selectedPromptId);
+
+    return prompts.find((prompt) => prompt.id === selectedPromptId) as Prompt;
   },
 );
 
@@ -213,13 +214,16 @@ export const isPublishPromptVersionUnique = createSelector(
     (_state: RootState, _entityId: string, version: string) => version,
   ],
   (state, entityId, version) => {
-    const prompt = selectPrompt(state, entityId);
+    const prompt = selectPrompt(state, entityId) as Prompt; // TODO: fix;
 
     if (!prompt || prompt?.publishVersion === version) return false;
 
-    const prompts = selectPrompts(state).filter(
-      (prmt) => prmt.originalId === entityId && prmt.publishVersion === version,
-    );
+    const prompts = selectPrompts(state)
+      .map((prompt) => prompt as Prompt)
+      .filter(
+        (prmt) =>
+          prmt.originalId === entityId && prmt.publishVersion === version,
+      );
 
     if (prompts.length) return false;
 

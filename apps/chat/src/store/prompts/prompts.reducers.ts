@@ -61,20 +61,14 @@ export const promptsSlice = createSlice({
         (p) => !payload.promptIds.includes(p.id),
       );
     },
-    updatePrompt: (
-      state,
-      { payload }: PayloadAction<{ promptId: string; values: Partial<Prompt> }>,
-    ) => {
-      state.prompts = state.prompts.map((prompt) => {
-        if (prompt.id === payload.promptId) {
-          return {
-            ...prompt,
-            ...payload.values,
-          };
-        }
+    updatePrompt: (state, { payload }: PayloadAction<{ prompt: Prompt }>) => {
+      const foundPromptIdx = state.prompts.findIndex(
+        (prompt) => prompt.id === payload.prompt.id,
+      );
 
-        return prompt;
-      });
+      if (foundPromptIdx !== -1) {
+        state.prompts[foundPromptIdx] = payload.prompt;
+      }
     },
     sharePrompt: (
       state,
@@ -377,6 +371,22 @@ export const promptsSlice = createSlice({
     ) => {
       state.selectedPromptId = payload.promptId;
       state.isPromptLoading = !!payload.promptId;
+    },
+    uploadPrompt: (state, _action: PayloadAction<{ promptId: string }>) => {
+      state.isPromptLoading = true;
+    },
+    uploadPromptSuccess: (
+      state,
+      { payload }: PayloadAction<{ prompt: Prompt | null }>,
+    ) => {
+      state.isPromptLoading = false;
+      const foundPromptIdx = state.prompts.findIndex(
+        (prompt) => prompt.id === payload.prompt?.id,
+      );
+
+      if (foundPromptIdx !== -1) {
+        state.prompts[foundPromptIdx] = payload.prompt as Prompt;
+      }
     },
   },
 });
