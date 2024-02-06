@@ -1721,20 +1721,24 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
       ConversationsActions.uploadConversationsByIds.match(action),
     ),
     switchMap(({ payload }) => {
-      const setIds = new Set(payload.conversationIds);
+      const setIds = new Set(payload.conversationIds as string[]);
       const conversationInfos = ConversationsSelectors.selectConversations(
         state$.value,
       ).filter((conv) => setIds.has(conv.id));
       // && !(conv as Conversation).replay); // TODO: not upload twice
-      return zip(
-        conversationInfos.map((info) =>
-          ConversationService.getConversation(info),
+      return forkJoin({
+        uploadedConversations: zip(
+          conversationInfos.map((info) =>
+            ConversationService.getConversation(info),
+          ),
         ),
-      );
+        setIds: of(setIds),
+      });
     }),
-    map((conversations) =>
+    map(({ uploadedConversations, setIds }) =>
       ConversationsActions.uploadConversationsByIdsSuccess({
-        conversations: conversations.filter(Boolean) as Conversation[],
+        setIds,
+        conversations: uploadedConversations.filter(Boolean) as Conversation[],
       }),
     ),
   );

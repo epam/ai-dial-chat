@@ -18,7 +18,6 @@ import { Translation } from '../types/translation';
 import { fallbackModelID } from '@/src/types/openai';
 
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
-import { ConversationsSelectors } from '../store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   SettingsActions,
@@ -29,7 +28,6 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
-import ChatLoader from '../components/Chat/ChatLoader';
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
@@ -66,9 +64,6 @@ export default function Home({ initialState }: HomeProps) {
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
   const shouldOverlayLogin = isOverlay && shouldLogin;
-  const areSelectedConversationsLoaded = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsLoaded,
-  );
 
   // EFFECTS  --------------------------------------------
   useEffect(() => {
@@ -163,7 +158,7 @@ export default function Home({ initialState }: HomeProps) {
 
               <div className="flex min-w-0 grow flex-col">
                 <AnnouncementsBanner />
-                {areSelectedConversationsLoaded ? <Chat /> : <ChatLoader />}
+                <Chat />
               </div>
 
               {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}

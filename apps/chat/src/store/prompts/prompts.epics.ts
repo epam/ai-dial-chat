@@ -25,7 +25,7 @@ import {
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
-import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { PromptInfo } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
 
 import { resetShareEntity } from '@/src/constants/chat';

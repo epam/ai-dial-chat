@@ -5,7 +5,6 @@ import classNames from 'classnames';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import Tooltip from '@/src/components/Common/Tooltip';

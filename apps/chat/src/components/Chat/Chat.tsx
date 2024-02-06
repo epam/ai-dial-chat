@@ -33,11 +33,13 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 
+import { NotFoundEntity } from '../Common/NotFoundEntity';
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
 import ChatExternalControls from './ChatExternalControls';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput/ChatInput';
+import ChatLoader from './ChatLoader';
 import ChatReplayControls from './ChatReplayControls';
 import { ChatSettings } from './ChatSettings';
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
@@ -51,7 +53,7 @@ import { Feature } from '@epam/ai-dial-shared';
 
 const scrollThrottlingTimeout = 250;
 
-export const Chat = memo(() => {
+export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
   const appName = useAppSelector(SettingsSelectors.selectAppName);
   const models = useAppSelector(ModelsSelectors.selectModels);
@@ -871,4 +873,23 @@ export const Chat = memo(() => {
     </div>
   );
 });
-Chat.displayName = 'Chat';
+ChatView.displayName = 'ChatView';
+
+export function Chat() {
+  const areSelectedConversationsLoaded = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsLoaded,
+  );
+  const selectedConversationsIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
+  if (!areSelectedConversationsLoaded) {
+    return <ChatLoader />;
+  }
+  if (selectedConversations.length !== selectedConversationsIds.length) {
+    return <NotFoundEntity entity="Conversation" />;
+  }
+  return <ChatView />;
+}

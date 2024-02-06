@@ -226,14 +226,16 @@ export const conversationsSlice = createSlice({
     },
     uploadConversationsByIdsSuccess: (
       state,
-      { payload }: PayloadAction<{ conversations: Conversation[] }>,
+      {
+        payload,
+      }: PayloadAction<{ setIds: Set<string>; conversations: Conversation[] }>,
     ) => {
       state.conversations = combineEntities(
         payload.conversations.map((conv) => ({
           ...conv,
           isMessageStreaming: false, // we shouldn't try to continue stream after upload
         })),
-        state.conversations,
+        state.conversations.filter((conv) => !payload.setIds.has(conv.id)),
       );
       state.areSelectedConversationsLoaded = true;
     },
@@ -315,7 +317,10 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ conversations: ConversationInfo[] }>,
     ) => {
-      state.conversations = state.conversations.concat(payload.conversations);
+      state.conversations = combineEntities(
+        payload.conversations,
+        state.conversations,
+      );
       state.conversationsLoaded = true;
     },
     addConversations: (
@@ -327,7 +332,10 @@ export const conversationsSlice = createSlice({
         selectAdded?: boolean;
       }>,
     ) => {
-      state.conversations = state.conversations.concat(payload.conversations);
+      state.conversations = combineEntities(
+        payload.conversations,
+        state.conversations,
+      );
       if (payload.selectAdded) {
         state.selectedConversationsIds = payload.conversations.map(
           ({ id }) => id,
@@ -473,7 +481,7 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
-      state.folders = state.folders.concat(payload.folders);
+      state.folders = combineEntities(payload.folders, state.folders);
     },
     setSearchTerm: (
       state,
