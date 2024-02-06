@@ -228,7 +228,7 @@ const importZipEpic: AppEpic = (action$, state$) =>
               ).pipe(
                 switchMap((attachmentsToUpload) => {
                   if (!attachmentsToUpload.length) {
-                    of(ImportExportActions.importFail());
+                    return of(ImportExportActions.importFail());
                   }
                   return of(
                     ImportExportActions.uploadConversationAttachments({
@@ -243,7 +243,6 @@ const importZipEpic: AppEpic = (action$, state$) =>
         }),
       );
     }),
-    takeUntil(action$.pipe(filter(ImportExportActions.importStop.match))),
   );
 
 const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
@@ -251,7 +250,6 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
     filter(ImportExportActions.uploadConversationAttachments.match),
     switchMap(({ payload }) => {
       const { attachmentsToUpload, completeHistory } = payload;
-
       const bucket = FilesSelectors.selectBucket(state$.value);
 
       if (!bucket.length) {
@@ -309,7 +307,6 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
               percent: percent!,
             });
           }),
-          takeUntil(action$.pipe(filter(ImportExportActions.importStop.match))),
           catchError(() => {
             return of(
               ImportExportActions.uploadSingleFileFail({
@@ -319,8 +316,10 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
           }),
         );
       });
-      mergeAll(1);
-      return concat(...actions);
+      mergeAll(5);
+      return concat(...actions).pipe(
+        takeUntil(action$.pipe(filter(ImportExportActions.importStop.match))),
+      );
     }),
   );
 
