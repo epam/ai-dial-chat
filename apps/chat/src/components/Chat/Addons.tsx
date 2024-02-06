@@ -12,7 +12,6 @@ import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
-
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import Tooltip from '../Common/Tooltip';
 import { AddonsDialog } from './AddonsDialog';

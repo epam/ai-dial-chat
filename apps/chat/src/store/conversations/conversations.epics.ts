@@ -1,45 +1,85 @@
-import { EMPTY, Observable, Subject, TimeoutError, catchError, concat, delay, filter, forkJoin, from, ignoreElements, iif, map, merge, mergeMap, of, startWith, switchMap, take, takeWhile, tap, throwError, timeout, zip } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  Subject,
+  TimeoutError,
+  catchError,
+  concat,
+  delay,
+  filter,
+  forkJoin,
+  from,
+  ignoreElements,
+  iif,
+  map,
+  merge,
+  mergeMap,
+  of,
+  startWith,
+  switchMap,
+  take,
+  takeWhile,
+  tap,
+  throwError,
+  timeout,
+  zip,
+} from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
-
-
 
 import { AnyAction } from '@reduxjs/toolkit';
 
-
-
 import { combineEpics } from 'redux-observable';
 
-
-
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import { addGeneratedConversationId, compareConversationsByDate, getNewConversationName, isSettingsChanged, parseConversationId } from '@/src/utils/app/conversation';
+import {
+  addGeneratedConversationId,
+  compareConversationsByDate,
+  getNewConversationName,
+  isSettingsChanged,
+  parseConversationId,
+} from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { generateNextName, getAllPathsFromId, getNextDefaultName } from '@/src/utils/app/folders';
-import { mergeMessages, parseStreamMessages } from '@/src/utils/app/merge-streams';
+import {
+  generateNextName,
+  getAllPathsFromId,
+  getNextDefaultName,
+} from '@/src/utils/app/folders';
+import {
+  mergeMessages,
+  parseStreamMessages,
+} from '@/src/utils/app/merge-streams';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
 
-
-
-import { ChatBody, Conversation, Message, MessageSettings, Playback, RateBody, Role } from '@/src/types/chat';
+import {
+  ChatBody,
+  Conversation,
+  Message,
+  MessageSettings,
+  Playback,
+  RateBody,
+  Role,
+} from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
-
-
 import { resetShareEntity } from '@/src/constants/chat';
-import { DEFAULT_CONVERSATION_NAME, DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/src/constants/default-settings';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+} from '@/src/constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { defaultReplay } from '@/src/constants/replay';
-
-
 
 import { AddonsActions } from '../addons/addons.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
-import { ConversationsActions, ConversationsSelectors } from './conversations.reducers';
-
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from './conversations.reducers';
 
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
