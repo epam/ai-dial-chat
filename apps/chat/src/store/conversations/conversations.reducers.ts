@@ -315,7 +315,7 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ conversations: ConversationInfo[] }>,
     ) => {
-      state.conversations = payload.conversations;
+      state.conversations = state.conversations.concat(payload.conversations);
       state.conversationsLoaded = true;
     },
     addConversations: (
@@ -323,7 +323,7 @@ export const conversationsSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        conversations: Conversation[];
+        conversations: ConversationInfo[];
         selectAdded?: boolean;
       }>,
     ) => {

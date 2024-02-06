@@ -178,7 +178,7 @@ const initFoldersEndConversationsEpic: AppEpic = (action$) =>
         switchMap(({ folders, entities }) => {
           return concat(
             of(
-              ConversationsActions.setFolders({
+              ConversationsActions.addFolders({
                 folders,
               }),
             ),
@@ -261,6 +261,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               of(
                 ConversationsActions.addConversations({
                   conversations: newConversations,
+                  selectAdded: true,
                 }),
               ),
             ),

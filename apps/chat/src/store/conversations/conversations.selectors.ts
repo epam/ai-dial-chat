@@ -113,7 +113,7 @@ export const selectSectionFolders = createSelector(
 export const selectLastConversation = createSelector(
   [selectConversations],
   (state): ConversationInfo | undefined => {
-    return state.sort(compareConversationsByDate)?.[0];
+    return state?.sort(compareConversationsByDate)?.[0];
   },
 );
 export const selectConversation = createSelector(
