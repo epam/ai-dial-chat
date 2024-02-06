@@ -1,5 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { compareConversationsByDate } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
@@ -112,7 +113,7 @@ export const selectSectionFolders = createSelector(
 export const selectLastConversation = createSelector(
   [selectConversations],
   (state): ConversationInfo | undefined => {
-    return state[0];
+    return state.sort(compareConversationsByDate)?.[0];
   },
 );
 export const selectConversation = createSelector(
@@ -517,9 +518,12 @@ export const areConversationsUploaded = createSelector(
   },
 );
 
-export const isConversationLoading = createSelector([rootSelector], (state) => {
-  return state.isConversationLoading;
-});
+export const selectAreSelectedConversationsLoaded = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.areSelectedConversationsLoaded;
+  },
+);
 // default name with counter
 export const selectNewFolderName = createSelector(
   [selectFolders],

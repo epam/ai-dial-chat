@@ -7,7 +7,6 @@ import {
   TimeoutError,
   catchError,
   concat,
-  debounceTime,
   delay,
   filter,
   forkJoin,
@@ -38,6 +37,7 @@ import {
   addGeneratedConversationId,
   getNewConversationName,
   isSettingsChanged,
+  parseConversationId,
 } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
@@ -83,6 +83,116 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from './conversations.reducers';
+
+const initEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter((action) => ConversationsActions.init.match(action)),
+    switchMap(() =>
+      concat(
+        of(ConversationsActions.initSelectedConversations()),
+        of(ConversationsActions.initFoldersEndConversations()),
+      ),
+    ),
+  );
+
+const initSelectedConversationsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.initSelectedConversations.match),
+    switchMap(() => ConversationService.getSelectedConversationsIds()),
+    switchMap((selectedIds) => {
+      if (!selectedIds.length) {
+        return forkJoin({
+          selectedConversations: of([]),
+          selectedIds: of([]),
+        });
+      }
+      return forkJoin({
+        selectedConversations: zip(
+          selectedIds.map((id) =>
+            ConversationService.getConversation(parseConversationId(id)),
+          ),
+        ),
+        selectedIds: of(selectedIds),
+      });
+    }),
+    map(({ selectedConversations, selectedIds }) => {
+      const conversations = selectedConversations
+        .filter(Boolean)
+        .map((conv) => addGeneratedConversationId(conv!)) as Conversation[];
+      if (!selectedIds.length || !conversations.length) {
+        return {
+          conversations: [],
+          selectedConversationsIds: [],
+        };
+      }
+
+      const existingSelectedConversationsIds = selectedIds.filter((id) =>
+        conversations.some((conv) => conv.id === id),
+      );
+
+      return {
+        conversations,
+        selectedConversationsIds: existingSelectedConversationsIds,
+      };
+    }),
+    switchMap(({ conversations, selectedConversationsIds }) => {
+      const actions: Observable<AnyAction>[] = [];
+      if (conversations.length) {
+        actions.push(
+          of(
+            ConversationsActions.addConversations({
+              conversations,
+              selectAdded: true,
+            }),
+          ),
+        );
+      }
+      actions.push(
+        of(
+          ConversationsActions.selectConversations({
+            conversationIds: selectedConversationsIds,
+          }),
+        ),
+      );
+      if (!conversations.length || !selectedConversationsIds.length) {
+        actions.push(
+          of(
+            ConversationsActions.createNewConversations({
+              names: [translate(DEFAULT_CONVERSATION_NAME)],
+            }),
+          ),
+        );
+      }
+
+      return concat(...actions);
+    }),
+  );
+
+const initFoldersEndConversationsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter((action) =>
+      ConversationsActions.initFoldersEndConversations.match(action),
+    ),
+    switchMap(() =>
+      ConversationService.getConversationsAndFolders().pipe(
+        switchMap(({ folders, entities }) => {
+          return concat(
+            of(
+              ConversationsActions.setFolders({
+                folders,
+              }),
+            ),
+            of(
+              ConversationsActions.updateConversations({
+                conversations: entities,
+              }),
+            ),
+            //of(ConversationsActions.uploadOpenFolders({ paths: [undefined] })),
+          );
+        }),
+      ),
+    ),
+  );
 
 const createNewConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -151,7 +261,6 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               of(
                 ConversationsActions.addConversations({
                   conversations: newConversations,
-                  selectAdded: true,
                 }),
               ),
             ),
@@ -515,61 +624,6 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
           ),
         ).pipe(switchMap(() => EMPTY)),
       );
-    }),
-  );
-
-const initConversationsEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(ConversationsActions.initConversations.match),
-    switchMap(() =>
-      forkJoin({
-        conversations: of(
-          ConversationsSelectors.selectConversations(state$.value),
-        ),
-        selectedConversationsIds:
-          ConversationService.getSelectedConversationsIds(),
-      }),
-    ),
-    map(({ conversations, selectedConversationsIds }) => {
-      if (!conversations.length) {
-        return {
-          conversations,
-          selectedConversationsIds: [],
-        };
-      }
-
-      const existingSelectedConversationsIds = selectedConversationsIds.filter(
-        (id) => conversations.some((conv) => conv.id === id),
-      );
-
-      return {
-        conversations,
-        selectedConversationsIds: existingSelectedConversationsIds,
-      };
-    }),
-    switchMap(({ conversations, selectedConversationsIds }) => {
-      const actions: Observable<AnyAction>[] = [];
-      // actions.push(
-      //   of(ConversationsActions.updateConversations({ conversations })),
-      // );
-      actions.push(
-        of(
-          ConversationsActions.selectConversations({
-            conversationIds: selectedConversationsIds,
-          }),
-        ),
-      );
-      if (!conversations.length || !selectedConversationsIds.length) {
-        actions.push(
-          of(
-            ConversationsActions.createNewConversations({
-              names: [translate(DEFAULT_CONVERSATION_NAME)],
-            }),
-          ),
-        );
-      }
-
-      return concat(...actions);
     }),
   );
 
@@ -1403,30 +1457,6 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
     ),
   );
 
-// const saveConversationsEpic: AppEpic = (action$, state$) =>
-//   action$.pipe(
-//     filter(
-//       (action) =>
-//         //ConversationsActions.createNewConversationsSuccess.match(action) ||
-//         //ConversationsActions.updateConversation.match(action) ||
-//         //ConversationsActions.updateConversations.match(action) ||
-//         ConversationsActions.importConversationsSuccess.match(action) ||
-//         //ConversationsActions.deleteConversations.match(action) ||
-//         //ConversationsActions.addConversations.match(action) ||
-//         ConversationsActions.unpublishConversation.match(action) ||
-//         ConversationsActions.duplicateSelectedConversations.match(action),
-//     ),
-//     map(() => ConversationsSelectors.selectConversations(state$.value)),
-//     switchMap((conversations) => {
-//       return ConversationService.setConversations(
-//         (conversations as Conversation[]).filter(
-//           (conv: Conversation) => !!conv.replay, //TODO: fix saving conversations
-//         ),
-//       );
-//     }),
-//     ignoreElements(),
-//   );
-
 const playbackNextMessageStartEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.playbackNextMessageStart.match),
@@ -1639,33 +1669,6 @@ const playbackCalncelEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const initFoldersEndConversationsEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter((action) =>
-      ConversationsActions.initFoldersEndConversations.match(action),
-    ),
-    switchMap(() =>
-      ConversationService.getConversationsAndFolders().pipe(
-        switchMap(({ folders, entities }) => {
-          return concat(
-            of(
-              ConversationsActions.setFolders({
-                folders,
-              }),
-            ),
-            of(
-              ConversationsActions.updateConversations({
-                conversations: entities,
-              }),
-            ),
-            of(ConversationsActions.initConversations()),
-            of(ConversationsActions.uploadOpenFolders({ paths: [undefined] })),
-          );
-        }),
-      ),
-    ),
-  );
-
 const uploadOpenFoldersEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter((action) => ConversationsActions.uploadOpenFolders.match(action)),
@@ -1692,12 +1695,6 @@ const uploadOpenFoldersEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const initEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter((action) => ConversationsActions.init.match(action)),
-    switchMap(() => of(ConversationsActions.initFoldersEndConversations())),
-  );
-
 const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter((action) =>
@@ -1722,15 +1719,31 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
     ),
   );
 
-const updateConversationDebounceEpic: AppEpic = (action$) =>
+const saveConversationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter((action) =>
-      ConversationsActions.updateConversationDebounce.match(action),
+    filter(
+      (action) =>
+        ConversationsActions.saveConversation.match(action) &&
+        !action.payload.isMessageStreaming, // shouldn't save during streaming
     ),
-    debounceTime(1000),
     switchMap(({ payload: newConversation }) => {
       return ConversationService.updateConversation(newConversation).pipe(
         switchMap(() => EMPTY),
+      );
+    }),
+  );
+
+const recreateConversationEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter((action) => ConversationsActions.recreateConversation.match(action)),
+    switchMap(({ payload }) => {
+      return concat(
+        ConversationService.createConversation(payload.new).pipe(
+          switchMap(() => EMPTY),
+        ),
+        ConversationService.createConversation(payload.old).pipe(
+          switchMap(() => EMPTY),
+        ),
       );
     }),
   );
@@ -1743,7 +1756,10 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
       const conversation = ConversationsSelectors.selectConversation(
         state$.value,
         id,
-      );
+      ) as Conversation;
+      if (!conversation) {
+        return EMPTY;
+      }
       const newConversation: Conversation = addGeneratedConversationId({
         ...(conversation as Conversation),
         ...values,
@@ -1757,11 +1773,13 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         ),
         iif(
           () => !!conversation && conversation.id !== newConversation.id,
-          concat(
-            ConversationService.createConversation(newConversation),
-            ConversationService.deleteConversation(conversation!),
-          ).pipe(switchMap(() => EMPTY)),
-          of(ConversationsActions.updateConversationDebounce(newConversation)),
+          of(
+            ConversationsActions.recreateConversation({
+              new: newConversation,
+              old: conversation,
+            }),
+          ),
+          of(ConversationsActions.saveConversation(newConversation)),
         ),
       );
     }),
@@ -1864,15 +1882,19 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
   );
 
 export const ConversationsEpics = combineEpics(
+  // init
   initEpic,
-  initConversationsEpic,
+  initSelectedConversationsEpic,
   initFoldersEndConversationsEpic,
+  // update
+  updateConversationEpic,
+  saveConversationEpic,
+  recreateConversationEpic,
+  createNewConversationsEpic,
 
   selectConversationsEpic,
-  createNewConversationsEpic,
   createNewConversationSuccessEpic,
   createNewConversationsSuccessEpic,
-  //saveConversationsEpic,
   saveFoldersEpic,
   deleteFolderEpic,
   exportConversationEpic,
@@ -1902,8 +1924,7 @@ export const ConversationsEpics = combineEpics(
   createNewPlaybackConversationEpic,
   duplicateConversationEpic,
   uploadConversationsByIdsEpic,
-  updateConversationEpic,
-  updateConversationDebounceEpic,
+
   uploadConversationsWithFoldersEpic,
   uploadFoldersEpic,
   uploadConversationsEpic,

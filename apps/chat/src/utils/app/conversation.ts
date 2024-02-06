@@ -1,8 +1,17 @@
-import { Conversation, Message, MessageSettings } from '@/src/types/chat';
+import {
+  Conversation,
+  ConversationInfo,
+  Message,
+  MessageSettings,
+} from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 
-import { getConversationApiKey, getParentPath } from '../server/api';
+import {
+  getConversationApiKey,
+  getParentPath,
+  parseConversationApiKey,
+} from '../server/api';
 import { constructPath } from './file';
 
 export const getAssitantModelId = (
@@ -98,3 +107,28 @@ export const addGeneratedConversationId = (
     getConversationApiKey(conversation),
   ),
 });
+
+export const parseConversationId = (id: string): ConversationInfo => {
+  const parts = id.split('/');
+  const key = parts[parts.length - 1];
+  const parentPath =
+    parts.length > 1
+      ? constructPath(...parts.slice(0, parts.length - 1))
+      : undefined;
+  return {
+    ...parseConversationApiKey(key),
+    folderId: parentPath,
+  };
+};
+
+export const compareConversationsByDate = (
+  convA: ConversationInfo,
+  convB: ConversationInfo,
+) => {
+  if (convA.lastActivityDate && convB.lastActivityDate) {
+    const dateA = convA.lastActivityDate;
+    const dateB = convB.lastActivityDate;
+    return dateB - dateA;
+  }
+  return -1;
+};

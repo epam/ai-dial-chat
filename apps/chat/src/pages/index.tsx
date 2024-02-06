@@ -66,8 +66,8 @@ export default function Home({ initialState }: HomeProps) {
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
   const shouldOverlayLogin = isOverlay && shouldLogin;
-  const isConversationLoading = useAppSelector(
-    ConversationsSelectors.isConversationLoading,
+  const areSelectedConversationsLoaded = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsLoaded,
   );
 
   // EFFECTS  --------------------------------------------
@@ -163,7 +163,7 @@ export default function Home({ initialState }: HomeProps) {
 
               <div className="flex min-w-0 grow flex-col">
                 <AnnouncementsBanner />
-                {!isConversationLoading ? <Chat /> : <ChatLoader />}
+                {areSelectedConversationsLoaded ? <Chat /> : <ChatLoader />}
               </div>
 
               {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}

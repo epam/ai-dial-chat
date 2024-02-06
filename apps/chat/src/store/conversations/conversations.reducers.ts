@@ -42,7 +42,7 @@ const initialState: ConversationsState = {
   isPlaybackPaused: true,
   newAddedFolderId: undefined,
   conversationsLoaded: false,
-  isConversationLoading: true,
+  areSelectedConversationsLoaded: false,
   conversationsStatus: UploadStatus.UNINITIALIZED,
   foldersStatus: UploadStatus.UNINITIALIZED,
   loadingFolderIds: [],
@@ -53,33 +53,17 @@ export const conversationsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    initConversations: (state) => state,
-    selectConversations: (
+    initSelectedConversations: (state) => state,
+    initFoldersEndConversations: (state) => state,
+    saveConversation: (state, _action: PayloadAction<Conversation>) => state,
+    recreateConversation: (
       state,
-      { payload }: PayloadAction<{ conversationIds: string[] }>,
-    ) => {
-      const newSelectedIds = Array.from(new Set(payload.conversationIds));
-
-      state.selectedConversationsIds = newSelectedIds;
-    },
-    unselectConversations: (
-      state,
-      { payload }: PayloadAction<{ conversationIds: string[] }>,
-    ) => {
-      state.selectedConversationsIds = state.selectedConversationsIds.filter(
-        (id) => !payload.conversationIds.includes(id),
-      );
-    },
-    createNewConversations: (
-      state,
-      _action: PayloadAction<{ names: string[] }>,
+      _action: PayloadAction<{ new: Conversation; old: Conversation }>,
     ) => state,
     updateConversation: (
       state,
       _action: PayloadAction<{ id: string; values: Partial<Conversation> }>,
     ) => state,
-    updateConversationDebounce: (state, _action: PayloadAction<Conversation>) =>
-      state,
     updateConversationSuccess: (
       state,
       { payload }: PayloadAction<{ id: string; conversation: Conversation }>,
@@ -101,6 +85,27 @@ export const conversationsSlice = createSlice({
         );
       }
     },
+    selectConversations: (
+      state,
+      { payload }: PayloadAction<{ conversationIds: string[] }>,
+    ) => {
+      const newSelectedIds = Array.from(new Set(payload.conversationIds));
+
+      state.selectedConversationsIds = newSelectedIds;
+    },
+    unselectConversations: (
+      state,
+      { payload }: PayloadAction<{ conversationIds: string[] }>,
+    ) => {
+      state.selectedConversationsIds = state.selectedConversationsIds.filter(
+        (id) => !payload.conversationIds.includes(id),
+      );
+    },
+    createNewConversations: (
+      state,
+      _action: PayloadAction<{ names: string[] }>,
+    ) => state,
+
     shareConversation: (
       state,
       { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
@@ -217,7 +222,7 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{ conversationIds: string[] }>,
     ) => {
-      state.isConversationLoading = true;
+      state.areSelectedConversationsLoaded = false;
     },
     uploadConversationsByIdsSuccess: (
       state,
@@ -230,7 +235,7 @@ export const conversationsSlice = createSlice({
         })),
         state.conversations,
       );
-      state.isConversationLoading = false;
+      state.areSelectedConversationsLoaded = true;
     },
     createNewReplayConversation: (
       state,
@@ -327,7 +332,7 @@ export const conversationsSlice = createSlice({
         state.selectedConversationsIds = payload.conversations.map(
           ({ id }) => id,
         );
-        state.isConversationLoading = false;
+        state.areSelectedConversationsLoaded = true;
       }
     },
     clearConversations: (state) => state,
@@ -603,7 +608,6 @@ export const conversationsSlice = createSlice({
       state.isPlaybackPaused = true;
     },
 
-    initFoldersEndConversations: (state) => state,
     uploadOpenFolders: (
       state,
       _action: PayloadAction<{

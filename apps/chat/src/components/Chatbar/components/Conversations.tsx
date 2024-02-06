@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { compareConversationsByDate } from '@/src/utils/app/conversation';
+
 import { ConversationInfo } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
@@ -30,18 +32,6 @@ interface SortedConversations {
   lastYear: SortedBlock;
   other: SortedBlock;
 }
-
-const sortingConversationsByDate = (
-  convA: ConversationInfo,
-  convB: ConversationInfo,
-) => {
-  if (convA.lastActivityDate && convB.lastActivityDate) {
-    const dateA = convA.lastActivityDate;
-    const dateB = convB.lastActivityDate;
-    return dateB - dateA;
-  }
-  return -1;
-};
 
 const conversationsDateBlocksNames = {
   today: 'Today',
@@ -117,29 +107,29 @@ export const Conversations = ({ conversations }: Props) => {
 
     setSortedConversations({
       today: {
-        conversations: allConversations.today.sort(sortingConversationsByDate),
+        conversations: allConversations.today.sort(compareConversationsByDate),
         name: conversationsDateBlocksNames.today,
       },
       yesterday: {
         conversations: allConversations.yesterday.sort(
-          sortingConversationsByDate,
+          compareConversationsByDate,
         ),
         name: conversationsDateBlocksNames.yesterday,
       },
       lastSevenDays: {
         conversations: allConversations.lastSevenDays.sort(
-          sortingConversationsByDate,
+          compareConversationsByDate,
         ),
         name: conversationsDateBlocksNames.lastSevenDays,
       },
       lastThirtyDays: {
         conversations: allConversations.lastThirtyDays.sort(
-          sortingConversationsByDate,
+          compareConversationsByDate,
         ),
         name: conversationsDateBlocksNames.lastThirtyDays,
       },
       lastYear: {
-        conversations: allConversations.older.sort(sortingConversationsByDate),
+        conversations: allConversations.older.sort(compareConversationsByDate),
         name: conversationsDateBlocksNames.older,
       },
       other: {

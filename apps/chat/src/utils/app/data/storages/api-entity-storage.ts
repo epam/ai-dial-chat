@@ -1,4 +1,4 @@
-import { Observable, map } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 
 import {
   ApiKeys,
@@ -120,6 +120,7 @@ export abstract class ApiEntityStorage<
           ...info,
         };
       }),
+      catchError(() => of(null)),
     );
   }
   createEntity(entity: Entity): Observable<void> {
