@@ -7,7 +7,6 @@ import {
   PublishedWithMeFilter,
   SharedWithMeFilter,
 } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
@@ -31,21 +30,16 @@ import {
 import Folder from '@/src/components/Folder/Folder';
 
 import CollapsableSection from '../../Common/CollapsableSection';
-import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { PromptComponent } from './Prompt';
 
 interface promptFolderProps {
   folder: FolderInterface;
-  index: number;
-  isLast: boolean;
   filters: EntityFilters;
   includeEmpty: boolean;
 }
 
 const PromptFolderTemplate = ({
   folder,
-  index,
-  isLast,
   filters,
   includeEmpty = false,
 }: promptFolderProps) => {
@@ -67,10 +61,6 @@ const PromptFolderTemplate = ({
     ),
   );
   const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
-
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
-  );
 
   const handleDrop = useCallback(
     (e: DragEvent, folder: FolderInterface) => {
@@ -108,23 +98,6 @@ const PromptFolderTemplate = ({
     [dispatch],
   );
 
-  const onDropBetweenFolders = useCallback(
-    (
-      folder: FolderInterface,
-      parentFolderId: string | undefined,
-      index: number,
-    ) => {
-      dispatch(
-        PromptsActions.moveFolder({
-          folderId: folder.id,
-          newParentFolderId: parentFolderId,
-          newIndex: index,
-        }),
-      );
-    },
-    [dispatch],
-  );
-
   const handleFolderClick = useCallback(
     (folderId: string) => {
       dispatch(UIActions.toggleFolder({ id: folderId }));
@@ -133,51 +106,30 @@ const PromptFolderTemplate = ({
   );
 
   return (
-    <>
-      <BetweenFoldersLine
-        level={0}
-        onDrop={onDropBetweenFolders}
-        index={index}
-        parentFolderId={folder.folderId}
-        featureType={FeatureType.Prompt}
-        denyDrop={isExternal}
-      />
-      <Folder
-        maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
-        searchTerm={searchTerm}
-        currentFolder={folder}
-        itemComponent={PromptComponent}
-        allItems={prompts}
-        allFolders={promptFolders}
-        highlightedFolders={highlightedFolders}
-        openedFoldersIds={openedFoldersIds}
-        handleDrop={handleDrop}
-        onRenameFolder={(name, folderId) => {
-          dispatch(
-            PromptsActions.renameFolder({
-              folderId,
-              name,
-            }),
-          );
-        }}
-        onDeleteFolder={(folderId: string) =>
-          dispatch(PromptsActions.deleteFolder({ folderId }))
-        }
-        onDropBetweenFolders={onDropBetweenFolders}
-        onClickFolder={handleFolderClick}
-        featureType={FeatureType.Prompt}
-      />
-      {isLast && (
-        <BetweenFoldersLine
-          level={0}
-          onDrop={onDropBetweenFolders}
-          index={index + 1}
-          parentFolderId={folder.folderId}
-          featureType={FeatureType.Prompt}
-          denyDrop={isExternal}
-        />
-      )}
-    </>
+    <Folder
+      maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
+      searchTerm={searchTerm}
+      currentFolder={folder}
+      itemComponent={PromptComponent}
+      allItems={prompts}
+      allFolders={promptFolders}
+      highlightedFolders={highlightedFolders}
+      openedFoldersIds={openedFoldersIds}
+      handleDrop={handleDrop}
+      onRenameFolder={(name, folderId) => {
+        dispatch(
+          PromptsActions.renameFolder({
+            folderId,
+            name,
+          }),
+        );
+      }}
+      onDeleteFolder={(folderId: string) =>
+        dispatch(PromptsActions.deleteFolder({ folderId }))
+      }
+      onClickFolder={handleFolderClick}
+      featureType={FeatureType.Prompt}
+    />
   );
 };
 
@@ -256,12 +208,10 @@ export const PromptSection = ({
       isHighlighted={isSectionHighlighted}
     >
       <div>
-        {rootFolders.map((folder, index, arr) => (
+        {rootFolders.map((folder) => (
           <PromptFolderTemplate
             key={folder.id}
             folder={folder}
-            index={index}
-            isLast={index === arr.length - 1}
             filters={filters}
             includeEmpty={showEmptyFolders}
           />

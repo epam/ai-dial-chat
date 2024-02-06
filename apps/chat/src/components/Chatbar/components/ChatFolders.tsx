@@ -7,7 +7,6 @@ import {
   PublishedWithMeFilter,
   SharedWithMeFilter,
 } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -31,13 +30,10 @@ import {
 import Folder from '@/src/components/Folder/Folder';
 
 import CollapsableSection from '../../Common/CollapsableSection';
-import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
 
 interface ChatFolderProps {
   folder: FolderInterface;
-  index: number;
-  isLast: boolean;
   readonly?: boolean;
   filters: EntityFilters;
   includeEmpty: boolean;
@@ -45,8 +41,6 @@ interface ChatFolderProps {
 
 const ChatFolderTemplate = ({
   folder,
-  index,
-  isLast,
   readonly,
   filters,
   includeEmpty = false,
@@ -73,10 +67,6 @@ const ChatFolderTemplate = ({
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
   );
   const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
-
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, folder, FeatureType.Chat),
-  );
 
   const handleDrop = useCallback(
     (e: DragEvent, folder: FolderInterface) => {
@@ -114,23 +104,6 @@ const ChatFolderTemplate = ({
     [dispatch],
   );
 
-  const onDropBetweenFolders = useCallback(
-    (
-      folder: FolderInterface,
-      parentFolderId: string | undefined,
-      index: number,
-    ) => {
-      dispatch(
-        ConversationsActions.moveFolder({
-          folderId: folder.id,
-          newParentFolderId: parentFolderId,
-          newIndex: index,
-        }),
-      );
-    },
-    [dispatch],
-  );
-
   const handleFolderClick = useCallback(
     (folderId: string) => {
       dispatch(UIActions.toggleFolder({ id: folderId }));
@@ -139,52 +112,31 @@ const ChatFolderTemplate = ({
   );
 
   return (
-    <>
-      <BetweenFoldersLine
-        level={0}
-        onDrop={onDropBetweenFolders}
-        index={index}
-        parentFolderId={folder.folderId}
-        featureType={FeatureType.Chat}
-        denyDrop={isExternal}
-      />
-      <Folder
-        maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
-        readonly={readonly}
-        searchTerm={searchTerm}
-        currentFolder={folder}
-        itemComponent={ConversationComponent}
-        allItems={conversations}
-        allFolders={conversationFolders}
-        highlightedFolders={highlightedFolders}
-        openedFoldersIds={openedFoldersIds}
-        handleDrop={handleDrop}
-        onRenameFolder={(name, folderId) => {
-          dispatch(
-            ConversationsActions.renameFolder({
-              folderId,
-              name,
-            }),
-          );
-        }}
-        onDeleteFolder={(folderId: string) =>
-          dispatch(ConversationsActions.deleteFolder({ folderId }))
-        }
-        onDropBetweenFolders={onDropBetweenFolders}
-        onClickFolder={handleFolderClick}
-        featureType={FeatureType.Chat}
-      />
-      {isLast && (
-        <BetweenFoldersLine
-          level={0}
-          onDrop={onDropBetweenFolders}
-          index={index + 1}
-          parentFolderId={folder.folderId}
-          featureType={FeatureType.Chat}
-          denyDrop={isExternal}
-        />
-      )}
-    </>
+    <Folder
+      maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
+      readonly={readonly}
+      searchTerm={searchTerm}
+      currentFolder={folder}
+      itemComponent={ConversationComponent}
+      allItems={conversations}
+      allFolders={conversationFolders}
+      highlightedFolders={highlightedFolders}
+      openedFoldersIds={openedFoldersIds}
+      handleDrop={handleDrop}
+      onRenameFolder={(name, folderId) => {
+        dispatch(
+          ConversationsActions.renameFolder({
+            folderId,
+            name,
+          }),
+        );
+      }}
+      onDeleteFolder={(folderId: string) =>
+        dispatch(ConversationsActions.deleteFolder({ folderId }))
+      }
+      onClickFolder={handleFolderClick}
+      featureType={FeatureType.Chat}
+    />
   );
 };
 
@@ -268,14 +220,12 @@ export const ChatSection = ({
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >
-      <div>
-        {rootFolders.map((folder, index, arr) => {
+      <div className='flex flex-col gap-1'>
+        {rootFolders.map((folder) => {
           return (
             <ChatFolderTemplate
               key={folder.id}
               folder={folder}
-              index={index}
-              isLast={index === arr.length - 1}
               filters={filters}
               includeEmpty={showEmptyFolders}
             />
