@@ -1,4 +1,4 @@
-import { FC, useRef } from 'react';
+import { FC, MouseEvent, useRef } from 'react';
 import toast from 'react-hot-toast';
 
 import { CustomTriggerMenuRendererProps } from '@/src/types/menu';
@@ -20,6 +20,9 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
     zip?: boolean;
   }) => void | undefined;
 
+  const onClickHandler = (e: MouseEvent<HTMLInputElement>) => {
+    e.currentTarget.value = '';
+  };
   return (
     <>
       <input
@@ -28,6 +31,7 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
         tabIndex={-1}
         type="file"
         accept="application/json, application/x-zip-compressed, application/zip"
+        onClick={onClickHandler}
         onChange={(e) => {
           if (!e.target.files?.length) return;
           const file = e.target.files[0];
@@ -37,7 +41,6 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
             file.type === 'application/x-zip-compressed'
           ) {
             typedImportHandler?.({ content: file, zip: true });
-            (ref.current as unknown as HTMLInputElement).value = '';
             return;
           }
 
@@ -46,7 +49,6 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
             reader.onload = (readerEvent) => {
               const json = JSON.parse(readerEvent.target?.result as string);
               typedImportHandler?.({ content: json });
-              (ref.current as unknown as HTMLInputElement).value = '';
             };
             reader.readAsText(file);
             return;
