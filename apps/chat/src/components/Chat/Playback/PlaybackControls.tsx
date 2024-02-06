@@ -116,12 +116,15 @@ export const PlaybackControls = ({
   const handlePrevMessage = useCallback(() => {
     if (phase === 'EMPTY') {
       setPhase('MESSAGE');
-      return;
+
+      if (isNextMessageInStack) {
+        return;
+      }
     }
     setPhase('EMPTY');
 
     dispatch(ConversationsActions.playbackPrevMessage());
-  }, [dispatch, phase]);
+  }, [dispatch, isNextMessageInStack, phase]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
