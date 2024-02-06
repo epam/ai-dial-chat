@@ -157,6 +157,9 @@ export enum ModelIds {
   IMAGE_GENERATION_005 = 'imagegeneration@005',
   GEMINI_PRO_VISION = 'gemini-pro-vision',
   GEMINI_PRO = 'gemini-pro',
+  LLAMA2_13B_CHAT_V1 = 'meta.llama2-13b-chat-v1',
+  LLAMA2_70B_CHAT_V1 = 'meta.llama2-70b-chat-v1',
+  COHERE_COMMAND_TEXT_V14 = 'cohere.command-text-v14',
 }
 
 export enum AddonIds {
