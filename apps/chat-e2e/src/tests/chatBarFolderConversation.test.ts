@@ -45,7 +45,6 @@ test(
     setTestIds('EPMRTC-571', 'EPMRTC-1371');
     const nestedFolders = conversationData.prepareNestedFolder(3);
     await localStorageManager.setFolders(...nestedFolders);
-    await localStorageManager.setOpenedFolders(...nestedFolders);
 
     const newName = 'updated folder name';
     const randomFolder = GeneratorUtil.randomArrayElement(nestedFolders);
@@ -53,6 +52,9 @@ test(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    for (const nestedFolder of nestedFolders) {
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }
     await folderConversations.openFolderDropdownMenu(randomFolder.name);
     await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
     await folderConversations.editFolderNameWithEnter(
@@ -294,10 +296,12 @@ test(
     setTestIds('EPMRTC-606', 'EPMRTC-1373');
     const nestedFolders = conversationData.prepareNestedFolder(3);
     await localStorageManager.setFolders(...nestedFolders);
-    await localStorageManager.setOpenedFolders(...nestedFolders);
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    for (const nestedFolder of nestedFolders) {
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }
     await folderConversations.openFolderDropdownMenu(nestedFolders[0].name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
     expect
@@ -397,13 +401,15 @@ test('Delete nested folder with chat', async ({
     nestedConversations =
       conversationData.prepareConversationsForNestedFolders(nestedFolders);
     await localStorageManager.setFolders(...nestedFolders);
-    await localStorageManager.setOpenedFolders(...nestedFolders);
     await localStorageManager.setConversationHistory(...nestedConversations);
   });
 
   await test.step('Delete 2nd level folder and verify all nested content is deleted as well', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    for (const nestedFolder of nestedFolders) {
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }
     await folderConversations.openFolderDropdownMenu(
       nestedFolders[levelToDelete].name,
     );

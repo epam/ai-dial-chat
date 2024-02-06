@@ -52,39 +52,4 @@ export class ChatBar extends SideBar {
     await modelsResponsePromise;
     await addonsResponsePromise;
   }
-
-  public async drugConversationFromFolder(
-    folderName: string,
-    conversationName: string,
-  ) {
-    const folderConversation = this.getFolderConversations().getFolderEntity(
-      folderName,
-      conversationName,
-    );
-    await this.dragEntityFromFolder(folderConversation);
-  }
-
-  public async drugConversationToFolder(
-    folderName: string,
-    conversationName: string,
-  ) {
-    const folder = this.getFolderConversations().getFolderByName(folderName);
-    const conversation =
-      this.getConversations().getConversationByName(conversationName);
-    await this.dragEntityToFolder(conversation, folder);
-  }
-
-  public async drugAndDropConversationToFolderConversation(
-    folderName: string,
-    folderConversationName: string,
-    conversationName: string,
-  ) {
-    const folderConversation = this.getFolderConversations().getFolderEntity(
-      folderName,
-      folderConversationName,
-    );
-    const conversation =
-      this.getConversations().getConversationByName(conversationName);
-    await this.dragAndDropEntityToFolder(conversation, folderConversation);
-  }
 }

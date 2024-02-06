@@ -140,7 +140,6 @@ export enum ExpectedMessages {
   entityIconIsValid = 'Entity icon is valid',
   addonsIconsCountIsValid = 'Addons icons number is valid',
   addonIconIsValid = 'Addon icon is valid',
-  draggableAreaColorIsValid = 'Draggable area background color is valid',
   folderNameColorIsValid = 'Folder name color is valid',
   confirmationMessageIsValid = 'Confirmation dialog message is valid',
   chronologyMessageCountIsCorrect = 'Chat bar chronology messages count is correct',

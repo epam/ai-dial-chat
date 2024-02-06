@@ -155,7 +155,6 @@ test('Export and import chat structure with all conversations', async ({
       conversationData.prepareConversationsForNestedFolders(nestedFolders);
 
     await localStorageManager.setFolders(emptyFolder, ...nestedFolders);
-    await localStorageManager.setOpenedFolders(...nestedFolders);
     await localStorageManager.setConversationHistory(
       conversationOutsideFolder,
       ...nestedConversations,
@@ -168,6 +167,9 @@ test('Export and import chat structure with all conversations', async ({
   await test.step('Export all conversations using chat bar Export button', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    for (const nestedFolder of nestedFolders) {
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }
     exportedData = await dialHomePage.downloadData(() =>
       chatBar.exportButton.click(),
     );
@@ -515,12 +517,14 @@ test(
       await localStorageManager.setSelectedConversation(
         nestedConversations[levelsCount],
       );
-      await localStorageManager.setOpenedFolders(...nestedFolders);
     });
 
     await test.step('Export single conversations inside last nested folder', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
+      for (const nestedFolder of nestedFolders) {
+        await folderConversations.expandCollapseFolder(nestedFolder.name);
+      }
 
       await folderConversations.openFolderEntityDropdownMenu(
         nestedFolders[levelsCount].name,
@@ -632,12 +636,14 @@ test('Import a chat in nested folder', async ({
     await localStorageManager.setSelectedConversation(
       nestedConversations[levelsCount],
     );
-    await localStorageManager.setOpenedFolders(...nestedFolders);
   });
 
   await test.step('Export single conversations from root folder and single conversation from 2nd level folder', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    for (const nestedFolder of nestedFolders) {
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }
 
     for (let i = 0; i <= 2; i = i + 2) {
       await folderConversations.openFolderEntityDropdownMenu(
@@ -739,13 +745,14 @@ test('Import a chat from nested folder which was moved to another place', async 
     await localStorageManager.setSelectedConversation(
       thirdLevelFolderConversation,
     );
-    await localStorageManager.setOpenedFolders(...nestedFolders);
   });
 
   await test.step('Export 3rd level folder conversation', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-
+    for (const nestedFolder of nestedFolders) {
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }
     await folderConversations.openFolderEntityDropdownMenu(
       nestedFolders[levelsCount].name,
       thirdLevelFolderConversation.name,
@@ -766,6 +773,9 @@ test('Import a chat from nested folder which was moved to another place', async 
   });
 
   await test.step('Verify imported conversations is in 3rd level folder on the root level', async () => {
+    for (const nestedFolder of nestedFolders) {
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }
     await folderConversations
       .getFolderEntity(
         nestedFolders[levelsCount].name,
