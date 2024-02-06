@@ -6,8 +6,8 @@ import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
 
-import { ConversationApiStorage } from './conversation-api-storage';
-import { PromptApiStorage } from './prompt-api-storage';
+import { ConversationApiStorage } from './api/conversation-api-storage';
+import { PromptApiStorage } from './api/prompt-api-storage';
 
 export class ApiStorage implements DialStorage {
   private _conversationApiStorage = new ConversationApiStorage();

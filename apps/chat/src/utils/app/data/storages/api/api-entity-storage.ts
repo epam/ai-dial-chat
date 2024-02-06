@@ -15,8 +15,8 @@ import {
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { EntityStorage } from '@/src/types/storage';
 
-import { BucketService } from '../bucket-service';
-import { constructPath } from './../../file';
+import { constructPath } from '../../../file';
+import { BucketService } from '../../bucket-service';
 
 export abstract class ApiEntityStorage<
   EntityInfo extends { folderId?: string },
