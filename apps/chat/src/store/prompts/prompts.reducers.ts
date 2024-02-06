@@ -377,7 +377,9 @@ export const promptsSlice = createSlice({
     },
     uploadPromptSuccess: (
       state,
-      { payload }: PayloadAction<{ prompt: Prompt | null }>,
+      {
+        payload,
+      }: PayloadAction<{ prompt: Prompt | null; originalPromptId: string }>,
     ) => {
       state.isPromptLoading = false;
       const foundPromptIdx = state.prompts.findIndex(
@@ -386,6 +388,10 @@ export const promptsSlice = createSlice({
 
       if (foundPromptIdx !== -1) {
         state.prompts[foundPromptIdx] = payload.prompt as Prompt;
+      } else {
+        state.prompts = state.prompts.filter(
+          (prompt) => prompt.id !== payload.originalPromptId,
+        );
       }
     },
   },
