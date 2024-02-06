@@ -889,7 +889,7 @@ export function Chat() {
     return <ChatLoader />;
   }
   if (selectedConversations.length !== selectedConversationsIds.length) {
-    return <NotFoundEntity entity="Conversation" />;
+    return <NotFoundEntity entity="Conversation" additionalText='Please, select other conversation.' />;
   }
   return <ChatView />;
 }
