@@ -66,7 +66,6 @@ const Promptbar = () => {
         const promptData = e.dataTransfer.getData(MoveType.Prompt);
         if (promptData) {
           // const prompt = JSON.parse(promptData);
-
           // dispatch(
           //   PromptsActions.updatePrompt({
           //     promptId: prompt.id,

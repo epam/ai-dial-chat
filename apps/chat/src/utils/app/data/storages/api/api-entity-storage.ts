@@ -1,4 +1,4 @@
-import { Observable, catchError, map, of } from 'rxjs';
+import { EMPTY, Observable, catchError, map, of } from 'rxjs';
 
 import {
   ApiKeys,
@@ -71,6 +71,12 @@ export abstract class ApiEntityStorage<
           folders: folders.map((folder) => this.mapFolder(folder)),
         };
       }),
+      catchError(() =>
+        of({
+          entities: [],
+          folders: [],
+        }),
+      ),
     );
   }
 
@@ -90,6 +96,7 @@ export abstract class ApiEntityStorage<
       map((folders: BackendChatFolder[]) => {
         return folders.map((folder) => this.mapFolder(folder));
       }),
+      catchError(() => of([])),
     );
   }
 
@@ -110,6 +117,7 @@ export abstract class ApiEntityStorage<
       map((entities: BackendChatEntity[]) => {
         return entities.map((entity) => this.mapEntity(entity));
       }),
+      catchError(() => of([])),
     );
   }
 
@@ -143,7 +151,7 @@ export abstract class ApiEntityStorage<
         },
         body: JSON.stringify(entity),
       },
-    );
+    ).pipe(catchError(() => EMPTY)); // TODO: handle error
   }
 
   updateEntity(entity: Entity): Observable<void> {
@@ -162,7 +170,7 @@ export abstract class ApiEntityStorage<
           'Content-Type': 'application/json',
         },
       },
-    );
+    ).pipe(catchError(() => EMPTY)); // TODO: handle error
   }
 
   abstract getEntityKey(info: EntityInfo): string;

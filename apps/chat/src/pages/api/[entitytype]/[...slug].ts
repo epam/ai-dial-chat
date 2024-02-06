@@ -102,9 +102,7 @@ async function handleGetRequest(
     headers: getApiHeaders({ jwt: token?.access_token as string }),
   });
 
-  if (proxyRes.status === 404) {
-    return res.status(200).send(null);
-  } else if (!proxyRes.ok) {
+  if (!proxyRes.ok) {
     throw new OpenAIError(proxyRes.statusText, '', '', proxyRes.status + '');
   }
 

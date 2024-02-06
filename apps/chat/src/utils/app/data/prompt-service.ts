@@ -14,7 +14,10 @@ export class PromptService {
     return DataService.getDataStorage().setPromptsFolders(folders);
   }
 
-  public static getPrompts(recursive = false, path?: string): Observable<PromptInfo[]> {
+  public static getPrompts(
+    recursive = false,
+    path?: string,
+  ): Observable<PromptInfo[]> {
     return DataService.getDataStorage().getPrompts(recursive, path);
   }
 
