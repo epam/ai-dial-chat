@@ -1,4 +1,4 @@
-import { ConversationInfo } from '@/src/types/chat';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
@@ -6,6 +6,7 @@ import { SearchFilters } from '@/src/types/search';
 export interface ConversationsState {
   conversationsToMigrateCount: number;
   migratedConversationsCount: number;
+  failedMigratedConversations: Conversation[];
   conversations: ConversationInfo[];
   selectedConversationsIds: string[];
   folders: FolderInterface[];

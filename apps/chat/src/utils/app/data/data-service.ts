@@ -3,7 +3,6 @@ import { Observable, map } from 'rxjs';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
-import { FeatureType } from '@/src/types/common';
 import {
   DialStorage,
   MigrationStorageKeys,
@@ -164,6 +163,23 @@ export class DataService {
     key:
       | MigrationStorageKeys.MigratedConversationIds
       | MigrationStorageKeys.MigratedPromptIds,
+  ): Observable<void> {
+    return BrowserStorage.setData(key, migratedEntityIds)
+  }
+
+  public static getFailedMigratedEntityIds(
+    key:
+      | MigrationStorageKeys.FailedMigratedConversationIds
+      | MigrationStorageKeys.FailedMigratedPromptIds,
+  ): Observable<string[]> {
+    return BrowserStorage.getData(key, []);
+  }
+
+  public static setFailedMigratedEntityIds(
+    migratedEntityIds: string[],
+    key:
+      | MigrationStorageKeys.FailedMigratedPromptIds
+      | MigrationStorageKeys.FailedMigratedConversationIds,
   ): Observable<void> {
     return BrowserStorage.setData(key, migratedEntityIds);
   }

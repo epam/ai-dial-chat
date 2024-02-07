@@ -17,6 +17,8 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
 
+import { skipFailedMigratedConversationsEpic } from '@/src/store/conversations/conversations.epics';
+
 import { resetShareEntity } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
@@ -33,6 +35,7 @@ export { ConversationsSelectors };
 const initialState: ConversationsState = {
   conversationsToMigrateCount: 0,
   migratedConversationsCount: 0,
+  failedMigratedConversations: [],
   conversations: [],
   selectedConversationsIds: [],
   folders: [],
@@ -77,6 +80,20 @@ export const conversationsSlice = createSlice({
     ) => {
       state.migratedConversationsCount = payload.migratedConversationsCount;
     },
+    setFailedMigratedConversations: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        failedMigratedConversations: Conversation[];
+      }>,
+    ) => {
+      state.failedMigratedConversations = payload.failedMigratedConversations;
+    },
+    skipFailedMigratedConversations: (
+      state,
+      { payload: _ }: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
+    ) => state,
     selectConversations: (
       state,
       { payload }: PayloadAction<{ conversationIds: string[] }>,

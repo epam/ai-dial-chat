@@ -11,7 +11,6 @@ import {
   debounceTime,
   delay,
   filter,
-  finalize,
   forkJoin,
   from,
   ignoreElements,
@@ -37,7 +36,7 @@ import { combineEpics } from 'redux-observable';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
-  filterNotMigratedEntities,
+  filterMigratedEntities,
   filterOnlyMyEntities,
 } from '@/src/utils/app/common';
 import {
@@ -549,13 +548,22 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
         migratedConversationIds: DataService.getMigratedEntityIds(
           MigrationStorageKeys.MigratedConversationIds,
         ),
+        failedMigratedConversationIds: DataService.getFailedMigratedEntityIds(
+          MigrationStorageKeys.FailedMigratedConversationIds,
+        ),
       }),
     ),
     switchMap(
-      ({ conversations, conversationsFolders, migratedConversationIds }) => {
-        const notMigratedConversations = filterNotMigratedEntities(
+      ({
+        conversations,
+        conversationsFolders,
+        migratedConversationIds,
+        failedMigratedConversationIds,
+      }) => {
+        const notMigratedConversations = filterMigratedEntities(
           conversations,
-          migratedConversationIds,
+          [...failedMigratedConversationIds, ...migratedConversationIds],
+          true,
         );
 
         if (
@@ -563,6 +571,17 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
             StorageType.API ||
           !notMigratedConversations.length
         ) {
+          if (failedMigratedConversationIds.length) {
+            return of(
+              ConversationsActions.setFailedMigratedConversations({
+                failedMigratedConversations: filterMigratedEntities(
+                  conversations,
+                  failedMigratedConversationIds,
+                ),
+              }),
+            );
+          }
+
           return EMPTY;
         }
 
@@ -616,22 +635,60 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
                     ),
                   );
                 }),
-                catchError(() =>
-                  of(
-                    ConversationsActions.migrateConversationFinish({
-                      migratedConversationsCount: ++migratedConversationsCount,
-                    }),
-                  ),
-                ),
+                catchError(() => {
+                  failedMigratedConversationIds.push(
+                    sortedConversations[migratedConversationsCount].id,
+                  );
+
+                  return concat(
+                    DataService.setFailedMigratedEntityIds(
+                      failedMigratedConversationIds,
+                      MigrationStorageKeys.FailedMigratedConversationIds,
+                    ).pipe(switchMap(() => EMPTY)),
+                    of(
+                      ConversationsActions.migrateConversationFinish({
+                        migratedConversationsCount:
+                          ++migratedConversationsCount,
+                      }),
+                    ),
+                  );
+                }),
               ),
             ),
-            // finalize(() => window.location.reload()),
           ),
         );
       },
     ),
   );
 };
+
+export const skipFailedMigratedConversationsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.skipFailedMigratedConversations.match),
+    switchMap(({ payload }) =>
+      DataService.getMigratedEntityIds(
+        MigrationStorageKeys.MigratedConversationIds,
+      ).pipe(
+        switchMap((migratedConversationIds) =>
+          concat(
+            DataService.setMigratedEntitiesIds(
+              [...payload.idsToMarkAsMigrated, ...migratedConversationIds],
+              MigrationStorageKeys.MigratedConversationIds,
+            ).pipe(switchMap(() => EMPTY)),
+            DataService.setFailedMigratedEntityIds(
+              [],
+              MigrationStorageKeys.FailedMigratedConversationIds,
+            ).pipe(switchMap(() => EMPTY)),
+            of(
+              ConversationsActions.setFailedMigratedConversations({
+                failedMigratedConversations: [],
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 
 const initConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -1980,6 +2037,7 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
 
 export const ConversationsEpics = combineEpics(
   migrateConversationsEpic,
+  skipFailedMigratedConversationsEpic,
   initEpic,
   initConversationsEpic,
   initFoldersEndConversationsEpic,

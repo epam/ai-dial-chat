@@ -36,13 +36,6 @@ export class ApiStorage implements DialStorage {
     return this.getConversations(entity.folderId).pipe(
       concatMap((receivedEntities) => {
         const apiEntities: ConversationInfo[] = receivedEntities;
-
-        console.log('Entity to create');
-        console.log(entity);
-
-        console.log('API entities');
-        console.log(apiEntities);
-
         let retries = 0;
 
         const retry = (
@@ -52,8 +45,6 @@ export class ApiStorage implements DialStorage {
         ): Observable<void> =>
           apiStorage.createEntity(entity).pipe(
             catchError((err) => {
-              console.log('err.message');
-              console.log(err.message);
               if (retries < MAX_RETRIES_COUNT) {
                 retries++;
 
@@ -62,8 +53,6 @@ export class ApiStorage implements DialStorage {
                   entity.name,
                   [...entities, ...apiEntities],
                 );
-                console.log('new generated name');
-                console.log(newName);
                 const updatedEntity = {
                   ...entity,
                   id: constructPath(entity.folderId, newName),

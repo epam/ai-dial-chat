@@ -54,7 +54,13 @@ export const filterOnlyMyEntities = <
 ): T[] =>
   entities.filter((entity) => !entity.sharedWithMe && !entity.publishedWithMe);
 
-export const filterNotMigratedEntities = <T extends Conversation | Prompt>(
+export const filterMigratedEntities = <T extends Conversation | Prompt>(
   entities: T[],
   migratedEntityIds: string[],
-): T[] => entities.filter((entity) => !migratedEntityIds.includes(entity.id));
+  notMigrated = false,
+): T[] =>
+  entities.filter((entity) =>
+    notMigrated
+      ? !migratedEntityIds.includes(entity.id)
+      : migratedEntityIds.includes(entity.id),
+  );

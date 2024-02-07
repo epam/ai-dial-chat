@@ -33,6 +33,8 @@ export enum UIStorageKeys {
 export enum MigrationStorageKeys {
   MigratedConversationIds = 'migratedConversationIds',
   MigratedPromptIds = 'migratedPromptIds',
+  FailedMigratedConversationIds = 'failedMigratedConversationIds',
+  FailedMigratedPromptIds = 'failedMigratedPromptIds',
 }
 
 export interface EntityStorage<

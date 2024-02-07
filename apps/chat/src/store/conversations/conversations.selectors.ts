@@ -543,3 +543,8 @@ export const selectLoadingFolderIds = createSelector(
     return state.loadingFolderIds;
   },
 );
+
+export const selectFailedMigratedConversations = createSelector(
+  [rootSelector],
+  (state) => state.failedMigratedConversations,
+);

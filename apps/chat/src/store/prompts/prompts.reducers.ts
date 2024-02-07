@@ -27,6 +27,7 @@ export { PromptsSelectors };
 const initialState: PromptsState = {
   promptsToMigrateCount: 0,
   migratedPromptsCount: 0,
+  failedMigratedPrompts: [],
   prompts: [],
   folders: [],
   temporaryFolders: [],
@@ -47,6 +48,10 @@ export const promptsSlice = createSlice({
     initFolders: (state) => state,
     initPrompts: (state) => state,
     migratePrompts: (state) => state,
+    skipFailedMigratedPrompts: (
+      state,
+      { payload: _ }: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
+    ) => state,
     initPromptsMigration: (
       state,
       {
@@ -66,6 +71,16 @@ export const promptsSlice = createSlice({
       }>,
     ) => {
       state.migratedPromptsCount = payload.migratedPromptsCount;
+    },
+    setFailedMigratedPrompts: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        failedMigratedPrompts: Prompt[];
+      }>,
+    ) => {
+      state.failedMigratedPrompts = payload.failedMigratedPrompts;
     },
     createNewPrompt: (state) => {
       const newPrompt: Prompt = addGeneratedPromptId({

@@ -19,9 +19,15 @@ import { fallbackModelID } from '@/src/types/openai';
 
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
 import { ConversationsSelectors } from '../store/conversations/conversations.reducers';
-import { selectConversationsToMigrateAndMigratedCount } from '@/src/store/conversations/conversations.selectors';
+import {
+  selectConversationsToMigrateAndMigratedCount,
+  selectFailedMigratedConversations,
+} from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { selectPromptsToMigrateAndMigratedCount } from '@/src/store/prompts/prompts.selectors';
+import {
+  selectFailedMigratedPrompts,
+  selectPromptsToMigrateAndMigratedCount,
+} from '@/src/store/prompts/prompts.selectors';
 import {
   SettingsActions,
   SettingsSelectors,
@@ -35,6 +41,7 @@ import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
 import ChatLoader from '@/src/components/Chat/ChatLoader';
 import { Migration } from '@/src/components/Chat/Migration';
+import { MigrationFailedWindow } from '@/src/components/Chat/MigrationFailedModal';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import Header from '@/src/components/Header/Header';
 import { UserMobile } from '@/src/components/Header/User/UserMobile';
@@ -73,6 +80,10 @@ export default function Home({ initialState }: HomeProps) {
   const { promptsToMigrateCount, migratedPromptsCount } = useAppSelector(
     selectPromptsToMigrateAndMigratedCount,
   );
+  const failedMigratedConversations = useAppSelector(
+    selectFailedMigratedConversations,
+  );
+  const failedMigratedPrompts = useAppSelector(selectFailedMigratedPrompts);
 
   const shouldOverlayLogin = isOverlay && shouldLogin;
   const isConversationLoading = useAppSelector(
@@ -138,6 +149,15 @@ export default function Home({ initialState }: HomeProps) {
     ]);
   };
 
+  if (conversationsToMigrateCount !== 0 || promptsToMigrateCount !== 0) {
+    if (
+      conversationsToMigrateCount + promptsToMigrateCount ===
+      migratedPromptsCount + migratedConversationsCount
+    ) {
+      return window.location.reload();
+    }
+  }
+
   return (
     <>
       <Head>
@@ -170,6 +190,12 @@ export default function Home({ initialState }: HomeProps) {
             <Migration
               total={conversationsToMigrateCount + promptsToMigrateCount}
               uploaded={migratedPromptsCount + migratedConversationsCount}
+            />
+          ) : failedMigratedConversations.length ||
+            failedMigratedPrompts.length ? (
+            <MigrationFailedWindow
+              failedMigratedConversations={failedMigratedConversations}
+              failedMigratedPrompts={failedMigratedPrompts}
             />
           ) : (
             <div className="flex h-full w-full flex-col sm:pt-0">

@@ -5,6 +5,7 @@ import { SearchFilters } from '@/src/types/search';
 export interface PromptsState {
   migratedPromptsCount: number;
   promptsToMigrateCount: number;
+  failedMigratedPrompts: Prompt[];
   prompts: Prompt[];
   folders: FolderInterface[];
   temporaryFolders: FolderInterface[];

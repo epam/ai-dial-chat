@@ -293,3 +293,8 @@ export const selectNewFolderName = createSelector(
     return getNextDefaultName(translate(DEFAULT_FOLDER_NAME), folders);
   },
 );
+
+export const selectFailedMigratedPrompts = createSelector(
+  [rootSelector],
+  (state) => state.failedMigratedPrompts,
+);
