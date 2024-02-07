@@ -1164,7 +1164,7 @@ test.describe('Compare mode tests', () => {
         firstFolderConversation.conversations[0],
         secondFolderConversation.conversations[0],
       );
-      await  localStorageManager.setSelectedConversation(
+      await localStorageManager.setSelectedConversation(
         firstFolderConversation.conversations[0],
       );
     });
@@ -1173,12 +1173,12 @@ test.describe('Compare mode tests', () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await folderConversations.expandCollapseFolder(
-      firstFolderConversation.folders.name,
-    );
-    await folderConversations.expandCollapseFolder(
-      secondFolderConversation.folders.name,
-    );
-    await folderConversations.openFolderEntityDropdownMenu(
+        firstFolderConversation.folders.name,
+      );
+      await folderConversations.expandCollapseFolder(
+        secondFolderConversation.folders.name,
+      );
+      await folderConversations.openFolderEntityDropdownMenu(
         firstFolderConversation.folders.name,
         firstFolderConversation.conversations[0].name,
       );

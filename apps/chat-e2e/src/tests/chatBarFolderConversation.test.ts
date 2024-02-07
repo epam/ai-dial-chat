@@ -50,7 +50,6 @@ test.describe('Chat bar folder conversations tests', () => {
       const nestedFolders = conversationData.prepareNestedFolder(3);
       await localStorageManager.setFolders(...nestedFolders);
 
-
       const newName = 'updated folder name';
       const randomFolder = GeneratorUtil.randomArrayElement(nestedFolders);
       const randomFolderIndex = nestedFolders.indexOf(randomFolder);
@@ -58,8 +57,9 @@ test.describe('Chat bar folder conversations tests', () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (const nestedFolder of nestedFolders) {
-      await folderConversations.expandCollapseFolder(nestedFolder.name);
-    }await folderConversations.openFolderDropdownMenu(randomFolder.name);
+        await folderConversations.expandCollapseFolder(nestedFolder.name);
+      }
+      await folderConversations.openFolderDropdownMenu(randomFolder.name);
       await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
       await folderConversations.editFolderNameWithEnter(
         randomFolder.name,
@@ -247,8 +247,7 @@ test.describe('Chat bar folder conversations tests', () => {
           .soft(emptyFolderCaret, ExpectedMessages.folderCaretIsNotVisible)
           .toBe(Attributes.invisible);
       });
-},
-
+    },
   );
 
   test(
@@ -266,12 +265,12 @@ test.describe('Chat bar folder conversations tests', () => {
       const nestedFolders = conversationData.prepareNestedFolder(3);
       await localStorageManager.setFolders(...nestedFolders);
 
-
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (const nestedFolder of nestedFolders) {
-      await folderConversations.expandCollapseFolder(nestedFolder.name);
-    }await folderConversations.openFolderDropdownMenu(nestedFolders[0].name);
+        await folderConversations.expandCollapseFolder(nestedFolder.name);
+      }
+      await folderConversations.openFolderDropdownMenu(nestedFolders[0].name);
       await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
       expect
         .soft(
@@ -370,15 +369,16 @@ test.describe('Chat bar folder conversations tests', () => {
       nestedConversations =
         conversationData.prepareConversationsForNestedFolders(nestedFolders);
       await localStorageManager.setFolders(...nestedFolders);
-      await  localStorageManager.setConversationHistory(...nestedConversations);
+      await localStorageManager.setConversationHistory(...nestedConversations);
     });
 
     await test.step('Delete 2nd level folder and verify all nested content is deleted as well', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (const nestedFolder of nestedFolders) {
-      await folderConversations.expandCollapseFolder(nestedFolder.name);
-    }await folderConversations.openFolderDropdownMenu(
+        await folderConversations.expandCollapseFolder(nestedFolder.name);
+      }
+      await folderConversations.openFolderDropdownMenu(
         nestedFolders[levelToDelete].name,
       );
       await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);

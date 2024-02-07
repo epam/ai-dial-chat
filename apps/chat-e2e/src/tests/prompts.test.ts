@@ -419,12 +419,13 @@ test.describe('Side bar prompt tests', () => {
     await dialHomePage.reloadPage();
     await dialHomePage.waitForPageLoaded();
     for (const nestedFolder of nestedFolders) {
-    await folderPrompts.expandCollapseFolder(nestedFolder.name);
-  }
-  await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
-  await folderConversations.expandCollapseFolder(
-    conversationInFolder.folders.name,
-  );await conversations
+      await folderPrompts.expandCollapseFolder(nestedFolder.name);
+    }
+    await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
+    await folderConversations.expandCollapseFolder(
+      conversationInFolder.folders.name,
+    );
+    await conversations
       .getConversationByName(singleConversation.name)
       .waitFor();
 
@@ -436,14 +437,16 @@ test.describe('Side bar prompt tests', () => {
         .getFolderByName(emptyConversationFolder.name)
         .waitFor();
       if (i === 1) {
-      await folderConversations.expandCollapseFolder(
-        conversationInFolder.folders.name,
-      );await folderConversations
-        .getFolderEntity(
+        await folderConversations.expandCollapseFolder(
           conversationInFolder.folders.name,
-          conversationInFolder.conversations[0].name,
-        )
-        .waitFor();}
+        );
+        await folderConversations
+          .getFolderEntity(
+            conversationInFolder.folders.name,
+            conversationInFolder.conversations[0].name,
+          )
+          .waitFor();
+      }
       await conversations
         .getConversationByName(singleConversation.name)
         .waitFor();

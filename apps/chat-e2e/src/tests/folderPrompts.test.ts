@@ -82,12 +82,12 @@ test.describe('Prompt bar folder tests', () => {
       const randomFolderIndex = nestedFolders.indexOf(randomFolder);
       await localStorageManager.setFolders(...nestedFolders);
 
-
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (const nestedFolder of nestedFolders) {
-      await folderPrompts.expandCollapseFolder(nestedFolder.name);
-    }await folderPrompts.openFolderDropdownMenu(randomFolder.name);
+        await folderPrompts.expandCollapseFolder(nestedFolder.name);
+      }
+      await folderPrompts.openFolderDropdownMenu(randomFolder.name);
       await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
       await folderPrompts.editFolderNameWithEnter(randomFolder.name, newName);
       expect
@@ -284,12 +284,12 @@ test.describe('Prompt bar folder tests', () => {
       const nestedFolders = promptData.prepareNestedFolder(3);
       await localStorageManager.setFolders(...nestedFolders);
 
-
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (const nestedFolder of nestedFolders) {
-      await folderPrompts.expandCollapseFolder(nestedFolder.name);
-    }await folderPrompts.openFolderDropdownMenu(nestedFolders[0].name);
+        await folderPrompts.expandCollapseFolder(nestedFolder.name);
+      }
+      await folderPrompts.openFolderDropdownMenu(nestedFolders[0].name);
       await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
       expect
         .soft(
@@ -383,15 +383,16 @@ test.describe('Prompt bar folder tests', () => {
         promptData.resetData();
       }
       await localStorageManager.setFolders(...nestedFolders);
-      await  localStorageManager.setPrompts(...nestedPrompts);
+      await localStorageManager.setPrompts(...nestedPrompts);
     });
 
     await test.step('Delete 2nd level folder and verify all nested content is deleted as well', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (const nestedFolder of nestedFolders) {
-      await folderPrompts.expandCollapseFolder(nestedFolder.name);
-    }await folderPrompts.openFolderDropdownMenu(
+        await folderPrompts.expandCollapseFolder(nestedFolder.name);
+      }
+      await folderPrompts.openFolderDropdownMenu(
         nestedFolders[levelToDelete].name,
       );
       await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);

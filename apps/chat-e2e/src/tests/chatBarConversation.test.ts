@@ -556,7 +556,7 @@ test.describe('Chat bar conversations tests', () => {
       setTestIds('EPMRTC-863', 'EPMRTC-942');
       const folderName = GeneratorUtil.randomString(70);
       let conversation: Conversation;
-    let folderToMoveIn: FolderInterface;
+      let folderToMoveIn: FolderInterface;
 
       await test.step('Prepare conversation and folder with long name to move conversation in', async () => {
         folderToMoveIn = conversationData.prepareFolder(folderName);
@@ -564,7 +564,6 @@ test.describe('Chat bar conversations tests', () => {
         await localStorageManager.setConversationHistory(conversation);
         await localStorageManager.setFolders(folderToMoveIn);
         await localStorageManager.setSelectedConversation(conversation);
-
       });
 
       await test.step('Open "Move to" menu option for conversation and verify folder name is truncated', async () => {
@@ -712,16 +711,16 @@ test.describe('Chat bar conversations tests', () => {
       ...nestedFolders,
     );
 
-
     await dialHomePage.reloadPage();
     await dialHomePage.waitForPageLoaded();
     for (const nestedFolder of nestedFolders) {
-    await folderConversations.expandCollapseFolder(nestedFolder.name);
-  }
-   await folderConversations.expandCollapseFolder(
-    conversationInFolder.folders.name,
-  );
-  await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);await chatBar.deleteAllEntities();
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }
+    await folderConversations.expandCollapseFolder(
+      conversationInFolder.folders.name,
+    );
+    await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
+    await chatBar.deleteAllEntities();
     await confirmationDialog.confirm();
 
     let i = 2;
@@ -763,16 +762,16 @@ test.describe('Chat bar conversations tests', () => {
         .soft(isNewConversationVisible, ExpectedMessages.newConversationCreated)
         .toBeTruthy();
 
-    if (i === 1) {
-      await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
-    }
-    const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(
-      promptInFolder.folders.name,
-      promptInFolder.prompts[0].name,
-    );
-    expect
-      .soft(isFolderPromptVisible, ExpectedMessages.promptNotDeleted)
-      .toBeTruthy();
+      if (i === 1) {
+        await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
+      }
+      const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(
+        promptInFolder.folders.name,
+        promptInFolder.prompts[0].name,
+      );
+      expect
+        .soft(isFolderPromptVisible, ExpectedMessages.promptNotDeleted)
+        .toBeTruthy();
 
       const isPromptFolderVisible = await folderPrompts
         .getFolderByName(emptyPromptFolder.name)

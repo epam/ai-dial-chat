@@ -1,7 +1,13 @@
 import { Conversation } from '@/chat/types/chat';
 import { OpenAIEntityModel } from '@/chat/types/openai';
 import test, { stateFilePath } from '@/src/core/fixtures';
-import { ExpectedConstants, ExpectedMessages, MenuOptions, ModelIds, Theme } from '@/src/testData';
+import {
+  ExpectedConstants,
+  ExpectedMessages,
+  MenuOptions,
+  ModelIds,
+  Theme,
+} from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
@@ -99,32 +105,33 @@ test.describe('Chat playback tests', () => {
           .toBeFalsy();
 
         const playbackMessage =
-        await playbackControl.playbackMessage.getElementContent();
-      expect
-        .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
-        .toBe(ExpectedConstants.emptyPlaybackMessage);
-    });
+          await playbackControl.playbackMessage.getElementContent();
+        expect
+          .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
+          .toBe(ExpectedConstants.emptyPlaybackMessage);
+      });
 
-    await test.step('Click on Next button and verify text content updated', async () => {
-      await chat.playNextChatMessage();
+      await test.step('Click on Next button and verify text content updated', async () => {
+        await chat.playNextChatMessage();
 
-      const isPlaybackNextBtnEnabled =
-        await playbackControl.playbackNextButton.isElementEnabled();
-      expect
-        .soft(
-          isPlaybackNextBtnEnabled,
-          ExpectedMessages.playbackNextButtonEnabled,
-        )
-        .toBeTruthy();
+        const isPlaybackNextBtnEnabled =
+          await playbackControl.playbackNextButton.isElementEnabled();
+        expect
+          .soft(
+            isPlaybackNextBtnEnabled,
+            ExpectedMessages.playbackNextButtonEnabled,
+          )
+          .toBeTruthy();
 
-      const isPlaybackPreviousBtnEnabled =
-        await playbackControl.playbackPreviousButton.isElementEnabled();
-      expect
-        .soft(
-          isPlaybackPreviousBtnEnabled,
-          ExpectedMessages.playbackPreviousButtonDisabled,
-        )
-        .toBeTruthy();const playbackMessage =
+        const isPlaybackPreviousBtnEnabled =
+          await playbackControl.playbackPreviousButton.isElementEnabled();
+        expect
+          .soft(
+            isPlaybackPreviousBtnEnabled,
+            ExpectedMessages.playbackPreviousButtonDisabled,
+          )
+          .toBeTruthy();
+        const playbackMessage =
           await playbackControl.playbackMessage.getElementContent();
         expect
           .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
@@ -192,12 +199,12 @@ test.describe('Chat playback tests', () => {
       });
 
       await test.step('Click on Next button again twice and verify chat header icon updated, history contains all messages and Next button disabled on bottom controls', async () => {
-      await chat.playNextChatMessage();
-      const playBackMessage =
-        await playbackControl.playbackMessage.getElementContent();
-      expect
-        .soft(playBackMessage, ExpectedMessages.playbackChatMessageIsValid)
-        .toBe(conversation.messages[2].content);
+        await chat.playNextChatMessage();
+        const playBackMessage =
+          await playbackControl.playbackMessage.getElementContent();
+        expect
+          .soft(playBackMessage, ExpectedMessages.playbackChatMessageIsValid)
+          .toBe(conversation.messages[2].content);
 
         await chat.playNextChatMessage();
         const messagesCount =
@@ -260,31 +267,32 @@ test.describe('Chat playback tests', () => {
       });
 
       await test.step('Click on Back button and verify chat header icon updated, history contains first request/response, Next button is enabled on bottom controls', async () => {
-      await chat.playPreviousChatMessage();
-      const isPlaybackNextBtnEnabled =
-        await playbackControl.playbackNextButton.isElementEnabled();
-      expect
-        .soft(
-          isPlaybackNextBtnEnabled,
-          ExpectedMessages.playbackNextButtonEnabled,
-        )
-        .toBeFalsy();
+        await chat.playPreviousChatMessage();
+        const isPlaybackNextBtnEnabled =
+          await playbackControl.playbackNextButton.isElementEnabled();
+        expect
+          .soft(
+            isPlaybackNextBtnEnabled,
+            ExpectedMessages.playbackNextButtonEnabled,
+          )
+          .toBeFalsy();
 
-      const isPlaybackPreviousBtnEnabled =
-        await playbackControl.playbackPreviousButton.isElementEnabled();
-      expect
-        .soft(
-          isPlaybackPreviousBtnEnabled,
-          ExpectedMessages.playbackPreviousButtonEnabled,
-        )
-        .toBeTruthy();
+        const isPlaybackPreviousBtnEnabled =
+          await playbackControl.playbackPreviousButton.isElementEnabled();
+        expect
+          .soft(
+            isPlaybackPreviousBtnEnabled,
+            ExpectedMessages.playbackPreviousButtonEnabled,
+          )
+          .toBeTruthy();
 
-      const playbackMessage =
-        await playbackControl.playbackMessage.getElementContent();
-      expect
-        .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
-        .toBe(ExpectedConstants.emptyPlaybackMessage);
-    });await test.step('Click on Back button and verify chat header icon updated, history contains first request/response, Next button is enabled on bottom controls', async () => {
+        const playbackMessage =
+          await playbackControl.playbackMessage.getElementContent();
+        expect
+          .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
+          .toBe(ExpectedConstants.emptyPlaybackMessage);
+      });
+      await test.step('Click on Back button and verify chat header icon updated, history contains first request/response, Next button is enabled on bottom controls', async () => {
         await chat.playPreviousChatMessage();
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
@@ -345,12 +353,12 @@ test.describe('Chat playback tests', () => {
       });
 
       await test.step('Click on Back button again twice and verify chat header icon updated, history is empty and Back button is disabled on bottom controls', async () => {
-      await chat.playPreviousChatMessage();
-      let playBackMessage =
-        await playbackControl.playbackMessage.getElementContent();
-      expect
-        .soft(playBackMessage, ExpectedMessages.playbackChatMessageIsValid)
-        .toBe(conversation.messages[2].content);
+        await chat.playPreviousChatMessage();
+        let playBackMessage =
+          await playbackControl.playbackMessage.getElementContent();
+        expect
+          .soft(playBackMessage, ExpectedMessages.playbackChatMessageIsValid)
+          .toBe(conversation.messages[2].content);
 
         await chat.playPreviousChatMessage();
         const messagesCount =
@@ -377,7 +385,7 @@ test.describe('Chat playback tests', () => {
           )
           .toBeFalsy();
 
-         playBackMessage =
+        playBackMessage =
           await playbackControl.playbackMessage.getElementContent();
         expect
           .soft(playBackMessage, ExpectedMessages.playbackChatMessageIsValid)
@@ -398,7 +406,7 @@ test.describe('Chat playback tests', () => {
       });
     },
   );
-// TODO: redo after new changes in playback
+  // TODO: redo after new changes in playback
   test.skip(
     'Playback: move to the next using hot keys.\n' +
       'Playback: move to the previous using hot keys',
@@ -643,7 +651,7 @@ test.describe('Chat playback tests', () => {
       });
     },
   );
-// TODO: redo after new changes in playback
+  // TODO: redo after new changes in playback
   test.skip('Playback: exit the mode at the end of playback', async ({
     dialHomePage,
     localStorageManager,
@@ -703,7 +711,7 @@ test.describe('Chat playback tests', () => {
         .toBe(expectedModelIcon);
     });
   });
-// TODO: redo after new changes in playback
+  // TODO: redo after new changes in playback
   test.skip(
     'Playback: auto-scroll.\n' +
       'Playback: huge user-message scrolled in message box.\n' +

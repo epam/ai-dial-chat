@@ -38,15 +38,16 @@ test.describe('Side panel drag and drop tests', () => {
     await localStorageManager.setConversationHistory(
       conversationInFolder.conversations[0],
     );
-    await  localStorageManager.setSelectedConversation(
+    await localStorageManager.setSelectedConversation(
       conversationInFolder.conversations[0],
     );
     await dialHomePage.openHomePage({
       iconsToBeLoaded: [gpt35Model.iconUrl],
     });
-    await dialHomePage.waitForPageLoaded();await folderConversations.expandCollapseFolder(
-    conversationInFolder.folders.name,
-  );
+    await dialHomePage.waitForPageLoaded();
+    await folderConversations.expandCollapseFolder(
+      conversationInFolder.folders.name,
+    );
     await chatBar.drugConversationFromFolder(
       conversationInFolder.folders.name,
       conversationInFolder.conversations[0].name,
@@ -109,7 +110,7 @@ test.describe('Side panel drag and drop tests', () => {
         conversation = conversationData.prepareDefaultConversation();
 
         await localStorageManager.setFolders(...nestedFolders);
-        await  localStorageManager.setConversationHistory(
+        await localStorageManager.setConversationHistory(
           conversationToDrop,
           conversation,
         );
@@ -120,12 +121,13 @@ test.describe('Side panel drag and drop tests', () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (const nestedFolder of [
-        nestedFolders[0],
-        nestedFolders[1],
-        nestedFolders[2],
-      ]) {
-        await folderConversations.expandCollapseFolder(nestedFolder.name);
-      }await chatBar.drugConversationToFolder(
+          nestedFolders[0],
+          nestedFolders[1],
+          nestedFolders[2],
+        ]) {
+          await folderConversations.expandCollapseFolder(nestedFolder.name);
+        }
+        await chatBar.drugConversationToFolder(
           nestedFolders[0].name,
           conversationToDrop.name,
         );
@@ -172,7 +174,7 @@ test.describe('Side panel drag and drop tests', () => {
       conversationToDrop = conversationData.prepareDefaultConversation();
 
       await localStorageManager.setFolders(folderConversation.folders);
-      await  localStorageManager.setConversationHistory(
+      await localStorageManager.setConversationHistory(
         ...folderConversation.conversations,
         conversationToDrop,
       );
@@ -183,9 +185,9 @@ test.describe('Side panel drag and drop tests', () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await folderConversations.expandCollapseFolder(
-      folderConversation.folders.name,
-    );
-    await chatBar.drugAndDropConversationToFolderConversation(
+        folderConversation.folders.name,
+      );
+      await chatBar.drugAndDropConversationToFolderConversation(
         folderConversation.folders.name,
         folderConversation.conversations[1].name,
         conversationToDrop.name,
@@ -222,11 +224,10 @@ test.describe('Side panel drag and drop tests', () => {
     await localStorageManager.setFolders(promptInFolder.folders);
     await localStorageManager.setPrompts(promptInFolder.prompts[0]);
 
-
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
-  await promptBar.dragAndDropPromptFromFolder(
+    await promptBar.dragAndDropPromptFromFolder(
       promptInFolder.folders.name,
       promptInFolder.prompts[0].name,
     );
@@ -299,14 +300,14 @@ test.describe('Side panel drag and drop tests', () => {
       prompt = promptData.prepareDefaultPrompt();
 
       await localStorageManager.setFolders(promptInFolder.folders);
-      await  localStorageManager.setPrompts(...promptInFolder.prompts, prompt);
+      await localStorageManager.setPrompts(...promptInFolder.prompts, prompt);
     });
 
     await test.step('Drag and drop prompt to prompt inside folder and verify prompt stays inside folder, folder remains expanded', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
       await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
-    await promptBar.drugAndDropPromptToFolderPrompt(
+      await promptBar.drugAndDropPromptToFolderPrompt(
         promptInFolder.folders.name,
         promptInFolder.prompts[0].name,
         prompt.name,
