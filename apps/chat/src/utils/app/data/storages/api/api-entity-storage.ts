@@ -46,14 +46,6 @@ export abstract class ApiEntityStorage<
     };
   }
 
-  private cleanUpEntity(entity: Entity): Entity {
-    const clone = { ...entity };
-    if ('lastActivityDate' in clone) {
-      delete clone.lastActivityDate;
-    }
-    return clone;
-  }
-
   getFoldersAndEntities(
     path?: string | undefined,
   ): Observable<FoldersAndEntities<EntityInfo>> {
@@ -186,4 +178,6 @@ export abstract class ApiEntityStorage<
   abstract parseEntityKey(key: string): EntityInfo;
 
   abstract getStorageKey(): ApiKeys;
+
+  abstract cleanUpEntity(entity: Entity): Entity;
 }
