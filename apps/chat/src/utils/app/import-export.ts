@@ -1,4 +1,5 @@
-import { Conversation } from '@/src/types/chat';
+import { Attachment, Conversation } from '@/src/types/chat';
+import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import {
   ExportConversationsFormatV4,
@@ -284,4 +285,56 @@ export const importPrompts = (
     .filter((folder) => folder.type === 'prompt');
 
   return { prompts: newPrompts, folders: newFolders, isError: false };
+};
+
+export const updateAttachment = ({
+  oldAttachment,
+  uploadedAttachments,
+}: {
+  oldAttachment: Attachment;
+  uploadedAttachments: Partial<DialFile>[];
+}) => {
+  const oldAttachmentUrl = oldAttachment.url || oldAttachment.reference_url;
+  if (!oldAttachmentUrl) {
+    return oldAttachment;
+  }
+
+  const regExpForOldAttachmentId = /^files\/\w*\//;
+  const indexAfterSplit = 1;
+
+  const oldAttachmentId = decodeURI(oldAttachmentUrl).split(
+    regExpForOldAttachmentId,
+  )[indexAfterSplit];
+
+  const newAttachmentFile = uploadedAttachments.find((newAttachment) => {
+    if (!newAttachment.id) {
+      return;
+    }
+    const regExpForNewAttachmentId = /^imports\/[\w-]*\//;
+    const newAttachmentId = newAttachment.id.split(regExpForNewAttachmentId)[
+      indexAfterSplit
+    ];
+    return (
+      newAttachmentId === oldAttachmentId ||
+      oldAttachmentId.includes(newAttachmentId)
+    );
+  });
+
+  if (!newAttachmentFile || !newAttachmentFile.name) {
+    return oldAttachment;
+  }
+
+  const newAttachmentUrl =
+    oldAttachment.url &&
+    encodeURI(`${newAttachmentFile.absolutePath}/${newAttachmentFile.name}`);
+
+  const newReferenceUrl =
+    oldAttachment.reference_url &&
+    encodeURI(`${newAttachmentFile.absolutePath}/${oldAttachmentId}`);
+
+  return {
+    ...oldAttachment,
+    url: newAttachmentUrl,
+    reference_url: newReferenceUrl,
+  };
 };
