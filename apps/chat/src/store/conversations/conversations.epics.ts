@@ -625,7 +625,7 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
                 ),
               ),
             ),
-            finalize(() => window.location.reload()),
+            // finalize(() => window.location.reload()),
           ),
         );
       },
