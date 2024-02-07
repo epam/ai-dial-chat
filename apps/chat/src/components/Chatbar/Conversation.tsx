@@ -18,7 +18,7 @@ import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { ConversationInfo } from '@/src/types/chat';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
@@ -148,7 +148,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
 
-  const isEmptyConversation = false; //conversation.messages.length === 0; //TODO: how check if empty?
+  const isEmptyConversation = !((conversation as Conversation).messages?.length > 0); //TODO: how check if empty?
 
   const handleRename = useCallback(
     (conversation: ConversationInfo) => {
