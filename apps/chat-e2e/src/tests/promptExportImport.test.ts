@@ -74,10 +74,7 @@ test.describe('Prompt export/import tests', () => {
           promptOutsideFolder,
           ...nestedPrompts,
         );
-        await localStorageManager.setOpenedFolders(
-          promptsInsideFolder.folders,
-          ...nestedFolders,
-        );
+
       });
 
       await test.step('Export all prompts using prompt bar Export button', async () => {
@@ -85,7 +82,12 @@ test.describe('Prompt export/import tests', () => {
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        exportedData = await dialHomePage.downloadData(() =>
+        for (const nestedFolder of nestedFolders) {
+        await folderPrompts.expandCollapseFolder(nestedFolder.name);
+      }
+      await folderPrompts.expandCollapseFolder(
+        promptsInsideFolder.folders.name,
+      );exportedData = await dialHomePage.downloadData(() =>
           promptBar.exportButton.click(),
         );
       });
@@ -507,7 +509,7 @@ test.describe('Prompt export/import tests', () => {
 
         await localStorageManager.setFolders(...nestedFolders);
         await localStorageManager.setPrompts(...nestedPrompts);
-        await localStorageManager.setOpenedFolders(...nestedFolders);
+
       });
 
       await test.step('Export prompt from 3rd level folder', async () => {
@@ -515,7 +517,9 @@ test.describe('Prompt export/import tests', () => {
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await folderPrompts.openFolderEntityDropdownMenu(
+        for (const nestedFolder of nestedFolders) {
+        await folderPrompts.expandCollapseFolder(nestedFolder.name);
+      }await folderPrompts.openFolderEntityDropdownMenu(
           nestedFolders[levelsCount].name,
           nestedPrompts[levelsCount].name,
         );
@@ -625,13 +629,15 @@ test.describe('Prompt export/import tests', () => {
 
       await localStorageManager.setFolders(...nestedFolders);
       await localStorageManager.setPrompts(...nestedPrompts);
-      await localStorageManager.setOpenedFolders(...nestedFolders);
+
     });
 
     await test.step('Export 2nd and 3rd level folder prompts', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-
+    for (const nestedFolder of nestedFolders) {
+      await folderPrompts.expandCollapseFolder(nestedFolder.name);
+    }
       for (let i = 1; i <= 3; i = i + 2) {
         await folderPrompts.openFolderEntityDropdownMenu(
           nestedFolders[i].name,
@@ -727,13 +733,15 @@ test.describe('Prompt export/import tests', () => {
 
       await localStorageManager.setFolders(...nestedFolders);
       await localStorageManager.setPrompts(thirdLevelFolderPrompt);
-      await localStorageManager.setOpenedFolders(...nestedFolders);
+
     });
 
     await test.step('Export 3rd level folder prompt', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-      await folderPrompts.openFolderEntityDropdownMenu(
+      for (const nestedFolder of nestedFolders) {
+      await folderPrompts.expandCollapseFolder(nestedFolder.name);
+    }await folderPrompts.openFolderEntityDropdownMenu(
         nestedFolders[levelsCount].name,
         thirdLevelFolderPrompt.name,
       );
@@ -753,7 +761,9 @@ test.describe('Prompt export/import tests', () => {
     });
 
     await test.step('Verify imported prompt is in 3rd level folder on the 1st level', async () => {
-      await folderPrompts
+      for (const nestedFolder of nestedFolders) {
+      await folderPrompts.expandCollapseFolder(nestedFolder.name);
+    }await folderPrompts
         .getFolderEntity(
           nestedFolders[levelsCount].name,
           thirdLevelFolderPrompt.name,

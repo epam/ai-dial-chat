@@ -556,19 +556,21 @@ test.describe('Chat bar conversations tests', () => {
       setTestIds('EPMRTC-863', 'EPMRTC-942');
       const folderName = GeneratorUtil.randomString(70);
       let conversation: Conversation;
+    let folderToMoveIn: FolderInterface;
 
       await test.step('Prepare conversation and folder with long name to move conversation in', async () => {
-        const folderToMoveIn = conversationData.prepareFolder(folderName);
+        folderToMoveIn = conversationData.prepareFolder(folderName);
         conversation = conversationData.prepareDefaultConversation();
         await localStorageManager.setConversationHistory(conversation);
         await localStorageManager.setFolders(folderToMoveIn);
         await localStorageManager.setSelectedConversation(conversation);
-        await localStorageManager.setOpenedFolders(folderToMoveIn);
+
       });
 
       await test.step('Open "Move to" menu option for conversation and verify folder name is truncated', async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await folderConversations.expandCollapseFolder(folderToMoveIn.name);
         await conversations.openConversationDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
 
@@ -709,15 +711,17 @@ test.describe('Chat bar conversations tests', () => {
       promptInFolder.folders,
       ...nestedFolders,
     );
-    await localStorageManager.updateOpenedFolders(
-      conversationInFolder.folders,
-      promptInFolder.folders,
-      ...nestedFolders,
-    );
+
 
     await dialHomePage.reloadPage();
     await dialHomePage.waitForPageLoaded();
-    await chatBar.deleteAllEntities();
+    for (const nestedFolder of nestedFolders) {
+    await folderConversations.expandCollapseFolder(nestedFolder.name);
+  }
+   await folderConversations.expandCollapseFolder(
+    conversationInFolder.folders.name,
+  );
+  await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);await chatBar.deleteAllEntities();
     await confirmationDialog.confirm();
 
     let i = 2;
@@ -759,13 +763,16 @@ test.describe('Chat bar conversations tests', () => {
         .soft(isNewConversationVisible, ExpectedMessages.newConversationCreated)
         .toBeTruthy();
 
-      const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(
-        promptInFolder.folders.name,
-        promptInFolder.prompts[0].name,
-      );
-      expect
-        .soft(isFolderPromptVisible, ExpectedMessages.promptNotDeleted)
-        .toBeTruthy();
+    if (i === 1) {
+      await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
+    }
+    const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(
+      promptInFolder.folders.name,
+      promptInFolder.prompts[0].name,
+    );
+    expect
+      .soft(isFolderPromptVisible, ExpectedMessages.promptNotDeleted)
+      .toBeTruthy();
 
       const isPromptFolderVisible = await folderPrompts
         .getFolderByName(emptyPromptFolder.name)

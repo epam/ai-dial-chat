@@ -172,19 +172,6 @@ export class DataService {
     return BrowserStorage.setData(UIStorageKeys.ShowPromptbar, showPromptbar);
   }
 
-  public static getOpenedFolderIds(): Observable<string[]> {
-    return BrowserStorage.getData(UIStorageKeys.OpenedFoldersIds, []);
-  }
-
-  public static setOpenedFolderIds(
-    openedFolderIds: string[],
-  ): Observable<void> {
-    return BrowserStorage.setData(
-      UIStorageKeys.OpenedFoldersIds,
-      openedFolderIds,
-    );
-  }
-
   public static getClosedAnnouncement(): Observable<string | undefined> {
     return BrowserStorage.getData(UIStorageKeys.TextOfClosedAnnouncement, '');
   }

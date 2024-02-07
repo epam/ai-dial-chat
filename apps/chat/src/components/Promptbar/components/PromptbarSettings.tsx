@@ -8,7 +8,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { FeatureType } from '@/src/types/common';
-import { PromptsHistory } from '@/src/types/export';
+import { PromptsHistory } from '@/src/types/importExport';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
@@ -46,9 +46,10 @@ export function PromptbarSettings() {
       {
         name: t('Import prompts'),
         onClick: (promptsJSON: unknown) => {
+          const typedJson = promptsJSON as { content: unknown };
           dispatch(
             PromptsActions.importPrompts({
-              promptsHistory: promptsJSON as PromptsHistory,
+              promptsHistory: typedJson.content as PromptsHistory,
             }),
           );
         },

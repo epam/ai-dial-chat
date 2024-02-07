@@ -257,7 +257,7 @@ export class ConversationData extends FolderData {
     name?: string,
   ): FolderConversation {
     const conversation = this.prepareDefaultConversation(model, name);
-    const folder = this.prepareDefaultFolder();
+    const folder = this.prepareFolder();
     conversation.folderId = folder.id;
     return { conversations: [conversation], folders: folder };
   }

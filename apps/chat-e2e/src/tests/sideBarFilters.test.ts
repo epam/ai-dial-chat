@@ -58,12 +58,7 @@ test.describe('Side panel filter tests', () => {
         emptyFolder,
         folderConversation.folders,
       );
-      await localStorageManager.setOpenedFolders(
-        ...nestedFolders,
-        emptyFolder,
-        folderConversation.folders,
-      );
-      await localStorageManager.setConversationHistory(
+      await  localStorageManager.setConversationHistory(
         ...nestedSharedConversations,
         ...nestedConversations,
         ...folderConversation.conversations,
@@ -78,7 +73,13 @@ test.describe('Side panel filter tests', () => {
     await test.step('Open chat panel filter, check "Shared by me" option and verify only shared conversations and parent folders are shown', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await chatFilter.openFilterDropdownMenu();
+      for (const nestedFolder of nestedFolders) {
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }
+    await folderConversations.expandCollapseFolder(emptyFolder.name);
+    await folderConversations.expandCollapseFolder(
+      folderConversation.folders.name,
+    );await chatFilter.openFilterDropdownMenu();
       await chatFilterDropdownMenu.selectMenuOption(
         FilterMenuOptions.sharedByMe,
       );
@@ -219,12 +220,7 @@ test.describe('Side panel filter tests', () => {
         emptyFolder,
         folderPrompt.folders,
       );
-      await localStorageManager.setOpenedFolders(
-        ...nestedFolders,
-        emptyFolder,
-        folderPrompt.folders,
-      );
-      await localStorageManager.setPrompts(
+      await  localStorageManager.setPrompts(
         ...nestedSharedPrompts,
         ...nestedPrompts,
         ...folderPrompt.prompts,
@@ -236,7 +232,11 @@ test.describe('Side panel filter tests', () => {
     await test.step('Open prompt panel filter, check "Shared by me" option and verify only shared prompts and parent folders are shown', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-      await promptFilter.openFilterDropdownMenu();
+      for (const nestedFolder of nestedFolders) {
+      await folderPrompts.expandCollapseFolder(nestedFolder.name);
+    }
+    await folderPrompts.expandCollapseFolder(emptyFolder.name);
+    await folderPrompts.expandCollapseFolder(folderPrompt.folders.name);await promptFilter.openFilterDropdownMenu();
       await promptFilterDropdownMenu.selectMenuOption(
         FilterMenuOptions.sharedByMe,
       );

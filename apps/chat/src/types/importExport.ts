@@ -57,3 +57,8 @@ export interface PromptsHistory {
   prompts: Prompt[];
   folders: FolderInterface[];
 }
+
+export enum Operation {
+  Importing = 'Importing',
+  Exporting = 'Exporting',
+}

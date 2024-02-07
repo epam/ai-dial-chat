@@ -84,8 +84,8 @@ test.describe('Chat export/import tests', () => {
           conversationInFolder.folders.name,
           conversationInFolder.conversations[0].name,
         );
-        exportedData = await dialHomePage.downloadData(() =>
-          conversationDropdownMenu.selectMenuOption(MenuOptions.export),
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.export);exportedData = await dialHomePage.downloadData(() =>
+          conversationDropdownMenu.selectMenuOption(MenuOptions.withoutAttachments,),
         );
       });
 
@@ -159,8 +159,7 @@ test.describe('Chat export/import tests', () => {
         conversationData.prepareConversationsForNestedFolders(nestedFolders);
 
       await localStorageManager.setFolders(emptyFolder, ...nestedFolders);
-      await localStorageManager.setOpenedFolders(...nestedFolders);
-      await localStorageManager.setConversationHistory(
+      await  localStorageManager.setConversationHistory(
         conversationOutsideFolder,
         ...nestedConversations,
       );
@@ -172,7 +171,9 @@ test.describe('Chat export/import tests', () => {
     await test.step('Export all conversations using chat bar Export button', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      exportedData = await dialHomePage.downloadData(() =>
+      for (const nestedFolder of nestedFolders) {
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }exportedData = await dialHomePage.downloadData(() =>
         chatBar.exportButton.click(),
       );
     });
@@ -530,19 +531,22 @@ test.describe('Chat export/import tests', () => {
         await localStorageManager.setSelectedConversation(
           nestedConversations[levelsCount],
         );
-        await localStorageManager.setOpenedFolders(...nestedFolders);
+
       });
 
       await test.step('Export single conversations inside last nested folder', async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+      for (const nestedFolder of nestedFolders) {
+        await folderConversations.expandCollapseFolder(nestedFolder.name);
+      }
 
         await folderConversations.openFolderEntityDropdownMenu(
           nestedFolders[levelsCount].name,
           nestedConversations[levelsCount].name,
         );
-        exportedData = await dialHomePage.downloadData(() =>
-          conversationDropdownMenu.selectMenuOption(MenuOptions.export),
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.export);exportedData = await dialHomePage.downloadData(() =>
+          conversationDropdownMenu.selectMenuOption(MenuOptions.withoutAttachments,),
         );
       });
 
@@ -647,20 +651,23 @@ test.describe('Chat export/import tests', () => {
       await localStorageManager.setSelectedConversation(
         nestedConversations[levelsCount],
       );
-      await localStorageManager.setOpenedFolders(...nestedFolders);
+
     });
 
     await test.step('Export single conversations from root folder and single conversation from 2nd level folder', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
+    for (const nestedFolder of nestedFolders) {
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }
 
       for (let i = 0; i <= 2; i = i + 2) {
         await folderConversations.openFolderEntityDropdownMenu(
           nestedFolders[i].name,
           nestedConversations[i].name,
         );
-        const exportedData = await dialHomePage.downloadData(
-          () => conversationDropdownMenu.selectMenuOption(MenuOptions.export),
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.export);const exportedData = await dialHomePage.downloadData(
+          () => conversationDropdownMenu.selectMenuOption(MenuOptions.withoutAttachments,),
           `${i}.json`,
         );
         exportedConversations.push(exportedData);
@@ -754,19 +761,21 @@ test.describe('Chat export/import tests', () => {
       await localStorageManager.setSelectedConversation(
         thirdLevelFolderConversation,
       );
-      await localStorageManager.setOpenedFolders(...nestedFolders);
+
     });
 
     await test.step('Export 3rd level folder conversation', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-
+for (const nestedFolder of nestedFolders) {
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }
       await folderConversations.openFolderEntityDropdownMenu(
         nestedFolders[levelsCount].name,
         thirdLevelFolderConversation.name,
       );
-      exportedData = await dialHomePage.downloadData(() =>
-        conversationDropdownMenu.selectMenuOption(MenuOptions.export),
+      await conversationDropdownMenu.selectMenuOption(MenuOptions.export);exportedData = await dialHomePage.downloadData(() =>
+        conversationDropdownMenu.selectMenuOption(MenuOptions.withoutAttachments),
       );
     });
 
@@ -781,7 +790,9 @@ test.describe('Chat export/import tests', () => {
     });
 
     await test.step('Verify imported conversations is in 3rd level folder on the root level', async () => {
-      await folderConversations
+      for (const nestedFolder of nestedFolders) {
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }await folderConversations
         .getFolderEntity(
           nestedFolders[levelsCount].name,
           thirdLevelFolderConversation.name,

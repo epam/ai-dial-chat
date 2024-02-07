@@ -49,7 +49,7 @@ test.describe('Chat bar folder conversations tests', () => {
       setTestIds('EPMRTC-571', 'EPMRTC-1371');
       const nestedFolders = conversationData.prepareNestedFolder(3);
       await localStorageManager.setFolders(...nestedFolders);
-      await localStorageManager.setOpenedFolders(...nestedFolders);
+
 
       const newName = 'updated folder name';
       const randomFolder = GeneratorUtil.randomArrayElement(nestedFolders);
@@ -57,7 +57,9 @@ test.describe('Chat bar folder conversations tests', () => {
 
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await folderConversations.openFolderDropdownMenu(randomFolder.name);
+      for (const nestedFolder of nestedFolders) {
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }await folderConversations.openFolderDropdownMenu(randomFolder.name);
       await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
       await folderConversations.editFolderNameWithEnter(
         randomFolder.name,
@@ -193,7 +195,6 @@ test.describe('Chat bar folder conversations tests', () => {
 
   test(
     'Folders can expand and collapse.\n' +
-      'Expanded and collapsed chat folders are stored locally.\n' +
       '[UI] Expand/collapse icon near chat folder appears if there is any chat inside',
     async ({
       dialHomePage,
@@ -202,7 +203,7 @@ test.describe('Chat bar folder conversations tests', () => {
       localStorageManager,
       setTestIds,
     }) => {
-      setTestIds('EPMRTC-579', 'EPMRTC-1315', 'EPMRTC-1365');
+      setTestIds('EPMRTC-579', 'EPMRTC-1365');
       let firstConversationInFolder: FolderConversation;
       let secondConversationInFolder: FolderConversation;
       let emptyFolder: FolderInterface;
@@ -246,44 +247,8 @@ test.describe('Chat bar folder conversations tests', () => {
           .soft(emptyFolderCaret, ExpectedMessages.folderCaretIsNotVisible)
           .toBe(Attributes.invisible);
       });
+},
 
-      await test.step('Expand one folder, collapse another and verify state is saved after browser refresh', async () => {
-        await folderConversations.expandCollapseFolder(
-          firstConversationInFolder.folders.name,
-        );
-        for (let i = 1; i <= 2; i++) {
-          await folderConversations.expandCollapseFolder(
-            secondConversationInFolder.folders.name,
-          );
-        }
-
-        let i = 2;
-        while (i > 0) {
-          if (i === 1) {
-            await dialHomePage.reloadPage();
-            await dialHomePage.waitForPageLoaded();
-          }
-          const isFirstConversationVisible =
-            await folderConversations.isFolderEntityVisible(
-              firstConversationInFolder.folders.name,
-              firstConversationInFolder.conversations[0].name,
-            );
-          expect
-            .soft(isFirstConversationVisible, ExpectedMessages.folderExpanded)
-            .toBeTruthy();
-
-          const isSecondConversationVisible =
-            await folderConversations.isFolderEntityVisible(
-              secondConversationInFolder.folders.name,
-              secondConversationInFolder.conversations[0].name,
-            );
-          expect
-            .soft(isSecondConversationVisible, ExpectedMessages.folderCollapsed)
-            .toBeFalsy();
-          i--;
-        }
-      });
-    },
   );
 
   test(
@@ -300,11 +265,13 @@ test.describe('Chat bar folder conversations tests', () => {
       setTestIds('EPMRTC-606', 'EPMRTC-1373');
       const nestedFolders = conversationData.prepareNestedFolder(3);
       await localStorageManager.setFolders(...nestedFolders);
-      await localStorageManager.setOpenedFolders(...nestedFolders);
+
 
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await folderConversations.openFolderDropdownMenu(nestedFolders[0].name);
+      for (const nestedFolder of nestedFolders) {
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }await folderConversations.openFolderDropdownMenu(nestedFolders[0].name);
       await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
       expect
         .soft(
@@ -403,14 +370,15 @@ test.describe('Chat bar folder conversations tests', () => {
       nestedConversations =
         conversationData.prepareConversationsForNestedFolders(nestedFolders);
       await localStorageManager.setFolders(...nestedFolders);
-      await localStorageManager.setOpenedFolders(...nestedFolders);
-      await localStorageManager.setConversationHistory(...nestedConversations);
+      await  localStorageManager.setConversationHistory(...nestedConversations);
     });
 
     await test.step('Delete 2nd level folder and verify all nested content is deleted as well', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await folderConversations.openFolderDropdownMenu(
+      for (const nestedFolder of nestedFolders) {
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }await folderConversations.openFolderDropdownMenu(
         nestedFolders[levelToDelete].name,
       );
       await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);

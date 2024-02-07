@@ -9,7 +9,7 @@ import { OpenAIEntityAddon } from '@/src/types/openai';
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
-import { ModelIcon } from '@/src/components/Chatbar/components/ModelIcon';
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import CircleCheck from '../../../public/images/icons/circle-check.svg';

@@ -3,8 +3,7 @@ import { useTranslation } from 'next-i18next';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
 
-import { ModelIcon } from '../Chatbar/components/ModelIcon';
-
+import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 
 interface Props {

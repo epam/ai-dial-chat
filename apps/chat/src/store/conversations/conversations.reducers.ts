@@ -11,7 +11,6 @@ import {
   Role,
 } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
-import { SupportedExportFormats } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
@@ -216,10 +215,7 @@ export const conversationsSlice = createSlice({
         return folder;
       });
     },
-    exportConversation: (
-      state,
-      _action: PayloadAction<{ conversationId: string }>,
-    ) => state,
+
     deleteConversations: (
       state,
       { payload }: PayloadAction<{ conversationIds: string[] }>,
@@ -362,11 +358,6 @@ export const conversationsSlice = createSlice({
       state.conversations = state.conversations.concat(newConversations);
       state.selectedConversationsIds = newSelectedIds;
     },
-    exportConversations: (state) => state,
-    importConversations: (
-      state,
-      _action: PayloadAction<{ data: SupportedExportFormats }>,
-    ) => state,
     importConversationsSuccess: (
       state,
       {
@@ -503,25 +494,18 @@ export const conversationsSlice = createSlice({
       }: PayloadAction<{
         folderId: string;
         newParentFolderId: string | undefined;
-        newIndex: number;
       }>,
     ) => {
-      const folderIndex = state.folders.findIndex(
-        (folder) => folder.id === payload.folderId,
-      );
-      const updatedFolderContent = {
-        ...state.folders[folderIndex],
-        folderId: payload.newParentFolderId,
-      };
-      state.folders = state.folders
-        .toSpliced(folderIndex, 1)
-        .toSpliced(
-          folderIndex < payload.newIndex
-            ? payload.newIndex - 1
-            : payload.newIndex,
-          0,
-          updatedFolderContent,
-        );
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.folderId) {
+          return {
+            ...folder,
+            folderId: payload.newParentFolderId,
+          };
+        }
+
+        return folder;
+      });
     },
     setFolders: (
       state,

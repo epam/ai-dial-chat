@@ -170,14 +170,15 @@ test.describe('Chat replay tests', () => {
       nestedConversations =
         conversationData.prepareConversationsForNestedFolders(nestedFolders);
       await localStorageManager.setFolders(...nestedFolders);
-      await localStorageManager.setOpenedFolders(...nestedFolders);
-      await localStorageManager.setConversationHistory(...nestedConversations);
+      await  localStorageManager.setConversationHistory(...nestedConversations);
     });
 
     await test.step('Select Replay from drop-down menu for conversations inside 1st and 3rd level folders', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-
+    for (const nestedFolder of nestedFolders) {
+      await folderConversations.expandCollapseFolder(nestedFolder.name);
+    }
       for (let i = 0; i < nestedLevels; i = i + 2) {
         await folderConversations.openFolderEntityDropdownMenu(
           nestedFolders[i + 1].name,

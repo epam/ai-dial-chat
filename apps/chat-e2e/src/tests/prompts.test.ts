@@ -414,16 +414,17 @@ test.describe('Side bar prompt tests', () => {
       conversationInFolder.folders,
       ...nestedFolders,
     );
-    await localStorageManager.updateOpenedFolders(
-      promptInFolder.folders,
-      conversationInFolder.folders,
-      ...nestedFolders,
-    );
     await localStorageManager.updateSelectedConversation(singleConversation);
 
     await dialHomePage.reloadPage();
     await dialHomePage.waitForPageLoaded();
-    await conversations
+    for (const nestedFolder of nestedFolders) {
+    await folderPrompts.expandCollapseFolder(nestedFolder.name);
+  }
+  await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
+  await folderConversations.expandCollapseFolder(
+    conversationInFolder.folders.name,
+  );await conversations
       .getConversationByName(singleConversation.name)
       .waitFor();
 
@@ -434,12 +435,15 @@ test.describe('Side bar prompt tests', () => {
       await folderConversations
         .getFolderByName(emptyConversationFolder.name)
         .waitFor();
-      await folderConversations
+      if (i === 1) {
+      await folderConversations.expandCollapseFolder(
+        conversationInFolder.folders.name,
+      );await folderConversations
         .getFolderEntity(
           conversationInFolder.folders.name,
           conversationInFolder.conversations[0].name,
         )
-        .waitFor();
+        .waitFor();}
       await conversations
         .getConversationByName(singleConversation.name)
         .waitFor();
