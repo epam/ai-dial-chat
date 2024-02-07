@@ -1692,7 +1692,7 @@ const recreateConversationEpic: AppEpic = (action$) =>
         ConversationService.createConversation(payload.new).pipe(
           switchMap(() => EMPTY),
         ),
-        ConversationService.createConversation(payload.old).pipe(
+        ConversationService.deleteConversation(payload.old).pipe(
           switchMap(() => EMPTY),
         ),
       );

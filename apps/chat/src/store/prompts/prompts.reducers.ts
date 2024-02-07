@@ -315,10 +315,10 @@ export const promptsSlice = createSlice({
     ) => {
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.folderId) {
-          return {
+          return addGeneratedFolderId({
             ...folder,
             folderId: payload.newParentFolderId,
-          };
+          });
         }
 
         return folder;
