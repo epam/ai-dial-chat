@@ -4,7 +4,7 @@ This is a default UI for [AI DIAL](https://epam-rail.com). AI DIAL can be used a
 
 Originally forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui) and then completely reworked and published under [apache 2.0 license](./LICENSE), while code taken from original repository is still subject to [original MIT license](./license-original). Due to rework we introduced lots of new features such as varios IDP support, model side-by-side compare, [DIAL extensions](https://epam-rail.com/extension-framework) support, conversation replays, branding and many more.
 
-![ai-dial-chat](./docs/ai-dial-chat.png)
+![ai-dial-chat](../../docs/ai-dial-chat.png)
 
 ## Docs
 
