@@ -1,7 +1,5 @@
 import { Prompt } from '@/src/types/prompt';
 
-
-
 import { getPromptApiKey } from '../server/api';
 import { constructPath } from './file';
 

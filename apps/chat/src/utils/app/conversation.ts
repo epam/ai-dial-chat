@@ -10,6 +10,7 @@ import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { constructPath } from './file';
 import { splitPath } from './folders';
+
 export const getAssitantModelId = (
   modelType: EntityType,
   defaultAssistantModelId: string,

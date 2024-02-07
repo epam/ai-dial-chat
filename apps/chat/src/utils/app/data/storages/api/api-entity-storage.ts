@@ -46,6 +46,14 @@ export abstract class ApiEntityStorage<
     };
   }
 
+  private cleanUpEntity(entity: Entity): Entity {
+    const clone = { ...entity };
+    if ('lastActivityDate' in clone) {
+      delete clone.lastActivityDate;
+    }
+    return clone;
+  }
+
   getFoldersAndEntities(
     path?: string | undefined,
   ): Observable<FoldersAndEntities<EntityInfo>> {
@@ -149,13 +157,13 @@ export abstract class ApiEntityStorage<
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(entity),
+        body: JSON.stringify(this.cleanUpEntity(entity)),
       },
     ).pipe(catchError(() => EMPTY)); // TODO: handle error
   }
 
   updateEntity(entity: Entity): Observable<void> {
-    return this.createEntity(entity);
+    return this.createEntity(this.cleanUpEntity(entity));
   }
 
   deleteEntity(info: EntityInfo): Observable<void> {
