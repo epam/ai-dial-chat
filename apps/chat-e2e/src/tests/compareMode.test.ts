@@ -1148,10 +1148,6 @@ test('Compare two chats located in different folders', async ({
       firstFolderConversation.conversations[0],
       secondFolderConversation.conversations[0],
     );
-    await localStorageManager.setOpenedFolders(
-      firstFolderConversation.folders,
-      secondFolderConversation.folders,
-    );
     await localStorageManager.setSelectedConversation(
       firstFolderConversation.conversations[0],
     );
@@ -1160,6 +1156,12 @@ test('Compare two chats located in different folders', async ({
   await test.step('Open compare mode from 1st chat dropdown menu and verify one chat is available for comparison', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    await folderConversations.expandCollapseFolder(
+      firstFolderConversation.folders.name,
+    );
+    await folderConversations.expandCollapseFolder(
+      secondFolderConversation.folders.name,
+    );
     await folderConversations.openFolderEntityDropdownMenu(
       firstFolderConversation.folders.name,
       firstFolderConversation.conversations[0].name,

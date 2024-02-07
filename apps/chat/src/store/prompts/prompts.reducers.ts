@@ -307,25 +307,18 @@ export const promptsSlice = createSlice({
       }: PayloadAction<{
         folderId: string;
         newParentFolderId: string | undefined;
-        newIndex: number;
       }>,
     ) => {
-      const folderIndex = state.folders.findIndex(
-        (folder) => folder.id === payload.folderId,
-      );
-      const updatedFolderContent = {
-        ...state.folders[folderIndex],
-        folderId: payload.newParentFolderId,
-      };
-      state.folders = state.folders
-        .toSpliced(folderIndex, 1)
-        .toSpliced(
-          folderIndex < payload.newIndex
-            ? payload.newIndex - 1
-            : payload.newIndex,
-          0,
-          updatedFolderContent,
-        );
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.folderId) {
+          return {
+            ...folder,
+            folderId: payload.newParentFolderId,
+          };
+        }
+
+        return folder;
+      });
     },
     setFolders: (
       state,

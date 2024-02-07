@@ -76,10 +76,12 @@ test(
     const randomFolder = GeneratorUtil.randomArrayElement(nestedFolders);
     const randomFolderIndex = nestedFolders.indexOf(randomFolder);
     await localStorageManager.setFolders(...nestedFolders);
-    await localStorageManager.setOpenedFolders(...nestedFolders);
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    for (const nestedFolder of nestedFolders) {
+      await folderPrompts.expandCollapseFolder(nestedFolder.name);
+    }
     await folderPrompts.openFolderDropdownMenu(randomFolder.name);
     await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
     await folderPrompts.editFolderNameWithEnter(randomFolder.name, newName);
@@ -272,10 +274,12 @@ test(
     setTestIds('EPMRTC-967', 'EPMRTC-1383');
     const nestedFolders = promptData.prepareNestedFolder(3);
     await localStorageManager.setFolders(...nestedFolders);
-    await localStorageManager.setOpenedFolders(...nestedFolders);
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    for (const nestedFolder of nestedFolders) {
+      await folderPrompts.expandCollapseFolder(nestedFolder.name);
+    }
     await folderPrompts.openFolderDropdownMenu(nestedFolders[0].name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
     expect
@@ -368,13 +372,15 @@ test('Delete nested prompt folder with prompt', async ({
       promptData.resetData();
     }
     await localStorageManager.setFolders(...nestedFolders);
-    await localStorageManager.setOpenedFolders(...nestedFolders);
     await localStorageManager.setPrompts(...nestedPrompts);
   });
 
   await test.step('Delete 2nd level folder and verify all nested content is deleted as well', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    for (const nestedFolder of nestedFolders) {
+      await folderPrompts.expandCollapseFolder(nestedFolder.name);
+    }
     await folderPrompts.openFolderDropdownMenu(
       nestedFolders[levelToDelete].name,
     );

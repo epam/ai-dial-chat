@@ -44,7 +44,7 @@ export const hasDragEventEntityData = (
   );
 };
 
-const hasDragEventFolderData = (
+export const hasDragEventFolderData = (
   event: DragEvent,
   featureType?: FeatureType,
 ): boolean => {

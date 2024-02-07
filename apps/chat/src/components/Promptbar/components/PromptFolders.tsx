@@ -2,6 +2,7 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { compareEntitiesByName } from '@/src/utils/app/folders';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
@@ -36,7 +37,6 @@ import { PromptComponent } from './Prompt';
 
 interface promptFolderProps {
   folder: FolderInterface;
-  index: number;
   isLast: boolean;
   filters: EntityFilters;
   includeEmpty: boolean;
@@ -44,7 +44,6 @@ interface promptFolderProps {
 
 const PromptFolderTemplate = ({
   folder,
-  index,
   isLast,
   filters,
   includeEmpty = false,
@@ -98,7 +97,6 @@ const PromptFolderTemplate = ({
               PromptsActions.moveFolder({
                 folderId: movedFolder.id,
                 newParentFolderId: folder.id,
-                newIndex: 0,
               }),
             );
           }
@@ -109,16 +107,11 @@ const PromptFolderTemplate = ({
   );
 
   const onDropBetweenFolders = useCallback(
-    (
-      folder: FolderInterface,
-      parentFolderId: string | undefined,
-      index: number,
-    ) => {
+    (folder: FolderInterface, parentFolderId: string | undefined) => {
       dispatch(
         PromptsActions.moveFolder({
           folderId: folder.id,
           newParentFolderId: parentFolderId,
-          newIndex: index,
         }),
       );
     },
@@ -137,7 +130,6 @@ const PromptFolderTemplate = ({
       <BetweenFoldersLine
         level={0}
         onDrop={onDropBetweenFolders}
-        index={index}
         parentFolderId={folder.folderId}
         featureType={FeatureType.Prompt}
         denyDrop={isExternal}
@@ -163,7 +155,6 @@ const PromptFolderTemplate = ({
         onDeleteFolder={(folderId: string) =>
           dispatch(PromptsActions.deleteFolder({ folderId }))
         }
-        onDropBetweenFolders={onDropBetweenFolders}
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Prompt}
       />
@@ -171,7 +162,6 @@ const PromptFolderTemplate = ({
         <BetweenFoldersLine
           level={0}
           onDrop={onDropBetweenFolders}
-          index={index + 1}
           parentFolderId={folder.folderId}
           featureType={FeatureType.Prompt}
           denyDrop={isExternal}
@@ -206,12 +196,14 @@ export const PromptSection = ({
   );
 
   const rootFolders = useMemo(
-    () => folders.filter(({ folderId }) => !folderId),
+    () =>
+      folders.filter(({ folderId }) => !folderId).sort(compareEntitiesByName),
     [folders],
   );
 
   const rootPrompts = useMemo(
-    () => prompts.filter(({ folderId }) => !folderId),
+    () =>
+      prompts.filter(({ folderId }) => !folderId).sort(compareEntitiesByName),
     [prompts],
   );
 
@@ -260,7 +252,6 @@ export const PromptSection = ({
           <PromptFolderTemplate
             key={folder.id}
             folder={folder}
-            index={index}
             isLast={index === arr.length - 1}
             filters={filters}
             includeEmpty={showEmptyFolders}

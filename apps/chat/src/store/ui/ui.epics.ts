@@ -5,7 +5,6 @@ import {
   filter,
   forkJoin,
   ignoreElements,
-  map,
   of,
   switchMap,
   tap,
@@ -20,7 +19,7 @@ import { AppEpic } from '@/src/types/store';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { SettingsSelectors } from '../settings/settings.reducers';
-import { UIActions, UISelectors } from './ui.reducers';
+import { UIActions } from './ui.reducers';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -37,7 +36,6 @@ const initEpic: AppEpic = (action$, state$) =>
           : of([]),
         showChatbar: DataService.getShowChatbar(),
         showPromptbar: DataService.getShowPromptbar(),
-        openedFoldersIds: DataService.getOpenedFolderIds(),
         textOfClosedAnnouncement: DataService.getClosedAnnouncement(),
         chatbarWidth: DataService.getChatbarWidth(),
         promptbarWidth: DataService.getPromptbarWidth(),
@@ -48,7 +46,6 @@ const initEpic: AppEpic = (action$, state$) =>
       ({
         theme,
         availableThemes,
-        openedFoldersIds,
         showChatbar,
         showPromptbar,
         textOfClosedAnnouncement,
@@ -66,7 +63,6 @@ const initEpic: AppEpic = (action$, state$) =>
         actions.push(UIActions.setAvailableThemes(availableThemes));
         actions.push(UIActions.setShowChatbar(showChatbar));
         actions.push(UIActions.setShowPromptbar(showPromptbar));
-        actions.push(UIActions.setOpenedFoldersIds(openedFoldersIds));
         actions.push(
           UIActions.closeAnnouncement({
             announcement: textOfClosedAnnouncement,
@@ -155,25 +151,6 @@ const closeAnnouncementEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
-const saveOpenedFoldersIdsEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(
-      (action) =>
-        UIActions.setOpenedFoldersIds.match(action) ||
-        UIActions.toggleFolder.match(action) ||
-        UIActions.openFolder.match(action) ||
-        UIActions.closeFolder.match(action),
-    ),
-    map(() => {
-      return UISelectors.selectOpenedFoldersIds(state$.value);
-    }),
-    switchMap((openedFolderIds) =>
-      DataService.setOpenedFolderIds(openedFolderIds),
-    ),
-
-    ignoreElements(),
-  );
-
 const saveChatbarWidthEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.setChatbarWidth.match),
@@ -201,7 +178,6 @@ const UIEpics = combineEpics(
   saveShowChatbarEpic,
   saveShowPromptbarEpic,
   showToastErrorEpic,
-  saveOpenedFoldersIdsEpic,
   closeAnnouncementEpic,
   saveChatbarWidthEpic,
   savePromptbarWidthEpic,

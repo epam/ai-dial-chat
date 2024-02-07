@@ -20,6 +20,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
+  compareEntitiesByName,
   getChildAndCurrentFoldersIdsById,
   getFoldersDepth,
 } from '@/src/utils/app/folders';
@@ -55,7 +56,6 @@ import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { FolderContextMenu } from '../Common/FolderContextMenu';
 import ShareIcon from '../Common/ShareIcon';
 import { Spinner } from '../Common/Spinner';
-import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
 
 export interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;
@@ -78,11 +78,6 @@ export interface FolderProps<T, P = unknown> {
   displayCaretAlways?: boolean;
   additionalItemData?: Record<string, unknown>;
   handleDrop?: (e: DragEvent, folder: FolderInterface) => void;
-  onDropBetweenFolders?: (
-    folder: FolderInterface,
-    parentFolderId: string | undefined,
-    index: number,
-  ) => void;
   onRenameFolder?: (newName: string, folderId: string) => void;
   onDeleteFolder?: (folderId: string) => void;
   onAddFolder?: (parentFolderId: string) => void;
@@ -111,7 +106,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   displayCaretAlways = false,
   additionalItemData,
   handleDrop,
-  onDropBetweenFolders,
   onRenameFolder,
   onDeleteFolder,
   onClickFolder,
@@ -138,7 +132,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   const [renameValue, setRenameValue] = useState(currentFolder.name);
   const [isSelected, setIsSelected] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
-  const [isDropAllowed, setIsDropAllowed] = useState(true);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const dragDropElement = useRef<HTMLDivElement>(null);
 
@@ -203,15 +196,19 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     return openedFoldersIds.includes(currentFolder.id);
   }, [currentFolder.id, openedFoldersIds]);
   const filteredChildFolders = useMemo(() => {
-    return allFolders.filter((folder) => folder.folderId === currentFolder.id);
+    return allFolders
+      .filter((folder) => folder.folderId === currentFolder.id)
+      .sort(compareEntitiesByName);
   }, [currentFolder, allFolders]);
   const filteredChildItems = useMemo(() => {
     return (
-      allItems?.filter(
-        (item) =>
-          item.folderId === currentFolder.id &&
-          doesEntityContainSearchItem(item, searchTerm),
-      ) || []
+      allItems
+        ?.filter(
+          (item) =>
+            item.folderId === currentFolder.id &&
+            (!searchTerm || doesEntityContainSearchItem(item, searchTerm)),
+        )
+        .sort(compareEntitiesByName) || []
     );
   }, [allItems, currentFolder.id, searchTerm]);
 
@@ -250,7 +247,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const dropHandler = useCallback(
     (e: DragEvent) => {
-      if (!isDropAllowed || !handleDrop || isExternal) {
+      if (!handleDrop || isExternal) {
         return;
       }
 
@@ -304,7 +301,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       }
     },
     [
-      isDropAllowed,
       handleDrop,
       isExternal,
       dispatch,
@@ -319,11 +315,11 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   const allowDrop = useCallback(
     (e: DragEvent) => {
-      if (isDropAllowed && !isExternal && hasDragEventAnyData(e, featureType)) {
+      if (!isExternal && hasDragEventAnyData(e, featureType)) {
         e.preventDefault();
       }
     },
-    [featureType, isDropAllowed, isExternal],
+    [featureType, isExternal],
   );
 
   const isParentFolder = useCallback(
@@ -460,10 +456,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     [currentFolder.id, dispatch, featureType, isExternal],
   );
 
-  const onDraggingBetweenFolders = useCallback((isDraggingOver: boolean) => {
-    setIsDropAllowed(!isDraggingOver);
-  }, []);
-
   const handleContextMenuOpen = (e: MouseEvent) => {
     if (hasParentWithFloatingOverlay(e.target as Element)) {
       return;
@@ -497,7 +489,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       id="folder"
       className={classNames(
         'transition-colors duration-200',
-        isDraggingOver && isDropAllowed && 'bg-accent-primary-alpha',
+        isDraggingOver && 'bg-accent-primary-alpha',
         currentFolder.temporary && 'text-primary',
       )}
       onDrop={dropHandler}
@@ -670,23 +662,11 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       {isFolderOpened ? (
         <div className="flex flex-col gap-1">
           <div className="flex flex-col">
-            {allFolders.map((item, index, arr) => {
+            {allFolders.map((item) => {
               if (item.folderId === currentFolder.id) {
                 return (
                   <Fragment key={item.id}>
-                    {onDropBetweenFolders ? (
-                      <BetweenFoldersLine
-                        level={level + 1}
-                        onDrop={onDropBetweenFolders}
-                        onDraggingOver={onDraggingBetweenFolders}
-                        index={index}
-                        parentFolderId={item.folderId}
-                        featureType={featureType}
-                        denyDrop={isExternal}
-                      />
-                    ) : (
-                      <div className="h-1"></div>
-                    )}
+                    <div className="h-1"></div>
                     <Folder
                       readonly={readonly}
                       level={level + 1}
@@ -703,7 +683,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       isInitialRenameEnabled={isInitialRenameEnabled}
                       newAddedFolderId={newAddedFolderId}
                       handleDrop={handleDrop}
-                      onDropBetweenFolders={onDropBetweenFolders}
                       onRenameFolder={onRenameFolder}
                       onFileUpload={onFileUpload}
                       onDeleteFolder={onDeleteFolder}
@@ -715,17 +694,6 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
                       highlightTemporaryFolders={highlightTemporaryFolders}
                       withBorderHighlight={withBorderHighlight}
                     />
-                    {onDropBetweenFolders && index === arr.length - 1 && (
-                      <BetweenFoldersLine
-                        level={level + 1}
-                        onDrop={onDropBetweenFolders}
-                        onDraggingOver={onDraggingBetweenFolders}
-                        index={index + 1}
-                        parentFolderId={item.folderId}
-                        featureType={featureType}
-                        denyDrop={isExternal}
-                      />
-                    )}
                   </Fragment>
                 );
               }
