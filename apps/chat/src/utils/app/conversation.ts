@@ -95,19 +95,25 @@ export const getNewConversationName = (
   return conversation.name;
 };
 
-export const addGeneratedConversationId = (
-  conversation: Omit<Conversation, 'id'>,
-) => ({
-  ...conversation,
-  id: constructPath(conversation.folderId, getConversationApiKey(conversation)),
-});
+export const getGeneratedConversationId = <T extends ConversationInfo>(
+  conversation: Omit<T, 'id'>,
+): string =>
+  constructPath(conversation.folderId, getConversationApiKey(conversation));
+
+export const addGeneratedConversationId = <T extends ConversationInfo>(
+  conversation: Omit<T, 'id'>,
+): T =>
+  ({
+    ...conversation,
+    id: getGeneratedConversationId(conversation),
+  }) as T;
 
 export const parseConversationId = (id: string): ConversationInfo => {
   const { name, parentPath } = splitPath(id);
-  return {
+  return addGeneratedConversationId({
     ...parseConversationApiKey(name),
     folderId: parentPath,
-  };
+  });
 };
 
 export const compareConversationsByDate = (

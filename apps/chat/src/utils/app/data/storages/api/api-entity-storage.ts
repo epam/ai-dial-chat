@@ -131,8 +131,7 @@ export abstract class ApiEntityStorage<
     ).pipe(
       map((entity: Entity) => {
         return {
-          ...entity,
-          ...info,
+          ...this.mergeGetResult(info, entity),
           status: UploadStatus.LOADED,
         };
       }),
@@ -182,4 +181,6 @@ export abstract class ApiEntityStorage<
   abstract getStorageKey(): ApiKeys;
 
   abstract cleanUpEntity(entity: Entity): Entity;
+
+  abstract mergeGetResult(info: EntityInfo, entity: Entity): Entity;
 }
