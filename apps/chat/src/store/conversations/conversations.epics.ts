@@ -77,6 +77,7 @@ import {
 import { errorsMessages } from '@/src/constants/errors';
 import { defaultReplay } from '@/src/constants/replay';
 
+import { RootState } from '..';
 import { AddonsActions } from '../addons/addons.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
@@ -291,14 +292,15 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.createNewReplayConversation.match),
     switchMap(({ payload }) =>
       forkJoin({
-        conversation: ConversationService.getConversation(payload),
+        conversationAndPayload: getOrUploadConversation(payload, state$.value),
         conversations: of(
           ConversationsSelectors.selectConversations(state$.value),
         ),
       }),
     ),
-    switchMap(({ conversation, conversations }) => {
-      if (!conversation) return EMPTY;
+    switchMap(({ conversationAndPayload, conversations }) => {
+      const { conversation } = conversationAndPayload;
+      if (!conversation) return EMPTY; // TODO: handle?
 
       const newConversationName = getNextDefaultName(
         `[Replay] ${conversation.name}`,
@@ -329,7 +331,8 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
           activeReplayIndex: 0,
           replayAsIs: true,
         },
-
+        isReplay: true,
+        isPlayback: false,
         playback: {
           isPlayback: false,
           activePlaybackIndex: 0,
@@ -350,14 +353,15 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.createNewPlaybackConversation.match),
     switchMap(({ payload }) =>
       forkJoin({
-        conversation: ConversationService.getConversation(payload),
+        conversationAndPayload: getOrUploadConversation(payload, state$.value),
         conversations: of(
           ConversationsSelectors.selectConversations(state$.value),
         ),
       }),
     ),
-    switchMap(({ conversation, conversations }) => {
-      if (!conversation) return EMPTY;
+    switchMap(({ conversationAndPayload, conversations }) => {
+      const { conversation } = conversationAndPayload;
+      if (!conversation) return EMPTY; // TODO: handle?
 
       const newConversationName = getNextDefaultName(
         `[Playback] ${conversation.name}`,
@@ -384,7 +388,8 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
           activePlaybackIndex: 0,
           isPlayback: true,
         },
-
+        isReplay: false,
+        isPlayback: true,
         replay: {
           isReplay: false,
           replayUserMessagesStack: [],
@@ -1778,33 +1783,45 @@ const recreateConversationEpic: AppEpic = (action$) =>
     }),
   );
 
+const getOrUploadConversation = (
+  payload: { id: string },
+  state: RootState,
+): Observable<{
+  conversation: Conversation | null;
+  payload: { id: string };
+}> => {
+  const conversation = ConversationsSelectors.selectConversation(
+    state,
+    payload.id,
+  ) as Conversation;
+  if (conversation.status !== UploadStatus.LOADED) {
+    return forkJoin({
+      conversation: ConversationService.getConversation(
+        parseConversationId(payload.id),
+      ),
+      payload: of(payload),
+    });
+  } else {
+    return forkJoin({
+      conversation: of(conversation),
+      payload: of(payload),
+    });
+  }
+};
+
 const updateConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter((action) => ConversationsActions.updateConversation.match(action)),
     switchMap(({ payload }) => {
-      const { id } = payload;
-      const conversation = ConversationsSelectors.selectConversation(
-        state$.value,
-        id,
-      ) as Conversation;
-      if (conversation.status !== UploadStatus.LOADED) {
-        return forkJoin({
-          conversation: ConversationService.getConversation(
-            parseConversationId(id),
-          ),
-          payload: of(payload),
-        });
-      } else {
-        return forkJoin({
-          conversation: of(conversation),
-          payload: of(payload),
-        });
-      }
+      return getOrUploadConversation(payload, state$.value);
     }),
     switchMap(({ payload, conversation }) => {
-      const { id, values } = payload;
+      const { id, values } = payload as {
+        id: string;
+        values: Partial<Conversation>;
+      };
       if (!conversation) {
-        return EMPTY;
+        return EMPTY; // TODO: handle?
       }
       const newConversation: Conversation = addGeneratedConversationId({
         ...(conversation as Conversation),

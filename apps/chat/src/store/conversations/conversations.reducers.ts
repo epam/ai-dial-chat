@@ -255,7 +255,7 @@ export const conversationsSlice = createSlice({
         payload: { newConversation },
       }: PayloadAction<{ newConversation: Conversation }>,
     ) => {
-      state.conversations.concat(newConversation);
+      state.conversations = state.conversations.concat(newConversation);
       state.selectedConversationsIds = [newConversation.id];
     },
     createNewPlaybackConversation: (
