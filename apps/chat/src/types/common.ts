@@ -83,3 +83,7 @@ export enum UploadStatus {
   LOADED = 'LOADED',
   FAILED = 'FAILED',
 }
+
+export const isNotLoaded = (status?: UploadStatus) => {
+  return !status || status === UploadStatus.UNINITIALIZED;
+};

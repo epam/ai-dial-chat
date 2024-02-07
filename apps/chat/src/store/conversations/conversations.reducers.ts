@@ -216,15 +216,23 @@ export const conversationsSlice = createSlice({
     },
     uploadConversationsByIds: (
       state,
-      _action: PayloadAction<{ conversationIds: string[] }>,
+      {
+        payload,
+      }: PayloadAction<{ conversationIds: string[]; showLoader?: boolean }>,
     ) => {
-      state.areSelectedConversationsLoaded = false;
+      if (payload.showLoader) {
+        state.areSelectedConversationsLoaded = false;
+      }
     },
     uploadConversationsByIdsSuccess: (
       state,
       {
         payload,
-      }: PayloadAction<{ setIds: Set<string>; conversations: Conversation[] }>,
+      }: PayloadAction<{
+        setIds: Set<string>;
+        conversations: Conversation[];
+        showLoader?: boolean;
+      }>,
     ) => {
       state.conversations = combineEntities(
         payload.conversations.map((conv) => ({
@@ -233,7 +241,9 @@ export const conversationsSlice = createSlice({
         })),
         state.conversations.filter((conv) => !payload.setIds.has(conv.id)),
       );
-      state.areSelectedConversationsLoaded = true;
+      if (payload.showLoader) {
+        state.areSelectedConversationsLoaded = true;
+      }
     },
     createNewReplayConversation: (
       state,

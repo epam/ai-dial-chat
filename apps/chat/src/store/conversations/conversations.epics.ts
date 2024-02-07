@@ -1474,6 +1474,7 @@ const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
         of(
           ConversationsActions.uploadConversationsByIds({
             conversationIds: selectedConversationsIds,
+            showLoader: true,
           }),
         ),
       ),
@@ -1736,12 +1737,14 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
           ),
         ),
         setIds: of(setIds),
+        showLoader: of(payload.showLoader),
       });
     }),
-    map(({ uploadedConversations, setIds }) =>
+    map(({ uploadedConversations, setIds, showLoader }) =>
       ConversationsActions.uploadConversationsByIdsSuccess({
         setIds,
         conversations: uploadedConversations.filter(Boolean) as Conversation[],
+        showLoader,
       }),
     ),
   );
