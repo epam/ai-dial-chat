@@ -287,6 +287,46 @@ export const importPrompts = (
   return { prompts: newPrompts, folders: newFolders, isError: false };
 };
 
+export const getAttachmentId = ({
+  url,
+  attachmentIdIndex,
+}: {
+  url: string;
+  attachmentIdIndex: number;
+}) => {
+  const regExpForAttachmentId = /^files\/\w*\//;
+
+  const attachmentId = decodeURI(url).split(regExpForAttachmentId)[
+    attachmentIdIndex
+  ];
+
+  return attachmentId;
+};
+
+const getNewAttachmentFileFromUploaded = ({
+  uploadedAttachments,
+  oldAttachmentId,
+  attachmentIdIndex,
+}: {
+  uploadedAttachments: Partial<DialFile>[];
+  oldAttachmentId: string;
+  attachmentIdIndex: number;
+}) =>
+  uploadedAttachments.find((newAttachment) => {
+    if (!newAttachment.id) {
+      return;
+    }
+    const regExpForNewAttachmentId = /^imports\/[\w-]*\//;
+
+    const newAttachmentId = newAttachment.id.split(regExpForNewAttachmentId)[
+      attachmentIdIndex
+    ];
+    return (
+      newAttachmentId === oldAttachmentId ||
+      oldAttachmentId.includes(newAttachmentId)
+    );
+  });
+
 export const updateAttachment = ({
   oldAttachment,
   uploadedAttachments,
@@ -295,29 +335,22 @@ export const updateAttachment = ({
   uploadedAttachments: Partial<DialFile>[];
 }) => {
   const oldAttachmentUrl = oldAttachment.url || oldAttachment.reference_url;
+
   if (!oldAttachmentUrl) {
     return oldAttachment;
   }
 
-  const regExpForOldAttachmentId = /^files\/\w*\//;
-  const indexAfterSplit = 1;
+  const attachmentIdIndex = 1;
 
-  const oldAttachmentId = decodeURI(oldAttachmentUrl).split(
-    regExpForOldAttachmentId,
-  )[indexAfterSplit];
+  const oldAttachmentId = getAttachmentId({
+    url: oldAttachmentUrl,
+    attachmentIdIndex,
+  });
 
-  const newAttachmentFile = uploadedAttachments.find((newAttachment) => {
-    if (!newAttachment.id) {
-      return;
-    }
-    const regExpForNewAttachmentId = /^imports\/[\w-]*\//;
-    const newAttachmentId = newAttachment.id.split(regExpForNewAttachmentId)[
-      indexAfterSplit
-    ];
-    return (
-      newAttachmentId === oldAttachmentId ||
-      oldAttachmentId.includes(newAttachmentId)
-    );
+  const newAttachmentFile = getNewAttachmentFileFromUploaded({
+    uploadedAttachments,
+    oldAttachmentId,
+    attachmentIdIndex,
   });
 
   if (!newAttachmentFile || !newAttachmentFile.name) {
@@ -332,9 +365,10 @@ export const updateAttachment = ({
     oldAttachment.reference_url &&
     encodeURI(`${newAttachmentFile.absolutePath}/${oldAttachmentId}`);
 
-  return {
+  const updatedAttachment: Attachment = {
     ...oldAttachment,
     url: newAttachmentUrl,
     reference_url: newReferenceUrl,
   };
+  return updatedAttachment;
 };
