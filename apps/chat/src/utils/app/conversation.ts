@@ -7,14 +7,9 @@ import {
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 
-import {
-  getConversationApiKey,
-  getParentPath,
-  parseConversationApiKey,
-} from '../server/api';
+import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { constructPath } from './file';
 import { splitPath } from './folders';
-
 export const getAssitantModelId = (
   modelType: EntityType,
   defaultAssistantModelId: string,
@@ -103,10 +98,7 @@ export const addGeneratedConversationId = (
   conversation: Omit<Conversation, 'id'>,
 ) => ({
   ...conversation,
-  id: constructPath(
-    getParentPath(conversation.folderId),
-    getConversationApiKey(conversation),
-  ),
+  id: constructPath(conversation.folderId, getConversationApiKey(conversation)),
 });
 
 export const parseConversationId = (id: string): ConversationInfo => {
