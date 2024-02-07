@@ -255,7 +255,7 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
             PromptService.setPrompts([prompt]).pipe(
               switchMap(() => {
                 migratedPromptIds.push(
-                  preparedPrompts[migratedPromptsCount].id,
+                  notMigratedPrompts[migratedPromptsCount].id,
                 );
 
                 return concat(

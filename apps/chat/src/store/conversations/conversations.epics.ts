@@ -566,27 +566,26 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
           return EMPTY;
         }
 
-        const preparedConversations = notMigratedConversations
-          .sort((a, b) => {
-            if (!a.lastActivityDate) return 1;
-            if (!b.lastActivityDate) return -1;
+        const sortedConversations = notMigratedConversations.sort((a, b) => {
+          if (!a.lastActivityDate) return 1;
+          if (!b.lastActivityDate) return -1;
 
-            return a.lastActivityDate - b.lastActivityDate;
-          })
-          .map((conv) => {
-            const { path } = getPathToFolderById(
-              conversationsFolders,
-              conv.folderId,
-            );
-            const newName = conv.name.replace(notAllowedSymbolsRegex, '');
+          return a.lastActivityDate - b.lastActivityDate;
+        });
+        const preparedConversations = notMigratedConversations.map((conv) => {
+          const { path } = getPathToFolderById(
+            conversationsFolders,
+            conv.folderId,
+          );
+          const newName = conv.name.replace(notAllowedSymbolsRegex, '');
 
-            return {
-              ...conv,
-              id: constructPath(...[path, newName]),
-              name: newName,
-              folderId: path.replace(notAllowedSymbolsRegex, ''),
-            };
-          }); // to send conversation with proper parentPath and lastActivityDate order
+          return {
+            ...conv,
+            id: constructPath(...[path, newName]),
+            name: newName,
+            folderId: path.replace(notAllowedSymbolsRegex, ''),
+          };
+        }); // to send conversation with proper parentPath and lastActivityDate order
 
         let migratedConversationsCount = 0;
 
@@ -601,7 +600,7 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
               ConversationService.setConversations([conversation]).pipe(
                 switchMap(() => {
                   migratedConversationIds.push(
-                    preparedConversations[migratedConversationsCount].id,
+                    sortedConversations[migratedConversationsCount].id,
                   );
 
                   return concat(
