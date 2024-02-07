@@ -5,11 +5,11 @@ import {
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
 
-import { Conversation } from '@/src/types/chat';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
-import { Prompt } from '@/src/types/prompt';
+import { FolderInterface, FolderType } from '@/src/types/folder';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
 import escapeStringRegexp from 'escape-string-regexp';
@@ -372,4 +372,72 @@ export const getFoldersWithEntities = (
   };
 
   return folders.filter(({ id }) => folderContainsEntity(id));
+};
+
+export const splitPath = (id: string) => {
+  const parts = id.split('/');
+  const name = parts[parts.length - 1];
+  const parentPath =
+    parts.length > 1
+      ? constructPath(...parts.slice(0, parts.length - 1))
+      : undefined;
+  return {
+    name,
+    parentPath,
+  };
+};
+
+export const getAllPathsFromPath = (path?: string): string[] => {
+  if (!path) {
+    return [];
+  }
+  const parts = path.split('/');
+  const paths = [];
+  for (let i = 1; i <= parts.length; i++) {
+    const path = constructPath(...parts.slice(0, i));
+    paths.push(path);
+  }
+  return paths;
+};
+
+export const getAllPathsFromId = (id: string): string[] => {
+  const { parentPath } = splitPath(id);
+  return getAllPathsFromPath(parentPath);
+};
+
+export const getFolderFromPath = (
+  path: string,
+  type: FolderType,
+): FolderInterface => {
+  const { name, parentPath } = splitPath(path);
+  return {
+    id: path,
+    name,
+    type,
+    folderId: parentPath,
+  };
+};
+
+export const getFoldersFromPaths = (
+  paths: (string | undefined)[],
+  type: FolderType,
+): FolderInterface[] => {
+  return (paths.filter(Boolean) as string[]).map((path) =>
+    getFolderFromPath(path, type),
+  );
+};
+
+export const compareEntitiesByName = <
+  T extends ConversationInfo | PromptInfo | DialFile,
+>(
+  a: T,
+  b: T,
+) => {
+  if (a.name > b.name) {
+    return 1;
+  }
+  if (a.name < b.name) {
+    return -1;
+  }
+  return 0;
 };

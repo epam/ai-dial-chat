@@ -394,15 +394,17 @@ test('Clear prompts. Clear', async ({
     conversationInFolder.folders,
     ...nestedFolders,
   );
-  await localStorageManager.updateOpenedFolders(
-    promptInFolder.folders,
-    conversationInFolder.folders,
-    ...nestedFolders,
-  );
   await localStorageManager.updateSelectedConversation(singleConversation);
 
   await dialHomePage.reloadPage();
   await dialHomePage.waitForPageLoaded();
+  for (const nestedFolder of nestedFolders) {
+    await folderPrompts.expandCollapseFolder(nestedFolder.name);
+  }
+  await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
+  await folderConversations.expandCollapseFolder(
+    conversationInFolder.folders.name,
+  );
   await conversations.getConversationByName(singleConversation.name).waitFor();
 
   await promptBar.deleteAllEntities();
@@ -412,12 +414,17 @@ test('Clear prompts. Clear', async ({
     await folderConversations
       .getFolderByName(emptyConversationFolder.name)
       .waitFor();
-    await folderConversations
-      .getFolderEntity(
+    if (i === 1) {
+      await folderConversations.expandCollapseFolder(
         conversationInFolder.folders.name,
-        conversationInFolder.conversations[0].name,
-      )
-      .waitFor();
+      );
+      await folderConversations
+        .getFolderEntity(
+          conversationInFolder.folders.name,
+          conversationInFolder.conversations[0].name,
+        )
+        .waitFor();
+    }
     await conversations
       .getConversationByName(singleConversation.name)
       .waitFor();

@@ -18,7 +18,7 @@ export interface ConversationsState {
   isPlaybackPaused: boolean;
   newAddedFolderId?: string;
   conversationsLoaded: boolean;
-  isConversationLoading: boolean;
+  areSelectedConversationsLoaded: boolean;
   conversationsStatus: UploadStatus;
   foldersStatus: UploadStatus;
   loadingFolderIds: string[];

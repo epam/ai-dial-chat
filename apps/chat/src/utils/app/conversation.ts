@@ -1,9 +1,15 @@
-import { Conversation, Message, MessageSettings } from '@/src/types/chat';
+import {
+  Conversation,
+  ConversationInfo,
+  Message,
+  MessageSettings,
+} from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 
-import { getConversationApiKey, getParentPath } from '../server/api';
+import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { constructPath } from './file';
+import { splitPath } from './folders';
 
 export const getAssitantModelId = (
   modelType: EntityType,
@@ -89,12 +95,35 @@ export const getNewConversationName = (
   return conversation.name;
 };
 
-export const addGeneratedConversationId = (
-  conversation: Omit<Conversation, 'id'>,
-) => ({
-  ...conversation,
-  id: constructPath(
-    getParentPath(conversation.folderId),
-    getConversationApiKey(conversation),
-  ),
-});
+export const getGeneratedConversationId = <T extends ConversationInfo>(
+  conversation: Omit<T, 'id'>,
+): string =>
+  constructPath(conversation.folderId, getConversationApiKey(conversation));
+
+export const addGeneratedConversationId = <T extends ConversationInfo>(
+  conversation: Omit<T, 'id'>,
+): T =>
+  ({
+    ...conversation,
+    id: getGeneratedConversationId(conversation),
+  }) as T;
+
+export const parseConversationId = (id: string): ConversationInfo => {
+  const { name, parentPath } = splitPath(id);
+  return addGeneratedConversationId({
+    ...parseConversationApiKey(name),
+    folderId: parentPath,
+  });
+};
+
+export const compareConversationsByDate = (
+  convA: ConversationInfo,
+  convB: ConversationInfo,
+) => {
+  if (convA.lastActivityDate && convB.lastActivityDate) {
+    const dateA = convA.lastActivityDate;
+    const dateB = convB.lastActivityDate;
+    return dateB - dateA;
+  }
+  return -1;
+};

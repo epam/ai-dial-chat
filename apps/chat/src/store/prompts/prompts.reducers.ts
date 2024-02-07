@@ -8,8 +8,8 @@ import {
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
-import { PromptsHistory } from '@/src/types/export';
 import { FolderInterface, FolderType } from '@/src/types/folder';
+import { PromptsHistory } from '@/src/types/importExport';
 import { Prompt } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
@@ -45,7 +45,7 @@ export const promptsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    initFolders: (state) => state,
+    // initFolders: (state) => state,
     initPrompts: (state) => state,
     migratePrompts: (state) => state,
     skipFailedMigratedPrompts: (
@@ -99,20 +99,14 @@ export const promptsSlice = createSlice({
         (p) => !payload.promptIds.includes(p.id),
       );
     },
-    updatePrompt: (
-      state,
-      { payload }: PayloadAction<{ promptId: string; values: Partial<Prompt> }>,
-    ) => {
-      state.prompts = state.prompts.map((prompt) => {
-        if (prompt.id === payload.promptId) {
-          return {
-            ...prompt,
-            ...payload.values,
-          };
-        }
+    updatePrompt: (state, { payload }: PayloadAction<{ prompt: Prompt }>) => {
+      const foundPromptIdx = state.prompts.findIndex(
+        (prompt) => prompt.id === payload.prompt.id,
+      );
 
-        return prompt;
-      });
+      if (foundPromptIdx !== -1) {
+        state.prompts[foundPromptIdx] = payload.prompt;
+      }
     },
     sharePrompt: (
       state,
@@ -355,25 +349,18 @@ export const promptsSlice = createSlice({
       }: PayloadAction<{
         folderId: string;
         newParentFolderId: string | undefined;
-        newIndex: number;
       }>,
     ) => {
-      const folderIndex = state.folders.findIndex(
-        (folder) => folder.id === payload.folderId,
-      );
-      const updatedFolderContent = {
-        ...state.folders[folderIndex],
-        folderId: payload.newParentFolderId,
-      };
-      state.folders = state.folders
-        .toSpliced(folderIndex, 1)
-        .toSpliced(
-          folderIndex < payload.newIndex
-            ? payload.newIndex - 1
-            : payload.newIndex,
-          0,
-          updatedFolderContent,
-        );
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.folderId) {
+          return addGeneratedFolderId({
+            ...folder,
+            folderId: payload.newParentFolderId,
+          });
+        }
+
+        return folder;
+      });
     },
     setFolders: (
       state,
@@ -415,6 +402,28 @@ export const promptsSlice = createSlice({
     ) => {
       state.selectedPromptId = payload.promptId;
       state.isPromptLoading = !!payload.promptId;
+    },
+    uploadPrompt: (state, _action: PayloadAction<{ promptId: string }>) => {
+      state.isPromptLoading = true;
+    },
+    uploadPromptSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{ prompt: Prompt | null; originalPromptId: string }>,
+    ) => {
+      state.isPromptLoading = false;
+      const foundPromptIdx = state.prompts.findIndex(
+        (prompt) => prompt.id === payload.prompt?.id,
+      );
+
+      if (foundPromptIdx !== -1) {
+        state.prompts[foundPromptIdx] = payload.prompt as Prompt;
+      } else {
+        state.prompts = state.prompts.filter(
+          (prompt) => prompt.id !== payload.originalPromptId,
+        );
+      }
     },
   },
 });

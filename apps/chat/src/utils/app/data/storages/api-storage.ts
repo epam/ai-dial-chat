@@ -7,7 +7,7 @@ import {
   throwError,
 } from 'rxjs';
 
-import { ApiEntityStorage } from '@/src/utils/app/data/storages/api-entity-storage';
+import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
 import { constructPath } from '@/src/utils/app/file';
 import { generateNextName } from '@/src/utils/app/folders';
 
@@ -19,8 +19,8 @@ import { DialStorage } from '@/src/types/storage';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 
-import { ConversationApiStorage } from './conversation-api-storage';
-import { PromptApiStorage } from './prompt-api-storage';
+import { ConversationApiStorage } from './api/conversation-api-storage';
+import { PromptApiStorage } from './api/prompt-api-storage';
 
 const MAX_RETRIES_COUNT = 3;
 
@@ -93,8 +93,11 @@ export class ApiStorage implements DialStorage {
     return this._conversationApiStorage.getFoldersAndEntities(path);
   }
 
-  getConversations(path?: string): Observable<ConversationInfo[]> {
-    return this._conversationApiStorage.getEntities(path);
+  getConversations(
+    path?: string,
+    recursive?: boolean,
+  ): Observable<ConversationInfo[]> {
+    return this._conversationApiStorage.getEntities(path, recursive);
   }
 
   getConversation(info: ConversationInfo): Observable<Conversation | null> {
@@ -131,8 +134,8 @@ export class ApiStorage implements DialStorage {
     return this._promptApiStorage.getFoldersAndEntities(path);
   }
 
-  getPrompts(path?: string): Observable<Prompt[]> {
-    return this._promptApiStorage.getEntities(path);
+  getPrompts(path?: string, recursive?: boolean): Observable<Prompt[]> {
+    return this._promptApiStorage.getEntities(path, recursive);
   }
 
   getPrompt(info: PromptInfo): Observable<Prompt | null> {

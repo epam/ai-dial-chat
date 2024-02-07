@@ -42,17 +42,19 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       path = '',
       filter,
       bucket,
+      recursive = false,
     } = req.query as {
       path: string;
       filter?: BackendDataNodeType;
       bucket: string;
+      recursive?: string;
     };
 
     const token = await getToken({ req });
 
     const url = `${
       process.env.DIAL_API_HOST
-    }/v1/metadata/${entityType}/${bucket}${path && `/${encodeURI(path)}`}/`;
+    }/v1/metadata/${entityType}/${bucket}${path && `/${encodeURI(path)}`}/${recursive ? '?recursive=true' : ''}`;
 
     const response = await fetch(url, {
       headers: getApiHeaders({ jwt: token?.access_token as string }),

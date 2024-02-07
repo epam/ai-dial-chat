@@ -1,7 +1,9 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { compareConversationsByDate } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import {
+  getAllPathsFromId,
   getChildAndCurrentFoldersIdsById,
   getConversationAttachmentWithPath,
   getFilteredFolders,
@@ -111,8 +113,9 @@ export const selectSectionFolders = createSelector(
 
 export const selectLastConversation = createSelector(
   [selectConversations],
-  (state): ConversationInfo | undefined => {
-    return state[0];
+  (conversations): ConversationInfo | undefined => {
+    if (!conversations.length) return undefined;
+    return [...conversations].sort(compareConversationsByDate)[0];
   },
 );
 export const selectConversation = createSelector(
@@ -147,24 +150,10 @@ export const selectParentFolders = createSelector(
     return getParentAndCurrentFoldersById(folders, folderId);
   },
 );
-const selectParentFoldersIds = createSelector(
-  [selectParentFolders],
-  (folders) => {
-    return folders.map((folder) => folder.id);
-  },
-);
 export const selectSelectedConversationsFoldersIds = createSelector(
-  [(state) => state, selectSelectedConversations],
-  (state, conversations) => {
-    let selectedFolders: string[] = [];
-
-    conversations.forEach((conv) => {
-      selectedFolders = selectedFolders.concat(
-        selectParentFoldersIds(state, conv.folderId),
-      );
-    });
-
-    return selectedFolders;
+  [selectSelectedConversationsIds],
+  (selectedConversationsIds) => {
+    return selectedConversationsIds.flatMap((id) => getAllPathsFromId(id));
   },
 );
 export const selectChildAndCurrentFoldersIdsById = createSelector(
@@ -467,7 +456,7 @@ export const selectNewAddedFolderId = createSelector(
   },
 );
 
-const getUniqueAttachments = (attachments: DialFile[]): DialFile[] => {
+export const getUniqueAttachments = (attachments: DialFile[]): DialFile[] => {
   const map = new Map<string, DialFile>();
   attachments.forEach((file) =>
     map.set(constructPath(file.relativePath, file.name), file),
@@ -517,16 +506,19 @@ export const areConversationsUploaded = createSelector(
   },
 );
 
-export const isConversationLoading = createSelector([rootSelector], (state) => {
-  return state.isConversationLoading;
-});
-
 export const selectConversationsToMigrateAndMigratedCount = createSelector(
   [rootSelector],
   (state) => ({
     conversationsToMigrateCount: state.conversationsToMigrateCount,
     migratedConversationsCount: state.migratedConversationsCount,
   }),
+);
+
+export const selectAreSelectedConversationsLoaded = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.areSelectedConversationsLoaded;
+  },
 );
 
 // default name with counter

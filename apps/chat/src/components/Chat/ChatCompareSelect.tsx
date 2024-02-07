@@ -12,8 +12,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import { ModelIcon } from '../Chatbar/components/ModelIcon';
-
+import { ModelIcon } from '../Chatbar/ModelIcon';
 import { Combobox } from '../Common/Combobox';
 import ShareIcon from '../Common/ShareIcon';
 

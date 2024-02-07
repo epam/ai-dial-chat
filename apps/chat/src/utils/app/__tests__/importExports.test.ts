@@ -13,13 +13,13 @@ import {
 
 import { Conversation, Message, Role } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
+import { FolderType } from '@/src/types/folder';
 import {
   ExportFormatV1,
   ExportFormatV2,
   ExportFormatV4,
   PromptsHistory,
-} from '@/src/types/export';
-import { FolderType } from '@/src/types/folder';
+} from '@/src/types/importExport';
 import { OpenAIEntityModelID } from '@/src/types/openai';
 
 import {
@@ -221,7 +221,8 @@ describe('cleanData Functions', () => {
 describe('Export helpers functions', () => {
   it('Should return false for non-prompts data', () => {
     const testData = [{ id: 1 }];
-    expect(isPromtsFormat(testData as any)).toBeFalsy();
+
+    expect(isPromtsFormat(testData as unknown as PromptsHistory)).toBeFalsy();
   });
 
   it('Should return true for prompts data', () => {

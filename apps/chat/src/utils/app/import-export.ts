@@ -1,4 +1,5 @@
 import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import {
   ExportConversationsFormatV4,
   ExportFormatV1,
@@ -8,8 +9,7 @@ import {
   LatestExportFormat,
   PromptsHistory,
   SupportedExportFormats,
-} from '@/src/types/export';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+} from '@/src/types/importExport';
 import { Prompt } from '@/src/types/prompt';
 
 import { cleanConversationHistory } from './clean';
@@ -123,7 +123,7 @@ function downloadChatPromptData(
   });
   const url = URL.createObjectURL(blob);
 
-  triggerDownload(url, `chatbot_ui_${exportType}_${currentDate()}.json`);
+  triggerDownload(url, `ai_dial_chat_${exportType}_${currentDate()}.json`);
 }
 
 const triggerDownloadConversation = (data: ExportConversationsFormatV4) => {
@@ -154,6 +154,23 @@ export const exportConversation = (
   };
 
   triggerDownloadConversation(data);
+};
+
+interface PrepareConversationsForExport {
+  conversations: Conversation[];
+  folders: FolderInterface[];
+}
+export const prepareConversationsForExport = ({
+  conversations,
+  folders,
+}: PrepareConversationsForExport) => {
+  const data = {
+    version: 4,
+    history: conversations || [],
+    folders: folders || [],
+  } as ExportConversationsFormatV4;
+
+  return data;
 };
 
 export const exportConversations = (

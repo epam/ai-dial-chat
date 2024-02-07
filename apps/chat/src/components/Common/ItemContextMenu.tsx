@@ -41,10 +41,11 @@ interface ItemContextMenuProps {
   className?: string;
   isOpen?: boolean;
   onOpenMoveToModal: () => void;
+  onOpenExportModal?: () => void;
   onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
   onDelete: MouseEventHandler<unknown>;
   onRename: MouseEventHandler<unknown>;
-  onExport: MouseEventHandler<unknown>;
+  onExport: (args?: unknown) => void;
   onReplay?: MouseEventHandler<unknown>;
   onCompare?: MouseEventHandler<unknown>;
   onPlayback?: MouseEventHandler<unknown>;
@@ -66,6 +67,7 @@ export default function ItemContextMenu({
   onDelete,
   onRename,
   onExport,
+  onOpenExportModal,
   onReplay,
   onCompare,
   onPlayback,
@@ -127,9 +129,43 @@ export default function ItemContextMenu({
       },
       {
         name: t('Export'),
-        dataQa: 'export',
+        dataQa: 'export-prompt',
+        display: featureType === FeatureType.Prompt,
         Icon: IconFileArrowRight,
         onClick: onExport,
+      },
+      {
+        name: t('Export'),
+        dataQa: 'export-chat-mobile',
+        display: featureType === FeatureType.Chat,
+        Icon: IconFileArrowRight,
+        onClick: onOpenExportModal,
+        className: 'md:hidden',
+      },
+      {
+        name: t('Export'),
+        display: featureType === FeatureType.Chat,
+        dataQa: 'export-chat',
+        Icon: IconFileArrowRight,
+        className: 'max-md:hidden',
+        childMenuItems: [
+          {
+            name: t('With attachments'),
+            dataQa: 'with-attachments',
+            onClick: () => {
+              onExport({ withAttachments: true });
+            },
+            className: 'invisible md:visible',
+          },
+          {
+            name: t('Without attachments'),
+            dataQa: 'without-attachments',
+            onClick: () => {
+              onExport();
+            },
+            className: 'invisible md:visible',
+          },
+        ],
       },
       {
         name: t('Move to'),
@@ -217,6 +253,7 @@ export default function ItemContextMenu({
       onReplay,
       onPlayback,
       onExport,
+      onOpenExportModal,
       onOpenMoveToModal,
       folders,
       isSharingEnabled,

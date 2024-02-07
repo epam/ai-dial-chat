@@ -1,4 +1,4 @@
-import { Observable, map } from 'rxjs';
+import { EMPTY, Observable, catchError, map, of } from 'rxjs';
 
 import {
   ApiKeys,
@@ -11,12 +11,13 @@ import {
   BackendChatEntity,
   BackendChatFolder,
   BackendDataNodeType,
+  UploadStatus,
 } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { EntityStorage } from '@/src/types/storage';
 
-import { BucketService } from '../bucket-service';
-import { constructPath } from './../../file';
+import { constructPath } from '../../../file';
+import { BucketService } from '../../bucket-service';
 
 export abstract class ApiEntityStorage<
   EntityInfo extends { folderId?: string },
@@ -33,6 +34,7 @@ export abstract class ApiEntityStorage<
       type: getFolderTypeByApiKey(this.getStorageKey()),
     };
   }
+
   private mapEntity(entity: BackendChatEntity) {
     const relativePath = entity.parentPath || undefined;
     const info = this.parseEntityKey(entity.name);
@@ -44,6 +46,7 @@ export abstract class ApiEntityStorage<
       folderId: relativePath,
     };
   }
+
   getFoldersAndEntities(
     path?: string | undefined,
   ): Observable<FoldersAndEntities<EntityInfo>> {
@@ -69,8 +72,15 @@ export abstract class ApiEntityStorage<
           folders: folders.map((folder) => this.mapFolder(folder)),
         };
       }),
+      catchError(() =>
+        of({
+          entities: [],
+          folders: [],
+        }),
+      ),
     );
   }
+
   getFolders(path?: string | undefined): Observable<FolderInterface[]> {
     const filter = BackendDataNodeType.FOLDER;
 
@@ -87,16 +97,18 @@ export abstract class ApiEntityStorage<
       map((folders: BackendChatFolder[]) => {
         return folders.map((folder) => this.mapFolder(folder));
       }),
+      catchError(() => of([])),
     );
   }
 
-  getEntities(path?: string): Observable<EntityInfo[]> {
+  getEntities(path?: string, recursive?: boolean): Observable<EntityInfo[]> {
     const filter = BackendDataNodeType.ITEM;
 
     const query = new URLSearchParams({
       filter,
       bucket: BucketService.getBucket(),
       ...(path && { path }),
+      ...(recursive && { recursive: String(recursive) }),
     });
     const resultQuery = query.toString();
 
@@ -106,6 +118,7 @@ export abstract class ApiEntityStorage<
       map((entities: BackendChatEntity[]) => {
         return entities.map((entity) => this.mapEntity(entity));
       }),
+      catchError(() => of([])),
     );
   }
 
@@ -118,10 +131,11 @@ export abstract class ApiEntityStorage<
     ).pipe(
       map((entity: Entity) => {
         return {
-          ...entity,
-          ...info,
+          ...this.mergeGetResult(info, entity),
+          status: UploadStatus.LOADED,
         };
       }),
+      catchError(() => of(null)),
     );
   }
 
@@ -136,13 +150,14 @@ export abstract class ApiEntityStorage<
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(entity),
+        body: JSON.stringify(this.cleanUpEntity(entity)),
       },
     );
+    // .pipe(catchError(() => EMPTY)); // TODO: handle error
   }
 
   updateEntity(entity: Entity): Observable<void> {
-    return this.createEntity(entity);
+    return this.createEntity(this.cleanUpEntity(entity));
   }
 
   deleteEntity(info: EntityInfo): Observable<void> {
@@ -157,7 +172,7 @@ export abstract class ApiEntityStorage<
           'Content-Type': 'application/json',
         },
       },
-    );
+    ).pipe(catchError(() => EMPTY)); // TODO: handle error
   }
 
   abstract getEntityKey(info: EntityInfo): string;
@@ -165,4 +180,8 @@ export abstract class ApiEntityStorage<
   abstract parseEntityKey(key: string): EntityInfo;
 
   abstract getStorageKey(): ApiKeys;
+
+  abstract cleanUpEntity(entity: Entity): Entity;
+
+  abstract mergeGetResult(info: EntityInfo, entity: Entity): Entity;
 }

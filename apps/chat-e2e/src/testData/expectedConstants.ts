@@ -13,6 +13,7 @@ export const ExpectedConstants = {
   replayAsIsLabel: 'Replay as is',
   replayConversation: '[Replay] ',
   playbackConversation: '[Playback] ',
+  emptyPlaybackMessage: 'Type a message',
   startReplayLabel: 'Start replay',
   continueReplayLabel: 'Continue replay',
   continueReplayAfterErrorLabel:
@@ -65,6 +66,8 @@ export enum MenuOptions {
   replay = 'Replay',
   playback = 'Playback',
   export = 'Export',
+  withAttachments = 'With attachments',
+  withoutAttachments = 'Without attachments',
   moveTo = 'Move to',
   share = 'Share',
   publish = 'Publish',
@@ -110,8 +113,8 @@ export const Import = {
   oldVersionAppFolderName: 'Version 1.x',
   oldVersionAppFolderChatName: '3-5 GPT math',
   v14AppBisonChatName: 'bison chat king',
-  v14AppImportedFilename: 'chatbot_ui_history_1-4_version.json',
-  v19AppImportedFilename: 'chatbot_ui_history_1-9_version.json',
+  v14AppImportedFilename: 'ai_dial_chat_history_1-4_version.json',
+  v19AppImportedFilename: 'ai_dial_chat_history_1-9_version.json',
   v14AppFolderPromptName: 'Version 1.4 A*B',
   oldVersionAppGpt35Message: '11 * 12 =',
 };
@@ -156,6 +159,9 @@ export enum ModelIds {
   IMAGE_GENERATION_005 = 'imagegeneration@005',
   GEMINI_PRO_VISION = 'gemini-pro-vision',
   GEMINI_PRO = 'gemini-pro',
+  LLAMA2_13B_CHAT_V1 = 'meta.llama2-13b-chat-v1',
+  LLAMA2_70B_CHAT_V1 = 'meta.llama2-70b-chat-v1',
+  COHERE_COMMAND_TEXT_V14 = 'cohere.command-text-v14',
 }
 
 export enum AddonIds {

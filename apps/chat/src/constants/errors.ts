@@ -22,4 +22,6 @@ export const errorsMessages = {
     'Error happened during getting file user bucket. Please reload the page to being able to load files.',
   noModelsAvailable:
     'You do not have any available models. Please contact your administrator or try to reload the page.',
+  importFailed: 'Import failed',
+  exportFailed: 'Export failed',
 };

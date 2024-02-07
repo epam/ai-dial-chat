@@ -13,12 +13,13 @@ import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
+import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ReportIssueDialog } from '@/src/components/Chat/ReportIssueDialog';
-import { ModelIcon } from '@/src/components/Chatbar/components/ModelIcon';
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { reportAnIssueHash } from '@/src/components/Common/FooterMessage';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import Tooltip from '@/src/components/Common/Tooltip';
@@ -198,7 +199,7 @@ export const MigrationFailedWindow = ({
             onExport={(conversation) =>
               // TODO: fix it when https://github.com/epam/ai-dial-chat/issues/640 will be resolved
               dispatch(
-                ConversationsActions.exportConversation({
+                ImportExportActions.exportConversation({
                   conversationId: conversation.id,
                 }),
               )
@@ -241,7 +242,7 @@ export const MigrationFailedWindow = ({
               <div
                 onClick={() => {
                   // TODO: fix it when https://github.com/epam/ai-dial-chat/issues/640 will be resolved
-                  dispatch(ConversationsActions.exportConversations());
+                  dispatch(ImportExportActions.exportConversations());
                   dispatch(PromptsActions.exportPrompts());
                 }}
                 className="group mr-2 cursor-pointer rounded p-[5px] hover:bg-accent-primary-alpha"

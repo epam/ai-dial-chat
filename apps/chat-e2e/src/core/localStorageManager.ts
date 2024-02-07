@@ -94,20 +94,6 @@ export class LocalStorageManager {
     );
   }
 
-  async setOpenedFolders(...folders: FolderInterface[]) {
-    await this.page.addInitScript(
-      this.setOpenedFoldersIdsKey(),
-      JSON.stringify(folders.map((f) => f.id)),
-    );
-  }
-
-  async updateOpenedFolders(...folders: FolderInterface[]) {
-    await this.page.evaluate(
-      this.setOpenedFoldersIdsKey(),
-      JSON.stringify(folders.map((f) => f.id)),
-    );
-  }
-
   async setSettings(theme: string) {
     const settings: Settings = { theme };
     await this.page.addInitScript(

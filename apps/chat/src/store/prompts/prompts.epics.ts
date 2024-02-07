@@ -3,9 +3,9 @@ import {
   catchError,
   concat,
   concatMap,
-  filter,
   forkJoin,
   from,
+  filter,
   ignoreElements,
   map,
   of,
@@ -25,6 +25,8 @@ import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   findRootFromItems,
+  getAllPathsFromPath,
+  getFolderFromPath,
   getFolderIdByPath,
   getPathToFolderById,
   getTemporaryFoldersToPublish,
@@ -37,8 +39,9 @@ import {
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
-import { Prompt } from '@/src/types/prompt';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
+import { FolderType } from '@/src/types/folder';
+import { PromptInfo, Prompt } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -58,7 +61,7 @@ const savePromptsEpic: AppEpic = (action$, state$) =>
         PromptsActions.createNewPrompt.match(action) ||
         PromptsActions.deletePrompts.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
-        PromptsActions.updatePrompt.match(action) ||
+        // PromptsActions.updatePrompt.match(action) ||
         PromptsActions.addPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action) ||
         PromptsActions.unpublishPrompt.match(action) ||
@@ -92,6 +95,14 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       return PromptService.setPromptFolders(promptsFolders);
     }),
     ignoreElements(),
+  );
+
+const updatePromptEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.updatePrompt.match),
+    switchMap(({ payload }) =>
+      PromptService.setPrompts([payload.prompt]).pipe(switchMap(() => EMPTY)),
+    ),
   );
 
 const deleteFolderEpic: AppEpic = (action$, state$) =>
@@ -186,19 +197,19 @@ const importPromptsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const initFoldersEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter((action) => PromptsActions.initFolders.match(action)),
-    switchMap(() =>
-      PromptService.getPromptsFolders().pipe(
-        map((folders) => {
-          return PromptsActions.setFolders({
-            folders,
-          });
-        }),
-      ),
-    ),
-  );
+// const initFoldersEpic: AppEpic = (action$) =>
+//   action$.pipe(
+//     filter((action) => PromptsActions.initFolders.match(action)),
+//     switchMap(() =>
+//       PromptService.getPromptsFolders().pipe(
+//         map((folders) => {
+//           return PromptsActions.setFolders({
+//             folders,
+//           });
+//         }),
+//       ),
+//     ),
+//   );
 
 const migratePromptsEpic: AppEpic = (action$, state$) => {
   const browserStorage = new BrowserStorage();
@@ -346,15 +357,23 @@ export const skipFailedMigratedPromptsEpic: AppEpic = (action$) =>
 const initPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.initPrompts.match),
-    switchMap(() =>
-      PromptService.getPrompts().pipe(
-        map((prompts) => {
-          return PromptsActions.updatePrompts({
+    switchMap(() => PromptService.getPrompts(undefined, true)),
+    switchMap((prompts) => {
+      return concat(
+        of(
+          PromptsActions.updatePrompts({
             prompts,
-          });
-        }),
-      ),
-    ),
+          }),
+        ),
+        of(
+          PromptsActions.setFolders({
+            folders: Array.from(
+              new Set(prompts.flatMap((p) => getAllPathsFromPath(p.folderId))),
+            ).map((path) => getFolderFromPath(path, FolderType.Prompt)),
+          }),
+        ),
+      );
+    }),
   );
 
 const initEpic: AppEpic = (action$) =>
@@ -362,7 +381,7 @@ const initEpic: AppEpic = (action$) =>
     filter((action) => PromptsActions.init.match(action)),
     switchMap(() =>
       concat(
-        of(PromptsActions.initFolders()),
+        // of(PromptsActions.initFolders()),
         of(PromptsActions.initPrompts()),
       ),
     ),
@@ -602,21 +621,45 @@ const publishPromptEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+export const uploadPromptEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.uploadPrompt.match),
+    switchMap(({ payload }) => {
+      const originalPrompt = PromptsSelectors.selectPrompt(
+        state$.value,
+        payload.promptId,
+      ) as PromptInfo;
+
+      return PromptService.getPrompt(originalPrompt).pipe(
+        map((servicePrompt) => ({ originalPrompt, servicePrompt })),
+      );
+    }),
+    map(({ servicePrompt, originalPrompt }) => {
+      return PromptsActions.uploadPromptSuccess({
+        prompt: servicePrompt,
+        originalPromptId: originalPrompt.id,
+      });
+    }),
+  );
+
 export const PromptsEpics = combineEpics(
   initEpic,
   initPromptsEpic,
-  initFoldersEpic,
   migratePromptsEpic,
   skipFailedMigratedPromptsEpic,
+  // initFoldersEpic,
   savePromptsEpic,
   saveFoldersEpic,
   deleteFolderEpic,
   exportPromptsEpic,
   exportPromptEpic,
   importPromptsEpic,
+  updatePromptEpic,
 
   shareFolderEpic,
   sharePromptEpic,
   publishFolderEpic,
   publishPromptEpic,
+
+  uploadPromptEpic,
 );

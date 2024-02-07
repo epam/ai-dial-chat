@@ -119,9 +119,7 @@ export class ApiUtils {
   static request(url: string, options?: RequestInit) {
     return fromFetch(url, options).pipe(
       switchMap((response) => {
-        if (response.status === 404) {
-          return [];
-        } else if (!response.ok) {
+        if (!response.ok) {
           return throwError(() => new Error(response.statusText));
         }
 

@@ -16,7 +16,7 @@ import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
-import { Prompt } from '@/src/types/prompt';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -38,7 +38,7 @@ import ShareIcon from '../../Common/ShareIcon';
 import { PromptModal } from './PromptModal';
 
 interface Props {
-  item: Prompt;
+  item: PromptInfo;
   level?: number;
 }
 
@@ -114,9 +114,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const handleUpdate = useCallback(
     (prompt: Prompt) => {
-      dispatch(
-        PromptsActions.updatePrompt({ promptId: prompt.id, values: prompt }),
-      );
+      dispatch(PromptsActions.updatePrompt({ prompt }));
       dispatch(PromptsActions.resetSearch());
       setIsRenaming(false);
     },
@@ -171,15 +169,17 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       setIsDeleting(false);
       setIsRenaming(true);
       dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
+      dispatch(PromptsActions.uploadPrompt({ promptId: prompt.id }));
       dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
     },
     [dispatch, prompt.id],
   );
 
-  const handleExportPrompt: MouseEventHandler = useCallback(
-    (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+  const handleExportPrompt = useCallback(
+    (e?: unknown) => {
+      const typedEvent = e as MouseEvent;
+      typedEvent.preventDefault();
+      typedEvent.stopPropagation();
 
       dispatch(
         PromptsActions.exportPrompt({
@@ -200,12 +200,12 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           }),
         );
       }
-      dispatch(
-        PromptsActions.updatePrompt({
-          promptId: prompt.id,
-          values: { folderId: folderPath },
-        }),
-      );
+      // dispatch(
+      //   PromptsActions.updatePrompt({
+      //     promptId: prompt.id,
+      //     values: { folderId: folderPath },
+      //   }),
+      // ); TODO: fix it
       setIsContextMenu(false);
     },
     [dispatch, newFolderName, prompt.id],
@@ -342,9 +342,8 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           )}
         </div>
 
-        {isSelected && showModal && (
+        {showModal && (
           <PromptModal
-            prompt={prompt}
             isOpen
             onClose={handleClose}
             onUpdatePrompt={handleUpdate}

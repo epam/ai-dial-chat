@@ -65,16 +65,15 @@ const Promptbar = () => {
       if (e.dataTransfer) {
         const promptData = e.dataTransfer.getData(MoveType.Prompt);
         if (promptData) {
-          const prompt = JSON.parse(promptData);
-
-          dispatch(
-            PromptsActions.updatePrompt({
-              promptId: prompt.id,
-              values: {
-                folderId: e.currentTarget.dataset.folderId,
-              },
-            }),
-          );
+          // const prompt = JSON.parse(promptData);
+          // dispatch(
+          //   PromptsActions.updatePrompt({
+          //     promptId: prompt.id,
+          //     values: {
+          //       folderId: e.currentTarget.dataset.folderId,
+          //     },
+          //   }),
+          // ); TODO: fix it
         }
       }
     },

@@ -1,5 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
-import { LatestExportFormat } from '@/chat/types/export';
+import { LatestExportFormat } from '@/chat/types/importExport';
 import { FolderConversation } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { FileUtil } from '@/src/utils/fileUtil';

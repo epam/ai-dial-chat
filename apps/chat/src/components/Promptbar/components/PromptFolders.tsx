@@ -2,6 +2,7 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { compareEntitiesByName } from '@/src/utils/app/folders';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
@@ -11,7 +12,6 @@ import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
-import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -36,7 +36,6 @@ import { PromptComponent } from './Prompt';
 
 interface promptFolderProps {
   folder: FolderInterface;
-  index: number;
   isLast: boolean;
   filters: EntityFilters;
   includeEmpty: boolean;
@@ -44,7 +43,6 @@ interface promptFolderProps {
 
 const PromptFolderTemplate = ({
   folder,
-  index,
   isLast,
   filters,
   includeEmpty = false,
@@ -81,15 +79,15 @@ const PromptFolderTemplate = ({
         const folderData = e.dataTransfer.getData(MoveType.PromptFolder);
 
         if (promptData) {
-          const prompt: Prompt = JSON.parse(promptData);
-          dispatch(
-            PromptsActions.updatePrompt({
-              promptId: prompt.id,
-              values: {
-                folderId: folder.id,
-              },
-            }),
-          );
+          // const prompt: Prompt = JSON.parse(promptData);
+          // dispatch(
+          //   PromptsActions.updatePrompt({
+          //     promptId: prompt.id,
+          //     values: {
+          //       folderId: folder.id,
+          //     },
+          //   }),
+          // ); TODO: fix it
         } else if (folderData) {
           const movedFolder: FolderInterface = JSON.parse(folderData);
           if (
@@ -100,7 +98,6 @@ const PromptFolderTemplate = ({
               PromptsActions.moveFolder({
                 folderId: movedFolder.id,
                 newParentFolderId: folder.id,
-                newIndex: 0,
               }),
             );
           }
@@ -111,16 +108,11 @@ const PromptFolderTemplate = ({
   );
 
   const onDropBetweenFolders = useCallback(
-    (
-      folder: FolderInterface,
-      parentFolderId: string | undefined,
-      index: number,
-    ) => {
+    (folder: FolderInterface, parentFolderId: string | undefined) => {
       dispatch(
         PromptsActions.moveFolder({
           folderId: folder.id,
           newParentFolderId: parentFolderId,
-          newIndex: index,
         }),
       );
     },
@@ -144,7 +136,6 @@ const PromptFolderTemplate = ({
       <BetweenFoldersLine
         level={0}
         onDrop={onDropBetweenFolders}
-        index={index}
         parentFolderId={folder.folderId}
         featureType={FeatureType.Prompt}
         denyDrop={isExternal}
@@ -170,7 +161,6 @@ const PromptFolderTemplate = ({
         onDeleteFolder={(folderId: string) =>
           dispatch(PromptsActions.deleteFolder({ folderId }))
         }
-        onDropBetweenFolders={onDropBetweenFolders}
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Prompt}
       />
@@ -178,7 +168,6 @@ const PromptFolderTemplate = ({
         <BetweenFoldersLine
           level={0}
           onDrop={onDropBetweenFolders}
-          index={index + 1}
           parentFolderId={folder.folderId}
           featureType={FeatureType.Prompt}
           denyDrop={isExternal}
@@ -213,12 +202,14 @@ export const PromptSection = ({
   );
 
   const rootFolders = useMemo(
-    () => folders.filter(({ folderId }) => !folderId),
+    () =>
+      folders.filter(({ folderId }) => !folderId).sort(compareEntitiesByName),
     [folders],
   );
 
   const rootPrompts = useMemo(
-    () => prompts.filter(({ folderId }) => !folderId),
+    () =>
+      prompts.filter(({ folderId }) => !folderId).sort(compareEntitiesByName),
     [prompts],
   );
 
@@ -267,7 +258,6 @@ export const PromptSection = ({
           <PromptFolderTemplate
             key={folder.id}
             folder={folder}
-            index={index}
             isLast={index === arr.length - 1}
             filters={filters}
             includeEmpty={showEmptyFolders}

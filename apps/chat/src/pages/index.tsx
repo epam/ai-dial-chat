@@ -18,7 +18,7 @@ import { Translation } from '../types/translation';
 import { fallbackModelID } from '@/src/types/openai';
 
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
-import { ConversationsSelectors } from '../store/conversations/conversations.reducers';
+import { ImportExportSelectors } from '../store/import-export/importExport.reducers';
 import {
   selectConversationsToMigrateAndMigratedCount,
   selectFailedMigratedConversations,
@@ -37,9 +37,9 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
-import ChatLoader from '@/src/components/Chat/ChatLoader';
 import { Migration } from '@/src/components/Chat/Migration';
 import { MigrationFailedWindow } from '@/src/components/Chat/MigrationFailedModal';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
@@ -85,10 +85,11 @@ export default function Home({ initialState }: HomeProps) {
   );
   const failedMigratedPrompts = useAppSelector(selectFailedMigratedPrompts);
 
-  const shouldOverlayLogin = isOverlay && shouldLogin;
-  const isConversationLoading = useAppSelector(
-    ConversationsSelectors.isConversationLoading,
+  const isImportingExporting = useAppSelector(
+    ImportExportSelectors.selectIsLoadingImportExport,
   );
+
+  const shouldOverlayLogin = isOverlay && shouldLogin;
 
   // EFFECTS  --------------------------------------------
   useEffect(() => {
@@ -198,15 +199,20 @@ export default function Home({ initialState }: HomeProps) {
               failedMigratedPrompts={failedMigratedPrompts}
             />
           ) : (
-            <div className="flex h-full w-full flex-col sm:pt-0">
+            <div className="flex size-full flex-col sm:pt-0">
               {enabledFeatures.has(Feature.Header) && <Header />}
               <div className="flex w-full grow overflow-auto">
                 {enabledFeatures.has(Feature.ConversationsSection) && (
                   <Chatbar />
                 )}
+
                 <div className="flex min-w-0 grow flex-col">
                   <AnnouncementsBanner />
-                  {!isConversationLoading ? <Chat /> : <ChatLoader />}
+                  <Chat />
+
+                  {isImportingExporting && (
+                    <ImportExportLoader isOpen={isImportingExporting} />
+                  )}
                 </div>
                 {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
                 {isProfileOpen && <UserMobile />}

@@ -18,8 +18,8 @@ import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { ConversationInfo } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { FeatureType, isNotLoaded } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
 import {
@@ -27,6 +27,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
@@ -38,8 +39,9 @@ import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 import ShareIcon from '@/src/components/Common/ShareIcon';
 
-import PublishModal from '../../Chat/Publish/PublishWizard';
-import UnpublishModal from '../../Chat/UnpublishModal';
+import PublishModal from '../Chat/Publish/PublishWizard';
+import UnpublishModal from '../Chat/UnpublishModal';
+import { ExportModal } from './ExportModal';
 import { ModelIcon } from './ModelIcon';
 
 interface ViewProps {
@@ -123,6 +125,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
+  const [isShowExportModal, setIsShowExportModal] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isSharing, setIsSharing] = useState(false);
@@ -142,10 +145,22 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     onOpenChange: setIsContextMenu,
   });
 
+  useEffect(() => {
+    if (isContextMenu && isNotLoaded(conversation.status)) {
+      dispatch(
+        ConversationsActions.uploadConversationsByIds({
+          conversationIds: [conversation.id],
+        }),
+      );
+    }
+  }, [conversation.id, conversation.status, dispatch, isContextMenu]);
+
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
 
-  const isEmptyConversation = false; //conversation.messages.length === 0; //TODO: how check if empty?
+  const isEmptyConversation = !(
+    (conversation as Conversation).messages?.length > 0
+  );
 
   const handleRename = useCallback(
     (conversation: ConversationInfo) => {
@@ -337,6 +352,34 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     },
     [conversation.id, dispatch, newFolderName],
   );
+  const handleOpenExportModal = useCallback(() => {
+    setIsShowExportModal(true);
+  }, []);
+  const handleCloseExportModal = useCallback(() => {
+    setIsShowExportModal(false);
+  }, []);
+
+  const handleExport = useCallback(
+    (args?: unknown) => {
+      const typedArgs = args as { withAttachments?: boolean };
+      if (typedArgs?.withAttachments) {
+        dispatch(
+          ImportExportActions.exportConversation({
+            conversationId: conversation.id,
+            withAttachments: true,
+          }),
+        );
+      } else {
+        dispatch(
+          ImportExportActions.exportConversation({
+            conversationId: conversation.id,
+          }),
+        );
+      }
+      handleCloseExportModal();
+    },
+    [conversation.id, dispatch, handleCloseExportModal],
+  );
 
   const handleContextMenuOpen = (e: MouseEvent) => {
     if (hasParentWithFloatingOverlay(e.target as Element)) {
@@ -451,13 +494,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onMoveToFolder={handleMoveToFolder}
             onDelete={handleOpenDeleteModal}
             onRename={handleOpenRenameModal}
-            onExport={() => {
-              dispatch(
-                ConversationsActions.exportConversation({
-                  conversationId: conversation.id,
-                }),
-              );
-            }}
+            onExport={handleExport}
+            onOpenExportModal={handleOpenExportModal}
             onCompare={!isReplay && !isPlayback ? handleCompare : undefined}
             onDuplicate={handleDuplicate}
             onReplay={!isPlayback ? handleStartReplay : undefined}
@@ -479,6 +517,15 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             }}
             folders={folders}
             onMoveToFolder={handleMoveToFolder}
+          />
+        )}
+      </div>
+      <div className="md:hidden">
+        {isShowExportModal && (
+          <ExportModal
+            onExport={handleExport}
+            onClose={handleCloseExportModal}
+            isOpen={isShowExportModal}
           />
         )}
       </div>

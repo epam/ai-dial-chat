@@ -34,7 +34,6 @@ test('Chat is moved from the folder via drag&drop', async ({
   await localStorageManager.setConversationHistory(
     conversationInFolder.conversations[0],
   );
-  await localStorageManager.setOpenedFolders(conversationInFolder.folders);
   await localStorageManager.setSelectedConversation(
     conversationInFolder.conversations[0],
   );
@@ -42,6 +41,9 @@ test('Chat is moved from the folder via drag&drop', async ({
     iconsToBeLoaded: [gpt35Model.iconUrl],
   });
   await dialHomePage.waitForPageLoaded();
+  await folderConversations.expandCollapseFolder(
+    conversationInFolder.folders.name,
+  );
   await chatBar.drugConversationFromFolder(
     conversationInFolder.folders.name,
     conversationInFolder.conversations[0].name,
@@ -104,11 +106,6 @@ test(
       conversation = conversationData.prepareDefaultConversation();
 
       await localStorageManager.setFolders(...nestedFolders);
-      await localStorageManager.setOpenedFolders(
-        nestedFolders[1],
-        nestedFolders[2],
-        nestedFolders[3],
-      );
       await localStorageManager.setConversationHistory(
         conversationToDrop,
         conversation,
@@ -119,6 +116,13 @@ test(
     await test.step('Open app, drag conversation to collapsed folder and verify folders hierarchy is expanded, background is highlighted', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
+      for (const nestedFolder of [
+        nestedFolders[0],
+        nestedFolders[1],
+        nestedFolders[2],
+      ]) {
+        await folderConversations.expandCollapseFolder(nestedFolder.name);
+      }
       await chatBar.drugConversationToFolder(
         nestedFolders[0].name,
         conversationToDrop.name,
@@ -166,7 +170,6 @@ test('Chat is moved using drag&drop to expanded folder', async ({
     conversationToDrop = conversationData.prepareDefaultConversation();
 
     await localStorageManager.setFolders(folderConversation.folders);
-    await localStorageManager.setOpenedFolders(folderConversation.folders);
     await localStorageManager.setConversationHistory(
       ...folderConversation.conversations,
       conversationToDrop,
@@ -177,6 +180,9 @@ test('Chat is moved using drag&drop to expanded folder', async ({
   await test.step('Open app, drag 1st conversation to expanded folder conversation and verify conversation stays in the folder, folder remains expanded, folder name is highlighted', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    await folderConversations.expandCollapseFolder(
+      folderConversation.folders.name,
+    );
     await chatBar.drugAndDropConversationToFolderConversation(
       folderConversation.folders.name,
       folderConversation.conversations[1].name,
@@ -213,10 +219,10 @@ test('Prompt is moved out of the folder via drag&drop', async ({
   const promptInFolder = promptData.prepareDefaultPromptInFolder();
   await localStorageManager.setFolders(promptInFolder.folders);
   await localStorageManager.setPrompts(promptInFolder.prompts[0]);
-  await localStorageManager.setOpenedFolders(promptInFolder.folders);
 
   await dialHomePage.openHomePage();
   await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+  await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
   await promptBar.dragAndDropPromptFromFolder(
     promptInFolder.folders.name,
     promptInFolder.prompts[0].name,
@@ -288,13 +294,13 @@ test('Prompt is moved using drag&drop to expanded folder', async ({
     prompt = promptData.prepareDefaultPrompt();
 
     await localStorageManager.setFolders(promptInFolder.folders);
-    await localStorageManager.setOpenedFolders(promptInFolder.folders);
     await localStorageManager.setPrompts(...promptInFolder.prompts, prompt);
   });
 
   await test.step('Drag and drop prompt to prompt inside folder and verify prompt stays inside folder, folder remains expanded', async () => {
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
     await promptBar.drugAndDropPromptToFolderPrompt(
       promptInFolder.folders.name,
       promptInFolder.prompts[0].name,

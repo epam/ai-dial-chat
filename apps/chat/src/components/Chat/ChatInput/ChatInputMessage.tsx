@@ -127,10 +127,11 @@ export const ChatInputMessage = ({
     showPromptList,
     setShowPromptList,
     updatePromptListVisibility,
-    handleInitModal,
     filteredPrompts,
     variables,
     handleKeyDownIfShown,
+    getPrompt,
+    isPromptLoading,
   } = usePromptSelection(maxLength);
 
   const isInputEmpty = useMemo(() => {
@@ -354,6 +355,7 @@ export const ChatInputMessage = ({
               ? t('Type a message') || ''
               : t('Type a text or «/» to use a prompt...') || ''
           }
+          disabled={isPromptLoading}
           value={content}
           rows={1}
           onCompositionStart={() => setIsTyping(true)}
@@ -366,6 +368,7 @@ export const ChatInputMessage = ({
           handleSend={handleSend}
           isDisabled={isSendDisabled}
           tooltip={tooltipContent()}
+          isPromptLoading={isPromptLoading}
         />
 
         {displayAttachFunctionality && (
@@ -401,7 +404,7 @@ export const ChatInputMessage = ({
             <PromptList
               activePromptIndex={activePromptIndex}
               prompts={filteredPrompts}
-              onSelect={handleInitModal}
+              onSelect={getPrompt}
               onMouseEnter={setActivePromptIndex}
               isOpen={showPromptList && filteredPrompts.length > 0}
               onClose={() => setShowPromptList(false)}

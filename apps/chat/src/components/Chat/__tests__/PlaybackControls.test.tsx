@@ -195,6 +195,30 @@ describe('PlaybackControls', () => {
     expect(onScrollDownClick).toHaveBeenCalledOnce();
   });
 
+  it("clicking on previous message button should show placeholder 'Type a message'", async () => {
+    const playbackPrevMessage = vi.fn();
+    vi.mocked(ConversationsActions.playbackPrevMessage).mockImplementation(
+      playbackPrevMessage,
+    );
+    render(
+      <PlaybackControls
+        onScrollDownClick={onScrollDownClick}
+        onResize={onResize}
+        nextMessageBoxRef={nextMessageBoxRef}
+        showScrollDownButton
+      />,
+    );
+    const prevBtn = screen.getByTestId('playback-prev');
+    const controlContent = screen.getByTestId(
+      'playback-message-content',
+    )?.textContent;
+
+    await userEvent.click(prevBtn);
+
+    expect(playbackPrevMessage).not.toHaveBeenCalled();
+    expect(controlContent).eq('Type a message');
+  });
+
   it('handles clicking on the previous message button', async () => {
     const playbackPrevMessage = vi.fn();
     vi.mocked(ConversationsActions.playbackPrevMessage).mockImplementation(
@@ -210,6 +234,7 @@ describe('PlaybackControls', () => {
     );
     const prevBtn = screen.getByTestId('playback-prev');
 
+    await userEvent.click(prevBtn);
     await userEvent.click(prevBtn);
 
     expect(playbackPrevMessage).toHaveBeenCalledOnce();
@@ -252,7 +277,32 @@ describe('PlaybackControls', () => {
       />,
     );
     const nextBtn = screen.getByTestId('playback-next');
+    const controlContent = screen.getByTestId(
+      'playback-message-content',
+    )?.textContent;
 
+    await userEvent.click(nextBtn);
+
+    expect(playbackNextMessageStart).not.toHaveBeenCalled();
+    expect(controlContent).eq('Type a message');
+  });
+
+  it('handles clicking on the next message button', async () => {
+    const playbackNextMessageStart = vi.fn();
+    vi.mocked(ConversationsActions.playbackNextMessageStart).mockImplementation(
+      playbackNextMessageStart,
+    );
+    render(
+      <PlaybackControls
+        onScrollDownClick={onScrollDownClick}
+        onResize={onResize}
+        nextMessageBoxRef={nextMessageBoxRef}
+        showScrollDownButton
+      />,
+    );
+    const nextBtn = screen.getByTestId('playback-next');
+
+    await userEvent.click(nextBtn);
     await userEvent.click(nextBtn);
 
     expect(playbackNextMessageStart).toHaveBeenCalledOnce();

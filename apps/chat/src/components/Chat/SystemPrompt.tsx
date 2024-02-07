@@ -53,12 +53,13 @@ export const SystemPrompt: FC<Props> = ({
     isPromptLimitModalOpen,
     setIsPromptLimitModalOpen,
     updatePromptListVisibility,
-    handleInitModal,
     filteredPrompts,
     variables,
     showPromptList,
     setShowPromptList,
     handleKeyDownIfShown,
+    getPrompt,
+    isPromptLoading,
   } = usePromptSelection(maxLength);
 
   const handleChange = useCallback(
@@ -164,6 +165,7 @@ export const SystemPrompt: FC<Props> = ({
         style={{ maxHeight: `${MAX_HEIGHT}px` }}
         value={content}
         rows={1}
+        disabled={isPromptLoading}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         data-qa="system-prompt"
@@ -174,7 +176,7 @@ export const SystemPrompt: FC<Props> = ({
           <PromptList
             activePromptIndex={activePromptIndex}
             prompts={filteredPrompts}
-            onSelect={handleInitModal}
+            onSelect={getPrompt}
             onMouseEnter={setActivePromptIndex}
             isOpen={showPromptList && filteredPrompts.length > 0}
             onClose={() => setShowPromptList(false)}
@@ -187,7 +189,7 @@ export const SystemPrompt: FC<Props> = ({
         heading={t('Prompt limit exceeded')}
         description={
           t(
-            `Prompt limit is ${maxLength} characters. 
+            `Prompt limit is ${maxLength} characters.
             ${getPromptLimitDescription(content, maxLength)}`,
           ) || ''
         }
