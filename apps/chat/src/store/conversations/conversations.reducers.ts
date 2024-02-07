@@ -437,6 +437,13 @@ export const conversationsSlice = createSlice({
     },
     moveFolder: (
       state,
+      _action: PayloadAction<{
+        folderId: string;
+        newParentFolderId: string | undefined;
+      }>,
+    ) => state,
+    moveFolderSuccess: (
+      state,
       {
         payload,
       }: PayloadAction<{

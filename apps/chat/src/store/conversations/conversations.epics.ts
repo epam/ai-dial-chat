@@ -31,6 +31,7 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
+import { combineEntities } from '@/src/utils/app/common';
 import {
   addGeneratedConversationId,
   compareConversationsByDate,
@@ -44,6 +45,7 @@ import {
   generateNextName,
   getAllPathsFromId,
   getAllPathsFromPath,
+  getFoldersFromPaths,
   getNextDefaultName,
 } from '@/src/utils/app/folders';
 import {
@@ -63,6 +65,7 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
+import { FolderType } from '@/src/types/folder';
 import { AppEpic } from '@/src/types/store';
 
 import { resetShareEntity } from '@/src/constants/chat';
@@ -486,6 +489,67 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
           ),
         );
       }
+
+      return concat(...actions);
+    }),
+  );
+
+const moveFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.moveFolder.match),
+    switchMap(({ payload }) =>
+      forkJoin({
+        folderId: of(payload.folderId),
+        newParentFolderId: of(payload.newParentFolderId),
+        conversations: ConversationService.getConversations(
+          payload.folderId,
+          true,
+        ),
+        folders: of(ConversationsSelectors.selectFolders(state$.value)),
+      }),
+    ),
+    switchMap(({ folderId, newParentFolderId, conversations, folders }) => {
+      const newFolderIds = [
+        newParentFolderId,
+        ...conversations.flatMap((conv) => getAllPathsFromPath(conv.folderId)),
+      ];
+      const oldFolderIds = new Set(
+        folders
+          .filter(
+            (folder) =>
+              folder.id === folderId ||
+              (folder.folderId && folder.folderId?.startsWith(`${folderId}\\`)),
+          )
+          .map((f) => f.id),
+      );
+      const updatedFolders = combineEntities(
+        getFoldersFromPaths(newFolderIds, FolderType.Chat),
+        folders.filter((f) => !oldFolderIds.has(f.id)),
+      );
+      const actions: Observable<AnyAction>[] = [];
+      actions.push(
+        of(
+          ConversationsActions.moveFolderSuccess({
+            folderId,
+            newParentFolderId,
+          }),
+        ),
+        of(
+          ConversationsActions.setFolders({
+            folders: updatedFolders,
+          }),
+        ),
+      );
+      // TODO: update all conversations with new folderId
+      // if (conversations.length) {
+      //   actions.push(
+      //     of(
+      //       ConversationsActions.updateConversation({
+      //         conversationIds: updateConversationsIds,
+      //       }),
+      //     ),
+      //   );
+      // }
 
       return concat(...actions);
     }),
@@ -1351,7 +1415,7 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         ConversationsActions.createFolder.match(action) ||
         ConversationsActions.deleteFolder.match(action) ||
         ConversationsActions.renameFolder.match(action) ||
-        ConversationsActions.moveFolder.match(action) ||
+        ConversationsActions.moveFolderSuccess.match(action) ||
         ConversationsActions.clearConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.addFolders.match(action) ||
@@ -1862,6 +1926,7 @@ export const ConversationsEpics = combineEpics(
   createNewConversationsSuccessEpic,
   saveFoldersEpic,
   deleteFolderEpic,
+  moveFolderEpic,
   clearConversationsEpic,
   deleteConversationsEpic,
   updateMessageEpic,

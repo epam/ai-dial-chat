@@ -391,6 +391,15 @@ export const getFolderFromPath = (
   };
 };
 
+export const getFoldersFromPaths = (
+  paths: (string | undefined)[],
+  type: FolderType,
+): FolderInterface[] => {
+  return (paths.filter(Boolean) as string[]).map((path) =>
+    getFolderFromPath(path, type),
+  );
+};
+
 export const compareEntitiesByName = <
   T extends ConversationInfo | PromptInfo | DialFile,
 >(
