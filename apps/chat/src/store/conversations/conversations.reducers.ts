@@ -304,13 +304,13 @@ export const conversationsSlice = createSlice({
         payload.conversations[payload.conversations.length - 1].id,
       ];
     },
-    updateConversations: (
+    setConversations: (
       state,
       { payload }: PayloadAction<{ conversations: ConversationInfo[] }>,
     ) => {
       state.conversations = combineEntities(
-        payload.conversations,
         state.conversations,
+        payload.conversations,
       );
       state.conversationsLoaded = true;
     },

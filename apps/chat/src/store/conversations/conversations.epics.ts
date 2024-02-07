@@ -190,7 +190,7 @@ const initFoldersEndConversationsEpic: AppEpic = (action$) =>
               }),
             ),
             of(
-              ConversationsActions.updateConversations({
+              ConversationsActions.setConversations({
                 conversations,
               }),
             ),
@@ -1373,10 +1373,10 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
       (action) =>
         ConversationsActions.selectConversations.match(action) ||
         ConversationsActions.unselectConversations.match(action) ||
-        //ConversationsActions.createNewConversationsSuccess.match(action) ||
-        //ConversationsActions.createNewConversationSuccess.match(action) ||
+        ConversationsActions.updateConversationSuccess.match(action) ||
+        ConversationsActions.createNewConversationSuccess.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
-        ConversationsActions.deleteConversations.match(action) ||
+        ConversationsActions.deleteConversationsSuccess.match(action) ||
         ConversationsActions.addConversations.match(action) ||
         ConversationsActions.duplicateConversation.match(action) ||
         ConversationsActions.duplicateSelectedConversations.match(action),
@@ -1395,6 +1395,18 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(({ selectedConversationsIds }) =>
       concat(
         of(UIActions.setIsCompareMode(selectedConversationsIds.length > 1)),
+      ),
+    ),
+  );
+
+const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter((action) => ConversationsActions.selectConversations.match(action)),
+    map(() =>
+      ConversationsSelectors.selectSelectedConversationsIds(state$.value),
+    ),
+    switchMap((selectedConversationsIds) =>
+      concat(
         of(
           ConversationsActions.uploadConversationsByIds({
             conversationIds: selectedConversationsIds,
@@ -1842,8 +1854,10 @@ export const ConversationsEpics = combineEpics(
   saveConversationEpic,
   recreateConversationEpic,
   createNewConversationsEpic,
-
+  // select
   selectConversationsEpic,
+  uploadSelectedConversationsEpic,
+
   createNewConversationSuccessEpic,
   createNewConversationsSuccessEpic,
   saveFoldersEpic,

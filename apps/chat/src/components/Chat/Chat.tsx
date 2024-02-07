@@ -892,7 +892,7 @@ export function Chat() {
     return (
       <NotFoundEntity
         entity="Conversation"
-        additionalText="Please, select other conversation."
+        additionalText="Please select another conversation."
       />
     );
   }
