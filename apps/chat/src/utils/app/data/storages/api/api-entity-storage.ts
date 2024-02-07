@@ -11,6 +11,7 @@ import {
   BackendChatEntity,
   BackendChatFolder,
   BackendDataNodeType,
+  UploadStatus,
 } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { EntityStorage } from '@/src/types/storage';
@@ -132,6 +133,7 @@ export abstract class ApiEntityStorage<
         return {
           ...entity,
           ...info,
+          status: UploadStatus.LOADED,
         };
       }),
       catchError(() => of(null)),

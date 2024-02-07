@@ -64,7 +64,7 @@ import {
   RateBody,
   Role,
 } from '@/src/types/chat';
-import { EntityType, FeatureType } from '@/src/types/common';
+import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { AppEpic } from '@/src/types/store';
 
@@ -1779,11 +1779,27 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter((action) => ConversationsActions.updateConversation.match(action)),
     switchMap(({ payload }) => {
-      const { id, values } = payload;
+      const { id } = payload;
       const conversation = ConversationsSelectors.selectConversation(
         state$.value,
         id,
       ) as Conversation;
+      if (conversation.status !== UploadStatus.LOADED) {
+        return forkJoin({
+          conversation: ConversationService.getConversation(
+            parseConversationId(id),
+          ),
+          payload: of(payload),
+        });
+      } else {
+        return forkJoin({
+          conversation: of(conversation),
+          payload: of(payload),
+        });
+      }
+    }),
+    switchMap(({ payload, conversation }) => {
+      const { id, values } = payload;
       if (!conversation) {
         return EMPTY;
       }

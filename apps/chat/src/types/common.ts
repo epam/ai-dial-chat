@@ -28,6 +28,7 @@ export interface Entity {
   id: string;
   name: string;
   folderId?: string;
+  status?: UploadStatus;
 }
 
 export interface ShareEntity extends Entity, ShareInterface {}
