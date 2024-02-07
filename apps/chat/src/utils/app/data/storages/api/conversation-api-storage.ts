@@ -1,14 +1,13 @@
-import { ApiKeys, getConversationApiKey, parseConversationApiKey } from '@/src/utils/server/api';
-
-
+import {
+  ApiKeys,
+  getConversationApiKey,
+  parseConversationApiKey,
+} from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 
-
-
 import { cleanConversation } from '../../../clean';
 import { ApiEntityStorage } from './api-entity-storage';
-
 
 export class ConversationApiStorage extends ApiEntityStorage<
   ConversationInfo,
@@ -18,7 +17,7 @@ export class ConversationApiStorage extends ApiEntityStorage<
     return {
       ...entity,
       ...info,
-      //model: entity.model,
+      model: entity.model,
     };
   }
   cleanUpEntity(conversation: Conversation): Conversation {

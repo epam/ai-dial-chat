@@ -131,15 +131,19 @@ export const getNextDefaultName = (
           (!entity.publishedWithMe || includingPublishedWithMe) &&
           (entity.name === defaultName || entity.name.match(regex)),
       )
-      .map((entity) => parseInt(entity.name.replace(prefix, ''), 10) || 1),
-    0,
+      .map(
+        (entity) =>
+          parseInt(entity.name.replace(prefix, ''), 10) ||
+          (startWithEmptyPostfix ? 0 : 1),
+      ),
+    startWithEmptyPostfix ? -1 : 0,
   ); // max number
 
-  if (startWithEmptyPostfix && maxNumber === 0) {
+  if (startWithEmptyPostfix && maxNumber === -1) {
     return defaultName;
   }
 
-  return `${prefix}${maxNumber + (startWithEmptyPostfix ? 2 : 1) + index}`;
+  return `${prefix}${maxNumber + 1 + index}`;
 };
 
 export const generateNextName = (

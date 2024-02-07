@@ -12,7 +12,7 @@ import {
   Replay,
   Role,
 } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
+import { EntityType, UploadStatus } from '@/src/types/common';
 
 import {
   AddonsActions,
@@ -885,7 +885,11 @@ export function Chat() {
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
-  if (!areSelectedConversationsLoaded) {
+  if (
+    !areSelectedConversationsLoaded &&
+    (!selectedConversations.length ||
+      selectedConversations.some((conv) => conv.status !== UploadStatus.LOADED))
+  ) {
     return <ChatLoader />;
   }
   if (selectedConversations.length !== selectedConversationsIds.length) {

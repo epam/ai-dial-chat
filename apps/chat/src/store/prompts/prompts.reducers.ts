@@ -46,7 +46,10 @@ export const promptsSlice = createSlice({
     initPrompts: (state) => state,
     createNewPrompt: (state) => {
       const newPrompt: Prompt = addGeneratedPromptId({
-        name: getNextDefaultName(translate('Prompt'), state.prompts),
+        name: getNextDefaultName(
+          translate('Prompt'),
+          state.prompts.filter((prompt) => !prompt.folderId), // only root prompts
+        ),
         description: '',
         content: '',
       });
