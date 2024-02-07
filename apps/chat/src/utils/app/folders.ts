@@ -6,9 +6,9 @@ import {
 } from '@/src/utils/app/file';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { ShareEntity } from '@/src/types/common';
+import { FeatureType, ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
@@ -360,7 +360,10 @@ export const splitPath = (id: string) => {
   };
 };
 
-export const getAllPathsFromPath = (path: string): string[] => {
+export const getAllPathsFromPath = (path?: string): string[] => {
+  if (!path) {
+    return [];
+  }
   const parts = path.split('/');
   const paths = [];
   for (let i = 1; i <= parts.length; i++) {
@@ -372,7 +375,20 @@ export const getAllPathsFromPath = (path: string): string[] => {
 
 export const getAllPathsFromId = (id: string): string[] => {
   const { parentPath } = splitPath(id);
-  return parentPath ? getAllPathsFromPath(parentPath) : [];
+  return getAllPathsFromPath(parentPath);
+};
+
+export const getFolderFromPath = (
+  path: string,
+  type: FolderType,
+): FolderInterface => {
+  const { name, parentPath } = splitPath(path);
+  return {
+    id: path,
+    name,
+    type,
+    folderId: parentPath,
+  };
 };
 
 export const compareEntitiesByName = <

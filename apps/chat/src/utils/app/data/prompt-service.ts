@@ -15,10 +15,10 @@ export class PromptService {
   }
 
   public static getPrompts(
-    recursive = false,
     path?: string,
+    recursive?: boolean,
   ): Observable<PromptInfo[]> {
-    return DataService.getDataStorage().getPrompts(recursive, path);
+    return DataService.getDataStorage().getPrompts(path, recursive);
   }
 
   public static getPrompt(info: PromptInfo): Observable<Prompt | null> {

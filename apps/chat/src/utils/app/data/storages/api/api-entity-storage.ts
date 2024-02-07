@@ -108,7 +108,7 @@ export abstract class ApiEntityStorage<
     );
   }
 
-  getEntities(path?: string, recursive = false): Observable<EntityInfo[]> {
+  getEntities(path?: string, recursive?: boolean): Observable<EntityInfo[]> {
     const filter = BackendDataNodeType.ITEM;
 
     const query = new URLSearchParams({

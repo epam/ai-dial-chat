@@ -44,8 +44,9 @@ export class ConversationService {
 
   public static getConversations(
     path?: string,
+    recursive?: boolean,
   ): Observable<ConversationInfo[]> {
-    return DataService.getDataStorage().getConversations(path);
+    return DataService.getDataStorage().getConversations(path, recursive);
   }
 
   public static getConversation(

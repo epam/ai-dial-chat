@@ -42,7 +42,7 @@ export const promptsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    initFolders: (state) => state,
+    // initFolders: (state) => state,
     initPrompts: (state) => state,
     createNewPrompt: (state) => {
       const newPrompt: Prompt = addGeneratedPromptId({

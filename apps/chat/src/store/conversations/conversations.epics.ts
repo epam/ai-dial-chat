@@ -43,6 +43,7 @@ import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   generateNextName,
   getAllPathsFromId,
+  getAllPathsFromPath,
   getNextDefaultName,
 } from '@/src/utils/app/folders';
 import {
@@ -452,41 +453,48 @@ const createNewConversationSuccessEpic: AppEpic = (action$) =>
 const deleteFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.deleteFolder.match),
-    map(({ payload }) => ({
-      conversations: ConversationsSelectors.selectConversations(state$.value),
-      childFolders: ConversationsSelectors.selectChildAndCurrentFoldersIdsById(
-        state$.value,
-        payload.folderId,
-      ),
-      folders: ConversationsSelectors.selectFolders(state$.value),
-    })),
-    switchMap(({ conversations, childFolders, folders }) => {
-      const removedConversationsIds = conversations
-        .filter((conv) => conv.folderId && childFolders.has(conv.folderId))
-        .map((conv) => conv.id);
-
-      return concat(
-        of(
-          ConversationsActions.deleteConversations({
-            conversationIds: removedConversationsIds,
-          }),
+    switchMap(({ payload }) =>
+      forkJoin({
+        folderId: of(payload.folderId),
+        conversations: ConversationService.getConversations(
+          payload.folderId,
+          true,
         ),
+        folders: of(ConversationsSelectors.selectFolders(state$.value)),
+      }),
+    ),
+    switchMap(({ folderId, conversations, folders }) => {
+      const childFolders = new Set([
+        folderId,
+        ...conversations.flatMap((conv) => getAllPathsFromPath(conv.folderId)),
+      ]);
+      const removedConversationsIds = conversations.map((conv) => conv.id);
+      const actions: Observable<AnyAction>[] = [];
+      actions.push(
         of(
           ConversationsActions.setFolders({
             folders: folders.filter((folder) => !childFolders.has(folder.id)),
           }),
         ),
       );
+      if (removedConversationsIds.length) {
+        actions.push(
+          of(
+            ConversationsActions.deleteConversations({
+              conversationIds: removedConversationsIds,
+            }),
+          ),
+        );
+      }
+
+      return concat(...actions);
     }),
   );
 
-const clearConversationsEpic: AppEpic = (action$, state$) =>
+const clearConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.clearConversations.match),
     switchMap(() => {
-      const conversations = ConversationsSelectors.selectConversations(
-        state$.value,
-      );
       return concat(
         of(
           ConversationsActions.createNewConversations({
@@ -495,11 +503,6 @@ const clearConversationsEpic: AppEpic = (action$, state$) =>
         ),
         of(ConversationsActions.clearConversationsSuccess()),
         of(ConversationsActions.deleteFolder({})),
-        zip(
-          conversations.map((conv) =>
-            ConversationService.deleteConversation(conv),
-          ), //TODO: delete folders
-        ).pipe(switchMap(() => EMPTY)),
       );
     }),
   );
@@ -514,10 +517,6 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
       deleteIds: new Set(payload.conversationIds),
     })),
     switchMap(({ conversations, selectedConversationsIds, deleteIds }) => {
-      const deleteConversations = conversations.filter((conv) =>
-        deleteIds.has(conv.id),
-      );
-
       const otherConversations = conversations.filter(
         (conv) => !deleteIds.has(conv.id),
       );
@@ -567,8 +566,8 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
       return concat(
         ...actions,
         zip(
-          deleteConversations.map((conv) =>
-            ConversationService.deleteConversation(conv),
+          Array.from(deleteIds).map((id) =>
+            ConversationService.deleteConversation(parseConversationId(id)),
           ),
         ).pipe(switchMap(() => EMPTY)),
       );

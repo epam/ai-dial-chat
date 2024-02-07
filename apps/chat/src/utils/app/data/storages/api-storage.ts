@@ -35,8 +35,11 @@ export class ApiStorage implements DialStorage {
     return this._conversationApiStorage.getFoldersAndEntities(path);
   }
 
-  getConversations(path?: string): Observable<ConversationInfo[]> {
-    return this._conversationApiStorage.getEntities(path);
+  getConversations(
+    path?: string,
+    recursive?: boolean,
+  ): Observable<ConversationInfo[]> {
+    return this._conversationApiStorage.getEntities(path, recursive);
   }
 
   getConversation(info: ConversationInfo): Observable<Conversation | null> {
@@ -67,7 +70,7 @@ export class ApiStorage implements DialStorage {
     return this._promptApiStorage.getFoldersAndEntities(path);
   }
 
-  getPrompts(recursive = false, path?: string): Observable<Prompt[]> {
+  getPrompts(path?: string, recursive?: boolean): Observable<Prompt[]> {
     return this._promptApiStorage.getEntities(path, recursive);
   }
 

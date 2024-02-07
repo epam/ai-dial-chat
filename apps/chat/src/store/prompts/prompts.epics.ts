@@ -14,6 +14,8 @@ import { combineEpics } from 'redux-observable';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import {
   findRootFromItems,
+  getAllPathsFromPath,
+  getFolderFromPath,
   getFolderIdByPath,
   getTemporaryFoldersToPublish,
 } from '@/src/utils/app/folders';
@@ -25,6 +27,7 @@ import {
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
+import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
 
@@ -179,32 +182,40 @@ const importPromptsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const initFoldersEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter((action) => PromptsActions.initFolders.match(action)),
-    switchMap(() =>
-      PromptService.getPromptsFolders().pipe(
-        map((folders) => {
-          return PromptsActions.setFolders({
-            folders,
-          });
-        }),
-      ),
-    ),
-  );
+// const initFoldersEpic: AppEpic = (action$) =>
+//   action$.pipe(
+//     filter((action) => PromptsActions.initFolders.match(action)),
+//     switchMap(() =>
+//       PromptService.getPromptsFolders().pipe(
+//         map((folders) => {
+//           return PromptsActions.setFolders({
+//             folders,
+//           });
+//         }),
+//       ),
+//     ),
+//   );
 
 const initPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.initPrompts.match),
-    switchMap(() =>
-      PromptService.getPrompts(true).pipe(
-        map((prompts) => {
-          return PromptsActions.updatePrompts({
+    switchMap(() => PromptService.getPrompts(undefined, true)),
+    switchMap((prompts) => {
+      return concat(
+        of(
+          PromptsActions.updatePrompts({
             prompts,
-          });
-        }),
-      ),
-    ),
+          }),
+        ),
+        of(
+          PromptsActions.setFolders({
+            folders: Array.from(
+              new Set(prompts.flatMap((p) => getAllPathsFromPath(p.folderId))),
+            ).map((path) => getFolderFromPath(path, FolderType.Prompt)),
+          }),
+        ),
+      );
+    }),
   );
 
 const initEpic: AppEpic = (action$) =>
@@ -212,7 +223,7 @@ const initEpic: AppEpic = (action$) =>
     filter((action) => PromptsActions.init.match(action)),
     switchMap(() =>
       concat(
-        of(PromptsActions.initFolders()),
+        // of(PromptsActions.initFolders()),
         of(PromptsActions.initPrompts()),
       ),
     ),
@@ -476,7 +487,7 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
 export const PromptsEpics = combineEpics(
   initEpic,
   initPromptsEpic,
-  initFoldersEpic,
+  // initFoldersEpic,
   savePromptsEpic,
   saveFoldersEpic,
   deleteFolderEpic,
