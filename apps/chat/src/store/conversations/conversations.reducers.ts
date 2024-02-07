@@ -104,39 +104,6 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{ names: string[] }>,
     ) => state,
-
-    shareConversation: (
-      state,
-      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
-    ) => {
-      state.conversations = state.conversations.map((conv) => {
-        if (conv.id === payload.id) {
-          return {
-            ...conv,
-            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
-            isShared: true,
-          };
-        }
-
-        return conv;
-      });
-    },
-    shareFolder: (
-      state,
-      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
-    ) => {
-      state.folders = state.folders.map((folder) => {
-        if (folder.id === payload.id) {
-          return {
-            ...folder,
-            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
-            isShared: true,
-          };
-        }
-
-        return folder;
-      });
-    },
     publishConversation: (
       state,
       { payload }: PayloadAction<PublishRequest>,

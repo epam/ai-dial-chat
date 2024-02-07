@@ -1,3 +1,5 @@
+import { ModalState } from '@/src/types/modal';
+
 import Modal, { Props as ModalProps } from './Modal';
 import { Spinner } from './Spinner';
 
@@ -26,7 +28,7 @@ export const FullPageLoader = ({
   return (
     <Modal
       onClose={onClose}
-      isOpen={isOpen}
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       hideClose={hideClose}
       dataQa={dataQa}
       portalId={portalId}

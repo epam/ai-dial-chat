@@ -24,6 +24,7 @@ import {
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
 
 import { DialFile } from '@/src/types/files';
+import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
@@ -297,7 +298,7 @@ export const PreUploadDialog = ({
       portalId="theme-main"
       containerClassName="flex flex-col gap-4 p-6 md:min-w-[425px] md:max-w-[500px]"
       dataQa="pre-upload-modal"
-      isOpen={isOpen}
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >

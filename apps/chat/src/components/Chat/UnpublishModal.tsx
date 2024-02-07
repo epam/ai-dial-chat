@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { getUnpublishActionByType } from '@/src/utils/app/share';
 
 import { Entity } from '@/src/types/common';
+import { ModalState } from '@/src/types/modal';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -60,7 +61,7 @@ export default function UnpublishModal({
       portalId="theme-main"
       containerClassName="inline-block h-[434px] sm:w-[424px] p-6 w-full"
       dataQa="unpublish-modal"
-      isOpen={isOpen}
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={onClose}
     >
       <div className="flex h-full flex-col justify-between gap-2">

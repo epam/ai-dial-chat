@@ -33,6 +33,7 @@ export interface Entity {
 export interface ShareEntity extends Entity, ShareInterface {}
 
 export interface BackendDataEntity {
+  nodeType: BackendDataNodeType;
   name: string;
   resourceType: BackendResourceType;
   bucket: string;

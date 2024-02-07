@@ -31,10 +31,8 @@ export const getRelativePath = (
   return absolutePath?.split('/').toSpliced(0, 2).join('/') || undefined;
 };
 
-export const getFileName = (
-  absolutePath: string | undefined,
-): string | undefined => {
-  return absolutePath?.split('/').slice(-1)?.[0] || undefined;
+export const getFileName = (path: string | undefined): string | undefined => {
+  return path?.split('/').slice(-1)?.[0] || undefined;
 };
 
 export const getUserCustomContent = (

@@ -70,38 +70,6 @@ export const promptsSlice = createSlice({
         state.prompts[foundPromptIdx] = payload.prompt;
       }
     },
-    sharePrompt: (
-      state,
-      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
-    ) => {
-      state.prompts = state.prompts.map((prompt) => {
-        if (prompt.id === payload.id) {
-          return {
-            ...prompt,
-            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
-            isShared: true,
-          };
-        }
-
-        return prompt;
-      });
-    },
-    shareFolder: (
-      state,
-      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
-    ) => {
-      state.folders = state.folders.map((folder) => {
-        if (folder.id === payload.id) {
-          return {
-            ...folder,
-            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
-            isShared: true,
-          };
-        }
-
-        return folder;
-      });
-    },
     publishPrompt: (state, { payload }: PayloadAction<PublishRequest>) => {
       state.prompts = state.prompts.map((prompt) => {
         if (prompt.id === payload.id) {

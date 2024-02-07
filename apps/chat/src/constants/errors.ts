@@ -24,4 +24,7 @@ export const errorsMessages = {
     'You do not have any available models. Please contact your administrator or try to reload the page.',
   importFailed: 'Import failed',
   exportFailed: 'Export failed',
+  shareFailed: 'Sharing failed. Please try again later.',
+  acceptShareFailed:
+    'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
 };

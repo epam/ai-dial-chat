@@ -25,6 +25,7 @@ import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { ModalState } from '@/src/types/modal';
 import {
   SharingType,
   TargetAudienceFilter,
@@ -226,7 +227,7 @@ export default function PublishWizard({
         { 'w-full': files.length },
       )}
       dataQa="publish-modal"
-      isOpen={isOpen}
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={onClose}
       initialFocus={nameInputRef}
     >

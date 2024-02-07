@@ -4,6 +4,7 @@ import { Observable, from, switchMap, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { BackendDataEntity, BackendResourceType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 
@@ -26,6 +27,18 @@ export const getFolderTypeByApiKey = (key: ApiKeys): FolderType => {
     case ApiKeys.Files:
     default:
       return FolderType.File;
+  }
+};
+
+export const getApiKeyByResourceType = (entityType: BackendResourceType) => {
+  switch (entityType) {
+    case BackendResourceType.PROMPT:
+      return ApiKeys.Prompts;
+    case BackendResourceType.CONVERSATION:
+      return ApiKeys.Conversations;
+    case BackendResourceType.FILE:
+    default:
+      return ApiKeys.Files;
   }
 };
 
@@ -117,7 +130,10 @@ export const parsePromptApiKey = (name: string): PromptInfo => {
 
 export class ApiUtils {
   static request(url: string, options?: RequestInit) {
-    return fromFetch(url, options).pipe(
+    return fromFetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    }).pipe(
       switchMap((response) => {
         if (!response.ok) {
           return throwError(() => new Error(response.statusText));

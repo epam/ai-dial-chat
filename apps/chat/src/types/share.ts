@@ -49,3 +49,31 @@ export interface PublishRequest {
     other: TargetAudienceFilter[];
   };
 }
+
+export enum ShareRequestType {
+  email = 'email',
+  link = 'link',
+}
+
+export interface ShareRequestModel {
+  invitationType: ShareRequestType;
+  resources: { url: string }[];
+}
+
+// Email sharing not implemented on BE
+export interface ShareByEmailRequestModel extends ShareRequestModel {
+  invitationType: ShareRequestType.email;
+  emails: string[];
+}
+
+export interface ShareByLinkRequestModel extends ShareRequestModel {
+  invitationType: ShareRequestType.link;
+}
+
+export interface ShareByLinkResponseModel {
+  invitationLink: string;
+}
+
+export interface ShareAcceptRequestModel {
+  invitationId: string;
+}

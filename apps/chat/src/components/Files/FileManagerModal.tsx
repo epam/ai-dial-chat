@@ -15,6 +15,7 @@ import {
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
@@ -253,7 +254,7 @@ export const FileManagerModal = ({
   return (
     <Modal
       portalId="theme-main"
-      isOpen={isOpen}
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
       dataQa="file-manager-modal"
       containerClassName="flex flex-col gap-4 sm:w-[525px] w-full"

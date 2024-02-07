@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/router';
 
+import { useUrlHash } from '@/src/hooks/useUrlHash';
+
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -24,27 +26,17 @@ export const FooterMessage = () => {
   const [isRequestAPIDialogOpen, setIsRequestAPIDialogOpen] = useState(false);
   const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
   const router = useRouter();
+  const { hash } = useUrlHash();
 
   useEffect(() => {
-    const handleHash = () => {
-      const hash = window.location.hash;
-
-      if (hash === requestApiKeyHash) {
-        setIsReportIssueDialogOpen(false);
-        setIsRequestAPIDialogOpen(true);
-      } else if (hash === reportAnIssueHash) {
-        setIsRequestAPIDialogOpen(false);
-        setIsReportIssueDialogOpen(true);
-      }
-    };
-    handleHash();
-
-    window.addEventListener('hashchange', handleHash);
-
-    return () => {
-      window.removeEventListener('hashchange', handleHash);
-    };
-  }, []);
+    if (hash === requestApiKeyHash) {
+      setIsReportIssueDialogOpen(false);
+      setIsRequestAPIDialogOpen(true);
+    } else if (hash === reportAnIssueHash) {
+      setIsRequestAPIDialogOpen(false);
+      setIsReportIssueDialogOpen(true);
+    }
+  }, [hash]);
 
   return enabledFeatures.has(Feature.Footer) ? (
     <div data-qa="footer-message">
