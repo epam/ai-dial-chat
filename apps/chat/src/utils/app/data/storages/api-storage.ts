@@ -52,7 +52,7 @@ export class ApiStorage implements DialStorage {
         ): Observable<void> =>
           apiStorage.createEntity(entity).pipe(
             catchError((err) => {
-              if (err.message === 'Conflict' && retries < MAX_RETRIES_COUNT) {
+              if (retries < MAX_RETRIES_COUNT) {
                 retries++;
 
                 const newName = generateNextName(
