@@ -1,4 +1,5 @@
-import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { Attachment, Conversation, ConversationInfo } from '@/src/types/chat';
+import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import {
   ExportConversationsFormatV4,
@@ -275,4 +276,93 @@ export const importPrompts = (
   ).filter((folder) => folder.type === FolderType.Prompt);
 
   return { prompts: newPrompts, folders: newFolders, isError: false };
+};
+
+export const getAttachmentId = ({
+  url,
+  attachmentIdIndex,
+}: {
+  url: string;
+  attachmentIdIndex: number;
+}) => {
+  const regExpForAttachmentId = /^files\/\w*\//;
+
+  const attachmentId = decodeURI(url).split(regExpForAttachmentId)[
+    attachmentIdIndex
+  ];
+
+  return attachmentId;
+};
+
+const getNewAttachmentFileFromUploaded = ({
+  uploadedAttachments,
+  oldAttachmentId,
+  attachmentIdIndex,
+}: {
+  uploadedAttachments: Partial<DialFile>[];
+  oldAttachmentId: string;
+  attachmentIdIndex: number;
+}) =>
+  uploadedAttachments.find((newAttachment) => {
+    if (!newAttachment.id) {
+      return;
+    }
+    const regExpForNewAttachmentId = /^imports\/[\w-]*\//;
+
+    const newAttachmentId = newAttachment.id.split(regExpForNewAttachmentId)[
+      attachmentIdIndex
+    ];
+    return (
+      newAttachmentId === oldAttachmentId ||
+      oldAttachmentId.includes(newAttachmentId)
+    );
+  });
+
+export const updateAttachment = ({
+  oldAttachment,
+  uploadedAttachments,
+}: {
+  oldAttachment: Attachment;
+  uploadedAttachments: Partial<DialFile>[];
+}) => {
+  const oldAttachmentUrl = oldAttachment.url || oldAttachment.reference_url;
+
+  if (!oldAttachmentUrl) {
+    return oldAttachment;
+  }
+
+  const attachmentIdIndex = 1;
+
+  const oldAttachmentId = getAttachmentId({
+    url: oldAttachmentUrl,
+    attachmentIdIndex,
+  });
+
+  const newAttachmentFile = getNewAttachmentFileFromUploaded({
+    uploadedAttachments,
+    oldAttachmentId,
+    attachmentIdIndex,
+  });
+
+  if (!newAttachmentFile || !newAttachmentFile.name) {
+    return oldAttachment;
+  }
+
+  const newAttachmentUrl =
+    oldAttachment.url &&
+    encodeURI(`${newAttachmentFile.absolutePath}/${newAttachmentFile.name}`);
+
+  const lastSlashIndex = oldAttachmentId.lastIndexOf('/');
+  const oldAttachmentNameInPath = oldAttachmentId.slice(lastSlashIndex + 1);
+
+  const newReferenceUrl =
+    oldAttachment.reference_url &&
+    encodeURI(`${newAttachmentFile.absolutePath}/${oldAttachmentNameInPath}`);
+
+  const updatedAttachment: Attachment = {
+    ...oldAttachment,
+    url: newAttachmentUrl,
+    reference_url: newReferenceUrl,
+  };
+  return updatedAttachment;
 };
