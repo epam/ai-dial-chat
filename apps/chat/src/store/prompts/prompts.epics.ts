@@ -129,9 +129,9 @@ const deletePromptsEpic: AppEpic = (action$) =>
             deletePrompts,
           }),
         ),
-        zip(
-          Array.from(deletePrompts).map((id) => PromptService.deletePrompt(id)),
-        ).pipe(switchMap(() => EMPTY)),
+        zip(deletePrompts.map((id) => PromptService.deletePrompt(id))).pipe(
+          switchMap(() => EMPTY),
+        ),
       ),
     ),
   );
