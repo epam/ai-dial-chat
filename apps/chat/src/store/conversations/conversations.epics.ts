@@ -1226,7 +1226,7 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
             type: 'error',
           }),
         ),
-        of(ConversationsActions.cleanMessage()),
+        // of(ConversationsActions.cleanMessage()),
       );
     }),
   );
@@ -1775,32 +1775,6 @@ const playbackCancelEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const uploadOpenFoldersEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(ConversationsActions.uploadOpenFolders.match),
-    switchMap(({ payload }) => {
-      const openFolderIds = new Set(
-        UISelectors.selectOpenedFoldersIds(state$.value, FeatureType.Chat),
-      );
-      const openFolders = ConversationsSelectors.selectFolders(
-        state$.value,
-      ).filter(
-        (folder) =>
-          openFolderIds.has(folder.id) &&
-          payload.paths.includes(folder.folderId),
-      );
-      if (!openFolders.length) {
-        return EMPTY;
-      }
-      return of(
-        ConversationsActions.uploadConversationsWithFolders({
-          paths: openFolders.map((folder) => folder.id),
-          withOpenChildren: true,
-        }),
-      );
-    }),
-  );
-
 const uploadConversationsByIdsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.uploadConversationsByIds.match),
@@ -1951,68 +1925,93 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
 const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.uploadConversationsWithFolders.match),
-    switchMap(({ payload }) => {
-      return concat(
-        of(ConversationsActions.uploadFolders(payload)),
-        of(ConversationsActions.uploadConversations(payload)),
-      );
-    }),
-  );
-
-const uploadFoldersEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(ConversationsActions.uploadFolders.match),
     switchMap(({ payload }) =>
       zip(
         payload.paths.map((path) =>
-          ConversationService.getConversationsFolders(path),
+          ConversationService.getConversationsAndFolders(path),
         ),
       ).pipe(
-        switchMap((folders) =>
-          concat(
+        switchMap((foldersAndEntities) => {
+          const folders = foldersAndEntities.flatMap((f) => f.folders);
+          const conversations = foldersAndEntities.flatMap((f) => f.entities);
+          return concat(
             of(
               ConversationsActions.uploadFoldersSuccess({
                 paths: new Set(payload.paths),
-                folders: folders.flat(),
+                folders: folders,
               }),
             ),
-            iif(
-              () => !!payload.withOpenChildren,
-              of(ConversationsActions.uploadOpenFolders(payload)),
-              EMPTY,
+            of(
+              ConversationsActions.uploadConversationsSuccess({
+                paths: new Set(payload.paths),
+                conversations: conversations.flat(),
+              }),
             ),
-          ),
-        ),
+          );
+        }),
         catchError(() =>
-          of(
-            ConversationsActions.uploadFoldersFail({
-              paths: new Set(payload.paths),
-            }),
+          concat(
+            of(
+              ConversationsActions.uploadFoldersFail({
+                paths: new Set(payload.paths),
+              }),
+            ),
+            of(ConversationsActions.uploadConversationsFail()),
           ),
         ),
       ),
     ),
   );
 
-const uploadConversationsEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(ConversationsActions.uploadConversations.match),
-    switchMap(({ payload }) =>
-      zip(
-        payload.paths.map((path: string | undefined) =>
-          ConversationService.getConversations(path),
-        ),
-      ).pipe(
-        map((conversations) =>
-          ConversationsActions.uploadConversationsSuccess({
-            paths: new Set(payload.paths),
-            conversations: conversations.flat(),
-          }),
-        ),
-        catchError(() => of(ConversationsActions.uploadConversationsFail())),
-      ),
-    ),
-  );
+// const uploadFoldersEpic: AppEpic = (action$) =>
+//   action$.pipe(
+//     filter(ConversationsActions.uploadFolders.match),
+//     switchMap(({ payload }) =>
+//       zip(
+//         payload.paths.map((path) =>
+//           ConversationService.getConversationsFolders(path),
+//         ),
+//       ).pipe(
+//         switchMap((folders) =>
+//           concat(
+//             of(
+//               ConversationsActions.uploadFoldersSuccess({
+//                 paths: new Set(payload.paths),
+//                 folders: folders.flat(),
+//               }),
+//             ),
+//           ),
+//         ),
+//         catchError(() =>
+//           of(
+//             ConversationsActions.uploadFoldersFail({
+//               paths: new Set(payload.paths),
+//             }),
+//           ),
+//         ),
+//       ),
+//     ),
+//   );
+
+// const uploadConversationsEpic: AppEpic = (action$) =>
+//   action$.pipe(
+//     filter(ConversationsActions.uploadConversations.match),
+//     switchMap(({ payload }) =>
+//       zip(
+//         payload.paths.map((path: string | undefined) =>
+//           ConversationService.getConversations(path),
+//         ),
+//       ).pipe(
+//         map((conversations) =>
+//           ConversationsActions.uploadConversationsSuccess({
+//             paths: new Set(payload.paths),
+//             conversations: conversations.flat(),
+//           }),
+//         ),
+//         catchError(() => of(ConversationsActions.uploadConversationsFail())),
+//       ),
+//     ),
+//   );
 
 const toggleFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -2096,9 +2095,8 @@ export const ConversationsEpics = combineEpics(
   uploadConversationsByIdsEpic,
 
   uploadConversationsWithFoldersEpic,
-  uploadFoldersEpic,
-  uploadConversationsEpic,
-  uploadOpenFoldersEpic,
+  // uploadFoldersEpic,
+  // uploadConversationsEpic,
   toggleFolderEpic,
   openFolderEpic,
 );
