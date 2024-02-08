@@ -28,6 +28,7 @@ export interface Entity {
   id: string;
   name: string;
   folderId?: string;
+  status?: UploadStatus;
 }
 
 export interface ShareEntity extends Entity, ShareInterface {}
@@ -83,3 +84,7 @@ export enum UploadStatus {
   LOADED = 'LOADED',
   FAILED = 'FAILED',
 }
+
+export const isNotLoaded = (status?: UploadStatus) => {
+  return !status || status === UploadStatus.UNINITIALIZED;
+};

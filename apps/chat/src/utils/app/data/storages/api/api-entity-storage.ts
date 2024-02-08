@@ -11,6 +11,7 @@ import {
   BackendChatEntity,
   BackendChatFolder,
   BackendDataNodeType,
+  UploadStatus,
 } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { EntityStorage } from '@/src/types/storage';
@@ -44,14 +45,6 @@ export abstract class ApiEntityStorage<
       lastActivityDate: entity.updatedAt,
       folderId: relativePath,
     };
-  }
-
-  private cleanUpEntity(entity: Entity): Entity {
-    const clone = { ...entity };
-    if ('lastActivityDate' in clone) {
-      delete clone.lastActivityDate;
-    }
-    return clone;
   }
 
   getFoldersAndEntities(
@@ -138,8 +131,8 @@ export abstract class ApiEntityStorage<
     ).pipe(
       map((entity: Entity) => {
         return {
-          ...entity,
-          ...info,
+          ...this.mergeGetResult(info, entity),
+          status: UploadStatus.LOADED,
         };
       }),
       catchError(() => of(null)),
@@ -186,4 +179,8 @@ export abstract class ApiEntityStorage<
   abstract parseEntityKey(key: string): EntityInfo;
 
   abstract getStorageKey(): ApiKeys;
+
+  abstract cleanUpEntity(entity: Entity): Entity;
+
+  abstract mergeGetResult(info: EntityInfo, entity: Entity): Entity;
 }

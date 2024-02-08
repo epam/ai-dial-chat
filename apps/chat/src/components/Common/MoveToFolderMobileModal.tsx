@@ -4,10 +4,8 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, MoveToFolderProps } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
-
-import { PromptMoveToFolderProps } from '../Promptbar/components/Prompt';
 
 interface MoveToFolderMobileModalProps {
   folders: FolderInterface[];
@@ -22,7 +20,7 @@ export const MoveToFolderMobileModal = ({
 }: MoveToFolderMobileModalProps) => {
   const { t } = useTranslation(Translation.SideBar);
   const handleMoveToFolder = useCallback(
-    ({ isNewFolder, folderId }: PromptMoveToFolderProps) => {
+    ({ isNewFolder, folderId }: MoveToFolderProps) => {
       onMoveToFolder({ isNewFolder, folderId });
       onClose();
     },

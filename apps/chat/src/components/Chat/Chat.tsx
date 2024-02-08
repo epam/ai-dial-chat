@@ -12,7 +12,7 @@ import {
   Replay,
   Role,
 } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
+import { EntityType, UploadStatus } from '@/src/types/common';
 
 import {
   AddonsActions,
@@ -131,7 +131,7 @@ export const ChatView = memo(() => {
             conv.replay.isReplay &&
             conv.replay.replayAsIs &&
             conv.replay.replayUserMessagesStack &&
-            conv.replay.replayUserMessagesStack?.[0]?.model
+            conv.replay.replayUserMessagesStack[0].model
           ) {
             return conv.replay.replayUserMessagesStack.some(
               (message) =>
@@ -885,14 +885,21 @@ export function Chat() {
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
-  if (!areSelectedConversationsLoaded) {
+  if (
+    !areSelectedConversationsLoaded &&
+    (!selectedConversations.length ||
+      selectedConversations.some((conv) => conv.status !== UploadStatus.LOADED))
+  ) {
     return <ChatLoader />;
   }
-  if (selectedConversations.length !== selectedConversationsIds.length) {
+  if (
+    selectedConversations.length !== selectedConversationsIds.length ||
+    selectedConversations.some((conv) => conv.status !== UploadStatus.LOADED)
+  ) {
     return (
       <NotFoundEntity
         entity="Conversation"
-        additionalText="Please, select other conversation."
+        additionalText="Please select another conversation."
       />
     );
   }

@@ -6,12 +6,23 @@ import {
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 
+import { cleanConversation } from '../../../clean';
 import { ApiEntityStorage } from './api-entity-storage';
 
 export class ConversationApiStorage extends ApiEntityStorage<
   ConversationInfo,
   Conversation
 > {
+  mergeGetResult(info: ConversationInfo, entity: Conversation): Conversation {
+    return {
+      ...entity,
+      ...info,
+      model: entity.model,
+    };
+  }
+  cleanUpEntity(conversation: Conversation): Conversation {
+    return cleanConversation(conversation);
+  }
   getEntityKey(info: ConversationInfo): string {
     return getConversationApiKey(info);
   }

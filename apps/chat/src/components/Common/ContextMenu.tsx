@@ -18,6 +18,7 @@ function ContextMenuItemRenderer({
   disabled,
   className,
   childMenuItems,
+  onChildMenuOpenChange,
 }: MenuItemRendererProps) {
   const item = (
     <div
@@ -49,6 +50,7 @@ function ContextMenuItemRenderer({
           'hover:bg-accent-primary-alpha',
         )}
         TriggerCustomRenderer={item}
+        onOpenChange={onChildMenuOpenChange}
       />
     );
   }

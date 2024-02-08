@@ -18,8 +18,12 @@ import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { ConversationInfo } from '@/src/types/chat';
-import { BackendResourceType, FeatureType } from '@/src/types/common';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
+import {
+  BackendResourceType,
+  FeatureType,
+  isNotLoaded,
+} from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
 import {
@@ -144,10 +148,22 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     onOpenChange: setIsContextMenu,
   });
 
+  useEffect(() => {
+    if (isContextMenu && isNotLoaded(conversation.status)) {
+      dispatch(
+        ConversationsActions.uploadConversationsByIds({
+          conversationIds: [conversation.id],
+        }),
+      );
+    }
+  }, [conversation.id, conversation.status, dispatch, isContextMenu]);
+
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
 
-  const isEmptyConversation = false; //conversation.messages.length === 0; //TODO: how check if empty?
+  const isEmptyConversation = !(
+    (conversation as Conversation).messages?.length > 0
+  );
 
   const handleRename = useCallback(
     (conversation: ConversationInfo) => {

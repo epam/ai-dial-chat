@@ -228,7 +228,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     if (!onRenameFolder) {
       return;
     }
-    onRenameFolder(renameValue, currentFolder.id);
+    renameValue.trim() && onRenameFolder(renameValue, currentFolder.id);
     setRenameValue('');
     setIsRenaming(false);
     setIsContextMenu(false);
@@ -664,43 +664,39 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {isFolderOpened ? (
         <div className="flex flex-col gap-1">
           <div className="flex flex-col">
-            {allFolders.map((item) => {
-              if (item.folderId === currentFolder.id) {
-                return (
-                  <Fragment key={item.id}>
-                    <div className="h-1"></div>
-                    <Folder
-                      readonly={readonly}
-                      level={level + 1}
-                      searchTerm={searchTerm}
-                      currentFolder={item}
-                      itemComponent={itemComponent}
-                      allItems={allItems}
-                      allFolders={allFolders}
-                      highlightedFolders={highlightedFolders}
-                      openedFoldersIds={openedFoldersIds}
-                      loadingFolderIds={loadingFolderIds}
-                      displayCaretAlways={displayCaretAlways}
-                      additionalItemData={additionalItemData}
-                      isInitialRenameEnabled={isInitialRenameEnabled}
-                      newAddedFolderId={newAddedFolderId}
-                      handleDrop={handleDrop}
-                      onRenameFolder={onRenameFolder}
-                      onFileUpload={onFileUpload}
-                      onDeleteFolder={onDeleteFolder}
-                      onAddFolder={onAddFolder}
-                      onClickFolder={onClickFolder}
-                      onItemEvent={onItemEvent}
-                      featureType={featureType}
-                      maxDepth={maxDepth}
-                      highlightTemporaryFolders={highlightTemporaryFolders}
-                      withBorderHighlight={withBorderHighlight}
-                    />
-                  </Fragment>
-                );
-              }
-
-              return null;
+            {filteredChildFolders.map((item) => {
+              return (
+                <Fragment key={item.id}>
+                  <div className="h-1"></div>
+                  <Folder
+                    readonly={readonly}
+                    level={level + 1}
+                    searchTerm={searchTerm}
+                    currentFolder={item}
+                    itemComponent={itemComponent}
+                    allItems={allItems}
+                    allFolders={allFolders}
+                    highlightedFolders={highlightedFolders}
+                    openedFoldersIds={openedFoldersIds}
+                    loadingFolderIds={loadingFolderIds}
+                    displayCaretAlways={displayCaretAlways}
+                    additionalItemData={additionalItemData}
+                    isInitialRenameEnabled={isInitialRenameEnabled}
+                    newAddedFolderId={newAddedFolderId}
+                    handleDrop={handleDrop}
+                    onRenameFolder={onRenameFolder}
+                    onFileUpload={onFileUpload}
+                    onDeleteFolder={onDeleteFolder}
+                    onAddFolder={onAddFolder}
+                    onClickFolder={onClickFolder}
+                    onItemEvent={onItemEvent}
+                    featureType={featureType}
+                    maxDepth={maxDepth}
+                    highlightTemporaryFolders={highlightTemporaryFolders}
+                    withBorderHighlight={withBorderHighlight}
+                  />
+                </Fragment>
+              );
             })}
           </div>
           {itemComponent &&
