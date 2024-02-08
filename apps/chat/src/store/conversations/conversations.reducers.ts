@@ -704,7 +704,7 @@ export const conversationsSlice = createSlice({
     toggleFolder: (
       state,
       _action: PayloadAction<{
-        folderId: string;
+        id: string;
       }>,
     ) => state,
   },
