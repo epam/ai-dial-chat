@@ -127,14 +127,14 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       e.preventDefault();
 
       if (isDeleting) {
-        dispatch(PromptsActions.deletePrompts({ promptIds: [prompt.id] }));
+        dispatch(PromptsActions.deletePrompt({ prompt }));
         dispatch(PromptsActions.resetSearch());
       }
 
       setIsDeleting(false);
       dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
     },
-    [dispatch, isDeleting, prompt.id],
+    [dispatch, isDeleting, prompt],
   );
 
   const handleCancelDelete: MouseEventHandler = useCallback((e) => {

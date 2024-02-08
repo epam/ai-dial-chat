@@ -44,7 +44,7 @@ const savePromptsEpic: AppEpic = (action$, state$) =>
     filter(
       (action) =>
         PromptsActions.createNewPrompt.match(action) ||
-        PromptsActions.deletePrompts.match(action) ||
+        // PromptsActions.deletePrompts.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
         // PromptsActions.updatePrompt.match(action) ||
         PromptsActions.addPrompts.match(action) ||
@@ -86,8 +86,18 @@ const updatePromptEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.updatePrompt.match),
     switchMap(({ payload }) =>
-      PromptService.setPrompts([payload.prompt]).pipe(switchMap(() => EMPTY)),
+      PromptService.updatePrompt(payload.prompt).pipe(switchMap(() => EMPTY)),
     ),
+  );
+
+export const deletePromptEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.deletePrompt.match),
+    switchMap(({ payload }) => {
+      return PromptService.deletePrompt(payload.prompt).pipe(
+        switchMap(() => EMPTY),
+      );
+    }),
   );
 
 const deleteFolderEpic: AppEpic = (action$, state$) =>
@@ -495,6 +505,7 @@ export const PromptsEpics = combineEpics(
   exportPromptEpic,
   importPromptsEpic,
   updatePromptEpic,
+  deletePromptEpic,
 
   shareFolderEpic,
   sharePromptEpic,

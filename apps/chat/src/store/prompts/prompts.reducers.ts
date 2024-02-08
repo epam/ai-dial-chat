@@ -64,6 +64,11 @@ export const promptsSlice = createSlice({
         (p) => !payload.promptIds.includes(p.id),
       );
     },
+    deletePrompt: (state, { payload }: PayloadAction<{ prompt: Prompt }>) => {
+      state.prompts = state.prompts.filter(
+        (prompt) => prompt.id !== payload.prompt.id,
+      );
+    },
     updatePrompt: (state, { payload }: PayloadAction<{ prompt: Prompt }>) => {
       const foundPromptIdx = state.prompts.findIndex(
         (prompt) => prompt.id === payload.prompt.id,
