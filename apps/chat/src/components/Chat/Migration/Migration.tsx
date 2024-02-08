@@ -2,7 +2,7 @@ import React from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { Translation } from '../../types/translation';
+import { Translation } from '../../../types/translation';
 
 import ChatLoader from '@/src/components/Chat/ChatLoader';
 
