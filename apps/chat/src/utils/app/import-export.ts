@@ -361,9 +361,12 @@ export const updateAttachment = ({
     oldAttachment.url &&
     encodeURI(`${newAttachmentFile.absolutePath}/${newAttachmentFile.name}`);
 
+  const lastSlashIndex = oldAttachmentId.lastIndexOf('/');
+  const oldAttachmentNameInPath = oldAttachmentId.slice(lastSlashIndex);
+
   const newReferenceUrl =
     oldAttachment.reference_url &&
-    encodeURI(`${newAttachmentFile.absolutePath}/${oldAttachmentId}`);
+    encodeURI(`${newAttachmentFile.absolutePath}/${oldAttachmentNameInPath}`);
 
   const updatedAttachment: Attachment = {
     ...oldAttachment,
