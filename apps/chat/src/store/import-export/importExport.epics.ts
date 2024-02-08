@@ -267,6 +267,7 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
             }),
           );
         }
+
         formData.append('attachment', attachment.fileContent, attachment.name);
         const relativePath = `imports/${conversation.id}/${attachment.relativePath}`;
         return DataService.sendFile(
