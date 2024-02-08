@@ -270,7 +270,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 selectedAddons: [],
                 lastActivityDate: Date.now(),
                 isMessageStreaming: false,
-                status: UploadStatus.LOADED
+                status: UploadStatus.LOADED,
               });
             },
           );

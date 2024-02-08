@@ -677,9 +677,25 @@ export const conversationsSlice = createSlice({
         conversations: ConversationInfo[];
       }>,
     ) => {
-      state.conversations = payload.conversations.concat(
-        state.conversations.filter((conv) => !payload.paths.has(conv.folderId)),
-      );
+      const conversationMap = state.conversations.reduce((map, conv) => {
+        map.set(conv.id, conv);
+        return map;
+      }, new Map<string, ConversationInfo>());
+
+      state.conversations = payload.conversations
+        .map((conv) =>
+          payload.paths.has(conv.folderId)
+            ? {
+                ...conversationMap.get(conv.id),
+                ...conv,
+              }
+            : conv,
+        )
+        .concat(
+          state.conversations.filter(
+            (conv) => !payload.paths.has(conv.folderId),
+          ),
+        );
       state.conversationsStatus = UploadStatus.LOADED;
     },
     uploadConversationsFail: (state) => {
