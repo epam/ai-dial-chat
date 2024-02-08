@@ -36,15 +36,11 @@ import ShareModal from '../../Chat/ShareModal';
 import UnpublishModal from '../../Chat/UnpublishModal';
 import ShareIcon from '../../Common/ShareIcon';
 import { PromptModal } from './PromptModal';
+import { MoveToFolderProps } from '@/src/types/folder';
 
 interface Props {
   item: PromptInfo;
   level?: number;
-}
-
-export interface PromptMoveToFolderProps {
-  folderId?: string;
-  isNewFolder?: boolean;
 }
 
 export const PromptComponent = ({ item: prompt, level }: Props) => {
@@ -191,7 +187,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   );
 
   const handleMoveToFolder = useCallback(
-    ({ folderId, isNewFolder }: PromptMoveToFolderProps) => {
+    ({ folderId, isNewFolder }: MoveToFolderProps) => {
       const folderPath = isNewFolder ? newFolderName : folderId;
       if (isNewFolder) {
         dispatch(
