@@ -6,7 +6,7 @@ import {
 } from '@/src/utils/app/file';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { ShareEntity } from '@/src/types/common';
+import { ShareEntity, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
@@ -131,15 +131,19 @@ export const getNextDefaultName = (
           (!entity.publishedWithMe || includingPublishedWithMe) &&
           (entity.name === defaultName || entity.name.match(regex)),
       )
-      .map((entity) => parseInt(entity.name.replace(prefix, ''), 10) || 1),
-    0,
+      .map(
+        (entity) =>
+          parseInt(entity.name.replace(prefix, ''), 10) ||
+          (startWithEmptyPostfix ? 0 : 1),
+      ),
+    startWithEmptyPostfix ? -1 : 0,
   ); // max number
 
-  if (startWithEmptyPostfix && maxNumber === 0) {
+  if (startWithEmptyPostfix && maxNumber === -1) {
     return defaultName;
   }
 
-  return `${prefix}${maxNumber + (startWithEmptyPostfix ? 2 : 1) + index}`;
+  return `${prefix}${maxNumber + 1 + index}`;
 };
 
 export const generateNextName = (
@@ -408,6 +412,7 @@ export const getAllPathsFromId = (id: string): string[] => {
 export const getFolderFromPath = (
   path: string,
   type: FolderType,
+  status?: UploadStatus,
 ): FolderInterface => {
   const { name, parentPath } = splitPath(path);
   return {
@@ -415,15 +420,17 @@ export const getFolderFromPath = (
     name,
     type,
     folderId: parentPath,
+    status,
   };
 };
 
 export const getFoldersFromPaths = (
   paths: (string | undefined)[],
   type: FolderType,
+  status?: UploadStatus,
 ): FolderInterface[] => {
   return (paths.filter(Boolean) as string[]).map((path) =>
-    getFolderFromPath(path, type),
+    getFolderFromPath(path, type, status),
   );
 };
 

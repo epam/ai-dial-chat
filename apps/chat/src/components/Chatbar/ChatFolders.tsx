@@ -105,9 +105,9 @@ const ChatFolderTemplate = ({
             movedFolder.folderId !== folder.id
           ) {
             dispatch(
-              ConversationsActions.moveFolder({
+              ConversationsActions.updateFolder({
                 folderId: movedFolder.id,
-                newParentFolderId: folder.id,
+                values: { folderId: folder.id },
               }),
             );
           }
@@ -120,9 +120,9 @@ const ChatFolderTemplate = ({
   const onDropBetweenFolders = useCallback(
     (folder: FolderInterface, parentFolderId: string | undefined) => {
       dispatch(
-        ConversationsActions.moveFolder({
+        ConversationsActions.updateFolder({
           folderId: folder.id,
-          newParentFolderId: parentFolderId,
+          values: { folderId: parentFolderId },
         }),
       );
     },
@@ -131,7 +131,7 @@ const ChatFolderTemplate = ({
 
   const handleFolderClick = useCallback(
     (folderId: string) => {
-      dispatch(ConversationsActions.toggleFolder({ folderId }));
+      dispatch(ConversationsActions.toggleFolder({ id: folderId }));
     },
     [dispatch],
   );
@@ -158,9 +158,9 @@ const ChatFolderTemplate = ({
         handleDrop={handleDrop}
         onRenameFolder={(name, folderId) => {
           dispatch(
-            ConversationsActions.renameFolder({
+            ConversationsActions.updateFolder({
               folderId,
-              name,
+              values: { name },
             }),
           );
         }}

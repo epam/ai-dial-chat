@@ -10,7 +10,7 @@ import { translate } from '@/src/utils/app/translation';
 
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { PromptsHistory } from '@/src/types/importExport';
-import { Prompt } from '@/src/types/prompt';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
 
@@ -84,7 +84,10 @@ export const promptsSlice = createSlice({
     },
     createNewPrompt: (state) => {
       const newPrompt: Prompt = addGeneratedPromptId({
-        name: getNextDefaultName(translate('Prompt'), state.prompts),
+        name: getNextDefaultName(
+          translate('Prompt'),
+          state.prompts.filter((prompt) => !prompt.folderId), // only root prompts
+        ),
         description: '',
         content: '',
       });
@@ -93,20 +96,48 @@ export const promptsSlice = createSlice({
     },
     deletePrompts: (
       state,
-      { payload }: PayloadAction<{ promptIds: string[] }>,
+      { payload }: PayloadAction<{ promptsToRemove: PromptInfo[] }>,
     ) => {
-      state.prompts = state.prompts.filter(
-        (p) => !payload.promptIds.includes(p.id),
-      );
-    },
-    updatePrompt: (state, { payload }: PayloadAction<{ prompt: Prompt }>) => {
-      const foundPromptIdx = state.prompts.findIndex(
-        (prompt) => prompt.id === payload.prompt.id,
+      const promptToDeleteIds = payload.promptsToRemove.map(
+        (prompt) => prompt.id,
       );
 
-      if (foundPromptIdx !== -1) {
-        state.prompts[foundPromptIdx] = payload.prompt;
-      }
+      state.prompts = state.prompts.filter(
+        (p) => !promptToDeleteIds.includes(p.id),
+      );
+    },
+    deletePromptsSuccess: (
+      state,
+      { payload }: PayloadAction<{ deletePrompts: PromptInfo[] }>,
+    ) => {
+      const deleteIds = new Set(
+        payload.deletePrompts.map((prompt) => prompt.id),
+      );
+
+      state.prompts = state.prompts.filter(
+        (prompt) => !deleteIds.has(prompt.id),
+      );
+    },
+    deletePrompt: (
+      state,
+      { payload }: PayloadAction<{ prompt: PromptInfo }>,
+    ) => {
+      state.prompts = state.prompts.filter(
+        (prompt) => prompt.id !== payload.prompt.id,
+      );
+    },
+    updatePrompt: (
+      state,
+      _action: PayloadAction<{ id: string; values: Partial<Prompt> }>,
+    ) => state,
+    updatePromptSuccess: (
+      state,
+      { payload }: PayloadAction<{ prompt: Prompt }>,
+    ) => {
+      const prompts = state.prompts.filter(
+        (prompt) => prompt.id !== payload.prompt.id,
+      );
+      state.prompts = prompts.concat(payload.prompt);
     },
     sharePrompt: (
       state,
@@ -225,7 +256,8 @@ export const promptsSlice = createSlice({
     addPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
       state.prompts = state.prompts.concat(payload.prompts);
     },
-    clearPrompts: (state) => {
+    clearPrompts: (state) => state,
+    clearPromptsSuccess: (state) => {
       state.prompts = [];
       state.folders = [];
     },
@@ -292,7 +324,10 @@ export const promptsSlice = createSlice({
       });
       state.newAddedFolderId = id;
     },
-    deleteFolder: (state, { payload }: PayloadAction<{ folderId: string }>) => {
+    deleteFolder: (
+      state,
+      { payload }: PayloadAction<{ folderId?: string }>,
+    ) => {
       state.folders = state.folders.filter(({ id }) => id !== payload.folderId);
     },
     deleteTemporaryFolder: (
@@ -311,9 +346,6 @@ export const promptsSlice = createSlice({
       { payload }: PayloadAction<{ folderId: string; name: string }>,
     ) => {
       const name = payload.name.trim();
-      if (name === '') {
-        return;
-      }
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.folderId) {
           return {
@@ -331,9 +363,6 @@ export const promptsSlice = createSlice({
     ) => {
       state.newAddedFolderId = undefined;
       const name = payload.name.trim();
-      if (name === '') {
-        return;
-      }
 
       state.temporaryFolders = state.temporaryFolders.map((folder) =>
         folder.id !== payload.folderId ? folder : { ...folder, name },

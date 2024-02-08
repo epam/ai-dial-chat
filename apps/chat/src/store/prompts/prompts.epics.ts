@@ -1,17 +1,22 @@
 import {
   EMPTY,
   catchError,
+  Observable,
   concat,
   concatMap,
   forkJoin,
   from,
   filter,
+  forkJoin,
   ignoreElements,
   map,
   of,
   switchMap,
   tap,
+  zip,
 } from 'rxjs';
+
+import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
@@ -42,6 +47,7 @@ import { translate } from '@/src/utils/app/translation';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { FolderType } from '@/src/types/folder';
 import { PromptInfo, Prompt } from '@/src/types/prompt';
+import { UploadStatus } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -52,6 +58,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { UIActions } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
+import { RootState } from '@/src/store';
 import { v4 as uuidv4 } from 'uuid';
 
 const savePromptsEpic: AppEpic = (action$, state$) =>
@@ -59,8 +66,8 @@ const savePromptsEpic: AppEpic = (action$, state$) =>
     filter(
       (action) =>
         PromptsActions.createNewPrompt.match(action) ||
-        PromptsActions.deletePrompts.match(action) ||
-        PromptsActions.clearPrompts.match(action) ||
+        // PromptsActions.deletePrompts.match(action) ||
+        // PromptsActions.clearPrompts.match(action) ||
         // PromptsActions.updatePrompt.match(action) ||
         PromptsActions.addPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action) ||
@@ -97,44 +104,132 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
-const updatePromptEpic: AppEpic = (action$) =>
+const getOrUploadPrompt = (
+  payload: { id: string },
+  state: RootState,
+): Observable<{
+  prompt: Prompt | null;
+  payload: { id: string };
+}> => {
+  const prompt = PromptsSelectors.selectPrompt(state, payload.id) as Prompt;
+  if (prompt?.status !== UploadStatus.LOADED) {
+    return forkJoin({
+      prompt: PromptService.getPrompt(prompt),
+      payload: of(payload),
+    });
+  } else {
+    return forkJoin({
+      prompt: of(prompt),
+      payload: of(payload),
+    });
+  }
+};
+
+const updatePromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.updatePrompt.match),
-    switchMap(({ payload }) =>
-      PromptService.setPrompts([payload.prompt]).pipe(switchMap(() => EMPTY)),
+    switchMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
+    switchMap(({ payload, prompt }) => {
+      const { values } = payload as {
+        id: string;
+        values: Partial<Prompt>;
+      };
+
+      if (!prompt) {
+        return EMPTY; // TODO: handle?
+      }
+
+      const newPrompt = {
+        ...(prompt as Prompt),
+        ...values,
+      };
+
+      return concat(
+        of(PromptsActions.updatePromptSuccess({ prompt: newPrompt })),
+        PromptService.deletePrompt(prompt).pipe(switchMap(() => EMPTY)),
+        PromptService.updatePrompt(newPrompt).pipe(switchMap(() => EMPTY)),
+      );
+    }),
+  );
+
+export const deletePromptEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.deletePrompt.match),
+    switchMap(({ payload }) => {
+      return PromptService.deletePrompt(payload.prompt).pipe(
+        switchMap(() => EMPTY),
+      );
+    }),
+  );
+
+export const clearPromptsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.clearPrompts.match),
+    switchMap(() =>
+      concat(
+        of(PromptsActions.clearPromptsSuccess()),
+        of(PromptsActions.deleteFolder({})),
+      ),
+    ),
+  );
+
+const deletePromptsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.deletePrompts.match),
+    map(({ payload }) => ({
+      deletePrompts: payload.promptsToRemove,
+    })),
+    switchMap(({ deletePrompts }) =>
+      concat(
+        of(
+          PromptsActions.deletePromptsSuccess({
+            deletePrompts,
+          }),
+        ),
+        zip(deletePrompts.map((id) => PromptService.deletePrompt(id))).pipe(
+          switchMap(() => EMPTY),
+        ),
+      ),
     ),
   );
 
 const deleteFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.deleteFolder.match),
-    map(({ payload }) => ({
-      prompts: PromptsSelectors.selectPrompts(state$.value),
-      childFolders: PromptsSelectors.selectChildAndCurrentFoldersIdsById(
-        state$.value,
-        payload.folderId,
-      ),
-      folders: PromptsSelectors.selectFolders(state$.value),
-    })),
-    switchMap(({ prompts, childFolders, folders }) => {
-      const removedPromptsIds = prompts
-        .filter(
-          (prompt) => prompt.folderId && childFolders.has(prompt.folderId),
-        )
-        .map(({ id }) => id);
-
-      return concat(
-        of(
-          PromptsActions.deletePrompts({
-            promptIds: removedPromptsIds,
-          }),
+    switchMap(({ payload }) =>
+      forkJoin({
+        folderId: of(payload.folderId),
+        promptsToRemove: PromptService.getPrompts(payload.folderId, true),
+        folders: of(PromptsSelectors.selectFolders(state$.value)),
+      }),
+    ),
+    switchMap(({ folderId, promptsToRemove, folders }) => {
+      const childFolders = new Set([
+        folderId,
+        ...promptsToRemove.flatMap((prompt) =>
+          getAllPathsFromPath(prompt.folderId),
         ),
+      ]);
+      const actions: Observable<AnyAction>[] = [];
+      actions.push(
         of(
           PromptsActions.setFolders({
             folders: folders.filter((folder) => !childFolders.has(folder.id)),
           }),
         ),
       );
+
+      if (promptsToRemove.length) {
+        actions.push(
+          of(
+            PromptsActions.deletePrompts({
+              promptsToRemove,
+            }),
+          ),
+        );
+      }
+
+      return concat(...actions);
     }),
   );
 
@@ -655,6 +750,9 @@ export const PromptsEpics = combineEpics(
   exportPromptEpic,
   importPromptsEpic,
   updatePromptEpic,
+  deletePromptEpic,
+  clearPromptsEpic,
+  deletePromptsEpic,
 
   shareFolderEpic,
   sharePromptEpic,

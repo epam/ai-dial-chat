@@ -28,3 +28,8 @@ export interface FolderSectionProps {
   showEmptyFolders?: boolean;
   openByDefault?: boolean;
 }
+
+export interface MoveToFolderProps {
+  folderId?: string;
+  isNewFolder?: boolean;
+}

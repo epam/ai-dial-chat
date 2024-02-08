@@ -12,6 +12,7 @@ import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
+import { PromptInfo } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -79,15 +80,15 @@ const PromptFolderTemplate = ({
         const folderData = e.dataTransfer.getData(MoveType.PromptFolder);
 
         if (promptData) {
-          // const prompt: Prompt = JSON.parse(promptData);
-          // dispatch(
-          //   PromptsActions.updatePrompt({
-          //     promptId: prompt.id,
-          //     values: {
-          //       folderId: folder.id,
-          //     },
-          //   }),
-          // ); TODO: fix it
+          const prompt: PromptInfo = JSON.parse(promptData);
+          dispatch(
+            PromptsActions.updatePrompt({
+              id: prompt.id,
+              values: {
+                folderId: folder.id,
+              },
+            }),
+          );
         } else if (folderData) {
           const movedFolder: FolderInterface = JSON.parse(folderData);
           if (

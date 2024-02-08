@@ -17,7 +17,10 @@ export class PromptApiStorage extends ApiEntityStorage<PromptInfo, Prompt> {
     };
   }
   cleanUpEntity(entity: Prompt): Prompt {
-    return entity;
+    return {
+      ...entity,
+      status: undefined,
+    };
   }
   getEntityKey(info: PromptInfo): string {
     return getPromptApiKey(info);
