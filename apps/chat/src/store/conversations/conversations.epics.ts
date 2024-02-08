@@ -1755,6 +1755,7 @@ const playbackCancelEpic: AppEpic = (action$, state$) =>
               values: {
                 messages: updatedMessages,
                 isMessageStreaming: false,
+                isPlayback: false,
                 playback: {
                   ...(conv.playback as Playback),
                   messagesStack: [],
