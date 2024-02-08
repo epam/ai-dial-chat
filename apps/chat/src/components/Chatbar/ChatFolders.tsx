@@ -131,7 +131,7 @@ const ChatFolderTemplate = ({
 
   const handleFolderClick = useCallback(
     (folderId: string) => {
-      dispatch(ConversationsActions.toggleFolder({ folderId }));
+      dispatch(ConversationsActions.toggleFolder({ id: folderId }));
     },
     [dispatch],
   );

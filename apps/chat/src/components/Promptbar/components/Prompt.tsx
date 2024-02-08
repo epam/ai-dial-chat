@@ -36,15 +36,11 @@ import ShareModal from '../../Chat/ShareModal';
 import UnpublishModal from '../../Chat/UnpublishModal';
 import ShareIcon from '../../Common/ShareIcon';
 import { PromptModal } from './PromptModal';
+import { MoveToFolderProps } from '@/src/types/folder';
 
 interface Props {
   item: PromptInfo;
   level?: number;
-}
-
-export interface PromptMoveToFolderProps {
-  folderId?: string;
-  isNewFolder?: boolean;
 }
 
 export const PromptComponent = ({ item: prompt, level }: Props) => {
@@ -114,7 +110,16 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const handleUpdate = useCallback(
     (prompt: Prompt) => {
-      dispatch(PromptsActions.updatePrompt({ prompt }));
+      dispatch(
+        PromptsActions.updatePrompt({
+          id: prompt.id,
+          values: {
+            name: prompt.name,
+            description: prompt.description,
+            content: prompt.content,
+          },
+        }),
+      );
       dispatch(PromptsActions.resetSearch());
       setIsRenaming(false);
     },
@@ -127,14 +132,14 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       e.preventDefault();
 
       if (isDeleting) {
-        dispatch(PromptsActions.deletePrompts({ promptIds: [prompt.id] }));
+        dispatch(PromptsActions.deletePrompt({ prompt }));
         dispatch(PromptsActions.resetSearch());
       }
 
       setIsDeleting(false);
       dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
     },
-    [dispatch, isDeleting, prompt.id],
+    [dispatch, isDeleting, prompt],
   );
 
   const handleCancelDelete: MouseEventHandler = useCallback((e) => {
@@ -191,7 +196,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   );
 
   const handleMoveToFolder = useCallback(
-    ({ folderId, isNewFolder }: PromptMoveToFolderProps) => {
+    ({ folderId, isNewFolder }: MoveToFolderProps) => {
       const folderPath = isNewFolder ? newFolderName : folderId;
       if (isNewFolder) {
         dispatch(
@@ -202,13 +207,14 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       }
       // dispatch(
       //   PromptsActions.updatePrompt({
-      //     promptId: prompt.id,
-      //     values: { folderId: folderPath },
+      //     prompt: {
+      //
+      //     }
       //   }),
-      // ); TODO: fix it
+      // );
       setIsContextMenu(false);
     },
-    [dispatch, newFolderName, prompt.id],
+    [dispatch, newFolderName],
   );
 
   const handleClose = useCallback(() => {
@@ -342,7 +348,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           )}
         </div>
 
-        {showModal && (
+        {showModal && isSelected && (
           <PromptModal
             isOpen
             onClose={handleClose}

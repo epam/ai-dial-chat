@@ -22,6 +22,7 @@ export interface DisplayMenuItemProps {
   customTriggerData?: unknown;
   className?: string;
   childMenuItems?: DisplayMenuItemProps[];
+  onChildMenuOpenChange?: (isOpen: boolean) => void;
 }
 
 export type MenuItemRendererProps = DisplayMenuItemProps & {
