@@ -342,7 +342,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           )}
         </div>
 
-        {showModal && (
+        {showModal && isSelected && (
           <PromptModal
             isOpen
             onClose={handleClose}
