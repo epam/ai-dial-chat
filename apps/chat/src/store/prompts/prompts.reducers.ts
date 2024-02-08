@@ -80,19 +80,26 @@ export const promptsSlice = createSlice({
         (prompt) => !deleteIds.has(prompt.id),
       );
     },
-    deletePrompt: (state, { payload }: PayloadAction<{ prompt: Prompt }>) => {
+    deletePrompt: (
+      state,
+      { payload }: PayloadAction<{ prompt: PromptInfo }>,
+    ) => {
       state.prompts = state.prompts.filter(
         (prompt) => prompt.id !== payload.prompt.id,
       );
     },
-    updatePrompt: (state, { payload }: PayloadAction<{ prompt: Prompt }>) => {
-      const foundPromptIdx = state.prompts.findIndex(
-        (prompt) => prompt.id === payload.prompt.id,
+    updatePrompt: (
+      state,
+      _action: PayloadAction<{ id: string; values: Partial<Prompt> }>,
+    ) => state,
+    updatePromptSuccess: (
+      state,
+      { payload }: PayloadAction<{ prompt: Prompt }>,
+    ) => {
+      const prompts = state.prompts.filter(
+        (prompt) => prompt.id !== payload.prompt.id,
       );
-
-      if (foundPromptIdx !== -1) {
-        state.prompts[foundPromptIdx] = payload.prompt;
-      }
+      state.prompts = prompts.concat(payload.prompt);
     },
     sharePrompt: (
       state,

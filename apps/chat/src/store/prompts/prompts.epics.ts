@@ -32,8 +32,9 @@ import {
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
+import { UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
-import { PromptInfo } from '@/src/types/prompt';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
 
 import { resetShareEntity } from '@/src/constants/chat';
@@ -42,6 +43,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { UIActions } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
+import { RootState } from '@/src/store';
 import { v4 as uuidv4 } from 'uuid';
 
 const savePromptsEpic: AppEpic = (action$, state$) =>
@@ -87,12 +89,52 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
-const updatePromptEpic: AppEpic = (action$) =>
+const getOrUploadPrompt = (
+  payload: { id: string },
+  state: RootState,
+): Observable<{
+  prompt: Prompt | null;
+  payload: { id: string };
+}> => {
+  const prompt = PromptsSelectors.selectPrompt(state, payload.id) as Prompt;
+  if (prompt?.status !== UploadStatus.LOADED) {
+    return forkJoin({
+      prompt: PromptService.getPrompt(prompt),
+      payload: of(payload),
+    });
+  } else {
+    return forkJoin({
+      prompt: of(prompt),
+      payload: of(payload),
+    });
+  }
+};
+
+const updatePromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.updatePrompt.match),
-    switchMap(({ payload }) =>
-      PromptService.updatePrompt(payload.prompt).pipe(switchMap(() => EMPTY)),
-    ),
+    switchMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
+    switchMap(({ payload, prompt }) => {
+      const { values } = payload as {
+        id: string;
+        values: Partial<Prompt>;
+      };
+
+      if (!prompt) {
+        return EMPTY; // TODO: handle?
+      }
+
+      const newPrompt = {
+        ...(prompt as Prompt),
+        ...values,
+      };
+
+      return concat(
+        of(PromptsActions.updatePromptSuccess({ prompt: newPrompt })),
+        PromptService.deletePrompt(prompt).pipe(switchMap(() => EMPTY)),
+        PromptService.updatePrompt(newPrompt).pipe(switchMap(() => EMPTY)),
+      );
+    }),
   );
 
 export const deletePromptEpic: AppEpic = (action$) =>

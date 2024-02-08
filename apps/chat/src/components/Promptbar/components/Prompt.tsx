@@ -110,7 +110,16 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const handleUpdate = useCallback(
     (prompt: Prompt) => {
-      dispatch(PromptsActions.updatePrompt({ prompt }));
+      dispatch(
+        PromptsActions.updatePrompt({
+          id: prompt.id,
+          values: {
+            name: prompt.name,
+            description: prompt.description,
+            content: prompt.content,
+          },
+        }),
+      );
       dispatch(PromptsActions.resetSearch());
       setIsRenaming(false);
     },
@@ -198,13 +207,14 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       }
       // dispatch(
       //   PromptsActions.updatePrompt({
-      //     promptId: prompt.id,
-      //     values: { folderId: folderPath },
+      //     prompt: {
+      //
+      //     }
       //   }),
-      // ); TODO: fix it
+      // );
       setIsContextMenu(false);
     },
-    [dispatch, newFolderName, prompt.id],
+    [dispatch, newFolderName],
   );
 
   const handleClose = useCallback(() => {
