@@ -10,7 +10,7 @@ import { translate } from '@/src/utils/app/translation';
 
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { PromptsHistory } from '@/src/types/importExport';
-import { Prompt } from '@/src/types/prompt';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
 
@@ -58,10 +58,26 @@ export const promptsSlice = createSlice({
     },
     deletePrompts: (
       state,
-      { payload }: PayloadAction<{ promptIds: string[] }>,
+      { payload }: PayloadAction<{ promptsToRemove: PromptInfo[] }>,
     ) => {
+      const promptToDeleteIds = payload.promptsToRemove.map(
+        (prompt) => prompt.id,
+      );
+
       state.prompts = state.prompts.filter(
-        (p) => !payload.promptIds.includes(p.id),
+        (p) => !promptToDeleteIds.includes(p.id),
+      );
+    },
+    deletePromptsSuccess: (
+      state,
+      { payload }: PayloadAction<{ deletePrompts: PromptInfo[] }>,
+    ) => {
+      const deleteIds = new Set(
+        payload.deletePrompts.map((prompt) => prompt.id),
+      );
+
+      state.prompts = state.prompts.filter(
+        (prompt) => !deleteIds.has(prompt.id),
       );
     },
     deletePrompt: (state, { payload }: PayloadAction<{ prompt: Prompt }>) => {
@@ -195,7 +211,8 @@ export const promptsSlice = createSlice({
     addPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
       state.prompts = state.prompts.concat(payload.prompts);
     },
-    clearPrompts: (state) => {
+    clearPrompts: (state) => state,
+    clearPromptsSuccess: (state) => {
       state.prompts = [];
       state.folders = [];
     },
@@ -262,7 +279,10 @@ export const promptsSlice = createSlice({
       });
       state.newAddedFolderId = id;
     },
-    deleteFolder: (state, { payload }: PayloadAction<{ folderId: string }>) => {
+    deleteFolder: (
+      state,
+      { payload }: PayloadAction<{ folderId?: string }>,
+    ) => {
       state.folders = state.folders.filter(({ id }) => id !== payload.folderId);
     },
     deleteTemporaryFolder: (

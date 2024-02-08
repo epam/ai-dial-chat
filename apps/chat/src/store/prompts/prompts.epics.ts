@@ -1,13 +1,18 @@
 import {
   EMPTY,
+  Observable,
   concat,
   filter,
+  forkJoin,
   ignoreElements,
   map,
   of,
   switchMap,
   tap,
+  zip,
 } from 'rxjs';
+
+import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
@@ -45,7 +50,7 @@ const savePromptsEpic: AppEpic = (action$, state$) =>
       (action) =>
         PromptsActions.createNewPrompt.match(action) ||
         // PromptsActions.deletePrompts.match(action) ||
-        PromptsActions.clearPrompts.match(action) ||
+        // PromptsActions.clearPrompts.match(action) ||
         // PromptsActions.updatePrompt.match(action) ||
         PromptsActions.addPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action) ||
@@ -100,36 +105,74 @@ export const deletePromptEpic: AppEpic = (action$) =>
     }),
   );
 
+export const clearPromptsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.clearPrompts.match),
+    switchMap(() =>
+      concat(
+        of(PromptsActions.clearPromptsSuccess()),
+        of(PromptsActions.deleteFolder({})),
+      ),
+    ),
+  );
+
+const deletePromptsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.deletePrompts.match),
+    map(({ payload }) => ({
+      deletePrompts: payload.promptsToRemove,
+    })),
+    switchMap(({ deletePrompts }) =>
+      concat(
+        of(
+          PromptsActions.deletePromptsSuccess({
+            deletePrompts,
+          }),
+        ),
+        zip(
+          Array.from(deletePrompts).map((id) => PromptService.deletePrompt(id)),
+        ).pipe(switchMap(() => EMPTY)),
+      ),
+    ),
+  );
+
 const deleteFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.deleteFolder.match),
-    map(({ payload }) => ({
-      prompts: PromptsSelectors.selectPrompts(state$.value),
-      childFolders: PromptsSelectors.selectChildAndCurrentFoldersIdsById(
-        state$.value,
-        payload.folderId,
-      ),
-      folders: PromptsSelectors.selectFolders(state$.value),
-    })),
-    switchMap(({ prompts, childFolders, folders }) => {
-      const removedPromptsIds = prompts
-        .filter(
-          (prompt) => prompt.folderId && childFolders.has(prompt.folderId),
-        )
-        .map(({ id }) => id);
-
-      return concat(
-        of(
-          PromptsActions.deletePrompts({
-            promptIds: removedPromptsIds,
-          }),
+    switchMap(({ payload }) =>
+      forkJoin({
+        folderId: of(payload.folderId),
+        promptsToRemove: PromptService.getPrompts(payload.folderId, true),
+        folders: of(PromptsSelectors.selectFolders(state$.value)),
+      }),
+    ),
+    switchMap(({ folderId, promptsToRemove, folders }) => {
+      const childFolders = new Set([
+        folderId,
+        ...promptsToRemove.flatMap((prompt) =>
+          getAllPathsFromPath(prompt.folderId),
         ),
+      ]);
+      const actions: Observable<AnyAction>[] = [];
+      actions.push(
         of(
           PromptsActions.setFolders({
             folders: folders.filter((folder) => !childFolders.has(folder.id)),
           }),
         ),
       );
+
+      if (promptsToRemove.length) {
+        actions.push(
+          of(
+            PromptsActions.deletePrompts({
+              promptsToRemove,
+            }),
+          ),
+        );
+      }
+
+      return concat(...actions);
     }),
   );
 
@@ -506,6 +549,8 @@ export const PromptsEpics = combineEpics(
   importPromptsEpic,
   updatePromptEpic,
   deletePromptEpic,
+  clearPromptsEpic,
+  deletePromptsEpic,
 
   shareFolderEpic,
   sharePromptEpic,
