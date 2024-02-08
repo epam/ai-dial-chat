@@ -1327,6 +1327,7 @@ const replayConversationsEpic: AppEpic = (action$) =>
             ConversationsActions.replayConversation({
               ...payload,
               conversationId: id,
+              activeReplayIndex: 0,
             }),
           );
         }),
@@ -1426,25 +1427,18 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
             );
           }),
           switchMap(() => {
-            const convReplay = conversation!.replay;
+            const convReplay = (
+              ConversationsSelectors.selectConversation(
+                state$.value,
+                conv.id,
+              ) as Conversation
+            ).replay;
 
-            return concat(
-              of(
-                ConversationsActions.updateConversation({
-                  id: payload.conversationId,
-                  values: {
-                    replay: {
-                      ...convReplay,
-                      activeReplayIndex: conv.replay.activeReplayIndex + 1,
-                    },
-                  },
-                }),
-              ),
-              of(
-                ConversationsActions.replayConversation({
-                  conversationId: payload.conversationId,
-                }),
-              ),
+            return of(
+              ConversationsActions.replayConversation({
+                conversationId: updatedConversation.id,
+                activeReplayIndex: convReplay.activeReplayIndex + 1,
+              }),
             );
           }),
         ),
@@ -1900,11 +1894,12 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         ...values,
         lastActivityDate: Date.now(),
       });
+
       return concat(
         of(
           ConversationsActions.updateConversationSuccess({
             id,
-            conversation: newConversation,
+            conversation: { ...values, id: newConversation.id },
           }),
         ),
         iif(

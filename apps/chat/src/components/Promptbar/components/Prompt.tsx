@@ -16,6 +16,7 @@ import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
+import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 
@@ -36,7 +37,6 @@ import ShareModal from '../../Chat/ShareModal';
 import UnpublishModal from '../../Chat/UnpublishModal';
 import ShareIcon from '../../Common/ShareIcon';
 import { PromptModal } from './PromptModal';
-import { MoveToFolderProps } from '@/src/types/folder';
 
 interface Props {
   item: PromptInfo;
