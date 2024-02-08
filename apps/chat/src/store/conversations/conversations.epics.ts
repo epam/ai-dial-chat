@@ -1470,6 +1470,7 @@ const endReplayConversationEpic: AppEpic = (action$, state$) =>
             ConversationsActions.updateConversation({
               id: conv.id,
               values: {
+                isReplay: false,
                 replay: {
                   ...conv.replay,
                   isReplay: false,
@@ -1899,7 +1900,10 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         of(
           ConversationsActions.updateConversationSuccess({
             id,
-            conversation: { ...values, id: newConversation.id },
+            conversation: {
+              ...values,
+              id: newConversation.id,
+            },
           }),
         ),
         iif(
