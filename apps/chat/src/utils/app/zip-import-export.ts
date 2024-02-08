@@ -5,7 +5,7 @@ import { FolderInterface } from '@/src/types/folder';
 import { AttachmentToUpload } from '@/src/store/import-export/importExport.reducers';
 
 import { constructPath, triggerDownload } from './file';
-import { prepareConversationsForExport } from './import-export';
+import { currentDate, prepareConversationsForExport } from './import-export';
 
 import JSZip from 'jszip';
 
@@ -44,8 +44,8 @@ export async function getZippedFile({
 
 export const downloadExportZip = (content: string) => {
   triggerDownload(
-    'data:application/zip;base64,' + content,
-    'ai_dial_chat_with_attachments.zip',
+    `data:application/zip;base64,${content}`,
+    `ai_dial_chat_with_attachments_${currentDate()}.zip`,
   );
 };
 

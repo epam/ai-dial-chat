@@ -9,7 +9,7 @@ export type SupportedExportFormats =
   | ExportFormatV4
   | ExportConversationsFormatV4;
 export type LatestExportFormat = ExportFormatV4;
-export type LatestExportConversationsFormat = ExportConversationsFormatV4;
+export type LatestExportConversationsFormat = ExportConversationsFormatV5;
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 interface ConversationV1 {
@@ -50,6 +50,14 @@ export interface ExportConversationsFormatV4 {
   history: Conversation[];
   folders: FolderInterface[];
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+export type ExportConversationsFormatV5 = Omit<
+  ExportConversationsFormatV4,
+  'version'
+> & {
+  version: 5;
+};
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 

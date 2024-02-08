@@ -43,11 +43,12 @@ import {
 
 import { Conversation, Message } from '@/src/types/chat';
 import { FolderType } from '@/src/types/folder';
-import { LatestExportFormat } from '@/src/types/importExport';
+import { LatestExportFormat } from '@/src/types/import-export';
 import { AppEpic } from '@/src/types/store';
 
 import { errorsMessages } from '@/src/constants/errors';
 
+import { getOrUploadConversation } from '../conversations/conversations.epics';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -65,15 +66,26 @@ const firstConversationIndex = 0;
 const exportConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.exportConversation.match),
-    map(({ payload }) => ({
-      conversation: ConversationsSelectors.selectConversation(
-        state$.value,
-        payload.conversationId,
-      ) as Conversation, //TODO: fix in https://github.com/epam/ai-dial-chat/issues/640
-      withAttachments: payload.withAttachments,
-      bucket: BucketService.getBucket(),
-    })),
-    switchMap(({ conversation, withAttachments, bucket }) => {
+    switchMap(({ payload }) =>
+      forkJoin({
+        conversationAndPayload: getOrUploadConversation(
+          { id: payload.conversationId },
+          state$.value,
+        ),
+        withAttachments: of(payload.withAttachments),
+        bucket: BucketService.getBucket(),
+      }),
+    ),
+    // map(({ payload }) => ({
+    //   conversation: ConversationsSelectors.selectConversation(
+    //     state$.value,
+    //     payload.conversationId,
+    //   ) as Conversation, //TODO: fix in https://github.com/epam/ai-dial-chat/issues/640
+    //   withAttachments: payload.withAttachments,
+    //   bucket: BucketService.getBucket(),
+    // })),
+    switchMap(({ conversationAndPayload, withAttachments, bucket }) => {
+      const { conversation } = conversationAndPayload;
       if (!conversation) {
         return of(ImportExportActions.exportFail());
       }

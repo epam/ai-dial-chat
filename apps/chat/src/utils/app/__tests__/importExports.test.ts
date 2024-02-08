@@ -19,7 +19,7 @@ import {
   ExportFormatV2,
   ExportFormatV4,
   PromptsHistory,
-} from '@/src/types/importExport';
+} from '@/src/types/import-export';
 import { OpenAIEntityModelID } from '@/src/types/openai';
 
 import {

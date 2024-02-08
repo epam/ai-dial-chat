@@ -1,15 +1,15 @@
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import {
-  ExportConversationsFormatV4,
   ExportFormatV1,
   ExportFormatV2,
   ExportFormatV3,
   ExportFormatV4,
+  LatestExportConversationsFormat,
   LatestExportFormat,
   PromptsHistory,
   SupportedExportFormats,
-} from '@/src/types/importExport';
+} from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 
 import { cleanConversationHistory } from './clean';
@@ -101,7 +101,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   };
 }
 
-function currentDate() {
+export function currentDate() {
   const date = new Date();
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -115,7 +115,7 @@ type ExportType =
   | 'prompts_history';
 
 function downloadChatPromptData(
-  data: ExportConversationsFormatV4 | Prompt[] | PromptsHistory,
+  data: LatestExportConversationsFormat | Prompt[] | PromptsHistory,
   exportType: ExportType,
 ) {
   const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -126,11 +126,11 @@ function downloadChatPromptData(
   triggerDownload(url, `ai_dial_chat_${exportType}_${currentDate()}.json`);
 }
 
-const triggerDownloadConversation = (data: ExportConversationsFormatV4) => {
+const triggerDownloadConversation = (data: LatestExportConversationsFormat) => {
   downloadChatPromptData(data, 'conversation');
 };
 const triggerDownloadConversationsHistory = (
-  data: ExportConversationsFormatV4,
+  data: LatestExportConversationsFormat,
 ) => {
   downloadChatPromptData(data, 'conversations_history');
 };
@@ -147,8 +147,8 @@ export const exportConversation = (
   conversation: Conversation,
   folders: FolderInterface[],
 ) => {
-  const data: ExportConversationsFormatV4 = {
-    version: 4,
+  const data: LatestExportConversationsFormat = {
+    version: 5,
     history: [conversation] || [],
     folders: folders,
   };
@@ -165,10 +165,10 @@ export const prepareConversationsForExport = ({
   folders,
 }: PrepareConversationsForExport) => {
   const data = {
-    version: 4,
+    version: 5,
     history: conversations || [],
     folders: folders || [],
-  } as ExportConversationsFormatV4;
+  } as LatestExportConversationsFormat;
 
   return data;
 };
@@ -178,10 +178,10 @@ export const exportConversations = (
   folders: FolderInterface[],
 ) => {
   const data = {
-    version: 4,
+    version: 5,
     history: conversations || [],
     folders: folders || [],
-  } as ExportConversationsFormatV4;
+  } as LatestExportConversationsFormat;
 
   triggerDownloadConversationsHistory(data);
 };

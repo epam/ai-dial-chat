@@ -5,7 +5,7 @@ import {
   LatestExportFormat,
   Operation,
   SupportedExportFormats,
-} from '@/src/types/importExport';
+} from '@/src/types/import-export';
 
 import { RootState } from '..';
 
