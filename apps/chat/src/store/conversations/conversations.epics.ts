@@ -1226,7 +1226,6 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
             type: 'error',
           }),
         ),
-        // of(ConversationsActions.cleanMessage()),
       );
     }),
   );
