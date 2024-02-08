@@ -276,9 +276,6 @@ export const promptsSlice = createSlice({
       { payload }: PayloadAction<{ folderId: string; name: string }>,
     ) => {
       const name = payload.name.trim();
-      if (name === '') {
-        return;
-      }
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.folderId) {
           return {
@@ -296,9 +293,6 @@ export const promptsSlice = createSlice({
     ) => {
       state.newAddedFolderId = undefined;
       const name = payload.name.trim();
-      if (name === '') {
-        return;
-      }
 
       state.temporaryFolders = state.temporaryFolders.map((folder) =>
         folder.id !== payload.folderId ? folder : { ...folder, name },

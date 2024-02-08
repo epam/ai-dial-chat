@@ -57,7 +57,7 @@ export const conversationsSlice = createSlice({
     saveConversation: (state, _action: PayloadAction<Conversation>) => state,
     recreateConversation: (
       state,
-      _action: PayloadAction<{ new: Conversation; old: Conversation }>,
+      _action: PayloadAction<{ new: Conversation; old: ConversationInfo }>,
     ) => state,
     updateConversation: (
       state,
@@ -409,34 +409,13 @@ export const conversationsSlice = createSlice({
     deleteAllTemporaryFolders: (state) => {
       state.temporaryFolders = [];
     },
-    renameFolder: (
-      state,
-      { payload }: PayloadAction<{ folderId: string; name: string }>,
-    ) => {
-      const name = payload.name.trim();
-      if (name === '') {
-        return;
-      }
-      state.folders = state.folders.map((folder) => {
-        if (folder.id === payload.folderId) {
-          return {
-            ...folder,
-            name,
-          };
-        }
 
-        return folder;
-      });
-    },
     renameTemporaryFolder: (
       state,
       { payload }: PayloadAction<{ folderId: string; name: string }>,
     ) => {
       state.newAddedFolderId = undefined;
       const name = payload.name.trim();
-      if (name === '') {
-        return;
-      }
 
       state.temporaryFolders = state.temporaryFolders.map((folder) =>
         folder.id !== payload.folderId ? folder : { ...folder, name },
@@ -445,32 +424,36 @@ export const conversationsSlice = createSlice({
     resetNewFolderId: (state) => {
       state.newAddedFolderId = undefined;
     },
-    moveFolder: (
-      state,
-      _action: PayloadAction<{
-        folderId: string;
-        newParentFolderId: string | undefined;
-      }>,
-    ) => state,
-    moveFolderSuccess: (
+    updateFolder: (
       state,
       {
         payload,
-      }: PayloadAction<{
-        folderId: string;
-        newParentFolderId: string | undefined;
-      }>,
+      }: PayloadAction<{ folderId: string; values: Partial<FolderInterface> }>,
     ) => {
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.folderId) {
-          return addGeneratedFolderId({
+          return {
             ...folder,
-            folderId: payload.newParentFolderId,
-          });
+            ...payload.values,
+          };
         }
 
         return folder;
       });
+    },
+    updateFolderSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        folders: FolderInterface[];
+        conversations: ConversationInfo[];
+        selectedConversationsIds: string[];
+      }>,
+    ) => {
+      state.folders = payload.folders;
+      state.conversations = payload.conversations;
+      state.selectedConversationsIds = payload.selectedConversationsIds;
     },
     setFolders: (
       state,

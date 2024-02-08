@@ -6,7 +6,7 @@ import {
 } from '@/src/utils/app/file';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { ShareEntity } from '@/src/types/common';
+import { ShareEntity, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
@@ -385,6 +385,7 @@ export const getAllPathsFromId = (id: string): string[] => {
 export const getFolderFromPath = (
   path: string,
   type: FolderType,
+  status?: UploadStatus,
 ): FolderInterface => {
   const { name, parentPath } = splitPath(path);
   return {
@@ -392,15 +393,17 @@ export const getFolderFromPath = (
     name,
     type,
     folderId: parentPath,
+    status,
   };
 };
 
 export const getFoldersFromPaths = (
   paths: (string | undefined)[],
   type: FolderType,
+  status?: UploadStatus,
 ): FolderInterface[] => {
   return (paths.filter(Boolean) as string[]).map((path) =>
-    getFolderFromPath(path, type),
+    getFolderFromPath(path, type, status),
   );
 };
 

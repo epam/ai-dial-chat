@@ -892,7 +892,10 @@ export function Chat() {
   ) {
     return <ChatLoader />;
   }
-  if (selectedConversations.length !== selectedConversationsIds.length) {
+  if (
+    selectedConversations.length !== selectedConversationsIds.length ||
+    selectedConversations.some((conv) => conv.status !== UploadStatus.LOADED)
+  ) {
     return (
       <NotFoundEntity
         entity="Conversation"
