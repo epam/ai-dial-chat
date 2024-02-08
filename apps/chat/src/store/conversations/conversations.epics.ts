@@ -1884,7 +1884,7 @@ const recreateConversationEpic: AppEpic = (action$) =>
     }),
   );
 
-const getOrUploadConversation = (
+export const getOrUploadConversation = (
   payload: { id: string },
   state: RootState,
 ): Observable<{

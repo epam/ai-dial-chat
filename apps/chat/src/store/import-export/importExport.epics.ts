@@ -5,6 +5,7 @@ import {
   catchError,
   concat,
   filter,
+  forkJoin,
   from,
   ignoreElements,
   map,
@@ -13,13 +14,19 @@ import {
   switchMap,
   takeUntil,
   tap,
+  zip,
 } from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { FileService } from '@/src/utils/app/data/file-service';
-import { getConversationAttachmentWithPath } from '@/src/utils/app/folders';
+import {
+  getAllPathsFromPath,
+  getConversationAttachmentWithPath,
+  getFoldersFromPaths,
+} from '@/src/utils/app/folders';
 import {
   ImportConversationsResponse,
   cleanData,
@@ -35,6 +42,7 @@ import {
 } from '@/src/utils/app/zip-import-export';
 
 import { Conversation, Message } from '@/src/types/chat';
+import { FolderType } from '@/src/types/folder';
 import { LatestExportFormat } from '@/src/types/importExport';
 import { AppEpic } from '@/src/types/store';
 
@@ -105,17 +113,39 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const exportConversationsEpic: AppEpic = (action$, state$) =>
+const exportConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ImportExportActions.exportConversations.match),
-    map(() => ({
-      conversations: ConversationsSelectors.selectConversations(
-        state$.value,
-      ) as Conversation[], //TODO: fix in https://github.com/epam/ai-dial-chat/issues/640
-      folders: ConversationsSelectors.selectFolders(state$.value),
-    })),
+    switchMap(
+      () => ConversationService.getConversations(undefined, true), //listing of all entities
+    ),
+    switchMap((conversationsListing) => {
+      const foldersIds = Array.from(
+        new Set(conversationsListing.map((info) => info.folderId)),
+      );
+      //calculate all folders;
+      const folders = getFoldersFromPaths(
+        Array.from(
+          new Set(foldersIds.flatMap((id) => getAllPathsFromPath(id))),
+        ),
+        FolderType.Chat,
+      );
+
+      return forkJoin({
+        //get all conversations from api
+        conversations: zip(
+          conversationsListing.map((info) =>
+            ConversationService.getConversation(info),
+          ),
+        ),
+        folders: of(folders),
+      });
+    }),
     tap(({ conversations, folders }) => {
-      exportConversations(conversations, folders);
+      const filteredConversations = conversations.filter(
+        Boolean,
+      ) as Conversation[];
+      exportConversations(filteredConversations, folders);
     }),
     ignoreElements(),
   );
