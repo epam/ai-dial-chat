@@ -30,17 +30,19 @@ export const FullPageLoader = ({
       hideClose={hideClose}
       dataQa={dataQa}
       portalId={portalId}
-      containerClassName="bg-transparent items-center gap-4 flex flex-col"
+      containerClassName="bg-transparent"
     >
-      <Spinner size={spinnerSize} />
+      <div className="flex w-64 flex-col items-center gap-4 rounded bg-layer-3 p-6">
+        <Spinner size={spinnerSize} />
 
-      <h4 className="text-xl font-normal leading-6">{loaderLabel}</h4>
-      <button
-        className="text-sm font-medium text-accent-primary"
-        onClick={onStop}
-      >
-        {stopLabel}
-      </button>
+        <h4 className="text-xl font-normal leading-6">{loaderLabel}</h4>
+        <button
+          className="text-sm font-medium text-accent-primary focus-visible:outline-none"
+          onClick={onStop}
+        >
+          {stopLabel}
+        </button>
+      </div>
     </Modal>
   );
 };
