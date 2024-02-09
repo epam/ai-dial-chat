@@ -810,12 +810,7 @@ export const ChatView = memo(() => {
                     selectedConversations={selectedConversations}
                     onConversationSelect={(conversation) => {
                       dispatch(
-                        ConversationsActions.selectConversations({
-                          conversationIds: [
-                            selectedConversations[0].id,
-                            conversation.id,
-                          ],
-                        }),
+                        ConversationsActions.selectForCompare(conversation),
                       );
                     }}
                   />

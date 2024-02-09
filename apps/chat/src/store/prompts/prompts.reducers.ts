@@ -132,12 +132,18 @@ export const promptsSlice = createSlice({
     ) => state,
     updatePromptSuccess: (
       state,
-      { payload }: PayloadAction<{ prompt: Prompt }>,
+      { payload }: PayloadAction<{ prompt: Prompt; id: string }>,
     ) => {
-      const prompts = state.prompts.filter(
-        (prompt) => prompt.id !== payload.prompt.id,
-      );
-      state.prompts = prompts.concat(payload.prompt);
+      state.prompts = state.prompts.map((prompt) => {
+        if (prompt.id === payload.id) {
+          return {
+            ...prompt,
+            ...payload.prompt,
+          };
+        }
+
+        return prompt;
+      });
     },
     sharePrompt: (
       state,
@@ -289,7 +295,12 @@ export const promptsSlice = createSlice({
           // custom name
           payload?.name ??
           // default name with counter
-          PromptsSelectors.selectNewFolderName({ prompts: state }),
+          PromptsSelectors.selectNewFolderName(
+            {
+              prompts: state,
+            },
+            payload?.parentId,
+          ),
         type: FolderType.Prompt,
       });
 
@@ -341,22 +352,6 @@ export const promptsSlice = createSlice({
     deleteAllTemporaryFolders: (state) => {
       state.temporaryFolders = [];
     },
-    renameFolder: (
-      state,
-      { payload }: PayloadAction<{ folderId: string; name: string }>,
-    ) => {
-      const name = payload.name.trim();
-      state.folders = state.folders.map((folder) => {
-        if (folder.id === payload.folderId) {
-          return {
-            ...folder,
-            name,
-          };
-        }
-
-        return folder;
-      });
-    },
     renameTemporaryFolder: (
       state,
       { payload }: PayloadAction<{ folderId: string; name: string }>,
@@ -371,25 +366,34 @@ export const promptsSlice = createSlice({
     resetNewFolderId: (state) => {
       state.newAddedFolderId = undefined;
     },
-    moveFolder: (
+    updateFolder: (
       state,
       {
         payload,
-      }: PayloadAction<{
-        folderId: string;
-        newParentFolderId: string | undefined;
-      }>,
+      }: PayloadAction<{ folderId: string; values: Partial<FolderInterface> }>,
     ) => {
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.folderId) {
-          return addGeneratedFolderId({
+          return {
             ...folder,
-            folderId: payload.newParentFolderId,
-          });
+            ...payload.values,
+          };
         }
 
         return folder;
       });
+    },
+    updateFolderSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        folders: FolderInterface[];
+        prompts: PromptInfo[];
+      }>,
+    ) => {
+      state.folders = payload.folders;
+      state.prompts = payload.prompts;
     },
     setFolders: (
       state,

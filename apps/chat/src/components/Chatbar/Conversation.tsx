@@ -136,8 +136,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
   );
-  const newFolderName = useAppSelector(
-    ConversationsSelectors.selectNewFolderName,
+
+  const newFolderName = useAppSelector((state) =>
+    ConversationsSelectors.selectNewFolderName(state, conversation.folderId),
   );
 
   const { refs, context } = useFloating({

@@ -96,9 +96,9 @@ const PromptFolderTemplate = ({
             movedFolder.folderId !== folder.id
           ) {
             dispatch(
-              PromptsActions.moveFolder({
+              PromptsActions.updateFolder({
                 folderId: movedFolder.id,
-                newParentFolderId: folder.id,
+                values: { folderId: folder.id },
               }),
             );
           }
@@ -111,9 +111,9 @@ const PromptFolderTemplate = ({
   const onDropBetweenFolders = useCallback(
     (folder: FolderInterface, parentFolderId: string | undefined) => {
       dispatch(
-        PromptsActions.moveFolder({
+        PromptsActions.updateFolder({
           folderId: folder.id,
-          newParentFolderId: parentFolderId,
+          values: { folderId: parentFolderId },
         }),
       );
     },
@@ -153,9 +153,9 @@ const PromptFolderTemplate = ({
         handleDrop={handleDrop}
         onRenameFolder={(name, folderId) => {
           dispatch(
-            PromptsActions.renameFolder({
+            PromptsActions.updateFolder({
               folderId,
-              name,
+              values: { name },
             }),
           );
         }}
@@ -203,8 +203,7 @@ export const PromptSection = ({
   );
 
   const rootFolders = useMemo(
-    () =>
-      folders.filter(({ folderId }) => !folderId).sort(compareEntitiesByName),
+    () => folders.filter(({ folderId }) => !folderId),
     [folders],
   );
 

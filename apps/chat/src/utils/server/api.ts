@@ -64,9 +64,9 @@ enum PseudoModel {
 }
 
 const getModelApiIdFromConversation = (conversation: Conversation) => {
-  if (conversation.replay?.isReplay || conversation.isReplay)
+  if (conversation.replay?.isReplay ?? conversation.isReplay)
     return PseudoModel.Replay;
-  if (conversation.playback?.isPlayback || conversation.isPlayback)
+  if (conversation.playback?.isPlayback ?? conversation.isPlayback)
     return PseudoModel.Playback;
   return conversation.model.id;
 };

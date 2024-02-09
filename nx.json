@@ -13,7 +13,14 @@
     },
     "test": {
       "executor": "@nx/vite:test",
-      "outputs": ["{options.reportsDirectory}"]
+      "outputs": ["{options.reportsDirectory}"],
+    },
+    "test:watch": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "watch": true
+      }
     },
     "test:coverage": {
       "executor": "@nx/vite:test",

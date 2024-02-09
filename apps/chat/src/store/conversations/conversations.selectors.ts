@@ -13,7 +13,7 @@ import {
 } from '@/src/utils/app/folders';
 import {
   PublishedWithMeFilter,
-  doesConversationContainSearchTerm,
+  doesPromptOrConversationContainSearchTerm,
   getMyItemsFilters,
   searchSectionFolders,
 } from '@/src/utils/app/search';
@@ -51,7 +51,10 @@ export const selectFilteredConversations = createSelector(
     return conversations.filter(
       (conversation) =>
         (!searchTerm ||
-          doesConversationContainSearchTerm(conversation, searchTerm)) &&
+          doesPromptOrConversationContainSearchTerm(
+            conversation,
+            searchTerm,
+          )) &&
         filters.searchFilter(conversation) &&
         (conversation.folderId || filters.sectionFilter(conversation)),
     );
@@ -197,7 +200,7 @@ export const selectSearchedConversations = createSelector(
   [selectConversations, selectSearchTerm],
   (conversations, searchTerm) =>
     conversations.filter((conversation) =>
-      doesConversationContainSearchTerm(conversation, searchTerm),
+      doesPromptOrConversationContainSearchTerm(conversation, searchTerm),
     ),
 );
 
@@ -512,6 +515,16 @@ export const selectConversationsToMigrateAndMigratedCount = createSelector(
     conversationsToMigrateCount: state.conversationsToMigrateCount,
     migratedConversationsCount: state.migratedConversationsCount,
   }),
+
+export const selectFoldersStatus = createSelector([rootSelector], (state) => {
+  return state.foldersStatus;
+});
+
+export const selectConversationsStatus = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.conversationsStatus;
+  },
 );
 
 export const selectAreSelectedConversationsLoaded = createSelector(
@@ -523,9 +536,15 @@ export const selectAreSelectedConversationsLoaded = createSelector(
 
 // default name with counter
 export const selectNewFolderName = createSelector(
-  [selectFolders],
-  (folders) => {
-    return getNextDefaultName(translate(DEFAULT_FOLDER_NAME), folders);
+  [
+    selectFolders,
+    (_state: RootState, folderId: string | undefined) => folderId,
+  ],
+  (folders, folderId) => {
+    return getNextDefaultName(
+      translate(DEFAULT_FOLDER_NAME),
+      folders.filter((f) => f.folderId === folderId),
+    );
   },
 );
 
@@ -539,4 +558,10 @@ export const selectLoadingFolderIds = createSelector(
 export const selectFailedMigratedConversations = createSelector(
   [rootSelector],
   (state) => state.failedMigratedConversations,
+
+export const selectIsCompareLoading = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.compareLoading;
+  },
 );
