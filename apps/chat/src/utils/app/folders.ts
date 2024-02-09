@@ -355,32 +355,6 @@ export const addGeneratedFolderId = (folder: Omit<FolderInterface, 'id'>) => ({
   id: constructPath(folder.folderId, folder.name),
 });
 
-export const getFoldersWithEntities = (
-  folders: FolderInterface[],
-  entities: Prompt[] | Conversation[],
-) => {
-  const entityFolderIds = new Set(
-    entities.map((entity) => entity.folderId).filter(Boolean),
-  );
-  const memoizedCheck = new Map<string, boolean>();
-
-  const folderContainsEntity = (folderId: string): boolean => {
-    if (entityFolderIds.has(folderId)) return true;
-    if (memoizedCheck.has(folderId)) {
-      return memoizedCheck.get(folderId) ?? false;
-    }
-
-    const subFoldersContainEntity = folders
-      .filter((folder) => folder.folderId === folderId)
-      .some((subFolder) => folderContainsEntity(subFolder.id));
-
-    memoizedCheck.set(folderId, subFoldersContainEntity);
-    return subFoldersContainEntity;
-  };
-
-  return folders.filter(({ id }) => folderContainsEntity(id));
-};
-
 export const splitPath = (id: string) => {
   const parts = id.split('/');
   const name = parts[parts.length - 1];
