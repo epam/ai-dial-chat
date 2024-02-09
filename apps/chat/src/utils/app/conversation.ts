@@ -183,7 +183,4 @@ export const isChosenConversationValidForCompare = (
   }
 
   return true;
-  // return selectedConvUserMessages.every(
-  //   (message, index) => message.content === convUserMessages[index].content,
-  // );
 };

@@ -13,6 +13,7 @@ import {
 
 import classNames from 'classnames';
 
+import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
@@ -439,7 +440,11 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             className="flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
             type="text"
             value={renameValue}
-            onChange={(e) => setRenameValue(e.target.value)}
+            onChange={(e) =>
+              setRenameValue(
+                e.target.value.replaceAll(notAllowedSymbolsRegex, ''),
+              )
+            }
             onKeyDown={handleEnterDown}
             autoFocus
             ref={inputRef}
