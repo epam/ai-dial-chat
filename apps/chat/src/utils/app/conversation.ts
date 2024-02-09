@@ -10,7 +10,7 @@ import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { constructPath, notAllowedSymbolsRegex } from './file';
-import { splitPath } from './folders';
+import { compareEntitiesByName, splitPath } from './folders';
 
 export const getAssitantModelId = (
   modelType: EntityType,
@@ -121,6 +121,9 @@ export const compareConversationsByDate = (
   convA: ConversationInfo,
   convB: ConversationInfo,
 ) => {
+  if (convA.lastActivityDate === convB.lastActivityDate) {
+    return compareEntitiesByName(convA, convB);
+  }
   if (convA.lastActivityDate && convB.lastActivityDate) {
     const dateA = convA.lastActivityDate;
     const dateB = convB.lastActivityDate;
