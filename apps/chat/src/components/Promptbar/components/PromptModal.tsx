@@ -24,8 +24,8 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 
-import ChatLoader from '../../Chat/ChatLoader';
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
+import Loader from '../../Common/Loader';
 import Modal from '../../Common/Modal';
 
 interface Props {
@@ -225,7 +225,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
           <NotFoundEntity entity="Prompt" />
         )
       ) : (
-        <ChatLoader containerClassName="h-[540px] max-h-full" />
+        <Loader containerClassName="h-[540px] max-h-full" />
       )}
     </Modal>
   );
