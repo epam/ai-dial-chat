@@ -31,7 +31,10 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import { combineEntities } from '@/src/utils/app/common';
+import {
+  combineEntities,
+  updateEntitiesFoldersAndIds,
+} from '@/src/utils/app/common';
 import {
   addGeneratedConversationId,
   compareConversationsByDate,
@@ -548,24 +551,13 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
           const selectedConversationsIds =
             ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
-          const allFolderIds = conversations.map(
-            (conv) => conv.folderId as string,
-          );
-
-          const updatedExistedFolders = folders.map((f: FolderInterface) => ({
-            ...f,
-            id: updateFolderId(f.id)!,
-            folderId: updateFolderId(f.folderId),
-          }));
-
-          const newUniqueFolderIds = Array.from(new Set(allFolderIds)).map(
-            (id) => updateFolderId(id),
-          );
-
-          const updatedFolders = combineEntities(
-            getFoldersFromPaths(newUniqueFolderIds, FolderType.Chat),
-            updatedExistedFolders,
-          );
+          const { updatedFolders, updatedOpenedFoldersIds } =
+            updateEntitiesFoldersAndIds(
+              conversations,
+              folders,
+              updateFolderId,
+              openedFoldersIds,
+            );
 
           const updatedConversations = combineEntities(
             allConversations.map((conv) =>
@@ -580,10 +572,6 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
                 folderId: updateFolderId(conv.folderId),
               }),
             ),
-          );
-
-          const updatedOpenedFoldersIds = openedFoldersIds.map(
-            (id) => updateFolderId(id)!,
           );
 
           const updatedSelectedConversationsIds = selectedConversationsIds.map(
