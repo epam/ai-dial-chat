@@ -86,6 +86,16 @@ export const conversationsSlice = createSlice({
         );
       }
     },
+    selectForCompare: (state, _action: PayloadAction<Conversation>) => {
+      state.compareLoading = true;
+    },
+    selectForCompareCompleted: (
+      state,
+      { payload }: PayloadAction<Conversation>,
+    ) => {
+      state.compareLoading = false;
+      state.conversations = combineEntities([payload], state.conversations);
+    },
     selectConversations: (
       state,
       { payload }: PayloadAction<{ conversationIds: string[] }>,

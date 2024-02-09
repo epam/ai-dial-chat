@@ -10,7 +10,10 @@ import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -18,6 +21,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { Combobox } from '../Common/Combobox';
 import ShareIcon from '../Common/ShareIcon';
+import ChatLoader from './ChatLoader';
 
 interface OptionProps {
   item: ConversationInfo;
@@ -54,7 +58,7 @@ interface Props {
   onConversationSelect: (conversation: ConversationInfo) => void;
 }
 
-export const ChatCompareSelect = ({
+export const ChatCompareSelectView = ({
   conversations,
   selectedConversations,
   onConversationSelect,
@@ -129,4 +133,14 @@ export const ChatCompareSelect = ({
       </div>
     </div>
   );
+};
+
+export const ChatCompareSelect = (props: Props) => {
+  const isLoading = useAppSelector(
+    ConversationsSelectors.selectIsCompareLoading,
+  );
+  if (isLoading) {
+    return <ChatLoader dataQa="compare-loader" />;
+  }
+  return <ChatCompareSelectView {...props} />;
 };

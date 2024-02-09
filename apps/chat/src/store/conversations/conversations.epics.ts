@@ -37,6 +37,7 @@ import {
   compareConversationsByDate,
   getGeneratedConversationId,
   getNewConversationName,
+  isChosenConversationValidForCompare,
   isSettingsChanged,
   parseConversationId,
 } from '@/src/utils/app/conversation';
@@ -1556,6 +1557,51 @@ const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
     ),
   );
 
+const compareConversationsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.selectForCompare.match),
+    switchMap(({ payload }) => getOrUploadConversation(payload, state$.value)),
+    switchMap(({ conversation: chosenConversation }) => {
+      const selectedConversation =
+        ConversationsSelectors.selectSelectedConversations(state$.value)[0];
+      const isInvalid =
+        !chosenConversation ||
+        !isChosenConversationValidForCompare(
+          selectedConversation,
+          chosenConversation as Conversation,
+        );
+      const actions: Observable<AnyAction>[] = [];
+      if (isInvalid) {
+        actions.push(
+          of(
+            UIActions.showToast({
+              message:
+                'Incorrect conversation was chosen for comparison. Please choose another one',
+              type: 'error',
+            }),
+          ),
+        );
+      } else {
+        actions.push(
+          of(
+            ConversationsActions.selectConversations({
+              conversationIds: [selectedConversation.id, chosenConversation.id],
+            }),
+          ),
+        );
+      }
+      actions.push(
+        of(
+          ConversationsActions.selectForCompareCompleted(
+            chosenConversation as Conversation,
+          ),
+        ),
+      );
+
+      return concat(...actions);
+    }),
+  );
+
 const playbackNextMessageStartEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.playbackNextMessageStart.match),
@@ -2135,4 +2181,5 @@ export const ConversationsEpics = combineEpics(
   uploadConversationsWithFoldersRecursiveEpic,
   toggleFolderEpic,
   openFolderEpic,
+  compareConversationsEpic,
 );

@@ -543,3 +543,10 @@ export const selectLoadingFolderIds = createSelector(
     return state.loadingFolderIds;
   },
 );
+
+export const selectIsCompareLoading = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.compareLoading;
+  },
+);
