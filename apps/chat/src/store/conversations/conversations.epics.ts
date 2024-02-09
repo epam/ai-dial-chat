@@ -620,11 +620,6 @@ const clearConversationsEpic: AppEpic = (action$) =>
     filter(ConversationsActions.clearConversations.match),
     switchMap(() => {
       return concat(
-        of(
-          ConversationsActions.createNewConversations({
-            names: [translate(DEFAULT_CONVERSATION_NAME)],
-          }),
-        ),
         of(ConversationsActions.clearConversationsSuccess()),
         of(ConversationsActions.deleteFolder({})),
       );
