@@ -832,11 +832,10 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
       payload,
       modelsMap: ModelsSelectors.selectModelsMap(state$.value),
       conversations: ConversationsSelectors.selectConversations(state$.value),
-      selectedConversations: ConversationsSelectors.selectSelectedConversations(
-        state$.value,
-      ),
+      selectedConversationIds:
+        ConversationsSelectors.selectSelectedConversationsIds(state$.value),
     })),
-    map(({ payload, modelsMap, conversations, selectedConversations }) => {
+    map(({ payload, modelsMap, conversations, selectedConversationIds }) => {
       const messageModel: Message[EntityType.Model] = {
         id: payload.conversation.model.id,
       };
@@ -880,7 +879,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
             conv.folderId === payload.conversation.folderId &&
             conv.id !== payload.conversation.id,
         ),
-        Math.max(selectedConversations.indexOf(payload.conversation), 0),
+        Math.max(selectedConversationIds.indexOf(payload.conversation.id), 0),
         true,
       );
 
