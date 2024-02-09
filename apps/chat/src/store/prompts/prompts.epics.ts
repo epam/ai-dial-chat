@@ -379,13 +379,13 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
               PromptService.setPrompts([prompt]).pipe(
                 switchMap(() => {
                   migratedPromptIds.push(
-                    preparedPrompts[migratedPromptsCount].id,
+                    notMigratedPrompts[migratedPromptsCount].id,
                   );
 
                   return concat(
                     DataService.setMigratedEntitiesIds(
                       migratedPromptIds,
-                      MigrationStorageKeys.MigratedConversationIds,
+                      MigrationStorageKeys.MigratedPromptIds,
                     ).pipe(switchMap(() => EMPTY)),
                     of(
                       PromptsActions.migratePromptFinish({
