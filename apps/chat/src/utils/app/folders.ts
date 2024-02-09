@@ -421,3 +421,39 @@ export const compareEntitiesByName = <
   }
   return 0;
 };
+
+export const updateMovedFolderId = (
+  oldParentFolderId: string | undefined,
+  newParentFolderId: string | undefined,
+  folderId: string | undefined,
+) => {
+  const curr = folderId || '';
+  const old = oldParentFolderId || '';
+  if (curr === old) {
+    return newParentFolderId;
+  }
+  const prefix = `${old}/`;
+  if (curr.startsWith(prefix)) {
+    if (!newParentFolderId) {
+      return curr.replace(prefix, '') || undefined;
+    }
+    return curr.replace(old, newParentFolderId);
+  }
+  return folderId;
+};
+
+export const updateMovedEntityId = (
+  oldParentFolderId: string | undefined,
+  newParentFolderId: string | undefined,
+  entityId: string,
+): string => {
+  const old = oldParentFolderId || '';
+  const prefix = `${old}/`;
+  if (entityId.startsWith(prefix)) {
+    if (!newParentFolderId) {
+      return entityId.replace(prefix, '');
+    }
+    return entityId.replace(old, newParentFolderId);
+  }
+  return entityId;
+};

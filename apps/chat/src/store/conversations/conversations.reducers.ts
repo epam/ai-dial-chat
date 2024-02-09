@@ -642,9 +642,7 @@ export const conversationsSlice = createSlice({
         (id) => !payload.paths.has(id),
       );
       state.foldersStatus = UploadStatus.LOADED;
-      state.folders = payload.folders.concat(
-        state.folders.filter((folder) => !payload.paths.has(folder.folderId)),
-      );
+      state.folders = combineEntities(payload.folders, state.folders);
     },
     uploadFoldersFail: (
       state,
@@ -683,20 +681,17 @@ export const conversationsSlice = createSlice({
         return map;
       }, new Map<string, ConversationInfo>());
 
-      state.conversations = payload.conversations
-        .map((conv) =>
+      state.conversations = combineEntities(
+        payload.conversations.map((conv) =>
           payload.paths.has(conv.folderId)
             ? {
                 ...conversationMap.get(conv.id),
                 ...conv,
               }
             : conv,
-        )
-        .concat(
-          state.conversations.filter(
-            (conv) => !payload.paths.has(conv.folderId),
-          ),
-        );
+        ),
+        state.conversations,
+      );
       state.conversationsStatus = UploadStatus.LOADED;
     },
     uploadConversationsFail: (state) => {

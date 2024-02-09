@@ -50,6 +50,8 @@ import {
   getFolderFromPath,
   getFoldersFromPaths,
   getNextDefaultName,
+  updateMovedEntityId,
+  updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import {
   mergeMessages,
@@ -69,7 +71,7 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { AppEpic } from '@/src/types/store';
 
 import { resetShareEntity } from '@/src/constants/chat';
@@ -89,8 +91,6 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from './conversations.reducers';
-
-import escapeStringRegexp from 'escape-string-regexp';
 
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -523,6 +523,17 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
       return ConversationService.getConversations(payload.folderId, true).pipe(
         switchMap((conversations) => {
+          const updateFolderId = updateMovedFolderId.bind(
+            null,
+            payload.folderId,
+            newFolder.id,
+          );
+          const updateEntityId = updateMovedEntityId.bind(
+            null,
+            payload.folderId,
+            newFolder.id,
+          );
+
           const folders = ConversationsSelectors.selectFolders(state$.value);
           const allConversations = ConversationsSelectors.selectConversations(
             state$.value,
@@ -534,67 +545,46 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
           const selectedConversationsIds =
             ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
-          const regex = new RegExp(`^${escapeStringRegexp(payload.folderId)}`);
-
-          const newUniqueFolderIds = Array.from(
-            new Set(conversations.map((conv) => conv.folderId as string)),
-          ).map((id) => id.replace(regex, newFolder.id));
-
-          const allNewFolderIdsSet = new Set(
-            newUniqueFolderIds.flatMap((fid) => getAllPathsFromPath(fid)),
+          const allFolderIds = conversations.map(
+            (conv) => conv.folderId as string,
           );
-          const allNewFolderIds = Array.from(allNewFolderIdsSet);
-          const oldFolderIds = new Set(
-            folders
-              .filter(
-                (folder) =>
-                  folder.id === payload.folderId || // this old folder
-                  folder.id.startsWith(`${payload.folderId}/`), // child folders
-              )
-              .map((f) => f.id),
+
+          const updatedExistedFolders = folders.map((f: FolderInterface) => ({
+            ...f,
+            id: updateFolderId(f.id)!,
+            folderId: updateFolderId(f.folderId),
+          }));
+
+          const newUniqueFolderIds = Array.from(new Set(allFolderIds)).map(
+            (id) => updateFolderId(id),
           );
 
           const updatedFolders = combineEntities(
-            getFoldersFromPaths(allNewFolderIds, FolderType.Chat),
-            folders.map((folder) =>
-              oldFolderIds.has(folder.id)
-                ? {
-                    ...folder,
-                    id: folder.id.replace(regex, newFolder.id),
-                    folderId: folder.folderId?.replace(regex, newFolder.id),
-                  }
-                : folder,
-            ),
+            getFoldersFromPaths(newUniqueFolderIds, FolderType.Chat),
+            updatedExistedFolders,
           );
 
           const updatedConversations = combineEntities(
             allConversations.map((conv) =>
-              conv.id.startsWith(`${payload.folderId}/`)
-                ? addGeneratedConversationId({
-                    ...conv,
-                    folderId: conv.folderId?.replace(regex, newFolder.id),
-                  })
-                : conv,
-            ), // child chats
+              addGeneratedConversationId({
+                ...conv,
+                folderId: updateFolderId(conv.folderId),
+              }),
+            ),
             conversations.map((conv) =>
               addGeneratedConversationId({
                 ...conv,
-                folderId: conv.folderId?.replace(regex, newFolder.id),
+                folderId: updateFolderId(conv.folderId),
               }),
             ),
           );
 
-          const updatedOpenedFoldersIds = openedFoldersIds.map((id) =>
-            id === payload.folderId || id.startsWith(`${payload.folderId}/`)
-              ? id.replace(regex, newFolder.id)
-              : id,
+          const updatedOpenedFoldersIds = openedFoldersIds.map(
+            (id) => updateFolderId(id)!,
           );
 
           const updatedSelectedConversationsIds = selectedConversationsIds.map(
-            (id) =>
-              id.startsWith(`${payload.folderId}/`)
-                ? id.replace(regex, newFolder.id)
-                : id,
+            (id) => updateEntityId(id),
           );
 
           const actions: Observable<AnyAction>[] = [];
@@ -620,10 +610,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
                   ConversationsActions.updateConversation({
                     id: conversation.id,
                     values: {
-                      folderId: conversation.folderId?.replace(
-                        regex,
-                        newFolder.id,
-                      ),
+                      folderId: updateFolderId(conversation.folderId),
                     },
                   }),
                 ),
