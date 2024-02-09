@@ -1579,7 +1579,7 @@ const compareConversationsEpic: AppEpic = (action$, state$) =>
           of(
             UIActions.showToast({
               message: translate(
-                'Incorrect conversation was chosen for comparison. Please choose another one.\r\nNote: only conversations with the same count of user messages can be compared',
+                'Incorrect conversation was chosen for comparison. Please choose another one.\r\nOnly conversations containing the same number of messages can be compared.',
               ),
               type: 'error',
             }),

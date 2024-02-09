@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { IconCheck } from '@tabler/icons-react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -27,7 +28,6 @@ interface OptionProps {
 const Option = ({ item }: OptionProps) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const defaultModelId = useAppSelector(SettingsSelectors.selectDefaultModelId);
-
 
   const model = useMemo(
     () =>
@@ -62,6 +62,14 @@ export const ChatCompareSelect = ({
   onConversationSelect,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+  const [showAll, setShowAll] = useState(false);
+
+  const handleChangeShowAll = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setShowAll(e.target.checked);
+    },
+    [],
+  );
 
   const isLoading = !!useAppSelector(
     ConversationsSelectors.selectIsCompareLoading,
@@ -75,14 +83,15 @@ export const ChatCompareSelect = ({
     if (selectedConversations.length === 1) {
       const selectedConversation = selectedConversations[0];
 
-      const comparableConversations = conversations.filter((conv) =>
-        isValidConversationForCompare(selectedConversation, conv),
+      const comparableConversations = conversations.filter(
+        (conv) =>
+          showAll || isValidConversationForCompare(selectedConversation, conv),
       );
       setComparableConversations(
         comparableConversations.sort(compareEntitiesByName),
       );
     }
-  }, [conversations, selectedConversations]);
+  }, [conversations, selectedConversations, showAll]);
 
   return (
     <div
@@ -97,10 +106,27 @@ export const ChatCompareSelect = ({
           <span className="text-secondary">
             (
             {t(
-              'Note: only conversations with the same count of user messages can be compared',
+              'Only conversations containing the same number of messages can be compared.',
             )}
             )
           </span>
+        </div>
+        <div className="relative flex items-center">
+          <input
+            name="showAllCheckbox"
+            checked={showAll}
+            onChange={handleChangeShowAll}
+            title=""
+            type="checkbox"
+            className="checkbox peer"
+          />
+          <IconCheck
+            size={18}
+            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+          />
+          <label className="" htmlFor="showAllCheckbox">
+            {t('Show all conversations')}
+          </label>
         </div>
         {comparableConversations && (
           <Combobox
@@ -126,7 +152,12 @@ export const ChatCompareSelect = ({
           />
         )}
       </div>
-      {isLoading && <ChatLoader dataQa="compare-loader" containerClassName='absolute bg-blackout h-full' />}
+      {isLoading && (
+        <ChatLoader
+          dataQa="compare-loader"
+          containerClassName="absolute bg-blackout h-full"
+        />
+      )}
     </div>
   );
 };
