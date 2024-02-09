@@ -78,9 +78,9 @@ import {
   RateBody,
   Role,
 } from '@/src/types/chat';
-import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
+import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -301,6 +301,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 }),
               ),
             ),
+            catchError(() => EMPTY),
           );
         }),
       );

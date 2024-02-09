@@ -1,4 +1,4 @@
-import { EMPTY, Observable, catchError, map, of } from 'rxjs';
+import { EMPTY, Observable, catchError, map, of, throwError } from 'rxjs';
 
 import {
   ApiKeys,
@@ -152,8 +152,7 @@ export abstract class ApiEntityStorage<
         },
         body: JSON.stringify(this.cleanUpEntity(entity)),
       },
-    );
-    // .pipe(catchError(() => EMPTY)); // TODO: handle error
+    ).pipe(catchError(() => throwError(() => EMPTY))); // TODO: handle error
   }
 
   updateEntity(entity: Entity): Observable<void> {

@@ -17,7 +17,10 @@ import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_PROMPT_NAME,
+} from '@/src/constants/default-settings';
 
 import { ConversationApiStorage } from './api/conversation-api-storage';
 import { PromptApiStorage } from './api/prompt-api-storage';
@@ -35,7 +38,7 @@ export class ApiStorage implements DialStorage {
   ): Observable<void> {
     return this.getConversations(entity.folderId).pipe(
       concatMap((receivedEntities) => {
-        const apiEntities: ConversationInfo[] = receivedEntities;
+        const apiEntities: PromptInfo[] | ConversationInfo[] = receivedEntities;
         let retries = 0;
 
         const retry = (
@@ -48,11 +51,15 @@ export class ApiStorage implements DialStorage {
               if (retries < MAX_RETRIES_COUNT) {
                 retries++;
 
-                const newName = generateNextName(
-                  DEFAULT_CONVERSATION_NAME,
-                  entity.name,
-                  [...entities, ...apiEntities],
-                );
+                const defaultName =
+                  'messages' in entity
+                    ? DEFAULT_CONVERSATION_NAME
+                    : DEFAULT_PROMPT_NAME;
+                const newName = generateNextName(defaultName, entity.name, [
+                  ...entities,
+                  ...apiEntities,
+                ]);
+
                 const updatedEntity = {
                   ...entity,
                   id: constructPath(entity.folderId, newName),
