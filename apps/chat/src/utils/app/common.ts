@@ -1,15 +1,13 @@
-import { getNextDefaultName } from '@/src/utils/app/folders';
+import {getNextDefaultName} from '@/src/utils/app/folders';
 
-import { Conversation } from '@/src/types/chat';
-import { Entity } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
-import { Prompt } from '@/src/types/prompt';
-import { getFoldersFromPaths } from '@/src/utils/app/folders';
+import {Conversation} from '@/src/types/chat';
+import {Prompt} from '@/src/types/prompt';
+import {getFoldersFromPaths} from '@/src/utils/app/folders';
 
-import { ConversationInfo } from '@/src/types/chat';
-import { Entity } from '@/src/types/common';
-import { FolderInterface, FolderType } from '@/src/types/folder';
-import { PromptInfo } from '@/src/types/prompt';
+import {ConversationInfo} from '@/src/types/chat';
+import {Entity} from '@/src/types/common';
+import {FolderInterface, FolderType} from '@/src/types/folder';
+import {PromptInfo} from '@/src/types/prompt';
 
 /**
  * Combine entities. If there are the same ids then will be used entity from entities1 i.e. first in array
@@ -70,7 +68,6 @@ export const filterMigratedEntities = <T extends Conversation | Prompt>(
       ? !migratedEntityIds.includes(entity.id)
       : migratedEntityIds.includes(entity.id),
   );
-};
 
 export const updateEntitiesFoldersAndIds = (
   entities: PromptInfo[] | ConversationInfo[],
@@ -99,5 +96,5 @@ export const updateEntitiesFoldersAndIds = (
     (id) => updateFolderId(id)!,
   );
 
-  return { updatedFolders, updatedOpenedFoldersIds };
+  return {updatedFolders, updatedOpenedFoldersIds};
 };

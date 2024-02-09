@@ -515,6 +515,7 @@ export const selectConversationsToMigrateAndMigratedCount = createSelector(
     conversationsToMigrateCount: state.conversationsToMigrateCount,
     migratedConversationsCount: state.migratedConversationsCount,
   }),
+);
 
 export const selectFoldersStatus = createSelector([rootSelector], (state) => {
   return state.foldersStatus;
@@ -558,6 +559,7 @@ export const selectLoadingFolderIds = createSelector(
 export const selectFailedMigratedConversations = createSelector(
   [rootSelector],
   (state) => state.failedMigratedConversations,
+);
 
 export const selectIsCompareLoading = createSelector(
   [rootSelector],

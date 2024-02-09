@@ -56,15 +56,12 @@ import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   generateNextName,
-  getNextDefaultName,
-  getPathToFolderById,
-} from '@/src/utils/app/folders';
-import {
   getAllPathsFromId,
   getAllPathsFromPath,
   getFolderFromPath,
   getFoldersFromPaths,
   getNextDefaultName,
+  getPathToFolderById,
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';

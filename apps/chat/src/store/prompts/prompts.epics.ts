@@ -1,12 +1,12 @@
 import {
   EMPTY,
-  catchError,
   Observable,
+  catchError,
   concat,
   concatMap,
-  from,
   filter,
   forkJoin,
+  from,
   ignoreElements,
   map,
   mergeMap,
@@ -21,9 +21,9 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 import {
+  combineEntities,
   filterMigratedEntities,
   filterOnlyMyEntities,
-  combineEntities,
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
 import { DataService } from '@/src/utils/app/data/data-service';
@@ -49,10 +49,10 @@ import {
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
-import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
-import { PromptInfo, Prompt } from '@/src/types/prompt';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
