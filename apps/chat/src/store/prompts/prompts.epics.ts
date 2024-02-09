@@ -18,7 +18,6 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 import { combineEntities } from '@/src/utils/app/common';
-import { addGeneratedConversationId } from '@/src/utils/app/conversation';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import {
   addGeneratedFolderId,
@@ -29,7 +28,6 @@ import {
   getFoldersFromPaths,
   getTemporaryFoldersToPublish,
   splitPath,
-  updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import {
