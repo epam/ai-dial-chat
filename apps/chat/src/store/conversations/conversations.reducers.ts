@@ -86,7 +86,7 @@ export const conversationsSlice = createSlice({
         );
       }
     },
-    selectForCompare: (state, _action: PayloadAction<Conversation>) => {
+    selectForCompare: (state, _action: PayloadAction<ConversationInfo>) => {
       state.compareLoading = true;
     },
     selectForCompareCompleted: (
