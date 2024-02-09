@@ -611,10 +611,17 @@ export const conversationsSlice = createSlice({
 
     uploadConversationsWithFolders: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         paths: (string | undefined)[];
       }>,
-    ) => state,
+    ) => {
+      state.foldersStatus = UploadStatus.LOADING;
+      state.loadingFolderIds = state.loadingFolderIds.concat(
+        payload.paths as string[],
+      );
+    },
 
     // uploadFolders: (
     //   state,
@@ -642,7 +649,15 @@ export const conversationsSlice = createSlice({
         (id) => !payload.paths.has(id),
       );
       state.foldersStatus = UploadStatus.LOADED;
-      state.folders = combineEntities(payload.folders, state.folders);
+      state.folders = combineEntities(payload.folders, state.folders).map(
+        (f) =>
+          payload.paths.has(f.id)
+            ? {
+                ...f,
+                status: UploadStatus.LOADED,
+              }
+            : f,
+      );
     },
     uploadFoldersFail: (
       state,

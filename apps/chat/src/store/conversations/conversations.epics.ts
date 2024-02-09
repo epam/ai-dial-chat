@@ -1930,7 +1930,7 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
             of(
               ConversationsActions.uploadConversationsSuccess({
                 paths: new Set(payload.paths),
-                conversations: conversations.flat(),
+                conversations: conversations,
               }),
             ),
           );
@@ -2026,6 +2026,12 @@ const openFolderEpic: AppEpic = (action$) =>
         action.payload.featureType === FeatureType.Chat,
     ),
     switchMap(({ payload }) => {
+      // const folder = ConversationsSelectors.selectFolders(state$.value).find(
+      //   (f) => f.id === payload.id,
+      // );
+      // if (folder?.status === UploadStatus.LOADED) {
+      //   return EMPTY;
+      // }
       return concat(
         of(
           ConversationsActions.uploadConversationsWithFolders({
