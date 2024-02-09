@@ -28,7 +28,6 @@ import {
   getAllPathsFromPath,
   getFolderFromPath,
   getFolderIdByPath,
-  getFoldersFromPaths,
   getTemporaryFoldersToPublish,
   splitPath,
   updateMovedFolderId,
@@ -42,7 +41,7 @@ import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
 
