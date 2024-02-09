@@ -18,6 +18,7 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 import { combineEntities } from '@/src/utils/app/common';
+import { addGeneratedConversationId } from '@/src/utils/app/conversation';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import {
   addGeneratedFolderId,
@@ -28,6 +29,8 @@ import {
   getFoldersFromPaths,
   getTemporaryFoldersToPublish,
   splitPath,
+  updateMovedEntityId,
+  updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import {
   exportPrompt,
@@ -38,7 +41,7 @@ import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
 
@@ -49,7 +52,6 @@ import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
 import { RootState } from '@/src/store';
-import escapeStringRegexp from 'escape-string-regexp';
 import { v4 as uuidv4 } from 'uuid';
 
 const savePromptsEpic: AppEpic = (action$, state$) =>
@@ -57,9 +59,6 @@ const savePromptsEpic: AppEpic = (action$, state$) =>
     filter(
       (action) =>
         PromptsActions.createNewPrompt.match(action) ||
-        // PromptsActions.deletePrompts.match(action) ||
-        // PromptsActions.clearPrompts.match(action) ||
-        // PromptsActions.updatePrompt.match(action) ||
         PromptsActions.addPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action) ||
         PromptsActions.unpublishPrompt.match(action) ||
@@ -203,66 +202,55 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
       return PromptService.getPrompts(payload.folderId, true).pipe(
         switchMap((prompts) => {
+          const updateFolderId = updateMovedFolderId.bind(
+            null,
+            payload.folderId,
+            newFolder.id,
+          );
+
           const folders = PromptsSelectors.selectFolders(state$.value);
           const allPrompts = PromptsSelectors.selectPrompts(state$.value);
           const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
             state$.value,
             FeatureType.Prompt,
           );
-          const regex = new RegExp(`^${escapeStringRegexp(payload.folderId)}`);
 
-          const newUniqueFolderIds = Array.from(
-            new Set(prompts.map((prompt) => prompt.folderId as string)),
-          ).map((id) => id.replace(regex, newFolder.id));
-
-          const allNewFolderIdsSet = new Set(
-            newUniqueFolderIds.flatMap((fid) => getAllPathsFromPath(fid)),
+          const allFolderIds = prompts.map(
+            (prompt) => prompt.folderId as string,
           );
-          const allNewFolderIds = Array.from(allNewFolderIdsSet);
-          const oldFolderIds = new Set(
-            folders
-              .filter(
-                (folder) =>
-                  folder.id === payload.folderId || // this is old folder
-                  folder.id.startsWith(`${payload.folderId}/`), // child folders
-              )
-              .map((f) => f.id),
+
+          const updatedExistedFolders = folders.map((f: FolderInterface) => ({
+            ...f,
+            id: updateFolderId(f.id)!,
+            folderId: updateFolderId(f.folderId),
+          }));
+
+          const newUniqueFolderIds = Array.from(new Set(allFolderIds)).map(
+            (id) => updateFolderId(id),
           );
 
           const updatedFolders = combineEntities(
-            getFoldersFromPaths(allNewFolderIds, FolderType.Prompt),
-            folders.map((folder) =>
-              oldFolderIds.has(folder.id)
-                ? {
-                    ...folder,
-                    id: folder.id.replace(regex, newFolder.id),
-                    folderId: folder.folderId?.replace(regex, newFolder.id),
-                  }
-                : folder,
-            ),
+            getFoldersFromPaths(newUniqueFolderIds, FolderType.Prompt),
+            updatedExistedFolders,
           );
 
           const updatedPrompts = combineEntities(
             allPrompts.map((prompt) =>
-              prompt.id.startsWith(`${payload.folderId}/`)
-                ? addGeneratedPromptId({
-                    ...prompt,
-                    folderId: prompt.folderId?.replace(regex, newFolder.id),
-                  })
-                : prompt,
-            ), // child prompts
+              addGeneratedPromptId({
+                ...prompt,
+                folderId: updateFolderId(prompt.folderId),
+              }),
+            ),
             prompts.map((prompt) =>
               addGeneratedPromptId({
                 ...prompt,
-                folderId: prompt.folderId?.replace(regex, newFolder.id),
+                folderId: updateFolderId(prompt.folderId),
               }),
             ),
           );
 
-          const updatedOpenedFoldersIds = openedFoldersIds.map((id) =>
-            id === payload.folderId || id.startsWith(`${payload.folderId}/`)
-              ? id.replace(regex, newFolder.id)
-              : id,
+          const updatedOpenedFoldersIds = openedFoldersIds.map(
+            (id) => updateFolderId(id)!,
           );
 
           const actions: Observable<AnyAction>[] = [];
@@ -287,7 +275,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
                   PromptsActions.updatePrompt({
                     id: prompt.id,
                     values: {
-                      folderId: prompt.folderId?.replace(regex, newFolder.id),
+                      folderId: updateFolderId(prompt.folderId),
                     },
                   }),
                 ),
