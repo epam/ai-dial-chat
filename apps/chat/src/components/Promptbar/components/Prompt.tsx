@@ -71,7 +71,9 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
   );
-  const newFolderName = useAppSelector(PromptsSelectors.selectNewFolderName);
+  const newFolderName = useAppSelector((state) =>
+    PromptsSelectors.selectNewFolderName(state, prompt.folderId),
+  );
 
   const { refs, context } = useFloating({
     open: isContextMenu,

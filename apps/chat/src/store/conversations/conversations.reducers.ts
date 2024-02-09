@@ -363,7 +363,10 @@ export const conversationsSlice = createSlice({
           // custom name
           payload?.name ??
           // default name with counter
-          ConversationsSelectors.selectNewFolderName({ conversations: state }),
+          ConversationsSelectors.selectNewFolderName(
+            { conversations: state },
+            payload?.parentId,
+          ),
         type: FolderType.Chat,
       });
 

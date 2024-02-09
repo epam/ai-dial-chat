@@ -129,6 +129,15 @@ export const compareConversationsByDate = (
   return -1;
 };
 
+const removePostfix = (name: string) => {
+  const regex = / \d{1,3}$/;
+  let newName = name.trim();
+  while (regex.test(newName)) {
+    newName = newName.replace(regex, '').trim();
+  }
+  return newName;
+};
+
 export const isValidConversationForCompare = (
   selectedConversation: Conversation,
   candidate: ConversationInfo,
@@ -146,8 +155,9 @@ export const isValidConversationForCompare = (
   if (candidate.id === selectedConversation.id) {
     return false;
   }
-
-  return true;
+  return (
+    removePostfix(selectedConversation.name) === removePostfix(candidate.name)
+  );
 };
 
 export const isChosenConversationValidForCompare = (

@@ -203,8 +203,7 @@ export const PromptSection = ({
   );
 
   const rootFolders = useMemo(
-    () =>
-      folders.filter(({ folderId }) => !folderId),
+    () => folders.filter(({ folderId }) => !folderId),
     [folders],
   );
 

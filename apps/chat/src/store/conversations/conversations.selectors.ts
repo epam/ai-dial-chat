@@ -525,9 +525,15 @@ export const selectAreSelectedConversationsLoaded = createSelector(
 );
 // default name with counter
 export const selectNewFolderName = createSelector(
-  [selectFolders],
-  (folders) => {
-    return getNextDefaultName(translate(DEFAULT_FOLDER_NAME), folders);
+  [
+    selectFolders,
+    (_state: RootState, folderId: string | undefined) => folderId,
+  ],
+  (folders, folderId) => {
+    return getNextDefaultName(
+      translate(DEFAULT_FOLDER_NAME),
+      folders.filter((f) => f.folderId === folderId),
+    );
   },
 );
 

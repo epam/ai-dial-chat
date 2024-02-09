@@ -139,8 +139,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const folderStatus = useAppSelector(
     ConversationsSelectors.selectFoldersStatus,
   );
-  const newFolderName = useAppSelector(
-    ConversationsSelectors.selectNewFolderName,
+  const newFolderName = useAppSelector((state) =>
+    ConversationsSelectors.selectNewFolderName(state, conversation.folderId),
   );
 
   const { refs, context } = useFloating({

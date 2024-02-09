@@ -2,22 +2,22 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isValidConversationForCompare } from '@/src/utils/app/conversation';
+import { compareEntitiesByName } from '@/src/utils/app/folders';
 import { isMobile } from '@/src/utils/app/mobile';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { isValidConversationForCompare } from '@/src/utils/app/conversation';
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { Combobox } from '../Common/Combobox';
 import ShareIcon from '../Common/ShareIcon';
-import { compareEntitiesByName } from '@/src/utils/app/folders';
 
 interface OptionProps {
   item: ConversationInfo;
@@ -67,17 +67,21 @@ export const ChatCompareSelect = ({
     ConversationInfo[]
   >([]);
 
-  useEffect(()=> { //TODO: check if already uploaded
-    dispatch(ConversationsActions.uploadConversationsWithFoldersRecursive())
-  },[dispatch])
+  useEffect(() => {
+    //TODO: check if already uploaded
+    dispatch(ConversationsActions.uploadConversationsWithFoldersRecursive());
+  }, [dispatch]);
 
   useEffect(() => {
     if (selectedConversations.length === 1) {
       const selectedConversation = selectedConversations[0];
 
-      const comparableConversations = conversations
-        .filter((conv) => isValidConversationForCompare(selectedConversation, conv));
-      setComparableConversations(comparableConversations.sort(compareEntitiesByName));
+      const comparableConversations = conversations.filter((conv) =>
+        isValidConversationForCompare(selectedConversation, conv),
+      );
+      setComparableConversations(
+        comparableConversations.sort(compareEntitiesByName),
+      );
     }
   }, [conversations, selectedConversations]);
 

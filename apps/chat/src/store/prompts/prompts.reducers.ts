@@ -251,7 +251,12 @@ export const promptsSlice = createSlice({
           // custom name
           payload?.name ??
           // default name with counter
-          PromptsSelectors.selectNewFolderName({ prompts: state }),
+          PromptsSelectors.selectNewFolderName(
+            {
+              prompts: state,
+            },
+            payload?.parentId,
+          ),
         type: FolderType.Prompt,
       });
 
