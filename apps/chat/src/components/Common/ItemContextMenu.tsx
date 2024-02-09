@@ -13,7 +13,7 @@ import {
   IconUserShare,
   IconWorldShare,
 } from '@tabler/icons-react';
-import { MouseEventHandler, useMemo } from 'react';
+import { MouseEventHandler, useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -55,6 +55,7 @@ interface ItemContextMenuProps {
   onPublishUpdate?: MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
   onDuplicate?: MouseEventHandler<unknown>;
+  onOpenMoveTo?: () => void;
 }
 
 export default function ItemContextMenu({
@@ -79,6 +80,7 @@ export default function ItemContextMenu({
   onPublishUpdate,
   onOpenChange,
   onDuplicate,
+  onOpenMoveTo,
 }: ItemContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isPublishingEnabled = useAppSelector((state) =>
@@ -90,6 +92,13 @@ export default function ItemContextMenu({
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, entity, featureType),
   );
+
+  const handleOpenMoveTo = useCallback((isOpen: boolean) => {
+    if (onOpenMoveTo && isOpen) {
+      onOpenMoveTo();
+    }
+  }, []);
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -181,6 +190,7 @@ export default function ItemContextMenu({
         dataQa: 'move-to',
         Icon: IconFolderShare,
         className: 'max-md:hidden',
+        onChildMenuOpenChange: handleOpenMoveTo,
         childMenuItems: [
           {
             name: t('New folder'),

@@ -1999,6 +1999,38 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
 //     ),
 //   );
 
+const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.uploadConversationsWithFoldersRecursive.match),
+    switchMap(() =>
+      ConversationService.getConversations(undefined, true).pipe(
+        switchMap((conversations) => {
+          const conv = conversations.flat();
+          const folderIds = Array.from(new Set(conv.map((c) => c.folderId)));
+          const paths = Array.from(
+            new Set(folderIds.flatMap((id) => getAllPathsFromPath(id))),
+          );
+          return concat(
+            of(
+              ConversationsActions.uploadConversationsSuccess({
+                paths: new Set(),
+                conversations: conv,
+              }),
+            ),
+            of(
+              ConversationsActions.uploadFoldersSuccess({
+                paths: new Set(),
+                folders: getFoldersFromPaths(paths, FolderType.Chat),
+                allLoaded: true,
+              }),
+            ),
+          );
+        }),
+        catchError(() => of(ConversationsActions.uploadConversationsFail())),
+      ),
+    ),
+  );
+
 const toggleFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.toggleFolder.match),
@@ -2088,7 +2120,7 @@ export const ConversationsEpics = combineEpics(
 
   uploadConversationsWithFoldersEpic,
   // uploadFoldersEpic,
-  // uploadConversationsEpic,
+  uploadConversationsWithFoldersRecursiveEpic,
   toggleFolderEpic,
   openFolderEpic,
 );

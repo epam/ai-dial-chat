@@ -643,6 +643,7 @@ export const conversationsSlice = createSlice({
       }: PayloadAction<{
         paths: Set<string | undefined>;
         folders: FolderInterface[];
+        allLoaded?: boolean;
       }>,
     ) => {
       state.loadingFolderIds = state.loadingFolderIds.filter(
@@ -658,6 +659,9 @@ export const conversationsSlice = createSlice({
               }
             : f,
       );
+      state.foldersStatus = payload.allLoaded
+        ? UploadStatus.ALL_LOADED
+        : UploadStatus.LOADED;
     },
     uploadFoldersFail: (
       state,
@@ -682,6 +686,10 @@ export const conversationsSlice = createSlice({
     //   state.conversationsStatus = UploadStatus.LOADING;
     // },
 
+    uploadConversationsWithFoldersRecursive: (state) => {
+      state.conversationsStatus = UploadStatus.LOADING;
+    },
+
     uploadConversationsSuccess: (
       state,
       {
@@ -696,9 +704,11 @@ export const conversationsSlice = createSlice({
         return map;
       }, new Map<string, ConversationInfo>());
 
+      const ids = new Set(payload.conversations.map((c) => c.id));
+
       state.conversations = combineEntities(
         payload.conversations.map((conv) =>
-          payload.paths.has(conv.folderId)
+          ids.has(conv.id)
             ? {
                 ...conversationMap.get(conv.id),
                 ...conv,

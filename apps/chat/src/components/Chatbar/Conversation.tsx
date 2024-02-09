@@ -19,7 +19,7 @@ import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { FeatureType, isNotLoaded } from '@/src/types/common';
+import { FeatureType, UploadStatus, isNotLoaded } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
 import {
@@ -135,6 +135,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const isSelected = selectedConversationIds.includes(conversation.id);
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
+  );
+  const folderStatus = useAppSelector(
+    ConversationsSelectors.selectFoldersStatus,
   );
   const newFolderName = useAppSelector(
     ConversationsSelectors.selectNewFolderName,
@@ -327,6 +330,12 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     setIsUnpublishing(false);
   }, []);
 
+  const handleOpenMoveTo = useCallback(() => {
+    if (folderStatus !== UploadStatus.ALL_LOADED) {
+      dispatch(ConversationsActions.uploadConversationsWithFoldersRecursive());
+    }
+  }, [dispatch, folderStatus]);
+
   const handleMoveToFolder = useCallback(
     ({
       folderId,
@@ -506,12 +515,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onUnpublish={handleOpenUnpublishing}
             onOpenChange={setIsContextMenu}
             isOpen={isContextMenu}
+            onOpenMoveTo={handleOpenMoveTo}
           />
         </div>
       )}
       <div className="md:hidden">
         {isShowMoveToModal && (
           <MoveToFolderMobileModal
+            onOpen={handleOpenMoveTo}
             onClose={() => {
               setIsShowMoveToModal(false);
             }}
