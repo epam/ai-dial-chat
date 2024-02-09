@@ -97,7 +97,7 @@ export const ChatCompareSelect = ({
           <span className="text-secondary">
             (
             {t(
-              'Note: only conversations with same user messages can be compared',
+              'Note: only conversations with the same count of user messages can be compared',
             )}
             )
           </span>
