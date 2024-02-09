@@ -22,6 +22,7 @@
     "affected:build": "nx affected -t build",
     "affected:test": "nx affected -t test",
     "affected:test:coverage": "nx affected -t test",
+    "affected:test:watch": "nx affected -t test",
     "affected:e2e": "nx affected -t e2e",
     "affected:lint": "nx affected -t lint",
     "affected:lint:fix": "nx affected -t lint:fix",
