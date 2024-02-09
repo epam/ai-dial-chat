@@ -66,7 +66,6 @@ import { translate } from '@/src/utils/app/translation';
 import {
   ChatBody,
   Conversation,
-  ConversationInfo,
   Message,
   MessageSettings,
   Playback,
@@ -235,9 +234,10 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(({ names, lastConversation, conversations }) =>
       forkJoin({
         names: of(names),
-        lastConversation: lastConversation
-          ? ConversationService.getConversation(lastConversation)
-          : of(lastConversation),
+        lastConversation:
+          lastConversation && lastConversation.status !== UploadStatus.LOADED
+            ? ConversationService.getConversation(lastConversation)
+            : (of(lastConversation) as Observable<Conversation>),
         conversations: of(conversations),
       }),
     ),
@@ -1802,17 +1802,16 @@ const playbackCancelEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const uploadConversationsByIdsEpic: AppEpic = (action$) =>
+const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.uploadConversationsByIds.match),
     switchMap(({ payload }) => {
-      const conversationInfos = payload.conversationIds.map((id: string) =>
-        parseConversationId(id),
-      ) as ConversationInfo[];
       return forkJoin({
         uploadedConversations: zip(
-          conversationInfos.map((info) =>
-            ConversationService.getConversation(info),
+          payload.conversationIds.map((id) =>
+            ConversationService.getConversation(
+              ConversationsSelectors.selectConversation(state$.value, id)!,
+            ),
           ),
         ),
         setIds: of(new Set(payload.conversationIds as string[])),
@@ -1897,9 +1896,7 @@ const getOrUploadConversation = (
 
   if (conversation?.status !== UploadStatus.LOADED) {
     return forkJoin({
-      conversation: ConversationService.getConversation(
-        parseConversationId(payload.id),
-      ),
+      conversation: ConversationService.getConversation(conversation),
       payload: of(payload),
     });
   } else {
