@@ -17,7 +17,10 @@ import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
-import { combineEntities } from '@/src/utils/app/common';
+import {
+  combineEntities,
+  updateEntitiesFoldersAndIds,
+} from '@/src/utils/app/common';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import {
   addGeneratedFolderId,
@@ -25,7 +28,6 @@ import {
   getAllPathsFromPath,
   getFolderFromPath,
   getFolderIdByPath,
-  getFoldersFromPaths,
   getTemporaryFoldersToPublish,
   splitPath,
   updateMovedFolderId,
@@ -39,7 +41,7 @@ import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
 
@@ -75,7 +77,6 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       (action) =>
         PromptsActions.createFolder.match(action) ||
         PromptsActions.deleteFolder.match(action) ||
-        PromptsActions.renameFolder.match(action) ||
         PromptsActions.addFolders.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action) ||
@@ -213,24 +214,13 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
             FeatureType.Prompt,
           );
 
-          const allFolderIds = prompts.map(
-            (prompt) => prompt.folderId as string,
-          );
-
-          const updatedExistedFolders = folders.map((f: FolderInterface) => ({
-            ...f,
-            id: updateFolderId(f.id)!,
-            folderId: updateFolderId(f.folderId),
-          }));
-
-          const newUniqueFolderIds = Array.from(new Set(allFolderIds)).map(
-            (id) => updateFolderId(id),
-          );
-
-          const updatedFolders = combineEntities(
-            getFoldersFromPaths(newUniqueFolderIds, FolderType.Prompt),
-            updatedExistedFolders,
-          );
+          const { updatedFolders, updatedOpenedFoldersIds } =
+            updateEntitiesFoldersAndIds(
+              prompts,
+              folders,
+              updateFolderId,
+              openedFoldersIds,
+            );
 
           const updatedPrompts = combineEntities(
             allPrompts.map((prompt) =>
@@ -245,10 +235,6 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
                 folderId: updateFolderId(prompt.folderId),
               }),
             ),
-          );
-
-          const updatedOpenedFoldersIds = openedFoldersIds.map(
-            (id) => updateFolderId(id)!,
           );
 
           const actions: Observable<AnyAction>[] = [];

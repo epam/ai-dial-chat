@@ -314,22 +314,6 @@ export const promptsSlice = createSlice({
     deleteAllTemporaryFolders: (state) => {
       state.temporaryFolders = [];
     },
-    renameFolder: (
-      state,
-      { payload }: PayloadAction<{ folderId: string; name: string }>,
-    ) => {
-      const name = payload.name.trim();
-      state.folders = state.folders.map((folder) => {
-        if (folder.id === payload.folderId) {
-          return {
-            ...folder,
-            name,
-          };
-        }
-
-        return folder;
-      });
-    },
     renameTemporaryFolder: (
       state,
       { payload }: PayloadAction<{ folderId: string; name: string }>,
