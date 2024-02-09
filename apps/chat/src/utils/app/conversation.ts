@@ -142,12 +142,6 @@ export const isValidConversationForCompare = (
   selectedConversation: Conversation,
   candidate: ConversationInfo,
 ): boolean => {
-  if (candidate.status === UploadStatus.LOADED) {
-    return isChosenConversationValidForCompare(
-      selectedConversation,
-      candidate as Conversation,
-    );
-  }
   if (candidate.isReplay || candidate.isPlayback) {
     return false;
   }

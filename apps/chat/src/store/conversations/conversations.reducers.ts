@@ -53,7 +53,7 @@ export const conversationsSlice = createSlice({
   reducers: {
     init: (state) => state,
     initSelectedConversations: (state) => state,
-    initFoldersEndConversations: (state) => state,
+    initFoldersAndConversations: (state) => state,
     saveConversation: (state, _action: PayloadAction<Conversation>) => state,
     recreateConversation: (
       state,

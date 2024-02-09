@@ -10,11 +10,8 @@ import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -65,16 +62,9 @@ export const ChatCompareSelectView = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const dispatch = useAppDispatch();
-
   const [comparableConversations, setComparableConversations] = useState<
     ConversationInfo[]
   >([]);
-
-  useEffect(() => {
-    //TODO: check if already uploaded
-    dispatch(ConversationsActions.uploadConversationsWithFoldersRecursive());
-  }, [dispatch]);
 
   useEffect(() => {
     if (selectedConversations.length === 1) {

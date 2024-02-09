@@ -98,7 +98,7 @@ const initEpic: AppEpic = (action$) =>
     switchMap(() =>
       concat(
         of(ConversationsActions.initSelectedConversations()),
-        of(ConversationsActions.initFoldersEndConversations()),
+        of(ConversationsActions.initFoldersAndConversations()),
       ),
     ),
   );
@@ -171,15 +171,18 @@ const initSelectedConversationsEpic: AppEpic = (action$) =>
           ),
         );
       }
+      actions.push(
+        of(ConversationsActions.uploadConversationsWithFoldersRecursive()),
+      );
 
       return concat(...actions);
     }),
   );
 
-const initFoldersEndConversationsEpic: AppEpic = (action$) =>
+const initFoldersAndConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter((action) =>
-      ConversationsActions.initFoldersEndConversations.match(action),
+      ConversationsActions.initFoldersAndConversations.match(action),
     ),
     switchMap(() => ConversationService.getSelectedConversationsIds()),
     switchMap((selectedIds) => {
@@ -2108,7 +2111,7 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const openFolderEpic: AppEpic = (action$) =>
+const openFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>
@@ -2116,12 +2119,12 @@ const openFolderEpic: AppEpic = (action$) =>
         action.payload.featureType === FeatureType.Chat,
     ),
     switchMap(({ payload }) => {
-      // const folder = ConversationsSelectors.selectFolders(state$.value).find(
-      //   (f) => f.id === payload.id,
-      // );
-      // if (folder?.status === UploadStatus.LOADED) {
-      //   return EMPTY;
-      // }
+      const folder = ConversationsSelectors.selectFolders(state$.value).find(
+        (f) => f.id === payload.id,
+      );
+      if (folder?.status === UploadStatus.LOADED) {
+        return EMPTY;
+      }
       return concat(
         of(
           ConversationsActions.uploadConversationsWithFolders({
@@ -2136,7 +2139,7 @@ export const ConversationsEpics = combineEpics(
   // init
   initEpic,
   initSelectedConversationsEpic,
-  initFoldersEndConversationsEpic,
+  initFoldersAndConversationsEpic,
   // update
   updateConversationEpic,
   saveConversationEpic,

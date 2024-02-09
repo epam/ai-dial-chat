@@ -17,6 +17,7 @@ export class ConversationApiStorage extends ApiEntityStorage<
     return {
       ...entity,
       ...info,
+      lastActivityDate: info.lastActivityDate,
       model: entity.model,
     };
   }
