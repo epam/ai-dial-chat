@@ -25,7 +25,8 @@ export const getAssitantModelId = (
 export const getValidEntitiesFromIds = <T>(
   entitiesIds: string[],
   addonsMap: Partial<Record<string, T>>,
-) => entitiesIds.map((entityId) => addonsMap[entityId]).filter(Boolean) as T[];
+): T[] =>
+  entitiesIds.map((entityId) => addonsMap[entityId]).filter(Boolean) as T[];
 
 export const getSelectedAddons = (
   selectedAddons: string[],
@@ -45,7 +46,7 @@ export const getSelectedAddons = (
 export const isSettingsChanged = (
   conversation: Conversation,
   newSettings: MessageSettings,
-) => {
+): boolean => {
   const isChanged = Object.keys(newSettings).some((key) => {
     const convSetting = conversation[key as keyof Conversation];
     const newSetting = newSettings[key as keyof MessageSettings];
@@ -77,7 +78,7 @@ export const getNewConversationName = (
   conversation: Conversation,
   message: Message,
   updatedMessages: Message[],
-) => {
+): string => {
   if (
     conversation.replay.isReplay ||
     updatedMessages.length !== 2 ||
@@ -120,7 +121,7 @@ export const parseConversationId = (id: string): ConversationInfo => {
 export const compareConversationsByDate = (
   convA: ConversationInfo,
   convB: ConversationInfo,
-) => {
+): number => {
   if (convA.lastActivityDate === convB.lastActivityDate) {
     return compareEntitiesByName(convA, convB);
   }
@@ -132,7 +133,7 @@ export const compareConversationsByDate = (
   return -1;
 };
 
-const removePostfix = (name: string) => {
+const removePostfix = (name: string): string => {
   const regex = / \d{1,3}$/;
   let newName = name.trim();
   while (regex.test(newName)) {
@@ -160,7 +161,7 @@ export const isValidConversationForCompare = (
 export const isChosenConversationValidForCompare = (
   selectedConversation: Conversation,
   chosenSelection: Conversation,
-) => {
+): boolean => {
   if (
     chosenSelection.status !== UploadStatus.LOADED ||
     chosenSelection.replay?.isReplay ||

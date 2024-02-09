@@ -9,7 +9,7 @@ import { PromptInfo } from '@/src/types/prompt';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-settings';
 
-import { OpenAIError } from './types';
+import { OpenAIError } from './error';
 
 export enum ApiKeys {
   Files = 'files',

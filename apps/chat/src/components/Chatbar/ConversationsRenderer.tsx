@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 
-import { getConversationApiKey } from '@/src/utils/server/api';
-
 import { Conversation } from '@/src/types/chat';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';

@@ -1991,56 +1991,6 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
     ),
   );
 
-// const uploadFoldersEpic: AppEpic = (action$) =>
-//   action$.pipe(
-//     filter(ConversationsActions.uploadFolders.match),
-//     switchMap(({ payload }) =>
-//       zip(
-//         payload.paths.map((path) =>
-//           ConversationService.getConversationsFolders(path),
-//         ),
-//       ).pipe(
-//         switchMap((folders) =>
-//           concat(
-//             of(
-//               ConversationsActions.uploadFoldersSuccess({
-//                 paths: new Set(payload.paths),
-//                 folders: folders.flat(),
-//               }),
-//             ),
-//           ),
-//         ),
-//         catchError(() =>
-//           of(
-//             ConversationsActions.uploadFoldersFail({
-//               paths: new Set(payload.paths),
-//             }),
-//           ),
-//         ),
-//       ),
-//     ),
-//   );
-
-// const uploadConversationsEpic: AppEpic = (action$) =>
-//   action$.pipe(
-//     filter(ConversationsActions.uploadConversations.match),
-//     switchMap(({ payload }) =>
-//       zip(
-//         payload.paths.map((path: string | undefined) =>
-//           ConversationService.getConversations(path),
-//         ),
-//       ).pipe(
-//         map((conversations) =>
-//           ConversationsActions.uploadConversationsSuccess({
-//             paths: new Set(payload.paths),
-//             conversations: conversations.flat(),
-//           }),
-//         ),
-//         catchError(() => of(ConversationsActions.uploadConversationsFail())),
-//       ),
-//     ),
-//   );
-
 const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.uploadConversationsWithFoldersRecursive.match),
@@ -2161,7 +2111,6 @@ export const ConversationsEpics = combineEpics(
   uploadConversationsByIdsEpic,
 
   uploadConversationsWithFoldersEpic,
-  // uploadFoldersEpic,
   uploadConversationsWithFoldersRecursiveEpic,
   toggleFolderEpic,
   openFolderEpic,

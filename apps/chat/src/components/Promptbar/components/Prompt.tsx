@@ -216,7 +216,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       );
       setIsContextMenu(false);
     },
-    [dispatch, newFolderName],
+    [dispatch, newFolderName, prompt.id],
   );
 
   const handleClose = useCallback(() => {
