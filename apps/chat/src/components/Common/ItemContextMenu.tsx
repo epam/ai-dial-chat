@@ -93,11 +93,14 @@ export default function ItemContextMenu({
     isEntityOrParentsExternal(state, entity, featureType),
   );
 
-  const handleOpenMoveTo = useCallback((isOpen: boolean) => {
-    if (onOpenMoveTo && isOpen) {
-      onOpenMoveTo();
-    }
-  }, []);
+  const handleOpenMoveTo = useCallback(
+    (isOpen: boolean) => {
+      if (onOpenMoveTo && isOpen) {
+        onOpenMoveTo();
+      }
+    },
+    [onOpenMoveTo],
+  );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -265,6 +268,7 @@ export default function ItemContextMenu({
       onExport,
       onOpenExportModal,
       onOpenMoveToModal,
+      handleOpenMoveTo,
       folders,
       isSharingEnabled,
       onShare,

@@ -253,9 +253,12 @@ export const getFilteredFolders = ({
       .flatMap((fid) => getParentAndCurrentFolderIdsById(folders, fid)),
   );
 
-  return folders.filter(
-    (folder) => filteredIds.has(folder.id) && filteredFolderIds.has(folder.id),
-  );
+  return folders
+    .filter(
+      (folder) =>
+        filteredIds.has(folder.id) && filteredFolderIds.has(folder.id),
+    )
+    .sort(compareEntitiesByName);
 };
 
 export const getParentAndChildFolders = (

@@ -204,7 +204,7 @@ export const PromptSection = ({
 
   const rootFolders = useMemo(
     () =>
-      folders.filter(({ folderId }) => !folderId).sort(compareEntitiesByName),
+      folders.filter(({ folderId }) => !folderId),
     [folders],
   );
 
