@@ -4,20 +4,23 @@ import { useTranslation } from 'next-i18next';
 
 import { isMobile } from '@/src/utils/app/mobile';
 
-import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { isValidConversationForCompare } from '@/src/utils/app/conversation';
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { Combobox } from '../Common/Combobox';
 import ShareIcon from '../Common/ShareIcon';
+import { compareEntitiesByName } from '@/src/utils/app/folders';
 
 interface OptionProps {
-  item: Conversation;
+  item: ConversationInfo;
 }
 
 const Option = ({ item }: OptionProps) => {
@@ -48,7 +51,7 @@ const Option = ({ item }: OptionProps) => {
 interface Props {
   conversations: ConversationInfo[];
   selectedConversations: Conversation[];
-  onConversationSelect: (conversation: Conversation) => void;
+  onConversationSelect: (conversation: ConversationInfo) => void;
 }
 
 export const ChatCompareSelect = ({
@@ -58,37 +61,23 @@ export const ChatCompareSelect = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
+  const dispatch = useAppDispatch();
+
   const [comparableConversations, setComparableConversations] = useState<
-    Conversation[]
+    ConversationInfo[]
   >([]);
+
+  useEffect(()=> { //TODO: check if already uploaded
+    dispatch(ConversationsActions.uploadConversationsWithFoldersRecursive())
+  },[dispatch])
 
   useEffect(() => {
     if (selectedConversations.length === 1) {
       const selectedConversation = selectedConversations[0];
 
-      const comparableConversations = (conversations as Conversation[]) // TODO: how to filter for comparison?
-        .filter((conv) => !conv.replay.isReplay)
-        .filter((conv) => {
-          if (conv.id === selectedConversation.id) {
-            return false;
-          }
-          const convUserMessages = conv.messages.filter(
-            (message) => message.role === Role.User,
-          );
-          const selectedConvUserMessages = selectedConversation.messages.filter(
-            (message) => message.role === Role.User,
-          );
-
-          if (convUserMessages.length !== selectedConvUserMessages.length) {
-            return false;
-          }
-
-          return selectedConvUserMessages.every(
-            (message, index) =>
-              message.content === convUserMessages[index].content,
-          );
-        });
-      setComparableConversations(comparableConversations);
+      const comparableConversations = conversations
+        .filter((conv) => isValidConversationForCompare(selectedConversation, conv));
+      setComparableConversations(comparableConversations.sort(compareEntitiesByName));
     }
   }, [conversations, selectedConversations]);
 
@@ -113,8 +102,8 @@ export const ChatCompareSelect = ({
         {comparableConversations && (
           <Combobox
             items={comparableConversations}
-            getItemLabel={(conversation: Conversation) => conversation.name}
-            getItemValue={(conversation: Conversation) => conversation.id}
+            getItemLabel={(conversation: ConversationInfo) => conversation.name}
+            getItemValue={(conversation: ConversationInfo) => conversation.id}
             itemRow={Option}
             placeholder={
               (comparableConversations?.length > 0
@@ -124,9 +113,9 @@ export const ChatCompareSelect = ({
             disabled={!comparableConversations?.length || isMobile()}
             notFoundPlaceholder={t('No conversations available') || ''}
             onSelectItem={(itemID: string) => {
-              const selectedConversation = comparableConversations.filter(
+              const selectedConversation = comparableConversations.find(
                 (conv) => conv.id === itemID,
-              )[0];
+              );
               if (selectedConversation) {
                 onConversationSelect(selectedConversation);
               }

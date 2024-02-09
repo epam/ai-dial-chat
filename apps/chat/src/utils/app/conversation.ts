@@ -3,8 +3,9 @@ import {
   ConversationInfo,
   Message,
   MessageSettings,
+  Role,
 } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
+import { EntityType, UploadStatus } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
@@ -126,4 +127,55 @@ export const compareConversationsByDate = (
     return dateB - dateA;
   }
   return -1;
+};
+
+export const isValidConversationForCompare = (
+  selectedConversation: Conversation,
+  candidate: ConversationInfo,
+): boolean => {
+  if (candidate.status === UploadStatus.LOADED) {
+    return isChosenConversationValidForCompare(
+      selectedConversation,
+      candidate as Conversation,
+    );
+  }
+  if (candidate.isReplay || candidate.isPlayback) {
+    return false;
+  }
+
+  if (candidate.id === selectedConversation.id) {
+    return false;
+  }
+
+  return true;
+};
+
+export const isChosenConversationValidForCompare = (
+  selectedConversation: Conversation,
+  chosenSelection: Conversation,
+) => {
+  if (
+    chosenSelection.status !== UploadStatus.LOADED ||
+    chosenSelection.replay?.isReplay ||
+    chosenSelection.playback?.isPlayback
+  ) {
+    return false;
+  }
+  if (chosenSelection.id === selectedConversation.id) {
+    return false;
+  }
+  const convUserMessages = chosenSelection.messages.filter(
+    (message) => message.role === Role.User,
+  );
+  const selectedConvUserMessages = selectedConversation.messages.filter(
+    (message) => message.role === Role.User,
+  );
+
+  if (convUserMessages.length !== selectedConvUserMessages.length) {
+    return false;
+  }
+
+  return selectedConvUserMessages.every(
+    (message, index) => message.content === convUserMessages[index].content,
+  );
 };

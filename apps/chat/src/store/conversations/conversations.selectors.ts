@@ -510,6 +510,13 @@ export const selectFoldersStatus = createSelector([rootSelector], (state) => {
   return state.foldersStatus;
 });
 
+export const selectConversationsStatus = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.conversationsStatus;
+  },
+);
+
 export const selectAreSelectedConversationsLoaded = createSelector(
   [rootSelector],
   (state) => {
