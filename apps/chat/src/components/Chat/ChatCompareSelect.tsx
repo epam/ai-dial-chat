@@ -28,6 +28,7 @@ const Option = ({ item }: OptionProps) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const defaultModelId = useAppSelector(SettingsSelectors.selectDefaultModelId);
 
+
   const model = useMemo(
     () =>
       modelsMap[item.model?.id] ||
@@ -55,12 +56,16 @@ interface Props {
   onConversationSelect: (conversation: ConversationInfo) => void;
 }
 
-export const ChatCompareSelectView = ({
+export const ChatCompareSelect = ({
   conversations,
   selectedConversations,
   onConversationSelect,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
+  const isLoading = !!useAppSelector(
+    ConversationsSelectors.selectIsCompareLoading,
+  );
 
   const [comparableConversations, setComparableConversations] = useState<
     ConversationInfo[]
@@ -81,10 +86,10 @@ export const ChatCompareSelectView = ({
 
   return (
     <div
-      className="flex grow flex-col items-center justify-center p-5 py-2"
+      className="relative flex grow flex-col items-center justify-center p-5 py-2"
       data-qa="conversation-to-compare"
     >
-      <div className="flex max-w-[465px] flex-col gap-3 rounded bg-layer-2 p-6">
+      <div className="flex max-w-[465px] flex-col gap-3 rounded bg-layer-2 p-6 ">
         <div className="flex flex-col gap-2 text-center">
           <h5 className="text-base font-semibold">
             {t('Select conversation to compare with')}
@@ -121,16 +126,7 @@ export const ChatCompareSelectView = ({
           />
         )}
       </div>
+      {isLoading && <ChatLoader dataQa="compare-loader" containerClassName='absolute bg-blackout h-full' />}
     </div>
   );
-};
-
-export const ChatCompareSelect = (props: Props) => {
-  const isLoading = useAppSelector(
-    ConversationsSelectors.selectIsCompareLoading,
-  );
-  if (isLoading) {
-    return <ChatLoader dataQa="compare-loader" />;
-  }
-  return <ChatCompareSelectView {...props} />;
 };

@@ -134,7 +134,7 @@ export const Combobox = <T,>({
         <div className="relative flex rounded border border-primary focus-within:border-accent-primary ">
           <input
             disabled={disabled}
-            placeholder={placeholder || ''}
+            placeholder={!selectedItem ? placeholder || '' : ''}
             className="w-full bg-transparent px-3 py-2.5 outline-none placeholder:text-secondary"
             {...getInputProps({
               ref: refs.reference as RefObject<HTMLInputElement>,
