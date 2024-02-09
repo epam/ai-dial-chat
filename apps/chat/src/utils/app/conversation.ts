@@ -8,7 +8,7 @@ import { EntityType } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
-import { constructPath } from './file';
+import { constructPath, notAllowedSymbolsRegex } from './file';
 import { splitPath } from './folders';
 
 export const getAssitantModelId = (
@@ -84,7 +84,7 @@ export const getNewConversationName = (
   ) {
     return conversation.name;
   }
-  const content = message.content.trim();
+  const content = message.content.replaceAll(notAllowedSymbolsRegex, '').trim();
   if (content.length > 0) {
     return content.length > 160 ? content.substring(0, 160) + '...' : content;
   } else if (message.custom_content?.attachments?.length) {

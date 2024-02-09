@@ -41,7 +41,6 @@ import {
   parseConversationId,
 } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
-import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   generateNextName,
@@ -845,8 +844,12 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
     map(({ payload }) => ({
       payload,
       modelsMap: ModelsSelectors.selectModelsMap(state$.value),
+      conversations: ConversationsSelectors.selectConversations(state$.value),
+      selectedConversations: ConversationsSelectors.selectSelectedConversations(
+        state$.value,
+      ),
     })),
-    map(({ payload, modelsMap }) => {
+    map(({ payload, modelsMap, conversations, selectedConversations }) => {
       const messageModel: Message[EntityType.Model] = {
         id: payload.conversation.model.id,
       };
@@ -879,11 +882,16 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           : payload.conversation.messages
       ).concat(userMessage, assistantMessage);
 
-      const newConversationName = getNewConversationName(
-        payload.conversation,
-        payload.message,
-        updatedMessages,
-      ).replaceAll(notAllowedSymbolsRegex, '');
+      const newConversationName = getNextDefaultName(
+        getNewConversationName(
+          payload.conversation,
+          payload.message,
+          updatedMessages,
+        ),
+        conversations,
+        Math.max(selectedConversations.indexOf(payload.conversation), 0),
+        true,
+      );
 
       const updatedConversation: Conversation = addGeneratedConversationId({
         ...payload.conversation,
