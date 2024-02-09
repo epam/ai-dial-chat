@@ -96,9 +96,9 @@ const PromptFolderTemplate = ({
             movedFolder.folderId !== folder.id
           ) {
             dispatch(
-              PromptsActions.moveFolder({
+              PromptsActions.updateFolder({
                 folderId: movedFolder.id,
-                newParentFolderId: folder.id,
+                values: { folderId: folder.id },
               }),
             );
           }
@@ -111,9 +111,9 @@ const PromptFolderTemplate = ({
   const onDropBetweenFolders = useCallback(
     (folder: FolderInterface, parentFolderId: string | undefined) => {
       dispatch(
-        PromptsActions.moveFolder({
+        PromptsActions.updateFolder({
           folderId: folder.id,
-          newParentFolderId: parentFolderId,
+          values: { folderId: parentFolderId },
         }),
       );
     },
