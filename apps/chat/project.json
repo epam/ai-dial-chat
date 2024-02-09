@@ -45,6 +45,11 @@
         "reportsDirectory": "../../coverage/libs/shared"
       }
     },
+    "test:watch": {
+      "options": {
+        "reportsDirectory": "../../coverage/libs/shared"
+      }
+    },
     "test:coverage": {
       "options": {
         "reportsDirectory": "../../coverage/libs/shared"

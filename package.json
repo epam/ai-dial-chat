@@ -8,6 +8,7 @@
     "graph": "nx graph",
     "build": "nx run-many -t build",
     "test": "nx run-many -t test",
+    "test:watch": "nx run-many -t test:watch",
     "test:coverage": "nx run-many -t test:coverage",
     "publish": "nx run-many -t publish",
     "publish:dry": "nx run-many -t publish --output-style=static --dry",
