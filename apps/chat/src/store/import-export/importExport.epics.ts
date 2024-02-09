@@ -76,14 +76,6 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
         bucket: BucketService.getBucket(),
       }),
     ),
-    // map(({ payload }) => ({
-    //   conversation: ConversationsSelectors.selectConversation(
-    //     state$.value,
-    //     payload.conversationId,
-    //   ) as Conversation, //TODO: fix in https://github.com/epam/ai-dial-chat/issues/640
-    //   withAttachments: payload.withAttachments,
-    //   bucket: BucketService.getBucket(),
-    // })),
     switchMap(({ conversationAndPayload, withAttachments, bucket }) => {
       const { conversation } = conversationAndPayload;
       if (!conversation) {
