@@ -153,9 +153,9 @@ const PromptFolderTemplate = ({
         handleDrop={handleDrop}
         onRenameFolder={(name, folderId) => {
           dispatch(
-            PromptsActions.renameFolder({
+            PromptsActions.updateFolder({
               folderId,
-              name,
+              values: { name },
             }),
           );
         }}

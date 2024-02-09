@@ -77,7 +77,6 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       (action) =>
         PromptsActions.createFolder.match(action) ||
         PromptsActions.deleteFolder.match(action) ||
-        PromptsActions.renameFolder.match(action) ||
         PromptsActions.addFolders.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action) ||
