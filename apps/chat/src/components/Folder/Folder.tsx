@@ -147,7 +147,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, currentFolder, FeatureType.Chat),
   );
-  const openTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     // only if search term was changed after first render
@@ -359,13 +358,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         dragDropElement.current?.contains(evt.target as Node) &&
         isParentFolder(dragDropElement.current, evt.target as Element)
       ) {
-        openTimeoutRef.current = setTimeout(
-          () =>
-            dispatch(
-              UIActions.openFolder({ id: currentFolder.id, featureType }),
-            ),
-          500,
-        );
+        dispatch(UIActions.openFolder({ id: currentFolder.id, featureType }));
         setIsDraggingOver(true);
       }
     },
@@ -376,7 +369,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     (evt: DragEvent) => {
       if (!dragDropElement.current?.contains(evt.relatedTarget as Node)) {
         setIsDraggingOver(false);
-        clearTimeout(openTimeoutRef.current);
         return;
       }
 
@@ -384,7 +376,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         !isParentFolder(dragDropElement.current, evt.relatedTarget as Element)
       ) {
         setIsDraggingOver(false);
-        clearTimeout(openTimeoutRef.current);
       }
     },
     [isParentFolder],
