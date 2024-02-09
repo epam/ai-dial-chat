@@ -60,6 +60,20 @@ export const getSortedEntities = async (token: JWT | null) => {
     const existingModelMapping: OpenAIEntityModel | undefined =
       OpenAIEntityModels[entity.id];
 
+    const maxLength = existingModelMapping
+      ? existingModelMapping.maxLength
+      : defaultModelLimits.maxLength;
+
+    // applications must handle the limit themselves, because they can have complex logic to handle it
+    const fallbackRequestLimit =
+      entity.object === EntityType.Application
+        ? Infinity
+        : defaultModelLimits.requestLimit;
+
+    const requestLimit = existingModelMapping
+      ? existingModelMapping.requestLimit
+      : fallbackRequestLimit;
+
     entities.push({
       id: entity.id,
       name: entity.display_name ?? existingModelMapping?.name ?? entity.id,
@@ -67,12 +81,8 @@ export const getSortedEntities = async (token: JWT | null) => {
       iconUrl: entity.icon_url,
       type: entity.object,
       selectedAddons: entity.addons,
-      ...(existingModelMapping
-        ? {
-            maxLength: existingModelMapping.maxLength,
-            requestLimit: existingModelMapping.requestLimit,
-          }
-        : defaultModelLimits),
+      maxLength,
+      requestLimit,
       inputAttachmentTypes: entity.input_attachment_types,
       maxInputAttachments: entity.max_input_attachments,
     });
