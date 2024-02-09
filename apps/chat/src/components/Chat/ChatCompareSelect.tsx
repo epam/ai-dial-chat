@@ -18,8 +18,8 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { Combobox } from '../Common/Combobox';
+import Loader from '../Common/Loader';
 import ShareIcon from '../Common/ShareIcon';
-import ChatLoader from './ChatLoader';
 
 interface OptionProps {
   item: ConversationInfo;
@@ -154,7 +154,7 @@ export const ChatCompareSelect = ({
         )}
       </div>
       {isLoading && (
-        <ChatLoader
+        <Loader
           dataQa="compare-loader"
           containerClassName="absolute bg-blackout h-full"
         />
