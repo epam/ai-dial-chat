@@ -9,7 +9,7 @@ import {
 } from '@/src/utils/app/folders';
 import {
   PublishedWithMeFilter,
-  doesPromptContainSearchTerm,
+  doesPromptOrConversationContainSearchTerm,
   getMyItemsFilters,
   searchSectionFolders,
 } from '@/src/utils/app/search';
@@ -39,7 +39,8 @@ export const selectFilteredPrompts = createSelector(
   (prompts, filters, searchTerm?) => {
     return prompts.filter(
       (prompt) =>
-        (!searchTerm || doesPromptContainSearchTerm(prompt, searchTerm)) &&
+        (!searchTerm ||
+          doesPromptOrConversationContainSearchTerm(prompt, searchTerm)) &&
         filters.searchFilter(prompt) &&
         (prompt.folderId || filters.sectionFilter(prompt)),
     );
@@ -147,7 +148,7 @@ export const selectSearchedPrompts = createSelector(
   [selectPrompts, selectSearchTerm],
   (prompts, searchTerm) => {
     return prompts.filter((prompt) =>
-      doesPromptContainSearchTerm(prompt, searchTerm),
+      doesPromptOrConversationContainSearchTerm(prompt, searchTerm),
     );
   },
 );

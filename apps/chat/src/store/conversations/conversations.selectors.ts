@@ -13,7 +13,7 @@ import {
 } from '@/src/utils/app/folders';
 import {
   PublishedWithMeFilter,
-  doesConversationContainSearchTerm,
+  doesPromptOrConversationContainSearchTerm,
   getMyItemsFilters,
   searchSectionFolders,
 } from '@/src/utils/app/search';
@@ -51,7 +51,10 @@ export const selectFilteredConversations = createSelector(
     return conversations.filter(
       (conversation) =>
         (!searchTerm ||
-          doesConversationContainSearchTerm(conversation, searchTerm)) &&
+          doesPromptOrConversationContainSearchTerm(
+            conversation,
+            searchTerm,
+          )) &&
         filters.searchFilter(conversation) &&
         (conversation.folderId || filters.sectionFilter(conversation)),
     );
@@ -197,7 +200,7 @@ export const selectSearchedConversations = createSelector(
   [selectConversations, selectSearchTerm],
   (conversations, searchTerm) =>
     conversations.filter((conversation) =>
-      doesConversationContainSearchTerm(conversation, searchTerm),
+      doesPromptOrConversationContainSearchTerm(conversation, searchTerm),
     ),
 );
 
