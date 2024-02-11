@@ -13,6 +13,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
@@ -56,7 +57,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
   }, [onClose]);
 
   const nameOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
+    setName(e.target.value.replaceAll(notAllowedSymbolsRegex, ''));
   };
 
   const descriptionOnChangeHandler = (e: ChangeEvent<HTMLTextAreaElement>) => {

@@ -115,35 +115,46 @@ export const getNextDefaultName = (
   index = 0,
   startWithEmptyPostfix = false,
   includingPublishedWithMe = false,
-) => {
+): string => {
   const prefix = `${defaultName} `;
-  const regex = new RegExp(`^${escapeStringRegexp(prefix)}(\\d{1,3})$`);
+  const regex = new RegExp(`^${escapeStringRegexp(prefix)}(\\d+)$`);
 
   if (!entities.length) {
-    return `${prefix}${1 + index}`;
+    return !startWithEmptyPostfix ? `${prefix}${1 + index}` : defaultName;
   }
 
-  const maxNumber = Math.max(
-    ...entities
-      .filter(
-        (entity) =>
-          !entity.sharedWithMe &&
-          (!entity.publishedWithMe || includingPublishedWithMe) &&
-          (entity.name === defaultName || entity.name.match(regex)),
-      )
-      .map(
-        (entity) =>
-          parseInt(entity.name.replace(prefix, ''), 10) ||
-          (startWithEmptyPostfix ? 0 : 1),
-      ),
-    startWithEmptyPostfix ? -1 : 0,
-  ); // max number
+  const maxNumber =
+    Math.max(
+      ...entities
+        .filter(
+          (entity) =>
+            !entity.sharedWithMe &&
+            (!entity.publishedWithMe || includingPublishedWithMe) &&
+            (entity.name === defaultName || entity.name.match(regex)),
+        )
+        .map(
+          (entity) =>
+            parseInt(entity.name.replace(prefix, ''), 10) ||
+            (startWithEmptyPostfix ? 0 : 1),
+        ),
+      startWithEmptyPostfix ? -1 : 0,
+    ) + index; // max number
+
+  if (maxNumber >= 9999999) {
+    return getNextDefaultName(
+      `${prefix}${maxNumber}`,
+      entities,
+      index,
+      startWithEmptyPostfix,
+      includingPublishedWithMe,
+    );
+  }
 
   if (startWithEmptyPostfix && maxNumber === -1) {
     return defaultName;
   }
 
-  return `${prefix}${maxNumber + 1 + index}`;
+  return `${prefix}${maxNumber + 1}`;
 };
 
 export const generateNextName = (
@@ -152,7 +163,7 @@ export const generateNextName = (
   entities: ShareEntity[],
   index = 0,
 ) => {
-  const regex = new RegExp(`^${defaultName} (\\d{1,3})$`);
+  const regex = new RegExp(`^${defaultName} (\\d+)$`);
 
   return currentName.match(regex)
     ? getNextDefaultName(defaultName, entities, index)

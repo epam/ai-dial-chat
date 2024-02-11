@@ -221,6 +221,6 @@ export const usePromptSelection = (maxLength: number) => {
     handleKeyDownIfShown,
     isRequestSent,
     getPrompt,
-    isPromptLoading: isLoading && isRequestSent,
+    isLoading: isLoading && isRequestSent,
   };
 };

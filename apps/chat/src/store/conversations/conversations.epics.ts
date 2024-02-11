@@ -75,7 +75,6 @@ import { translate } from '@/src/utils/app/translation';
 import {
   ChatBody,
   Conversation,
-  ConversationInfo,
   Message,
   MessageSettings,
   Playback,
@@ -247,9 +246,10 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(({ names, lastConversation, conversations }) =>
       forkJoin({
         names: of(names),
-        lastConversation: lastConversation
-          ? ConversationService.getConversation(lastConversation)
-          : of(lastConversation),
+        lastConversation:
+          lastConversation && lastConversation.status !== UploadStatus.LOADED
+            ? ConversationService.getConversation(lastConversation)
+            : (of(lastConversation) as Observable<Conversation>),
         conversations: of(conversations),
       }),
     ),
@@ -1003,11 +1003,10 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
       payload,
       modelsMap: ModelsSelectors.selectModelsMap(state$.value),
       conversations: ConversationsSelectors.selectConversations(state$.value),
-      selectedConversations: ConversationsSelectors.selectSelectedConversations(
-        state$.value,
-      ),
+      selectedConversationIds:
+        ConversationsSelectors.selectSelectedConversationsIds(state$.value),
     })),
-    map(({ payload, modelsMap, conversations, selectedConversations }) => {
+    map(({ payload, modelsMap, conversations, selectedConversationIds }) => {
       const messageModel: Message[EntityType.Model] = {
         id: payload.conversation.model.id,
       };
@@ -1051,7 +1050,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
             conv.folderId === payload.conversation.folderId &&
             conv.id !== payload.conversation.id,
         ),
-        Math.max(selectedConversations.indexOf(payload.conversation), 0),
+        Math.max(selectedConversationIds.indexOf(payload.conversation.id), 0),
         true,
       );
 
@@ -1973,17 +1972,16 @@ const playbackCancelEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const uploadConversationsByIdsEpic: AppEpic = (action$) =>
+const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.uploadConversationsByIds.match),
     switchMap(({ payload }) => {
-      const conversationInfos = payload.conversationIds.map((id: string) =>
-        parseConversationId(id),
-      ) as ConversationInfo[];
       return forkJoin({
         uploadedConversations: zip(
-          conversationInfos.map((info) =>
-            ConversationService.getConversation(info),
+          payload.conversationIds.map((id) =>
+            ConversationService.getConversation(
+              ConversationsSelectors.selectConversation(state$.value, id)!,
+            ),
           ),
         ),
         setIds: of(new Set(payload.conversationIds as string[])),
@@ -2068,9 +2066,7 @@ const getOrUploadConversation = (
 
   if (conversation?.status !== UploadStatus.LOADED) {
     return forkJoin({
-      conversation: ConversationService.getConversation(
-        parseConversationId(payload.id),
-      ),
+      conversation: ConversationService.getConversation(conversation),
       payload: of(payload),
     });
   } else {
@@ -2165,56 +2161,6 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
       ),
     ),
   );
-
-// const uploadFoldersEpic: AppEpic = (action$) =>
-//   action$.pipe(
-//     filter(ConversationsActions.uploadFolders.match),
-//     switchMap(({ payload }) =>
-//       zip(
-//         payload.paths.map((path) =>
-//           ConversationService.getConversationsFolders(path),
-//         ),
-//       ).pipe(
-//         switchMap((folders) =>
-//           concat(
-//             of(
-//               ConversationsActions.uploadFoldersSuccess({
-//                 paths: new Set(payload.paths),
-//                 folders: folders.flat(),
-//               }),
-//             ),
-//           ),
-//         ),
-//         catchError(() =>
-//           of(
-//             ConversationsActions.uploadFoldersFail({
-//               paths: new Set(payload.paths),
-//             }),
-//           ),
-//         ),
-//       ),
-//     ),
-//   );
-
-// const uploadConversationsEpic: AppEpic = (action$) =>
-//   action$.pipe(
-//     filter(ConversationsActions.uploadConversations.match),
-//     switchMap(({ payload }) =>
-//       zip(
-//         payload.paths.map((path: string | undefined) =>
-//           ConversationService.getConversations(path),
-//         ),
-//       ).pipe(
-//         map((conversations) =>
-//           ConversationsActions.uploadConversationsSuccess({
-//             paths: new Set(payload.paths),
-//             conversations: conversations.flat(),
-//           }),
-//         ),
-//         catchError(() => of(ConversationsActions.uploadConversationsFail())),
-//       ),
-//     ),
-//   );
 
 const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -2338,7 +2284,6 @@ export const ConversationsEpics = combineEpics(
   uploadConversationsByIdsEpic,
 
   uploadConversationsWithFoldersEpic,
-  // uploadFoldersEpic,
   uploadConversationsWithFoldersRecursiveEpic,
   toggleFolderEpic,
   openFolderEpic,

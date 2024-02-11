@@ -30,7 +30,7 @@ export const MoveToFolderMobileModal = ({
   );
 
   useEffect(() => {
-    onOpen && onOpen();
+    onOpen?.();
   }, [onOpen]);
 
   return (

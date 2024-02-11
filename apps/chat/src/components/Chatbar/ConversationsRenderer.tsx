@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 
-import { getConversationApiKey } from '@/src/utils/server/api';
-
 import { Conversation } from '@/src/types/chat';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
@@ -42,7 +40,7 @@ export const ConversationsRenderer = ({
           <div className="flex flex-col gap-1 py-1">
             {conversations.map((conversation) => (
               <ConversationComponent
-                key={getConversationApiKey(conversation)} //TODO: remove temp solution
+                key={conversation.id}
                 item={conversation}
               />
             ))}

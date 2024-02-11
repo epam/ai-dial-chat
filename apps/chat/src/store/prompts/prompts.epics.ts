@@ -48,6 +48,7 @@ import {
 } from '@/src/utils/app/import-export';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
+import { getPromptApiKey } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
@@ -146,9 +147,13 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
         return EMPTY; // TODO: handle?
       }
 
-      const newPrompt = {
-        ...(prompt as Prompt),
+      const newPrompt: Prompt = {
+        ...prompt,
         ...values,
+        id: constructPath(
+          prompt.folderId,
+          getPromptApiKey({ ...prompt, ...values }),
+        ),
       };
 
       return concat(

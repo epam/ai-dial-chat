@@ -42,17 +42,17 @@
     "lint:fix": {},
     "test": {
       "options": {
-        "reportsDirectory": "../../coverage/libs/shared"
+        "reportsDirectory": "../../coverage/apps/chat"
       }
     },
     "test:watch": {
       "options": {
-        "reportsDirectory": "../../coverage/libs/shared"
+        "reportsDirectory": "../../coverage/apps/chat"
       }
     },
     "test:coverage": {
       "options": {
-        "reportsDirectory": "../../coverage/libs/shared"
+        "reportsDirectory": "../../coverage/apps/chat"
       }
     },
     "format": {},
