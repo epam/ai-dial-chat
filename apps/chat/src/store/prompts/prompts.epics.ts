@@ -463,10 +463,6 @@ const publishFolderEpic: AppEpic = (action$, state$) =>
               folder.id === publishRequest.id
                 ? publishRequest.name
                 : folder.name,
-            shareUniqueId:
-              folder.id === publishRequest.id
-                ? publishRequest.shareUniqueId
-                : folder.shareUniqueId,
             publishVersion:
               folder.id === publishRequest.id
                 ? publishRequest.version
@@ -535,7 +531,6 @@ const publishPromptEpic: AppEpic = (action$, state$) =>
             publishedWithMe: true,
             name: publishRequest.name,
             publishVersion: publishRequest.version,
-            shareUniqueId: publishRequest.shareUniqueId,
           }),
         );
 

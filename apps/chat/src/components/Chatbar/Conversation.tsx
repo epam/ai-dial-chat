@@ -20,6 +20,7 @@ import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import {
+  BackendDataNodeType,
   BackendResourceType,
   FeatureType,
   isNotLoaded,
@@ -306,6 +307,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         ShareActions.share({
           resourceType: BackendResourceType.CONVERSATION,
           resourceRelativePath: conversation.id,
+          nodeType: BackendDataNodeType.ITEM,
         }),
       );
       setIsContextMenu(false);

@@ -24,26 +24,52 @@ import {
 import { translate } from '@/src/utils/app/translation';
 
 import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
-import { EntityType, FeatureType } from '@/src/types/common';
+import {
+  BackendDataNodeType,
+  EntityType,
+  FeatureType,
+} from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { FolderInterface } from '@/src/types/folder';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import { RootState } from '../index';
 import { ModelsSelectors } from '../models/models.reducers';
+import { ShareSelectors } from '../share/share.reducers';
 import { ConversationsState } from './conversations.types';
 
 const rootSelector = (state: RootState): ConversationsState =>
   state.conversations;
 
-export const selectConversations = createSelector([rootSelector], (state) => {
-  return state.conversations;
-});
+export const selectConversationsInfos = createSelector(
+  [
+    rootSelector,
+    ShareSelectors.selectSharedByMeConversationsResources,
+    ShareSelectors.selectSharedWithMeConversationInfos,
+  ],
+  (state, sharedByMeConversations, sharedWithMeConversations) =>
+    state.conversations
+      .map(
+        (conversation): ConversationInfo => ({
+          ...conversation,
+          isShared: sharedByMeConversations.some(
+            ({ parentPath, name, nodeType }) => {
+              const id = constructPath(parentPath, name);
+              return (
+                id === conversation.id && nodeType === BackendDataNodeType.ITEM
+              );
+            },
+          ),
+        }),
+      )
+      .concat(sharedWithMeConversations),
+);
 
 export const selectFilteredConversations = createSelector(
   [
-    selectConversations,
+    selectConversationsInfos,
     (_state, filters: EntityFilters) => filters,
     (_state, _filters, searchTerm?: string) => searchTerm,
   ],
@@ -59,14 +85,36 @@ export const selectFilteredConversations = createSelector(
 );
 
 export const selectFolders = createSelector(
-  [rootSelector],
-  (state: ConversationsState) => {
-    return state.folders;
+  [
+    rootSelector,
+    ShareSelectors.selectSharedByMeConversationsResources,
+    ShareSelectors.selectSharedWithMeConversationFolders,
+  ],
+  (
+    state: ConversationsState,
+    sharedConversationResources,
+    sharedConversationFolders,
+  ) => {
+    return state.folders
+      .map(
+        (folder): FolderInterface => ({
+          ...folder,
+          isShared: sharedConversationResources.some(
+            ({ parentPath, name, nodeType }) => {
+              const id = constructPath(parentPath, name);
+              return (
+                id === folder.id && nodeType === BackendDataNodeType.FOLDER
+              );
+            },
+          ),
+        }),
+      )
+      .concat(sharedConversationFolders);
   },
 );
 
 export const selectEmptyFolderIds = createSelector(
-  [selectFolders, selectConversations],
+  [selectFolders, selectConversationsInfos],
   (folders, conversations) => {
     return folders
       .filter(
@@ -112,14 +160,14 @@ export const selectSectionFolders = createSelector(
 );
 
 export const selectLastConversation = createSelector(
-  [selectConversations],
+  [selectConversationsInfos],
   (conversations): ConversationInfo | undefined => {
     if (!conversations.length) return undefined;
     return [...conversations].sort(compareConversationsByDate)[0];
   },
 );
 export const selectConversation = createSelector(
-  [selectConversations, (_state, id: string) => id],
+  [selectConversationsInfos, (_state, id: string) => id],
   (conversations, id): ConversationInfo | undefined => {
     return conversations.find((conv) => conv.id === id);
   },
@@ -137,7 +185,7 @@ export const selectConversationSignal = createSelector(
   },
 );
 export const selectSelectedConversations = createSelector(
-  [selectConversations, selectSelectedConversationsIds],
+  [selectConversationsInfos, selectSelectedConversationsIds],
   (conversations, selectedConversationIds) => {
     return selectedConversationIds
       .map((id) => conversations.find((conv) => conv.id === id))
@@ -194,7 +242,7 @@ export const selectMyItemsFilters = createSelector(
 );
 
 export const selectSearchedConversations = createSelector(
-  [selectConversations, selectSearchTerm],
+  [selectConversationsInfos, selectSearchTerm],
   (conversations, searchTerm) =>
     conversations.filter((conversation) =>
       doesConversationContainSearchTerm(conversation, searchTerm),
@@ -396,7 +444,7 @@ export const isPublishConversationVersionUnique = createSelector(
 
     if (!conversation || conversation?.publishVersion === version) return false;
 
-    const conversations = selectConversations(state)
+    const conversations = selectConversationsInfos(state)
       .map((conv) => conv as Conversation) // TODO: fix
       .filter(
         (conv) =>
@@ -483,7 +531,7 @@ export const getAttachments = createSelector(
 
       if (!folderIds.size) return [];
 
-      const conversations = selectConversations(state).filter(
+      const conversations = selectConversationsInfos(state).filter(
         (conv) => conv.folderId && folderIds.has(conv.folderId),
       );
 

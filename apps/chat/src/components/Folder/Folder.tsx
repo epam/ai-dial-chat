@@ -32,9 +32,10 @@ import {
 } from '@/src/utils/app/move';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { getBackendResourceTypeByFeatureType } from '@/src/utils/server/api';
 
 import { ConversationInfo } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { BackendDataNodeType, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
@@ -43,6 +44,7 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
@@ -50,7 +52,6 @@ import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
 import PublishModal from '../Chat/Publish/PublishWizard';
-import ShareModal from '../Chat/ShareModal';
 import UnpublishModal from '../Chat/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { FolderContextMenu } from '../Common/FolderContextMenu';
@@ -135,10 +136,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const [isContextMenu, setIsContextMenu] = useState(false);
   const dragDropElement = useRef<HTMLDivElement>(null);
 
-  const [isSharing, setIsSharing] = useState(false);
-  const isSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isSharingEnabled(state, featureType),
-  );
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const isPublishingEnabled = useAppSelector((state) =>
@@ -165,14 +162,19 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     }
   }, [isRenaming]);
 
-  const handleOpenSharing: MouseEventHandler = useCallback((e) => {
-    e.stopPropagation();
-    setIsSharing(true);
-  }, []);
-
-  const handleCloseShareModal = useCallback(() => {
-    setIsSharing(false);
-  }, []);
+  const handleShare: MouseEventHandler = useCallback(
+    (e) => {
+      e.stopPropagation();
+      dispatch(
+        ShareActions.share({
+          resourceRelativePath: currentFolder.id,
+          resourceType: getBackendResourceTypeByFeatureType(featureType),
+          nodeType: BackendDataNodeType.FOLDER,
+        }),
+      );
+    },
+    [currentFolder.id, dispatch, featureType],
+  );
 
   const handleOpenPublishing: MouseEventHandler = useCallback((e) => {
     e.stopPropagation();
@@ -613,7 +615,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     }
                     onDelete={onDeleteFolder && onDelete}
                     onAddFolder={onAddFolder && onAdd}
-                    onShare={handleOpenSharing}
+                    onShare={handleShare}
                     onPublish={handleOpenPublishing}
                     onPublishUpdate={handleOpenPublishing}
                     onUnpublish={handleOpenUnpublishing}
@@ -730,18 +732,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               onDeleteFolder(currentFolder.id);
             }
           }}
-        />
-      )}
-      {isSharing && isSharingEnabled && (
-        <ShareModal
-          entity={currentFolder}
-          type={
-            featureType === FeatureType.Prompt
-              ? SharingType.PromptFolder
-              : SharingType.ConversationFolder
-          }
-          isOpen
-          onClose={handleCloseShareModal}
         />
       )}
       {isPublishing && isPublishingEnabled && (

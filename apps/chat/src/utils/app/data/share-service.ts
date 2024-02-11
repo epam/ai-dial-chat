@@ -1,8 +1,10 @@
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
+import { BackendDataEntity } from '@/src/types/common';
 import {
   ShareAcceptRequestModel,
   ShareByLinkResponseModel,
+  ShareListingRequestModel,
   ShareRequestModel,
 } from '@/src/types/share';
 
@@ -24,5 +26,13 @@ export class ShareService {
       method: 'POST',
       body: JSON.stringify(shareAcceptData),
     });
+  }
+  public static getSharedListing(
+    sharedListingData: ShareListingRequestModel,
+  ): Observable<BackendDataEntity[]> {
+    return ApiUtils.request(`api/share/listing`, {
+      method: 'POST',
+      body: JSON.stringify(sharedListingData),
+    }).pipe(map((resp: { resources: BackendDataEntity[] }) => resp.resources));
   }
 }

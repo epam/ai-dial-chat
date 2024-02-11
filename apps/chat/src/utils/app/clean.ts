@@ -94,7 +94,6 @@ export const cleanConversation = (
     sharedWithMe: conversation.sharedWithMe,
     isPublished: conversation.isPublished,
     publishedWithMe: conversation.publishedWithMe,
-    shareUniqueId: conversation.shareUniqueId,
   };
 
   return cleanConversation;

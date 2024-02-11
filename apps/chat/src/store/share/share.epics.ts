@@ -1,4 +1,13 @@
-import { EMPTY, catchError, filter, map, of, switchMap } from 'rxjs';
+import {
+  EMPTY,
+  catchError,
+  concat,
+  filter,
+  map,
+  mergeMap,
+  of,
+  switchMap,
+} from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
@@ -8,11 +17,23 @@ import { constructPath } from '@/src/utils/app/file';
 import { translate } from '@/src/utils/app/translation';
 import { getApiKeyByResourceType } from '@/src/utils/server/api';
 
-import { ShareByLinkResponseModel, ShareRequestType } from '@/src/types/share';
+import {
+  BackendDataNodeType,
+  BackendResourceType,
+  FeatureType,
+} from '@/src/types/common';
+import {
+  ShareByLinkResponseModel,
+  ShareRelations,
+  ShareRequestType,
+} from '@/src/types/share';
 import { AppEpic } from '@/src/types/store';
 
 import { errorsMessages } from '@/src/constants/errors';
 
+import { ConversationsActions } from '../conversations/conversations.reducers';
+import { PromptsActions } from '../prompts/prompts.reducers';
+import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { ShareActions } from './share.reducers';
 
@@ -26,16 +47,17 @@ const shareEpic: AppEpic = (action$) =>
         resources: [
           {
             url: constructPath(
-              getApiKeyByResourceType(payload.resourceType),
-              bucket,
-              payload.resourceRelativePath,
+              encodeURIComponent(getApiKeyByResourceType(payload.resourceType)),
+              encodeURIComponent(bucket),
+              encodeURIComponent(payload.resourceRelativePath) +
+                (payload.nodeType === BackendDataNodeType.FOLDER ? '/' : ''),
             ),
           },
         ],
       }).pipe(
         map((response: ShareByLinkResponseModel) => {
           return ShareActions.shareSuccess({
-            invitationId: response.url.split('/').slice(-1)?.[0],
+            invitationId: response.invitationLink.split('/').slice(-1)?.[0],
           });
         }),
         catchError((err) => {
@@ -96,10 +118,114 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
     }),
   );
 
+const triggerGettingSharedListingsConversationsEpic: AppEpic = (
+  action$,
+  state$,
+) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        ConversationsActions.setConversations.match(action) ||
+        ShareActions.acceptShareInvitationSuccess.match(action),
+    ),
+    filter(() =>
+      SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat),
+    ),
+    switchMap(() => {
+      return concat(
+        of(
+          ShareActions.getSharedListing({
+            resourceTypes: [BackendResourceType.CONVERSATION],
+            sharedWith: ShareRelations.me,
+          }),
+        ),
+        of(
+          ShareActions.getSharedListing({
+            resourceTypes: [BackendResourceType.CONVERSATION],
+            sharedWith: ShareRelations.others,
+          }),
+        ),
+      );
+    }),
+  );
+
+const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        PromptsActions.updatePrompts.match(action) ||
+        ShareActions.acceptShareInvitationSuccess.match(action),
+    ),
+    filter(() =>
+      SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Prompt),
+    ),
+    switchMap(() => {
+      return concat(
+        of(
+          ShareActions.getSharedListing({
+            resourceTypes: [BackendResourceType.PROMPT],
+            sharedWith: ShareRelations.me,
+          }),
+        ),
+        of(
+          ShareActions.getSharedListing({
+            resourceTypes: [BackendResourceType.PROMPT],
+            sharedWith: ShareRelations.others,
+          }),
+        ),
+      );
+    }),
+  );
+
+const getSharedListingEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ShareActions.getSharedListing.match),
+    mergeMap(({ payload }) => {
+      return ShareService.getSharedListing({
+        order: 'popular_asc',
+        resourceTypes: payload.resourceTypes,
+        with: payload.sharedWith,
+      }).pipe(
+        switchMap((entities) => {
+          return of(
+            ShareActions.getSharedListingSuccess({
+              resourceTypes: payload.resourceTypes,
+              sharedWith: payload.sharedWith,
+              resources: entities,
+            }),
+          );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(ShareActions.getSharedListingFail());
+        }),
+      );
+    }),
+  );
+
+const getSharedListingFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ShareActions.getSharedListingFail.match),
+    switchMap(() => {
+      return of(
+        UIActions.showToast({
+          message: translate(errorsMessages.shareByMeListingFailed),
+        }),
+      );
+    }),
+  );
+
 export const ShareEpics = combineEpics(
   shareEpic,
   shareFailEpic,
+
   acceptInvitationEpic,
   acceptInvitationSuccessEpic,
   acceptInvitationFailEpic,
+
+  getSharedListingEpic,
+  getSharedListingFailEpic,
+
+  triggerGettingSharedListingsConversationsEpic,
+  triggerGettingSharedListingsPromptsEpic,
 );

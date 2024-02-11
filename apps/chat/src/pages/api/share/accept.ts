@@ -23,7 +23,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   try {
     const { invitationId } = req.body;
-    console.log(invitationId);
 
     const proxyRes = await fetch(
       `${process.env.DIAL_API_HOST}/v1/invitations/${invitationId}?accept=true`,

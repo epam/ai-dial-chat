@@ -182,7 +182,6 @@ export default function PublishWizard({
       dispatch(
         publishAction({
           id: entity.id,
-          shareUniqueId: shareId.current,
           name: trimmedName,
           path: trimmedPath,
           version: trimmedVersion,

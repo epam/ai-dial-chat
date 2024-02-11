@@ -4,7 +4,7 @@ import { Observable, from, switchMap, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { BackendDataEntity, BackendResourceType } from '@/src/types/common';
+import { BackendResourceType, FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 
@@ -39,6 +39,20 @@ export const getApiKeyByResourceType = (entityType: BackendResourceType) => {
     case BackendResourceType.FILE:
     default:
       return ApiKeys.Files;
+  }
+};
+
+export const getBackendResourceTypeByFeatureType = (
+  entityType: FeatureType,
+) => {
+  switch (entityType) {
+    case FeatureType.Chat:
+      return BackendResourceType.CONVERSATION;
+    case FeatureType.Prompt:
+      return BackendResourceType.PROMPT;
+    case FeatureType.File:
+    default:
+      return BackendResourceType.FILE;
   }
 };
 

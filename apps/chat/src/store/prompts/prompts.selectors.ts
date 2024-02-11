@@ -1,5 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getFilteredFolders,
@@ -22,13 +23,23 @@ import { EntityFilters, SearchFilters } from '@/src/types/search';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import { RootState } from '../index';
+import { ShareSelectors } from '../share/share.reducers';
 import { PromptsState } from './prompts.types';
 
 const rootSelector = (state: RootState): PromptsState => state.prompts;
 
-export const selectPrompts = createSelector([rootSelector], (state) => {
-  return state.prompts;
-});
+export const selectPrompts = createSelector(
+  [rootSelector, ShareSelectors.selectSharedByMePromptsResources],
+  (state, sharedByMePrompts) => {
+    return state.prompts.map((conversation) => ({
+      ...conversation,
+      isShared: sharedByMePrompts.some(({ parentPath, name }) => {
+        const id = constructPath(parentPath, name);
+        return id === conversation.id;
+      }),
+    }));
+  },
+);
 
 export const selectFilteredPrompts = createSelector(
   [

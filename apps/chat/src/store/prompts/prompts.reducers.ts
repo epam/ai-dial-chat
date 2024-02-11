@@ -127,10 +127,7 @@ export const promptsSlice = createSlice({
         return folder;
       });
     },
-    unpublishPrompt: (
-      state,
-      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
-    ) => {
+    unpublishPrompt: (state, { payload }: PayloadAction<{ id: string }>) => {
       state.prompts = state.prompts.map((prompt) => {
         if (prompt.id === payload.id) {
           return {
@@ -143,10 +140,7 @@ export const promptsSlice = createSlice({
         return prompt;
       });
     },
-    unpublishFolder: (
-      state,
-      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
-    ) => {
+    unpublishFolder: (state, { payload }: PayloadAction<{ id: string }>) => {
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.id) {
           return {

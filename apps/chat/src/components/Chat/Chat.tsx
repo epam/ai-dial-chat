@@ -74,7 +74,7 @@ export const ChatView = memo(() => {
     ConversationsSelectors.selectIsConversationsStreaming,
   );
   const conversations = useAppSelector(
-    ConversationsSelectors.selectConversations,
+    ConversationsSelectors.selectConversationsInfos,
   );
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const enabledFeatures = useAppSelector(

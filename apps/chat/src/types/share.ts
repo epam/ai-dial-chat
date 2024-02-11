@@ -1,10 +1,12 @@
+import { BackendResourceType } from './common';
+
 export interface ShareInterface {
   isShared?: boolean;
   sharedWithMe?: boolean;
+
   isPublished?: boolean;
   publishedWithMe?: boolean;
-  shareUniqueId?: string;
-  originalId?: string;
+  originalId?: string; // TODO: revise that when publishing will be in work
   publishVersion?: string;
 }
 
@@ -39,7 +41,6 @@ export interface TargetAudienceFilter extends TargetAudienceFilterItem {
 
 export interface PublishRequest {
   id: string;
-  shareUniqueId: string;
   name: string;
   path: string;
   version: string;
@@ -76,4 +77,15 @@ export interface ShareByLinkResponseModel {
 
 export interface ShareAcceptRequestModel {
   invitationId: string;
+}
+
+export enum ShareRelations {
+  me = 'me',
+  others = 'others',
+}
+
+export interface ShareListingRequestModel {
+  resourceTypes: BackendResourceType[];
+  with: ShareRelations;
+  order: 'popular_asc';
 }

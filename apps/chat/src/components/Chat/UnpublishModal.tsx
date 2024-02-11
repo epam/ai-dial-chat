@@ -48,9 +48,7 @@ export default function UnpublishModal({
       e.preventDefault();
       e.stopPropagation();
 
-      dispatch(
-        unpublishAction({ id: entity.id, shareUniqueId: shareId.current }),
-      );
+      dispatch(unpublishAction({ id: entity.id }));
       onClose();
     },
     [dispatch, entity.id, onClose, unpublishAction],
