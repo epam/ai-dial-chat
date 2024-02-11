@@ -45,7 +45,6 @@ export const promptsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    // initFolders: (state) => state,
     initPrompts: (state) => state,
     migratePrompts: (state) => state,
     skipFailedMigratedPrompts: (
