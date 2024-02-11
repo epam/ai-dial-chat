@@ -31,6 +31,8 @@ export const SendMessageButton = ({
     ConversationsSelectors.selectIsConversationsStreaming,
   );
 
+  const isSpinner = isLoading || isModelsLoading || messageIsStreaming;
+
   return (
     <button
       className={classNames(
@@ -42,7 +44,7 @@ export const SendMessageButton = ({
       data-qa="send"
     >
       <Tooltip hideTooltip={!isDisabled} tooltip={tooltip}>
-        {messageIsStreaming || isModelsLoading || isLoading ? (
+        {isSpinner ? (
           <Spinner size={20} />
         ) : (
           <IconSend size={24} stroke="1.5" />
