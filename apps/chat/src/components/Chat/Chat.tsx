@@ -1,5 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import { throttle } from '@/src/utils/data/throttle';
 
@@ -13,6 +15,7 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType, UploadStatus } from '@/src/types/common';
+import { Translation } from '@/src/types/translation';
 
 import {
   AddonsActions,
@@ -871,6 +874,8 @@ export const ChatView = memo(() => {
 ChatView.displayName = 'ChatView';
 
 export function Chat() {
+  const { t } = useTranslation(Translation.Chat);
+
   const areSelectedConversationsLoaded = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
   );
@@ -893,7 +898,7 @@ export function Chat() {
   ) {
     return (
       <NotFoundEntity
-        entity="Conversation"
+        entity={t('Conversation')}
         additionalText="Please select another conversation."
       />
     );

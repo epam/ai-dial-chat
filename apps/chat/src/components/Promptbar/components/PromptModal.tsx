@@ -222,7 +222,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             </div>
           </>
         ) : (
-          <NotFoundEntity entity="Prompt" />
+          <NotFoundEntity entity={t('Prompt')} />
         )
       ) : (
         <ChatLoader containerClassName="h-[540px] max-h-full" />
