@@ -25,7 +25,7 @@ import {
 import { ConversationApiStorage } from './api/conversation-api-storage';
 import { PromptApiStorage } from './api/prompt-api-storage';
 
-const MAX_RETRIES_COUNT = 0;
+const MAX_RETRIES_COUNT = 3;
 
 export class ApiStorage implements DialStorage {
   private _conversationApiStorage = new ConversationApiStorage();
