@@ -84,21 +84,22 @@ async function handlePutRequest(
     body: readable,
   });
 
-  try {
-    const json: unknown = await proxyRes.json();
-    if (!proxyRes.ok) {
-      throw new OpenAIError(
-        (typeof json === 'string' && json) || proxyRes.statusText,
-        '',
-        '',
-        proxyRes.status + '',
-      );
+  let json: unknown;
+  if (!proxyRes.ok) {
+    try {
+      json = await proxyRes.json();
+    } catch (err) {
+      json = undefined;
     }
-
-    return res.status(200).send(json);
-  } catch (error) {
-    throw new Error('Error parsing response as JSON');
+    throw new OpenAIError(
+      (typeof json === 'string' && json) || proxyRes.statusText,
+      '',
+      '',
+      proxyRes.status + '',
+    );
   }
+
+  return res.status(200).send(json);
 }
 
 async function handleGetRequest(
