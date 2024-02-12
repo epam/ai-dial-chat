@@ -77,7 +77,7 @@ export abstract class ApiEntityStorage<
           entities: [],
           folders: [],
         }),
-      ),
+      ), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
     );
   }
 
@@ -135,7 +135,7 @@ export abstract class ApiEntityStorage<
           status: UploadStatus.LOADED,
         };
       }),
-      catchError(() => of(null)),
+      catchError(() => of(null)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
     );
   }
 
