@@ -147,7 +147,7 @@ export abstract class ApiEntityStorage<
 
   createEntity(entity: Entity): Observable<void> {
     return ApiUtils.request(this.getEntityUrl(entity), {
-      method: 'PUT',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -156,7 +156,13 @@ export abstract class ApiEntityStorage<
   }
 
   updateEntity(entity: Entity): Observable<void> {
-    return this.createEntity(this.cleanUpEntity(entity));
+    return ApiUtils.request(this.getEntityUrl(entity), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(this.cleanUpEntity(entity)),
+    }).pipe(catchError(() => EMPTY)); // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
   }
 
   deleteEntity(info: EntityInfo): Observable<void> {
