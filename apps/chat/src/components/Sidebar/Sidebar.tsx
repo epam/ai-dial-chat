@@ -23,7 +23,7 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
-import ChatLoader from '../Chat/ChatLoader';
+import Loader from '../Common/Loader';
 import { NoData } from '../Common/NoData';
 import { NoResultsFound } from '../Common/NoResultsFound';
 import Search from '../Search';
@@ -255,7 +255,7 @@ const Sidebar = <T,>({
             {footerComponent}
           </>
         ) : (
-          <ChatLoader />
+          <Loader />
         )}
       </div>
     </Resizable>

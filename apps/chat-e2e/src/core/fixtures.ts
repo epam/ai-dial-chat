@@ -52,6 +52,12 @@ import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { VariableModalDialog } from '@/src/ui/webElements/variableModalDialog';
 import { test as base } from '@playwright/test';
 import { allure } from 'allure-playwright';
+import path from 'path';
+
+export const stateFilePath = path.join(
+  __dirname,
+  `../../auth/desktopUser${process.env.TEST_PARALLEL_INDEX}.json`,
+);
 
 interface ReportAttributes {
   setTestIds: (...testId: string[]) => void;

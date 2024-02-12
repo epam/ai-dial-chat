@@ -31,17 +31,20 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import { combineEntities } from '@/src/utils/app/common';
+import {
+  combineEntities,
+  updateEntitiesFoldersAndIds,
+} from '@/src/utils/app/common';
 import {
   addGeneratedConversationId,
   compareConversationsByDate,
   getGeneratedConversationId,
   getNewConversationName,
+  isChosenConversationValidForCompare,
   isSettingsChanged,
   parseConversationId,
 } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
-import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   generateNextName,
@@ -50,6 +53,8 @@ import {
   getFolderFromPath,
   getFoldersFromPaths,
   getNextDefaultName,
+  updateMovedEntityId,
+  updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import {
   mergeMessages,
@@ -61,7 +66,6 @@ import { translate } from '@/src/utils/app/translation';
 import {
   ChatBody,
   Conversation,
-  ConversationInfo,
   Message,
   MessageSettings,
   Playback,
@@ -90,15 +94,13 @@ import {
   ConversationsSelectors,
 } from './conversations.reducers';
 
-import escapeStringRegexp from 'escape-string-regexp';
-
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
     filter((action) => ConversationsActions.init.match(action)),
     switchMap(() =>
       concat(
         of(ConversationsActions.initSelectedConversations()),
-        of(ConversationsActions.initFoldersEndConversations()),
+        of(ConversationsActions.initFoldersAndConversations()),
       ),
     ),
   );
@@ -171,15 +173,18 @@ const initSelectedConversationsEpic: AppEpic = (action$) =>
           ),
         );
       }
+      actions.push(
+        of(ConversationsActions.uploadConversationsWithFoldersRecursive()),
+      );
 
       return concat(...actions);
     }),
   );
 
-const initFoldersEndConversationsEpic: AppEpic = (action$) =>
+const initFoldersAndConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter((action) =>
-      ConversationsActions.initFoldersEndConversations.match(action),
+      ConversationsActions.initFoldersAndConversations.match(action),
     ),
     switchMap(() => ConversationService.getSelectedConversationsIds()),
     switchMap((selectedIds) => {
@@ -231,9 +236,10 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(({ names, lastConversation, conversations }) =>
       forkJoin({
         names: of(names),
-        lastConversation: lastConversation
-          ? ConversationService.getConversation(lastConversation)
-          : of(lastConversation),
+        lastConversation:
+          lastConversation && lastConversation.status !== UploadStatus.LOADED
+            ? ConversationService.getConversation(lastConversation)
+            : (of(lastConversation) as Observable<Conversation>),
         conversations: of(conversations),
       }),
     ),
@@ -466,7 +472,7 @@ const createNewConversationSuccessEpic: AppEpic = (action$) =>
     ),
     switchMap(({ payload }) =>
       ConversationService.createConversation(payload.newConversation).pipe(
-        switchMap(() => EMPTY),
+        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       ),
     ),
   );
@@ -525,6 +531,17 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
       return ConversationService.getConversations(payload.folderId, true).pipe(
         switchMap((conversations) => {
+          const updateFolderId = updateMovedFolderId.bind(
+            null,
+            payload.folderId,
+            newFolder.id,
+          );
+          const updateEntityId = updateMovedEntityId.bind(
+            null,
+            payload.folderId,
+            newFolder.id,
+          );
+
           const folders = ConversationsSelectors.selectFolders(state$.value);
           const allConversations =
             ConversationsSelectors.selectConversationsInfos(state$.value);
@@ -535,67 +552,31 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
           const selectedConversationsIds =
             ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
-          const regex = new RegExp(`^${escapeStringRegexp(payload.folderId)}`);
-
-          const newUniqueFolderIds = Array.from(
-            new Set(conversations.map((conv) => conv.folderId as string)),
-          ).map((id) => id.replace(regex, newFolder.id));
-
-          const allNewFolderIdsSet = new Set(
-            newUniqueFolderIds.flatMap((fid) => getAllPathsFromPath(fid)),
-          );
-          const allNewFolderIds = Array.from(allNewFolderIdsSet);
-          const oldFolderIds = new Set(
-            folders
-              .filter(
-                (folder) =>
-                  folder.id === payload.folderId || // this old folder
-                  folder.id.startsWith(`${payload.folderId}/`), // child folders
-              )
-              .map((f) => f.id),
-          );
-
-          const updatedFolders = combineEntities(
-            getFoldersFromPaths(allNewFolderIds, FolderType.Chat),
-            folders.map((folder) =>
-              oldFolderIds.has(folder.id)
-                ? {
-                    ...folder,
-                    id: folder.id.replace(regex, newFolder.id),
-                    folderId: folder.folderId?.replace(regex, newFolder.id),
-                  }
-                : folder,
-            ),
-          );
+          const { updatedFolders, updatedOpenedFoldersIds } =
+            updateEntitiesFoldersAndIds(
+              conversations,
+              folders,
+              updateFolderId,
+              openedFoldersIds,
+            );
 
           const updatedConversations = combineEntities(
             allConversations.map((conv) =>
-              conv.id.startsWith(`${payload.folderId}/`)
-                ? addGeneratedConversationId({
-                    ...conv,
-                    folderId: conv.folderId?.replace(regex, newFolder.id),
-                  })
-                : conv,
-            ), // child chats
+              addGeneratedConversationId({
+                ...conv,
+                folderId: updateFolderId(conv.folderId),
+              }),
+            ),
             conversations.map((conv) =>
               addGeneratedConversationId({
                 ...conv,
-                folderId: conv.folderId?.replace(regex, newFolder.id),
+                folderId: updateFolderId(conv.folderId),
               }),
             ),
           );
 
-          const updatedOpenedFoldersIds = openedFoldersIds.map((id) =>
-            id === payload.folderId || id.startsWith(`${payload.folderId}/`)
-              ? id.replace(regex, newFolder.id)
-              : id,
-          );
-
           const updatedSelectedConversationsIds = selectedConversationsIds.map(
-            (id) =>
-              id.startsWith(`${payload.folderId}/`)
-                ? id.replace(regex, newFolder.id)
-                : id,
+            (id) => updateEntityId(id),
           );
 
           const actions: Observable<AnyAction>[] = [];
@@ -621,10 +602,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
                   ConversationsActions.updateConversation({
                     id: conversation.id,
                     values: {
-                      folderId: conversation.folderId?.replace(
-                        regex,
-                        newFolder.id,
-                      ),
+                      folderId: updateFolderId(conversation.folderId),
                     },
                   }),
                 ),
@@ -643,11 +621,6 @@ const clearConversationsEpic: AppEpic = (action$) =>
     filter(ConversationsActions.clearConversations.match),
     switchMap(() => {
       return concat(
-        of(
-          ConversationsActions.createNewConversations({
-            names: [translate(DEFAULT_CONVERSATION_NAME)],
-          }),
-        ),
         of(ConversationsActions.clearConversationsSuccess()),
         of(ConversationsActions.deleteFolder({})),
       );
@@ -718,7 +691,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
           Array.from(deleteIds).map((id) =>
             ConversationService.deleteConversation(parseConversationId(id)),
           ),
-        ).pipe(switchMap(() => EMPTY)),
+        ).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       );
     }),
   );
@@ -865,8 +838,11 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
     map(({ payload }) => ({
       payload,
       modelsMap: ModelsSelectors.selectModelsMap(state$.value),
+      conversations: ConversationsSelectors.selectConversations(state$.value),
+      selectedConversationIds:
+        ConversationsSelectors.selectSelectedConversationsIds(state$.value),
     })),
-    map(({ payload, modelsMap }) => {
+    map(({ payload, modelsMap, conversations, selectedConversationIds }) => {
       const messageModel: Message[EntityType.Model] = {
         id: payload.conversation.model.id,
       };
@@ -899,11 +875,20 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           : payload.conversation.messages
       ).concat(userMessage, assistantMessage);
 
-      const newConversationName = getNewConversationName(
-        payload.conversation,
-        payload.message,
-        updatedMessages,
-      ).replaceAll(notAllowedSymbolsRegex, '');
+      const newConversationName = getNextDefaultName(
+        getNewConversationName(
+          payload.conversation,
+          payload.message,
+          updatedMessages,
+        ),
+        conversations.filter(
+          (conv) =>
+            conv.folderId === payload.conversation.folderId &&
+            conv.id !== payload.conversation.id,
+        ),
+        Math.max(selectedConversationIds.indexOf(payload.conversation.id), 0),
+        true,
+      );
 
       const updatedConversation: Conversation = addGeneratedConversationId({
         ...payload.conversation,
@@ -1334,6 +1319,7 @@ const replayConversationsEpic: AppEpic = (action$) =>
             ConversationsActions.replayConversation({
               ...payload,
               conversationId: id,
+              activeReplayIndex: 0,
             }),
           );
         }),
@@ -1433,25 +1419,18 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
             );
           }),
           switchMap(() => {
-            const convReplay = conversation!.replay;
+            const convReplay = (
+              ConversationsSelectors.selectConversation(
+                state$.value,
+                conv.id,
+              ) as Conversation
+            ).replay;
 
-            return concat(
-              of(
-                ConversationsActions.updateConversation({
-                  id: payload.conversationId,
-                  values: {
-                    replay: {
-                      ...convReplay,
-                      activeReplayIndex: conv.replay.activeReplayIndex + 1,
-                    },
-                  },
-                }),
-              ),
-              of(
-                ConversationsActions.replayConversation({
-                  conversationId: payload.conversationId,
-                }),
-              ),
+            return of(
+              ConversationsActions.replayConversation({
+                conversationId: updatedConversation.id,
+                activeReplayIndex: convReplay.activeReplayIndex + 1,
+              }),
             );
           }),
         ),
@@ -1483,6 +1462,7 @@ const endReplayConversationEpic: AppEpic = (action$, state$) =>
             ConversationsActions.updateConversation({
               id: conv.id,
               values: {
+                isReplay: false,
                 replay: {
                   ...conv.replay,
                   isReplay: false,
@@ -1567,6 +1547,52 @@ const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
         ),
       ),
     ),
+  );
+
+const compareConversationsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.selectForCompare.match),
+    switchMap(({ payload }) => getOrUploadConversation(payload, state$.value)),
+    switchMap(({ conversation: chosenConversation }) => {
+      const selectedConversation =
+        ConversationsSelectors.selectSelectedConversations(state$.value)[0];
+      const isInvalid =
+        !chosenConversation ||
+        !isChosenConversationValidForCompare(
+          selectedConversation,
+          chosenConversation as Conversation,
+        );
+      const actions: Observable<AnyAction>[] = [];
+      if (isInvalid) {
+        actions.push(
+          of(
+            UIActions.showToast({
+              message: translate(
+                'Incorrect conversation was chosen for comparison. Please choose another one.\r\nOnly conversations containing the same number of messages can be compared.',
+              ),
+              type: 'error',
+            }),
+          ),
+        );
+      } else {
+        actions.push(
+          of(
+            ConversationsActions.selectConversations({
+              conversationIds: [selectedConversation.id, chosenConversation.id],
+            }),
+          ),
+        );
+      }
+      actions.push(
+        of(
+          ConversationsActions.selectForCompareCompleted(
+            chosenConversation as Conversation,
+          ),
+        ),
+      );
+
+      return concat(...actions);
+    }),
   );
 
 const playbackNextMessageStartEpic: AppEpic = (action$, state$) =>
@@ -1767,6 +1793,7 @@ const playbackCancelEpic: AppEpic = (action$, state$) =>
               values: {
                 messages: updatedMessages,
                 isMessageStreaming: false,
+                isPlayback: false,
                 playback: {
                   ...(conv.playback as Playback),
                   messagesStack: [],
@@ -1781,17 +1808,16 @@ const playbackCancelEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const uploadConversationsByIdsEpic: AppEpic = (action$) =>
+const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.uploadConversationsByIds.match),
     switchMap(({ payload }) => {
-      const conversationInfos = payload.conversationIds.map((id: string) =>
-        parseConversationId(id),
-      ) as ConversationInfo[];
       return forkJoin({
         uploadedConversations: zip(
-          conversationInfos.map((info) =>
-            ConversationService.getConversation(info),
+          payload.conversationIds.map((id) =>
+            ConversationService.getConversation(
+              ConversationsSelectors.selectConversation(state$.value, id)!,
+            ),
           ),
         ),
         setIds: of(new Set(payload.conversationIds as string[])),
@@ -1842,7 +1868,7 @@ const saveConversationEpic: AppEpic = (action$) =>
     ),
     switchMap(({ payload: newConversation }) => {
       return ConversationService.updateConversation(newConversation).pipe(
-        switchMap(() => EMPTY),
+        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       );
     }),
   );
@@ -1853,11 +1879,11 @@ const recreateConversationEpic: AppEpic = (action$) =>
     mergeMap(({ payload }) => {
       return concat(
         ConversationService.createConversation(payload.new).pipe(
-          switchMap(() => EMPTY),
+          switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
         ),
         ConversationService.deleteConversation(
           parseConversationId(payload.old.id),
-        ).pipe(switchMap(() => EMPTY)),
+        ).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       );
     }),
   );
@@ -1873,11 +1899,10 @@ const getOrUploadConversation = (
     state,
     payload.id,
   ) as Conversation;
+
   if (conversation?.status !== UploadStatus.LOADED) {
     return forkJoin({
-      conversation: ConversationService.getConversation(
-        parseConversationId(payload.id),
-      ),
+      conversation: ConversationService.getConversation(conversation),
       payload: of(payload),
     });
   } else {
@@ -1907,11 +1932,15 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         ...values,
         lastActivityDate: Date.now(),
       });
+
       return concat(
         of(
           ConversationsActions.updateConversationSuccess({
             id,
-            conversation: newConversation,
+            conversation: {
+              ...values,
+              id: newConversation.id,
+            },
           }),
         ),
         iif(
@@ -1950,7 +1979,7 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
             of(
               ConversationsActions.uploadConversationsSuccess({
                 paths: new Set(payload.paths),
-                conversations: conversations.flat(),
+                conversations: conversations,
               }),
             ),
           );
@@ -1964,60 +1993,42 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
             ),
             of(ConversationsActions.uploadConversationsFail()),
           ),
-        ),
+        ), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       ),
     ),
   );
 
-// const uploadFoldersEpic: AppEpic = (action$) =>
-//   action$.pipe(
-//     filter(ConversationsActions.uploadFolders.match),
-//     switchMap(({ payload }) =>
-//       zip(
-//         payload.paths.map((path) =>
-//           ConversationService.getConversationsFolders(path),
-//         ),
-//       ).pipe(
-//         switchMap((folders) =>
-//           concat(
-//             of(
-//               ConversationsActions.uploadFoldersSuccess({
-//                 paths: new Set(payload.paths),
-//                 folders: folders.flat(),
-//               }),
-//             ),
-//           ),
-//         ),
-//         catchError(() =>
-//           of(
-//             ConversationsActions.uploadFoldersFail({
-//               paths: new Set(payload.paths),
-//             }),
-//           ),
-//         ),
-//       ),
-//     ),
-//   );
-
-// const uploadConversationsEpic: AppEpic = (action$) =>
-//   action$.pipe(
-//     filter(ConversationsActions.uploadConversations.match),
-//     switchMap(({ payload }) =>
-//       zip(
-//         payload.paths.map((path: string | undefined) =>
-//           ConversationService.getConversations(path),
-//         ),
-//       ).pipe(
-//         map((conversations) =>
-//           ConversationsActions.uploadConversationsSuccess({
-//             paths: new Set(payload.paths),
-//             conversations: conversations.flat(),
-//           }),
-//         ),
-//         catchError(() => of(ConversationsActions.uploadConversationsFail())),
-//       ),
-//     ),
-//   );
+const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.uploadConversationsWithFoldersRecursive.match),
+    switchMap(() =>
+      ConversationService.getConversations(undefined, true).pipe(
+        switchMap((conversations) => {
+          const conv = conversations.flat();
+          const folderIds = Array.from(new Set(conv.map((c) => c.folderId)));
+          const paths = Array.from(
+            new Set(folderIds.flatMap((id) => getAllPathsFromPath(id))),
+          );
+          return concat(
+            of(
+              ConversationsActions.uploadConversationsSuccess({
+                paths: new Set(),
+                conversations: conv,
+              }),
+            ),
+            of(
+              ConversationsActions.uploadFoldersSuccess({
+                paths: new Set(),
+                folders: getFoldersFromPaths(paths, FolderType.Chat),
+                allLoaded: true,
+              }),
+            ),
+          );
+        }),
+        catchError(() => of(ConversationsActions.uploadConversationsFail())), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+      ),
+    ),
+  );
 
 const toggleFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -2038,7 +2049,7 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const openFolderEpic: AppEpic = (action$) =>
+const openFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>
@@ -2046,6 +2057,12 @@ const openFolderEpic: AppEpic = (action$) =>
         action.payload.featureType === FeatureType.Chat,
     ),
     switchMap(({ payload }) => {
+      const folder = ConversationsSelectors.selectFolders(state$.value).find(
+        (f) => f.id === payload.id,
+      );
+      if (folder?.status === UploadStatus.LOADED) {
+        return EMPTY;
+      }
       return concat(
         of(
           ConversationsActions.uploadConversationsWithFolders({
@@ -2060,7 +2077,7 @@ export const ConversationsEpics = combineEpics(
   // init
   initEpic,
   initSelectedConversationsEpic,
-  initFoldersEndConversationsEpic,
+  initFoldersAndConversationsEpic,
   // update
   updateConversationEpic,
   saveConversationEpic,
@@ -2101,8 +2118,8 @@ export const ConversationsEpics = combineEpics(
   uploadConversationsByIdsEpic,
 
   uploadConversationsWithFoldersEpic,
-  // uploadFoldersEpic,
-  // uploadConversationsEpic,
+  uploadConversationsWithFoldersRecursiveEpic,
   toggleFolderEpic,
   openFolderEpic,
+  compareConversationsEpic,
 );

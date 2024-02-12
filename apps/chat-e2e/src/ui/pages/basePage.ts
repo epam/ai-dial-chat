@@ -43,12 +43,10 @@ export class BasePage {
   ) {
     const responses = [];
     const responseBodies = new Map<string, string>();
-    for (const host of [
-      API.modelsHost,
-      API.addonsHost,
-      API.sessionHost,
-      API.bucketHost,
-    ]) {
+    const hostsArray = options?.setEntitiesEnvVars
+      ? [API.modelsHost, API.addonsHost, API.sessionHost, API.bucketHost]
+      : [API.bucketHost];
+    for (const host of hostsArray) {
       const resp = this.page.waitForResponse(
         (response) =>
           response.url().includes(host) && response.status() === 200,
@@ -69,7 +67,7 @@ export class BasePage {
     await method();
     for (const resp of responses) {
       const resolvedResp = await resp;
-      if (options?.setEntitiesEnvVars) {
+      if (hostsArray) {
         const body = await resolvedResp.text();
         const host = resolvedResp.url();
         const baseURL = config.use?.baseURL;

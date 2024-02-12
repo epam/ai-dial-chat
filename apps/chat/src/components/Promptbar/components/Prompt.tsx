@@ -20,9 +20,11 @@ import {
   BackendResourceType,
   FeatureType,
 } from '@/src/types/common';
+import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   PromptsActions,
@@ -40,7 +42,6 @@ import PublishModal from '../../Chat/Publish/PublishWizard';
 import UnpublishModal from '../../Chat/UnpublishModal';
 import ShareIcon from '../../Common/ShareIcon';
 import { PromptModal } from './PromptModal';
-import { MoveToFolderProps } from '@/src/types/folder';
 
 interface Props {
   item: PromptInfo;
@@ -74,7 +75,9 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
   );
-  const newFolderName = useAppSelector(PromptsSelectors.selectNewFolderName);
+  const newFolderName = useAppSelector((state) =>
+    PromptsSelectors.selectNewFolderName(state, prompt.folderId),
+  );
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -210,16 +213,15 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           }),
         );
       }
-      // dispatch(
-      //   PromptsActions.updatePrompt({
-      //     prompt: {
-      //
-      //     }
-      //   }),
-      // );
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: prompt.id,
+          values: { folderId: folderPath },
+        }),
+      );
       setIsContextMenu(false);
     },
-    [dispatch, newFolderName],
+    [dispatch, newFolderName, prompt.id],
   );
 
   const handleClose = useCallback(() => {

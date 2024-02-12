@@ -6,6 +6,7 @@ import {
   forkJoin,
   ignoreElements,
   map,
+  mergeMap,
   of,
   switchMap,
   tap,
@@ -16,13 +17,21 @@ import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
-import { PromptService } from '@/src/utils/app/data/prompt-service';
 import {
+  combineEntities,
+  updateEntitiesFoldersAndIds,
+} from '@/src/utils/app/common';
+import { PromptService } from '@/src/utils/app/data/prompt-service';
+import { constructPath } from '@/src/utils/app/file';
+import {
+  addGeneratedFolderId,
   findRootFromItems,
   getAllPathsFromPath,
   getFolderFromPath,
   getFolderIdByPath,
   getTemporaryFoldersToPublish,
+  splitPath,
+  updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import {
   exportPrompt,
@@ -31,8 +40,9 @@ import {
 } from '@/src/utils/app/import-export';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
+import { getPromptApiKey } from '@/src/utils/server/api';
 
-import { UploadStatus } from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
@@ -40,7 +50,7 @@ import { AppEpic } from '@/src/types/store';
 import { resetShareEntity } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
 
-import { UIActions } from '../ui/ui.reducers';
+import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
 import { RootState } from '@/src/store';
@@ -51,9 +61,6 @@ const savePromptsEpic: AppEpic = (action$, state$) =>
     filter(
       (action) =>
         PromptsActions.createNewPrompt.match(action) ||
-        // PromptsActions.deletePrompts.match(action) ||
-        // PromptsActions.clearPrompts.match(action) ||
-        // PromptsActions.updatePrompt.match(action) ||
         PromptsActions.addPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action) ||
         PromptsActions.unpublishPrompt.match(action) ||
@@ -72,8 +79,6 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       (action) =>
         PromptsActions.createFolder.match(action) ||
         PromptsActions.deleteFolder.match(action) ||
-        PromptsActions.renameFolder.match(action) ||
-        PromptsActions.moveFolder.match(action) ||
         PromptsActions.addFolders.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action) ||
@@ -96,8 +101,15 @@ const getOrUploadPrompt = (
   prompt: Prompt | null;
   payload: { id: string };
 }> => {
-  const prompt = PromptsSelectors.selectPrompt(state, payload.id) as Prompt;
+  const prompt = PromptsSelectors.selectPrompt(state, payload.id);
+
   if (prompt?.status !== UploadStatus.LOADED) {
+    const { name, parentPath } = splitPath(payload.id);
+    const prompt = addGeneratedPromptId({
+      name,
+      folderId: parentPath,
+    });
+
     return forkJoin({
       prompt: PromptService.getPrompt(prompt),
       payload: of(payload),
@@ -113,9 +125,9 @@ const getOrUploadPrompt = (
 const updatePromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.updatePrompt.match),
-    switchMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
-    switchMap(({ payload, prompt }) => {
-      const { values } = payload as {
+    mergeMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
+    mergeMap(({ payload, prompt }) => {
+      const { values, id } = payload as {
         id: string;
         values: Partial<Prompt>;
       };
@@ -124,15 +136,19 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
         return EMPTY; // TODO: handle?
       }
 
-      const newPrompt = {
-        ...(prompt as Prompt),
+      const newPrompt: Prompt = {
+        ...prompt,
         ...values,
+        id: constructPath(
+          prompt.folderId,
+          getPromptApiKey({ ...prompt, ...values }),
+        ),
       };
 
       return concat(
-        of(PromptsActions.updatePromptSuccess({ prompt: newPrompt })),
-        PromptService.deletePrompt(prompt).pipe(switchMap(() => EMPTY)),
-        PromptService.updatePrompt(newPrompt).pipe(switchMap(() => EMPTY)),
+        of(PromptsActions.updatePromptSuccess({ prompt: newPrompt, id })),
+        PromptService.deletePrompt(prompt).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        PromptService.updatePrompt(newPrompt).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       );
     }),
   );
@@ -142,7 +158,7 @@ export const deletePromptEpic: AppEpic = (action$) =>
     filter(PromptsActions.deletePrompt.match),
     switchMap(({ payload }) => {
       return PromptService.deletePrompt(payload.prompt).pipe(
-        switchMap(() => EMPTY),
+        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       );
     }),
   );
@@ -172,10 +188,95 @@ const deletePromptsEpic: AppEpic = (action$) =>
           }),
         ),
         zip(deletePrompts.map((id) => PromptService.deletePrompt(id))).pipe(
-          switchMap(() => EMPTY),
+          switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
         ),
       ),
     ),
+  );
+
+const updateFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.updateFolder.match),
+    switchMap(({ payload }) => {
+      const folder = getFolderFromPath(payload.folderId, FolderType.Prompt);
+      const newFolder = addGeneratedFolderId({ ...folder, ...payload.values });
+
+      if (payload.folderId === newFolder.id) {
+        return EMPTY;
+      }
+
+      return PromptService.getPrompts(payload.folderId, true).pipe(
+        switchMap((prompts) => {
+          const updateFolderId = updateMovedFolderId.bind(
+            null,
+            payload.folderId,
+            newFolder.id,
+          );
+
+          const folders = PromptsSelectors.selectFolders(state$.value);
+          const allPrompts = PromptsSelectors.selectPrompts(state$.value);
+          const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
+            state$.value,
+            FeatureType.Prompt,
+          );
+
+          const { updatedFolders, updatedOpenedFoldersIds } =
+            updateEntitiesFoldersAndIds(
+              prompts,
+              folders,
+              updateFolderId,
+              openedFoldersIds,
+            );
+
+          const updatedPrompts = combineEntities(
+            allPrompts.map((prompt) =>
+              addGeneratedPromptId({
+                ...prompt,
+                folderId: updateFolderId(prompt.folderId),
+              }),
+            ),
+            prompts.map((prompt) =>
+              addGeneratedPromptId({
+                ...prompt,
+                folderId: updateFolderId(prompt.folderId),
+              }),
+            ),
+          );
+
+          const actions: Observable<AnyAction>[] = [];
+          actions.push(
+            of(
+              PromptsActions.updateFolderSuccess({
+                folders: updatedFolders,
+                prompts: updatedPrompts,
+              }),
+            ),
+            of(
+              UIActions.setOpenedFoldersIds({
+                openedFolderIds: updatedOpenedFoldersIds,
+                featureType: FeatureType.Prompt,
+              }),
+            ),
+          );
+          if (prompts.length) {
+            prompts.forEach((prompt) => {
+              actions.push(
+                of(
+                  PromptsActions.updatePrompt({
+                    id: prompt.id,
+                    values: {
+                      folderId: updateFolderId(prompt.folderId),
+                    },
+                  }),
+                ),
+              );
+            });
+          }
+
+          return concat(...actions);
+        }),
+      );
+    }),
   );
 
 const deleteFolderEpic: AppEpic = (action$, state$) =>
@@ -588,6 +689,7 @@ export const PromptsEpics = combineEpics(
   deletePromptEpic,
   clearPromptsEpic,
   deletePromptsEpic,
+  updateFolderEpic,
 
   // shareFolderEpic,
   // sharePromptEpic,

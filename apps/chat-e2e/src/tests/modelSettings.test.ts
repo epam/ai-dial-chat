@@ -1,5 +1,5 @@
 import { OpenAIEntityModel } from '@/chat/types/openai';
-import test from '@/src/core/fixtures';
+import test, { stateFilePath } from '@/src/core/fixtures';
 import { ExpectedMessages } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -16,72 +16,79 @@ test.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
 });
 
-test('Selected settings are saved if to switch from Model1 to Model2', async ({
-  dialHomePage,
-  recentEntities,
-  entitySettings,
-  temperatureSlider,
-  addons,
-  setTestIds,
-  talkToSelector,
-}) => {
-  setTestIds('EPMRTC-1046');
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-  const randomModel = GeneratorUtil.randomArrayElement(
-    models.filter((m) => m.id !== defaultModel.id),
-  );
+test.describe('Chat model settings tests', () => {
+  test.use({
+    storageState: stateFilePath,
+  });
+  test('Selected settings are saved if to switch from Model1 to Model2', async ({
+    dialHomePage,
+    recentEntities,
+    entitySettings,
+    temperatureSlider,
+    addons,
+    setTestIds,
+    talkToSelector,
+  }) => {
+    setTestIds('EPMRTC-1046');
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    const randomModel = GeneratorUtil.randomArrayElement(
+      models.filter((m) => m.id !== defaultModel.id),
+    );
 
-  await entitySettings.setSystemPrompt(sysPrompt);
-  await temperatureSlider.setTemperature(temp);
+    await entitySettings.setSystemPrompt(sysPrompt);
+    await temperatureSlider.setTemperature(temp);
 
-  await talkToSelector.selectModel(randomModel.name);
-  const modelBorderColors = await recentEntities
-    .getRecentEntity(randomModel.name)
-    .getAllBorderColors();
-  Object.values(modelBorderColors).forEach((borders) => {
-    borders.forEach((borderColor) => {
-      expect
-        .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
-        .toBe(Colors.controlsBackgroundAccent);
+    await talkToSelector.selectModel(randomModel.name);
+    const modelBorderColors = await recentEntities
+      .getRecentEntity(randomModel.name)
+      .getAllBorderColors();
+    Object.values(modelBorderColors).forEach((borders) => {
+      borders.forEach((borderColor) => {
+        expect
+          .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
+          .toBe(Colors.controlsBackgroundAccent);
+      });
     });
+
+    const systemPromptVisible = await entitySettings.getSystemPrompt();
+    expect
+      .soft(systemPromptVisible, ExpectedMessages.systemPromptIsValid)
+      .toBe(sysPrompt);
+
+    const temperature = await temperatureSlider.getTemperature();
+    expect
+      .soft(temperature, ExpectedMessages.temperatureIsValid)
+      .toBe(temp.toString());
+
+    const selectedAddons = await addons.getSelectedAddons();
+    expect
+      .soft(selectedAddons, ExpectedMessages.selectedAddonsValid)
+      .toEqual([]);
   });
 
-  const systemPromptVisible = await entitySettings.getSystemPrompt();
-  expect
-    .soft(systemPromptVisible, ExpectedMessages.systemPromptIsValid)
-    .toBe(sysPrompt);
-
-  const temperature = await temperatureSlider.getTemperature();
-  expect
-    .soft(temperature, ExpectedMessages.temperatureIsValid)
-    .toBe(temp.toString());
-
-  const selectedAddons = await addons.getSelectedAddons();
-  expect.soft(selectedAddons, ExpectedMessages.selectedAddonsValid).toEqual([]);
-});
-
-test('System prompt contains combinations with :', async ({
-  dialHomePage,
-  entitySettings,
-  setTestIds,
-}) => {
-  setTestIds('EPMRTC-1084');
-  const prompts = [
-    'test:',
-    'test. test:',
-    'test :',
-    ' test:',
-    'test test. test:',
-  ];
-  await dialHomePage.openHomePage();
-  await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-  for (const prompt of prompts) {
-    await entitySettings.setSystemPrompt(prompt);
-    const systemPrompt = await entitySettings.getSystemPrompt();
-    expect
-      .soft(systemPrompt, ExpectedMessages.systemPromptIsValid)
-      .toBe(prompt);
-    await entitySettings.clearSystemPrompt();
-  }
+  test('System prompt contains combinations with :', async ({
+    dialHomePage,
+    entitySettings,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-1084');
+    const prompts = [
+      'test:',
+      'test. test:',
+      'test :',
+      ' test:',
+      'test test. test:',
+    ];
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    for (const prompt of prompts) {
+      await entitySettings.setSystemPrompt(prompt);
+      const systemPrompt = await entitySettings.getSystemPrompt();
+      expect
+        .soft(systemPrompt, ExpectedMessages.systemPromptIsValid)
+        .toBe(prompt);
+      await entitySettings.clearSystemPrompt();
+    }
+  });
 });

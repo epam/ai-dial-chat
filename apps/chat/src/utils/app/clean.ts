@@ -90,10 +90,6 @@ export const cleanConversation = (
     ...(conversation.playback && {
       playback: conversation.playback,
     }),
-    isShared: conversation.isShared,
-    sharedWithMe: conversation.sharedWithMe,
-    isPublished: conversation.isPublished,
-    publishedWithMe: conversation.publishedWithMe,
   };
 
   return cleanConversation;

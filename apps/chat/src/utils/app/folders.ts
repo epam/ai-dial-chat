@@ -65,10 +65,6 @@ export const getChildAndCurrentFoldersById = (
   folderId: string | undefined,
   allFolders: FolderInterface[],
 ) => {
-  // if (!folderId) {
-  //   return [];
-  // }
-
   const currentFolder = allFolders.find((folder) => folder.id === folderId);
   const childFolders = allFolders.filter(
     (folder) => folder.folderId === folderId,
@@ -115,35 +111,46 @@ export const getNextDefaultName = (
   index = 0,
   startWithEmptyPostfix = false,
   includingPublishedWithMe = false,
-) => {
+): string => {
   const prefix = `${defaultName} `;
-  const regex = new RegExp(`^${escapeStringRegexp(prefix)}(\\d{1,3})$`);
+  const regex = new RegExp(`^${escapeStringRegexp(prefix)}(\\d+)$`);
 
   if (!entities.length) {
-    return `${prefix}${1 + index}`;
+    return !startWithEmptyPostfix ? `${prefix}${1 + index}` : defaultName;
   }
 
-  const maxNumber = Math.max(
-    ...entities
-      .filter(
-        (entity) =>
-          !entity.sharedWithMe &&
-          (!entity.publishedWithMe || includingPublishedWithMe) &&
-          (entity.name === defaultName || entity.name.match(regex)),
-      )
-      .map(
-        (entity) =>
-          parseInt(entity.name.replace(prefix, ''), 10) ||
-          (startWithEmptyPostfix ? 0 : 1),
-      ),
-    startWithEmptyPostfix ? -1 : 0,
-  ); // max number
+  const maxNumber =
+    Math.max(
+      ...entities
+        .filter(
+          (entity) =>
+            !entity.sharedWithMe &&
+            (!entity.publishedWithMe || includingPublishedWithMe) &&
+            (entity.name === defaultName || entity.name.match(regex)),
+        )
+        .map(
+          (entity) =>
+            parseInt(entity.name.replace(prefix, ''), 10) ||
+            (startWithEmptyPostfix ? 0 : 1),
+        ),
+      startWithEmptyPostfix ? -1 : 0,
+    ) + index; // max number
+
+  if (maxNumber >= 9999999) {
+    return getNextDefaultName(
+      `${prefix}${maxNumber}`,
+      entities,
+      index,
+      startWithEmptyPostfix,
+      includingPublishedWithMe,
+    );
+  }
 
   if (startWithEmptyPostfix && maxNumber === -1) {
     return defaultName;
   }
 
-  return `${prefix}${maxNumber + 1 + index}`;
+  return `${prefix}${maxNumber + 1}`;
 };
 
 export const generateNextName = (
@@ -152,7 +159,7 @@ export const generateNextName = (
   entities: ShareEntity[],
   index = 0,
 ) => {
-  const regex = new RegExp(`^${defaultName} (\\d{1,3})$`);
+  const regex = new RegExp(`^${defaultName} (\\d+)$`);
   return currentName.match(regex)
     ? getNextDefaultName(defaultName, entities, index)
     : getNextDefaultName(currentName, entities, index, true);
@@ -253,9 +260,12 @@ export const getFilteredFolders = ({
       .flatMap((fid) => getParentAndCurrentFolderIdsById(folders, fid)),
   );
 
-  return folders.filter(
-    (folder) => filteredIds.has(folder.id) && filteredFolderIds.has(folder.id),
-  );
+  return folders
+    .filter(
+      (folder) =>
+        filteredIds.has(folder.id) && filteredFolderIds.has(folder.id),
+    )
+    .sort(compareEntitiesByName);
 };
 
 export const getParentAndChildFolders = (
@@ -420,4 +430,40 @@ export const compareEntitiesByName = <
     return -1;
   }
   return 0;
+};
+
+export const updateMovedFolderId = (
+  oldParentFolderId: string | undefined,
+  newParentFolderId: string | undefined,
+  folderId: string | undefined,
+) => {
+  const curr = folderId || '';
+  const old = oldParentFolderId || '';
+  if (curr === old) {
+    return newParentFolderId;
+  }
+  const prefix = `${old}/`;
+  if (curr.startsWith(prefix)) {
+    if (!newParentFolderId) {
+      return curr.replace(prefix, '') || undefined;
+    }
+    return curr.replace(old, newParentFolderId);
+  }
+  return folderId;
+};
+
+export const updateMovedEntityId = (
+  oldParentFolderId: string | undefined,
+  newParentFolderId: string | undefined,
+  entityId: string,
+): string => {
+  const old = oldParentFolderId || '';
+  const prefix = `${old}/`;
+  if (entityId.startsWith(prefix)) {
+    if (!newParentFolderId) {
+      return entityId.replace(prefix, '');
+    }
+    return entityId.replace(old, newParentFolderId);
+  }
+  return entityId;
 };

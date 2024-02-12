@@ -13,7 +13,6 @@ import { ApiStorage } from './storages/api-storage';
 import { BrowserStorage } from './storages/browser-storage';
 
 export class DataService {
-  // storage
   private static dataStorage: DialStorage;
 
   public static init(storageType?: string) {
@@ -30,12 +29,12 @@ export class DataService {
 
   private static setDataStorage(dataStorageType?: string): void {
     switch (dataStorageType) {
-      case StorageType.API:
-        this.dataStorage = new ApiStorage();
-        break;
       case StorageType.BrowserStorage:
-      default:
         this.dataStorage = new BrowserStorage();
+        break;
+      case StorageType.API:
+      default:
+        this.dataStorage = new ApiStorage();
     }
   }
 

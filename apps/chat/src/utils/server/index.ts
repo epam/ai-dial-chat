@@ -13,8 +13,8 @@ import {
 } from '../../constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
+import { OpenAIError } from './error';
 import { getApiHeaders } from './get-headers';
-import { OpenAIError } from './types';
 
 import {
   ParsedEvent,

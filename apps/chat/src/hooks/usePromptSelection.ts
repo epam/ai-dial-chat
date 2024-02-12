@@ -195,14 +195,14 @@ export const usePromptSelection = (maxLength: number) => {
   /**
    * Initializes the prompt loads.
    */
-  const getPrompt = () => {
+  const getPrompt = useCallback(() => {
     setIsRequestSent(true);
     dispatch(
       PromptsActions.uploadPrompt({
         promptId: filteredPrompts[activePromptIndex].id,
       }),
     );
-  };
+  }, [activePromptIndex, dispatch, filteredPrompts]);
 
   return {
     setActivePromptIndex,
@@ -221,6 +221,6 @@ export const usePromptSelection = (maxLength: number) => {
     handleKeyDownIfShown,
     isRequestSent,
     getPrompt,
-    isPromptLoading: isLoading && isRequestSent,
+    isLoading: isLoading && isRequestSent,
   };
 };

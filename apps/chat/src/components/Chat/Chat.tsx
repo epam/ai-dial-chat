@@ -1,5 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import { throttle } from '@/src/utils/data/throttle';
 
@@ -13,6 +15,7 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType, UploadStatus } from '@/src/types/common';
+import { Translation } from '@/src/types/translation';
 
 import {
   AddonsActions,
@@ -33,13 +36,13 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 
+import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
 import ChatExternalControls from './ChatExternalControls';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput/ChatInput';
-import ChatLoader from './ChatLoader';
 import ChatReplayControls from './ChatReplayControls';
 import { ChatSettings } from './ChatSettings';
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
@@ -810,12 +813,7 @@ export const ChatView = memo(() => {
                     selectedConversations={selectedConversations}
                     onConversationSelect={(conversation) => {
                       dispatch(
-                        ConversationsActions.selectConversations({
-                          conversationIds: [
-                            selectedConversations[0].id,
-                            conversation.id,
-                          ],
-                        }),
+                        ConversationsActions.selectForCompare(conversation),
                       );
                     }}
                   />
@@ -876,6 +874,8 @@ export const ChatView = memo(() => {
 ChatView.displayName = 'ChatView';
 
 export function Chat() {
+  const { t } = useTranslation(Translation.Chat);
+
   const areSelectedConversationsLoaded = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
   );
@@ -890,7 +890,7 @@ export function Chat() {
     (!selectedConversations.length ||
       selectedConversations.some((conv) => conv.status !== UploadStatus.LOADED))
   ) {
-    return <ChatLoader />;
+    return <Loader />;
   }
   if (
     selectedConversations.length !== selectedConversationsIds.length ||
@@ -898,7 +898,7 @@ export function Chat() {
   ) {
     return (
       <NotFoundEntity
-        entity="Conversation"
+        entity={t('Conversation')}
         additionalText="Please select another conversation."
       />
     );

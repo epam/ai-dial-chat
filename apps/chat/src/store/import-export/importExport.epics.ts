@@ -26,6 +26,7 @@ import {
   exportConversation,
   exportConversations,
   importConversations,
+  updateAttachment,
 } from '@/src/utils/app/import-export';
 import {
   compressConversationInZip,
@@ -34,7 +35,7 @@ import {
   importZippedHistory,
 } from '@/src/utils/app/zip-import-export';
 
-import { Conversation, Message } from '@/src/types/chat';
+import { Conversation, Message, Stage } from '@/src/types/chat';
 import { LatestExportFormat } from '@/src/types/importExport';
 import { AppEpic } from '@/src/types/store';
 
@@ -268,6 +269,7 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$) =>
             }),
           );
         }
+
         formData.append('attachment', attachment.fileContent, attachment.name);
         const relativePath = `imports/${conversation.id}/${attachment.relativePath}`;
         return FileService.sendFile(
@@ -374,50 +376,30 @@ const uploadAllAttachmentsSuccessEpic: AppEpic = (action$, state$) =>
           }
 
           const newAttachments = message.custom_content.attachments.map(
-            (oldAttachment) => {
-              if (!oldAttachment.url) {
-                return oldAttachment;
-              }
-
-              const regExpForOldAttachmentId = /^files\/\w*\//;
-              const indexAfterSplit = 1;
-              const oldAttachmentId = decodeURI(oldAttachment.url).split(
-                regExpForOldAttachmentId,
-              )[indexAfterSplit];
-
-              const newAttachmentFile = uploadedAttachments.find(
-                (newAttachment) => {
-                  if (!newAttachment.id) {
-                    return;
-                  }
-                  const regExpForNewAttachmentId = /^imports\/[\w-]*\//;
-                  const newAttachmentId = newAttachment.id.split(
-                    regExpForNewAttachmentId,
-                  )[indexAfterSplit];
-                  return newAttachmentId === oldAttachmentId;
-                },
-              );
-
-              if (
-                !newAttachmentFile ||
-                !newAttachmentFile.contentType ||
-                !newAttachmentFile.name
-              ) {
-                return oldAttachment;
-              }
-
-              return {
-                ...oldAttachment,
-                url: encodeURI(
-                  `${newAttachmentFile.absolutePath}/${newAttachmentFile.name}`,
-                ),
-              };
-            },
+            (oldAttachment) =>
+              updateAttachment({ oldAttachment, uploadedAttachments }),
           );
+
+          const newStages: Stage[] | undefined =
+            message.custom_content.stages &&
+            message.custom_content.stages.map((stage) => {
+              if (!stage.attachments) {
+                return stage;
+              }
+              const newStageAttachments = stage.attachments.map(
+                (oldAttachment) =>
+                  updateAttachment({ oldAttachment, uploadedAttachments }),
+              );
+              return {
+                ...stage,
+                attachments: newStageAttachments,
+              };
+            });
 
           const newCustomContent: Message['custom_content'] = {
             ...message.custom_content,
             attachments: newAttachments,
+            stages: newStages,
           };
           return {
             ...message,
