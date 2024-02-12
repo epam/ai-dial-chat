@@ -9,7 +9,7 @@ import {
 } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
 
-import { ApiKeys, ApiUtils, getParentPath } from '../../server/api';
+import { ApiKeys, ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
 import { BucketService } from './bucket-service';
 
@@ -20,7 +20,7 @@ export class FileService {
     fileName: string,
   ): Observable<{ percent?: number; result?: DialFile }> {
     const resultPath = encodeURI(
-      `${BucketService.getBucket()}${getParentPath(relativePath)}/${fileName}`,
+      constructPath(BucketService.getBucket(), relativePath, fileName),
     );
 
     return ApiUtils.requestOld({

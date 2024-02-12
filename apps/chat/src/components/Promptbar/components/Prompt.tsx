@@ -209,7 +209,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         );
       }
       dispatch(
-        ConversationsActions.updateConversation({
+        PromptsActions.updatePrompt({
           id: prompt.id,
           values: { folderId: folderPath },
         }),
