@@ -48,15 +48,7 @@ export abstract class ApiEntityStorage<
   }
 
   private getEntityUrl = (entity: TEntityInfo): string =>
-    encodeURI(
-      constructPath(
-        'api',
-        this.getStorageKey(),
-        BucketService.getBucket(),
-        entity.folderId,
-        this.getEntityKey(entity),
-      ),
-    );
+    encodeURI(constructPath('api', entity.id));
 
   private getListingUrl = (resultQuery: string): string => {
     const listingUrl = encodeURI(

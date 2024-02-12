@@ -168,7 +168,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       e.stopPropagation();
       dispatch(
         ShareActions.share({
-          resourceRelativePath: currentFolder.id,
+          resourceId: currentFolder.id,
           resourceType: getBackendResourceTypeByFeatureType(featureType),
           nodeType: BackendDataNodeType.FOLDER,
         }),

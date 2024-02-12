@@ -24,47 +24,22 @@ import {
 import { translate } from '@/src/utils/app/translation';
 
 import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
-import {
-  BackendDataNodeType,
-  EntityType,
-  FeatureType,
-} from '@/src/types/common';
+import { EntityType, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import { RootState } from '../index';
 import { ModelsSelectors } from '../models/models.reducers';
-import { ShareSelectors } from '../share/share.reducers';
 import { ConversationsState } from './conversations.types';
 
 const rootSelector = (state: RootState): ConversationsState =>
   state.conversations;
 
 export const selectConversations = createSelector(
-  [
-    rootSelector,
-    ShareSelectors.selectSharedByMeConversationsResources,
-    ShareSelectors.selectSharedWithMeConversationInfos,
-  ],
-  (state, sharedByMeConversations, sharedWithMeConversations) =>
-    state.conversations
-      .map(
-        (conversation): ConversationInfo => ({
-          ...conversation,
-          isShared: sharedByMeConversations.some(
-            ({ parentPath, name, nodeType }) => {
-              const id = constructPath(parentPath, name);
-              return (
-                id === conversation.id && nodeType === BackendDataNodeType.ITEM
-              );
-            },
-          ),
-        }),
-      )
-      .concat(sharedWithMeConversations),
+  [rootSelector],
+  (state) => state.conversations,
 );
 
 export const selectFilteredConversations = createSelector(
@@ -88,31 +63,9 @@ export const selectFilteredConversations = createSelector(
 );
 
 export const selectFolders = createSelector(
-  [
-    rootSelector,
-    ShareSelectors.selectSharedByMeConversationsResources,
-    ShareSelectors.selectSharedWithMeConversationFolders,
-  ],
-  (
-    state: ConversationsState,
-    sharedConversationResources,
-    sharedConversationFolders,
-  ) => {
-    return state.folders
-      .map(
-        (folder): FolderInterface => ({
-          ...folder,
-          isShared: sharedConversationResources.some(
-            ({ parentPath, name, nodeType }) => {
-              const id = constructPath(parentPath, name);
-              return (
-                id === folder.id && nodeType === BackendDataNodeType.FOLDER
-              );
-            },
-          ),
-        }),
-      )
-      .concat(sharedConversationFolders);
+  [rootSelector],
+  (state: ConversationsState) => {
+    return state.folders;
   },
 );
 

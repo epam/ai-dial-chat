@@ -308,7 +308,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       dispatch(
         ShareActions.share({
           resourceType: BackendResourceType.CONVERSATION,
-          resourceRelativePath: conversation.id,
+          resourceId: conversation.id,
           nodeType: BackendDataNodeType.ITEM,
         }),
       );

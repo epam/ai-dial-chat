@@ -2,7 +2,6 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
 import { regenerateConversationId } from '@/src/utils/app/conversation';
-import { BucketService } from '@/src/utils/app/data/bucket-service';
 import {
   addGeneratedFolderId,
   generateNextName,
@@ -638,20 +637,6 @@ export const conversationsSlice = createSlice({
         payload.paths as string[],
       );
     },
-
-    // uploadFolders: (
-    //   state,
-    //   {
-    //     payload,
-    //   }: PayloadAction<{
-    //     paths: (string | undefined)[];
-    //   }>,
-    // ) => {
-    //   state.foldersStatus = UploadStatus.LOADING;
-    //   state.loadingFolderIds = state.loadingFolderIds.concat(
-    //     payload.paths as string[],
-    //   );
-    // },
     uploadFoldersSuccess: (
       state,
       {
@@ -692,16 +677,6 @@ export const conversationsSlice = createSlice({
       );
       state.foldersStatus = UploadStatus.FAILED;
     },
-
-    // uploadConversations: (
-    //   state,
-    //   _action: PayloadAction<{
-    //     paths: (string | undefined)[];
-    //   }>,
-    // ) => {
-    //   state.conversationsStatus = UploadStatus.LOADING;
-    // },
-
     uploadConversationsWithFoldersRecursive: (state) => {
       state.conversationsStatus = UploadStatus.LOADING;
     },

@@ -91,7 +91,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       dispatch(
         ShareActions.share({
           resourceType: BackendResourceType.PROMPT,
-          resourceRelativePath: prompt.id,
+          resourceId: prompt.id,
           nodeType: BackendDataNodeType.ITEM,
         }),
       );
