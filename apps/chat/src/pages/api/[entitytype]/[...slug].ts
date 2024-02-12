@@ -85,12 +85,13 @@ async function handlePutRequest(
   });
 
   let json: unknown;
+  try {
+    json = await proxyRes.json();
+  } catch {
+    json = undefined;
+  }
+
   if (!proxyRes.ok) {
-    try {
-      json = await proxyRes.json();
-    } catch (err) {
-      json = undefined;
-    }
     throw new OpenAIError(
       (typeof json === 'string' && json) || proxyRes.statusText,
       '',

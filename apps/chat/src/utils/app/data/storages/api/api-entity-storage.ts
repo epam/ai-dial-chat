@@ -153,8 +153,8 @@ export abstract class ApiEntityStorage<
       },
       body: JSON.stringify(this.cleanUpEntity(entity)),
     }).pipe(
-      catchError(() => {
-        throw new Error();
+      catchError((err) => {
+        throw new Error(err);
       }),
     ); // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
   }
