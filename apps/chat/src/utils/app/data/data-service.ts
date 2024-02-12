@@ -5,7 +5,6 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import {
   DialStorage,
-  MigrationStorageKeys,
   StorageType,
   UIStorageKeys,
 } from '@/src/types/storage';
