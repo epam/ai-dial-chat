@@ -509,6 +509,14 @@ export const areConversationsUploaded = createSelector(
   },
 );
 
+export const selectConversationsToMigrateAndMigratedCount = createSelector(
+  [rootSelector],
+  (state) => ({
+    conversationsToMigrateCount: state.conversationsToMigrateCount,
+    migratedConversationsCount: state.migratedConversationsCount,
+  }),
+);
+
 export const selectFoldersStatus = createSelector([rootSelector], (state) => {
   return state.foldersStatus;
 });
@@ -526,6 +534,7 @@ export const selectAreSelectedConversationsLoaded = createSelector(
     return state.areSelectedConversationsLoaded;
   },
 );
+
 // default name with counter
 export const selectNewFolderName = createSelector(
   [
@@ -545,6 +554,11 @@ export const selectLoadingFolderIds = createSelector(
   (state) => {
     return state.loadingFolderIds;
   },
+);
+
+export const selectFailedMigratedConversations = createSelector(
+  [rootSelector],
+  (state) => state.failedMigratedConversations,
 );
 
 export const selectIsCompareLoading = createSelector(

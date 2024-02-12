@@ -30,6 +30,13 @@ export enum UIStorageKeys {
   TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
 }
 
+export enum MigrationStorageKeys {
+  MigratedConversationIds = 'migratedConversationIds',
+  MigratedPromptIds = 'migratedPromptIds',
+  FailedMigratedConversationIds = 'failedMigratedConversationIds',
+  FailedMigratedPromptIds = 'failedMigratedPromptIds',
+}
+
 export interface EntityStorage<
   EntityInfo extends { folderId?: string },
   Entity extends EntityInfo,

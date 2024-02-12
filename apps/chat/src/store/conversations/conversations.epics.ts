@@ -5,6 +5,7 @@ import {
   TimeoutError,
   catchError,
   concat,
+  concatMap,
   delay,
   filter,
   forkJoin,
@@ -36,6 +37,10 @@ import {
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
 import {
+  filterMigratedEntities,
+  filterOnlyMyEntities,
+} from '@/src/utils/app/common';
+import {
   addGeneratedConversationId,
   compareConversationsByDate,
   getGeneratedConversationId,
@@ -46,6 +51,8 @@ import {
 } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
+import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
+import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   generateNextName,
@@ -54,6 +61,7 @@ import {
   getFolderFromPath,
   getFoldersFromPaths,
   getNextDefaultName,
+  getPathToFolderById,
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
@@ -75,7 +83,10 @@ import {
 } from '@/src/types/chat';
 import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
+import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
+
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { resetShareEntity } from '@/src/constants/chat';
 import {
@@ -294,6 +305,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 }),
               ),
             ),
+            catchError(() => EMPTY),
           );
         }),
       );
@@ -691,6 +703,165 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
         ).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       );
     }),
+  );
+
+const migrateConversationsEpic: AppEpic = (action$, state$) => {
+  const browserStorage = new BrowserStorage();
+
+  return action$.pipe(
+    filter(ConversationsActions.migrateConversations.match),
+    switchMap(() =>
+      forkJoin({
+        conversations: browserStorage
+          .getConversations()
+          .pipe(map(filterOnlyMyEntities)),
+        conversationsFolders: browserStorage
+          .getConversationsFolders()
+          .pipe(map(filterOnlyMyEntities)),
+        migratedConversationIds: BrowserStorage.getMigratedEntityIds(
+          MigrationStorageKeys.MigratedConversationIds,
+        ),
+        failedMigratedConversationIds:
+          BrowserStorage.getFailedMigratedEntityIds(
+            MigrationStorageKeys.FailedMigratedConversationIds,
+          ),
+      }),
+    ),
+    switchMap(
+      ({
+        conversations,
+        conversationsFolders,
+        migratedConversationIds,
+        failedMigratedConversationIds,
+      }) => {
+        const notMigratedConversations = filterMigratedEntities(
+          conversations,
+          [...failedMigratedConversationIds, ...migratedConversationIds],
+          true,
+        );
+
+        if (
+          SettingsSelectors.selectStorageType(state$.value) !==
+            StorageType.API ||
+          !notMigratedConversations.length
+        ) {
+          if (failedMigratedConversationIds.length) {
+            return of(
+              ConversationsActions.setFailedMigratedConversations({
+                failedMigratedConversations: filterMigratedEntities(
+                  conversations,
+                  failedMigratedConversationIds,
+                ),
+              }),
+            );
+          }
+
+          return EMPTY;
+        }
+
+        const sortedConversations = notMigratedConversations.sort((a, b) => {
+          if (!a.lastActivityDate) return 1;
+          if (!b.lastActivityDate) return -1;
+
+          return a.lastActivityDate - b.lastActivityDate;
+        });
+        const preparedConversations = notMigratedConversations.map((conv) => {
+          const { path } = getPathToFolderById(
+            conversationsFolders,
+            conv.folderId,
+          );
+          const newName = conv.name.replace(notAllowedSymbolsRegex, '');
+
+          return {
+            ...conv,
+            id: constructPath(...[path, newName]),
+            name: newName,
+            folderId: path.replace(notAllowedSymbolsRegex, ''),
+          };
+        }); // to send conversation with proper parentPath and lastActivityDate order
+
+        let migratedConversationsCount = 0;
+
+        return concat(
+          of(
+            ConversationsActions.initConversationsMigration({
+              conversationsToMigrateCount: notMigratedConversations.length,
+            }),
+          ),
+          from(preparedConversations).pipe(
+            concatMap((conversation) =>
+              ConversationService.setConversations([conversation]).pipe(
+                switchMap(() => {
+                  migratedConversationIds.push(
+                    sortedConversations[migratedConversationsCount].id,
+                  );
+
+                  return concat(
+                    BrowserStorage.setMigratedEntitiesIds(
+                      migratedConversationIds,
+                      MigrationStorageKeys.MigratedConversationIds,
+                    ).pipe(switchMap(() => EMPTY)),
+                    of(
+                      ConversationsActions.migrateConversationFinish({
+                        migratedConversationsCount:
+                          ++migratedConversationsCount,
+                      }),
+                    ),
+                  );
+                }),
+                catchError(() => {
+                  failedMigratedConversationIds.push(
+                    sortedConversations[migratedConversationsCount].id,
+                  );
+
+                  return concat(
+                    BrowserStorage.setFailedMigratedEntityIds(
+                      failedMigratedConversationIds,
+                      MigrationStorageKeys.FailedMigratedConversationIds,
+                    ).pipe(switchMap(() => EMPTY)),
+                    of(
+                      ConversationsActions.migrateConversationFinish({
+                        migratedConversationsCount:
+                          ++migratedConversationsCount,
+                      }),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ),
+        );
+      },
+    ),
+  );
+};
+
+export const skipFailedMigratedConversationsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.skipFailedMigratedConversations.match),
+    switchMap(({ payload }) =>
+      BrowserStorage.getMigratedEntityIds(
+        MigrationStorageKeys.MigratedConversationIds,
+      ).pipe(
+        switchMap((migratedConversationIds) =>
+          concat(
+            BrowserStorage.setMigratedEntitiesIds(
+              [...payload.idsToMarkAsMigrated, ...migratedConversationIds],
+              MigrationStorageKeys.MigratedConversationIds,
+            ).pipe(switchMap(() => EMPTY)),
+            BrowserStorage.setFailedMigratedEntityIds(
+              [],
+              MigrationStorageKeys.FailedMigratedConversationIds,
+            ).pipe(switchMap(() => EMPTY)),
+            of(
+              ConversationsActions.setFailedMigratedConversations({
+                failedMigratedConversations: [],
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
   );
 
 const rateMessageEpic: AppEpic = (action$, state$) =>
@@ -2042,6 +2213,8 @@ const openFolderEpic: AppEpic = (action$, state$) =>
   );
 
 export const ConversationsEpics = combineEpics(
+  migrateConversationsEpic,
+  skipFailedMigratedConversationsEpic,
   // init
   initEpic,
   initSelectedConversationsEpic,

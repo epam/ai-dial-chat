@@ -11,7 +11,11 @@ import {
   FoldersAndEntities,
 } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
-import { DialStorage, UIStorageKeys } from '@/src/types/storage';
+import {
+  DialStorage,
+  MigrationStorageKeys,
+  UIStorageKeys,
+} from '@/src/types/storage';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -82,6 +86,7 @@ export class BrowserStorage implements DialStorage {
       }),
     );
   }
+
   updateConversation(conversation: Conversation): Observable<void> {
     return BrowserStorage.getData(UIStorageKeys.ConversationHistory, []).pipe(
       map((conversations: Conversation[]) => {
@@ -94,6 +99,7 @@ export class BrowserStorage implements DialStorage {
       }),
     );
   }
+
   deleteConversation(info: ConversationInfo): Observable<void> {
     return BrowserStorage.getData(UIStorageKeys.ConversationHistory, []).pipe(
       map((conversations: Conversation[]) => {
@@ -139,6 +145,7 @@ export class BrowserStorage implements DialStorage {
       }),
     );
   }
+
   updatePrompt(prompt: Prompt): Observable<void> {
     return BrowserStorage.getData(UIStorageKeys.Prompts, []).pipe(
       map((prompts: Prompt[]) => {
@@ -149,6 +156,7 @@ export class BrowserStorage implements DialStorage {
       }),
     );
   }
+
   deletePrompt(info: Entity): Observable<void> {
     return BrowserStorage.getData(UIStorageKeys.Prompts, []).pipe(
       map((prompts: Prompt[]) => {
@@ -216,8 +224,42 @@ export class BrowserStorage implements DialStorage {
     );
   }
 
+  public static getMigratedEntityIds(
+    key:
+      | MigrationStorageKeys.MigratedConversationIds
+      | MigrationStorageKeys.MigratedPromptIds,
+  ): Observable<string[]> {
+    return BrowserStorage.getData(key, []);
+  }
+
+  public static setMigratedEntitiesIds(
+    migratedEntityIds: string[],
+    key:
+      | MigrationStorageKeys.MigratedConversationIds
+      | MigrationStorageKeys.MigratedPromptIds,
+  ): Observable<void> {
+    return BrowserStorage.setData(key, migratedEntityIds);
+  }
+
+  public static getFailedMigratedEntityIds(
+    key:
+      | MigrationStorageKeys.FailedMigratedConversationIds
+      | MigrationStorageKeys.FailedMigratedPromptIds,
+  ): Observable<string[]> {
+    return BrowserStorage.getData(key, []);
+  }
+
+  public static setFailedMigratedEntityIds(
+    migratedEntityIds: string[],
+    key:
+      | MigrationStorageKeys.FailedMigratedPromptIds
+      | MigrationStorageKeys.FailedMigratedConversationIds,
+  ): Observable<void> {
+    return BrowserStorage.setData(key, migratedEntityIds);
+  }
+
   public static getData<K = undefined>(
-    key: UIStorageKeys,
+    key: UIStorageKeys | MigrationStorageKeys,
     defaultValue: K,
   ): Observable<K> {
     try {
@@ -237,7 +279,7 @@ export class BrowserStorage implements DialStorage {
   }
 
   public static setData<K = unknown>(
-    key: UIStorageKeys,
+    key: UIStorageKeys | MigrationStorageKeys,
     value: K,
   ): Observable<void> {
     try {

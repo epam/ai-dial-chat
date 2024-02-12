@@ -19,10 +19,12 @@ import {
 
 import { combineEpics } from 'redux-observable';
 
+import { filterOnlyMyEntities } from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { FileService } from '@/src/utils/app/data/file-service';
 import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
+import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import {
   getAllPathsFromPath,
   getConversationAttachmentWithPath,
@@ -33,6 +35,7 @@ import {
   cleanData,
   exportConversation,
   exportConversations,
+  exportPrompts,
   importConversations,
   updateAttachment,
 } from '@/src/utils/app/import-export';
@@ -164,6 +167,29 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
     }),
     ignoreElements(),
   );
+
+const exportLocalStorageEntitiesEpic: AppEpic = (action$) => {
+  const browserStorage = new BrowserStorage();
+
+  return action$.pipe(
+    filter(ImportExportActions.exportLocalStorageEntities.match),
+    switchMap(() =>
+      forkJoin({
+        conversations: browserStorage
+          .getConversations()
+          .pipe(map(filterOnlyMyEntities)),
+        conversationFolders: browserStorage.getConversationsFolders(),
+        prompts: browserStorage.getPrompts().pipe(map(filterOnlyMyEntities)),
+        promptFolders: browserStorage.getPromptsFolders(),
+      }),
+    ),
+    tap(({ conversations, conversationFolders, prompts, promptFolders }) => {
+      exportConversations(conversations, conversationFolders);
+      exportPrompts(prompts, promptFolders);
+    }),
+    ignoreElements(),
+  );
+};
 
 const importConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -538,4 +564,5 @@ export const ImportExportEpics = combineEpics(
   importFailEpic,
   exportFailEpic,
   checkImportFailEpic,
+  exportLocalStorageEntitiesEpic,
 );
