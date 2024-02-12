@@ -110,7 +110,7 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.exportConversations.match),
     map(() => ({
-      conversations: ConversationsSelectors.selectConversationsInfos(
+      conversations: ConversationsSelectors.selectConversations(
         state$.value,
       ) as Conversation[], //TODO: fix in https://github.com/epam/ai-dial-chat/issues/640
       folders: ConversationsSelectors.selectFolders(state$.value),
@@ -125,8 +125,9 @@ const importConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.importConversations.match),
     switchMap(({ payload }) => {
-      const currentConversations =
-        ConversationsSelectors.selectConversationsInfos(state$.value);
+      const currentConversations = ConversationsSelectors.selectConversations(
+        state$.value,
+      );
       const currentFolders = ConversationsSelectors.selectFolders(state$.value);
       const { history, folders, isError }: ImportConversationsResponse =
         importConversations(payload.data, {

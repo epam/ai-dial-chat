@@ -106,6 +106,21 @@ export const promptsSlice = createSlice({
         return prompt;
       });
     },
+    sharePrompt: (
+      state,
+      { payload }: PayloadAction<{ prompt: Prompt; id: string }>,
+    ) => {
+      state.prompts = state.prompts.map((prompt) => {
+        if (prompt.id === payload.id) {
+          return {
+            ...prompt,
+            ...payload.prompt,
+          };
+        }
+
+        return prompt;
+      });
+    },
     publishPrompt: (state, { payload }: PayloadAction<PublishRequest>) => {
       state.prompts = state.prompts.map((prompt) => {
         if (prompt.id === payload.id) {

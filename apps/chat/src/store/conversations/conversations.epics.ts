@@ -229,9 +229,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
       lastConversation: ConversationsSelectors.selectLastConversation(
         state$.value,
       ),
-      conversations: ConversationsSelectors.selectConversationsInfos(
-        state$.value,
-      ),
+      conversations: ConversationsSelectors.selectConversations(state$.value),
     })),
     switchMap(({ names, lastConversation, conversations }) =>
       forkJoin({
@@ -309,7 +307,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
       forkJoin({
         conversationAndPayload: getOrUploadConversation(payload, state$.value),
         conversations: of(
-          ConversationsSelectors.selectConversationsInfos(state$.value),
+          ConversationsSelectors.selectConversations(state$.value),
         ),
       }),
     ),
@@ -372,7 +370,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
       forkJoin({
         conversationAndPayload: getOrUploadConversation(payload, state$.value),
         conversations: of(
-          ConversationsSelectors.selectConversationsInfos(state$.value),
+          ConversationsSelectors.selectConversations(state$.value),
         ),
       }),
     ),
@@ -543,8 +541,9 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
           );
 
           const folders = ConversationsSelectors.selectFolders(state$.value);
-          const allConversations =
-            ConversationsSelectors.selectConversationsInfos(state$.value);
+          const allConversations = ConversationsSelectors.selectConversations(
+            state$.value,
+          );
           const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
             state$.value,
             FeatureType.Chat,
@@ -631,9 +630,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.deleteConversations.match),
     map(({ payload }) => ({
-      conversations: ConversationsSelectors.selectConversationsInfos(
-        state$.value,
-      ),
+      conversations: ConversationsSelectors.selectConversations(state$.value),
       selectedConversationsIds:
         ConversationsSelectors.selectSelectedConversationsIds(state$.value),
       deleteIds: new Set(payload.conversationIds),
@@ -701,9 +698,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.rateMessage.match),
     map(({ payload }) => ({
       payload,
-      conversations: ConversationsSelectors.selectConversationsInfos(
-        state$.value,
-      ),
+      conversations: ConversationsSelectors.selectConversations(state$.value),
     })),
     switchMap(({ conversations, payload }) => {
       const conversation = conversations.find(
@@ -769,9 +764,7 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.updateMessage.match),
     map(({ payload }) => ({
       payload,
-      conversations: ConversationsSelectors.selectConversationsInfos(
-        state$.value,
-      ),
+      conversations: ConversationsSelectors.selectConversations(state$.value),
     })),
     switchMap(({ conversations, payload }) => {
       const conversation = conversations.find(

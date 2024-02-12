@@ -1,8 +1,6 @@
-import { Entity, ShareEntity } from './common';
+import { ShareEntity } from './common';
 
-export type PromptInfo = Entity & {
-  isShared?: boolean;
-};
+export type PromptInfo = ShareEntity;
 
 export interface Prompt extends ShareEntity, PromptInfo {
   description?: string;

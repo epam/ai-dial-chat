@@ -112,7 +112,7 @@ export interface ConversationEntityModel {
   id: string;
 }
 
-export interface ConversationInfo extends Entity, ShareInterface {
+export interface ConversationInfo extends Entity {
   model: ConversationEntityModel;
   lastActivityDate?: number;
   isPlayback?: boolean;

@@ -77,7 +77,7 @@ export const ChatView = memo(() => {
     ConversationsSelectors.selectIsConversationsStreaming,
   );
   const conversations = useAppSelector(
-    ConversationsSelectors.selectConversationsInfos,
+    ConversationsSelectors.selectConversations,
   );
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const enabledFeatures = useAppSelector(
@@ -497,9 +497,6 @@ export const ChatView = memo(() => {
             values: { messages: clearStateForMessages(conversation.messages) },
           }),
         );
-        if (temporarySettings.modelId) {
-          handleSelectModel(conversation, temporarySettings.modelId);
-        }
         handleChangePrompt(conversation, temporarySettings.prompt);
         handleChangeTemperature(conversation, temporarySettings.temperature);
         if (temporarySettings.currentAssistentModelId) {
@@ -510,6 +507,9 @@ export const ChatView = memo(() => {
         }
         if (temporarySettings.addonsIds) {
           handleOnApplyAddons(conversation, temporarySettings.addonsIds);
+        }
+        if (temporarySettings.modelId) {
+          handleSelectModel(conversation, temporarySettings.modelId);
         }
       }
     });

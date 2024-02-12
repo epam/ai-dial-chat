@@ -24,7 +24,6 @@ import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   PromptsActions,
@@ -214,7 +213,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         );
       }
       dispatch(
-        ConversationsActions.updateConversation({
+        PromptsActions.updatePrompt({
           id: prompt.id,
           values: { folderId: folderPath },
         }),

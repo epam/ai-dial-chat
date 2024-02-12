@@ -43,7 +43,7 @@ import { ConversationsState } from './conversations.types';
 const rootSelector = (state: RootState): ConversationsState =>
   state.conversations;
 
-export const selectConversationsInfos = createSelector(
+export const selectConversations = createSelector(
   [
     rootSelector,
     ShareSelectors.selectSharedByMeConversationsResources,
@@ -69,7 +69,7 @@ export const selectConversationsInfos = createSelector(
 
 export const selectFilteredConversations = createSelector(
   [
-    selectConversationsInfos,
+    selectConversations,
     (_state, filters: EntityFilters) => filters,
     (_state, _filters, searchTerm?: string) => searchTerm,
   ],
@@ -117,7 +117,7 @@ export const selectFolders = createSelector(
 );
 
 export const selectEmptyFolderIds = createSelector(
-  [selectFolders, selectConversationsInfos],
+  [selectFolders, selectConversations],
   (folders, conversations) => {
     return folders
       .filter(
@@ -163,14 +163,14 @@ export const selectSectionFolders = createSelector(
 );
 
 export const selectLastConversation = createSelector(
-  [selectConversationsInfos],
+  [selectConversations],
   (conversations): ConversationInfo | undefined => {
     if (!conversations.length) return undefined;
     return [...conversations].sort(compareConversationsByDate)[0];
   },
 );
 export const selectConversation = createSelector(
-  [selectConversationsInfos, (_state, id: string) => id],
+  [selectConversations, (_state, id: string) => id],
   (conversations, id): ConversationInfo | undefined => {
     return conversations.find((conv) => conv.id === id);
   },
@@ -188,7 +188,7 @@ export const selectConversationSignal = createSelector(
   },
 );
 export const selectSelectedConversations = createSelector(
-  [selectConversationsInfos, selectSelectedConversationsIds],
+  [selectConversations, selectSelectedConversationsIds],
   (conversations, selectedConversationIds) => {
     return selectedConversationIds
       .map((id) => conversations.find((conv) => conv.id === id))
@@ -245,7 +245,7 @@ export const selectMyItemsFilters = createSelector(
 );
 
 export const selectSearchedConversations = createSelector(
-  [selectConversationsInfos, selectSearchTerm],
+  [selectConversations, selectSearchTerm],
   (conversations, searchTerm) =>
     conversations.filter((conversation) =>
       doesPromptOrConversationContainSearchTerm(conversation, searchTerm),
@@ -447,7 +447,7 @@ export const isPublishConversationVersionUnique = createSelector(
 
     if (!conversation || conversation?.publishVersion === version) return false;
 
-    const conversations = selectConversationsInfos(state)
+    const conversations = selectConversations(state)
       .map((conv) => conv as Conversation) // TODO: will be fixed in https://github.com/epam/ai-dial-chat/issues/313
       .filter(
         (conv) =>
@@ -523,7 +523,7 @@ export const getAttachments = createSelector(
     if (conversation) {
       return getUniqueAttachments(
         getConversationAttachmentWithPath(
-          conversation as Conversation, //TODO: upload conversation
+          conversation as Conversation, //TODO: fix in https://github.com/epam/ai-dial-chat/issues/640
           folders,
         ),
       );
@@ -534,14 +534,14 @@ export const getAttachments = createSelector(
 
       if (!folderIds.size) return [];
 
-      const conversations = selectConversationsInfos(state).filter(
+      const conversations = selectConversations(state).filter(
         (conv) => conv.folderId && folderIds.has(conv.folderId),
       );
 
       return getUniqueAttachments(
         conversations.flatMap((conv) =>
           getConversationAttachmentWithPath(
-            conv as Conversation, //TODO: upload conversation
+            conv as Conversation, //TODO: fix in https://github.com/epam/ai-dial-chat/issues/640
             folders,
           ),
         ),
