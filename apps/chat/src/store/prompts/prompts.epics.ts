@@ -411,7 +411,7 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
       forkJoin({
         prompts: browserStorage.getPrompts().pipe(map(filterOnlyMyEntities)),
         promptsFolders: browserStorage
-          .getPromptsFolders()
+          .getPromptsFolders(undefined, true)
           .pipe(map(filterOnlyMyEntities)),
         migratedPromptIds: BrowserStorage.getMigratedEntityIds(
           MigrationStorageKeys.MigratedPromptIds,
@@ -453,14 +453,18 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
         }
 
         const preparedPrompts: Prompt[] = notMigratedPrompts.map((prompt) => {
-          const { path } = getPathToFolderById(promptsFolders, prompt.folderId);
+          const { path } = getPathToFolderById(
+            promptsFolders,
+            prompt.folderId,
+            true,
+          );
           const newName = prompt.name.replace(notAllowedSymbolsRegex, '');
 
           return {
             ...prompt,
             id: constructPath(...[path, newName]),
             name: newName,
-            folderId: path.replace(notAllowedSymbolsRegex, ''),
+            folderId: path,
           };
         }); // to send prompts with proper parentPath
         let migratedPromptsCount = 0;

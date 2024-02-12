@@ -716,7 +716,7 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
           .getConversations()
           .pipe(map(filterOnlyMyEntities)),
         conversationsFolders: browserStorage
-          .getConversationsFolders()
+          .getConversationsFolders(undefined, true)
           .pipe(map(filterOnlyMyEntities)),
         migratedConversationIds: BrowserStorage.getMigratedEntityIds(
           MigrationStorageKeys.MigratedConversationIds,
@@ -769,6 +769,7 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
           const { path } = getPathToFolderById(
             conversationsFolders,
             conv.folderId,
+            true,
           );
           const newName = conv.name.replace(notAllowedSymbolsRegex, '');
 
@@ -776,7 +777,7 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
             ...conv,
             id: constructPath(...[path, newName]),
             name: newName,
-            folderId: path.replace(notAllowedSymbolsRegex, ''),
+            folderId: path,
           };
         }); // to send conversation with proper parentPath and lastActivityDate order
 

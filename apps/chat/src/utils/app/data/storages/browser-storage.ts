@@ -172,23 +172,25 @@ export class BrowserStorage implements DialStorage {
     return BrowserStorage.setData(UIStorageKeys.Prompts, prompts);
   }
 
-  getConversationsFolders(path?: string) {
+  getConversationsFolders(path?: string, recursive?: boolean) {
     return BrowserStorage.getData(UIStorageKeys.Folders, []).pipe(
       map((folders: FolderInterface[]) => {
         return folders.filter(
           (folder) =>
-            folder.type === FolderType.Chat && folder.folderId === path,
+            folder.type === FolderType.Chat &&
+            (recursive || folder.folderId === path),
         );
       }),
     );
   }
 
-  getPromptsFolders(path?: string) {
+  getPromptsFolders(path?: string, recursive?: boolean) {
     return BrowserStorage.getData(UIStorageKeys.Folders, []).pipe(
       map((folders: FolderInterface[]) => {
         return folders.filter(
           (folder) =>
-            folder.type === FolderType.Prompt && folder.folderId === path,
+            folder.type === FolderType.Prompt &&
+            (recursive || folder.folderId === path),
         );
       }),
     );
