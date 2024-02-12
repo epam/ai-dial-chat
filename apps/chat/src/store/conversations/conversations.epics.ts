@@ -503,7 +503,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     switchMap(({ folderId, conversations, folders }) => {
       const childFolders = new Set([
         folderId,
-        ...conversations.flatMap((conv) => getAllPathsFromPath(conv.folderId)),
+        ...conversations.map((conv) => conv.folderId),
       ]);
       const removedConversationsIds = conversations.map((conv) => conv.id);
       const actions: Observable<AnyAction>[] = [];
