@@ -58,6 +58,7 @@ export const importExportSlice = createSlice({
     },
     exportConversationSuccess: (state) => state,
     exportConversations: (state) => state,
+    exportLocalStorageEntities: (state) => state,
     exportCancel: (state) => state,
     exportFail: (state) => {
       state.status = undefined;

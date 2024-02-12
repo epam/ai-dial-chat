@@ -20,7 +20,15 @@ import { fallbackModelID } from '@/src/types/openai';
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
 import { ImportExportSelectors } from '../store/import-export/importExport.reducers';
 import { ShareActions, ShareSelectors } from '../store/share/share.reducers';
+import {
+  selectConversationsToMigrateAndMigratedCount,
+  selectFailedMigratedConversations,
+} from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  selectFailedMigratedPrompts,
+  selectPromptsToMigrateAndMigratedCount,
+} from '@/src/store/prompts/prompts.selectors';
 import {
   SettingsActions,
   SettingsSelectors,
@@ -36,6 +44,8 @@ import ShareModal from '../components/Chat/ShareModal';
 import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
+import { Migration } from '@/src/components/Chat/Migration/Migration';
+import { MigrationFailedWindow } from '@/src/components/Chat/Migration/MigrationFailedModal';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import Header from '@/src/components/Header/Header';
 import { UserMobile } from '@/src/components/Header/User/UserMobile';
@@ -71,6 +81,16 @@ export default function Home({ initialState }: HomeProps) {
 
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
+  const { conversationsToMigrateCount, migratedConversationsCount } =
+    useAppSelector(selectConversationsToMigrateAndMigratedCount);
+  const { promptsToMigrateCount, migratedPromptsCount } = useAppSelector(
+    selectPromptsToMigrateAndMigratedCount,
+  );
+  const failedMigratedConversations = useAppSelector(
+    selectFailedMigratedConversations,
+  );
+  const failedMigratedPrompts = useAppSelector(selectFailedMigratedPrompts);
+
   const isImportingExporting = useAppSelector(
     ImportExportSelectors.selectIsLoadingImportExport,
   );
@@ -147,6 +167,15 @@ export default function Home({ initialState }: HomeProps) {
     ]);
   };
 
+  if (conversationsToMigrateCount !== 0 || promptsToMigrateCount !== 0) {
+    if (
+      conversationsToMigrateCount + promptsToMigrateCount ===
+      migratedPromptsCount + migratedConversationsCount
+    ) {
+      return window.location.reload();
+    }
+  }
+
   return (
     <>
       <Head>
@@ -174,25 +203,40 @@ export default function Home({ initialState }: HomeProps) {
           className="h-screen w-screen flex-col bg-layer-1 text-sm text-primary"
           id="theme-main"
         >
-          <div className="flex size-full flex-col sm:pt-0">
-            {enabledFeatures.has(Feature.Header) && <Header />}
-            <div className="flex w-full grow overflow-auto">
-              {enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
-
-              <div className="flex min-w-0 grow flex-col">
-                <AnnouncementsBanner />
-                <Chat />
-
-                {isImportingExporting && (
-                  <ImportExportLoader isOpen={isImportingExporting} />
+          {conversationsToMigrateCount + promptsToMigrateCount !==
+          migratedPromptsCount + migratedConversationsCount ? (
+            <Migration
+              total={conversationsToMigrateCount + promptsToMigrateCount}
+              uploaded={migratedPromptsCount + migratedConversationsCount}
+            />
+          ) : failedMigratedConversations.length ||
+            failedMigratedPrompts.length ? (
+            <MigrationFailedWindow
+              failedMigratedConversations={failedMigratedConversations}
+              failedMigratedPrompts={failedMigratedPrompts}
+            />
+          ) : (
+            <div className="flex size-full flex-col sm:pt-0">
+              {enabledFeatures.has(Feature.Header) && <Header />}
+              <div className="flex w-full grow overflow-auto">
+                {enabledFeatures.has(Feature.ConversationsSection) && (
+                  <Chatbar />
                 )}
-              </div>
 
-              {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
-              {isProfileOpen && <UserMobile />}
-              {!isShareModalClosed && <ShareModal />}
+                <div className="flex min-w-0 grow flex-col">
+                  <AnnouncementsBanner />
+                  <Chat />
+
+                  {isImportingExporting && (
+                    <ImportExportLoader isOpen={isImportingExporting} />
+                  )}
+                </div>
+                {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
+                {isProfileOpen && <UserMobile />}
+                {!isShareModalClosed && <ShareModal />}
+              </div>
             </div>
-          </div>
+          )}
         </main>
       )}
     </>

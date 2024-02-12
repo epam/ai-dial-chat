@@ -30,6 +30,9 @@ import { v4 as uuidv4 } from 'uuid';
 export { ConversationsSelectors };
 
 const initialState: ConversationsState = {
+  conversationsToMigrateCount: 0,
+  migratedConversationsCount: 0,
+  failedMigratedConversations: [],
   conversations: [],
   selectedConversationsIds: [],
   folders: [],
@@ -52,6 +55,41 @@ export const conversationsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    migrateConversations: (state) => state,
+    initConversationsMigration: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        conversationsToMigrateCount: number;
+      }>,
+    ) => {
+      state.conversationsToMigrateCount = payload.conversationsToMigrateCount;
+    },
+    migrateConversationFinish: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        migratedConversationsCount: number;
+      }>,
+    ) => {
+      state.migratedConversationsCount = payload.migratedConversationsCount;
+    },
+    setFailedMigratedConversations: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        failedMigratedConversations: Conversation[];
+      }>,
+    ) => {
+      state.failedMigratedConversations = payload.failedMigratedConversations;
+    },
+    skipFailedMigratedConversations: (
+      state,
+      { payload: _ }: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
+    ) => state,
     initSelectedConversations: (state) => state,
     initFoldersAndConversations: (state) => state,
     saveConversation: (state, _action: PayloadAction<Conversation>) => state,

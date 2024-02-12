@@ -25,6 +25,9 @@ import { v4 as uuidv4 } from 'uuid';
 export { PromptsSelectors };
 
 const initialState: PromptsState = {
+  promptsToMigrateCount: 0,
+  migratedPromptsCount: 0,
+  failedMigratedPrompts: [],
   prompts: [],
   folders: [],
   temporaryFolders: [],
@@ -43,6 +46,41 @@ export const promptsSlice = createSlice({
   reducers: {
     init: (state) => state,
     initPrompts: (state) => state,
+    migratePrompts: (state) => state,
+    skipFailedMigratedPrompts: (
+      state,
+      { payload: _ }: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
+    ) => state,
+    initPromptsMigration: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        promptsToMigrateCount: number;
+      }>,
+    ) => {
+      state.promptsToMigrateCount = payload.promptsToMigrateCount;
+    },
+    migratePromptFinish: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        migratedPromptsCount: number;
+      }>,
+    ) => {
+      state.migratedPromptsCount = payload.migratedPromptsCount;
+    },
+    setFailedMigratedPrompts: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        failedMigratedPrompts: Prompt[];
+      }>,
+    ) => {
+      state.failedMigratedPrompts = payload.failedMigratedPrompts;
+    },
     createNewPrompt: (state) => {
       const newPrompt: Prompt = addGeneratedPromptId({
         name: getNextDefaultName(
