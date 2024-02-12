@@ -591,6 +591,20 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
           );
 
           const actions: Observable<AnyAction>[] = [];
+          if (conversations.length) {
+            conversations.forEach((conversation) => {
+              actions.push(
+                of(
+                  ConversationsActions.updateConversation({
+                    id: conversation.id,
+                    values: {
+                      folderId: updateFolderId(conversation.folderId),
+                    },
+                  }),
+                ),
+              );
+            });
+          }
           actions.push(
             of(
               ConversationsActions.updateFolderSuccess({
@@ -606,20 +620,6 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
               }),
             ),
           );
-          if (conversations.length) {
-            conversations.forEach((conversation) => {
-              actions.push(
-                of(
-                  ConversationsActions.updateConversation({
-                    id: conversation.id,
-                    values: {
-                      folderId: updateFolderId(conversation.folderId),
-                    },
-                  }),
-                ),
-              );
-            });
-          }
 
           return concat(...actions);
         }),
@@ -2064,7 +2064,7 @@ const getOrUploadConversation = (
     payload.id,
   ) as Conversation;
 
-  if (conversation?.status !== UploadStatus.LOADED) {
+  if (conversation && conversation?.status !== UploadStatus.LOADED) {
     return forkJoin({
       conversation: ConversationService.getConversation(conversation),
       payload: of(payload),
