@@ -315,11 +315,14 @@ export const ChatView = memo(() => {
     );
   }, [dispatch, selectedConversationsIds]);
 
-  const handleSelectModel = useCallback(
-    (conversation: Conversation, modelId: string) => {
-      const newAiEntity = modelsMap[modelId];
-      if (!newAiEntity) {
-        return;
+  const applySelectedModel = useCallback(
+    (
+      conversation: Conversation,
+      modelId: string | undefined,
+    ): Partial<Conversation> => {
+      const newAiEntity = modelId ? modelsMap[modelId] : undefined;
+      if (!modelId || !newAiEntity) {
+        return {};
       }
 
       const updatedReplay: Replay = !conversation.replay.isReplay
@@ -335,22 +338,36 @@ export const ChatView = memo(() => {
           ? conversation.selectedAddons.filter((addonId) => addonsMap[addonId])
           : conversation.selectedAddons;
 
+      return {
+        model: { id: modelId },
+        assistantModelId:
+          newAiEntity.type === EntityType.Assistant
+            ? DEFAULT_ASSISTANT_SUBMODEL.id
+            : undefined,
+        replay: updatedReplay,
+        selectedAddons: updatedAddons,
+      };
+    },
+    [addonsMap, modelsMap],
+  );
+
+  const handleSelectModel = useCallback(
+    (conversation: Conversation, modelId: string) => {
+      const newAiEntity = modelsMap[modelId];
+      if (!newAiEntity) {
+        return;
+      }
+
       dispatch(
         ConversationsActions.updateConversation({
           id: conversation.id,
           values: {
-            model: { id: modelId },
-            assistantModelId:
-              newAiEntity.type === EntityType.Assistant
-                ? DEFAULT_ASSISTANT_SUBMODEL.id
-                : undefined,
-            replay: updatedReplay,
-            selectedAddons: updatedAddons,
+            ...applySelectedModel(conversation, modelId),
           },
         }),
       );
     },
-    [addonsMap, dispatch, modelsMap],
+    [applySelectedModel, dispatch, modelsMap],
   );
 
   const handleSelectAssistantSubModel = useCallback(
@@ -494,34 +511,21 @@ export const ChatView = memo(() => {
         dispatch(
           ConversationsActions.updateConversation({
             id: conversation.id,
-            values: { messages: clearStateForMessages(conversation.messages) },
+            values: {
+              messages: clearStateForMessages(conversation.messages),
+              prompt: temporarySettings.prompt,
+              temperature: temporarySettings.temperature,
+              selectedAddons: temporarySettings.addonsIds.filter(
+                (addonId) => addonsMap[addonId],
+              ),
+              ...applySelectedModel(conversation, temporarySettings.modelId),
+              assistantModelId: temporarySettings.currentAssistentModelId,
+            },
           }),
         );
-        handleChangePrompt(conversation, temporarySettings.prompt);
-        handleChangeTemperature(conversation, temporarySettings.temperature);
-        if (temporarySettings.currentAssistentModelId) {
-          handleSelectAssistantSubModel(
-            conversation,
-            temporarySettings.currentAssistentModelId,
-          );
-        }
-        if (temporarySettings.addonsIds) {
-          handleOnApplyAddons(conversation, temporarySettings.addonsIds);
-        }
-        if (temporarySettings.modelId) {
-          handleSelectModel(conversation, temporarySettings.modelId);
-        }
       }
     });
-  }, [
-    selectedConversations,
-    dispatch,
-    handleChangePrompt,
-    handleChangeTemperature,
-    handleSelectModel,
-    handleSelectAssistantSubModel,
-    handleOnApplyAddons,
-  ]);
+  }, [selectedConversations, dispatch, applySelectedModel, addonsMap]);
 
   const handleTemporarySettingsSave = useCallback(
     (conversation: Conversation, args: ConversationsTemporarySettings) => {

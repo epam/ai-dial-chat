@@ -15,7 +15,7 @@ export const getApiHeaders = ({
     'Content-Type': 'application/json',
   };
   if (chatId) {
-    headers['X-CONVERSATION-ID'] = chatId;
+    headers['X-CONVERSATION-ID'] = encodeURIComponent(chatId);
   }
 
   if (jwt) {
