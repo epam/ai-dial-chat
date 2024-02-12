@@ -5,6 +5,7 @@ import { FolderInterface } from '@/src/types/folder';
 
 import { getPathToFolderById } from './folders';
 
+import escapeStringRegexp from 'escape-string-regexp';
 import { extensions } from 'mime-types';
 
 export function triggerDownload(url: string, name: string): void {
@@ -104,8 +105,11 @@ export const getFilesWithInvalidFileType = (
     ? []
     : files.filter((file) => !isAllowedMimeType(allowedFileTypes, file.type));
 };
-export const notAllowedSymbols = ':;,=/#?';
-export const notAllowedSymbolsRegex = new RegExp(`[${notAllowedSymbols}]`, 'g');
+export const notAllowedSymbols = ':;,=/#?&';
+export const notAllowedSymbolsRegex = new RegExp(
+  `[${escapeStringRegexp(notAllowedSymbols)}]`,
+  'g',
+);
 export const getFilesWithInvalidFileName = <T extends { name: string }>(
   files: T[],
 ): T[] => {
