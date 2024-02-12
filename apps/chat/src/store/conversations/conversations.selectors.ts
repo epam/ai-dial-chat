@@ -395,12 +395,12 @@ export const isPublishConversationVersionUnique = createSelector(
     (_state: RootState, _entityId: string, version: string) => version,
   ],
   (state, entityId, version) => {
-    const conversation = selectConversation(state, entityId) as Conversation; // TODO: fix
+    const conversation = selectConversation(state, entityId) as Conversation; // TODO: will be fixed in https://github.com/epam/ai-dial-chat/issues/313
 
     if (!conversation || conversation?.publishVersion === version) return false;
 
     const conversations = selectConversations(state)
-      .map((conv) => conv as Conversation) // TODO: fix
+      .map((conv) => conv as Conversation) // TODO: will be fixed in https://github.com/epam/ai-dial-chat/issues/313
       .filter(
         (conv) =>
           conv.originalId === entityId && conv.publishVersion === version,
