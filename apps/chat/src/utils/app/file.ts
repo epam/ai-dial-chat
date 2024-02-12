@@ -110,6 +110,7 @@ export const notAllowedSymbols = ':;,=/#?&';
 export const notAllowedSymbolsRegex = new RegExp(
   `[${escapeStringRegexp(notAllowedSymbols)}]`,
   'g',
+);
 export const getFilesWithInvalidFileName = <T extends { name: string }>(
   files: T[],
 ): T[] => {
