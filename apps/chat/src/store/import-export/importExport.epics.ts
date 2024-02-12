@@ -23,7 +23,10 @@ import { filterOnlyMyEntities } from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { FileService } from '@/src/utils/app/data/file-service';
-import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
+import {
+  getOrUploadConversation,
+  getPreparedConversations,
+} from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import {
   getAllPathsFromPath,
@@ -191,17 +194,49 @@ const exportLocalStorageEntitiesEpic: AppEpic = (action$) => {
   );
 };
 
-const importConversationsEpic: AppEpic = (action$, state$) =>
+const importConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ImportExportActions.importConversations.match),
-    switchMap(({ payload }) => {
-      const currentConversations = ConversationsSelectors.selectConversations(
-        state$.value,
+    switchMap(({ payload }) =>
+      forkJoin({
+        conversationsListing: ConversationService.getConversations(
+          undefined,
+          true,
+        ), //listing of all entities
+        importedData: of(payload.data),
+      }),
+    ),
+    switchMap(({ conversationsListing, importedData }) => {
+      const foldersIds = Array.from(
+        new Set(conversationsListing.map((info) => info.folderId)),
       );
-      const currentFolders = ConversationsSelectors.selectFolders(state$.value);
+      //calculate all folders;
+      const folders = getFoldersFromPaths(
+        Array.from(
+          new Set(foldersIds.flatMap((id) => getAllPathsFromPath(id))),
+        ),
+        FolderType.Chat,
+      );
+
+      return forkJoin({
+        //get all conversations from api
+        currentConversations: zip(
+          conversationsListing.map((info) =>
+            ConversationService.getConversation(info),
+          ),
+        ),
+        currentFolders: of(folders),
+        importedData: of(importedData),
+      });
+    }),
+    switchMap(({ currentConversations, currentFolders, importedData }) => {
+      const filteredConversations = currentConversations.filter(
+        Boolean,
+      ) as Conversation[];
+
       const { history, folders, isError }: ImportConversationsResponse =
-        importConversations(payload.data, {
-          currentConversations,
+        importConversations(importedData, {
+          currentConversations: filteredConversations,
           currentFolders,
         });
 
@@ -210,14 +245,46 @@ const importConversationsEpic: AppEpic = (action$, state$) =>
         return of(ImportExportActions.resetState());
       }
 
-      return concat(
-        of(ImportExportActions.importConversationsSuccess()),
-        of(
-          ConversationsActions.importConversationsSuccess({
-            conversations: history,
-            folders,
-          }),
+      const conversationsInfoToUpload = history.filter((conversation) => {
+        return conversation.status !== 'LOADED';
+      });
+
+      const importedConversations = conversationsInfoToUpload
+        .map(({ id }) => {
+          return (importedData as LatestExportFormat).history.find(
+            (conversation) => conversation.id === id,
+          );
+        })
+        .filter(Boolean) as Conversation[];
+
+      const foldersToUpload = folders.filter(({ id }) => {
+        return (importedData as LatestExportFormat).folders.find(
+          (folder) => folder.id === id,
+        );
+      });
+      // upload to the API
+      const preparedConversations = getPreparedConversations({
+        conversations: importedConversations,
+        conversationsFolders: foldersToUpload,
+      });
+
+      return zip(
+        preparedConversations.map((info) =>
+          ConversationService.createConversation(info),
         ),
+      ).pipe(
+        switchMap(() =>
+          concat(
+            of(ImportExportActions.importConversationsSuccess()),
+            of(
+              ConversationsActions.importConversationsSuccess({
+                conversations: history,
+                folders,
+              }),
+            ),
+          ),
+        ),
+        catchError(() => of(ImportExportActions.importFail())),
       );
     }),
   );

@@ -37,6 +37,11 @@ export function isExportFormatV4(obj: any): obj is ExportFormatV4 {
   return 'version' in obj && obj.version === 4;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function isExportFormatV5(obj: any): obj is ExportFormatV4 {
+  return 'version' in obj && obj.version === 5;
+}
+
 export function isPromtsFormat(obj: PromptsHistory) {
   return Object.prototype.hasOwnProperty.call(obj, 'prompts');
 }
@@ -85,6 +90,15 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   }
 
   if (isExportFormatV4(data)) {
+    return {
+      ...data,
+      history: cleanConversationHistory(data.history),
+      prompts: data.prompts || [],
+      isError: false,
+    };
+  }
+
+  if (isExportFormatV5(data)) {
     return {
       ...data,
       history: cleanConversationHistory(data.history),

@@ -8,10 +8,13 @@ import {
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
+import { FolderInterface } from '@/src/types/folder';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 
 import { cleanConversation } from '../../../clean';
+import { constructPath, notAllowedSymbolsRegex } from '../../../file';
+import { getPathToFolderById } from '../../../folders';
 import { ConversationService } from '../../conversation-service';
 import { ApiEntityStorage } from './api-entity-storage';
 
@@ -67,3 +70,22 @@ export const getOrUploadConversation = (
     });
   }
 };
+
+export const getPreparedConversations = ({
+  conversations,
+  conversationsFolders,
+}: {
+  conversations: Conversation[];
+  conversationsFolders: FolderInterface[];
+}) =>
+  conversations.map((conv) => {
+    const { path } = getPathToFolderById(conversationsFolders, conv.folderId);
+    const newName = conv.name.replace(notAllowedSymbolsRegex, '');
+
+    return {
+      ...conv,
+      id: constructPath(...[path, newName]),
+      name: newName,
+      folderId: path.replace(notAllowedSymbolsRegex, ''),
+    };
+  }); // to send conversation with proper parentPath and lastActivityDate order

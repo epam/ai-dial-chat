@@ -50,9 +50,11 @@ import {
   parseConversationId,
 } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
-import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
+import {
+  getOrUploadConversation,
+  getPreparedConversations,
+} from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   generateNextName,
@@ -61,7 +63,6 @@ import {
   getFolderFromPath,
   getFoldersFromPaths,
   getNextDefaultName,
-  getPathToFolderById,
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
@@ -765,20 +766,10 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
 
           return a.lastActivityDate - b.lastActivityDate;
         });
-        const preparedConversations = notMigratedConversations.map((conv) => {
-          const { path } = getPathToFolderById(
-            conversationsFolders,
-            conv.folderId,
-          );
-          const newName = conv.name.replace(notAllowedSymbolsRegex, '');
-
-          return {
-            ...conv,
-            id: constructPath(...[path, newName]),
-            name: newName,
-            folderId: path.replace(notAllowedSymbolsRegex, ''),
-          };
-        }); // to send conversation with proper parentPath and lastActivityDate order
+        const preparedConversations = getPreparedConversations({
+          conversations: notMigratedConversations,
+          conversationsFolders,
+        });
 
         let migratedConversationsCount = 0;
 
@@ -1675,7 +1666,8 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.deleteConversationsSuccess.match(action) ||
         ConversationsActions.addConversations.match(action) ||
         ConversationsActions.duplicateConversation.match(action) ||
-        ConversationsActions.duplicateSelectedConversations.match(action),
+        ConversationsActions.duplicateSelectedConversations.match(action) ||
+        ConversationsActions.importConversationsSuccess.match(action),
     ),
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
@@ -1697,7 +1689,11 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
 
 const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.selectConversations.match),
+    filter(
+      (action) =>
+        ConversationsActions.selectConversations.match(action) ||
+        ConversationsActions.importConversationsSuccess.match(action),
+    ),
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
     ),

@@ -7,7 +7,8 @@ export type SupportedExportFormats =
   | ExportFormatV2
   | ExportFormatV3
   | ExportFormatV4
-  | ExportConversationsFormatV4;
+  | ExportConversationsFormatV4
+  | ExportConversationsFormatV5;
 export type LatestExportFormat = ExportFormatV4;
 export type LatestExportConversationsFormat = ExportConversationsFormatV5;
 
