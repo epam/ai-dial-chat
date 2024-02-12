@@ -1,7 +1,8 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
-import { addGeneratedConversationId } from '@/src/utils/app/conversation';
+import { regenerateConversationId } from '@/src/utils/app/conversation';
+import { BucketService } from '@/src/utils/app/data/bucket-service';
 import {
   addGeneratedFolderId,
   generateNextName,
@@ -292,7 +293,7 @@ export const conversationsSlice = createSlice({
             FeatureType.Chat,
           )
         ) {
-          const newConversation: Conversation = addGeneratedConversationId({
+          const newConversation: Conversation = regenerateConversationId({
             ...(conversation as Conversation),
             ...resetShareEntity,
             folderId: undefined,

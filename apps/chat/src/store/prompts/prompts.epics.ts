@@ -33,11 +33,11 @@ import {
   addGeneratedFolderId,
   findRootFromItems,
   getAllPathsFromPath,
-  getFolderFromPath,
+  getFolderFromId,
   getFolderIdByPath,
   getPathToFolderById,
   getTemporaryFoldersToPublish,
-  splitPath,
+  splitEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import {
@@ -114,7 +114,7 @@ const getOrUploadPrompt = (
   const prompt = PromptsSelectors.selectPrompt(state, payload.id);
 
   if (prompt?.status !== UploadStatus.LOADED) {
-    const { name, parentPath } = splitPath(payload.id);
+    const { name, parentPath } = splitEntityId(payload.id);
     const prompt = addGeneratedPromptId({
       name,
       folderId: parentPath,
@@ -208,7 +208,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.updateFolder.match),
     switchMap(({ payload }) => {
-      const folder = getFolderFromPath(payload.folderId, FolderType.Prompt);
+      const folder = getFolderFromId(payload.folderId, FolderType.Prompt);
       const newFolder = addGeneratedFolderId({ ...folder, ...payload.values });
 
       if (payload.folderId === newFolder.id) {
@@ -560,7 +560,7 @@ const initPromptsEpic: AppEpic = (action$) =>
           PromptsActions.setFolders({
             folders: Array.from(
               new Set(prompts.flatMap((p) => getAllPathsFromPath(p.folderId))),
-            ).map((path) => getFolderFromPath(path, FolderType.Prompt)),
+            ).map((path) => getFolderFromId(path, FolderType.Prompt)),
           }),
         ),
       );

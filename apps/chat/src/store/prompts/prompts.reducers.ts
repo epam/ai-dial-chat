@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { BucketService } from '@/src/utils/app/data/bucket-service';
 import {
   addGeneratedFolderId,
   generateNextName,
@@ -83,6 +84,7 @@ export const promptsSlice = createSlice({
     },
     createNewPrompt: (state) => {
       const newPrompt: Prompt = addGeneratedPromptId({
+        bucket: BucketService.getBucket(),
         name: getNextDefaultName(
           translate('Prompt'),
           state.prompts.filter((prompt) => !prompt.folderId), // only root prompts
@@ -266,6 +268,7 @@ export const promptsSlice = createSlice({
       }: PayloadAction<{ name?: string; parentId?: string } | undefined>,
     ) => {
       const newFolder: FolderInterface = addGeneratedFolderId({
+        bucket: BucketService.getBucket(),
         folderId: payload?.parentId,
         name:
           // custom name
@@ -303,6 +306,7 @@ export const promptsSlice = createSlice({
       const id = uuidv4();
 
       state.temporaryFolders.push({
+        bucket: BucketService.getBucket(),
         id,
         name: folderName,
         type: FolderType.Prompt,

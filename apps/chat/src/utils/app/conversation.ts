@@ -8,9 +8,14 @@ import {
 import { EntityType, UploadStatus } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 
-import { getConversationApiKey, parseConversationApiKey } from '../server/api';
+import {
+  ApiKeys,
+  getConversationApiKey,
+  parseConversationApiKey,
+} from '../server/api';
+import { BucketService } from './data/bucket-service';
 import { constructPath, notAllowedSymbolsRegex } from './file';
-import { compareEntitiesByName, splitPath } from './folders';
+import { compareEntitiesByName, splitEntityId } from './folders';
 
 export const getAssitantModelId = (
   modelType: EntityType,
@@ -98,21 +103,32 @@ export const getNewConversationName = (
 };
 
 export const getGeneratedConversationId = <T extends ConversationInfo>(
-  conversation: Omit<T, 'id'>,
-): string =>
-  constructPath(conversation.folderId, getConversationApiKey(conversation));
+  conversation: Omit<T, 'id'> & Partial<Pick<T, 'id'>>,
+): string => {
+  let bucket;
+  if (conversation.id) {
+    bucket = splitEntityId(conversation.id).bucket;
+  }
 
-export const addGeneratedConversationId = <T extends ConversationInfo>(
-  conversation: Omit<T, 'id'>,
+  return constructPath(
+    ApiKeys.Conversations,
+    bucket || BucketService.getBucket(),
+    conversation.folderId,
+    getConversationApiKey(conversation),
+  );
+};
+
+export const regenerateConversationId = <T extends ConversationInfo>(
+  conversation: Omit<T, 'id'> & Partial<Pick<T, 'id'>>,
 ): T =>
   ({
     ...conversation,
     id: getGeneratedConversationId(conversation),
   }) as T;
 
-export const parseConversationId = (id: string): ConversationInfo => {
-  const { name, parentPath } = splitPath(id);
-  return addGeneratedConversationId({
+export const getConversationInfoFromId = (id: string): ConversationInfo => {
+  const { name, parentPath } = splitEntityId(id);
+  return regenerateConversationId({
     ...parseConversationApiKey(name),
     folderId: parentPath,
   });

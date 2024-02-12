@@ -41,13 +41,13 @@ import {
   filterOnlyMyEntities,
 } from '@/src/utils/app/common';
 import {
-  addGeneratedConversationId,
   compareConversationsByDate,
+  getConversationInfoFromId,
   getGeneratedConversationId,
   getNewConversationName,
   isChosenConversationValidForCompare,
   isSettingsChanged,
-  parseConversationId,
+  regenerateConversationId,
 } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
@@ -57,7 +57,7 @@ import {
   generateNextName,
   getAllPathsFromId,
   getAllPathsFromPath,
-  getFolderFromPath,
+  getFolderFromId,
   getFoldersFromPaths,
   getNextDefaultName,
   getPathToFolderById,
@@ -130,7 +130,7 @@ const initSelectedConversationsEpic: AppEpic = (action$) =>
       return forkJoin({
         selectedConversations: zip(
           selectedIds.map((id) =>
-            ConversationService.getConversation(parseConversationId(id)),
+            ConversationService.getConversation(getConversationInfoFromId(id)),
           ),
         ),
         selectedIds: of(selectedIds),
@@ -139,7 +139,7 @@ const initSelectedConversationsEpic: AppEpic = (action$) =>
     map(({ selectedConversations, selectedIds }) => {
       const conversations = selectedConversations
         .filter(Boolean)
-        .map((conv) => addGeneratedConversationId(conv!)) as Conversation[];
+        .map((conv) => regenerateConversationId(conv!));
       if (!selectedIds.length || !conversations.length) {
         return {
           conversations: [],
@@ -267,7 +267,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
           const newConversations: Conversation[] = names.map(
             (name: string, index): Conversation => {
-              return addGeneratedConversationId({
+              return regenerateConversationId({
                 name:
                   name !== DEFAULT_CONVERSATION_NAME
                     ? name
@@ -344,7 +344,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
       const userMessages = conversation.messages.filter(
         ({ role }) => role === Role.User,
       );
-      const newConversation: Conversation = addGeneratedConversationId({
+      const newConversation: Conversation = regenerateConversationId({
         ...conversation,
         ...resetShareEntity,
         folderId,
@@ -404,7 +404,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
         true,
       );
 
-      const newConversation: Conversation = addGeneratedConversationId({
+      const newConversation: Conversation = regenerateConversationId({
         ...conversation,
         ...resetShareEntity,
         folderId,
@@ -446,7 +446,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
     switchMap(({ conversation }) => {
       if (!conversation) return EMPTY;
 
-      const newConversation: Conversation = addGeneratedConversationId({
+      const newConversation: Conversation = regenerateConversationId({
         ...conversation,
         ...resetShareEntity,
         folderId: undefined,
@@ -532,7 +532,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.updateFolder.match),
     switchMap(({ payload }) => {
-      const folder = getFolderFromPath(payload.folderId, FolderType.Chat);
+      const folder = getFolderFromId(payload.folderId, FolderType.Chat);
       const newFolder = addGeneratedFolderId({ ...folder, ...payload.values });
 
       if (payload.folderId === newFolder.id) {
@@ -573,13 +573,13 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
           const updatedConversations = combineEntities(
             allConversations.map((conv) =>
-              addGeneratedConversationId({
+              regenerateConversationId({
                 ...conv,
                 folderId: updateFolderId(conv.folderId),
               }),
             ),
             conversations.map((conv) =>
-              addGeneratedConversationId({
+              regenerateConversationId({
                 ...conv,
                 folderId: updateFolderId(conv.folderId),
               }),
@@ -698,7 +698,9 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
         ...actions,
         zip(
           Array.from(deleteIds).map((id) =>
-            ConversationService.deleteConversation(parseConversationId(id)),
+            ConversationService.deleteConversation(
+              getConversationInfoFromId(id),
+            ),
           ),
         ).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       );
@@ -1054,7 +1056,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         true,
       );
 
-      const updatedConversation: Conversation = addGeneratedConversationId({
+      const updatedConversation: Conversation = regenerateConversationId({
         ...payload.conversation,
         lastActivityDate: Date.now(),
         replay: {
@@ -1544,7 +1546,7 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
             ? clearStateForMessages(conv.messages)
             : conv.messages;
 
-        updatedConversation = addGeneratedConversationId({
+        updatedConversation = regenerateConversationId({
           ...conv,
           model: model,
           messages,
@@ -2046,7 +2048,7 @@ const recreateConversationEpic: AppEpic = (action$) =>
           switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
         ),
         ConversationService.deleteConversation(
-          parseConversationId(payload.old.id),
+          getConversationInfoFromId(payload.old.id),
         ).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       );
     }),
@@ -2091,7 +2093,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
       if (!conversation) {
         return EMPTY; // TODO: handle?
       }
-      const newConversation: Conversation = addGeneratedConversationId({
+      const newConversation: Conversation = regenerateConversationId({
         ...(conversation as Conversation),
         ...values,
         lastActivityDate: Date.now(),

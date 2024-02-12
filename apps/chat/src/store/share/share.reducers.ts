@@ -201,7 +201,11 @@ const selectSharedWithMeConversationInfos = createSelector(
 
         return {
           ...info,
-          id: constructPath(sharedEntity.parentPath, sharedEntity.name),
+          id: constructPath(
+            sharedEntity.bucket,
+            sharedEntity.parentPath,
+            sharedEntity.name,
+          ),
           lastActivityDate: Date.now(),
           folderId: relativePath,
 
@@ -221,7 +225,11 @@ const selectSharedWithMeConversationFolders = createSelector(
 
         return {
           ...info,
-          id: constructPath(sharedEntity.parentPath, sharedEntity.name),
+          id: constructPath(
+            sharedEntity.bucket,
+            sharedEntity.parentPath,
+            sharedEntity.name,
+          ),
           folderId: relativePath,
           type: FolderType.Chat,
           sharedWithMe: true,

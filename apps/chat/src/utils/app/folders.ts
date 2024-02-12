@@ -361,16 +361,26 @@ export const addGeneratedFolderId = (folder: Omit<FolderInterface, 'id'>) => ({
   id: constructPath(folder.folderId, folder.name),
 });
 
-export const splitPath = (id: string) => {
+// {apikey}/{bucket}/path.../name
+export const splitEntityId = (
+  id: string,
+): {
+  bucket: string;
+  name: string;
+  parentPath: string | undefined;
+  apiKey: string;
+} => {
   const parts = id.split('/');
-  const name = parts[parts.length - 1];
   const parentPath =
-    parts.length > 1
-      ? constructPath(...parts.slice(0, parts.length - 1))
+    parts.length > 3
+      ? constructPath(...parts.slice(2, parts.length - 1))
       : undefined;
+
   return {
-    name,
+    apiKey: parts[0],
+    bucket: parts[1],
     parentPath,
+    name: parts[parts.length - 1],
   };
 };
 
@@ -388,18 +398,18 @@ export const getAllPathsFromPath = (path?: string): string[] => {
 };
 
 export const getAllPathsFromId = (id: string): string[] => {
-  const { parentPath } = splitPath(id);
+  const { parentPath } = splitEntityId(id);
   return getAllPathsFromPath(parentPath);
 };
 
-export const getFolderFromPath = (
-  path: string,
+export const getFolderFromId = (
+  id: string,
   type: FolderType,
   status?: UploadStatus,
 ): FolderInterface => {
-  const { name, parentPath } = splitPath(path);
+  const { name, parentPath } = splitEntityId(id);
   return {
-    id: path,
+    id,
     name,
     type,
     folderId: parentPath,
@@ -413,7 +423,7 @@ export const getFoldersFromPaths = (
   status?: UploadStatus,
 ): FolderInterface[] => {
   return (paths.filter(Boolean) as string[]).map((path) =>
-    getFolderFromPath(path, type, status),
+    getFolderFromId(path, type, status),
   );
 };
 

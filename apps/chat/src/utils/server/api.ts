@@ -127,7 +127,9 @@ export const getConversationApiKey = (
 };
 
 // Format key: {modelId}__{name}
-export const parseConversationApiKey = (apiKey: string): ConversationInfo => {
+export const parseConversationApiKey = (
+  apiKey: string,
+): Omit<ConversationInfo, 'bucket'> => {
   const parts = apiKey.split(pathKeySeparator);
 
   const [modelId, name] =
@@ -150,7 +152,7 @@ export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>): string => {
 };
 
 // Format key: {name}
-export const parsePromptApiKey = (name: string): PromptInfo => {
+export const parsePromptApiKey = (name: string): Omit<PromptInfo, 'bucket'> => {
   return {
     id: name,
     name,
