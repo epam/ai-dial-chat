@@ -835,10 +835,11 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
   );
 
 export const PromptsEpics = combineEpics(
-  initEpic,
-  initPromptsEpic,
   migratePromptsEpic,
   skipFailedMigratedPromptsEpic,
+  // init
+  initEpic,
+  initPromptsEpic,
   // initFoldersEpic,
   savePromptsEpic,
   saveFoldersEpic,

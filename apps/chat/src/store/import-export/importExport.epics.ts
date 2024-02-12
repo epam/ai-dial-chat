@@ -20,7 +20,6 @@ import { combineEpics } from 'redux-observable';
 
 import { filterOnlyMyEntities } from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
-import { DataService } from '@/src/utils/app/data/data-service';
 import { FileService } from '@/src/utils/app/data/file-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { getConversationAttachmentWithPath } from '@/src/utils/app/folders';
@@ -42,7 +41,6 @@ import {
 
 import { Conversation, Message, Stage } from '@/src/types/chat';
 import { LatestExportFormat } from '@/src/types/importExport';
-import { MigrationStorageKeys } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
 import { errorsMessages } from '@/src/constants/errors';

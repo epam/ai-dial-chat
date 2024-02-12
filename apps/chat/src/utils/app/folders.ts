@@ -160,7 +160,6 @@ export const generateNextName = (
   index = 0,
 ) => {
   const regex = new RegExp(`^${defaultName} (\\d+)$`);
-
   return currentName.match(regex)
     ? getNextDefaultName(defaultName, entities, index)
     : getNextDefaultName(currentName, entities, index, true);

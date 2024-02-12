@@ -163,7 +163,7 @@ export class DataService {
       | MigrationStorageKeys.MigratedConversationIds
       | MigrationStorageKeys.MigratedPromptIds,
   ): Observable<void> {
-    return BrowserStorage.setData(key, migratedEntityIds)
+    return BrowserStorage.setData(key, migratedEntityIds);
   }
 
   public static getFailedMigratedEntityIds(
