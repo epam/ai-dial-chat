@@ -470,7 +470,7 @@ const createNewConversationSuccessEpic: AppEpic = (action$) =>
     ),
     switchMap(({ payload }) =>
       ConversationService.createConversation(payload.newConversation).pipe(
-        switchMap(() => EMPTY),
+        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       ),
     ),
   );
@@ -688,7 +688,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
           Array.from(deleteIds).map((id) =>
             ConversationService.deleteConversation(parseConversationId(id)),
           ),
-        ).pipe(switchMap(() => EMPTY)),
+        ).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       );
     }),
   );
@@ -1861,7 +1861,7 @@ const saveConversationEpic: AppEpic = (action$) =>
     ),
     switchMap(({ payload: newConversation }) => {
       return ConversationService.updateConversation(newConversation).pipe(
-        switchMap(() => EMPTY),
+        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       );
     }),
   );
@@ -1872,11 +1872,11 @@ const recreateConversationEpic: AppEpic = (action$) =>
     mergeMap(({ payload }) => {
       return concat(
         ConversationService.createConversation(payload.new).pipe(
-          switchMap(() => EMPTY),
+          switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
         ),
         ConversationService.deleteConversation(
           parseConversationId(payload.old.id),
-        ).pipe(switchMap(() => EMPTY)),
+        ).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       );
     }),
   );
@@ -1986,7 +1986,7 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
             ),
             of(ConversationsActions.uploadConversationsFail()),
           ),
-        ),
+        ), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       ),
     ),
   );
@@ -2018,7 +2018,7 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
             ),
           );
         }),
-        catchError(() => of(ConversationsActions.uploadConversationsFail())),
+        catchError(() => of(ConversationsActions.uploadConversationsFail())), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       ),
     ),
   );

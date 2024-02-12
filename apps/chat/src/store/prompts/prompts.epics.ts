@@ -147,8 +147,8 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
 
       return concat(
         of(PromptsActions.updatePromptSuccess({ prompt: newPrompt, id })),
-        PromptService.deletePrompt(prompt).pipe(switchMap(() => EMPTY)),
-        PromptService.updatePrompt(newPrompt).pipe(switchMap(() => EMPTY)),
+        PromptService.deletePrompt(prompt).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        PromptService.updatePrompt(newPrompt).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       );
     }),
   );
@@ -158,7 +158,7 @@ export const deletePromptEpic: AppEpic = (action$) =>
     filter(PromptsActions.deletePrompt.match),
     switchMap(({ payload }) => {
       return PromptService.deletePrompt(payload.prompt).pipe(
-        switchMap(() => EMPTY),
+        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       );
     }),
   );
@@ -188,7 +188,7 @@ const deletePromptsEpic: AppEpic = (action$) =>
           }),
         ),
         zip(deletePrompts.map((id) => PromptService.deletePrompt(id))).pipe(
-          switchMap(() => EMPTY),
+          switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
         ),
       ),
     ),
