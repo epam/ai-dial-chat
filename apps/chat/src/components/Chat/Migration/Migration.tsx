@@ -17,7 +17,9 @@ export const Migration = ({ total, uploaded }: Props) => {
   return (
     <div className="flex h-full flex-col items-center justify-center">
       <Spinner className="h-auto" size={60} />
-      <h1 className="mt-7 text-2xl md:text-3xl font-semibold">{t('Migration')}</h1>
+      <h1 className="mt-7 text-2xl font-semibold md:text-3xl">
+        {t('Migration')}
+      </h1>
       <p className="mt-7 text-center text-base md:text-xl">
         {uploaded} {t('out of')} {total} <br />
         {t('conversations and prompts are loaded')}
