@@ -24,5 +24,6 @@ export const errorsMessages = {
     'You do not have any available models. Please contact your administrator or try to reload the page.',
   importFailed: 'Import failed',
   exportFailed: 'Export failed',
-  notValidEntityType: 'You made a request with an unavailable or nonexistent entity type',
+  notValidEntityType:
+    'You made a request with an unavailable or nonexistent entity type',
 };
