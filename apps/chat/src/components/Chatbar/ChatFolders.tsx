@@ -22,7 +22,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
   MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH,
@@ -71,7 +71,12 @@ const ChatFolderTemplate = ({
   const highlightedFolders = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
   );
-  const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
+  const openedFoldersIds = useAppSelector((state) =>
+    UISelectors.selectOpenedFoldersIds(state, FeatureType.Chat),
+  );
+  const loadingFolderIds = useAppSelector(
+    ConversationsSelectors.selectLoadingFolderIds,
+  );
 
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, folder, FeatureType.Chat),
@@ -100,9 +105,9 @@ const ChatFolderTemplate = ({
             movedFolder.folderId !== folder.id
           ) {
             dispatch(
-              ConversationsActions.moveFolder({
+              ConversationsActions.updateFolder({
                 folderId: movedFolder.id,
-                newParentFolderId: folder.id,
+                values: { folderId: folder.id },
               }),
             );
           }
@@ -115,9 +120,9 @@ const ChatFolderTemplate = ({
   const onDropBetweenFolders = useCallback(
     (folder: FolderInterface, parentFolderId: string | undefined) => {
       dispatch(
-        ConversationsActions.moveFolder({
+        ConversationsActions.updateFolder({
           folderId: folder.id,
-          newParentFolderId: parentFolderId,
+          values: { folderId: parentFolderId },
         }),
       );
     },
@@ -126,7 +131,7 @@ const ChatFolderTemplate = ({
 
   const handleFolderClick = useCallback(
     (folderId: string) => {
-      dispatch(UIActions.toggleFolder({ id: folderId }));
+      dispatch(ConversationsActions.toggleFolder({ id: folderId }));
     },
     [dispatch],
   );
@@ -153,9 +158,9 @@ const ChatFolderTemplate = ({
         handleDrop={handleDrop}
         onRenameFolder={(name, folderId) => {
           dispatch(
-            ConversationsActions.renameFolder({
+            ConversationsActions.updateFolder({
               folderId,
-              name,
+              values: { name },
             }),
           );
         }}
@@ -164,6 +169,7 @@ const ChatFolderTemplate = ({
         }
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Chat}
+        loadingFolderIds={loadingFolderIds}
       />
       {isLast && (
         <BetweenFoldersLine
@@ -207,8 +213,7 @@ export const ChatSection = ({
   );
 
   const rootFolders = useMemo(
-    () =>
-      folders.filter(({ folderId }) => !folderId).sort(compareEntitiesByName),
+    () => folders.filter(({ folderId }) => !folderId),
     [folders],
   );
 

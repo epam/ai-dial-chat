@@ -16,7 +16,8 @@ import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
-import { Prompt } from '@/src/types/prompt';
+import { MoveToFolderProps } from '@/src/types/folder';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -37,16 +38,9 @@ import UnpublishModal from '../../Chat/UnpublishModal';
 import ShareIcon from '../../Common/ShareIcon';
 import { PromptModal } from './PromptModal';
 
-import { v4 as uuidv4 } from 'uuid';
-
 interface Props {
-  item: Prompt;
+  item: PromptInfo;
   level?: number;
-}
-
-export interface PromptMoveToFolderProps {
-  folderId?: string;
-  isNewFolder?: boolean;
 }
 
 export const PromptComponent = ({ item: prompt, level }: Props) => {
@@ -76,6 +70,9 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const [isContextMenu, setIsContextMenu] = useState(false);
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
+  );
+  const newFolderName = useAppSelector((state) =>
+    PromptsSelectors.selectNewFolderName(state, prompt.folderId),
   );
 
   const { refs, context } = useFloating({
@@ -116,7 +113,14 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const handleUpdate = useCallback(
     (prompt: Prompt) => {
       dispatch(
-        PromptsActions.updatePrompt({ promptId: prompt.id, values: prompt }),
+        PromptsActions.updatePrompt({
+          id: prompt.id,
+          values: {
+            name: prompt.name,
+            description: prompt.description,
+            content: prompt.content,
+          },
+        }),
       );
       dispatch(PromptsActions.resetSearch());
       setIsRenaming(false);
@@ -130,14 +134,14 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       e.preventDefault();
 
       if (isDeleting) {
-        dispatch(PromptsActions.deletePrompts({ promptIds: [prompt.id] }));
+        dispatch(PromptsActions.deletePrompt({ prompt }));
         dispatch(PromptsActions.resetSearch());
       }
 
       setIsDeleting(false);
       dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
     },
-    [dispatch, isDeleting, prompt.id],
+    [dispatch, isDeleting, prompt],
   );
 
   const handleCancelDelete: MouseEventHandler = useCallback((e) => {
@@ -172,6 +176,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       setIsDeleting(false);
       setIsRenaming(true);
       dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
+      dispatch(PromptsActions.uploadPrompt({ promptId: prompt.id }));
       dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
     },
     [dispatch, prompt.id],
@@ -193,25 +198,24 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   );
 
   const handleMoveToFolder = useCallback(
-    ({ folderId, isNewFolder }: PromptMoveToFolderProps) => {
-      let localFolderId = folderId;
+    ({ folderId, isNewFolder }: MoveToFolderProps) => {
+      const folderPath = isNewFolder ? newFolderName : folderId;
       if (isNewFolder) {
-        localFolderId = uuidv4();
         dispatch(
           PromptsActions.createFolder({
-            folderId: localFolderId,
+            name: folderPath,
           }),
         );
       }
       dispatch(
         PromptsActions.updatePrompt({
-          promptId: prompt.id,
-          values: { folderId: localFolderId },
+          id: prompt.id,
+          values: { folderId: folderPath },
         }),
       );
       setIsContextMenu(false);
     },
-    [dispatch, prompt.id],
+    [dispatch, newFolderName, prompt.id],
   );
 
   const handleClose = useCallback(() => {
@@ -345,9 +349,8 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           )}
         </div>
 
-        {isSelected && showModal && (
+        {showModal && isSelected && (
           <PromptModal
-            prompt={prompt}
             isOpen
             onClose={handleClose}
             onUpdatePrompt={handleUpdate}

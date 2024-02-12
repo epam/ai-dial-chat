@@ -4,7 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { MoveType } from '@/src/utils/app/move';
 
-import { Conversation } from '@/src/types/chat';
+import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -58,6 +58,9 @@ export const Chatbar = () => {
 
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
+  const areEntitiesUploaded = useAppSelector(
+    ConversationsSelectors.areConversationsUploaded,
+  );
   const searchFilters = useAppSelector(
     ConversationsSelectors.selectSearchFilters,
   );
@@ -93,7 +96,7 @@ export const Chatbar = () => {
   );
 
   return (
-    <Sidebar<Conversation>
+    <Sidebar<ConversationInfo>
       featureType={FeatureType.Chat}
       side="left"
       actionButtons={<ChatActionsBlock />}
@@ -111,6 +114,7 @@ export const Chatbar = () => {
       }
       handleDrop={handleDrop}
       footerComponent={<ChatbarSettings />}
+      areEntitiesUploaded={areEntitiesUploaded}
     />
   );
 };

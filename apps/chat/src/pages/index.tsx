@@ -13,6 +13,7 @@ import { delay } from '@/src/utils/auth/delay';
 import { isServerSessionValid } from '@/src/utils/auth/session';
 import { timeoutAsync } from '@/src/utils/auth/timeout-async';
 
+import { StorageType } from '../types/storage';
 import { Translation } from '../types/translation';
 import { fallbackModelID } from '@/src/types/openai';
 
@@ -223,7 +224,11 @@ export const getServerSideProps: GetServerSideProps = async ({
       packageJSON.version,
     ),
     isAuthDisabled,
-    storageType: process.env.STORAGE_TYPE || 'browserStorage',
+    storageType: Object.values(StorageType).includes(
+      process.env.STORAGE_TYPE as StorageType,
+    )
+      ? (process.env.STORAGE_TYPE as StorageType)
+      : StorageType.API,
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
   };

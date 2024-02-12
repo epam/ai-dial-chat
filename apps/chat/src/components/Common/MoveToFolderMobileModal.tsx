@@ -1,33 +1,37 @@
 import { FloatingOverlay } from '@floating-ui/react';
 import { IconFolderPlus, IconX } from '@tabler/icons-react';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, MoveToFolderProps } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
-
-import { PromptMoveToFolderProps } from '../Promptbar/components/Prompt';
 
 interface MoveToFolderMobileModalProps {
   folders: FolderInterface[];
+  onOpen?: () => void;
   onClose: () => void;
   onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
 }
 
 export const MoveToFolderMobileModal = ({
   folders,
+  onOpen,
   onMoveToFolder,
   onClose,
 }: MoveToFolderMobileModalProps) => {
   const { t } = useTranslation(Translation.SideBar);
   const handleMoveToFolder = useCallback(
-    ({ isNewFolder, folderId }: PromptMoveToFolderProps) => {
+    ({ isNewFolder, folderId }: MoveToFolderProps) => {
       onMoveToFolder({ isNewFolder, folderId });
       onClose();
     },
     [onMoveToFolder, onClose],
   );
+
+  useEffect(() => {
+    onOpen?.();
+  }, [onOpen]);
 
   return (
     <FloatingOverlay className="z-50 flex items-center justify-center bg-blackout p-3 md:p-5">

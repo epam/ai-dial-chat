@@ -1,4 +1,4 @@
-import { ShareEntity } from './common';
+import { Entity, ShareEntity } from './common';
 import { MIMEType } from './files';
 
 export interface Attachment {
@@ -68,9 +68,8 @@ export interface RateBody {
   value: boolean;
 }
 
-export interface Conversation extends ShareEntity {
+export interface Conversation extends ShareEntity, ConversationInfo {
   messages: Message[];
-  model: ConversationEntityModel;
   prompt: string;
   temperature: number;
   replay: Replay;
@@ -79,7 +78,6 @@ export interface Conversation extends ShareEntity {
   // Addons selected by user clicks
   selectedAddons: string[];
   assistantModelId?: string;
-  lastActivityDate?: number;
 
   isMessageStreaming: boolean;
   isNameChanged?: boolean;
@@ -111,4 +109,11 @@ export interface ConversationsTemporarySettings {
 
 export interface ConversationEntityModel {
   id: string;
+}
+
+export interface ConversationInfo extends Entity {
+  model: ConversationEntityModel;
+  lastActivityDate?: number;
+  isPlayback?: boolean;
+  isReplay?: boolean;
 }

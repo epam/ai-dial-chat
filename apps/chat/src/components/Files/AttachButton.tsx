@@ -7,6 +7,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -82,6 +83,7 @@ export const AttachButton = ({
         triggerTooltip={t('Attach files') || ''}
         disabled={messageIsStreaming || !isModelLoaded}
         triggerIconHighlight
+        featureType={FeatureType.File}
       />
       {isSelectFilesDialogOpened && (
         <FileManagerModal

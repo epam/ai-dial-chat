@@ -1,21 +1,28 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { generateNextName, getNextDefaultName } from '@/src/utils/app/folders';
+import {
+  addGeneratedFolderId,
+  generateNextName,
+  getNextDefaultName,
+} from '@/src/utils/app/folders';
+import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { PromptsHistory } from '@/src/types/importExport';
-import { Prompt } from '@/src/types/prompt';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
 
 import { resetShareEntity } from '@/src/constants/chat';
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
+import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
 
 import { v4 as uuidv4 } from 'uuid';
 
-export * as PromptsSelectors from './prompts.selectors';
+export { PromptsSelectors };
 
 const initialState: PromptsState = {
   prompts: [],
@@ -26,6 +33,8 @@ const initialState: PromptsState = {
   selectedPromptId: undefined,
   isEditModalOpen: false,
   newAddedFolderId: undefined,
+  promptsLoaded: false,
+  isPromptLoading: false,
 };
 
 export const promptsSlice = createSlice({
@@ -33,35 +42,64 @@ export const promptsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    initFolders: (state) => state,
     initPrompts: (state) => state,
     createNewPrompt: (state) => {
-      const newPrompt: Prompt = {
-        id: uuidv4(),
-        name: getNextDefaultName(translate('Prompt'), state.prompts),
+      const newPrompt: Prompt = addGeneratedPromptId({
+        name: getNextDefaultName(
+          translate('Prompt'),
+          state.prompts.filter((prompt) => !prompt.folderId), // only root prompts
+        ),
         description: '',
         content: '',
-      };
+      });
       state.prompts = state.prompts.concat(newPrompt);
       state.selectedPromptId = newPrompt.id;
     },
     deletePrompts: (
       state,
-      { payload }: PayloadAction<{ promptIds: string[] }>,
+      { payload }: PayloadAction<{ promptsToRemove: PromptInfo[] }>,
+    ) => {
+      const promptToDeleteIds = payload.promptsToRemove.map(
+        (prompt) => prompt.id,
+      );
+
+      state.prompts = state.prompts.filter(
+        (p) => !promptToDeleteIds.includes(p.id),
+      );
+    },
+    deletePromptsSuccess: (
+      state,
+      { payload }: PayloadAction<{ deletePrompts: PromptInfo[] }>,
+    ) => {
+      const deleteIds = new Set(
+        payload.deletePrompts.map((prompt) => prompt.id),
+      );
+
+      state.prompts = state.prompts.filter(
+        (prompt) => !deleteIds.has(prompt.id),
+      );
+    },
+    deletePrompt: (
+      state,
+      { payload }: PayloadAction<{ prompt: PromptInfo }>,
     ) => {
       state.prompts = state.prompts.filter(
-        (p) => !payload.promptIds.includes(p.id),
+        (prompt) => prompt.id !== payload.prompt.id,
       );
     },
     updatePrompt: (
       state,
-      { payload }: PayloadAction<{ promptId: string; values: Partial<Prompt> }>,
+      _action: PayloadAction<{ id: string; values: Partial<Prompt> }>,
+    ) => state,
+    updatePromptSuccess: (
+      state,
+      { payload }: PayloadAction<{ prompt: Prompt; id: string }>,
     ) => {
       state.prompts = state.prompts.map((prompt) => {
-        if (prompt.id === payload.promptId) {
+        if (prompt.id === payload.id) {
           return {
             ...prompt,
-            ...payload.values,
+            ...payload.prompt,
           };
         }
 
@@ -162,7 +200,7 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ prompt: Prompt }>,
     ) => {
-      const newPrompt: Prompt = {
+      const newPrompt: Prompt = addGeneratedPromptId({
         ...payload.prompt,
         ...resetShareEntity,
         folderId: undefined,
@@ -171,8 +209,7 @@ export const promptsSlice = createSlice({
           payload.prompt.name,
           state.prompts,
         ),
-        id: uuidv4(),
-      };
+      });
       state.prompts = state.prompts.concat(newPrompt);
       state.selectedPromptId = newPrompt.id;
     },
@@ -181,11 +218,13 @@ export const promptsSlice = createSlice({
       { payload }: PayloadAction<{ prompts: Prompt[] }>,
     ) => {
       state.prompts = payload.prompts;
+      state.promptsLoaded = true;
     },
     addPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
       state.prompts = state.prompts.concat(payload.prompts);
     },
-    clearPrompts: (state) => {
+    clearPrompts: (state) => state,
+    clearPromptsSuccess: (state) => {
       state.prompts = [];
       state.folders = [];
     },
@@ -209,15 +248,22 @@ export const promptsSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ name?: string; folderId?: string } | undefined>,
+      }: PayloadAction<{ name?: string; parentId?: string } | undefined>,
     ) => {
-      const newFolder: FolderInterface = {
-        id: payload?.folderId || uuidv4(),
+      const newFolder: FolderInterface = addGeneratedFolderId({
+        folderId: payload?.parentId,
         name:
-          payload?.name ?? // custom name
-          getNextDefaultName(translate('New folder'), state.folders), // default name with counter
+          // custom name
+          payload?.name ??
+          // default name with counter
+          PromptsSelectors.selectNewFolderName(
+            {
+              prompts: state,
+            },
+            payload?.parentId,
+          ),
         type: FolderType.Prompt,
-      };
+      });
 
       state.folders = state.folders.concat(newFolder);
     },
@@ -230,7 +276,7 @@ export const promptsSlice = createSlice({
       }>,
     ) => {
       const folderName = getNextDefaultName(
-        translate('New folder'),
+        translate(DEFAULT_FOLDER_NAME),
         [
           ...state.temporaryFolders,
           ...state.folders.filter((folder) => folder.publishedWithMe),
@@ -250,7 +296,10 @@ export const promptsSlice = createSlice({
       });
       state.newAddedFolderId = id;
     },
-    deleteFolder: (state, { payload }: PayloadAction<{ folderId: string }>) => {
+    deleteFolder: (
+      state,
+      { payload }: PayloadAction<{ folderId?: string }>,
+    ) => {
       state.folders = state.folders.filter(({ id }) => id !== payload.folderId);
     },
     deleteTemporaryFolder: (
@@ -264,34 +313,12 @@ export const promptsSlice = createSlice({
     deleteAllTemporaryFolders: (state) => {
       state.temporaryFolders = [];
     },
-    renameFolder: (
-      state,
-      { payload }: PayloadAction<{ folderId: string; name: string }>,
-    ) => {
-      const name = payload.name.trim();
-      if (name === '') {
-        return;
-      }
-      state.folders = state.folders.map((folder) => {
-        if (folder.id === payload.folderId) {
-          return {
-            ...folder,
-            name,
-          };
-        }
-
-        return folder;
-      });
-    },
     renameTemporaryFolder: (
       state,
       { payload }: PayloadAction<{ folderId: string; name: string }>,
     ) => {
       state.newAddedFolderId = undefined;
       const name = payload.name.trim();
-      if (name === '') {
-        return;
-      }
 
       state.temporaryFolders = state.temporaryFolders.map((folder) =>
         folder.id !== payload.folderId ? folder : { ...folder, name },
@@ -300,25 +327,34 @@ export const promptsSlice = createSlice({
     resetNewFolderId: (state) => {
       state.newAddedFolderId = undefined;
     },
-    moveFolder: (
+    updateFolder: (
       state,
       {
         payload,
-      }: PayloadAction<{
-        folderId: string;
-        newParentFolderId: string | undefined;
-      }>,
+      }: PayloadAction<{ folderId: string; values: Partial<FolderInterface> }>,
     ) => {
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.folderId) {
           return {
             ...folder,
-            folderId: payload.newParentFolderId,
+            ...payload.values,
           };
         }
 
         return folder;
       });
+    },
+    updateFolderSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        folders: FolderInterface[];
+        prompts: PromptInfo[];
+      }>,
+    ) => {
+      state.folders = payload.folders;
+      state.prompts = payload.prompts;
     },
     setFolders: (
       state,
@@ -359,6 +395,29 @@ export const promptsSlice = createSlice({
       { payload }: PayloadAction<{ promptId: string | undefined }>,
     ) => {
       state.selectedPromptId = payload.promptId;
+      state.isPromptLoading = !!payload.promptId;
+    },
+    uploadPrompt: (state, _action: PayloadAction<{ promptId: string }>) => {
+      state.isPromptLoading = true;
+    },
+    uploadPromptSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{ prompt: Prompt | null; originalPromptId: string }>,
+    ) => {
+      state.isPromptLoading = false;
+      const foundPromptIdx = state.prompts.findIndex(
+        (prompt) => prompt.id === payload.prompt?.id,
+      );
+
+      if (foundPromptIdx !== -1) {
+        state.prompts[foundPromptIdx] = payload.prompt as Prompt;
+      } else {
+        state.prompts = state.prompts.filter(
+          (prompt) => prompt.id !== payload.originalPromptId,
+        );
+      }
     },
   },
 });

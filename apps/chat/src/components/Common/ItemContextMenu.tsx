@@ -90,6 +90,7 @@ export default function ItemContextMenu({
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, entity, featureType),
   );
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {

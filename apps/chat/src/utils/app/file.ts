@@ -1,9 +1,11 @@
 import { Attachment, Conversation } from '@/src/types/chat';
+import { UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
 import { getPathToFolderById } from './folders';
 
+import escapeStringRegexp from 'escape-string-regexp';
 import { extensions } from 'mime-types';
 
 export function triggerDownload(url: string, name: string): void {
@@ -45,7 +47,11 @@ export const getUserCustomContent = (
 
   return {
     attachments: files
-      .filter((file) => file.status !== 'FAILED' && file.status !== 'UPLOADING')
+      .filter(
+        (file) =>
+          file.status !== UploadStatus.FAILED &&
+          file.status !== UploadStatus.LOADING,
+      )
       .map((file) => ({
         type: file.contentType,
         title: file.name,
@@ -99,8 +105,11 @@ export const getFilesWithInvalidFileType = (
     ? []
     : files.filter((file) => !isAllowedMimeType(allowedFileTypes, file.type));
 };
-export const notAllowedSymbols = ':;,=/#\\\\';
-export const notAllowedSymbolsRegex = new RegExp(`[${notAllowedSymbols}]`, 'g');
+export const notAllowedSymbols = ':;,=/#?&';
+export const notAllowedSymbolsRegex = new RegExp(
+  `[${escapeStringRegexp(notAllowedSymbols)}]`,
+  'g',
+);
 export const getFilesWithInvalidFileName = <T extends { name: string }>(
   files: T[],
 ): T[] => {

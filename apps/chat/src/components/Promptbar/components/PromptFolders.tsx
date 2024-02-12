@@ -12,7 +12,7 @@ import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
-import { Prompt } from '@/src/types/prompt';
+import { PromptInfo } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -65,7 +65,9 @@ const PromptFolderTemplate = ({
       includeEmpty,
     ),
   );
-  const openedFoldersIds = useAppSelector(UISelectors.selectOpenedFoldersIds);
+  const openedFoldersIds = useAppSelector((state) =>
+    UISelectors.selectOpenedFoldersIds(state, FeatureType.Prompt),
+  );
 
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
@@ -78,10 +80,10 @@ const PromptFolderTemplate = ({
         const folderData = e.dataTransfer.getData(MoveType.PromptFolder);
 
         if (promptData) {
-          const prompt: Prompt = JSON.parse(promptData);
+          const prompt: PromptInfo = JSON.parse(promptData);
           dispatch(
             PromptsActions.updatePrompt({
-              promptId: prompt.id,
+              id: prompt.id,
               values: {
                 folderId: folder.id,
               },
@@ -94,9 +96,9 @@ const PromptFolderTemplate = ({
             movedFolder.folderId !== folder.id
           ) {
             dispatch(
-              PromptsActions.moveFolder({
+              PromptsActions.updateFolder({
                 folderId: movedFolder.id,
-                newParentFolderId: folder.id,
+                values: { folderId: folder.id },
               }),
             );
           }
@@ -109,9 +111,9 @@ const PromptFolderTemplate = ({
   const onDropBetweenFolders = useCallback(
     (folder: FolderInterface, parentFolderId: string | undefined) => {
       dispatch(
-        PromptsActions.moveFolder({
+        PromptsActions.updateFolder({
           folderId: folder.id,
-          newParentFolderId: parentFolderId,
+          values: { folderId: parentFolderId },
         }),
       );
     },
@@ -120,7 +122,12 @@ const PromptFolderTemplate = ({
 
   const handleFolderClick = useCallback(
     (folderId: string) => {
-      dispatch(UIActions.toggleFolder({ id: folderId }));
+      dispatch(
+        UIActions.toggleFolder({
+          id: folderId,
+          featureType: FeatureType.Prompt,
+        }),
+      );
     },
     [dispatch],
   );
@@ -146,9 +153,9 @@ const PromptFolderTemplate = ({
         handleDrop={handleDrop}
         onRenameFolder={(name, folderId) => {
           dispatch(
-            PromptsActions.renameFolder({
+            PromptsActions.updateFolder({
               folderId,
-              name,
+              values: { name },
             }),
           );
         }}
@@ -196,8 +203,7 @@ export const PromptSection = ({
   );
 
   const rootFolders = useMemo(
-    () =>
-      folders.filter(({ folderId }) => !folderId).sort(compareEntitiesByName),
+    () => folders.filter(({ folderId }) => !folderId),
     [folders],
   );
 

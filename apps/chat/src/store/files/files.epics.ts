@@ -14,65 +14,25 @@ import {
 
 import { combineEpics } from 'redux-observable';
 
-import { DataService } from '@/src/utils/app/data/data-service';
+import { FileService } from '@/src/utils/app/data/file-service';
 import { triggerDownload } from '@/src/utils/app/file';
 import { translate } from '@/src/utils/app/translation';
 
+import { UploadStatus } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
-
-import { errorsMessages } from '@/src/constants/errors';
 
 import { UIActions } from '../ui/ui.reducers';
 import { FilesActions, FilesSelectors } from './files.reducers';
 
-const initEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(FilesActions.init.match),
-    switchMap(() => {
-      const actions = [];
-
-      actions.push(FilesActions.getBucket());
-
-      return concat(actions);
-    }),
-  );
-
-const getBucketEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(FilesActions.getBucket.match),
-    switchMap(() => {
-      return DataService.getFilesBucket().pipe(
-        map(({ bucket }) => {
-          return FilesActions.setBucket({ bucket });
-        }),
-        catchError((error) => {
-          if (error.status === 401) {
-            window.location.assign('api/auth/signin');
-            return EMPTY;
-          } else {
-            return of(
-              UIActions.showToast({
-                message: errorsMessages.errorGettingUserFileBucket,
-                type: 'error',
-              }),
-            );
-          }
-        }),
-      );
-    }),
-  );
-
-const uploadFileEpic: AppEpic = (action$, state$) =>
+const uploadFileEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(FilesActions.uploadFile.match),
     mergeMap(({ payload }) => {
-      const bucket = FilesSelectors.selectBucket(state$.value);
       const formData = new FormData();
       formData.append('attachment', payload.fileContent, payload.name);
 
-      return DataService.sendFile(
+      return FileService.sendFile(
         formData,
-        bucket,
         payload.relativePath,
         payload.name,
       ).pipe(
@@ -127,43 +87,35 @@ const reuploadFileEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const getFilesEpic: AppEpic = (action$, state$) =>
+const getFilesEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(FilesActions.getFiles.match),
-    switchMap(({ payload }) => {
-      const bucket = FilesSelectors.selectBucket(state$.value);
-
-      return DataService.getFiles(bucket, payload.path).pipe(
-        map((files) => {
-          return FilesActions.getFilesSuccess({
+    switchMap(({ payload }) =>
+      FileService.getFiles(payload.path).pipe(
+        map((files) =>
+          FilesActions.getFilesSuccess({
             relativePath: payload.path,
             files,
-          });
-        }),
-        catchError(() => {
-          return of(FilesActions.getFilesFail());
-        }),
-      );
-    }),
+          }),
+        ),
+        catchError(() => of(FilesActions.getFilesFail())),
+      ),
+    ),
   );
 
-const getFileFoldersEpic: AppEpic = (action$, state$) =>
+const getFileFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(FilesActions.getFolders.match),
-    switchMap(({ payload }) => {
-      const bucket = FilesSelectors.selectBucket(state$.value);
-
-      return DataService.getFileFolders(bucket, payload?.path).pipe(
-        map((folders) => {
-          return FilesActions.getFoldersSuccess({
+    switchMap(({ payload }) =>
+      FileService.getFileFolders(payload?.path).pipe(
+        map((folders) =>
+          FilesActions.getFoldersSuccess({
             folders,
-          });
-        }),
-        catchError(() => {
-          return of(FilesActions.getFoldersFail());
-        }),
-      );
-    }),
+          }),
+        ),
+        catchError(() => of(FilesActions.getFoldersFail())),
+      ),
+    ),
   );
 
 const getFilesWithFoldersEpic: AppEpic = (action$) =>
@@ -193,8 +145,6 @@ const removeFileEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(FilesActions.removeFile.match),
     mergeMap(({ payload }) => {
-      const bucket = FilesSelectors.selectBucket(state$.value);
-
       const file = FilesSelectors.selectFiles(state$.value).find(
         (file) => file.id === payload.fileId,
       );
@@ -214,7 +164,7 @@ const removeFileEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      return DataService.removeFile(bucket, payload.fileId).pipe(
+      return FileService.removeFile(payload.fileId).pipe(
         map(() => {
           return FilesActions.removeFileSuccess({
             fileId: payload.fileId,
@@ -262,7 +212,9 @@ const unselectFilesEpic: AppEpic = (action$, state$) =>
     switchMap(({ payload }) => {
       const files = FilesSelectors.selectFilesByIds(state$.value, payload.ids);
       const cancelFileActions = files
-        .filter((file) => !file.serverSynced && file.status === 'UPLOADING')
+        .filter(
+          (file) => !file.serverSynced && file.status === UploadStatus.LOADING,
+        )
         .map((file) => of(FilesActions.uploadFileCancel({ id: file.id })));
 
       return cancelFileActions.length ? concat(...cancelFileActions) : EMPTY;
@@ -278,7 +230,7 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
     tap(({ files }) => {
       files.forEach((file) =>
         triggerDownload(
-          `api/files/file/${encodeURI(`${file.absolutePath}/${file.name}`)}`,
+          `api/${encodeURI(`${file.absolutePath}/${file.name}`)}`,
           file.name,
         ),
       );
@@ -287,7 +239,6 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
   );
 
 export const FilesEpics = combineEpics(
-  initEpic,
   uploadFileEpic,
   getFileFoldersEpic,
   getFilesEpic,
@@ -298,6 +249,5 @@ export const FilesEpics = combineEpics(
   removeMultipleFilesEpic,
   downloadFilesListEpic,
   removeFileFailEpic,
-  getBucketEpic,
   unselectFilesEpic,
 );

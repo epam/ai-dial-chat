@@ -1,92 +1,96 @@
-import { Observable, from, switchMap, throwError } from 'rxjs';
-import { fromFetch } from 'rxjs/fetch';
+import { EMPTY, Observable, from, mergeMap } from 'rxjs';
 
-import { Conversation } from '@/src/types/chat';
-import { FolderInterface } from '@/src/types/folder';
-import { Prompt } from '@/src/types/prompt';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { Entity } from '@/src/types/common';
+import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
 
-export class ApiStorage implements DialStorage {
-  static request(url: string, options?: RequestInit) {
-    return fromFetch(url, options).pipe(
-      switchMap((response) => {
-        if (!response.ok) {
-          return throwError(() => new Error(response.statusText));
-        }
+import { ConversationApiStorage } from './api/conversation-api-storage';
+import { PromptApiStorage } from './api/prompt-api-storage';
 
-        return from(response.json());
-      }),
+export class ApiStorage implements DialStorage {
+  private _conversationApiStorage = new ConversationApiStorage();
+  private _promptApiStorage = new PromptApiStorage();
+
+  getConversationsFolders(path?: string): Observable<FolderInterface[]> {
+    return this._conversationApiStorage.getFolders(path);
+  }
+
+  setConversationsFolders(_folders: FolderInterface[]): Observable<void> {
+    return EMPTY; // don't need to save folders
+  }
+
+  getPromptsFolders(path?: string): Observable<FolderInterface[]> {
+    return this._promptApiStorage.getFolders(path);
+  }
+
+  setPromptsFolders(_folders: FolderInterface[]): Observable<void> {
+    return EMPTY; // don't need to save folders
+  }
+
+  getConversationsAndFolders(
+    path?: string | undefined,
+  ): Observable<FoldersAndEntities<ConversationInfo>> {
+    return this._conversationApiStorage.getFoldersAndEntities(path);
+  }
+
+  getConversations(
+    path?: string,
+    recursive?: boolean,
+  ): Observable<ConversationInfo[]> {
+    return this._conversationApiStorage.getEntities(path, recursive);
+  }
+
+  getConversation(info: ConversationInfo): Observable<Conversation | null> {
+    return this._conversationApiStorage.getEntity(info);
+  }
+
+  createConversation(conversation: Conversation): Observable<void> {
+    return this._conversationApiStorage.createEntity(conversation);
+  }
+  updateConversation(conversation: Conversation): Observable<void> {
+    return this._conversationApiStorage.updateEntity(conversation);
+  }
+  deleteConversation(info: ConversationInfo): Observable<void> {
+    return this._conversationApiStorage.deleteEntity(info);
+  }
+
+  setConversations(conversations: Conversation[]): Observable<void> {
+    return from(conversations).pipe(
+      mergeMap((conversation) =>
+        this._conversationApiStorage.createEntity(conversation),
+      ),
     );
   }
-  static requestOld({
-    url,
-    method,
-    async,
-    body,
-  }: {
-    url: string | URL;
-    method: string;
-    async: boolean;
-    body: XMLHttpRequestBodyInit | Document | null | undefined;
-  }): Observable<{ percent?: number; result?: unknown }> {
-    return new Observable((observer) => {
-      const xhr = new XMLHttpRequest();
 
-      xhr.open(method, url, async);
-      xhr.responseType = 'json';
+  getPromptsAndFolders(
+    path?: string | undefined,
+  ): Observable<FoldersAndEntities<Entity>> {
+    return this._promptApiStorage.getFoldersAndEntities(path);
+  }
 
-      // Track upload progress
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const percentComplete = (event.loaded / event.total) * 100;
-          observer.next({ percent: Math.round(percentComplete) });
-        }
-      };
+  getPrompts(path?: string, recursive?: boolean): Observable<Prompt[]> {
+    return this._promptApiStorage.getEntities(path, recursive);
+  }
 
-      // Handle response
-      xhr.onload = () => {
-        if (xhr.status === 200) {
-          observer.next({ result: xhr.response });
-          observer.complete();
-        } else {
-          observer.error('Request failed');
-        }
-      };
+  getPrompt(info: PromptInfo): Observable<Prompt | null> {
+    return this._promptApiStorage.getEntity(info);
+  }
 
-      xhr.onerror = () => {
-        observer.error('Request failed');
-      };
+  createPrompt(prompt: Prompt): Observable<void> {
+    return this._promptApiStorage.createEntity(prompt);
+  }
+  updatePrompt(prompt: Prompt): Observable<void> {
+    return this._promptApiStorage.updateEntity(prompt);
+  }
+  deletePrompt(info: Entity): Observable<void> {
+    return this._promptApiStorage.deleteEntity(info);
+  }
 
-      xhr.send(body);
-
-      // Return cleanup function
-      return () => {
-        xhr.abort();
-      };
-    });
-  }
-  getConversationsFolders(): Observable<FolderInterface[]> {
-    throw new Error('Method not implemented.');
-  }
-  setConversationsFolders(_folders: FolderInterface[]): Observable<void> {
-    throw new Error('Method not implemented.');
-  }
-  getPromptsFolders(): Observable<FolderInterface[]> {
-    throw new Error('Method not implemented.');
-  }
-  setPromptsFolders(_folders: FolderInterface[]): Observable<void> {
-    throw new Error('Method not implemented.');
-  }
-  getConversations(): Observable<Conversation[]> {
-    throw new Error('Method not implemented.');
-  }
-  setConversations(_conversations: Conversation[]): Observable<void> {
-    throw new Error('Method not implemented.');
-  }
-  getPrompts(): Observable<Prompt[]> {
-    throw new Error('Method not implemented.');
-  }
-  setPrompts(_prompts: Prompt[]): Observable<void> {
-    throw new Error('Method not implemented.');
+  setPrompts(prompts: Prompt[]): Observable<void> {
+    return from(prompts).pipe(
+      mergeMap((prompt) => this._promptApiStorage.createEntity(prompt)),
+    );
   }
 }

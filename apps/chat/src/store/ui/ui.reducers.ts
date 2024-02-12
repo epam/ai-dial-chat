@@ -1,5 +1,6 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
+import { FeatureType } from '@/src/types/common';
 import { Theme } from '@/src/types/themes';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
@@ -14,12 +15,18 @@ export interface UIState {
   isUserSettingsOpen: boolean;
   isProfileOpen: boolean;
   isCompareMode: boolean;
-  openedFoldersIds: string[];
+  openedFoldersIds: Record<FeatureType, string[]>;
   textOfClosedAnnouncement?: string | undefined;
   isChatFullWidth: boolean;
   chatbarWidth?: number;
   promptbarWidth?: number;
 }
+
+export const openFoldersInitialState = {
+  [FeatureType.Chat]: [],
+  [FeatureType.Prompt]: [],
+  [FeatureType.File]: [],
+};
 
 const initialState: UIState = {
   theme: '',
@@ -29,7 +36,7 @@ const initialState: UIState = {
   isUserSettingsOpen: false,
   isProfileOpen: false,
   isCompareMode: false,
-  openedFoldersIds: [],
+  openedFoldersIds: openFoldersInitialState,
   textOfClosedAnnouncement: undefined,
   chatbarWidth: SIDEBAR_MIN_WIDTH,
   promptbarWidth: SIDEBAR_MIN_WIDTH,
@@ -99,31 +106,50 @@ export const uiSlice = createSlice({
     ) => state,
     setOpenedFoldersIds: (
       state,
-      { payload }: PayloadAction<UIState['openedFoldersIds']>,
+      {
+        payload,
+      }: PayloadAction<{ openedFolderIds: string[]; featureType: FeatureType }>,
     ) => {
-      const uniqueIds = Array.from(new Set(payload));
-      state.openedFoldersIds = uniqueIds;
+      state.openedFoldersIds = {
+        ...state.openedFoldersIds,
+        [payload.featureType]: Array.from(new Set(payload.openedFolderIds)),
+      };
     },
-    toggleFolder: (state, { payload }: PayloadAction<{ id: string }>) => {
-      const isOpened = state.openedFoldersIds.includes(payload.id);
+    toggleFolder: (
+      state,
+      { payload }: PayloadAction<{ id: string; featureType: FeatureType }>,
+    ) => {
+      const featureType = payload.featureType;
+      const openedFoldersIds = state.openedFoldersIds[featureType];
+      const isOpened = openedFoldersIds.includes(payload.id);
       if (isOpened) {
-        state.openedFoldersIds = state.openedFoldersIds.filter(
+        state.openedFoldersIds[featureType] = openedFoldersIds.filter(
           (id) => id !== payload.id,
         );
       } else {
-        state.openedFoldersIds.push(payload.id);
+        state.openedFoldersIds[featureType].push(payload.id);
       }
     },
-    openFolder: (state, { payload }: PayloadAction<{ id: string }>) => {
-      const isOpened = state.openedFoldersIds.includes(payload.id);
+    openFolder: (
+      state,
+      { payload }: PayloadAction<{ id: string; featureType: FeatureType }>,
+    ) => {
+      const featureType = payload.featureType;
+      const openedFoldersIds = state.openedFoldersIds[featureType];
+      const isOpened = openedFoldersIds.includes(payload.id);
       if (!isOpened) {
-        state.openedFoldersIds.push(payload.id);
+        state.openedFoldersIds[featureType].push(payload.id);
       }
     },
-    closeFolder: (state, { payload }: PayloadAction<{ id: string }>) => {
-      const isOpened = state.openedFoldersIds.includes(payload.id);
+    closeFolder: (
+      state,
+      { payload }: PayloadAction<{ id: string; featureType: FeatureType }>,
+    ) => {
+      const featureType = payload.featureType;
+      const openedFoldersIds = state.openedFoldersIds[featureType];
+      const isOpened = openedFoldersIds.includes(payload.id);
       if (isOpened) {
-        state.openedFoldersIds = state.openedFoldersIds.filter(
+        state.openedFoldersIds[featureType] = openedFoldersIds.filter(
           (id) => id !== payload.id,
         );
       }
@@ -166,11 +192,25 @@ const selectIsCompareMode = createSelector([rootSelector], (state) => {
   return state.isCompareMode;
 });
 
-const selectOpenedFoldersIds = createSelector([rootSelector], (state) => {
+const selectAllOpenedFoldersIds = createSelector([rootSelector], (state) => {
   return state.openedFoldersIds;
 });
+
+const selectOpenedFoldersIds = createSelector(
+  [
+    selectAllOpenedFoldersIds,
+    (_state, featureType: FeatureType) => featureType,
+  ],
+  (openedFoldersIds, featureType) => {
+    return openedFoldersIds[featureType];
+  },
+);
 const selectIsFolderOpened = createSelector(
-  [selectOpenedFoldersIds, (_state, id: string) => id],
+  [
+    (state, featureType: FeatureType) =>
+      selectOpenedFoldersIds(state, featureType),
+    (_state, _featureType: FeatureType, id: string) => id,
+  ],
   (ids, id): boolean => {
     return ids.includes(id);
   },
@@ -203,6 +243,7 @@ export const UISelectors = {
   selectIsUserSettingsOpen,
   selectIsProfileOpen,
   selectIsCompareMode,
+  selectAllOpenedFoldersIds,
   selectOpenedFoldersIds,
   selectIsFolderOpened,
   selectTextOfClosedAnnouncement,

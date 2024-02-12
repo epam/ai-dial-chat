@@ -2,9 +2,9 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { translate } from '@/src/utils/app/translation';
 
-import { EntityType } from '@/src/types/common';
+import { EntityType, UploadStatus } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
-import { ModelsListingStatuses, ModelsMap } from '@/src/types/models';
+import { ModelsMap } from '@/src/types/models';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -12,7 +12,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { RootState } from '../index';
 
 export interface ModelsState {
-  status: ModelsListingStatuses;
+  status: UploadStatus;
   error: ErrorMessage | undefined;
   models: OpenAIEntityModel[];
   modelsMap: ModelsMap;
@@ -20,7 +20,7 @@ export interface ModelsState {
 }
 
 const initialState: ModelsState = {
-  status: ModelsListingStatuses.UNINITIALIZED,
+  status: UploadStatus.UNINITIALIZED,
   error: undefined,
   models: [],
   modelsMap: {},
@@ -33,13 +33,13 @@ export const modelsSlice = createSlice({
   reducers: {
     init: (state) => state,
     getModels: (state) => {
-      state.status = ModelsListingStatuses.LOADING;
+      state.status = UploadStatus.LOADING;
     },
     getModelsSuccess: (
       state,
       { payload }: PayloadAction<{ models: OpenAIEntityModel[] }>,
     ) => {
-      state.status = ModelsListingStatuses.LOADED;
+      state.status = UploadStatus.LOADED;
       state.error = undefined;
       state.models = payload.models;
       state.modelsMap = (payload.models as OpenAIEntityModel[]).reduce(
@@ -59,7 +59,7 @@ export const modelsSlice = createSlice({
         error: { status?: string | number; statusText?: string };
       }>,
     ) => {
-      state.status = ModelsListingStatuses.LOADED;
+      state.status = UploadStatus.LOADED;
       state.error = {
         title: translate('Error fetching models.'),
         code: payload.error.status?.toString() ?? 'unknown',
@@ -108,11 +108,11 @@ export const modelsSlice = createSlice({
 const rootSelector = (state: RootState): ModelsState => state.models;
 
 const selectModelsIsLoading = createSelector([rootSelector], (state) => {
-  return state.status === ModelsListingStatuses.LOADING;
+  return state.status === UploadStatus.LOADING;
 });
 
 const selectIsModelsLoaded = createSelector([rootSelector], (state) => {
-  return state.status === ModelsListingStatuses.LOADED;
+  return state.status === UploadStatus.LOADED;
 });
 
 const selectModelsError = createSelector([rootSelector], (state) => {

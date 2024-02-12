@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { MoveType } from '@/src/utils/app/move';
 
 import { FeatureType } from '@/src/types/common';
-import { Prompt } from '@/src/types/prompt';
+import { PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -50,6 +50,9 @@ const Promptbar = () => {
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const myItemsFilters = useAppSelector(PromptsSelectors.selectMyItemsFilters);
+  const areEntitiesUploaded = useAppSelector(
+    PromptsSelectors.arePromptsUploaded,
+  );
 
   const filteredPrompts = useAppSelector((state) =>
     PromptsSelectors.selectFilteredPrompts(state, myItemsFilters, searchTerm),
@@ -63,10 +66,9 @@ const Promptbar = () => {
         const promptData = e.dataTransfer.getData(MoveType.Prompt);
         if (promptData) {
           const prompt = JSON.parse(promptData);
-
           dispatch(
             PromptsActions.updatePrompt({
-              promptId: prompt.id,
+              id: prompt.id,
               values: {
                 folderId: e.currentTarget.dataset.folderId,
               },
@@ -79,7 +81,7 @@ const Promptbar = () => {
   );
 
   return (
-    <Sidebar<Prompt>
+    <Sidebar<PromptInfo>
       featureType={FeatureType.Prompt}
       side="right"
       isOpen={showPromptbar}
@@ -97,6 +99,7 @@ const Promptbar = () => {
       }
       handleDrop={handleDrop}
       footerComponent={<PromptbarSettings />}
+      areEntitiesUploaded={areEntitiesUploaded}
     />
   );
 };

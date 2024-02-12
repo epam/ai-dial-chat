@@ -17,7 +17,8 @@ import {
 
 import { combineEpics } from 'redux-observable';
 
-import { DataService } from '@/src/utils/app/data/data-service';
+import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { FileService } from '@/src/utils/app/data/file-service';
 import { getConversationAttachmentWithPath } from '@/src/utils/app/folders';
 import {
   ImportConversationsResponse,
@@ -45,7 +46,7 @@ import {
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
 import { getUniqueAttachments } from '../conversations/conversations.selectors';
-import { FilesActions, FilesSelectors } from '../files/files.reducers';
+import { FilesActions } from '../files/files.reducers';
 import { selectFolders } from '../prompts/prompts.selectors';
 import {
   ImportExportActions,
@@ -61,9 +62,9 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
       conversation: ConversationsSelectors.selectConversation(
         state$.value,
         payload.conversationId,
-      ),
+      ) as Conversation, //TODO: fix in https://github.com/epam/ai-dial-chat/issues/640
       withAttachments: payload.withAttachments,
-      bucket: FilesSelectors.selectBucket(state$.value),
+      bucket: BucketService.getBucket(),
     })),
     switchMap(({ conversation, withAttachments, bucket }) => {
       if (!conversation) {
@@ -109,7 +110,9 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.exportConversations.match),
     map(() => ({
-      conversations: ConversationsSelectors.selectConversations(state$.value),
+      conversations: ConversationsSelectors.selectConversations(
+        state$.value,
+      ) as Conversation[], //TODO: fix in https://github.com/epam/ai-dial-chat/issues/640
       folders: ConversationsSelectors.selectFolders(state$.value),
     })),
     tap(({ conversations, folders }) => {
@@ -246,12 +249,12 @@ const importZipEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
+const uploadConversationAttachmentsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ImportExportActions.uploadConversationAttachments.match),
     switchMap(({ payload }) => {
       const { attachmentsToUpload, completeHistory } = payload;
-      const bucket = FilesSelectors.selectBucket(state$.value);
+      const bucket = BucketService.getBucket();
 
       if (!bucket.length) {
         return of(ImportExportActions.importFail());
@@ -270,9 +273,8 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
 
         formData.append('attachment', attachment.fileContent, attachment.name);
         const relativePath = `imports/${conversation.id}/${attachment.relativePath}`;
-        return DataService.sendFile(
+        return FileService.sendFile(
           formData,
-          bucket,
           relativePath,
           attachment.name,
         ).pipe(

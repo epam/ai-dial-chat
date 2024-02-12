@@ -1,5 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import { throttle } from '@/src/utils/data/throttle';
 
@@ -12,7 +14,8 @@ import {
   Replay,
   Role,
 } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
+import { EntityType, UploadStatus } from '@/src/types/common';
+import { Translation } from '@/src/types/translation';
 
 import {
   AddonsActions,
@@ -33,6 +36,8 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
 
+import Loader from '../Common/Loader';
+import { NotFoundEntity } from '../Common/NotFoundEntity';
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
 import ChatExternalControls from './ChatExternalControls';
@@ -51,7 +56,7 @@ import { Feature } from '@epam/ai-dial-shared';
 
 const scrollThrottlingTimeout = 250;
 
-export const Chat = memo(() => {
+export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
   const appName = useAppSelector(SettingsSelectors.selectAppName);
   const models = useAppSelector(ModelsSelectors.selectModels);
@@ -492,9 +497,6 @@ export const Chat = memo(() => {
             values: { messages: clearStateForMessages(conversation.messages) },
           }),
         );
-        if (temporarySettings.modelId) {
-          handleSelectModel(conversation, temporarySettings.modelId);
-        }
         handleChangePrompt(conversation, temporarySettings.prompt);
         handleChangeTemperature(conversation, temporarySettings.temperature);
         if (temporarySettings.currentAssistentModelId) {
@@ -505,6 +507,9 @@ export const Chat = memo(() => {
         }
         if (temporarySettings.addonsIds) {
           handleOnApplyAddons(conversation, temporarySettings.addonsIds);
+        }
+        if (temporarySettings.modelId) {
+          handleSelectModel(conversation, temporarySettings.modelId);
         }
       }
     });
@@ -808,12 +813,7 @@ export const Chat = memo(() => {
                     selectedConversations={selectedConversations}
                     onConversationSelect={(conversation) => {
                       dispatch(
-                        ConversationsActions.selectConversations({
-                          conversationIds: [
-                            selectedConversations[0].id,
-                            conversation.id,
-                          ],
-                        }),
+                        ConversationsActions.selectForCompare(conversation),
                       );
                     }}
                   />
@@ -871,4 +871,37 @@ export const Chat = memo(() => {
     </div>
   );
 });
-Chat.displayName = 'Chat';
+ChatView.displayName = 'ChatView';
+
+export function Chat() {
+  const { t } = useTranslation(Translation.Chat);
+
+  const areSelectedConversationsLoaded = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsLoaded,
+  );
+  const selectedConversationsIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
+  if (
+    !areSelectedConversationsLoaded &&
+    (!selectedConversations.length ||
+      selectedConversations.some((conv) => conv.status !== UploadStatus.LOADED))
+  ) {
+    return <Loader />;
+  }
+  if (
+    selectedConversations.length !== selectedConversationsIds.length ||
+    selectedConversations.some((conv) => conv.status !== UploadStatus.LOADED)
+  ) {
+    return (
+      <NotFoundEntity
+        entity={t('Conversation')}
+        additionalText="Please select another conversation."
+      />
+    );
+  }
+  return <ChatView />;
+}

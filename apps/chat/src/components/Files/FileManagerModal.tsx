@@ -13,6 +13,7 @@ import {
   getExtensionsListForMimeTypes,
 } from '@/src/utils/app/file';
 
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
@@ -38,8 +39,6 @@ interface Props {
   onClose: (result: boolean | string[]) => void;
 }
 
-const loadingStatuses = new Set(['LOADING', undefined]);
-
 export const FileManagerModal = ({
   isOpen,
   allowedTypes = [],
@@ -58,8 +57,12 @@ export const FileManagerModal = ({
   const folders = useAppSelector(FilesSelectors.selectFolders);
   const files = useAppSelector(FilesSelectors.selectFiles);
   const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
-  const foldersStatus = useAppSelector(FilesSelectors.selectFoldersStatus);
-  const loadingFolderId = useAppSelector(FilesSelectors.selectLoadingFolderId);
+  const areFoldersLoading = useAppSelector(
+    FilesSelectors.selectAreFoldersLoading,
+  );
+  const loadingFolderIds = useAppSelector(
+    FilesSelectors.selectLoadingFolderIds,
+  );
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
@@ -97,8 +100,7 @@ export const FileManagerModal = ({
     }
     return getExtensionsListForMimeTypes(allowedTypes);
   }, [allowedTypes, t]);
-  const showSpinner =
-    folders.length === 0 && loadingStatuses.has(foldersStatus);
+  const showSpinner = folders.length === 0 && areFoldersLoading;
 
   useEffect(() => {
     if (isOpen) {
@@ -321,7 +323,7 @@ export const FileManagerModal = ({
                               isInitialRenameEnabled
                               newAddedFolderId={newFolderId}
                               displayCaretAlways
-                              loadingFolderId={loadingFolderId}
+                              loadingFolderIds={loadingFolderIds}
                               openedFoldersIds={openedFoldersIds}
                               allItems={filteredFiles}
                               additionalItemData={{
@@ -334,6 +336,7 @@ export const FileManagerModal = ({
                               onRenameFolder={handleRenameFolder}
                               onItemEvent={handleItemCallback}
                               withBorderHighlight={false}
+                              featureType={FeatureType.File}
                             />
                           </div>
                         );

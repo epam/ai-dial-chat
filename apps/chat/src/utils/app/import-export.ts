@@ -1,4 +1,4 @@
-import { Attachment, Conversation } from '@/src/types/chat';
+import { Attachment, Conversation, ConversationInfo } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import {
@@ -14,6 +14,7 @@ import {
 import { Prompt } from '@/src/types/prompt';
 
 import { cleanConversationHistory } from './clean';
+import { combineEntities } from './common';
 import { triggerDownload } from './file';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,7 +50,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV1(data)) {
     const cleanHistoryData: LatestExportFormat = {
       version: 4,
-      history: cleanConversationHistory(data),
+      history: cleanConversationHistory(data as unknown as Conversation[]),
       folders: [],
       prompts: [],
     };
@@ -208,7 +209,7 @@ export const exportPrompt = (prompt: Prompt, folders: FolderInterface[]) => {
 };
 
 export interface ImportConversationsResponse {
-  history: Conversation[];
+  history: ConversationInfo[];
   folders: FolderInterface[];
   isError: boolean;
 }
@@ -218,26 +219,21 @@ export const importConversations = (
     currentConversations,
     currentFolders,
   }: {
-    currentConversations: Conversation[];
+    currentConversations: ConversationInfo[];
     currentFolders: FolderInterface[];
   },
 ): ImportConversationsResponse => {
   const { history, folders, isError } = cleanData(importedData);
 
-  const newHistory: Conversation[] = [
-    ...currentConversations,
-    ...history,
-  ].filter(
-    (conversation, index, self) =>
-      index === self.findIndex((c) => c.id === conversation.id),
+  const newHistory: ConversationInfo[] = combineEntities(
+    currentConversations,
+    history,
   );
 
-  const newFolders: FolderInterface[] = [...currentFolders, ...folders]
-    .filter(
-      (folder, index, self) =>
-        index === self.findIndex((f) => f.id === folder.id),
-    )
-    .filter((folder) => folder.type === FolderType.Chat);
+  const newFolders: FolderInterface[] = combineEntities(
+    currentFolders,
+    folders,
+  ).filter((folder) => folder.type === FolderType.Chat);
 
   return {
     history: newHistory,
@@ -269,20 +265,15 @@ export const importPrompts = (
     };
   }
 
-  const newPrompts: Prompt[] = currentPrompts
-    .concat(importedData.prompts)
-    .filter(
-      (prompt, index, self) =>
-        index === self.findIndex((p) => p.id === prompt.id),
-    );
+  const newPrompts: Prompt[] = combineEntities(
+    currentPrompts,
+    importedData.prompts,
+  );
 
-  const newFolders: FolderInterface[] = currentFolders
-    .concat(importedData.folders)
-    .filter(
-      (folder, index, self) =>
-        index === self.findIndex((p) => p.id === folder.id),
-    )
-    .filter((folder) => folder.type === 'prompt');
+  const newFolders: FolderInterface[] = combineEntities(
+    currentFolders,
+    importedData.folders,
+  ).filter((folder) => folder.type === FolderType.Prompt);
 
   return { prompts: newPrompts, folders: newFolders, isError: false };
 };

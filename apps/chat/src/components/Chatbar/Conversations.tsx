@@ -2,24 +2,26 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { Conversation } from '@/src/types/chat';
+import { compareConversationsByDate } from '@/src/utils/app/conversation';
+
+import { ConversationInfo } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsRenderer } from './ConversationsRenderer';
 
 interface Props {
-  conversations: Conversation[];
+  conversations: ConversationInfo[];
 }
 interface AllConversations {
-  today: Conversation[];
-  yesterday: Conversation[];
-  lastSevenDays: Conversation[];
-  lastThirtyDays: Conversation[];
-  older: Conversation[];
-  other: Conversation[];
+  today: ConversationInfo[];
+  yesterday: ConversationInfo[];
+  lastSevenDays: ConversationInfo[];
+  lastThirtyDays: ConversationInfo[];
+  older: ConversationInfo[];
+  other: ConversationInfo[];
 }
 interface SortedBlock {
-  conversations: Conversation[];
+  conversations: ConversationInfo[];
   name: string;
 }
 interface SortedConversations {
@@ -30,18 +32,6 @@ interface SortedConversations {
   lastYear: SortedBlock;
   other: SortedBlock;
 }
-
-const sortingConversationsByDate = (
-  convA: Conversation,
-  convB: Conversation,
-) => {
-  if (convA.lastActivityDate && convB.lastActivityDate) {
-    const dateA = convA.lastActivityDate;
-    const dateB = convB.lastActivityDate;
-    return dateB - dateA;
-  }
-  return -1;
-};
 
 const conversationsDateBlocksNames = {
   today: 'Today',
@@ -78,72 +68,64 @@ export const Conversations = ({ conversations }: Props) => {
       older: [],
       other: [],
     };
-    conversationsToDisplay.forEach((conv) => {
+    conversationsToDisplay.sort(compareConversationsByDate).forEach((conv) => {
       const lastActivityDateNumber = conv.lastActivityDate;
       if (
         !lastActivityDateNumber ||
         typeof lastActivityDateNumber !== 'number'
       ) {
-        allConversations.other = allConversations.other.concat(conv);
+        allConversations.other.push(conv);
       } else {
         if (lastActivityDateNumber > todayDate) {
-          allConversations.today = allConversations.today.concat(conv);
+          allConversations.today.push(conv);
         }
         if (
           lastActivityDateNumber < todayDate &&
           lastActivityDateNumber >= yesterdayDate
         ) {
-          allConversations.yesterday = allConversations.yesterday.concat(conv);
+          allConversations.yesterday.push(conv);
         }
         if (
           lastActivityDateNumber < yesterdayDate &&
           lastActivityDateNumber >= lastSevenDate
         ) {
-          allConversations.lastSevenDays =
-            allConversations.lastSevenDays.concat(conv);
+          allConversations.lastSevenDays.push(conv);
         }
         if (
           lastActivityDateNumber < lastSevenDate &&
           lastActivityDateNumber >= lastThirtyDate
         ) {
-          allConversations.lastThirtyDays =
-            allConversations.lastThirtyDays.concat(conv);
+          allConversations.lastThirtyDays.push(conv);
         }
         if (lastActivityDateNumber < lastThirtyDate) {
-          allConversations.older = allConversations.older.concat(conv);
+          allConversations.older.push(conv);
         }
       }
     });
 
     setSortedConversations({
       today: {
-        conversations: allConversations.today.sort(sortingConversationsByDate),
+        conversations: allConversations.today,
         name: conversationsDateBlocksNames.today,
       },
       yesterday: {
-        conversations: allConversations.yesterday.sort(
-          sortingConversationsByDate,
-        ),
+        conversations: allConversations.yesterday,
         name: conversationsDateBlocksNames.yesterday,
       },
       lastSevenDays: {
-        conversations: allConversations.lastSevenDays.sort(
-          sortingConversationsByDate,
-        ),
+        conversations: allConversations.lastSevenDays,
         name: conversationsDateBlocksNames.lastSevenDays,
       },
       lastThirtyDays: {
-        conversations: allConversations.lastThirtyDays.sort(
-          sortingConversationsByDate,
-        ),
+        conversations: allConversations.lastThirtyDays,
         name: conversationsDateBlocksNames.lastThirtyDays,
       },
       lastYear: {
-        conversations: allConversations.older.sort(sortingConversationsByDate),
+        conversations: allConversations.older,
         name: conversationsDateBlocksNames.older,
       },
       other: {
-        conversations: allConversations.other.reverse(),
+        conversations: allConversations.other,
         name: conversationsDateBlocksNames.other,
       },
     });

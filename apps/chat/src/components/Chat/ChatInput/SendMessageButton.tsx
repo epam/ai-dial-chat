@@ -15,12 +15,14 @@ interface Props {
   handleSend: () => void;
   isDisabled: boolean;
   tooltip?: string;
+  isLoading?: boolean;
 }
 
 export const SendMessageButton = ({
   handleSend,
   isDisabled,
   tooltip,
+  isLoading,
 }: Props) => {
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
@@ -28,6 +30,8 @@ export const SendMessageButton = ({
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+
+  const isSpinner = isLoading || isModelsLoading || messageIsStreaming;
 
   return (
     <button
@@ -40,7 +44,7 @@ export const SendMessageButton = ({
       data-qa="send"
     >
       <Tooltip hideTooltip={!isDisabled} tooltip={tooltip}>
-        {messageIsStreaming || isModelsLoading ? (
+        {isSpinner ? (
           <Spinner size={20} />
         ) : (
           <IconSend size={24} stroke="1.5" />

@@ -6,51 +6,38 @@ import {
   getParentAndChildFolders,
 } from '@/src/utils/app/folders';
 
-import { DialFile, FileFolderInterface, Status } from '@/src/types/files';
+import { UploadStatus } from '@/src/types/common';
+import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
+
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import { RootState } from '../index';
 
 export interface FilesState {
   files: DialFile[];
-  bucket: string;
   selectedFilesIds: string[];
-  filesStatus: Status;
+  filesStatus: UploadStatus;
 
   folders: FileFolderInterface[];
-  foldersStatus: Status;
-  loadingFolder: string | undefined;
-  newAddedFolderId: string | undefined;
+  foldersStatus: UploadStatus;
+  loadingFolder?: string;
+  newAddedFolderId?: string;
 }
 
 const initialState: FilesState = {
   files: [],
-  bucket: '',
-  filesStatus: undefined,
+  filesStatus: UploadStatus.UNINITIALIZED,
   selectedFilesIds: [],
 
   folders: [],
-  foldersStatus: undefined,
-  loadingFolder: undefined,
-  newAddedFolderId: undefined,
+  foldersStatus: UploadStatus.UNINITIALIZED,
 };
 
 export const filesSlice = createSlice({
   name: 'files',
   initialState,
   reducers: {
-    init: (state) => state,
-    getBucket: (state) => state,
-    setBucket: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        bucket: string;
-      }>,
-    ) => {
-      state.bucket = payload.bucket;
-    },
     uploadFile: (
       state,
       {
@@ -69,7 +56,7 @@ export const filesSlice = createSlice({
         relativePath: payload.relativePath,
         folderId: payload.relativePath || undefined,
 
-        status: 'UPLOADING',
+        status: UploadStatus.LOADING,
         percent: 0,
         fileContent: payload.fileContent,
         contentLength: payload.fileContent.size,
@@ -88,7 +75,7 @@ export const filesSlice = createSlice({
         return state;
       }
 
-      file.status = 'UPLOADING';
+      file.status = UploadStatus.LOADING;
       file.percent = 0;
     },
     selectFiles: (state, { payload }: PayloadAction<{ ids: string[] }>) => {
@@ -140,7 +127,7 @@ export const filesSlice = createSlice({
     ) => {
       const updatedFile = state.files.find((file) => file.id === payload.id);
       if (updatedFile) {
-        updatedFile.status = 'FAILED';
+        updatedFile.status = UploadStatus.FAILED;
       }
     },
     getFiles: (
@@ -149,7 +136,7 @@ export const filesSlice = createSlice({
         path?: string;
       }>,
     ) => {
-      state.filesStatus = 'LOADING';
+      state.filesStatus = UploadStatus.LOADING;
     },
     getFilesSuccess: (
       state,
@@ -165,10 +152,10 @@ export const filesSlice = createSlice({
           (file) => file.relativePath !== payload.relativePath,
         ),
       );
-      state.filesStatus = 'LOADED';
+      state.filesStatus = UploadStatus.LOADED;
     },
     getFilesFail: (state) => {
-      state.filesStatus = 'FAILED';
+      state.filesStatus = UploadStatus.FAILED;
     },
     getFolders: (
       state,
@@ -178,7 +165,7 @@ export const filesSlice = createSlice({
         path?: string;
       }>,
     ) => {
-      state.foldersStatus = 'LOADING';
+      state.foldersStatus = UploadStatus.LOADING;
       state.loadingFolder = payload.path;
     },
     getFoldersList: (
@@ -196,7 +183,7 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       state.loadingFolder = undefined;
-      state.foldersStatus = 'LOADED';
+      state.foldersStatus = UploadStatus.LOADED;
       state.folders = payload.folders.concat(
         state.folders.filter(
           (folder) =>
@@ -208,7 +195,7 @@ export const filesSlice = createSlice({
     },
     getFoldersFail: (state) => {
       state.loadingFolder = undefined;
-      state.foldersStatus = 'FAILED';
+      state.foldersStatus = UploadStatus.FAILED;
     },
     getFilesWithFolders: (
       state,
@@ -226,7 +213,7 @@ export const filesSlice = createSlice({
     ) => {
       const folderName = getAvailableNameOnSameFolderLevel(
         state.folders,
-        'New folder',
+        DEFAULT_FOLDER_NAME,
         payload.relativePath,
       );
 
@@ -334,7 +321,8 @@ const selectSelectedFiles = createSelector(
 );
 const selectIsUploadingFilePresent = createSelector(
   [selectSelectedFiles],
-  (selectedFiles) => selectedFiles.some((file) => file.status === 'UPLOADING'),
+  (selectedFiles) =>
+    selectedFiles.some((file) => file.status === UploadStatus.LOADING),
 );
 
 const selectFolders = createSelector([rootSelector], (state) => {
@@ -342,17 +330,14 @@ const selectFolders = createSelector([rootSelector], (state) => {
     a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
   );
 });
-const selectFoldersStatus = createSelector([rootSelector], (state) => {
-  return state.foldersStatus;
+const selectAreFoldersLoading = createSelector([rootSelector], (state) => {
+  return state.foldersStatus === UploadStatus.LOADING;
 });
-const selectLoadingFolderId = createSelector([rootSelector], (state) => {
-  return state.loadingFolder;
+const selectLoadingFolderIds = createSelector([rootSelector], (state) => {
+  return state.loadingFolder ? [state.loadingFolder] : [];
 });
 const selectNewAddedFolderId = createSelector([rootSelector], (state) => {
   return state.newAddedFolderId;
-});
-const selectBucket = createSelector([rootSelector], (state) => {
-  return state.bucket;
 });
 const selectFoldersWithSearchTerm = createSelector(
   [selectFolders, (_state, searchTerm: string) => searchTerm],
@@ -371,11 +356,10 @@ export const FilesSelectors = {
   selectSelectedFiles,
   selectIsUploadingFilePresent,
   selectFolders,
-  selectFoldersStatus,
-  selectLoadingFolderId,
+  selectAreFoldersLoading,
+  selectLoadingFolderIds,
   selectNewAddedFolderId,
   selectFilesByIds,
-  selectBucket,
   selectFoldersWithSearchTerm,
 };
 

@@ -22,15 +22,16 @@ export interface DisplayMenuItemProps {
   customTriggerData?: unknown;
   className?: string;
   childMenuItems?: DisplayMenuItemProps[];
+  onChildMenuOpenChange?: (isOpen: boolean) => void;
 }
 
 export type MenuItemRendererProps = DisplayMenuItemProps & {
-  featureType?: FeatureType;
+  featureType: FeatureType;
 };
 
 export interface MenuProps {
   menuItems: DisplayMenuItemProps[];
-  featureType?: FeatureType;
+  featureType: FeatureType;
   displayMenuItemCount?: number;
   className?: string;
   disabled?: boolean;

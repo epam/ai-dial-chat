@@ -4,17 +4,27 @@ import { JWT, getToken } from 'next-auth/jwt';
 
 import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIError } from '@/src/utils/server';
+import {
+  getEntityTypeFromPath,
+  getEntityUrlFromSlugs,
+  isValidEntityApiType,
+} from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import { authOptions } from '../../auth/[...nextauth]';
+import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import fetch from 'node-fetch';
 import { Readable } from 'stream';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  const entityType = getEntityTypeFromPath(req);
+  if (!entityType || !isValidEntityApiType(entityType)) {
+    return res.status(400).json(errorsMessages.notValidEntityType);
+  }
+
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
   const token = await getToken({ req });
@@ -25,7 +35,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     if (req.method === 'GET') {
       return await handleGetRequest(req, token, res);
-    } else if (req.method === 'PUT') {
+    } else if (req.method === 'PUT' || req.method === 'POST') {
       return await handlePutRequest(req, token, res);
     } else if (req.method === 'DELETE') {
       return await handleDeleteRequest(req, token, res);
@@ -38,7 +48,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         .status(parseInt(error.code, 10) || 500)
         .send(error.message || errorsMessages.generalServer);
     }
-    return res.status(500).send(errorsMessages.errorDuringFileRequest);
+    return res
+      .status(500)
+      .send(errorsMessages.errorDuringEntityRequest(entityType));
   }
 };
 
@@ -57,14 +69,7 @@ async function handlePutRequest(
   res: NextApiResponse,
 ) {
   const readable = Readable.from(req);
-  const slugs = Array.isArray(req.query.slug)
-    ? req.query.slug
-    : [req.query.slug];
-
-  if (!slugs || slugs.length === 0) {
-    throw new OpenAIError('No file path provided', '', '', '400');
-  }
-  const url = `${process.env.DIAL_API_HOST}/v1/${encodeURI(slugs.join('/'))}`;
+  const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   const proxyRes = await fetch(url, {
     method: 'PUT',
     headers: {
@@ -92,14 +97,7 @@ async function handleGetRequest(
   token: JWT | null,
   res: NextApiResponse,
 ) {
-  const slugs = Array.isArray(req.query.slug)
-    ? req.query.slug
-    : [req.query.slug];
-
-  if (!slugs || slugs.length === 0) {
-    throw new OpenAIError('No file path provided', '', '', '400');
-  }
-  const url = `${process.env.DIAL_API_HOST}/v1/${encodeURI(slugs.join('/'))}`;
+  const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   const proxyRes = await fetch(url, {
     headers: getApiHeaders({ jwt: token?.access_token as string }),
   });
@@ -123,15 +121,7 @@ async function handleDeleteRequest(
   token: JWT | null,
   res: NextApiResponse,
 ) {
-  const slugs = Array.isArray(req.query.slug)
-    ? req.query.slug
-    : [req.query.slug];
-
-  if (!slugs || slugs.length === 0) {
-    throw new OpenAIError('No file path provided', '', '', '400');
-  }
-  const url = `${process.env.DIAL_API_HOST}/v1/${encodeURI(slugs.join('/'))}`;
-
+  const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   const proxyRes = await fetch(url, {
     method: 'DELETE',
     headers: getApiHeaders({ jwt: token?.access_token as string }),

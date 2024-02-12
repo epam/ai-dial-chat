@@ -19,6 +19,7 @@ import { Translation } from '@/src/types/translation';
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-settings';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { Spinner } from '@/src/components/Common/Spinner';
 
 import { PromptDialog } from './ChatInput/PromptDialog';
 import { PromptList } from './ChatInput/PromptList';
@@ -53,12 +54,13 @@ export const SystemPrompt: FC<Props> = ({
     isPromptLimitModalOpen,
     setIsPromptLimitModalOpen,
     updatePromptListVisibility,
-    handleInitModal,
     filteredPrompts,
     variables,
     showPromptList,
     setShowPromptList,
     handleKeyDownIfShown,
+    getPrompt,
+    isLoading,
   } = usePromptSelection(maxLength);
 
   const handleChange = useCallback(
@@ -157,24 +159,32 @@ export const SystemPrompt: FC<Props> = ({
   return (
     <div className="flex flex-col">
       <label className="mb-4 text-left">{t('System prompt')}</label>
-      <textarea
-        ref={textareaRef}
-        className="w-full resize-none overflow-y-auto rounded border border-primary bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-within:border-accent-primary"
-        placeholder={t('Type a text or «/» to use a prompt...') || ''}
-        style={{ maxHeight: `${MAX_HEIGHT}px` }}
-        value={content}
-        rows={1}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        data-qa="system-prompt"
-      />
+      <div className="relative flex flex-col">
+        <textarea
+          ref={textareaRef}
+          className="w-full resize-none overflow-y-auto rounded border border-primary bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-within:border-accent-primary"
+          placeholder={t('Type a text or «/» to use a prompt...') || ''}
+          style={{ maxHeight: `${MAX_HEIGHT}px` }}
+          value={content}
+          rows={1}
+          disabled={isLoading}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          data-qa="system-prompt"
+        />
+        {isLoading && (
+          <span className="absolute bottom-2 right-3 rounded bg-layer-2 p-[3px]">
+            <Spinner size={24} />
+          </span>
+        )}
+      </div>
 
       {showPromptList && filteredPrompts.length > 0 && (
         <div>
           <PromptList
             activePromptIndex={activePromptIndex}
             prompts={filteredPrompts}
-            onSelect={handleInitModal}
+            onSelect={getPrompt}
             onMouseEnter={setActivePromptIndex}
             isOpen={showPromptList && filteredPrompts.length > 0}
             onClose={() => setShowPromptList(false)}
@@ -187,7 +197,7 @@ export const SystemPrompt: FC<Props> = ({
         heading={t('Prompt limit exceeded')}
         description={
           t(
-            `Prompt limit is ${maxLength} characters. 
+            `Prompt limit is ${maxLength} characters.
             ${getPromptLimitDescription(content, maxLength)}`,
           ) || ''
         }

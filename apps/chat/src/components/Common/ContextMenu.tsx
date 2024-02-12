@@ -18,6 +18,7 @@ function ContextMenuItemRenderer({
   disabled,
   className,
   childMenuItems,
+  onChildMenuOpenChange,
 }: MenuItemRendererProps) {
   const item = (
     <div
@@ -49,6 +50,7 @@ function ContextMenuItemRenderer({
           'hover:bg-accent-primary-alpha',
         )}
         TriggerCustomRenderer={item}
+        onOpenChange={onChildMenuOpenChange}
       />
     );
   }
@@ -100,10 +102,8 @@ export default function ContextMenu({
     <Menu
       className={classNames(triggerIconClassName)}
       listClassName={classNames(
-        featureType &&
-          (featureType === FeatureType.Chat
-            ? 'context-menu-chat'
-            : 'context-menu-prompt'),
+        featureType === FeatureType.Chat && 'context-menu-chat',
+        featureType === FeatureType.Prompt && 'context-menu-prompt',
       )}
       disabled={disabled}
       type="contextMenu"

@@ -1,9 +1,10 @@
-import { Conversation } from '@/src/types/chat';
+import { ConversationInfo } from '@/src/types/chat';
+import { UploadStatus } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 
 export interface ConversationsState {
-  conversations: Conversation[];
+  conversations: ConversationInfo[];
   selectedConversationsIds: string[];
   folders: FolderInterface[];
   temporaryFolders: FolderInterface[];
@@ -13,4 +14,10 @@ export interface ConversationsState {
   isReplayPaused: boolean;
   isPlaybackPaused: boolean;
   newAddedFolderId?: string;
+  conversationsLoaded: boolean;
+  areSelectedConversationsLoaded: boolean;
+  conversationsStatus: UploadStatus;
+  foldersStatus: UploadStatus;
+  loadingFolderIds: string[];
+  compareLoading?: boolean;
 }

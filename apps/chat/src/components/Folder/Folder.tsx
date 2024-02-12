@@ -19,6 +19,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   compareEntitiesByName,
   getChildAndCurrentFoldersIdsById,
@@ -33,11 +34,11 @@ import {
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { Conversation } from '@/src/types/chat';
+import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
-import { Prompt } from '@/src/types/prompt';
+import { PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -74,7 +75,7 @@ export interface FolderProps<T, P = unknown> {
   openedFoldersIds: string[];
   isInitialRenameEnabled?: boolean;
   newAddedFolderId?: string;
-  loadingFolderId?: string;
+  loadingFolderIds?: string[];
   displayCaretAlways?: boolean;
   additionalItemData?: Record<string, unknown>;
   handleDrop?: (e: DragEvent, folder: FolderInterface) => void;
@@ -82,7 +83,7 @@ export interface FolderProps<T, P = unknown> {
   onDeleteFolder?: (folderId: string) => void;
   onAddFolder?: (parentFolderId: string) => void;
   onClickFolder: (folderId: string) => void;
-  featureType?: FeatureType;
+  featureType: FeatureType;
   onItemEvent?: (eventId: string, data: unknown) => void;
   readonly?: boolean;
   onFileUpload?: (parentFolderId: string) => void;
@@ -91,7 +92,7 @@ export interface FolderProps<T, P = unknown> {
   withBorderHighlight?: boolean;
 }
 
-const Folder = <T extends Conversation | Prompt | DialFile>({
+const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   currentFolder,
   searchTerm,
   itemComponent,
@@ -102,7 +103,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
   level = 0,
   isInitialRenameEnabled = false,
   newAddedFolderId,
-  loadingFolderId = '',
+  loadingFolderIds = [],
   displayCaretAlways = false,
   additionalItemData,
   handleDrop,
@@ -228,7 +229,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
     if (!onRenameFolder) {
       return;
     }
-    onRenameFolder(renameValue, currentFolder.id);
+    renameValue.trim() && onRenameFolder(renameValue, currentFolder.id);
     setRenameValue('');
     setIsRenaming(false);
     setIsContextMenu(false);
@@ -255,7 +256,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         e.preventDefault();
         e.stopPropagation();
 
-        dispatch(UIActions.openFolder({ id: currentFolder.id }));
+        dispatch(UIActions.openFolder({ id: currentFolder.id, featureType }));
         setIsDraggingOver(false);
 
         const folderData = e.dataTransfer.getData(
@@ -358,7 +359,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
         dragDropElement.current?.contains(evt.target as Node) &&
         isParentFolder(dragDropElement.current, evt.target as Element)
       ) {
-        dispatch(UIActions.openFolder({ id: currentFolder.id }));
+        dispatch(UIActions.openFolder({ id: currentFolder.id, featureType }));
         setIsDraggingOver(true);
       }
     },
@@ -450,7 +451,7 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
           getFolderMoveType(featureType),
           JSON.stringify(folder),
         );
-        dispatch(UIActions.closeFolder({ id: currentFolder.id }));
+        dispatch(UIActions.closeFolder({ id: currentFolder.id, featureType }));
       }
     },
     [currentFolder.id, dispatch, featureType, isExternal],
@@ -475,9 +476,9 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
 
   useEffect(() => {
     if (searchTerm) {
-      dispatch(UIActions.openFolder({ id: currentFolder.id }));
+      dispatch(UIActions.openFolder({ id: currentFolder.id, featureType }));
     }
-  }, [currentFolder.id, dispatch, searchTerm]);
+  }, [currentFolder.id, dispatch, featureType, searchTerm]);
 
   const isHighlighted =
     isRenaming ||
@@ -520,7 +521,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
               hidden={!hasChildElements && !displayCaretAlways}
             />
 
-            {loadingFolderId === currentFolder.id ? (
+            {loadingFolderIds.includes(currentFolder.id) &&
+            !hasChildElements ? (
               <Spinner />
             ) : (
               <ShareIcon
@@ -536,7 +538,11 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
               className="mr-12 flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
               type="text"
               value={renameValue}
-              onChange={(e) => setRenameValue(e.target.value)}
+              onChange={(e) =>
+                setRenameValue(
+                  e.target.value.replaceAll(notAllowedSymbolsRegex, ''),
+                )
+              }
               onKeyDown={handleEnterDown}
               ref={renameInputRef}
             />
@@ -565,7 +571,8 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
               hidden={!hasChildElements && !displayCaretAlways}
             />
 
-            {loadingFolderId === currentFolder.id ? (
+            {loadingFolderIds.includes(currentFolder.id) &&
+            !hasChildElements ? (
               <Spinner className="mr-1" />
             ) : (
               <ShareIcon
@@ -662,43 +669,39 @@ const Folder = <T extends Conversation | Prompt | DialFile>({
       {isFolderOpened ? (
         <div className="flex flex-col gap-1">
           <div className="flex flex-col">
-            {allFolders.map((item) => {
-              if (item.folderId === currentFolder.id) {
-                return (
-                  <Fragment key={item.id}>
-                    <div className="h-1"></div>
-                    <Folder
-                      readonly={readonly}
-                      level={level + 1}
-                      searchTerm={searchTerm}
-                      currentFolder={item}
-                      itemComponent={itemComponent}
-                      allItems={allItems}
-                      allFolders={allFolders}
-                      highlightedFolders={highlightedFolders}
-                      openedFoldersIds={openedFoldersIds}
-                      loadingFolderId={loadingFolderId}
-                      displayCaretAlways={displayCaretAlways}
-                      additionalItemData={additionalItemData}
-                      isInitialRenameEnabled={isInitialRenameEnabled}
-                      newAddedFolderId={newAddedFolderId}
-                      handleDrop={handleDrop}
-                      onRenameFolder={onRenameFolder}
-                      onFileUpload={onFileUpload}
-                      onDeleteFolder={onDeleteFolder}
-                      onAddFolder={onAddFolder}
-                      onClickFolder={onClickFolder}
-                      onItemEvent={onItemEvent}
-                      featureType={featureType}
-                      maxDepth={maxDepth}
-                      highlightTemporaryFolders={highlightTemporaryFolders}
-                      withBorderHighlight={withBorderHighlight}
-                    />
-                  </Fragment>
-                );
-              }
-
-              return null;
+            {filteredChildFolders.map((item) => {
+              return (
+                <Fragment key={item.id}>
+                  <div className="h-1"></div>
+                  <Folder
+                    readonly={readonly}
+                    level={level + 1}
+                    searchTerm={searchTerm}
+                    currentFolder={item}
+                    itemComponent={itemComponent}
+                    allItems={allItems}
+                    allFolders={allFolders}
+                    highlightedFolders={highlightedFolders}
+                    openedFoldersIds={openedFoldersIds}
+                    loadingFolderIds={loadingFolderIds}
+                    displayCaretAlways={displayCaretAlways}
+                    additionalItemData={additionalItemData}
+                    isInitialRenameEnabled={isInitialRenameEnabled}
+                    newAddedFolderId={newAddedFolderId}
+                    handleDrop={handleDrop}
+                    onRenameFolder={onRenameFolder}
+                    onFileUpload={onFileUpload}
+                    onDeleteFolder={onDeleteFolder}
+                    onAddFolder={onAddFolder}
+                    onClickFolder={onClickFolder}
+                    onItemEvent={onItemEvent}
+                    featureType={featureType}
+                    maxDepth={maxDepth}
+                    highlightTemporaryFolders={highlightTemporaryFolders}
+                    withBorderHighlight={withBorderHighlight}
+                  />
+                </Fragment>
+              );
             })}
           </div>
           {itemComponent &&

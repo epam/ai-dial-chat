@@ -13,6 +13,7 @@ import {
 } from '../../constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
+import { OpenAIError } from './error';
 import { getApiHeaders } from './get-headers';
 
 import {
@@ -22,19 +23,7 @@ import {
 } from 'eventsource-parser';
 import fetch from 'node-fetch';
 
-export class OpenAIError extends Error {
-  type: string;
-  param: string;
-  code: string;
-
-  constructor(message: string, type: string, param: string, code: string) {
-    super(message);
-    this.name = 'OpenAIError';
-    this.type = type;
-    this.param = param;
-    this.code = code;
-  }
-}
+export { OpenAIError };
 
 interface OpenAIErrorResponse extends Response {
   error?: OpenAIError;

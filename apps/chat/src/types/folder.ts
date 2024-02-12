@@ -7,6 +7,11 @@ export interface FolderInterface extends ShareEntity {
   serverSynced?: boolean;
 }
 
+export interface FoldersAndEntities<T> {
+  folders: FolderInterface[];
+  entities: T[];
+}
+
 export enum FolderType {
   Chat = 'chat',
   Prompt = 'prompt',
@@ -22,4 +27,9 @@ export interface FolderSectionProps {
   filters: EntityFilters;
   showEmptyFolders?: boolean;
   openByDefault?: boolean;
+}
+
+export interface MoveToFolderProps {
+  folderId?: string;
+  isNewFolder?: boolean;
 }

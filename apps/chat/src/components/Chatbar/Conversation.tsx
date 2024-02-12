@@ -13,13 +13,14 @@ import {
 
 import classNames from 'classnames';
 
+import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { Conversation } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { FeatureType, isNotLoaded } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
 import {
@@ -44,10 +45,8 @@ import UnpublishModal from '../Chat/UnpublishModal';
 import { ExportModal } from './ExportModal';
 import { ModelIcon } from './ModelIcon';
 
-import { v4 as uuidv4 } from 'uuid';
-
 interface ViewProps {
-  conversation: Conversation;
+  conversation: ConversationInfo;
   isHighlited: boolean;
 }
 
@@ -61,26 +60,25 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
         isHighlighted={!!isHighlited}
         featureType={FeatureType.Chat}
       >
-        {conversation.replay.replayAsIs && (
+        {conversation.isReplay && (
           <span className="flex shrink-0">
             <ReplayAsIsIcon size={18} />
           </span>
         )}
 
-        {conversation.playback && conversation.playback.isPlayback && (
+        {conversation.isPlayback && (
           <span className="flex shrink-0">
             <PlaybackIcon size={18} />
           </span>
         )}
 
-        {!conversation.replay.replayAsIs &&
-          !conversation.playback?.isPlayback && (
-            <ModelIcon
-              size={18}
-              entityId={conversation.model.id}
-              entity={modelsMap[conversation.model.id]}
-            />
-          )}
+        {!conversation.isReplay && !conversation.isPlayback && (
+          <ModelIcon
+            size={18}
+            entityId={conversation.model.id}
+            entity={modelsMap[conversation.model.id]}
+          />
+        )}
       </ShareIcon>
       <div
         className="relative max-h-5 flex-1 truncate break-all text-left"
@@ -93,7 +91,7 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
 }
 
 interface Props {
-  item: Conversation;
+  item: ConversationInfo;
   level?: number;
 }
 
@@ -140,18 +138,34 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
   );
 
+  const newFolderName = useAppSelector((state) =>
+    ConversationsSelectors.selectNewFolderName(state, conversation.folderId),
+  );
+
   const { refs, context } = useFloating({
     open: isContextMenu,
     onOpenChange: setIsContextMenu,
   });
 
+  useEffect(() => {
+    if (isContextMenu && isNotLoaded(conversation.status)) {
+      dispatch(
+        ConversationsActions.uploadConversationsByIds({
+          conversationIds: [conversation.id],
+        }),
+      );
+    }
+  }, [conversation.id, conversation.status, dispatch, isContextMenu]);
+
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
 
-  const isEmptyConversation = conversation.messages.length === 0;
+  const isEmptyConversation = !(
+    (conversation as Conversation).messages?.length > 0
+  );
 
   const handleRename = useCallback(
-    (conversation: Conversation) => {
+    (conversation: ConversationInfo) => {
       if (renameValue.trim().length > 0) {
         dispatch(
           ConversationsActions.updateConversation({
@@ -182,7 +196,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   );
 
   const handleDragStart = useCallback(
-    (e: DragEvent<HTMLButtonElement>, conversation: Conversation) => {
+    (e: DragEvent<HTMLButtonElement>, conversation: ConversationInfo) => {
       if (e.dataTransfer && !isExternal) {
         e.dataTransfer.setDragImage(getDragImage(), 0, 0);
         e.dataTransfer.setData(
@@ -240,9 +254,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     (e) => {
       e.stopPropagation();
       setIsContextMenu(false);
-      dispatch(
-        ConversationsActions.createNewReplayConversation({ conversation }),
-      );
+      dispatch(ConversationsActions.createNewReplayConversation(conversation));
     },
     [conversation, dispatch],
   );
@@ -250,7 +262,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const handleCreatePlayback: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
       dispatch(
-        ConversationsActions.createNewPlaybackConversation({ conversation }),
+        ConversationsActions.createNewPlaybackConversation(conversation),
       );
       setIsContextMenu(false);
     }, [conversation, dispatch]);
@@ -270,11 +282,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     (e) => {
       e.stopPropagation();
       setIsContextMenu(false);
-      dispatch(
-        ConversationsActions.duplicateConversation({
-          conversation,
-        }),
-      );
+      dispatch(ConversationsActions.duplicateConversation(conversation));
     },
     [conversation, dispatch],
   );
@@ -329,23 +337,22 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       folderId?: string;
       isNewFolder?: boolean;
     }) => {
-      let localFolderId = folderId;
+      const folderPath = isNewFolder ? newFolderName : folderId;
       if (isNewFolder) {
-        localFolderId = uuidv4();
         dispatch(
           ConversationsActions.createFolder({
-            folderId: localFolderId,
+            name: newFolderName,
           }),
         );
       }
       dispatch(
         ConversationsActions.updateConversation({
           id: conversation.id,
-          values: { folderId: localFolderId },
+          values: { folderId: folderPath },
         }),
       );
     },
-    [conversation.id, dispatch],
+    [conversation.id, dispatch, newFolderName],
   );
   const handleOpenExportModal = useCallback(() => {
     setIsShowExportModal(true);
@@ -409,32 +416,35 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             isHighlighted={isHighlighted}
             featureType={FeatureType.Chat}
           >
-            {conversation.replay.replayAsIs && (
+            {conversation.isReplay && (
               <span className="flex shrink-0">
                 <ReplayAsIsIcon size={18} />
               </span>
             )}
 
-            {conversation.playback && conversation.playback.isPlayback && (
+            {conversation.isPlayback && (
               <span className="flex shrink-0">
                 <PlaybackIcon size={18} />
               </span>
             )}
 
-            {!conversation.replay.replayAsIs &&
-              !conversation.playback?.isPlayback && (
-                <ModelIcon
-                  size={18}
-                  entityId={conversation.model.id}
-                  entity={modelsMap[conversation.model.id]}
-                />
-              )}
+            {!conversation.isReplay && !conversation.isPlayback && (
+              <ModelIcon
+                size={18}
+                entityId={conversation.model.id}
+                entity={modelsMap[conversation.model.id]}
+              />
+            )}
           </ShareIcon>
           <input
             className="flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
             type="text"
             value={renameValue}
-            onChange={(e) => setRenameValue(e.target.value)}
+            onChange={(e) =>
+              setRenameValue(
+                e.target.value.replaceAll(notAllowedSymbolsRegex, ''),
+              )
+            }
             onKeyDown={handleEnterDown}
             autoFocus
             ref={inputRef}

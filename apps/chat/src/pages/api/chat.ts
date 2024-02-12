@@ -26,7 +26,6 @@ import tiktokenModel from '@dqbd/tiktoken/encoders/cl100k_base.json';
 import { Tiktoken, init } from '@dqbd/tiktoken/lite/init';
 import { readFileSync } from 'fs';
 import path from 'path';
-import { validate } from 'uuid';
 
 // export const config = {
 //   runtime: 'edge',
@@ -117,7 +116,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       id,
     } = req.body as ChatBody;
 
-    if (!id || !validate(id)) {
+    if (!id) {
       return res.status(400).send(errorsMessages[400]);
     }
 

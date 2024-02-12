@@ -3,19 +3,23 @@ import { createSelector } from '@reduxjs/toolkit';
 import {
   getChildAndCurrentFoldersIdsById,
   getFilteredFolders,
+  getNextDefaultName,
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
 } from '@/src/utils/app/folders';
 import {
   PublishedWithMeFilter,
-  doesPromptContainSearchTerm,
+  doesPromptOrConversationContainSearchTerm,
   getMyItemsFilters,
   searchSectionFolders,
 } from '@/src/utils/app/search';
 import { isEntityExternal } from '@/src/utils/app/share';
+import { translate } from '@/src/utils/app/translation';
 
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
+
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import { RootState } from '../index';
 import { PromptsState } from './prompts.types';
@@ -35,7 +39,8 @@ export const selectFilteredPrompts = createSelector(
   (prompts, filters, searchTerm?) => {
     return prompts.filter(
       (prompt) =>
-        (!searchTerm || doesPromptContainSearchTerm(prompt, searchTerm)) &&
+        (!searchTerm ||
+          doesPromptOrConversationContainSearchTerm(prompt, searchTerm)) &&
         filters.searchFilter(prompt) &&
         (prompt.folderId || filters.sectionFilter(prompt)),
     );
@@ -143,7 +148,7 @@ export const selectSearchedPrompts = createSelector(
   [selectPrompts, selectSearchTerm],
   (prompts, searchTerm) => {
     return prompts.filter((prompt) =>
-      doesPromptContainSearchTerm(prompt, searchTerm),
+      doesPromptOrConversationContainSearchTerm(prompt, searchTerm),
     );
   },
 );
@@ -165,7 +170,8 @@ export const selectSelectedPrompt = createSelector(
     if (!selectedPromptId) {
       return undefined;
     }
-    return prompts.find((prompt) => prompt.id === selectedPromptId);
+
+    return prompts.find((prompt) => prompt.id === selectedPromptId) as Prompt;
   },
 );
 
@@ -209,13 +215,16 @@ export const isPublishPromptVersionUnique = createSelector(
     (_state: RootState, _entityId: string, version: string) => version,
   ],
   (state, entityId, version) => {
-    const prompt = selectPrompt(state, entityId);
+    const prompt = selectPrompt(state, entityId) as Prompt; // TODO: will be fixed in https://github.com/epam/ai-dial-chat/issues/313;
 
     if (!prompt || prompt?.publishVersion === version) return false;
 
-    const prompts = selectPrompts(state).filter(
-      (prmt) => prmt.originalId === entityId && prmt.publishVersion === version,
-    );
+    const prompts = selectPrompts(state)
+      .map((prompt) => prompt as Prompt)
+      .filter(
+        (prmt) =>
+          prmt.originalId === entityId && prmt.publishVersion === version,
+      );
 
     if (prompts.length) return false;
 
@@ -263,5 +272,27 @@ export const selectNewAddedFolderId = createSelector(
   [rootSelector],
   (state) => {
     return state.newAddedFolderId;
+  },
+);
+
+export const arePromptsUploaded = createSelector([rootSelector], (state) => {
+  return state.promptsLoaded;
+});
+
+export const isPromptLoading = createSelector([rootSelector], (state) => {
+  return state.isPromptLoading;
+});
+
+// default name with counter
+export const selectNewFolderName = createSelector(
+  [
+    selectFolders,
+    (_state: RootState, folderId: string | undefined) => folderId,
+  ],
+  (folders, folderId) => {
+    return getNextDefaultName(
+      translate(DEFAULT_FOLDER_NAME),
+      folders.filter((f) => f.folderId === folderId),
+    );
   },
 );

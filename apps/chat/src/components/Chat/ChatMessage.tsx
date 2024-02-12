@@ -29,6 +29,7 @@ import {
 import { isOnlySmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation, Message, Role } from '@/src/types/chat';
+import { UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
@@ -165,7 +166,7 @@ export const ChatMessage: FC<Props> = memo(
       const isContentEmptyAndNoAttachments =
         messageContent.trim().length <= 0 && newEditableAttachments.length <= 0;
       const isUploadingAttachmentPresent = newEditableAttachments.some(
-        (item) => item.status === 'UPLOADING',
+        (item) => item.status === UploadStatus.LOADING,
       );
 
       return isContentEmptyAndNoAttachments || isUploadingAttachmentPresent;
