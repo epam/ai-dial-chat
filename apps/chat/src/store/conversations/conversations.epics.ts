@@ -592,6 +592,20 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
           );
 
           const actions: Observable<AnyAction>[] = [];
+          if (conversations.length) {
+            conversations.forEach((conversation) => {
+              actions.push(
+                of(
+                  ConversationsActions.updateConversation({
+                    id: conversation.id,
+                    values: {
+                      folderId: updateFolderId(conversation.folderId),
+                    },
+                  }),
+                ),
+              );
+            });
+          }
           actions.push(
             of(
               ConversationsActions.updateFolderSuccess({
@@ -607,20 +621,6 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
               }),
             ),
           );
-          if (conversations.length) {
-            conversations.forEach((conversation) => {
-              actions.push(
-                of(
-                  ConversationsActions.updateConversation({
-                    id: conversation.id,
-                    values: {
-                      folderId: updateFolderId(conversation.folderId),
-                    },
-                  }),
-                ),
-              );
-            });
-          }
 
           return concat(...actions);
         }),
