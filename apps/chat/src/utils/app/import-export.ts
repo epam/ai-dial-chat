@@ -42,7 +42,7 @@ export function isExportFormatV5(obj: any): obj is ExportFormatV4 {
   return 'version' in obj && obj.version === 5;
 }
 
-export function isPromtsFormat(obj: PromptsHistory) {
+export function isPromptsFormat(obj: PromptsHistory) {
   return Object.prototype.hasOwnProperty.call(obj, 'prompts');
 }
 
@@ -293,7 +293,7 @@ export const importPrompts = (
     currentFolders: FolderInterface[];
   },
 ): ImportPromtsResponse => {
-  if (!isPromtsFormat(importedData)) {
+  if (!isPromptsFormat(importedData)) {
     return {
       prompts: currentPrompts,
       folders: currentFolders,

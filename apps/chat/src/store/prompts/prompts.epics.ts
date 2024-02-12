@@ -26,7 +26,10 @@ import {
   filterOnlyMyEntities,
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
-import { PromptService } from '@/src/utils/app/data/prompt-service';
+import {
+  PromptService,
+  getPreparedPrompts,
+} from '@/src/utils/app/data/prompt-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
@@ -45,6 +48,7 @@ import {
   exportPrompt,
   exportPrompts,
   importPrompts,
+  isPromptsFormat,
 } from '@/src/utils/app/import-export';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
@@ -52,6 +56,7 @@ import { getPromptApiKey } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
+import { PromptsHistory } from '@/src/types/import-export';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
@@ -385,7 +390,6 @@ const exportPromptEpic: AppEpic = (action$, state$) =>
         PromptsSelectors.selectParentFolders(state$.value, prompt.folderId),
         appName,
       );
-      //TODO create export success action
       return EMPTY;
     }),
   );
@@ -396,10 +400,10 @@ const importPromptsEpic: AppEpic = (action$) =>
     switchMap(({ payload }) =>
       forkJoin({
         promptsListing: PromptService.getPrompts(undefined, true), //listing of all entities
-        importedPrompts: of(payload.promptsHistory),
+        promptsHistory: of(payload.promptsHistory),
       }),
     ),
-    switchMap(({ promptsListing, importedPrompts }) => {
+    switchMap(({ promptsListing, promptsHistory }) => {
       const foldersIds = Array.from(
         new Set(promptsListing.map((info) => info.folderId)),
       );
@@ -413,25 +417,43 @@ const importPromptsEpic: AppEpic = (action$) =>
 
       return forkJoin({
         //get all prompts from api
-        prompts: zip(
+        currentPrompts: zip(
           promptsListing.map((info) => PromptService.getPrompt(info)),
         ),
-        folders: of(folders),
-        importedPrompts: of(importedPrompts),
+        currentFolders: of(folders),
+        promptsHistory: of(promptsHistory),
       });
     }),
-    switchMap((payload) => {
-      const { prompts, folders, importedPrompts } = payload;
-      const filteredPrompts = prompts.filter(Boolean) as Prompt[];
+    switchMap(({ currentPrompts, currentFolders, promptsHistory }) => {
+      const filteredPrompts = currentPrompts.filter(Boolean) as Prompt[];
+      if (!isPromptsFormat(promptsHistory)) {
+        return of(
+          UIActions.showToast({
+            message: translate(errorsMessages.unsupportedDataFormat, {
+              ns: 'common',
+            }),
+            type: 'error',
+          }),
+        );
+      }
+      const preparedPrompts: Prompt[] = getPreparedPrompts({
+        prompts: promptsHistory.prompts,
+        folders: promptsHistory.folders,
+      });
 
-      return of(
-        importPrompts(importedPrompts, {
-          currentFolders: folders,
+      const preparedPromptsHistory: PromptsHistory = {
+        ...promptsHistory,
+        prompts: preparedPrompts,
+      };
+
+      const { prompts, folders, isError } = importPrompts(
+        preparedPromptsHistory,
+        {
+          currentFolders,
           currentPrompts: filteredPrompts,
-        }),
+        },
       );
-    }),
-    switchMap(({ prompts, folders, isError }) => {
+
       if (isError) {
         return of(
           UIActions.showToast({
@@ -442,7 +464,6 @@ const importPromptsEpic: AppEpic = (action$) =>
           }),
         );
       }
-
       return of(PromptsActions.importPromptsSuccess({ prompts, folders }));
     }),
   );
