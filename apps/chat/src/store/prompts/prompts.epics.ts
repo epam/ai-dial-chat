@@ -26,7 +26,6 @@ import {
   filterOnlyMyEntities,
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
-import { DataService } from '@/src/utils/app/data/data-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
@@ -414,10 +413,10 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
         promptsFolders: browserStorage
           .getPromptsFolders()
           .pipe(map(filterOnlyMyEntities)),
-        migratedPromptIds: DataService.getMigratedEntityIds(
+        migratedPromptIds: BrowserStorage.getMigratedEntityIds(
           MigrationStorageKeys.MigratedPromptIds,
         ),
-        failedMigratedPromptIds: DataService.getFailedMigratedEntityIds(
+        failedMigratedPromptIds: BrowserStorage.getFailedMigratedEntityIds(
           MigrationStorageKeys.FailedMigratedPromptIds,
         ),
       }),
@@ -481,7 +480,7 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
                   );
 
                   return concat(
-                    DataService.setMigratedEntitiesIds(
+                    BrowserStorage.setMigratedEntitiesIds(
                       migratedPromptIds,
                       MigrationStorageKeys.MigratedPromptIds,
                     ).pipe(switchMap(() => EMPTY)),
@@ -498,7 +497,7 @@ const migratePromptsEpic: AppEpic = (action$, state$) => {
                   );
 
                   return concat(
-                    DataService.setFailedMigratedEntityIds(
+                    BrowserStorage.setFailedMigratedEntityIds(
                       failedMigratedPromptIds,
                       MigrationStorageKeys.FailedMigratedPromptIds,
                     ).pipe(switchMap(() => EMPTY)),
@@ -522,16 +521,16 @@ export const skipFailedMigratedPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.skipFailedMigratedPrompts.match),
     switchMap(({ payload }) =>
-      DataService.getMigratedEntityIds(
+      BrowserStorage.getMigratedEntityIds(
         MigrationStorageKeys.MigratedPromptIds,
       ).pipe(
         switchMap((migratedPromptIds) =>
           concat(
-            DataService.setMigratedEntitiesIds(
+            BrowserStorage.setMigratedEntitiesIds(
               [...payload.idsToMarkAsMigrated, ...migratedPromptIds],
               MigrationStorageKeys.MigratedPromptIds,
             ).pipe(switchMap(() => EMPTY)),
-            DataService.setFailedMigratedEntityIds(
+            BrowserStorage.setFailedMigratedEntityIds(
               [],
               MigrationStorageKeys.FailedMigratedPromptIds,
             ).pipe(switchMap(() => EMPTY)),

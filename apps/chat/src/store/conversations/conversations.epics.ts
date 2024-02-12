@@ -50,7 +50,6 @@ import {
   parseConversationId,
 } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
-import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
@@ -719,12 +718,13 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
         conversationsFolders: browserStorage
           .getConversationsFolders()
           .pipe(map(filterOnlyMyEntities)),
-        migratedConversationIds: DataService.getMigratedEntityIds(
+        migratedConversationIds: BrowserStorage.getMigratedEntityIds(
           MigrationStorageKeys.MigratedConversationIds,
         ),
-        failedMigratedConversationIds: DataService.getFailedMigratedEntityIds(
-          MigrationStorageKeys.FailedMigratedConversationIds,
-        ),
+        failedMigratedConversationIds:
+          BrowserStorage.getFailedMigratedEntityIds(
+            MigrationStorageKeys.FailedMigratedConversationIds,
+          ),
       }),
     ),
     switchMap(
@@ -797,7 +797,7 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
                   );
 
                   return concat(
-                    DataService.setMigratedEntitiesIds(
+                    BrowserStorage.setMigratedEntitiesIds(
                       migratedConversationIds,
                       MigrationStorageKeys.MigratedConversationIds,
                     ).pipe(switchMap(() => EMPTY)),
@@ -815,7 +815,7 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
                   );
 
                   return concat(
-                    DataService.setFailedMigratedEntityIds(
+                    BrowserStorage.setFailedMigratedEntityIds(
                       failedMigratedConversationIds,
                       MigrationStorageKeys.FailedMigratedConversationIds,
                     ).pipe(switchMap(() => EMPTY)),
@@ -840,16 +840,16 @@ export const skipFailedMigratedConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.skipFailedMigratedConversations.match),
     switchMap(({ payload }) =>
-      DataService.getMigratedEntityIds(
+      BrowserStorage.getMigratedEntityIds(
         MigrationStorageKeys.MigratedConversationIds,
       ).pipe(
         switchMap((migratedConversationIds) =>
           concat(
-            DataService.setMigratedEntitiesIds(
+            BrowserStorage.setMigratedEntitiesIds(
               [...payload.idsToMarkAsMigrated, ...migratedConversationIds],
               MigrationStorageKeys.MigratedConversationIds,
             ).pipe(switchMap(() => EMPTY)),
-            DataService.setFailedMigratedEntityIds(
+            BrowserStorage.setFailedMigratedEntityIds(
               [],
               MigrationStorageKeys.FailedMigratedConversationIds,
             ).pipe(switchMap(() => EMPTY)),

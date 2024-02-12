@@ -148,38 +148,4 @@ export class DataService {
       closedAnnouncementText || '',
     );
   }
-
-  public static getMigratedEntityIds(
-    key:
-      | MigrationStorageKeys.MigratedConversationIds
-      | MigrationStorageKeys.MigratedPromptIds,
-  ): Observable<string[]> {
-    return BrowserStorage.getData(key, []);
-  }
-
-  public static setMigratedEntitiesIds(
-    migratedEntityIds: string[],
-    key:
-      | MigrationStorageKeys.MigratedConversationIds
-      | MigrationStorageKeys.MigratedPromptIds,
-  ): Observable<void> {
-    return BrowserStorage.setData(key, migratedEntityIds);
-  }
-
-  public static getFailedMigratedEntityIds(
-    key:
-      | MigrationStorageKeys.FailedMigratedConversationIds
-      | MigrationStorageKeys.FailedMigratedPromptIds,
-  ): Observable<string[]> {
-    return BrowserStorage.getData(key, []);
-  }
-
-  public static setFailedMigratedEntityIds(
-    migratedEntityIds: string[],
-    key:
-      | MigrationStorageKeys.FailedMigratedPromptIds
-      | MigrationStorageKeys.FailedMigratedConversationIds,
-  ): Observable<void> {
-    return BrowserStorage.setData(key, migratedEntityIds);
-  }
 }
