@@ -705,18 +705,18 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const migrateConversationsEpic: AppEpic = (action$, state$) => {
+const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
   const browserStorage = new BrowserStorage();
 
   return action$.pipe(
-    filter(ConversationsActions.migrateConversations.match),
+    filter(ConversationsActions.migrateConversationsIfRequired.match),
     switchMap(() =>
       forkJoin({
         conversations: browserStorage
           .getConversations()
           .pipe(map(filterOnlyMyEntities)),
         conversationsFolders: browserStorage
-          .getConversationsFolders()
+          .getConversationsFolders(undefined, true)
           .pipe(map(filterOnlyMyEntities)),
         migratedConversationIds: BrowserStorage.getMigratedEntityIds(
           MigrationStorageKeys.MigratedConversationIds,
@@ -769,6 +769,7 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
           const { path } = getPathToFolderById(
             conversationsFolders,
             conv.folderId,
+            true,
           );
           const newName = conv.name.replace(notAllowedSymbolsRegex, '');
 
@@ -776,7 +777,7 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
             ...conv,
             id: constructPath(...[path, newName]),
             name: newName,
-            folderId: path.replace(notAllowedSymbolsRegex, ''),
+            folderId: path,
           };
         }); // to send conversation with proper parentPath and lastActivityDate order
 
@@ -2238,7 +2239,7 @@ const openFolderEpic: AppEpic = (action$, state$) =>
   );
 
 export const ConversationsEpics = combineEpics(
-  migrateConversationsEpic,
+  migrateConversationsIfRequiredEpic,
   skipFailedMigratedConversationsEpic,
   // init
   initEpic,
