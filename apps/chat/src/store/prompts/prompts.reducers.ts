@@ -223,8 +223,7 @@ export const promptsSlice = createSlice({
       state.prompts = [];
       state.folders = [];
     },
-    exportPrompt: (state, _action: PayloadAction<{ promptId: string }>) =>
-      state,
+    exportPrompt: (state, _action: PayloadAction<{ id: string }>) => state,
     exportPrompts: (state) => state,
     importPrompts: (
       state,

@@ -40,6 +40,8 @@ import { AppEpic } from '@/src/types/store';
 import { resetShareEntity } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
 
+import { ImportExportActions } from '../import-export/importExport.reducers';
+import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
@@ -51,9 +53,6 @@ const savePromptsEpic: AppEpic = (action$, state$) =>
     filter(
       (action) =>
         PromptsActions.createNewPrompt.match(action) ||
-        // PromptsActions.deletePrompts.match(action) ||
-        // PromptsActions.clearPrompts.match(action) ||
-        // PromptsActions.updatePrompt.match(action) ||
         PromptsActions.addPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action) ||
         PromptsActions.unpublishPrompt.match(action) ||
@@ -224,10 +223,11 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
     map(() => ({
       prompts: PromptsSelectors.selectPrompts(state$.value),
       folders: PromptsSelectors.selectFolders(state$.value),
+      appName: SettingsSelectors.selectAppName(state$.value),
     })),
-    tap(({ prompts, folders }) => {
+    tap(({ prompts, folders, appName }) => {
       //TODO: upload all prompts for export - will be implemented in https://github.com/epam/ai-dial-chat/issues/640
-      exportPrompts(prompts, folders);
+      exportPrompts(prompts, folders, appName);
     }),
     ignoreElements(),
   );
@@ -235,18 +235,24 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
 const exportPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.exportPrompt.match),
-    map(({ payload }) =>
-      PromptsSelectors.selectPrompt(state$.value, payload.promptId),
-    ),
-    filter(Boolean),
-    tap((prompt) => {
-      //TODO: upload all prompts for export - will be implemented in https://github.com/epam/ai-dial-chat/issues/640
+    switchMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
+
+    switchMap((promptAndPayload) => {
+      const { prompt } = promptAndPayload;
+      if (!prompt) {
+        return of(ImportExportActions.exportFail());
+      }
+
+      const appName = SettingsSelectors.selectAppName(state$.value);
+
       exportPrompt(
         prompt,
         PromptsSelectors.selectParentFolders(state$.value, prompt.folderId),
+        appName,
       );
+      //TODO create export success action
+      return EMPTY;
     }),
-    ignoreElements(),
   );
 
 const importPromptsEpic: AppEpic = (action$, state$) =>

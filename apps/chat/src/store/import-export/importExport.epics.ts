@@ -56,6 +56,7 @@ import {
 import { getUniqueAttachments } from '../conversations/conversations.selectors';
 import { FilesActions } from '../files/files.reducers';
 import { selectFolders } from '../prompts/prompts.selectors';
+import { SettingsSelectors } from '../settings/settings.reducers';
 import {
   ImportExportActions,
   ImportExportSelectors,
@@ -85,8 +86,12 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
         state$.value,
         conversation.folderId,
       );
+
+      const appName = SettingsSelectors.selectAppName(state$.value);
+
       if (!withAttachments) {
-        exportConversation(conversation, parentFolders);
+        exportConversation(conversation, parentFolders, appName);
+
         return of(ImportExportActions.exportConversationSuccess());
       }
 
@@ -109,7 +114,9 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
           if (!content) {
             return of(ImportExportActions.exportFail());
           }
-          downloadExportZip(content);
+
+          downloadExportZip(content, appName);
+
           return of(ImportExportActions.exportConversationSuccess());
         }),
         takeUntil(action$.pipe(filter(ImportExportActions.exportCancel.match))),
@@ -117,7 +124,7 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const exportConversationsEpic: AppEpic = (action$) =>
+const exportConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.exportConversations.match),
     switchMap(
@@ -149,7 +156,10 @@ const exportConversationsEpic: AppEpic = (action$) =>
       const filteredConversations = conversations.filter(
         Boolean,
       ) as Conversation[];
-      exportConversations(filteredConversations, folders);
+
+      const appName = SettingsSelectors.selectAppName(state$.value);
+
+      exportConversations(filteredConversations, folders, appName);
     }),
     ignoreElements(),
   );
@@ -304,7 +314,11 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$) =>
           );
         }
         formData.append('attachment', attachment.fileContent, attachment.name);
-        const relativePath = `imports/${conversation.id}/${attachment.relativePath}`;
+        const isImports = attachment.relativePath?.startsWith('imports/');
+        const relativePath = isImports
+          ? attachment.relativePath
+          : `imports/${conversation.id}/${attachment.relativePath}`;
+
         return FileService.sendFile(
           formData,
           relativePath,

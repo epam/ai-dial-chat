@@ -114,38 +114,54 @@ type ExportType =
   | 'prompt'
   | 'prompts_history';
 
+export const getDownloadFileName = (fileName?: string): string =>
+  !fileName ? 'ai_dial' : fileName.toLowerCase().replaceAll(' ', '_');
+
 function downloadChatPromptData(
   data: LatestExportConversationsFormat | Prompt[] | PromptsHistory,
   exportType: ExportType,
+  fileName?: string,
 ) {
   const blob = new Blob([JSON.stringify(data, null, 2)], {
     type: 'application/json',
   });
   const url = URL.createObjectURL(blob);
+  const downloadName = getDownloadFileName(fileName);
 
-  triggerDownload(url, `ai_dial_chat_${exportType}_${currentDate()}.json`);
+  triggerDownload(
+    url,
+    `${downloadName}_chat_${exportType}_${currentDate()}.json`,
+  );
 }
 
-const triggerDownloadConversation = (data: LatestExportConversationsFormat) => {
-  downloadChatPromptData(data, 'conversation');
+const triggerDownloadConversation = (
+  data: LatestExportConversationsFormat,
+  appName?: string,
+) => {
+  downloadChatPromptData(data, 'conversation', appName);
 };
 const triggerDownloadConversationsHistory = (
   data: LatestExportConversationsFormat,
+  appName?: string,
 ) => {
-  downloadChatPromptData(data, 'conversations_history');
+  downloadChatPromptData(data, 'conversations_history', appName);
 };
 
-const triggerDownloadPromptsHistory = (data: PromptsHistory) => {
-  downloadChatPromptData(data, 'prompts_history');
+const triggerDownloadPromptsHistory = (
+  data: PromptsHistory,
+  appName?: string,
+) => {
+  downloadChatPromptData(data, 'prompts_history', appName);
 };
 
-const triggerDownloadPrompt = (data: PromptsHistory) => {
-  downloadChatPromptData(data, 'prompt');
+const triggerDownloadPrompt = (data: PromptsHistory, appName?: string) => {
+  downloadChatPromptData(data, 'prompt', appName);
 };
 
 export const exportConversation = (
   conversation: Conversation,
   folders: FolderInterface[],
+  appName?: string,
 ) => {
   const data: LatestExportConversationsFormat = {
     version: 5,
@@ -153,7 +169,7 @@ export const exportConversation = (
     folders: folders,
   };
 
-  triggerDownloadConversation(data);
+  triggerDownloadConversation(data, appName);
 };
 
 interface PrepareConversationsForExport {
@@ -176,6 +192,7 @@ export const prepareConversationsForExport = ({
 export const exportConversations = (
   conversations: Conversation[],
   folders: FolderInterface[],
+  appName?: string,
 ) => {
   const data = {
     version: 5,
@@ -183,28 +200,33 @@ export const exportConversations = (
     folders: folders || [],
   } as LatestExportConversationsFormat;
 
-  triggerDownloadConversationsHistory(data);
+  triggerDownloadConversationsHistory(data, appName);
 };
 
 export const exportPrompts = (
   prompts: Prompt[],
   folders: FolderInterface[],
+  appName?: string,
 ) => {
   const data = {
     prompts,
     folders,
   };
-  triggerDownloadPromptsHistory(data);
+  triggerDownloadPromptsHistory(data, appName);
 };
 
-export const exportPrompt = (prompt: Prompt, folders: FolderInterface[]) => {
+export const exportPrompt = (
+  prompt: Prompt,
+  folders: FolderInterface[],
+  appName?: string,
+) => {
   const promptsToExport: Prompt[] = [prompt];
 
   const data: PromptsHistory = {
     prompts: promptsToExport,
     folders,
   };
-  triggerDownloadPrompt(data);
+  triggerDownloadPrompt(data, appName);
 };
 
 export interface ImportConversationsResponse {
