@@ -13,6 +13,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
@@ -23,8 +24,8 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 
-import ChatLoader from '../../Chat/ChatLoader';
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
+import Loader from '../../Common/Loader';
 import Modal from '../../Common/Modal';
 
 interface Props {
@@ -56,7 +57,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
   }, [onClose]);
 
   const nameOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
+    setName(e.target.value.replaceAll(notAllowedSymbolsRegex, ''));
   };
 
   const descriptionOnChangeHandler = (e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -221,10 +222,10 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             </div>
           </>
         ) : (
-          <NotFoundEntity entity="Prompt" />
+          <NotFoundEntity entity={t('Prompt')} />
         )
       ) : (
-        <ChatLoader containerClassName="h-[540px] max-h-full" />
+        <Loader containerClassName="h-[540px] max-h-full" />
       )}
     </Modal>
   );

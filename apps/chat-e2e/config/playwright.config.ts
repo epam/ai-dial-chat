@@ -1,8 +1,5 @@
 import { ResultFolder } from '@/src/testData';
 import { defineConfig, devices } from '@playwright/test';
-import * as path from 'path';
-
-export const STORAGE_STATE = path.join(__dirname, '../auth/desktopUser.json');
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -12,7 +9,7 @@ export default defineConfig({
   /* Run tests in files in parallel */
   fullyParallel: false,
   /* Opt out of parallel tests on CI. */
-  workers: 6,
+  workers: process.env.E2E_WORKERS ? +process.env.E2E_WORKERS : 2,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['list'],
@@ -52,6 +49,7 @@ export default defineConfig({
   projects: [
     {
       name: 'auth',
+      fullyParallel: true,
       testMatch: /desktopAuth\.ts/,
     },
     {
@@ -65,15 +63,11 @@ export default defineConfig({
       testMatch: /\/chatApi\/.*\.test\.ts/,
       dependencies: ['api listing'],
       fullyParallel: true,
-      use: {
-        storageState: STORAGE_STATE,
-      },
     },
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: STORAGE_STATE,
         viewport: { width: 1536, height: 864 },
       },
       dependencies: ['chat api'],

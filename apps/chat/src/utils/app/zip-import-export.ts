@@ -12,6 +12,7 @@ import {
 } from './import-export';
 
 import JSZip from 'jszip';
+import { contentType } from 'mime-types';
 
 interface GetZippedFile {
   files: DialFile[];
@@ -119,11 +120,6 @@ export const getUnZipAttachments = async ({
     if (!file) {
       return;
     }
-    const fileContent = await file.async('blob');
-
-    if (!fileContent) {
-      return;
-    }
 
     const firstSlashIndex = getFirstSlashIndex(relativePath);
     const lastSlashIndex = zipEntry.name.lastIndexOf('/');
@@ -134,6 +130,17 @@ export const getUnZipAttachments = async ({
       lastSlashIndex,
     );
     const fileId = relativePath.slice(firstSlashIndex + substringLength);
+    const fileContentBlob = await file.async('blob');
+
+    const fileContent = fileContentBlob.type.length
+      ? fileContentBlob
+      : new File([fileContentBlob], fileName, {
+          type: contentType(fileName) || 'application/octet-stream',
+        });
+
+    if (!fileContent) {
+      return;
+    }
 
     const attachmentToUpload = {
       fileContent,

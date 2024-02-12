@@ -9,7 +9,7 @@ import {
 } from '@/src/utils/app/folders';
 import {
   PublishedWithMeFilter,
-  doesPromptContainSearchTerm,
+  doesPromptOrConversationContainSearchTerm,
   getMyItemsFilters,
   searchSectionFolders,
 } from '@/src/utils/app/search';
@@ -39,7 +39,8 @@ export const selectFilteredPrompts = createSelector(
   (prompts, filters, searchTerm?) => {
     return prompts.filter(
       (prompt) =>
-        (!searchTerm || doesPromptContainSearchTerm(prompt, searchTerm)) &&
+        (!searchTerm ||
+          doesPromptOrConversationContainSearchTerm(prompt, searchTerm)) &&
         filters.searchFilter(prompt) &&
         (prompt.folderId || filters.sectionFilter(prompt)),
     );
@@ -147,7 +148,7 @@ export const selectSearchedPrompts = createSelector(
   [selectPrompts, selectSearchTerm],
   (prompts, searchTerm) => {
     return prompts.filter((prompt) =>
-      doesPromptContainSearchTerm(prompt, searchTerm),
+      doesPromptOrConversationContainSearchTerm(prompt, searchTerm),
     );
   },
 );
@@ -214,7 +215,7 @@ export const isPublishPromptVersionUnique = createSelector(
     (_state: RootState, _entityId: string, version: string) => version,
   ],
   (state, entityId, version) => {
-    const prompt = selectPrompt(state, entityId) as Prompt; // TODO: fix;
+    const prompt = selectPrompt(state, entityId) as Prompt; // TODO: will be fixed in https://github.com/epam/ai-dial-chat/issues/313;
 
     if (!prompt || prompt?.publishVersion === version) return false;
 
@@ -284,8 +285,14 @@ export const isPromptLoading = createSelector([rootSelector], (state) => {
 
 // default name with counter
 export const selectNewFolderName = createSelector(
-  [selectFolders],
-  (folders) => {
-    return getNextDefaultName(translate(DEFAULT_FOLDER_NAME), folders);
+  [
+    selectFolders,
+    (_state: RootState, folderId: string | undefined) => folderId,
+  ],
+  (folders, folderId) => {
+    return getNextDefaultName(
+      translate(DEFAULT_FOLDER_NAME),
+      folders.filter((f) => f.folderId === folderId),
+    );
   },
 );

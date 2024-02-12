@@ -82,6 +82,7 @@ export enum UploadStatus {
   LOADING = 'UPLOADING',
   LOADED = 'LOADED',
   FAILED = 'FAILED',
+  ALL_LOADED = 'ALL_LOADED',
 }
 
 export const isNotLoaded = (status?: UploadStatus) => {

@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 
-import { Spinner } from '../Common/Spinner';
+import { Spinner } from './Spinner';
 
 interface Props {
   size?: number;
@@ -10,7 +10,7 @@ interface Props {
   dataQa?: string;
 }
 
-export default function ChatLoader({
+export default function Loader({
   size = 45,
   containerClassName,
   loaderClassName,

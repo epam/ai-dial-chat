@@ -9,8 +9,6 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
 import { usePromptSelection } from '@/src/hooks/usePromptSelection';
 
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
@@ -62,7 +60,7 @@ export const SystemPrompt: FC<Props> = ({
     setShowPromptList,
     handleKeyDownIfShown,
     getPrompt,
-    isPromptLoading,
+    isLoading,
   } = usePromptSelection(maxLength);
 
   const handleChange = useCallback(
@@ -169,19 +167,16 @@ export const SystemPrompt: FC<Props> = ({
           style={{ maxHeight: `${MAX_HEIGHT}px` }}
           value={content}
           rows={1}
-          disabled={isPromptLoading}
+          disabled={isLoading}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           data-qa="system-prompt"
         />
-        <span
-          className={classNames(
-            'absolute bottom-2 right-3 rounded bg-layer-2 p-[3px]',
-            !isPromptLoading && 'hidden',
-          )}
-        >
-          <Spinner size={24} />
-        </span>
+        {isLoading && (
+          <span className="absolute bottom-2 right-3 rounded bg-layer-2 p-[3px]">
+            <Spinner size={24} />
+          </span>
+        )}
       </div>
 
       {showPromptList && filteredPrompts.length > 0 && (

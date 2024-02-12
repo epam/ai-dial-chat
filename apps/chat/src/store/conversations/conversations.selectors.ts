@@ -13,7 +13,7 @@ import {
 } from '@/src/utils/app/folders';
 import {
   PublishedWithMeFilter,
-  doesConversationContainSearchTerm,
+  doesPromptOrConversationContainSearchTerm,
   getMyItemsFilters,
   searchSectionFolders,
 } from '@/src/utils/app/search';
@@ -51,7 +51,10 @@ export const selectFilteredConversations = createSelector(
     return conversations.filter(
       (conversation) =>
         (!searchTerm ||
-          doesConversationContainSearchTerm(conversation, searchTerm)) &&
+          doesPromptOrConversationContainSearchTerm(
+            conversation,
+            searchTerm,
+          )) &&
         filters.searchFilter(conversation) &&
         (conversation.folderId || filters.sectionFilter(conversation)),
     );
@@ -197,7 +200,7 @@ export const selectSearchedConversations = createSelector(
   [selectConversations, selectSearchTerm],
   (conversations, searchTerm) =>
     conversations.filter((conversation) =>
-      doesConversationContainSearchTerm(conversation, searchTerm),
+      doesPromptOrConversationContainSearchTerm(conversation, searchTerm),
     ),
 );
 
@@ -392,12 +395,12 @@ export const isPublishConversationVersionUnique = createSelector(
     (_state: RootState, _entityId: string, version: string) => version,
   ],
   (state, entityId, version) => {
-    const conversation = selectConversation(state, entityId) as Conversation; // TODO: fix
+    const conversation = selectConversation(state, entityId) as Conversation; // TODO: will be fixed in https://github.com/epam/ai-dial-chat/issues/313
 
     if (!conversation || conversation?.publishVersion === version) return false;
 
     const conversations = selectConversations(state)
-      .map((conv) => conv as Conversation) // TODO: fix
+      .map((conv) => conv as Conversation) // TODO: will be fixed in https://github.com/epam/ai-dial-chat/issues/313
       .filter(
         (conv) =>
           conv.originalId === entityId && conv.publishVersion === version,
@@ -506,6 +509,17 @@ export const areConversationsUploaded = createSelector(
   },
 );
 
+export const selectFoldersStatus = createSelector([rootSelector], (state) => {
+  return state.foldersStatus;
+});
+
+export const selectConversationsStatus = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.conversationsStatus;
+  },
+);
+
 export const selectAreSelectedConversationsLoaded = createSelector(
   [rootSelector],
   (state) => {
@@ -514,9 +528,15 @@ export const selectAreSelectedConversationsLoaded = createSelector(
 );
 // default name with counter
 export const selectNewFolderName = createSelector(
-  [selectFolders],
-  (folders) => {
-    return getNextDefaultName(translate(DEFAULT_FOLDER_NAME), folders);
+  [
+    selectFolders,
+    (_state: RootState, folderId: string | undefined) => folderId,
+  ],
+  (folders, folderId) => {
+    return getNextDefaultName(
+      translate(DEFAULT_FOLDER_NAME),
+      folders.filter((f) => f.folderId === folderId),
+    );
   },
 );
 
@@ -524,5 +544,12 @@ export const selectLoadingFolderIds = createSelector(
   [rootSelector],
   (state) => {
     return state.loadingFolderIds;
+  },
+);
+
+export const selectIsCompareLoading = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.compareLoading;
   },
 );

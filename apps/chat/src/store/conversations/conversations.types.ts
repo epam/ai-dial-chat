@@ -19,4 +19,5 @@ export interface ConversationsState {
   conversationsStatus: UploadStatus;
   foldersStatus: UploadStatus;
   loadingFolderIds: string[];
+  compareLoading?: boolean;
 }

@@ -9,7 +9,7 @@ import { PromptInfo } from '@/src/types/prompt';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-settings';
 
-import { OpenAIError } from './types';
+import { OpenAIError } from './error';
 
 export enum ApiKeys {
   Files = 'files',
@@ -54,9 +54,22 @@ export const getEntityUrlFromSlugs = (
 };
 
 const pathKeySeparator = '__';
+const encodedKeySeparator = '%5F%5F';
 
 export const combineApiKey = (...args: (string | number)[]) =>
   args.join(pathKeySeparator);
+
+export const encodeModelId = (modelId: string) =>
+  modelId
+    .split(pathKeySeparator)
+    .map((i) => encodeURI(i))
+    .join(encodedKeySeparator);
+
+export const decodeModelId = (modelKey: string) =>
+  modelKey
+    .split(encodedKeySeparator)
+    .map((i) => decodeURI(i))
+    .join(pathKeySeparator);
 
 enum PseudoModel {
   Replay = 'replay',
@@ -64,9 +77,9 @@ enum PseudoModel {
 }
 
 const getModelApiIdFromConversation = (conversation: Conversation) => {
-  if (conversation.replay?.isReplay || conversation.isReplay)
+  if (conversation.replay?.isReplay ?? conversation.isReplay)
     return PseudoModel.Replay;
-  if (conversation.playback?.isPlayback || conversation.isPlayback)
+  if (conversation.playback?.isPlayback ?? conversation.isPlayback)
     return PseudoModel.Playback;
   return conversation.model.id;
 };
@@ -79,7 +92,7 @@ export const getConversationApiKey = (
     return conversation.name;
   }
   return combineApiKey(
-    getModelApiIdFromConversation(conversation as Conversation),
+    encodeModelId(getModelApiIdFromConversation(conversation as Conversation)),
     conversation.name,
   );
 };
@@ -91,7 +104,7 @@ export const parseConversationApiKey = (apiKey: string): ConversationInfo => {
   const [modelId, name] =
     parts.length < 2
       ? [EMPTY_MODEL_ID, apiKey] // receive without postfix with model i.e. {name}
-      : [parts[0], parts.slice(1).join(pathKeySeparator)]; // receive correct format {modelId}__{name}
+      : [decodeModelId(parts[0]), parts.slice(1).join(pathKeySeparator)]; // receive correct format {modelId}__{name}
 
   return {
     id: name,

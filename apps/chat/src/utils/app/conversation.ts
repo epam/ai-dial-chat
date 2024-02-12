@@ -3,13 +3,14 @@ import {
   ConversationInfo,
   Message,
   MessageSettings,
+  Role,
 } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
+import { EntityType, UploadStatus } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
-import { constructPath } from './file';
-import { splitPath } from './folders';
+import { constructPath, notAllowedSymbolsRegex } from './file';
+import { compareEntitiesByName, splitPath } from './folders';
 
 export const getAssitantModelId = (
   modelType: EntityType,
@@ -24,7 +25,8 @@ export const getAssitantModelId = (
 export const getValidEntitiesFromIds = <T>(
   entitiesIds: string[],
   addonsMap: Partial<Record<string, T>>,
-) => entitiesIds.map((entityId) => addonsMap[entityId]).filter(Boolean) as T[];
+): T[] =>
+  entitiesIds.map((entityId) => addonsMap[entityId]).filter(Boolean) as T[];
 
 export const getSelectedAddons = (
   selectedAddons: string[],
@@ -44,7 +46,7 @@ export const getSelectedAddons = (
 export const isSettingsChanged = (
   conversation: Conversation,
   newSettings: MessageSettings,
-) => {
+): boolean => {
   const isChanged = Object.keys(newSettings).some((key) => {
     const convSetting = conversation[key as keyof Conversation];
     const newSetting = newSettings[key as keyof MessageSettings];
@@ -76,7 +78,7 @@ export const getNewConversationName = (
   conversation: Conversation,
   message: Message,
   updatedMessages: Message[],
-) => {
+): string => {
   if (
     conversation.replay.isReplay ||
     updatedMessages.length !== 2 ||
@@ -84,7 +86,7 @@ export const getNewConversationName = (
   ) {
     return conversation.name;
   }
-  const content = message.content.trim();
+  const content = message.content.replaceAll(notAllowedSymbolsRegex, '').trim();
   if (content.length > 0) {
     return content.length > 160 ? content.substring(0, 160) + '...' : content;
   } else if (message.custom_content?.attachments?.length) {
@@ -119,11 +121,67 @@ export const parseConversationId = (id: string): ConversationInfo => {
 export const compareConversationsByDate = (
   convA: ConversationInfo,
   convB: ConversationInfo,
-) => {
+): number => {
+  if (convA.lastActivityDate === convB.lastActivityDate) {
+    return compareEntitiesByName(convA, convB);
+  }
   if (convA.lastActivityDate && convB.lastActivityDate) {
     const dateA = convA.lastActivityDate;
     const dateB = convB.lastActivityDate;
     return dateB - dateA;
   }
   return -1;
+};
+
+const removePostfix = (name: string): string => {
+  const regex = / \d{1,3}$/;
+  let newName = name.trim();
+  while (regex.test(newName)) {
+    newName = newName.replace(regex, '').trim();
+  }
+  return newName;
+};
+
+export const isValidConversationForCompare = (
+  selectedConversation: Conversation,
+  candidate: ConversationInfo,
+): boolean => {
+  if (candidate.isReplay || candidate.isPlayback) {
+    return false;
+  }
+
+  if (candidate.id === selectedConversation.id) {
+    return false;
+  }
+  return (
+    removePostfix(selectedConversation.name) === removePostfix(candidate.name)
+  );
+};
+
+export const isChosenConversationValidForCompare = (
+  selectedConversation: Conversation,
+  chosenSelection: Conversation,
+): boolean => {
+  if (
+    chosenSelection.status !== UploadStatus.LOADED ||
+    chosenSelection.replay?.isReplay ||
+    chosenSelection.playback?.isPlayback
+  ) {
+    return false;
+  }
+  if (chosenSelection.id === selectedConversation.id) {
+    return false;
+  }
+  const convUserMessages = chosenSelection.messages.filter(
+    (message) => message.role === Role.User,
+  );
+  const selectedConvUserMessages = selectedConversation.messages.filter(
+    (message) => message.role === Role.User,
+  );
+
+  if (convUserMessages.length !== selectedConvUserMessages.length) {
+    return false;
+  }
+
+  return true;
 };

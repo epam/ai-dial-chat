@@ -8,18 +8,11 @@ import { ShareInterface } from '@/src/types/share';
 
 import { getChildAndCurrentFoldersIdsById } from './folders';
 
-export const doesConversationContainSearchTerm = (
-  conversation: ConversationInfo,
+export const doesPromptOrConversationContainSearchTerm = (
+  conversation: ConversationInfo | PromptInfo,
   searchTerm: string,
 ) => {
   return conversation.name.toLowerCase().includes(searchTerm.toLowerCase());
-};
-
-export const doesPromptContainSearchTerm = (
-  prompt: PromptInfo,
-  searchTerm: string,
-) => {
-  return prompt.name.toLowerCase().includes(searchTerm.toLowerCase());
 };
 
 export const doesFileContainSearchTerm = (
@@ -50,16 +43,15 @@ export const doesEntityContainSearchItem = <
   if (!searchTerm) {
     return true;
   }
-  if ('messages' in item) {
-    // Conversation
-    return doesConversationContainSearchTerm(item, searchTerm);
-  } else if ('content' in item && 'description' in item) {
-    // Prompt
-    return doesPromptContainSearchTerm(item, searchTerm);
-  } else if ('contentType' in item) {
+
+  if ('contentType' in item) {
     // DialFile
     return doesFileContainSearchTerm(item, searchTerm);
+  } else if ('name' in item) {
+    // Conversation or Prompt
+    return doesPromptOrConversationContainSearchTerm(item, searchTerm);
   }
+
   return false;
 };
 

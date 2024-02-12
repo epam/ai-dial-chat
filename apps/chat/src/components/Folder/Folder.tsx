@@ -19,6 +19,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   compareEntitiesByName,
   getChildAndCurrentFoldersIdsById,
@@ -537,7 +538,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               className="mr-12 flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
               type="text"
               value={renameValue}
-              onChange={(e) => setRenameValue(e.target.value)}
+              onChange={(e) =>
+                setRenameValue(
+                  e.target.value.replaceAll(notAllowedSymbolsRegex, ''),
+                )
+              }
               onKeyDown={handleEnterDown}
               ref={renameInputRef}
             />
