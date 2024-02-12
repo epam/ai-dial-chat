@@ -215,7 +215,7 @@ export const isPublishPromptVersionUnique = createSelector(
     (_state: RootState, _entityId: string, version: string) => version,
   ],
   (state, entityId, version) => {
-    const prompt = selectPrompt(state, entityId) as Prompt; // TODO: fix;
+    const prompt = selectPrompt(state, entityId) as Prompt; // TODO: will be fixed in https://github.com/epam/ai-dial-chat/issues/313;
 
     if (!prompt || prompt?.publishVersion === version) return false;
 
