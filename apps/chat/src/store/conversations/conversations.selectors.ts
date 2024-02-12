@@ -475,7 +475,7 @@ export const getAttachments = createSelector(
     if (conversation) {
       return getUniqueAttachments(
         getConversationAttachmentWithPath(
-          conversation as Conversation, //TODO: upload conversation
+          conversation as Conversation, //TODO: fix in https://github.com/epam/ai-dial-chat/issues/640
           folders,
         ),
       );
@@ -493,7 +493,7 @@ export const getAttachments = createSelector(
       return getUniqueAttachments(
         conversations.flatMap((conv) =>
           getConversationAttachmentWithPath(
-            conv as Conversation, //TODO: upload conversation
+            conv as Conversation, //TODO: fix in https://github.com/epam/ai-dial-chat/issues/640
             folders,
           ),
         ),

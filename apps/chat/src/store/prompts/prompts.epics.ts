@@ -142,7 +142,7 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
         ...prompt,
         ...values,
         id: constructPath(
-          prompt.folderId,
+          values.folderId || prompt.folderId,
           getPromptApiKey({ ...prompt, ...values }),
         ),
       };

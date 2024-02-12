@@ -45,6 +45,7 @@ import {
   parseConversationId,
 } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
+import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import {
   addGeneratedFolderId,
   generateNextName,
@@ -85,7 +86,6 @@ import {
 import { errorsMessages } from '@/src/constants/errors';
 import { defaultReplay } from '@/src/constants/replay';
 
-import { RootState } from '..';
 import { AddonsActions } from '../addons/addons.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
@@ -1880,31 +1880,6 @@ const recreateConversationEpic: AppEpic = (action$) =>
       );
     }),
   );
-
-export const getOrUploadConversation = (
-  payload: { id: string },
-  state: RootState,
-): Observable<{
-  conversation: Conversation | null;
-  payload: { id: string };
-}> => {
-  const conversation = ConversationsSelectors.selectConversation(
-    state,
-    payload.id,
-  ) as Conversation;
-
-  if (conversation?.status !== UploadStatus.LOADED) {
-    return forkJoin({
-      conversation: ConversationService.getConversation(conversation),
-      payload: of(payload),
-    });
-  } else {
-    return forkJoin({
-      conversation: of(conversation),
-      payload: of(payload),
-    });
-  }
-};
 
 const updateConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(

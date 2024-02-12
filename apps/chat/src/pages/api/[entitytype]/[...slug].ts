@@ -35,7 +35,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     if (req.method === 'GET') {
       return await handleGetRequest(req, token, res);
-    } else if (req.method === 'PUT') {
+    } else if (req.method === 'PUT' || req.method === 'POST') {
       return await handlePutRequest(req, token, res);
     } else if (req.method === 'DELETE') {
       return await handleDeleteRequest(req, token, res);

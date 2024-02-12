@@ -22,6 +22,7 @@ import { combineEpics } from 'redux-observable';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { FileService } from '@/src/utils/app/data/file-service';
+import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import {
   getAllPathsFromPath,
   getConversationAttachmentWithPath,
@@ -49,7 +50,6 @@ import { AppEpic } from '@/src/types/store';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import { getOrUploadConversation } from '../conversations/conversations.epics';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -307,6 +307,7 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$) =>
 
       const actions = attachmentsToUpload.map((attachment) => {
         const formData = new FormData();
+
         if (!attachment.fileContent) {
           return of(
             ImportExportActions.uploadSingleFileFail({
