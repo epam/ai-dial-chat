@@ -65,10 +65,6 @@ export const getChildAndCurrentFoldersById = (
   folderId: string | undefined,
   allFolders: FolderInterface[],
 ) => {
-  // if (!folderId) {
-  //   return [];
-  // }
-
   const currentFolder = allFolders.find((folder) => folder.id === folderId);
   const childFolders = allFolders.filter(
     (folder) => folder.folderId === folderId,

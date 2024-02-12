@@ -22,7 +22,7 @@ import { Readable } from 'stream';
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const entityType = getEntityTypeFromPath(req);
   if (!entityType || !isValidEntityApiType(entityType)) {
-    return res.status(500).json(errorsMessages.generalServer);
+    return res.status(400).json(errorsMessages.notValidEntityType);
   }
 
   const session = await getServerSession(req, res, authOptions);

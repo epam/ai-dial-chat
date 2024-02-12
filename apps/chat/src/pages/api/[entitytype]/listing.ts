@@ -28,7 +28,7 @@ import fetch from 'node-fetch';
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const entityType = getEntityTypeFromPath(req);
   if (!entityType || !isValidEntityApiType(entityType)) {
-    return res.status(500).json(errorsMessages.generalServer);
+    return res.status(400).json(errorsMessages.notValidEntityType);
   }
 
   const session = await getServerSession(req, res, authOptions);
@@ -59,14 +59,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const response = await fetch(url, {
       headers: getApiHeaders({ jwt: token?.access_token as string }),
     });
-
-    // eslint-disable-next-line no-console
-    console.log(
-      '------------->bucket:',
-      bucket,
-      '\r\n------->token:',
-      token?.access_token,
-    );
 
     if (response.status === 404) {
       return res.status(200).send([]);
