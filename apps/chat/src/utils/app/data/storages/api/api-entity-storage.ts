@@ -4,7 +4,6 @@ import {
   ApiKeys,
   ApiUtils,
   getFolderTypeByApiKey,
-  getParentPath,
 } from '@/src/utils/server/api';
 
 import {
@@ -47,6 +46,24 @@ export abstract class ApiEntityStorage<
     };
   }
 
+  private getEntityUrl = (entity: EntityInfo): string =>
+    encodeURI(
+      constructPath(
+        'api',
+        this.getStorageKey(),
+        BucketService.getBucket(),
+        entity.folderId,
+        this.getEntityKey(entity),
+      ),
+    );
+
+  private getListingUrl = (resultQuery: string): string => {
+    const listingUrl = encodeURI(
+      constructPath('api', this.getStorageKey(), 'listing'),
+    );
+    return `${listingUrl}?${resultQuery}`;
+  };
+
   getFoldersAndEntities(
     path?: string | undefined,
   ): Observable<FoldersAndEntities<EntityInfo>> {
@@ -56,9 +73,7 @@ export abstract class ApiEntityStorage<
     });
     const resultQuery = query.toString();
 
-    return ApiUtils.request(
-      `api/${this.getStorageKey()}/listing?${resultQuery}`,
-    ).pipe(
+    return ApiUtils.request(this.getListingUrl(resultQuery)).pipe(
       map((items: (BackendChatFolder | BackendChatEntity)[]) => {
         const folders = items.filter(
           (item) => item.nodeType === BackendDataNodeType.FOLDER,
@@ -91,9 +106,7 @@ export abstract class ApiEntityStorage<
     });
     const resultQuery = query.toString();
 
-    return ApiUtils.request(
-      `api/${this.getStorageKey()}/listing?${resultQuery}`,
-    ).pipe(
+    return ApiUtils.request(this.getListingUrl(resultQuery)).pipe(
       map((folders: BackendChatFolder[]) => {
         return folders.map((folder) => this.mapFolder(folder));
       }),
@@ -112,9 +125,7 @@ export abstract class ApiEntityStorage<
     });
     const resultQuery = query.toString();
 
-    return ApiUtils.request(
-      `api/${this.getStorageKey()}/listing?${resultQuery}`,
-    ).pipe(
+    return ApiUtils.request(this.getListingUrl(resultQuery)).pipe(
       map((entities: BackendChatEntity[]) => {
         return entities.map((entity) => this.mapEntity(entity));
       }),
@@ -123,12 +134,7 @@ export abstract class ApiEntityStorage<
   }
 
   getEntity(info: EntityInfo): Observable<Entity | null> {
-    const key = this.getEntityKey(info);
-    return ApiUtils.request(
-      `api/${this.getStorageKey()}/${BucketService.getBucket()}${getParentPath(
-        info.folderId,
-      )}/${key}`,
-    ).pipe(
+    return ApiUtils.request(this.getEntityUrl(info)).pipe(
       map((entity: Entity) => {
         return {
           ...this.mergeGetResult(info, entity),
@@ -140,19 +146,13 @@ export abstract class ApiEntityStorage<
   }
 
   createEntity(entity: Entity): Observable<void> {
-    const key = this.getEntityKey(entity);
-    return ApiUtils.request(
-      `api/${this.getStorageKey()}/${BucketService.getBucket()}${getParentPath(
-        entity.folderId,
-      )}/${key}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(this.cleanUpEntity(entity)),
+    return ApiUtils.request(this.getEntityUrl(entity), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    ).pipe(catchError(() => EMPTY)); // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+      body: JSON.stringify(this.cleanUpEntity(entity)),
+    }).pipe(catchError(() => EMPTY)); // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
   }
 
   updateEntity(entity: Entity): Observable<void> {
@@ -160,18 +160,12 @@ export abstract class ApiEntityStorage<
   }
 
   deleteEntity(info: EntityInfo): Observable<void> {
-    const key = this.getEntityKey(info);
-    return ApiUtils.request(
-      `api/${this.getStorageKey()}/${BucketService.getBucket()}${getParentPath(
-        info.folderId,
-      )}/${key}`,
-      {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+    return ApiUtils.request(this.getEntityUrl(info), {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    ).pipe(catchError(() => EMPTY)); // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+    }).pipe(catchError(() => EMPTY)); // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
   }
 
   abstract getEntityKey(info: EntityInfo): string;

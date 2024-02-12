@@ -29,25 +29,27 @@ export const getFolderTypeByApiKey = (key: ApiKeys): FolderType => {
   }
 };
 
-export const isValidEntityApiType = (apiKey: string) => {
+export const isValidEntityApiType = (apiKey: string): boolean => {
   return Object.values(ApiKeys).includes(apiKey as ApiKeys);
 };
 
-export const getEntityTypeFromPath = (req: NextApiRequest) => {
+export const getEntityTypeFromPath = (
+  req: NextApiRequest,
+): string | undefined => {
   return Array.isArray(req.query.entitytype) ? '' : req.query.entitytype;
 };
 
 export const getEntityUrlFromSlugs = (
   dialApiHost: string,
   req: NextApiRequest,
-) => {
+): string => {
   const entityType = getEntityTypeFromPath(req);
   const slugs = Array.isArray(req.query.slug)
     ? req.query.slug
     : [req.query.slug];
 
   if (!slugs || slugs.length === 0) {
-    throw new OpenAIError(`No ${entityType} path provided`, '', '', '400');
+    throw new OpenAIError(`No ${entityType} path provided`, '', '', '404');
   }
 
   return `${dialApiHost}/v1/${entityType}/${encodeURI(slugs.join('/'))}`;
@@ -56,16 +58,16 @@ export const getEntityUrlFromSlugs = (
 const pathKeySeparator = '__';
 const encodedKeySeparator = '%5F%5F';
 
-export const combineApiKey = (...args: (string | number)[]) =>
+export const combineApiKey = (...args: (string | number)[]): string =>
   args.join(pathKeySeparator);
 
-export const encodeModelId = (modelId: string) =>
+export const encodeModelId = (modelId: string): string =>
   modelId
     .split(pathKeySeparator)
     .map((i) => encodeURI(i))
     .join(encodedKeySeparator);
 
-export const decodeModelId = (modelKey: string) =>
+export const decodeModelId = (modelKey: string): string =>
   modelKey
     .split(encodedKeySeparator)
     .map((i) => decodeURI(i))
@@ -76,7 +78,7 @@ enum PseudoModel {
   Playback = 'playback',
 }
 
-const getModelApiIdFromConversation = (conversation: Conversation) => {
+const getModelApiIdFromConversation = (conversation: Conversation): string => {
   if (conversation.replay?.isReplay ?? conversation.isReplay)
     return PseudoModel.Replay;
   if (conversation.playback?.isPlayback ?? conversation.isPlayback)
@@ -87,7 +89,7 @@ const getModelApiIdFromConversation = (conversation: Conversation) => {
 // Format key: {modelId}__{name}
 export const getConversationApiKey = (
   conversation: Omit<ConversationInfo, 'id'>,
-) => {
+): string => {
   if (conversation.model.id === EMPTY_MODEL_ID) {
     return conversation.name;
   }
@@ -116,7 +118,7 @@ export const parseConversationApiKey = (apiKey: string): ConversationInfo => {
 };
 
 // Format key: {name:base64}
-export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>) => {
+export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>): string => {
   return combineApiKey(prompt.name);
 };
 
@@ -189,6 +191,3 @@ export class ApiUtils {
     });
   }
 }
-
-export const getParentPath = (parentPath?: string | null) =>
-  parentPath ? `/${parentPath}` : '';
