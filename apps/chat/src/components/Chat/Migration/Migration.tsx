@@ -4,7 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { Translation } from '@/src/types/translation';
 
-import ChatLoader from '@/src/components/Chat/ChatLoader';
+import { Spinner } from '@/src/components/Common/Spinner';
 
 interface Props {
   total: number;
@@ -16,7 +16,7 @@ export const Migration = ({ total, uploaded }: Props) => {
 
   return (
     <div className="flex h-full flex-col items-center justify-center">
-      <ChatLoader containerClassName="h-auto" size={60} />
+      <Spinner className="h-auto" size={60} />
       <h1 className="mt-7 text-2xl font-semibold md:text-3xl">
         {uploaded} {t('out of')} {total}
       </h1>
