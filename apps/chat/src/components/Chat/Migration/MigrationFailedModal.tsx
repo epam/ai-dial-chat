@@ -1,5 +1,5 @@
 import { IconBulb, IconCheck, IconMinus } from '@tabler/icons-react';
-import { ReactElement, useState } from 'react';
+import { ReactElement, useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { useTranslation } from 'next-i18next';
@@ -46,57 +46,55 @@ const ItemsList = <T extends Conversation | Prompt>({
     setEntitiesToRetryIds(entitiesToRetryIds.filter((id) => id !== entityId));
   };
 
-  return (
-    !!failedMigratedEntities.length && (
-      <div className={classNames('mt-2', withPt && 'pt-2')}>
-        <ul className="flex flex-col gap-0.5">
-          {failedMigratedEntities.map((entity) => (
-            <li
-              className="relative flex h-[30px] items-center justify-between rounded"
-              key={entity.id}
-            >
-              <div className="flex">
-                {getModelIcon(entity)}
-                <p className="ml-2">{entity.name}</p>
+  return failedMigratedEntities.length ? (
+    <div className={classNames('mt-2', withPt && 'pt-2')}>
+      <ul className="flex flex-col gap-0.5">
+        {failedMigratedEntities.map((entity) => (
+          <li
+            className="relative flex h-[30px] items-center justify-between rounded"
+            key={entity.id}
+          >
+            <div className="flex">
+              {getModelIcon(entity)}
+              <p className="ml-2">{entity.name}</p>
+            </div>
+            <div className="flex w-[100px] items-center justify-around">
+              <div
+                onClick={() => handleSelect(entity.id)}
+                className="relative flex size-[18px] group-hover/file-item:flex"
+              >
+                <input
+                  className="checkbox peer size-[18px] bg-transparent"
+                  type="checkbox"
+                  readOnly
+                  checked={entitiesToRetryIds.includes(entity.id)}
+                />
+                <IconCheck
+                  size={18}
+                  className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+                />
               </div>
-              <div className="flex w-[100px] items-center justify-around">
-                <div
-                  onClick={() => handleSelect(entity.id)}
-                  className="relative flex size-[18px] group-hover/file-item:flex"
-                >
-                  <input
-                    className="checkbox peer size-[18px] bg-transparent"
-                    type="checkbox"
-                    readOnly
-                    checked={entitiesToRetryIds.includes(entity.id)}
-                  />
-                  <IconCheck
-                    size={18}
-                    className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
-                  />
-                </div>
-                <div
-                  onClick={() => handleUnselect(entity.id)}
-                  className="relative flex size-[18px] group-hover/file-item:flex"
-                >
-                  <input
-                    className="checkbox peer size-[18px] bg-transparent"
-                    type="checkbox"
-                    readOnly
-                    checked={!entitiesToRetryIds.includes(entity.id)}
-                  />
-                  <IconCheck
-                    size={18}
-                    className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
-                  />
-                </div>
+              <div
+                onClick={() => handleUnselect(entity.id)}
+                className="relative flex size-[18px] group-hover/file-item:flex"
+              >
+                <input
+                  className="checkbox peer size-[18px] bg-transparent"
+                  type="checkbox"
+                  readOnly
+                  checked={!entitiesToRetryIds.includes(entity.id)}
+                />
+                <IconCheck
+                  size={18}
+                  className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+                />
               </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    )
-  );
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  ) : null;
 };
 
 interface Props {
@@ -114,12 +112,10 @@ export const MigrationFailedWindow = ({
 
   const router = useRouter();
 
-  const [conversationsToRetryIds, setConversationsToRetryIds] = useState(() =>
-    failedMigratedConversations.map((conv) => conv.id),
-  );
-  const [promptsToRetryIds, setPromptsToRetryIds] = useState(() =>
-    failedMigratedPrompts.map((prompt) => prompt.id),
-  );
+  const [conversationsToRetryIds, setConversationsToRetryIds] = useState<
+    string[]
+  >([]);
+  const [promptsToRetryIds, setPromptsToRetryIds] = useState<string[]>([]);
 
   const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
 
@@ -128,7 +124,17 @@ export const MigrationFailedWindow = ({
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
-  const onSkipAll = () => {
+  useEffect(() => {
+    setConversationsToRetryIds(
+      failedMigratedConversations.map((conv) => conv.id),
+    );
+  }, [failedMigratedConversations]);
+
+  useEffect(() => {
+    setPromptsToRetryIds(failedMigratedPrompts.map((prompt) => prompt.id));
+  }, [failedMigratedPrompts]);
+
+  const onSkipAll = useCallback(() => {
     dispatch(
       ConversationsActions.skipFailedMigratedConversations({
         idsToMarkAsMigrated: failedMigratedConversations.map((conv) => conv.id),
@@ -139,9 +145,9 @@ export const MigrationFailedWindow = ({
         idsToMarkAsMigrated: failedMigratedPrompts.map((prompt) => prompt.id),
       }),
     );
-  };
+  }, [dispatch, failedMigratedConversations, failedMigratedPrompts]);
 
-  const onRetry = () => {
+  const onRetry = useCallback(() => {
     const failedMigratedConversationIds = failedMigratedConversations.map(
       (conv) => conv.id,
     );
@@ -166,14 +172,20 @@ export const MigrationFailedWindow = ({
     );
     dispatch(ConversationsActions.migrateConversations());
     dispatch(PromptsActions.migratePrompts());
-  };
+  }, [
+    conversationsToRetryIds,
+    dispatch,
+    failedMigratedConversations,
+    failedMigratedPrompts,
+    promptsToRetryIds,
+  ]);
 
-  const onSelectAll = () => {
+  const onSelectAll = useCallback(() => {
     setConversationsToRetryIds(
       failedMigratedConversations.map((conv) => conv.id),
     );
     setPromptsToRetryIds(failedMigratedPrompts.map((prompt) => prompt.id));
-  };
+  }, [failedMigratedConversations, failedMigratedPrompts]);
 
   const onUnselectAll = () => {
     setConversationsToRetryIds([]);

@@ -17,12 +17,12 @@ export const Migration = ({ total, uploaded }: Props) => {
   return (
     <div className="flex h-full flex-col items-center justify-center">
       <Spinner className="h-auto" size={60} />
-      <h1 className="mt-7 text-2xl font-semibold md:text-3xl">
-        {uploaded} {t('out of')} {total}
-      </h1>
-      <h3 className="mt-2 text-base md:text-xl">
-        {t('conversations and prompts are loaded')}
-      </h3>
+      <p className="mt-7 text-center text-2xl font-semibold md:text-3xl">
+        {uploaded} {t('out of')} {total} <br />
+        <span className="text-base md:text-xl">
+          {t('conversations and prompts are loaded')}
+        </span>
+      </p>
       <div className="my-7 h-[1px] w-[80px] bg-controls-disable"></div>
       <p className="text-base md:text-xl">
         {t('Do not close the browser tab')}
