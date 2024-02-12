@@ -1,9 +1,12 @@
 import {
   EMPTY,
   Observable,
+  catchError,
   concat,
+  concatMap,
   filter,
   forkJoin,
+  from,
   ignoreElements,
   map,
   mergeMap,
@@ -19,16 +22,20 @@ import { combineEpics } from 'redux-observable';
 
 import {
   combineEntities,
+  filterMigratedEntities,
+  filterOnlyMyEntities,
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
-import { constructPath } from '@/src/utils/app/file';
+import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
+import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   findRootFromItems,
   getAllPathsFromPath,
   getFolderFromPath,
   getFolderIdByPath,
+  getPathToFolderById,
   getTemporaryFoldersToPublish,
   splitPath,
   updateMovedFolderId,
@@ -45,7 +52,10 @@ import { getPromptApiKey } from '@/src/utils/server/api';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
+
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { resetShareEntity } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
@@ -392,6 +402,149 @@ const importPromptsEpic: AppEpic = (action$, state$) =>
 //     ),
 //   );
 
+const migratePromptsEpic: AppEpic = (action$, state$) => {
+  const browserStorage = new BrowserStorage();
+
+  return action$.pipe(
+    filter(PromptsActions.migratePrompts.match),
+    switchMap(() =>
+      forkJoin({
+        prompts: browserStorage.getPrompts().pipe(map(filterOnlyMyEntities)),
+        promptsFolders: browserStorage
+          .getPromptsFolders()
+          .pipe(map(filterOnlyMyEntities)),
+        migratedPromptIds: BrowserStorage.getMigratedEntityIds(
+          MigrationStorageKeys.MigratedPromptIds,
+        ),
+        failedMigratedPromptIds: BrowserStorage.getFailedMigratedEntityIds(
+          MigrationStorageKeys.FailedMigratedPromptIds,
+        ),
+      }),
+    ),
+    switchMap(
+      ({
+        prompts,
+        promptsFolders,
+        migratedPromptIds,
+        failedMigratedPromptIds,
+      }) => {
+        const notMigratedPrompts = filterMigratedEntities(
+          prompts,
+          [...migratedPromptIds, ...failedMigratedPromptIds],
+          true,
+        );
+
+        if (
+          SettingsSelectors.selectStorageType(state$.value) !==
+            StorageType.API ||
+          !notMigratedPrompts.length
+        ) {
+          if (failedMigratedPromptIds.length) {
+            return of(
+              PromptsActions.setFailedMigratedPrompts({
+                failedMigratedPrompts: filterMigratedEntities(
+                  prompts,
+                  failedMigratedPromptIds,
+                ),
+              }),
+            );
+          }
+          return EMPTY;
+        }
+
+        const preparedPrompts: Prompt[] = notMigratedPrompts.map((prompt) => {
+          const { path } = getPathToFolderById(promptsFolders, prompt.folderId);
+          const newName = prompt.name.replace(notAllowedSymbolsRegex, '');
+
+          return {
+            ...prompt,
+            id: constructPath(...[path, newName]),
+            name: newName,
+            folderId: path.replace(notAllowedSymbolsRegex, ''),
+          };
+        }); // to send prompts with proper parentPath
+        let migratedPromptsCount = 0;
+
+        return concat(
+          of(
+            PromptsActions.initPromptsMigration({
+              promptsToMigrateCount: notMigratedPrompts.length,
+            }),
+          ),
+          from(preparedPrompts).pipe(
+            concatMap((prompt) =>
+              PromptService.setPrompts([prompt]).pipe(
+                switchMap(() => {
+                  migratedPromptIds.push(
+                    notMigratedPrompts[migratedPromptsCount].id,
+                  );
+
+                  return concat(
+                    BrowserStorage.setMigratedEntitiesIds(
+                      migratedPromptIds,
+                      MigrationStorageKeys.MigratedPromptIds,
+                    ).pipe(switchMap(() => EMPTY)),
+                    of(
+                      PromptsActions.migratePromptFinish({
+                        migratedPromptsCount: ++migratedPromptsCount,
+                      }),
+                    ),
+                  );
+                }),
+                catchError(() => {
+                  failedMigratedPromptIds.push(
+                    notMigratedPrompts[migratedPromptsCount].id,
+                  );
+
+                  return concat(
+                    BrowserStorage.setFailedMigratedEntityIds(
+                      failedMigratedPromptIds,
+                      MigrationStorageKeys.FailedMigratedPromptIds,
+                    ).pipe(switchMap(() => EMPTY)),
+                    of(
+                      PromptsActions.migratePromptFinish({
+                        migratedPromptsCount: ++migratedPromptsCount,
+                      }),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ),
+        );
+      },
+    ),
+  );
+};
+
+export const skipFailedMigratedPromptsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.skipFailedMigratedPrompts.match),
+    switchMap(({ payload }) =>
+      BrowserStorage.getMigratedEntityIds(
+        MigrationStorageKeys.MigratedPromptIds,
+      ).pipe(
+        switchMap((migratedPromptIds) =>
+          concat(
+            BrowserStorage.setMigratedEntitiesIds(
+              [...payload.idsToMarkAsMigrated, ...migratedPromptIds],
+              MigrationStorageKeys.MigratedPromptIds,
+            ).pipe(switchMap(() => EMPTY)),
+            BrowserStorage.setFailedMigratedEntityIds(
+              [],
+              MigrationStorageKeys.FailedMigratedPromptIds,
+            ).pipe(switchMap(() => EMPTY)),
+            of(
+              PromptsActions.setFailedMigratedPrompts({
+                failedMigratedPrompts: [],
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
 const initPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.initPrompts.match),
@@ -681,6 +834,9 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
   );
 
 export const PromptsEpics = combineEpics(
+  migratePromptsEpic,
+  skipFailedMigratedPromptsEpic,
+  // init
   initEpic,
   initPromptsEpic,
   // initFoldersEpic,

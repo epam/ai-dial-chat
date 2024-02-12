@@ -4,7 +4,6 @@ import { Spinner } from './Spinner';
 
 interface Props {
   size?: number;
-  slow?: boolean;
   containerClassName?: string;
   loaderClassName?: string;
   dataQa?: string;
