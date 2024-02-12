@@ -497,9 +497,6 @@ export const ChatView = memo(() => {
             values: { messages: clearStateForMessages(conversation.messages) },
           }),
         );
-        if (temporarySettings.modelId) {
-          handleSelectModel(conversation, temporarySettings.modelId);
-        }
         handleChangePrompt(conversation, temporarySettings.prompt);
         handleChangeTemperature(conversation, temporarySettings.temperature);
         if (temporarySettings.currentAssistentModelId) {
@@ -510,6 +507,9 @@ export const ChatView = memo(() => {
         }
         if (temporarySettings.addonsIds) {
           handleOnApplyAddons(conversation, temporarySettings.addonsIds);
+        }
+        if (temporarySettings.modelId) {
+          handleSelectModel(conversation, temporarySettings.modelId);
         }
       }
     });
