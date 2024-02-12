@@ -390,17 +390,46 @@ const exportPromptEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const importPromptsEpic: AppEpic = (action$, state$) =>
+const importPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.importPrompts.match),
-    map(({ payload }) => {
-      const prompts = PromptsSelectors.selectPrompts(state$.value);
-      const folders = PromptsSelectors.selectFolders(state$.value);
-      //TODO: save in API - will be implemented in https://github.com/epam/ai-dial-chat/issues/640
-      return importPrompts(payload.promptsHistory, {
-        currentFolders: folders,
-        currentPrompts: prompts,
+    switchMap(({ payload }) =>
+      forkJoin({
+        promptsListing: PromptService.getPrompts(undefined, true), //listing of all entities
+        importedPrompts: of(payload.promptsHistory),
+      }),
+    ),
+    switchMap(({ promptsListing, importedPrompts }) => {
+      const foldersIds = Array.from(
+        new Set(promptsListing.map((info) => info.folderId)),
+      );
+      //calculate all folders;
+      const folders = getFoldersFromPaths(
+        Array.from(
+          new Set(foldersIds.flatMap((id) => getAllPathsFromPath(id))),
+        ),
+        FolderType.Prompt,
+      );
+
+      return forkJoin({
+        //get all prompts from api
+        prompts: zip(
+          promptsListing.map((info) => PromptService.getPrompt(info)),
+        ),
+        folders: of(folders),
+        importedPrompts: of(importedPrompts),
       });
+    }),
+    switchMap((payload) => {
+      const { prompts, folders, importedPrompts } = payload;
+      const filteredPrompts = prompts.filter(Boolean) as Prompt[];
+
+      return of(
+        importPrompts(importedPrompts, {
+          currentFolders: folders,
+          currentPrompts: filteredPrompts,
+        }),
+      );
     }),
     switchMap(({ prompts, folders, isError }) => {
       if (isError) {
