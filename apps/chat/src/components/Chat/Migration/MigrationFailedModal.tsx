@@ -1,5 +1,5 @@
 import { IconBulb, IconCheck, IconMinus } from '@tabler/icons-react';
-import { ReactElement, useEffect, useState } from 'react';
+import { ReactElement, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { useTranslation } from 'next-i18next';
@@ -20,7 +20,6 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ReportIssueDialog } from '@/src/components/Chat/ReportIssueDialog';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
-import { reportAnIssueHash } from '@/src/components/Common/FooterMessage';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -129,24 +128,6 @@ export const MigrationFailedWindow = ({
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
-  useEffect(() => {
-    const handleHash = () => {
-      const hash = window.location.hash;
-
-      if (hash === reportAnIssueHash) {
-        setIsReportIssueDialogOpen(true);
-      }
-    };
-
-    handleHash();
-
-    window.addEventListener('hashchange', handleHash);
-
-    return () => {
-      window.removeEventListener('hashchange', handleHash);
-    };
-  }, []);
-
   const onSkipAll = () => {
     dispatch(
       ConversationsActions.skipFailedMigratedConversations({
@@ -223,7 +204,7 @@ export const MigrationFailedWindow = ({
                 <p className="flex w-[50px] justify-center">{t('Discard')}</p>
               </div>
             </div>
-            <div className="mb-2 mt-2 flex justify-between border-b-[1px] border-b-tertiary pb-2">
+            <div className="my-2 flex justify-between border-b-[1px] border-b-tertiary pb-2">
               <div className="flex items-center gap-1 py-1 text-xs">
                 {t('All items')}
               </div>
@@ -312,9 +293,13 @@ export const MigrationFailedWindow = ({
       </div>
       <p className="mt-6 text-secondary">
         {t('If you have a problem please ')}
-        <a href="/#reportAnIssue" className="underline">
-          contact us.
-        </a>
+        <button
+          onClick={() => setIsReportIssueDialogOpen(true)}
+          type="button"
+          className="underline"
+        >
+          {t('contact us.')}
+        </button>
       </p>
       {enabledFeatures.has(Feature.ReportAnIssue) && (
         <ReportIssueDialog
