@@ -1,4 +1,4 @@
-import { EMPTY, Observable, catchError, map, of, throwError } from 'rxjs';
+import { EMPTY, Observable, catchError, map, of } from 'rxjs';
 
 import {
   ApiKeys,
