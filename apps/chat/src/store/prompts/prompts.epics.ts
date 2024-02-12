@@ -402,11 +402,11 @@ const importPromptsEpic: AppEpic = (action$, state$) =>
 //     ),
 //   );
 
-const migratePromptsEpic: AppEpic = (action$, state$) => {
+const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
   const browserStorage = new BrowserStorage();
 
   return action$.pipe(
-    filter(PromptsActions.migratePrompts.match),
+    filter(PromptsActions.migratePromptsIfRequired.match),
     switchMap(() =>
       forkJoin({
         prompts: browserStorage.getPrompts().pipe(map(filterOnlyMyEntities)),
@@ -838,7 +838,7 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
   );
 
 export const PromptsEpics = combineEpics(
-  migratePromptsEpic,
+  migratePromptsIfRequiredEpic,
   skipFailedMigratedPromptsEpic,
   // init
   initEpic,

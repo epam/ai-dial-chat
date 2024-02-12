@@ -194,8 +194,8 @@ export const MigrationFailedWindow = ({
       }),
     );
 
-    dispatch(ConversationsActions.migrateConversations());
-    dispatch(PromptsActions.migratePrompts());
+    dispatch(ConversationsActions.migrateConversationsIfRequired());
+    dispatch(PromptsActions.migratePromptsIfRequired());
   }, [
     conversationsToRetryIds,
     dispatch,

@@ -46,7 +46,7 @@ export const promptsSlice = createSlice({
   reducers: {
     init: (state) => state,
     initPrompts: (state) => state,
-    migratePrompts: (state) => state,
+    migratePromptsIfRequired: (state) => state,
     skipFailedMigratedPrompts: (
       state,
       { payload: _ }: PayloadAction<{ idsToMarkAsMigrated: string[] }>,

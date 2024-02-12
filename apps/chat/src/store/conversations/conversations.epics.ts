@@ -705,11 +705,11 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const migrateConversationsEpic: AppEpic = (action$, state$) => {
+const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
   const browserStorage = new BrowserStorage();
 
   return action$.pipe(
-    filter(ConversationsActions.migrateConversations.match),
+    filter(ConversationsActions.migrateConversationsIfRequired.match),
     switchMap(() =>
       forkJoin({
         conversations: browserStorage
@@ -2239,7 +2239,7 @@ const openFolderEpic: AppEpic = (action$, state$) =>
   );
 
 export const ConversationsEpics = combineEpics(
-  migrateConversationsEpic,
+  migrateConversationsIfRequiredEpic,
   skipFailedMigratedConversationsEpic,
   // init
   initEpic,
