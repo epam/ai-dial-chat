@@ -34,14 +34,14 @@ export class ApiStorage implements DialStorage {
   private tryCreateEntity<T extends Conversation | Prompt>(
     entity: T,
     entities: T[],
-    apiStorage: ApiEntityStorage<PromptInfo | ConversationInfo, T>,
+    apiStorage: ApiEntityStorage<T, T>,
   ): Observable<void> {
     let retries = 0;
 
     const retry = (
       entity: T,
       entities: T[],
-      apiStorage: ApiEntityStorage<PromptInfo | ConversationInfo, T>,
+      apiStorage: ApiEntityStorage<T, T>,
     ): Observable<void> =>
       apiStorage.createEntity(entity).pipe(
         catchError((err) => {
