@@ -29,6 +29,7 @@ import {
   getAllPathsFromPath,
   getFolderFromPath,
   getFolderIdByPath,
+  getFoldersFromPaths,
   getTemporaryFoldersToPublish,
   splitPath,
   updateMovedFolderId,
@@ -324,14 +325,35 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
 const exportPromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.exportPrompts.match),
-    map(() => ({
-      prompts: PromptsSelectors.selectPrompts(state$.value),
-      folders: PromptsSelectors.selectFolders(state$.value),
-      appName: SettingsSelectors.selectAppName(state$.value),
-    })),
-    tap(({ prompts, folders, appName }) => {
-      //TODO: upload all prompts for export - will be implemented in https://github.com/epam/ai-dial-chat/issues/640
-      exportPrompts(prompts, folders, appName);
+    switchMap(
+      () => PromptService.getPrompts(undefined, true), //listing of all entities
+    ),
+    switchMap((promptsListing) => {
+      const foldersIds = Array.from(
+        new Set(promptsListing.map((info) => info.folderId)),
+      );
+      //calculate all folders;
+      const folders = getFoldersFromPaths(
+        Array.from(
+          new Set(foldersIds.flatMap((id) => getAllPathsFromPath(id))),
+        ),
+        FolderType.Prompt,
+      );
+
+      return forkJoin({
+        //get all prompts from api
+        prompts: zip(
+          promptsListing.map((info) => PromptService.getPrompt(info)),
+        ),
+        folders: of(folders),
+      });
+    }),
+    tap(({ prompts, folders }) => {
+      const filteredPrompts = prompts.filter(Boolean) as Prompt[];
+
+      const appName = SettingsSelectors.selectAppName(state$.value);
+
+      exportPrompts(filteredPrompts, folders, appName);
     }),
     ignoreElements(),
   );
