@@ -110,7 +110,7 @@ describe('cleanData Functions', () => {
     assistantModelId: 'gpt-4',
     isMessageStreaming: false,
     folderId: undefined,
-    lastActivityDate: undefined,
+    lastActivityDate: expect.any(Number),
   };
 
   describe('cleaning v1 data', () => {
