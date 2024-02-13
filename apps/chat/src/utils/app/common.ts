@@ -35,12 +35,9 @@ export const isEntityNameOnSameLevelUnique = <
   entity: T,
   entities: T[],
 ): boolean => {
-  console.log(entities);
   const sameLevelEntities = entities.filter(
     (e) => entity.id !== e.id && e.folderId === entity.folderId,
   );
-
-  console.log(sameLevelEntities);
 
   return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
 };
