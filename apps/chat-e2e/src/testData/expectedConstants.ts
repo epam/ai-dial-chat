@@ -109,8 +109,7 @@ export const API = {
   promptsHost: '/api/prompts',
   conversationsListingHost: () => `${API.conversationsHost}/listing`,
   promptsListingHost: () => `${API.promptsHost}/listing`,
-  fileHost: '/api/files/file',
-  uploadedFileHost: () => `${API.fileHost}/files`,
+  fileHost: '/api/files',
 };
 
 export const Import = {
