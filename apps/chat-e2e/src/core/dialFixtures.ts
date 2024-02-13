@@ -1,10 +1,11 @@
-import { DialHomePage, LoginPage } from '../ui/pages';
+import { DialHomePage } from '../ui/pages';
 import {
   Chat,
   ChatBar,
   ChatHeader,
   ChatMessages,
   ConversationSettings,
+  ConversationToCompare,
   Conversations,
   EntitySelector,
   ModelsDialog,
@@ -13,22 +14,27 @@ import {
   RecentEntities,
   SendMessage,
 } from '../ui/webElements';
-import { LocalStorageManager } from './localStorageManager';
 
+import test from '@/src/core/baseFixtures';
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ConversationData } from '@/src/testData';
 import {
   ChatApiHelper,
   FileApiHelper,
   IconApiHelper,
 } from '@/src/testData/api';
+import { ItemApiHelper } from '@/src/testData/api/itemApiHelper';
+import { ApiInjector } from '@/src/testData/injector/apiInjector';
+import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
+import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { PromptData } from '@/src/testData/prompts/promptData';
-import { Auth0Page } from '@/src/ui/pages/auth0Page';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { Addons } from '@/src/ui/webElements/addons';
 import { AddonsDialog } from '@/src/ui/webElements/addonsDialog';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { Banner } from '@/src/ui/webElements/banner';
 import { ChatInfoTooltip } from '@/src/ui/webElements/chatInfoTooltip';
+import { ChatLoader } from '@/src/ui/webElements/chatLoader';
 import { Compare } from '@/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
 import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu';
@@ -50,7 +56,6 @@ import { ShareModal } from '@/src/ui/webElements/shareModal';
 import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { VariableModalDialog } from '@/src/ui/webElements/variableModalDialog';
-import { test as base } from '@playwright/test';
 import { allure } from 'allure-playwright';
 import path from 'path';
 
@@ -64,13 +69,13 @@ interface ReportAttributes {
   setIssueIds: (...issueIds: string[]) => void;
 }
 
-const test = base.extend<
+const dialTest = test.extend<
   ReportAttributes & {
+    beforeTestCleanup: string;
     dialHomePage: DialHomePage;
-    loginPage: LoginPage;
-    auth0Page: Auth0Page;
     appContainer: AppContainer;
     chatBar: ChatBar;
+    chatLoader: ChatLoader;
     header: Header;
     accountSettings: AccountSettings;
     accountDropdownMenu: DropdownMenu;
@@ -93,7 +98,6 @@ const test = base.extend<
     addonsDialog: AddonsDialog;
     conversationData: ConversationData;
     promptData: PromptData;
-    localStorageManager: LocalStorageManager;
     conversationDropdownMenu: DropdownMenu;
     folderDropdownMenu: DropdownMenu;
     promptDropdownMenu: DropdownMenu;
@@ -106,6 +110,7 @@ const test = base.extend<
     chatInfoTooltip: ChatInfoTooltip;
     compare: Compare;
     compareConversationSelector: ModelSelector;
+    compareConversation: ConversationToCompare;
     rightConversationSettings: ConversationSettings;
     leftConversationSettings: ConversationSettings;
     rightChatHeader: ChatHeader;
@@ -125,6 +130,10 @@ const test = base.extend<
     iconApiHelper: IconApiHelper;
     chatApiHelper: ChatApiHelper;
     fileApiHelper: FileApiHelper;
+    itemApiHelper: ItemApiHelper;
+    browserStorageInjector: BrowserStorageInjector;
+    apiInjector: ApiInjector;
+    dataInjector: DataInjectorInterface;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -141,22 +150,25 @@ const test = base.extend<
     const callback = (...issueIds: string[]) => {
       for (const issueId of issueIds) {
         allure.issue(issueId, `${process.env.ISSUE_URL}/${issueId}`);
-        test.skip();
+        dialTest.skip();
       }
     };
     await use(callback);
   },
+  beforeTestCleanup: [
+    async ({ dataInjector }, use) => {
+      await dataInjector.deleteAllData();
+      await use('beforeTestCleanup');
+    },
+    { scope: 'test', auto: true },
+  ],
+  // eslint-disable-next-line no-empty-pattern
+  storageState: async ({}, use) => {
+    await use(stateFilePath);
+  },
   dialHomePage: async ({ page }, use) => {
     const dialHomePage = new DialHomePage(page);
     await use(dialHomePage);
-  },
-  loginPage: async ({ page }, use) => {
-    const loginPage = new LoginPage(page);
-    await use(loginPage);
-  },
-  auth0Page: async ({ page }, use) => {
-    const auth0Page = new Auth0Page(page);
-    await use(auth0Page);
   },
   appContainer: async ({ dialHomePage }, use) => {
     const appContainer = dialHomePage.getAppContainer();
@@ -165,6 +177,10 @@ const test = base.extend<
   chatBar: async ({ appContainer }, use) => {
     const chatBar = appContainer.getChatBar();
     await use(chatBar);
+  },
+  chatLoader: async ({ appContainer }, use) => {
+    const chatLoader = appContainer.getChatLoader();
+    await use(chatLoader);
   },
   header: async ({ appContainer }, use) => {
     const header = appContainer.getHeader();
@@ -316,10 +332,6 @@ const test = base.extend<
     const promptData = new PromptData();
     await use(promptData);
   },
-  localStorageManager: async ({ page }, use) => {
-    const localStorageManager = new LocalStorageManager(page);
-    await use(localStorageManager);
-  },
   chatInfoTooltip: async ({ page }, use) => {
     const chatInfoTooltip = new ChatInfoTooltip(page);
     await use(chatInfoTooltip);
@@ -328,10 +340,13 @@ const test = base.extend<
     const compare = chat.getCompare();
     await use(compare);
   },
-  compareConversationSelector: async ({ compare }, use) => {
-    const compareConversationSelector = compare
-      .getConversationToCompare()
-      .getConversationSelector();
+  compareConversation: async ({ compare }, use) => {
+    const compareConversation = compare.getConversationToCompare();
+    await use(compareConversation);
+  },
+  compareConversationSelector: async ({ compareConversation }, use) => {
+    const compareConversationSelector =
+      compareConversation.getConversationSelector();
     await use(compareConversationSelector);
   },
   rightConversationSettings: async ({ compare }, use) => {
@@ -386,6 +401,26 @@ const test = base.extend<
     const fileApiHelper = new FileApiHelper(request);
     await use(fileApiHelper);
   },
+  itemApiHelper: async ({ request }, use) => {
+    const conversationApiHelper = new ItemApiHelper(request);
+    await use(conversationApiHelper);
+  },
+  apiInjector: async ({ itemApiHelper }, use) => {
+    const apiInjector = new ApiInjector(itemApiHelper);
+    await use(apiInjector);
+  },
+  browserStorageInjector: async ({ localStorageManager }, use) => {
+    const browserStorageInjector = new BrowserStorageInjector(
+      localStorageManager,
+    );
+    await use(browserStorageInjector);
+  },
+  dataInjector: async ({ apiInjector, browserStorageInjector }, use) => {
+    const dataInjector = isApiStorageType
+      ? apiInjector
+      : browserStorageInjector;
+    await use(dataInjector);
+  },
 });
 
-export default test;
+export default dialTest;

@@ -1,4 +1,4 @@
-import test, { stateFilePath } from '@/src/core/fixtures';
+import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, ExpectedMessages, ModelIds } from '@/src/testData';
 import { expect } from '@playwright/test';
 
@@ -34,13 +34,10 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.GEMINI_PRO, isSysPromptAllowed: true },
 );
 
-test.describe('Chat API arithmetic request tests', () => {
-  test.use({ storageState: stateFilePath });
-  for (const modelToUse of modelsForArithmeticRequest) {
-    test(`Generate arithmetic response for model: ${modelToUse.modelId}`, async ({
-      conversationData,
-      chatApiHelper,
-    }) => {
+for (const modelToUse of modelsForArithmeticRequest) {
+  dialTest(
+    `Generate arithmetic response for model: ${modelToUse.modelId}`,
+    async ({ conversationData, chatApiHelper }) => {
       const conversation = conversationData.prepareModelConversation(
         0,
         modelToUse.isSysPromptAllowed
@@ -69,6 +66,6 @@ test.describe('Chat API arithmetic request tests', () => {
           `${ExpectedMessages.responseTextIsValid}${modelToUse.modelId}`,
         )
         .toMatch(/\s?3\.?/);
-    });
-  }
-});
+    },
+  );
+}

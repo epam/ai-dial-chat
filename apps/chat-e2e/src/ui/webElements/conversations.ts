@@ -1,5 +1,6 @@
 import { ChatBarSelectors, SideBarSelectors } from '../selectors';
 
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import { Chronology } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
@@ -114,7 +115,15 @@ export class Conversations extends SideBarEntities {
 
   public async editConversationNameWithEnter(name: string, newName: string) {
     await this.openEditConversationNameMode(name, newName);
-    await this.page.keyboard.press(keys.enter);
+    if (isApiStorageType) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'DELETE',
+      );
+      await this.page.keyboard.press(keys.enter);
+      await respPromise;
+    } else {
+      await this.page.keyboard.press(keys.enter);
+    }
     await this.getConversationByName(name).waitFor({ state: 'hidden' });
   }
 
@@ -127,7 +136,7 @@ export class Conversations extends SideBarEntities {
   }
 
   public async isConversationHasPlaybackIcon(name: string, index?: number) {
-    const playBackIcon = await this.getConversationByName(name, index).locator(
+    const playBackIcon = this.getConversationByName(name, index).locator(
       IconSelectors.playbackIcon,
     );
     return playBackIcon.isVisible();

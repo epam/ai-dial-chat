@@ -85,7 +85,7 @@ export class ChatMessages extends BaseElement {
 
   public async getMessageIconSize(index?: number) {
     const messagesCount = await this.chatMessages.getElementsCount();
-    const icon = await this.chatMessages
+    const icon = this.chatMessages
       .getNthElement(index ?? messagesCount)
       .locator(Tags.svg)
       .first();
@@ -187,7 +187,11 @@ export class ChatMessages extends BaseElement {
     );
     await thumb.hover({ force: true });
     await thumb.waitFor();
+    const respPromise = this.page.waitForResponse(
+      (resp) => resp.request().method() === 'POST',
+    );
     await thumb.click();
+    return respPromise;
   }
 
   public async isComparedRowMessageRated(
@@ -246,7 +250,7 @@ export class ChatMessages extends BaseElement {
       rowIndex,
     );
     await messageToCopy.hover();
-    const copyIcon = await messageToCopy.locator(selector);
+    const copyIcon = messageToCopy.locator(selector);
     await copyIcon.waitFor();
     await copyIcon.click();
   }

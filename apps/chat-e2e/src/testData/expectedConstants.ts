@@ -5,6 +5,8 @@ export const ExpectedConstants = {
   newPromptTitle: (index: number) => `Prompt ${index}`,
   promptPlaceholder: (variable: string) => `Enter a value for ${variable}...`,
   newFolderTitle: 'New folder',
+  newFolderWithIndexTitle: (index: number) =>
+    `${ExpectedConstants.newFolderTitle} ${index}`,
   emptyString: '',
   defaultTemperature: '1',
   signInButtonTitle: 'Sign in with Credentials',
@@ -102,7 +104,11 @@ export const API = {
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
   defaultIconHost: '/api/themes/image?name=default-model',
-  bucketHost: '/api/files/bucket',
+  bucketHost: '/api/bucket',
+  conversationsHost: '/api/conversations',
+  promptsHost: '/api/prompts',
+  conversationsListingHost: () => `${API.conversationsHost}/listing`,
+  promptsListingHost: () => `${API.promptsHost}/listing`,
   fileHost: '/api/files/file',
   uploadedFileHost: () => `${API.fileHost}/files`,
 };

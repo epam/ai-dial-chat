@@ -1,6 +1,7 @@
 import config from '../../config/playwright.config';
-import test, { stateFilePath } from '../core/fixtures';
+import { stateFilePath } from '../core/dialFixtures';
 
+import test from '@/src/core/baseFixtures';
 import { API } from '@/src/testData';
 
 const usernames = process.env

@@ -39,7 +39,11 @@ export class PromptModalDialog extends BaseElement {
     value: string,
   ) {
     await this.fillPromptDetails(name, description, value);
+    const respPromise = this.page.waitForResponse(
+      (resp) => resp.request().method() === 'PUT',
+    );
     await this.saveButton.click();
+    await respPromise;
   }
 
   public async updatePromptDetailsWithEnter(
@@ -48,7 +52,11 @@ export class PromptModalDialog extends BaseElement {
     value: string,
   ) {
     await this.fillPromptDetails(name, description, value);
+    const respPromise = this.page.waitForResponse(
+      (resp) => resp.request().method() === 'PUT',
+    );
     await this.page.keyboard.press(keys.enter);
+    await respPromise;
   }
 
   public async getName() {

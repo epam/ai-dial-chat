@@ -27,10 +27,6 @@ export class LocalStorageManager {
     window.localStorage.setItem('selectedConversationIds', selected);
   };
 
-  setOpenedFoldersIdsKey = () => (folders: string) => {
-    window.localStorage.setItem('openedFoldersIds', folders);
-  };
-
   setSettingsKey = () => (settings: string) => {
     window.localStorage.setItem('settings', settings);
   };

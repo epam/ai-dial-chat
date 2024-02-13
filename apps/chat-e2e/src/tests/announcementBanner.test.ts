@@ -1,41 +1,41 @@
 import { Conversation } from '@/chat/types/chat';
-import test, { stateFilePath } from '@/src/core/fixtures';
+import dialTest from '@/src/core/dialFixtures';
 import { AccountMenuOptions, ExpectedMessages } from '@/src/testData';
 import { expect } from '@playwright/test';
 
-test.describe('Announcement banner tests', () => {
-  test.use({ storageState: stateFilePath });
-  test(
-    'Banner is shown.\n' +
-      'Banner text contains html link.\n' +
-      "Banner doesn't appear if to close it",
-    async ({
-      dialHomePage,
-      conversationData,
-      localStorageManager,
-      chatBar,
-      promptBar,
-      conversations,
-      banner,
-      header,
-      appContainer,
-      accountSettings,
-      accountDropdownMenu,
-      confirmationDialog,
-      loginPage,
-      setTestIds,
-    }) => {
-      setTestIds('EPMRTC-1576', 'EPMRTC-1580', 'EPMRTC-1577');
-      let conversation: Conversation;
-      let chatBarBounding;
-      let promptBarBounding;
+dialTest(
+  'Banner is shown.\n' +
+    'Banner text contains html link.\n' +
+    "Banner doesn't appear if to close it",
+  async ({
+    dialHomePage,
+    conversationData,
+    dataInjector,
+    chatBar,
+    promptBar,
+    conversations,
+    banner,
+    header,
+    appContainer,
+    accountSettings,
+    accountDropdownMenu,
+    confirmationDialog,
+    loginPage,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-1576', 'EPMRTC-1580', 'EPMRTC-1577');
+    let conversation: Conversation;
+    let chatBarBounding;
+    let promptBarBounding;
 
-      await test.step('Prepare any conversation', async () => {
-        conversation = conversationData.prepareDefaultConversation();
-        await localStorageManager.setConversationHistory(conversation);
-      });
+    await dialTest.step('Prepare any conversation', async () => {
+      conversation = conversationData.prepareDefaultConversation();
+      await dataInjector.createConversations([conversation]);
+    });
 
-      await test.step('Open app and verify announcement banner is shown between side panels', async () => {
+    await dialTest.step(
+      'Open app and verify announcement banner is shown between side panels',
+      async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
@@ -67,9 +67,12 @@ test.describe('Announcement banner tests', () => {
             ExpectedMessages.bannerWidthIsValid,
           )
           .toBeTruthy();
-      });
+      },
+    );
 
-      await test.step('Select conversation in chat panel and verify announcement banner is shown between side panels', async () => {
+    await dialTest.step(
+      'Select conversation in chat panel and verify announcement banner is shown between side panels',
+      async () => {
         await conversations.selectConversation(conversation.name);
         const bannerBounding = await banner.getElementBoundingBox();
         expect
@@ -84,9 +87,12 @@ test.describe('Announcement banner tests', () => {
             ExpectedMessages.bannerWidthIsValid,
           )
           .toBeTruthy();
-      });
+      },
+    );
 
-      await test.step('Hide side panels and verify announcement banner is shown on full window width', async () => {
+    await dialTest.step(
+      'Hide side panels and verify announcement banner is shown on full window width',
+      async () => {
         await header.chatPanelToggle.click();
         await header.promptsPanelToggle.click();
         const appBounding = await appContainer.getElementBoundingBox();
@@ -97,33 +103,45 @@ test.describe('Announcement banner tests', () => {
             ExpectedMessages.bannerWidthIsValid,
           )
           .toBeTruthy();
-      });
+      },
+    );
 
-      await test.step('Click on banner message link and verify new page is opened', async () => {
+    await dialTest.step(
+      'Click on banner message link and verify new page is opened',
+      async () => {
         const newPage = await dialHomePage.getNewPage(() =>
           banner.bannerMessageLink.click(),
         );
         expect
           .soft(newPage !== undefined, ExpectedMessages.newPageIsOpened)
           .toBeTruthy();
-      });
+      },
+    );
 
-      await test.step('Click on close on banner and verify it is not shown', async () => {
+    await dialTest.step(
+      'Click on close on banner and verify it is not shown',
+      async () => {
         await dialHomePage.bringPageToFront();
         await banner.closeButton.click();
         expect
           .soft(await banner.isVisible(), ExpectedMessages.bannerIsClosed)
           .toBeFalsy();
-      });
+      },
+    );
 
-      await test.step('Refresh page and verify banner is not shown', async () => {
+    await dialTest.step(
+      'Refresh page and verify banner is not shown',
+      async () => {
         await dialHomePage.reloadPage();
         expect
           .soft(await banner.isVisible(), ExpectedMessages.bannerIsClosed)
           .toBeFalsy();
-      });
+      },
+    );
 
-      await test.step('Re-login to app and verify banner is not shown', async () => {
+    await dialTest.step(
+      'Re-login to app and verify banner is not shown',
+      async () => {
         await accountSettings.openAccountDropdownMenu();
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.logout);
         await confirmationDialog.confirm();
@@ -131,7 +149,7 @@ test.describe('Announcement banner tests', () => {
         expect
           .soft(await banner.isVisible(), ExpectedMessages.bannerIsClosed)
           .toBeFalsy();
-      });
-    },
-  );
-});
+      },
+    );
+  },
+);

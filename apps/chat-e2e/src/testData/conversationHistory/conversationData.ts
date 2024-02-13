@@ -41,6 +41,7 @@ export class ConversationData extends FolderData {
     const userMessage: Message = {
       role: Role.User,
       content: 'test request',
+      model: { id: modelToUse.id },
     };
     const assistantMessage: Message = {
       role: Role.Assistant,

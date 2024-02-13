@@ -1,9 +1,10 @@
 import { Conversation } from '@/chat/types/chat';
-import { FolderInterface } from '@/chat/types/folder';
 import { OpenAIEntityModel } from '@/chat/types/openai';
 import { Prompt } from '@/chat/types/prompt';
-import test, { stateFilePath } from '@/src/core/fixtures';
+import dialTest from '@/src/core/dialFixtures';
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
+  ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
   FolderPrompt,
@@ -13,19 +14,17 @@ import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let gpt35Model: OpenAIEntityModel;
-test.beforeAll(async () => {
+dialTest.beforeAll(async () => {
   gpt35Model = ModelsUtil.getDefaultModel()!;
 });
 
-test.describe('Side panel drag and drop tests', () => {
-  test.use({
-    storageState: stateFilePath,
-  });
-  test('Chat is moved from the folder via drag&drop', async ({
+dialTest(
+  'Chat is moved from the folder via drag&drop',
+  async ({
     dialHomePage,
     conversationData,
     folderConversations,
-    localStorageManager,
+    dataInjector,
     conversations,
     chatBar,
     page,
@@ -34,12 +33,9 @@ test.describe('Side panel drag and drop tests', () => {
     setTestIds('EPMRTC-861');
     const conversationInFolder =
       conversationData.prepareDefaultConversationInFolder();
-    await localStorageManager.setFolders(conversationInFolder.folders);
-    await localStorageManager.setConversationHistory(
-      conversationInFolder.conversations[0],
-    );
-    await localStorageManager.setSelectedConversation(
-      conversationInFolder.conversations[0],
+    await dataInjector.createConversations(
+      conversationInFolder.conversations,
+      conversationInFolder.folders,
     );
     await dialHomePage.openHomePage({
       iconsToBeLoaded: [gpt35Model.iconUrl],
@@ -47,6 +43,7 @@ test.describe('Side panel drag and drop tests', () => {
     await dialHomePage.waitForPageLoaded();
     await folderConversations.expandCollapseFolder(
       conversationInFolder.folders.name,
+      { isHttpMethodTriggered: true },
     );
     await chatBar.drugConversationFromFolder(
       conversationInFolder.folders.name,
@@ -82,67 +79,90 @@ test.describe('Side panel drag and drop tests', () => {
     expect
       .soft(folderNameColor[0], ExpectedMessages.folderNameColorIsValid)
       .toBe(Colors.textPrimary);
-  });
+  },
+);
 
-  test(
-    'Chat is moved using drag&drop to collapsed folder.\n' +
-      'Chat is moved using drag&drop to collapsed folder',
-    async ({
-      dialHomePage,
-      conversationData,
-      conversations,
-      folderConversations,
-      localStorageManager,
-      chatBar,
-      setTestIds,
-      page,
-    }) => {
-      setTestIds('EPMRTC-1599', 'EPMRTC-591');
-      let nestedFolders: FolderInterface[];
-      let conversationToDrop: Conversation;
-      let conversation: Conversation;
+dialTest(
+  'Chat is moved using drag&drop to collapsed folder.\n' +
+    'Chat is moved using drag&drop to collapsed folder',
+  async ({
+    dialHomePage,
+    conversationData,
+    conversations,
+    folderConversations,
+    localStorageManager,
+    dataInjector,
+    chatBar,
+    setTestIds,
+    page,
+  }) => {
+    setTestIds('EPMRTC-1599', 'EPMRTC-591');
+    let conversationToDrop: Conversation;
+    let conversation: Conversation;
 
-      await test.step('Prepare nested folders and single conversations outside folder', async () => {
-        nestedFolders = conversationData.prepareNestedFolder(3);
+    await dialTest.step(
+      'Prepare nested folders and single conversations outside folder',
+      async () => {
         conversationData.resetData();
         conversationToDrop = conversationData.prepareDefaultConversation();
         conversationData.resetData();
         conversation = conversationData.prepareDefaultConversation();
 
-        await localStorageManager.setFolders(...nestedFolders);
-        await localStorageManager.setConversationHistory(
+        await dataInjector.createConversations([
           conversationToDrop,
           conversation,
-        );
+        ]);
         await localStorageManager.setSelectedConversation(conversation);
-      });
+      },
+    );
 
-      await test.step('Open app, drag conversation to collapsed folder and verify folders hierarchy is expanded, background is highlighted', async () => {
+    await dialTest.step(
+      'Open app, drag conversation to collapsed folder and verify folders hierarchy is expanded, background is highlighted',
+      async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        for (const nestedFolder of [
-          nestedFolders[0],
-          nestedFolders[1],
-          nestedFolders[2],
-        ]) {
-          await folderConversations.expandCollapseFolder(nestedFolder.name);
+        for (let i = 1; i <= 3; i++) {
+          await chatBar.createNewFolder();
         }
+        for (let i = 3; i >= 2; i--) {
+          await chatBar.dragAndDropEntityToFolder(
+            folderConversations.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(i),
+            ),
+            folderConversations.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(i - 1),
+            ),
+          );
+        }
+        await folderConversations.expandCollapseFolder(
+          ExpectedConstants.newFolderWithIndexTitle(2),
+          { isHttpMethodTriggered: true },
+        );
+
         await chatBar.drugConversationToFolder(
-          nestedFolders[0].name,
+          ExpectedConstants.newFolderWithIndexTitle(1),
           conversationToDrop.name,
         );
         await folderConversations.waitForFolderGroupIsHighlighted(
-          nestedFolders[0].name,
+          ExpectedConstants.newFolderWithIndexTitle(1),
         );
-        for (const folder of nestedFolders) {
-          await folderConversations.getFolderByName(folder.name).waitFor();
+        for (let i = 1; i <= 3; i++) {
+          await folderConversations
+            .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(i))
+            .waitFor();
         }
         await page.mouse.up();
-      });
+      },
+    );
 
-      await test.step('Verify conversation is moving to root folder, another conversation remained selected', async () => {
+    await dialTest.step(
+      'Verify conversation is moving to root folder, another conversation remained selected',
+      async () => {
         await folderConversations
-          .getFolderEntity(nestedFolders[0].name, conversationToDrop.name)
+          .getFolderEntity(
+            ExpectedConstants.newFolderWithIndexTitle(1),
+            conversationToDrop.name,
+          )
           .waitFor();
         const conversationBackgroundColor =
           await conversations.getConversationBackgroundColor(conversation.name);
@@ -152,14 +172,18 @@ test.describe('Side panel drag and drop tests', () => {
             ExpectedMessages.conversationIsSelected,
           )
           .toBe(Colors.backgroundAccentSecondary);
-      });
-    },
-  );
+      },
+    );
+  },
+);
 
-  test('Chat is moved using drag&drop to expanded folder', async ({
+dialTest(
+  'Chat is moved using drag&drop to expanded folder',
+  async ({
     dialHomePage,
     conversationData,
     folderConversations,
+    dataInjector,
     localStorageManager,
     chatBar,
     setTestIds,
@@ -168,61 +192,72 @@ test.describe('Side panel drag and drop tests', () => {
     let folderConversation: FolderConversation;
     let conversationToDrop: Conversation;
 
-    await test.step('Prepare folder with 2 conversation inside and 2 single conversations outside folder', async () => {
-      folderConversation = conversationData.prepareFolderWithConversations(2);
-      conversationData.resetData();
-      conversationToDrop = conversationData.prepareDefaultConversation();
+    await dialTest.step(
+      'Prepare folder with 2 conversation inside and 2 single conversations outside folder',
+      async () => {
+        folderConversation = conversationData.prepareFolderWithConversations(2);
+        conversationData.resetData();
+        conversationToDrop = conversationData.prepareDefaultConversation();
 
-      await localStorageManager.setFolders(folderConversation.folders);
-      await localStorageManager.setConversationHistory(
-        ...folderConversation.conversations,
-        conversationToDrop,
-      );
-      await localStorageManager.setSelectedConversation(conversationToDrop);
-    });
+        await dataInjector.createConversations(
+          [...folderConversation.conversations, conversationToDrop],
+          folderConversation.folders,
+        );
+        await localStorageManager.setSelectedConversation(conversationToDrop);
+      },
+    );
 
-    await test.step('Open app, drag 1st conversation to expanded folder conversation and verify conversation stays in the folder, folder remains expanded, folder name is highlighted', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-      await folderConversations.expandCollapseFolder(
-        folderConversation.folders.name,
-      );
-      await chatBar.drugAndDropConversationToFolderConversation(
-        folderConversation.folders.name,
-        folderConversation.conversations[1].name,
-        conversationToDrop.name,
-      );
+    await dialTest.step(
+      'Open app, drag 1st conversation to expanded folder conversation and verify conversation stays in the folder, folder remains expanded, folder name is highlighted',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await folderConversations.expandCollapseFolder(
+          folderConversation.folders.name,
+          { isHttpMethodTriggered: true },
+        );
+        await chatBar.drugAndDropConversationToFolderConversation(
+          folderConversation.folders.name,
+          folderConversation.conversations[1].name,
+          conversationToDrop.name,
+        );
 
-      const folderConversationsCount =
-        await folderConversations.getFolderEntitiesCount(
+        const folderConversationsCount =
+          await folderConversations.getFolderEntitiesCount(
+            folderConversation.folders.name,
+          );
+        expect
+          .soft(folderConversationsCount, ExpectedMessages.folderIsHighlighted)
+          .toBe(folderConversation.conversations.length + 1);
+
+        const folderNameColor = await folderConversations.getFolderNameColor(
           folderConversation.folders.name,
         );
-      expect
-        .soft(folderConversationsCount, ExpectedMessages.folderIsHighlighted)
-        .toBe(folderConversation.conversations.length + 1);
+        expect
+          .soft(folderNameColor[0], ExpectedMessages.folderNameColorIsValid)
+          .toBe(Colors.textAccentSecondary);
+      },
+    );
+  },
+);
 
-      const folderNameColor = await folderConversations.getFolderNameColor(
-        folderConversation.folders.name,
-      );
-      expect
-        .soft(folderNameColor[0], ExpectedMessages.folderNameColorIsValid)
-        .toBe(Colors.textAccentSecondary);
-    });
-  });
-
-  test('Prompt is moved out of the folder via drag&drop', async ({
+dialTest(
+  'Prompt is moved out of the folder via drag&drop',
+  async ({
     dialHomePage,
     promptData,
     folderPrompts,
-    localStorageManager,
+    dataInjector,
     prompts,
     promptBar,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-961');
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
-    await localStorageManager.setFolders(promptInFolder.folders);
-    await localStorageManager.setPrompts(promptInFolder.prompts[0]);
+    await dataInjector.createPrompts(
+      promptInFolder.prompts,
+      promptInFolder.folders,
+    );
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
@@ -245,48 +280,87 @@ test.describe('Side panel drag and drop tests', () => {
       .getPromptByName(promptInFolder.prompts[0].name)
       .isVisible();
     expect.soft(isPromptVisible, ExpectedMessages.promptIsVisible).toBeTruthy();
-  });
+  },
+);
 
-  test('Prompt is moved using drag&drop to collapsed folder', async ({
+dialTest(
+  'Prompt is moved using drag&drop to collapsed folder',
+  async ({
     dialHomePage,
     promptData,
     folderPrompts,
-    localStorageManager,
+    dataInjector,
     promptBar,
     page,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-959');
-    let folders: FolderInterface[];
     let prompt: Prompt;
 
-    await test.step('Prepare nested folders and prompt outside folder', async () => {
-      folders = promptData.prepareNestedFolder(1);
-      promptData.resetData();
-      prompt = promptData.prepareDefaultPrompt();
+    await dialTest.step(
+      'Prepare nested folders and prompt outside folder',
+      async () => {
+        prompt = promptData.prepareDefaultPrompt();
+        await dataInjector.createPrompts([prompt]);
+      },
+    );
 
-      await localStorageManager.setFolders(...folders);
-      await localStorageManager.setPrompts(prompt);
-    });
+    await dialTest.step(
+      'Drag and drop prompt to root folder name and verify folder is highlighted, prompt stays inside folder, folder is expanded',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        for (let i = 1; i <= 2; i++) {
+          await promptBar.createNewFolder();
+        }
+        await promptBar.dragAndDropEntityToFolder(
+          folderPrompts.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(2),
+          ),
+          folderPrompts.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(1),
+          ),
+        );
 
-    await test.step('Drag and drop prompt to root folder name and verify folder is highlighted, prompt stays inside folder, folder is expanded', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-      await promptBar.drugPromptToFolder(folders[0].name, prompt.name);
-      await folderPrompts.getFolderByName(folders[1].name).waitFor();
-      await folderPrompts.waitForFolderGroupIsHighlighted(folders[0].name);
-      await page.mouse.up();
-      await folderPrompts
-        .getFolderEntity(folders[0].name, prompt.name)
-        .waitFor();
-    });
-  });
+        await promptBar.drugPromptToFolder(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+          prompt.name,
+        );
+        await folderPrompts
+          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(2))
+          .waitFor();
+        await folderPrompts.waitForFolderGroupIsHighlighted(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
+        if (isApiStorageType) {
+          const respPromise = page.waitForResponse((resp) => {
+            return resp.request().method() === 'PUT';
+          });
+          await page.mouse.up();
+          return respPromise;
+        } else {
+          await page.mouse.up();
+        }
+        await folderPrompts
+          .getFolderEntity(
+            ExpectedConstants.newFolderWithIndexTitle(1),
+            prompt.name,
+          )
+          .waitFor();
+      },
+    );
+  },
+);
 
-  test('Prompt is moved using drag&drop to expanded folder', async ({
+dialTest(
+  'Prompt is moved using drag&drop to expanded folder',
+  async ({
     dialHomePage,
     promptData,
     folderPrompts,
-    localStorageManager,
+    dataInjector,
     promptBar,
     setTestIds,
   }) => {
@@ -294,27 +368,36 @@ test.describe('Side panel drag and drop tests', () => {
     let promptInFolder: FolderPrompt;
     let prompt: Prompt;
 
-    await test.step('Prepare folder with prompt and prompt outside folder', async () => {
-      promptInFolder = promptData.preparePromptsInFolder(1);
-      promptData.resetData();
-      prompt = promptData.prepareDefaultPrompt();
+    await dialTest.step(
+      'Prepare folder with prompt and prompt outside folder',
+      async () => {
+        promptInFolder = promptData.preparePromptsInFolder(1);
+        promptData.resetData();
+        prompt = promptData.prepareDefaultPrompt();
+        await dataInjector.createPrompts(
+          [...promptInFolder.prompts, prompt],
+          promptInFolder.folders,
+        );
+      },
+    );
 
-      await localStorageManager.setFolders(promptInFolder.folders);
-      await localStorageManager.setPrompts(...promptInFolder.prompts, prompt);
-    });
-
-    await test.step('Drag and drop prompt to prompt inside folder and verify prompt stays inside folder, folder remains expanded', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-      await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
-      await promptBar.drugAndDropPromptToFolderPrompt(
-        promptInFolder.folders.name,
-        promptInFolder.prompts[0].name,
-        prompt.name,
-      );
-      await folderPrompts
-        .getFolderEntity(promptInFolder.folders.name, prompt.name)
-        .waitFor();
-    });
-  });
-});
+    await dialTest.step(
+      'Drag and drop prompt to prompt inside folder and verify prompt stays inside folder, folder remains expanded',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
+        await promptBar.drugAndDropPromptToFolderPrompt(
+          promptInFolder.folders.name,
+          promptInFolder.prompts[0].name,
+          prompt.name,
+        );
+        await folderPrompts
+          .getFolderEntity(promptInFolder.folders.name, prompt.name)
+          .waitFor();
+      },
+    );
+  },
+);

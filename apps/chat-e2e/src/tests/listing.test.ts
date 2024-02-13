@@ -1,4 +1,4 @@
-import test from '@/src/core/fixtures';
+import test from '@/src/core/baseFixtures';
 import { AddonIds, ExpectedMessages, ModelIds } from '@/src/testData';
 import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
