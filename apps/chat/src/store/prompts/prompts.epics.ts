@@ -38,8 +38,8 @@ import {
   generateNextName,
   getAllPathsFromPath,
   getFolderFromPath,
-  getNextDefaultName,
   getFoldersFromPaths,
+  getNextDefaultName,
   splitPath,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
