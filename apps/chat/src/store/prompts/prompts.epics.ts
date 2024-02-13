@@ -8,6 +8,7 @@ import {
   forkJoin,
   from,
   ignoreElements,
+  iif,
   map,
   mergeMap,
   of,
@@ -26,6 +27,7 @@ import {
   filterOnlyMyEntities,
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
+import { regenerateConversationId } from '@/src/utils/app/conversation';
 import {
   PromptService,
   getPreparedPrompts,
@@ -34,12 +36,18 @@ import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
+  getAllPathsFromPath,
   getFolderFromId,
+  getFolderFromPath,
   getFoldersFromIds,
+  getFoldersFromPaths,
+  getNextDefaultName,
   getParentFolderIdsFromFolderId,
   splitEntityId,
+  splitPath,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
+import { getRootId } from '@/src/utils/app/id';
 import {
   exportPrompt,
   exportPrompts,
@@ -48,7 +56,11 @@ import {
 } from '@/src/utils/app/import-export';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
-import { getPromptApiKey } from '@/src/utils/server/api';
+import {
+  ApiKeys,
+  getPromptApiKey,
+  parsePromptApiKey,
+} from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
@@ -59,6 +71,7 @@ import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { ImportExportActions } from '../import-export/importExport.reducers';
@@ -67,21 +80,34 @@ import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
 import { RootState } from '@/src/store';
 
-const savePromptsEpic: AppEpic = (action$, state$) =>
+const createNewPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        PromptsActions.createNewPrompt.match(action) ||
-        PromptsActions.addPrompts.match(action) ||
-        PromptsActions.importPromptsSuccess.match(action) ||
-        PromptsActions.unpublishPrompt.match(action) ||
-        PromptsActions.duplicatePrompt.match(action),
-    ),
-    map(() => PromptsSelectors.selectPrompts(state$.value)),
-    switchMap((prompts) => {
-      return PromptService.setPrompts(prompts);
+    filter(PromptsActions.createNewPrompt.match),
+    switchMap(() => {
+      const prompts = PromptsSelectors.selectPrompts(state$.value);
+
+      const newPrompt: Prompt = addGeneratedPromptId({
+        name: getNextDefaultName(
+          DEFAULT_PROMPT_NAME,
+          prompts.filter((prompt) => !prompt.folderId),
+        ),
+        description: '',
+        content: '',
+        folderId: getRootId({ apiKey: ApiKeys.Prompts }),
+      });
+
+      return of(PromptsActions.createNewPromptSuccess({ newPrompt }));
     }),
-    ignoreElements(),
+  );
+
+const createNewPromptSuccessEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.createNewPromptSuccess.match),
+    switchMap(({ payload }) =>
+      PromptService.createPrompt(payload.newPrompt).pipe(
+        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+      ),
+    ),
   );
 
 const saveFoldersEpic: AppEpic = (action$, state$) =>
@@ -133,6 +159,34 @@ const getOrUploadPrompt = (
   }
 };
 
+const savePromptEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.savePrompt.match),
+    switchMap(({ payload: newPrompt }) => {
+      return PromptService.updatePrompt(newPrompt).pipe(
+        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+      );
+    }),
+  );
+
+const recreatePromptEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.recreatePrompt.match),
+    mergeMap(({ payload }) => {
+      const { parentPath } = splitEntityId(payload.old.id);
+      return concat(
+        PromptService.createPrompt(payload.new).pipe(
+          switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        ),
+        PromptService.deletePrompt({
+          id: payload.old.id,
+          folderId: parentPath || getRootId({ apiKey: ApiKeys.Prompts }),
+          name: payload.old.name,
+        }).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+      );
+    }),
+  );
+
 const updatePromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.updatePrompt.match),
@@ -158,8 +212,11 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
 
       return concat(
         of(PromptsActions.updatePromptSuccess({ prompt: newPrompt, id })),
-        PromptService.deletePrompt(prompt).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
-        PromptService.updatePrompt(newPrompt).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        iif(
+          () => !!prompt && prompt.id !== newPrompt.id,
+          of(PromptsActions.recreatePrompt({ old: prompt, new: newPrompt })),
+          of(PromptsActions.savePrompt(newPrompt)),
+        ),
       );
     }),
   );
@@ -676,16 +733,20 @@ export const PromptsEpics = combineEpics(
   initEpic,
   initPromptsEpic,
 
-  savePromptsEpic,
   saveFoldersEpic,
   deleteFolderEpic,
   exportPromptsEpic,
   exportPromptEpic,
   importPromptsEpic,
+  savePromptEpic,
+  recreatePromptEpic,
   updatePromptEpic,
   deletePromptEpic,
   clearPromptsEpic,
   deletePromptsEpic,
   updateFolderEpic,
+  createNewPromptEpic,
+  createNewPromptSuccessEpic,
+
   uploadPromptEpic,
 );

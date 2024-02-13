@@ -6,7 +6,7 @@ import {
   generateNextName,
   getNextDefaultName,
 } from '@/src/utils/app/folders';
-import { getRootId, isRootId } from '@/src/utils/app/id';
+import { getRootId } from '@/src/utils/app/id';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 import { ApiKeys } from '@/src/utils/server/api';
@@ -83,18 +83,13 @@ export const promptsSlice = createSlice({
     ) => {
       state.failedMigratedPrompts = payload.failedMigratedPrompts;
     },
-    createNewPrompt: (state) => {
-      const newPrompt: Prompt = addGeneratedPromptId({
-        name: getNextDefaultName(
-          translate('Prompt'),
-          state.prompts.filter((prompt) => isRootId(prompt.folderId)), // only root prompts
-        ),
-        description: '',
-        content: '',
-        folderId: getRootId({ apiKey: ApiKeys.Prompts }),
-      });
-      state.prompts = state.prompts.concat(newPrompt);
-      state.selectedPromptId = newPrompt.id;
+    createNewPrompt: (state) => state,
+    createNewPromptSuccess: (
+      state,
+      { payload }: PayloadAction<{ newPrompt: Prompt }>,
+    ) => {
+      state.prompts = state.prompts.concat(payload.newPrompt);
+      state.selectedPromptId = payload.newPrompt.id;
     },
     deletePrompts: (
       state,
@@ -128,6 +123,11 @@ export const promptsSlice = createSlice({
         (prompt) => prompt.id !== payload.prompt.id,
       );
     },
+    savePrompt: (state, _action: PayloadAction<Prompt>) => state,
+    recreatePrompt: (
+      state,
+      _action: PayloadAction<{ new: Prompt; old: PromptInfo }>,
+    ) => state,
     updatePrompt: (
       state,
       _action: PayloadAction<{ id: string; values: Partial<Prompt> }>,
