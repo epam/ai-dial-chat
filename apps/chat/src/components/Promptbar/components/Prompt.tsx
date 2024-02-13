@@ -190,7 +190,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
       dispatch(
         PromptsActions.exportPrompt({
-          promptId: prompt.id,
+          id: prompt.id,
         }),
       );
     },

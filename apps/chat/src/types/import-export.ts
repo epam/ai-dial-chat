@@ -7,9 +7,10 @@ export type SupportedExportFormats =
   | ExportFormatV2
   | ExportFormatV3
   | ExportFormatV4
-  | ExportConversationsFormatV4;
-export type LatestExportFormat = ExportFormatV4;
-export type LatestExportConversationsFormat = ExportConversationsFormatV4;
+  | ExportConversationsFormatV4
+  | ExportConversationsFormatV5;
+export type LatestExportFormat = ExportFormatV5;
+export type LatestExportConversationsFormat = ExportConversationsFormatV5;
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 interface ConversationV1 {
@@ -44,12 +45,27 @@ export interface ExportFormatV4 {
   folders: FolderInterface[];
   prompts: Prompt[];
 }
+
+export interface ExportFormatV5 {
+  version: 5;
+  history: Conversation[];
+  folders: FolderInterface[];
+  prompts: Prompt[];
+}
 /////////////////////////////////////////////////////////////////////////////////////////////
 export interface ExportConversationsFormatV4 {
   version: 4;
   history: Conversation[];
   folders: FolderInterface[];
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+export type ExportConversationsFormatV5 = Omit<
+  ExportConversationsFormatV4,
+  'version'
+> & {
+  version: 5;
+};
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 

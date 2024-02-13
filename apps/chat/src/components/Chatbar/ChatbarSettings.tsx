@@ -10,7 +10,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { FeatureType } from '@/src/types/common';
-import { SupportedExportFormats } from '@/src/types/importExport';
+import { SupportedExportFormats } from '@/src/types/import-export';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 

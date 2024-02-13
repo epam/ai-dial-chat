@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { Operation } from '@/src/types/importExport';
+import { Operation } from '@/src/types/import-export';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';

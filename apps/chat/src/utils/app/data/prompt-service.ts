@@ -1,8 +1,11 @@
 import { Observable } from 'rxjs';
 
+import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
+
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 
+import { getPathToFolderById } from '../folders';
 import { DataService } from './data-service';
 
 export class PromptService {
@@ -41,3 +44,22 @@ export class PromptService {
     return DataService.getDataStorage().deletePrompt(info);
   }
 }
+
+export const getPreparedPrompts = ({
+  prompts,
+  folders,
+}: {
+  prompts: Prompt[];
+  folders: FolderInterface[];
+}) =>
+  prompts.map((prompt) => {
+    const { path } = getPathToFolderById(folders, prompt.folderId, true);
+    const newName = prompt.name.replace(notAllowedSymbolsRegex, '');
+
+    return {
+      ...prompt,
+      id: constructPath(...[path, newName]),
+      name: newName,
+      folderId: path,
+    };
+  }); // to send prompts with proper parentPath
