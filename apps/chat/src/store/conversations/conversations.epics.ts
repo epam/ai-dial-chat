@@ -459,7 +459,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
           conversation.name,
-          state$.value.conversations,
+          ConversationsSelectors.selectConversations(state$.value),
           0,
         ),
         lastActivityDate: Date.now(),
@@ -1674,7 +1674,6 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.deleteConversationsSuccess.match(action) ||
         ConversationsActions.addConversations.match(action) ||
         ConversationsActions.duplicateConversation.match(action) ||
-        ConversationsActions.duplicateSelectedConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action),
     ),
     map(() =>

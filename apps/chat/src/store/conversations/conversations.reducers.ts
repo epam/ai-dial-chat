@@ -279,41 +279,6 @@ export const conversationsSlice = createSlice({
     ) => state,
     duplicateConversation: (state, _action: PayloadAction<ConversationInfo>) =>
       state,
-    duplicateSelectedConversations: (state) => {
-      const selectedIds = new Set(state.selectedConversationsIds);
-      const newSelectedIds: string[] = [];
-      const newConversations: Conversation[] = [];
-      selectedIds.forEach((id) => {
-        const conversation = state.conversations.find((conv) => conv.id === id);
-        if (
-          conversation &&
-          isEntityOrParentsExternal(
-            { conversations: state },
-            conversation,
-            FeatureType.Chat,
-          )
-        ) {
-          const newConversation: Conversation = regenerateConversationId({
-            ...(conversation as Conversation),
-            ...resetShareEntity,
-            folderId: getRootId({ apiKey: ApiKeys.Conversations }),
-            name: generateNextName(
-              DEFAULT_CONVERSATION_NAME,
-              conversation.name,
-              state.conversations.concat(newConversations),
-              0,
-            ),
-            lastActivityDate: Date.now(),
-          });
-          newConversations.push(newConversation);
-          newSelectedIds.push(newConversation.id);
-        } else {
-          newSelectedIds.push(id);
-        }
-      });
-      state.conversations = state.conversations.concat(newConversations); // TODO: save in API
-      state.selectedConversationsIds = newSelectedIds;
-    },
     importConversationsSuccess: (
       state,
       {
