@@ -5,7 +5,7 @@ import {
   LatestExportFormat,
   Operation,
   SupportedExportFormats,
-} from '@/src/types/importExport';
+} from '@/src/types/import-export';
 
 import { RootState } from '..';
 
@@ -22,7 +22,7 @@ interface ImportExportState {
   operation?: Operation;
 }
 const defaultImportedHistory: LatestExportFormat = {
-  version: 4,
+  version: 5,
   history: [],
   folders: [],
   prompts: [],
