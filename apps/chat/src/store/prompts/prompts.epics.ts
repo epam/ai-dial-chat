@@ -346,9 +346,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     switchMap(({ folderId, promptsToRemove, folders }) => {
       const childFolders = new Set([
         folderId,
-        ...promptsToRemove.flatMap((prompt) =>
-          getAllPathsFromPath(prompt.folderId),
-        ),
+        ...promptsToRemove.map((prompt) => prompt.folderId),
       ]);
       const actions: Observable<AnyAction>[] = [];
       actions.push(
