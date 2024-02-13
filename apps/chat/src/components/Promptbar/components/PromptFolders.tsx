@@ -2,14 +2,16 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { compareEntitiesByName } from '@/src/utils/app/folders';
-import { isRootId } from '@/src/utils/app/id';
+import { getRootId, isRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilter,
 } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { ApiKeys } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
@@ -49,6 +51,8 @@ const PromptFolderTemplate = ({
   filters,
   includeEmpty = false,
 }: promptFolderProps) => {
+  const { t } = useTranslation(Translation.SideBar);
+
   const dispatch = useAppDispatch();
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
@@ -112,15 +116,40 @@ const PromptFolderTemplate = ({
   );
 
   const onDropBetweenFolders = useCallback(
-    (folder: FolderInterface, parentFolderId: string | undefined) => {
+    (folder: FolderInterface) => {
+      const folderId = getRootId({ apiKey: ApiKeys.Prompts });
+
+      if (
+        !isEntityNameOnSameLevelUnique(
+          folder.name,
+          { ...folder, folderId },
+          allFolders,
+        )
+      ) {
+        dispatch(
+          UIActions.showToast({
+            message: t(
+              'Folder with name "{{name}}" already exists in the root.',
+              {
+                ns: 'folder',
+                name: folder.name,
+              },
+            ),
+            type: 'error',
+          }),
+        );
+
+        return;
+      }
+
       dispatch(
         PromptsActions.updateFolder({
           folderId: folder.id,
-          values: { folderId: parentFolderId },
+          values: { folderId },
         }),
       );
     },
-    [dispatch],
+    [allFolders, dispatch, t],
   );
 
   const handleFolderClick = useCallback(
@@ -140,7 +169,6 @@ const PromptFolderTemplate = ({
       <BetweenFoldersLine
         level={0}
         onDrop={onDropBetweenFolders}
-        parentFolderId={folder.folderId}
         featureType={FeatureType.Prompt}
         denyDrop={isExternal}
       />
@@ -174,7 +202,6 @@ const PromptFolderTemplate = ({
         <BetweenFoldersLine
           level={0}
           onDrop={onDropBetweenFolders}
-          parentFolderId={folder.folderId}
           featureType={FeatureType.Prompt}
           denyDrop={isExternal}
         />

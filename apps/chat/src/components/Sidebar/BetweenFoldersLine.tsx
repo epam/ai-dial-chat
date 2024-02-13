@@ -12,11 +12,7 @@ import { FolderInterface } from '@/src/types/folder';
 
 interface BetweenFoldersLineProps {
   level: number;
-  parentFolderId: string | undefined;
-  onDrop: (
-    folderData: FolderInterface,
-    parentFolderId: string | undefined,
-  ) => void;
+  onDrop: (folderData: FolderInterface) => void;
   onDraggingOver?: (isDraggingOver: boolean) => void;
   featureType: FeatureType;
   denyDrop?: boolean;
@@ -24,7 +20,6 @@ interface BetweenFoldersLineProps {
 
 export const BetweenFoldersLine = ({
   level,
-  parentFolderId,
   onDrop,
   onDraggingOver,
   featureType,
@@ -47,10 +42,10 @@ export const BetweenFoldersLine = ({
       const folderData = e.dataTransfer.getData(getFolderMoveType(featureType));
 
       if (folderData) {
-        onDrop(JSON.parse(folderData), parentFolderId);
+        onDrop(JSON.parse(folderData));
       }
     },
-    [denyDrop, featureType, onDrop, parentFolderId],
+    [denyDrop, featureType, onDrop],
   );
 
   const allowDrop = useCallback(
