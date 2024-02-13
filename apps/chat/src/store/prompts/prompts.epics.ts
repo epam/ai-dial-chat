@@ -707,38 +707,6 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-export const duplicatePromptEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(PromptsActions.duplicatePrompt.match),
-    switchMap(({ payload }) =>
-      forkJoin({
-        prompt: PromptService.getPrompt(payload),
-      }),
-    ),
-    switchMap(({ prompt }) => {
-      if (!prompt) return EMPTY;
-
-      const prompts = PromptsSelectors.selectPrompts(state$.value);
-
-      const newPrompt: Prompt = addGeneratedPromptId({
-        ...prompt,
-        ...resetShareEntity,
-        folderId: undefined,
-        name: generateNextName(
-          DEFAULT_PROMPT_NAME,
-          prompt.name,
-          prompts.filter((p) => !p.folderId),
-        ),
-      });
-
-      return of(
-        PromptsActions.createNewPromptSuccess({
-          newPrompt,
-        }),
-      );
-    }),
-  );
-
 export const PromptsEpics = combineEpics(
   migratePromptsIfRequiredEpic,
   skipFailedMigratedPromptsEpic,
@@ -760,7 +728,6 @@ export const PromptsEpics = combineEpics(
   updateFolderEpic,
   createNewPromptEpic,
   createNewPromptSuccessEpic,
-  duplicatePromptEpic,
 
   uploadPromptEpic,
 );
