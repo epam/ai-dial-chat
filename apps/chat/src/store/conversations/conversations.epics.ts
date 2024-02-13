@@ -2093,12 +2093,11 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         return EMPTY; // TODO: handle?
       }
 
-      const newConversation: Conversation = {
+      const newConversation: Conversation = addGeneratedConversationId({
         ...(conversation as Conversation),
         ...values,
         lastActivityDate: Date.now(),
-      };
-      const newId = getGeneratedConversationId(newConversation);
+      });
 
       return concat(
         of(
@@ -2111,10 +2110,10 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
           }),
         ),
         iif(
-          () => !!conversation && conversation.id !== newId,
+          () => !!conversation && conversation.id !== newConversation.id,
           of(
             ConversationsActions.recreateConversation({
-              new: { ...newConversation, id: newId },
+              new: { ...newConversation, id: newConversation.id },
               old: conversation,
             }),
           ),
