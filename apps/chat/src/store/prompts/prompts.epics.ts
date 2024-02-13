@@ -26,16 +26,19 @@ import {
   filterOnlyMyEntities,
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
-import { PromptService } from '@/src/utils/app/data/prompt-service';
+import {
+  PromptService,
+  getPreparedPrompts,
+} from '@/src/utils/app/data/prompt-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   findRootFromItems,
   getAllPathsFromPath,
   getFolderFromPath,
   getFolderIdByPath,
-  getPathToFolderById,
+  getFoldersFromPaths,
   getTemporaryFoldersToPublish,
   splitPath,
   updateMovedFolderId,
@@ -44,6 +47,7 @@ import {
   exportPrompt,
   exportPrompts,
   importPrompts,
+  isPromptsFormat,
 } from '@/src/utils/app/import-export';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
@@ -51,6 +55,7 @@ import { getPromptApiKey } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
+import { PromptsHistory } from '@/src/types/import-export';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
@@ -60,6 +65,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { resetShareEntity } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
 
+import { ImportExportActions } from '../import-export/importExport.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
@@ -302,9 +308,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     switchMap(({ folderId, promptsToRemove, folders }) => {
       const childFolders = new Set([
         folderId,
-        ...promptsToRemove.flatMap((prompt) =>
-          getAllPathsFromPath(prompt.folderId),
-        ),
+        ...promptsToRemove.map((prompt) => prompt.folderId),
       ]);
       const actions: Observable<AnyAction>[] = [];
       actions.push(
@@ -332,13 +336,35 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
 const exportPromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.exportPrompts.match),
-    map(() => ({
-      prompts: PromptsSelectors.selectPrompts(state$.value),
-      folders: PromptsSelectors.selectFolders(state$.value),
-    })),
+    switchMap(
+      () => PromptService.getPrompts(undefined, true), //listing of all entities
+    ),
+    switchMap((promptsListing) => {
+      const foldersIds = Array.from(
+        new Set(promptsListing.map((info) => info.folderId)),
+      );
+      //calculate all folders;
+      const folders = getFoldersFromPaths(
+        Array.from(
+          new Set(foldersIds.flatMap((id) => getAllPathsFromPath(id))),
+        ),
+        FolderType.Prompt,
+      );
+
+      return forkJoin({
+        //get all prompts from api
+        prompts: zip(
+          promptsListing.map((info) => PromptService.getPrompt(info)),
+        ),
+        folders: of(folders),
+      });
+    }),
     tap(({ prompts, folders }) => {
-      //TODO: upload all prompts for export - will be implemented in https://github.com/epam/ai-dial-chat/issues/640
-      exportPrompts(prompts, folders);
+      const filteredPrompts = prompts.filter(Boolean) as Prompt[];
+
+      const appName = SettingsSelectors.selectAppName(state$.value);
+
+      exportPrompts(filteredPrompts, folders, appName);
     }),
     ignoreElements(),
   );
@@ -346,33 +372,94 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
 const exportPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.exportPrompt.match),
-    map(({ payload }) =>
-      PromptsSelectors.selectPrompt(state$.value, payload.promptId),
-    ),
-    filter(Boolean),
-    tap((prompt) => {
-      //TODO: upload all prompts for export - will be implemented in https://github.com/epam/ai-dial-chat/issues/640
+    switchMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
+
+    switchMap((promptAndPayload) => {
+      const { prompt } = promptAndPayload;
+      if (!prompt) {
+        return of(ImportExportActions.exportFail());
+      }
+
+      const appName = SettingsSelectors.selectAppName(state$.value);
+
       exportPrompt(
         prompt,
         PromptsSelectors.selectParentFolders(state$.value, prompt.folderId),
+        appName,
       );
+      return EMPTY;
     }),
-    ignoreElements(),
   );
 
-const importPromptsEpic: AppEpic = (action$, state$) =>
+const importPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.importPrompts.match),
-    map(({ payload }) => {
-      const prompts = PromptsSelectors.selectPrompts(state$.value);
-      const folders = PromptsSelectors.selectFolders(state$.value);
-      //TODO: save in API - will be implemented in https://github.com/epam/ai-dial-chat/issues/640
-      return importPrompts(payload.promptsHistory, {
-        currentFolders: folders,
-        currentPrompts: prompts,
+    switchMap(({ payload }) =>
+      forkJoin({
+        promptsListing: PromptService.getPrompts(undefined, true), //listing of all entities
+        promptsHistory: of(payload.promptsHistory),
+      }),
+    ),
+    switchMap(({ promptsListing, promptsHistory }) => {
+      if (!promptsListing.length) {
+        return forkJoin({
+          currentPrompts: of([]),
+          currentFolders: of([]),
+          promptsHistory: of(promptsHistory),
+        });
+      }
+
+      const foldersIds = Array.from(
+        new Set(promptsListing.map((info) => info.folderId)),
+      );
+      //calculate all folders;
+      const folders = getFoldersFromPaths(
+        Array.from(
+          new Set(foldersIds.flatMap((id) => getAllPathsFromPath(id))),
+        ),
+        FolderType.Prompt,
+      );
+      //get all prompts from api
+      const currentPrompts = zip(
+        promptsListing.map((info) => PromptService.getPrompt(info)),
+      );
+
+      return forkJoin({
+        currentPrompts,
+        currentFolders: of(folders),
+        promptsHistory: of(promptsHistory),
       });
     }),
-    switchMap(({ prompts, folders, isError }) => {
+    switchMap(({ currentPrompts, currentFolders, promptsHistory }) => {
+      const filteredPrompts = currentPrompts.filter(Boolean) as Prompt[];
+      if (!isPromptsFormat(promptsHistory)) {
+        return of(
+          UIActions.showToast({
+            message: translate(errorsMessages.unsupportedDataFormat, {
+              ns: 'common',
+            }),
+            type: 'error',
+          }),
+        );
+      }
+      const preparedPrompts: Prompt[] = getPreparedPrompts({
+        prompts: promptsHistory.prompts,
+        folders: promptsHistory.folders,
+      });
+
+      const preparedPromptsHistory: PromptsHistory = {
+        ...promptsHistory,
+        prompts: preparedPrompts,
+      };
+
+      const { prompts, folders, isError } = importPrompts(
+        preparedPromptsHistory,
+        {
+          currentFolders,
+          currentPrompts: filteredPrompts,
+        },
+      );
+
       if (isError) {
         return of(
           UIActions.showToast({
@@ -383,7 +470,6 @@ const importPromptsEpic: AppEpic = (action$, state$) =>
           }),
         );
       }
-
       return of(PromptsActions.importPromptsSuccess({ prompts, folders }));
     }),
   );
@@ -452,21 +538,11 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
           return EMPTY;
         }
 
-        const preparedPrompts: Prompt[] = notMigratedPrompts.map((prompt) => {
-          const { path } = getPathToFolderById(
-            promptsFolders,
-            prompt.folderId,
-            true,
-          );
-          const newName = prompt.name.replace(notAllowedSymbolsRegex, '');
-
-          return {
-            ...prompt,
-            id: constructPath(...[path, newName]),
-            name: newName,
-            folderId: path,
-          };
+        const preparedPrompts: Prompt[] = getPreparedPrompts({
+          prompts: notMigratedPrompts,
+          folders: promptsFolders,
         }); // to send prompts with proper parentPath
+
         let migratedPromptsCount = 0;
 
         return concat(
