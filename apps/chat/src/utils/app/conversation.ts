@@ -102,13 +102,20 @@ export const getGeneratedConversationId = <T extends ConversationInfo>(
 ): string =>
   constructPath(conversation.folderId, getConversationApiKey(conversation));
 
+type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+
 export const addGeneratedConversationId = <T extends ConversationInfo>(
-  conversation: Omit<T, 'id'>,
-): T =>
-  ({
-    ...conversation,
-    id: getGeneratedConversationId(conversation),
-  }) as T;
+  conversation: PartialBy<T, 'id'>,
+): T => {
+  const newId = getGeneratedConversationId(conversation);
+  if (!conversation.id || newId !== conversation.id) {
+    return {
+      ...conversation,
+      id: getGeneratedConversationId(conversation),
+    } as T;
+  }
+  return conversation as T;
+};
 
 export const parseConversationId = (id: string): ConversationInfo => {
   const { name, parentPath } = splitPath(id);
