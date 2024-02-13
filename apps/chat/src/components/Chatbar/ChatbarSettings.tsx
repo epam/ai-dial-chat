@@ -11,6 +11,7 @@ import { useTranslation } from 'next-i18next';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { constructPath } from '@/src/utils/app/file';
+import { getRootId } from '@/src/utils/app/id';
 import { ApiKeys } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
@@ -89,10 +90,7 @@ export const ChatbarSettings = () => {
         onClick: () => {
           dispatch(
             ConversationsActions.createFolder({
-              parentId: constructPath(
-                ApiKeys.Conversations,
-                BucketService.getBucket(),
-              ),
+              parentId: getRootId({ apiKey: ApiKeys.Conversations }),
             }),
           );
         },

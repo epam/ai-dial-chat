@@ -76,10 +76,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
         id: chatFolder.id.toString(),
         name: chatFolder.name,
         type: FolderType.Chat,
-        folderId: constructPath(
-          ApiKeys.Conversations,
-          BucketService.getBucket(),
-        ),
+        folderId: getRootId({ apiKey: ApiKeys.Conversations }),
       })),
       prompts: [],
       isError: false,

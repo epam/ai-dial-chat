@@ -7,6 +7,7 @@ import {
   getAvailableNameOnSameFolderLevel,
   getParentAndChildFolders,
 } from '@/src/utils/app/folders';
+import { getRootId } from '@/src/utils/app/id';
 import { ApiKeys } from '@/src/utils/server/api';
 
 import { UploadStatus } from '@/src/types/common';
@@ -57,11 +58,7 @@ export const filesSlice = createSlice({
         id: payload.id,
         name: payload.name,
         relativePath: payload.relativePath,
-        folderId: constructPath(
-          ApiKeys.Files,
-          BucketService.getBucket(),
-          payload.relativePath,
-        ),
+        folderId: constructPath(getRootId(), payload.relativePath),
 
         status: UploadStatus.LOADING,
         percent: 0,
@@ -225,8 +222,7 @@ export const filesSlice = createSlice({
       );
 
       const newAddedFolderId = constructPath(
-        ApiKeys.Files,
-        BucketService.getBucket(),
+        getRootId(),
         payload.relativePath,
         folderName,
       );
@@ -234,11 +230,7 @@ export const filesSlice = createSlice({
         addGeneratedFolderId({
           name: folderName,
           type: FolderType.File,
-          folderId: constructPath(
-            ApiKeys.Files,
-            BucketService.getBucket(),
-            payload.relativePath,
-          ),
+          folderId: constructPath(getRootId(), payload.relativePath),
         }),
       );
       state.newAddedFolderId = newAddedFolderId;

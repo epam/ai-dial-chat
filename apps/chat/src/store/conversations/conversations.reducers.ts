@@ -299,10 +299,7 @@ export const conversationsSlice = createSlice({
           const newConversation: Conversation = regenerateConversationId({
             ...(conversation as Conversation),
             ...resetShareEntity,
-            folderId: constructPath(
-              ApiKeys.Conversations,
-              BucketService.getBucket(),
-            ),
+            folderId: getRootId({ apiKey: ApiKeys.Conversations }),
             name: generateNextName(
               DEFAULT_CONVERSATION_NAME,
               conversation.name,

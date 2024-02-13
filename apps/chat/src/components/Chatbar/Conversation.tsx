@@ -15,6 +15,7 @@ import classNames from 'classnames';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { getRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
@@ -349,10 +350,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       if (isNewFolder) {
         dispatch(
           ConversationsActions.createFolder({
-            parentId: constructPath(
-              ApiKeys.Conversations,
-              BucketService.getBucket(),
-            ),
+            parentId: getRootId({ apiKey: ApiKeys.Conversations }),
             name: newFolderName,
           }),
         );
@@ -363,8 +361,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           values: {
             folderId: isNewFolder
               ? constructPath(
-                  ApiKeys.Conversations,
-                  BucketService.getBucket(),
+                  getRootId({ apiKey: ApiKeys.Conversations }),
                   folderPath,
                 )
               : folderPath,

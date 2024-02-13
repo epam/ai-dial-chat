@@ -223,8 +223,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           values: {
             folderId: isNewFolder
               ? constructPath(
-                  ApiKeys.Prompts,
-                  BucketService.getBucket(),
+                  getRootId({ apiKey: ApiKeys.Prompts }),
                   folderPath,
                 )
               : folderPath,

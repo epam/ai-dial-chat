@@ -16,6 +16,7 @@ import {
 import { BucketService } from './data/bucket-service';
 import { constructPath, notAllowedSymbolsRegex } from './file';
 import { compareEntitiesByName, splitEntityId } from './folders';
+import { getRootId } from './id';
 
 export const getAssitantModelId = (
   modelType: EntityType,
@@ -114,8 +115,7 @@ export const getGeneratedConversationId = <T extends ConversationInfo>(
     );
   }
   return constructPath(
-    ApiKeys.Conversations,
-    BucketService.getBucket(),
+    getRootId({ apiKey: ApiKeys.Conversations }),
     getConversationApiKey(conversation),
   );
 };

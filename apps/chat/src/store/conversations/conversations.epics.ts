@@ -295,10 +295,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 lastActivityDate: Date.now(),
                 isMessageStreaming: false,
                 status: UploadStatus.LOADED,
-                folderId: constructPath(
-                  ApiKeys.Conversations,
-                  BucketService.getBucket(),
-                ),
+                folderId: getRootId({ apiKey: ApiKeys.Conversations }),
               });
             },
           );
@@ -460,10 +457,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
         ...resetShareEntity,
-        folderId: constructPath(
-          ApiKeys.Conversations,
-          BucketService.getBucket(),
-        ),
+        folderId: getRootId({ apiKey: ApiKeys.Conversations }),
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
           conversation.name,

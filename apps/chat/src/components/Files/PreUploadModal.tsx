@@ -23,6 +23,7 @@ import {
   notAllowedSymbols,
 } from '@/src/utils/app/file';
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
+import { getRootId } from '@/src/utils/app/id';
 import { ApiKeys } from '@/src/utils/server/api';
 
 import { DialFile } from '@/src/types/files';
@@ -147,12 +148,7 @@ export const PreUploadDialog = ({
           filteredFiles.map((file) => {
             return {
               fileContent: file,
-              id: constructPath(
-                ApiKeys.Files,
-                BucketService.getBucket(),
-                folderPath,
-                file.name,
-              ),
+              id: constructPath(getRootId(), folderPath, file.name),
               name: file.name,
             };
           }),
@@ -251,8 +247,7 @@ export const PreUploadDialog = ({
                 ...file,
                 name: e.target.value + formatFile,
                 id: constructPath(
-                  ApiKeys.Files,
-                  BucketService.getBucket(),
+                  getRootId(),
                   folderPath,
                   e.target.value + formatFile,
                 ),
@@ -299,8 +294,7 @@ export const PreUploadDialog = ({
         return {
           ...file,
           id: constructPath(
-            ApiKeys.Files,
-            BucketService.getBucket(),
+            getRootId(),
             folderPath,
             file.name,
           ),
