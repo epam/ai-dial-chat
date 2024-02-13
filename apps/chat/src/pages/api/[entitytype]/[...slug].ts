@@ -2,11 +2,12 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { JWT, getToken } from 'next-auth/jwt';
 
+import { constructPath } from '@/src/utils/app/file';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIError } from '@/src/utils/server';
 import {
+  encodeSlugs,
   getEntityTypeFromPath,
-  getEntityUrlFromSlugs,
   isValidEntityApiType,
 } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
@@ -18,6 +19,22 @@ import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import fetch from 'node-fetch';
 import { Readable } from 'stream';
+
+const getEntityUrlFromSlugs = (
+  dialApiHost: string,
+  req: NextApiRequest,
+): string => {
+  const entityType = getEntityTypeFromPath(req);
+  const slugs = Array.isArray(req.query.slug)
+    ? req.query.slug
+    : [req.query.slug];
+
+  if (!slugs || slugs.length === 0) {
+    throw new OpenAIError(`No ${entityType} path provided`, '', '', '404');
+  }
+
+  return constructPath(dialApiHost, 'v1', entityType, encodeSlugs(slugs));
+};
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const entityType = getEntityTypeFromPath(req);

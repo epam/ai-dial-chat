@@ -3,6 +3,7 @@ import { Observable, map } from 'rxjs';
 import {
   ApiKeys,
   ApiUtils,
+  encodePath,
   getFolderTypeByApiKey,
 } from '@/src/utils/server/api';
 
@@ -18,7 +19,7 @@ import { EntityStorage } from '@/src/types/storage';
 
 import { constructPath } from '../../../file';
 import { splitEntityId } from '../../../folders';
-import { BucketService } from '../../bucket-service';
+import { getRootId } from '../../../id';
 
 export abstract class ApiEntityStorage<
   TEntityInfo extends Entity,
@@ -50,29 +51,29 @@ export abstract class ApiEntityStorage<
     } as unknown as TEntityInfo;
   }
 
-  private encodePath = (path: string): string =>
-    constructPath(...path.split('/').map((part) => encodeURIComponent(part)));
-
   private getEntityUrl = (entity: TEntityInfo): string =>
-    this.encodePath(constructPath('api', entity.id));
+    encodePath(constructPath('api', entity.id));
 
-  private getListingUrl = (resultQuery: string): string => {
-    const listingUrl = this.encodePath(
-      constructPath('api', this.getStorageKey(), 'listing'),
+  private getListingUrl = ({
+    path,
+    resultQuery,
+  }: {
+    path?: string;
+    resultQuery?: string;
+  }): string => {
+    const listingUrl = encodePath(
+      constructPath(
+        'api/listing',
+        path || getRootId({ apiKey: this.getStorageKey() }),
+      ),
     );
-    return `${listingUrl}?${resultQuery}`;
+    return resultQuery ? `${listingUrl}?${resultQuery}` : listingUrl;
   };
 
   getFoldersAndEntities(
     path?: string | undefined,
   ): Observable<FoldersAndEntities<TEntityInfo>> {
-    const query = new URLSearchParams({
-      bucket: BucketService.getBucket(),
-      ...(path && { path }),
-    });
-    const resultQuery = query.toString();
-
-    return ApiUtils.request(this.getListingUrl(resultQuery)).pipe(
+    return ApiUtils.request(this.getListingUrl({ path })).pipe(
       map((items: (BackendChatFolder | BackendChatEntity)[]) => {
         const folders = items.filter(
           (item) => item.nodeType === BackendDataNodeType.FOLDER,
@@ -94,12 +95,10 @@ export abstract class ApiEntityStorage<
 
     const query = new URLSearchParams({
       filter,
-      bucket: BucketService.getBucket(),
-      ...(path && { path }),
     });
     const resultQuery = query.toString();
 
-    return ApiUtils.request(this.getListingUrl(resultQuery)).pipe(
+    return ApiUtils.request(this.getListingUrl({ path, resultQuery })).pipe(
       map((folders: BackendChatFolder[]) => {
         return folders.map((folder) => this.mapFolder(folder));
       }),
@@ -111,13 +110,11 @@ export abstract class ApiEntityStorage<
 
     const query = new URLSearchParams({
       filter,
-      bucket: BucketService.getBucket(),
-      ...(path && { path }),
       ...(recursive && { recursive: String(recursive) }),
     });
     const resultQuery = query.toString();
 
-    return ApiUtils.request(this.getListingUrl(resultQuery)).pipe(
+    return ApiUtils.request(this.getListingUrl({ path, resultQuery })).pipe(
       map((entities: BackendChatEntity[]) => {
         return entities.map((entity) => this.mapEntity(entity));
       }),
