@@ -264,6 +264,12 @@ export const conversationsSlice = createSlice({
         (id) => !payload.deleteIds.has(id),
       );
     },
+    deleteConversationsFail: (
+      state,
+      _action: PayloadAction<{
+        id: string;
+      }>,
+    ) => state,
     uploadConversationsByIds: (
       state,
       {
@@ -727,15 +733,6 @@ export const conversationsSlice = createSlice({
       );
       state.foldersStatus = UploadStatus.FAILED;
     },
-
-    // uploadConversations: (
-    //   state,
-    //   _action: PayloadAction<{
-    //     paths: (string | undefined)[];
-    //   }>,
-    // ) => {
-    //   state.conversationsStatus = UploadStatus.LOADING;
-    // },
 
     uploadConversationsWithFoldersRecursive: (state) => {
       state.conversationsStatus = UploadStatus.LOADING;

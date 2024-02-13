@@ -1,4 +1,4 @@
-import { EMPTY, Observable, catchError, map, of } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 import {
   ApiKeys,
@@ -90,12 +90,6 @@ export abstract class ApiEntityStorage<
           folders: folders.map((folder) => this.mapFolder(folder)),
         };
       }),
-      catchError(() =>
-        of({
-          entities: [],
-          folders: [],
-        }),
-      ), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
     );
   }
 
@@ -113,7 +107,6 @@ export abstract class ApiEntityStorage<
       map((folders: BackendChatFolder[]) => {
         return folders.map((folder) => this.mapFolder(folder));
       }),
-      catchError(() => of([])), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
     );
   }
 
@@ -132,7 +125,6 @@ export abstract class ApiEntityStorage<
       map((entities: BackendChatEntity[]) => {
         return entities.map((entity) => this.mapEntity(entity));
       }),
-      catchError(() => of([])), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
     );
   }
 
@@ -144,7 +136,6 @@ export abstract class ApiEntityStorage<
           status: UploadStatus.LOADED,
         };
       }),
-      catchError(() => of(null)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
     );
   }
 
@@ -155,11 +146,7 @@ export abstract class ApiEntityStorage<
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(this.cleanUpEntity(entity)),
-    }).pipe(
-      catchError((err) => {
-        throw new Error(err);
-      }),
-    ); // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+    });
   }
 
   updateEntity(entity: Entity): Observable<void> {
@@ -169,7 +156,7 @@ export abstract class ApiEntityStorage<
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(this.cleanUpEntity(entity)),
-    }).pipe(catchError(() => EMPTY)); // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+    });
   }
 
   deleteEntity(info: EntityInfo): Observable<void> {
@@ -178,7 +165,7 @@ export abstract class ApiEntityStorage<
       headers: {
         'Content-Type': 'application/json',
       },
-    }).pipe(catchError(() => EMPTY)); // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+    });
   }
 
   abstract getEntityKey(info: EntityInfo): string;

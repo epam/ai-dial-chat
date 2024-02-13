@@ -657,13 +657,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
         (id) => !deleteIds.has(id),
       );
 
-      const actions: Observable<AnyAction>[] = [
-        of(
-          ConversationsActions.deleteConversationsSuccess({
-            deleteIds,
-          }),
-        ),
-      ];
+      const actions: Observable<AnyAction>[] = [];
 
       if (otherConversations.length === 0) {
         actions.push(
@@ -699,9 +693,24 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
         ...actions,
         zip(
           Array.from(deleteIds).map((id) =>
-            ConversationService.deleteConversation(parseConversationId(id)),
+            ConversationService.deleteConversation(
+              parseConversationId(id),
+            ).pipe(
+              map(() => id),
+              catchError(() =>
+                of(ConversationsActions.deleteConversationsFail({ id })),
+              ),
+            ),
           ),
-        ).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        ).pipe(
+          switchMap(() =>
+            of(
+              ConversationsActions.deleteConversationsSuccess({
+                deleteIds,
+              }),
+            ),
+          ),
+        ),
       );
     }),
   );

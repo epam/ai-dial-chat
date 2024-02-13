@@ -54,9 +54,11 @@ const PromptFolderTemplate = ({
   const highlightedFolders = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
+  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const prompts = useAppSelector((state) =>
     PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
   );
+  const allFolders = useAppSelector(PromptsSelectors.selectFolders);
   const promptFolders = useAppSelector((state) =>
     PromptsSelectors.selectFilteredFolders(
       state,
@@ -147,7 +149,9 @@ const PromptFolderTemplate = ({
         currentFolder={folder}
         itemComponent={PromptComponent}
         allItems={prompts}
+        allItemsWithoutFilters={allPrompts}
         allFolders={promptFolders}
+        allFoldersWithoutFilters={allFolders}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
