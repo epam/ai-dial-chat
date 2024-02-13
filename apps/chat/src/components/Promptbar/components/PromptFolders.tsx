@@ -129,7 +129,7 @@ const PromptFolderTemplate = ({
         dispatch(
           UIActions.showToast({
             message: t(
-              'Folder with name "{{name}}" already exists in the root.',
+              'Folder with name "{{name}}" already exists at the root.',
               {
                 ns: 'folder',
                 name: folder.name,

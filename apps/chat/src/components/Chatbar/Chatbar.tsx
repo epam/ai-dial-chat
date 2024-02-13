@@ -102,7 +102,7 @@ export const Chatbar = () => {
             dispatch(
               UIActions.showToast({
                 message: t(
-                  'Prompt with name "{{name}}" already exists in the root.',
+                  'Prompt with name "{{name}}" already exists at the root.',
                   {
                     ns: 'prompt',
                     name: conversation.name,
