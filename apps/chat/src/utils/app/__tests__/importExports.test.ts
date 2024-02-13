@@ -195,7 +195,6 @@ describe('cleanData Functions', () => {
       } as ExportFormatV4;
 
       const obj = cleanData(dataV4);
-      console.log(obj);
       expect(isLatestExportFormat(obj)).toBe(true);
       expect(obj).toEqual({
         version: 5,
