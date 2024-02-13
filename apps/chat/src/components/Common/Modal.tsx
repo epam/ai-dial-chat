@@ -29,7 +29,7 @@ import Tooltip from './Tooltip';
 export interface Props extends FormHTMLAttributes<HTMLFormElement> {
   children: ReactNode | ReactNode[];
   portalId: string;
-  state?: ModalState;
+  state?: ModalState | boolean;
   heading?: string | ReactNode;
 
   dataQa: string;
@@ -64,7 +64,7 @@ function ModalView({
   form,
 }: Props) {
   const { refs, context } = useFloating({
-    open: state !== ModalState.CLOSED,
+    open: state !== ModalState.CLOSED && !!state,
     onOpenChange: onClose,
   });
   const role = useRole(context);

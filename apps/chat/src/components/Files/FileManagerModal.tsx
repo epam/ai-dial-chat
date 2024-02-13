@@ -12,6 +12,7 @@ import {
   getDialFilesWithInvalidFileType,
   getExtensionsListForMimeTypes,
 } from '@/src/utils/app/file';
+import { isRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -310,7 +311,7 @@ export const FileManagerModal = ({
                   {(folders.length !== 0 || filteredFiles.length !== 0) && (
                     <div className="flex flex-col gap-1 overflow-auto">
                       {folders.map((folder) => {
-                        if (folder.folderId.split('/').length !== 2) {
+                        if (!isRootId(folder.folderId)) {
                           return null;
                         }
 
@@ -343,7 +344,7 @@ export const FileManagerModal = ({
                         );
                       })}
                       {filteredFiles.map((file) => {
-                        if (file.folderId.split('/').length !== 2) {
+                        if (!isRootId(file.folderId)) {
                           return null;
                         }
 

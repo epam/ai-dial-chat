@@ -5,9 +5,9 @@ import { useTranslation } from 'next-i18next';
 import {
   getChildAndCurrentFoldersIdsById,
   getPathToFolderById,
-  getRootId,
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
+import { getRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';

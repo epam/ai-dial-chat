@@ -17,7 +17,7 @@ import { defaultReplay } from '@/src/constants/replay';
 
 import { ApiKeys } from '../server/api';
 import { constructPath } from './file';
-import { getRootId } from './folders';
+import { getRootId } from './id';
 
 import { v4 } from 'uuid';
 

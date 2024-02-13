@@ -12,27 +12,8 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
-import { ApiKeys } from '../server/api';
-import { BucketService } from './data/bucket-service';
-
 import escapeStringRegexp from 'escape-string-regexp';
-
-export const getRootId = ({
-  id,
-  apiKey = ApiKeys.Files,
-  bucket,
-}: {
-  id?: string;
-  apiKey?: ApiKeys;
-  bucket?: string;
-} = {}) => {
-  const splittedEntityId = id ? splitEntityId(id) : undefined;
-
-  return constructPath(
-    apiKey || splittedEntityId?.apiKey || ApiKeys.Files,
-    bucket || splittedEntityId?.bucket || BucketService.getBucket(),
-  );
-};
+import { isRootId } from './id';
 
 export const getFoldersDepth = (
   childFolder: FolderInterface,
@@ -252,7 +233,7 @@ export const getFilteredFolders = ({
 }: GetFilteredFoldersProps) => {
   const rootFolders = allFolders.filter(
     (folder) =>
-      folder.folderId?.split('/').length === 2 && filters.sectionFilter(folder),
+    isRootId(folder.folderId) && filters.sectionFilter(folder),
   );
   const filteredIds = new Set(
     rootFolders.flatMap((folder) =>

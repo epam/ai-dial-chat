@@ -65,10 +65,10 @@ import {
   getNextDefaultName,
   getParentFolderIdsFromEntityId,
   getParentFolderIdsFromFolderId,
-  getRootId,
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
+import { getRootId, isRootId } from '@/src/utils/app/id';
 import {
   mergeMessages,
   parseStreamMessages,
@@ -280,9 +280,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                     ? name
                     : getNextDefaultName(
                         DEFAULT_CONVERSATION_NAME,
-                        conversations.filter(
-                          (conv) => conv.folderId.split('/').length === 2,
-                        ), //only root conversations
+                        conversations.filter((conv) => isRootId(conv.folderId)), //only root conversations
                         index,
                       ),
                 messages: [],

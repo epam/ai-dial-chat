@@ -30,7 +30,7 @@ import { defaultReplay } from '@/src/constants/replay';
 
 import { ApiKeys } from '../../server/api';
 import { BucketService } from '../data/bucket-service';
-import { getRootId } from '../folders';
+import { getRootId } from '../id';
 
 const bucket = '123';
 beforeAll(() => {

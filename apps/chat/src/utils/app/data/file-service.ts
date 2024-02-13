@@ -11,7 +11,7 @@ import { FolderType } from '@/src/types/folder';
 
 import { ApiKeys, ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
-import { getRootId } from '../folders';
+import { getRootId } from '../id';
 import { BucketService } from './bucket-service';
 
 export class FileService {

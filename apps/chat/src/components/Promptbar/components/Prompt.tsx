@@ -12,7 +12,7 @@ import classNames from 'classnames';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { constructPath } from '@/src/utils/app/file';
-import { getRootId } from '@/src/utils/app/folders';
+import { getRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';

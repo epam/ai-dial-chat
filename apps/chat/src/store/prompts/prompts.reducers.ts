@@ -1,13 +1,11 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { BucketService } from '@/src/utils/app/data/bucket-service';
-import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   generateNextName,
   getNextDefaultName,
-  getRootId,
 } from '@/src/utils/app/folders';
+import { getRootId, isRootId } from '@/src/utils/app/id';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 import { ApiKeys } from '@/src/utils/server/api';
@@ -90,9 +88,7 @@ export const promptsSlice = createSlice({
       const newPrompt: Prompt = addGeneratedPromptId({
         name: getNextDefaultName(
           translate('Prompt'),
-          state.prompts.filter(
-            (prompt) => prompt.folderId.split('/').length === 2,
-          ), // only root prompts
+          state.prompts.filter((prompt) => isRootId(prompt.folderId)), // only root prompts
         ),
         description: '',
         content: '',

@@ -2,6 +2,8 @@ import { FC, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isRootId } from '@/src/utils/app/id';
+
 import { PromptInfo } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
@@ -16,10 +18,7 @@ interface Props {
 export const Prompts: FC<Props> = ({ prompts }) => {
   const { t } = useTranslation(Translation.PromptBar);
   const promptsToDisplay = useMemo(
-    () =>
-      prompts
-        .filter((prompt) => prompt.folderId.split('/').length === 2)
-        .reverse(),
+    () => prompts.filter((prompt) => isRootId(prompt.folderId)).reverse(),
     [prompts],
   );
 

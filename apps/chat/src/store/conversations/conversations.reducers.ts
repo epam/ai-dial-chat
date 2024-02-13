@@ -8,8 +8,8 @@ import {
   addGeneratedFolderId,
   generateNextName,
   getNextDefaultName,
-  getRootId,
 } from '@/src/utils/app/folders';
+import { getRootId } from '@/src/utils/app/id';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { ApiKeys } from '@/src/utils/server/api';
