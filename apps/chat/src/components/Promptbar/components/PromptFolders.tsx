@@ -149,7 +149,7 @@ const PromptFolderTemplate = ({
         }
       }
     },
-    [allPrompts, dispatch, t],
+    [allFolders, allPrompts, dispatch, t],
   );
 
   const onDropBetweenFolders = useCallback(

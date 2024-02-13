@@ -21,7 +21,6 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
-import { selectConversations } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
