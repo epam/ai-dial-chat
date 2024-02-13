@@ -19,6 +19,11 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import {
+  isEntityNameOnSameLevelUnique,
+  prepareEntityName,
+  truncateText,
+} from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   compareEntitiesByName,
@@ -90,6 +95,7 @@ export interface FolderProps<T, P = unknown> {
   maxDepth?: number;
   highlightTemporaryFolders?: boolean;
   withBorderHighlight?: boolean;
+  allFoldersWithoutFilters?: FolderInterface[];
 }
 
 const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
@@ -98,6 +104,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   itemComponent,
   allItems,
   allFolders,
+  allFoldersWithoutFilters = [],
   highlightedFolders,
   openedFoldersIds,
   level = 0,
@@ -229,11 +236,40 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     if (!onRenameFolder) {
       return;
     }
-    renameValue.trim() && onRenameFolder(renameValue, currentFolder.id);
+
+    const preparedName = truncateText(prepareEntityName(renameValue));
+
+    if (
+      !isEntityNameOnSameLevelUnique(
+        preparedName,
+        currentFolder,
+        allFoldersWithoutFilters,
+      )
+    ) {
+      dispatch(
+        UIActions.showToast({
+          message: t(
+            `Folder with name "${preparedName}" already exists in this folder.`,
+          ),
+          type: 'error',
+        }),
+      );
+
+      return;
+    }
+
+    preparedName && onRenameFolder(renameValue, currentFolder.id);
     setRenameValue('');
     setIsRenaming(false);
     setIsContextMenu(false);
-  }, [onRenameFolder, renameValue, currentFolder]);
+  }, [
+    onRenameFolder,
+    renameValue,
+    currentFolder,
+    allFoldersWithoutFilters,
+    dispatch,
+    t,
+  ]);
 
   const handleEnterDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
@@ -298,18 +334,19 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             return;
           }
         }
+
         handleDrop(e, currentFolder);
       }
     },
     [
+      allFolders,
+      currentFolder,
+      dispatch,
+      featureType,
       handleDrop,
       isExternal,
-      dispatch,
-      currentFolder,
-      featureType,
-      allFolders,
-      maxDepth,
       level,
+      maxDepth,
       t,
     ],
   );

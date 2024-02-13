@@ -2,6 +2,7 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { compareEntitiesByName } from '@/src/utils/app/folders';
 import { MoveType } from '@/src/utils/app/move';
 import {
@@ -48,15 +49,19 @@ const PromptFolderTemplate = ({
   filters,
   includeEmpty = false,
 }: promptFolderProps) => {
+  const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const highlightedFolders = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
+  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const prompts = useAppSelector((state) =>
     PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
   );
+  const allFolders = useAppSelector(PromptsSelectors.selectFolders);
   const promptFolders = useAppSelector((state) =>
     PromptsSelectors.selectFilteredFolders(
       state,
@@ -81,6 +86,26 @@ const PromptFolderTemplate = ({
 
         if (promptData) {
           const prompt: PromptInfo = JSON.parse(promptData);
+
+          if (
+            !isEntityNameOnSameLevelUnique(
+              prompt.name,
+              { ...prompt, folderId: folder.id },
+              allPrompts,
+            )
+          ) {
+            dispatch(
+              UIActions.showToast({
+                message: t(
+                  `Prompt with name "${prompt.name}" already exists in this folder.`,
+                ),
+                type: 'error',
+              }),
+            );
+
+            return;
+          }
+
           dispatch(
             PromptsActions.updatePrompt({
               id: prompt.id,
@@ -95,6 +120,25 @@ const PromptFolderTemplate = ({
             movedFolder.id !== folder.id &&
             movedFolder.folderId !== folder.id
           ) {
+            if (
+              !isEntityNameOnSameLevelUnique(
+                movedFolder.name,
+                { ...movedFolder, folderId: folder.id },
+                allFolders,
+              )
+            ) {
+              dispatch(
+                UIActions.showToast({
+                  message: t(
+                    `Folder with name "${movedFolder.name}" already exists in this folder.`,
+                  ),
+                  type: 'error',
+                }),
+              );
+
+              return;
+            }
+
             dispatch(
               PromptsActions.updateFolder({
                 folderId: movedFolder.id,
@@ -105,7 +149,7 @@ const PromptFolderTemplate = ({
         }
       }
     },
-    [dispatch],
+    [allPrompts, dispatch, t],
   );
 
   const onDropBetweenFolders = useCallback(
@@ -148,6 +192,7 @@ const PromptFolderTemplate = ({
         itemComponent={PromptComponent}
         allItems={prompts}
         allFolders={promptFolders}
+        allFoldersWithoutFilters={allFolders}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
