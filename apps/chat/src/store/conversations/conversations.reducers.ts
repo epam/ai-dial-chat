@@ -1,29 +1,22 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
-import { regenerateConversationId } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
-  generateNextName,
   getNextDefaultName,
 } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { UploadStatus } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
 
-import { resetShareEntity } from '@/src/constants/chat';
-import {
-  DEFAULT_CONVERSATION_NAME,
-  DEFAULT_FOLDER_NAME,
-} from '@/src/constants/default-settings';
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import * as ConversationsSelectors from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
