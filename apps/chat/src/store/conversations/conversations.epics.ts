@@ -65,6 +65,7 @@ import {
   getNextDefaultName,
   getParentFolderIdsFromEntityId,
   getParentFolderIdsFromFolderId,
+  getRootId,
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
@@ -343,7 +344,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
         state$.value,
         conversation.folderId,
       )
-        ? constructPath(ApiKeys.Conversations, BucketService.getBucket())
+        ? getRootId({ apiKey: ApiKeys.Conversations })
         : conversation.folderId;
 
       const newConversationName = getNextDefaultName(
@@ -406,7 +407,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
         state$.value,
         conversation.folderId,
       )
-        ? constructPath(ApiKeys.Conversations, BucketService.getBucket())
+        ? getRootId({ apiKey: ApiKeys.Conversations })
         : conversation.folderId;
 
       const newConversationName = getNextDefaultName(

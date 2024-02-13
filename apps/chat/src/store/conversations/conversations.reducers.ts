@@ -8,6 +8,7 @@ import {
   addGeneratedFolderId,
   generateNextName,
   getNextDefaultName,
+  getRootId,
 } from '@/src/utils/app/folders';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
@@ -413,8 +414,7 @@ export const conversationsSlice = createSlice({
         name: folderName,
         type: FolderType.Chat,
         folderId:
-          payload.relativePath ||
-          constructPath(ApiKeys.Conversations, BucketService.getBucket()),
+          payload.relativePath || getRootId({ apiKey: ApiKeys.Conversations }),
         temporary: true,
       });
       state.newAddedFolderId = id;

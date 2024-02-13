@@ -12,7 +12,27 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
+import { ApiKeys } from '../server/api';
+import { BucketService } from './data/bucket-service';
+
 import escapeStringRegexp from 'escape-string-regexp';
+
+export const getRootId = ({
+  id,
+  apiKey = ApiKeys.Files,
+  bucket,
+}: {
+  id?: string;
+  apiKey?: ApiKeys;
+  bucket?: string;
+} = {}) => {
+  const splittedEntityId = id ? splitEntityId(id) : undefined;
+
+  return constructPath(
+    apiKey || splittedEntityId?.apiKey || ApiKeys.Files,
+    bucket || splittedEntityId?.bucket || BucketService.getBucket(),
+  );
+};
 
 export const getFoldersDepth = (
   childFolder: FolderInterface,

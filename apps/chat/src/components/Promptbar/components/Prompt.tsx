@@ -12,6 +12,7 @@ import classNames from 'classnames';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { constructPath } from '@/src/utils/app/file';
+import { getRootId } from '@/src/utils/app/folders';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
@@ -212,7 +213,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         dispatch(
           PromptsActions.createFolder({
             name: folderPath,
-            parentId: constructPath(ApiKeys.Prompts, BucketService.getBucket()),
+            parentId: getRootId({ apiKey: ApiKeys.Prompts }),
           }),
         );
       }

@@ -6,6 +6,7 @@ import {
   addGeneratedFolderId,
   generateNextName,
   getNextDefaultName,
+  getRootId,
 } from '@/src/utils/app/folders';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
@@ -95,7 +96,7 @@ export const promptsSlice = createSlice({
         ),
         description: '',
         content: '',
-        folderId: constructPath(ApiKeys.Prompts, BucketService.getBucket()),
+        folderId: getRootId({ apiKey: ApiKeys.Prompts }),
       });
       state.prompts = state.prompts.concat(newPrompt);
       state.selectedPromptId = newPrompt.id;
@@ -225,7 +226,7 @@ export const promptsSlice = createSlice({
       const newPrompt: Prompt = addGeneratedPromptId({
         ...payload.prompt,
         ...resetShareEntity,
-        folderId: constructPath(ApiKeys.Prompts, BucketService.getBucket()),
+        folderId: getRootId({ apiKey: ApiKeys.Prompts }),
         name: generateNextName(
           translate('Prompt'),
           payload.prompt.name,

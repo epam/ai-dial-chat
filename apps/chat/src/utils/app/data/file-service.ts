@@ -11,6 +11,7 @@ import { FolderType } from '@/src/types/folder';
 
 import { ApiKeys, ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
+import { getRootId } from '../folders';
 import { BucketService } from './bucket-service';
 
 export class FileService {
@@ -107,7 +108,10 @@ export class FileService {
               relativePath,
             ),
             relativePath: relativePath,
-            folderId: constructPath(ApiKeys.Files, folder.bucket, relativePath),
+            folderId: constructPath(
+              getRootId({ apiKey: ApiKeys.Files, bucket: folder.bucket }),
+              relativePath,
+            ),
             serverSynced: true,
           };
         });
@@ -159,7 +163,10 @@ export class FileService {
               relativePath,
             ),
             relativePath: relativePath,
-            folderId: constructPath(ApiKeys.Files, file.bucket, relativePath),
+            folderId: constructPath(
+              getRootId({ apiKey: ApiKeys.Files, bucket: file.bucket }),
+              relativePath,
+            ),
             contentLength: file.contentLength,
             contentType: file.contentType,
             serverSynced: true,

@@ -2,14 +2,12 @@ import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { BucketService } from '@/src/utils/app/data/bucket-service';
-import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getPathToFolderById,
+  getRootId,
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
@@ -209,11 +207,7 @@ export const ChangePathDialog = ({
         />
       </SelectFolderHeader>
       <SelectFolderFooter
-        handleNewFolder={() =>
-          handleAddFolder(
-            constructPath(ApiKeys.Files, BucketService.getBucket()),
-          )
-        }
+        handleNewFolder={() => handleAddFolder(getRootId())}
         onSelectFolderClick={getPath}
       />
     </SelectFolder>
