@@ -11,8 +11,14 @@ import {
   useState,
 } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
 
+import {
+  isEntityNameOnSameLevelUnique,
+  prepareEntityName,
+} from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
@@ -22,6 +28,7 @@ import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FeatureType, isNotLoaded } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
+import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
@@ -96,6 +103,8 @@ interface Props {
 }
 
 export const ConversationComponent = ({ item: conversation, level }: Props) => {
+  const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -141,6 +150,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const newFolderName = useAppSelector((state) =>
     ConversationsSelectors.selectNewFolderName(state, conversation.folderId),
   );
+  const allConversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
+  );
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -166,22 +178,46 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
   const handleRename = useCallback(
     (conversation: ConversationInfo) => {
-      if (renameValue.trim().length > 0) {
+      const newName = prepareEntityName(renameValue);
+      setRenameValue(newName);
+
+      if (
+        !isEntityNameOnSameLevelUnique(newName, conversation, allConversations)
+      ) {
+        dispatch(
+          UIActions.showToast({
+            message: t(
+              'Conversation with name "{{newName}}" already exists in this folder.',
+              {
+                ns: 'chat',
+                newName,
+              },
+            ),
+            type: 'error',
+          }),
+        );
+
+        return;
+      }
+
+      if (newName.length > 0) {
         dispatch(
           ConversationsActions.updateConversation({
             id: conversation.id,
             values: {
-              name: renameValue.trim(),
+              name: newName,
               isNameChanged: true,
             },
           }),
         );
+
         setRenameValue('');
-        setIsRenaming(false);
         setIsContextMenu(false);
       }
+
+      setIsRenaming(false);
     },
-    [dispatch, renameValue],
+    [allConversations, dispatch, renameValue, t],
   );
 
   const handleEnterDown = useCallback(
@@ -217,11 +253,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             conversationIds: [conversation.id],
           }),
         );
+        setIsDeleting(false);
       } else if (isRenaming) {
         handleRename(conversation);
       }
-      setIsDeleting(false);
-      setIsRenaming(false);
     },
     [conversation, dispatch, handleRename, isDeleting, isRenaming],
   );
