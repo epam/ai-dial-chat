@@ -1,4 +1,4 @@
-import { getNextDefaultName } from '@/src/utils/app/folders';
+import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getFoldersFromIds } from '@/src/utils/app/folders';
 
 import { Conversation } from '@/src/types/chat';
@@ -7,6 +7,8 @@ import { Entity } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { PromptInfo } from '@/src/types/prompt';
+
+import { MAX_ENTITY_LENGTH } from '@/src/constants/default-settings';
 
 /**
  * Combine entities. If there are the same ids then will be used entity from entities1 i.e. first in array
@@ -26,28 +28,17 @@ export const combineEntities = <T extends Entity>(
     );
 };
 
-export const getSameLevelEntitiesWithUniqueNames = <
-  T extends Prompt | Conversation,
+export const isEntityNameOnSameLevelUnique = <
+  T extends Conversation | Prompt | FolderInterface,
 >(
+  nameToBeUnique: string,
+  entity: T,
   entities: T[],
-) => {
-  const folderGroups: Record<string, Record<string, number>> = {};
-
-  entities.forEach((entity) => {
-    const folderId = entity.folderId || '';
-
-    if (!folderGroups[folderId]) {
-      folderGroups[folderId] = {};
-    }
-    if (!folderGroups[folderId][entity.name]) {
-      folderGroups[folderId][entity.name] = 1;
-    } else {
-      folderGroups[folderId][entity.name]++;
-      entity.name = getNextDefaultName(entity.name, entities);
-    }
-  });
-
-  return entities;
+): boolean => {
+  const sameLevelEntities = entities.filter(
+    (e) => entity.id !== e.id && e.folderId === entity.folderId,
+  );
+  return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
 };
 
 export const filterOnlyMyEntities = <
@@ -96,4 +87,14 @@ export const updateEntitiesFoldersAndIds = (
   );
 
   return { updatedFolders, updatedOpenedFoldersIds };
+};
+
+export const prepareEntityName = (name: string) => {
+  const clearName = name.trim().replace(notAllowedSymbolsRegex, '');
+
+  if (clearName.length > MAX_ENTITY_LENGTH) {
+    return clearName.substring(0, MAX_ENTITY_LENGTH - 3) + '...';
+  }
+
+  return clearName;
 };

@@ -1,3 +1,5 @@
+import { prepareEntityName } from '@/src/utils/app/common';
+
 import {
   Conversation,
   ConversationInfo,
@@ -13,7 +15,7 @@ import {
   getConversationApiKey,
   parseConversationApiKey,
 } from '../server/api';
-import { constructPath, notAllowedSymbolsRegex } from './file';
+import { constructPath } from './file';
 import { compareEntitiesByName, splitEntityId } from './folders';
 import { getRootId } from './id';
 
@@ -84,24 +86,24 @@ export const getNewConversationName = (
   message: Message,
   updatedMessages: Message[],
 ): string => {
+  const convName = prepareEntityName(conversation.name);
+
   if (
     conversation.replay.isReplay ||
     updatedMessages.length !== 2 ||
     conversation.isNameChanged
   ) {
-    return conversation.name;
+    return convName;
   }
-  const content = message.content
-    .replaceAll(notAllowedSymbolsRegex, ' ')
-    .trim();
+  const content = prepareEntityName(message.content);
   if (content.length > 0) {
-    return content.length > 160 ? content.substring(0, 157) + '...' : content;
+    return content;
   } else if (message.custom_content?.attachments?.length) {
     const files = message.custom_content.attachments;
     return files[0].title;
   }
 
-  return conversation.name;
+  return convName;
 };
 
 export const getGeneratedConversationId = <T extends ConversationInfo>(

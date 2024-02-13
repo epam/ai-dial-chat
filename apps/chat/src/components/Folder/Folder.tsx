@@ -19,6 +19,10 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import {
+  isEntityNameOnSameLevelUnique,
+  prepareEntityName,
+} from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   compareEntitiesByName,
@@ -28,6 +32,7 @@ import {
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import {
   getDragImage,
+  getEntityMoveType,
   getFolderMoveType,
   hasDragEventAnyData,
 } from '@/src/utils/app/move';
@@ -91,6 +96,8 @@ export interface FolderProps<T, P = unknown> {
   maxDepth?: number;
   highlightTemporaryFolders?: boolean;
   withBorderHighlight?: boolean;
+  allFoldersWithoutFilters?: FolderInterface[];
+  allItemsWithoutFilters?: T[];
 }
 
 const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
@@ -98,7 +105,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   searchTerm,
   itemComponent,
   allItems,
+  allItemsWithoutFilters = [],
   allFolders,
+  allFoldersWithoutFilters = [],
   highlightedFolders,
   openedFoldersIds,
   level = 0,
@@ -231,11 +240,45 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     if (!onRenameFolder) {
       return;
     }
-    renameValue.trim() && onRenameFolder(renameValue, currentFolder.id);
+
+    const newName = prepareEntityName(renameValue);
+    setRenameValue(newName);
+
+    if (
+      !isEntityNameOnSameLevelUnique(
+        newName,
+        currentFolder,
+        allFoldersWithoutFilters,
+      )
+    ) {
+      dispatch(
+        UIActions.showToast({
+          message: t(
+            'Folder with name "{{folderName}}" already exists in this folder.',
+            {
+              ns: 'folder',
+              folderName: newName,
+            },
+          ),
+          type: 'error',
+        }),
+      );
+
+      return;
+    }
+
+    newName && onRenameFolder(newName, currentFolder.id);
     setRenameValue('');
     setIsRenaming(false);
     setIsContextMenu(false);
-  }, [onRenameFolder, renameValue, currentFolder]);
+  }, [
+    onRenameFolder,
+    renameValue,
+    currentFolder,
+    allFoldersWithoutFilters,
+    dispatch,
+    t,
+  ]);
 
   const handleEnterDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
@@ -299,19 +342,79 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             );
             return;
           }
+
+          if (
+            !isEntityNameOnSameLevelUnique(
+              draggedFolder.name,
+              { ...draggedFolder, folderId: currentFolder.id },
+              allFoldersWithoutFilters,
+            )
+          ) {
+            dispatch(
+              UIActions.showToast({
+                message: t(
+                  'Folder with name "{{folderName}}" already exists in this folder.',
+                  {
+                    ns: 'folder',
+                    folderName: draggedFolder.name,
+                  },
+                ),
+                type: 'error',
+              }),
+            );
+
+            return;
+          }
         }
+
+        const entityData = e.dataTransfer.getData(
+          getEntityMoveType(featureType),
+        );
+        if (entityData) {
+          const draggedEntity = JSON.parse(entityData);
+
+          if (
+            !isEntityNameOnSameLevelUnique(
+              draggedEntity.name,
+              { ...draggedEntity, folderId: currentFolder.id },
+              allItemsWithoutFilters,
+            )
+          ) {
+            dispatch(
+              UIActions.showToast({
+                message: t(
+                  '{{entityType}} with name "{{entityName}}" already exists in this folder.',
+                  {
+                    ns: 'common',
+                    entityType:
+                      featureType === FeatureType.Chat
+                        ? 'Conversation'
+                        : 'Prompt',
+                    entityName: draggedEntity.name,
+                  },
+                ),
+                type: 'error',
+              }),
+            );
+
+            return;
+          }
+        }
+
         handleDrop(e, currentFolder);
       }
     },
     [
+      allFolders,
+      allFoldersWithoutFilters,
+      allItemsWithoutFilters,
+      currentFolder,
+      dispatch,
+      featureType,
       handleDrop,
       isExternal,
-      dispatch,
-      currentFolder,
-      featureType,
-      allFolders,
-      maxDepth,
       level,
+      maxDepth,
       t,
     ],
   );
@@ -682,7 +785,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     currentFolder={item}
                     itemComponent={itemComponent}
                     allItems={allItems}
+                    allItemsWithoutFilters={allItemsWithoutFilters}
                     allFolders={allFolders}
+                    allFoldersWithoutFilters={allFoldersWithoutFilters}
                     highlightedFolders={highlightedFolders}
                     openedFoldersIds={openedFoldersIds}
                     loadingFolderIds={loadingFolderIds}
