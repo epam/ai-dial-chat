@@ -210,9 +210,10 @@ export const exportConversations = (
   conversations: Conversation[],
   folders: FolderInterface[],
   appName?: string,
+  version = 5,
 ) => {
   const data = {
-    version: 5,
+    version,
     history: conversations || [],
     folders: folders || [],
   } as LatestExportConversationsFormat;

@@ -171,7 +171,7 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
-const exportLocalStorageEntitiesEpic: AppEpic = (action$) => {
+const exportLocalStorageEntitiesEpic: AppEpic = (action$, state$) => {
   const browserStorage = new BrowserStorage();
 
   return action$.pipe(
@@ -184,12 +184,21 @@ const exportLocalStorageEntitiesEpic: AppEpic = (action$) => {
         conversationFolders: browserStorage.getConversationsFolders(),
         prompts: browserStorage.getPrompts().pipe(map(filterOnlyMyEntities)),
         promptFolders: browserStorage.getPromptsFolders(),
+        appName: SettingsSelectors.selectAppName(state$.value),
       }),
     ),
-    tap(({ conversations, conversationFolders, prompts, promptFolders }) => {
-      exportConversations(conversations, conversationFolders);
-      exportPrompts(prompts, promptFolders);
-    }),
+    tap(
+      ({
+        conversations,
+        conversationFolders,
+        prompts,
+        promptFolders,
+        appName,
+      }) => {
+        exportConversations(conversations, conversationFolders, appName, 4);
+        exportPrompts(prompts, promptFolders);
+      },
+    ),
     ignoreElements(),
   );
 };
