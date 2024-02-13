@@ -60,6 +60,10 @@ const ChatFolderTemplate = ({
       searchTerm,
     ),
   );
+  const allConversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
+  );
+  const allFolders = useAppSelector(ConversationsSelectors.selectFolders);
   const conversationFolders = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredFolders(
       state,
@@ -116,7 +120,6 @@ const ChatFolderTemplate = ({
     },
     [dispatch],
   );
-
   const onDropBetweenFolders = useCallback(
     (folder: FolderInterface, parentFolderId: string | undefined) => {
       dispatch(
@@ -152,7 +155,9 @@ const ChatFolderTemplate = ({
         currentFolder={folder}
         itemComponent={ConversationComponent}
         allItems={conversations}
+        allItemsWithoutFilters={allConversations}
         allFolders={conversationFolders}
+        allFoldersWithoutFilters={allFolders}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
