@@ -6,7 +6,7 @@ import {
 } from '@/src/utils/app/file';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { ShareEntity, UploadStatus } from '@/src/types/common';
+import { PartialBy, ShareEntity, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
@@ -357,10 +357,21 @@ export const getConversationAttachmentWithPath = (
   ).map((file) => ({ ...file, relativePath: path, contentLength: 0 }));
 };
 
-export const addGeneratedFolderId = (folder: Omit<FolderInterface, 'id'>) => ({
-  ...folder,
-  id: constructPath(folder.folderId, folder.name),
-});
+const getGeneratedFolderId = (folder: PartialBy<FolderInterface, 'id'>) =>
+  constructPath(folder.folderId, folder.name);
+
+export const addGeneratedFolderId = (
+  folder: PartialBy<FolderInterface, 'id'>,
+): FolderInterface => {
+  const newId = getGeneratedFolderId(folder);
+  if (!folder.id || newId !== folder.id) {
+    return {
+      ...folder,
+      id: constructPath(folder.folderId, folder.name),
+    };
+  }
+  return folder as FolderInterface;
+};
 
 // {apikey}/{bucket}/path.../name
 export const splitEntityId = (

@@ -5,7 +5,7 @@ import {
   MessageSettings,
   Role,
 } from '@/src/types/chat';
-import { EntityType, UploadStatus } from '@/src/types/common';
+import { EntityType, PartialBy, UploadStatus } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 
 import {
@@ -91,9 +91,11 @@ export const getNewConversationName = (
   ) {
     return conversation.name;
   }
-  const content = message.content.replaceAll(notAllowedSymbolsRegex, '').trim();
+  const content = message.content
+    .replaceAll(notAllowedSymbolsRegex, ' ')
+    .trim();
   if (content.length > 0) {
-    return content.length > 160 ? content.substring(0, 160) + '...' : content;
+    return content.length > 160 ? content.substring(0, 157) + '...' : content;
   } else if (message.custom_content?.attachments?.length) {
     const files = message.custom_content.attachments;
     return files[0].title;
@@ -119,12 +121,17 @@ export const getGeneratedConversationId = <T extends ConversationInfo>(
 };
 
 export const regenerateConversationId = <T extends ConversationInfo>(
-  conversation: Omit<T, 'id'> & Partial<Pick<T, 'id'>>,
-): T =>
-  ({
-    ...conversation,
-    id: getGeneratedConversationId(conversation),
-  }) as T;
+  conversation: PartialBy<T, 'id'>,
+): T => {
+  const newId = getGeneratedConversationId(conversation);
+  if (!conversation.id || newId !== conversation.id) {
+    return {
+      ...conversation,
+      id: newId,
+    } as T;
+  }
+  return conversation as T;
+};
 
 export const getConversationInfoFromId = (id: string): ConversationInfo => {
   const { apiKey, bucket, name, parentPath } = splitEntityId(id);

@@ -34,12 +34,9 @@ import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
-  findRootFromItems,
   getFolderFromId,
   getFoldersFromIds,
   getParentFolderIdsFromFolderId,
-  getPathToFolderById,
-  getTemporaryFoldersToPublish,
   splitEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
@@ -306,9 +303,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     switchMap(({ folderId, promptsToRemove, folders }) => {
       const childFolders = new Set([
         folderId,
-        ...promptsToRemove.flatMap((prompt) =>
-          getParentFolderIdsFromFolderId(prompt.folderId),
-        ),
+        ...promptsToRemove.map((prompt) => prompt.folderId),
       ]);
       const actions: Observable<AnyAction>[] = [];
       actions.push(

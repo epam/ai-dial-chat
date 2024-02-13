@@ -89,3 +89,5 @@ export enum UploadStatus {
 export const isNotLoaded = (status?: UploadStatus) => {
   return !status || status === UploadStatus.UNINITIALIZED;
 };
+
+export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
