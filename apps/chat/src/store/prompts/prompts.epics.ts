@@ -39,10 +39,7 @@ import {
   getAllPathsFromPath,
   getFolderFromPath,
   getNextDefaultName,
-  getPathToFolderById,
-  getFolderIdByPath,
   getFoldersFromPaths,
-  getTemporaryFoldersToPublish,
   splitPath,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
