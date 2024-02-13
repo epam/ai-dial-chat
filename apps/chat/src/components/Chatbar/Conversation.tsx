@@ -39,6 +39,8 @@ import { ImportExportActions } from '@/src/store/import-export/importExport.redu
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
+
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
@@ -178,7 +180,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
   const handleRename = useCallback(
     (conversation: ConversationInfo) => {
-      const newName = prepareEntityName(renameValue);
+      const newName = prepareEntityName(renameValue, DEFAULT_CONVERSATION_NAME);
+      setRenameValue(newName);
 
       if (
         !isEntityNameOnSameLevelUnique(newName, conversation, allConversations)

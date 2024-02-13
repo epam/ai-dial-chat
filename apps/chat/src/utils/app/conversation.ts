@@ -1,4 +1,4 @@
-import { prepareEntityName, truncateText } from '@/src/utils/app/common';
+import { prepareEntityName } from '@/src/utils/app/common';
 
 import {
   Conversation,
@@ -9,6 +9,8 @@ import {
 } from '@/src/types/chat';
 import { EntityType, PartialBy, UploadStatus } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
+
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { constructPath } from './file';
@@ -81,7 +83,10 @@ export const getNewConversationName = (
   message: Message,
   updatedMessages: Message[],
 ): string => {
-  const convName = prepareEntityName(conversation.name);
+  const convName = prepareEntityName(
+    conversation.name,
+    DEFAULT_CONVERSATION_NAME,
+  );
 
   if (
     conversation.replay.isReplay ||
@@ -90,7 +95,7 @@ export const getNewConversationName = (
   ) {
     return convName;
   }
-  const content = truncateText(prepareEntityName(message.content));
+  const content = prepareEntityName(message.content, DEFAULT_CONVERSATION_NAME);
   if (content.length > 0) {
     return content;
   } else if (message.custom_content?.attachments?.length) {

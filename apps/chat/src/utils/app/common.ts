@@ -91,13 +91,13 @@ export const updateEntitiesFoldersAndIds = (
   return { updatedFolders, updatedOpenedFoldersIds };
 };
 
-export const prepareEntityName = (name: string) =>
-  name.trim().replace(notAllowedSymbolsRegex, '');
+export const prepareEntityName = (name: string, defaultName: string) => {
+  const clearName =
+    name.trim().replace(notAllowedSymbolsRegex, '') || defaultName;
 
-export const truncateText = (content: string) => {
-  if (content.length > MAX_ENTITY_LENGTH) {
-    return content.substring(0, MAX_ENTITY_LENGTH - 3) + '...';
+  if (clearName.length > MAX_ENTITY_LENGTH) {
+    return clearName.substring(0, MAX_ENTITY_LENGTH - 3) + '...';
   }
 
-  return content;
+  return clearName;
 };

@@ -22,7 +22,6 @@ import classNames from 'classnames';
 import {
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
-  truncateText,
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
@@ -50,6 +49,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
+
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
@@ -237,7 +238,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       return;
     }
 
-    const preparedName = truncateText(prepareEntityName(renameValue));
+    const preparedName = prepareEntityName(renameValue, DEFAULT_FOLDER_NAME);
+    setRenameValue(preparedName);
 
     if (
       !isEntityNameOnSameLevelUnique(
