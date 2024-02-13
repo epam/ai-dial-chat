@@ -58,7 +58,7 @@ dialTest(
         return resp.request().method() === 'POST';
       });
       await page.mouse.up();
-      return respPromise;
+      await respPromise;
     } else {
       await page.mouse.up();
     }
