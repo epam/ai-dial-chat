@@ -50,8 +50,6 @@ const ChatFolderTemplate = ({
   filters,
   includeEmpty = false,
 }: ChatFolderProps) => {
-  const { t } = useTranslation(Translation.Chat);
-
   const dispatch = useAppDispatch();
 
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
