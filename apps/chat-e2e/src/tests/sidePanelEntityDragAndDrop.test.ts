@@ -136,7 +136,6 @@ dialTest(
         }
         await folderConversations.expandCollapseFolder(
           ExpectedConstants.newFolderWithIndexTitle(2),
-          { isHttpMethodTriggered: true },
         );
 
         await chatBar.drugConversationToFolder(
