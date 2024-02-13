@@ -239,11 +239,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     (e) => {
       e.stopPropagation();
       setIsContextMenu(false);
-      dispatch(
-        PromptsActions.duplicatePrompt({
-          prompt,
-        }),
-      );
+      dispatch(PromptsActions.duplicatePrompt(prompt));
     },
     [dispatch, prompt],
   );

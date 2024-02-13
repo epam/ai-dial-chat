@@ -74,7 +74,7 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
 
       const newPrompt: Prompt = addGeneratedPromptId({
         name: getNextDefaultName(
-          translate('Prompt'),
+          DEFAULT_PROMPT_NAME,
           prompts.filter((prompt) => !prompt.folderId),
         ),
         description: '',

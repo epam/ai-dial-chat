@@ -10,7 +10,7 @@ export const DEFAULT_TEMPERATURE = parseFloat(
 );
 
 export const DEFAULT_CONVERSATION_NAME = 'New conversation';
-export const DEFAULT_PROMPT_NAME = 'New prompt';
+export const DEFAULT_PROMPT_NAME = 'Prompt';
 export const DEFAULT_FOLDER_NAME = 'New folder';
 export const EMPTY_MODEL_ID = 'empty';
 
