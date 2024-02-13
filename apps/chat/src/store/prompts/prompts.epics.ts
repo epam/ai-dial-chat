@@ -81,12 +81,18 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
         content: '',
       });
 
-      return PromptService.createPrompt(newPrompt).pipe(
-        switchMap(() =>
-          of(PromptsActions.createNewPromptSuccess({ newPrompt })),
-        ),
-      );
+      return of(PromptsActions.createNewPromptSuccess({ newPrompt }));
     }),
+  );
+
+const createNewPromptSuccessEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.createNewPromptSuccess.match),
+    switchMap(({ payload }) =>
+      PromptService.createPrompt(payload.newPrompt).pipe(
+        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+      ),
+    ),
   );
 
 const saveFoldersEpic: AppEpic = (action$, state$) =>
@@ -634,6 +640,8 @@ export const duplicatePromptEpic: AppEpic = (action$, state$) =>
     switchMap(({ prompt }) => {
       if (!prompt) return EMPTY;
 
+      const prompts = PromptsSelectors.selectPrompts(state$.value);
+
       const newPrompt: Prompt = addGeneratedPromptId({
         ...prompt,
         ...resetShareEntity,
@@ -641,7 +649,7 @@ export const duplicatePromptEpic: AppEpic = (action$, state$) =>
         name: generateNextName(
           DEFAULT_PROMPT_NAME,
           prompt.name,
-          state$.value.prompts,
+          prompts.filter((p) => !p.folderId),
         ),
       });
 
@@ -659,6 +667,7 @@ export const PromptsEpics = combineEpics(
   // init
   initEpic,
   initPromptsEpic,
+
   saveFoldersEpic,
   deleteFolderEpic,
   exportPromptsEpic,
@@ -672,6 +681,7 @@ export const PromptsEpics = combineEpics(
   deletePromptsEpic,
   updateFolderEpic,
   createNewPromptEpic,
+  createNewPromptSuccessEpic,
   duplicatePromptEpic,
 
   uploadPromptEpic,

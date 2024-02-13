@@ -85,6 +85,7 @@ import { FolderType } from '@/src/types/folder';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
+import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { resetShareEntity } from '@/src/constants/chat';
@@ -446,6 +447,10 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
     switchMap(({ conversation }) => {
       if (!conversation) return EMPTY;
 
+      const conversations = ConversationsSelectors.selectConversations(
+        state$.value,
+      );
+
       const newConversation: Conversation = addGeneratedConversationId({
         ...conversation,
         ...resetShareEntity,
@@ -453,8 +458,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
           conversation.name,
-          state$.value.conversations,
-          0,
+          conversations.filter((conv) => !conv.folderId),
         ),
         lastActivityDate: Date.now(),
       });
