@@ -151,11 +151,8 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
       );
 
       const allFolders = ConversationsSelectors.selectFolders(state$.value);
-      const emptyFolders = allFolders.filter(
-        ({ id }) => !foldersIds.some((folderId) => folderId === id),
-      );
 
-      const folders = combineEntities(foldersWithConversation, emptyFolders);
+      const folders = combineEntities(foldersWithConversation, allFolders);
 
       return forkJoin({
         //get all conversations from api
