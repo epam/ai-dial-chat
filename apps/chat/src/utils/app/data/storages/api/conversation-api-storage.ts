@@ -79,13 +79,17 @@ export const getPreparedConversations = ({
   conversationsFolders: FolderInterface[];
 }) =>
   conversations.map((conv) => {
-    const { path } = getPathToFolderById(conversationsFolders, conv.folderId);
+    const { path } = getPathToFolderById(
+      conversationsFolders,
+      conv.folderId,
+      true,
+    );
     const newName = conv.name.replace(notAllowedSymbolsRegex, '');
 
     return {
       ...conv,
       id: constructPath(...[path, newName]),
       name: newName,
-      folderId: path.replace(notAllowedSymbolsRegex, ''),
+      folderId: path,
     };
   }); // to send conversation with proper parentPath and lastActivityDate order
