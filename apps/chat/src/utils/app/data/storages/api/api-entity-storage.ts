@@ -46,8 +46,11 @@ export abstract class ApiEntityStorage<
     };
   }
 
+  private encodePath = (path: string): string =>
+    constructPath(...path.split('/').map((part) => encodeURIComponent(part)));
+
   private getEntityUrl = (entity: EntityInfo): string =>
-    encodeURI(
+    this.encodePath(
       constructPath(
         'api',
         this.getStorageKey(),
@@ -58,7 +61,7 @@ export abstract class ApiEntityStorage<
     );
 
   private getListingUrl = (resultQuery: string): string => {
-    const listingUrl = encodeURI(
+    const listingUrl = this.encodePath(
       constructPath('api', this.getStorageKey(), 'listing'),
     );
     return `${listingUrl}?${resultQuery}`;
