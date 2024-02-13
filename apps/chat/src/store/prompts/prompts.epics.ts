@@ -31,7 +31,7 @@ import {
   getPreparedPrompts,
 } from '@/src/utils/app/data/prompt-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   findRootFromItems,
@@ -39,7 +39,6 @@ import {
   getFolderFromPath,
   getFolderIdByPath,
   getFoldersFromPaths,
-  getPathToFolderById,
   getTemporaryFoldersToPublish,
   splitPath,
   updateMovedFolderId,
@@ -532,21 +531,11 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
           return EMPTY;
         }
 
-        const preparedPrompts: Prompt[] = notMigratedPrompts.map((prompt) => {
-          const { path } = getPathToFolderById(
-            promptsFolders,
-            prompt.folderId,
-            true,
-          );
-          const newName = prompt.name.replace(notAllowedSymbolsRegex, '');
-
-          return {
-            ...prompt,
-            id: constructPath(...[path, newName]),
-            name: newName,
-            folderId: path,
-          };
+        const preparedPrompts: Prompt[] = getPreparedPrompts({
+          prompts: notMigratedPrompts,
+          folders: promptsFolders,
         }); // to send prompts with proper parentPath
+
         let migratedPromptsCount = 0;
 
         return concat(

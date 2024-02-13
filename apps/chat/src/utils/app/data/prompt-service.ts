@@ -53,13 +53,13 @@ export const getPreparedPrompts = ({
   folders: FolderInterface[];
 }) =>
   prompts.map((prompt) => {
-    const { path } = getPathToFolderById(folders, prompt.folderId);
+    const { path } = getPathToFolderById(folders, prompt.folderId, true);
     const newName = prompt.name.replace(notAllowedSymbolsRegex, '');
 
     return {
       ...prompt,
       id: constructPath(...[path, newName]),
       name: newName,
-      folderId: path.replace(notAllowedSymbolsRegex, ''),
-    } as Prompt;
+      folderId: path,
+    };
   }); // to send prompts with proper parentPath
