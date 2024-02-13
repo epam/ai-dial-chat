@@ -28,6 +28,15 @@ import {
 } from '@/src/constants/default-settings';
 import { defaultReplay } from '@/src/constants/replay';
 
+import { ApiKeys } from '../../server/api';
+import { BucketService } from '../data/bucket-service';
+import { constructPath } from '../file';
+
+const bucket = '123';
+beforeAll(() => {
+  BucketService.setBucket(bucket);
+});
+
 describe('Export Format Functions', () => {
   describe('isExportFormatV1', () => {
     it('should return true for v1 format', () => {
@@ -109,7 +118,7 @@ describe('cleanData Functions', () => {
     selectedAddons: [],
     assistantModelId: 'gpt-4',
     isMessageStreaming: false,
-    folderId: undefined,
+    folderId: constructPath(ApiKeys.Conversations, bucket),
     lastActivityDate: expect.any(Number),
   };
 
@@ -154,6 +163,7 @@ describe('cleanData Functions', () => {
             id: '1',
             name: 'folder 1',
             type: FolderType.Chat,
+            folderId: constructPath(ApiKeys.Conversations, bucket),
           },
         ],
         prompts: [],
@@ -233,6 +243,7 @@ describe('Export helpers functions', () => {
           name: 'prompt 1',
           description: '',
           content: '',
+          folderId: constructPath(ApiKeys.Conversations, bucket),
         },
       ],
       folders: [
@@ -240,6 +251,7 @@ describe('Export helpers functions', () => {
           id: 'pf-1',
           name: 'Test folder',
           type: FolderType.Prompt,
+          folderId: constructPath(ApiKeys.Conversations, bucket),
         },
       ],
     };

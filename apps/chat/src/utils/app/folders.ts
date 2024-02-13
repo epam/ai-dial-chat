@@ -164,32 +164,6 @@ export const generateNextName = (
     ? getNextDefaultName(defaultName, entities, index)
     : getNextDefaultName(currentName, entities, index, true);
 };
-
-export const getFolderIdByPath = (path: string, folders: FolderInterface[]) => {
-  if (!path.trim()) return undefined;
-
-  const parts = path.split('/');
-
-  if (!parts.length) return undefined;
-
-  const childFolderName = parts[parts.length - 1];
-
-  const childFolderId = folders.find((f) => f.name === childFolderName)?.id;
-
-  if (!childFolderId) return undefined;
-
-  const parentFolders = getParentAndCurrentFoldersById(folders, childFolderId);
-  const pathPartSet = new Set(parts);
-
-  if (
-    parentFolders.length === parts.length &&
-    parentFolders.every((f) => pathPartSet.has(f.name))
-  ) {
-    return childFolderId;
-  }
-
-  return undefined;
-};
 export const getPathToFolderById = (
   folders: FolderInterface[],
   starterId: string | undefined,
