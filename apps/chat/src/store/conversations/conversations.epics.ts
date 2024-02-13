@@ -51,8 +51,12 @@ import {
 } from '@/src/utils/app/conversation';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
+import {
+  getOrUploadConversation,
+  getPreparedConversations,
+} from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   generateNextName,
@@ -60,8 +64,6 @@ import {
   getFoldersFromIds,
   getNextDefaultName,
   getParentFolderIdsFromEntityId,
-  getParentFolderIdsFromFolderId,
-  getPathToFolderById,
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
@@ -98,7 +100,6 @@ import {
 import { errorsMessages } from '@/src/constants/errors';
 import { defaultReplay } from '@/src/constants/replay';
 
-import { RootState } from '..';
 import { AddonsActions } from '../addons/addons.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
@@ -516,9 +517,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     switchMap(({ folderId, conversations, folders }) => {
       const childFolders = new Set([
         folderId,
-        ...conversations.flatMap((conv) =>
-          getParentFolderIdsFromFolderId(conv.folderId),
-        ),
+        ...conversations.map((conv) => conv.folderId),
       ]);
       const removedConversationsIds = conversations.map((conv) => conv.id);
       const actions: Observable<AnyAction>[] = [];
@@ -723,18 +722,18 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const migrateConversationsEpic: AppEpic = (action$, state$) => {
+const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
   const browserStorage = new BrowserStorage();
 
   return action$.pipe(
-    filter(ConversationsActions.migrateConversations.match),
+    filter(ConversationsActions.migrateConversationsIfRequired.match),
     switchMap(() =>
       forkJoin({
         conversations: browserStorage
           .getConversations()
           .pipe(map(filterOnlyMyEntities)),
         conversationsFolders: browserStorage
-          .getConversationsFolders()
+          .getConversationsFolders(undefined, true)
           .pipe(map(filterOnlyMyEntities)),
         migratedConversationIds: BrowserStorage.getMigratedEntityIds(
           MigrationStorageKeys.MigratedConversationIds,
@@ -783,20 +782,10 @@ const migrateConversationsEpic: AppEpic = (action$, state$) => {
 
           return a.lastActivityDate - b.lastActivityDate;
         });
-        const preparedConversations = notMigratedConversations.map((conv) => {
-          const { path } = getPathToFolderById(
-            conversationsFolders,
-            conv.folderId,
-          );
-          const newName = conv.name.replace(notAllowedSymbolsRegex, '');
-
-          return {
-            ...conv,
-            id: constructPath(...[path, newName]),
-            name: newName,
-            folderId: path.replace(notAllowedSymbolsRegex, ''),
-          };
-        }); // to send conversation with proper parentPath and lastActivityDate order
+        const preparedConversations = getPreparedConversations({
+          conversations: notMigratedConversations,
+          conversationsFolders,
+        });
 
         let migratedConversationsCount = 0;
 
@@ -1693,7 +1682,8 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.deleteConversationsSuccess.match(action) ||
         ConversationsActions.addConversations.match(action) ||
         ConversationsActions.duplicateConversation.match(action) ||
-        ConversationsActions.duplicateSelectedConversations.match(action),
+        ConversationsActions.duplicateSelectedConversations.match(action) ||
+        ConversationsActions.importConversationsSuccess.match(action),
     ),
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
@@ -1715,7 +1705,11 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
 
 const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.selectConversations.match),
+    filter(
+      (action) =>
+        ConversationsActions.selectConversations.match(action) ||
+        ConversationsActions.importConversationsSuccess.match(action),
+    ),
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
     ),
@@ -2070,31 +2064,6 @@ const recreateConversationEpic: AppEpic = (action$) =>
     }),
   );
 
-const getOrUploadConversation = (
-  payload: { id: string },
-  state: RootState,
-): Observable<{
-  conversation: Conversation | null;
-  payload: { id: string };
-}> => {
-  const conversation = ConversationsSelectors.selectConversation(
-    state,
-    payload.id,
-  ) as Conversation;
-
-  if (conversation && conversation?.status !== UploadStatus.LOADED) {
-    return forkJoin({
-      conversation: ConversationService.getConversation(conversation),
-      payload: of(payload),
-    });
-  } else {
-    return forkJoin({
-      conversation: of(conversation),
-      payload: of(payload),
-    });
-  }
-};
-
 const updateConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.updateConversation.match),
@@ -2258,7 +2227,7 @@ const openFolderEpic: AppEpic = (action$, state$) =>
   );
 
 export const ConversationsEpics = combineEpics(
-  migrateConversationsEpic,
+  migrateConversationsIfRequiredEpic,
   skipFailedMigratedConversationsEpic,
   // init
   initEpic,

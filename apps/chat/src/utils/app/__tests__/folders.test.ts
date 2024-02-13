@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { updateMovedEntityId, updateMovedFolderId } from '../folders';
 
 describe.skip('Folder utility methods', () => {
@@ -14,10 +15,10 @@ describe.skip('Folder utility methods', () => {
   ])(
     'updateMovedFolderId (%s, %s, %s, %s)',
     (
-      oldParentFolderId: string | undefined,
-      newParentFolderId: string | undefined,
-      currentId: string | undefined,
-      expectedFolderId: string | undefined,
+      oldParentFolderId: any,
+      newParentFolderId: any,
+      currentId: any,
+      expectedFolderId: any,
     ) => {
       expect(
         updateMovedFolderId(oldParentFolderId, newParentFolderId, currentId),
@@ -39,10 +40,10 @@ describe.skip('Folder utility methods', () => {
   ])(
     'updateMovedEntityId (%s, %s, %s, %s)',
     (
-      oldParentFolderId: string | undefined,
-      newParentFolderId: string | undefined,
-      currentId: string,
-      expectedFolderId: string,
+      oldParentFolderId: any,
+      newParentFolderId: any,
+      currentId: any,
+      expectedFolderId: any,
     ) => {
       expect(
         updateMovedEntityId(oldParentFolderId, newParentFolderId, currentId),

@@ -14,7 +14,7 @@ import { constructPath } from '@/src/utils/app/file';
 import { ApiKeys } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
-import { SupportedExportFormats } from '@/src/types/importExport';
+import { SupportedExportFormats } from '@/src/types/import-export';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 

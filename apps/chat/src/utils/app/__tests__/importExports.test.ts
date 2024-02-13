@@ -8,7 +8,7 @@ import {
   isExportFormatV3,
   isExportFormatV4,
   isLatestExportFormat,
-  isPromtsFormat,
+  isPromptsFormat,
 } from '@/src/utils/app/import-export';
 
 import { Conversation, Message, Role } from '@/src/types/chat';
@@ -19,7 +19,7 @@ import {
   ExportFormatV2,
   ExportFormatV4,
   PromptsHistory,
-} from '@/src/types/importExport';
+} from '@/src/types/import-export';
 import { OpenAIEntityModelID } from '@/src/types/openai';
 
 import {
@@ -94,10 +94,12 @@ describe('cleanData Functions', () => {
     {
       role: Role.User,
       content: "what's up ?",
+      custom_content: undefined,
     },
     {
       role: Role.Assistant,
       content: 'Hi',
+      custom_content: undefined,
     },
   ];
 
@@ -129,7 +131,7 @@ describe('cleanData Functions', () => {
       const obj = cleanData(dataV1);
       expect(isLatestExportFormat(obj)).toBe(true);
       expect(obj).toEqual({
-        version: 4,
+        version: 5,
         history: [{ ...expectedConversation, id: 1 }],
         folders: [],
         prompts: [],
@@ -156,7 +158,7 @@ describe('cleanData Functions', () => {
       const obj = cleanData(dataV2);
       expect(isLatestExportFormat(obj)).toBe(true);
       expect(obj).toEqual({
-        version: 4,
+        version: 5,
         history: [expectedConversation],
         folders: [
           {
@@ -205,7 +207,7 @@ describe('cleanData Functions', () => {
       const obj = cleanData(dataV4);
       expect(isLatestExportFormat(obj)).toBe(true);
       expect(obj).toEqual({
-        version: 4,
+        version: 5,
         history: [expectedConversation],
         folders: [
           {
@@ -232,7 +234,7 @@ describe('Export helpers functions', () => {
   it('Should return false for non-prompts data', () => {
     const testData = [{ id: 1 }];
 
-    expect(isPromtsFormat(testData as unknown as PromptsHistory)).toBeFalsy();
+    expect(isPromptsFormat(testData as unknown as PromptsHistory)).toBeFalsy();
   });
 
   it('Should return true for prompts data', () => {
@@ -255,7 +257,7 @@ describe('Export helpers functions', () => {
         },
       ],
     };
-    expect(isPromtsFormat(testData)).toBeTruthy();
+    expect(isPromptsFormat(testData)).toBeTruthy();
   });
   describe('getAssitantModelId', () => {
     it('should return default assistant model id', () => {

@@ -58,7 +58,7 @@ export const conversationsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    migrateConversations: (state) => state,
+    migrateConversationsIfRequired: (state) => state,
     initConversationsMigration: (
       state,
       {
