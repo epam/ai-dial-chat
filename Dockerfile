@@ -1,6 +1,6 @@
 # ---- Base Node ----
 FROM node:20-alpine AS base
-RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
+RUN apk update && apk upgrade --no-cache libcrypto3 libssl3 ip
 WORKDIR /app
 COPY /tools ./tools
 COPY package*.json ./
@@ -23,7 +23,7 @@ RUN node tools/patch-nextjs.js
 
 # ---- Production ----
 FROM node:20-alpine AS production
-RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
+RUN apk update && apk upgrade --no-cache libcrypto3 libssl3 ip
 WORKDIR /app
 COPY --from=run_ependencies /app/dist/apps/chat ./
 COPY --from=run_ependencies /app/startup.sh ./startup.sh
