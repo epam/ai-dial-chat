@@ -368,7 +368,7 @@ const getGeneratedFolderId = (folder: PartialBy<FolderInterface, 'id'>) =>
 
 export const addGeneratedFolderId = (
   folder: PartialBy<FolderInterface, 'id'>,
-) => {
+): FolderInterface => {
   const newId = getGeneratedFolderId(folder);
   if (!folder.id || newId !== folder.id) {
     return {
@@ -376,7 +376,7 @@ export const addGeneratedFolderId = (
       id: constructPath(folder.folderId, folder.name),
     };
   }
-  return folder;
+  return folder as FolderInterface;
 };
 
 export const splitPath = (id: string) => {
