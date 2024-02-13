@@ -87,8 +87,8 @@ export const getNewConversationName = (
     return conversation.name;
   }
   const content = message.content
-    .trim()
-    .replaceAll(notAllowedSymbolsRegex, ' ');
+    .replaceAll(notAllowedSymbolsRegex, ' ')
+    .trim();
   if (content.length > 0) {
     return content.length > 160 ? content.substring(0, 160) + '...' : content;
   } else if (message.custom_content?.attachments?.length) {
