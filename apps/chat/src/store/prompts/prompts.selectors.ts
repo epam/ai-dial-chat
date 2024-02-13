@@ -105,7 +105,7 @@ export const selectSectionFolders = createSelector(
 );
 
 export const selectParentFolders = createSelector(
-  [selectFolders, (_state, folderId: string | undefined) => folderId],
+  [selectFolders, (_state, folderId: string) => folderId],
   (folders, folderId) => {
     return getParentAndCurrentFoldersById(folders, folderId);
   },
@@ -119,7 +119,7 @@ export const selectParentFoldersIds = createSelector(
 );
 
 export const selectChildAndCurrentFoldersIdsById = createSelector(
-  [selectFolders, (_state, folderId: string | undefined) => folderId],
+  [selectFolders, (_state, folderId: string) => folderId],
   (folders, folderId) => {
     return new Set(getChildAndCurrentFoldersIdsById(folderId, folders));
   },
@@ -180,9 +180,9 @@ export const selectSelectedPromptFoldersIds = createSelector(
   (prompt, state) => {
     let selectedFolders: string[] = [];
 
-    selectedFolders = selectedFolders.concat(
-      selectParentFoldersIds(state, prompt?.folderId),
-    );
+    selectedFolders = prompt
+      ? selectedFolders.concat(selectParentFoldersIds(state, prompt.folderId))
+      : [];
 
     return selectedFolders;
   },

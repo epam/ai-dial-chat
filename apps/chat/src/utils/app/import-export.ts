@@ -14,9 +14,11 @@ import {
 } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 
+import { ApiKeys } from '../server/api';
 import { cleanConversationHistory } from './clean';
 import { combineEntities } from './common';
 import { triggerDownload } from './file';
+import { getRootId } from './id';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isExportFormatV1(obj: any): obj is ExportFormatV1 {
@@ -74,6 +76,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
         id: chatFolder.id.toString(),
         name: chatFolder.name,
         type: FolderType.Chat,
+        folderId: getRootId({ apiKey: ApiKeys.Conversations }),
       })),
       prompts: [],
       isError: false,

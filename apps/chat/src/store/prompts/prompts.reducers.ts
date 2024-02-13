@@ -1,12 +1,15 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   generateNextName,
   getNextDefaultName,
 } from '@/src/utils/app/folders';
+import { getRootId } from '@/src/utils/app/id';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
+import { ApiKeys } from '@/src/utils/server/api';
 
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { PromptsHistory } from '@/src/types/import-export';
@@ -19,8 +22,6 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
-
-import { v4 as uuidv4 } from 'uuid';
 
 export { PromptsSelectors };
 
@@ -46,6 +47,7 @@ export const promptsSlice = createSlice({
   reducers: {
     init: (state) => state,
     initPrompts: (state) => state,
+    initPromptsSuccess: (state) => state,
     migratePromptsIfRequired: (state) => state,
     skipFailedMigratedPrompts: (
       state,
@@ -147,34 +149,17 @@ export const promptsSlice = createSlice({
     },
     sharePrompt: (
       state,
-      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
+      { payload }: PayloadAction<{ prompt: Prompt; id: string }>,
     ) => {
       state.prompts = state.prompts.map((prompt) => {
         if (prompt.id === payload.id) {
           return {
             ...prompt,
-            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
-            isShared: true,
+            ...payload.prompt,
           };
         }
 
         return prompt;
-      });
-    },
-    shareFolder: (
-      state,
-      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
-    ) => {
-      state.folders = state.folders.map((folder) => {
-        if (folder.id === payload.id) {
-          return {
-            ...folder,
-            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
-            isShared: true,
-          };
-        }
-
-        return folder;
       });
     },
     publishPrompt: (state, { payload }: PayloadAction<PublishRequest>) => {
@@ -203,10 +188,7 @@ export const promptsSlice = createSlice({
         return folder;
       });
     },
-    unpublishPrompt: (
-      state,
-      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
-    ) => {
+    unpublishPrompt: (state, { payload }: PayloadAction<{ id: string }>) => {
       state.prompts = state.prompts.map((prompt) => {
         if (prompt.id === payload.id) {
           return {
@@ -219,10 +201,7 @@ export const promptsSlice = createSlice({
         return prompt;
       });
     },
-    unpublishFolder: (
-      state,
-      { payload }: PayloadAction<{ id: string; shareUniqueId: string }>,
-    ) => {
+    unpublishFolder: (state, { payload }: PayloadAction<{ id: string }>) => {
       state.folders = state.folders.map((folder) => {
         if (folder.id === payload.id) {
           return {
@@ -242,7 +221,7 @@ export const promptsSlice = createSlice({
       const newPrompt: Prompt = addGeneratedPromptId({
         ...payload.prompt,
         ...resetShareEntity,
-        folderId: undefined,
+        folderId: getRootId({ apiKey: ApiKeys.Prompts }),
         name: generateNextName(
           translate('Prompt'),
           payload.prompt.name,
@@ -284,12 +263,10 @@ export const promptsSlice = createSlice({
     },
     createFolder: (
       state,
-      {
-        payload,
-      }: PayloadAction<{ name?: string; parentId?: string } | undefined>,
+      { payload }: PayloadAction<{ name?: string; parentId: string }>,
     ) => {
       const newFolder: FolderInterface = addGeneratedFolderId({
-        folderId: payload?.parentId,
+        folderId: payload.parentId,
         name:
           // custom name
           payload?.name ??
@@ -298,7 +275,7 @@ export const promptsSlice = createSlice({
             {
               prompts: state,
             },
-            payload?.parentId,
+            payload.parentId,
           ),
         type: FolderType.Prompt,
       });
@@ -310,7 +287,7 @@ export const promptsSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        relativePath?: string;
+        relativePath: string;
       }>,
     ) => {
       const folderName = getNextDefaultName(
@@ -323,7 +300,10 @@ export const promptsSlice = createSlice({
         false,
         true,
       );
-      const id = uuidv4();
+      const id = constructPath(
+        payload.relativePath || getRootId({ apiKey: ApiKeys.Prompts }),
+        folderName,
+      );
 
       state.temporaryFolders.push({
         id,

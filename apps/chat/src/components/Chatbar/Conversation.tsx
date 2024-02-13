@@ -19,14 +19,21 @@ import {
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
 } from '@/src/utils/app/common';
-import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { getRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { FeatureType, isNotLoaded } from '@/src/types/common';
+import {
+  BackendDataNodeType,
+  BackendResourceType,
+  FeatureType,
+  isNotLoaded,
+} from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -37,12 +44,12 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
-import ShareModal from '@/src/components/Chat/ShareModal';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 import ShareIcon from '@/src/components/Common/ShareIcon';
@@ -138,7 +145,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const [isShowExportModal, setIsShowExportModal] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [isSharing, setIsSharing] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
@@ -335,13 +341,15 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
   const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
-      setIsSharing(true);
+      dispatch(
+        ShareActions.share({
+          resourceType: BackendResourceType.CONVERSATION,
+          resourceId: conversation.id,
+          nodeType: BackendDataNodeType.ITEM,
+        }),
+      );
       setIsContextMenu(false);
-    }, []);
-
-  const handleCloseShareModal = useCallback(() => {
-    setIsSharing(false);
-  }, []);
+    }, [conversation.id, dispatch]);
 
   const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
@@ -375,6 +383,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       if (isNewFolder) {
         dispatch(
           ConversationsActions.createFolder({
+            parentId: getRootId({ apiKey: ApiKeys.Conversations }),
             name: newFolderName,
           }),
         );
@@ -382,7 +391,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       dispatch(
         ConversationsActions.updateConversation({
           id: conversation.id,
-          values: { folderId: folderPath },
+          values: {
+            folderId: isNewFolder
+              ? constructPath(
+                  getRootId({ apiKey: ApiKeys.Conversations }),
+                  folderPath,
+                )
+              : folderPath,
+          },
         }),
       );
     },
@@ -583,14 +599,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             />
           </SidebarActionButton>
         </div>
-      )}
-      {isSharing && (
-        <ShareModal
-          entity={conversation}
-          type={SharingType.Conversation}
-          isOpen
-          onClose={handleCloseShareModal}
-        />
       )}
       {isPublishing && (
         <PublishModal

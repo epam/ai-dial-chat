@@ -1,5 +1,7 @@
 import { useId, useRef } from 'react';
 
+import { ModalState } from '@/src/types/modal';
+
 import Modal from '@/src/components/Common/Modal';
 
 interface Props {
@@ -27,7 +29,7 @@ export const ConfirmDialog = ({
   return (
     <Modal
       portalId="theme-main"
-      isOpen={isOpen}
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
       dataQa="confirmation-dialog"
       containerClassName="z-50 flex min-w-[90%] flex-col items-center gap-4 p-6 text-center md:min-w-[300px] md:max-w-[500px]"

@@ -15,9 +15,9 @@ import {
 } from '../../constants/default-settings';
 import { defaultReplay } from '@/src/constants/replay';
 
+import { ApiKeys } from '../server/api';
 import { constructPath } from './file';
-
-import { v4 } from 'uuid';
+import { getRootId } from './id';
 
 const migrateAttachmentUrls = (attachment: Attachment): Attachment => {
   const getNewAttachmentUrl = (url: string | undefined): string | undefined =>
@@ -75,12 +75,18 @@ export const cleanConversation = (
     conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id;
 
   const cleanConversation: Conversation = {
-    id: conversation.id || v4(),
+    id:
+      conversation.id ||
+      constructPath(
+        conversation.folderId || getRootId({ apiKey: ApiKeys.Conversations }),
+        conversation.name || DEFAULT_CONVERSATION_NAME,
+      ),
     name: conversation.name || DEFAULT_CONVERSATION_NAME,
     model: model,
     prompt: conversation.prompt || DEFAULT_SYSTEM_PROMPT,
     temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
-    folderId: conversation.folderId || undefined,
+    folderId:
+      conversation.folderId || getRootId({ apiKey: ApiKeys.Conversations }),
     messages: conversation.messages?.map(migrateMessageAttachmentUrls) || [],
     replay: conversation.replay || defaultReplay,
     selectedAddons: conversation.selectedAddons ?? [],

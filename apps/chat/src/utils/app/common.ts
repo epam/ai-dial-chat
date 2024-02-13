@@ -1,5 +1,5 @@
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { getFoldersFromPaths } from '@/src/utils/app/folders';
+import { getFoldersFromIds } from '@/src/utils/app/folders';
 
 import { Conversation } from '@/src/types/chat';
 import { ConversationInfo } from '@/src/types/chat';
@@ -36,9 +36,7 @@ export const isEntityNameOnSameLevelUnique = <
   entities: T[],
 ): boolean => {
   const sameLevelEntities = entities.filter(
-    (e) =>
-      entity.id !== e.id &&
-      (e.folderId === entity.folderId || (!entity.folderId && !e.folderId)),
+    (e) => entity.id !== e.id && e.folderId === entity.folderId,
   );
   return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
 };
@@ -64,7 +62,7 @@ export const filterMigratedEntities = <T extends Conversation | Prompt>(
 export const updateEntitiesFoldersAndIds = (
   entities: PromptInfo[] | ConversationInfo[],
   folders: FolderInterface[],
-  updateFolderId: (folderId: string | undefined) => string | undefined,
+  updateFolderId: (folderId: string) => string,
   openedFoldersIds: string[],
 ) => {
   const allFolderIds = entities.map((prompt) => prompt.folderId as string);
@@ -80,7 +78,7 @@ export const updateEntitiesFoldersAndIds = (
   );
 
   const updatedFolders = combineEntities(
-    getFoldersFromPaths(newUniqueFolderIds, FolderType.Chat),
+    getFoldersFromIds(newUniqueFolderIds, FolderType.Chat),
     updatedExistedFolders,
   );
 

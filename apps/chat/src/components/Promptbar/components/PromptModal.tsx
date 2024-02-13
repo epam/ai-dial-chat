@@ -20,6 +20,7 @@ import {
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
+import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
@@ -165,7 +166,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
       portalId="theme-main"
       containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
       dataQa="prompt-modal"
-      isOpen={isOpen}
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={handleClose}
       onKeyDownOverlay={(e) => {
         if (selectedPrompt) handleEnter(e, selectedPrompt);

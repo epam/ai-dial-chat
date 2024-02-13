@@ -35,13 +35,14 @@ import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
-  getAllPathsFromPath,
-  getFolderFromPath,
-  getFoldersFromPaths,
+  getFolderFromId,
+  getFoldersFromIds,
   getNextDefaultName,
-  splitPath,
+  getParentFolderIdsFromFolderId,
+  splitEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
+import { getRootId } from '@/src/utils/app/id';
 import {
   exportPrompt,
   exportPrompts,
@@ -50,7 +51,7 @@ import {
 } from '@/src/utils/app/import-export';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
-import { getPromptApiKey, parsePromptApiKey } from '@/src/utils/server/api';
+import { ApiKeys, getPromptApiKey } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
@@ -83,6 +84,7 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
         ),
         description: '',
         content: '',
+        folderId: getRootId({ apiKey: ApiKeys.Prompts }),
       });
 
       return of(PromptsActions.createNewPromptSuccess({ newPrompt }));
@@ -130,10 +132,10 @@ const getOrUploadPrompt = (
   const prompt = PromptsSelectors.selectPrompt(state, payload.id);
 
   if (prompt?.status !== UploadStatus.LOADED) {
-    const { name, parentPath } = splitPath(payload.id);
+    const { apiKey, bucket, name, parentPath } = splitEntityId(payload.id);
     const prompt = addGeneratedPromptId({
       name,
-      folderId: parentPath,
+      folderId: constructPath(apiKey, bucket, parentPath),
     });
 
     return forkJoin({
@@ -162,13 +164,16 @@ const recreatePromptEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.recreatePrompt.match),
     mergeMap(({ payload }) => {
+      const { parentPath } = splitEntityId(payload.old.id);
       return concat(
         PromptService.createPrompt(payload.new).pipe(
           switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
         ),
-        PromptService.deletePrompt(parsePromptApiKey(payload.old.id)).pipe(
-          switchMap(() => EMPTY),
-        ), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        PromptService.deletePrompt({
+          id: payload.old.id,
+          folderId: parentPath || getRootId({ apiKey: ApiKeys.Prompts }),
+          name: payload.old.name,
+        }).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
       );
     }),
   );
@@ -252,7 +257,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.updateFolder.match),
     switchMap(({ payload }) => {
-      const folder = getFolderFromPath(payload.folderId, FolderType.Prompt);
+      const folder = getFolderFromId(payload.folderId, FolderType.Prompt);
       const newFolder = addGeneratedFolderId({ ...folder, ...payload.values });
 
       if (payload.folderId === newFolder.id) {
@@ -382,9 +387,11 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
         new Set(promptsListing.map((info) => info.folderId)),
       );
       //calculate all folders;
-      const folders = getFoldersFromPaths(
+      const folders = getFoldersFromIds(
         Array.from(
-          new Set(foldersIds.flatMap((id) => getAllPathsFromPath(id))),
+          new Set(
+            foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+          ),
         ),
         FolderType.Prompt,
       );
@@ -451,9 +458,11 @@ const importPromptsEpic: AppEpic = (action$) =>
         new Set(promptsListing.map((info) => info.folderId)),
       );
       //calculate all folders;
-      const folders = getFoldersFromPaths(
+      const folders = getFoldersFromIds(
         Array.from(
-          new Set(foldersIds.flatMap((id) => getAllPathsFromPath(id))),
+          new Set(
+            foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+          ),
         ),
         FolderType.Prompt,
       );
@@ -663,10 +672,15 @@ const initPromptsEpic: AppEpic = (action$) =>
         of(
           PromptsActions.setFolders({
             folders: Array.from(
-              new Set(prompts.flatMap((p) => getAllPathsFromPath(p.folderId))),
-            ).map((path) => getFolderFromPath(path, FolderType.Prompt)),
+              new Set(
+                prompts.flatMap((p) =>
+                  getParentFolderIdsFromFolderId(p.folderId),
+                ),
+              ),
+            ).map((path) => getFolderFromId(path, FolderType.Prompt)),
           }),
         ),
+        of(PromptsActions.initPromptsSuccess()),
       );
     }),
   );
@@ -706,7 +720,7 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
 export const PromptsEpics = combineEpics(
   migratePromptsIfRequiredEpic,
   skipFailedMigratedPromptsEpic,
-  // init
+
   initEpic,
   initPromptsEpic,
 

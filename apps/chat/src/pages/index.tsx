@@ -19,6 +19,7 @@ import { fallbackModelID } from '@/src/types/openai';
 
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
 import { ImportExportSelectors } from '../store/import-export/importExport.reducers';
+import { ShareActions, ShareSelectors } from '../store/share/share.reducers';
 import {
   selectConversationsToMigrateAndMigratedCount,
   selectFailedMigratedConversations,
@@ -35,8 +36,11 @@ import {
 } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { SHARE_QUERY_PARAM } from '../constants/share';
+
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+import ShareModal from '../components/Chat/ShareModal';
 import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
@@ -66,7 +70,9 @@ export default function Home({ initialState }: HomeProps) {
   const dispatch = useAppDispatch();
 
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
-
+  const isShareModalClosed = useAppSelector(
+    ShareSelectors.selectShareModalClosed,
+  );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const enabledFeatures = useAppSelector(
@@ -90,6 +96,17 @@ export default function Home({ initialState }: HomeProps) {
   );
 
   const shouldOverlayLogin = isOverlay && shouldLogin;
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.has(SHARE_QUERY_PARAM)) {
+      dispatch(
+        ShareActions.acceptShareInvitation({
+          invitationId: searchParams.get(SHARE_QUERY_PARAM)!,
+        }),
+      );
+    }
+  }, [dispatch]);
 
   // EFFECTS  --------------------------------------------
   useEffect(() => {
@@ -216,6 +233,7 @@ export default function Home({ initialState }: HomeProps) {
                 </div>
                 {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
                 {isProfileOpen && <UserMobile />}
+                {!isShareModalClosed && <ShareModal />}
               </div>
             </div>
           )}

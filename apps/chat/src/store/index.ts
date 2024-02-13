@@ -25,6 +25,8 @@ import { PromptsEpics } from './prompts/prompts.epics';
 import { promptsSlice } from './prompts/prompts.reducers';
 import { SettingsEpics } from './settings/settings.epic';
 import { SettingsState, settingsSlice } from './settings/settings.reducers';
+import { ShareEpics } from './share/share.epics';
+import { shareSlice } from './share/share.reducers';
 import UIEpics from './ui/ui.epics';
 import { uiSlice } from './ui/ui.reducers';
 
@@ -38,6 +40,7 @@ export const rootEpic = combineEpics(
   SettingsEpics,
   FilesEpics,
   ImportExportEpics,
+  ShareEpics,
 );
 
 const reducer = {
@@ -51,6 +54,7 @@ const reducer = {
   files: filesSlice.reducer,
   auth: authSlice.reducer,
   importExport: importExportSlice.reducer,
+  share: shareSlice.reducer,
 };
 const getMiddleware = (
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
