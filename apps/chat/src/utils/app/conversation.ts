@@ -103,17 +103,17 @@ export const getNewConversationName = (
 };
 
 export const getGeneratedConversationId = <T extends ConversationInfo>(
-  conversation: Omit<T, 'id'> & Partial<Pick<T, 'id'>>,
+  conversation: Omit<T, 'id'>,
 ): string => {
-  let bucket;
-  if (conversation.id) {
-    bucket = splitEntityId(conversation.id).bucket;
+  if (conversation.folderId) {
+    return constructPath(
+      conversation.folderId,
+      getConversationApiKey(conversation),
+    );
   }
-
   return constructPath(
     ApiKeys.Conversations,
-    bucket || BucketService.getBucket(),
-    conversation.folderId,
+    BucketService.getBucket(),
     getConversationApiKey(conversation),
   );
 };
@@ -127,10 +127,10 @@ export const regenerateConversationId = <T extends ConversationInfo>(
   }) as T;
 
 export const getConversationInfoFromId = (id: string): ConversationInfo => {
-  const { name, parentPath } = splitEntityId(id);
+  const { apiKey, bucket, name, parentPath } = splitEntityId(id);
   return regenerateConversationId({
     ...parseConversationApiKey(name),
-    folderId: parentPath,
+    folderId: constructPath(apiKey, bucket, parentPath),
   });
 };
 

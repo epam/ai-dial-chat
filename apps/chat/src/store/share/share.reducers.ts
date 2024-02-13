@@ -96,7 +96,10 @@ export const shareSlice = createSlice({
       _action: PayloadAction<{
         resourceType: BackendResourceType;
         sharedWith: ShareRelations;
-        resources: (ConversationInfo | Prompt | FolderInterface)[];
+        resources: {
+          entities: (ConversationInfo | Prompt)[];
+          folders: FolderInterface[];
+        };
       }>,
     ) => state,
     getSharedListingFail: (state) => state,

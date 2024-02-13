@@ -231,7 +231,8 @@ export const getFilteredFolders = ({
   includeEmptyFolders,
 }: GetFilteredFoldersProps) => {
   const rootFolders = allFolders.filter(
-    (folder) => !folder.folderId && filters.sectionFilter(folder),
+    (folder) =>
+      folder.folderId?.split('/').length === 2 && filters.sectionFilter(folder),
   );
   const filteredIds = new Set(
     rootFolders.flatMap((folder) =>
@@ -384,22 +385,22 @@ export const splitEntityId = (
   };
 };
 
-export const getAllPathsFromPath = (path?: string): string[] => {
+export const getParentFolderIdsFromFolderId = (path?: string): string[] => {
   if (!path) {
     return [];
   }
   const parts = path.split('/');
   const paths = [];
-  for (let i = 1; i <= parts.length; i++) {
+  for (let i = 3; i <= parts.length; i++) {
     const path = constructPath(...parts.slice(0, i));
     paths.push(path);
   }
   return paths;
 };
 
-export const getAllPathsFromId = (id: string): string[] => {
+export const getParentFolderIdsFromEntityId = (id: string): string[] => {
   const { parentPath } = splitEntityId(id);
-  return getAllPathsFromPath(parentPath);
+  return getParentFolderIdsFromFolderId(parentPath);
 };
 
 export const getFolderFromId = (
@@ -407,22 +408,22 @@ export const getFolderFromId = (
   type: FolderType,
   status?: UploadStatus,
 ): FolderInterface => {
-  const { name, parentPath } = splitEntityId(id);
+  const { apiKey, bucket, name, parentPath } = splitEntityId(id);
   return {
     id,
     name,
     type,
-    folderId: parentPath,
+    folderId: constructPath(apiKey, bucket, parentPath),
     status,
   };
 };
 
-export const getFoldersFromPaths = (
-  paths: (string | undefined)[],
+export const getFoldersFromIds = (
+  ids: (string | undefined)[],
   type: FolderType,
   status?: UploadStatus,
 ): FolderInterface[] => {
-  return (paths.filter(Boolean) as string[]).map((path) =>
+  return (ids.filter(Boolean) as string[]).map((path) =>
     getFolderFromId(path, type, status),
   );
 };
@@ -443,36 +444,30 @@ export const compareEntitiesByName = <
 };
 
 export const updateMovedFolderId = (
-  oldParentFolderId: string | undefined,
-  newParentFolderId: string | undefined,
-  folderId: string | undefined,
-) => {
-  const curr = folderId || '';
-  const old = oldParentFolderId || '';
+  oldParentFolderId: string,
+  newParentFolderId: string,
+  folderId: string,
+): string => {
+  const curr = folderId;
+  const old = oldParentFolderId;
   if (curr === old) {
     return newParentFolderId;
   }
   const prefix = `${old}/`;
   if (curr.startsWith(prefix)) {
-    if (!newParentFolderId) {
-      return curr.replace(prefix, '') || undefined;
-    }
     return curr.replace(old, newParentFolderId);
   }
   return folderId;
 };
 
 export const updateMovedEntityId = (
-  oldParentFolderId: string | undefined,
-  newParentFolderId: string | undefined,
+  oldParentFolderId: string,
+  newParentFolderId: string,
   entityId: string,
 ): string => {
-  const old = oldParentFolderId || '';
+  const old = oldParentFolderId;
   const prefix = `${old}/`;
   if (entityId.startsWith(prefix)) {
-    if (!newParentFolderId) {
-      return entityId.replace(prefix, '');
-    }
     return entityId.replace(old, newParentFolderId);
   }
   return entityId;

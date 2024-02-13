@@ -49,17 +49,18 @@ import {
   isSettingsChanged,
   regenerateConversationId,
 } from '@/src/utils/app/conversation';
+import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   generateNextName,
-  getAllPathsFromId,
-  getAllPathsFromPath,
   getFolderFromId,
-  getFoldersFromPaths,
+  getFoldersFromIds,
   getNextDefaultName,
+  getParentFolderIdsFromEntityId,
+  getParentFolderIdsFromFolderId,
   getPathToFolderById,
   updateMovedEntityId,
   updateMovedFolderId,
@@ -70,6 +71,7 @@ import {
 } from '@/src/utils/app/merge-streams';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
+import { ApiKeys } from '@/src/utils/server/api';
 
 import {
   ChatBody,
@@ -199,7 +201,9 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
     ),
     switchMap(() => ConversationService.getSelectedConversationsIds()),
     switchMap((selectedIds) => {
-      const paths = selectedIds.flatMap((id) => getAllPathsFromId(id));
+      const paths = selectedIds.flatMap((id) =>
+        getParentFolderIdsFromEntityId(id),
+      );
       const uploadPaths = [undefined, ...paths];
       return zip(
         uploadPaths.map((path) =>
@@ -273,7 +277,9 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                     ? name
                     : getNextDefaultName(
                         DEFAULT_CONVERSATION_NAME,
-                        conversations.filter((conv) => !conv.folderId), //only root conversations
+                        conversations.filter(
+                          (conv) => conv.folderId.split('/').length === 2,
+                        ), //only root conversations
                         index,
                       ),
                 messages: [],
@@ -288,6 +294,10 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 lastActivityDate: Date.now(),
                 isMessageStreaming: false,
                 status: UploadStatus.LOADED,
+                folderId: constructPath(
+                  ApiKeys.Conversations,
+                  BucketService.getBucket(),
+                ),
               });
             },
           );
@@ -331,7 +341,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
         state$.value,
         conversation.folderId,
       )
-        ? undefined
+        ? constructPath(ApiKeys.Conversations, BucketService.getBucket())
         : conversation.folderId;
 
       const newConversationName = getNextDefaultName(
@@ -394,7 +404,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
         state$.value,
         conversation.folderId,
       )
-        ? undefined
+        ? constructPath(ApiKeys.Conversations, BucketService.getBucket())
         : conversation.folderId;
 
       const newConversationName = getNextDefaultName(
@@ -449,7 +459,10 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
         ...resetShareEntity,
-        folderId: undefined,
+        folderId: constructPath(
+          ApiKeys.Conversations,
+          BucketService.getBucket(),
+        ),
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
           conversation.name,
@@ -503,7 +516,9 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     switchMap(({ folderId, conversations, folders }) => {
       const childFolders = new Set([
         folderId,
-        ...conversations.flatMap((conv) => getAllPathsFromPath(conv.folderId)),
+        ...conversations.flatMap((conv) =>
+          getParentFolderIdsFromFolderId(conv.folderId),
+        ),
       ]);
       const removedConversationsIds = conversations.map((conv) => conv.id);
       const actions: Observable<AnyAction>[] = [];
@@ -533,6 +548,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.updateFolder.match),
     switchMap(({ payload }) => {
       const folder = getFolderFromId(payload.folderId, FolderType.Chat);
+
       const newFolder = addGeneratedFolderId({ ...folder, ...payload.values });
 
       if (payload.folderId === newFolder.id) {
@@ -2173,7 +2189,9 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
           const conv = conversations.flat();
           const folderIds = Array.from(new Set(conv.map((c) => c.folderId)));
           const paths = Array.from(
-            new Set(folderIds.flatMap((id) => getAllPathsFromPath(id))),
+            new Set(
+              folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+            ),
           );
           return concat(
             of(
@@ -2185,7 +2203,7 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
             of(
               ConversationsActions.uploadFoldersSuccess({
                 paths: new Set(),
-                folders: getFoldersFromPaths(paths, FolderType.Chat),
+                folders: getFoldersFromIds(paths, FolderType.Chat),
                 allLoaded: true,
               }),
             ),

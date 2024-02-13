@@ -15,6 +15,8 @@ import {
 } from '../../constants/default-settings';
 import { defaultReplay } from '@/src/constants/replay';
 
+import { ApiKeys } from '../server/api';
+import { BucketService } from './data/bucket-service';
 import { constructPath } from './file';
 
 import { v4 } from 'uuid';
@@ -80,7 +82,9 @@ export const cleanConversation = (
     model: model,
     prompt: conversation.prompt || DEFAULT_SYSTEM_PROMPT,
     temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
-    folderId: conversation.folderId || undefined,
+    folderId:
+      conversation.folderId ||
+      constructPath(ApiKeys.Conversations, BucketService.getBucket()),
     messages: conversation.messages?.map(migrateMessageAttachmentUrls) || [],
     replay: conversation.replay || defaultReplay,
     selectedAddons: conversation.selectedAddons ?? [],

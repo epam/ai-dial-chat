@@ -13,11 +13,13 @@ import {
 
 import classNames from 'classnames';
 
-import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import {
@@ -347,6 +349,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       if (isNewFolder) {
         dispatch(
           ConversationsActions.createFolder({
+            parentId: constructPath(
+              ApiKeys.Conversations,
+              BucketService.getBucket(),
+            ),
             name: newFolderName,
           }),
         );
@@ -354,7 +360,15 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       dispatch(
         ConversationsActions.updateConversation({
           id: conversation.id,
-          values: { folderId: folderPath },
+          values: {
+            folderId: isNewFolder
+              ? constructPath(
+                  ApiKeys.Conversations,
+                  BucketService.getBucket(),
+                  folderPath,
+                )
+              : folderPath,
+          },
         }),
       );
     },

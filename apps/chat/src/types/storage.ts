@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { Conversation } from '@/src/types/chat';
 
 import { ConversationInfo } from './chat';
+import { Entity } from './common';
 import { FolderInterface, FoldersAndEntities } from './folder';
 import { Prompt, PromptInfo } from './prompt';
 
@@ -38,28 +39,28 @@ export enum MigrationStorageKeys {
 }
 
 export interface EntityStorage<
-  EntityInfo extends { folderId?: string },
-  Entity extends EntityInfo,
+  TEntityInfo extends Entity,
+  TEntity extends TEntityInfo,
 > {
   getFolders(path?: string): Observable<FolderInterface[]>; // listing with short information
 
-  getEntities(path?: string, recursive?: boolean): Observable<EntityInfo[]>; // listing with short information
+  getEntities(path?: string, recursive?: boolean): Observable<TEntityInfo[]>; // listing with short information
 
   getFoldersAndEntities(
     path?: string,
-  ): Observable<FoldersAndEntities<EntityInfo>>;
+  ): Observable<FoldersAndEntities<TEntityInfo>>;
 
-  getEntity(info: EntityInfo): Observable<Entity | null>;
+  getEntity(info: TEntityInfo): Observable<TEntity | null>;
 
-  createEntity(entity: Entity): Observable<void>;
+  createEntity(entity: TEntity): Observable<void>;
 
-  updateEntity(entity: Entity): Observable<void>;
+  updateEntity(entity: TEntity): Observable<void>;
 
-  deleteEntity(info: EntityInfo): Observable<void>;
+  deleteEntity(info: TEntityInfo): Observable<void>;
 
-  getEntityKey(info: EntityInfo): string;
+  getEntityKey(info: TEntityInfo): string;
 
-  parseEntityKey(key: string): EntityInfo;
+  parseEntityKey(key: string): Omit<TEntityInfo, 'folderId'>;
 
   getStorageKey(): string; // e.g. ApiKeys or `conversationHistory`/`prompts` in case of localStorage
 }

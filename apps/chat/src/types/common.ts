@@ -27,7 +27,7 @@ export enum BackendResourceType {
 export interface Entity {
   id: string;
   name: string;
-  folderId?: string;
+  folderId: string;
   status?: UploadStatus;
 }
 
@@ -67,7 +67,7 @@ export interface BaseDialEntity {
   absolutePath?: string;
   relativePath?: string;
   // Same as relative path, but needed for simplicity and backward compatibility
-  folderId?: string;
+  folderId: string;
   serverSynced?: boolean;
   status?: UploadStatus.LOADING | UploadStatus.FAILED;
 }

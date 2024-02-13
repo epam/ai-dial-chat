@@ -5,7 +5,7 @@ import { Spinner } from './Spinner';
 
 interface Props {
   onClose: ModalProps['onClose'];
-  isOpen: ModalProps['isOpen'];
+  isOpen: boolean;
   hideClose?: ModalProps['hideClose'];
   dataQa?: ModalProps['dataQa'];
   portalId?: ModalProps['portalId'];

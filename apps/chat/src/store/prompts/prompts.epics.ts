@@ -31,12 +31,9 @@ import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
-  findRootFromItems,
-  getAllPathsFromPath,
   getFolderFromId,
-  getFolderIdByPath,
+  getParentFolderIdsFromFolderId,
   getPathToFolderById,
-  getTemporaryFoldersToPublish,
   splitEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
@@ -57,14 +54,12 @@ import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import { resetShareEntity } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
 import { RootState } from '@/src/store';
-import { v4 as uuidv4 } from 'uuid';
 
 const savePromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -114,10 +109,10 @@ const getOrUploadPrompt = (
   const prompt = PromptsSelectors.selectPrompt(state, payload.id);
 
   if (prompt?.status !== UploadStatus.LOADED) {
-    const { name, parentPath } = splitEntityId(payload.id);
+    const { apiKey, bucket, name, parentPath } = splitEntityId(payload.id);
     const prompt = addGeneratedPromptId({
       name,
-      folderId: parentPath,
+      folderId: constructPath(apiKey, bucket, parentPath),
     });
 
     return forkJoin({
@@ -303,7 +298,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
       const childFolders = new Set([
         folderId,
         ...promptsToRemove.flatMap((prompt) =>
-          getAllPathsFromPath(prompt.folderId),
+          getParentFolderIdsFromFolderId(prompt.folderId),
         ),
       ]);
       const actions: Observable<AnyAction>[] = [];
@@ -387,20 +382,6 @@ const importPromptsEpic: AppEpic = (action$, state$) =>
       return of(PromptsActions.importPromptsSuccess({ prompts, folders }));
     }),
   );
-
-// const initFoldersEpic: AppEpic = (action$) =>
-//   action$.pipe(
-//     filter((action) => PromptsActions.initFolders.match(action)),
-//     switchMap(() =>
-//       PromptService.getPromptsFolders().pipe(
-//         map((folders) => {
-//           return PromptsActions.setFolders({
-//             folders,
-//           });
-//         }),
-//       ),
-//     ),
-//   );
 
 const migratePromptsEpic: AppEpic = (action$, state$) => {
   const browserStorage = new BrowserStorage();
@@ -559,9 +540,16 @@ const initPromptsEpic: AppEpic = (action$) =>
         of(
           PromptsActions.setFolders({
             folders: Array.from(
-              new Set(prompts.flatMap((p) => getAllPathsFromPath(p.folderId))),
+              new Set(
+                prompts.flatMap((p) =>
+                  getParentFolderIdsFromFolderId(p.folderId),
+                ),
+              ),
             ).map((path) => getFolderFromId(path, FolderType.Prompt)),
           }),
+        ),
+        of(
+          PromptsActions.initPromptsSuccess(),
         ),
       );
     }),
@@ -674,138 +662,138 @@ const initEpic: AppEpic = (action$) =>
 //   );
 
 //TODO: added for development purpose - emulate immediate sharing with yourself
-const publishFolderEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(PromptsActions.publishFolder.match),
-    map(({ payload }) => ({
-      publishRequest: payload,
-      prompts: PromptsSelectors.selectPrompts(state$.value),
-      childFolders: PromptsSelectors.selectChildAndCurrentFoldersIdsById(
-        state$.value,
-        payload.id,
-      ),
-      folders: PromptsSelectors.selectFolders(state$.value),
-      publishedAndTemporaryFolders:
-        PromptsSelectors.selectTemporaryAndFilteredFolders(state$.value),
-    })),
-    switchMap(
-      ({
-        publishRequest,
-        prompts,
-        childFolders,
-        folders,
-        publishedAndTemporaryFolders,
-      }) => {
-        const mapping = new Map();
-        childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
-        const newFolders = folders
-          .filter(({ id }) => childFolders.has(id))
-          .map(({ folderId, ...folder }) => ({
-            ...folder,
-            ...resetShareEntity,
-            id: mapping.get(folder.id),
-            originalId: folder.id,
-            folderId:
-              folder.id === publishRequest.id
-                ? getFolderIdByPath(
-                    publishRequest.path,
-                    publishedAndTemporaryFolders,
-                  )
-                : mapping.get(folderId),
-            publishedWithMe: true,
-            name:
-              folder.id === publishRequest.id
-                ? publishRequest.name
-                : folder.name,
-            publishVersion:
-              folder.id === publishRequest.id
-                ? publishRequest.version
-                : folder.publishVersion,
-          }));
+// const publishFolderEpic: AppEpic = (action$, state$) =>
+//   action$.pipe(
+//     filter(PromptsActions.publishFolder.match),
+//     map(({ payload }) => ({
+//       publishRequest: payload,
+//       prompts: PromptsSelectors.selectPrompts(state$.value),
+//       childFolders: PromptsSelectors.selectChildAndCurrentFoldersIdsById(
+//         state$.value,
+//         payload.id,
+//       ),
+//       folders: PromptsSelectors.selectFolders(state$.value),
+//       publishedAndTemporaryFolders:
+//         PromptsSelectors.selectTemporaryAndFilteredFolders(state$.value),
+//     })),
+//     switchMap(
+//       ({
+//         publishRequest,
+//         prompts,
+//         childFolders,
+//         folders,
+//         publishedAndTemporaryFolders,
+//       }) => {
+//         const mapping = new Map();
+//         childFolders.forEach((folderId) => mapping.set(folderId, uuidv4()));
+//         const newFolders = folders
+//           .filter(({ id }) => childFolders.has(id))
+//           .map(({ folderId, ...folder }) => ({
+//             ...folder,
+//             ...resetShareEntity,
+//             id: mapping.get(folder.id),
+//             originalId: folder.id,
+//             folderId:
+//               folder.id === publishRequest.id
+//                 ? getFolderIdByPath(
+//                     publishRequest.path,
+//                     publishedAndTemporaryFolders,
+//                   )
+//                 : mapping.get(folderId),
+//             publishedWithMe: true,
+//             name:
+//               folder.id === publishRequest.id
+//                 ? publishRequest.name
+//                 : folder.name,
+//             publishVersion:
+//               folder.id === publishRequest.id
+//                 ? publishRequest.version
+//                 : folder.publishVersion,
+//           }));
 
-        const rootFolder = findRootFromItems(newFolders);
-        const temporaryFolders = getTemporaryFoldersToPublish(
-          publishedAndTemporaryFolders,
-          rootFolder?.folderId,
-          publishRequest.version,
-        );
+//         const rootFolder = findRootFromItems(newFolders);
+//         const temporaryFolders = getTemporaryFoldersToPublish(
+//           publishedAndTemporaryFolders,
+//           rootFolder?.folderId,
+//           publishRequest.version,
+//         );
 
-        const sharedPrompts = prompts
-          .filter(
-            (prompt) => prompt.folderId && childFolders.has(prompt.folderId),
-          )
-          .map(({ folderId, ...prompt }) =>
-            addGeneratedPromptId({
-              ...prompt,
-              ...resetShareEntity,
-              originalId: prompt.id,
-              folderId: mapping.get(folderId),
-            }),
-          );
+//         const sharedPrompts = prompts
+//           .filter(
+//             (prompt) => prompt.folderId && childFolders.has(prompt.folderId),
+//           )
+//           .map(({ folderId, ...prompt }) =>
+//             addGeneratedPromptId({
+//               ...prompt,
+//               ...resetShareEntity,
+//               originalId: prompt.id,
+//               folderId: mapping.get(folderId),
+//             }),
+//           );
 
-        return concat(
-          of(
-            PromptsActions.addPrompts({
-              prompts: sharedPrompts,
-            }),
-          ),
-          of(
-            PromptsActions.addFolders({
-              folders: [...temporaryFolders, ...newFolders],
-            }),
-          ),
-          of(PromptsActions.deleteAllTemporaryFolders()),
-        );
-      },
-    ),
-  );
+//         return concat(
+//           of(
+//             PromptsActions.addPrompts({
+//               prompts: sharedPrompts,
+//             }),
+//           ),
+//           of(
+//             PromptsActions.addFolders({
+//               folders: [...temporaryFolders, ...newFolders],
+//             }),
+//           ),
+//           of(PromptsActions.deleteAllTemporaryFolders()),
+//         );
+//       },
+//     ),
+//   );
 
 //TODO: added for development purpose - emulate immediate sharing with yourself
-const publishPromptEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(PromptsActions.publishPrompt.match),
-    map(({ payload }) => ({
-      publishRequest: payload,
-      prompts: PromptsSelectors.selectPrompts(state$.value),
-      publishedAndTemporaryFolders:
-        PromptsSelectors.selectTemporaryAndFilteredFolders(state$.value),
-    })),
-    switchMap(({ publishRequest, prompts, publishedAndTemporaryFolders }) => {
-      const sharedPrompts = prompts
-        .filter((prompt) => prompt.id === publishRequest.id)
-        .map(({ folderId: _, ...prompt }) =>
-          addGeneratedPromptId({
-            ...prompt,
-            ...resetShareEntity,
-            originalId: prompt.id,
-            folderId: getFolderIdByPath(
-              publishRequest.path,
-              publishedAndTemporaryFolders,
-            ),
-            publishedWithMe: true,
-            name: publishRequest.name,
-            publishVersion: publishRequest.version,
-          }),
-        );
+// const publishPromptEpic: AppEpic = (action$, state$) =>
+//   action$.pipe(
+//     filter(PromptsActions.publishPrompt.match),
+//     map(({ payload }) => ({
+//       publishRequest: payload,
+//       prompts: PromptsSelectors.selectPrompts(state$.value),
+//       publishedAndTemporaryFolders:
+//         PromptsSelectors.selectTemporaryAndFilteredFolders(state$.value),
+//     })),
+//     switchMap(({ publishRequest, prompts, publishedAndTemporaryFolders }) => {
+//       const sharedPrompts = prompts
+//         .filter((prompt) => prompt.id === publishRequest.id)
+//         .map(({ folderId: _, ...prompt }) =>
+//           addGeneratedPromptId({
+//             ...prompt,
+//             ...resetShareEntity,
+//             originalId: prompt.id,
+//             folderId: getFolderIdByPath(
+//               publishRequest.path,
+//               publishedAndTemporaryFolders,
+//             ),
+//             publishedWithMe: true,
+//             name: publishRequest.name,
+//             publishVersion: publishRequest.version,
+//           }),
+//         );
 
-      const rootItem = findRootFromItems(sharedPrompts);
-      const temporaryFolders = getTemporaryFoldersToPublish(
-        publishedAndTemporaryFolders,
-        rootItem?.folderId,
-        publishRequest.version,
-      );
+//       const rootItem = findRootFromItems(sharedPrompts);
+//       const temporaryFolders = getTemporaryFoldersToPublish(
+//         publishedAndTemporaryFolders,
+//         rootItem?.folderId,
+//         publishRequest.version,
+//       );
 
-      return concat(
-        of(PromptsActions.addFolders({ folders: temporaryFolders })),
-        of(PromptsActions.deleteAllTemporaryFolders()),
-        of(
-          PromptsActions.addPrompts({
-            prompts: sharedPrompts,
-          }),
-        ),
-      );
-    }),
-  );
+//       return concat(
+//         of(PromptsActions.addFolders({ folders: temporaryFolders })),
+//         of(PromptsActions.deleteAllTemporaryFolders()),
+//         of(
+//           PromptsActions.addPrompts({
+//             prompts: sharedPrompts,
+//           }),
+//         ),
+//       );
+//     }),
+//   );
 
 export const uploadPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -849,8 +837,8 @@ export const PromptsEpics = combineEpics(
 
   // shareFolderEpic,
   // sharePromptEpic,
-  publishFolderEpic,
-  publishPromptEpic,
+  // publishFolderEpic,
+  // publishPromptEpic,
 
   uploadPromptEpic,
 );

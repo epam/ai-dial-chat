@@ -16,7 +16,10 @@ interface Props {
 export const Prompts: FC<Props> = ({ prompts }) => {
   const { t } = useTranslation(Translation.PromptBar);
   const promptsToDisplay = useMemo(
-    () => prompts.filter((prompt) => !prompt.folderId).reverse(),
+    () =>
+      prompts
+        .filter((prompt) => prompt.folderId.split('/').length === 2)
+        .reverse(),
     [prompts],
   );
 

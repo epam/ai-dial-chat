@@ -1,6 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   generateNextName,
@@ -8,6 +9,7 @@ import {
 } from '@/src/utils/app/folders';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
+import { ApiKeys } from '@/src/utils/server/api';
 
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { PromptsHistory } from '@/src/types/importExport';
@@ -47,6 +49,7 @@ export const promptsSlice = createSlice({
   reducers: {
     init: (state) => state,
     initPrompts: (state) => state,
+    initPromptsSuccess: (state) => state,
     migratePrompts: (state) => state,
     skipFailedMigratedPrompts: (
       state,
@@ -84,13 +87,15 @@ export const promptsSlice = createSlice({
     },
     createNewPrompt: (state) => {
       const newPrompt: Prompt = addGeneratedPromptId({
-        bucket: BucketService.getBucket(),
         name: getNextDefaultName(
           translate('Prompt'),
-          state.prompts.filter((prompt) => !prompt.folderId), // only root prompts
+          state.prompts.filter(
+            (prompt) => prompt.folderId.split('/').length === 2,
+          ), // only root prompts
         ),
         description: '',
         content: '',
+        folderId: constructPath(ApiKeys.Prompts, BucketService.getBucket()),
       });
       state.prompts = state.prompts.concat(newPrompt);
       state.selectedPromptId = newPrompt.id;
@@ -220,7 +225,7 @@ export const promptsSlice = createSlice({
       const newPrompt: Prompt = addGeneratedPromptId({
         ...payload.prompt,
         ...resetShareEntity,
-        folderId: undefined,
+        folderId: constructPath(ApiKeys.Prompts, BucketService.getBucket()),
         name: generateNextName(
           translate('Prompt'),
           payload.prompt.name,
@@ -263,13 +268,10 @@ export const promptsSlice = createSlice({
     },
     createFolder: (
       state,
-      {
-        payload,
-      }: PayloadAction<{ name?: string; parentId?: string } | undefined>,
+      { payload }: PayloadAction<{ name?: string; parentId: string }>,
     ) => {
       const newFolder: FolderInterface = addGeneratedFolderId({
-        bucket: BucketService.getBucket(),
-        folderId: payload?.parentId,
+        folderId: payload.parentId,
         name:
           // custom name
           payload?.name ??
@@ -278,7 +280,7 @@ export const promptsSlice = createSlice({
             {
               prompts: state,
             },
-            payload?.parentId,
+            payload.parentId,
           ),
         type: FolderType.Prompt,
       });
@@ -290,7 +292,7 @@ export const promptsSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        relativePath?: string;
+        relativePath: string;
       }>,
     ) => {
       const folderName = getNextDefaultName(
@@ -306,7 +308,6 @@ export const promptsSlice = createSlice({
       const id = uuidv4();
 
       state.temporaryFolders.push({
-        bucket: BucketService.getBucket(),
         id,
         name: folderName,
         type: FolderType.Prompt,

@@ -203,13 +203,15 @@ export const PromptSection = ({
   );
 
   const rootFolders = useMemo(
-    () => folders.filter(({ folderId }) => !folderId),
+    () => folders.filter(({ folderId }) => folderId.split('/').length === 2),
     [folders],
   );
 
   const rootPrompts = useMemo(
     () =>
-      prompts.filter(({ folderId }) => !folderId).sort(compareEntitiesByName),
+      prompts
+        .filter(({ folderId }) => folderId.split('/').length === 2)
+        .sort(compareEntitiesByName),
     [prompts],
   );
 

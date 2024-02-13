@@ -49,9 +49,13 @@ export const Conversations = ({ conversations }: Props) => {
   const { t } = useTranslation(Translation.SideBar);
 
   const conversationsToDisplay = useMemo(
-    () => conversations.filter((conversation) => !conversation.folderId),
+    () =>
+      conversations.filter(
+        (conversation) => conversation.folderId.split('/').length === 2,
+      ),
     [conversations],
   );
+  
 
   const todayDate = useMemo(() => new Date().setHours(0, 0, 0), []);
   const oneDayMilliseconds = 8.64e7;

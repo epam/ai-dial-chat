@@ -129,7 +129,7 @@ export const getConversationApiKey = (
 // Format key: {modelId}__{name}
 export const parseConversationApiKey = (
   apiKey: string,
-): Omit<ConversationInfo, 'bucket'> => {
+): Omit<ConversationInfo, 'folderId'> => {
   const parts = apiKey.split(pathKeySeparator);
 
   const [modelId, name] =
@@ -146,13 +146,15 @@ export const parseConversationApiKey = (
   };
 };
 
-// Format key: {name:base64}
+// Format key: {name}
 export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>): string => {
-  return combineApiKey(prompt.name);
+  return prompt.name;
 };
 
 // Format key: {name}
-export const parsePromptApiKey = (name: string): Omit<PromptInfo, 'bucket'> => {
+export const parsePromptApiKey = (
+  name: string,
+): Omit<PromptInfo, 'folderId'> => {
   return {
     id: name,
     name,

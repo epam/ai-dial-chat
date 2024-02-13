@@ -24,6 +24,8 @@ import {
   parseConversationApiKey,
   parsePromptApiKey,
 } from '../../server/api';
+import { constructPath } from '../file';
+import { splitEntityId } from '../folders';
 
 export class ShareService {
   public static share(
@@ -44,78 +46,90 @@ export class ShareService {
   }
   public static getSharedListing(
     sharedListingData: ShareListingRequestModel,
-  ): Observable<(ConversationInfo | PromptInfo)[]> {
+  ): Observable<{
+    entities: (ConversationInfo | PromptInfo)[];
+    folders: FolderInterface[];
+  }> {
     return ApiUtils.request(`api/share/listing`, {
       method: 'POST',
       body: JSON.stringify(sharedListingData),
     }).pipe(
       map((resp: { resources: BackendDataEntity[] }) => {
-        return resp.resources.map(
-          (entity): ConversationInfo | PromptInfo | FolderInterface => {
-            if (entity.resourceType === BackendResourceType.CONVERSATION) {
-              const conversationResource = entity as
-                | BackendChatEntity
-                | BackendChatFolder;
+        const folders: FolderInterface[] = [];
+        const entities: (ConversationInfo | PromptInfo)[] = [];
 
-              if (entity.nodeType === BackendDataNodeType.ITEM) {
-                const conversation = conversationResource as BackendChatEntity;
-                const relativePath =
-                  conversationResource.parentPath || undefined;
+        resp.resources.forEach((entity) => {
+          if (entity.resourceType === BackendResourceType.CONVERSATION) {
+            const conversationResource = entity as
+              | BackendChatEntity
+              | BackendChatFolder;
 
-                return {
-                  ...parseConversationApiKey(conversation.name),
-                  id: decodeURI(conversation.url),
-                  lastActivityDate: conversation.updatedAt,
-                  folderId: relativePath,
-                };
-              }
-              if (entity.nodeType === BackendDataNodeType.FOLDER) {
-                const folder = conversationResource as BackendChatFolder;
-                const relativePath =
-                  conversationResource.parentPath || undefined;
+            if (entity.nodeType === BackendDataNodeType.ITEM) {
+              const conversation = conversationResource as BackendChatEntity;
+              const id = decodeURI(
+                conversation.url.slice(0, conversation.url.length - 1),
+              );
+              const { apiKey, bucket, parentPath } = splitEntityId(id);
 
-                return {
-                  id: decodeURI(folder.url),
-                  name: folder.name,
-                  folderId: relativePath,
-                  type: getFolderTypeByApiKey(ApiKeys.Conversations),
-                };
-              }
+              entities.push({
+                ...parseConversationApiKey(conversation.name),
+                id: decodeURI(conversation.url),
+                lastActivityDate: conversation.updatedAt,
+                folderId: constructPath(apiKey, bucket, parentPath),
+              });
             }
+            if (entity.nodeType === BackendDataNodeType.FOLDER) {
+              const folder = conversationResource as BackendChatFolder;
+              const id = decodeURI(folder.url.slice(0, folder.url.length - 1));
+              const { apiKey, bucket, parentPath } = splitEntityId(id);
 
-            if (entity.resourceType === BackendResourceType.PROMPT) {
-              const conversationResource = entity as
-                | BackendChatEntity
-                | BackendChatFolder;
-
-              if (entity.nodeType === BackendDataNodeType.ITEM) {
-                const conversation = conversationResource as BackendChatEntity;
-                const relativePath =
-                  conversationResource.parentPath || undefined;
-
-                return {
-                  ...parsePromptApiKey(conversation.name),
-                  id: decodeURI(conversation.url),
-                  lastActivityDate: conversation.updatedAt,
-                  folderId: relativePath,
-                };
-              }
-              if (entity.nodeType === BackendDataNodeType.FOLDER) {
-                const folder = conversationResource as BackendChatFolder;
-                const relativePath =
-                  conversationResource.parentPath || undefined;
-
-                return {
-                  id: decodeURI(folder.url),
-                  name: folder.name,
-                  folderId: relativePath,
-                  type: getFolderTypeByApiKey(ApiKeys.Prompts),
-                };
-              }
+              folders.push({
+                id: decodeURI(folder.url.slice(0, folder.url.length - 1)),
+                name: folder.name,
+                folderId: constructPath(apiKey, bucket, parentPath),
+                type: getFolderTypeByApiKey(ApiKeys.Conversations),
+              });
             }
-            return entity;
-          },
-        );
+          }
+
+          if (entity.resourceType === BackendResourceType.PROMPT) {
+            const conversationResource = entity as
+              | BackendChatEntity
+              | BackendChatFolder;
+
+            if (entity.nodeType === BackendDataNodeType.ITEM) {
+              const conversation = conversationResource as BackendChatEntity;
+              const id = decodeURI(
+                conversation.url.slice(0, conversation.url.length - 1),
+              );
+              const { apiKey, bucket, parentPath } = splitEntityId(id);
+
+              entities.push({
+                ...parsePromptApiKey(conversation.name),
+                id: decodeURI(conversation.url),
+                lastActivityDate: conversation.updatedAt,
+                folderId: constructPath(apiKey, bucket, parentPath),
+              });
+            }
+            if (entity.nodeType === BackendDataNodeType.FOLDER) {
+              const folder = conversationResource as BackendChatFolder;
+              const id = decodeURI(folder.url.slice(0, folder.url.length - 1));
+              const { apiKey, bucket, parentPath } = splitEntityId(id);
+
+              folders.push({
+                id: decodeURI(folder.url.slice(0, folder.url.length - 1)),
+                name: folder.name,
+                folderId: constructPath(apiKey, bucket, parentPath),
+                type: getFolderTypeByApiKey(ApiKeys.Prompts),
+              });
+            }
+          }
+        });
+
+        return {
+          folders,
+          entities,
+        };
       }),
     );
   }

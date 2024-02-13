@@ -310,7 +310,7 @@ export const FileManagerModal = ({
                   {(folders.length !== 0 || filteredFiles.length !== 0) && (
                     <div className="flex flex-col gap-1 overflow-auto">
                       {folders.map((folder) => {
-                        if (folder.folderId) {
+                        if (folder.folderId.split('/').length !== 2) {
                           return null;
                         }
 
@@ -343,7 +343,7 @@ export const FileManagerModal = ({
                         );
                       })}
                       {filteredFiles.map((file) => {
-                        if (file.folderId) {
+                        if (file.folderId.split('/').length !== 2) {
                           return null;
                         }
 

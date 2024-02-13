@@ -3,13 +3,13 @@ import { createSelector } from '@reduxjs/toolkit';
 import { compareConversationsByDate } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import {
-  getAllPathsFromId,
   getChildAndCurrentFoldersIdsById,
   getConversationAttachmentWithPath,
   getFilteredFolders,
   getNextDefaultName,
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
+  getParentFolderIdsFromEntityId,
 } from '@/src/utils/app/folders';
 import {
   PublishedWithMeFilter,
@@ -57,7 +57,7 @@ export const selectFilteredConversations = createSelector(
             searchTerm,
           )) &&
         filters.searchFilter(conversation) &&
-        (conversation.folderId || filters.sectionFilter(conversation)),
+        filters.sectionFilter(conversation),
     );
   },
 );
@@ -157,7 +157,9 @@ export const selectParentFolders = createSelector(
 export const selectSelectedConversationsFoldersIds = createSelector(
   [selectSelectedConversationsIds],
   (selectedConversationsIds) => {
-    return selectedConversationsIds.flatMap((id) => getAllPathsFromId(id));
+    return selectedConversationsIds.flatMap((id) =>
+      getParentFolderIdsFromEntityId(id),
+    );
   },
 );
 export const selectChildAndCurrentFoldersIdsById = createSelector(

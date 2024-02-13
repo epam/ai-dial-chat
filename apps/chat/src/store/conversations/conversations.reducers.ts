@@ -2,6 +2,8 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
 import { regenerateConversationId } from '@/src/utils/app/conversation';
+import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   generateNextName,
@@ -9,6 +11,7 @@ import {
 } from '@/src/utils/app/folders';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
+import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
@@ -295,7 +298,10 @@ export const conversationsSlice = createSlice({
           const newConversation: Conversation = regenerateConversationId({
             ...(conversation as Conversation),
             ...resetShareEntity,
-            folderId: undefined,
+            folderId: constructPath(
+              ApiKeys.Conversations,
+              BucketService.getBucket(),
+            ),
             name: generateNextName(
               DEFAULT_CONVERSATION_NAME,
               conversation.name,
@@ -365,9 +371,7 @@ export const conversationsSlice = createSlice({
     },
     createFolder: (
       state,
-      {
-        payload,
-      }: PayloadAction<{ name?: string; parentId?: string } | undefined>,
+      { payload }: PayloadAction<{ name?: string; parentId: string }>,
     ) => {
       const newFolder: FolderInterface = addGeneratedFolderId({
         folderId: payload?.parentId,
@@ -408,7 +412,9 @@ export const conversationsSlice = createSlice({
         id,
         name: folderName,
         type: FolderType.Chat,
-        folderId: payload.relativePath,
+        folderId:
+          payload.relativePath ||
+          constructPath(ApiKeys.Conversations, BucketService.getBucket()),
         temporary: true,
       });
       state.newAddedFolderId = id;

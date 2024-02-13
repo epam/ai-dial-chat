@@ -50,7 +50,7 @@ export class FileService {
 
           return {
             result: {
-              id: constructPath(relativePath, typedResult.name),
+              id: decodeURI(typedResult.url),
               name: typedResult.name,
               absolutePath: constructPath(
                 ApiKeys.Files,
@@ -58,7 +58,11 @@ export class FileService {
                 relativePath,
               ),
               relativePath: relativePath,
-              folderId: relativePath,
+              folderId: constructPath(
+                ApiKeys.Files,
+                typedResult.bucket,
+                relativePath,
+              ),
               contentLength: typedResult.contentLength,
               contentType: typedResult.contentType,
               serverSynced: true,
@@ -77,7 +81,9 @@ export class FileService {
     const query = new URLSearchParams({
       filter,
       bucket: BucketService.getBucket(),
-      ...(parentPath && { path: parentPath }),
+      ...(parentPath && {
+        path: parentPath,
+      }),
     });
     const resultQuery = query.toString();
 
@@ -87,16 +93,21 @@ export class FileService {
           const relativePath = folder.parentPath || undefined;
 
           return {
-            id: constructPath(relativePath, folder.name),
+            id: constructPath(
+              ApiKeys.Files,
+              folder.bucket,
+              relativePath,
+              folder.name,
+            ),
             name: folder.name,
             type: FolderType.File,
             absolutePath: constructPath(
               ApiKeys.Files,
-              BucketService.getBucket(),
+              folder.bucket,
               relativePath,
             ),
             relativePath: relativePath,
-            folderId: relativePath,
+            folderId: constructPath(ApiKeys.Files, folder.bucket, relativePath),
             serverSynced: true,
           };
         });
@@ -123,7 +134,9 @@ export class FileService {
     const query = new URLSearchParams({
       filter,
       bucket: BucketService.getBucket(),
-      ...(parentPath && { path: parentPath }),
+      ...(parentPath && {
+        path: parentPath,
+      }),
     });
     const resultQuery = query.toString();
 
@@ -133,7 +146,12 @@ export class FileService {
           const relativePath = file.parentPath || undefined;
 
           return {
-            id: constructPath(relativePath, file.name),
+            id: constructPath(
+              ApiKeys.Files,
+              file.bucket,
+              relativePath,
+              file.name,
+            ),
             name: file.name,
             absolutePath: constructPath(
               ApiKeys.Files,
@@ -141,7 +159,7 @@ export class FileService {
               relativePath,
             ),
             relativePath: relativePath,
-            folderId: relativePath,
+            folderId: constructPath(ApiKeys.Files, file.bucket, relativePath),
             contentLength: file.contentLength,
             contentType: file.contentType,
             serverSynced: true,

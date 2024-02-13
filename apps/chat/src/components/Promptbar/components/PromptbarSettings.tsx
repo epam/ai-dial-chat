@@ -7,6 +7,10 @@ import { useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { constructPath } from '@/src/utils/app/file';
+import { ApiKeys } from '@/src/utils/server/api';
+
 import { FeatureType } from '@/src/types/common';
 import { PromptsHistory } from '@/src/types/importExport';
 import { DisplayMenuItemProps } from '@/src/types/menu';
@@ -40,7 +44,14 @@ export function PromptbarSettings() {
         dataQa: 'create-folder',
         Icon: FolderPlus,
         onClick: () => {
-          dispatch(PromptsActions.createFolder());
+          dispatch(
+            PromptsActions.createFolder({
+              parentId: constructPath(
+                ApiKeys.Prompts,
+                BucketService.getBucket(),
+              ),
+            }),
+          );
         },
       },
       {

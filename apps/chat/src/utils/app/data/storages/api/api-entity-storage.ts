@@ -10,44 +10,47 @@ import {
   BackendChatEntity,
   BackendChatFolder,
   BackendDataNodeType,
+  Entity,
   UploadStatus,
 } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { EntityStorage } from '@/src/types/storage';
 
 import { constructPath } from '../../../file';
+import { splitEntityId } from '../../../folders';
 import { BucketService } from '../../bucket-service';
 
 export abstract class ApiEntityStorage<
-  TEntityInfo extends { id: string; folderId?: string },
+  TEntityInfo extends Entity,
   TEntity extends TEntityInfo,
 > implements EntityStorage<TEntityInfo, TEntity>
 {
   private mapFolder(folder: BackendChatFolder): FolderInterface {
-    const relativePath = folder.parentPath || undefined;
+    const id = decodeURI(folder.url.slice(0, folder.url.length - 1));
+    const { apiKey, bucket, parentPath } = splitEntityId(id);
 
     return {
-      id: decodeURI(folder.url),
+      id,
       name: folder.name,
-      folderId: relativePath,
+      folderId: constructPath(apiKey, bucket, parentPath),
       type: getFolderTypeByApiKey(this.getStorageKey()),
     };
   }
 
-  private mapEntity(entity: BackendChatEntity) {
-    const relativePath = entity.parentPath || undefined;
+  private mapEntity(entity: BackendChatEntity): TEntityInfo {
     const info = this.parseEntityKey(entity.name);
+    const id = decodeURI(entity.url);
+    const { apiKey, bucket, parentPath } = splitEntityId(id);
 
     return {
       ...info,
-      id: decodeURI(entity.url),
-      bucket: entity.bucket,
+      id,
       lastActivityDate: entity.updatedAt,
-      folderId: relativePath,
-    };
+      folderId: constructPath(apiKey, bucket, parentPath),
+    } as unknown as TEntityInfo;
   }
 
-  private getEntityUrl = (entity: TEntityInfo): string =>
+  private getEntityUrl = (entity: { id: string }): string =>
     encodeURI(constructPath('api', entity.id));
 
   private getListingUrl = (resultQuery: string): string => {
@@ -169,7 +172,7 @@ export abstract class ApiEntityStorage<
 
   abstract getEntityKey(info: TEntityInfo): string;
 
-  abstract parseEntityKey(key: string): TEntityInfo;
+  abstract parseEntityKey(key: string): Omit<TEntityInfo, 'folderId'>;
 
   abstract getStorageKey(): ApiKeys;
 

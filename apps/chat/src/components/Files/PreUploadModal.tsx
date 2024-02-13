@@ -11,6 +11,7 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import { BucketService } from '@/src/utils/app/data/bucket-service';
 import {
   constructPath,
   getExtensionsListForMimeTypes,
@@ -22,6 +23,7 @@ import {
   notAllowedSymbols,
 } from '@/src/utils/app/file';
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
+import { ApiKeys } from '@/src/utils/server/api';
 
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
@@ -145,7 +147,12 @@ export const PreUploadDialog = ({
           filteredFiles.map((file) => {
             return {
               fileContent: file,
-              id: constructPath(folderPath, file.name),
+              id: constructPath(
+                ApiKeys.Files,
+                BucketService.getBucket(),
+                folderPath,
+                file.name,
+              ),
               name: file.name,
             };
           }),
@@ -243,7 +250,12 @@ export const PreUploadDialog = ({
               return {
                 ...file,
                 name: e.target.value + formatFile,
-                id: constructPath(folderPath, e.target.value + formatFile),
+                id: constructPath(
+                  ApiKeys.Files,
+                  BucketService.getBucket(),
+                  folderPath,
+                  e.target.value + formatFile,
+                ),
               };
             }
 
@@ -286,7 +298,12 @@ export const PreUploadDialog = ({
       oldFiles.map((file) => {
         return {
           ...file,
-          id: constructPath(folderPath, file.name),
+          id: constructPath(
+            ApiKeys.Files,
+            BucketService.getBucket(),
+            folderPath,
+            file.name,
+          ),
           folderPath,
         };
       }),

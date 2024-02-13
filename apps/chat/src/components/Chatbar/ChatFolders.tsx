@@ -213,14 +213,14 @@ export const ChatSection = ({
   );
 
   const rootFolders = useMemo(
-    () => folders.filter(({ folderId }) => !folderId),
+    () => folders.filter(({ folderId }) => folderId.split('/').length === 2),
     [folders],
   );
 
   const rootConversations = useMemo(
     () =>
       conversations
-        .filter(({ folderId }) => !folderId)
+        .filter(({ folderId }) => folderId.split('/').length === 2)
         .sort(compareEntitiesByName),
     [conversations],
   );

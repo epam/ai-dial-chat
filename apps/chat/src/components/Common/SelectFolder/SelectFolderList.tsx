@@ -60,7 +60,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
             <div className="flex flex-col gap-1 overflow-auto">
               {folderProps.allFolders.map((folder) => {
                 if (
-                  folder.folderId ||
+                  folder.folderId.split('/').length !== 2 ||
                   (initiallySelectedFolderId &&
                     folder.originalId === initiallySelectedFolderId)
                 ) {
