@@ -89,7 +89,11 @@ export const getPreparedConversations = ({
 
     return {
       ...conv,
-      id: getGeneratedConversationId({ ...conv, folderId: path }),
+      id: getGeneratedConversationId({
+        ...conv,
+        name: newName,
+        folderId: path,
+      }),
       name: newName,
       folderId: path,
     };
