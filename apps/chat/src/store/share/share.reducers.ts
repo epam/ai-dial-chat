@@ -51,6 +51,30 @@ export const shareSlice = createSlice({
       state.shareModalState = ModalState.LOADING;
       state.shareResourceName = getFileName(payload.resourceId);
     },
+    sharePrompt: (
+      state,
+      _action: PayloadAction<{
+        resourceId: string;
+      }>,
+    ) => state,
+    sharePromptFolder: (
+      state,
+      _action: PayloadAction<{
+        resourceId: string;
+      }>,
+    ) => state,
+    shareConversation: (
+      state,
+      _action: PayloadAction<{
+        resourceId: string;
+      }>,
+    ) => state,
+    shareConversationFolder: (
+      state,
+      _action: PayloadAction<{
+        resourceId: string;
+      }>,
+    ) => state,
     shareSuccess: (
       state,
       {

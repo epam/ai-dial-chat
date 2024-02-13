@@ -64,6 +64,7 @@ import {
   getFoldersFromIds,
   getNextDefaultName,
   getParentFolderIdsFromEntityId,
+  getParentFolderIdsFromFolderId,
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
