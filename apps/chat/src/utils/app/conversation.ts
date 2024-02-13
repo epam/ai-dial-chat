@@ -111,7 +111,7 @@ export const addGeneratedConversationId = <T extends ConversationInfo>(
   if (!conversation.id || newId !== conversation.id) {
     return {
       ...conversation,
-      id: getGeneratedConversationId(conversation),
+      id: newId,
     } as T;
   }
   return conversation as T;
