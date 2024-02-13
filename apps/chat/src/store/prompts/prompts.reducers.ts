@@ -2,10 +2,8 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import {
   addGeneratedFolderId,
-  generateNextName,
   getNextDefaultName,
 } from '@/src/utils/app/folders';
-import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 
 import { FolderInterface, FolderType } from '@/src/types/folder';
@@ -14,7 +12,6 @@ import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
 
-import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import * as PromptsSelectors from './prompts.selectors';
@@ -81,17 +78,13 @@ export const promptsSlice = createSlice({
     ) => {
       state.failedMigratedPrompts = payload.failedMigratedPrompts;
     },
-    createNewPrompt: (state) => {
-      const newPrompt: Prompt = addGeneratedPromptId({
-        name: getNextDefaultName(
-          translate('Prompt'),
-          state.prompts.filter((prompt) => !prompt.folderId), // only root prompts
-        ),
-        description: '',
-        content: '',
-      });
-      state.prompts = state.prompts.concat(newPrompt);
-      state.selectedPromptId = newPrompt.id;
+    createNewPrompt: (state) => state,
+    createNewPromptSuccess: (
+      state,
+      { payload }: PayloadAction<{ newPrompt: Prompt }>,
+    ) => {
+      state.prompts = state.prompts.concat(payload.newPrompt);
+      state.selectedPromptId = payload.newPrompt.id;
     },
     deletePrompts: (
       state,
@@ -125,6 +118,11 @@ export const promptsSlice = createSlice({
         (prompt) => prompt.id !== payload.prompt.id,
       );
     },
+    savePrompt: (state, _action: PayloadAction<Prompt>) => state,
+    recreatePrompt: (
+      state,
+      _action: PayloadAction<{ new: Prompt; old: PromptInfo }>,
+    ) => state,
     updatePrompt: (
       state,
       _action: PayloadAction<{ id: string; values: Partial<Prompt> }>,
@@ -234,23 +232,7 @@ export const promptsSlice = createSlice({
         return folder;
       });
     },
-    duplicatePrompt: (
-      state,
-      { payload }: PayloadAction<{ prompt: Prompt }>,
-    ) => {
-      const newPrompt: Prompt = addGeneratedPromptId({
-        ...payload.prompt,
-        ...resetShareEntity,
-        folderId: undefined,
-        name: generateNextName(
-          translate('Prompt'),
-          payload.prompt.name,
-          state.prompts,
-        ),
-      });
-      state.prompts = state.prompts.concat(newPrompt);
-      state.selectedPromptId = newPrompt.id;
-    },
+    duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
     updatePrompts: (
       state,
       { payload }: PayloadAction<{ prompts: Prompt[] }>,
