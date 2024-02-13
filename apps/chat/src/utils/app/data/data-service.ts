@@ -3,11 +3,7 @@ import { Observable, map } from 'rxjs';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
-import {
-  DialStorage,
-  StorageType,
-  UIStorageKeys,
-} from '@/src/types/storage';
+import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
 import { Theme } from '@/src/types/themes';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';

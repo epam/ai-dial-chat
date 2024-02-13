@@ -235,15 +235,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     [],
   );
 
-  const handleOpenRenameModal: MouseEventHandler<HTMLButtonElement> =
-    useCallback(
-      (e) => {
-        e.stopPropagation();
-        setIsRenaming(true);
-        setRenameValue(conversation.name);
-      },
-      [conversation.name],
-    );
+  const handleStartRename: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (e) => {
+      e.stopPropagation();
+      setIsRenaming(true);
+      setRenameValue(conversation.name);
+    },
+    [conversation.name],
+  );
   const handleOpenDeleteModal: MouseEventHandler<HTMLButtonElement> =
     useCallback((e) => {
       e.stopPropagation();
@@ -499,7 +498,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             }}
             onMoveToFolder={handleMoveToFolder}
             onDelete={handleOpenDeleteModal}
-            onRename={handleOpenRenameModal}
+            onRename={handleStartRename}
             onExport={handleExport}
             onOpenExportModal={handleOpenExportModal}
             onCompare={!isReplay && !isPlayback ? handleCompare : undefined}
