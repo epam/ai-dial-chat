@@ -52,9 +52,11 @@ export class ApiStorage implements DialStorage {
               'messages' in entity
                 ? DEFAULT_CONVERSATION_NAME
                 : DEFAULT_PROMPT_NAME;
-            const newName = generateNextName(defaultName, entity.name, [
-              ...entities,
-            ]);
+            const newName = generateNextName(
+              defaultName,
+              entity.name,
+              entities,
+            );
             const updatedEntity = {
               ...entity,
               id: constructPath(entity.folderId, newName),
@@ -117,12 +119,12 @@ export class ApiStorage implements DialStorage {
   }
 
   setConversations(conversations: Conversation[]): Observable<void> {
-    return this.getConversations().pipe(
-      concatMap((apiConversations) =>
-        from(conversations).pipe(
-          concatMap((conversation) =>
+    return from(conversations).pipe(
+      concatMap((conv) =>
+        this.getConversations(conv.folderId).pipe(
+          concatMap((apiConversations) =>
             this.tryCreateEntity(
-              conversation,
+              conv,
               [...conversations, ...apiConversations],
               this._conversationApiStorage,
             ),
@@ -159,10 +161,10 @@ export class ApiStorage implements DialStorage {
   }
 
   setPrompts(prompts: Prompt[]): Observable<void> {
-    return this.getPrompts().pipe(
-      concatMap((apiPrompts) =>
-        from(prompts).pipe(
-          concatMap((prompt) =>
+    return from(prompts).pipe(
+      concatMap((prompt) =>
+        this.getPrompts(prompt.folderId).pipe(
+          concatMap((apiPrompts) =>
             this.tryCreateEntity(
               prompt,
               [...prompts, ...apiPrompts],
