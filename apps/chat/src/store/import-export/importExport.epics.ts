@@ -278,6 +278,11 @@ const importConversationsEpic: AppEpic = (action$) =>
         conversationsFolders: foldersToUpload,
       });
 
+      const preparedHistory = [
+        ...filteredConversations,
+        ...preparedConversations,
+      ];
+
       return zip(
         preparedConversations.map((info) =>
           ConversationService.createConversation(info),
@@ -288,7 +293,7 @@ const importConversationsEpic: AppEpic = (action$) =>
             of(ImportExportActions.importConversationsSuccess()),
             of(
               ConversationsActions.importConversationsSuccess({
-                conversations: history,
+                conversations: preparedHistory,
                 folders,
               }),
             ),

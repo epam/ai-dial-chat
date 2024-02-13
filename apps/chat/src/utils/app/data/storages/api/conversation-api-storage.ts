@@ -13,7 +13,8 @@ import { FolderInterface } from '@/src/types/folder';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 
 import { cleanConversation } from '../../../clean';
-import { constructPath, notAllowedSymbolsRegex } from '../../../file';
+import { getGeneratedConversationId } from '../../../conversation';
+import { notAllowedSymbolsRegex } from '../../../file';
 import { getPathToFolderById } from '../../../folders';
 import { ConversationService } from '../../conversation-service';
 import { ApiEntityStorage } from './api-entity-storage';
@@ -88,7 +89,7 @@ export const getPreparedConversations = ({
 
     return {
       ...conv,
-      id: constructPath(...[path, newName]),
+      id: getGeneratedConversationId({ ...conv, folderId: path }),
       name: newName,
       folderId: path,
     };
