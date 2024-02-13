@@ -19,7 +19,7 @@ import {
 
 import { combineEpics } from 'redux-observable';
 
-import { filterOnlyMyEntities } from '@/src/utils/app/common';
+import { combineEntities, filterOnlyMyEntities } from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { FileService } from '@/src/utils/app/data/file-service';
@@ -143,7 +143,7 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
         new Set(conversationsListing.map((info) => info.folderId)),
       );
       //calculate all folders;
-      const folders = getFoldersFromIds(
+      const foldersWithConversation = getFoldersFromIds(
         Array.from(
           new Set(
             foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
@@ -151,6 +151,10 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
         ),
         FolderType.Chat,
       );
+
+      const allFolders = ConversationsSelectors.selectFolders(state$.value);
+
+      const folders = combineEntities(foldersWithConversation, allFolders);
 
       return forkJoin({
         //get all conversations from api
