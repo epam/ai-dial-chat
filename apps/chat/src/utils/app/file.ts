@@ -103,7 +103,7 @@ export const getFilesWithInvalidFileType = (
     ? []
     : files.filter((file) => !isAllowedMimeType(allowedFileTypes, file.type));
 };
-export const notAllowedSymbols = ':;,=/#?&';
+export const notAllowedSymbols = ':;,=/';
 export const notAllowedSymbolsRegex = new RegExp(
   `[${escapeStringRegexp(notAllowedSymbols)}]|(\r\n|\n|\r)`,
   'gm',

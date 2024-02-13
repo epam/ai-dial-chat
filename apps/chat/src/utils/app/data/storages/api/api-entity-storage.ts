@@ -50,11 +50,14 @@ export abstract class ApiEntityStorage<
     } as unknown as TEntityInfo;
   }
 
-  private getEntityUrl = (entity: { id: string }): string =>
-    encodeURI(constructPath('api', entity.id));
+  private encodePath = (path: string): string =>
+    constructPath(...path.split('/').map((part) => encodeURIComponent(part)));
+
+  private getEntityUrl = (entity: TEntityInfo): string =>
+    this.encodePath(constructPath('api', entity.id));
 
   private getListingUrl = (resultQuery: string): string => {
-    const listingUrl = encodeURI(
+    const listingUrl = this.encodePath(
       constructPath('api', this.getStorageKey(), 'listing'),
     );
     return `${listingUrl}?${resultQuery}`;

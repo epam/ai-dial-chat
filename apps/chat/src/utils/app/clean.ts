@@ -93,6 +93,7 @@ export const cleanConversation = (
     assistantModelId,
     lastActivityDate: conversation.lastActivityDate || Date.now(),
     isMessageStreaming: false,
+    isNameChanged: conversation.isNameChanged,
     ...(conversation.playback && {
       playback: conversation.playback,
     }),
