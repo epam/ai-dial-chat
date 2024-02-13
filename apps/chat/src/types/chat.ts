@@ -1,6 +1,5 @@
 import { Entity, ShareEntity } from './common';
 import { MIMEType } from './files';
-import { ShareInterface } from './share';
 
 export interface Attachment {
   index?: number;

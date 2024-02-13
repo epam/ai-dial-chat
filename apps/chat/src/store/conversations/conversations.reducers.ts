@@ -2,7 +2,6 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
 import { regenerateConversationId } from '@/src/utils/app/conversation';
-import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
@@ -28,8 +27,6 @@ import {
 
 import * as ConversationsSelectors from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
-
-import { v4 as uuidv4 } from 'uuid';
 
 export { ConversationsSelectors };
 
@@ -404,7 +401,10 @@ export const conversationsSlice = createSlice({
         false,
         true,
       );
-      const id = uuidv4();
+      const id = constructPath(
+        payload.relativePath || getRootId({ apiKey: ApiKeys.Conversations }),
+        folderName,
+      );
 
       state.temporaryFolders.push({
         id,

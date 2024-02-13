@@ -13,7 +13,6 @@ import {
   getConversationApiKey,
   parseConversationApiKey,
 } from '../server/api';
-import { BucketService } from './data/bucket-service';
 import { constructPath, notAllowedSymbolsRegex } from './file';
 import { compareEntitiesByName, splitEntityId } from './folders';
 import { getRootId } from './id';

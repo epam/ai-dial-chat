@@ -12,8 +12,9 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
-import escapeStringRegexp from 'escape-string-regexp';
 import { isRootId } from './id';
+
+import escapeStringRegexp from 'escape-string-regexp';
 
 export const getFoldersDepth = (
   childFolder: FolderInterface,
@@ -232,8 +233,7 @@ export const getFilteredFolders = ({
   includeEmptyFolders,
 }: GetFilteredFoldersProps) => {
   const rootFolders = allFolders.filter(
-    (folder) =>
-    isRootId(folder.folderId) && filters.sectionFilter(folder),
+    (folder) => isRootId(folder.folderId) && filters.sectionFilter(folder),
   );
   const filteredIds = new Set(
     rootFolders.flatMap((folder) =>

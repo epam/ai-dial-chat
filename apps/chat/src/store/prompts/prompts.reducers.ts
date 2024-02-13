@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   generateNextName,
@@ -21,8 +22,6 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
-
-import { v4 as uuidv4 } from 'uuid';
 
 export { PromptsSelectors };
 
@@ -301,7 +300,10 @@ export const promptsSlice = createSlice({
         false,
         true,
       );
-      const id = uuidv4();
+      const id = constructPath(
+        payload.relativePath || getRootId({ apiKey: ApiKeys.Prompts }),
+        folderName,
+      );
 
       state.temporaryFolders.push({
         id,

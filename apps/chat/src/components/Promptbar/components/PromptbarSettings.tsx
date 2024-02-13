@@ -7,8 +7,6 @@ import { useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { BucketService } from '@/src/utils/app/data/bucket-service';
-import { constructPath } from '@/src/utils/app/file';
 import { getRootId } from '@/src/utils/app/id';
 import { ApiKeys } from '@/src/utils/server/api';
 

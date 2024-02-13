@@ -1,6 +1,5 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
@@ -8,7 +7,6 @@ import {
   getParentAndChildFolders,
 } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import { UploadStatus } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';

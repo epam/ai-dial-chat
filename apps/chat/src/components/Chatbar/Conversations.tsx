@@ -3,12 +3,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { compareConversationsByDate } from '@/src/utils/app/conversation';
+import { isRootId } from '@/src/utils/app/id';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsRenderer } from './ConversationsRenderer';
-import { isRootId } from '@/src/utils/app/id';
 
 interface Props {
   conversations: ConversationInfo[];
@@ -51,12 +51,9 @@ export const Conversations = ({ conversations }: Props) => {
 
   const conversationsToDisplay = useMemo(
     () =>
-      conversations.filter(
-        (conversation) => isRootId(conversation.folderId),
-      ),
+      conversations.filter((conversation) => isRootId(conversation.folderId)),
     [conversations],
   );
-
 
   const todayDate = useMemo(() => new Date().setHours(0, 0, 0), []);
   const oneDayMilliseconds = 8.64e7;

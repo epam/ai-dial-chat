@@ -49,14 +49,12 @@ import {
   isSettingsChanged,
   regenerateConversationId,
 } from '@/src/utils/app/conversation';
-import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import {
   getOrUploadConversation,
   getPreparedConversations,
 } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   generateNextName,

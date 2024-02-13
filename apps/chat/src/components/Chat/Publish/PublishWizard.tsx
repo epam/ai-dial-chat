@@ -48,8 +48,6 @@ import { PublishAttachment } from './PublishAttachment';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
 import { UserGroupFilter } from './UserGroupFilter';
 
-import { v4 as uuidv4 } from 'uuid';
-
 interface Props {
   entity: ShareEntity;
   type: SharingType;
@@ -78,7 +76,6 @@ export default function PublishWizard({
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
   const publishAction = getPublishActionByType(type);
-  const shareId = useRef(uuidv4());
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState<string>(entity.name);

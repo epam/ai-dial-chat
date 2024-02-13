@@ -1,4 +1,4 @@
-import { ClipboardEvent, MouseEvent, useCallback, useRef } from 'react';
+import { ClipboardEvent, MouseEvent, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -12,8 +12,6 @@ import { Translation } from '@/src/types/translation';
 import { useAppDispatch } from '@/src/store/hooks';
 
 import Modal from '../Common/Modal';
-
-import { v4 as uuidv4 } from 'uuid';
 
 interface Props {
   entity: Entity;
@@ -31,8 +29,6 @@ export default function UnpublishModal({
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
   const unpublishAction = getUnpublishActionByType(type);
-  const shareId = useRef(uuidv4());
-
   const handleClose = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();

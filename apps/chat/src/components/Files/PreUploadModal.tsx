@@ -11,7 +11,6 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
-import { BucketService } from '@/src/utils/app/data/bucket-service';
 import {
   constructPath,
   getExtensionsListForMimeTypes,
@@ -24,7 +23,6 @@ import {
 } from '@/src/utils/app/file';
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
@@ -293,11 +291,7 @@ export const PreUploadDialog = ({
       oldFiles.map((file) => {
         return {
           ...file,
-          id: constructPath(
-            getRootId(),
-            folderPath,
-            file.name,
-          ),
+          id: constructPath(getRootId(), folderPath, file.name),
           folderPath,
         };
       }),

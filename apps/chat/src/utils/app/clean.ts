@@ -19,8 +19,6 @@ import { ApiKeys } from '../server/api';
 import { constructPath } from './file';
 import { getRootId } from './id';
 
-import { v4 } from 'uuid';
-
 const migrateAttachmentUrls = (attachment: Attachment): Attachment => {
   const getNewAttachmentUrl = (url: string | undefined): string | undefined =>
     url &&
@@ -77,7 +75,12 @@ export const cleanConversation = (
     conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id;
 
   const cleanConversation: Conversation = {
-    id: conversation.id || v4(),
+    id:
+      conversation.id ||
+      constructPath(
+        conversation.folderId || getRootId({ apiKey: ApiKeys.Conversations }),
+        conversation.name || DEFAULT_CONVERSATION_NAME,
+      ),
     name: conversation.name || DEFAULT_CONVERSATION_NAME,
     model: model,
     prompt: conversation.prompt || DEFAULT_SYSTEM_PROMPT,
