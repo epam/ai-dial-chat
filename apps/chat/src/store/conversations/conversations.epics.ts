@@ -2062,7 +2062,6 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
       if (!conversation) {
         return EMPTY; // TODO: handle?
       }
-
       const newConversation: Conversation = addGeneratedConversationId({
         ...(conversation as Conversation),
         ...values,
@@ -2083,7 +2082,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
           () => !!conversation && conversation.id !== newConversation.id,
           of(
             ConversationsActions.recreateConversation({
-              new: { ...newConversation, id: newConversation.id },
+              new: newConversation,
               old: conversation,
             }),
           ),
