@@ -13,7 +13,6 @@ import {
 
 import classNames from 'classnames';
 
-import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
