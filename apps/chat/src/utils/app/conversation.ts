@@ -90,7 +90,7 @@ export const getNewConversationName = (
     .replaceAll(notAllowedSymbolsRegex, ' ')
     .trim();
   if (content.length > 0) {
-    return content.length > 160 ? content.substring(0, 160) + '...' : content;
+    return content.length > 160 ? content.substring(0, 157) + '...' : content;
   } else if (message.custom_content?.attachments?.length) {
     const files = message.custom_content.attachments;
     return files[0].title;
