@@ -427,8 +427,10 @@ dialTest(
     confirmationDialog,
     promptData,
     setTestIds,
+    setIssueIds,
   }) => {
     setTestIds('EPMRTC-1384');
+    setIssueIds('671');
     const levelsCount = 3;
     const levelToDelete = 2;
     let nestedFolders: FolderInterface[];

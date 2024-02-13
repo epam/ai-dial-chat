@@ -33,7 +33,7 @@ dialTest.beforeAll(async () => {
   gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
 });
 
-dialTest.skip(
+dialTest(
   'Export and import one chat in a folder.\n' +
     `Export and import one chat in a folder when folder doesn't exist`,
   async ({
@@ -151,7 +151,8 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+//TODO: empty folder export
+dialTest(
   'Export and import chat structure with all conversations',
   async ({
     dialHomePage,
@@ -231,7 +232,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Existed chats stay after import',
   async ({
     dialHomePage,
@@ -383,7 +384,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Continue working with imported file. Regenerate response.\n' +
     'Continue working with imported file. Send a message.\n' +
     'Continue working with imported file. Edit a message',
@@ -397,7 +398,7 @@ dialTest.skip(
   }) => {
     setTestIds('EPMRTC-923', 'EPMRTC-924', 'EPMRTC-925');
     let importedRootConversation: Conversation;
-    const requests = ['1+2=', '2+3=', '3+4='];
+    const requests = ['1+2', '2+3', '3+4'];
 
     await dialTest.step(
       'Prepare conversation with several messages to import',
@@ -435,7 +436,7 @@ dialTest.skip(
     await dialTest.step(
       'Send new request in chat and verify response is received',
       async () => {
-        const newRequest = '4+5=';
+        const newRequest = '4+5';
         await chat.sendRequestWithButton(newRequest);
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
@@ -448,7 +449,7 @@ dialTest.skip(
     await dialTest.step(
       'Edit 1st request in chat and verify 1st response is regenerated',
       async () => {
-        const updatedMessage = '6+7=';
+        const updatedMessage = '6+7';
         await chatMessages.openEditMessageMode(1);
         await chatMessages.editMessage(requests[0], updatedMessage);
         const messagesCount =

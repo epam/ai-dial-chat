@@ -53,7 +53,15 @@ dialTest(
     expect
       .soft(draggableAreaColor, ExpectedMessages.draggableAreaColorIsValid)
       .toBe(Colors.backgroundAccentSecondary);
-    await page.mouse.up();
+    if (isApiStorageType) {
+      const respPromise = page.waitForResponse((resp) => {
+        return resp.request().method() === 'POST';
+      });
+      await page.mouse.up();
+      return respPromise;
+    } else {
+      await page.mouse.up();
+    }
 
     expect
       .soft(

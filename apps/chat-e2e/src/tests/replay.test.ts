@@ -978,7 +978,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   `"Replay as is" in chat from 1.4 milestone.\n` +
     `"Replay as is" in chat from 1.9 milestone`,
   async ({

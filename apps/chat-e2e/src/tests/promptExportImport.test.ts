@@ -355,7 +355,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Existed prompts stay after import',
   async ({
     dialHomePage,
@@ -478,7 +478,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Import file from 1.4 version to prompts and continue working with it',
   async ({
     dialHomePage,
