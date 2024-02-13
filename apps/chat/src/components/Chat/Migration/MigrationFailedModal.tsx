@@ -46,19 +46,21 @@ const ItemsList = <T extends Conversation | Prompt>({
     setEntitiesToRetryIds(entitiesToRetryIds.filter((id) => id !== entityId));
   };
 
-  return failedMigratedEntities.length ? (
+  if (!failedMigratedEntities.length) return null;
+
+  return (
     <div className={classNames('mt-2', withPt && 'pt-2')}>
       <ul className="flex flex-col gap-0.5">
         {failedMigratedEntities.map((entity) => (
           <li
-            className="relative flex h-[30px] items-center justify-between rounded"
+            className="flex h-[30px] items-center justify-between rounded"
             key={entity.id}
           >
-            <div className="flex">
+            <div className="flex min-w-0">
               {getModelIcon(entity)}
-              <p className="ml-2">{entity.name}</p>
+              <p className="ml-2 truncate">{entity.name}</p>
             </div>
-            <div className="flex w-[100px] items-center justify-around">
+            <div className="flex min-w-[100px] items-center justify-around">
               <div
                 onClick={() => handleSelect(entity.id)}
                 className="relative flex size-[18px] group-hover/file-item:flex"
@@ -94,13 +96,47 @@ const ItemsList = <T extends Conversation | Prompt>({
         ))}
       </ul>
     </div>
-  ) : null;
+  );
 };
 
 interface Props {
   failedMigratedConversations: Conversation[];
   failedMigratedPrompts: Prompt[];
 }
+
+interface AllItemsCheckboxesProps {
+  isChecked: boolean;
+  isCheckIcon: boolean;
+  isMinusIcon: boolean;
+  onSelectHandler: () => void;
+}
+
+const AllItemsCheckboxes = ({
+  isChecked,
+  isCheckIcon,
+  isMinusIcon,
+  onSelectHandler,
+}: AllItemsCheckboxesProps) => {
+  const Icon = isCheckIcon ? IconCheck : isMinusIcon ? IconMinus : null;
+
+  return (
+    <div className="relative flex size-[18px] group-hover/file-item:flex">
+      <input
+        className="checkbox peer size-[18px] bg-transparent"
+        type="checkbox"
+        onClick={onSelectHandler}
+        readOnly
+        checked={isChecked}
+      />
+      {Icon && (
+        <Icon
+          size={18}
+          className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+        />
+      )}
+    </div>
+  );
+};
 
 export const MigrationFailedWindow = ({
   failedMigratedConversations,
@@ -134,20 +170,7 @@ export const MigrationFailedWindow = ({
     setPromptsToRetryIds(failedMigratedPrompts.map((prompt) => prompt.id));
   }, [failedMigratedPrompts]);
 
-  const onSkipAll = useCallback(() => {
-    dispatch(
-      ConversationsActions.skipFailedMigratedConversations({
-        idsToMarkAsMigrated: failedMigratedConversations.map((conv) => conv.id),
-      }),
-    );
-    dispatch(
-      PromptsActions.skipFailedMigratedPrompts({
-        idsToMarkAsMigrated: failedMigratedPrompts.map((prompt) => prompt.id),
-      }),
-    );
-  }, [dispatch, failedMigratedConversations, failedMigratedPrompts]);
-
-  const onRetry = useCallback(() => {
+  const retryMigration = useCallback(() => {
     const failedMigratedConversationIds = failedMigratedConversations.map(
       (conv) => conv.id,
     );
@@ -155,7 +178,6 @@ export const MigrationFailedWindow = ({
       (conv) => conv.id,
     );
 
-    dispatch(ImportExportActions.exportLocalStorageEntities());
     dispatch(
       ConversationsActions.skipFailedMigratedConversations({
         idsToMarkAsMigrated: failedMigratedConversationIds.filter(
@@ -170,8 +192,9 @@ export const MigrationFailedWindow = ({
         ),
       }),
     );
-    dispatch(ConversationsActions.migrateConversations());
-    dispatch(PromptsActions.migratePrompts());
+
+    dispatch(ConversationsActions.migrateConversationsIfRequired());
+    dispatch(PromptsActions.migratePromptsIfRequired());
   }, [
     conversationsToRetryIds,
     dispatch,
@@ -179,6 +202,15 @@ export const MigrationFailedWindow = ({
     failedMigratedPrompts,
     promptsToRetryIds,
   ]);
+
+  const onRetryWithoutBackup = useCallback(() => {
+    retryMigration();
+  }, [retryMigration]);
+
+  const onRetryWithBackup = useCallback(() => {
+    dispatch(ImportExportActions.exportLocalStorageEntities());
+    retryMigration();
+  }, [dispatch, retryMigration]);
 
   const onSelectAll = useCallback(() => {
     setConversationsToRetryIds(
@@ -191,6 +223,15 @@ export const MigrationFailedWindow = ({
     setConversationsToRetryIds([]);
     setPromptsToRetryIds([]);
   };
+
+  const isAllItemsSelected =
+    conversationsToRetryIds.length + promptsToRetryIds.length ===
+    failedMigratedPrompts.length + failedMigratedConversations.length;
+  const isSomeItemsSelected =
+    !!conversationsToRetryIds.length || !!promptsToRetryIds.length;
+  const isNothingSelected =
+    conversationsToRetryIds.length === 0 &&
+    conversationsToRetryIds.length === 0;
 
   return (
     <div className="flex size-full flex-col items-center justify-center">
@@ -220,40 +261,19 @@ export const MigrationFailedWindow = ({
               <div className="flex items-center gap-1 py-1 text-xs">
                 {t('All items')}
               </div>
-              <div className="flex w-[100px] justify-around">
-                <div className="relative flex size-[18px] group-hover/file-item:flex">
-                  <input
-                    className="checkbox peer size-[18px] bg-transparent"
-                    type="checkbox"
-                    onClick={onUnselectAll}
-                    readOnly
-                    checked={
-                      conversationsToRetryIds.length !== 0 ||
-                      promptsToRetryIds.length !== 0
-                    }
-                  />
-                  <IconMinus
-                    size={18}
-                    className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
-                  />
-                </div>
-                <div className="relative flex size-[18px] group-hover/file-item:flex">
-                  <input
-                    className="checkbox peer size-[18px] bg-transparent"
-                    type="checkbox"
-                    onClick={onSelectAll}
-                    readOnly
-                    checked={
-                      conversationsToRetryIds.length !==
-                        failedMigratedConversations.length ||
-                      promptsToRetryIds.length !== failedMigratedPrompts.length
-                    }
-                  />
-                  <IconMinus
-                    size={18}
-                    className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
-                  />
-                </div>
+              <div className="flex w-[100px] items-center justify-around">
+                <AllItemsCheckboxes
+                  isChecked={isAllItemsSelected || isSomeItemsSelected}
+                  isCheckIcon={isAllItemsSelected}
+                  isMinusIcon={isSomeItemsSelected}
+                  onSelectHandler={onSelectAll}
+                />
+                <AllItemsCheckboxes
+                  isChecked={!isAllItemsSelected || isNothingSelected}
+                  isCheckIcon={isNothingSelected}
+                  isMinusIcon={!isAllItemsSelected}
+                  onSelectHandler={onUnselectAll}
+                />
               </div>
             </div>
           </div>
@@ -290,14 +310,14 @@ export const MigrationFailedWindow = ({
           <button
             className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center"
             data-qa="skip-migration"
-            onClick={onSkipAll}
+            onClick={onRetryWithoutBackup}
           >
             {t('Continue without backup')}
           </button>
           <button
             className="button button-primary flex h-[38px] items-center"
             data-qa="try-migration-again"
-            onClick={onRetry}
+            onClick={onRetryWithBackup}
           >
             {t('Backup to disk and continue')}
           </button>
