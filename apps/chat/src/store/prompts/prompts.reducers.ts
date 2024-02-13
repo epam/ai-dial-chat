@@ -81,17 +81,13 @@ export const promptsSlice = createSlice({
     ) => {
       state.failedMigratedPrompts = payload.failedMigratedPrompts;
     },
-    createNewPrompt: (state) => {
-      const newPrompt: Prompt = addGeneratedPromptId({
-        name: getNextDefaultName(
-          translate('Prompt'),
-          state.prompts.filter((prompt) => !prompt.folderId), // only root prompts
-        ),
-        description: '',
-        content: '',
-      });
-      state.prompts = state.prompts.concat(newPrompt);
-      state.selectedPromptId = newPrompt.id;
+    createNewPrompt: (state) => state,
+    createNewPromptSuccess: (
+      state,
+      { payload }: PayloadAction<{ newPrompt: Prompt }>,
+    ) => {
+      state.prompts = state.prompts.concat(payload.newPrompt);
+      state.selectedPromptId = payload.newPrompt.id;
     },
     deletePrompts: (
       state,
@@ -125,6 +121,11 @@ export const promptsSlice = createSlice({
         (prompt) => prompt.id !== payload.prompt.id,
       );
     },
+    savePrompt: (state, _action: PayloadAction<Prompt>) => state,
+    recreatePrompt: (
+      state,
+      _action: PayloadAction<{ new: Prompt; old: PromptInfo }>,
+    ) => state,
     updatePrompt: (
       state,
       _action: PayloadAction<{ id: string; values: Partial<Prompt> }>,
