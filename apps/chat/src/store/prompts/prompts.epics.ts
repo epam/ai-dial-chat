@@ -35,7 +35,6 @@ import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
-  generateNextName,
   getAllPathsFromPath,
   getFolderFromPath,
   getFoldersFromPaths,
@@ -62,7 +61,6 @@ import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
