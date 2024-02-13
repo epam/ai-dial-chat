@@ -27,7 +27,6 @@ import {
   filterOnlyMyEntities,
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
-import { regenerateConversationId } from '@/src/utils/app/conversation';
 import {
   PromptService,
   getPreparedPrompts,
@@ -36,15 +35,11 @@ import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
-  getAllPathsFromPath,
   getFolderFromId,
-  getFolderFromPath,
   getFoldersFromIds,
-  getFoldersFromPaths,
   getNextDefaultName,
   getParentFolderIdsFromFolderId,
   splitEntityId,
-  splitPath,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
@@ -56,11 +51,7 @@ import {
 } from '@/src/utils/app/import-export';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
-import {
-  ApiKeys,
-  getPromptApiKey,
-  parsePromptApiKey,
-} from '@/src/utils/server/api';
+import { ApiKeys, getPromptApiKey } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
