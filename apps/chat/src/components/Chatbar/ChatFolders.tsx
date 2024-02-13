@@ -2,7 +2,6 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { compareEntitiesByName } from '@/src/utils/app/folders';
 import { MoveType } from '@/src/utils/app/move';
 import {
@@ -23,7 +22,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
   MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH,
@@ -97,25 +96,6 @@ const ChatFolderTemplate = ({
 
         if (conversationData) {
           const conversation: Conversation = JSON.parse(conversationData);
-          if (
-            !isEntityNameOnSameLevelUnique(
-              conversation.name,
-              { ...conversation, folderId: folder.id },
-              allConversations,
-            )
-          ) {
-            dispatch(
-              UIActions.showToast({
-                message: t(
-                  `Conversation with name "${conversation.name}" already exists in this folder.`,
-                ),
-                type: 'error',
-              }),
-            );
-
-            return;
-          }
-
           dispatch(
             ConversationsActions.updateConversation({
               id: conversation.id,
@@ -130,25 +110,6 @@ const ChatFolderTemplate = ({
             movedFolder.id !== folder.id &&
             movedFolder.folderId !== folder.id
           ) {
-            if (
-              !isEntityNameOnSameLevelUnique(
-                movedFolder.name,
-                { ...movedFolder, folderId: folder.id },
-                allFolders,
-              )
-            ) {
-              dispatch(
-                UIActions.showToast({
-                  message: t(
-                    `Folder with name "${movedFolder.name}" already exists in this folder.`,
-                  ),
-                  type: 'error',
-                }),
-              );
-
-              return;
-            }
-
             dispatch(
               ConversationsActions.updateFolder({
                 folderId: movedFolder.id,
@@ -159,7 +120,7 @@ const ChatFolderTemplate = ({
         }
       }
     },
-    [allConversations, allFolders, dispatch, t],
+    [dispatch],
   );
   const onDropBetweenFolders = useCallback(
     (folder: FolderInterface, parentFolderId: string | undefined) => {
@@ -196,6 +157,7 @@ const ChatFolderTemplate = ({
         currentFolder={folder}
         itemComponent={ConversationComponent}
         allItems={conversations}
+        allItemsWithoutFilters={allConversations}
         allFolders={conversationFolders}
         allFoldersWithoutFilters={allFolders}
         highlightedFolders={highlightedFolders}
