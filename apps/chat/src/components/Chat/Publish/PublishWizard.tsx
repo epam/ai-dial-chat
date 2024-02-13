@@ -25,6 +25,7 @@ import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { ModalState } from '@/src/types/modal';
 import {
   SharingType,
   TargetAudienceFilter,
@@ -46,8 +47,6 @@ import Tooltip from '../../Common/Tooltip';
 import { PublishAttachment } from './PublishAttachment';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
 import { UserGroupFilter } from './UserGroupFilter';
-
-import { v4 as uuidv4 } from 'uuid';
 
 interface Props {
   entity: ShareEntity;
@@ -77,7 +76,6 @@ export default function PublishWizard({
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
   const publishAction = getPublishActionByType(type);
-  const shareId = useRef(uuidv4());
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState<string>(entity.name);
@@ -181,7 +179,6 @@ export default function PublishWizard({
       dispatch(
         publishAction({
           id: entity.id,
-          shareUniqueId: shareId.current,
           name: trimmedName,
           path: trimmedPath,
           version: trimmedVersion,
@@ -226,7 +223,7 @@ export default function PublishWizard({
         { 'w-full': files.length },
       )}
       dataQa="publish-modal"
-      isOpen={isOpen}
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={onClose}
       initialFocus={nameInputRef}
     >

@@ -855,7 +855,11 @@ export const ChatView = memo(() => {
                         showReplayStart={!isNotEmptyConversations}
                       />
                     )}
-                    {isExternal && <ChatExternalControls />}
+                    {isExternal && (
+                      <ChatExternalControls
+                        conversations={selectedConversations}
+                      />
+                    )}
                   </ChatInput>
                 )}
 

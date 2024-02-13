@@ -39,7 +39,7 @@ export class ConversationApiStorage extends ApiEntityStorage<
   getEntityKey(info: ConversationInfo): string {
     return getConversationApiKey(info);
   }
-  parseEntityKey(key: string): ConversationInfo {
+  parseEntityKey(key: string): Omit<ConversationInfo, 'folderId'> {
     return parseConversationApiKey(key);
   }
   getStorageKey(): ApiKeys {

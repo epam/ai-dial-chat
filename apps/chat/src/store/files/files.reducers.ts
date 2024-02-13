@@ -2,9 +2,11 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { constructPath } from '@/src/utils/app/file';
 import {
+  addGeneratedFolderId,
   getAvailableNameOnSameFolderLevel,
   getParentAndChildFolders,
 } from '@/src/utils/app/folders';
+import { getRootId } from '@/src/utils/app/id';
 
 import { UploadStatus } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
@@ -54,7 +56,7 @@ export const filesSlice = createSlice({
         id: payload.id,
         name: payload.name,
         relativePath: payload.relativePath,
-        folderId: payload.relativePath || undefined,
+        folderId: constructPath(getRootId(), payload.relativePath),
 
         status: UploadStatus.LOADING,
         percent: 0,
@@ -143,13 +145,13 @@ export const filesSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        relativePath?: string;
         files: DialFile[];
       }>,
     ) => {
       state.files = payload.files.concat(
         state.files.filter(
-          (file) => file.relativePath !== payload.relativePath,
+          (file) =>
+            !payload.files.find((stateFile) => stateFile.id === file.id),
         ),
       );
       state.filesStatus = UploadStatus.LOADED;
@@ -217,14 +219,19 @@ export const filesSlice = createSlice({
         payload.relativePath,
       );
 
-      const folderId = constructPath(payload.relativePath, folderName);
-      state.folders.push({
-        id: folderId,
-        name: folderName,
-        type: FolderType.File,
-        folderId: payload.relativePath,
-      });
-      state.newAddedFolderId = folderId;
+      const newAddedFolderId = constructPath(
+        getRootId(),
+        payload.relativePath,
+        folderName,
+      );
+      state.folders.push(
+        addGeneratedFolderId({
+          name: folderName,
+          type: FolderType.File,
+          folderId: constructPath(getRootId(), payload.relativePath),
+        }),
+      );
+      state.newAddedFolderId = newAddedFolderId;
     },
     renameFolder: (
       state,

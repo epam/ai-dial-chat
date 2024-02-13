@@ -4,6 +4,7 @@ import { Observable, from, switchMap, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { BackendResourceType, FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 
@@ -27,6 +28,32 @@ export const getFolderTypeByApiKey = (key: ApiKeys): FolderType => {
     case ApiKeys.Files:
     default:
       return FolderType.File;
+  }
+};
+
+export const getApiKeyByResourceType = (entityType: BackendResourceType) => {
+  switch (entityType) {
+    case BackendResourceType.PROMPT:
+      return ApiKeys.Prompts;
+    case BackendResourceType.CONVERSATION:
+      return ApiKeys.Conversations;
+    case BackendResourceType.FILE:
+    default:
+      return ApiKeys.Files;
+  }
+};
+
+export const getBackendResourceTypeByFeatureType = (
+  entityType: FeatureType,
+) => {
+  switch (entityType) {
+    case FeatureType.Chat:
+      return BackendResourceType.CONVERSATION;
+    case FeatureType.Prompt:
+      return BackendResourceType.PROMPT;
+    case FeatureType.File:
+    default:
+      return BackendResourceType.FILE;
   }
 };
 
@@ -106,7 +133,9 @@ export const getConversationApiKey = (
 };
 
 // Format key: {modelId}__{name}
-export const parseConversationApiKey = (apiKey: string): ConversationInfo => {
+export const parseConversationApiKey = (
+  apiKey: string,
+): Omit<ConversationInfo, 'folderId'> => {
   const parts = apiKey.split(pathKeySeparator);
 
   const [modelId, name] =
@@ -123,13 +152,15 @@ export const parseConversationApiKey = (apiKey: string): ConversationInfo => {
   };
 };
 
-// Format key: {name:base64}
+// Format key: {name}
 export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>): string => {
-  return combineApiKey(prompt.name);
+  return prompt.name;
 };
 
 // Format key: {name}
-export const parsePromptApiKey = (name: string): PromptInfo => {
+export const parsePromptApiKey = (
+  name: string,
+): Omit<PromptInfo, 'folderId'> => {
   return {
     id: name,
     name,
@@ -138,7 +169,10 @@ export const parsePromptApiKey = (name: string): PromptInfo => {
 
 export class ApiUtils {
   static request(url: string, options?: RequestInit) {
-    return fromFetch(url, options).pipe(
+    return fromFetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    }).pipe(
       switchMap((response) => {
         if (!response.ok) {
           return throwError(() => new Error(response.statusText));

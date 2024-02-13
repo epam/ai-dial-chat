@@ -7,7 +7,7 @@ export interface ConversationsState {
   conversationsToMigrateCount: number;
   migratedConversationsCount: number;
   failedMigratedConversations: Conversation[];
-  conversations: ConversationInfo[];
+  conversations: (ConversationInfo | Conversation)[];
   selectedConversationsIds: string[];
   folders: FolderInterface[];
   temporaryFolders: FolderInterface[];

@@ -21,28 +21,36 @@ import {
 
 import classNames from 'classnames';
 
+import { ModalState } from '@/src/types/modal';
+
+import { Spinner } from './Spinner';
+import Tooltip from './Tooltip';
+
 export interface Props extends FormHTMLAttributes<HTMLFormElement> {
-  portalId: string;
-  isOpen: boolean;
-  onClose: () => void;
   children: ReactNode | ReactNode[];
+  portalId: string;
+  state?: ModalState | boolean;
+  heading?: string | ReactNode;
+
   dataQa: string;
   initialFocus?: number | MutableRefObject<HTMLElement | null>;
   overlayClassName?: string;
   containerClassName: string;
   lockScroll?: boolean;
   hideClose?: boolean;
-  onKeyDownOverlay?: KeyboardEventHandler<HTMLDivElement>;
   dismissProps?: UseDismissProps;
   form?: {
     noValidate: boolean;
     onSubmit: (e: FormEvent) => void;
   };
+  onClose: () => void;
+  onKeyDownOverlay?: KeyboardEventHandler<HTMLDivElement>;
 }
 
-export default function Modal({
+function ModalView({
   portalId,
-  isOpen,
+  state = ModalState.CLOSED,
+  heading,
   onClose,
   children,
   dataQa,
@@ -56,7 +64,7 @@ export default function Modal({
   form,
 }: Props) {
   const { refs, context } = useFloating({
-    open: isOpen,
+    open: state !== ModalState.CLOSED && !!state,
     onOpenChange: onClose,
   });
   const role = useRole(context);
@@ -77,7 +85,7 @@ export default function Modal({
 
   return (
     <FloatingPortal id={portalId}>
-      {isOpen && (
+      {state !== ModalState.CLOSED && (
         <FloatingOverlay
           lockScroll={lockScroll}
           className={classNames(
@@ -109,8 +117,28 @@ export default function Modal({
                   <IconX height={24} width={24} />
                 </button>
               )}
+              {heading && typeof heading === 'string' ? (
+                <h4 className="mb-2 max-h-[50px] text-left text-base font-semibold">
+                  <Tooltip tooltip={heading}>
+                    <div
+                      className="line-clamp-2 w-full break-words"
+                      data-qa="modal-chat-name"
+                    >
+                      {heading}
+                    </div>
+                  </Tooltip>
+                </h4>
+              ) : (
+                heading
+              )}
 
-              {children}
+              {state === ModalState.LOADING ? (
+                <div className="flex min-h-[200px] items-center justify-center">
+                  <Spinner size={60} />
+                </div>
+              ) : (
+                children
+              )}
             </Tag>
           </FloatingFocusManager>
         </FloatingOverlay>
@@ -118,3 +146,13 @@ export default function Modal({
     </FloatingPortal>
   );
 }
+
+const Modal = (props: Props) => {
+  if (props.state === ModalState.CLOSED) {
+    return null;
+  }
+
+  return <ModalView {...props} />;
+};
+
+export default Modal;

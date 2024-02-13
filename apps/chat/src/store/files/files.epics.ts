@@ -94,7 +94,6 @@ const getFilesEpic: AppEpic = (action$) =>
       FileService.getFiles(payload.path).pipe(
         map((files) =>
           FilesActions.getFilesSuccess({
-            relativePath: payload.path,
             files,
           }),
         ),

@@ -7,6 +7,7 @@ import {
   getPathToFolderById,
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
+import { getRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
@@ -132,7 +133,7 @@ export const ChangePathDialog = ({
   );
 
   const handleAddFolder = useCallback(
-    (parentFolderId?: string) => {
+    (parentFolderId: string) => {
       dispatch(
         actions.createTemporaryFolder({
           relativePath: parentFolderId,
@@ -206,7 +207,7 @@ export const ChangePathDialog = ({
         />
       </SelectFolderHeader>
       <SelectFolderFooter
-        handleNewFolder={() => handleAddFolder()}
+        handleNewFolder={() => handleAddFolder(getRootId())}
         onSelectFolderClick={getPath}
       />
     </SelectFolder>

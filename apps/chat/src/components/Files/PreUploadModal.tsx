@@ -22,8 +22,10 @@ import {
   notAllowedSymbols,
 } from '@/src/utils/app/file';
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
+import { getRootId } from '@/src/utils/app/id';
 
 import { DialFile } from '@/src/types/files';
+import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
@@ -144,7 +146,7 @@ export const PreUploadDialog = ({
           filteredFiles.map((file) => {
             return {
               fileContent: file,
-              id: constructPath(folderPath, file.name),
+              id: constructPath(getRootId(), folderPath, file.name),
               name: file.name,
             };
           }),
@@ -242,7 +244,11 @@ export const PreUploadDialog = ({
               return {
                 ...file,
                 name: e.target.value + formatFile,
-                id: constructPath(folderPath, e.target.value + formatFile),
+                id: constructPath(
+                  getRootId(),
+                  folderPath,
+                  e.target.value + formatFile,
+                ),
               };
             }
 
@@ -285,7 +291,7 @@ export const PreUploadDialog = ({
       oldFiles.map((file) => {
         return {
           ...file,
-          id: constructPath(folderPath, file.name),
+          id: constructPath(getRootId(), folderPath, file.name),
           folderPath,
         };
       }),
@@ -297,7 +303,7 @@ export const PreUploadDialog = ({
       portalId="theme-main"
       containerClassName="flex flex-col gap-4 p-6 md:min-w-[425px] md:max-w-[500px]"
       dataQa="pre-upload-modal"
-      isOpen={isOpen}
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >

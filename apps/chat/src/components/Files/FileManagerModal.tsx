@@ -12,9 +12,11 @@ import {
   getDialFilesWithInvalidFileType,
   getExtensionsListForMimeTypes,
 } from '@/src/utils/app/file';
+import { isRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
@@ -253,7 +255,7 @@ export const FileManagerModal = ({
   return (
     <Modal
       portalId="theme-main"
-      isOpen={isOpen}
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
       dataQa="file-manager-modal"
       containerClassName="flex flex-col gap-4 sm:w-[525px] w-full"
@@ -309,7 +311,7 @@ export const FileManagerModal = ({
                   {(folders.length !== 0 || filteredFiles.length !== 0) && (
                     <div className="flex flex-col gap-1 overflow-auto">
                       {folders.map((folder) => {
-                        if (folder.folderId) {
+                        if (!isRootId(folder.folderId)) {
                           return null;
                         }
 
@@ -342,7 +344,7 @@ export const FileManagerModal = ({
                         );
                       })}
                       {filteredFiles.map((file) => {
-                        if (file.folderId) {
+                        if (!isRootId(file.folderId)) {
                           return null;
                         }
 

@@ -29,9 +29,9 @@ import {
 } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import {
-  getAllPathsFromPath,
   getConversationAttachmentWithPath,
-  getFoldersFromPaths,
+  getFoldersFromIds,
+  getParentFolderIdsFromFolderId,
 } from '@/src/utils/app/folders';
 import {
   ImportConversationsResponse,
@@ -143,9 +143,11 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
         new Set(conversationsListing.map((info) => info.folderId)),
       );
       //calculate all folders;
-      const foldersWithConversation = getFoldersFromPaths(
+      const foldersWithConversation = getFoldersFromIds(
         Array.from(
-          new Set(foldersIds.flatMap((id) => getAllPathsFromPath(id))),
+          new Set(
+            foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+          ),
         ),
         FolderType.Chat,
       );
@@ -225,9 +227,11 @@ const importConversationsEpic: AppEpic = (action$) =>
         new Set(conversationsListing.map((info) => info.folderId)),
       );
       //calculate all folders;
-      const folders = getFoldersFromPaths(
+      const folders = getFoldersFromIds(
         Array.from(
-          new Set(foldersIds.flatMap((id) => getAllPathsFromPath(id))),
+          new Set(
+            foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+          ),
         ),
         FolderType.Chat,
       );
