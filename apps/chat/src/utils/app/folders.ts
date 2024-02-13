@@ -12,6 +12,8 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
+
 import escapeStringRegexp from 'escape-string-regexp';
 
 export const getFoldersDepth = (
@@ -193,13 +195,18 @@ export const getFolderIdByPath = (path: string, folders: FolderInterface[]) => {
 export const getPathToFolderById = (
   folders: FolderInterface[],
   starterId: string | undefined,
+  removeNotAllowedSymbols = false,
 ) => {
   const path: string[] = [];
   const createPath = (folderId: string) => {
     const folder = folders.find((folder) => folder.id === folderId);
     if (!folder) return;
 
-    path.unshift(folder.name);
+    path.unshift(
+      removeNotAllowedSymbols
+        ? folder.name.replace(notAllowedSymbolsRegex, '') || DEFAULT_FOLDER_NAME
+        : folder.name,
+    );
 
     if (folder.folderId) {
       createPath(folder.folderId);

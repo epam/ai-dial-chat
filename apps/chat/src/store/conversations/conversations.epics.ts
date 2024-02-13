@@ -504,7 +504,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     switchMap(({ folderId, conversations, folders }) => {
       const childFolders = new Set([
         folderId,
-        ...conversations.flatMap((conv) => getAllPathsFromPath(conv.folderId)),
+        ...conversations.map((conv) => conv.folderId),
       ]);
       const removedConversationsIds = conversations.map((conv) => conv.id);
       const actions: Observable<AnyAction>[] = [];
@@ -706,18 +706,18 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const migrateConversationsEpic: AppEpic = (action$, state$) => {
+const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
   const browserStorage = new BrowserStorage();
 
   return action$.pipe(
-    filter(ConversationsActions.migrateConversations.match),
+    filter(ConversationsActions.migrateConversationsIfRequired.match),
     switchMap(() =>
       forkJoin({
         conversations: browserStorage
           .getConversations()
           .pipe(map(filterOnlyMyEntities)),
         conversationsFolders: browserStorage
-          .getConversationsFolders()
+          .getConversationsFolders(undefined, true)
           .pipe(map(filterOnlyMyEntities)),
         migratedConversationIds: BrowserStorage.getMigratedEntityIds(
           MigrationStorageKeys.MigratedConversationIds,
@@ -2209,7 +2209,7 @@ const openFolderEpic: AppEpic = (action$, state$) =>
   );
 
 export const ConversationsEpics = combineEpics(
-  migrateConversationsEpic,
+  migrateConversationsIfRequiredEpic,
   skipFailedMigratedConversationsEpic,
   // init
   initEpic,
