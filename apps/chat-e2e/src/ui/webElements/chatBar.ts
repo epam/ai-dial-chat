@@ -44,7 +44,7 @@ export class ChatBar extends SideBar {
     let putResponsePromise;
     if (isApiStorageType) {
       putResponsePromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'PUT',
+        (resp) => resp.request().method() === 'POST',
       );
     }
     await this.newEntityButton.click();

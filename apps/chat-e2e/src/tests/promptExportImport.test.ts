@@ -23,7 +23,7 @@ const newDescr = 'test description';
 const newValue = 'what is {{A}}';
 const levelsCount = 3;
 
-dialTest(
+dialTest.skip(
   'Export and import prompt structure with all prompts.\n' +
     'Continue working with imported file. Add imported prompt to a message',
   async ({

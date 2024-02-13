@@ -61,7 +61,6 @@ dialTest(
     }
     await folderConversations.expandCollapseFolder(
       ExpectedConstants.newFolderWithIndexTitle(2),
-      { isHttpMethodTriggered: true },
     );
 
     await folderConversations.openFolderDropdownMenu(
@@ -297,7 +296,6 @@ dialTest(
     }
     await folderConversations.expandCollapseFolder(
       ExpectedConstants.newFolderWithIndexTitle(2),
-      { isHttpMethodTriggered: true },
     );
 
     await folderConversations.openFolderDropdownMenu(
