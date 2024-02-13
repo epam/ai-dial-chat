@@ -50,6 +50,7 @@ import {
 } from '@/src/utils/app/zip-import-export';
 
 import { Conversation, Message, Stage } from '@/src/types/chat';
+import { UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { LatestExportFormat } from '@/src/types/import-export';
 import { AppEpic } from '@/src/types/store';
@@ -255,7 +256,7 @@ const importConversationsEpic: AppEpic = (action$) =>
       }
 
       const conversationsInfoToUpload = history.filter((conversation) => {
-        return conversation.status !== 'LOADED';
+        return conversation.status !== UploadStatus.LOADED;
       });
 
       const importedConversations = conversationsInfoToUpload
