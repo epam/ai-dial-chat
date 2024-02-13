@@ -14,6 +14,7 @@ import classNames from 'classnames';
 import { checkValidity } from '@/src/utils/app/forms';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
+import { ModalState } from '@/src/types/modal';
 import { ReportIssueBody } from '@/src/types/report-issue';
 import { Translation } from '@/src/types/translation';
 
@@ -115,22 +116,16 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
     [description, dispatch, handleClose, t, title],
   );
 
-  // Render nothing if the dialog is not open.
-  if (!isOpen) {
-    return <></>;
-  }
-
   const inputClassName = classNames('input-form', 'peer', {
     'input-invalid': submitted,
     submitted: submitted,
   });
 
-  // Render the dialog.
   return (
     <Modal
       initialFocus={titleInputRef}
       portalId="theme-main"
-      isOpen={isOpen}
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={handleClose}
       dataQa="request-api-key-dialog"
       overlayClassName="fixed inset-0"

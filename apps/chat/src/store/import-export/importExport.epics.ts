@@ -19,7 +19,7 @@ import {
 
 import { combineEpics } from 'redux-observable';
 
-import { filterOnlyMyEntities } from '@/src/utils/app/common';
+import { combineEntities, filterOnlyMyEntities } from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { FileService } from '@/src/utils/app/data/file-service';
@@ -29,9 +29,9 @@ import {
 } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import {
-  getAllPathsFromPath,
   getConversationAttachmentWithPath,
-  getFoldersFromPaths,
+  getFoldersFromIds,
+  getParentFolderIdsFromFolderId,
 } from '@/src/utils/app/folders';
 import {
   ImportConversationsResponse,
@@ -143,12 +143,18 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
         new Set(conversationsListing.map((info) => info.folderId)),
       );
       //calculate all folders;
-      const folders = getFoldersFromPaths(
+      const foldersWithConversation = getFoldersFromIds(
         Array.from(
-          new Set(foldersIds.flatMap((id) => getAllPathsFromPath(id))),
+          new Set(
+            foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+          ),
         ),
         FolderType.Chat,
       );
+
+      const allFolders = ConversationsSelectors.selectFolders(state$.value);
+
+      const folders = combineEntities(foldersWithConversation, allFolders);
 
       return forkJoin({
         //get all conversations from api
@@ -221,9 +227,11 @@ const importConversationsEpic: AppEpic = (action$) =>
         new Set(conversationsListing.map((info) => info.folderId)),
       );
       //calculate all folders;
-      const folders = getFoldersFromPaths(
+      const folders = getFoldersFromIds(
         Array.from(
-          new Set(foldersIds.flatMap((id) => getAllPathsFromPath(id))),
+          new Set(
+            foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+          ),
         ),
         FolderType.Chat,
       );

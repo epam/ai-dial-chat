@@ -13,14 +13,20 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import {
+  isEntityNameOnSameLevelUnique,
+  prepareEntityName,
+} from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
+import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 
@@ -35,8 +41,11 @@ interface Props {
 }
 
 export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
+  const dispatch = useAppDispatch();
+
   const selectedPrompt = useAppSelector(PromptsSelectors.selectSelectedPrompt);
   const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
+  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
 
   const { t } = useTranslation(Translation.PromptBar);
   const [name, setName] = useState<string>('');
@@ -68,6 +77,51 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
     setContent(e.target.value);
   };
 
+  const updatePrompt = useCallback(
+    (selectedPrompt: Prompt) => {
+      const newName = prepareEntityName(name);
+      setName(newName);
+
+      if (!newName) return;
+
+      if (!isEntityNameOnSameLevelUnique(newName, selectedPrompt, allPrompts)) {
+        dispatch(
+          UIActions.showToast({
+            message: t(
+              'Prompt with name "{{newName}}" already exists in this folder.',
+              {
+                ns: 'prompt',
+                newName,
+              },
+            ),
+            type: 'error',
+          }),
+        );
+
+        return;
+      }
+
+      onUpdatePrompt({
+        ...selectedPrompt,
+        name: newName,
+        description: description?.trim(),
+        content: content.trim(),
+      });
+      setSubmitted(false);
+      onClose();
+    },
+    [
+      allPrompts,
+      content,
+      description,
+      dispatch,
+      name,
+      onClose,
+      onUpdatePrompt,
+      t,
+    ],
+  );
+
   const handleSubmit = useCallback(
     (e: MouseEvent<HTMLButtonElement>, selectedPrompt: Prompt) => {
       e.preventDefault();
@@ -75,37 +129,18 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
 
       setSubmitted(true);
 
-      if (!name || name.trim() === '') {
-        return;
-      }
-      const updatedPrompt = {
-        ...selectedPrompt,
-        name: name.trim(),
-        description: description?.trim(),
-        content: content.trim(),
-      };
-
-      onUpdatePrompt(updatedPrompt);
-      setSubmitted(false);
-      onClose();
+      updatePrompt(selectedPrompt);
     },
-    [name, description, content, onUpdatePrompt, onClose],
+    [updatePrompt],
   );
 
   const handleEnter = useCallback(
     (e: KeyboardEvent<HTMLDivElement>, selectedPrompt: Prompt) => {
       if (e.key === 'Enter' && !e.shiftKey) {
-        onUpdatePrompt({
-          ...selectedPrompt,
-          name,
-          description,
-          content: content.trim(),
-        });
-        setSubmitted(false);
-        onClose();
+        updatePrompt(selectedPrompt);
       }
     },
-    [onUpdatePrompt, name, description, content, onClose],
+    [updatePrompt],
   );
 
   useEffect(() => {
@@ -131,7 +166,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
       portalId="theme-main"
       containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
       dataQa="prompt-modal"
-      isOpen={isOpen}
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={handleClose}
       onKeyDownOverlay={(e) => {
         if (selectedPrompt) handleEnter(e, selectedPrompt);

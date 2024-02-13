@@ -4,6 +4,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { isRootId } from '@/src/utils/app/id';
+
 import { Conversation } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
@@ -60,7 +62,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
             <div className="flex flex-col gap-1 overflow-auto">
               {folderProps.allFolders.map((folder) => {
                 if (
-                  folder.folderId ||
+                  !isRootId(folder.folderId) ||
                   (initiallySelectedFolderId &&
                     folder.originalId === initiallySelectedFolderId)
                 ) {

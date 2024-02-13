@@ -3,6 +3,7 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { compareEntitiesByName } from '@/src/utils/app/folders';
+import { isRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
@@ -60,6 +61,10 @@ const ChatFolderTemplate = ({
       searchTerm,
     ),
   );
+  const allConversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
+  );
+  const allFolders = useAppSelector(ConversationsSelectors.selectFolders);
   const conversationFolders = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredFolders(
       state,
@@ -116,7 +121,6 @@ const ChatFolderTemplate = ({
     },
     [dispatch],
   );
-
   const onDropBetweenFolders = useCallback(
     (folder: FolderInterface, parentFolderId: string | undefined) => {
       dispatch(
@@ -152,7 +156,9 @@ const ChatFolderTemplate = ({
         currentFolder={folder}
         itemComponent={ConversationComponent}
         allItems={conversations}
+        allItemsWithoutFilters={allConversations}
         allFolders={conversationFolders}
+        allFoldersWithoutFilters={allFolders}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
@@ -213,14 +219,14 @@ export const ChatSection = ({
   );
 
   const rootFolders = useMemo(
-    () => folders.filter(({ folderId }) => !folderId),
+    () => folders.filter(({ folderId }) => isRootId(folderId)),
     [folders],
   );
 
   const rootConversations = useMemo(
     () =>
       conversations
-        .filter(({ folderId }) => !folderId)
+        .filter(({ folderId }) => isRootId(folderId))
         .sort(compareEntitiesByName),
     [conversations],
   );

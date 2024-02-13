@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
 import Modal from '@/src/components/Common/Modal';
@@ -28,7 +29,7 @@ export const SelectFolder = ({
   return (
     <Modal
       portalId="theme-main"
-      isOpen={isOpen}
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={onClose}
       dataQa={modalDataQa}
       containerClassName="flex min-w-full flex-col gap-4 md:min-w-[425px] md:max-w-full"

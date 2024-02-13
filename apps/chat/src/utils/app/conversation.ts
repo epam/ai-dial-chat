@@ -1,3 +1,5 @@
+import { prepareEntityName } from '@/src/utils/app/common';
+
 import {
   Conversation,
   ConversationInfo,
@@ -8,9 +10,14 @@ import {
 import { EntityType, PartialBy, UploadStatus } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 
-import { getConversationApiKey, parseConversationApiKey } from '../server/api';
-import { constructPath, notAllowedSymbolsRegex } from './file';
-import { compareEntitiesByName, splitPath } from './folders';
+import {
+  ApiKeys,
+  getConversationApiKey,
+  parseConversationApiKey,
+} from '../server/api';
+import { constructPath } from './file';
+import { compareEntitiesByName, splitEntityId } from './folders';
+import { getRootId } from './id';
 
 export const getAssitantModelId = (
   modelType: EntityType,
@@ -79,32 +86,42 @@ export const getNewConversationName = (
   message: Message,
   updatedMessages: Message[],
 ): string => {
+  const convName = prepareEntityName(conversation.name);
+
   if (
     conversation.replay.isReplay ||
     updatedMessages.length !== 2 ||
     conversation.isNameChanged
   ) {
-    return conversation.name;
+    return convName;
   }
-  const content = message.content
-    .replaceAll(notAllowedSymbolsRegex, ' ')
-    .trim();
+  const content = prepareEntityName(message.content);
   if (content.length > 0) {
-    return content.length > 160 ? content.substring(0, 157) + '...' : content;
+    return content;
   } else if (message.custom_content?.attachments?.length) {
     const files = message.custom_content.attachments;
     return files[0].title;
   }
 
-  return conversation.name;
+  return convName;
 };
 
 export const getGeneratedConversationId = <T extends ConversationInfo>(
   conversation: Omit<T, 'id'>,
-): string =>
-  constructPath(conversation.folderId, getConversationApiKey(conversation));
+): string => {
+  if (conversation.folderId) {
+    return constructPath(
+      conversation.folderId,
+      getConversationApiKey(conversation),
+    );
+  }
+  return constructPath(
+    getRootId({ apiKey: ApiKeys.Conversations }),
+    getConversationApiKey(conversation),
+  );
+};
 
-export const addGeneratedConversationId = <T extends ConversationInfo>(
+export const regenerateConversationId = <T extends ConversationInfo>(
   conversation: PartialBy<T, 'id'>,
 ): T => {
   const newId = getGeneratedConversationId(conversation);
@@ -117,11 +134,11 @@ export const addGeneratedConversationId = <T extends ConversationInfo>(
   return conversation as T;
 };
 
-export const parseConversationId = (id: string): ConversationInfo => {
-  const { name, parentPath } = splitPath(id);
-  return addGeneratedConversationId({
+export const getConversationInfoFromId = (id: string): ConversationInfo => {
+  const { apiKey, bucket, name, parentPath } = splitEntityId(id);
+  return regenerateConversationId({
     ...parseConversationApiKey(name),
-    folderId: parentPath,
+    folderId: constructPath(apiKey, bucket, parentPath),
   });
 };
 

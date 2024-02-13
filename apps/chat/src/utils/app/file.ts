@@ -32,10 +32,8 @@ export const getRelativePath = (
   return absolutePath?.split('/').toSpliced(0, 2).join('/') || undefined;
 };
 
-export const getFileName = (
-  absolutePath: string | undefined,
-): string | undefined => {
-  return absolutePath?.split('/').slice(-1)?.[0] || undefined;
+export const getFileName = (path: string | undefined): string | undefined => {
+  return path?.split('/').slice(-1)?.[0] || undefined;
 };
 
 export const getUserCustomContent = (
@@ -105,7 +103,7 @@ export const getFilesWithInvalidFileType = (
     ? []
     : files.filter((file) => !isAllowedMimeType(allowedFileTypes, file.type));
 };
-export const notAllowedSymbols = ':;,=/#?&';
+export const notAllowedSymbols = ':;,=/';
 export const notAllowedSymbolsRegex = new RegExp(
   `[${escapeStringRegexp(notAllowedSymbols)}]|(\r\n|\n|\r)`,
   'gm',
@@ -151,12 +149,12 @@ export const getDialFilesFromAttachments = (
       }
 
       const { absolutePath, name } = parseAttachmentUrl(attachment.url);
-      const relativePath = getRelativePath(absolutePath);
 
       return {
-        id: constructPath(relativePath, name),
+        id: absolutePath,
         name,
         contentType: attachment.type,
+        folderId: absolutePath,
         absolutePath,
       };
     })

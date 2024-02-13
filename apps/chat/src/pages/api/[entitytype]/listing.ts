@@ -54,7 +54,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const url = `${
       process.env.DIAL_API_HOST
-    }/v1/metadata/${entityType}/${bucket}${path && `/${encodeURI(path)}`}/?limit=1000${recursive ? '&recursive=true' : ''}`;
+    }/v1/metadata/${path ? `${encodeURI(path)}` : `${entityType}/${bucket}`}/?limit=1000${recursive ? '&recursive=true' : ''}`;
 
     const response = await fetch(url, {
       headers: getApiHeaders({ jwt: token?.access_token as string }),

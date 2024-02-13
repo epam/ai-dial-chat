@@ -49,6 +49,7 @@ export class ConversationService {
     return DataService.getDataStorage().getConversations(path, recursive);
   }
 
+  // TODO: allow to pass only path, because it's hard to create full object every time
   public static getConversation(
     info: ConversationInfo,
   ): Observable<Conversation | null> {

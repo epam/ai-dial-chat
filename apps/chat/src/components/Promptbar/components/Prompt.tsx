@@ -10,12 +10,19 @@ import {
 
 import classNames from 'classnames';
 
+import { constructPath } from '@/src/utils/app/file';
+import { getRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { ApiKeys } from '@/src/utils/server/api';
 
-import { FeatureType } from '@/src/types/common';
+import {
+  BackendDataNodeType,
+  BackendResourceType,
+  FeatureType,
+} from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
@@ -25,6 +32,7 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
 
@@ -33,7 +41,6 @@ import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
 import PublishModal from '../../Chat/Publish/PublishWizard';
-import ShareModal from '../../Chat/ShareModal';
 import UnpublishModal from '../../Chat/UnpublishModal';
 import ShareIcon from '../../Common/ShareIcon';
 import { PromptModal } from './PromptModal';
@@ -64,7 +71,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const [isRenaming, setIsRenaming] = useState(false);
 
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
@@ -83,14 +89,16 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
 
-  const handleCloseShareModal = useCallback(() => {
-    setIsSharing(false);
-  }, []);
-
   const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
-      setIsSharing(true);
-    }, []);
+      dispatch(
+        ShareActions.share({
+          resourceType: BackendResourceType.PROMPT,
+          resourceId: prompt.id,
+          nodeType: BackendDataNodeType.ITEM,
+        }),
+      );
+    }, [dispatch, prompt.id]);
 
   const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
@@ -204,13 +212,21 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         dispatch(
           PromptsActions.createFolder({
             name: folderPath,
+            parentId: getRootId({ apiKey: ApiKeys.Prompts }),
           }),
         );
       }
       dispatch(
         PromptsActions.updatePrompt({
           id: prompt.id,
-          values: { folderId: folderPath },
+          values: {
+            folderId: isNewFolder
+              ? constructPath(
+                  getRootId({ apiKey: ApiKeys.Prompts }),
+                  folderPath,
+                )
+              : folderPath,
+          },
         }),
       );
       setIsContextMenu(false);
@@ -357,14 +373,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           />
         )}
       </div>
-      {isSharing && (
-        <ShareModal
-          entity={prompt}
-          type={SharingType.Prompt}
-          isOpen
-          onClose={handleCloseShareModal}
-        />
-      )}
 
       {isPublishing && (
         <PublishModal

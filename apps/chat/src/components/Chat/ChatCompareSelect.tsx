@@ -100,7 +100,7 @@ export const ChatCompareSelect = ({
       data-qa="conversation-to-compare"
     >
       <div className="flex max-w-[465px] flex-col gap-3 rounded bg-layer-2 p-6 ">
-        <div className="flex flex-col gap-2 text-center">
+        <div className="flex flex-col gap-2">
           <h5 className="text-base font-semibold">
             {t('Select conversation to compare with')}
           </h5>
@@ -122,7 +122,7 @@ export const ChatCompareSelect = ({
             className="checkbox peer"
           />
           <IconCheck
-            size={18}
+            size={16}
             className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
           />
           <label className="" htmlFor="showAllCheckbox">

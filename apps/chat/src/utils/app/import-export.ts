@@ -14,9 +14,11 @@ import {
 } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 
+import { ApiKeys } from '../server/api';
 import { cleanConversationHistory } from './clean';
 import { combineEntities } from './common';
 import { triggerDownload } from './file';
+import { getRootId } from './id';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isExportFormatV1(obj: any): obj is ExportFormatV1 {
@@ -74,6 +76,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
         id: chatFolder.id.toString(),
         name: chatFolder.name,
         type: FolderType.Chat,
+        folderId: getRootId({ apiKey: ApiKeys.Conversations }),
       })),
       prompts: [],
       isError: false,
@@ -346,11 +349,12 @@ const getNewAttachmentFileFromUploaded = ({
     if (!newAttachment.id) {
       return;
     }
-    const regExpForNewAttachmentId = /^imports\/[\w-]*\//;
+    const regExpForNewAttachmentId = /^imports\/[\w\s-]+\//;
 
     const newAttachmentId = newAttachment.id.split(regExpForNewAttachmentId)[
       attachmentIdIndex
     ];
+
     return (
       newAttachmentId === oldAttachmentId ||
       oldAttachmentId.includes(newAttachmentId)
@@ -371,7 +375,6 @@ export const updateAttachment = ({
   }
 
   const attachmentIdIndex = 1;
-
   const oldAttachmentId = getAttachmentId({
     url: oldAttachmentUrl,
     attachmentIdIndex,
@@ -390,7 +393,6 @@ export const updateAttachment = ({
   const newAttachmentUrl =
     oldAttachment.url &&
     encodeURI(`${newAttachmentFile.absolutePath}/${newAttachmentFile.name}`);
-
   const lastSlashIndex = oldAttachmentId.lastIndexOf('/');
   const oldAttachmentNameInPath = oldAttachmentId.slice(lastSlashIndex + 1);
 
@@ -400,6 +402,7 @@ export const updateAttachment = ({
 
   const updatedAttachment: Attachment = {
     ...oldAttachment,
+    type: newAttachmentFile.contentType ?? oldAttachment.type,
     url: newAttachmentUrl,
     reference_url: newReferenceUrl,
   };

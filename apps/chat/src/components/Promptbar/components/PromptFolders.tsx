@@ -3,6 +3,7 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { compareEntitiesByName } from '@/src/utils/app/folders';
+import { isRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
@@ -54,9 +55,11 @@ const PromptFolderTemplate = ({
   const highlightedFolders = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
+  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const prompts = useAppSelector((state) =>
     PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
   );
+  const allFolders = useAppSelector(PromptsSelectors.selectFolders);
   const promptFolders = useAppSelector((state) =>
     PromptsSelectors.selectFilteredFolders(
       state,
@@ -147,7 +150,9 @@ const PromptFolderTemplate = ({
         currentFolder={folder}
         itemComponent={PromptComponent}
         allItems={prompts}
+        allItemsWithoutFilters={allPrompts}
         allFolders={promptFolders}
+        allFoldersWithoutFilters={allFolders}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
@@ -203,13 +208,15 @@ export const PromptSection = ({
   );
 
   const rootFolders = useMemo(
-    () => folders.filter(({ folderId }) => !folderId),
+    () => folders.filter(({ folderId }) => isRootId(folderId)),
     [folders],
   );
 
   const rootPrompts = useMemo(
     () =>
-      prompts.filter(({ folderId }) => !folderId).sort(compareEntitiesByName),
+      prompts
+        .filter(({ folderId }) => isRootId(folderId))
+        .sort(compareEntitiesByName),
     [prompts],
   );
 
