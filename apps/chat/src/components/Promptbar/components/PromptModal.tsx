@@ -27,8 +27,6 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-settings';
-
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
@@ -80,7 +78,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
 
   const updatePrompt = useCallback(
     (selectedPrompt: Prompt) => {
-      const newName = prepareEntityName(name, DEFAULT_PROMPT_NAME);
+      const newName = prepareEntityName(name);
       setName(newName);
 
       if (!newName) return;

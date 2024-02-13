@@ -91,9 +91,8 @@ export const updateEntitiesFoldersAndIds = (
   return { updatedFolders, updatedOpenedFoldersIds };
 };
 
-export const prepareEntityName = (name: string, defaultName: string) => {
-  const clearName =
-    name.trim().replace(notAllowedSymbolsRegex, '') || defaultName;
+export const prepareEntityName = (name: string) => {
+  const clearName = name.trim().replace(notAllowedSymbolsRegex, '');
 
   if (clearName.length > MAX_ENTITY_LENGTH) {
     return clearName.substring(0, MAX_ENTITY_LENGTH - 3) + '...';

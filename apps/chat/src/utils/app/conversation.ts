@@ -10,8 +10,6 @@ import {
 import { EntityType, PartialBy, UploadStatus } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
-
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { constructPath } from './file';
 import { compareEntitiesByName, splitPath } from './folders';
@@ -83,10 +81,7 @@ export const getNewConversationName = (
   message: Message,
   updatedMessages: Message[],
 ): string => {
-  const convName = prepareEntityName(
-    conversation.name,
-    DEFAULT_CONVERSATION_NAME,
-  );
+  const convName = prepareEntityName(conversation.name);
 
   if (
     conversation.replay.isReplay ||
@@ -95,7 +90,7 @@ export const getNewConversationName = (
   ) {
     return convName;
   }
-  const content = prepareEntityName(message.content, DEFAULT_CONVERSATION_NAME);
+  const content = prepareEntityName(message.content);
   if (content.length > 0) {
     return content;
   } else if (message.custom_content?.attachments?.length) {
