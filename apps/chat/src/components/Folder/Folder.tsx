@@ -239,12 +239,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       return;
     }
 
-    const preparedName = prepareEntityName(renameValue);
-    setRenameValue(preparedName);
+    const newName = prepareEntityName(renameValue);
+    setRenameValue(newName);
 
     if (
       !isEntityNameOnSameLevelUnique(
-        preparedName,
+        newName,
         currentFolder,
         allFoldersWithoutFilters,
       )
@@ -252,7 +252,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       dispatch(
         UIActions.showToast({
           message: t(
-            `Folder with name "${preparedName}" already exists in this folder.`,
+            'Folder with name "{{folderName}}" already exists in this folder.',
+            {
+              ns: 'folder',
+              folderName: newName,
+            },
           ),
           type: 'error',
         }),
@@ -261,7 +265,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       return;
     }
 
-    preparedName && onRenameFolder(renameValue, currentFolder.id);
+    newName && onRenameFolder(newName, currentFolder.id);
     setRenameValue('');
     setIsRenaming(false);
     setIsContextMenu(false);
@@ -347,7 +351,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             dispatch(
               UIActions.showToast({
                 message: t(
-                  `Folder with name "${draggedFolder.name}" already exists in this folder.`,
+                  'Folder with name "{{folderName}}" already exists in this folder.',
+                  {
+                    ns: 'folder',
+                    folderName: draggedFolder.name,
+                  },
                 ),
                 type: 'error',
               }),
@@ -373,9 +381,15 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             dispatch(
               UIActions.showToast({
                 message: t(
-                  `${
-                    featureType === FeatureType.Chat ? 'Conversation' : 'Prompt'
-                  } with name "${draggedEntity.name}" already exists in this folder.`,
+                  '{{entityType}} with name "{{entityName}}" already exists in this folder.',
+                  {
+                    ns: 'common',
+                    entityType:
+                      featureType === FeatureType.Chat
+                        ? 'Conversation'
+                        : 'Prompt',
+                    entityName: draggedEntity.name,
+                  },
                 ),
                 type: 'error',
               }),
