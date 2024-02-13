@@ -85,10 +85,12 @@ describe('cleanData Functions', () => {
     {
       role: Role.User,
       content: "what's up ?",
+      custom_content: undefined,
     },
     {
       role: Role.Assistant,
       content: 'Hi',
+      custom_content: undefined,
     },
   ];
 
@@ -120,7 +122,7 @@ describe('cleanData Functions', () => {
       const obj = cleanData(dataV1);
       expect(isLatestExportFormat(obj)).toBe(true);
       expect(obj).toEqual({
-        version: 4,
+        version: 5,
         history: [{ ...expectedConversation, id: 1 }],
         folders: [],
         prompts: [],
@@ -147,7 +149,7 @@ describe('cleanData Functions', () => {
       const obj = cleanData(dataV2);
       expect(isLatestExportFormat(obj)).toBe(true);
       expect(obj).toEqual({
-        version: 4,
+        version: 5,
         history: [expectedConversation],
         folders: [
           {
@@ -193,9 +195,10 @@ describe('cleanData Functions', () => {
       } as ExportFormatV4;
 
       const obj = cleanData(dataV4);
+      console.log(obj);
       expect(isLatestExportFormat(obj)).toBe(true);
       expect(obj).toEqual({
-        version: 4,
+        version: 5,
         history: [expectedConversation],
         folders: [
           {

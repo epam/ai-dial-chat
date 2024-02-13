@@ -47,7 +47,7 @@ export function isPromptsFormat(obj: PromptsHistory) {
   return Object.prototype.hasOwnProperty.call(obj, 'prompts');
 }
 
-export const isLatestExportFormat = isExportFormatV4;
+export const isLatestExportFormat = isExportFormatV5;
 
 export interface CleanDataResponse extends LatestExportFormat {
   isError: boolean;
