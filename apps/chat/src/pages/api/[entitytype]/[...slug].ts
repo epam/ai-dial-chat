@@ -36,9 +36,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     if (req.method === 'GET') {
       return await handleGetRequest(req, token, res);
     } else if (req.method === 'PUT') {
-      return await handlePutRequest(req, token, res, {
-        ifNoneMatch: undefined,
-      });
+      return await handlePutRequest(req, token, res);
     } else if (req.method === 'POST') {
       return await handlePutRequest(req, token, res, { ifNoneMatch: '*' });
     } else if (req.method === 'DELETE') {
@@ -66,19 +64,24 @@ export const config = {
     responseLimit: false,
   },
 };
-
+interface PutOptions {
+  ifNoneMatch?: string;
+}
 async function handlePutRequest(
   req: NextApiRequest,
   token: JWT | null,
   res: NextApiResponse,
-  { ifNoneMatch }: { ifNoneMatch?: string },
+  options?: PutOptions,
 ) {
   const readable = Readable.from(req);
   const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   const proxyRes = await fetch(url, {
     method: 'PUT',
     headers: {
-      ...getApiHeaders({ jwt: token?.access_token as string, ifNoneMatch }),
+      ...getApiHeaders({
+        jwt: token?.access_token as string,
+        ifNoneMatch: options?.ifNoneMatch,
+      }),
       'Content-Type': req.headers['content-type'] as string,
     },
     body: readable,
@@ -139,7 +142,12 @@ async function handleDeleteRequest(
   });
 
   if (!proxyRes.ok) {
-    const json: unknown = await proxyRes.json();
+    let json: unknown;
+    try {
+      json = await proxyRes.json();
+    } catch {
+      json = undefined;
+    }
     throw new OpenAIError(
       (typeof json === 'string' && json) || proxyRes.statusText,
       '',
