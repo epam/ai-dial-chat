@@ -6,6 +6,7 @@ import {
   ExportFormatV2,
   ExportFormatV3,
   ExportFormatV4,
+  ExportFormatV5,
   LatestExportConversationsFormat,
   LatestExportFormat,
   PromptsHistory,
@@ -38,7 +39,7 @@ export function isExportFormatV4(obj: any): obj is ExportFormatV4 {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isExportFormatV5(obj: any): obj is ExportFormatV4 {
+export function isExportFormatV5(obj: any): obj is ExportFormatV5 {
   return 'version' in obj && obj.version === 5;
 }
 
@@ -54,7 +55,7 @@ export interface CleanDataResponse extends LatestExportFormat {
 export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV1(data)) {
     const cleanHistoryData: LatestExportFormat = {
-      version: 4,
+      version: 5,
       history: cleanConversationHistory(data as unknown as Conversation[]),
       folders: [],
       prompts: [],
@@ -67,7 +68,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
 
   if (isExportFormatV2(data)) {
     return {
-      version: 4,
+      version: 5,
       history: cleanConversationHistory(data.history || []),
       folders: (data.folders || []).map((chatFolder) => ({
         id: chatFolder.id.toString(),
@@ -83,7 +84,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
     return {
       history: cleanConversationHistory(data.history),
       folders: [...data.folders],
-      version: 4,
+      version: 5,
       prompts: [],
       isError: false,
     };
@@ -92,6 +93,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV4(data)) {
     return {
       ...data,
+      version: 5,
       history: cleanConversationHistory(data.history),
       prompts: data.prompts || [],
       isError: false,
@@ -108,7 +110,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   }
 
   return {
-    version: 4,
+    version: 5,
     history: [],
     folders: [],
     prompts: [],

@@ -54,7 +54,7 @@ import { translate } from '@/src/utils/app/translation';
 import { getPromptApiKey } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { PromptsHistory } from '@/src/types/import-export';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
@@ -403,22 +403,29 @@ const importPromptsEpic: AppEpic = (action$) =>
       }),
     ),
     switchMap(({ promptsListing, promptsHistory }) => {
-      const foldersIds = Array.from(
-        new Set(promptsListing.map((info) => info.folderId)),
-      );
-      //calculate all folders;
-      const folders = getFoldersFromPaths(
-        Array.from(
-          new Set(foldersIds.flatMap((id) => getAllPathsFromPath(id))),
-        ),
-        FolderType.Prompt,
-      );
+      let foldersIds: (string | undefined)[] = [];
+      let folders: FolderInterface[] = [];
+      let currentPrompts: Observable<(Prompt | null)[]> = of([]);
+
+      if (promptsListing.length) {
+        foldersIds = Array.from(
+          new Set(promptsListing.map((info) => info.folderId)),
+        );
+        //calculate all folders;
+        folders = getFoldersFromPaths(
+          Array.from(
+            new Set(foldersIds.flatMap((id) => getAllPathsFromPath(id))),
+          ),
+          FolderType.Prompt,
+        );
+        //get all prompts from api
+        currentPrompts = zip(
+          promptsListing.map((info) => PromptService.getPrompt(info)),
+        );
+      }
 
       return forkJoin({
-        //get all prompts from api
-        currentPrompts: zip(
-          promptsListing.map((info) => PromptService.getPrompt(info)),
-        ),
+        currentPrompts,
         currentFolders: of(folders),
         promptsHistory: of(promptsHistory),
       });
