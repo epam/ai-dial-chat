@@ -76,15 +76,16 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
     filter(PromptsActions.createNewPrompt.match),
     switchMap(() => {
       const prompts = PromptsSelectors.selectPrompts(state$.value);
+      const rootId = getRootId({ apiKey: ApiKeys.Prompts });
 
       const newPrompt: Prompt = addGeneratedPromptId({
         name: getNextDefaultName(
           DEFAULT_PROMPT_NAME,
-          prompts.filter((prompt) => !prompt.folderId),
+          prompts.filter((prompt) => prompt.folderId === rootId),
         ),
         description: '',
         content: '',
-        folderId: getRootId({ apiKey: ApiKeys.Prompts }),
+        folderId: rootId,
       });
 
       return of(PromptsActions.createNewPromptSuccess({ newPrompt }));
