@@ -50,7 +50,7 @@ export const hasExternalParent = (
   folderId: string | undefined,
   featureType: FeatureType,
 ) => {
-  if (!featureType || !folderId) return false;
+  if (!featureType) return false;
 
   return featureType === FeatureType.Chat
     ? ConversationsSelectors.hasExternalParent(state, folderId)
