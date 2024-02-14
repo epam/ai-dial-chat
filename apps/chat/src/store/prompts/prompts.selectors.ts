@@ -42,7 +42,7 @@ export const selectFilteredPrompts = createSelector(
         (!searchTerm ||
           doesPromptOrConversationContainSearchTerm(prompt, searchTerm)) &&
         filters.searchFilter(prompt) &&
-        (prompt.folderId || filters.sectionFilter(prompt)),
+        filters.sectionFilter(prompt),
     );
   },
 );
