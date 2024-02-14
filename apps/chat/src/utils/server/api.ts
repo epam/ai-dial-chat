@@ -72,6 +72,12 @@ const encodeSlugs = (slugs: (string | undefined)[]): string =>
     ...slugs.filter(Boolean).map((part) => encodeURIComponent(part as string)),
   );
 
+export const encodeApiUrl = (path: string): string =>
+  constructPath(...path.split('/').map((part) => encodeURIComponent(part)));
+
+export const decodeApiUrl = (path: string): string =>
+  constructPath(...path.split('/').map((part) => decodeURIComponent(part)));
+
 export const getEntityUrlFromSlugs = (
   dialApiHost: string,
   req: NextApiRequest,
