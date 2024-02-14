@@ -27,6 +27,7 @@ export const errorsMessages = {
   shareFailed: 'Sharing failed. Please try again later.',
   acceptShareFailed:
     'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
+  acceptShareNotExists: 'Share link is incorrect or already expired',
   shareByMeListingFailed:
     'Getting shared by you resources failed. Please reload the page to get them again.',
   shareWithMeListingFailed:

@@ -254,7 +254,11 @@ const acceptInvitationEpic: AppEpic = (action$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(ShareActions.acceptShareInvitationFail());
+          let message = errorsMessages.acceptShareFailed;
+          if (err.message === 'Not Found') {
+            message = errorsMessages.acceptShareNotExists;
+          }
+          return of(ShareActions.acceptShareInvitationFail({ message }));
         }),
       );
     }),
@@ -273,11 +277,11 @@ const acceptInvitationSuccessEpic: AppEpic = (action$) =>
 const acceptInvitationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.acceptShareInvitationFail.match),
-    map(() => {
+    map(({ payload }) => {
       history.replaceState({}, '', `${window.location.origin}`);
 
       return UIActions.showToast({
-        message: translate(errorsMessages.acceptShareFailed),
+        message: translate(payload.message || errorsMessages.acceptShareFailed),
       });
     }),
   );
