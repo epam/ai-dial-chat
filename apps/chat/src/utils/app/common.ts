@@ -38,6 +38,7 @@ export const isEntityNameOnSameLevelUnique = <
   const sameLevelEntities = entities.filter(
     (e) => entity.id !== e.id && e.folderId === entity.folderId,
   );
+
   return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
 };
 
