@@ -15,7 +15,7 @@ COPY . .
 RUN npm run build
 
 # ---- Only required dependencies ----
-FROM build AS run_ependencies
+FROM build AS run_dependencies
 WORKDIR /app/dist/apps/chat
 COPY /tools /app/dist/apps/chat/tools
 RUN npm i
@@ -25,8 +25,8 @@ RUN node tools/patch-nextjs.js
 FROM node:20-alpine AS production
 RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
 WORKDIR /app
-COPY --from=run_ependencies /app/dist/apps/chat ./
-COPY --from=run_ependencies /app/startup.sh ./startup.sh
+COPY --from=run_dependencies /app/dist/apps/chat ./
+COPY --from=run_dependencies /app/startup.sh ./startup.sh
 
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
