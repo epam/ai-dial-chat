@@ -102,7 +102,31 @@ const saveShowPromptbarEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
-const showToastErrorEpic: AppEpic = (action$) =>
+const showErrorToastEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.showErrorToast.match),
+    switchMap(({ payload }) =>
+      of(UIActions.showToast({ message: payload, type: 'error' })),
+    ),
+  );
+
+const showLoadingToastEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.showLoadingToast.match),
+    switchMap(({ payload }) =>
+      of(UIActions.showToast({ message: payload, type: 'loading' })),
+    ),
+  );
+
+const showSuccessToastEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.showSuccessToast.match),
+    switchMap(({ payload }) =>
+      of(UIActions.showToast({ message: payload, type: 'success' })),
+    ),
+  );
+
+const showToastEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.showToast.match),
     switchMap(({ payload }) => {
@@ -177,7 +201,10 @@ const UIEpics = combineEpics(
   saveThemeEpic,
   saveShowChatbarEpic,
   saveShowPromptbarEpic,
-  showToastErrorEpic,
+  showToastEpic,
+  showErrorToastEpic,
+  showLoadingToastEpic,
+  showSuccessToastEpic,
   closeAnnouncementEpic,
   saveChatbarWidthEpic,
   savePromptbarWidthEpic,

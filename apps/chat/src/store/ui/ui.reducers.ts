@@ -104,6 +104,9 @@ export const uiSlice = createSlice({
         response?: Response;
       }>,
     ) => state,
+    showErrorToast: (state, _action: PayloadAction<string>) => state,
+    showLoadingToast: (state, _action: PayloadAction<string>) => state,
+    showSuccessToast: (state, _action: PayloadAction<string>) => state,
     setOpenedFoldersIds: (
       state,
       {
