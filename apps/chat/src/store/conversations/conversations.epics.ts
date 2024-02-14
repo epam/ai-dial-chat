@@ -132,7 +132,14 @@ const initSelectedConversationsEpic: AppEpic = (action$) =>
       return forkJoin({
         selectedConversations: zip(
           selectedIds.map((id) =>
-            ConversationService.getConversation(getConversationInfoFromId(id)),
+            ConversationService.getConversation(
+              getConversationInfoFromId(id),
+            ).pipe(
+              catchError((err) => {
+                console.error('The selected conversation was not found:', err);
+                return of(null);
+              }),
+            ),
           ),
         ),
         selectedIds: of(selectedIds),
@@ -237,10 +244,26 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
           names: of(names),
           lastConversation:
             lastConversation && lastConversation.status !== UploadStatus.LOADED
-              ? ConversationService.getConversation(lastConversation)
+              ? ConversationService.getConversation(lastConversation).pipe(
+                  catchError((err) => {
+                    console.error(
+                      'The last used conversation was not found:',
+                      err,
+                    );
+                    return of(null);
+                  }),
+                )
               : (of(lastConversation) as Observable<Conversation>),
           conversations: shouldUploadConversationsForCompare
-            ? ConversationService.getConversations()
+            ? ConversationService.getConversations().pipe(
+                catchError((err) => {
+                  console.error(
+                    'The conversations were not upload successfully:',
+                    err,
+                  );
+                  return of([]);
+                }),
+              )
             : of(conversations),
         }),
     ),
@@ -298,7 +321,16 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 }),
               ),
             ),
-            catchError(() => EMPTY),
+            catchError((err) => {
+              console.error("New conversation wasn't created:", err);
+              return of(
+                UIActions.showErrorToast(
+                  translate(
+                    'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
+                  ),
+                ),
+              );
+            }),
           );
         }),
       );
@@ -318,7 +350,14 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
     ),
     switchMap(({ conversationAndPayload, conversations }) => {
       const { conversation } = conversationAndPayload;
-      if (!conversation) return EMPTY; // TODO: handle?
+      if (!conversation)
+        return of(
+          UIActions.showErrorToast(
+            translate(
+              'It looks like this conversation has been deleted. Please reload the page',
+            ),
+          ),
+        );
 
       const folderId = ConversationsSelectors.hasExternalParent(
         state$.value,
@@ -361,7 +400,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
       });
 
       return of(
-        ConversationsActions.createNewConversationSuccess({
+        ConversationsActions.saveNewConversation({
           newConversation,
         }),
       );
@@ -381,7 +420,14 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
     ),
     switchMap(({ conversationAndPayload, conversations }) => {
       const { conversation } = conversationAndPayload;
-      if (!conversation) return EMPTY; // TODO: handle?
+      if (!conversation)
+        return of(
+          UIActions.showErrorToast(
+            translate(
+              'It looks like this conversation has been deleted. Please reload the page',
+            ),
+          ),
+        );
 
       const folderId = ConversationsSelectors.hasExternalParent(
         state$.value,
@@ -421,7 +467,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
       });
 
       return of(
-        ConversationsActions.createNewConversationSuccess({
+        ConversationsActions.saveNewConversation({
           newConversation,
         }),
       );
@@ -433,11 +479,19 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.duplicateConversation.match),
     switchMap(({ payload }) =>
       forkJoin({
-        conversation: ConversationService.getConversation(payload),
+        conversationAndPayload: getOrUploadConversation(payload, state$.value),
       }),
     ),
-    switchMap(({ conversation }) => {
-      if (!conversation) return EMPTY;
+    switchMap(({ conversationAndPayload: { conversation } }) => {
+      if (!conversation) {
+        return of(
+          UIActions.showErrorToast(
+            translate(
+              'It looks like this conversation has been deleted. Please reload the page',
+            ),
+          ),
+        );
+      }
 
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
@@ -453,7 +507,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       });
 
       return of(
-        ConversationsActions.createNewConversationSuccess({
+        ConversationsActions.saveNewConversation({
           newConversation,
         }),
       );
@@ -468,14 +522,24 @@ const createNewConversationsSuccessEpic: AppEpic = (action$) =>
     ),
   );
 
-const createNewConversationSuccessEpic: AppEpic = (action$) =>
+const saveNewConversationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter((action) =>
-      ConversationsActions.createNewConversationSuccess.match(action),
-    ),
+    filter((action) => ConversationsActions.saveNewConversation.match(action)),
     switchMap(({ payload }) =>
       ConversationService.createConversation(payload.newConversation).pipe(
-        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        switchMap(() =>
+          of(ConversationsActions.saveNewConversationSuccess(payload)),
+        ),
+        catchError((err) => {
+          console.error(err);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                'An error occurred while saving the conversation. Most likely the conversation already exists. Please refresh the page.',
+              ),
+            ),
+          );
+        }),
       ),
     ),
   );
@@ -489,6 +553,11 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         conversations: ConversationService.getConversations(
           payload.folderId,
           true,
+        ).pipe(
+          catchError((err) => {
+            console.error('Error during delete folder:', err);
+            return of([]);
+          }),
         ),
         folders: of(ConversationsSelectors.selectFolders(state$.value)),
       }),
@@ -617,6 +686,10 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
           return concat(...actions);
         }),
+        catchError((err) => {
+          console.error('Error during upload conversations and folders', err);
+          return of(ConversationsActions.uploadConversationsFail());
+        }),
       );
     }),
   );
@@ -650,13 +723,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
         (id) => !deleteIds.has(id),
       );
 
-      const actions: Observable<AnyAction>[] = [
-        of(
-          ConversationsActions.deleteConversationsSuccess({
-            deleteIds,
-          }),
-        ),
-      ];
+      const actions: Observable<AnyAction>[] = [];
 
       if (otherConversations.length === 0) {
         actions.push(
@@ -694,9 +761,37 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
           Array.from(deleteIds).map((id) =>
             ConversationService.deleteConversation(
               getConversationInfoFromId(id),
+            ).pipe(
+              switchMap(() => of(null)),
+              catchError((err) => {
+                const { name } = getConversationInfoFromId(id);
+                console.error(`Error during deleting "${name}"`, err);
+                return name;
+              }),
             ),
           ),
-        ).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        ).pipe(
+          switchMap((failedNames) =>
+            concat(
+              iif(
+                () => failedNames.filter(Boolean).length > 0,
+                of(
+                  UIActions.showErrorToast(
+                    translate(
+                      `An error occurred while saving the prompt(s): "${failedNames.filter(Boolean).join('", "')}"`,
+                    ),
+                  ),
+                ),
+                EMPTY,
+              ),
+              of(
+                ConversationsActions.deleteConversationsComplete({
+                  deleteIds,
+                }),
+              ),
+            ),
+          ),
+        ),
       );
     }),
   );
@@ -1398,12 +1493,7 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
           }),
         ),
         isReplay ? of(ConversationsActions.stopReplayConversation()) : EMPTY,
-        of(
-          UIActions.showToast({
-            message: message,
-            type: 'error',
-          }),
-        ),
+        of(UIActions.showErrorToast(translate(message))),
       );
     }),
   );
@@ -1679,7 +1769,23 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       conversationsFolders: ConversationsSelectors.selectFolders(state$.value),
     })),
     switchMap(({ conversationsFolders }) => {
-      return ConversationService.setConversationFolders(conversationsFolders);
+      return ConversationService.setConversationFolders(
+        conversationsFolders,
+      ).pipe(
+        catchError((err) => {
+          console.error(
+            'An error occurred during the saving conversation folders: ',
+            err,
+          );
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                'An error occurred during the saving conversation folders',
+              ),
+            ),
+          );
+        }),
+      );
     }),
     ignoreElements(),
   );
@@ -1692,9 +1798,9 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.selectConversations.match(action) ||
         ConversationsActions.unselectConversations.match(action) ||
         ConversationsActions.updateConversationSuccess.match(action) ||
-        ConversationsActions.createNewConversationSuccess.match(action) ||
+        ConversationsActions.saveNewConversationSuccess.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
-        ConversationsActions.deleteConversationsSuccess.match(action) ||
+        ConversationsActions.deleteConversationsComplete.match(action) ||
         ConversationsActions.addConversations.match(action) ||
         ConversationsActions.duplicateConversation.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action),
@@ -1756,12 +1862,11 @@ const compareConversationsEpic: AppEpic = (action$, state$) =>
       if (isInvalid) {
         actions.push(
           of(
-            UIActions.showToast({
-              message: translate(
+            UIActions.showErrorToast(
+              translate(
                 'Incorrect conversation was chosen for comparison. Please choose another one.\r\nOnly conversations containing the same number of messages can be compared.',
               ),
-              type: 'error',
-            }),
+            ),
           ),
         );
       } else {
@@ -2007,6 +2112,11 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
           payload.conversationIds.map((id) =>
             ConversationService.getConversation(
               ConversationsSelectors.selectConversation(state$.value, id)!,
+            ).pipe(
+              catchError((err) => {
+                console.error('The selected conversation was not found:', err);
+                return of(null);
+              }),
             ),
           ),
         ),
@@ -2058,7 +2168,17 @@ const saveConversationEpic: AppEpic = (action$) =>
     ),
     switchMap(({ payload: newConversation }) => {
       return ConversationService.updateConversation(newConversation).pipe(
-        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        switchMap(() => EMPTY),
+        catchError((err) => {
+          console.error(err);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                'An error occurred while saving the conversation. Please refresh the page.',
+              ),
+            ),
+          );
+        }),
       );
     }),
   );
@@ -2067,13 +2187,23 @@ const recreateConversationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.recreateConversation.match),
     mergeMap(({ payload }) => {
-      return concat(
-        ConversationService.createConversation(payload.new).pipe(
-          switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
-        ),
+      return zip(
+        ConversationService.createConversation(payload.new),
         ConversationService.deleteConversation(
           getConversationInfoFromId(payload.old.id),
-        ).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        ),
+      ).pipe(
+        switchMap(() => EMPTY),
+        catchError((err) => {
+          console.error(err);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                'An error occurred while saving the conversation. Please refresh the page.',
+              ),
+            ),
+          );
+        }),
       );
     }),
   );
@@ -2090,7 +2220,13 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         values: Partial<Conversation>;
       };
       if (!conversation) {
-        return EMPTY; // TODO: handle?
+        return of(
+          UIActions.showErrorToast(
+            translate(
+              'It looks like this conversation has been deleted. Please reload the page',
+            ),
+          ),
+        );
       }
       const newConversation: Conversation = regenerateConversationId({
         ...(conversation as Conversation),
@@ -2159,16 +2295,29 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
             ),
           );
         }),
-        catchError(() =>
-          concat(
+        catchError((err) => {
+          console.error('Error during upload conversations and folders', err);
+          return concat(
             of(
               ConversationsActions.uploadFoldersFail({
                 paths: new Set(payload.paths),
               }),
             ),
             of(ConversationsActions.uploadConversationsFail()),
-          ),
-        ), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+          );
+        }),
+      ),
+    ),
+  );
+
+const uploadConversationsFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.uploadConversationsFail.match),
+    map(() =>
+      UIActions.showErrorToast(
+        translate(
+          'An error occurred while loading conversations and folders. Most likely the conversation already exists. Please refresh the page.',
+        ),
       ),
     ),
   );
@@ -2207,7 +2356,10 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
             of(ConversationsActions.initFoldersAndConversationsSuccess()),
           );
         }),
-        catchError(() => of(ConversationsActions.uploadConversationsFail())), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        catchError((err) => {
+          console.error('Error during upload conversations and folders', err);
+          return of(ConversationsActions.uploadConversationsFail());
+        }),
       ),
     ),
   );
@@ -2274,7 +2426,7 @@ export const ConversationsEpics = combineEpics(
   selectConversationsEpic,
   uploadSelectedConversationsEpic,
 
-  createNewConversationSuccessEpic,
+  saveNewConversationEpic,
   createNewConversationsSuccessEpic,
   saveFoldersEpic,
   deleteFolderEpic,
@@ -2306,6 +2458,7 @@ export const ConversationsEpics = combineEpics(
 
   uploadConversationsWithFoldersEpic,
   uploadConversationsWithFoldersRecursiveEpic,
+  uploadConversationsFailEpic,
   toggleFolderEpic,
   openFolderEpic,
   compareConversationsEpic,

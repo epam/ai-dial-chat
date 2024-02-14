@@ -56,7 +56,9 @@ export class ApiStorage implements DialStorage {
             const newName = generateNextName(
               defaultName,
               entity.name,
-              entities.filter((e) => e.folderId === entity.folderId),
+              entities.filter(
+                (e) => e.folderId === entity.folderId && e.id !== entity.id,
+              ),
             );
             const updatedEntity = {
               ...entity,
