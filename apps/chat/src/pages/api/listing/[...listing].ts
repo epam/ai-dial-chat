@@ -45,7 +45,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       : [req.query.listing];
 
     if (!slugs || slugs.length === 0) {
-      throw new OpenAIError(`No path provided`, '', '', '404');
+      throw new OpenAIError(`No path provided`, '', '', '400');
     }
 
     const url = `${constructPath(
