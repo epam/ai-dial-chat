@@ -215,7 +215,7 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{ conversationIds: string[] }>,
     ) => state,
-    deleteConversationsSuccess: (
+    deleteConversationsComplete: (
       state,
       { payload }: PayloadAction<{ deleteIds: Set<string> }>,
     ) => {
@@ -261,7 +261,11 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<ConversationInfo>,
     ) => state,
-    createNewConversationSuccess: (
+    saveNewConversation: (
+      state,
+      _action: PayloadAction<{ newConversation: Conversation }>,
+    ) => state,
+    saveNewConversationSuccess: (
       state,
       {
         payload: { newConversation },
@@ -651,7 +655,6 @@ export const conversationsSlice = createSlice({
     uploadConversationsWithFoldersRecursive: (state) => {
       state.conversationsStatus = UploadStatus.LOADING;
     },
-
     uploadConversationsSuccess: (
       state,
       {
