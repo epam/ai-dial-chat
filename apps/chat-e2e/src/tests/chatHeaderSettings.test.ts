@@ -1,7 +1,6 @@
-import { Conversation } from '@/chat/types/chat';
 import { OpenAIEntityModel } from '@/chat/types/openai';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedMessages } from '@/src/testData';
+import { ExpectedMessages, TestConversation } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -26,7 +25,7 @@ dialTest(
     dataInjector,
   }) => {
     setTestIds('EPMRTC-449');
-    let conversation: Conversation;
+    let conversation: TestConversation;
     const allModels = ModelsUtil.getModels();
     const randomModel = GeneratorUtil.randomArrayElement(
       allModels.filter((m) => m.id !== defaultModel.id),

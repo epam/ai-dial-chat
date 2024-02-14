@@ -1,5 +1,3 @@
-import { FolderInterface } from '@/chat/types/folder';
-import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
@@ -7,6 +5,8 @@ import {
   ExpectedMessages,
   FolderPrompt,
   MenuOptions,
+  TestFolder,
+  TestPrompt,
 } from '@/src/testData';
 import { GeneratorUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
@@ -427,14 +427,12 @@ dialTest(
     confirmationDialog,
     promptData,
     setTestIds,
-    setIssueIds,
   }) => {
     setTestIds('EPMRTC-1384');
-    setIssueIds('671');
     const levelsCount = 3;
     const levelToDelete = 2;
-    let nestedFolders: FolderInterface[];
-    const nestedPrompts: Prompt[] = [];
+    let nestedFolders: TestFolder[];
+    const nestedPrompts: TestPrompt[] = [];
 
     await dialTest.step(
       'Prepare nested folders with prompts inside each one',

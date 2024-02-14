@@ -3,6 +3,8 @@ import { LoginPage } from '@/src/ui/pages';
 import { Auth0Page } from '@/src/ui/pages/auth0Page';
 import { test as base } from '@playwright/test';
 
+export const skipReason = 'Execute test on CI env only';
+
 const test = base.extend<{
   loginPage: LoginPage;
   auth0Page: Auth0Page;

@@ -1,5 +1,4 @@
-import { ChatBody, Conversation } from '@/chat/types/chat';
-import { FolderInterface } from '@/chat/types/folder';
+import { ChatBody } from '@/chat/types/chat';
 import { OpenAIEntityModel } from '@/chat/types/openai';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -8,6 +7,8 @@ import {
   Import,
   MenuOptions,
   ModelIds,
+  TestConversation,
+  TestFolder,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -44,10 +45,10 @@ dialTest(
     addons,
   }) => {
     setTestIds('EPMRTC-501', 'EPMRTC-1264');
-    let replayConversation: Conversation;
+    let replayConversation: TestConversation;
     const replayTemp = 0;
     const replayPrompt = 'replay prompt';
-    let firstConversation: Conversation;
+    let firstConversation: TestConversation;
 
     await dialTest.step(
       'Prepare two conversation with different settings',
@@ -174,8 +175,8 @@ dialTest(
     conversationDropdownMenu,
   }) => {
     setTestIds('EPMRTC-503');
-    let nestedFolders: FolderInterface[];
-    let nestedConversations: Conversation[] = [];
+    let nestedFolders: TestFolder[];
+    let nestedConversations: TestConversation[] = [];
     const nestedLevels = 3;
 
     await dialTest.step(
@@ -349,8 +350,8 @@ dialTest(
     chatMessages,
   }) => {
     setTestIds('EPMRTC-512');
-    let conversation: Conversation;
-    let replayConversation: Conversation;
+    let conversation: TestConversation;
+    let replayConversation: TestConversation;
     const userRequest = 'write down 100 adjectives';
 
     await dialTest.step('Prepare model conversation to replay', async () => {
@@ -420,8 +421,8 @@ dialTest(
     conversations,
   }) => {
     setTestIds('EPMRTC-514', 'EPMRTC-1165');
-    let conversation: Conversation;
-    let replayConversation: Conversation;
+    let conversation: TestConversation;
+    let replayConversation: TestConversation;
     await dialTest.step('Prepare conversation to replay', async () => {
       conversation = conversationData.prepareDefaultConversation(gpt35Model);
       replayConversation =
@@ -497,8 +498,8 @@ dialTest(
     setTestIds('EPMRTC-1323', 'EPMRTC-1324');
     const replayTemp = 0.8;
     const replayPrompt = 'reply the same text';
-    let conversation: Conversation;
-    let replayConversation: Conversation;
+    let conversation: TestConversation;
+    let replayConversation: TestConversation;
     const expectedModelIcon = await iconApiHelper.getEntityIcon(gpt35Model);
 
     await dialTest.step('Prepare conversation to replay', async () => {
@@ -596,8 +597,8 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1322', 'EPMRTC-388');
-    let replayConversation: Conversation;
-    let conversation: Conversation;
+    let replayConversation: TestConversation;
+    let conversation: TestConversation;
     const firstModel = gpt35Model;
     const secondModel = gpt4Model;
     const conversationModels = [gpt35Model, gpt4Model];
@@ -674,7 +675,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-1535');
     const message = GeneratorUtil.randomString(10);
-    let replayConversation: Conversation;
+    let replayConversation: TestConversation;
 
     await dialTest.step('Prepare conversation to replay', async () => {
       const requests: string[] = [];
@@ -781,8 +782,8 @@ dialTest(
     conversations,
   }) => {
     setTestIds('EPMRTC-505', 'EPMRTC-506', 'EPMRTC-515', 'EPMRTC-516');
-    let conversation: Conversation;
-    let replayConversation: Conversation;
+    let conversation: TestConversation;
+    let replayConversation: TestConversation;
 
     await dialTest.step(
       'Prepare conversation to replay with updated name',
@@ -872,8 +873,8 @@ dialTest(
     conversations,
   }) => {
     setTestIds('EPMRTC-1312');
-    let errorConversation: Conversation;
-    let replayConversation: Conversation;
+    let errorConversation: TestConversation;
+    let replayConversation: TestConversation;
 
     await dialTest.step(
       'Prepare errorConversation with error response and replay errorConversation',
@@ -919,8 +920,8 @@ dialTest(
     conversations,
   }) => {
     setTestIds('EPMRTC-1328');
-    let notAllowedModelConversation: Conversation;
-    let replayConversation: Conversation;
+    let notAllowedModelConversation: TestConversation;
+    let replayConversation: TestConversation;
 
     await dialTest.step(
       'Prepare conversation with not allowed model and replay for it',
@@ -1093,7 +1094,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-500');
-    let conversation: Conversation;
+    let conversation: TestConversation;
 
     await dialTest.step('Prepare empty conversation', async () => {
       conversation = conversationData.prepareEmptyConversation();
@@ -1131,8 +1132,8 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1542');
-    let conversation: Conversation;
-    let replayConversation: Conversation;
+    let conversation: TestConversation;
+    let replayConversation: TestConversation;
 
     await dialTest.step('Prepare partially replayed conversation', async () => {
       conversation = conversationData.prepareConversationWithDifferentModels([

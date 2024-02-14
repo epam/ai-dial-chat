@@ -1,4 +1,3 @@
-import { Conversation } from '@/chat/types/chat';
 import { OpenAIEntityModel } from '@/chat/types/openai';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -6,6 +5,7 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   ModelIds,
+  TestConversation,
   Theme,
 } from '@/src/testData';
 import { Cursors, Styles } from '@/src/ui/domData';
@@ -38,7 +38,7 @@ dialTest(
     chatMessages,
   }) => {
     setTestIds('EPMRTC-476');
-    let conversation: Conversation;
+    let conversation: TestConversation;
     const userRequests = [
       'first request',
       'second request',
@@ -235,7 +235,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-485', 'EPMRTC-486', 'EPMRTC-487');
     const editData = 'updated message';
-    let conversation: Conversation;
+    let conversation: TestConversation;
     const userRequests = ['1+2=', '2+3=', '3+4='];
     await dialTest.step('Prepare conversation with 3 requests', async () => {
       conversation = conversationData.prepareModelConversationBasedOnRequests(

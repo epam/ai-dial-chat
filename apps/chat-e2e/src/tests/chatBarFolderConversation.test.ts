@@ -1,11 +1,11 @@
-import { Conversation } from '@/chat/types/chat';
-import { FolderInterface } from '@/chat/types/folder';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
+  TestConversation,
+  TestFolder,
 } from '@/src/testData';
 import { Overflow, Styles } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
@@ -393,8 +393,8 @@ dialTest(
     setTestIds('EPMRTC-1372');
     const levelsCount = 3;
     const levelToDelete = 2;
-    let nestedFolders: FolderInterface[];
-    let nestedConversations: Conversation[] = [];
+    let nestedFolders: TestFolder[];
+    let nestedConversations: TestConversation[] = [];
 
     await dialTest.step(
       'Prepare nested folders with conversations inside each one',

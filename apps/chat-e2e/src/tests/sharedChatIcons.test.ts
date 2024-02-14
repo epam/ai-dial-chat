@@ -1,10 +1,10 @@
-import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
   ModelIds,
+  TestConversation,
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
@@ -181,7 +181,7 @@ dialTest.skip(
       'EPMRTC-1508',
       'EPMRTC-1509',
     );
-    let conversation: Conversation;
+    let conversation: TestConversation;
     const conversationName = GeneratorUtil.randomString(60);
 
     await dialTest.step('Prepare default conversation', async () => {
@@ -331,7 +331,7 @@ dialTest.skip(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1510');
-    let conversation: Conversation;
+    let conversation: TestConversation;
 
     await dialTest.step('Prepare shared conversation', async () => {
       conversation = conversationData.prepareDefaultSharedConversation();
@@ -381,8 +381,8 @@ dialTest.skip(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1600', 'EPMRTC-1511');
-    let notSharedConversation: Conversation;
-    let sharedConversation: Conversation;
+    let notSharedConversation: TestConversation;
+    let sharedConversation: TestConversation;
 
     await dialTest.step(
       'Prepare one shared and one not shared conversations',

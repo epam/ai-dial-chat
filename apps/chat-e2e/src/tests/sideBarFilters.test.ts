@@ -1,6 +1,3 @@
-import { Conversation } from '@/chat/types/chat';
-import { FolderInterface } from '@/chat/types/folder';
-import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
@@ -9,6 +6,9 @@ import {
   FolderConversation,
   FolderPrompt,
   ModelIds,
+  TestConversation,
+  TestFolder,
+  TestPrompt,
 } from '@/src/testData';
 import { expect } from '@playwright/test';
 
@@ -27,12 +27,12 @@ dialTest.skip(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1597');
-    let nestedFolders: FolderInterface[];
-    let nestedSharedConversations: Conversation[];
-    let nestedConversations: Conversation[];
+    let nestedFolders: TestFolder[];
+    let nestedSharedConversations: TestConversation[];
+    let nestedConversations: TestConversation[];
     let folderConversation: FolderConversation;
-    let sharedSingleConversation: Conversation;
-    let singleConversation: Conversation;
+    let sharedSingleConversation: TestConversation;
+    let singleConversation: TestConversation;
 
     await dialTest.step(
       'Prepare nested folders and single shared and not shared conversations',
@@ -166,7 +166,7 @@ dialTest.skip(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1631');
-    const testConversations: Conversation[] = [];
+    const testConversations: TestConversation[] = [];
     const searchTerm = 'test';
 
     await dialTest.step(
@@ -227,12 +227,12 @@ dialTest.skip(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1635');
-    let nestedFolders: FolderInterface[];
-    let nestedSharedPrompts: Prompt[];
-    let nestedPrompts: Prompt[];
+    let nestedFolders: TestFolder[];
+    let nestedSharedPrompts: TestPrompt[];
+    let nestedPrompts: TestPrompt[];
     let folderPrompt: FolderPrompt;
-    let sharedSinglePrompt: Prompt;
-    let singlePrompt: Prompt;
+    let sharedSinglePrompt: TestPrompt;
+    let singlePrompt: TestPrompt;
 
     await dialTest.step(
       'Prepare nested folders and single shared and not shared prompts',
@@ -353,7 +353,7 @@ dialTest.skip(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1636');
-    const testPrompts: Prompt[] = [];
+    const testPrompts: TestPrompt[] = [];
     const searchTerm = 'test';
 
     await dialTest.step(

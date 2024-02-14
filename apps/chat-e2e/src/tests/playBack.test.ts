@@ -1,4 +1,3 @@
-import { Conversation } from '@/chat/types/chat';
 import { OpenAIEntityModel } from '@/chat/types/openai';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -6,6 +5,7 @@ import {
   ExpectedMessages,
   MenuOptions,
   ModelIds,
+  TestConversation,
   Theme,
 } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
@@ -40,7 +40,7 @@ dialTest.skip(
     iconApiHelper,
   }) => {
     setTestIds('EPMRTC-1417', 'EPMRTC-1418', 'EPMRTC-1422');
-    let conversation: Conversation;
+    let conversation: TestConversation;
     const conversationModels = [defaultModel, gpt4Model];
     let playbackConversationName: string;
 
@@ -443,8 +443,8 @@ dialTest.skip(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1420', 'EPMRTC-1421');
-    let conversation: Conversation;
-    let playbackConversation: Conversation;
+    let conversation: TestConversation;
+    let playbackConversation: TestConversation;
     const playNextKeys = [
       keys.space,
       keys.enter,
@@ -702,8 +702,8 @@ dialTest.skip(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1425');
-    let conversation: Conversation;
-    let playbackConversation: Conversation;
+    let conversation: TestConversation;
+    let playbackConversation: TestConversation;
 
     await dialTest.step(
       'Prepare playback conversation based on 2 requests and played back till the last message',
@@ -774,8 +774,8 @@ dialTest.skip(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1427', 'EPMRTC-1470', 'EPMRTC-1473', 'EPMRTC-1428');
-    let conversation: Conversation;
-    let playbackConversation: Conversation;
+    let conversation: TestConversation;
+    let playbackConversation: TestConversation;
 
     await dialTest.step(
       'Prepare playback conversation based on several long requests',

@@ -1,3 +1,4 @@
+import test, { skipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, ExpectedMessages, ModelIds } from '@/src/testData';
 import { expect } from '@playwright/test';
@@ -14,6 +15,7 @@ for (const modelToUse of modelsForImageGeneration) {
   dialTest(
     `Generate image for model: ${modelToUse}`,
     async ({ conversationData, chatApiHelper }) => {
+      test.skip(process.env.E2E_HOST === undefined, skipReason);
       const conversation =
         conversationData.prepareModelConversationBasedOnRequests(modelToUse, [
           'draw smiling emoticon',

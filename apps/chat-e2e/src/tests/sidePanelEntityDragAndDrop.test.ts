@@ -1,6 +1,4 @@
-import { Conversation } from '@/chat/types/chat';
 import { OpenAIEntityModel } from '@/chat/types/openai';
-import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
@@ -8,6 +6,8 @@ import {
   ExpectedMessages,
   FolderConversation,
   FolderPrompt,
+  TestConversation,
+  TestPrompt,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { ModelsUtil } from '@/src/utils';
@@ -105,8 +105,8 @@ dialTest(
     page,
   }) => {
     setTestIds('EPMRTC-1599', 'EPMRTC-591');
-    let conversationToDrop: Conversation;
-    let conversation: Conversation;
+    let conversationToDrop: TestConversation;
+    let conversation: TestConversation;
 
     await dialTest.step(
       'Prepare nested folders and single conversations outside folder',
@@ -197,7 +197,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-941');
     let folderConversation: FolderConversation;
-    let conversationToDrop: Conversation;
+    let conversationToDrop: TestConversation;
 
     await dialTest.step(
       'Prepare folder with 2 conversation inside and 2 single conversations outside folder',
@@ -302,7 +302,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-959');
-    let prompt: Prompt;
+    let prompt: TestPrompt;
 
     await dialTest.step(
       'Prepare nested folders and prompt outside folder',
@@ -373,7 +373,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-960');
     let promptInFolder: FolderPrompt;
-    let prompt: Prompt;
+    let prompt: TestPrompt;
 
     await dialTest.step(
       'Prepare folder with prompt and prompt outside folder',

@@ -1,10 +1,10 @@
-import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
+  TestPrompt,
 } from '@/src/testData';
 import { Colors, Cursors } from '@/src/ui/domData';
 import { expect } from '@playwright/test';
@@ -663,11 +663,11 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1173');
-    let firstPrompt: Prompt;
-    let secondPrompt: Prompt;
-    let thirdPrompt: Prompt;
-    let fourthPrompt: Prompt;
-    let fifthPrompt: Prompt;
+    let firstPrompt: TestPrompt;
+    let secondPrompt: TestPrompt;
+    let thirdPrompt: TestPrompt;
+    let fourthPrompt: TestPrompt;
+    let fifthPrompt: TestPrompt;
     const promptContent = 'Prompt search test';
     const notMatchingSearchTerm = 'abc';
     const searchTerm = 'test';

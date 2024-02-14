@@ -1,6 +1,5 @@
-import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedMessages, MenuOptions } from '@/src/testData';
+import { ExpectedMessages, MenuOptions, TestPrompt } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil } from '@/src/utils';
@@ -22,7 +21,7 @@ dialTest.skip(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1517', 'EPMRTC-1520', 'EPMRTC-1521', 'EPMRTC-1523');
-    let prompt: Prompt;
+    let prompt: TestPrompt;
     await dialTest.step('Prepare a new prompt', async () => {
       prompt = promptData.prepareDefaultPrompt();
       await dataInjector.createPrompts([prompt]);
@@ -123,7 +122,7 @@ dialTest.skip(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1518', 'EPMRTC-1524');
-    let prompt: Prompt;
+    let prompt: TestPrompt;
     await dialTest.step('Prepare a new prompt', async () => {
       prompt = promptData.prepareDefaultPrompt();
       await dataInjector.createPrompts([prompt]);

@@ -1,6 +1,4 @@
-import { Conversation } from '@/chat/types/chat';
-import { FolderInterface } from '@/chat/types/folder';
-import { Prompt } from '@/chat/types/prompt';
+import { TestConversation, TestFolder, TestPrompt } from '@/src/testData';
 import { ItemApiHelper } from '@/src/testData/api';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 
@@ -12,29 +10,29 @@ export class ApiInjector implements DataInjectorInterface {
   }
 
   async createPrompts(
-    prompts: Prompt[],
-    ...folders: FolderInterface[]
+    prompts: TestPrompt[],
+    ...folders: TestFolder[]
   ): Promise<void> {
     await this.itemApiHelper.createPrompts(prompts, ...folders);
   }
 
   async updateConversations(
-    conversations: Conversation[],
-    ...folders: FolderInterface[]
+    conversations: TestConversation[],
+    ...folders: TestFolder[]
   ): Promise<void> {
     await this.itemApiHelper.createConversations(conversations, ...folders);
   }
 
   async updatePrompts(
-    prompts: Prompt[],
-    ...folders: FolderInterface[]
+    prompts: TestPrompt[],
+    ...folders: TestFolder[]
   ): Promise<void> {
     await this.itemApiHelper.createPrompts(prompts, ...folders);
   }
 
   async createConversations(
-    conversations: Conversation[],
-    ...folders: FolderInterface[]
+    conversations: TestConversation[],
+    ...folders: TestFolder[]
   ) {
     await this.itemApiHelper.createConversations(conversations, ...folders);
   }

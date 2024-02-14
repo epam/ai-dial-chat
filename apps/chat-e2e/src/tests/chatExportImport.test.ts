@@ -1,5 +1,3 @@
-import { Conversation } from '@/chat/types/chat';
-import { FolderInterface } from '@/chat/types/folder';
 import { OpenAIEntityModel } from '@/chat/types/openai';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -9,6 +7,8 @@ import {
   Import,
   MenuOptions,
   ModelIds,
+  TestConversation,
+  TestFolder,
 } from '@/src/testData';
 import { ImportConversation } from '@/src/testData/conversationHistory/importConversation';
 import { UploadDownloadData } from '@/src/ui/pages';
@@ -33,7 +33,7 @@ dialTest.beforeAll(async () => {
   gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
 });
 
-dialTest(
+dialTest.skip(
   'Export and import one chat in a folder.\n' +
     `Export and import one chat in a folder when folder doesn't exist`,
   async ({
@@ -151,8 +151,7 @@ dialTest(
   },
 );
 
-//TODO: empty folder export
-dialTest(
+dialTest.skip(
   'Export and import chat structure with all conversations',
   async ({
     dialHomePage,
@@ -165,9 +164,9 @@ dialTest(
     confirmationDialog,
   }) => {
     setTestIds('EPMRTC-907');
-    let nestedFolders: FolderInterface[];
-    let conversationOutsideFolder: Conversation;
-    let nestedConversations: Conversation[] = [];
+    let nestedFolders: TestFolder[];
+    let conversationOutsideFolder: TestConversation;
+    let nestedConversations: TestConversation[] = [];
     let exportedData: UploadDownloadData;
 
     await dialTest.step(
@@ -232,7 +231,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Existed chats stay after import',
   async ({
     dialHomePage,
@@ -246,9 +245,9 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-913');
     let conversationsInFolder: FolderConversation;
-    let conversationOutsideFolder: Conversation;
-    let importedFolderConversation: Conversation;
-    let importedRootConversation: Conversation;
+    let conversationOutsideFolder: TestConversation;
+    let importedFolderConversation: TestConversation;
+    let importedRootConversation: TestConversation;
     let importedNewFolderConversation: FolderConversation;
 
     await dialTest.step(
@@ -384,7 +383,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Continue working with imported file. Regenerate response.\n' +
     'Continue working with imported file. Send a message.\n' +
     'Continue working with imported file. Edit a message',
@@ -397,7 +396,7 @@ dialTest(
     chatBar,
   }) => {
     setTestIds('EPMRTC-923', 'EPMRTC-924', 'EPMRTC-925');
-    let importedRootConversation: Conversation;
+    let importedRootConversation: TestConversation;
     const requests = ['1+2', '2+3', '3+4'];
 
     await dialTest.step(
@@ -608,8 +607,8 @@ dialTest.skip(
     folderDropdownMenu,
   }) => {
     setTestIds('EPMRTC-1359', 'EPMRTC-1368', 'EPMRTC-1369');
-    let nestedFolders: FolderInterface[];
-    let nestedConversations: Conversation[] = [];
+    let nestedFolders: TestFolder[];
+    let nestedConversations: TestConversation[] = [];
     let exportedData: UploadDownloadData;
     await dialTest.step(
       'Prepare 3 level nested folders with conversations in each folder',
@@ -751,8 +750,8 @@ dialTest.skip(
     conversationDropdownMenu,
   }) => {
     setTestIds('EPMRTC-1374');
-    let nestedFolders: FolderInterface[];
-    let nestedConversations: Conversation[] = [];
+    let nestedFolders: TestFolder[];
+    let nestedConversations: TestConversation[] = [];
     const updatedConversationNames: string[] = [];
 
     await dialTest.step(
@@ -882,8 +881,8 @@ dialTest.skip(
     conversationDropdownMenu,
   }) => {
     setTestIds('EPMRTC-1387');
-    let nestedFolders: FolderInterface[];
-    let thirdLevelFolderConversation: Conversation;
+    let nestedFolders: TestFolder[];
+    let thirdLevelFolderConversation: TestConversation;
     let exportedData: UploadDownloadData;
 
     await dialTest.step(

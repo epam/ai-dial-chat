@@ -1,32 +1,38 @@
-import { Conversation } from '@/chat/types/chat';
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { FolderConversation } from '@/src/testData';
+import {
+  FolderConversation,
+  TestConversation,
+  TestFolder,
+  TestPrompt,
+} from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
-import { ConversationUtil } from '@/src/utils';
+import { ItemUtil } from '@/src/utils';
 import { FileUtil } from '@/src/utils/fileUtil';
+
+export interface TestImportFormat {
+  history: TestConversation[];
+  folders: TestFolder[];
+  prompts: TestPrompt[];
+  version?: number;
+}
 
 export class ImportConversation {
   public static prepareConversationFile(
-    importedConversation: Conversation,
+    importedConversation: TestConversation,
     importedFolder?: FolderConversation,
   ): UploadDownloadData {
     ImportConversation.setImportedItemAttributes(
       importedConversation,
       importedFolder,
     );
-    const folderConversationToImport = isApiStorageType
-      ? {
-          folders: importedFolder ? [importedFolder.folders] : [],
-          history: [importedConversation],
-          prompts: [],
-          version: 5,
-        }
-      : {
-          folders: importedFolder ? [importedFolder.folders] : [],
-          history: [importedConversation],
-          prompts: [],
-          version: 4,
-        };
+    const folderConversationToImport: TestImportFormat = {
+      folders: importedFolder ? [importedFolder.folders] : [],
+      history: [importedConversation],
+      prompts: [],
+    };
+    isApiStorageType
+      ? (folderConversationToImport.version = 5)
+      : (folderConversationToImport.version = 4);
     return {
       path: FileUtil.writeDataToFile(folderConversationToImport),
       isDownloadedData: false,
@@ -34,17 +40,22 @@ export class ImportConversation {
   }
 
   private static setImportedItemAttributes(
-    importedConversation: Conversation,
+    importedConversation: TestConversation,
     importedFolder?: FolderConversation,
   ) {
     if (isApiStorageType) {
       if (importedFolder) {
-        importedFolder.folders.id = importedFolder.folders.name;
+        importedFolder.folders.id = ItemUtil.getApiConversationFolderId(
+          importedFolder.folders.name,
+        );
         importedConversation.folderId = importedFolder.folders.id;
-        importedConversation.id = `${importedConversation.folderId}/${ConversationUtil.getApiConversationId(importedConversation)}`;
+        importedConversation.id = ItemUtil.getApiConversationId(
+          importedConversation,
+          importedFolder.folders.name,
+        );
       } else {
         importedConversation.id =
-          ConversationUtil.getApiConversationId(importedConversation);
+          ItemUtil.getApiConversationId(importedConversation);
       }
     } else {
       importedConversation.folderId = importedFolder

@@ -1,3 +1,4 @@
+import test, { skipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
@@ -24,6 +25,7 @@ for (const modelToUse of modelsForRequestWithAttachment) {
   dialTest(
     `Generate response on request with attachment for model: ${modelToUse.modelId}`,
     async ({ conversationData, chatApiHelper }) => {
+      test.skip(process.env.E2E_HOST === undefined, skipReason);
       const conversation = conversationData.prepareConversationWithAttachment(
         imageUrl,
         modelToUse.modelId,

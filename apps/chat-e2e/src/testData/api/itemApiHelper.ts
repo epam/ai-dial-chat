@@ -1,10 +1,7 @@
-import { Conversation } from '@/chat/types/chat';
 import { BackendDataEntity, BackendDataNodeType } from '@/chat/types/common';
-import { FolderInterface } from '@/chat/types/folder';
-import { Prompt } from '@/chat/types/prompt';
-import { API } from '@/src/testData';
+import { API, TestConversation, TestFolder, TestPrompt } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
-import { BucketUtil, ConversationUtil } from '@/src/utils';
+import { BucketUtil, ItemUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 export class ItemApiHelper extends BaseApiHelper {
@@ -42,29 +39,28 @@ export class ItemApiHelper extends BaseApiHelper {
   }
 
   public async createConversations(
-    conversations: Conversation[],
-    ...folders: FolderInterface[]
+    conversations: TestConversation[],
+    ...folders: TestFolder[]
   ) {
     for (const conversation of conversations) {
       const path = await this.getItemPath(conversation, ...folders);
-      conversation.id =
-        path.length === 0
-          ? ConversationUtil.getApiConversationId(conversation)
-          : `${path}/${ConversationUtil.getApiConversationId(conversation)}`;
-      await this.createItem(API.conversationsHost, conversation);
+      conversation.folderId = ItemUtil.getApiConversationFolderId(path);
+      conversation.id = ItemUtil.getApiConversationId(conversation, path);
+      await this.createItem(conversation);
     }
   }
 
-  public async createPrompts(prompts: Prompt[], ...folders: FolderInterface[]) {
+  public async createPrompts(prompts: TestPrompt[], ...folders: TestFolder[]) {
     for (const prompt of prompts) {
       const path = await this.getItemPath(prompt, ...folders);
-      prompt.id = path.length === 0 ? prompt.name : `${path}/${prompt.name}`;
-      await this.createItem(API.promptsHost, prompt);
+      prompt.folderId = ItemUtil.getApiPromptFolderId(path);
+      prompt.id = ItemUtil.getApiPromptId(prompt, path);
+      await this.createItem(prompt);
     }
   }
 
-  private async createItem(host: string, item: Prompt | Conversation) {
-    const url = `${host}/${BucketUtil.getBucket()}/${item.id}`;
+  private async createItem(item: TestPrompt | TestConversation) {
+    const url = `api/${item.id}`;
     const response = await this.request.put(url, {
       data: item,
     });
@@ -75,8 +71,8 @@ export class ItemApiHelper extends BaseApiHelper {
   }
 
   private async getItemPath(
-    item: Prompt | Conversation,
-    ...folders: FolderInterface[]
+    item: TestPrompt | TestConversation,
+    ...folders: TestFolder[]
   ) {
     let path = '';
     const itemFolderId = item.folderId;
@@ -87,7 +83,6 @@ export class ItemApiHelper extends BaseApiHelper {
         itemFolder = folders.find((f) => f.id === itemFolder?.folderId);
         path = `${itemFolder?.name}/${path}`;
       }
-      item.folderId = path;
     }
     return path;
   }

@@ -1,7 +1,6 @@
-import { Conversation } from '@/chat/types/chat';
 import { OpenAIEntityModel } from '@/chat/types/openai';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedMessages } from '@/src/testData';
+import { ExpectedMessages, TestConversation } from '@/src/testData';
 import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -31,7 +30,7 @@ dialTest(
     iconApiHelper,
   }) => {
     setTestIds('EPMRTC-1115', 'EPMRTC-473');
-    let conversation: Conversation;
+    let conversation: TestConversation;
     const temp = 0;
     const request = 'This is a test request';
     const expectedModelIcon = await iconApiHelper.getEntityIcon(defaultModel);
@@ -178,7 +177,7 @@ dialTest(
     confirmationDialog,
   }) => {
     setTestIds('EPMRTC-490', 'EPMRTC-491');
-    let conversation: Conversation;
+    let conversation: TestConversation;
     await dialTest.step('Prepare conversation with history', async () => {
       conversation =
         await conversationData.prepareModelConversationBasedOnRequests(

@@ -1,11 +1,13 @@
-import { Conversation, Message, Role, Stage } from '@/chat/types/chat';
-import { FolderInterface, FolderType } from '@/chat/types/folder';
+import { Message, Role, Stage } from '@/chat/types/chat';
+import { FolderType } from '@/chat/types/folder';
 import { OpenAIEntityModel } from '@/chat/types/openai';
 import {
   ConversationBuilder,
   ExpectedConstants,
   MenuOptions,
   ModelIds,
+  TestConversation,
+  TestFolder,
 } from '@/src/testData';
 import { FileApiHelper } from '@/src/testData/api';
 import { FolderData } from '@/src/testData/folders/folderData';
@@ -14,8 +16,8 @@ import { GeneratorUtil } from '@/src/utils/generatorUtil';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface FolderConversation {
-  conversations: Conversation[];
-  folders: FolderInterface;
+  conversations: TestConversation[];
+  folders: TestFolder;
 }
 
 export class ConversationData extends FolderData {
@@ -131,13 +133,13 @@ export class ConversationData extends FolderData {
     return defaultConversation;
   }
 
-  public prepareDefaultReplayConversation(conversation: Conversation) {
+  public prepareDefaultReplayConversation(conversation: TestConversation) {
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
     return this.fillReplayData(conversation, userMessages!);
   }
 
   public preparePartiallyReplayedStagedConversation(
-    conversation: Conversation,
+    conversation: TestConversation,
   ) {
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
     const assistantMessage = conversation.messages.filter(
@@ -158,7 +160,7 @@ export class ConversationData extends FolderData {
     return replayConversation;
   }
 
-  public preparePartiallyReplayedConversation(conversation: Conversation) {
+  public preparePartiallyReplayedConversation(conversation: TestConversation) {
     const defaultReplayConversation =
       this.prepareDefaultReplayConversation(conversation);
     const assistantMessages = conversation.messages.find(
@@ -226,10 +228,8 @@ export class ConversationData extends FolderData {
     return super.prepareNestedFolder(nestedLevel, FolderType.Chat);
   }
 
-  public prepareConversationsForNestedFolders(
-    nestedFolders: FolderInterface[],
-  ) {
-    const nestedConversations: Conversation[] = [];
+  public prepareConversationsForNestedFolders(nestedFolders: TestFolder[]) {
+    const nestedConversations: TestConversation[] = [];
     for (const item of nestedFolders) {
       const nestedConversation = this.prepareDefaultConversation();
       nestedConversations.push(nestedConversation);
@@ -243,7 +243,7 @@ export class ConversationData extends FolderData {
     conversationsCount: number,
   ): FolderConversation {
     const folder = this.prepareFolder();
-    const conversations: Conversation[] = [];
+    const conversations: TestConversation[] = [];
     for (let i = 1; i <= conversationsCount; i++) {
       const conversation = this.prepareDefaultConversation();
       conversation.folderId = folder.id;
@@ -294,7 +294,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareDefaultPlaybackConversation(
-    conversation: Conversation,
+    conversation: TestConversation,
     playbackIndex?: number,
   ) {
     const messages = conversation.messages;
@@ -348,9 +348,9 @@ export class ConversationData extends FolderData {
   }
 
   private fillReplayData(
-    conversation: Conversation,
+    conversation: TestConversation,
     userMessages: Message[],
-  ): Conversation {
+  ): TestConversation {
     const replayConversation = JSON.parse(JSON.stringify(conversation));
     replayConversation.id = uuidv4();
     replayConversation.name = `${ExpectedConstants.replayConversation}${conversation.name}`;

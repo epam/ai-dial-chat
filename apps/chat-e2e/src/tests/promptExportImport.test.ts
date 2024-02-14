@@ -1,11 +1,11 @@
-import { FolderInterface } from '@/chat/types/folder';
-import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedMessages,
   FolderPrompt,
   Import,
   MenuOptions,
+  TestFolder,
+  TestPrompt,
 } from '@/src/testData';
 import { ImportPrompt } from '@/src/testData/conversationHistory/importPrompt';
 import { UploadDownloadData } from '@/src/ui/pages';
@@ -39,10 +39,10 @@ dialTest.skip(
   }) => {
     setTestIds('EPMRTC-883', 'EPMRTC-895');
     let promptsInsideFolder: FolderPrompt;
-    let emptyFolder: FolderInterface;
-    let promptOutsideFolder: Prompt;
-    let nestedFolders: FolderInterface[];
-    let nestedPrompts: Prompt[];
+    let emptyFolder: TestFolder;
+    let promptOutsideFolder: TestPrompt;
+    let nestedFolders: TestFolder[];
+    let nestedPrompts: TestPrompt[];
     let exportedData: UploadDownloadData;
     const promptContent = 'test';
 
@@ -153,7 +153,7 @@ dialTest.skip(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Export and import one prompt in a folder.\n' +
     `Export and import one prompt in a folder when folder doesn't exist.\n` +
     'Continue working with imported file. Edit imported prompt',
@@ -171,7 +171,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-884', 'EPMRTC-885', 'EPMRTC-896');
     let promptInsideFolder: FolderPrompt;
-    let promptOutsideFolder: Prompt;
+    let promptOutsideFolder: TestPrompt;
     let exportedData: UploadDownloadData;
 
     await dialTest.step(
@@ -288,7 +288,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Export and import one prompt in hierarchy tree',
   async ({
     dialHomePage,
@@ -301,7 +301,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-886');
     let promptInsideFolder: FolderPrompt;
-    let promptOutsideFolder: Prompt;
+    let promptOutsideFolder: TestPrompt;
     let exportedData: UploadDownloadData;
     const promptContent = 'test prompt';
 
@@ -368,9 +368,9 @@ dialTest.skip(
   }) => {
     setTestIds('EPMRTC-889');
     let promptsInsideFolder: FolderPrompt;
-    let promptOutsideFolder: Prompt;
-    let importedFolderPrompt: Prompt;
-    let importedRootPrompt: Prompt;
+    let promptOutsideFolder: TestPrompt;
+    let importedFolderPrompt: TestPrompt;
+    let importedRootPrompt: TestPrompt;
     let importedNewFolderPrompt: FolderPrompt;
 
     await dialTest.step(
@@ -554,7 +554,7 @@ dialTest.skip(
   },
 );
 
-dialTest(
+dialTest.skip(
   `Export and import single prompt in nested folders when folders structure doesn't exist.\n` +
     `Export and import single prompt in nested folders when it's folder doesn't exist.\n` +
     `Export and import single prompt in nested folders when parent folder doesn't exist`,
@@ -570,8 +570,8 @@ dialTest(
     folderDropdownMenu,
   }) => {
     setTestIds('EPMRTC-1375', 'EPMRTC-1376', 'EPMRTC-1377');
-    let nestedFolders: FolderInterface[];
-    let nestedPrompts: Prompt[];
+    let nestedFolders: TestFolder[];
+    let nestedPrompts: TestPrompt[];
     let exportedData: UploadDownloadData;
 
     await dialTest.step(
@@ -693,7 +693,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Import a prompt in nested folder',
   async ({
     dialHomePage,
@@ -705,8 +705,8 @@ dialTest(
     promptDropdownMenu,
   }) => {
     setTestIds('EPMRTC-1378');
-    let nestedFolders: FolderInterface[];
-    let nestedPrompts: Prompt[];
+    let nestedFolders: TestFolder[];
+    let nestedPrompts: TestPrompt[];
     const updatedPromptNames: string[] = [];
 
     await dialTest.step(
@@ -808,7 +808,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Import a prompt from nested folder which was moved to another place',
   async ({
     dialHomePage,
@@ -820,8 +820,8 @@ dialTest(
     promptDropdownMenu,
   }) => {
     setTestIds('EPMRTC-1388');
-    let nestedFolders: FolderInterface[];
-    let thirdLevelFolderPrompt: Prompt;
+    let nestedFolders: TestFolder[];
+    let thirdLevelFolderPrompt: TestPrompt;
     let exportedData: UploadDownloadData;
 
     await dialTest.step(

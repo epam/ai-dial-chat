@@ -1,5 +1,3 @@
-import { Conversation } from '@/chat/types/chat';
-import { FolderInterface } from '@/chat/types/folder';
 import { OpenAIEntityModel } from '@/chat/types/openai';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -9,6 +7,8 @@ import {
   ExpectedMessages,
   MenuOptions,
   ModelIds,
+  TestConversation,
+  TestFolder,
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
@@ -69,7 +69,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-588', 'EPMRTC-816', 'EPMRTC-1494');
     const newName = 'new name to cancel';
-    let conversation: Conversation;
+    let conversation: TestConversation;
     const conversationName = GeneratorUtil.randomString(70);
 
     await dialTest.step('Prepare conversation with long name', async () => {
@@ -589,7 +589,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-863', 'EPMRTC-942');
     const folderName = GeneratorUtil.randomString(70);
-    let conversation: Conversation;
+    let conversation: TestConversation;
 
     await dialTest.step(
       'Prepare conversation and folder with long name to move conversation in',
@@ -1033,8 +1033,8 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-1201');
 
-    let firstFolder: FolderInterface;
-    let secondFolder: FolderInterface;
+    let firstFolder: TestFolder;
+    let secondFolder: TestFolder;
 
     await dialTest.step(
       'Prepare conversations in folders with different content',

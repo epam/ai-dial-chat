@@ -1,6 +1,9 @@
-import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
-import { AccountMenuOptions, ExpectedMessages } from '@/src/testData';
+import {
+  AccountMenuOptions,
+  ExpectedMessages,
+  TestConversation,
+} from '@/src/testData';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -24,7 +27,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1576', 'EPMRTC-1580', 'EPMRTC-1577');
-    let conversation: Conversation;
+    let conversation: TestConversation;
     let chatBarBounding;
     let promptBarBounding;
 
