@@ -30,7 +30,7 @@ const getEntityUrlFromSlugs = (
     : [req.query.slug];
 
   if (!slugs || slugs.length === 0) {
-    throw new OpenAIError(`No ${entityType} path provided`, '', '', '404');
+    throw new OpenAIError(`No ${entityType} path provided`, '', '', '400');
   }
 
   return constructPath(dialApiHost, 'v1', entityType, encodeSlugs(slugs));

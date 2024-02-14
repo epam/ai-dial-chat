@@ -30,9 +30,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const { filter, recursive = false } = req.query as {
+    const {
+      filter,
+      recursive = false,
+      limit = 1000,
+    } = req.query as {
       filter?: BackendDataNodeType;
       recursive?: string;
+      limit?: number;
     };
     const token = await getToken({ req });
     const slugs = Array.isArray(req.query.listing)
@@ -47,16 +52,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       process.env.DIAL_API_HOST,
       'v1/metadata',
       encodeSlugs(slugs),
-    )}/?limit=1000${recursive ? '&recursive=true' : ''}`;
-    // eslint-disable-next-line no-console
-    console.log('---------------->', token?.access_token);
-    // eslint-disable-next-line no-console
-    console.log('---------------->', url);
+    )}/?limit=${limit}&recursive=${recursive}`;
+
     const response = await fetch(url, {
       headers: getApiHeaders({ jwt: token?.access_token as string }),
     });
-    // eslint-disable-next-line no-console
-    console.log('---------------->', response.status, response.statusText);
+
     if (response.status === 404) {
       return res.status(200).send([]);
     } else if (!response.ok) {
