@@ -343,7 +343,7 @@ dialTest(
         );
         if (isApiStorageType) {
           const respPromise = page.waitForResponse((resp) => {
-            return resp.request().method() === 'PUT';
+            return resp.request().method() === 'POST';
           });
           await page.mouse.up();
           return respPromise;
