@@ -2,14 +2,16 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { compareEntitiesByName } from '@/src/utils/app/folders';
-import { isRootId } from '@/src/utils/app/id';
+import { getRootId, isRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilter,
 } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -23,7 +25,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
   MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH,
@@ -51,6 +53,8 @@ const ChatFolderTemplate = ({
   filters,
   includeEmpty = false,
 }: ChatFolderProps) => {
+  const { t } = useTranslation(Translation.SideBar);
+
   const dispatch = useAppDispatch();
 
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
@@ -122,15 +126,40 @@ const ChatFolderTemplate = ({
     [dispatch],
   );
   const onDropBetweenFolders = useCallback(
-    (folder: FolderInterface, parentFolderId: string | undefined) => {
+    (folder: FolderInterface) => {
+      const folderId = getRootId({ apiKey: ApiKeys.Conversations });
+
+      if (
+        !isEntityNameOnSameLevelUnique(
+          folder.name,
+          { ...folder, folderId },
+          allFolders,
+        )
+      ) {
+        dispatch(
+          UIActions.showToast({
+            message: t(
+              'Folder with name "{{name}}" already exists at the root.',
+              {
+                ns: 'folder',
+                name: folder.name,
+              },
+            ),
+            type: 'error',
+          }),
+        );
+
+        return;
+      }
+
       dispatch(
         ConversationsActions.updateFolder({
           folderId: folder.id,
-          values: { folderId: parentFolderId },
+          values: { folderId },
         }),
       );
     },
-    [dispatch],
+    [allFolders, dispatch, t],
   );
 
   const handleFolderClick = useCallback(
@@ -145,7 +174,6 @@ const ChatFolderTemplate = ({
       <BetweenFoldersLine
         level={0}
         onDrop={onDropBetweenFolders}
-        parentFolderId={folder.folderId}
         featureType={FeatureType.Chat}
         denyDrop={isExternal}
       />
@@ -181,7 +209,6 @@ const ChatFolderTemplate = ({
         <BetweenFoldersLine
           level={0}
           onDrop={onDropBetweenFolders}
-          parentFolderId={folder.folderId}
           featureType={FeatureType.Chat}
           denyDrop={isExternal}
         />
