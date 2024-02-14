@@ -34,6 +34,7 @@ import {
   FeatureType,
   isNotLoaded,
 } from '@/src/types/common';
+import { MoveToFolderProps } from '@/src/types/folder';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -372,14 +373,32 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   }, []);
 
   const handleMoveToFolder = useCallback(
-    ({
-      folderId,
-      isNewFolder,
-    }: {
-      folderId?: string;
-      isNewFolder?: boolean;
-    }) => {
-      const folderPath = isNewFolder ? newFolderName : folderId;
+    ({ folderId, isNewFolder }: MoveToFolderProps) => {
+      const folderPath = (isNewFolder ? newFolderName : folderId) as string;
+
+      if (
+        !isEntityNameOnSameLevelUnique(
+          conversation.name,
+          { ...conversation, folderId: folderPath },
+          allConversations,
+        )
+      ) {
+        dispatch(
+          UIActions.showToast({
+            message: t(
+              'Conversation with name "{{name}}" already exists in this folder.',
+              {
+                ns: 'chat',
+                name: conversation.name,
+              },
+            ),
+            type: 'error',
+          }),
+        );
+
+        return;
+      }
+
       if (isNewFolder) {
         dispatch(
           ConversationsActions.createFolder({
@@ -402,7 +421,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         }),
       );
     },
-    [conversation.id, dispatch, newFolderName],
+    [allConversations, conversation, dispatch, newFolderName, t],
   );
   const handleOpenExportModal = useCallback(() => {
     setIsShowExportModal(true);
