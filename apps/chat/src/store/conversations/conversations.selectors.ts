@@ -168,6 +168,18 @@ export const selectChildAndCurrentFoldersIdsById = createSelector(
     return new Set(getChildAndCurrentFoldersIdsById(folderId, folders));
   },
 );
+export const selectFullTreeChildConversationsByFolderId = createSelector(
+  [selectConversations, selectChildAndCurrentFoldersIdsById],
+  (conversations, foldersIds) => {
+    return conversations.filter((conv) => foldersIds.has(conv.folderId));
+  },
+);
+export const selectFullTreeChildFoldersByFolderId = createSelector(
+  [selectFolders, selectChildAndCurrentFoldersIdsById],
+  (folders, foldersIds) => {
+    return folders.filter((folder) => foldersIds.has(folder.id));
+  },
+);
 export const selectFirstSelectedConversation = createSelector(
   [selectSelectedConversations],
   (conversations): Conversation | undefined => {

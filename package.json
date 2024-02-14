@@ -76,8 +76,7 @@
     "remark-gfm": "^3.0.1",
     "rxjs": "^7.8.1",
     "svgo": "^3.0.2",
-    "tslib": "^2.6.0",
-    "uuid": "^9.0.0"
+    "tslib": "^2.6.0"
   },
   "devDependencies": {
     "@mozilla/readability": "^0.4.4",
@@ -106,7 +105,6 @@
     "@types/react": "18.2.33",
     "@types/react-dom": "18.2.14",
     "@types/react-syntax-highlighter": "^15.5.6",
-    "@types/uuid": "^9.0.1",
     "@typescript-eslint/eslint-plugin": "^6.7.0",
     "@typescript-eslint/parser": "^6.7.0",
     "@vitejs/plugin-react": "^4.2.1",
