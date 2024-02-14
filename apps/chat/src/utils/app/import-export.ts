@@ -14,7 +14,7 @@ import {
 } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 
-import { ApiKeys } from '../server/api';
+import { ApiKeys, decodeApiUrl, encodeApiUrl } from '../server/api';
 import { cleanConversationHistory } from './clean';
 import { combineEntities } from './common';
 import { triggerDownload } from './file';
@@ -339,7 +339,7 @@ export const getAttachmentId = ({
 }) => {
   const regExpForAttachmentId = /^files\/\w*\//;
 
-  const attachmentId = decodeURI(url).split(regExpForAttachmentId)[
+  const attachmentId = decodeApiUrl(url).split(regExpForAttachmentId)[
     attachmentIdIndex
   ];
 
@@ -402,13 +402,15 @@ export const updateAttachment = ({
 
   const newAttachmentUrl =
     oldAttachment.url &&
-    encodeURI(`${newAttachmentFile.absolutePath}/${newAttachmentFile.name}`);
+    encodeApiUrl(`${newAttachmentFile.absolutePath}/${newAttachmentFile.name}`);
   const lastSlashIndex = oldAttachmentId.lastIndexOf('/');
   const oldAttachmentNameInPath = oldAttachmentId.slice(lastSlashIndex + 1);
 
   const newReferenceUrl =
     oldAttachment.reference_url &&
-    encodeURI(`${newAttachmentFile.absolutePath}/${oldAttachmentNameInPath}`);
+    encodeApiUrl(
+      `${newAttachmentFile.absolutePath}/${oldAttachmentNameInPath}`,
+    );
 
   const updatedAttachment: Attachment = {
     ...oldAttachment,

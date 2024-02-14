@@ -76,6 +76,7 @@ import { ApiKeys } from '@/src/utils/server/api';
 import {
   ChatBody,
   Conversation,
+  ConversationInfo,
   Message,
   MessageSettings,
   Playback,
@@ -83,7 +84,7 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
@@ -2096,8 +2097,18 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
         ),
       ).pipe(
         switchMap((foldersAndEntities) => {
-          const folders = foldersAndEntities.flatMap((f) => f.folders);
-          const conversations = foldersAndEntities.flatMap((f) => f.entities);
+          const folders = foldersAndEntities
+            .flatMap((f) => f.folders)
+            .map((item) => ({
+              ...item,
+              ...(payload.inheritedMetadata as Partial<FolderInterface>),
+            }));
+          const conversations = foldersAndEntities
+            .flatMap((f) => f.entities)
+            .map((item) => ({
+              ...item,
+              ...(payload.inheritedMetadata as Partial<ConversationInfo>),
+            }));
           return concat(
             of(
               ConversationsActions.uploadFoldersSuccess({
@@ -2150,10 +2161,15 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
             of(
               ConversationsActions.uploadFoldersSuccess({
                 paths: new Set(),
-                folders: getFoldersFromIds(paths, FolderType.Chat),
+                folders: getFoldersFromIds(
+                  paths,
+                  FolderType.Chat,
+                  UploadStatus.LOADED,
+                ),
                 allLoaded: true,
               }),
             ),
+            of(ConversationsActions.initFoldersAndConversationsSuccess()),
           );
         }),
         catchError(() => of(ConversationsActions.uploadConversationsFail())), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
@@ -2198,6 +2214,9 @@ const openFolderEpic: AppEpic = (action$, state$) =>
         of(
           ConversationsActions.uploadConversationsWithFolders({
             paths: [payload.id],
+            inheritedMetadata: {
+              sharedWithMe: true,
+            },
           }),
         ),
       );

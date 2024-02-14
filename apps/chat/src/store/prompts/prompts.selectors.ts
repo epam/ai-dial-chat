@@ -42,7 +42,7 @@ export const selectFilteredPrompts = createSelector(
         (!searchTerm ||
           doesPromptOrConversationContainSearchTerm(prompt, searchTerm)) &&
         filters.searchFilter(prompt) &&
-        (prompt.folderId || filters.sectionFilter(prompt)),
+        filters.sectionFilter(prompt),
     );
   },
 );
@@ -122,6 +122,18 @@ export const selectChildAndCurrentFoldersIdsById = createSelector(
   [selectFolders, (_state, folderId: string) => folderId],
   (folders, folderId) => {
     return new Set(getChildAndCurrentFoldersIdsById(folderId, folders));
+  },
+);
+export const selectFullTreeChildPromptsByFolderId = createSelector(
+  [selectPrompts, selectChildAndCurrentFoldersIdsById],
+  (prompts, foldersIds) => {
+    return prompts.filter((conv) => foldersIds.has(conv.folderId));
+  },
+);
+export const selectFullTreeChildFoldersByFolderId = createSelector(
+  [selectFolders, selectChildAndCurrentFoldersIdsById],
+  (folders, foldersIds) => {
+    return folders.filter((folder) => foldersIds.has(folder.id));
   },
 );
 
