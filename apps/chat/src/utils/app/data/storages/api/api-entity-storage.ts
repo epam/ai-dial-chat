@@ -39,7 +39,7 @@ export abstract class ApiEntityStorage<
 
   private mapEntity(entity: BackendChatEntity): TEntityInfo {
     const info = this.parseEntityKey(entity.name);
-    const id = decodeURI(entity.url);
+    const id = this.decodePath(entity.url);
     const { apiKey, bucket, parentPath } = splitEntityId(id);
 
     return {
@@ -52,6 +52,9 @@ export abstract class ApiEntityStorage<
 
   private encodePath = (path: string): string =>
     constructPath(...path.split('/').map((part) => encodeURIComponent(part)));
+
+  private decodePath = (path: string): string =>
+    constructPath(...path.split('/').map((part) => decodeURIComponent(part)));
 
   private getEntityUrl = (entity: TEntityInfo): string =>
     this.encodePath(constructPath('api', entity.id));
