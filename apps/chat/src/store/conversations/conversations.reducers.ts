@@ -269,6 +269,10 @@ export const conversationsSlice = createSlice({
     ) => state,
     saveNewConversation: (
       state,
+      _action: PayloadAction<{ newConversation: Conversation }>,
+    ) => state,
+    saveNewConversationSuccess: (
+      state,
       {
         payload: { newConversation },
       }: PayloadAction<{ newConversation: Conversation }>,
