@@ -36,6 +36,7 @@ export abstract class ApiEntityStorage<
       name: folder.name,
       folderId: constructPath(apiKey, bucket, parentPath),
       type: getFolderTypeByApiKey(this.getStorageKey()),
+      isShared: false,
     };
   }
 
@@ -49,6 +50,7 @@ export abstract class ApiEntityStorage<
       id,
       lastActivityDate: entity.updatedAt,
       folderId: constructPath(apiKey, bucket, parentPath),
+      isShared: false,
     } as unknown as TEntityInfo;
   }
 

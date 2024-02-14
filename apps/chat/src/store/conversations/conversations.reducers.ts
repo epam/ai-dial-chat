@@ -86,6 +86,7 @@ export const conversationsSlice = createSlice({
     ) => state,
     initSelectedConversations: (state) => state,
     initFoldersAndConversations: (state) => state,
+    initFoldersAndConversationsSuccess: (state) => state,
     saveConversation: (state, _action: PayloadAction<Conversation>) => state,
     recreateConversation: (
       state,
@@ -601,6 +602,8 @@ export const conversationsSlice = createSlice({
         payload,
       }: PayloadAction<{
         paths: (string | undefined)[];
+        // Needed for open shared with me folder and keep shared with me flag
+        inheritedMetadata?: unknown;
       }>,
     ) => {
       state.foldersStatus = UploadStatus.LOADING;

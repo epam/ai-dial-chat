@@ -17,7 +17,7 @@ import { ShareService } from '@/src/utils/app/data/share-service';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { translate } from '@/src/utils/app/translation';
-import { parseConversationApiKey } from '@/src/utils/server/api';
+import { encodeApiUrl, parseConversationApiKey } from '@/src/utils/server/api';
 
 import { Conversation, Message } from '@/src/types/chat';
 import {
@@ -111,7 +111,7 @@ const shareConversationEpic: AppEpic = (action$) =>
             invitationType: ShareRequestType.link,
             resources: [
               {
-                url: encodeURI(payload.resourceId),
+                url: encodeApiUrl(payload.resourceId),
               },
               ...internalResources.map((res) => ({ url: res })),
             ],
@@ -159,7 +159,7 @@ const shareConversationFolderEpic: AppEpic = (action$) =>
             invitationType: ShareRequestType.link,
             resources: [
               {
-                url: encodeURI(payload.resourceId + '/'),
+                url: encodeApiUrl(payload.resourceId) + '/',
               },
               ...internalResourcesIds,
             ],
@@ -190,7 +190,7 @@ const sharePromptEpic: AppEpic = (action$) =>
         invitationType: ShareRequestType.link,
         resources: [
           {
-            url: encodeURI(payload.resourceId),
+            url: encodeApiUrl(payload.resourceId),
           },
         ],
       }).pipe(
@@ -215,7 +215,7 @@ const sharePromptFolderEpic: AppEpic = (action$) =>
         invitationType: ShareRequestType.link,
         resources: [
           {
-            url: encodeURI(payload.resourceId + '/'),
+            url: encodeApiUrl(payload.resourceId) + '/',
           },
         ],
       }).pipe(
@@ -289,7 +289,7 @@ const triggerGettingSharedListingsConversationsEpic: AppEpic = (
   action$.pipe(
     filter(
       (action) =>
-        ConversationsActions.uploadConversationsSuccess.match(action) ||
+        ConversationsActions.initFoldersAndConversationsSuccess.match(action) ||
         ShareActions.acceptShareInvitationSuccess.match(action),
     ),
     filter(() =>
@@ -391,20 +391,44 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             state$.value,
           );
           const folders = ConversationsSelectors.selectFolders(state$.value);
+
           actions.push(
             ...(folders
-              .map((item) => {
+              .flatMap((item) => {
                 const isShared = payload.resources.folders.find(
                   (res) => res.id === item.id,
                 );
 
                 if (isShared) {
-                  return ConversationsActions.updateFolder({
-                    folderId: item.id,
-                    values: {
-                      isShared: true,
-                    },
-                  });
+                  const childConversations =
+                    ConversationsSelectors.selectFullTreeChildConversationsByFolderId(
+                      state$.value,
+                      item.id,
+                    );
+                  const childFolders =
+                    ConversationsSelectors.selectFullTreeChildFoldersByFolderId(
+                      state$.value,
+                      item.id,
+                    );
+
+                  return [
+                    ...childFolders.map((folder) =>
+                      ConversationsActions.updateFolder({
+                        folderId: folder.id,
+                        values: {
+                          isShared: true,
+                        },
+                      }),
+                    ),
+                    ...childConversations.map((conv) =>
+                      ConversationsActions.updateConversation({
+                        id: conv.id,
+                        values: {
+                          isShared: true,
+                        },
+                      }),
+                    ),
+                  ];
                 }
                 return undefined;
               })
@@ -473,18 +497,41 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           const folders = PromptsSelectors.selectFolders(state$.value);
           actions.push(
             ...(folders
-              .map((item) => {
+              .flatMap((item) => {
                 const isShared = payload.resources.folders.find(
                   (res) => res.id === item.id,
                 );
 
                 if (isShared) {
-                  return PromptsActions.updateFolder({
-                    folderId: item.id,
-                    values: {
-                      isShared: true,
-                    },
-                  });
+                  const childPrompts =
+                    PromptsSelectors.selectFullTreeChildPromptsByFolderId(
+                      state$.value,
+                      item.id,
+                    );
+                  const childFolders =
+                    PromptsSelectors.selectFullTreeChildFoldersByFolderId(
+                      state$.value,
+                      item.id,
+                    );
+
+                  return [
+                    ...childFolders.map((folder) =>
+                      PromptsActions.updateFolder({
+                        folderId: folder.id,
+                        values: {
+                          isShared: true,
+                        },
+                      }),
+                    ),
+                    ...childPrompts.map((prompt) =>
+                      PromptsActions.updatePrompt({
+                        id: prompt.id,
+                        values: {
+                          isShared: true,
+                        },
+                      }),
+                    ),
+                  ];
                 }
                 return undefined;
               })
